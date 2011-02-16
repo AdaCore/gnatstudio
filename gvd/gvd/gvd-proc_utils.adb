@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-
+with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
@@ -36,6 +36,8 @@ package body GVD.Proc_Utils is
 
    type Process_Record is record
       Descriptor : Process_Descriptor_Access;
+      Index      : Natural := 0;
+      --  Index of the start of the command
    end record;
 
    procedure Free is new Ada.Unchecked_Deallocation
@@ -77,11 +79,20 @@ package body GVD.Proc_Utils is
          begin
             Skip_Blanks (S, Index);
             Skip_To_Char (S, Index, ' ');
-            Info :=
-              (Id_Len   => Index - S'First + 1,
-               Info_Len => S'Last - Index - 1,
-               Id       => S (S'First .. Index),
-               Info     => S (Index + 1 .. S'Last - 1));
+
+            if Handle.Index /= 0 then
+               Info :=
+                 (Id_Len   => Index - S'First + 1,
+                  Info_Len => S'Last - Handle.Index,
+                  Id       => S (S'First .. Index),
+                  Info     => S (Handle.Index .. S'Last - 1));
+            else
+               Info :=
+                 (Id_Len   => Index - S'First + 1,
+                  Info_Len => S'Last - Index - 1,
+                  Id       => S (S'First .. Index),
+                  Info     => S (Index + 1 .. S'Last - 1));
+            end if;
 
          exception
             when Constraint_Error =>
@@ -123,7 +134,24 @@ package body GVD.Proc_Utils is
              Handle.Descriptor,
              Success);
       if Success then
+         --  Read header and discard it
          Expect (Handle.Descriptor.all, Match, "\n");
+
+         if Match = 1 then
+            --  Let's keep the column where the command starts
+            declare
+               S : constant String :=
+                     Strip_CR (Expect_Out (Handle.Descriptor.all));
+            begin
+               --  GNU/Linux   TIME
+               --  Solaris     TIME
+               --  Cygwin     STIME
+               Handle.Index := Index (S, "TIME ");
+               if Handle.Index /= 0 then
+                  Handle.Index := Handle.Index + 5;
+               end if;
+            end;
+         end if;
       end if;
 
    exception
