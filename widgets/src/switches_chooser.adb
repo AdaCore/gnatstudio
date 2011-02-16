@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007-2010, AdaCore             --
+--                      Copyright (C) 2007-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1165,7 +1165,7 @@ package body Switches_Chooser is
          Set_Command_Line
            (Cmd2,
             Argument_List_To_String (Args),
-            Get_Switches (Editor.Config.Config, Editor.Config.Switch_Char),
+            --  Get_Switches (Editor.Config.Config, Editor.Config.Switch_Char),
             Switch_Char => Editor.Config.Switch_Char);
 
          --  The two command lines are equal if the switches are exactly in the
