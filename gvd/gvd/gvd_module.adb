@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -681,6 +681,7 @@ package body GVD_Module is
                   Address => Addr,
                   Mode    => GVD.Types.Visible);
             end;
+
          else
             Console.Insert
               (Kernel, (-"Could not find file: ") & S.Display_Full_Name,

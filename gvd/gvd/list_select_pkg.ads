@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
---                              ACT-Europe                           --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,15 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.CList;           use Gtk.CList;
+with Gtk.Clist;           use Gtk.Clist;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Button;          use Gtk.Button;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 package List_Select_Pkg is
 
@@ -59,16 +59,16 @@ package List_Select_Pkg is
       Help_Message  : String;
       Item_Label    : String;
       Comment_Label : String);
-   --  Internal initialize procedure.
+   --  Internal initialize procedure
 
    procedure Add_Item
      (List_Select : List_Select_Access;
       Label       : String;
       Comment     : String);
-   --  Add an item to the list with the specified label.
+   --  Add an item to the list with the specified label
 
    procedure Remove_All_Items (List_Select : List_Select_Access);
-   --  Removes all the items in the list.
+   --  Removes all the items in the list
 
    function Show
      (List_Select : List_Select_Access) return String;
@@ -76,9 +76,9 @@ package List_Select_Pkg is
    --  Upon exit, returns the contents of the entry.
 
 private
+
    type List_Select_Record is new Gtk_Window_Record with record
       Help_Text      : String_Access;
-
       Vbox           : Gtk_Vbox;
       Hbox           : Gtk_Hbox;
       Scrolledwindow : Gtk_Scrolled_Window;
@@ -92,4 +92,5 @@ private
       Cancel         : Gtk_Button;
       Help           : Gtk_Button;
    end record;
+
 end List_Select_Pkg;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -189,6 +188,7 @@ package body List_Select_Pkg is
 
       if Item_Label = "" and then Comment_Label = "" then
          Column_Titles_Hide (List_Select.List);
+
       else
          Set_Column_Title (List_Select.List, 0, Item_Label);
          Set_Column_Title (List_Select.List, 1, Comment_Label);
