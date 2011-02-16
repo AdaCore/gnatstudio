@@ -8818,6 +8818,10 @@ Open a file system explorer on the left area.
 Open a view of the current source editor.
 @xref{The Outline View}.
 
+@item Messages
+Open the Messages winbdow
+@xref{The Messages Window}.
+
 @item Project
 @xref{The Project View}.
 

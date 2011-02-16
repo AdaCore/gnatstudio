@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -95,6 +95,10 @@ package body GPS.Kernel.Console is
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Messages->Clear menu
+
+   procedure Open_Messages_View
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Open the Messages view
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -406,6 +410,23 @@ package body GPS.Kernel.Console is
    end On_Preferences_Changed;
 
    ------------------------
+   -- Open_Messages_View --
+   ------------------------
+
+   procedure Open_Messages_View
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Console : constant Interactive_Console := Get_Console (Kernel);
+      Child   : MDI_Child;
+   begin
+      Child := Find_MDI_Child (Get_MDI (Kernel), Console);
+      Child.Raise_Child;
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Open_Messages_View;
+
+   ------------------------
    -- Initialize_Console --
    ------------------------
 
@@ -621,6 +642,12 @@ package body GPS.Kernel.Console is
         (Kernel, Console, -"_Save As...", "", On_Save_Console_As'Access);
       Register_Menu
         (Kernel, Console, -"_Load Contents...", "", On_Load_To_Console'Access);
+
+      Register_Menu
+        (Kernel,
+         Parent_Path => "/" & (-"_Tools") & '/' & (-"_Views"),
+         Text        => -"_Messages",
+         Callback    => Open_Messages_View'Access);
    end Register_Module;
 
 end GPS.Kernel.Console;

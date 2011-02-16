@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2010, AdaCore                  --
+--                 Copyright (C) 2005-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1021,7 +1021,7 @@ package body Outline_View is
 
       Register_Menu
         (Kernel, Tools, -"_Outline", "", On_Open_Outline'Access,
-         Ref_Item => -"File Switches", Add_Before => False);
+         Ref_Item => -"Messages", Add_Before => False);
 
       Command := new Refresh_Outline_Command;
       Register_Contextual_Menu
