@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009-2010, AdaCore              --
+--                     Copyright (C) 2009-2011, AdaCore              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,11 +38,13 @@ package Code_Peer.Categories_Criteria_Editors is
 
    procedure Gtk_New
      (Editor     : in out Categories_Criteria_Editor;
+      Kernel     : GPS.Kernel.Kernel_Handle;
       Categories : Code_Peer.Message_Category_Sets.Set);
 
    procedure Initialize
      (Self       :
         not null access Categories_Criteria_Editor_Record'Class;
+      Kernel     : GPS.Kernel.Kernel_Handle;
       Categories : Code_Peer.Message_Category_Sets.Set);
 
    function Get_Visible_Categories

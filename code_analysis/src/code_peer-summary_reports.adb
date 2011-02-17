@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,6 +43,7 @@ with Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
+with Histories;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
@@ -162,6 +163,23 @@ package body Code_Peer.Summary_Reports is
      (Object : System.Address;
       Name   : Glib.Signal_Name);
    pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
+
+   Lifeage_Added_History         : constant Histories.History_Key :=
+     "codepeer-summary_report-lifeage-added";
+   Lifeage_Unchanged_History     : constant Histories.History_Key :=
+     "codepeer-summary_report-lifeage-unchanged";
+   Lifeage_Removed_History       : constant Histories.History_Key :=
+     "codepeer-summary_report-lifeage-removed";
+   Ranking_Suppressed_History    : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-suppressed";
+   Ranking_Informational_History : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-informational";
+   Ranking_Low_History           : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-low";
+   Ranking_Medium_History        : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-medium";
+   Ranking_High_History          : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-high";
 
    Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
 
@@ -483,6 +501,48 @@ package body Code_Peer.Summary_Reports is
           (Kernel.Get_Main_Window).Render_Icon
           (Code_Analysis_GUI.Subp_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
 
+      --  Restore filter settings from histories.
+
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Lifeage_Added_History, True);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Lifeage_Unchanged_History, True);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Lifeage_Removed_History, False);
+
+      Self.Show_Lifeage (Added)     :=
+        Histories.Get_History (Kernel.Get_History.all, Lifeage_Added_History);
+      Self.Show_Lifeage (Unchanged) :=
+        Histories.Get_History
+          (Kernel.Get_History.all, Lifeage_Unchanged_History);
+      Self.Show_Lifeage (Removed)   :=
+        Histories.Get_History
+          (Kernel.Get_History.all, Lifeage_Removed_History);
+
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Ranking_Suppressed_History, False);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Ranking_Informational_History, False);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Ranking_Low_History, False);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Ranking_Medium_History, True);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Ranking_High_History, True);
+
+      Self.Show_Ranking (Code_Peer.Suppressed) :=
+        Histories.Get_History
+          (Kernel.Get_History.all, Ranking_Suppressed_History);
+      Self.Show_Ranking (Code_Peer.Informational) :=
+        Histories.Get_History
+          (Kernel.Get_History.all, Ranking_Informational_History);
+      Self.Show_Ranking (Code_Peer.Low) :=
+        Histories.Get_History (Kernel.Get_History.all, Ranking_Low_History);
+      Self.Show_Ranking (Code_Peer.Medium) :=
+        Histories.Get_History (Kernel.Get_History.all, Ranking_Medium_History);
+      Self.Show_Ranking (Code_Peer.High) :=
+        Histories.Get_History (Kernel.Get_History.all, Ranking_High_History);
+
       --  Baseline and current inspections' ids
 
       Gtk.Box.Gtk_New_Hbox (Inspections_Box, True);
@@ -786,7 +846,7 @@ package body Code_Peer.Summary_Reports is
       Filter_Box.Pack_Start (Label, False);
 
       Gtk.Check_Button.Gtk_New (Check, -"suppressed");
-      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Suppressed));
+      Check.Set_Active (Self.Show_Ranking (Code_Peer.Suppressed));
       Filter_Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
@@ -796,7 +856,7 @@ package body Code_Peer.Summary_Reports is
          Summary_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"informational");
-      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Informational));
+      Check.Set_Active (Self.Show_Ranking (Code_Peer.Informational));
       Filter_Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
@@ -806,7 +866,7 @@ package body Code_Peer.Summary_Reports is
          Summary_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"low");
-      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Low));
+      Check.Set_Active (Self.Show_Ranking (Code_Peer.Low));
       Filter_Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
@@ -816,7 +876,7 @@ package body Code_Peer.Summary_Reports is
          Summary_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"medium");
-      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Medium));
+      Check.Set_Active (Self.Show_Ranking (Code_Peer.Medium));
       Filter_Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
@@ -826,7 +886,7 @@ package body Code_Peer.Summary_Reports is
          Summary_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"high");
-      Check.Set_Active (Self.Show_Probabilities (Code_Peer.High));
+      Check.Set_Active (Self.Show_Ranking (Code_Peer.High));
       Filter_Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
@@ -842,6 +902,7 @@ package body Code_Peer.Summary_Reports is
 
       Code_Peer.Categories_Criteria_Editors.Gtk_New
         (Self.Categories_Editor,
+         Self.Kernel,
          Code_Peer.Project_Data'Class
            (Code_Analysis.Get_Or_Create
               (Tree,
@@ -1033,6 +1094,10 @@ package body Code_Peer.Summary_Reports is
       Self   : Summary_Report) is
    begin
       Self.Show_Lifeage (Added) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Lifeage_Added_History,
+         Self.Show_Lifeage (Added));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Added_Messages_Toggled;
 
@@ -1044,7 +1109,11 @@ package body Code_Peer.Summary_Reports is
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Summary_Report) is
    begin
-      Self.Show_Probabilities (High) := Object.Get_Active;
+      Self.Show_Ranking (High) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Ranking_High_History,
+         Self.Show_Ranking (High));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_High_Messages_Toggled;
 
@@ -1056,7 +1125,11 @@ package body Code_Peer.Summary_Reports is
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Summary_Report) is
    begin
-      Self.Show_Probabilities (Informational) := Object.Get_Active;
+      Self.Show_Ranking (Informational) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Ranking_Informational_History,
+         Self.Show_Ranking (Informational));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Informational_Messages_Toggled;
 
@@ -1068,7 +1141,11 @@ package body Code_Peer.Summary_Reports is
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Summary_Report) is
    begin
-      Self.Show_Probabilities (Low) := Object.Get_Active;
+      Self.Show_Ranking (Low) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Ranking_Low_History,
+         Self.Show_Ranking (Low));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Low_Messages_Toggled;
 
@@ -1080,7 +1157,11 @@ package body Code_Peer.Summary_Reports is
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Summary_Report) is
    begin
-      Self.Show_Probabilities (Medium) := Object.Get_Active;
+      Self.Show_Ranking (Medium) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Ranking_Medium_History,
+         Self.Show_Ranking (Medium));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Medium_Messages_Toggled;
 
@@ -1093,6 +1174,10 @@ package body Code_Peer.Summary_Reports is
       Self   : Summary_Report) is
    begin
       Self.Show_Lifeage (Removed) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Lifeage_Removed_History,
+         Self.Show_Lifeage (Removed));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Removed_Messages_Toggled;
 
@@ -1104,7 +1189,11 @@ package body Code_Peer.Summary_Reports is
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Summary_Report) is
    begin
-      Self.Show_Probabilities (Suppressed) := Object.Get_Active;
+      Self.Show_Ranking (Suppressed) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Ranking_Suppressed_History,
+         Self.Show_Ranking (Suppressed));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Suppressed_Messages_Toggled;
 
@@ -1117,6 +1206,10 @@ package body Code_Peer.Summary_Reports is
       Self   : Summary_Report) is
    begin
       Self.Show_Lifeage (Unchanged) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Lifeage_Unchanged_History,
+         Self.Show_Lifeage (Unchanged));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Unchanged_Messages_Toggled;
 
@@ -1140,7 +1233,7 @@ package body Code_Peer.Summary_Reports is
    is
    begin
       Criteria.Categories := Self.Categories_Editor.Get_Visible_Categories;
-      Criteria.Rankings   := Self.Show_Probabilities;
+      Criteria.Rankings   := Self.Show_Ranking;
       Criteria.Lineages   := Self.Show_Lifeage;
    end Update_Criteria;
 

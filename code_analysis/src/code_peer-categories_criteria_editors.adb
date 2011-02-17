@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009-2010, AdaCore              --
+--                     Copyright (C) 2009-2011, AdaCore              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,7 @@ with Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 
 with GPS.Intl; use GPS.Intl;
+with Histories;
 
 package body Code_Peer.Categories_Criteria_Editors is
 
@@ -55,6 +56,10 @@ package body Code_Peer.Categories_Criteria_Editors is
    procedure On_Destroy
      (Self : access Categories_Criteria_Editor_Record'Class);
    --  Called on widget destroy.
+
+   procedure Update_Toggle_State
+     (Self : not null access Categories_Criteria_Editor_Record'Class);
+   --  Updates state of 'select/unselect all' toggle
 
    package Cell_Renderer_Toggle_Callbacks is
      new Gtk.Handlers.User_Callback
@@ -105,10 +110,11 @@ package body Code_Peer.Categories_Criteria_Editors is
 
    procedure Gtk_New
      (Editor     : in out Categories_Criteria_Editor;
+      Kernel     : GPS.Kernel.Kernel_Handle;
       Categories : Code_Peer.Message_Category_Sets.Set) is
    begin
       Editor := new Categories_Criteria_Editor_Record;
-      Initialize (Editor, Categories);
+      Initialize (Editor, Kernel, Categories);
    end Gtk_New;
 
    ----------------
@@ -118,6 +124,7 @@ package body Code_Peer.Categories_Criteria_Editors is
    procedure Initialize
      (Self       :
         not null access Categories_Criteria_Editor_Record'Class;
+      Kernel     : GPS.Kernel.Kernel_Handle;
       Categories : Code_Peer.Message_Category_Sets.Set)
    is
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -134,6 +141,7 @@ package body Code_Peer.Categories_Criteria_Editors is
          Class_Record,
          "CodePeerMessageCategoryCriteriaEditor",
          Signal_Parameters);
+
       Message_Categories_Criteria_Editor_Callbacks.Connect
         (Self,
          Gtk.Object.Signal_Destroy,
@@ -143,7 +151,7 @@ package body Code_Peer.Categories_Criteria_Editors is
       Self.Set_Policy (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
 
       Code_Peer.Categories_Criteria_Models.Gtk_New
-        (Self.Model, Categories);
+        (Self.Model, Kernel, "codepeer-summary_report-categories", Categories);
       Message_Categories_Criteria_Model_Callbacks.Connect
         (Self.Model,
          Gtk.Tree_Model.Signal_Row_Changed,
@@ -164,6 +172,7 @@ package body Code_Peer.Categories_Criteria_Editors is
       Gtk.Check_Button.Gtk_New (Self.Toggle, "");
          Self.Toggle.Set_Inconsistent (False);
          Self.Toggle.Set_Active (True);
+      Self.Update_Toggle_State;
       Self.Toggle.Show;
       Column.Set_Widget (Self.Toggle);
       Gtk.Cell_Renderer_Toggle.Gtk_New (Toggle_Renderer);
@@ -216,17 +225,7 @@ package body Code_Peer.Categories_Criteria_Editors is
       pragma Unreferenced (Object);
 
    begin
-      if Self.Model.Is_Empty then
-         Self.Toggle.Set_Inconsistent (False);
-         Self.Toggle.Set_Active (False);
-
-      elsif Self.Model.Is_Full then
-         Self.Toggle.Set_Inconsistent (False);
-         Self.Toggle.Set_Active (True);
-
-      else
-         Self.Toggle.Set_Inconsistent (True);
-      end if;
+      Self.Update_Toggle_State;
    end On_Model_Row_Changed;
 
    ---------------------------
@@ -264,6 +263,8 @@ package body Code_Peer.Categories_Criteria_Editors is
       Path   : Interfaces.C.Strings.chars_ptr;
       Self   : Categories_Criteria_Editor)
    is
+      use type Histories.History_Key;
+
       Iter  : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
                          Self.Model.Get_Iter_From_String
                            (Interfaces.C.Strings.Value (Path));
@@ -279,5 +280,25 @@ package body Code_Peer.Categories_Criteria_Editors is
       Message_Categories_Criteria_Editor_Callbacks.Emit_By_Name
         (Self, Signal_Criteria_Changed);
    end On_Toggle_Category_Visibility;
+
+   -------------------------
+   -- Update_Toggle_State --
+   -------------------------
+
+   procedure Update_Toggle_State
+     (Self : not null access Categories_Criteria_Editor_Record'Class) is
+   begin
+      if Self.Model.Is_Empty then
+         Self.Toggle.Set_Inconsistent (False);
+         Self.Toggle.Set_Active (False);
+
+      elsif Self.Model.Is_Full then
+         Self.Toggle.Set_Inconsistent (False);
+         Self.Toggle.Set_Active (True);
+
+      else
+         Self.Toggle.Set_Inconsistent (True);
+      end if;
+   end Update_Toggle_State;
 
 end Code_Peer.Categories_Criteria_Editors;

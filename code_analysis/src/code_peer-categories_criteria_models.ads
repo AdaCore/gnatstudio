@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+private with Ada.Strings.Unbounded;
 
 with Glib.Values;
 with Gtk.Tree_Model;
@@ -36,12 +38,18 @@ package Code_Peer.Categories_Criteria_Models is
      access all Categories_Criteria_Model_Record'Class;
 
    procedure Gtk_New
-     (Model      : in out Categories_Criteria_Model;
-      Categories : Code_Peer.Message_Category_Sets.Set);
+     (Model          : in out Categories_Criteria_Model;
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      History_Prefix : String;
+      Categories     : Code_Peer.Message_Category_Sets.Set);
+   --  Creates new instance. History_Prefix is a prefix to manage persistent
+   --  state of selected categories.
 
    procedure Initialize
-     (Self       : access Categories_Criteria_Model_Record'Class;
-      Categories : Code_Peer.Message_Category_Sets.Set);
+     (Self           : access Categories_Criteria_Model_Record'Class;
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      History_Prefix : String;
+      Categories     : Code_Peer.Message_Category_Sets.Set);
 
    procedure Show
      (Self     : access Categories_Criteria_Model_Record'Class;
@@ -74,6 +82,8 @@ private
    type Categories_Criteria_Model_Record is
      new Code_Peer.Message_Categories_Models.Message_Categories_Model_Record
        with record
+      Kernel              : GPS.Kernel.Kernel_Handle;
+      History_Prefix      : Ada.Strings.Unbounded.Unbounded_String;
       Selected_Categories : Code_Peer.Message_Category_Sets.Set;
    end record;
 

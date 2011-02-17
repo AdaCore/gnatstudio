@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -87,16 +87,8 @@ private
       Categories_Editor   :
         Code_Peer.Categories_Criteria_Editors.Categories_Criteria_Editor;
 
-      Show_Lifeage        : Lifeage_Kinds_Flags :=
-                              (Added     => True,
-                               Unchanged => True,
-                               Removed   => False);
-      Show_Probabilities  : Message_Ranking_Level_Flags :=
-                              (Informational => False,
-                               Suppressed    => False,
-                               Low           => False,
-                               Medium        => True,
-                               High          => True);
+      Show_Lifeage        : Lifeage_Kinds_Flags;
+      Show_Ranking        : Message_Ranking_Level_Flags;
    end record;
 
    Signal_Activated        : constant Glib.Signal_Name := "activated";

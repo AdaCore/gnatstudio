@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Histories;
+
 package body Code_Peer.Categories_Criteria_Models is
+
+   function History_Key
+     (Self     : not null access Categories_Criteria_Model_Record'Class;
+      Category : Code_Peer.Message_Category_Access)
+      return Histories.History_Key;
+   --  Constructs history key for specified category.
 
    -----------
    -- Clear --
@@ -111,13 +119,14 @@ package body Code_Peer.Categories_Criteria_Models is
    -------------
 
    procedure Gtk_New
-     (Model      : in out Categories_Criteria_Model;
-      Categories : Code_Peer.Message_Category_Sets.Set)
-   is
+     (Model          : in out Categories_Criteria_Model;
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      History_Prefix : String;
+      Categories     : Code_Peer.Message_Category_Sets.Set) is
    begin
       Model := new Categories_Criteria_Model_Record;
 
-      Initialize (Model, Categories);
+      Initialize (Model, Kernel, History_Prefix, Categories);
    end Gtk_New;
 
    ----------
@@ -130,6 +139,9 @@ package body Code_Peer.Categories_Criteria_Models is
    is
    begin
       Self.Selected_Categories.Exclude (Category);
+      Histories.Set_History
+        (Self.Kernel.Get_History.all, Self.History_Key (Category), False);
+
       Self.Row_Changed (Category);
    end Hide;
 
@@ -162,17 +174,60 @@ package body Code_Peer.Categories_Criteria_Models is
       Self.All_Categories.Iterate (Process'Access);
    end Hide_All;
 
+   -----------------
+   -- History_Key --
+   -----------------
+
+   function History_Key
+     (Self     : not null access Categories_Criteria_Model_Record'Class;
+      Category : Code_Peer.Message_Category_Access)
+      return Histories.History_Key is
+   begin
+      return
+        Histories.History_Key
+          (Ada.Strings.Unbounded.To_String (Self.History_Prefix)
+             & '-'
+             & Category.Name.all);
+   end History_Key;
+
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (Self       : access Categories_Criteria_Model_Record'Class;
-      Categories : Code_Peer.Message_Category_Sets.Set) is
+     (Self           : access Categories_Criteria_Model_Record'Class;
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      History_Prefix : String;
+      Categories     : Code_Peer.Message_Category_Sets.Set)
+   is
+      procedure Restore (Position : Code_Peer.Message_Category_Sets.Cursor);
+      --  Restores previous state from history.
+
+      -------------
+      -- Restore --
+      -------------
+
+      procedure Restore (Position : Code_Peer.Message_Category_Sets.Cursor) is
+         Category : constant Code_Peer.Message_Category_Access
+           := Code_Peer.Message_Category_Sets.Element (Position);
+
+      begin
+         Histories.Create_New_Boolean_Key_If_Necessary
+           (Self.Kernel.Get_History.all, Self.History_Key (Category), True);
+
+         if Histories.Get_History
+             (Self.Kernel.Get_History.all, Self.History_Key (Category))
+         then
+            Self.Selected_Categories.Insert (Category);
+         end if;
+      end Restore;
+
    begin
       Code_Peer.Message_Categories_Models.Initialize (Self, Categories);
-
-      Self.Selected_Categories := Categories;
+      Self.Kernel := Kernel;
+      Self.History_Prefix :=
+        Ada.Strings.Unbounded.To_Unbounded_String (History_Prefix);
+      Categories.Iterate (Restore'Access);
    end Initialize;
 
    --------------
@@ -208,6 +263,9 @@ package body Code_Peer.Categories_Criteria_Models is
    is
    begin
       Self.Selected_Categories.Include (Category);
+      Histories.Set_History
+        (Self.Kernel.Get_History.all, Self.History_Key (Category), True);
+
       Self.Row_Changed (Category);
    end Show;
 
