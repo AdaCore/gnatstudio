@@ -2014,14 +2014,14 @@ package body VCS.Generic_VCS is
          end loop;
 
          Create_Line_Information_Column
-           (Kernel        => Kernel,
-            File          => File,
-            Info          => (Text => new String'((1 .. Max_Length => ' ')),
-                              Tooltip_Text => null,
-                              Image => null,
-                              Associated_Command => null),
-            Identifier    => Annotation_Id,
-            Every_Line    => False);
+           (Kernel     => Kernel,
+            File       => File,
+            Info       => (Text => new String'((1 .. Max_Length => ' ')),
+                           Tooltip_Text       => null,
+                           Image              => null,
+                           Associated_Command => null),
+            Identifier => Annotation_Id,
+            Every_Line => False);
 
          Add_Line_Information
            (Kernel,
