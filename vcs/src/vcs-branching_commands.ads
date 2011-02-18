@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2010, AdaCore                       --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,12 +25,12 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Commands;   use Commands;
+with Commands;              use Commands;
 
 package VCS.Branching_Commands is
 
-   package Command_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Command_Access);
+   package Command_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Command_Access);
    use Command_Lists;
 
    type Branching_Command_Record is new Root_Command with private;

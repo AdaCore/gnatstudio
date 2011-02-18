@@ -17,42 +17,41 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Characters.Handling;      use Ada.Characters.Handling;
+with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
+with GNAT.Regpat;                  use GNAT.Regpat;
+with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Utils;       use GNATCOLL.Scripts.Utils;
 
 with Basic_Types;
-with Commands.Custom;           use Commands.Custom;
-with Commands.Interactive;      use Commands.Interactive;
-with Commands;                  use Commands;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with Generic_List;
-with Traces;                    use Traces;
-with VCS_Activities;            use VCS_Activities;
-with VCS_View.Activities;       use VCS_View.Activities;
-with VCS_View.Explorer;         use VCS_View.Explorer;
-with VCS_Module;                use VCS_Module;
-with VCS_Status;                use VCS_Status;
-with String_Utils;              use String_Utils;
-with XML_Utils;                 use XML_Utils;
-with GPS.Editors; use GPS.Editors;
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
-
+with Commands.Custom;              use Commands.Custom;
+with Commands.Interactive;         use Commands.Interactive;
+with Commands;                     use Commands;
+with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-with VCS.Branching_Commands; use VCS.Branching_Commands;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
+with GPS.Kernel.Console;           use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;      use GPS.Kernel.Task_Manager;
+with Generic_List;
+with Traces;                       use Traces;
+with VCS_Activities;               use VCS_Activities;
+with VCS_View.Activities;          use VCS_View.Activities;
+with VCS_View.Explorer;            use VCS_View.Explorer;
+with VCS_Module;                   use VCS_Module;
+with VCS_Status;                   use VCS_Status;
+with VCS.Branching_Commands;       use VCS.Branching_Commands;
+with String_Utils;                 use String_Utils;
+with XML_Utils;                    use XML_Utils;
 
 package body VCS.Generic_VCS is
 
@@ -184,8 +183,7 @@ package body VCS.Generic_VCS is
    ------------------------------
 
    overriding function Administrative_Directory
-     (Ref : access Generic_VCS_Record) return Filesystem_String
-   is
+     (Ref : access Generic_VCS_Record) return Filesystem_String is
    begin
       if Ref.Administrative_Dir = null then
          return "";
@@ -241,8 +239,7 @@ package body VCS.Generic_VCS is
 
    function Describe_Action
      (Ref    : access Generic_VCS_Record;
-      Action : VCS_Action) return String
-   is
+      Action : VCS_Action) return String is
    begin
       if Ref.Action_Labels (Action) = null then
          return -"VCS command";

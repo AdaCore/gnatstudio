@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2010, AdaCore                       --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,8 +26,7 @@ package body VCS.Branching_Commands is
    -------------
 
    overriding function Execute
-     (Command : access Branching_Command_Record)
-      return Command_Return_Type
+     (Command : access Branching_Command_Record) return Command_Return_Type
    is
       Result : Command_Return_Type;
       C      : Cursor := No_Element;
