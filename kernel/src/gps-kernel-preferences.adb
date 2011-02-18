@@ -76,9 +76,9 @@ package body GPS.Kernel.Preferences is
 
       elsif Command = "get" then
          declare
-            Name  : constant String     := Get_Data (Inst, Class);
+            Name : constant String     := Get_Data (Inst, Class);
             Pref : constant Preference :=
-              Get_Pref_From_Name (Kernel.Preferences, Name, False);
+                      Get_Pref_From_Name (Kernel.Preferences, Name, False);
          begin
             if Pref = null then
                Set_Error_Msg (Data, -"Unknown preference " & Name);
@@ -110,10 +110,10 @@ package body GPS.Kernel.Preferences is
       elsif Command = "set" then
          Name_Parameters (Data, Set_Cmd_Parameters);
          declare
-            Name  : constant String     := Get_Data (Inst, Class);
-            Pref  : constant Preference :=
-              Get_Pref_From_Name (Kernel.Preferences, Name, False);
-            Done  : Boolean := True;
+            Name : constant String     := Get_Data (Inst, Class);
+            Pref : constant Preference :=
+                     Get_Pref_From_Name (Kernel.Preferences, Name, False);
+            Done : Boolean := True;
          begin
             if Pref = null then
                Set_Error_Msg (Data, -"Unknown preference " & Name);
@@ -278,8 +278,8 @@ package body GPS.Kernel.Preferences is
          Default => Config.Default_Fixed_Font,
          Doc     => -("Fixed pitch (monospace) font used in the various views "
                       & "(Outline View, Clipboard View, Messages, ...)"),
-         Label    => -"Fixed view font",
-         Page     => -"General");
+         Label   => -"Fixed view font",
+         Page    => -"General");
 
       GPS.Kernel.Charsets.Register_Preferences (Kernel);
 
@@ -1311,15 +1311,15 @@ package body GPS.Kernel.Preferences is
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);
-      Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
-      Child : XML_Utils.Node_Ptr;
+      Kernel      : constant Kernel_Handle := Get_Kernel (Module.all);
+      Child       : XML_Utils.Node_Ptr;
       Child_Count : Natural;
    begin
       if Node.Tag.all = "preference" then
          declare
             Name    : constant String := Get_Attribute (Node, "name", "");
             Page    : constant String :=
-              Get_Attribute (Node, "page", "General");
+                        Get_Attribute (Node, "page", "General");
             Default : constant String := Get_Attribute (Node, "default", "");
             Tooltip : constant String := Get_Attribute (Node, "tip", "");
             Label   : constant String := Get_Attribute (Node, "label", "");
@@ -1506,31 +1506,31 @@ package body GPS.Kernel.Preferences is
    begin
       Module := new Preferences_Module;
       GPS.Kernel.Modules.Register_Module
-        (Module                => Module,
-         Kernel                => Kernel,
-         Module_Name           => "Preferences");
+        (Module      => Module,
+         Kernel      => Kernel,
+         Module_Name => "Preferences");
       Register_Command
         (Kernel, Constructor_Method,
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Pref_Class,
-         Handler       => Get_Command_Handler'Access);
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Pref_Class,
+         Handler      => Get_Command_Handler'Access);
       Register_Command
         (Kernel, "get",
-         Class         => Pref_Class,
-         Handler       => Get_Command_Handler'Access);
+         Class   => Pref_Class,
+         Handler => Get_Command_Handler'Access);
       Register_Command
         (Kernel, "set",
-         Minimum_Args  => 1,
-         Maximum_Args  => 2,
-         Class         => Pref_Class,
-         Handler       => Get_Command_Handler'Access);
+         Minimum_Args => 1,
+         Maximum_Args => 2,
+         Class        => Pref_Class,
+         Handler      => Get_Command_Handler'Access);
       Register_Command
         (Kernel, "create",
-         Minimum_Args  => 2,
-         Maximum_Args  => Integer'Last,
-         Class         => Pref_Class,
-         Handler       => Get_Command_Handler'Access);
+         Minimum_Args => 2,
+         Maximum_Args => Integer'Last,
+         Class        => Pref_Class,
+         Handler      => Get_Command_Handler'Access);
    end Register_Module;
 
    ----------------------
