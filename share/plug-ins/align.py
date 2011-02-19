@@ -88,6 +88,7 @@ when editing other languages
 ############################################################################
 
 import re
+import sys
 import GPS
 from gps_utils import *
 
@@ -204,11 +205,88 @@ def buffer_align_on (sep, replace_with=None, buffer=None):
    finally:
       top.buffer().finish_undo_group ()
 
+def get_comas(l):
+   n=0
+   enabled=True
+   res = []
+   for k in range(0, len(l)-1):
+      if l[k] == '"':
+         enabled = not enabled
+      elif enabled and l[k] == ',':
+         res.append(k)
+         n=n+1
+   res.insert(0,n)
+   return res
+
+def max_min (e1, e2):
+   res=[min(e1[0], e2[0])]
+   for k in range(1,res[0]+1):
+      if k == 1:
+         m = max(e1[k],e2[k])
+      else:
+         m = max(e1[k]+m-e1[k-1],e2[k]+m-e2[k-1])
+      res.append(m)
+   return res
+
 @interactive ("Ada", in_ada_file, contextual="Align/Colons",
               name="Align colons")
 def align_colons ():
    """Aligns colons (eg in object and record type declarations) and trailing text in current selection"""
    buffer_align_on (sep=":(?!=)", replace_with=" : ")
+
+@interactive ("Ada", in_ada_file, contextual="Align/Comas",
+              name="Align comas")
+def align_comas ():
+   """Aligns comas (eg actual parameters or arguments in pragmas) in current selection"""
+   buffer = GPS.EditorBuffer.get ()
+   top    = buffer.selection_start ()
+   bottom = buffer.selection_end ()
+
+   if top == bottom:
+      GPS.MDI.dialog ("You must first select the intended text")
+      return
+
+   if top.beginning_of_line() != top:
+      top = top.beginning_of_line()
+
+   if bottom.beginning_of_line() == bottom:
+      bottom = bottom.forward_char(-1)
+
+   try:
+      content = []
+      data = []
+      chars = ""
+      buffer.start_undo_group()
+
+      line = top.beginning_of_line ()
+
+      while line <= bottom:
+         content.append(top.buffer().get_chars (line, line.end_of_line()))
+         line = line.forward_line ()
+
+      for l in content:
+         data.append(get_comas(l))
+      mm = reduce (max_min, data)
+
+      for l in range(0,len(content)):
+         nl=""
+         for c in range(0,mm[0]+1):
+            if c == 0:
+               nl = nl + content[l][:data[l][c+1]+1]
+               nl = nl + ' ' * (mm[c+1] - len(nl) + 1)
+            elif c == mm[0]:
+               nl = nl + content[l][data[l][c]+1:]
+            else:
+               nl = nl + content[l][data[l][c]+1:data[l][c+1]+1]
+               nl = nl + ' ' * (mm[c+1] - len(nl) + 1)
+         chars = chars + nl
+
+      buffer.delete (top, bottom)
+      buffer.insert (top, chars)
+   except:
+      GPS.Console ().write (str (sys.exc_info ()) + "\n")
+   finally:
+      top.buffer().finish_undo_group()
 
 @interactive ("Ada", in_ada_file, contextual="Align/Reserved word 'is'",
               name="Align reserved is")
