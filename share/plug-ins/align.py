@@ -207,7 +207,7 @@ def buffer_align_on (sep, replace_with=None, buffer=None):
 @interactive ("Ada", in_ada_file, contextual="Align/Colons",
               name="Align colons")
 def align_colons ():
-   """Aligns colons (eg in object and record type declarations and trailing text in current selection"""
+   """Aligns colons (eg in object and record type declarations) and trailing text in current selection"""
    buffer_align_on (sep=":(?!=)", replace_with=" : ")
 
 @interactive ("Ada", in_ada_file, contextual="Align/Reserved word 'is'",
