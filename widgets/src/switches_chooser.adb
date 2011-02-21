@@ -136,6 +136,9 @@ package body Switches_Chooser is
          Frames            => <>,
          Dependencies      => null);
 
+      --  Add star to getopt switches
+      Define_Switch (Config.Config, "*");
+
       --  Add sections to getopt switches
       Start := Sections'First;
       Stop  := Start + 1;
