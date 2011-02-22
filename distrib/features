@@ -23,16 +23,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
-NF-51-K216-038 GB: new Insert Unit Comment Box action (2011-02-16)
+NF-51-K216-038 GB: New Insert Unit Comment Box action (2011-02-16)
 
   A new command for inserting a comment box containing the unit
   name has been added.  Subprograms, entries, packages, and
   protected objects are supported. This command works exactly
   like the "Insert Subprogram Box" command in GPS.
 
-NF-51-K215-022 New menu Tools->View->Messages (2011-02-16)
+NF-51-K215-022 New menu Tools->Views->Messages (2011-02-16)
 
-  This menu brings up the Messages View.
+  This menu brings up the Messages window.
 
 NF-51-K209-048 New plugin to prevent project edition (2011-02-15)
 
