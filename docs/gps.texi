@@ -7868,14 +7868,6 @@ command will freeze the item.
 @cindex graph undisplay
 This command will remove an item from the canvas
 
-@item view (source|asm|source_asm)
-@cindex view
-@cindex asm
-This command indicates what should be displayed in the source window.
-The first option indicates that only the source code should be visible,
-the second one specifies that only the assembly code should be visible,
-and the last one indicates that both should be displayed.
-
 @end table
 
 @c --------------------------------------------------------------------
