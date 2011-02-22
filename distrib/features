@@ -120,7 +120,7 @@ NF-51-J616-028 GB: new menu entry for invoking gpr project editor (2011-02-17)
   project's gpr file, without first requiring the corresponding node to
   be located in the GNAT Project Explorer. The new entry appears under
   the "GNAT Project" main menu in the contextual menus on project nodes
-  in the GNAT Project Explorer and is titled "Edit GPR FIle". The command
+  in the GNAT Project Explorer and is titled "Edit GPR File". The command
   is available both for the root project node and for any dependent
   projects' nodes.
 
