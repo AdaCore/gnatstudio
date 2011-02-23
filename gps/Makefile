@@ -24,8 +24,6 @@ include ../Makefile.gnat
 # NOTE: we need to build gnatcoll separately, since we cannot use
 # gnat.adc (No_Tasking restriction) on all gnatcoll sources.
 all:
-	$(MAKE) -s Build=${Build} LIBRARY_TYPE=static ENABLE_SHARED=no \
-	  -C ../templates_parser setup
 	$(MAKE) -s Gnatcoll_Build=${Build} -C ../gnatlib do_links
 	$(GPRBUILD) $(GPRBUILD_FLAGS) ${GPRBUILD_BUILD_TYPE_FLAGS} \
 		-m -p -ws -P../gnatlib/src/gnatcoll
