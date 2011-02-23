@@ -183,10 +183,14 @@ def create_menus (system_name, actions):
                 GPS.Contextual (contextual_label).show()
 
 def remove_old_menus(system_name):
+    global global_vcs_menus
+
     if system_name in contextual_menu_labels:
         # Remove old menus
         for m in global_vcs_menus:
             m.destroy()
+
+        global_vcs_menus = []
 
         # Hide contextual menus
         for m in contextual_menu_labels[system_name]:
