@@ -242,10 +242,6 @@ package body Code_Peer.Module is
    --  If File is set, run CodePeer on the specified file only. Recursive
    --  should be set to False in this case.
 
-   Code_Peer_Message_Flags : constant Message_Flags :=
-     (Editor_Side => True,
-      Locations   => True);
-
    procedure Create_Library_File
      (Kernel    : Kernel_Handle;
       Project   : Project_Type;
@@ -729,7 +725,7 @@ package body Code_Peer.Module is
 
       Module.Listener.Set_Cleanup_Mode (True);
       Get_Messages_Container (Module.Kernel).Remove_Category
-        (Code_Peer_Category_Name, Code_Peer_Message_Flags);
+        (Code_Peer_Category_Name, Empty_Message_Flags);
       Module.Listener.Set_Cleanup_Mode (False);
 
       --  Load code review information
@@ -1560,7 +1556,7 @@ package body Code_Peer.Module is
       --  Cleanup location view
 
       Get_Messages_Container (Context.Module.Kernel).Remove_Category
-        (Code_Peer_Category_Name, Code_Peer_Message_Flags);
+        (Code_Peer_Category_Name, Empty_Message_Flags);
 
       --  Cleanup filter criteria
 
@@ -1675,7 +1671,7 @@ package body Code_Peer.Module is
    begin
       Module.Listener.Set_Cleanup_Mode (True);
       Get_Messages_Container (Kernel).Remove_Category
-        (Code_Peer_Category_Name, Code_Peer_Message_Flags);
+        (Code_Peer_Category_Name, Empty_Message_Flags);
       Module.Listener.Set_Cleanup_Mode (False);
    end On_Project_Changed_Hook;
 
