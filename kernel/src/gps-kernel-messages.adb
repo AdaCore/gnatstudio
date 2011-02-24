@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2009-2010, AdaCore                  --
+--                 Copyright (C) 2009-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1341,12 +1341,7 @@ package body GPS.Kernel.Messages is
       for J in reverse 1 .. Self.Categories.Last_Index loop
          Category_Node := Self.Categories.Element (J);
          Category_Position := Self.Category_Map.Find (Category_Node.Name);
-
-         Self.Remove_Category
-           (Category_Position,
-            Self.Categories.Last_Index,
-            Category_Node,
-            Flags);
+         Self.Remove_Category (Category_Position, J, Category_Node, Flags);
       end loop;
    end Remove_All_Messages;
 
@@ -1374,12 +1369,7 @@ package body GPS.Kernel.Messages is
                               Category_Node.File_Map.Find (File_Node.File);
 
          begin
-            Self.Remove_File
-              (File_Position,
-               Category_Node.Children.Last_Index,
-               File_Node,
-               Flags,
-               False);
+            Self.Remove_File (File_Position, J, File_Node, Flags, False);
          end;
       end loop;
 
