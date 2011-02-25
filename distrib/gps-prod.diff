@@ -3,8 +3,14 @@
 @@ -7 +7 @@
 -   Build : Build_Type := External ("Build", "Debug");
 +   Build : Build_Type := External ("Build", "Production");
---- templates_parser/tp_shared.gpr.old	2008-05-20 16:12:51.062500000 +0200
-+++ templates_parser/tp_shared.gpr	2008-05-20 16:14:04.015625000 +0200
-@@ -34 +34 @@
+--- templates_parser/templates_parser.gpr	(revision 170830)
++++ templates_parser/templates_parser.gpr	(working copy)
+@@ -38,7 +38,7 @@
+    for Library_Kind use "static";
+ 
+    type Build_Type is ("Debug", "Release");
 -   Build : Build_Type := external ("PRJ_BUILD", "Debug");
 +   Build : Build_Type := external ("PRJ_BUILD", "Release");
+ 
+    Processors := External ("PROCESSORS", "2");
+ 
