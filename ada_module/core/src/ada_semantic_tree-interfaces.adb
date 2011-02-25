@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2009, AdaCore                      --
+--                  Copyright (C) 2009-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -230,7 +230,7 @@ package body Ada_Semantic_Tree.Interfaces is
    begin
       while It /= Null_Construct_Tree_Iterator loop
          if Get_Construct (It).Category = Cat_Pragma then
-            --  If this is a pragma, then extrat the import / export
+            --  If this is a pragma, then extract the import / export
             --  information
 
             if Get_Construct (It).Name /= No_Symbol
