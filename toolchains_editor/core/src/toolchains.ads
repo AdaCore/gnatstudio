@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                    Copyright (C) 2010-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -252,10 +252,10 @@ package Toolchains is
    --  Return true if this toolchain is a native toolchain.
 
    procedure Set_Custom (This : Toolchain; Value : Boolean);
-   --  Set wether this toolchain is a custom toolchain
+   --  Set whether this toolchain is a custom toolchain
 
    procedure Set_Native (This : Toolchain; Value : Boolean);
-   --  Set wether this toolchain is a native toolchain
+   --  Set whether this toolchain is a native toolchain
 
    procedure Free (This : in out Toolchain);
    --  Free the memory associated to this toolchain. Removal from the manager
