@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -289,7 +289,7 @@ package body VCS_Module is
          declare
             Kernel : constant Kernel_Handle := Get_Kernel (Data);
             Ref    : constant VCS_Access :=
-              Get_Current_Ref (Kernel, Get_Project (Kernel));
+                       Get_Current_Ref (Kernel, Get_Project (Kernel));
          begin
             if Ref /= null
               and then Ref /= Unknown_VCS_Reference
@@ -820,7 +820,6 @@ package body VCS_Module is
       --  Register contextual menus
 
       Register_Actions (Kernel);
-
    end Register_Module;
 
    --------------------------
@@ -1155,9 +1154,7 @@ package body VCS_Module is
          Set_Focus_Child (M.Explorer_Child);
       end if;
 
-      if M.Explorer_Child /= null
-        and then Raise_Child
-      then
+      if M.Explorer_Child /= null and then Raise_Child then
          Gtkada.MDI.Raise_Child (M.Explorer_Child);
       end if;
 
@@ -1218,9 +1215,7 @@ package body VCS_Module is
          Set_Focus_Child (M.Activities_Child);
       end if;
 
-      if M.Activities_Child /= null
-        and then Raise_Child
-      then
+      if M.Activities_Child /= null and then Raise_Child then
          Gtkada.MDI.Raise_Child (M.Activities_Child);
       end if;
 
@@ -1287,7 +1282,7 @@ package body VCS_Module is
    is
       pragma Unreferenced (Data, Kernel);
    begin
-      --  ??? This could be removed.
+      --  ??? This could be removed
       VCS_Module_ID.VCS_Project_Cache.Clear;
    end On_Project_Changing;
 

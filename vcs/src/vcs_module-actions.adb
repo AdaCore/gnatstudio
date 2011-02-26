@@ -136,7 +136,7 @@ package body VCS_Module.Actions is
                            new Is_Revision_Log_Filter;
 
       Is_File_Filter : constant Action_Filter :=
-        Lookup_Filter (Kernel, "File");
+                         Lookup_Filter (Kernel, "File");
 
       File_Filter : constant Action_Filter :=
                       Lookup_Filter (Kernel, "File") and not Is_Revision_Log;
