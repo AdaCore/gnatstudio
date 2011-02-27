@@ -4,6 +4,12 @@
    This plug-in adds:
 
    - an entry in the Debug contextual menu so that you can display the entity
+   with its full expanded name (e.g. Foo.Bar.Var). In particular, this is
+   useful when you have lots of partial name qualification in your code, such
+   as Bar.Var to refer to Foo.Bar.Var, where the underlying debugger cannot
+   resolve the value by itself.
+
+   - an entry in the Debug contextual menu so that you can display the entity
    under the cursor as a decimal. In particular, this is useful when you click
    on an enumeration literal or a variable of an enumeration type if you want
    to see the actual value instead of the literal value.
@@ -47,9 +53,9 @@ def in_debugger (context):
 def print_in_console (debug, txt):
    Console ("Debugger Console").write (txt)
 
-######################################
-# Display all local vars in graph    #
-######################################
+###################################
+# Display all local vars in graph #
+###################################
 
 def display_local_vars (menu):
    buffer = EditorBuffer.get()
@@ -64,32 +70,48 @@ def display_local_vars (menu):
 Menu.create (
    path = "/Debug/Data/Graph display local variables",
    on_activate = display_local_vars)
- 
-######################################
-# Printing as decimal                #
-######################################
 
-def print_as_dec_label (context):
-   return "Debug/Print <b> " + context.entity().name() + "</b> as decimal"
+#####################
+# Display full name #
+#####################
 
-def print_as_dec_run (context):
-   Debugger.get().send ("print/d " + context.entity().name(),
+def display_full_name_label (context):
+   return "Debug/Display <b>" + context.entity().full_name() + "</b>"
+
+def display_full_name_run (context):
+   Debugger.get().send ("graph display " + context.entity().full_name(),
                         show_in_console=True)
 
 def in_debugger_on_entity (context):
    try:
-     return in_debugger (context) and context.entity() != None 
+     return in_debugger (context) and context.entity() != None
    except:
      return False
+
+Contextual ("debug display full name").create (
+   label       = display_full_name_label,
+   on_activate = display_full_name_run,
+   filter      = in_debugger_on_entity)
+
+#######################
+# Printing as decimal #
+#######################
+
+def print_as_dec_label (context):
+   return "Debug/Print <b>" + context.entity().name() + "</b> as decimal"
+
+def print_as_dec_run (context):
+   Debugger.get().send ("print/d " + context.entity().name(),
+                        show_in_console=True)
 
 Contextual ("debug print as decimal").create (
    label       = print_as_dec_label,
    on_activate = print_as_dec_run,
    filter      = in_debugger_on_entity)
 
-####################################
-# Continuing till a specific line
-####################################
+###################################
+# Continuing till a specific line #
+###################################
 
 @interactive (name="continue till line", category="Debugger",
               filter="Debugger active", key="control-b",
@@ -104,9 +126,9 @@ def continue_till_line ():
   except:
      pass  # No debugger active
 
-####################################
-# Breakpoint exceptions            #
-####################################
+#########################
+# Breakpoint exceptions #
+#########################
 
 def debug_add_br_exception_label (context):
    f = os.path.basename (context.file().name())\
