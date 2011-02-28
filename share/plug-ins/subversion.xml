@@ -53,6 +53,7 @@
       </on-failure>
       <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
    </action>
+
    <!-- SVN tag/branch -->
 
    <action name="generic_svn_create_tag" show-command="false" output="" category="">
