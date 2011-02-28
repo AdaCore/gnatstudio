@@ -423,6 +423,8 @@ xmlCompilerHead = """
                  tip="Override the compiler's default, and compile in Ada 95 mode" />
           <check label="Ada 2005 mode" switch="-gnat05" line="3" column="2"
                  tip="Override the compiler's default, and activate Ada 2005 language features" />
+          <check label="Ada 2012 mode" switch="-gnat12" line="3" column="2"
+                 tip="Override the compiler's default, and activate Ada 2012 language features" />
 """
 
 xmlCompilerDefault="""
