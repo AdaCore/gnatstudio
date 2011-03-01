@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,7 @@ with GNAT.Expect;         use GNAT.Expect;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GNAT.Regpat;         use GNAT.Regpat;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Utils;      use GNATCOLL.Utils;
 
 with Basic_Types;         use Basic_Types;
 with Config;              use Config;
@@ -62,7 +63,6 @@ with Pango.Enums;         use Pango.Enums;
 
 with Traces;              use Traces;
 with Histories;           use Histories;
-with String_Utils;        use String_Utils;
 with String_List_Utils;   use String_List_Utils;
 with GUI_Utils;           use GUI_Utils;
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;

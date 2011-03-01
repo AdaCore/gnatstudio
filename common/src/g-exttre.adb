@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 2006-2010, AdaCore                     --
+--                     Copyright (C) 2006-2011, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -29,6 +29,8 @@ with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
 
 with Password_Manager;     use Password_Manager;
 with String_Utils;         use String_Utils;
+with GNATCOLL.Arg_Lists;   use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;       use GNATCOLL.Utils;
 with Traces;               use Traces;
 with User_Interface_Tools; use User_Interface_Tools;
 

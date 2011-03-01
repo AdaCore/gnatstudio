@@ -20,6 +20,7 @@
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                 use GNAT.Strings;
+with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
@@ -70,7 +71,6 @@ with Naming_Editors;               use Naming_Editors;
 with Project_Properties;           use Project_Properties;
 with Projects;                     use Projects;
 with Remote;                       use Remote;
-with String_Utils;                 use String_Utils;
 with Switches_Editors;             use Switches_Editors;
 with System;
 with Traces;                       use Traces;

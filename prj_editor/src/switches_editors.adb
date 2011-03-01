@@ -49,10 +49,10 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with Language_Handlers;         use Language_Handlers;
 with Scenario_Selectors;        use Scenario_Selectors;
-with String_Utils;              use String_Utils;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
 with Traces;                    use Traces;
 with Histories;                 use Histories;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Switches_Editors is

@@ -889,35 +889,9 @@ package body String_Utils is
       end if;
    end Krunch;
 
-   ---------------------
-   -- Strip_Character --
-   ---------------------
-
-   function Strip_Character (Text : String; C : Character) return String is
-      pragma Suppress (All_Checks);
-
-      To       : String (1 .. Text'Length);
-      Index_To : Positive := 1;
-
-   begin
-      for Index in Text'Range loop
-         if Text (Index) /= C then
-            To (Index_To) := Text (Index);
-            Index_To := Index_To + 1;
-         end if;
-      end loop;
-
-      return To (1 .. Index_To - 1);
-   end Strip_Character;
-
    --------------
    -- Strip_CR --
    --------------
-
-   function Strip_CR (Text : String) return String is
-   begin
-      return Strip_Character (Text, ASCII.CR);
-   end Strip_CR;
 
    procedure Strip_CR
      (Text     : in out String;
@@ -1233,52 +1207,6 @@ package body String_Utils is
    begin
       Strncpy (Str, Item, Interfaces.C.size_t (Len));
    end Copy_String;
-
-   -----------------------------
-   -- Argument_List_To_String --
-   -----------------------------
-
-   function Argument_List_To_String
-     (List           : GNAT.Strings.String_List;
-      Protect_Quotes : Boolean := True) return String
-   is
-      Length : Natural := 0;
-   begin
-      for L in List'Range loop
-         Length := Length + List (L)'Length + 1;
-
-         if Protect_Quotes then
-            for S in List (L)'Range loop
-               if List (L)(S) = '"'
-                 or else List (L)(S) = ' '
-               then
-                  Length := Length + 1;
-               end if;
-            end loop;
-         end if;
-      end loop;
-
-      declare
-         S     : String (1 .. Length);
-         Index : Positive := S'First;
-      begin
-         for L in List'Range loop
-            for J in List (L)'Range loop
-               if Protect_Quotes then
-                  if List (L)(J) = '"' or else List (L)(J) = ' ' then
-                     S (Index) := '\';
-                     Index := Index + 1;
-                  end if;
-               end if;
-               S (Index) := List (L)(J);
-               Index := Index + 1;
-            end loop;
-            S (Index) := ' ';
-            Index := Index + 1;
-         end loop;
-         return S (1 .. S'Last - 1);  -- Ignore last space
-      end;
-   end Argument_List_To_String;
 
    -----------
    -- Clone --

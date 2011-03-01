@@ -17,11 +17,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
+with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Opt;                        use Opt;
 with Namet;                      use Namet;
@@ -29,7 +30,6 @@ with Scans;                      use Scans;
 with Snames;                     use Snames;
 with GPS.Intl;                   use GPS.Intl;
 with Remote;                     use Remote;
-with String_Utils;               use String_Utils;
 with Toolchains_Old;                 use Toolchains_Old;
 
 pragma Warnings (Off);
@@ -215,46 +215,7 @@ package body Projects is
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Process_Descriptor'Class, Process_Descriptor_Access);
-      Current         : GNATCOLL.VFS.File_Array_Access :=
-                          new File_Array'(1 .. 0 => <>);
-      Object_Path_Set : Boolean := False;
 
-      procedure Add_Directory (S : String);
-      --  Add S to the search path.
-      --  If Source_Path is True, the source path is modified.
-      --  Otherwise, the object path is modified.
-
-      -------------------
-      -- Add_Directory --
-      -------------------
-
-      procedure Add_Directory (S : String) is
-         Dir : Virtual_File;
-      begin
-         if S = "" then
-            return;
-
-         elsif S = "<Current_Directory>" then
-            if not Object_Path_Set then
-               --  Do not include "." in the default source/object paths: when
-               --  the user is compiling, it would represent the object
-               --  directory, when the user is searching file it would
-               --  represent whatever the current directory is at that point,
-               --  ...
-               return;
-            else
-               Dir := Create_From_Base (".");
-               Ensure_Directory (Dir);
-               Append (Current, Dir);
-            end if;
-
-         else
-            Dir := To_Local (Create (+S, Get_Nickname (Build_Server)));
-            Append (Current, Dir);
-         end if;
-      end Add_Directory;
-
-      Result  : Expect_Match;
       Success : Boolean;
       Fd      : Process_Descriptor_Access;
 
@@ -317,78 +278,14 @@ package body Projects is
       end if;
 
       Gnatls_Called := True;
-      Expect (Fd.all, Result, "GNATLS .+(\n| )Copyright", Timeout => 10000);
 
-      declare
-         S : constant String := Strip_CR (Expect_Out_Match (Fd.all));
-      begin
-         GNAT_Version := new String'(S (S'First + 7 .. S'Last - 10));
-      end;
+      Set_Path_From_Gnatls_Output
+        (Registry.Environment.all,
+         Output       => GNATCOLL.Utils.Get_Command_Output (Fd),
+         GNAT_Version => GNAT_Version);
 
-      Expect (Fd.all, Result, "Source Search Path:", Timeout => 10000);
-
-      loop
-         Expect (Fd.all, Result, "\n", Timeout => 10000);
-
-         declare
-            S : constant String :=
-                  Trim (Strip_CR (Expect_Out (Fd.all)), Ada.Strings.Left);
-         begin
-            if S = "Object Search Path:" & ASCII.LF then
-               if Active (Me) then
-                  Trace (Me, "Set source path from gnatls to:");
-                  for J in Current'Range loop
-                     Trace (Me, "  " & Current (J).Display_Full_Name);
-                  end loop;
-               end if;
-
-               Registry.Environment.Set_Predefined_Source_Path (Current.all);
-               Unchecked_Free (Current);
-               Current := new File_Array'(1 .. 0 => <>);
-
-            elsif S = "Project Search Path:" & ASCII.LF then
-               if Active (Me) then
-                  Trace (Me, "Set object path from gnatls to:");
-                  for J in Current'Range loop
-                     Trace (Me, "  " & Current (J).Display_Full_Name);
-                  end loop;
-               end if;
-
-               Object_Path_Set := True;
-               Registry.Environment.Set_Predefined_Object_Path (Current.all);
-               Unchecked_Free (Current);
-               Current := new File_Array'(1 .. 0 => <>);
-
-            else
-               Add_Directory (S (S'First .. S'Last - 1));
-            end if;
-         end;
-      end loop;
-
-   exception
-      when Process_Died =>
-         if Object_Path_Set then
-            if Active (Me) then
-               Trace (Me, "Set project path from gnatls to:");
-               for J in Current'Range loop
-                  Trace (Me, "  " & Current (J).Display_Full_Name);
-               end loop;
-            end if;
-            Registry.Environment.Set_Predefined_Project_Path (Current.all);
-
-         else
-            if Active (Me) then
-               Trace (Me, "Set object path (2) from gnatls to:");
-               for J in Current'Range loop
-                  Trace (Me, "  " & Current (J).Display_Full_Name);
-               end loop;
-            end if;
-            Registry.Environment.Set_Predefined_Object_Path (Current.all);
-         end if;
-
-         Unchecked_Free (Current);
-         Close (Fd.all);
-         Unchecked_Free (Fd);
+      Close (Fd.all);
+      Unchecked_Free (Fd);
    end Compute_Predefined_Paths;
 
 begin

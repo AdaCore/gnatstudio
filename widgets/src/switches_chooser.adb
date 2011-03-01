@@ -19,7 +19,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with String_Utils;               use String_Utils;
+with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 
 package body Switches_Chooser is
 
