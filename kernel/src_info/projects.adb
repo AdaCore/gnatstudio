@@ -284,7 +284,6 @@ package body Projects is
          Output       => GNATCOLL.Utils.Get_Command_Output (Fd),
          GNAT_Version => GNAT_Version);
 
-      Close (Fd.all);
       Unchecked_Free (Fd);
    end Compute_Predefined_Paths;
 
