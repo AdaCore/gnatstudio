@@ -22,7 +22,6 @@ with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 
 package body Switches_Chooser is
-
    use Switch_Description_Vectors, Combo_Switch_Vectors;
    use Frame_Description_Vectors;
 
@@ -223,19 +222,8 @@ package body Switches_Chooser is
       Separator : Character)
    is
    begin
-      --  If the switch has an argument, it must start with Switch_Char.
-      --  Otherwise, Getopt (called in Set_Command_Line) will not recognize it
-      --  and cannot properly associate its parameter with it.
-      --  If this proves to be too much of an issue, and when the switch does
-      --  not start with Switch_Char, we mark it as having no parameter, which
-      --  is not ideal but should work.
-      --  The most common case of having two or more switch_char is for
-      --  enabling and disabling options as in "+opt -opt", so these are
-      --  check buttons, with no parameter anyway
-
-      if Separator = ASCII.LF
-        or else Switch (Switch'First) /= Config.Switch_Char
-      then
+      if Separator = ASCII.LF then
+         --  No parameter
          Define_Switch (Config.Config, Switch);
       elsif Separator = ASCII.NUL then
          Define_Switch (Config.Config, Switch & "!");
@@ -243,8 +231,17 @@ package body Switches_Chooser is
          Define_Switch (Config.Config, Switch & "=");
       elsif Separator = ASCII.CR then
          Define_Switch (Config.Config, Switch & "?");
-      else
+      elsif Separator = ' ' then
          Define_Switch (Config.Config, Switch & ":");
+      else
+         --  Any other separator is not supported by Getopt out of the box.
+         --  So we just indicate that there is no space, and let the
+         --  application deal with removing the separator.
+         --  For instance, if the separator is ':' and we pass
+         --    +RCyclomatic_Complexity:10
+         --  getopt will return ":10" as the argument.
+
+         Define_Switch (Config.Config, Switch & "!");
       end if;
    end Add_To_Getopt;
 
@@ -1234,6 +1231,27 @@ package body Switches_Chooser is
                                  First (Editor.Config.Switches);
          Current_Radio_Group : Radio_Switch := -1;
 
+         function Get_Param (S : Switch_Description) return String;
+         --  Returns the current parameter pointed to by Iter, after removing
+         --  the separator for S if needed
+
+         function Get_Param (S : Switch_Description) return String is
+            Param : constant String := Current_Parameter (Iter);
+         begin
+            case S.Separator is
+               when ASCII.NUL | ASCII.LF | '=' | ASCII.CR | ' ' =>
+                  return Param;
+               when others =>
+                  if Param'Length > 0
+                    and then Param (Param'First) = S.Separator
+                  then
+                     return Param (Param'First + 1 .. Param'Last);
+                  else
+                     return Param;
+                  end if;
+            end case;
+         end Get_Param;
+
       begin
          if Editor.Block then
             return;
@@ -1246,7 +1264,6 @@ package body Switches_Chooser is
                S : constant Switch_Description := Element (Switch);
             begin
                Start (Editor.Cmd_Line, Iter, Expanded => True);
-
                while Has_More (Iter) loop
                   exit when To_String (S.Switch) = Current_Switch (Iter)
                     and then To_String (S.Section) = Current_Section (Iter);
@@ -1301,7 +1318,7 @@ package body Switches_Chooser is
 
                   when Switch_Spin =>
                      if Editor.Widgets (To_Index (Switch)) /= null then
-                        if Current_Parameter (Iter) = "" then
+                        if Get_Param (S) = "" then
                            Set_Graphical_Widget
                              (Editor,
                               Editor.Widgets (To_Index (Switch)),
@@ -1313,7 +1330,7 @@ package body Switches_Chooser is
                              (Editor,
                               Editor.Widgets (To_Index (Switch)),
                               S.Typ,
-                              Current_Parameter (Iter));
+                              Get_Param (S));
                         end if;
                      end if;
 
@@ -1323,7 +1340,7 @@ package body Switches_Chooser is
                           (Editor,
                            Editor.Widgets (To_Index (Switch)),
                            S.Typ,
-                           Current_Parameter (Iter));
+                           Get_Param (S));
                      end if;
 
                   when Switch_Radio =>
@@ -1348,7 +1365,7 @@ package body Switches_Chooser is
                         declare
                            Combo : Combo_Switch_Vectors.Cursor
                              := First (S.Entries);
-                           Param : constant String := Current_Parameter (Iter);
+                           Param : constant String := Get_Param (S);
                         begin
                            while Has_Element (Combo) loop
                               if not Has_More (Iter) then
