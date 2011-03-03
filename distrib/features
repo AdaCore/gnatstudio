@@ -162,3 +162,11 @@ NF-51-G823-005 GPS: Leave codefix wrench for readonly files (2010-10-26)
 
   When an auto fix is applied on a readonly file, the wrench icon does not
   disappear and an error message is added in the Messages window.
+
+NF-51-G820-002 GB: New navigation buttons to ada elements (2011-03-03)
+
+  Add "Open Specification" and if any, "Open Body" buttons to the ada
+  element's documentation tooltip view toolbar.
+  This view is displayed by the ada editor as ada element's tooltip or as
+  ada content assist proposal element's documentation. The view's toolbar is
+  displayed after the view is mouse clicked.
