@@ -934,7 +934,7 @@ package body KeyManager_Module is
                         Error_Message
                           (Kernel,
                            (-"Cannot use key shortcut <") & Key
-                           & (-"' for action """) & Action & """:" & ASCII.LF
+                           & (-"> for action """) & Action & """:" & ASCII.LF
                            & (-"prefixing key shortcut <")
                            & Key (Key'First .. Last - 1)
                            & (-"> is already bound to action """)
