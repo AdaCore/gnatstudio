@@ -1042,7 +1042,6 @@ parent unit must be package or generic package
 partial view must be a synchronized tagged type
 position cannot be negative
 position normalized to \^ before bit order interpreted
-positional aggregate cannot have one component
 positional association follows named one
 positional parameter association not allowed after named one
 positional parameters not allowed after named ones

@@ -91,6 +91,7 @@ add Convention pragma to declaration of& #
 add LIMITED to type indication
 address cannot be given for &
 aggregate may not have single positional component
+positional aggregate cannot have one component 
 alignment cannot be given for &
 all components must be declared in spec
 allocation from empty storage pool!
