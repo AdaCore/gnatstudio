@@ -318,7 +318,7 @@ package body Ada_Analyzer is
       --  Defines the attributes that have been found for the given token
 
       Is_Generic_Param      : Boolean := False;
-      --  This this token a generic parameter?
+      --  Is this token a generic parameter?
    end record;
    --  Extended information for a token
 
@@ -4322,11 +4322,11 @@ package body Ada_Analyzer is
                         or else Top_Token.Type_Definition_Section)
               and then (Prev_Token not in Reserved_Token_Type
                         or else Prev_Token = Tok_Declare
-                        or else Prev_Token = Tok_Is
                         or else Prev_Token = Tok_Private
                         or else Prev_Token = Tok_Record
                         or else Prev_Token = Tok_Generic
-                        or else Prev_Token = Tok_For)
+                        or else Prev_Token = Tok_For
+                        or else (Prev_Token = Tok_Is and then not In_Generic))
               and then Prev_Token /= Tok_Dot
             then
                --  This is a variable, a field declaration or a enumeration
