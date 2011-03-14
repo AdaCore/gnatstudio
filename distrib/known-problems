@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 5.0.2
 
+- K224-024 Wrong indentation of 'not' keyword on line start
+  Problem:    A line starting with 'not' in the middle of an expressions is
+              not considered as a continuation line by the indentation engine.
+  Workaround: Indent the line manually or do not put the 'not' keyword first
+              on the line.
+
 - K128-015 GPS: hangs on locate in project tree
   Problem:    GPS hangs sometimes on searching for file in project view when
               tree of projects has cycles introduced by limited with clause in
