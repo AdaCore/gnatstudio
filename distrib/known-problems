@@ -6,6 +6,14 @@ Known Problems fixed in GPS 5.0.2
   Workaround: Indent the line manually or do not put the 'not' keyword first
               on the line.
 
+- K218-031 Incorrect outline of generic procedure parameter
+  Problem:    The outline view and block highlighting gets confused on
+              constructs of the form:
+                 generic
+                 with procedure S is S;
+  Workaround: Ignore the visual glitches, or replace the code to use the <>
+              notation instead.
+
 - K128-015 GPS: hangs on locate in project tree
   Problem:    GPS hangs sometimes on searching for file in project view when
               tree of projects has cycles introduced by limited with clause in
