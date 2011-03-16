@@ -241,7 +241,6 @@ if codepeer != "":
         <arg>-margs</arg>
         <arg>--subdirs=%subdir</arg>
         <arg>-k</arg>
-        <arg>-c</arg>
         <arg>-gnatcC</arg>
       </extra-args>
     </builder-mode>
