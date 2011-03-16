@@ -2399,16 +2399,96 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Cursor : constant File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Location.all);
-      Comp_Cursor : File_Cursor'Class :=
-        Current_Text.Search_Tokens
-          (Cursor, (Equals_Tok, Not_Equals_Tok), Reverse_Step);
-      True_Cursor : File_Cursor'Class :=
-           Current_Text.Search_Token (Comp_Cursor, True_Tok);
-   begin
-      Current_Text.Replace (Comp_Cursor, True_Cursor, "", One, One);
+      Comp_Cursor : File_Cursor := Null_File_Cursor;
 
-      Free (Comp_Cursor);
-      Free (True_Cursor);
+      Not_Cursor : File_Cursor := Null_File_Cursor;
+      Paren_Depth : Integer := 0;
+      Last_Index  : String_Index_Type := 0;
+
+      procedure Callback
+        (Buffer : access String;
+         Token  : Language.Token_Record;
+         Stop   : in out Boolean);
+
+      procedure Callback
+        (Buffer : access String;
+         Token  : Language.Token_Record;
+         Stop   : in out Boolean)
+      is
+         Line   : Integer;
+         Column : Visible_Column_Type;
+      begin
+         if Comp_Cursor = Null_File_Cursor then
+            declare
+               Str : constant String := Buffer
+                 (Integer (Token.Token_First)
+                  .. Integer (Token.Token_Last));
+            begin
+               if Str = "=" or else Str = "/=" then
+                  To_Line_Column
+                    (File                 =>
+                       Current_Text.Get_Structured_File (Cursor.File),
+                     Absolute_Byte_Offset => Token.Token_First,
+                     Line                 => Line,
+                     Column               => Column);
+
+                  Comp_Cursor.Set_File (Cursor.Get_File);
+                  Comp_Cursor.Set_Line (Line);
+                  Comp_Cursor.Set_Column (Column);
+
+                  Stop := Str = "=";
+               end if;
+            end;
+         else
+            if Token.Tok_Type = Tok_Close_Parenthesis then
+               Paren_Depth := Paren_Depth + 1;
+            elsif Token.Tok_Type = Tok_Open_Parenthesis then
+               Paren_Depth := Paren_Depth - 1;
+               Last_Index := Token.Token_First;
+            elsif Paren_Depth = 0 then
+               case Token.Tok_Type is
+                  when Tok_Dot | Tok_Blank | Tok_Identifier | Tok_Tick =>
+                     Last_Index := Token.Token_First;
+
+                  when others =>
+                     To_Line_Column
+                       (File                 =>
+                        Current_Text.Get_Structured_File (Cursor.File),
+                        Absolute_Byte_Offset => Last_Index,
+                        Line                 => Line,
+                        Column               => Column);
+
+                     Not_Cursor.Set_File (Cursor.Get_File);
+                     Not_Cursor.Set_Line (Line);
+                     Not_Cursor.Set_Column (Column);
+
+                     Stop := True;
+               end case;
+            end if;
+         end if;
+      end Callback;
+   begin
+      Parse_Entities_Backwards
+        (Ada_Lang, Current_Text, Callback'Access, Cursor);
+
+      declare
+         True_Cursor : File_Cursor'Class :=
+           Current_Text.Search_Token (Comp_Cursor, True_Tok);
+      begin
+         Current_Text.Replace
+           (Comp_Cursor, True_Cursor, "", One, One);
+
+         if Not_Cursor /= Null_File_Cursor then
+            Current_Text.Replace
+              (Not_Cursor,
+               0,
+               " not");
+         end if;
+
+         Free (Comp_Cursor);
+         Free (True_Cursor);
+         Free (Not_Cursor);
+      end;
    end Execute;
 
    overriding procedure Free (This : in out Remove_Comparison_Cmd) is

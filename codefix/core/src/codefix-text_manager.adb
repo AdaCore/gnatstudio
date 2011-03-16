@@ -771,6 +771,22 @@ package body Codefix.Text_Manager is
         (Lang, Get_File (This, Get_File (Start)).all, Callback, Start);
    end Parse_Entities;
 
+   ------------------------------
+   -- Parse_Entities_Backwards --
+   ------------------------------
+
+   procedure Parse_Entities_Backwards
+     (Lang     : access Language_Root'Class;
+      This     : Text_Navigator_Abstr'Class;
+      Callback : access procedure (Buffer : access String;
+                                   Token  : Language.Token_Record;
+                                   Stop   : in out Boolean);
+      Start    : File_Cursor'Class) is
+   begin
+      Parse_Entities_Backwards
+        (Lang, Get_File (This, Get_File (Start)).all, Callback, Start);
+   end Parse_Entities_Backwards;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -1407,6 +1423,46 @@ package body Codefix.Text_Manager is
          Set_Location (Cursor, Get_Line (Cursor) + 1, 1);
       end loop;
    end Parse_Entities;
+
+   ------------------------------
+   -- Parse_Entities_Backwards --
+   ------------------------------
+
+   procedure Parse_Entities_Backwards
+     (Lang     : access Language_Root'Class;
+      This     : in out Text_Interface'Class;
+      Callback : access procedure (Buffer : access String;
+                                   Token  : Language.Token_Record;
+                                   Stop   : in out Boolean);
+      Start    : File_Cursor'Class)
+   is
+      Contents : String_Access := This.Read_File;
+      Offset   : String_Index_Type;
+
+      procedure Internal_Callback
+        (Token  : Language.Token_Record;
+         Stop   : in out Boolean);
+
+      procedure Internal_Callback
+        (Token  : Language.Token_Record;
+         Stop   : in out Boolean) is
+      begin
+         Callback.all (Contents, Token, Stop);
+      end Internal_Callback;
+
+   begin
+      Offset := To_String_Index
+        (This.Get_Structured_File,
+         Start.Line,
+         Start.Col);
+
+      Lang.Parse_Tokens_Backwards
+        (Buffer       => Contents.all,
+         Start_Offset => Offset,
+         Callback     => Internal_Callback'Access);
+
+      Free (Contents);
+   end Parse_Entities_Backwards;
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor

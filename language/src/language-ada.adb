@@ -1183,6 +1183,8 @@ package body Language.Ada is
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '>' then
                   --  => case
                   Token.Tok_Type := Tok_Arrow;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset + 1);
                else
                   Handle_Token (Token, Offset, Stop);
                   exit when Stop;
@@ -1192,7 +1194,22 @@ package body Language.Ada is
                   Token.Token_Last := String_Index_Type (Offset);
                end if;
 
-            when '+' | '-' | '/' | '&' =>
+            when '/' =>
+               if Offset < Buffer'Last and then Buffer (Offset + 1) = '=' then
+                  --  /= case
+                  Token.Tok_Type := Tok_Operator;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset + 1);
+               else
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
+
+                  Token.Tok_Type := Tok_Operator;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset);
+               end if;
+
+            when '+' | '-' | '&' =>
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 

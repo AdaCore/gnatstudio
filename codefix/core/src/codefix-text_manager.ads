@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2010, AdaCore                  --
+--                 Copyright (C) 2002-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -381,6 +381,15 @@ package Codefix.Text_Manager is
    --  For each match, call Callback. Stops at the end of Buffer or when
    --  callback returns True.
 
+   procedure Parse_Entities_Backwards
+     (Lang     : access Language_Root'Class;
+      This     : in out Text_Interface'Class;
+      Callback : access procedure (Buffer : access String;
+                                   Token  : Language.Token_Record;
+                                   Stop   : in out Boolean);
+      Start    : File_Cursor'Class);
+   --  Parse entities in reverse order, as defined by the package Language.
+
    procedure Erase
      (This            : in out Text_Interface'Class;
       Start, Stop     : File_Cursor'Class);
@@ -502,7 +511,7 @@ package Codefix.Text_Manager is
    function Read_File
      (This      : Text_Navigator_Abstr;
       File_Name : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access;
-   --  Get the entire file File_Name
+   --  Get the entire file File_Name. Result must be freed by the caller.
 
    procedure Replace
      (This      : in out Text_Navigator_Abstr;
@@ -615,6 +624,15 @@ package Codefix.Text_Manager is
    --  Parse entities (as defined by Language_Entity) contained in buffer.
    --  For each match, call Callback. Stops at the end of Buffer or when
    --  callback returns True.
+
+   procedure Parse_Entities_Backwards
+     (Lang     : access Language_Root'Class;
+      This     : Text_Navigator_Abstr'Class;
+      Callback : access procedure (Buffer : access String;
+                                   Token  : Language.Token_Record;
+                                   Stop   : in out Boolean);
+      Start    : File_Cursor'Class);
+   --  Parse entities in reverse order, as defined by the package Language.
 
    type Replace_Blanks_Policy is (Keep, One, None);
 
