@@ -115,13 +115,19 @@ class gnatMakeProc:
 
       if self.gnatCmd == "":
          self.gnatCmd = "gnat"
-      if GPS.is_server_local ("Build_Server"):
-         if not os.path.isfile (self.gnatCmd):
-            self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
-      if self.gnatCmd == "":
-         GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
-         GPS.Console ("Messages").write ("Error: Could not initialize the ada_support module.\n")
-         return
+
+      if GPS.is_server_local("Build_Server"):
+         if not os.path.isfile(self.gnatCmd):
+            cmd = os_utils.locate_exec_on_path(self.gnatCmd)
+            if cmd == "":
+               GPS.Console("Messages").write(
+                   "Error: '%s' is not in the path.\n" % self.gnatCmd)
+               GPS.Console("Messages").write(
+                   "Error: Could not initialize the ada_support module.\n")
+               return
+
+            self.gnatCmd = cmd
+
       # gnat check command changed: we reinitialize the rules list
       if prev_cmd != self.gnatCmd:
          self.__get_switches_from_help()
@@ -130,7 +136,8 @@ class gnatMakeProc:
          return False
 
    def __get_xml(self):
-      global ruleseditor, xmlCompilerHead, xmlCompilerPopupValidity, xmlCompilerPopupStyles, xmlCompilerTrailer
+      global ruleseditor, xmlCompilerHead, xmlCompilerPopupValidity
+      global xmlCompilerPopupStyles, xmlCompilerTrailer
       xml = """<popup label="Warnings" line="2" column="1" lines="2" columns="3">
                  <title line="1" column="1" column-span="3">Global switches</title>
                  <title line="2" column="1" column-span="3">Warnings</title>
