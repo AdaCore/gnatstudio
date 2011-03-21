@@ -1,9 +1,10 @@
 Known Problems fixed in GPS 5.0.2
 
-- K318-002 GPS: Analyze File is broken
-  Problem:    CodePeer run of one selected file fails because of incorrect
-              format of library file.
-  Workaround: Run full analysis instead.
+- K318-002 CodePeer Analyze File not working
+  Problem:    CodePeer run of one selected file fails because the automatically
+              generated library file is incorrect.
+  Workaround: Run a full analysis instead or run CodePeer from the command
+              line.
 
 - K224-024 Wrong indentation of 'not' keyword on line start
   Problem:    A line starting with 'not' in the middle of an expressions is
