@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -309,8 +309,7 @@ package body Code_Peer.Module is
                  (F, "Source (Directory => """
                      & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
                Ada.Text_IO.Put (F, "        Files     => (""");
-               Ada.Text_IO.Put_Line (F, Info.Unit_Name);
-                  Ada.Text_IO.Put (F, "__body.scil""),");
+               Ada.Text_IO.Put_Line (F, Info.Unit_Name & "__body.scil""),");
                Ada.Text_IO.Put_Line (F, "        Language  => SCIL);");
             end if;
          end if;
