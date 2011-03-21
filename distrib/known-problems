@@ -38,6 +38,11 @@ Known Problems fixed in GPS 5.0.2
               exception message.
   Workaround: Use a known server configuration name.
 
+- K106-017 GPS doesn't sort files alphabeticaly in locations view
+  Problem:    Files in Locations view are not sorted in alphabetical order for
+              CodePeer messages.
+  Workarond:  Not needed.
+
 Known Problems fixed in GPS 5.0.1
 
 - K112-004 Crash when editing new project with same scenario variables
