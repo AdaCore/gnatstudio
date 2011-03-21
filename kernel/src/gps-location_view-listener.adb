@@ -903,10 +903,13 @@ package body GPS.Location_View.Listener is
                end loop;
 
                Init (Value, Glib.GType_Int);
-               Set_Int (Value, 0);
-               --  ??? Need to fix this: need to introduce function
-               --  get_sort_order_hint
-               --  Sort_Order_Hint'Pos (Category_Node.Sort_Hint));
+               Set_Int
+                 (Value,
+                  Sort_Order_Hint'Pos
+                    (Get_Sort_Order_Hint
+                       (GPS.Kernel.Messages.Get_Messages_Container
+                          (Self.Kernel),
+                        To_String (Category_Node.Name))));
             end;
 
          when Message_Column =>
