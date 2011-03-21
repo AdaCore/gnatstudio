@@ -38,10 +38,10 @@ Known Problems fixed in GPS 5.0.2
               exception message.
   Workaround: Use a known server configuration name.
 
-- K106-017 GPS doesn't sort files alphabeticaly in locations view
-  Problem:    Files in Locations view are not sorted in alphabetical order for
-              CodePeer messages.
-  Workarond:  Not needed.
+- K106-017 Files not sorted alphabetically in locations view
+  Problem:    Files in the Locations view are not sorted in alphabetical order
+              for CodePeer messages.
+  Workaround: None needed.
 
 Known Problems fixed in GPS 5.0.1
 
@@ -103,7 +103,7 @@ Known Problems fixed in GPS 5.0.1
               incorrectly expanded to the local full path, which may make it
               incorrect when run on the remote server.
   Workaround: Replace the default %E by the actual path to use on the remote
-              server
+              server.
 
 - JC07-007: Remote connections not closed when GPS exits
   Problem:    When GPS exits, the remote connections are not closed.
@@ -146,8 +146,8 @@ Known Problems fixed in GPS 5.0.1
               clipboard, this clipboard is not available to applications
               outside of GPS.
   Workaround: Use the Python/Gtk integration, ie from a Python script:
-      import gtk
-      gtk.Clipboard().set_text("text to copy to other applications")
+                import gtk
+                gtk.Clipboard().set_text("text to copy to other applications")
 
 - JB01-014: GPS consuming CPU when processing build output
   Problems:   When the build process launched by GPS produces a big amount of
@@ -445,7 +445,7 @@ Known Problems fixed in GPS 5.0.0
   Problem:    The list of source files in the project editor is not sorted,
               making it harder to locate a file.
   Workaround: Once you have selected a file, you can use ctrl-F to search
-              for other files in the list
+              for other files in the list.
 
 - J511-019: Renaming an entity displays dialog asking to save the file
   Problem:    If you rename an entity through the "Refactoring" contextual
@@ -461,7 +461,7 @@ Known Problems fixed in GPS 5.0.0
               belongs to. In addition, not all directories are properly
               refreshed in some cases, and you might end up with a mixture
               of absolute and relative paths.
-  Workaround: Restart GPS after setting your preferred setup
+  Workaround: Restart GPS after setting your preferred setup.
 
 - J422-045: Prefix completion doesn't work with one parameter functions
   Problem:    When completing a function with only one parameter, prefix
@@ -479,14 +479,14 @@ Known Problems fixed in GPS 5.0.0
   Problem:    When it recomputes the list of dispatching calls, this plugin
               will in fact reload more .ali files than are really needed,
               thus slowing things down.
-  Workaround: It might be faster if you use Build/Load Xref In Memory
+  Workaround: It might be faster if you use Build/Load Xref In Memory.
 
 - J406-019: Docgen does not see documentation of nested generics
   Problem:    In case of a nested generic package of subprogram, the GPS
               documentation generator won't interprete comments before the
               generic keyword as the construct's documentation.
   Workaround: Place the construct's documentation after the construct's
-              definition
+              definition.
 
 - J319-001: Continuing search after changing scenario finds wrong files
   Problem:    If you start a search in "Files From Project", but then change
@@ -515,7 +515,7 @@ Known Problems fixed in GPS 5.0.0
               Also, clicking in the "info registers" window colors it in
               black instead of the selection color set in the preferences.
   Workaround: Press "Next" to continue the debugger session, the window will
-              refresh automatically
+              refresh automatically.
 
 - J212-018: Error when editing a project with indexed attributes assignments
   Problem:    When you are editing a project, GPS first tries to normalize
@@ -555,7 +555,7 @@ Known Problems fixed in GPS 5.0.0
               your project and these names include symbolic links, then GPS
               will not provide any cross-reference (no matter whether you
               use Fast Project Loading or not)
-  Workaround: Use relative dirs if possible in project files
+  Workaround: Use relative dirs if possible in project files.
 
 - IB05-015: Gnatcheck plugin issues in remote mode
   Problem:    When using the remote mode, GPS tries to spawn gnatcheck on the
