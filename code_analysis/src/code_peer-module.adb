@@ -337,8 +337,7 @@ package body Code_Peer.Module is
                  (F, "Source (Directory => """
                      & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
                Ada.Text_IO.Put (F, "        Files     => (""");
-               Ada.Text_IO.Put_Line (F, Info.Unit_Name);
-                  Ada.Text_IO.Put (F, "__body.scil""),");
+               Ada.Text_IO.Put_Line (F, Info.Unit_Name & "__body.scil""),");
                Ada.Text_IO.Put_Line (F, "        Language  => SCIL);");
             end if;
          end if;
