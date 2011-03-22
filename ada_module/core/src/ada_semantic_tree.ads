@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2010, AdaCore                 --
+--                  Copyright (C) 2007-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,7 +54,12 @@ package Ada_Semantic_Tree is
    --  This type is used to describe the visibility level of an entity, from a
    --  location on the file.
 
-   type Entity_View_Record is abstract tagged private;
+   type Entity_View_Record is abstract tagged record
+      Entity        : Entity_Access;
+      Is_All        : Boolean := False;
+      From_Prefixed : Boolean := False;
+      Confidence    : Visibility_Confidence;
+   end record;
    type Entity_View is access all Entity_View_Record'Class;
    --  This type a view of a declaration, in a given context. It has
    --  information such as formal & actual parameters of the declaration.
@@ -299,13 +304,6 @@ private
 
    Test_Trace : constant Trace_Handle :=
      Create ("Ada_Semantic_Tree.Test", Off);
-
-   type Entity_View_Record is abstract tagged record
-      Entity        : Entity_Access;
-      Is_All        : Boolean := False;
-      From_Prefixed : Boolean := False;
-      Confidence    : Visibility_Confidence;
-   end record;
 
    procedure Free (E : in out Entity_View_Record) is null;
 
