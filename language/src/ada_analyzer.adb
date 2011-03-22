@@ -1422,12 +1422,23 @@ package body Ada_Analyzer is
                Do_Indent (Prec, Line_Count, Num_Spaces);
             end if;
 
-         elsif (Prev_Token = Tok_Colon_Equal or else Prev_Token = Tok_Renames)
-           and then Top (Tokens).Colon_Col /= 0
+         elsif Top (Tokens).Colon_Col /= 0
            and then Continuation_Val = 0
+           and then (Prev_Token = Tok_Colon_Equal
+                     or else Prev_Token = Tok_Renames
+                     or else Is_Operator (Prev_Token)
+                     or else Is_Operator (Token))
          then
             Continuation_Val := Top (Tokens).Colon_Col + 4 - Indent_Continue;
             Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
+
+         elsif Prev_Token = Tok_Ampersand or else Token = Tok_Ampersand then
+            if Continuation_Val > 0 then
+               Continuation_Val := Continuation_Val - Indent_Continue;
+            end if;
+
+            Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
+            Continuation_Val := 0;
 
          elsif Is_Continuation_Line then
             Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
@@ -3561,10 +3572,9 @@ package body Ada_Analyzer is
 
                   if (P = Buffer'First
                       or else not Is_Alphanumeric (Buffer (P - 1)))
-                    and then (P < Buffer'Last
-                              and then
-                                (Is_Letter (Buffer (P + 1))
-                                 or else Buffer (P + 1) = ' '))
+                    and then P < Buffer'Last
+                    and then (Is_Letter (Buffer (P + 1))
+                              or else Buffer (P + 1) = ' ')
                   then
                      Preprocessor_Directive;
                   end if;
