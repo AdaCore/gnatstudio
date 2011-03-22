@@ -778,7 +778,7 @@ package body Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : Text_Navigator_Abstr'Class;
-      Callback : access procedure (Buffer : access String;
+      Callback : access procedure (Buffer : String;
                                    Token  : Language.Token_Record;
                                    Stop   : in out Boolean);
       Start    : File_Cursor'Class) is
@@ -1431,7 +1431,7 @@ package body Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : in out Text_Interface'Class;
-      Callback : access procedure (Buffer : access String;
+      Callback : access procedure (Buffer : String;
                                    Token  : Language.Token_Record;
                                    Stop   : in out Boolean);
       Start    : File_Cursor'Class)
@@ -1447,7 +1447,7 @@ package body Codefix.Text_Manager is
         (Token  : Language.Token_Record;
          Stop   : in out Boolean) is
       begin
-         Callback.all (Contents, Token, Stop);
+         Callback.all (Contents.all, Token, Stop);
       end Internal_Callback;
 
    begin

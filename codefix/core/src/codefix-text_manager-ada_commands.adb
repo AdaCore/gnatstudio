@@ -2406,12 +2406,12 @@ package body Codefix.Text_Manager.Ada_Commands is
       Last_Index  : String_Index_Type := 0;
 
       procedure Callback
-        (Buffer : access String;
+        (Buffer : String;
          Token  : Language.Token_Record;
          Stop   : in out Boolean);
 
       procedure Callback
-        (Buffer : access String;
+        (Buffer : String;
          Token  : Language.Token_Record;
          Stop   : in out Boolean)
       is
