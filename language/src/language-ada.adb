@@ -40,7 +40,7 @@ package body Language.Ada is
                  & "oto)|i([fs]|n(terface)?)|l(imited|oop)|mod|n(ew|ot|ull)|"
                  & "o(thers|ut|[fr]|verriding)|p(ackage|r(agma|ivate|o(cedure|"
                  & "tected)))|r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|s"
-                 & "(e(lect|ome|parate)|ubtype|ynchronized)|t(a(gged|sk)|"
+                 & "(e(lect|parate)|ome|ubtype|ynchronized)|t(a(gged|sk)|"
                  & "erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|xor";
 
    Keywords_List : aliased Pattern_Matcher :=
