@@ -4291,6 +4291,12 @@ highlight_category, style_category and warning_category reference the colors to 
      <see_also name="GPS.Locations.list_categories" />
   </shell_doc>
 
+  <shell_doc name="GPS.Locations.set_sort_order_hint">
+     <param name="category">A string</param>
+     <param name="category">A string ("Chronological" or "Alphabetical")</param>
+     <description>Sets desired sorting order for file nodes of the category. Actual sort order can be overrided by user.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Locations.list_categories">
      <return>A list of strings</return>
      <description>Return the list of all categories currently displayed in the Locations window. These are the top-level nodes used to group information generally related to one command, like the result of a compilation.</description>

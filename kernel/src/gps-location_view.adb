@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -132,31 +132,35 @@ package body GPS.Location_View is
    Style_Cat_Cst     : aliased constant String := "style_category";
    Warning_Cat_Cst   : aliased constant String := "warning_category";
    Look_Sec_Cst      : aliased constant String := "look_for_secondary";
+   Hint_Cst          : aliased constant String := "hint";
 
-   Parse_Location_Parameters  : constant Cst_Argument_List :=
-                                  (1  => Output_Cst'Access,
-                                   2  => Category_Cst'Access,
-                                   3  => Regexp_Cst'Access,
-                                   4  => File_Index_Cst'Access,
-                                   5  => Line_Index_Cst'Access,
-                                   6  => Col_Index_Cst'Access,
-                                   7  => Msg_Index_Cst'Access,
-                                   8  => Style_Index_Cst'Access,
-                                   9  => Warning_Index_Cst'Access,
-                                   10 => Highlight_Cat_Cst'Access,
-                                   11 => Style_Cat_Cst'Access,
-                                   12 => Warning_Cat_Cst'Access);
-   Remove_Category_Parameters : constant Cst_Argument_List :=
-                                  (1 => Category_Cst'Access);
-   Locations_Add_Parameters   : constant Cst_Argument_List :=
-                                  (1 => Category_Cst'Access,
-                                   2 => File_Cst'Access,
-                                   3 => Line_Cst'Access,
-                                   4 => Column_Cst'Access,
-                                   5 => Message_Cst'Access,
-                                   6 => Highlight_Cst'Access,
-                                   7 => Length_Cst'Access,
-                                   8 => Look_Sec_Cst'Access);
+   Parse_Location_Parameters   : constant Cst_Argument_List :=
+                                   (1  => Output_Cst'Access,
+                                    2  => Category_Cst'Access,
+                                    3  => Regexp_Cst'Access,
+                                    4  => File_Index_Cst'Access,
+                                    5  => Line_Index_Cst'Access,
+                                    6  => Col_Index_Cst'Access,
+                                    7  => Msg_Index_Cst'Access,
+                                    8  => Style_Index_Cst'Access,
+                                    9  => Warning_Index_Cst'Access,
+                                    10 => Highlight_Cat_Cst'Access,
+                                    11 => Style_Cat_Cst'Access,
+                                    12 => Warning_Cat_Cst'Access);
+   Remove_Category_Parameters  : constant Cst_Argument_List :=
+                                   (1 => Category_Cst'Access);
+   Locations_Add_Parameters    : constant Cst_Argument_List :=
+                                   (1 => Category_Cst'Access,
+                                    2 => File_Cst'Access,
+                                    3 => Line_Cst'Access,
+                                    4 => Column_Cst'Access,
+                                    5 => Message_Cst'Access,
+                                    6 => Highlight_Cst'Access,
+                                    7 => Length_Cst'Access,
+                                    8 => Look_Sec_Cst'Access);
+   Set_Sorting_Hint_Parameters : constant Cst_Argument_List :=
+                                   (1 => Category_Cst'Access,
+                                    2 => Hint_Cst'Access);
 
    -----------------------
    -- Local subprograms --
@@ -1350,6 +1354,14 @@ package body GPS.Location_View is
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Register_Command
+        (Kernel        => Kernel,
+         Command       => "set_sort_order_hint",
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Handler       => Default_Command_Handler'Access,
+         Class         => Locations_Class,
+         Static_Method => True);
+      Register_Command
         (Kernel, "dump",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
@@ -1466,6 +1478,13 @@ package body GPS.Location_View is
                     Show_In_Locations => True);
             end if;
          end;
+
+      elsif Command = "set_sort_order_hint" then
+         Name_Parameters (Data, Set_Sorting_Hint_Parameters);
+
+         Get_Messages_Container (Get_Kernel (Data)).Set_Sort_Order_Hint
+           (Nth_Arg (Data, 1),
+            Sort_Order_Hint'Value (Nth_Arg (Data, 2)));
 
       elsif Command = "dump" then
          Name_Parameters (Data, Locations_Add_Parameters);
