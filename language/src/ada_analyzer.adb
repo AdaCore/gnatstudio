@@ -4576,9 +4576,17 @@ package body Ada_Analyzer is
                   null;
 
                when Upper | Lower | Mixed | Smart_Mixed  =>
-                  Set_Case (Case_Exceptions, Str (1 .. Str_Len), Casing);
-                  Replace_Text
-                    (Prec, Current + 1, Line_Count, Str (1 .. Str_Len));
+                  --  We do not want to case some as this is a new keyword in
+                  --  Ada 2012 but for upward compatibility issue GNAT does not
+                  --  forbid some as identifier. Without context it is not
+                  --  possible to determine if some is used as identifier or as
+                  --  keyword, so to avoid upsetting users we never change
+                  --  casing of some.
+                  if To_Lower (Str (1 .. Str_Len)) /= "some" then
+                     Set_Case (Case_Exceptions, Str (1 .. Str_Len), Casing);
+                     Replace_Text
+                       (Prec, Current + 1, Line_Count, Str (1 .. Str_Len));
+                  end if;
             end case;
          end if;
 
