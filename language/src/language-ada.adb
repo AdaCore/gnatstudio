@@ -17,15 +17,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada_Analyzer;              use Ada_Analyzer;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+
 with Glib.Unicode;              use Glib.Unicode;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+
+with Ada_Analyzer;              use Ada_Analyzer;
 with String_Utils;              use String_Utils;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 package body Language.Ada is
 
@@ -145,33 +147,37 @@ package body Language.Ada is
 
    function Remove_Ada_Comments (Str : String) return String;
    --  Remove all Ada comments from the string (ie from -- to the next end of
-   --  line)
+   --  line).
 
    Comment_RE : constant String := "([ \t]*--[^\n]*)?";
 
    Subprogram_RE : aliased Pattern_Matcher :=
-     Compile
-       ("^[ \t]*(procedure|function)\s+" &
-        "(\w+)(" & Comment_RE & "\s*|\s*\([^\)]+\)" & Comment_RE & ")\s*" &
-        "(return\s+(\w|\.)+\s*)?is\s", Multiple_Lines or Case_Insensitive);
+                     Compile
+                       ("^[ \t]*(procedure|function)\s+"
+                        & "(\w+)(" & Comment_RE & "\s*|\s*\([^\)]+\)"
+                        & Comment_RE & ")\s*"
+                        & "(return\s+(\w|\.)+\s*)?is\s",
+                        Multiple_Lines or Case_Insensitive);
 
    Package_RE    : aliased Pattern_Matcher :=
-     Compile
-       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|\.)+))",
-        Multiple_Lines or Case_Insensitive);
+                     Compile
+                       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|\.)+))",
+                        Multiple_Lines or Case_Insensitive);
 
    Type_Def_RE   : aliased Pattern_Matcher :=
-     Compile
-       ("^[ \t]*(sub)?type[ \t]+(\w+)", Multiple_Lines or Case_Insensitive);
+                     Compile
+                       ("^[ \t]*(sub)?type[ \t]+(\w+)",
+                        Multiple_Lines or Case_Insensitive);
 
    Task_RE       : aliased Pattern_Matcher :=
-     Compile
-       ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)",
-        Multiple_Lines or Case_Insensitive);
+                     Compile
+                       ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)",
+                        Multiple_Lines or Case_Insensitive);
 
-   Protected_RE : aliased Pattern_Matcher :=
-     Compile ("^[ \t]*protected[ \t]+((type|body)[ \t]+)?(\w+)",
-              Multiple_Lines or Case_Insensitive);
+   Protected_RE  : aliased Pattern_Matcher :=
+                     Compile
+                       ("^[ \t]*protected[ \t]+((type|body)[ \t]+)?(\w+)",
+                        Multiple_Lines or Case_Insensitive);
 
    --  The Specs are not parsed specifically. Instead, all the work is done
    --  while parsing for subprograms, and the function Make_Entry_Subprogram
@@ -305,9 +311,9 @@ package body Language.Ada is
    -------------------------
 
    function Remove_Ada_Comments (Str : String) return String is
-      Result : String (Str'Range);
+      Result       : String (Str'Range);
       Result_Index : Natural := Result'First;
-      J : Natural := Str'First;
+      J            : Natural := Str'First;
    begin
       while J <= Str'Last loop
          if Str (J) = '-' and then Str (J + 1) = '-' then
@@ -1394,18 +1400,17 @@ package body Language.Ada is
            (Tmp,
             1,
             Buffer
-              (Natural (Token.Token_First)
-               .. Natural (Token.Token_Last)));
+              (Natural (Token.Token_First) .. Natural (Token.Token_Last)));
 
          Prev_Non_Blank := Token;
       end Callback;
 
    begin
       Lang.Parse_Tokens_Backwards
-        (Buffer            => Buffer,
-         Start_Offset      => Start_Offset,
-         End_Offset        => End_Offset,
-         Callback          => Callback'Access);
+        (Buffer       => Buffer,
+         Start_Offset => Start_Offset,
+         End_Offset   => End_Offset,
+         Callback     => Callback'Access);
 
       return To_String (Tmp);
    end Parse_Reference_Backwards;

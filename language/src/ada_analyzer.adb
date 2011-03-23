@@ -367,6 +367,7 @@ package body Ada_Analyzer is
 
       if S'Length = 0 then
          return No_Token;
+
       elsif S'Length = 1 then
          if Is_Control (S (S'First)) then
             return No_Token;
@@ -2912,6 +2913,7 @@ package body Ada_Analyzer is
             if Indents = null or else Top (Indents).Level = None then
                --  Syntax error
                null;
+
             else
                if not Indent_Done then
                   --  Adjust indentation level for closing parenthesis at the
@@ -4446,8 +4448,8 @@ package body Ada_Analyzer is
                           and then Prev_Token = Tok_Return)
                then
                   Entity := Type_Text;
-               elsif    (Prev_Token = Tok_Type
-                         and then Prev_Prev_Token /= Tok_Use)
+               elsif (Prev_Token = Tok_Type
+                      and then Prev_Prev_Token /= Tok_Use)
                  or else Prev_Token = Tok_Subtype
                  or else Prev_Token = Tok_End
                  or else Prev_Token = Tok_Procedure
@@ -4491,7 +4493,6 @@ package body Ada_Analyzer is
                      or else Token = Tok_Access)
          then
             --  This token should not be considered as a reserved word
-
             Casing := Ident_Casing;
 
             if Callback /= null then
