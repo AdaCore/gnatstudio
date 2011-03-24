@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2009, AdaCore             --
+--                      Copyright (C) 2001-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,12 +43,14 @@ package Traces is
    procedure Trace
      (Handle : Debug_Handle;
       E      : Ada.Exceptions.Exception_Occurrence;
-      Msg    : String := "Unexpected exception: ")
+      Msg    : String := "Unexpected exception: ";
+      Color  : String := GNATCOLL.Traces.Default_Fg)
      renames GNATCOLL.Traces.Trace;
 
    procedure Trace
      (Handle   : Debug_Handle;
       Message  : String;
+      Color  : String := GNATCOLL.Traces.Default_Fg;
       Location : String := GNAT.Source_Info.Source_Location;
       Entity   : String := GNAT.Source_Info.Enclosing_Entity)
      renames GNATCOLL.Traces.Trace;

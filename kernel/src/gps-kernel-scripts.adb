@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,6 @@
 with Ada.Unchecked_Conversion;
 with System;                  use System;
 with System.Address_Image;
-with System.Assertions;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
@@ -86,14 +85,13 @@ package body GPS.Kernel.Scripts is
    Project_Class_Name       : constant String := "Project";
    Context_Class_Name       : constant String := "Context";
    File_Location_Class_Name : constant String := "FileLocation";
-   Logger_Class_Name        : constant String := "Logger";
    Hook_Class_Name          : constant String := "Hook";
 
    function To_Address is new Ada.Unchecked_Conversion
      (Selection_Context_Data, System.Address);
 
    type GPS_Properties_Type is
-     (Files, Contexts, Entities, Projects, File_Locations, Debug_Handles);
+     (Files, Contexts, Entities, Projects, File_Locations);
 
    type GPS_Properties_Record (Typ : GPS_Properties_Type)
      is new Instance_Property_Record
@@ -109,8 +107,6 @@ package body GPS.Kernel.Scripts is
             Project : Project_Type;
          when File_Locations =>
             Location : File_Location_Info;
-         when Debug_Handles =>
-            Handle   : Trace_Handle;
       end case;
    end record;
 
@@ -173,10 +169,6 @@ package body GPS.Kernel.Scripts is
    procedure GUI_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all GUI class commands
-
-   procedure Logger_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   --  Handler for all Logger class commands
 
    procedure Set_Data (Instance : Class_Instance; File : Virtual_File);
    procedure Set_Data
@@ -1785,55 +1777,6 @@ package body GPS.Kernel.Scripts is
       end if;
    end Console_Command_Handler;
 
-   --------------------
-   -- Logger_Handler --
-   --------------------
-
-   procedure Logger_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Name_Cst            : aliased constant String := "name";
-      Message_Cst         : aliased constant String := "message";
-      Active_Cst          : aliased constant String := "active";
-      Condition_Cst       : aliased constant String := "condition";
-      Error_Message_Cst   : aliased constant String := "error_message";
-      Success_Message_Cst : aliased constant String := "success_message";
-      Inst                : constant Class_Instance := Nth_Arg (Data, 1);
-      Prop                : Instance_Property;
-   begin
-      if Command = Constructor_Method then
-         Name_Parameters (Data, (1 => Name_Cst'Unchecked_Access));
-         Set_Data
-           (Inst, Logger_Class_Name, GPS_Properties_Record'
-              (Typ => Debug_Handles, Handle => Create (Nth_Arg (Data, 2))));
-
-      elsif Command = "log" then
-         Name_Parameters (Data, (1 => Message_Cst'Unchecked_Access));
-         Prop := Get_Data (Inst, Logger_Class_Name);
-         Trace (GPS_Properties (Prop).Handle, Nth_Arg (Data, 2));
-
-      elsif Command = "set_active" then
-         Name_Parameters (Data, (1 => Active_Cst'Unchecked_Access));
-         Prop := Get_Data (Inst, Logger_Class_Name);
-         Set_Active (GPS_Properties (Prop).Handle, Nth_Arg (Data, 2));
-
-      elsif Command = "check" then
-         Name_Parameters (Data, (1 => Condition_Cst'Unchecked_Access,
-                                 2 => Error_Message_Cst'Unchecked_Access,
-                                 3 => Success_Message_Cst'Unchecked_Access));
-         begin
-            Prop := Get_Data (Inst, Logger_Class_Name);
-            Assert (GPS_Properties (Prop).Handle,
-                    Condition          => Nth_Arg (Data, 2),
-                    Error_Message      => Nth_Arg (Data, 3),
-                    Message_If_Success => Nth_Arg (Data, 4, ""));
-         exception
-            when System.Assertions.Assert_Failure =>
-               Set_Error_Msg (Data, "Assertion error: " & Nth_Arg (Data, 3));
-         end;
-      end if;
-   end Logger_Handler;
-
    ----------------------
    -- Register_Command --
    ----------------------
@@ -1909,22 +1852,12 @@ package body GPS.Kernel.Scripts is
       Console_Class_Name : constant String := "Console";
       Console_Class      : constant Class_Type := New_Class
         (Kernel.Scripts, Console_Class_Name, Base => Get_GUI_Class (Kernel));
-      Logger             : constant Class_Type :=
-                             New_Class (Kernel.Scripts, Logger_Class_Name);
       Tmp : String_Access;
    begin
       GNATCOLL.Scripts.Register_Standard_Classes
         (Get_Scripts (Kernel),
-         Console_Class_Name => Console_Class_Name);
-
-      Register_Command
-        (Kernel, Constructor_Method, 1, 1, Logger_Handler'Access, Logger);
-      Register_Command
-        (Kernel, "log", 1, 1, Logger_Handler'Access, Logger);
-      Register_Command
-        (Kernel, "set_active", 1, 1, Logger_Handler'Access, Logger);
-      Register_Command
-        (Kernel, "check", 2, 3, Logger_Handler'Access, Logger);
+         Console_Class_Name => Console_Class_Name,
+         Logger_Class_Name  => "Logger");
 
       Register_Command
         (Kernel, Constructor_Method,
@@ -2832,7 +2765,7 @@ package body GPS.Kernel.Scripts is
             --  context itself is destroyed.
             null;
 
-         when Files | Projects | Debug_Handles =>
+         when Files | Projects =>
             null;
 
          when Entities =>
@@ -2857,7 +2790,7 @@ package body GPS.Kernel.Scripts is
                return Prop.Context.Data.Data.Instances;
             end if;
 
-         when Files | Entities | Projects | File_Locations | Debug_Handles =>
+         when Files | Entities | Projects | File_Locations =>
             null;
       end case;
 
