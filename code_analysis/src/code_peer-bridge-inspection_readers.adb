@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -86,6 +86,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
       Message_Category    : Code_Peer.Message_Category_Access;
       Annotation_Category : Code_Peer.Annotation_Category_Access;
       File_Name           : GNATCOLL.VFS.Virtual_File;
+      Relocated_Name      : GNATCOLL.VFS.Virtual_File;
       Project_Node        : Code_Analysis.Project_Access;
 
       function Lifeage return Lifeage_Kinds;
@@ -163,6 +164,17 @@ package body Code_Peer.Bridge.Inspection_Readers is
            GPS.Kernel.Create (+Attrs.Get_Value ("name"), Self.Kernel);
          --  ??? Potentially non-utf8 string should not be
          --  stored in an XML attribute.
+
+         --  Try to found file with the same base name in the current project.
+         --  Use this file instead of original name which comes from the
+         --  database to be able to reuse database between several users.
+
+         Relocated_Name :=
+           GPS.Kernel.Create_From_Base (File_Name.Base_Name, Self.Kernel);
+
+         if Relocated_Name.Is_Regular_File then
+            File_Name := Relocated_Name;
+         end if;
 
          Project_Node :=
            Code_Analysis.Get_Or_Create
