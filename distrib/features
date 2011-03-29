@@ -69,7 +69,8 @@ NF-51-K113-012 GPS: improvements in createfile.py plug-in (2011-01-13)
 NF-51-K112-013 GPS: user defined database directory for CodePeer (2011-03-29)
 
   CodePeer plug-in allows to define output and database directories as
-  project's attributes. It allows to shared database between users.
+  project's attributes. This is useful for example for sharing the database
+  between users.
 
 NF-51-JC10-012 GPS: "short titles" pref applies to docked windows (2010-12-13)
 
