@@ -165,7 +165,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
          --  ??? Potentially non-utf8 string should not be
          --  stored in an XML attribute.
 
-         --  Try to found file with the same base name in the current project.
+         --  Try to find file with the same base name in the current project.
          --  Use this file instead of original name which comes from the
          --  database to be able to reuse database between several users.
 
