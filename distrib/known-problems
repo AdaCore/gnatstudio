@@ -8,6 +8,11 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K324-017 convert to GB project: finish button disabled
+  Problem:    Sometimes when starting the "Convert to an Ada Project" wizard
+              the finish button is disabled.
+  Workaround: Touch the "Project to convert:" edit field.
+  
 - K315-047 Incorrect "auto-fix fo comparison with True is redundant"
   Problem:    When applying an auto-fix on redudant comparison with True,
               Codefix will fail to add the "not" in front of the expression
