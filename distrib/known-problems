@@ -8,7 +8,7 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- K324-017 convert to GB project: finish button disabled
+- K324-017 GB: convert to GNATbench project: finish button disabled
   Problem:    Sometimes when starting the "Convert to an Ada Project" wizard
               the finish button is disabled.
   Workaround: Touch the "Project to convert:" edit field.
