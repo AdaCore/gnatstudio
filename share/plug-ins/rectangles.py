@@ -121,16 +121,26 @@ def on_gps_started (hook_name):
 ## No public function below this
 ##############################################################################
 
-class Rectangle (object):
+class Rectangle(object):
    @staticmethod
-   def from_buffer (buffer):
-      start = buffer.selection_start ()
-      end   = buffer.selection_end   () - 1
-      return Rectangle (buffer     = buffer,
-                        start_line = start.line (),
-                        start_col  = start.column (),
-                        end_line   = end.line (),
-                        end_col    = end.column ())
+   def from_buffer(buffer):
+      start = buffer.selection_start()
+      end   = buffer.selection_end()
+
+      if start.column() == end.column():
+         # An empty rectangle ?
+         return Rectangle(buffer     = buffer,
+                          start_line = start.line(),
+                          start_col  = start.column(),
+                          end_line   = end.line(),
+                          end_col    = end.column())
+      else:
+         end -= 1
+         return Rectangle(buffer     = buffer,
+                          start_line = start.line(),
+                          start_col  = start.column(),
+                          end_line   = end.line(),
+                          end_col    = end.column())
 
    def __init__ (self, buffer, start_line, start_col, end_line, end_col):
       """Create a new rectangle.

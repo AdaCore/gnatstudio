@@ -8,6 +8,12 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K405-008 GPS: off-by-one error in rectangles with empty rectangle
+  Problem:    Select an empty rectangle (for instance from line 1, column 4
+              to line 3, column 4), and select /Edit/Rectangles/Insert Text.
+              The new text is inserted in column 3 instead of 4.
+  Workaround: Select up to column 5 (a non-empty rectangle).
+
 - K324-017 GB: convert to GNATbench project: finish button disabled
   Problem:    Sometimes when starting the "Convert to an Ada Project" wizard
               the finish button is disabled.
