@@ -38,6 +38,13 @@ If no tag is specified, the entry is relevant to all IDEs.
               an existing rule file is incorrectly loaded for switches that
               use ':' as a separator.
   Workaround: Edit the rule files manually.
+  
+- K228-039 GB: Coding Standard editor inserting additional colons
+  Problem:    For switches taking values, GNATbench inserted a colon after
+              the switch name when writing the rules file, but there was
+              already a colon included.  As a result there were two colons
+              between the switch name and the value.
+  Workaround: Edit the rule files manually.
 
 - K108-001 GPS: Adding Makefile as a language results in errors
   Problem:    Edit the project properties to add Makefile as a language.
