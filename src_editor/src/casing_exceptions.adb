@@ -180,14 +180,24 @@ package body Casing_Exceptions is
          Execute_GPS_Shell_Command (Get_Kernel (Context), CL);
       end Set_Casing;
 
+      Line, Column : Integer := 0;
+
    begin
       if Has_Area_Information (Context) then
-         Set_Casing (File_Information (Context), Line_Information (Context),
-                     Integer (Column_Information (Context)));
+         declare
+            E_Line : Integer;
+         begin
+            Get_Area (Context, Start_Line => Line, End_Line => E_Line);
+            Column := Integer (Column_Information (Context));
+         end;
 
       elsif Has_Entity_Column_Information (Context) then
-         Set_Casing (File_Information (Context), Line_Information (Context),
-                     Integer (Entity_Column_Information (Context)));
+         Line := Line_Information (Context);
+         Column := Integer (Entity_Column_Information (Context));
+      end if;
+
+      if Line /= 0 then
+         Set_Casing (File_Information (Context), Line, Column);
       end if;
    end Set_Casing;
 
