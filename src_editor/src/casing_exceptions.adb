@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2010, AdaCore             --
+--                 Copyright (C) 2004-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,10 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Convert; use Glib.Convert;
-
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
+
+with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+
+with Glib.Convert;            use Glib.Convert;
 
 with Case_Handling.IO;        use Case_Handling.IO;
 with Commands.Interactive;    use Commands, Commands.Interactive;
@@ -32,15 +35,12 @@ with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Src_Editor_Module;       use Src_Editor_Module;
 with String_Utils;            use String_Utils;
-with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
-
-with UTF8_Utils; use UTF8_Utils;
+with UTF8_Utils;              use UTF8_Utils;
 
 package body Casing_Exceptions is
 
    Case_Exceptions_Filename : constant Filesystem_String :=
-     "case_exceptions.xml";
+                                "case_exceptions.xml";
 
    type Casing_Module_Record is new Module_ID_Record with record
       Casing_Exceptions_Table : Case_Handling.Casing_Exceptions;
@@ -168,7 +168,7 @@ package body Casing_Exceptions is
         (File         : Virtual_File;
          Line, Column : Integer)
       is
-         CL   : Arg_List;
+         CL : Arg_List;
       begin
          CL := Create ("Editor.replace_text");
          Append_Argument (CL, +Full_Name (File), One_Arg);
@@ -316,6 +316,7 @@ package body Casing_Exceptions is
          begin
             Execute (Str);
          end;
+
       elsif Has_Area_Information (Context.Context) then
          declare
             Str : String := Text_Information (Context.Context);
@@ -404,21 +405,24 @@ package body Casing_Exceptions is
       elsif Has_Area_Information (Context) then
          declare
             File      : constant Virtual_File :=
-              File_Information (Context);
+                          File_Information (Context);
             Area      : constant String := Text_Information (Context);
             W_Seps    : constant Character_Set :=
                           To_Set (" ;.:=(),/'#*+-""><&" &
                                   ASCII.HT & ASCII.CR & ASCII.LF);
-            Editor : constant Editor_Buffer'Class :=
-              Kernel.Get_Buffer_Factory.Get (File);
-            Loc_Start : constant Editor_Location'Class := Editor.New_Location
-              (Line_Information (Context),
-               Column_Information (Context)).Forward_Char (-1);
-            Loc_End   : constant Editor_Location'Class := Editor.New_Location
-              (Line_Information (Context),
-               Column_Information (Context))
-              .Forward_Char (Area'Length);
-            Text : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
+            Editor    : constant Editor_Buffer'Class :=
+                          Kernel.Get_Buffer_Factory.Get (File);
+            Loc_Start : constant Editor_Location'Class :=
+                          Editor.New_Location
+                            (Line_Information (Context),
+                             Column_Information (Context)).Forward_Char (-1);
+            Loc_End   : constant Editor_Location'Class :=
+                          Editor.New_Location
+                            (Line_Information (Context),
+                             Column_Information
+                               (Context)).Forward_Char (Area'Length);
+            Text      : constant String :=
+                          Editor.Get_Chars (Loc_Start, Loc_End);
          begin
             return Text'Length <= 1
               or else not Is_In (Text (Text'First), W_Seps)
