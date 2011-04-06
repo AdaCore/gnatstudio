@@ -141,6 +141,12 @@ If no tag is specified, the entry is relevant to all IDEs.
               unreferenced.
   Workaround: Manually fix the code.
 
+- H423-012 GB: "New Ada Source Dir" wizard always puts updated gpr file at root
+  Problem:    When using the New Ada Source Dir wizard, the updated gpr file is
+              unconditionally written to the project root instead of to the
+              actual location.
+  Workaround: Edit the gpr file manually.
+
 - GB21-006 Profile completion errors with formal parameters
   Problem:    Auto completion with formal parameters of subprogram calls may
               not insert the correct formal parameters if there are already
