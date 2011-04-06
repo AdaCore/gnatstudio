@@ -133,16 +133,19 @@ class Rectangle(object):
                           start_line = start.line(),
                           start_col  = start.column(),
                           end_line   = end.line(),
-                          end_col    = end.column())
+                          end_col    = end.column(),
+                          empty      = True)
       else:
          end -= 1
          return Rectangle(buffer     = buffer,
                           start_line = start.line(),
                           start_col  = start.column(),
                           end_line   = end.line(),
-                          end_col    = end.column())
+                          end_col    = end.column(),
+                          empty      = False)
 
-   def __init__ (self, buffer, start_line, start_col, end_line, end_col):
+   def __init__ (self, buffer, start_line, start_col, end_line, end_col,
+                 empty=False):
       """Create a new rectangle.
          Internally, ensures that start_line <= end_line and
          start_col <= end_col
@@ -153,6 +156,7 @@ class Rectangle(object):
       self.end_line   = max (start_line, end_line)
       self.start_col  = min (start_col, end_col)
       self.end_col    = max (start_col, end_col)
+      self.empty      = empty
 
    def insert (self, text):
       """Insert TEXT at the beginning of each line of the rectangle."""
@@ -234,7 +238,8 @@ class Rectangle(object):
 
    def __replace_func (self, start, end, text):
       """Replaces the range START .. END with TEXT"""
-      self.buffer.delete (start, end)
+      if not self.empty:
+         self.buffer.delete (start, end)
       self.buffer.insert (start, text)
 
    def __open_line_func (self, func, eol, *args):
