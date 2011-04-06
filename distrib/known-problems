@@ -44,8 +44,8 @@ If no tag is specified, the entry is relevant to all IDEs.
   Workaround: Change the comments removing the # characters.
 
 - K307-005 GPS: Making a window 'Floating' by dragging it to the desktop
-  Problem:    In GPS 5.0.1 it is no longer possible to make a window 'Floating'
-              by dragging its title bar to the desktop.
+  Problem:    In GPS 5.0.1 under Windows, it is no longer possible to make a
+              window 'Floating' by dragging its title bar to the desktop.
   Workaround: Use the menu Window->Floating instead.
 
 - K301-029 GPS: Handling of Coding Standard switches
