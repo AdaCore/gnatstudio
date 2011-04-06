@@ -54,7 +54,7 @@ NF-51-K209-048 New plugin to prevent project edition (2011-02-15)
 
 NF-51-K204-022 Use project's gnatls for default project path (2011-03-02)
 
-  GPS will now check the project's IDE.Gnatlist attribute to query the
+  The IDEs will now check the project's IDE.Gnatlist attribute to query the
   default project path (instead of always running the native "gnatls").
   This allows a project to depend on a project only available for cross
   platforms (for instance "zfp_support.gpr").
