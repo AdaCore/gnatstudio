@@ -264,4 +264,14 @@
     <Body_Suffix>.s</Body_Suffix>
   </Language>
 
+  <Language>
+    <Name>Asm_Cpp</Name>
+    <Body_Suffix>.S</Body_Suffix>
+  </Language>
+
+  <Language>
+    <Name>Asms</Name>
+    <Body_Suffix>.asm</Body_Suffix>
+  </Language>
+
 </GPS>
