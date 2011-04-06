@@ -14,6 +14,12 @@ If no tag is specified, the entry is relevant to all IDEs.
               been saved, unless the focus is moved away from the text field.
   Workaround: Move the focus away from the text field before saving.
 
+- K405-009 GPS: Casing selected text may corrupt editor content
+  Problem:    After selecting an area and using the Casing contextual
+              menu, the text replaced in the source editor may be
+              inserted starting at a wrong line.
+  Workaround: Fix case in the area manually.
+
 - K405-008 GPS: off-by-one error with empty rectangles
   Problem:    Select an empty rectangle (for instance from line 1, column 4
               to line 3, column 4), and select /Edit/Rectangles/Insert Text.
