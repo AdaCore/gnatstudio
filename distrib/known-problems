@@ -8,6 +8,12 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K405-023 GB: Coding Style editor stays "dirty" after save operation
+  Problem:    After inserting values into text fields and saving the file
+              via control-s, the page stays "dirty" as if the file has not
+              been saved, unless the focus is moved away from the text field.
+  Workaround: Move the focus away from the text field before saving.
+
 - K405-008 GPS: off-by-one error with empty rectangles
   Problem:    Select an empty rectangle (for instance from line 1, column 4
               to line 3, column 4), and select /Edit/Rectangles/Insert Text.
