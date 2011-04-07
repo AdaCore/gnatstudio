@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K406-021 GPS: Support for more assembly languages (2011-04-06)
+
+  GPS now supports languages "Asm_Cpp" (file extension .S by default) and
+  "Asm2" (.asm) to be in line with the languages recognized by gprbuild.
+  The language "Asm" (.s files) was already supported in GPS 5.0.
+
 NF-51-K225-033 GPS: New menu Debug->Display <expanded name> (2011-02-27)
 
   As part of the optional debugger.py plug-in, a new menu is provided when
