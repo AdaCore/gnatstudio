@@ -17,9 +17,9 @@ project Src_Editor is
    package Naming is
       case Shared.OS is
          when "Windows_NT" =>
-            for Implementation ("src_printing") use "src_printing_win32.adb";
+            for Implementation ("src_printing") use "src_printing__win32.adb";
          when "unix" =>
-            for Implementation ("src_printing") use "src_printing_default.adb";
+            for Implementation ("src_printing") use "src_printing__default.adb";
       end case;
    end Naming;
 
