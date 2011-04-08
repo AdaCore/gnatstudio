@@ -82,9 +82,9 @@ project GPS is
    package Naming is
       case Shared.OS is
          when "Windows_NT" =>
-            for Implementation ("dde") use "dde_win32.adb";
+            for Implementation ("dde") use "dde__win32.adb";
          when "unix" =>
-            for Implementation ("dde") use "dde_default.adb";
+            for Implementation ("dde") use "dde__default.adb";
       end case;
    end Naming;
 
