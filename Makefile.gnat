@@ -2,6 +2,7 @@ GNAT_SOURCES= \
   gnat_ugn.texi \
   prj-pars.ads \
   prj-pars.adb \
+  impunit.ads \
   impunit.adb \
   gnat_style.css
 
