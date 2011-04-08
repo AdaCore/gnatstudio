@@ -14,9 +14,9 @@ project Widgets is
    package Naming is
       case Shared.OS is
          when "Windows_NT" =>
-            for Implementation ("gtk_utils") use "gtk_utils_win32.adb";
+            for Implementation ("gtk_utils") use "gtk_utils__win32.adb";
          when "unix" =>
-            for Implementation ("gtk_utils") use "gtk_utils_default.adb";
+            for Implementation ("gtk_utils") use "gtk_utils__default.adb";
       end case;
    end Naming;
 
