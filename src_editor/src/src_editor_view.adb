@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2010, AdaCore                --
+--                   Copyright (C) 2001-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2431,8 +2431,6 @@ package body Src_Editor_View is
 
    begin
       Invalidate_Window (Src_View);
-      Redraw_Speed_Column (Src_View);
-      Redraw_Columns (Src_View);
 
       if Src_View.Scrolling or else Src_View.Synchronized_Editor = null then
          return;
