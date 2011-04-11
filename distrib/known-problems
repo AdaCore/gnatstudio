@@ -18,6 +18,13 @@ Known Problems fixed in GPS 5.0.2
               window 'Floating' by dragging its title bar to the desktop.
   Workaround: Use the menu Window->Floating instead.
 
+- K307-004 Project properties editor display problem under Windows classic
+  Problem:    Under Windows when using the 'Windows Classic' appearance only,
+              the project properties editor does not display tabs on the left
+              properly (they are all black except the tab currently selected).
+  Workaround: Change the appearance settings from the Windows control panel,
+              or move/rename the lib/gtk-2.0/2.10.0/engines/libwimp.dll file.
+
 - K224-024 Wrong indentation of 'not' keyword on line start
   Problem:    A line starting with 'not' in the middle of an expressions is
               not considered as a continuation line by the indentation engine.
