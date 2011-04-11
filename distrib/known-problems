@@ -6,6 +6,18 @@ Known Problems fixed in GPS 5.0.2
   Workaround: Run a full analysis instead or run CodePeer from the command
               line.
 
+- K315-038 GPS retains foreground while debugging
+  Problem:    When debugging, the GPS main window will sometimes stay on top
+              of every other window in your desktop.
+  Workaround: GPS will stay in background until restarted. If you open a dialog
+              (e.g. Help->About) which is hidden under the main window, you
+              can use the 'ESC' key to close it.
+
+- K307-005 Making a window 'Floating' by dragging it to the desktop
+  Problem:    In GPS 5.0.1 under Windows, it is no longer possible to make a
+              window 'Floating' by dragging its title bar to the desktop.
+  Workaround: Use the menu Window->Floating instead.
+
 - K224-024 Wrong indentation of 'not' keyword on line start
   Problem:    A line starting with 'not' in the middle of an expressions is
               not considered as a continuation line by the indentation engine.
