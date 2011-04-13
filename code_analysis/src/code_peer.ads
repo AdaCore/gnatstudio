@@ -71,6 +71,7 @@ package Code_Peer is
       Line             : Positive;
       Column           : Positive;
       Category         : Message_Category_Access;
+      Is_Warning       : Boolean;
       Computed_Ranking : Message_Ranking_Level;
       Current_Ranking  : Message_Ranking_Level;
       Text             : GNAT.Strings.String_Access;

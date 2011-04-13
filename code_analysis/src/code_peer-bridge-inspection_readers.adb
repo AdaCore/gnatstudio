@@ -213,6 +213,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
                Positive'Value (Attrs.Get_Value ("column")),
                Self.Message_Categories.Element
                  (Positive'Value (Attrs.Get_Value ("category"))),
+               False,
                Computed_Ranking,
                Code_Peer.Message_Ranking_Level'Value
                  (Attrs.Get_Value ("probability")),
@@ -231,6 +232,14 @@ package body Code_Peer.Bridge.Inspection_Readers is
               Positive'Value (Attrs.Get_Value ("from_line"));
             Self.Subprogram_Data.Messages.Last_Element.From_Column :=
               Positive'Value (Attrs.Get_Value ("from_column"));
+         end if;
+
+         --  Check whether optional 'is_warning' attribute is present and
+         --  process it.
+
+         if Attrs.Get_Index ("is_warning") /= -1 then
+            Self.Subprogram_Data.Messages.Last_Element.Is_Warning :=
+              Boolean'Value (Attrs.Get_Value ("is_warning"));
          end if;
 
       elsif Qname = Annotation_Tag then
