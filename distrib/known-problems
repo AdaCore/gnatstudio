@@ -130,12 +130,12 @@ If no tag is specified, the entry is relevant to all IDEs.
               UTF8 characters on the line.
   Workaround: Compile the file and then navigate.
 
-- J329-016 GPS: probability of some CodePeer messages can't be changed
-  Problem:    Probability of 'check always fails' and 'subp never returns'
-              categories of messages can't be changed by message review
-              procedure. Probability of these messages is reseted to 'high'
-              every time when analysis data is reloaded.
-  Workaround: Not needed.
+- J329-016 GPS: ranking of some CodePeer messages cannot be changed
+  Problem:    Ranking of 'check always fails' and 'subp never returns'
+              messages cannot be changed by a manual message review.
+              The ranking of these messages is always reset to 'high' when
+              the codepeer analysis data is reloaded.
+  Workaround: None.
 
 - J302-007 No quick fixes for unreferenced type definitions
   Problem:    When an unreferenced type definition is detected by the compiler,
