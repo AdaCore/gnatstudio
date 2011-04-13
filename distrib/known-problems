@@ -130,6 +130,13 @@ If no tag is specified, the entry is relevant to all IDEs.
               UTF8 characters on the line.
   Workaround: Compile the file and then navigate.
 
+- J329-016 GPS: probability of some CodePeer messages can't be changed
+  Problem:    Probability of 'check always fails' and 'subp never returns'
+              categories of messages can't be changed by message review
+              procedure. Probability of these messages is reseted to 'high'
+              every time when analysis data is reloaded.
+  Workaround: Not needed.
+
 - J302-007 No quick fixes for unreferenced type definitions
   Problem:    When an unreferenced type definition is detected by the compiler,
               no quick fix is offered to removed the type or add a pragma
