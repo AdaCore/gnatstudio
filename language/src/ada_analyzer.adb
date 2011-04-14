@@ -3101,10 +3101,11 @@ package body Ada_Analyzer is
             Do_Indent (P, L, Num_Spaces);
             Prev_Token := Tok_Arrow;
 
-            if Local_Top_Token.Token = Tok_When
-              and then (Tokens.Next = null
-                        or else
-                          Tokens.Next.Val.Token /= Tok_Select)
+            if (Local_Top_Token.Token = Tok_When
+                and then (Tokens.Next = null
+                          or else
+                            Tokens.Next.Val.Token /= Tok_Select))
+              or else Local_Top_Token.Token = Tok_For
             then
                Pop_And_Set_Local (Tokens);
             end if;
