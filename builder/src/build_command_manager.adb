@@ -823,46 +823,46 @@ package body Build_Command_Manager is
             end if;
          end if;
 
-         --  Apparently codefix depends on Error_Category to work properly,
-         --  but we need to set the category properly, at least for CodePeer
-         --  targets???
-
          Data := new Build_Callback_Data;
          Data.Target_Name := To_Unbounded_String (Target_Name);
 
+         --  For background compilation synthetic messages category name is
+         --  used. For non-background compilation target's messages category is
+         --  used when defined, otherwise Error_Category is used for backward
+         --  compatibility and compatibility with codefix.
+
          if Background then
-            Data.Category_Name := To_Unbounded_String
-              (Current_Background_Build_Id);
+            Data.Category_Name :=
+              To_Unbounded_String (Current_Background_Build_Id);
+
          else
-            Data.Category_Name := To_Unbounded_String (Error_Category);
+            Data.Category_Name := Get_Messages_Category (T);
+
+            if Data.Category_Name = Null_Unbounded_String then
+               Data.Category_Name := To_Unbounded_String (Error_Category);
+            end if;
 
             if Main /= No_File then
                Set_Last_Main (Target_Name, Main);
             end if;
          end if;
 
-         Data.Mode_Name   := To_Unbounded_String (Mode);
-         Data.Quiet := Quiet;
-         Data.Shadow := Shadow;
-         Data.Background := Background;
+         Data.Mode_Name      := To_Unbounded_String (Mode);
+         Data.Quiet          := Quiet;
+         Data.Shadow         := Shadow;
+         Data.Background     := Background;
          Data.Background_Env := Background_Env;
 
-         if Get_Category (T) = "CodePeer" then
-            Data.Category_Name := To_Unbounded_String ("CodePeer");
+         if Is_Run (T) then
+            Launch_Build_Command
+              (Kernel, Full.Args, Data, Server,
+               Synchronous, Uses_Shell (T),
+               "Run: " & Main.Display_Base_Name, Dir);
+
+         else
             Launch_Build_Command
               (Kernel, Full.Args, Data, Server,
                Synchronous, Uses_Shell (T), "", Dir);
-         else
-            if Is_Run (T) then
-               Launch_Build_Command
-                 (Kernel, Full.Args, Data, Server,
-                  Synchronous, Uses_Shell (T),
-                  "Run: " & Main.Display_Base_Name, Dir);
-            else
-               Launch_Build_Command
-                 (Kernel, Full.Args, Data, Server,
-                  Synchronous, Uses_Shell (T), "", Dir);
-            end if;
          end if;
 
          Unchecked_Free (All_Extra_Args);

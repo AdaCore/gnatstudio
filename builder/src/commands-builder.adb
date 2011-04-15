@@ -166,7 +166,7 @@ package body Commands.Builder is
       --  Raise the messages window is compilation was unsuccessful
       --  and no error was parsed. See D914-005
 
-      if Category_Count (Data.Kernel, Error_Category) = 0
+      if Category_Count (Data.Kernel, To_String (Build_Data.Category_Name)) = 0
         and then Status /= 0
         and then not Build_Data.Background
       then
@@ -464,10 +464,10 @@ package body Commands.Builder is
 
       if Is_A_Run
         or else Compilation_Starting
-          (Kernel,
-           To_String (Data.Target_Name),
-           Quiet  => Data.Quiet,
-           Shadow => Data.Shadow,
+          (Handle     => Kernel,
+           Category   => To_String (Data.Category_Name),
+           Quiet      => Data.Quiet,
+           Shadow     => Data.Shadow,
            Background => Data.Background)
       then
          Append_To_Build_Output

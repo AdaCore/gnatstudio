@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -811,16 +811,37 @@ package body Build_Configurations is
       N.Tag := new String'("target");
 
       --  Main node
-      N.Attributes := new String'
-        ("model="""
-         & XML_Utils.Protect (To_String (Target.Model.Name))
-         & """ category="""
-         & XML_Utils.Protect (To_String (Target.Properties.Category))
-         & """ menu="""
-         & XML_Utils.Protect (To_String (Target.Properties.Parent_Menu_Name))
-         & """ name="""
-         & XML_Utils.Protect  (To_String (Target.Properties.Menu_Name))
-         & """");
+
+      if Target.Properties.Messages_Category = Null_Unbounded_String then
+         N.Attributes := new String'
+           ("model="""
+            & XML_Utils.Protect (To_String (Target.Model.Name))
+            & """ category="""
+            & XML_Utils.Protect (To_String (Target.Properties.Category))
+            & """ menu="""
+            & XML_Utils.Protect
+              (To_String (Target.Properties.Parent_Menu_Name))
+            & """ name="""
+            & XML_Utils.Protect (To_String (Target.Properties.Menu_Name))
+            & '"');
+
+      else
+         N.Attributes := new String'
+           ("model="""
+            & XML_Utils.Protect (To_String (Target.Model.Name))
+            & """ category="""
+            & XML_Utils.Protect (To_String (Target.Properties.Category))
+            & """ menu="""
+            & XML_Utils.Protect
+              (To_String (Target.Properties.Parent_Menu_Name))
+            & """ name="""
+            & XML_Utils.Protect (To_String (Target.Properties.Menu_Name))
+            & """ messages_category="""
+            & XML_Utils.Protect
+              (To_String (Target.Properties.Messages_Category))
+            & '"');
+      end if;
+
       --  Insert a <icon> node if needed
 
       N.Child := new Node;
@@ -915,12 +936,19 @@ package body Build_Configurations is
       --  Main node
 
       declare
-         Parent_Menu : constant String :=
-           Get_Attribute (XML, "menu", Build_Menu);
-         Menu_Name   : constant String := Get_Attribute (XML, "name", "");
-         Target_Name : constant String := Strip_Single_Underscores (Menu_Name);
-         Category    : constant String := Get_Attribute (XML, "category", "");
-         Model       : constant String := Get_Attribute (XML, "model", "");
+         Parent_Menu      : constant String :=
+                               Get_Attribute (XML, "menu", Build_Menu);
+         Menu_Name         : constant String :=
+                               Get_Attribute (XML, "name", "");
+         Target_Name       : constant String :=
+                               Strip_Single_Underscores (Menu_Name);
+         Category          : constant String :=
+                               Get_Attribute (XML, "category", "");
+         Model             : constant String :=
+                               Get_Attribute (XML, "model", "");
+         Messages_Category : constant String :=
+                               Get_Attribute (XML, "messages_category", "");
+
       begin
          if Menu_Name = "" then
             Log (Registry,
@@ -962,6 +990,8 @@ package body Build_Configurations is
               To_Unbounded_String (Parent_Menu);
             Target.Properties.Menu_Name := To_Unbounded_String (Menu_Name);
             Target.Properties.Category := To_Unbounded_String (Category);
+            Target.Properties.Messages_Category :=
+              To_Unbounded_String (Messages_Category);
             Target.Model := Registry.Models.Element
               (To_Unbounded_String (Model));
 
@@ -1188,6 +1218,16 @@ package body Build_Configurations is
    begin
       return To_String (Target.Properties.Category);
    end Get_Category;
+
+   ---------------------------
+   -- Get_Messages_Category --
+   ---------------------------
+
+   function Get_Messages_Category
+     (Target : Target_Access) return Unbounded_String is
+   begin
+      return Target.Properties.Messages_Category;
+   end Get_Messages_Category;
 
    ----------------
    -- Get_Server --

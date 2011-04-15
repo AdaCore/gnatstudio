@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2008-2010, AdaCore                  --
+--                 Copyright (C) 2008-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -278,9 +278,13 @@ package Build_Configurations is
       Menu_Name : Unbounded_String;
       --  The name of the menu to display target
 
-      Category : Unbounded_String;
+      Category          : Unbounded_String;
       --  The category of the target, used for purposes of displaying the
       --  targets in a hierarchical fashion.
+
+      Messages_Category : Unbounded_String;
+      --  Name of the messages category to be used to create messages in
+      --  the messages container.
    end record;
 
    function Get_Properties (Target : Target_Access) return Target_Properties;
@@ -328,6 +332,11 @@ package Build_Configurations is
 
    function Get_Category (Target : Target_Access) return String;
    --  Return the category of Target
+
+   function Get_Messages_Category
+     (Target : Target_Access) return Unbounded_String;
+   --  Return the messages category to be used for messages in messages
+   --  container
 
    function Get_Icon (Target : Target_Access) return String;
    --  Return the stock-id corresponding to the icon for target

@@ -52,7 +52,8 @@ package Commands.Builder is
       --  The name of the mode being built
 
       Category_Name : Unbounded_String;
-      --  The name of the category for the target
+      --  The name of the messages category to create messages in messages
+      --  container.
 
       Quiet : Boolean := False;
       --  Whether the target should be Quiet.

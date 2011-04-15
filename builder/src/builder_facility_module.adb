@@ -803,8 +803,8 @@ package body Builder_Facility_Module is
       Shadow          : Boolean;
       Background      : Boolean)
    is
-      pragma Unreferenced (Category);
       Console : Interactive_Console;
+
    begin
       if Clear_Console then
          Console := Get_Build_Console (Kernel, Shadow, Background, False);
@@ -818,7 +818,7 @@ package body Builder_Facility_Module is
         and then not Background
       then
          Get_Messages_Container (Kernel).Remove_Category
-           (Error_Category, Builder_Message_Flags);
+           (Category, Builder_Message_Flags);
       end if;
 
       if Shadow then

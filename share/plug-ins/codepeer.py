@@ -295,7 +295,8 @@ if codepeer != "":
        </switches>
     </target-model>
 
-    <target model="generate_scil" category="CodePeer" name="Generate SCIL">
+    <target model="generate_scil" category="CodePeer" name="Generate SCIL"
+            messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
@@ -311,7 +312,8 @@ if codepeer != "":
        </command-line>
     </target>
 
-    <target model="gprclean" category="CodePeer" name="Remove SCIL">
+    <target model="gprclean" category="CodePeer" name="Remove SCIL"
+            messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <icon>gps-clean</icon>
@@ -327,7 +329,8 @@ if codepeer != "":
        </command-line>
     </target>
 
-    <target model="codepeer" category="CodePeer" name="Run CodePeer">
+    <target model="codepeer" category="CodePeer" name="Run CodePeer"
+            messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
@@ -345,7 +348,8 @@ if codepeer != "":
        </command-line>
     </target>
 
-    <target model="codepeer" category="CodePeer" name="Run CodePeer Quickly">
+    <target model="codepeer" category="CodePeer" name="Run CodePeer Quickly"
+            messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
@@ -370,7 +374,7 @@ if codepeer != "":
     </target>
 
     <target model="codepeer" category="CodePeer"
-            name="Regenerate CodePeer Report">
+            name="Regenerate CodePeer Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
