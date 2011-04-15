@@ -34,12 +34,15 @@ with Extending_Environments; use Extending_Environments;
 
 package Commands.Builder is
 
-   Error_Category   : constant String := "Builder results";
+   Error_Category : constant String := "Builder results";
    --  -"Builder results"
 
-   Builder_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
+   Builder_Message_Flags    : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => True,
       GPS.Kernel.Messages.Locations   => True);
+   Background_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
+     (GPS.Kernel.Messages.Editor_Side => True,
+      GPS.Kernel.Messages.Locations   => False);
 
    type Build_Callback_Data is new Callback_Data_Record with record
       Target_Name   : Unbounded_String;

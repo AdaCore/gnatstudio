@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2008-2010, AdaCore                  --
+--                 Copyright (C) 2008-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -99,13 +99,6 @@ package body Builder_Facility_Module is
 
    Mode_Property : constant String := "Build-Mode";
    --  History to store which mode is selected
-
-   Builder_Message_Flags    : constant Message_Flags :=
-     (Editor_Side => True,
-      Locations   => True);
-   Background_Message_Flags : constant Message_Flags :=
-     (Editor_Side => True,
-      Locations   => False);
 
    package Projects_Stack is new Generic_Stack (Project_Type);
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -180,7 +180,7 @@ package body Commands.Builder is
          --  the new background build is completed.
 
          Get_Messages_Container (Data.Kernel).Remove_Category
-           (Previous_Background_Build_Id, Builder_Message_Flags);
+           (Previous_Background_Build_Id, Background_Message_Flags);
 
          Background_Build_Finished;
       end if;
@@ -449,7 +449,7 @@ package body Commands.Builder is
          --  If we are starting a "real" build, remove messages from the
          --  current background build
          Get_Messages_Container (Kernel).Remove_Category
-           (Previous_Background_Build_Id, Builder_Message_Flags);
+           (Previous_Background_Build_Id, Background_Message_Flags);
       end if;
 
       if not (Data.Shadow or else Data.Quiet or else Data.Background) then
