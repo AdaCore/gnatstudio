@@ -5,7 +5,7 @@ with "../widgets/widgets";
 with "../shared";
 with "../templates_parser/templates_parser";
 
-project Aunit is
+project Aunit_Support is
 
    for Languages use ("Ada", "Templates");
    for Source_Dirs use ("src", "templates");
@@ -22,5 +22,4 @@ project Aunit is
 
    package Ide renames Shared.Ide;
 
-end Aunit;
-
+end Aunit_Support;
