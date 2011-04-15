@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                  --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -36,12 +36,6 @@ package Commands.Builder is
 
    Error_Category   : constant String := "Builder results";
    --  -"Builder results"
-   Warning_Category : constant String := "Builder warnings";
-   --  -"Builder warnings"
-   Style_Category   : constant String := "Style errors";
-   --  -"Style errors"
-   Shadow_Category  : constant String := "Syntax check";
-   --  -"Syntax check"
 
    Builder_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => True,
