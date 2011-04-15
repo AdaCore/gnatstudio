@@ -340,12 +340,12 @@ package body Commands.Builder is
       Parse_File_Locations
         (Kernel,
          Output,
-         Category           => To_String (Data.Category_Name),
-         Highlight          => True,
-         Highlight_Category => Error_Category,
-         Style_Category     => Style_Category,
-         Warning_Category   => Warning_Category,
-         Show_In_Locations  => not Data.Background);
+         Category          => To_String (Data.Category_Name),
+         Highlight         => True,
+         Highlight_Style   => Error_Category,
+         Style_Style       => Style_Category,
+         Warning_Style     => Warning_Category,
+         Show_In_Locations => not Data.Background);
 
    exception
       when E : others => Trace (Exception_Handle, E);

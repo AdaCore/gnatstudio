@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,14 +25,14 @@
 package GPS.Kernel.Messages.Tools_Output is
 
    procedure Parse_File_Locations
-     (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : UTF8_String;
-      Category                : Glib.UTF8_String;
-      Highlight               : Boolean := False;
-      Highlight_Category      : GPS.Styles.UI.Style_Access := null;
-      Style_Category          : GPS.Styles.UI.Style_Access := null;
-      Warning_Category        : GPS.Styles.UI.Style_Access := null;
-      Show_In_Locations       : Boolean := True);
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Text              : UTF8_String;
+      Category          : Glib.UTF8_String;
+      Highlight         : Boolean := False;
+      Highlight_Style   : GPS.Styles.UI.Style_Access := null;
+      Style_Style       : GPS.Styles.UI.Style_Access := null;
+      Warning_Style     : GPS.Styles.UI.Style_Access := null;
+      Show_In_Locations : Boolean := True);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
