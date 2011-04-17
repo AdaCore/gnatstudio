@@ -294,6 +294,11 @@ def align_reserved_is ():
    """Aligns reserved word 'is' (eg in type declarations) in current selection"""
    buffer_align_on (sep=" is ")
 
+@interactive ("Ada", in_ada_file, contextual="Align/Reserved word 'renames'", name="Align reserved renames")
+def align_renaming ():
+   """Aligns reserved word 'renames' in current selection"""
+   buffer_align_on (sep=" renames ")
+
 @interactive ("Ada", in_ada_file, contextual="Align/Use clauses",
               name="Align use clauses")
 def align_use_clauses ():

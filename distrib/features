@@ -23,6 +23,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K412-030 GPS: Add support to align on renames keyword (2011-04-17)
+
+  The align plug-in has been enhanced to align on renames keyword.
+
 NF-51-K406-021 GPS: Support for more assembly languages (2011-04-06)
 
   GPS now supports languages "Asm_Cpp" (file extension .S by default) and
