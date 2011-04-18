@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2002-2010, AdaCore                  --
+--                 Copyright (C) 2002-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -3166,7 +3166,6 @@ package body Project_Properties is
       Text       : Gtk_Cell_Renderer_Text;
       Toggle     : Gtk_Cell_Renderer_Toggle;
       Col        : Gtk_Tree_View_Column;
-      Iter       : Gtk_Tree_Iter;
       Arrow      : Gtk_Arrow;
       Col_Number : Gint;
       pragma Unreferenced (Col_Number);
@@ -3261,12 +3260,15 @@ package body Project_Properties is
          end if;
 
          declare
+            Iter  : Gtk_Tree_Iter;
+            Sort  : constant Gint := Freeze_Sort (Editor.Model);
             Value : String_List_Access :=
               Get_Current_Value
                 (Kernel  => Kernel,
                  Project => Project,
                  Attr    => Description,
                  Index   => Attribute_Index);
+
          begin
             if Value /= null then
                for V in Value'Range loop
@@ -3310,6 +3312,8 @@ package body Project_Properties is
                end loop;
                Free (Value);
             end if;
+
+            Thaw_Sort (Editor.Model, Sort);
          end;
 
       else

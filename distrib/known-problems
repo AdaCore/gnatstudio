@@ -8,6 +8,13 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K413-033 GPS: Project properties editor slow to display
+  Problem:    When your project has several thousand sources, the project
+              properties editor might be slow to display.
+  Workaround: Edit the plugin projects.xml and remove the lines for the
+              "source_files" attribute. This will disable graphical editing
+              of this attribute, but will make the editor faster.
+
 - K405-023 GB: Coding Style editor stays "dirty" after save operation
   Problem:    After inserting values into text fields and saving the file
               via control-s, the page stays "dirty" as if the file has not
