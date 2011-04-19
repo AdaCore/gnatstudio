@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1596,6 +1596,7 @@ package body Vsearch is
       Attach (Vsearch.Table, Vsearch.Context_Combo, 1, 2, 2, 3);
 
       Vsearch.Context_Entry := Get_Entry (Vsearch.Context_Combo);
+      Set_Editable (Vsearch.Context_Entry, False);
       Set_Size_Request (Vsearch.Context_Entry, 0, -1);
       Set_Text (Vsearch.Context_Entry, -"");
       Set_Tip (Tooltips, Vsearch.Context_Entry, -"The context of the search");
