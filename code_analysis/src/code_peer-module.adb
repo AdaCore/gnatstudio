@@ -248,8 +248,8 @@ package body Code_Peer.Module is
       Recursive : Boolean;
       File      : Virtual_File := No_File);
    --  Create CodePeer library file. Recursive is True if all project files
-   --  should be included.
-   --  File if set represents the (only) file to analyze.
+   --  should be included. File if set represents the (only) file to analyze;
+   --  value of Recursive is not taken into account in this case.
 
    Output_Directory_Attribute   :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
@@ -279,11 +279,42 @@ package body Code_Peer.Module is
       Recursive : Boolean;
       File      : Virtual_File := No_File)
    is
+      procedure Generate_Source_Directive
+        (File      : Ada.Text_IO.File_Type;
+         Directory : GNATCOLL.VFS.Virtual_File);
+      --  Generates Source directive in the specified file for the specified
+      --  directory.
+
+      -------------------------------
+      -- Generate_Source_Directive --
+      -------------------------------
+
+      procedure Generate_Source_Directive
+        (File      : Ada.Text_IO.File_Type;
+         Directory : GNATCOLL.VFS.Virtual_File) is
+      begin
+         Ada.Text_IO.Put_Line
+           (File,
+            "Source (Directory => """
+              & String (Directory.Full_Name.all) & """,");
+         Ada.Text_IO.Put_Line
+           (File, "        Files     => (""*.scil""),");
+         Ada.Text_IO.Put_Line
+           (File, "        Language  => SCIL);");
+      end Generate_Source_Directive;
+
+      package Virtual_File_Vectors is
+        new Ada.Containers.Vectors
+              (Positive, GNATCOLL.VFS.Virtual_File, GNATCOLL.VFS."=");
+
       F    : Ada.Text_IO.File_Type;
       Prj  : Project_Type;
-      Objs : constant GNATCOLL.VFS.File_Array :=
-              Object_Path (Project, True, True);
       Info : File_Info;
+
+      SCIL_Dirs  : Virtual_File_Vectors.Vector;
+      Iterator   : GNATCOLL.Projects.Project_Iterator;
+      Current    : GNATCOLL.Projects.Project_Type;
+      Object_Dir : GNATCOLL.VFS.Virtual_File;
 
    begin
       Ada.Text_IO.Create
@@ -303,43 +334,52 @@ package body Code_Peer.Module is
          & (+Codepeer_Database_Directory (Project).Full_Name) & """;");
       Ada.Text_IO.New_Line (F);
 
-      if Recursive then
-         for J in Objs'Range loop
-            Ada.Text_IO.Put_Line
-              (F,
-               "Source (Directory => """ &
-               String (Objs (J).Full_Name.all) & "SCIL"",");
-            Ada.Text_IO.Put_Line
-              (F, "        Files     => (""*.scil""),");
-            Ada.Text_IO.Put_Line
-              (F, "        Language  => SCIL);");
+      if File = No_File then
+         --  Construct list of SCIL directories.
+
+         Iterator :=
+           GNATCOLL.Projects.Start (Project, Recursive, False, False);
+         Current  := GNATCOLL.Projects.Current (Iterator);
+
+         while Current /= GNATCOLL.Projects.No_Project loop
+            Object_Dir := Current.Object_Dir;
+
+            --  When object directory is specified and project has language
+            --  "Ada" it is added to the list of object directories.
+
+            if Object_Dir /= No_File and then Current.Has_Language ("ada") then
+               SCIL_Dirs.Append
+                 (GNATCOLL.VFS.Create_From_Dir (Object_Dir, "SCIL"));
+            end if;
+
+            GNATCOLL.Projects.Next (Iterator);
+            Current := GNATCOLL.Projects.Current (Iterator);
          end loop;
+
+         --  Generate Source directive for each SCIL directory.
+
+         for J in SCIL_Dirs.First_Index .. SCIL_Dirs.Last_Index loop
+            Generate_Source_Directive (F, SCIL_Dirs.Element (J));
+         end loop;
+
       else
-         if File = No_File then
-            Ada.Text_IO.Put_Line
-              (F, "Source (Directory => ""SCIL"",");
-            Ada.Text_IO.Put
-              (F, "        Files     => (""*.scil""),");
+         Info := Get_Registry (Kernel).Tree.Info (File);
+         Prj := Info.Project;
 
-         else
-            Info := Get_Registry (Kernel).Tree.Info (File);
-            Prj := Info.Project;
+         Ada.Text_IO.Put_Line
+           (F, "Source (Directory => """
+              & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
+         Ada.Text_IO.Put (F, "        Files     => (""");
+         Ada.Text_IO.Put_Line (F, Info.Unit_Name & ".scil""),");
+         Ada.Text_IO.Put_Line (F, "        Language  => SCIL);");
 
+         if Info.Unit_Part = Unit_Body then
             Ada.Text_IO.Put_Line
               (F, "Source (Directory => """
-                  & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
+                 & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
             Ada.Text_IO.Put (F, "        Files     => (""");
-            Ada.Text_IO.Put_Line (F, Info.Unit_Name & ".scil""),");
+            Ada.Text_IO.Put_Line (F, Info.Unit_Name & "__body.scil""),");
             Ada.Text_IO.Put_Line (F, "        Language  => SCIL);");
-
-            if Info.Unit_Part = Unit_Body then
-               Ada.Text_IO.Put_Line
-                 (F, "Source (Directory => """
-                     & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
-               Ada.Text_IO.Put (F, "        Files     => (""");
-               Ada.Text_IO.Put_Line (F, Info.Unit_Name & "__body.scil""),");
-               Ada.Text_IO.Put_Line (F, "        Language  => SCIL);");
-            end if;
          end if;
       end if;
 
