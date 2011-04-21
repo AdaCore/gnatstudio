@@ -19,6 +19,7 @@
 
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
+with Ada.Strings.Hash;
 with Ada.Text_IO;
 
 with Input_Sources.File;
@@ -285,6 +286,10 @@ package body Code_Peer.Module is
       --  Generates Source directive in the specified file for the specified
       --  directory.
 
+      function Hash
+        (Item : GNATCOLL.VFS.Virtual_File) return Ada.Containers.Hash_Type;
+      --  Returns hash for specified file.
+
       -------------------------------
       -- Generate_Source_Directive --
       -------------------------------
@@ -303,18 +308,32 @@ package body Code_Peer.Module is
            (File, "        Language  => SCIL);");
       end Generate_Source_Directive;
 
-      package Virtual_File_Vectors is
-        new Ada.Containers.Vectors
-              (Positive, GNATCOLL.VFS.Virtual_File, GNATCOLL.VFS."=");
+      ----------
+      -- Hash --
+      ----------
+
+      function Hash
+        (Item : GNATCOLL.VFS.Virtual_File) return Ada.Containers.Hash_Type is
+      begin
+         return Ada.Strings.Hash (String (Item.Full_Name.all));
+      end Hash;
+
+      package Virtual_File_Sets is
+        new Ada.Containers.Hashed_Sets
+              (GNATCOLL.VFS.Virtual_File,
+               Hash,
+               GNATCOLL.VFS."=",
+               GNATCOLL.VFS."=");
 
       F    : Ada.Text_IO.File_Type;
       Prj  : Project_Type;
       Info : File_Info;
 
-      SCIL_Dirs  : Virtual_File_Vectors.Vector;
-      Iterator   : GNATCOLL.Projects.Project_Iterator;
-      Current    : GNATCOLL.Projects.Project_Type;
-      Object_Dir : GNATCOLL.VFS.Virtual_File;
+      SCIL_Dirs   : Virtual_File_Sets.Set;
+      SCIL_Cursor : Virtual_File_Sets.Cursor;
+      Iterator    : GNATCOLL.Projects.Project_Iterator;
+      Current     : GNATCOLL.Projects.Project_Type;
+      Object_Dir  : GNATCOLL.VFS.Virtual_File;
 
    begin
       Ada.Text_IO.Create
@@ -348,7 +367,7 @@ package body Code_Peer.Module is
             --  "Ada" it is added to the list of object directories.
 
             if Object_Dir /= No_File and then Current.Has_Language ("ada") then
-               SCIL_Dirs.Append
+               SCIL_Dirs.Include
                  (GNATCOLL.VFS.Create_From_Dir (Object_Dir, "SCIL"));
             end if;
 
@@ -358,8 +377,12 @@ package body Code_Peer.Module is
 
          --  Generate Source directive for each SCIL directory.
 
-         for J in SCIL_Dirs.First_Index .. SCIL_Dirs.Last_Index loop
-            Generate_Source_Directive (F, SCIL_Dirs.Element (J));
+         SCIL_Cursor := SCIL_Dirs.First;
+
+         while Virtual_File_Sets.Has_Element (SCIL_Cursor) loop
+            Generate_Source_Directive
+              (F, Virtual_File_Sets.Element (SCIL_Cursor));
+            Virtual_File_Sets.Next (SCIL_Cursor);
          end loop;
 
       else
