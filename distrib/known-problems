@@ -8,6 +8,11 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K418-012 GPS: creates broken library file for 'Analyze Root Project'
+  Problem:    GPS creates broken library file for 'Analyze Root Project'
+              action.
+  Workaround: Use 'Analyze All' instead.
+
 - K418-001 GPS: CodePeer's database can't be stored on separate drive
   Problem:    On Windows, CodePeer's output and database directories can be
               located on separate (from project) drive.
