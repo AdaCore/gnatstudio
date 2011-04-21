@@ -14,6 +14,11 @@ If no tag is specified, the entry is relevant to all IDEs.
   Workaround: Use the same drive to store both project and CodePeer output and
               database directories.
 
+- K414-002 GPS: CodePeer's SCIL messages are not removed on sequential runs
+  Problem:    Error messages from CodePeer's SCIL generator are not removed on
+              subsequential runs.
+  Workaround: Manually remove 'CodePeer' category before next run.
+
 - K413-033 GPS: Project properties editor slow to display
   Problem:    When your project has several thousand sources, the project
               properties editor might be slow to display.
