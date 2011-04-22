@@ -8,6 +8,11 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K418-017 GB: errors with comments ending with **
+  Problem:    GNATbench may crash if source file contain comment ending with 
+              **.
+  Workaround: Add some random character at the end of the comment. 
+
 - K418-012 GPS: creates broken library file for 'Analyze Root Project'
   Problem:    GPS creates broken library file for 'Analyze Root Project'
               action.
