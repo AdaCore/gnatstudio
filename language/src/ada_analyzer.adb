@@ -3950,7 +3950,9 @@ package body Ada_Analyzer is
                              and then Buffer (Prev_Tmp) /= '*';
                         end;
 
-                        if Buffer (Next_Char (P)) = '*' then
+                        if P < Buffer'Last
+                          and then Buffer (Next_Char (P)) = '*'
+                        then
                            Handle_Two_Chars ('*');
                            Prev_Token := Tok_Double_Asterisk;
                         else
