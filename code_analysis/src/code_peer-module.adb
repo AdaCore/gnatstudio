@@ -28,6 +28,7 @@ with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Object;
+with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Widget;
 
 with Basic_Types;
@@ -2162,12 +2163,12 @@ package body Code_Peer.Module is
          Style.Set_Background (Preference.Get_Pref);
       end Initialize_Style;
 
-      Submenu_Factory    : GPS.Kernel.Modules.UI.Submenu_Factory;
-      Menu               : constant String := -"/_CodePeer";
-      Advanced_Menu      : constant String := Menu & (-"/Advanced");
-      Codepeer           : constant Virtual_File :=
-                             Locate_On_Path ("codepeer");
-      Mitem              : Gtk.Menu_Item.Gtk_Menu_Item;
+      Submenu_Factory : GPS.Kernel.Modules.UI.Submenu_Factory;
+      Menu            : constant String := -"/_CodePeer";
+      Advanced_Menu   : constant String := Menu & (-"/Advanced");
+      Codepeer        : constant Virtual_File :=
+                          Locate_On_Path ("codepeer");
+      Sep             : Gtk_Separator_Menu_Item;
 
    begin
       if Codepeer = No_File then
@@ -2216,8 +2217,8 @@ package body Code_Peer.Module is
          Text        => -"_Display Code Review",
          Callback    => On_Display_Code_Review'Access);
 
-      Gtk.Menu_Item.Gtk_New (Mitem);
-      Register_Menu (Kernel, Menu, Mitem);
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Menu, Sep);
 
       Register_Menu
         (Kernel      => Kernel,
@@ -2269,8 +2270,8 @@ package body Code_Peer.Module is
          Text        => -"CodePeer _Log",
          Callback    => On_Edit_Log'Access);
 
-      Gtk.Menu_Item.Gtk_New (Mitem);
-      Register_Menu (Kernel, Advanced_Menu, Mitem);
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Advanced_Menu, Sep);
 
       Register_Menu
         (Kernel      => Kernel,

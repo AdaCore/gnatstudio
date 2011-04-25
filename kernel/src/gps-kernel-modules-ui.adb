@@ -52,6 +52,7 @@ with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Selection;             use Gtk.Selection;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Window;                use Gtk.Window;
@@ -715,7 +716,12 @@ package body GPS.Kernel.Modules.UI is
                Widget_List.Free (Children);
 
             when Type_Separator =>
-               Gtk_New (Item, "");
+               declare
+                  Sep : Gtk_Separator_Menu_Item;
+               begin
+                  Gtk_New (Sep);
+                  Item := Gtk_Menu_Item (Sep);
+               end;
 
             when Type_Action | Type_Command =>
                if Full_Name.all /= "" then
@@ -1020,7 +1026,7 @@ package body GPS.Kernel.Modules.UI is
    procedure Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
       Parent_Path : String;
-      Item        : Gtk.Menu_Item.Gtk_Menu_Item := null;
+      Item        : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Filter      : Action_Filter  := null)

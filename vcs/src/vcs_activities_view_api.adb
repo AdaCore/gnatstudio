@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2010, AdaCore                  --
+--                 Copyright (C) 2005-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,6 +31,7 @@ with Templates_Parser;          use Templates_Parser;
 
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 
@@ -975,6 +976,7 @@ package body VCS_Activities_View_API is
       All_Has_Log        : Boolean := True;
       Group_Commit       : Boolean := True;
       Single             : Boolean := True; -- single activity selected
+      Sep                : Gtk_Separator_Menu_Item;
    begin
       --  Determine which sections should be displayed
 
@@ -1055,8 +1057,8 @@ package body VCS_Activities_View_API is
                and then Atomic_Supported
                and then All_Opened);
 
-            Gtk_New (Item);
-            Append (Menu, Item);
+            Gtk_New (Sep);
+            Append (Menu, Sep);
          end;
       end if;
 
@@ -1097,8 +1099,8 @@ package body VCS_Activities_View_API is
            (Item, Signal_Activate, On_Menu_Delete_Activity'Access, Context);
          Set_Sensitive (Item, True);
 
-         Gtk_New (Item);
-         Append (Menu, Item);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
 
          if Actions (Commit) /= null then
             if Single then
@@ -1145,8 +1147,8 @@ package body VCS_Activities_View_API is
       end if;
 
       if File_Section or else Activity_Section then
-         Gtk_New (Item);
-         Append (Menu, Item);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
       end if;
 
       if File_Section then

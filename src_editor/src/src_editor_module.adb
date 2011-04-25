@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,6 +49,7 @@ with Gtk.Object;                        use Gtk.Object;
 with Gtk.Rc;                            use Gtk.Rc;
 with Gtk.Size_Group;                    use Gtk.Size_Group;
 with Gtk.Stock;                         use Gtk.Stock;
+with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;           use Gtk.Separator_Tool_Item;
 with Gtk.Tool_Button;                   use Gtk.Tool_Button;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
@@ -84,6 +85,7 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;                use GPS.Kernel.Timeout;
+with GPS.OS_Integration;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -2565,7 +2567,7 @@ package body Src_Editor_Module is
       Selection                : constant String :=
                                    Edit & (-"S_election") & '/';
       Navigate                 : constant String := '/' & (-"Navigate") & '/';
-      Mitem                    : Gtk_Menu_Item;
+      Sep                      : Gtk_Separator_Menu_Item;
       Toolbar                  : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       UR                       : constant Undo_Redo :=
                                    new Undo_Redo_Information;
@@ -2939,17 +2941,19 @@ package body Src_Editor_Module is
          Command     => Command,
          Add_Before  => False);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Exit");
+      if GPS.OS_Integration.Add_Exit_Menu_In_Menubar then
+         Gtk_New (Sep);
+         Register_Menu (Kernel, File, Sep, Ref_Item => -"Exit");
+      end if;
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
+      Gtk_New (Sep);
+      Register_Menu (Kernel, File, Sep, Ref_Item => -"Close");
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Print");
+      Gtk_New (Sep);
+      Register_Menu (Kernel, File, Sep, Ref_Item => -"Print");
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Change Directory...");
+      Gtk_New (Sep);
+      Register_Menu (Kernel, File, Sep, Ref_Item => -"Change Directory...");
 
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
@@ -3001,17 +3005,17 @@ package body Src_Editor_Module is
                      Add_Before => False,
                      Filter => Src_Action_Context);
 
-      Gtk_New (Mitem);
+      Gtk_New (Sep);
       Register_Menu
-        (Kernel, Edit, Mitem, Ref_Item => "Redo", Add_Before => False);
+        (Kernel, Edit, Sep, Ref_Item => "Redo", Add_Before => False);
 
       Register_Menu (Kernel, Edit, -"Insert _File...",  "",
                      On_Insert_File'Access, Ref_Item => -"Select All",
                      Add_Before => False,
                      Filter => Src_Action_Context);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Select All",
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Select All",
                      Add_Before => False);
 
       Register_Menu (Kernel, Selection, -"Comment _Lines", "",
@@ -3033,8 +3037,8 @@ package body Src_Editor_Module is
                      Add_Before => False,
                      Filter     => Src_Action_Context);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Selection",
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Selection",
                     Add_Before => False);
 
       Command := new Indentation_Command;
@@ -3051,8 +3055,8 @@ package body Src_Editor_Module is
          Category => "Editor",
          Filter   => Src_Action_Context);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Insert File...",
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Insert File...",
                      Add_Before => False);
 
       Register_Menu (Kernel, Edit, -"_Fold all blocks", "",
@@ -3061,8 +3065,8 @@ package body Src_Editor_Module is
                      Add_Before     => False,
                      Filter         => Src_Action_Context);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Fold all blocks",
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Fold all blocks",
                      Add_Before => True);
 
       Register_Menu (Kernel, Edit, -"Unfold all _blocks", "",

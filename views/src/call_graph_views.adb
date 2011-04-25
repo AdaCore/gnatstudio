@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2010, AdaCore                  --
+--                 Copyright (C) 2005-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,6 +38,7 @@ with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Paned;                   use Gtk.Paned;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
+with Gtk.Separator_Menu_Item;     use Gtk.Separator_Menu_Item;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
@@ -920,6 +921,8 @@ package body Call_Graph_Views is
       Entity : Entity_Information;
       Value  : GValue;
       Mitem  : Gtk_Menu_Item;
+      Sep    : Gtk_Separator_Menu_Item;
+
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
 
@@ -952,8 +955,8 @@ package body Call_Graph_Views is
          Widget_Callback.Object_Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Clear_View'Access, V);
 
-         Gtk_New (Mitem);
-         Append (Menu, Mitem);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
 
       else
          Unselect_All (Get_Selection (V.Tree));

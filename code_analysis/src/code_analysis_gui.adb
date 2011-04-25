@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2010, AdaCore                  --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,7 @@ with Gtk.Window;                 use Gtk.Window;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Image;                  use Gtk.Image;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
@@ -435,7 +436,9 @@ package body Code_Analysis_GUI is
       Buffer_Y  : Gint;
       Row_Found : Boolean;
       Item      : Gtk_Menu_Item;
+      Sep       : Gtk_Separator_Menu_Item;
       Iter      : Gtk_Tree_Iter := Get_Iter_First (View.Model);
+
    begin
 
       Get_Path_At_Pos (View.Tree, Gint (X), Gint (Y), Path, Column,
@@ -482,8 +485,8 @@ package body Code_Analysis_GUI is
       ----------------------------------
 
       if Path /= null then
-         Gtk_New (Item);
-         Append (Menu, Item);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
          Select_Path (Get_Selection (View.Tree), Path);
          Iter := Get_Iter (Gtk_Tree_Model (View.Model), Path);
 

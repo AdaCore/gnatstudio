@@ -37,7 +37,8 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
-with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
+with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -2373,6 +2374,7 @@ package body GVD_Module is
       Debug_Sub         : constant String := Debug & (-"_Debug") & '/';
       Data_Sub          : constant String := Debug & (-"D_ata") & '/';
       Mitem             : Gtk_Menu_Item;
+      Sepitem           : Gtk_Separator_Menu_Item;
       Menu              : Gtk_Menu;
       Command           : Interactive_Command_Access;
       Filter            : Action_Filter;
@@ -2514,8 +2516,8 @@ package body GVD_Module is
       Breakpoints_Editor.Register_Module (Kernel);
       GVD.Memory_View.Register_Module (Kernel);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Data_Sub, Mitem);
+      Gtk_New (Sepitem);
+      Register_Menu (Kernel, Data_Sub, Sepitem);
       Register_Menu (Kernel, Data_Sub, -"Display _Local Variables", "",
                      On_Display_Locals'Access, null,
                      GDK_L, Mod1_Mask);
@@ -2527,8 +2529,8 @@ package body GVD_Module is
       Register_Menu (Kernel, Data_Sub, -"Display Any _Expression...", "",
                      On_Display_Expression'Access);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Debug, Mitem);
+      Gtk_New (Sepitem);
+      Register_Menu (Kernel, Debug, Sepitem);
 
       Register_Menu (Kernel, Debug, -"_Run...", "",
                      On_Start'Access, null, GDK_F2, Sensitive => False);
@@ -2549,8 +2551,8 @@ package body GVD_Module is
       Register_Menu (Kernel, Debug, -"_Interrupt", Stock_Stop,
                      On_Interrupt'Access, null,
                      GDK_backslash, Control_Mask, Sensitive => False);
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Debug, Mitem);
+      Gtk_New (Sepitem);
+      Register_Menu (Kernel, Debug, Sepitem);
 
       Register_Menu (Kernel, Debug, -"Te_rminate Current", "",
                      On_Debug_Terminate_Current'Access, Sensitive => False);

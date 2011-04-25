@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2010, AdaCore                  --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,6 +33,7 @@ with Gtk.Enums;                              use Gtk.Enums;
 with Gtk.Handlers;                           use Gtk.Handlers;
 with Gtk.Menu;                               use Gtk.Menu;
 with Gtk.Menu_Item;                          use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;                use Gtk.Separator_Menu_Item;
 with Gtk.Tree_Selection;                     use Gtk.Tree_Selection;
 with Gtk.Tree_View;                          use Gtk.Tree_View;
 with Gtk.Tree_Model;                         use Gtk.Tree_Model;
@@ -1628,6 +1629,7 @@ package body Code_Analysis_Module is
       Analysis : constant String :=
          To_String (Code_Analysis_Module_ID.Registered_Analysis.First_Element);
       Item     : Gtk_Menu_Item;
+      Sep      : Gtk_Separator_Menu_Item;
 
    begin
       if Has_File_Information (Context) then
@@ -1655,8 +1657,8 @@ package body Code_Analysis_Module is
                Project  => Project_Information (Context),
                File     => File_Information (Context)));
 
-         Gtk_New (Item);
-         Append (Submenu, Item);
+         Gtk_New (Sep);
+         Append (Submenu, Sep);
 
          Gtk_New
            (Item, -"Load data for " &
@@ -1713,8 +1715,8 @@ package body Code_Analysis_Module is
                Project  => Project_Information (Context),
                File     => No_File));
 
-         Gtk_New (Item);
-         Append (Submenu, Item);
+         Gtk_New (Sep);
+         Append (Submenu, Sep);
 
          Gtk_New
            (Item, -"Load data for project " &
@@ -1750,8 +1752,8 @@ package body Code_Analysis_Module is
       if Get_Creator (Context) /=
         Abstract_Module_ID (Code_Analysis_Module_ID)
       then
-         Gtk_New (Item);
-         Append (Submenu, Item);
+         Gtk_New (Sep);
+         Append (Submenu, Sep);
 
          Gtk_New (Item, -"Show Coverage Report");
          Append (Submenu, Item);
@@ -2109,7 +2111,7 @@ package body Code_Analysis_Module is
       Tools               : constant String := '/' & (-"Tools");
       Coverage            : constant String := -"Cov_erage";
       Views               : constant String := -"Views";
-      Mitem               : Gtk_Menu_Item;
+      Sep                 : Gtk_Separator_Menu_Item;
 
    begin
       Binary_Coverage_Mode          := Active (Binary_Coverage_Trace);
@@ -2139,8 +2141,8 @@ package body Code_Analysis_Module is
          Ref_Item    => -"Documentation",
          Add_Before  => True);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Tools & '/' & Coverage, Mitem);
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Tools & '/' & Coverage, Sep);
 
       Register_Menu
         (Kernel      => Kernel,

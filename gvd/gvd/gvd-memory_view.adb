@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2010, AdaCore               --
+--                    Copyright (C) 2000-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,7 +39,7 @@ with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
@@ -1543,7 +1543,7 @@ package body GVD.Memory_View is
    is
       Debug    : constant String := '/' & (-"_Debug") & '/';
       Data_Sub : constant String := Debug & (-"D_ata") & '/';
-      Mitem    : Gtk_Menu_Item;
+      Mitem    : Gtk_Separator_Menu_Item;
       Command  : Interactive_Command_Access;
    begin
       Gtk_New (Mitem);

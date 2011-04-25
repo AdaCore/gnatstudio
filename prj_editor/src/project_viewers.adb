@@ -40,6 +40,7 @@ with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
+with Gtk.Separator_Menu_Item;      use Gtk.Separator_Menu_Item;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
 with Gtk.Tree_Store;               use Gtk.Tree_Store;
@@ -1739,7 +1740,7 @@ package body Project_Viewers is
       Filter  : Action_Filter;
       Filter2 : Action_Filter;
       Command : Interactive_Command_Access;
-      Mitem   : Gtk_Menu_Item;
+      Mitem   : Gtk_Separator_Menu_Item;
 
    begin
       Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;

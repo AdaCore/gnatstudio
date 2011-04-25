@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2010, AdaCore                 --
+--                  Copyright (C) 2002-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,7 +30,7 @@ with Glib.Object;                use Glib.Object;
 with XML_Utils;                  use XML_Utils;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
-with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Tool_Button;            use Gtk.Tool_Button;
@@ -1074,7 +1074,7 @@ package body Navigation_Module is
       Navigate           : constant String := "/_" & (-"Navigate");
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
-      Menu_Item          : Gtk_Menu_Item;
+      Menu_Item          : Gtk_Separator_Menu_Item;
       Button             : Gtk_Tool_Button;
       Space              : Gtk_Separator_Tool_Item;
       --  Memory is never freed, but this is needed for the whole life of

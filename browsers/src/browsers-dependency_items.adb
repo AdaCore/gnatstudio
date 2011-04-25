@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,48 +17,49 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                   use Glib;
-with Glib.Object;            use Glib.Object;
-with Gdk.Event;              use Gdk.Event;
+with Glib;                    use Glib;
+with Glib.Object;             use Glib.Object;
+with Gdk.Event;               use Gdk.Event;
 
-with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
-with Gtk.Main;               use Gtk.Main;
-with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Menu_Item;          use Gtk.Menu_Item;
-with Gtk.Object;             use Gtk.Object;
-with Gtk.Stock;              use Gtk.Stock;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtk.Window;             use Gtk.Window;
+with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
+with Gtk.Main;                use Gtk.Main;
+with Gtk.Menu;                use Gtk.Menu;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Object;              use Gtk.Object;
+with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
+with Gtk.Stock;               use Gtk.Stock;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Window;              use Gtk.Window;
 
-with Gtkada.Canvas;          use Gtkada.Canvas;
-with Gtkada.File_Selector;   use Gtkada.File_Selector;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-with Gtkada.MDI;             use Gtkada.MDI;
+with Gtkada.Canvas;           use Gtkada.Canvas;
+with Gtkada.File_Selector;    use Gtkada.File_Selector;
+with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.MDI;              use Gtkada.MDI;
 
-with Browsers.Canvas;        use Browsers.Canvas;
-with Commands.Interactive;   use Commands, Commands.Interactive;
-with Entities.Queries;       use Entities.Queries;
-with Entities;               use Entities;
-with Fname;                  use Fname;
-with GNATCOLL.Projects;      use GNATCOLL.Projects;
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel;             use GPS.Kernel;
-with Histories;              use Histories;
-with Namet;                  use Namet;
-with Pango.Layout;           use Pango.Layout;
-with Projects;               use Projects;
-with Traces;                 use Traces;
-with XML_Utils;              use XML_Utils;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with Browsers.Canvas;         use Browsers.Canvas;
+with Commands.Interactive;    use Commands, Commands.Interactive;
+with Entities.Queries;        use Entities.Queries;
+with Entities;                use Entities;
+with Fname;                   use Fname;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
+with Histories;               use Histories;
+with Namet;                   use Namet;
+with Pango.Layout;            use Pango.Layout;
+with Projects;                use Projects;
+with Traces;                  use Traces;
+with XML_Utils;               use XML_Utils;
 
 package body Browsers.Dependency_Items is
 
@@ -401,14 +402,15 @@ package body Browsers.Dependency_Items is
       Menu         : Gtk.Menu.Gtk_Menu)
    is
       Mitem : Gtk_Menu_Item;
+      Sep   : Gtk_Separator_Menu_Item;
       Check : Gtk_Check_Menu_Item;
    begin
       Default_Browser_Context_Factory
         (Context, Kernel, Event_Widget, Object, Event, Menu);
 
       if not Has_File_Information (Context) then
-         Gtk_New (Mitem, "");
-         Append (Menu, Mitem);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
 
          Gtk_New (Mitem, Label => -"Open file...");
          Append (Menu, Mitem);

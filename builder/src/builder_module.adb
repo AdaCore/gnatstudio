@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +29,7 @@ with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
-with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
@@ -423,8 +423,9 @@ package body Builder_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Build_Menu : constant String := '/' & (-"_Build") & '/';
-      Tools : constant String := '/' & (-"Tools") & '/';
-      Mitem : Gtk_Menu_Item;
+      Tools      : constant String := '/' & (-"Tools") & '/';
+      Sep        : Gtk_Separator_Menu_Item;
+
    begin
       --  This memory is allocated once, and lives as long as the application
 
@@ -435,8 +436,8 @@ package body Builder_Module is
          Module_Name => "Builder",
          Priority    => Default_Priority);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Build_Menu, Mitem, Ref_Item => -"Settings");
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
 
       Register_Menu
         (Kernel, Build_Menu, -"Recompute _Xref info", "",
@@ -445,11 +446,11 @@ package body Builder_Module is
         (Kernel, Build_Menu, -"Load Xref info in memory", "",
          On_Load_Xref_In_Memory'Access, Ref_Item => -"Settings");
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Build_Menu, Mitem, Ref_Item => -"Settings");
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Tools, Mitem);
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Tools, Sep);
       Register_Menu
         (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Tools_Interrupt'Access,
          null, GDK_C, Control_Mask + Shift_Mask);

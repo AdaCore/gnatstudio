@@ -38,6 +38,7 @@ with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Selection;            use Gtk.Selection;
+with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
@@ -2454,7 +2455,7 @@ package body Vsearch is
    is
       Navigate : constant String := "/_" & (-"Navigate");
       Find_All : constant String := -"Find All References";
-      Mitem    : Gtk_Menu_Item;
+      Mitem    : Gtk_Separator_Menu_Item;
 
       open_options_xpm : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
       pragma Import (C, open_options_xpm, "unfold_block_xpm");

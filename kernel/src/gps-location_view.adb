@@ -40,6 +40,7 @@ with Gtk.Menu;                         use Gtk.Menu;
 with Gtk.Menu_Item;                    use Gtk.Menu_Item;
 with Gtk.Object;                       use Gtk.Object;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
+with Gtk.Separator_Menu_Item;          use Gtk.Separator_Menu_Item;
 with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
 with Gtk.Widget;                       use Gtk.Widget;
 
@@ -707,6 +708,7 @@ package body GPS.Location_View is
    is
       pragma Unreferenced (Kernel, Event_Widget, Event);
       Mitem    : Gtk_Menu_Item;
+      Sep      : Gtk_Separator_Menu_Item;
 
       Explorer : constant Location_View := Location_View (Object);
       Path     : Gtk_Tree_Path;
@@ -738,8 +740,8 @@ package body GPS.Location_View is
          return;
       end if;
 
-      Gtk_New (Mitem);
-      Append (Menu, Mitem);
+      Gtk_New (Sep);
+      Append (Menu, Sep);
 
       Gtk_New (Mitem, -"Expand category");
       Location_View_Callbacks.Object_Connect
@@ -813,8 +815,8 @@ package body GPS.Location_View is
       end if;
 
       if Created then
-         Gtk_New (Mitem);
-         Append (Menu, Mitem);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
       end if;
 
       Gtk_New (Mitem, -"Clear locations");

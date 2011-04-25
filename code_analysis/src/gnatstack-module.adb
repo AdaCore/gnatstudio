@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2010, AdaCore                   --
+--                     Copyright (C) 2010-2011, AdaCore              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,7 @@ with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Item;
 with Gtk.Object;
+with Gtk.Separator_Menu_Item;       use Gtk.Separator_Menu_Item;
 with Gtkada.MDI;
 with GPS.Editors.Line_Information;
 with GPS.Intl;
@@ -1039,7 +1040,7 @@ package body GNATStack.Module is
       GNATStack_Path : constant GNATCOLL.VFS.Virtual_File :=
                          GNATCOLL.VFS.Locate_On_Path ("gnatstack");
       Factory        : GPS.Kernel.Modules.UI.Submenu_Factory;
-      Mitem          : Gtk.Menu_Item.Gtk_Menu_Item;
+      Sep            : Gtk_Separator_Menu_Item;
 
    begin
       if GNATStack_Path = No_File then
@@ -1071,8 +1072,8 @@ package body GNATStack.Module is
          Text        => -"_Analyze stack usage",
          Callback    => On_Analyze_Stack_Usage'Access);
 
-      Gtk.Menu_Item.Gtk_New (Mitem);
-      Register_Menu (Kernel, Menu, Mitem);
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Menu, Sep);
 
       Register_Menu
         (Kernel      => Kernel,
@@ -1080,8 +1081,8 @@ package body GNATStack.Module is
          Text        => -"_Open undefined subprograms editor",
          Callback    => On_Open_CIs_Editor'Access);
 
-      Gtk.Menu_Item.Gtk_New (Mitem);
-      Register_Menu (Kernel, Menu, Mitem);
+      Gtk_New (Sep);
+      Register_Menu (Kernel, Menu, Sep);
 
       Register_Menu
         (Kernel      => Kernel,

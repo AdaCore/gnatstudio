@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -51,6 +51,7 @@ with Gtk.Image;                         use Gtk.Image;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Object;                        use Gtk.Object;
+with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
 with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Style;                         use Gtk.Style;
@@ -709,6 +710,7 @@ package body Browsers.Canvas is
       pragma Unreferenced (Event_Widget);
       B            : constant General_Browser := General_Browser (Object);
       Mitem        : Gtk_Menu_Item;
+      Sep          : Gtk_Separator_Menu_Item;
       Check        : Gtk_Check_Menu_Item;
       Zooms_Menu   : Gtk_Menu;
       Item         : Canvas_Item;
@@ -834,8 +836,8 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Mitem, Gtk.Menu_Item.Signal_Activate, On_Select_All'Access, B);
 
-      Gtk_New (Mitem);
-      Append (Menu, Mitem);
+      Gtk.Separator_Menu_Item.Gtk_New (Sep);
+      Append (Menu, Sep);
 
       Gtk_New (Mitem, Label => -"Clear");
       Append (Menu, Mitem);

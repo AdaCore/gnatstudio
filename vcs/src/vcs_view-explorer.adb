@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,6 +31,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -847,6 +848,7 @@ package body VCS_View.Explorer is
 
       Check     : Gtk_Check_Menu_Item;
       Mitem     : Gtk_Menu_Item;
+      Sep       : Gtk_Separator_Menu_Item;
       Submenu   : Gtk_Menu;
       Files     : File_Array_Access;
       Path      : Gtk_Tree_Path;
@@ -940,8 +942,8 @@ package body VCS_View.Explorer is
       Widget_Callback.Object_Connect
         (Mitem, Signal_Activate, Hide_All_Status'Access, Explorer);
 
-      Gtk_New (Mitem);
-      Append (Submenu, Mitem);
+      Gtk_New (Sep);
+      Append (Submenu, Sep);
 
       declare
          S : constant Status_Array_Access :=

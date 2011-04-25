@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,6 +38,7 @@ with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
@@ -814,10 +815,11 @@ package body VCS_View_API is
       -------------------
 
       procedure Add_Separator is
+         Sep : Gtk_Separator_Menu_Item;
       begin
          if Items_Inserted then
-            Gtk_New (Item);
-            Append (Menu, Item);
+            Gtk_New (Sep);
+            Append (Menu, Sep);
             Items_Inserted := False;
          end if;
       end Add_Separator;

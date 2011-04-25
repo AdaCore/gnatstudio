@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2010, AdaCore             --
+--                      Copyright (C) 2001-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,6 +36,7 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -1054,7 +1055,7 @@ package body Custom_Module is
          After   : constant String := Get_Attribute (Node, "after");
          Child   : Node_Ptr;
          Title   : GNAT.OS_Lib.String_Access := new String'("");
-         Item    : Gtk_Menu_Item;
+         Sep     : Gtk_Separator_Menu_Item;
          Command : Action_Record_Access;
       begin
          Child := Node.Child;
@@ -1083,8 +1084,8 @@ package body Custom_Module is
          end if;
 
          if Title.all = "" then
-            Gtk_New (Item);
-            Register_Menu (Kernel, Parent_Path, Item);
+            Gtk_New (Sep);
+            Register_Menu (Kernel, Parent_Path, Sep);
          else
             Command := Lookup_Action (Kernel, Action);
             if Command /= null and then Command.Command /= null then
@@ -1458,8 +1459,10 @@ package body Custom_Module is
             Filter_A : Action_Filter;
 
             Item : Gtk_Menu_Item;
+            Sep  : Gtk_Separator_Menu_Item;
             Menu : Subprogram_Type_Menu;
             Last : Integer := Path'First - 1;
+
          begin
             --  Take into account backslashes when extracting components of the
             --  menu path.
@@ -1474,7 +1477,8 @@ package body Custom_Module is
             end loop;
 
             if Path'Length > 0 and then Path (Last + 1) = '-' then
-               Gtk_New (Item);
+               Gtk_New (Sep);
+               Item := Gtk_Menu_Item (Sep);
             else
                Menu := new Subprogram_Type_Menu_Record;
                Gtk.Menu_Item.Initialize_With_Mnemonic

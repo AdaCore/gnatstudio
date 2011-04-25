@@ -57,9 +57,10 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -1066,6 +1067,7 @@ package body Project_Explorers is
       Iter      : constant Gtk_Tree_Iter :=
                     Find_Iter_For_Event (T.Tree, T.Tree.Model, Event);
       Item      : Gtk_Menu_Item;
+      Sep       : Gtk_Separator_Menu_Item;
       Check     : Gtk_Check_Menu_Item;
       Path      : Gtk_Tree_Path;
       Node_Type : Node_Types;
@@ -1110,8 +1112,8 @@ package body Project_Explorers is
            (Check, Signal_Toggled, Update_View'Access,
             Slot_Object => T);
 
-         Gtk_New (Item);
-         Append (Menu, Item);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
       end if;
 
       if (Node_Type = Project_Node or else Node_Type = Extends_Project_Node)

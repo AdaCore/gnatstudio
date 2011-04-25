@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -331,7 +331,7 @@ package GPS.Kernel.Modules.UI is
    procedure Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
       Parent_Path : String;
-      Item        : Gtk.Menu_Item.Gtk_Menu_Item := null;
+      Item        : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Filter      : Action_Filter  := null);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2010, AdaCore              --
+--                     Copyright (C) 2001-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;                       use Glib.Object;
-with Gtk.Menu_Item;                     use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Dialog;                        use Gtk.Dialog;
 
 with GPS.Kernel;                        use GPS.Kernel;
@@ -141,7 +141,7 @@ package body Aunit_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Menu_Item    : Gtk_Menu_Item;
+      Menu_Item    : Gtk_Separator_Menu_Item;
       Edit         : constant String := '/' & (-"Edit") & '/';
       Unit_Testing : constant String := -"Unit Testing";
    begin

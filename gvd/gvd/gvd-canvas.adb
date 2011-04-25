@@ -17,28 +17,29 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Bitmap;          use Gdk.Bitmap;
-with Gdk.Color;           use Gdk.Color;
-with Gdk.Event;           use Gdk.Event;
-with Gdk.GC;              use Gdk.GC;
-with Gdk.Pixmap;          use Gdk.Pixmap;
-with Gdk.Window;          use Gdk.Window;
-with Gdk;                 use Gdk;
-with Glib;                use Glib;
-with Glib.Object;         use Glib.Object;
-with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
-with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Menu;            use Gtk.Menu;
-with Gtk.Menu_Item;       use Gtk.Menu_Item;
-with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Canvas;       use Gtkada.Canvas;
-with Gtkada.Handlers;     use Gtkada.Handlers;
-with Gtkada.MDI;          use Gtkada.MDI;
-with Pango.Enums;         use Pango.Enums;
-with Pango.Font;          use Pango.Font;
-with Pango.Layout;        use Pango.Layout;
+with Gdk.Bitmap;              use Gdk.Bitmap;
+with Gdk.Color;               use Gdk.Color;
+with Gdk.Event;               use Gdk.Event;
+with Gdk.GC;                  use Gdk.GC;
+with Gdk.Pixmap;              use Gdk.Pixmap;
+with Gdk.Window;              use Gdk.Window;
+with Gdk;                     use Gdk;
+with Glib;                    use Glib;
+with Glib.Object;             use Glib.Object;
+with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
+with Gtk.Enums;               use Gtk.Enums;
+with Gtk.Handlers;            use Gtk.Handlers;
+with Gtk.Menu;                use Gtk.Menu;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
+with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtkada.Canvas;           use Gtkada.Canvas;
+with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.MDI;              use Gtkada.MDI;
+with Pango.Enums;             use Pango.Enums;
+with Pango.Font;              use Pango.Font;
+with Pango.Layout;            use Pango.Layout;
 
 with Browsers.Canvas;        use Browsers.Canvas;
 with Debugger;               use Debugger;
@@ -1322,6 +1323,7 @@ package body GVD.Canvas is
    is
       Canvas  : constant GVD_Canvas := GVD_Canvas (Object);
       Mitem   : Gtk_Menu_Item;
+      Sep     : Gtk_Separator_Menu_Item;
       Check   : Gtk_Check_Menu_Item;
       Xr, Yr  : Gint;
       CItem   : Canvas_Item;
@@ -1336,8 +1338,8 @@ package body GVD.Canvas is
       end if;
 
       if Item = null then
-         Gtk_New (Mitem);
-         Append (Menu, Mitem);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
 
          Gtk_New (Mitem, Label => -"Display Expression...");
          Append (Menu, Mitem);
@@ -1388,6 +1390,7 @@ package body GVD.Canvas is
    is
       Canvas  : constant GVD_Canvas := GVD_Canvas (Debugger.Data);
       Mitem   : Gtk_Menu_Item;
+      Sep     : Gtk_Separator_Menu_Item;
       Radio   : Gtk_Radio_Menu_Item;
       Check   : Gtk_Check_Menu_Item;
       Submenu : Gtk_Menu;
@@ -1412,8 +1415,8 @@ package body GVD.Canvas is
       if Is_A_Variable (Item) then
          --  Display a separator
 
-         Gtk_New (Mitem);
-         Append (Menu, Mitem);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
 
          Gtk_New (Mitem, Label => -"Hide all " & Component_Name);
          Item_Handler.Connect
@@ -1459,8 +1462,8 @@ package body GVD.Canvas is
 
          --  Display a separator
 
-         Gtk_New (Mitem);
-         Append (Menu, Mitem);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
 
          Gtk_New (Mitem, Label => -"Clone" & " " & Component_Name);
          Item_Handler.Connect
@@ -1522,8 +1525,8 @@ package body GVD.Canvas is
 
       if Is_A_Variable (Item) then
          --  Display a separator
-         Gtk_New (Mitem);
-         Append (Menu, Mitem);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
 
          Gtk_New (Submenu);
          Gtk_New (Mitem, Label => -"Display");
@@ -1576,8 +1579,8 @@ package body GVD.Canvas is
          Append (Submenu, Radio);
 
          --  Display a separator
-         Gtk_New (Mitem);
-         Append (Submenu, Mitem);
+         Gtk_New (Sep);
+         Append (Submenu, Sep);
 
          Gtk_New (Radio, Widget_SList.Null_List, -"Default");
          Set_Active (Radio, Get_Format (Item) = Default_Format);
@@ -1657,8 +1660,8 @@ package body GVD.Canvas is
 
       --  Display a separator
 
-      Gtk_New (Mitem);
-      Append (Menu, Mitem);
+      Gtk_New (Sep);
+      Append (Menu, Sep);
 
       --  Display "Toggle auto-refresh" option
 

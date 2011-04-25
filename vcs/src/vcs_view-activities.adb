@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2010, AdaCore                  --
+--                 Copyright (C) 2005-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,7 +28,7 @@ with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
@@ -769,7 +769,7 @@ package body VCS_View.Activities is
 
       Explorer : constant VCS_Activities_View_Access :=
                    VCS_Activities_View_Access (Object);
-      Mitem    : Gtk_Menu_Item;
+      Mitem    : Gtk_Separator_Menu_Item;
       Files    : File_Array_Access;
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;

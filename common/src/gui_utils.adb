@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2010, AdaCore                  --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1133,6 +1133,7 @@ package body GUI_Utils is
       Max : constant Natural := Shift'Length + Control'Length + Meta'Length;
       Buffer   : String (1 .. Max);
       Current : Natural := Buffer'First;
+
    begin
       if Key = 0 then
          return "";
@@ -1587,7 +1588,8 @@ package body GUI_Utils is
       Ref_Item     : String  := "";
       Add_Before   : Boolean := True;
       Use_Mnemonics : Boolean := True;
-      New_Item      : Gtk.Menu_Item.Gtk_Menu_Item := null) return Gtk_Menu_Item
+      New_Item      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
+      return Gtk_Menu_Item
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Gtk_Menu_Item_Record'Class, Gtk_Menu_Item);
@@ -1645,7 +1647,7 @@ package body GUI_Utils is
             Skip_To_Char (Path, Last, '/');
 
             if Last > Path'Last and then New_Item /= null then
-               Menu_Item := New_Item;
+               Menu_Item := Gtk_Menu_Item (New_Item);
             else
                Menu_Item := new Gtk_Menu_Item_Record;
             end if;
@@ -1680,7 +1682,7 @@ package body GUI_Utils is
       end if;
 
       if Menu_Item = null then
-         Menu_Item := New_Item;
+         Menu_Item := Gtk_Menu_Item (New_Item);
          Unchecked_Free (Menu_Item);
       end if;
 
@@ -1694,7 +1696,7 @@ package body GUI_Utils is
    procedure Add_Menu
      (Parent     : Gtk_Menu;
       Menu_Bar   : Gtk_Menu_Bar := null;
-      Item       : Gtk_Menu_Item;
+      Item       : access Gtk_Menu_Item_Record'Class;
       Index      : Gint := -1;
       Add_Before : Boolean := True)
    is

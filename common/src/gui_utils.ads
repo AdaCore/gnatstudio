@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2009, AdaCore                  --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -448,7 +448,7 @@ package GUI_Utils is
       Ref_Item      : String  := "";
       Add_Before    : Boolean := True;
       Use_Mnemonics : Boolean := True;
-      New_Item      : Gtk.Menu_Item.Gtk_Menu_Item := null)
+      New_Item      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
       return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Create or return the menu_item corresponding to Path in Menu.
    --  Path is a '/'-separated list of menu names, for instance File/New.
@@ -465,7 +465,7 @@ package GUI_Utils is
    procedure Add_Menu
      (Parent     : Gtk.Menu.Gtk_Menu;
       Menu_Bar   : Gtk.Menu_Bar.Gtk_Menu_Bar := null;
-      Item       : Gtk.Menu_Item.Gtk_Menu_Item;
+      Item       : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
       Index      : Gint    := -1;
       Add_Before : Boolean := True);
    --  Append Item either to Parent, if not null, or directly to the menu
