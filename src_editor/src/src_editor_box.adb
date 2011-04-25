@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -53,6 +53,7 @@ with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Object;                 use Gtk.Object;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
+with Gtk.Status_Bar;             use Gtk.Status_Bar;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Mark;              use Gtk.Text_Mark;
 with Gtk.Text_View;              use Gtk.Text_View;
@@ -668,7 +669,6 @@ package body Src_Editor_Box is
 
       Info  : constant Extra_Information_Array_Access :=
                 Get_Extra_Information (Box.Source_Buffer);
-      Label : Gtk_Label;
 
    begin
       Destroy_Info_Frames (Box);
@@ -680,13 +680,10 @@ package body Src_Editor_Box is
 
       for J in Box.Buffer_Info_Frames'Range loop
          if Info (J).Info.Text /= null then
-            Gtk_New (Label, Info (J).Info.Text.all);
+            Gtk_New (Box.Buffer_Info_Frames (J).Label, Info (J).Info.Text.all);
          else
-            Gtk_New (Label);
+            Gtk_New (Box.Buffer_Info_Frames (J).Label);
          end if;
-
-         Gtk_New (Box.Buffer_Info_Frames (J).Frame);
-         Set_Shadow_Type (Box.Buffer_Info_Frames (J).Frame, Shadow_None);
 
          Gtk_New_Vseparator (Box.Buffer_Info_Frames (J).Separator);
          Pack_End
@@ -695,11 +692,9 @@ package body Src_Editor_Box is
             Expand => False,
             Fill => False);
 
-         Add (Box.Buffer_Info_Frames (J).Frame, Label);
-
          Pack_End
            (Box.Label_Box,
-            Box.Buffer_Info_Frames (J).Frame,
+            Box.Buffer_Info_Frames (J).Label,
             Expand  => False,
             Fill    => True,
             Padding => 0);
@@ -769,7 +764,7 @@ package body Src_Editor_Box is
    begin
       if Box.Buffer_Info_Frames /= null then
          for J in Box.Buffer_Info_Frames'Range loop
-            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Frame);
+            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Label);
             Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Separator);
          end loop;
 
@@ -843,6 +838,7 @@ package body Src_Editor_Box is
       Drawing_Area   : Gtk_Drawing_Area;
       Hbox           : Gtk_Hbox;
       Separator      : Gtk_Vseparator;
+      Status_Bar     : Gtk_Status_Bar;
 
    begin
       Initialize_Vbox (Box, Homogeneous => False);
@@ -890,12 +886,28 @@ package body Src_Editor_Box is
 
       --  The status bar, at the bottom of the window...
 
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_Etched_In);
-      Pack_Start (Box, Frame, Expand => False, Fill => False);
+      --  We use an actual GtkStatusBar so that themes can correctly display
+      --  the status bar as desired.
+      Gtk_New (Status_Bar);
+      Status_Bar.Set_Has_Resize_Grip (False);
+      Pack_Start (Box, Status_Bar, Expand => False, Fill => False);
+      Box.Label_Box := Gtk_Hbox (Status_Bar.Get_Message_Area);
 
-      Gtk_New_Hbox (Box.Label_Box, Homogeneous => False, Spacing => 2);
-      Add (Frame, Box.Label_Box);
+      --  Remove packed-in children, and replace with our own widgets
+      declare
+         Children : Gtk.Widget.Widget_List.Glist :=
+                      Box.Label_Box.Get_Children;
+         Child    : Gtk_Widget;
+         use Gtk.Widget.Widget_List;
+
+      begin
+         for J in 0 .. Length (Children) - 1 loop
+            Child := Nth_Data (Children, J);
+            Box.Label_Box.Remove (Child);
+         end loop;
+
+         Free (Children);
+      end;
 
       --  Avoid resizing the main window whenever a label is changed
       Set_Resize_Mode (Box.Label_Box, Resize_Queue);
@@ -932,20 +944,16 @@ package body Src_Editor_Box is
       --  Modified file area...
       Gtk_New_Vseparator (Separator);
       Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_None);
-      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Modified_Label);
-      Add (Frame, Box.Modified_Label);
+      Pack_End
+        (Box.Label_Box, Box.Modified_Label, Expand => False, Fill => True);
 
       --  Read only file area...
       Gtk_New_Vseparator (Separator);
       Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_None);
-      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Event_Box);
-      Add (Frame, Event_Box);
+      Pack_End
+        (Box.Label_Box, Event_Box, Expand => False, Fill => True);
       Gtk_New (Box.Read_Only_Label);
       Add (Event_Box, Box.Read_Only_Label);
       Object_Return_Callback.Object_Connect
@@ -957,14 +965,13 @@ package body Src_Editor_Box is
       Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
-      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Overwrite_Label, -"Insert");
 
       --  ??? Using an Event_Box should not be necessary, but it avoids
       --  some overlaps when resizing the editor window
 
       Gtk_New (Event_Box);
-      Add (Frame, Event_Box);
+      Pack_End (Box.Label_Box, Event_Box, Expand => False, Fill => True);
       Add (Event_Box, Box.Overwrite_Label);
       Box_Callback.Connect
         (Box.Source_View,
@@ -973,9 +980,6 @@ package body Src_Editor_Box is
          User_Data => Source_Editor_Box (Box));
 
       --  Function location area
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_None);
-      Pack_Start (Box.Label_Box, Frame, Expand => True, Fill => True);
       Gtk_New (Box.Function_Label);
       Set_Ellipsize (Box.Function_Label, Ellipsize_End);
       Set_Alignment (Box.Function_Label, 0.0, 0.5);
@@ -984,7 +988,7 @@ package body Src_Editor_Box is
       --  window. See also ??? comment above.
 
       Gtk_New (Event_Box);
-      Add (Frame, Event_Box);
+      Pack_Start (Box.Label_Box, Event_Box, Expand => True, Fill => True);
       Add (Event_Box, Box.Function_Label);
 
       --  Connect to source buffer signals

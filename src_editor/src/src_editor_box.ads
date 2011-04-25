@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +33,6 @@ with Glib.Object;
 with Gdk.Event;
 
 with Gtk.Box;
-with Gtk.Frame;
 with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Main;
@@ -467,7 +466,7 @@ private
    --  has said yes.
 
    type Frame_Separator is record
-      Frame     : Gtk.Frame.Gtk_Frame;
+      Label     : Gtk.Label.Gtk_Label;
       Separator : Gtk.Separator.Gtk_Separator;
    end record;
 
