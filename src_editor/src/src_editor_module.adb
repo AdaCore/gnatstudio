@@ -85,7 +85,6 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;                use GPS.Kernel.Timeout;
-with GPS.OS_Integration;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -2941,10 +2940,8 @@ package body Src_Editor_Module is
          Command     => Command,
          Add_Before  => False);
 
-      if GPS.OS_Integration.Add_Exit_Menu_In_Menubar then
-         Gtk_New (Sep);
-         Register_Menu (Kernel, File, Sep, Ref_Item => -"Exit");
-      end if;
+      Gtk_New (Sep);
+      Register_Menu (Kernel, File, Sep, Ref_Item => -"Exit");
 
       Gtk_New (Sep);
       Register_Menu (Kernel, File, Sep, Ref_Item => -"Close");
