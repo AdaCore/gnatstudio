@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -67,17 +67,17 @@ with Gdk.Pixbuf;          use Gdk.Pixbuf;
 
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Combo;           use Gtk.Combo;
+with Gtk.Combo_Box;       use Gtk.Combo_Box;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Image;           use Gtk.Image;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Tool_Button;     use Gtk.Tool_Button;
 with Gtk.Tree_Store;      use Gtk.Tree_Store;
 with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Window;          use Gtk.Window;
-with Gtkada.Combo;        use Gtkada.Combo;
 
 with Directory_Tree;      use Directory_Tree;
 with Generic_List;
@@ -324,17 +324,13 @@ private
 
       Past_History           : Simple_Stack;
       Future_History         : Simple_Stack;
-      Back_Button            : Gtk_Button;
-      Forward_Button         : Gtk_Button;
-      Home_Button            : Gtk_Button;
+      Back_Button            : Gtk_Tool_Button;
+      Forward_Button         : Gtk_Tool_Button;
+      Home_Button            : Gtk_Tool_Button;
+      Up_Button              : Gtk_Tool_Button;
+      Refresh_Button         : Gtk_Tool_Button;
 
-      Up_Button              : Gtk_Widget;
-      Up_Icon                : Gtk_Image;
-
-      Refresh_Button         : Gtk_Widget;
-      Refresh_Icon           : Gtk_Image;
-
-      Hosts_Combo            : Gtkada_Combo;
+      Hosts_Combo            : Gtk_Combo_Box;
 
       Location_Combo         : Gtk_Combo;
       Location_Combo_Entry   : Gtk_Entry;

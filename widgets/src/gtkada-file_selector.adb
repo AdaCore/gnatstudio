@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2011, AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -48,12 +48,12 @@ with Glib.Unicode;              use Glib.Unicode;
 with Gtk;                       use Gtk;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Ctree;                 use Gtk.Ctree;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.List;                  use Gtk.List;
-with Gtk.List_Item;             use Gtk.List_Item;
+with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -184,6 +184,8 @@ package body Gtkada.File_Selector is
    procedure Set_Busy (W : Gtk_Window; Busy : Boolean);
    --  Set/Reset the busy cursor on the specified window
 
+   function Get_Selected (Combo : Gtk_Combo_Box) return String;
+
    ---------------
    -- Callbacks --
    ---------------
@@ -262,6 +264,16 @@ package body Gtkada.File_Selector is
 
    procedure Name_Selected (File : access Gtk_Widget_Record'Class);
    --  Called when a new file has been selected
+
+   function Get_Selected (Combo : Gtk_Combo_Box) return String is
+      Iter : constant Gtk_Tree_Iter := Combo.Get_Active_Iter;
+   begin
+      if Iter = Null_Iter then
+         return "";
+      else
+         return Combo.Get_Model.Get_String (Iter, 0);
+      end if;
+   end Get_Selected;
 
    ------------------
    -- Set_Location --
@@ -1227,9 +1239,11 @@ package body Gtkada.File_Selector is
    is
       Win  : constant File_Selector_Window_Access :=
                File_Selector_Window_Access (Object);
-      Host : constant String := Get_Text (Get_Entry (Win.Hosts_Combo));
+      Host : constant String := Get_Selected (Win.Hosts_Combo);
       Dir  : Virtual_File;
       Dead : Message_Dialog_Buttons;
+      List : Gtk_Tree_Store;
+      Iter : Gtk_Tree_Iter;
       pragma Unreferenced (Dead);
    begin
       if Host /= Display_Local_Nickname then
@@ -1255,11 +1269,21 @@ package body Gtkada.File_Selector is
             Buttons     => Button_OK,
             Parent      => Gtk_Window (Win));
          if Is_Local (Win.Current_Directory) then
-            Set_Text (Get_Entry (Win.Hosts_Combo),
-                      Display_Local_Nickname);
+            --  local host is always the first iter
+            Win.Hosts_Combo.Set_Active_Iter
+              (Win.Hosts_Combo.Get_Model.Get_Iter_First);
          else
-            Set_Text (Get_Entry (Win.Hosts_Combo),
-                      Get_Host (Win.Current_Directory));
+            List := Gtk_Tree_Store (Win.Hosts_Combo.Get_Model);
+            Iter := List.Get_Iter_First;
+            while Iter /= Null_Iter loop
+               if List.Get_String (Iter, 0) =
+                 Get_Host (Win.Current_Directory)
+               then
+                  Win.Hosts_Combo.Set_Active_Iter (Iter);
+                  exit;
+               end if;
+               List.Next (Iter);
+            end loop;
          end if;
          Host_Selected (Object);
       when E : others => Trace (Me, E);
@@ -1832,15 +1856,17 @@ package body Gtkada.File_Selector is
    is
       pragma Suppress (All_Checks);
 
+      List     : Gtk_List_Store;
+      Cell     : Gtk_Cell_Renderer_Text;
+      Iter     : Gtk_Tree_Iter := Null_Iter;
+
       Toolbar1 : Gtk_Toolbar;
       Label1   : Gtk_Label;
-      Item     : Gtk_List_Item;
       Button   : Gtk_Widget;
       pragma Unreferenced (Button);
 
       Hpaned1  : Gtk_Hpaned;
 
-      Hbox1    : Gtk_Hbox;
       Hbox2    : Gtk_Hbox;
       Hbox3    : Gtk_Hbox;
       Hbox4    : Gtk_Hbox;
@@ -1887,81 +1913,88 @@ package body Gtkada.File_Selector is
       Set_Position (File_Selector_Window, Win_Pos_Mouse);
       Set_Modal (File_Selector_Window, False);
 
-      Gtk_New_Hbox (Hbox1, False, 0);
-      Pack_Start (Get_Vbox (File_Selector_Window), Hbox1, False, False, 3);
-
       Gtk_New (Toolbar1, Orientation_Horizontal, Toolbar_Both);
+      Pack_Start (File_Selector_Window.Get_Vbox, Toolbar1, False, False);
 
-      Set_Icon_Size (Toolbar1, Icon_Size_Button);
+      Set_Icon_Size (Toolbar1, Icon_Size_Small_Toolbar);
       Set_Style (Toolbar1,  Toolbar_Icons);
-      File_Selector_Window.Back_Button := Insert_Stock
-        (Toolbar1,
-         Stock_Go_Back,
-         -"Go To Previous Location",
-         Position => -1);
-      Set_Sensitive (File_Selector_Window.Back_Button, False);
+
+      Gtk_New_From_Stock
+        (File_Selector_Window.Back_Button, Stock_Go_Back);
+      Set_Tooltip_Text
+        (File_Selector_Window.Back_Button,
+         -"Go To Previous Location");
+      Toolbar1.Insert (File_Selector_Window.Back_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Back_Button, Gtk.Button.Signal_Clicked,
+        (File_Selector_Window.Back_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Back_Button_Clicked'Access);
 
-      File_Selector_Window.Forward_Button := Insert_Stock
-        (Toolbar1,
-         Stock_Go_Forward,
-         -"Go To Next Location",
-         Position => -1);
-      Set_Sensitive (File_Selector_Window.Forward_Button, False);
+      Gtk_New_From_Stock
+        (File_Selector_Window.Forward_Button, Stock_Go_Forward);
+      Set_Tooltip_Text
+        (File_Selector_Window.Forward_Button,
+         -"Go To Next Location");
+      Toolbar1.Insert (File_Selector_Window.Forward_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Forward_Button, Gtk.Button.Signal_Clicked,
+        (File_Selector_Window.Forward_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Forward_Button_Clicked'Access);
 
-      Gtk_New (File_Selector_Window.Up_Icon, Stock_Go_Up, Icon_Size_Button);
-      File_Selector_Window.Up_Button := Append_Element
-        (Toolbar => Toolbar1,
-         The_Type => Toolbar_Child_Button,
-         Tooltip_Text => -"Go To Parent Directory",
-         Icon => Gtk_Widget (File_Selector_Window.Up_Icon));
-
+      Gtk_New_From_Stock
+        (File_Selector_Window.Up_Button, Stock_Go_Up);
+      Set_Tooltip_Text
+        (File_Selector_Window.Up_Button,
+         -"Go To Parent Directory");
+      Toolbar1.Insert (File_Selector_Window.Up_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Up_Button, Gtk.Button.Signal_Clicked,
+        (File_Selector_Window.Up_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Up_Button_Clicked'Access);
 
-      Gtk_New
-        (File_Selector_Window.Refresh_Icon, Stock_Refresh, Icon_Size_Button);
-      File_Selector_Window.Refresh_Button := Append_Element
-        (Toolbar      => Toolbar1,
-         The_Type     => Toolbar_Child_Button,
-         Tooltip_Text => -"Refresh",
-         Icon         => Gtk_Widget (File_Selector_Window.Refresh_Icon));
+      Gtk_New_From_Stock
+        (File_Selector_Window.Refresh_Button, Stock_Refresh);
+      Set_Tooltip_Text
+        (File_Selector_Window.Refresh_Button,
+         -"Refresh");
+      Toolbar1.Insert (File_Selector_Window.Refresh_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Refresh_Button, Gtk.Button.Signal_Clicked,
+        (File_Selector_Window.Refresh_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Refresh_Button_Clicked'Access);
 
-      File_Selector_Window.Home_Button := Insert_Stock
-        (Toolbar1,
-         Stock_Home,
-         -"Go To Home Directory",
-         Position => -1);
-      Set_Sensitive (File_Selector_Window.Home_Button, True);
+      Gtk_New_From_Stock
+        (File_Selector_Window.Home_Button, Stock_Home);
+      Set_Tooltip_Text
+        (File_Selector_Window.Home_Button,
+         -"Go To Home Directory");
+      Toolbar1.Insert (File_Selector_Window.Home_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Home_Button, Gtk.Button.Signal_Clicked,
+        (File_Selector_Window.Home_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Home_Button_Clicked'Access);
-
-      Pack_Start (Hbox1, Toolbar1, True, True, 3);
 
       File_Selector_Window.Display_Remote :=
         Remote_Browsing or not Is_Local (Initial_Directory);
 
       if Remote_Browsing then
          Gtk_New_Hbox (Hbox2, False, 0);
-         Pack_Start (Get_Vbox (File_Selector_Window), Hbox2, True, True, 0);
+         Pack_Start (Get_Vbox (File_Selector_Window), Hbox2, True, True);
 
          Gtk_New (Label1, -("Host:"));
          Pack_Start (Hbox2, Label1, False, False, 3);
 
-         Gtk_New (File_Selector_Window.Hosts_Combo);
-         Set_Editable (Get_Entry (File_Selector_Window.Hosts_Combo), False);
-         Gtk_New (Item, Display_Local_Nickname);
-         Add (Get_List (File_Selector_Window.Hosts_Combo), Item);
+         Gtk_New (List, (1 => Glib.GType_String));
+         Gtk_New_With_Model (File_Selector_Window.Hosts_Combo, List);
+         Gtk_New (Cell);
+         Pack_Start
+           (Implements_Cell_Layout.To_Interface
+              (File_Selector_Window.Hosts_Combo),
+            Cell,
+            True);
+         Add_Attribute
+           (Implements_Cell_Layout.To_Interface
+              (File_Selector_Window.Hosts_Combo),
+            Cell, "text", 0);
+
+         List.Append (Iter);
+         List.Set (Iter, 0, Display_Local_Nickname);
+         File_Selector_Window.Hosts_Combo.Set_Active_Iter (Iter);
 
          declare
             Machines : constant GNAT.Strings.String_List := Get_Servers;
@@ -1969,26 +2002,25 @@ package body Gtkada.File_Selector is
             for J in Machines'Range loop
                Trace (Me, "Adding " & Machines (J).all &
                       " in servers list");
-               Gtk_New (Item, Machines (J).all);
-               Add (Get_List (File_Selector_Window.Hosts_Combo), Item);
+               List.Append (Iter);
+               List.Set (Iter, 0, Machines (J).all);
+
+               if Initial_Directory /= No_File
+                 and then not Is_Local (Initial_Directory)
+                 and then Get_Host (Initial_Directory) = Machines (J).all
+               then
+                  File_Selector_Window.Hosts_Combo.Set_Active_Iter (Iter);
+               end if;
             end loop;
          end;
 
-         if Initial_Directory /= No_File
-           and then not Is_Local (Initial_Directory)
-         then
-            Set_Text (Get_Entry (File_Selector_Window.Hosts_Combo),
-                      Get_Host (Initial_Directory));
-         end if;
-
-         Show_All (Get_List (File_Selector_Window.Hosts_Combo));
          Pack_Start (Hbox2, File_Selector_Window.Hosts_Combo, True, True, 3);
 
          --  Connect to Gtkada-combo's "changed" signal, that is raised when
          --  the list disapears. This prevents eventual dialogs appearing on
          --  host selection to be hidden by the drop down list.
          Widget_Callback.Object_Connect
-           (File_Selector_Window.Hosts_Combo, Gtkada.Combo.Signal_Changed,
+           (File_Selector_Window.Hosts_Combo, Gtk.Combo_Box.Signal_Changed,
             Host_Selected'Access, File_Selector_Window, After => True);
       end if;
 
