@@ -74,6 +74,7 @@
   <toolchain name="erc32-elf"/>
 
   <toolchain name="leon-elf"/>
+  <toolchain name="leon3-elf"/>
 
   <toolchain name="arm-mentor-nucleus"/>
 
