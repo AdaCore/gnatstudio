@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2010, AdaCore                  --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,19 +35,20 @@ with Gdk.Color;              use Gdk.Color;
 
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Button;             use Gtk.Button;
+with Gtk.Cell_Layout;        use Gtk.Cell_Layout;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Combo_Box;          use Gtk.Combo_Box;
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Image;              use Gtk.Image;
 with Gtk.Label;              use Gtk.Label;
-with Gtk.List;               use Gtk.List;
-with Gtk.List_Item;          use Gtk.List_Item;
+with Gtk.List_Store;         use Gtk.List_Store;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Style;              use Gtk.Style;
 with Gtk.Table;              use Gtk.Table;
 with Gtk.Tooltips;           use Gtk.Tooltips;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Widget;             use Gtk.Widget;
-with Gtkada.Combo;           use Gtkada.Combo;
 with Gtkada.Dialogs;         use Gtkada.Dialogs;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Collapsing_Pane;        use Collapsing_Pane;
@@ -73,7 +74,7 @@ package body Remote.View is
    subtype Config_Servers is Server_Type range GPS_Server .. Debug_Server;
 
    type Sync_Buttons_Array is array (Config_Servers) of Gtk_Button;
-   type Server_Combo_Array is array (Config_Servers) of Gtkada_Combo;
+   type Server_Combo_Array is array (Config_Servers) of Gtk_Combo_Box;
 
    type Remote_View_Record is new Gtk_Scrolled_Window_Record with record
       Main_Table         : Gtk.Table.Gtk_Table;
@@ -151,17 +152,6 @@ package body Remote.View is
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when server list changed
 
-   procedure Set_Modified
-     (View     : Remote_View;
-      Gentry   : Gtk_Entry;
-      Modified : Boolean);
-   --  Set font style according to the modified state
-
-   function Get_Modified
-     (View     : Remote_View;
-      Gentry   : Gtk_Entry) return Boolean;
-   --  Get the modified state of the entry
-
    procedure On_Combo_Changed
      (Combo : access Gtk_Widget_Record'Class;
       User  : Remote_Data);
@@ -191,6 +181,26 @@ package body Remote.View is
      (View : access Gtk_Widget_Record'Class;
       User : Remote_Data);
    --  Called when the "Set default" button is clicked
+
+   function Get_Selected
+     (Combo : access Gtk_Combo_Box_Record'Class) return String;
+   --  Utility function to retrieve the selected value from a combo box
+
+   ------------------
+   -- Get_Selected --
+   ------------------
+
+   function Get_Selected
+     (Combo : access Gtk_Combo_Box_Record'Class) return String
+   is
+      Iter : constant Gtk_Tree_Iter := Combo.Get_Active_Iter;
+   begin
+      if Iter = Null_Iter then
+         return "<none>";
+      else
+         return Get_Model (Combo).Get_String (Iter, 0);
+      end if;
+   end Get_Selected;
 
    -------------
    -- Gtk_New --
@@ -224,6 +234,8 @@ package body Remote.View is
       Buttons_Box    : Gtk_Hbox;
       To_Local_Img   : Gtk_Image;
       To_Remote_Img  : Gtk_Image;
+      List           : Gtk_List_Store;
+      Cell           : Gtk_Cell_Renderer_Text;
 
    begin
       Gtk.Scrolled_Window.Initialize (View);
@@ -257,9 +269,18 @@ package body Remote.View is
       end if;
 
       for S in Config_Servers'Range loop
-         Gtk_New (View.Servers_Combo (S));
-         Set_Editable (Get_Entry (View.Servers_Combo (S)), False);
-         Set_Width_Chars (Get_Entry (View.Servers_Combo (S)), 0);
+         Gtk_New (List, (1 => Glib.GType_String));
+         Gtk_New_With_Model (View.Servers_Combo (S), List);
+         Gtk_New (Cell);
+         Pack_Start
+           (Implements_Cell_Layout.To_Interface (View.Servers_Combo (S)),
+            Cell,
+            True);
+         Add_Attribute
+           (Implements_Cell_Layout.To_Interface (View.Servers_Combo (S)),
+            Cell, "text", 0);
+         --  Set_Editable (Get_Entry (View.Servers_Combo (S)), False);
+         --  Set_Width_Chars (Get_Entry (View.Servers_Combo (S)), 0);
          View_Callback.Connect
            (View.Servers_Combo (S), Signal_Changed, On_Combo_Changed'Access,
             (View => Remote_View (View), Server => S));
@@ -269,26 +290,18 @@ package body Remote.View is
                Server_Label := null;
                Set_Name (View.Servers_Combo (S),
                          "combo_remote_server_all");
-               Set_Name (View.Servers_Combo (S).Get_List,
-                         "combo_list_remote_server_all");
             when Build_Server =>
                Gtk_New (Server_Label, -("Build:"));
                Set_Name (View.Servers_Combo (S),
                          "combo_remote_server_build");
-               Set_Name (View.Servers_Combo (S).Get_List,
-                         "combo_list_remote_server_build");
             when Debug_Server =>
                Gtk_New (Server_Label, -("Debug:"));
                Set_Name (View.Servers_Combo (S),
                          "combo_remote_server_debug");
-               Set_Name (View.Servers_Combo (S).Get_List,
-                         "combo_list_remote_server_debug");
             when Execution_Server =>
                Gtk_New (Server_Label, -("Execution:"));
                Set_Name (View.Servers_Combo (S),
                          "combo_remote_server_exec");
-               Set_Name (View.Servers_Combo (S).Get_List,
-                         "combo_list_remote_server_exec");
          end case;
 
          if Server_Label /= null then
@@ -384,17 +397,17 @@ package body Remote.View is
       end loop;
 
       Set_Tip
-        (Tooltips, Get_Entry (View.Servers_Combo (GPS_Server)),
+        (Tooltips, View.Servers_Combo (GPS_Server),
          -("The remote server used to compile, debug and execute your " &
            "project."));
       Set_Tip
-        (Tooltips, Get_Entry (View.Servers_Combo (Build_Server)),
+        (Tooltips, View.Servers_Combo (Build_Server),
          -"The server used to perform builds and execute gnat tools");
       Set_Tip
-        (Tooltips, Get_Entry (View.Servers_Combo (Debug_Server)),
+        (Tooltips, View.Servers_Combo (Debug_Server),
          -"The server used to launch the debugger");
       Set_Tip
-        (Tooltips, Get_Entry (View.Servers_Combo (Execution_Server)),
+        (Tooltips, View.Servers_Combo (Execution_Server),
          -"The server used to execute the built executables");
 
       --  Styles
@@ -402,7 +415,9 @@ package body Remote.View is
       Gtk_New (View.Modified_Style);
       Color := Parse ("red");
       Alloc_Color (Get_Default_Colormap, Color, Success => Success);
-      Set_Text (View.Modified_Style, State_Normal, Color);
+      for State in Gtk_State_Type loop
+         Set_Text (View.Modified_Style, State, Color);
+      end loop;
 
       --  Buttons
 
@@ -564,73 +579,38 @@ package body Remote.View is
    -----------------
 
    procedure Set_Servers (View : access Remote_View_Record'Class) is
-
-      procedure Set_Servers_List
-        (List    : access Gtk_List_Record'Class;
-         Servers : GNAT.Strings.String_List);
-      --  Sets the list of available servers
-
-      ----------------------
-      -- Set_Servers_List --
-      ----------------------
-
-      procedure Set_Servers_List
-        (List    : access Gtk_List_Record'Class;
-         Servers : GNAT.Strings.String_List)
-      is
-         Item        : Gtk_List_Item;
-      begin
-         Clear_Items (List, 0, -1);
-         Gtk_New (Item, Display_Local_Nickname);
-         Add (List, Item);
-
-         for J in Servers'Range loop
-            Gtk_New (Item, Servers (J).all);
-            Add (List, Item);
-         end loop;
-
-         Show_All (List);
-      end Set_Servers_List;
-
-      Entries  : array (Distant_Server_Type) of GNAT.Strings.String_Access;
-      States   : array (Distant_Server_Type) of Boolean;
-      Machines : constant GNAT.Strings.String_List := Get_Servers;
+      Machines   : constant GNAT.Strings.String_List := Get_Servers;
 
    begin
-      for S in Distant_Server_Type'Range loop
-         declare
-            The_Entry : Gtk_Entry renames
-                           Get_Entry (View.Servers_Combo (S));
-            Old_Server : constant String :=
-                           Get_Text (The_Entry);
-         begin
-            for J in Machines'Range loop
-               if Machines (J).all = Old_Server then
-                  Entries (S) := new String'(Get_Text (The_Entry));
-                  States (S) := Get_Modified (Remote_View (View), The_Entry);
-                  exit;
-               end if;
-            end loop;
-
-            if Entries (S) = null then
-               Entries (S) := new String'(Get_Printable_Nickname (S));
-               States (S) := False;
-            end if;
-         end;
-      end loop;
-
-      Set_Servers_List (Get_List (View.Servers_Combo (GPS_Server)), Machines);
-
-      for S in Distant_Server_Type'Range loop
+      for S in View.Servers_Combo'Range loop
          --  Set server for full view
          declare
-            The_Entry : Gtk_Entry renames Get_Entry (View.Servers_Combo (S));
-         begin
-            Set_Servers_List (Get_List (View.Servers_Combo (S)), Machines);
+            List       : constant Gtk_List_Store :=
+                           Gtk_List_Store (Get_Model (View.Servers_Combo (S)));
+            Iter       : Gtk_Tree_Iter :=
+                           View.Servers_Combo (S).Get_Active_Iter;
 
-            Set_Text (The_Entry, Entries (S).all);
-            Set_Modified (Remote_View (View), The_Entry, States (S));
-            Free (Entries (S));
+            --  Save the selected server to select it back after list update
+            Old_Server : constant String :=
+                           Get_Selected (View.Servers_Combo (S));
+
+         begin
+            List.Clear;
+            Iter := Null_Iter;
+
+            List.Append (Iter);
+            List.Set (Iter, 0, Display_Local_Nickname);
+
+            View.Servers_Combo (S).Set_Active_Iter (Iter);
+
+            for J in Machines'Range loop
+               List.Append (Iter);
+               List.Set (Iter, 0, Machines (J).all);
+
+               if Old_Server = Machines (J).all then
+                  View.Servers_Combo (S).Set_Active_Iter (Iter);
+               end if;
+            end loop;
          end;
       end loop;
 
@@ -639,7 +619,8 @@ package body Remote.View is
       Set_Sensitive (View.Set_Default_Button,
                      not GPS.Kernel.Remote.Is_Default_Remote_Setting);
 
-      --  Update simple view by calling the combo_changed CB
+      --  Update the view according to the modification in the servers list
+      --  We just need to call it once for one of the distant servers
 
       On_Combo_Changed
         (View.Servers_Combo (Build_Server),
@@ -684,35 +665,6 @@ package body Remote.View is
       Set_Servers (Func.View);
    end Execute;
 
-   ------------------------
-   -- Set_Modified_Style --
-   ------------------------
-
-   procedure Set_Modified
-     (View     : Remote_View;
-      Gentry   : Gtk_Entry;
-      Modified : Boolean)
-   is
-   begin
-      if Modified then
-         Set_Style (Gentry, View.Modified_Style);
-      else
-         Set_Style (Gentry, View.Normal_Style);
-      end if;
-   end Set_Modified;
-
-   ------------------
-   -- Get_Modified --
-   ------------------
-
-   function Get_Modified
-     (View     : Remote_View;
-      Gentry   : Gtk_Entry) return Boolean
-   is
-   begin
-      return Get_Style (Gentry) = View.Modified_Style;
-   end Get_Modified;
-
    ----------------------
    -- On_Combo_Changed --
    ----------------------
@@ -721,86 +673,137 @@ package body Remote.View is
      (Combo : access Gtk_Widget_Record'Class;
       User  : Remote_Data)
    is
-      Value    : constant String :=
-                   Get_Text (Get_Entry (Gtkada_Combo (Combo)));
+      List     : Gtk_List_Store;
+      Iter     : Gtk_Tree_Iter;
+      Value    : constant String := Get_Selected (Gtk_Combo_Box (Combo));
       Txt_Set  : Boolean;
       Modified : Boolean;
       Remote   : Boolean;
       Advanced : Boolean;
+      Adv_Str  : constant String := -"(Advanced configuration)";
+
    begin
       if Active (Me) then
          Trace (Me, "Combo for Server " & Server_Type'Image (User.Server) &
                 " changed");
       end if;
 
-      --  Update full view combos
+      --  Take care of the 'advanced' state of the simple view: remove it if
+      --  the value is present in the combo and wasn't selected.
 
-      if User.Server in Distant_Server_Type then
-         Set_Modified
-           (User.View, Get_Entry (User.View.Servers_Combo (User.Server)),
-            Get_Printable_Nickname (User.Server) /= Value);
+      --  Selecting this value means only one thing: nothing has changed, so
+      --  we can safely return in this specific case.
+      List :=
+        Gtk_List_Store (Get_Model (User.View.Servers_Combo (GPS_Server)));
 
-      else
+      if List.Get_Iter_First /= Null_Iter
+        and then List.Get_String (List.Get_Iter_First, 0) = Adv_Str
+      then
+         if Value = Adv_Str then
+            return;
+         else
+            --  Remove in all cases, as this may be added later on in this
+            --  procedure
+            Iter := List.Get_Iter_First;
+            List.Remove (Iter);
+         end if;
+      end if;
+
+      --  Update the other combos according to the selection
+
+      if User.Server = GPS_Server then
          for S in Distant_Server_Type'Range loop
-            Set_Text (Get_Entry (User.View.Servers_Combo (S)), Value);
-            Set_Modified
-              (User.View, Get_Entry (User.View.Servers_Combo (S)),
-               Get_Printable_Nickname (S) /= Value);
+            List := Gtk_List_Store (Get_Model (User.View.Servers_Combo (S)));
+            Iter := List.Get_Iter_First;
+
+            while Iter /= Null_Iter loop
+               if List.Get_String (Iter, 0) = Value then
+                  User.View.Servers_Combo (S).Set_Active_Iter (Iter);
+
+                  exit;
+               end if;
+
+               List.Next (Iter);
+            end loop;
          end loop;
       end if;
 
-      --  Update simple view combo
+      --  Take care of the "advanced config" case
 
       Txt_Set := False;
       Advanced := False;
 
-      Servers_Loop :
-      for S1 in Distant_Server_Type'Range loop
-         for S2 in Distant_Server_Type'Range loop
-            if S1 /= S2
-              and then Get_Text (Get_Entry (User.View.Servers_Combo (S1))) /=
-                        Get_Text (Get_Entry (User.View.Servers_Combo (S2)))
-            then
-               Set_Text (Get_Entry (User.View.Servers_Combo (GPS_Server)),
-                         -"(Advanced configuration)");
-               Txt_Set := True;
-               Advanced := True;
+      if User.Server /= GPS_Server then
+         Servers_Loop :
+         for S1 in Distant_Server_Type'Range loop
+            for S2 in Distant_Server_Type'Range loop
+               if S1 /= S2
+                 and then Get_Selected (User.View.Servers_Combo (S1)) /=
+                 Get_Selected (User.View.Servers_Combo (S2))
+               then
+                  List :=
+                    Gtk_List_Store
+                      (User.View.Servers_Combo (GPS_Server).Get_Model);
+                  Iter := List.Get_Iter_First;
+                  Prepend (List, Iter);
+                  List.Set (Iter, 0, Adv_Str);
+                  User.View.Servers_Combo (GPS_Server).Set_Active_Iter (Iter);
 
-               exit Servers_Loop;
-            end if;
-         end loop;
-      end loop Servers_Loop;
+                  Txt_Set := True;
+                  Advanced := True;
 
-      if not Txt_Set then
-         Set_Text (Get_Entry (User.View.Servers_Combo (GPS_Server)),
-                   Value);
+                  exit Servers_Loop;
+               end if;
+            end loop;
+         end loop Servers_Loop;
+
+         --  No advanced config: make sure that the simple view matches the
+         --  selected server in the advanced view
+
+         if not Txt_Set then
+            Iter := List.Get_Iter_First;
+
+            while Iter /= Null_Iter loop
+               if List.Get_String (Iter, 0) = Value then
+                  User.View.Servers_Combo (GPS_Server).Set_Active_Iter (Iter);
+
+                  exit;
+               end if;
+
+               List.Next (Iter);
+            end loop;
+         end if;
       end if;
+
+      --  Now make sure that the modification states are properly set
 
       Modified := False;
       Remote   := False;
+      Set_Sensitive (User.View.To_Local_Buttons (GPS_Server), False);
+      Set_Sensitive (User.View.To_Remote_Buttons (GPS_Server), False);
 
       for S in Distant_Server_Type'Range loop
          --  Set modified states if needed
-         if Get_Text (Get_Entry (User.View.Servers_Combo (S))) /=
+         if Get_Selected (User.View.Servers_Combo (S)) /=
            Get_Printable_Nickname (S)
          then
             Modified := True;
-            Set_Modified (User.View, Get_Entry (User.View.Servers_Combo (S)),
-                          True);
+            Set_Style (User.View.Servers_Combo (S).Get_Child,
+                       User.View.Modified_Style);
          else
-            Set_Modified (User.View, Get_Entry (User.View.Servers_Combo (S)),
-                          False);
+            Set_Style (User.View.Servers_Combo (S).Get_Child,
+                       User.View.Normal_Style);
          end if;
 
          --  Update buttons sensitity
-         if Get_Text (Get_Entry (User.View.Servers_Combo (S))) /=
+         if Get_Selected (User.View.Servers_Combo (S)) /=
            Display_Local_Nickname
          then
             Remote := True;
             Set_Sensitive (User.View.To_Local_Buttons (S), True);
             Set_Sensitive (User.View.To_Remote_Buttons (S), True);
 
-            if S = Build_Server then
+            if S = Build_Server and then not Advanced then
                Set_Sensitive (User.View.To_Local_Buttons (GPS_Server), True);
                Set_Sensitive (User.View.To_Remote_Buttons (GPS_Server), True);
             end if;
@@ -808,22 +811,19 @@ package body Remote.View is
          else
             Set_Sensitive (User.View.To_Local_Buttons (S), False);
             Set_Sensitive (User.View.To_Remote_Buttons (S), False);
-
-            if S = Build_Server then
-               Set_Sensitive (User.View.To_Local_Buttons (GPS_Server), False);
-               Set_Sensitive (User.View.To_Remote_Buttons (GPS_Server), False);
-            end if;
          end if;
       end loop;
 
-      if Advanced then
-         Set_Sensitive (User.View.To_Local_Buttons (GPS_Server), False);
-         Set_Sensitive (User.View.To_Remote_Buttons (GPS_Server), False);
+      if Modified then
+         Set_Style
+           (User.View.Servers_Combo (GPS_Server).Get_Child,
+            User.View.Modified_Style);
+      else
+         Set_Style
+           (User.View.Servers_Combo (GPS_Server).Get_Child,
+            User.View.Normal_Style);
       end if;
 
-      Set_Modified
-        (User.View, Get_Entry (User.View.Servers_Combo (GPS_Server)),
-         Modified);
       Set_Sensitive (User.View.Check_Button, Remote and then Modified);
       Set_Sensitive (User.View.Apply_Button, Modified);
 
@@ -859,16 +859,16 @@ package body Remote.View is
      (W    : access Gtk_Widget_Record'Class;
       User : Remote_Data)
    is
-      New_Build_Server : constant String := Get_Text
-        (Get_Entry (User.View.Servers_Combo (Build_Server)));
+      New_Server : constant String :=
+                     Get_Selected (User.View.Servers_Combo (Build_Server));
       --  ??? We used to have a single assignment for Prj and Project below,
       --  but this caused a memory corruption (codegen bug ?), so work around
       --  it for now
-      Prj              : constant GNATCOLL.VFS.Virtual_File :=
-                           Get_Project (User.View.Kernel).Object_Dir;
-      Reasons          : Ada.Strings.Unbounded.Unbounded_String;
-      Failure          : Boolean := False;
-      Res              : Message_Dialog_Buttons;
+      Prj        : constant GNATCOLL.VFS.Virtual_File :=
+                     Get_Project (User.View.Kernel).Object_Dir;
+      Reasons    : Ada.Strings.Unbounded.Unbounded_String;
+      Failure    : Boolean := False;
+      Res        : Message_Dialog_Buttons;
       pragma Unreferenced (W, Res);
 
    begin
@@ -877,7 +877,7 @@ package body Remote.View is
       for S in Distant_Server_Type'Range loop
          declare
             Server_Name : constant String :=
-                            Get_Text (Get_Entry (User.View.Servers_Combo (S)));
+                            Get_Selected (User.View.Servers_Combo (S));
             Already_Checked : Boolean := False;
 
          begin
@@ -885,7 +885,7 @@ package body Remote.View is
             begin
                for S2 in Distant_Server_Type'First .. Server_Type'Pred (S) loop
                   Already_Checked := Server_Name =
-                    Get_Text (Get_Entry (User.View.Servers_Combo (S2)));
+                    Get_Selected (User.View.Servers_Combo (S2));
                   exit when Already_Checked;
                end loop;
 
@@ -914,25 +914,25 @@ package body Remote.View is
       begin
          --  In case of a remote build server: check that the project has an
          --  equivalent path on the remote server, or the paths are identical.
-         if New_Build_Server /= Local_Nickname
-           and then not Is_Regular_File (To_Remote (Prj, New_Build_Server))
+         if New_Server /= Display_Local_Nickname
+           and then not Is_Regular_File (To_Remote (Prj, New_Server))
          then
             Failure := True;
             Reasons := Reasons & "Project " & Prj.Display_Full_Name &
-              " has no equivalence on build server " & New_Build_Server &
+              " has no equivalence on build server " & New_Server &
               ASCII.LF & ASCII.LF &
               "Please verify the Path translation setting in the 'Servers " &
               "settings' dialog, and in particular verify that " & ASCII.LF &
               Prj.Display_Dir_Name &
               " can be synchronized to the server '" &
-              New_Build_Server & "'" & ASCII.LF;
+              New_Server & "'" & ASCII.LF;
          end if;
 
       exception
          when E : Invalid_Process =>
             Failure := True;
             Reasons := Reasons & "Could not connect to host " &
-              New_Build_Server & ": " & Exception_Message (E) & ASCII.LF;
+              New_Server & ": " & Exception_Message (E) & ASCII.LF;
       end;
 
       Pop_State (User.View.Kernel);
@@ -948,6 +948,15 @@ package body Remote.View is
             Dialog_Type => Error,
             Buttons     => Button_OK);
       end if;
+
+   exception
+      when E : others =>
+         Res := Message_Dialog
+           ("Remote configuration check has failed for the following reasons:"
+            & ASCII.LF & "Exception received: " & ASCII.LF &
+            Ada.Exceptions.Exception_Information (E),
+            Dialog_Type => Error,
+            Buttons     => Button_OK);
    end On_Check_Clicked;
 
    ------------------------
@@ -966,7 +975,7 @@ package body Remote.View is
       for S in Distant_Server_Type'Range loop
          declare
             Server_Name : constant String :=
-                            Get_Text (Get_Entry (User.View.Servers_Combo (S)));
+                            Get_Selected (User.View.Servers_Combo (S));
          begin
             if Server_Name /= Get_Printable_Nickname (S) then
                if Active (Me) then
@@ -1017,7 +1026,7 @@ package body Remote.View is
             when others =>
                declare
                   Str : constant String :=
-                          Get_Text (Get_Entry (User.View.Servers_Combo (S)));
+                          Get_Selected (User.View.Servers_Combo (S));
                begin
                   if Str = Local_Nickname then
                      return "";
@@ -1055,8 +1064,8 @@ package body Remote.View is
       User : Remote_Data)
    is
       pragma Unreferenced (View);
-      Build_Txt : constant String := Get_Text
-        (Get_Entry (User.View.Servers_Combo (Build_Server)));
+      Build_Txt : constant String :=
+                    Get_Selected (User.View.Servers_Combo (Build_Server));
    begin
       if Build_Txt /= Local_Nickname then
          Remote.Config_Dialog.Configure_Server_List

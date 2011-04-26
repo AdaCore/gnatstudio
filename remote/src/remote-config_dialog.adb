@@ -34,7 +34,10 @@ with Glib.Object;                use Glib.Object;
 
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
+with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
+with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
+with Gtk.Combo_Box;              use Gtk.Combo_Box;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -44,8 +47,7 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
-with Gtk.List;                   use Gtk.List;
-with Gtk.List_Item;              use Gtk.List_Item;
+with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Paned;                  use Gtk.Paned;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
@@ -62,7 +64,6 @@ with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 with Gtkada;
-with Gtkada.Combo;               use Gtkada.Combo;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;            use Gtkada.Handlers;
@@ -113,7 +114,7 @@ package body Remote.Config_Dialog is
       Remote_Browse_Button : Gtk_Button;
       Remote_Frame         : Gtk_Frame;
       Remote_Hbox          : Gtk_Hbox;
-      Sync_Combo           : Gtkada_Combo;
+      Sync_Combo           : Gtk_Combo_Box;
       Remove_Button        : Gtk_Button;
    end record;
    type Path_Row is access all Path_Row_Record;
@@ -198,15 +199,15 @@ package body Remote.Config_Dialog is
       Nickname_Label        : Gtk_Label;
       Nickname_Entry        : Gtk_Entry;
       Network_Name_Entry    : Gtk_Entry;
-      Remote_Access_Combo   : Gtkada_Combo;
-      Remote_Shell_Combo    : Gtkada_Combo;
-      Remote_Sync_Combo     : Gtkada_Combo;
+      Remote_Access_Combo   : Gtk_Combo_Box;
+      Remote_Shell_Combo    : Gtk_Combo_Box;
+      Remote_Sync_Combo     : Gtk_Combo_Box;
       --  Advanced config panel
       Advanced_Pane         : Collapsing_Pane.Collapsing_Pane;
       Advanced_Table        : Gtk_Table;
       User_Name_Entry       : Gtk_Entry;
       Max_Nb_Connected_Spin : Gtk_Spin_Button;
-      Cr_Lf_Combo           : Gtkada_Combo;
+      Cr_Lf_Combo           : Gtk_Combo_Box;
       Timeout_Spin          : Gtk_Spin_Button;
       Init_Cmds_View        : Gtk_Text_View;
       Debug_Button          : Gtk_Check_Button;
@@ -396,7 +397,6 @@ package body Remote.Config_Dialog is
       Pix  : Gtk_Image;
       Row  : Path_Row;
       Data : Path_Cb_Data_Access;
-      Item : Gtk_List_Item;
       Tips : Gtk_Tooltips;
    begin
       Row := new Path_Row_Record;
@@ -459,21 +459,37 @@ package body Remote.Config_Dialog is
            "applied"));
 
       Gtk_New (Row.Sync_Combo);
-      Set_Text (Get_Entry (Row.Sync_Combo),
-                Synchronisation_String (Synchro).all);
+      declare
+         Iter : Gtk_Tree_Iter;
+         List : Gtk_List_Store;
+         Cell : Gtk_Cell_Renderer_Text;
+      begin
+         Gtk_New (List, (1 => Glib.GType_String));
+         Gtk_New_With_Model (Row.Sync_Combo, List);
+         Gtk_New (Cell);
+         Pack_Start
+           (Implements_Cell_Layout.To_Interface (Row.Sync_Combo),
+            Cell,
+            True);
+         Add_Attribute
+           (Implements_Cell_Layout.To_Interface (Row.Sync_Combo),
+            Cell, "text", 0);
 
-      for J in Synchronisation_Type'Range loop
-         Gtk_New (Item, Synchronisation_String (J).all);
-         Add (Get_List (Row.Sync_Combo), Item);
-         Show_All (Get_List (Row.Sync_Combo));
-      end loop;
+         Iter := Null_Iter;
+         for J in Synchronisation_Type'Range loop
+            List.Append (Iter);
+            List.Set (Iter, 0, Synchronisation_String (J).all);
 
-      Set_Value_In_List (Row.Sync_Combo);
-      Set_Width_Chars (Get_Entry (Row.Sync_Combo), 14);
+            if J = Synchro then
+               Row.Sync_Combo.Set_Active_Iter (Iter);
+            end if;
+         end loop;
+      end;
+
       Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
               0, 0, 0, 2);
       Set_Tip
-        (Tips, Get_Entry (Row.Sync_Combo),
+        (Tips, Row.Sync_Combo,
          -("Five kinds of path synchronization can be set for each defined " &
            "path:" & ASCII.LF &
            "* Never: no synchronization is required from GPS, the paths " &
@@ -515,9 +531,21 @@ package body Remote.Config_Dialog is
          Set_Text (Row.Remote_Entry, Remote_Path.Display_Full_Name);
       end if;
 
-      Set_Text
-        (Get_Entry (Row.Sync_Combo),
-         Synchronisation_String (Synchro).all);
+      declare
+         List : Gtk_Tree_Model renames Row.Sync_Combo.Get_Model;
+         Iter : Gtk_Tree_Iter := List.Get_Iter_First;
+      begin
+         while Iter /= Null_Iter loop
+            if List.Get_String (Iter, 0) =
+              Synchronisation_String (Synchro).all
+            then
+               Row.Sync_Combo.Set_Active_Iter (Iter);
+               exit;
+            end if;
+
+            List.Next (Iter);
+         end loop;
+      end;
 
       Data := new Path_Cb_Data;
       Data.Widget := Widget;
@@ -536,7 +564,7 @@ package body Remote.Config_Dialog is
         (Row.Remote_Browse_Button, Signal_Clicked,
          On_Browse_Remote'Access, Data);
       Widget_Boolean_Callback.Object_Connect
-        (Row.Sync_Combo, Gtkada.Combo.Signal_Changed,
+        (Row.Sync_Combo, Gtk.Combo_Box.Signal_Changed,
          On_Changed'Access, Widget.Dialog, False);
       Path_Callback.Object_Connect
         (Row.Remove_Button, Signal_Clicked,
@@ -626,14 +654,18 @@ package body Remote.Config_Dialog is
          raise Invalid_Path;
       end if;
 
-      for J in Synchronisation_Type'Range loop
-         if Get_Text (Get_Entry (Row.Sync_Combo)) =
-           Synchronisation_String (J).all
-         then
-            Sync := J;
-            exit;
-         end if;
-      end loop;
+      declare
+         Model    : Gtk_Tree_Model renames Row.Sync_Combo.Get_Model;
+         Sync_Str : constant String :=
+                      Model.Get_String (Row.Sync_Combo.Get_Active_Iter, 0);
+      begin
+         for J in Synchronisation_Type'Range loop
+            if Sync_Str = Synchronisation_String (J).all then
+               Sync := J;
+               exit;
+            end if;
+         end loop;
+      end;
 
       if Active (Me) then
          Trace (Me, "Get_Mount_Point : " &
@@ -801,7 +833,6 @@ package body Remote.Config_Dialog is
       Iter         : Gtk_Tree_Iter;
       Tmp          : Gtk_Widget;
       Label        : Gtk_Label;
-      Item         : Gtk_List_Item;
       Line_Nb      : Guint;
       VBox         : Gtk_Vbox;
       Event        : Gtk_Event_Box;
@@ -913,20 +944,18 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
-      Gtk_New (Dialog.Remote_Access_Combo);
+      Gtk_New_Text (Dialog.Remote_Access_Combo);
       Set_Name (Dialog.Remote_Access_Combo, "remote access combo");
-      Set_Editable (Get_Entry (Dialog.Remote_Access_Combo), False);
       Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
       Set_Tip
-        (Tips, Get_Entry (Dialog.Remote_Access_Combo),
+        (Tips, Dialog.Remote_Access_Combo,
          -("The remote access tool is the tool used to connect to this " &
            "server."));
 
       for J in Access_Tools'Range loop
-         Gtk_New (Item, Access_Tools (J).all);
-         Add (Get_List (Dialog.Remote_Access_Combo), Item);
+         Dialog.Remote_Access_Combo.Append_Text (Access_Tools (J).all);
          Free (Access_Tools (J));
       end loop;
 
@@ -950,8 +979,6 @@ package body Remote.Config_Dialog is
          end;
       end if;
 
-      Show_All (Get_List (Dialog.Remote_Access_Combo));
-
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label);
       Set_Markup (Label, "<span foreground=""red"">*</span>" & (-" Shell:"));
@@ -959,22 +986,19 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
-      Gtk_New (Dialog.Remote_Shell_Combo);
+      Gtk_New_Text (Dialog.Remote_Shell_Combo);
       Set_Name (Dialog.Remote_Shell_Combo, "remote shell combo");
-      Set_Editable (Get_Entry (Dialog.Remote_Shell_Combo), False);
       Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
       Set_Tip
-        (Tips, Get_Entry (Dialog.Remote_Shell_Combo),
+        (Tips, Dialog.Remote_Shell_Combo,
          -"The shell tells GPS what shell runs on the remote server.");
 
       for J in Shells'Range loop
-         Gtk_New (Item, Shells (J).all);
-         Add (Get_List (Dialog.Remote_Shell_Combo), Item);
+         Dialog.Remote_Shell_Combo.Append_Text (Shells (J).all);
          Free (Shells (J));
       end loop;
-      Show_All (Get_List (Dialog.Remote_Shell_Combo));
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Sync tool:");
@@ -982,13 +1006,12 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
-      Gtk_New (Dialog.Remote_Sync_Combo);
-      Set_Editable (Get_Entry (Dialog.Remote_Sync_Combo), False);
+      Gtk_New_Text (Dialog.Remote_Sync_Combo);
       Attach (Dialog.Right_Table, Dialog.Remote_Sync_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
       Set_Tip
-        (Tips, Get_Entry (Dialog.Remote_Sync_Combo),
+        (Tips, Dialog.Remote_Sync_Combo,
          -("The sync tool is used to synchronize remote and local " &
            "filesystems, if these are not shared filesystems."));
 
@@ -997,10 +1020,8 @@ package body Remote.Config_Dialog is
                         Get_Hook_Func_List (Kernel, Rsync_Action_Hook);
       begin
          for J in Rsync_List'Range loop
-            Gtk_New (Item, String (Rsync_List (J).all));
-            Add (Get_List (Dialog.Remote_Sync_Combo), Item);
+            Dialog.Remote_Sync_Combo.Append_Text (String (Rsync_List (J).all));
          end loop;
-         Show_All (Get_List (Dialog.Remote_Sync_Combo));
       end;
 
       Line_Nb := Line_Nb + 1;
@@ -1088,22 +1109,20 @@ package body Remote.Config_Dialog is
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
               Fill or Expand, 0, 10);
-      Gtk_New (Dialog.Cr_Lf_Combo);
+      Gtk_New_Text (Dialog.Cr_Lf_Combo);
       Set_Name (Dialog.Cr_Lf_Combo, "crlf handling combo");
-      Set_Editable (Get_Entry (Dialog.Cr_Lf_Combo), False);
       Attach (Dialog.Advanced_Table, Dialog.Cr_Lf_Combo,
               1, 2, 3, 4,
               Fill or Expand, 0);
       Set_Tip
-        (Tips, Get_Entry (Dialog.Cr_Lf_Combo),
+        (Tips, Dialog.Cr_Lf_Combo,
          -("Indicates what characters the remote host understands as line" &
            " ending: LF, CR/LF, or automatically determine it."));
 
       for J in Cr_Lf_Handling'Range loop
-         Gtk_New (Item, Ada.Characters.Handling.To_Lower (J'Img));
-         Add (Get_List (Dialog.Cr_Lf_Combo), Item);
+         Dialog.Cr_Lf_Combo.Append_Text
+           (Ada.Characters.Handling.To_Lower (J'Img));
       end loop;
-      Show_All (Get_List (Dialog.Cr_Lf_Combo));
 
       Gtk_New (Label, -"Debug console:");
       Set_Alignment (Label, 0.0, 0.5);
@@ -1145,14 +1164,14 @@ package body Remote.Config_Dialog is
         (Dialog.User_Name_Entry, Gtk.Editable.Signal_Changed,
          On_Changed'Access, Dialog, True);
       Widget_Boolean_Callback.Object_Connect
-        (Get_Entry (Dialog.Remote_Access_Combo),
-         Gtk.Editable.Signal_Changed, On_Changed'Access, Dialog, True);
+        (Dialog.Remote_Access_Combo,
+         Gtk.Combo_Box.Signal_Changed, On_Changed'Access, Dialog, True);
       Widget_Boolean_Callback.Object_Connect
-        (Get_Entry (Dialog.Remote_Shell_Combo),
-         Gtk.Editable.Signal_Changed, On_Changed'Access, Dialog, True);
+        (Dialog.Remote_Shell_Combo,
+         Gtk.Combo_Box.Signal_Changed, On_Changed'Access, Dialog, True);
       Widget_Boolean_Callback.Object_Connect
-        (Get_Entry (Dialog.Remote_Sync_Combo),
-         Gtk.Editable.Signal_Changed, On_Changed'Access, Dialog, False);
+        (Dialog.Remote_Sync_Combo,
+         Gtk.Combo_Box.Signal_Changed, On_Changed'Access, Dialog, False);
       Widget_Boolean_Callback.Object_Connect
         (Dialog.Max_Nb_Connected_Spin, Gtk.Editable.Signal_Changed,
          On_Changed'Access, Dialog, False);
@@ -1163,8 +1182,8 @@ package body Remote.Config_Dialog is
         (Get_Buffer (Dialog.Init_Cmds_View), Gtk.Text_Buffer.Signal_Changed,
          On_Changed'Access, Dialog, False);
       Widget_Boolean_Callback.Object_Connect
-        (Get_Entry (Dialog.Cr_Lf_Combo),
-         Gtk.Editable.Signal_Changed, On_Changed'Access, Dialog, True);
+        (Dialog.Cr_Lf_Combo,
+         Gtk.Combo_Box.Signal_Changed, On_Changed'Access, Dialog, True);
       Widget_Boolean_Callback.Object_Connect
         (Dialog.Debug_Button, Signal_Clicked,
          On_Changed'Access, Dialog, False);
@@ -1236,23 +1255,64 @@ package body Remote.Config_Dialog is
       Set_Text
         (Dialog.User_Name_Entry,
          Machine.User_Name);
-      Set_Text
-        (Get_Entry (Dialog.Remote_Access_Combo),
-         Machine.Access_Tool);
-      Set_Text
-        (Get_Entry (Dialog.Remote_Shell_Combo),
-         Machine.Shell);
-      Set_Text
-        (Get_Entry (Dialog.Remote_Sync_Combo), Machine.Rsync_Func);
+
+      declare
+         Model : Gtk_Tree_Model;
+         Iter  : Gtk_Tree_Iter;
+      begin
+         Model := Dialog.Remote_Access_Combo.Get_Model;
+         Iter  := Model.Get_Iter_First;
+
+         while Iter /= Null_Iter loop
+            if Model.Get_String (Iter, 0) = Machine.Access_Tool then
+               Dialog.Remote_Access_Combo.Set_Active_Iter (Iter);
+               exit;
+            end if;
+            Model.Next (Iter);
+         end loop;
+
+         Model := Dialog.Remote_Shell_Combo.Get_Model;
+         Iter  := Model.Get_Iter_First;
+
+         while Iter /= Null_Iter loop
+            if Model.Get_String (Iter, 0) = Machine.Shell then
+               Dialog.Remote_Shell_Combo.Set_Active_Iter (Iter);
+               exit;
+            end if;
+            Model.Next (Iter);
+         end loop;
+
+         Model := Dialog.Remote_Sync_Combo.Get_Model;
+         Iter  := Model.Get_Iter_First;
+
+         while Iter /= Null_Iter loop
+            if Model.Get_String (Iter, 0) = Machine.Rsync_Func then
+               Dialog.Remote_Sync_Combo.Set_Active_Iter (Iter);
+               exit;
+            end if;
+            Model.Next (Iter);
+         end loop;
+
+         Model := Dialog.Cr_Lf_Combo.Get_Model;
+         Iter  := Model.Get_Iter_First;
+
+         while Iter /= Null_Iter loop
+            if Model.Get_String (Iter, 0) =
+              Ada.Characters.Handling.To_Lower (Machine.Cr_Lf'Img)
+            then
+               Dialog.Cr_Lf_Combo.Set_Active_Iter (Iter);
+               exit;
+            end if;
+            Model.Next (Iter);
+         end loop;
+      end;
+
       Set_Value
         (Dialog.Timeout_Spin,
          Gdouble (Machine.Timeout) / 1000.0);
       Set_Value
         (Dialog.Max_Nb_Connected_Spin,
          Gdouble (Machine.Max_Nb_Connections));
-      Set_Text
-        (Get_Entry (Dialog.Cr_Lf_Combo),
-         Ada.Characters.Handling.To_Lower (Machine.Cr_Lf'Img));
       declare
          Init_Cmds : constant GNAT.Strings.String_List :=
                        Machine.Extra_Init_Commands;
@@ -1487,10 +1547,10 @@ package body Remote.Config_Dialog is
 
       begin
          Has_Network_Name := Get_Text (Dialog.Network_Name_Entry) /= "";
-         Has_Access_Name  := Get_Text
-           (Get_Entry (Dialog.Remote_Access_Combo)) /= "";
+         Has_Access_Name  :=
+           Get_Active_Text (Dialog.Remote_Access_Combo) /= "";
          Has_Shell_Name   :=
-           Get_Text (Get_Entry (Dialog.Remote_Shell_Combo)) /= "";
+           Get_Active_Text (Dialog.Remote_Shell_Combo) /= "";
 
          if not Has_Network_Name
            or else not Has_Access_Name
@@ -1573,11 +1633,11 @@ package body Remote.Config_Dialog is
       Machine.Set_Network_Name
         (Get_Text (Dialog.Network_Name_Entry));
       Machine.Set_Access_Tool
-        (Get_Text (Get_Entry (Dialog.Remote_Access_Combo)));
+        (Get_Active_Text (Dialog.Remote_Access_Combo));
       Machine.Set_Shell
-        (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo)));
+        (Get_Active_Text (Dialog.Remote_Shell_Combo));
       Machine.Set_Rsync_Func
-        (Get_Text (Get_Entry (Dialog.Remote_Sync_Combo)));
+        (Get_Active_Text (Dialog.Remote_Sync_Combo));
       Machine.Set_Extra_Init_Commands
         (Get_Command_List (Dialog.Init_Cmds_View));
       Machine.Set_User_Name
@@ -1588,7 +1648,7 @@ package body Remote.Config_Dialog is
         (Integer (Get_Value_As_Int (Dialog.Timeout_Spin)) * 1000);
       Machine.Set_Cr_Lf
         (Cr_Lf_Handling'Value
-           (Get_Text (Get_Entry (Dialog.Cr_Lf_Combo))));
+           (Get_Active_Text (Dialog.Cr_Lf_Combo)));
       Machine.Set_Use_Dbg
         (Get_Active (Dialog.Debug_Button));
 
