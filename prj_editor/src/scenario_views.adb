@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,19 +25,17 @@ with Gtk.Box;             use Gtk.Box;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Event_Box;       use Gtk.Event_Box;
-with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Label;           use Gtk.Label;
-with Gtk.List;            use Gtk.List;
-with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Table;           use Gtk.Table;
 with Gtk.Tooltips;        use Gtk.Tooltips;
+with Gtk.Tree_Model;      use Gtk.Tree_Model;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Viewport;        use Gtk.Viewport;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Combo;        use Gtkada.Combo;
+with Gtk.Combo_Box;       use Gtk.Combo_Box;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with XML_Utils;           use XML_Utils;
 with Gtkada.MDI;          use Gtkada.MDI;
@@ -103,9 +101,14 @@ package body Scenario_Views is
 
    procedure Add_Possible_Values
      (Kernel : access Kernel_Handle_Record'Class;
-      List : access Gtk_List_Record'Class;
-      Var  : Scenario_Variable);
+      Combo  : access Gtk_Combo_Box_Record'Class;
+      Var    : Scenario_Variable);
    --  Add all the possible values for type Typ into the List
+
+   procedure Select_Value
+     (Combo : access Gtk_Combo_Box_Record'Class;
+      Value : String);
+   --  Selects value in Combo, if present
 
    type Variable_User_Data is record
       View : Scenario_View;
@@ -257,7 +260,7 @@ package body Scenario_Views is
      (Combo : access Gtk_Widget_Record'Class;
       User  : Variable_User_Data)
    is
-      Value : constant String := Get_Text (Get_Entry (Gtkada_Combo (Combo)));
+      Value : constant String := Get_Active_Text (Gtk_Combo_Box (Combo));
       Var   : Scenario_Variable := User.Var;
    begin
       if Value /= "" then
@@ -275,21 +278,42 @@ package body Scenario_Views is
 
    procedure Add_Possible_Values
      (Kernel : access Kernel_Handle_Record'Class;
-      List   : access Gtk_List_Record'Class;
+      Combo  : access Gtk_Combo_Box_Record'Class;
       Var    : Scenario_Variable)
    is
       Values : GNAT.Strings.String_List :=
-        Get_Registry (Kernel).Tree.Possible_Values_Of (Var);
-      Item : Gtk_List_Item;
+                 Get_Registry (Kernel).Tree.Possible_Values_Of (Var);
    begin
       for Iter in Values'Range loop
-         Gtk_New (Item, Locale_To_UTF8 (Values (Iter).all));
-         Add (List, Item);
+         Combo.Append_Text (Locale_To_UTF8 (Values (Iter).all));
       end loop;
 
-      Show_All (List);
       Free (Values);
    end Add_Possible_Values;
+
+   ------------------
+   -- Select_Value --
+   ------------------
+
+   procedure Select_Value
+     (Combo : access Gtk_Combo_Box_Record'Class;
+      Value : String)
+   is
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model renames Combo.Get_Model;
+   begin
+      Iter := Model.Get_Iter_First;
+
+      while Iter /= Null_Iter loop
+         if Model.Get_String (Iter, 0) = Value then
+            Combo.Set_Active_Iter (Iter);
+
+            return;
+         end if;
+
+         Model.Next (Iter);
+      end loop;
+   end Select_Value;
 
    -------------------
    -- Edit_Variable --
@@ -419,7 +443,7 @@ package body Scenario_Views is
    is
       V      : constant Scenario_View := Hook.View;
       Label  : Gtk_Label;
-      Combo  : Gtkada_Combo;
+      Combo  : Gtk_Combo_Box;
       Row    : Guint;
       Event  : Gtk_Event_Box;
 
@@ -493,14 +517,12 @@ package body Scenario_Views is
                         -"Right-Click to edit properties or delete variable");
                   end;
 
-                  Gtk_New (Combo);
-                  Set_Editable (Get_Entry (Combo), False);
-                  Set_Width_Chars (Get_Entry (Combo), 0);
+                  Gtk_New_Text (Combo);
                   Attach (V.Table, Combo, 1, 2, Row, Row + 1);
 
                   Add_Possible_Values
-                    (Kernel, Get_List (Combo), Scenar_Var (J));
-                  Set_Text (Get_Entry (Combo), Value (Scenar_Var (J)));
+                    (Kernel, Combo, Scenar_Var (J));
+                  Select_Value (Combo, Value (Scenar_Var (J)));
 
                   Scenario_Contextual.Register_Contextual_Menu
                     (Widget       => Event,
@@ -511,7 +533,8 @@ package body Scenario_Views is
                      Menu_Create  => Create_Contextual_Menu'Access);
 
                   View_Callback.Connect
-                    (Combo, Signal_Changed, Variable_Value_Changed'Access,
+                    (Combo, Gtk.Combo_Box.Signal_Changed,
+                     Variable_Value_Changed'Access,
                      (View => V, Var => Scenar_Var (J)));
                end loop;
 
