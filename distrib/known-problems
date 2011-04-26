@@ -8,10 +8,16 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K425-003 GPS: some toolchains not preperly loaded from project
+  Problem:    If a toolchain is not defined in the 'toolchains.xml' file, then
+              at startup GPS might not properly load the 'gnatmake' command.
+  Workaround: Edit share/gps/plug-ins/toolchains.xml and add the toolchain
+              there.
+
 - K418-017 GB: errors with comments ending with **
-  Problem:    GNATbench may crash if source file contain comment ending with 
+  Problem:    GNATbench may crash if source file contain comment ending with
               **.
-  Workaround: Add some random character at the end of the comment. 
+  Workaround: Add some random character at the end of the comment.
 
 - K418-012 GPS: creates broken library file for 'Analyze Root Project'
   Problem:    GPS creates broken library file for 'Analyze Root Project'
@@ -58,7 +64,7 @@ If no tag is specified, the entry is relevant to all IDEs.
   Problem:    Sometimes when starting the "Convert to an Ada Project" wizard
               the finish button is disabled.
   Workaround: Touch the "Project to convert:" edit field.
-  
+
 - K315-047 Incorrect "auto-fix fo comparison with True is redundant"
   Problem:    When applying an auto-fix on redudant comparison with True,
               Codefix will fail to add the "not" in front of the expression
@@ -78,7 +84,7 @@ If no tag is specified, the entry is relevant to all IDEs.
               an existing rule file is incorrectly loaded for switches that
               use ':' as a separator.
   Workaround: Edit the rule files manually.
-  
+
 - K228-039 GB: Coding Standard editor inserting additional colons
   Problem:    For switches taking values, GNATbench inserted a colon after
               the switch name when writing the rules file, but there was
@@ -108,13 +114,13 @@ If no tag is specified, the entry is relevant to all IDEs.
               code fixing, in certain situations, the chunk of removed code is
               larger than the package.
   Workaround: Manually delete the code.
-  
+
 - JC07-005 GB: project property GUI not showing scenario vars
   Problem:    When launched from GNATbench, the GPS property editor dialog does
               not show the scenario variables declared within the GNAT-defined
               project files located in <gnatpro installation>/lib/gnat, even
               though those gpr files are specified in with-clauses by the
-              application project file. 
+              application project file.
   Workaround: Use the gpr textual editor to change the project file.
 
 - JB10-036 Too many spaces for "out" formal parameters
