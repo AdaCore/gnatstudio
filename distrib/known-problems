@@ -8,7 +8,7 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- K425-003 GPS: some toolchains not preperly loaded from project
+- K425-003 GPS: some toolchains not properly loaded from project
   Problem:    If a toolchain is not defined in the 'toolchains.xml' file, then
               at startup GPS might not properly load the 'gnatmake' command.
   Workaround: Edit share/gps/plug-ins/toolchains.xml and add the toolchain
