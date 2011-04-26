@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2010, AdaCore                   --
+--                Copyright (C) 2001-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,12 +24,11 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
 with Gdk.Color;                use Gdk.Color;
-with Gdk.Font;                 use Gdk.Font;
 with Gdk.Types;                use Gdk.Types;
 
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
-with XML_Utils;             use XML_Utils;
+with XML_Utils;                use XML_Utils;
 
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Box;                  use Gtk.Box;
@@ -69,6 +68,7 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Color_Combo;       use Gtkada.Color_Combo;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
+with Pango.Context;
 with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
 
@@ -634,12 +634,6 @@ package body Default_Preferences is
    begin
       if Pref.Descr = null then
          Pref.Descr := From_String (Pref.Font_Value.all);
-
-         --  Check that the font exists, or use a default, to avoid crashes
-         if From_Description (Pref.Descr) = null then
-            Free (Pref.Descr);
-            Pref.Descr := From_String (Config.Default_Font);
-         end if;
       end if;
       return Pref.Descr;
    end Get_Pref;
@@ -663,12 +657,6 @@ package body Default_Preferences is
    begin
       if Pref.Font_Descr = null then
          Pref.Font_Descr := From_String (Pref.Style_Font.all);
-
-         --  Check that the font exists, or use a default, to avoid crashes
-         if From_Description (Pref.Font_Descr) = null then
-            Free (Pref.Font_Descr);
-            Pref.Font_Descr := From_String (Config.Default_Font);
-         end if;
       end if;
       return Pref.Font_Descr;
    end Get_Pref_Font;
@@ -1128,14 +1116,12 @@ package body Default_Preferences is
       --  Also set the context, so that every time the pango layout is
       --  recreated by the entry (key press,...), we still use the correct
       --  font.
-      --  ??? Right now, the mechanism described above will cause gtk to
-      --  crash when Desc doesn't correspond to a drawable font, therefore
-      --  the following code is commented out.
-      --  Set_Font_Description (Get_Pango_Context (E), Desc);
 
-      if From_Description (Desc) = null then
+      if Pango.Context.Load_Font (Get_Pango_Context (E), Desc) = null then
          Free (Desc);
          Desc := From_String (Config.Default_Font);
+      else
+         Pango.Context.Set_Font_Description (Get_Pango_Context (E), Desc);
       end if;
 
       Modify_Font (E, Desc);
@@ -1407,7 +1393,9 @@ package body Default_Preferences is
          Update_Font_Entry'Access, Ent,
          User_Data => (Preferences_Manager (Manager), Pref));
 
-      if From_Description (Desc) /= null then
+      if Pango.Context.Load_Font
+        (Get_Pango_Context (Manager.Pref_Editor), Desc) /= null
+      then
          Modify_Font (Ent, Desc);
       end if;
 
@@ -1722,9 +1710,10 @@ package body Default_Preferences is
    is
       Event : Gtk_Event_Box;
       Box   : Gtk_Box;
-      F     : constant Gtk_Box := Create_Box_For_Font
-        (Manager, Preference (Pref),
-         Get_Pref_Font (Style_Preference (Pref)), "...");
+      F     : constant Gtk_Box :=
+                Create_Box_For_Font
+                  (Manager, Preference (Pref),
+                   Get_Pref_Font (Style_Preference (Pref)), "...");
 
    begin
       Gtk_New (Event);
