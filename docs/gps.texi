@@ -15209,6 +15209,9 @@ Targets are defined in a @code{target} node which has three attributes:
    underscore, use a double underscore.
    If @code{category} begins and ends with an underscore, the menu for the
    Target is placed in the toplevel Build menu.
+@item messages_category
+   The name of the category to be used to organize messages in Locations
+   window.
 @item model
    The name of the Model of which this Target inherits initially.
 @end table
