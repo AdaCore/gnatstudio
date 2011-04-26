@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1604,7 +1604,8 @@ package body Toolchains is
                                 and then Debugger_Str = "";
 
    begin
-      --  We read the compilers defined directly in the project first.
+      --  We read the compilers defined directly in the project first, and
+      --  store them in 'New_Toolchain'
       Set_Compilers_From_Attribute (Compiler_Command_Attribute);
       Set_Compilers_From_Attribute (Compiler_Driver_Attribute);
 
@@ -1658,14 +1659,28 @@ package body Toolchains is
       --  one.
 
       if Ret = null then
-         if Get_Prefix = "" then
-            Ret := Manager.Get_Native_Toolchain;
-         else
-            Ret := Create_Empty_Toolchain (Manager);
-            Modified := True;
-            Set_Name (Ret, Get_Prefix);
-            Set_Label (Ret, Get_Prefix);
-         end if;
+         declare
+            Prefix : constant String := Get_Prefix;
+         begin
+            if Prefix = "" then
+               Ret := Manager.Get_Native_Toolchain;
+            else
+               Ret := Create_Empty_Toolchain (Manager);
+               Modified := True;
+               Set_Name (Ret, Prefix);
+               Set_Label (Ret, Prefix);
+               Set_Command
+                 (Ret, GNAT_List, Prefix & "-gnatls", From_Default, True);
+               Set_Command
+                 (Ret, GNAT_Driver, Prefix & "-gnat", From_Default, True);
+               Set_Command
+                 (Ret, Debugger, Prefix & "-gdb", From_Default, True);
+               Set_Compiler
+                 (Ret, "Ada", Prefix & "-gnatmake");
+               Set_Compiler
+                 (Ret, "C", Prefix & "-gcc");
+            end if;
+         end;
       end if;
 
       --  At this stage, we have either a toolchain created from a known
