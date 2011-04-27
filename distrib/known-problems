@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 5.0.2
 
+- K427-016 Dialogs displayed when launching debug session from prompt
+  Problem:    When launching GPS using the command line, with the option
+              --debug=, if the parameter given to the --debug option is
+              an executable followed by arguments, then GPS might display
+              dialogs indicating that the underlying debugger is not ready.
+  Workaround: Discard the dialogs, the warnings can be safely ignored.
+
 - K318-002 CodePeer Analyze File not working
   Problem:    CodePeer run of one selected file fails because the automatically
               generated library file is incorrect.
