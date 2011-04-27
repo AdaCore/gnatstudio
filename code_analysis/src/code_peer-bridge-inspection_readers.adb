@@ -32,6 +32,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
 
    Identifier_Attribute    : constant String := "identifier";
    Previous_Attribute      : constant String := "previous";
+   Format_Attribute        : constant String := "format";
 
    ----------
    -- Hash --
@@ -56,6 +57,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
 
    begin
       Self.Kernel          := Kernel;
+      Self.Version         := 1;
       Self.Projects        := new Code_Analysis.Project_Maps.Map;
       Self.Root_Inspection := new Code_Peer.Project_Data;
       Self.Message_Categories.Clear;
@@ -137,6 +139,11 @@ package body Code_Peer.Bridge.Inspection_Readers is
            (Self.Root_Inspection.all).Baseline_Inspection :=
            Natural'Value (Attrs.Get_Value (Previous_Attribute));
 
+         if Attrs.Get_Index (Format_Attribute) /= -1 then
+            Self.Version :=
+              Positive'Value (Attrs.Get_Value (Format_Attribute));
+         end if;
+
       elsif Qname = Message_Category_Tag then
          Message_Category :=
            new Code_Peer.Message_Category'
@@ -205,42 +212,90 @@ package body Code_Peer.Bridge.Inspection_Readers is
              (Self.Subprogram_Node.Analysis_Data.Code_Peer_Data);
 
       elsif Qname = Message_Tag then
-         Self.Subprogram_Data.Messages.Append
-           (new Code_Peer.Message'
-              (Positive'Value (Attrs.Get_Value ("identifier")),
-               Lifeage,
-               Positive'Value (Attrs.Get_Value ("line")),
-               Positive'Value (Attrs.Get_Value ("column")),
-               Self.Message_Categories.Element
-                 (Positive'Value (Attrs.Get_Value ("category"))),
-               False,
-               Computed_Ranking,
-               Code_Peer.Message_Ranking_Level'Value
-                 (Attrs.Get_Value ("probability")),
-               new String'(Attrs.Get_Value ("text")),
-               False,
-               Code_Peer.Audit_Vectors.Empty_Vector,
-               GNATCOLL.VFS.No_File,
-               1,
-               1,
-               null));
+         declare
+            Message : Code_Peer.Message_Access;
 
-         if Attrs.Get_Index ("from_file") /= -1 then
-            Self.Subprogram_Data.Messages.Last_Element.From_File :=
-              GPS.Kernel.Create (+Attrs.Get_Value ("from_file"), Self.Kernel);
-            Self.Subprogram_Data.Messages.Last_Element.From_Line :=
-              Positive'Value (Attrs.Get_Value ("from_line"));
-            Self.Subprogram_Data.Messages.Last_Element.From_Column :=
-              Positive'Value (Attrs.Get_Value ("from_column"));
-         end if;
+         begin
+            Message :=
+              new Code_Peer.Message'
+                (Positive'Value (Attrs.Get_Value ("identifier")),
+                 Lifeage,
+                 Positive'Value (Attrs.Get_Value ("line")),
+                 Positive'Value (Attrs.Get_Value ("column")),
+                 Self.Message_Categories.Element
+                   (Positive'Value (Attrs.Get_Value ("category"))),
+                 False,
+                 Computed_Ranking,
+                 Code_Peer.Message_Ranking_Level'Value
+                   (Attrs.Get_Value ("probability")),
+                 new String'(Attrs.Get_Value ("text")),
+                 False,
+                 Code_Peer.Audit_Vectors.Empty_Vector,
+                 GNATCOLL.VFS.No_File,
+                 1,
+                 1,
+                 null);
+            Self.Subprogram_Data.Messages.Append (Message);
 
-         --  Check whether optional 'is_warning' attribute is present and
-         --  process it.
+            if Attrs.Get_Index ("from_file") /= -1 then
+               Message.From_File :=
+                 GPS.Kernel.Create
+                   (+Attrs.Get_Value ("from_file"), Self.Kernel);
+               Message.From_Line :=
+                 Positive'Value (Attrs.Get_Value ("from_line"));
+               Message.From_Column :=
+                 Positive'Value (Attrs.Get_Value ("from_column"));
+            end if;
 
-         if Attrs.Get_Index ("is_warning") /= -1 then
-            Self.Subprogram_Data.Messages.Last_Element.Is_Warning :=
-              Boolean'Value (Attrs.Get_Value ("is_warning"));
-         end if;
+            if Self.Version > 1 then
+               --  Check whether optional 'is_warning' attribute is present
+               --  and process it.
+
+               if Attrs.Get_Index ("is_warning") /= -1 then
+                  Message.Is_Warning :=
+                    Boolean'Value (Attrs.Get_Value ("is_warning"));
+               end if;
+
+            else
+               --  Use heuristic to compute value of 'is_warning' attribute.
+               --  This code is used for CodePeer 2.0 and can be removed in
+               --  the future.
+               --  ??? Should be reviewed after begining of 2013 and be
+               --  removed.
+
+               declare
+
+                  function Starts_With
+                    (Item : String; Prefix : String) return Boolean;
+                  --  Returns True when Item starts with Prefix.
+
+                  -----------------
+                  -- Starts_With --
+                  -----------------
+
+                  function Starts_With
+                    (Item : String; Prefix : String) return Boolean
+                  is
+                     Last : constant Natural := Item'First + Prefix'Length - 1;
+
+                  begin
+                     return Item'Length >= Prefix'Length
+                       and then Item (Item'First .. Last) = Prefix;
+                  end Starts_With;
+
+                  Category : constant String := Message.Category.Name.all;
+
+               begin
+                  Message.Is_Warning :=
+                    Category = "dead code"
+                      or else Starts_With (Category, "mismatched ")
+                      or else Starts_With (Category, "suspicious ")
+                      or else Starts_With (Category, "test ")
+                      or else Starts_With (Category, "unused ")
+                      or else Starts_With (Category, "unprotected ");
+               end;
+            end if;
+         end;
 
       elsif Qname = Annotation_Tag then
          Annotation_Category :=

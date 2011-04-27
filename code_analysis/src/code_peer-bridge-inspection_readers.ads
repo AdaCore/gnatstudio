@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,6 +49,13 @@ private
 
    type Reader is new Sax.Readers.Reader with record
       Kernel                : GPS.Kernel.Kernel_Handle;
+
+      Version               : Positive;
+      --  Version number of interchange format.
+      --
+      --   1 - default value
+      --   2 - is_warning attribute is reported by CodePeer
+
       Projects              : Code_Analysis.Code_Analysis_Tree;
       Root_Inspection       : Code_Analysis.Code_Peer_Data_Access;
       Message_Categories    : Message_Category_Maps.Map;
