@@ -30,9 +30,12 @@ package body Code_Peer.Bridge.Inspection_Readers is
    Message_Tag             : constant String := "message";
    Annotation_Tag          : constant String := "annotation";
 
-   Identifier_Attribute    : constant String := "identifier";
-   Previous_Attribute      : constant String := "previous";
+   Checks_Attribute        : constant String := "checks";
    Format_Attribute        : constant String := "format";
+   Identifier_Attribute    : constant String := "identifier";
+   Is_Check_Attribute      : constant String := "is_check";
+   Is_Warning_Attribute    : constant String := "is_warning";
+   Previous_Attribute      : constant String := "previous";
 
    ----------
    -- Hash --
@@ -97,6 +100,33 @@ package body Code_Peer.Bridge.Inspection_Readers is
       --  Returns value of "computed_probability" attribute if any, otherwise
       --  returns value of "probability" attribute.
 
+      function Checks return Natural;
+      --  Returns value of "checks" attribiute if any, otherwise returns zero.
+
+      function Is_Check return Boolean;
+      --  Returns value of "is_check" attribute is any, otherwise returns
+      --  False.
+
+      function Is_Warning return Boolean;
+      --  Returns value of "is_warning" attribute is any, otherwise returns
+      --  False.
+
+      ------------
+      -- Checks --
+      ------------
+
+      function Checks return Natural is
+         Index : constant Integer := Attrs.Get_Index (Checks_Attribute);
+
+      begin
+         if Index = -1 then
+            return 0;
+
+         else
+            return Natural'Value (Attrs.Get_Value (Index));
+         end if;
+      end Checks;
+
       ----------------------
       -- Computed_Ranking --
       ----------------------
@@ -113,6 +143,38 @@ package body Code_Peer.Bridge.Inspection_Readers is
             return Message_Ranking_Level'Value (Attrs.Get_Value (Index));
          end if;
       end Computed_Ranking;
+
+      --------------
+      -- Is_Check --
+      --------------
+
+      function Is_Check return Boolean is
+         Index : constant Integer := Attrs.Get_Index (Is_Check_Attribute);
+
+      begin
+         if Index = -1 then
+            return False;
+
+         else
+            return Boolean'Value (Attrs.Get_Value (Index));
+         end if;
+      end Is_Check;
+
+      ----------------
+      -- Is_Warning --
+      ----------------
+
+      function Is_Warning return Boolean is
+         Index : constant Integer := Attrs.Get_Index (Is_Warning_Attribute);
+
+      begin
+         if Index = -1 then
+            return False;
+
+         else
+            return Boolean'Value (Attrs.Get_Value (Index));
+         end if;
+      end Is_Warning;
 
       -------------
       -- Lifeage --
@@ -190,7 +252,9 @@ package body Code_Peer.Bridge.Inspection_Readers is
          Self.File_Node :=
            Code_Analysis.Get_Or_Create (Project_Node, File_Name);
          Self.File_Node.Analysis_Data.Code_Peer_Data :=
-           new Code_Peer.File_Data'(Lifeage => Lifeage);
+           new Code_Peer.File_Data'
+                 (Lifeage      => Lifeage,
+                  Total_Checks => Checks);
 
       elsif Qname = Subprogram_Tag then
          Self.Subprogram_Node :=
@@ -224,7 +288,8 @@ package body Code_Peer.Bridge.Inspection_Readers is
                  Positive'Value (Attrs.Get_Value ("column")),
                  Self.Message_Categories.Element
                    (Positive'Value (Attrs.Get_Value ("category"))),
-                 False,
+                 Is_Warning,
+                 Is_Check,
                  Computed_Ranking,
                  Code_Peer.Message_Ranking_Level'Value
                    (Attrs.Get_Value ("probability")),
@@ -235,7 +300,6 @@ package body Code_Peer.Bridge.Inspection_Readers is
                  1,
                  1,
                  null);
-            Self.Subprogram_Data.Messages.Append (Message);
 
             if Attrs.Get_Index ("from_file") /= -1 then
                Message.From_File :=
@@ -247,16 +311,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
                  Positive'Value (Attrs.Get_Value ("from_column"));
             end if;
 
-            if Self.Version > 1 then
-               --  Check whether optional 'is_warning' attribute is present
-               --  and process it.
-
-               if Attrs.Get_Index ("is_warning") /= -1 then
-                  Message.Is_Warning :=
-                    Boolean'Value (Attrs.Get_Value ("is_warning"));
-               end if;
-
-            else
+            if Self.Version = 1 then
                --  Use heuristic to compute value of 'is_warning' attribute.
                --  This code is used for CodePeer 2.0 and can be removed in
                --  the future.
@@ -295,6 +350,10 @@ package body Code_Peer.Bridge.Inspection_Readers is
                       or else Starts_With (Category, "unprotected ");
                end;
             end if;
+
+            --  Append message to the list of subprogram's messages
+
+            Self.Subprogram_Data.Messages.Append (Message);
          end;
 
       elsif Qname = Annotation_Tag then

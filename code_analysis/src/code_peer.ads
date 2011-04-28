@@ -72,6 +72,9 @@ package Code_Peer is
       Column           : Positive;
       Category         : Message_Category_Access;
       Is_Warning       : Boolean;
+      --  True means this message is warning, there is no ranking for it.
+      Is_Check         : Boolean;
+      --  True means this message is check.
       Computed_Ranking : Message_Ranking_Level;
       Current_Ranking  : Message_Ranking_Level;
       Text             : GNAT.Strings.String_Access;
@@ -131,7 +134,8 @@ package Code_Peer is
    overriding procedure Finalize (Self : access Project_Data);
 
    type File_Data is new Code_Analysis.Code_Peer_Data_Root with record
-      Lifeage : Lifeage_Kinds;
+      Lifeage      : Lifeage_Kinds;
+      Total_Checks : Natural;
    end record;
 
    type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;

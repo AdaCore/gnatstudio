@@ -717,6 +717,26 @@ package body Code_Peer.Summary_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-("Total" & Ada.Characters.Latin_1.LF & "checks"));
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.Total_Checks_Count_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-("Passed" & Ada.Characters.Latin_1.LF & "checks"));
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.Passed_Checks_Count_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       --  Message category view

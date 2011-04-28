@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -127,6 +127,8 @@ package body Code_Peer.Summary_Models is
             | Suppressed_Deltas_Count_Column
             | Suppressed_Removed_Count_Column
             | Suppressed_Current_Count_Column
+            | Total_Checks_Count_Column
+            | Passed_Checks_Count_Column
               =>
             return Glib.GType_String;
 
@@ -535,6 +537,53 @@ package body Code_Peer.Summary_Models is
          when Suppressed_Current_Count_Column =>
             Set_Count_Image (Code_Peer.Suppressed, Current);
 
+         when Total_Checks_Count_Column =>
+            if Subprogram_Node /= null then
+               --  Nothing to output, checks are counted per file
+
+               Set_Integer_Image (0, True);
+
+            elsif File_Node /= null then
+               Set_Integer_Image
+                 (Code_Peer.File_Data
+                    (File_Node.Node.Analysis_Data.Code_Peer_Data.all).
+                       Total_Checks,
+                  True);
+
+            elsif Project_Node /= null then
+               Set_Integer_Image (Project_Node.Total_Checks, True);
+
+            else
+               --  ??? Total line, nothing to output. The problem is that some
+               --  projects can be hidden and actual output will be incorrect.
+
+               Set_Integer_Image (0, True);
+            end if;
+
+         when Passed_Checks_Count_Column =>
+            if Subprogram_Node /= null then
+               --  Nothing to output, checks are counted per file
+
+               Set_Integer_Image (0, True);
+
+            elsif File_Node /= null then
+               Set_Integer_Image
+                 (Code_Peer.File_Data
+                    (File_Node.Node.Analysis_Data.Code_Peer_Data.all).
+                       Total_Checks - File_Node.Checks_Count,
+                  True);
+
+            elsif Project_Node /= null then
+               Set_Integer_Image
+                 (Project_Node.Total_Checks - Project_Node.Checks_Count, True);
+
+            else
+               --  ??? Total line, nothing to output. The problem is that some
+               --  projects can be hidden and actual output will be incorrect.
+
+               Set_Integer_Image (0, True);
+            end if;
+
          when others =>
             null;
       end case;
@@ -642,7 +691,9 @@ package body Code_Peer.Summary_Models is
       Code_Peer.Utilities.Compute_Messages_Count
         (Project_Node.Node,
          Self.Message_Categories,
-         Project_Node.Messages_Counts);
+         Project_Node.Messages_Counts,
+         Project_Node.Checks_Count,
+         Project_Node.Total_Checks);
       Project_Node.Computed := True;
 
       return Self.Show_All_Projects
@@ -672,7 +723,8 @@ package body Code_Peer.Summary_Models is
       Code_Peer.Utilities.Compute_Messages_Count
         (File_Node.Node,
          Self.Message_Categories,
-         File_Node.Messages_Counts);
+         File_Node.Messages_Counts,
+         File_Node.Checks_Count);
       File_Node.Computed := True;
 
       return Self.Show_All_Files
@@ -696,12 +748,14 @@ package body Code_Peer.Summary_Models is
 
       Subprogram_Node : constant Subprogram_Item_Access :=
                           Subprogram_Item_Access (Subprogram);
+      Dummy           : Natural;
 
    begin
       Code_Peer.Utilities.Compute_Messages_Count
         (Subprogram_Node.Node,
          Self.Message_Categories,
-         Subprogram_Node.Messages_Counts);
+         Subprogram_Node.Messages_Counts,
+         Dummy);
       Subprogram_Node.Computed := True;
 
       return Self.Show_All_Subprograms

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -46,7 +46,8 @@ package body Code_Peer.Utilities is
    procedure Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
       Categories : Code_Peer.Message_Category_Sets.Set;
-      Counts     : out Messages_Counts)
+      Counts     : out Messages_Counts;
+      Checks     : out Natural)
    is
       procedure Process (Position : Message_Vectors.Cursor);
 
@@ -59,6 +60,8 @@ package body Code_Peer.Utilities is
                      Message_Vectors.Element (Position);
 
       begin
+         --  Count messages by ranking only when have specified categories.
+
          if Categories.Contains (Message.Category) then
             case Message.Lifeage is
                when Added =>
@@ -80,10 +83,19 @@ package body Code_Peer.Utilities is
                     Counts (Message.Current_Ranking).Removed + 1;
             end case;
          end if;
+
+         --  Count all chechs with non-suppressed ranking
+
+         if Message.Is_Check
+           and then Message.Current_Ranking /= Suppressed
+         then
+            Checks := Checks + 1;
+         end if;
       end Process;
 
    begin
       Counts := (others => (others => 0));
+      Checks := 0;
 
       Subprogram_Data'Class
         (Subprogram.Analysis_Data.Code_Peer_Data.all).Messages.Iterate
@@ -97,7 +109,8 @@ package body Code_Peer.Utilities is
    procedure Compute_Messages_Count
      (File       : Code_Analysis.File_Access;
       Categories : Code_Peer.Message_Category_Sets.Set;
-      Counts     : out Messages_Counts)
+      Counts     : out Messages_Counts;
+      Checks     : out Natural)
    is
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor);
 
@@ -108,16 +121,20 @@ package body Code_Peer.Utilities is
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor) is
          Subprogram : constant Code_Analysis.Subprogram_Access :=
                         Code_Analysis.Subprogram_Maps.Element (Position);
-         Aux        : Messages_Counts;
+         Aux_Counts : Messages_Counts;
+         Aux_Checks : Natural;
 
       begin
-         Compute_Messages_Count (Subprogram, Categories, Aux);
+         Compute_Messages_Count
+           (Subprogram, Categories, Aux_Counts, Aux_Checks);
 
-         Counts := Counts + Aux;
+         Counts := Counts + Aux_Counts;
+         Checks := Checks + Aux_Checks;
       end Process;
 
    begin
       Counts := (others => (others => 0));
+      Checks := 0;
 
       File.Subprograms.Iterate (Process'Access);
    end Compute_Messages_Count;
@@ -127,9 +144,11 @@ package body Code_Peer.Utilities is
    ----------------------------
 
    procedure Compute_Messages_Count
-     (Project    : Code_Analysis.Project_Access;
-      Categories : Code_Peer.Message_Category_Sets.Set;
-      Counts     : out Messages_Counts)
+     (Project      : Code_Analysis.Project_Access;
+      Categories   : Code_Peer.Message_Category_Sets.Set;
+      Counts       : out Messages_Counts;
+      Checks       : out Natural;
+      Total_Checks : out Natural)
    is
       procedure Process (Position : Code_Analysis.File_Maps.Cursor);
 
@@ -138,18 +157,26 @@ package body Code_Peer.Utilities is
       -------------
 
       procedure Process (Position : Code_Analysis.File_Maps.Cursor) is
-         File : constant Code_Analysis.File_Access :=
-                           Code_Analysis.File_Maps.Element (Position);
-         Aux  : Messages_Counts;
+         File       : constant Code_Analysis.File_Access :=
+                        Code_Analysis.File_Maps.Element (Position);
+         Aux_Counts : Messages_Counts;
+         Aux_Checks : Natural;
 
       begin
-         Compute_Messages_Count (File, Categories, Aux);
+         Compute_Messages_Count (File, Categories, Aux_Counts, Aux_Checks);
 
-         Counts := Counts + Aux;
+         Counts := Counts + Aux_Counts;
+         Checks := Checks + Aux_Checks;
+         Total_Checks :=
+           Total_Checks
+             + Code_Peer.File_Data'Class
+                 (File.Analysis_Data.Code_Peer_Data.all).Total_Checks;
       end Process;
 
    begin
       Counts := (others => (others => 0));
+      Checks := 0;
+      Total_Checks := 0;
 
       Project.Files.Iterate (Process'Access);
    end Compute_Messages_Count;
@@ -170,14 +197,17 @@ package body Code_Peer.Utilities is
       -------------
 
       procedure Process (Position : Code_Analysis.Project_Maps.Cursor) is
-         Project : constant Code_Analysis.Project_Access :=
-                     Code_Analysis.Project_Maps.Element (Position);
-         Aux     : Messages_Counts;
+         Project    : constant Code_Analysis.Project_Access :=
+                        Code_Analysis.Project_Maps.Element (Position);
+         Aux_Counts : Messages_Counts;
+         Aux_Checks : Natural;
+         Aux_Total  : Natural;
 
       begin
-         Compute_Messages_Count (Project, Categories, Aux);
+         Compute_Messages_Count
+           (Project, Categories, Aux_Counts, Aux_Checks, Aux_Total);
 
-         Counts := Counts + Aux;
+         Counts := Counts + Aux_Counts;
       end Process;
 
    begin

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,19 +34,23 @@ package Code_Peer.Utilities is
    procedure Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
       Categories : Code_Peer.Message_Category_Sets.Set;
-      Counts     : out Messages_Counts);
+      Counts     : out Messages_Counts;
+      Checks     : out Natural);
    --  Computes number of the subprogram's messages with specified categories
 
    procedure Compute_Messages_Count
      (File       : Code_Analysis.File_Access;
       Categories : Code_Peer.Message_Category_Sets.Set;
-      Counts     : out Messages_Counts);
+      Counts     : out Messages_Counts;
+      Checks     : out Natural);
    --  Computes number of the file's messages with specified categories
 
    procedure Compute_Messages_Count
-     (Project    : Code_Analysis.Project_Access;
-      Categories : Code_Peer.Message_Category_Sets.Set;
-      Counts     : out Messages_Counts);
+     (Project      : Code_Analysis.Project_Access;
+      Categories   : Code_Peer.Message_Category_Sets.Set;
+      Counts       : out Messages_Counts;
+      Checks       : out Natural;
+      Total_Checks : out Natural);
    --  Computes number of the project's messages with specified categories
 
    procedure Compute_Messages_Count

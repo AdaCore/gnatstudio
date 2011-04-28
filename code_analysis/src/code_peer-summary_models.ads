@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,7 +57,9 @@ package Code_Peer.Summary_Models is
    Suppressed_Deltas_Count_Column     : constant := 28;
    Suppressed_Removed_Count_Column    : constant := 29;
    Suppressed_Current_Count_Column    : constant := 30;
-   Number_Of_Columns                  : constant := 31;
+   Total_Checks_Count_Column          : constant := 31;
+   Passed_Checks_Count_Column         : constant := 32;
+   Number_Of_Columns                  : constant := 33;
    --  *_Added_* and *_Removed_* are used for sorting by the intermediate
    --  GtkTreeModelSort model.
 
@@ -120,6 +122,8 @@ private
    type File_Item is new Code_Analysis.Tree_Models.File_Item with record
       Computed        : Boolean := False;
       Messages_Counts : Code_Peer.Utilities.Messages_Counts;
+      Checks_Count    : Natural := 0;
+      --  Number of non-suppressed check messages
    end record;
 
    type File_Item_Access is access all File_Item'Class;
@@ -127,6 +131,10 @@ private
    type Project_Item is new Code_Analysis.Tree_Models.Project_Item with record
       Computed        : Boolean := False;
       Messages_Counts : Code_Peer.Utilities.Messages_Counts;
+      Checks_Count    : Natural := 0;
+      --  Number of non-suppressed check messages
+      Total_Checks    : Natural := 0;
+      --  Total number of checks for all files in the project
    end record;
 
    type Project_Item_Access is access all Project_Item'Class;
