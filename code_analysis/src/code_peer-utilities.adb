@@ -186,9 +186,11 @@ package body Code_Peer.Utilities is
    ----------------------------
 
    procedure Compute_Messages_Count
-     (Tree       : Code_Analysis.Code_Analysis_Tree;
-      Categories : Code_Peer.Message_Category_Sets.Set;
-      Counts     : out Messages_Counts)
+     (Tree         : Code_Analysis.Code_Analysis_Tree;
+      Categories   : Code_Peer.Message_Category_Sets.Set;
+      Counts       : out Messages_Counts;
+      Checks       : out Natural;
+      Total_Checks : out Natural)
    is
       procedure Process (Position : Code_Analysis.Project_Maps.Cursor);
 
@@ -208,10 +210,14 @@ package body Code_Peer.Utilities is
            (Project, Categories, Aux_Counts, Aux_Checks, Aux_Total);
 
          Counts := Counts + Aux_Counts;
+         Checks := Checks + Aux_Checks;
+         Total_Checks := Total_Checks + Aux_Total;
       end Process;
 
    begin
       Counts := (others => (others => 0));
+      Checks := 0;
+      Total_Checks := 0;
 
       Tree.Iterate (Process'Access);
    end Compute_Messages_Count;

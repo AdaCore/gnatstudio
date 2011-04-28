@@ -54,9 +54,11 @@ package Code_Peer.Utilities is
    --  Computes number of the project's messages with specified categories
 
    procedure Compute_Messages_Count
-     (Tree       : Code_Analysis.Code_Analysis_Tree;
-      Categories : Code_Peer.Message_Category_Sets.Set;
-      Counts     : out Messages_Counts);
+     (Tree         : Code_Analysis.Code_Analysis_Tree;
+      Categories   : Code_Peer.Message_Category_Sets.Set;
+      Counts       : out Messages_Counts;
+      Checks       : out Natural;
+      Total_Checks : out Natural);
    --  Computes number of the whole tree messages with specified categories
 
    function Compute_Messages_Count

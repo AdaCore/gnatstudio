@@ -259,11 +259,17 @@ package body Code_Peer.Summary_Models is
             --  "Total" line
 
             declare
-               Counts : Code_Peer.Utilities.Messages_Counts;
+               Counts       : Code_Peer.Utilities.Messages_Counts;
+               Dummy_Checks : Natural;
+               Dummy_Totals : Natural;
 
             begin
                Code_Peer.Utilities.Compute_Messages_Count
-                 (Self.Tree, Self.Message_Categories, Counts);
+                 (Self.Tree,
+                  Self.Message_Categories,
+                  Counts,
+                  Dummy_Checks,
+                  Dummy_Totals);
 
                case Kind is
                   when Base =>
@@ -307,11 +313,17 @@ package body Code_Peer.Summary_Models is
             --  "Total" line
 
             declare
-               Counts : Code_Peer.Utilities.Messages_Counts;
+               Counts       : Code_Peer.Utilities.Messages_Counts;
+               Dummy_Checks : Natural;
+               Dummy_Totals : Natural;
 
             begin
                Code_Peer.Utilities.Compute_Messages_Count
-                 (Self.Tree, Self.Message_Categories, Counts);
+                 (Self.Tree,
+                  Self.Message_Categories,
+                  Counts,
+                  Dummy_Checks,
+                  Dummy_Totals);
 
                Set_Deltas_Image (Counts (Level).Added, Counts (Level).Removed);
             end;
@@ -554,10 +566,21 @@ package body Code_Peer.Summary_Models is
                Set_Integer_Image (Project_Node.Total_Checks, True);
 
             else
-               --  ??? Total line, nothing to output. The problem is that some
-               --  projects can be hidden and actual output will be incorrect.
+               declare
+                  Counts : Code_Peer.Utilities.Messages_Counts;
+                  Checks : Natural;
+                  Totals : Natural;
 
-               Set_Integer_Image (0, True);
+               begin
+                  Code_Peer.Utilities.Compute_Messages_Count
+                    (Self.Tree,
+                     Self.Message_Categories,
+                     Counts,
+                     Checks,
+                     Totals);
+
+                  Set_Integer_Image (Totals, True);
+               end;
             end if;
 
          when Passed_Checks_Count_Column =>
@@ -578,10 +601,21 @@ package body Code_Peer.Summary_Models is
                  (Project_Node.Total_Checks - Project_Node.Checks_Count, True);
 
             else
-               --  ??? Total line, nothing to output. The problem is that some
-               --  projects can be hidden and actual output will be incorrect.
+               declare
+                  Counts : Code_Peer.Utilities.Messages_Counts;
+                  Checks : Natural;
+                  Totals : Natural;
 
-               Set_Integer_Image (0, True);
+               begin
+                  Code_Peer.Utilities.Compute_Messages_Count
+                    (Self.Tree,
+                     Self.Message_Categories,
+                     Counts,
+                     Checks,
+                     Totals);
+
+                  Set_Integer_Image (Totals, True);
+               end;
             end if;
 
          when others =>
@@ -699,7 +733,8 @@ package body Code_Peer.Summary_Models is
       return Self.Show_All_Projects
         or else Project_Node.Messages_Counts (Low)    /= (others => 0)
         or else Project_Node.Messages_Counts (Medium) /= (others => 0)
-        or else Project_Node.Messages_Counts (High)   /= (others => 0);
+        or else Project_Node.Messages_Counts (High)   /= (others => 0)
+        or else Project_Node.Total_Checks /= 0;
    end Is_Visible;
 
    ----------------
