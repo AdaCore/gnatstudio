@@ -92,6 +92,15 @@ If no tag is specified, the entry is relevant to all IDEs.
               between the switch name and the value.
   Workaround: Edit the rule files manually.
 
+- K222-028 GB: Invoking metrics analysis does not show Problems view
+  Problem:     When the metrics analysis cannot complete (e.g., due to syntax
+               errors) the Metrics view is nonetheless given the focus, hiding
+               the Problems view. This can leave the user under the impression
+               that no problem has arisen because the Metrics view might still
+               display (potentially obsolete) content.
+  Workaround : Check the Problems view or Console view manually after invoking
+               the metrics analysis.
+
 - K108-001 GPS: Adding Makefile as a language results in errors
   Problem:    Edit the project properties to add Makefile as a language.
               GPS will raise an error when it parses the resulting project,
