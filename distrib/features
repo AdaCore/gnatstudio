@@ -177,6 +177,11 @@ NF-51-I618-021 GPS: Add support for sorting the process list (2011-02-16)
   the process list now contains only the actual command for better
   readability.
 
+NF-51-I617-011 GPS: Add total/passed checks counters for CodePeer (2011-04-28)
+
+  CodePeer Summary Report has been extended to display total/passed checks
+  counters for each file and project.
+
 NF-51-I128-011 GPS: save CodePeer filter settings between sessions (2011-02-17)
 
   GPS saves CodePeer Summary Report's filter settings between sessions.
