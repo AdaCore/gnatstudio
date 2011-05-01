@@ -29,6 +29,8 @@ with GNAT.Regpat;           use GNAT.Regpat;
 
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
+
+with OS_Utils;              use OS_Utils;
 with Remote;                use Remote;
 with Toolchains.Known;      use Toolchains.Known;
 
@@ -81,9 +83,6 @@ package body Toolchains is
          From  : String) return String;
       --  Parses From to retrieve the value of Token for compiler Num
 
-      function Strip_Exe (Name : String) return String;
-      --  Strips the .exe extension if needed
-
       ---------------
       -- Get_Value --
       ---------------
@@ -113,21 +112,6 @@ package body Toolchains is
             return "";
          end if;
       end Get_Value;
-
-      ---------------
-      -- Strip_Exe --
-      ---------------
-
-      function Strip_Exe (Name : String) return String is
-      begin
-         if Name'Length > 4
-           and then Name (Name'Last - 3 .. Name'Last) = ".exe"
-         then
-            return Name (Name'First .. Name'Last - 4);
-         end if;
-
-         return Name;
-      end Strip_Exe;
 
       Comp_Num  : Natural := 1;
       Glob_List : Compiler_Vector.Vector;

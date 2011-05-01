@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -87,6 +87,9 @@ package OS_Utils is
    --  At the moment, the only non case-sensitive OS supported is Windows.
    --  This routine should be called for any pathname comming from the command
    --  line or from dialogs filled by users.
+
+   function Strip_Exe (Name : String) return String;
+   --  Strips the .exe extension if needed
 
 private
    pragma Import (C, Install_Ctrl_C_Handler, "__gnat_install_int_handler");

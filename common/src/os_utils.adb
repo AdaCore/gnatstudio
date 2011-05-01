@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -300,5 +300,22 @@ package body OS_Utils is
       when Name_Error | Use_Error | Status_Error =>
          return Full_Name;
    end Normalize_To_OS_Case;
+
+   ---------------
+   -- Strip_Exe --
+   ---------------
+
+   function Strip_Exe (Name : String) return String is
+      use type Config.Host_Type;
+   begin
+      if Config.Host = Config.Windows
+        and then Name'Length > 4
+        and then Name (Name'Last - 3 .. Name'Last) = ".exe"
+      then
+         return Name (Name'First .. Name'Last - 4);
+      else
+         return Name;
+      end if;
+   end Strip_Exe;
 
 end OS_Utils;
