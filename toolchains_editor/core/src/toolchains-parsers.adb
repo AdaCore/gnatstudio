@@ -505,9 +505,11 @@ package body Toolchains.Parsers is
          if Attribute_Name = "gnatlist" then
             Result :=
               (Kind => Tool_Kind, Tool => GNAT_List, others => <>);
+
          elsif Attribute_Name = "gnat" then
             Result :=
               (Kind => Tool_Kind, Tool => GNAT_Driver, others => <>);
+
          elsif Attribute_Name = "compiler_command" then
             declare
                Attribute_Index : constant String := Get_Name_String
@@ -518,6 +520,7 @@ package body Toolchains.Parsers is
                     (Kind   => Compiler_Kind,
                      Lang   => Manager.Get_Or_Create_Language ("ada"),
                      others => <>);
+
                elsif Attribute_Index = "c" then
                   Result :=
                     (Kind   => Compiler_Kind,
@@ -527,9 +530,11 @@ package body Toolchains.Parsers is
                   --  ??? what about C++ compiler ???
                end if;
             end;
+
          elsif Attribute_Name = "debugger_command" then
             Result :=
               (Kind => Tool_Kind, Tool => Debugger, others => <>);
+
          else
             Result.Error := Create_Error_Message
               (Attribute_Id,

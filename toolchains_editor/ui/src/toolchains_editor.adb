@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -145,11 +145,11 @@ package body Toolchains_Editor is
       Command           : String;
       Timeout_MS        : Integer;
       Handle_GUI_Events : Boolean := False) return String;
-   --  Executes the command and returns the result.
+   --  Executes the command and returns the result
 
    procedure Set_Project
-     (Editor    : Toolchains_Edit;
-      Project   : GNATCOLL.Projects.Project_Type);
+     (Editor  : Toolchains_Edit;
+      Project : GNATCOLL.Projects.Project_Type);
    --  Sets the current project
 
    procedure Add_Toolchain
@@ -172,8 +172,7 @@ package body Toolchains_Editor is
       Is_Valid    : Boolean;
       Is_Editable : Boolean);
 
-   procedure Update_Details
-     (Editor : Toolchains_Edit);
+   procedure Update_Details (Editor : Toolchains_Edit);
 
    function Get_Selected_Toolchain
      (Editor : access Toolchains_Edit_Record'Class) return Toolchain;
@@ -224,9 +223,8 @@ package body Toolchains_Editor is
    -------------
 
    function Create_Language_Page
-     (Project     : Project_Type;
-      Kernel      : access Kernel_Handle_Record'Class)
-      return Toolchains_Edit
+     (Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class) return Toolchains_Edit
    is
       Editor          : Toolchains_Edit;
       Tc_Box          : Gtk.Box.Gtk_Hbox;
@@ -304,13 +302,13 @@ package body Toolchains_Editor is
          User_Data   => No_Compiler_Column);
 
       declare
-         Langs : constant GNAT.OS_Lib.Argument_List :=
-                   Language_Handlers.Known_Languages
-                     (Get_Language_Handler (Kernel));
+         Langs   : constant GNAT.OS_Lib.Argument_List :=
+                     Language_Handlers.Known_Languages
+                       (Get_Language_Handler (Kernel));
          Ordered : GNAT.OS_Lib.Argument_List := Langs;
          Done    : Boolean := False;
          Last    : Natural;
-         Iter  : Gtk_Tree_Iter := Null_Iter;
+         Iter    : Gtk_Tree_Iter := Null_Iter;
 
       begin
          --  First order the languages alphabetically, with Ada, C and C++
@@ -445,8 +443,8 @@ package body Toolchains_Editor is
    -----------------
 
    procedure Set_Project
-     (Editor    : Toolchains_Edit;
-      Project   : GNATCOLL.Projects.Project_Type)
+     (Editor  : Toolchains_Edit;
+      Project : GNATCOLL.Projects.Project_Type)
    is
       Languages : constant GNAT.Strings.String_List :=
                     GNATCOLL.Projects.Languages (Project);
@@ -515,7 +513,6 @@ package body Toolchains_Editor is
       N_Items : Natural := 0;
       Val     : GNAT.Strings.String_List_Access;
    begin
-
       Iter := Editor.Lang_Model.Get_Iter_First;
 
       while Iter /= Null_Iter loop
@@ -550,12 +547,12 @@ package body Toolchains_Editor is
       Project   : Project_Type;
       Scenarii  : Scenario_Variable_Array) return Boolean
    is
-      Tc      : constant Toolchain := Get_Selected_Toolchain (Editor);
-      Iter    : Gtk_Tree_Iter;
-      Val     : GNAT.Strings.String_List_Access;
-      Old     : constant GNAT.Strings.String_List :=
-                  GNATCOLL.Projects.Languages (Project);
-      Modified : Boolean := False;
+      Old       : constant GNAT.Strings.String_List :=
+                    GNATCOLL.Projects.Languages (Project);
+      Tc        : constant Toolchain := Get_Selected_Toolchain (Editor);
+      Iter      : Gtk_Tree_Iter;
+      Val       : GNAT.Strings.String_List_Access;
+      Modified  : Boolean := False;
       Tmp_Modif : Boolean := False;
 
       procedure Set_Attribute
@@ -646,16 +643,16 @@ package body Toolchains_Editor is
             Tmp_Modif := True;
             for K in Old'Range loop
                if Ada.Strings.Equal_Case_Insensitive
-                    (Old (K).all, Val (J).all)
+                 (Old (K).all, Val (J).all)
                then
                   Tmp_Modif := False;
-
                   exit;
                end if;
             end loop;
 
             exit when Tmp_Modif;
          end loop;
+
       else
          Tmp_Modif := True;
       end if;
@@ -683,7 +680,6 @@ package body Toolchains_Editor is
                  or else not Is_Default (Tc, Tool)
                  or else not Is_Base_Name (Tc, Tool)
                then
-
                   Set_Attribute
                     (Attr, "", Get_Command (Tc, Tool));
                else
@@ -747,13 +743,13 @@ package body Toolchains_Editor is
    -------------------
 
    procedure Add_Toolchain
-     (Editor          : Toolchains_Edit;
-      Tc              : Toolchains.Toolchain;
+     (Editor         : Toolchains_Edit;
+      Tc             : Toolchains.Toolchain;
       Force_Selected : Boolean)
    is
-      Iter      : Gtk_Tree_Iter;
-      Infos     : Ada_Library_Info_Access;
-      Name      : constant String := Toolchains.Get_Name (Tc);
+      Iter  : Gtk_Tree_Iter;
+      Infos : Ada_Library_Info_Access;
+      Name  : constant String := Toolchains.Get_Name (Tc);
 
    begin
       Toolchains.Compute_Predefined_Paths (Tc);
@@ -822,6 +818,10 @@ package body Toolchains_Editor is
 
       function Format_String return String;
 
+      ----------------
+      -- Get_String --
+      ----------------
+
       function Get_String return String is
       begin
          if Kind = Tool_Kind_Tool then
@@ -842,6 +842,10 @@ package body Toolchains_Editor is
             return Lang & ":";
          end if;
       end Get_String;
+
+      -------------------
+      -- Format_String --
+      -------------------
 
       function Format_String return String is
       begin
@@ -941,9 +945,8 @@ package body Toolchains_Editor is
    -- Update_Details --
    --------------------
 
-   procedure Update_Details
-     (Editor : Toolchains_Edit)
-   is
+   procedure Update_Details (Editor : Toolchains_Edit) is
+
       W      : Gtk_Widget;
       Iter   : Gtk_Tree_Iter;
       Tc     : constant Toolchain := Get_Selected_Toolchain (Editor);
@@ -959,6 +962,10 @@ package body Toolchains_Editor is
          Is_Default  : Boolean;
          Is_Valid    : Boolean;
          Is_Editable : Boolean);
+
+      ----------------
+      -- Add_Detail --
+      ----------------
 
       procedure Add_Detail
         (Kind        : Tool_Kind;
@@ -1021,6 +1028,7 @@ package body Toolchains_Editor is
                Top_Attach    => N_Rows - 1,
                Bottom_Attach => N_Rows,
                Xoptions      => 0);
+
             Tool_Callback.Object_Connect
               (Btn, Gtk.Button.Signal_Clicked,
                On_Reset'Access,
@@ -1033,6 +1041,7 @@ package body Toolchains_Editor is
                   Value     => Ent,
                   Icon      => Icn,
                   Reset_Btn => Btn));
+
             Tool_Callback.Object_Connect
               (Ent, Gtk.Editable.Signal_Changed,
                On_Tool_Value_Changed'Access,
@@ -1141,10 +1150,10 @@ package body Toolchains_Editor is
       while Iter /= Null_Iter loop
          if Get_Boolean (Editor.Lang_Model, Iter, Active_Column) then
             declare
-               Lang        : constant String :=
-                               Get_String
-                                 (Editor.Lang_Model, Iter, Name_Column);
-               C           : constant Compiler := Get_Compiler (Tc, Lang);
+               Lang : constant String :=
+                        Get_String
+                          (Editor.Lang_Model, Iter, Name_Column);
+               C    : constant Compiler := Get_Compiler (Tc, Lang);
 
             begin
                if not Get_Compiler_Is_Used (Tc, Lang) then
@@ -1489,8 +1498,8 @@ package body Toolchains_Editor is
    -- On_Scan_Clicked --
    ---------------------
 
-   procedure On_Scan_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
+   procedure On_Scan_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
+
       Editor  : constant Toolchains_Edit := Toolchains_Edit (W);
       Success : Boolean;
       Tc      : constant Toolchain := Get_Selected_Toolchain (Editor);
@@ -1555,15 +1564,16 @@ package body Toolchains_Editor is
       procedure Free is new Ada.Unchecked_Deallocation
         (GNAT.Expect.Process_Descriptor'Class,
          GNAT.Expect.Process_Descriptor_Access);
-      Status    : Boolean;
-      Pd        : GNAT.Expect.Process_Descriptor_Access;
-      Match     : Expect_Match := 0;
-      Ret       : Unbounded_String;
-      Args      : constant Arg_List :=
-                    GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args);
-      Start     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Timeout   : constant Duration := Duration (Timeout_MS) / 1000.0;
-      Dead      : Boolean;
+
+      Status  : Boolean;
+      Pd      : GNAT.Expect.Process_Descriptor_Access;
+      Match   : Expect_Match := 0;
+      Ret     : Unbounded_String;
+      Args    : constant Arg_List :=
+                  GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args);
+      Start   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Timeout : constant Duration := Duration (Timeout_MS) / 1000.0;
+      Dead    : Boolean;
       pragma Unreferenced (Dead);
 
    begin
@@ -1642,10 +1652,10 @@ package body Toolchains_Editor is
    begin
       Toolchains_Module_ID := new Toolchains_Module_Record;
       Register_Module
-        (Module                  => Toolchains_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => Toolchains_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Toolchains_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => Toolchains_Module_Name,
+         Priority    => Default_Priority);
 
       Kernel.Set_Toolchains_Manager (new GPS_Toolchain_Manager_Record);
 

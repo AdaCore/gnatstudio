@@ -790,6 +790,7 @@ package body Toolchains is
 
    begin
       File := Locate_On_Path (+Value, Get_Nickname (Build_Server));
+
       if File /= No_File then
          New_Comp.Is_Valid := True;
 
@@ -809,9 +810,9 @@ package body Toolchains is
               (To_String (Comp.Lang), Lang)
             then
                --  If a compiler exists for the same language and comes from
-               --  default (e.g. xml definition file), the we replace it if we
+               --  default (e.g. xml definition file), then we replace it if we
                --  have more accurate information (e.g. new one is coming from
-               --  a gprconfig query)
+               --  a gprconfig query).
                if Comp.Origin = From_Default
                  and then Origin = From_Gprconfig
                then
@@ -821,14 +822,13 @@ package body Toolchains is
 
                --  If we are inserting a user-defined compiler, then we replace
                --  a previously existing user-defined compiler for the same
-               --  language
+               --  language.
                elsif Comp.Origin = From_User
                  and then Origin = From_User
                then
                   This.Full_Compiler_List.Replace_Element (J, New_Comp);
 
                   return;
-
                end if;
             end if;
          end;
@@ -837,7 +837,8 @@ package body Toolchains is
       This.Full_Compiler_List.Append (New_Comp);
 
       --  If no previous compiler existed, then let's set the in-use compiler
-      --  for the language
+      --  for the language.
+
       if not This.Used_Compiler_List.Contains (Lang) then
          This.Used_Compiler_List.Insert
            (Lang, Natural (This.Full_Compiler_List.Last_Index));
@@ -853,7 +854,7 @@ package body Toolchains is
       Lang  : String;
       Value : String)
    is
-      Full     : Compiler_Vector.Vector renames This.Full_Compiler_List;
+      Full : Compiler_Vector.Vector renames This.Full_Compiler_List;
 
    begin
       for J in Full.First_Index .. Full.Last_Index loop
@@ -1029,8 +1030,7 @@ package body Toolchains is
    -- Is_Base_Name --
    ------------------
 
-   function Is_Base_Name (This : Toolchain; Lang : String) return Boolean
-   is
+   function Is_Base_Name (This : Toolchain; Lang : String) return Boolean is
       Comp : constant Compiler := Get_Compiler (This, Lang);
    begin
       return Comp.Base_Name;
@@ -1073,6 +1073,10 @@ package body Toolchains is
       Is_Base_Name : Boolean)
    is
       function Locate_Tool (Path : String) return Boolean;
+
+      -----------------
+      -- Locate_Tool --
+      -----------------
 
       function Locate_Tool (Path : String) return Boolean is
       begin
@@ -1124,8 +1128,7 @@ package body Toolchains is
    -- Is_Base_Name --
    ------------------
 
-   function Is_Base_Name (This : Toolchain; Name : Tools) return Boolean
-   is
+   function Is_Base_Name (This : Toolchain; Name : Tools) return Boolean is
    begin
       return This.Tools (Name).Base_Name;
    end Is_Base_Name;
@@ -1559,8 +1562,7 @@ package body Toolchains is
       -- Set_Compilers_From_Attribute --
       ----------------------------------
 
-      procedure Set_Compilers_From_Attribute  (Attr : Attribute_Pkg_String)
-      is
+      procedure Set_Compilers_From_Attribute  (Attr : Attribute_Pkg_String) is
          Indexes : String_List := Attribute_Indexes (Project, Attr);
          Origin  : Compiler_Origin;
       begin
@@ -1591,21 +1593,22 @@ package body Toolchains is
          Free (Indexes);
       end Set_Compilers_From_Attribute;
 
-      Cursor    : Toolchain_Maps.Cursor;
-      Ret       : Toolchain := null;
-      Modified  : Boolean := False;
+      Cursor   : Toolchain_Maps.Cursor;
+      Ret      : Toolchain := null;
+      Modified : Boolean := False;
       --  Whether the toolchain returned has been modified from the one stored
       --  in the manager
 
-      Is_Empty  : constant Boolean :=
-                    GNAT_List_Str = ""
-                        and then GNAT_Str = ""
-                        and then Gnatmake_Str = ""
-                                and then Debugger_Str = "";
+      Is_Empty : constant Boolean :=
+                   GNAT_List_Str = ""
+                       and then GNAT_Str = ""
+                       and then Gnatmake_Str = ""
+                       and then Debugger_Str = "";
 
    begin
       --  We read the compilers defined directly in the project first, and
-      --  store them in 'New_Toolchain'
+      --  store them in 'New_Toolchain'.
+
       Set_Compilers_From_Attribute (Compiler_Command_Attribute);
       Set_Compilers_From_Attribute (Compiler_Driver_Attribute);
 
@@ -2003,8 +2006,7 @@ package body Toolchains is
       --  Force compilers if needed
 
       declare
-         Langs : String_List_Access :=
-                   Toolchains.Known.Langs (Name);
+         Langs : String_List_Access := Toolchains.Known.Langs (Name);
       begin
          for J in Langs'Range loop
             if Get_Compiler (This, Langs (J).all) = No_Compiler then

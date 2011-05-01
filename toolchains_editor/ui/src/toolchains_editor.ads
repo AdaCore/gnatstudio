@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,16 +37,15 @@ package Toolchains_Editor is
 
    function Create_Language_Page
      (Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class)
-      return Toolchains_Edit;
+      Kernel  : access Kernel_Handle_Record'Class) return Toolchains_Edit;
 
    function Get_Languages (Editor : Toolchains_Edit)
      return GNAT.Strings.String_List_Access;
 
    function Generate_Project
-     (Editor    : Toolchains_Edit;
-      Project   : Project_Type;
-      Scenarii  : Scenario_Variable_Array) return Boolean;
+     (Editor   : Toolchains_Edit;
+      Project  : Project_Type;
+      Scenarii : Scenario_Variable_Array) return Boolean;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -54,16 +53,16 @@ package Toolchains_Editor is
 private
 
    type Toolchains_Edit_Record is new Gtk.Box.Gtk_Vbox_Record with record
-      Kernel           : GPS.Kernel.Kernel_Handle;
-      Languages        : Gtk_Tree_View;
-      Lang_Model       : Gtk_Tree_Store;
-      Toolchains_Tree  : Gtk_Tree_View;
-      Model            : Gtk_Tree_Store;
-      Details_View     : Gtk_Table;
-      Mgr              : Toolchains.Toolchain_Manager;
-      Toolchain        : Toolchains.Toolchain := Toolchains.Null_Toolchain;
-      Updating         : Boolean := False;
-      Edited_Prj       : GNATCOLL.Projects.Project_Type;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Languages       : Gtk_Tree_View;
+      Lang_Model      : Gtk_Tree_Store;
+      Toolchains_Tree : Gtk_Tree_View;
+      Model           : Gtk_Tree_Store;
+      Details_View    : Gtk_Table;
+      Mgr             : Toolchains.Toolchain_Manager;
+      Toolchain       : Toolchains.Toolchain := Toolchains.Null_Toolchain;
+      Updating        : Boolean := False;
+      Edited_Prj      : GNATCOLL.Projects.Project_Type;
    end record;
 
 end Toolchains_Editor;
