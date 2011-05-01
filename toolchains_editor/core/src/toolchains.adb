@@ -778,7 +778,7 @@ package body Toolchains is
       if File /= No_File then
          New_Comp.Is_Valid := True;
 
-         if +File.Base_Name (File.File_Extension) = Value then
+         if +File.Base_Name (File.File_Extension) = Strip_Exe (Value) then
             New_Comp.Base_Name := True;
          end if;
       end if;
