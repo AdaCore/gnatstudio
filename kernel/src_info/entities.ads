@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2011, AdaCore              --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -128,7 +128,7 @@ package Entities is
    --  locked until all locks have been unlocked.
 
    overriding procedure Finalize (Lock : in out Construct_Heuristics_Lock);
-   --  Same as above, if not already unlocked.
+   --  Same as above, if not already unlocked
 
    procedure Freeze
      (Db : Entities_Database; Mode : Freeze_Type := No_Create_Or_Update);
@@ -554,7 +554,7 @@ package Entities is
    --  file, then the order is the one given by comparing the file names.
 
    function To_String (Loc : File_Location) return String;
-   --  Return a string representation of the location, for debug purpose.
+   --  Return a string representation of the location, for debug purpose
 
    ----------------------------
    -- Generic instantiations --
@@ -723,14 +723,14 @@ package Entities is
    --  actually instantiates a generic (generally a package).
 
    procedure Add_Called
-     (Entity   : Entity_Information;
-      Called   : Entity_Information);
+     (Entity : Entity_Information;
+      Called : Entity_Information);
    --  Add a new called entity, that is an entity which has a reference in the
    --  scope of Entity or its body
 
    procedure Set_Caller_At_Declaration
-     (Entity   : Entity_Information;
-      Caller   : Entity_Information);
+     (Entity : Entity_Information;
+      Caller : Entity_Information);
    --  Set the name of the entity which contains, in its scope, the declaration
    --  of Entity
 
@@ -848,15 +848,15 @@ package Entities is
    type LI_Information_Iterator is abstract tagged null record;
 
    function Parse_All_LI_Information
-     (Handler          : access LI_Handler_Record;
-      Project          : GNATCOLL.Projects.Project_Type)
+     (Handler : access LI_Handler_Record;
+      Project : GNATCOLL.Projects.Project_Type)
       return LI_Information_Iterator'Class is abstract;
    --  Prepare the parsing of all the existing LI information for all the files
    --  in Project. This should be called only after Generate_LI_For_Project.
 
    procedure Parse_All_LI_Information
-     (Handler          : access LI_Handler_Record'Class;
-      Project          : GNATCOLL.Projects.Project_Type);
+     (Handler : access LI_Handler_Record'Class;
+      Project : GNATCOLL.Projects.Project_Type);
    --  A version that does all the iteration automatically
 
    procedure Next
@@ -890,11 +890,11 @@ package Entities is
    --  LI structures themselves, which will be done by Get_Source_Info.
 
    procedure Parse_File_Constructs
-     (Handler      : access LI_Handler_Record;
-      Languages    : access
+     (Handler   : access LI_Handler_Record;
+      Languages : access
         Language.Tree.Database.Abstract_Language_Handler_Record'Class;
-      File_Name    : GNATCOLL.VFS.Virtual_File;
-      Result       : out Language.Construct_List);
+      File_Name : GNATCOLL.VFS.Virtual_File;
+      Result    : out Language.Construct_List);
    --  Build a Construct_List, either using the src_info tools (like SN)
    --  or a language parser. Any potential error should be ignored, and we
    --  should return an empty Result instead.
@@ -1094,9 +1094,9 @@ private
    --  Return true if the key given in parameter is contained in the list
 
    procedure Replace
-     (List   : Entity_Reference_List;
-      Key    : Entity_Reference_Index;
-      Val    : E_Reference);
+     (List : Entity_Reference_List;
+      Key  : Entity_Reference_Index;
+      Val  : E_Reference);
    --  Replace the element at the given index by val
 
    function Index
@@ -1112,7 +1112,7 @@ private
       Index  : Entity_Reference_Index;
    end record;
    No_Entity_Reference : aliased constant Entity_Reference :=
-     (null, Null_Entity_Reference_Index);
+                           (null, Null_Entity_Reference_Index);
 
    --------------------------
    -- LI_Entities_Iterator --
