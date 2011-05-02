@@ -17,7 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Containers.Ordered_Sets; use Ada.Containers;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
@@ -1618,6 +1619,63 @@ package body Src_Editor_Box is
       function On_Callee
         (Callee, Primitive_Of : Entity_Information) return Boolean;
 
+      --  CP record is used to sort the menu entries by means of an ordered set
+
+      type CP is record
+         Callee, Primitive_Of : Entity_Information;
+      end record;
+
+      function "<" (Left, Right : CP) return Boolean;
+      overriding function "=" (Left, Right : CP) return Boolean;
+
+      ---------
+      -- "<" --
+      ---------
+
+      function "<" (Left, Right : CP) return Boolean is
+      begin
+         return Get (Get_Name (Left.Primitive_Of)).all
+           < Get (Get_Name (Right.Primitive_Of)).all;
+      end "<";
+
+      ---------
+      -- "=" --
+      ---------
+
+      overriding function "=" (Left, Right : CP) return Boolean is
+      begin
+         return Get (Get_Name (Left.Primitive_Of)).all
+           = Get (Get_Name (Right.Primitive_Of)).all;
+      end "=";
+
+      package CP_Set is new Ordered_Sets (CP);
+
+      procedure Fill_Menu (Position : CP_Set.Cursor);
+      --  Fill the menu with the entities pointed to by Position
+
+      ---------------
+      -- Fill_Menu --
+      ---------------
+
+      procedure Fill_Menu (Position : CP_Set.Cursor) is
+         E : constant CP := CP_Set.Element (Position);
+      begin
+         Gtk_New (Label,
+                  "Primitive of: "
+                  & Emphasize (Get (Get_Name (E.Primitive_Of)).all));
+         Set_Use_Markup (Label, True);
+         Set_Alignment (Label, 0.0, 0.5);
+         Gtk_New (Item);
+         Add (Item, Label);
+         GPS.Kernel.MDI.Entity_Callback.Object_Connect
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Callback, Get_Kernel (Context), E.Callee);
+         Add (Menu, Item);
+         Count := Count + 1;
+      end Fill_Menu;
+
+      E_Set : CP_Set.Set;
+
       ---------------
       -- On_Callee --
       ---------------
@@ -1625,18 +1683,7 @@ package body Src_Editor_Box is
       function On_Callee
         (Callee, Primitive_Of : Entity_Information) return Boolean is
       begin
-         Gtk_New (Label,
-                  "Primitive of: "
-                  & Emphasize (Get (Get_Name (Primitive_Of)).all));
-         Set_Use_Markup (Label, True);
-         Set_Alignment (Label, 0.0, 0.5);
-         Gtk_New (Item);
-         Add (Item, Label);
-         GPS.Kernel.MDI.Entity_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Callback, Get_Kernel (Context), Callee);
-         Add (Menu, Item);
-         Count := Count + 1;
+         E_Set.Insert (CP'(Callee, Primitive_Of));
          return True;
       end On_Callee;
 
@@ -1666,6 +1713,8 @@ package body Src_Editor_Box is
          On_Callee => On_Callee'Access,
          Filter    => Filter,
          Policy    => Pref);
+
+      E_Set.Iterate (Fill_Menu'Access);
 
       --  If we have not found any possible call, we must be missing some
       --  .ALI file (for instance the one containing the declaration of the
