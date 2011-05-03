@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -149,10 +149,10 @@ package body Toolchains_Dialog is
       end if;
 
       declare
-         Dir : constant GNATCOLL.VFS.Virtual_File :=
-                 Select_Directory
-                   (Base_Directory => Start_Dir,
-                    Parent         => Gtk_Window (Get_Toplevel (Button)));
+         Dir      : constant GNATCOLL.VFS.Virtual_File :=
+                      Select_Directory
+                        (Base_Directory => Start_Dir,
+                         Parent         => Gtk_Window (Get_Toplevel (Button)));
          Compiler : constant String :=
                       Get_Project (Data.D.Kernel).Attribute_Value
                         (Compiler_Command_Attribute,
@@ -175,10 +175,10 @@ package body Toolchains_Dialog is
                     (-("The selected path does not contain a compiler." &
                        ASCII.LF &
                        "Are you sure you want to use this path ?"),
-                     Dialog_Type    => Gtkada.Dialogs.Error,
-                     Buttons        => Button_OK + Button_Cancel,
-                     Title          => -"Invalid compiler path",
-                     Parent         => Gtk_Window (Data.D));
+                     Dialog_Type => Gtkada.Dialogs.Error,
+                     Buttons     => Button_OK + Button_Cancel,
+                     Title       => -"Invalid compiler path",
+                     Parent      => Gtk_Window (Data.D));
 
                   if Resp = Button_OK then
                      Set_Text (Data.E, Display_Full_Name (Dir));

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2010, AdaCore              --
+--                  Copyright (C) 2001-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1054,7 +1054,7 @@ package body GPS.Kernel.Project is
       end Report_Error;
 
       Data : aliased Project_Hooks_Args :=
-        (Hooks_Data with Project => Project);
+               (Hooks_Data with Project => Project);
    begin
       if Project.Save (Errors => Report_Error'Unrestricted_Access) then
          Run_Hook (Kernel, Project_Saved_Hook, Data'Access);

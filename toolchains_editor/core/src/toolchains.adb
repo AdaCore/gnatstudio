@@ -1550,7 +1550,6 @@ package body Toolchains is
          Indexes : String_List := Attribute_Indexes (Project, Attr);
          Origin  : Compiler_Origin;
       begin
-
          if Attr = Compiler_Command_Attribute then
             Origin := From_Project;
          else

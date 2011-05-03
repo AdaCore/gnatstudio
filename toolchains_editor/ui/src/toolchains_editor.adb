@@ -680,8 +680,7 @@ package body Toolchains_Editor is
                  or else not Is_Default (Tc, Tool)
                  or else not Is_Base_Name (Tc, Tool)
                then
-                  Set_Attribute
-                    (Attr, "", Get_Command (Tc, Tool));
+                  Set_Attribute (Attr, "", Get_Command (Tc, Tool));
                else
                   Clear_Attribute (Attr, "");
                end if;
@@ -703,8 +702,7 @@ package body Toolchains_Editor is
             if Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
                if Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column) then
                   Set_Attribute
-                    (GNATCOLL.Projects.Compiler_Driver_Attribute,
-                     Lang, "");
+                    (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang, "");
                else
                   Comp := Get_Compiler (Tc, Lang);
 
@@ -1499,7 +1497,6 @@ package body Toolchains_Editor is
    ---------------------
 
    procedure On_Scan_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
-
       Editor  : constant Toolchains_Edit := Toolchains_Edit (W);
       Success : Boolean;
       Tc      : constant Toolchain := Get_Selected_Toolchain (Editor);
