@@ -1155,16 +1155,19 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Mode);
 
-      No_Such_File_Regexp : constant Pattern_Matcher :=
-                              Compile ("No such file or directory.");
-      --  Note that this pattern should work even when LANG isn't english
-      --  because gdb does not seem to take into account this variable at all.
-
       Remote_Exec         : constant Virtual_File :=
                               To_Remote
                                 (Executable, Get_Nickname (Debug_Server));
       Exec_Has_Spaces     : constant Boolean :=
                               Index (Remote_Exec.Display_Full_Name, " ") /= 0;
+      Full_Name           : constant String :=
+                              +Remote_Exec.Unix_Style_Full_Name;
+      No_Such_File_Regexp : constant Pattern_Matcher :=
+                              Compile (Full_Name &
+                                       ": No such file or directory.");
+      --  Note that this pattern should work even when LANG isn't english
+      --  because gdb does not seem to take into account this variable at all.
+
       Lang                : Language_Access;
       Process             : Visual_Debugger;
 
@@ -1180,10 +1183,10 @@ package body Debugger.Gdb is
       begin
          if Exec_Has_Spaces then
             Cmd := new String'
-              (Command & " """ & (+Remote_Exec.Unix_Style_Full_Name) & '"');
+              (Command & " """ & Full_Name & '"');
          else
             Cmd := new String'
-              (Command & " " & (+Remote_Exec.Unix_Style_Full_Name));
+              (Command & " " & Full_Name);
          end if;
 
          if Process /= null then
