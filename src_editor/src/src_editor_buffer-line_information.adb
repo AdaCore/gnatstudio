@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,12 +19,9 @@
 
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
-with Cairo;                    use Cairo;
-
 with Gdk;                      use Gdk;
 with Gdk.Cairo;                use Gdk.Cairo;
 with Gdk.Color;                use Gdk.Color;
-with Gdk.Pixmap;               use Gdk.Pixmap;
 
 with Glib.Object;              use Glib.Object;
 
@@ -910,7 +907,7 @@ package body Src_Editor_Buffer.Line_Information is
       View        : Gtk_Text_View;
       Color       : Gdk_Color;
       Layout      : Pango_Layout;
-      Drawable    : Gdk.Pixmap.Gdk_Pixmap)
+      Drawable    : Cairo.Cairo_Surface)
    is
       Current_Line    : Buffer_Line_Type;
       Editable_Line   : Editable_Line_Type;

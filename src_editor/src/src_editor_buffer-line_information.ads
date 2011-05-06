@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,9 +20,10 @@
 --  This package handles the customizable information in the buffer,
 --  such as information added to the sides of lines, or VCS information.
 
+with Cairo;         use Cairo;
+
 with Gdk.Color;
 with Gdk.Pixbuf;    use Gdk.Pixbuf;
-with Gdk.Pixmap;
 
 with Gtk.Text_View; use Gtk.Text_View;
 with Gtk.Widget;    use Gtk.Widget;
@@ -90,7 +91,7 @@ package Src_Editor_Buffer.Line_Information is
       View        : Gtk_Text_View;
       Color       : Gdk.Color.Gdk_Color;
       Layout      : Pango_Layout;
-      Drawable    : Gdk.Pixmap.Gdk_Pixmap);
+      Drawable    : Cairo.Cairo_Surface);
    --  Draw side info from Top_Line to Bottom_Line on Drawable.
    --  Layout should be used to draw text.
 

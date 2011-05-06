@@ -22,7 +22,7 @@ with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
-with Cairo;                      use Cairo;
+with Cairo.Surface;              use Cairo.Surface;
 
 with Gdk;                        use Gdk;
 with Gdk.Cairo;                  use Gdk.Cairo;
@@ -30,7 +30,6 @@ with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Window;                 use Gdk.Window;
-with Gdk.Pixmap;                 use Gdk.Pixmap;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 
@@ -441,9 +440,9 @@ package body Src_Editor_View is
 
       Invalidate_Side_Column_Cache (View);
 
-      if View.Speed_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (View.Speed_Column_Buffer);
-         View.Speed_Column_Buffer := null;
+      if View.Speed_Column_Buffer /= Null_Surface then
+         Destroy (View.Speed_Column_Buffer);
+         View.Speed_Column_Buffer := Null_Surface;
       end if;
 
       Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
@@ -570,9 +569,9 @@ package body Src_Editor_View is
    begin
       User.Redraw_Registered := False;
 
-      if User.Speed_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (User.Speed_Column_Buffer);
-         User.Speed_Column_Buffer := null;
+      if User.Speed_Column_Buffer /= Null_Surface then
+         Destroy (User.Speed_Column_Buffer);
+         User.Speed_Column_Buffer := Null_Surface;
       end if;
 
       Invalidate_Window (User);
@@ -680,9 +679,9 @@ package body Src_Editor_View is
    begin
       Invalidate_Side_Column_Cache (View);
 
-      if View.Speed_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (View.Speed_Column_Buffer);
-         View.Speed_Column_Buffer := null;
+      if View.Speed_Column_Buffer /= Null_Surface then
+         Destroy (View.Speed_Column_Buffer);
+         View.Speed_Column_Buffer := Null_Surface;
       end if;
 
       if Realized_Is_Set (View) then
@@ -808,9 +807,9 @@ package body Src_Editor_View is
    is
       View : constant Source_View := Source_View (Widget);
    begin
-      if View.Speed_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (View.Speed_Column_Buffer);
-         View.Speed_Column_Buffer := null;
+      if View.Speed_Column_Buffer /= Null_Surface then
+         Destroy (View.Speed_Column_Buffer);
+         View.Speed_Column_Buffer := Null_Surface;
       end if;
 
    exception
@@ -1559,9 +1558,9 @@ package body Src_Editor_View is
             Set_Size_Request (Source.Area, Speed_Column_Width, -1);
          end if;
 
-         if Source.Speed_Column_Buffer /= null then
-            Gdk.Pixmap.Unref (Source.Speed_Column_Buffer);
-            Source.Speed_Column_Buffer := null;
+         if Source.Speed_Column_Buffer /= Null_Surface then
+            Destroy (Source.Speed_Column_Buffer);
+            Source.Speed_Column_Buffer := Null_Surface;
          end if;
 
          if Realized_Is_Set (Source.Area) then
@@ -2214,14 +2213,14 @@ package body Src_Editor_View is
          return;
       end if;
 
-      if View.Side_Column_Buffer /= null
+      if View.Side_Column_Buffer /= Null_Surface
         and then View.Top_Line = View.Buffer_Top_Line
         and then View.Bottom_Line = View.Buffer_Bottom_Line
       then
          --  If the cache corresponds to the lines, redraw it
 
          Cr := Create (Left_Window);
-         Set_Source_Pixmap (Cr, View.Side_Column_Buffer, 0.0, 0.0);
+         Set_Source_Surface (Cr, View.Side_Column_Buffer, 0.0, 0.0);
          Paint (Cr);
          Destroy (Cr);
 
@@ -2238,7 +2237,9 @@ package body Src_Editor_View is
 
          Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
 
-         Gdk_New (View.Side_Column_Buffer, Left_Window, Total_Width, Height);
+         View.Side_Column_Buffer := Gdk.Window.Create_Similar_Surface
+           (Gdk_Drawable (Left_Window), Cairo_Content_Color_Alpha,
+            Total_Width, Height);
 
          Cr := Create (View.Side_Column_Buffer);
          Set_Source_Color (Cr, View.Background_Color_Other);
@@ -2254,7 +2255,7 @@ package body Src_Editor_View is
             Layout, View.Side_Column_Buffer);
 
          Cr := Create (Left_Window);
-         Set_Source_Pixmap (Cr, View.Side_Column_Buffer, 0.0, 0.0);
+         Set_Source_Surface (Cr, View.Side_Column_Buffer, 0.0, 0.0);
          Paint (Cr);
          Destroy (Cr);
 
@@ -2298,10 +2299,10 @@ package body Src_Editor_View is
 
       Total_Lines := Get_Line_Count (Src_Buffer);
 
-      if View.Speed_Column_Buffer = null then
-         Gdk_New
-           (View.Speed_Column_Buffer,
-            Right_Window,
+      if View.Speed_Column_Buffer = Null_Surface then
+         View.Speed_Column_Buffer :=
+           Create_Similar_Surface
+           (Right_Window, Cairo_Content_Color_Alpha,
             Speed_Column_Width,
             Height);
 
@@ -2367,7 +2368,7 @@ package body Src_Editor_View is
       end if;
 
       Cr := Create (Right_Window);
-      Set_Source_Pixmap (Cr, View.Speed_Column_Buffer, 0.0, 0.0);
+      Set_Source_Surface (Cr, View.Speed_Column_Buffer, 0.0, 0.0);
       Paint (Cr);
 
       if Width = 1 then
@@ -2506,9 +2507,9 @@ package body Src_Editor_View is
    procedure Invalidate_Side_Column_Cache
      (View : access Source_View_Record'Class) is
    begin
-      if View.Side_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (View.Side_Column_Buffer);
-         View.Side_Column_Buffer := null;
+      if View.Side_Column_Buffer /= Null_Surface then
+         Destroy (View.Side_Column_Buffer);
+         View.Side_Column_Buffer := Null_Surface;
       end if;
    end Invalidate_Side_Column_Cache;
 

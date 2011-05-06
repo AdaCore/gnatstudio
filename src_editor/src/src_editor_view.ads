@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2010, AdaCore                --
+--                   Copyright (C) 2001-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,9 +22,9 @@
 --  many functionalities related to source code editing.
 --  </description>
 
+with Cairo;                  use Cairo;
 with Gdk.Color;
 with Gdk.Event;
-with Gdk.Pixmap;
 with Glib;                   use Glib;
 with Gtk.Drawing_Area;
 with Gtk.Main;
@@ -187,7 +187,7 @@ private
       Buffer_Top_Line     : Src_Editor_Buffer.Buffer_Line_Type := 1;
       Buffer_Bottom_Line  : Src_Editor_Buffer.Buffer_Line_Type := 0;
       Buffer_Column_Size  : Gint := 1;
-      Side_Column_Buffer  : Gdk.Pixmap.Gdk_Pixmap;
+      Side_Column_Buffer  : Cairo_Surface := Null_Surface;
       --  Cache for avoiding to redraw the side columns too often
 
       Side_Columns_Up_To_Date : Boolean := False;
@@ -224,7 +224,7 @@ private
       --  An editor which should have a scrolling synchronized with this
       --  editor.
 
-      Speed_Column_Buffer  : Gdk.Pixmap.Gdk_Pixmap;
+      Speed_Column_Buffer  : Cairo_Surface := Null_Surface;
       --  Cache for avoiding to redraw the speed column too often
 
       Speed_Column_Mode    : Speed_Column_Policies := Automatic;
