@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2010, AdaCore             --
+--                      Copyright (C) 2000-2011, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,10 +21,8 @@ with GNAT.Strings;     use GNAT.Strings;
 
 with Glib;             use Glib;
 with Glib.Object;      use Glib.Object;
-with Gdk.Bitmap;       use Gdk.Bitmap;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Event;        use Gdk.Event;
-with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gdk.Window;        use Gdk.Window;
@@ -45,7 +43,6 @@ with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Spin_Button;  use Gtk.Spin_Button;
 with Gtk.Style;        use Gtk.Style;
 with Gtk.Widget;       use Gtk.Widget;
-with Gtk.Window;       use Gtk.Window;
 
 with Gtk.Text_View;    use Gtk.Text_View;
 with Gtk.Text_Buffer;  use Gtk.Text_Buffer;
@@ -64,7 +61,6 @@ with Gtkada.MDI;         use Gtkada.MDI;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks; use GPS.Kernel;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
-with Pixmaps_IDE;      use Pixmaps_IDE;
 with GVD_Module;       use GVD_Module;
 with GVD.Code_Editors; use GVD, GVD.Code_Editors;
 with GVD.Process;      use GVD.Process;
@@ -84,8 +80,6 @@ package body Breakpoints_Editor is
       record
          Editor               : Breakpoints_Access;
          Advanced_Breakpoints : Advanced_Breakpoint_Access;
-         Enabled_Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
-         Enabled_Mask         : Gdk.Bitmap.Gdk_Bitmap;
       end record;
    type Breakpoint_Editor is access all Breakpoint_Editor_Record'Class;
 
@@ -416,15 +410,6 @@ package body Breakpoints_Editor is
       Set_Sensitive (Widget.Editor.Advanced_Location, False);
       Set_Sensitive (Widget.Editor.Remove, False);
       Set_Sensitive (Widget.Editor.View, False);
-
-      if Get_Window (Get_Main_Window (Kernel)) /= null then
-         Create_From_Xpm_D
-           (Widget.Enabled_Pixmap,
-            Get_Window (Get_Main_Window (Kernel)),
-            Widget.Enabled_Mask,
-            White (Get_Default_Colormap),
-            break_xpm);
-      end if;
 
       --  Grey background when the combo boxes are insensitive
       Gtk_New (Style);
