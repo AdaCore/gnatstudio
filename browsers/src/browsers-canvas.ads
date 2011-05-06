@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                                GPS                                --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,9 +20,9 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 
-with Gdk.Color;
+with Cairo;
+
 with Gdk.Event;
-with Gdk.GC;
 with Gdk.Pixbuf;
 with Gdk.Rectangle;
 
@@ -33,9 +33,11 @@ with Gtk.Handlers;
 with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Stock;
+with Gtk.Style;
 with Gtk.Widget;
 
 with Gtkada.Canvas;
+with Gtkada.Style;
 
 with Pango.Layout;
 
@@ -216,18 +218,14 @@ package Browsers.Canvas is
    --  (from Get_Background_GC). It doesn't need to call Item_Updated or
    --  Refresh_Canvas, this is done automatically.
 
-   function Get_Background_GC
-     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC;
-   --  Return the graphic context to use for the background of the item. This
-   --  can be used to draw the selected item with a different color for
-   --  instance (the default behavior)
-
-   function Get_Title_Background_GC
-     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC;
-   --  Return the graphic context to use for the background of the title bar.
+   function Get_Item_Style
+     (Item : access Browser_Item_Record) return Gtk.Style.Gtk_Style;
+   function Get_Default_Item_Style
+     (Item : access Browser_Item_Record) return Gtk.Style.Gtk_Style;
 
    procedure Resize_And_Draw
      (Item             : access Browser_Item_Record;
+      Cr               : in out Cairo.Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -268,6 +266,7 @@ package Browsers.Canvas is
 
    procedure Draw_Title_Bar_Button
      (Item   : access Browser_Item_Record;
+      Cr     : Cairo.Cairo_Context;
       Num    : Glib.Gint;
       Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
       Cb     : Active_Area_Callback'Class);
@@ -294,7 +293,15 @@ package Browsers.Canvas is
    --  Return the last number of the button set by this item. This function is
    --  used to make sure that no two items set the same button.
 
-   procedure Redraw_Title_Bar (Item : access Browser_Item_Record);
+   function Create
+     (Item : access Browser_Item_Record) return Cairo.Cairo_Context;
+   --  Creates a new Cairo_Context for drawing on the Item.
+   --  This context is owned by the caller and needs to be freed by
+   --  Cairo.Destroy
+
+   procedure Redraw_Title_Bar
+     (Item : access Browser_Item_Record;
+      Cr   : Cairo.Cairo_Context);
    --  This function should redraw the title bar buttons, after calling the
    --  inherited subprogram.
    --
@@ -323,9 +330,9 @@ package Browsers.Canvas is
    --  whenever the user clicks in Rectangle, provided there is no smaller area
    --  that also contains the click location.
 
-   procedure Activate
+   function Activate
      (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event);
+      Event : Gdk.Event.Gdk_Event) return Boolean;
    --  Calls the callback that is activated when the user clicks in the
    --  item. The coordinates returned by Get_X and Get_Y in Event should be
    --  relative to the top-left corner of the Item.
@@ -339,13 +346,6 @@ package Browsers.Canvas is
    --  (supposedly buttons) are not removed
    --  If Other_Areas is False, then the areas that are not in the title bar
    --  are not removed.
-
-   function Output_SVG (Item : access Browser_Item_Record'Class) return String;
-   --  Return the XML string representing Item in SVG.
-
-   function Output_SVG_Item_Content
-     (Item : access Browser_Item_Record) return String;
-   --  Return the XML string representing the content of an Item in SVG.
 
    -----------------
    -- Xrefs lists --
@@ -386,6 +386,7 @@ package Browsers.Canvas is
 
    procedure Display_Lines
      (Item          : access Browser_Item_Record'Class;
+      Cr            : Cairo.Cairo_Context;
       List          : Xref_List;
       X             : Glib.Gint;
       Y             : in out Glib.Gint;
@@ -485,8 +486,7 @@ package Browsers.Canvas is
    overriding procedure Draw_Link
      (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Link        : access Browser_Link_Record;
-      Invert_Mode : Boolean;
-      GC          : Gdk.GC.Gdk_GC;
+      Cr          : Cairo.Cairo_Context;
       Edge_Number : Glib.Gint;
       Show_Annotation : Boolean := True);
    --  Override the drawing of links (so that links can be drawn in different
@@ -495,25 +495,6 @@ package Browsers.Canvas is
    ----------------------
    -- Graphic contexts --
    ----------------------
-
-   function Get_Default_Item_Background_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
-   --  Return the default graphic context to use for unselected items'
-   --  background.
-
-   function Get_Selected_Item_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
-   --  Return the graphic context for the background of selected items
-
-   function Get_Parent_Linked_Item_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
-   --  Return the graphic context for the background of items that are parent
-   --  of the selectd item.
-
-   function Get_Child_Linked_Item_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
-   --  Return the graphic context for the background of items that are children
-   --  of the selectd item.
 
    function Get_Parents_Arrow
      (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf;
@@ -540,15 +521,6 @@ package Browsers.Canvas is
    --  This version takes care of checking whether the user clicked on an item,
    --  and adds the standard menu entries
 
-   ----------------------
-   -- Exporting canvas --
-   ----------------------
-
-   function Get_Pixbuf
-     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf;
-   --  Return a pixbuf containing the contents of Browser.
-   --  The returned pixbuf should be unref'ed when no longer used.
-
    ----------------
    -- Navigation --
    ----------------
@@ -561,23 +533,29 @@ package Browsers.Canvas is
 private
 
    type General_Browser_Record is new Gtk.Box.Gtk_Box_Record with record
-      Canvas                : Gtkada.Canvas.Interactive_Canvas;
-      Kernel                : GPS.Kernel.Kernel_Handle;
-      Toolbar               : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
+      Canvas                   : Gtkada.Canvas.Interactive_Canvas;
+      Kernel                   : GPS.Kernel.Kernel_Handle;
+      Toolbar                  : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
-      Selected_Link_Color   : Gdk.Color.Gdk_Color;
-      Unselected_Link_Color : Gdk.Color.Gdk_Color;
-      Default_Item_GC       : Gdk.GC.Gdk_GC;
-      Selected_Item_GC      : Gdk.GC.Gdk_GC;
-      Parent_Linked_Item_GC : Gdk.GC.Gdk_GC;
-      Child_Linked_Item_GC  : Gdk.GC.Gdk_GC;
-      Text_GC               : Gdk.GC.Gdk_GC;
-      Title_GC              : Gdk.GC.Gdk_GC;
+      Selected_Link_Color      : Gtkada.Style.Cairo_Color;
+      Unselected_Link_Color    : Gtkada.Style.Cairo_Color;
+      Item_Style               : Gtk.Style.Gtk_Style;
+      --  The following colors are used from this style:
+      --  Bg[NORMAL|SELECTED]: the background of the item
+      --  Fg[NORMAL|SELECTED]: the border of the item
+      --  Text[NORMAL|SELECTED]: the texts in the item (title)
+      --  Base[NORMAL|SELECTED]: the color of the title's background
 
-      Selected_Item         : Gtkada.Canvas.Canvas_Item;
+      --  Text[ACTIVE] : the tests in the item using hyperlink style
 
-      Close_Pixmap          : Gdk.Pixbuf.Gdk_Pixbuf;
-      Up_Arrow, Down_Arrow  : Gdk.Pixbuf.Gdk_Pixbuf;
+      Item_Style_Parent_Linked : Gtk.Style.Gtk_Style;
+      Item_Style_Child_Linked  : Gtk.Style.Gtk_Style;
+      --  Style used for linked parents/children
+
+      Selected_Item            : Gtkada.Canvas.Canvas_Item;
+
+      Close_Pixmap             : Gdk.Pixbuf.Gdk_Pixbuf;
+      Up_Arrow, Down_Arrow     : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
    type Active_Area_Tree_Record;
@@ -591,13 +569,16 @@ private
    end record;
 
    overriding procedure Destroy (Item : in out Browser_Item_Record);
-   overriding procedure On_Button_Click
+   overriding function On_Button_Click
      (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button);
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
    overriding procedure Selected
      (Item        : access Browser_Item_Record;
       Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Is_Selected : Boolean);
+   overriding procedure Draw_Selected
+     (Item : access Browser_Item_Record;
+      Cr   : Cairo.Cairo_Context);
    --  See doc for inherited subprograms
 
    type Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
@@ -611,7 +592,7 @@ private
 
       Active_Areas : Active_Area_Tree;
 
-      Title_X, Title_Width, Title_Y : Glib.Gint;
+      Title_Coord  : Gdk.Rectangle.Gdk_Rectangle;
    end record;
 
    type Arrow_Item_Record is new Browser_Item_Record with record
@@ -619,7 +600,9 @@ private
       Parents_Cb, Children_Cb : Arrow_Item_Callback;
    end record;
 
-   overriding procedure Redraw_Title_Bar (Item : access Arrow_Item_Record);
+   overriding procedure Redraw_Title_Bar
+     (Item : access Arrow_Item_Record;
+      Cr   : Cairo.Cairo_Context);
    overriding function Get_Last_Button_Number
      (Item : access Arrow_Item_Record) return Glib.Gint;
    overriding procedure Reset

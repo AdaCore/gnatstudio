@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2011, AdaCore                  --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,11 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Bitmap;              use Gdk.Bitmap;
+with Gdk.Pixbuf;              use Gdk.Pixbuf;
 with Gdk.Color;               use Gdk.Color;
 with Gdk.Event;               use Gdk.Event;
-with Gdk.GC;                  use Gdk.GC;
-with Gdk.Pixmap;              use Gdk.Pixmap;
 with Gdk.Window;              use Gdk.Window;
 with Gdk;                     use Gdk;
 with Glib;                    use Glib;
@@ -1031,33 +1029,22 @@ package body GVD.Canvas is
 
    procedure Initialize_GC (Canvas : access GVD_Canvas_Record'Class) is
    begin
-      if Canvas.Item_Context.GC /= null then
-         Set_Foreground (Canvas.Item_Context.GC, Black (Get_Default_Colormap));
-         Canvas.Tooltip_Context.GC := Canvas.Item_Context.GC;
+      Canvas.Item_Context.Foreground := Black (Get_Default_Colormap);
+      Canvas.Tooltip_Context.Foreground := Black (Get_Default_Colormap);
 
-         Set_Foreground (Canvas.Item_Context.Xref_GC, Xref_Color.Get_Pref);
-         Canvas.Tooltip_Context.Xref_GC := Canvas.Item_Context.Xref_GC;
+      Canvas.Item_Context.Xref_Color := Xref_Color.Get_Pref;
+      Canvas.Tooltip_Context.Xref_Color := Xref_Color.Get_Pref;
 
-         Set_Foreground
-           (Canvas.Item_Context.Modified_GC, Change_Color.Get_Pref);
-         Canvas.Tooltip_Context.Modified_GC := Canvas.Item_Context.Modified_GC;
+      Canvas.Item_Context.Modified_Color := Change_Color.Get_Pref;
+      Canvas.Tooltip_Context.Modified_Color := Change_Color.Get_Pref;
 
-         Set_Foreground (Canvas.Item_Context.Selection_GC,
-                         Selected_Item_Color.Get_Pref);
-         Canvas.Tooltip_Context.Selection_GC :=
-           Canvas.Item_Context.Selection_GC;
+      Canvas.Item_Context.Selection_Color := Selected_Item_Color.Get_Pref;
+      Canvas.Tooltip_Context.Selection_Color := Selected_Item_Color.Get_Pref;
 
-         Set_Foreground (Canvas.Box_Context.Grey_GC, Title_Color.Get_Pref);
-
-         Set_Foreground
-           (Canvas.Box_Context.Black_GC, Black (Get_Default_Colormap));
-
-         Set_Foreground
-           (Canvas.Box_Context.Thaw_Bg_GC, Thaw_Bg_Color.Get_Pref);
-
-         Set_Foreground
-           (Canvas.Box_Context.Freeze_Bg_GC, Freeze_Bg_Color.Get_Pref);
-      end if;
+      Canvas.Box_Context.Black_Color := Black (Get_Default_Colormap);
+      Canvas.Box_Context.Grey_Color := Title_Color.Get_Pref;
+      Canvas.Box_Context.Thaw_Bg_Color := Thaw_Bg_Color.Get_Pref;
+      Canvas.Box_Context.Freeze_Bg_Color := Freeze_Bg_Color.Get_Pref;
    end Initialize_GC;
 
    ----------------
@@ -1070,38 +1057,20 @@ package body GVD.Canvas is
    begin
       pragma Assert (Win /= null);
       if C.Box_Context.Close_Pixmap = null then
-         Create_From_Xpm_D
-           (C.Box_Context.Close_Pixmap, Win,
-            C.Box_Context.Close_Mask, Null_Color, cancel_xpm);
-         Create_From_Xpm_D
-           (C.Box_Context.Locked_Pixmap, Win,
-            C.Box_Context.Locked_Mask, Null_Color, lock_xpm);
-         Create_From_Xpm_D
-           (C.Box_Context.Auto_Display_Pixmap, Win,
-            C.Box_Context.Auto_Display_Mask, Null_Color,
-            display_small_xpm);
-         Create_From_Xpm_D
-           (C.Item_Context.Hidden_Pixmap, Win,
-            C.Item_Context.Hidden_Mask, Null_Color, box_xpm);
-         Create_From_Xpm_D
-           (C.Item_Context.Unknown_Pixmap, Win,
-            C.Item_Context.Unknown_Mask, Null_Color, trash_xpm);
+         C.Box_Context.Close_Pixmap :=
+           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (cancel_xpm);
+         C.Box_Context.Locked_Pixmap :=
+           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (lock_xpm);
+         C.Box_Context.Auto_Display_Pixmap :=
+           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (display_small_xpm);
+         C.Item_Context.Hidden_Pixmap :=
+           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (box_xpm);
+         C.Item_Context.Unknown_Pixmap :=
+           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (trash_xpm);
          Preferences_Changed (C);
       end if;
 
       --  Create graphic contexts
-
-      if C.Item_Context.GC = null then
-         Gdk_New (C.Item_Context.GC, Get_Window (C));
-         Gdk_New (C.Item_Context.Xref_GC, Get_Window (C));
-         Gdk_New (C.Item_Context.Modified_GC, Get_Window (C));
-         Gdk_New (C.Item_Context.Selection_GC, Get_Window (C));
-         Gdk_New (C.Box_Context.Grey_GC, Get_Window (C));
-         Gdk_New (C.Box_Context.Black_GC, Get_Window (C));
-         Gdk_New (C.Box_Context.Refresh_Button_GC, Get_Window (C));
-         Gdk_New (C.Box_Context.Thaw_Bg_GC, Get_Window (C));
-         Gdk_New (C.Box_Context.Freeze_Bg_GC, Get_Window (C));
-      end if;
 
       Initialize_GC (C);
 

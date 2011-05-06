@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,13 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Display_Items;
-with Gdk.GC;
-with Gdk.Bitmap;
-with Gdk.Pixmap;
+with Gdk.Color;
+with Gdk.Pixbuf;
+
 with Gtkada.Canvas;
+
 with GPS.Kernel;
 with GVD.Process;
+
+with Display_Items;
 with Items;
 
 package GVD.Canvas is
@@ -60,18 +62,15 @@ package GVD.Canvas is
    --  canvas.
 
    type Box_Drawing_Context is record
-      Grey_GC           : Gdk.GC.Gdk_GC;
-      Black_GC          : Gdk.GC.Gdk_GC;
-      Refresh_Button_GC : Gdk.GC.Gdk_GC;
-      Thaw_Bg_GC        : Gdk.GC.Gdk_GC;
-      Freeze_Bg_GC      : Gdk.GC.Gdk_GC;
+      Black_Color          : Gdk.Color.Gdk_Color;
+      Refresh_Button_Color : Gdk.Color.Gdk_Color;
+      Grey_Color           : Gdk.Color.Gdk_Color;
+      Thaw_Bg_Color        : Gdk.Color.Gdk_Color;
+      Freeze_Bg_Color      : Gdk.Color.Gdk_Color;
 
-      Close_Pixmap        : Gdk.Pixmap.Gdk_Pixmap;
-      Close_Mask          : Gdk.Bitmap.Gdk_Bitmap;
-      Locked_Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
-      Locked_Mask         : Gdk.Bitmap.Gdk_Bitmap;
-      Auto_Display_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Auto_Display_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+      Close_Pixmap        : Gdk.Pixbuf.Gdk_Pixbuf;
+      Locked_Pixmap       : Gdk.Pixbuf.Gdk_Pixbuf;
+      Auto_Display_Pixmap : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
    --  Structure that holds all the required information to draw the boxes
    --  around each item in the canvas, including the title. Note that this

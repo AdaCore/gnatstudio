@@ -17,19 +17,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Numerics.Generic_Elementary_Functions;
 
 with GNAT.Heap_Sort_G;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.Strings;              use GNAT.Strings;
 
-with Gdk.GC;                    use Gdk.GC;
+with Cairo;                     use Cairo;
+
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Drawable;              use Gdk.Drawable;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Region;                use Gdk.Region;
 with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
@@ -45,6 +43,7 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Canvas;             use Gtkada.Canvas;
 with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Style;              use Gtkada.Style;
 with Gtkada.Types;
 
 with Pango.Layout;              use Pango.Layout;
@@ -66,13 +65,15 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with XML_Utils;                 use XML_Utils;
 
 package body Browsers.Entities is
 
    Me : constant Debug_Handle := Create ("Browser.Entities");
+
+   package Num is new Ada.Numerics.Generic_Elementary_Functions (Gdouble);
+   use Num;
 
    type Entity_Browser_Module_Record is new Module_ID_Record with null record;
    Entity_Browser_Module : Module_ID;
@@ -154,10 +155,11 @@ package body Browsers.Entities is
    --  Free the memory occupied by the item. This is called automatically when
    --  the item is removed from the canvas.
 
-   overriding function Get_Background_GC
-     (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC;
+   overriding function Get_Item_Style
+     (Item : access Type_Item_Record) return Gtk.Style.Gtk_Style;
    overriding procedure Resize_And_Draw
      (Item             : access Type_Item_Record;
+      Cr               : in out Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -171,10 +173,10 @@ package body Browsers.Entities is
       Menu    : Gtk.Menu.Gtk_Menu);
    overriding function Get_Last_Button_Number
      (Item : access Type_Item_Record) return Glib.Gint;
-   overriding procedure Redraw_Title_Bar (Item : access Type_Item_Record);
+   overriding procedure Redraw_Title_Bar
+     (Item : access Type_Item_Record;
+      Cr   : Cairo_Context);
    overriding procedure Highlight (Item : access Type_Item_Record);
-   overriding function Output_SVG_Item_Content
-     (Item : access Type_Item_Record) return String;
    --  See doc for inherited subprograms
 
    ------------------
@@ -186,6 +188,7 @@ package body Browsers.Entities is
 
    overriding procedure Resize_And_Draw
      (Item             : access Generic_Item_Record;
+      Cr               : in out Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -196,10 +199,7 @@ package body Browsers.Entities is
       X, Y   : Glib.Gint) return Boolean;
    overriding procedure Draw
      (Item   : access Generic_Item_Record;
-      Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      GC     : Gdk.GC.Gdk_GC;
-      Xdest  : Glib.Gint;
-      Ydest  : Glib.Gint);
+      Cr     : Cairo_Context);
    overriding procedure Clip_Line
      (Src   : access Generic_Item_Record;
       Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
@@ -221,12 +221,11 @@ package body Browsers.Entities is
 
    overriding procedure Draw_Straight_Line
      (Link        : access Parent_Link_Record;
-      Window      : Gdk.Window.Gdk_Window;
-      GC          : Gdk.GC.Gdk_GC;
+      Cr          : Cairo.Cairo_Context;
       Parent_Side : Gtkada.Canvas.Item_Side;
-      X1, Y1      : Glib.Gint;
+      X1, Y1      : Glib.Gdouble;
       Child_Side  : Gtkada.Canvas.Item_Side;
-      X2, Y2      : Glib.Gint);
+      X2, Y2      : Glib.Gdouble);
    --  See doc for inherited subprogram
 
    ----------
@@ -1405,6 +1404,7 @@ package body Browsers.Entities is
       Parents : Boolean)
    is
       It : constant Type_Item := Type_Item (Item);
+      Cr : Cairo_Context;
    begin
       for P in Members'Range loop
          Add_Item_And_Link
@@ -1419,7 +1419,9 @@ package body Browsers.Entities is
          Set_Children_Shown (It, True);
       end if;
 
-      Redraw_Title_Bar (Item);
+      Cr := Create (Item);
+      Redraw_Title_Bar (Item, Cr);
+      Destroy (Cr);
 
       Layout (Type_Browser (Get_Browser (Item)), Force => False);
       Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
@@ -1447,6 +1449,7 @@ package body Browsers.Entities is
    procedure Find_Child_Types (Item  : access Arrow_Item_Record'Class) is
       Iter  : Children_Iterator := Get_Child_Types (Type_Item (Item).Entity);
       Child : Entity_Information;
+      Cr    : Cairo_Context;
    begin
       --  ??? Should be done in background
       while not At_End (Iter) loop
@@ -1462,7 +1465,9 @@ package body Browsers.Entities is
       Destroy (Iter);
 
       Set_Children_Shown (Type_Item (Item), True);
-      Redraw_Title_Bar (Item);
+      Cr := Create (Item);
+      Redraw_Title_Bar (Item, Cr);
+      Destroy (Cr);
       Layout (Type_Browser (Get_Browser (Item)), Force => False);
       Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
 
@@ -1497,6 +1502,7 @@ package body Browsers.Entities is
 
    overriding procedure Resize_And_Draw
      (Item             : access Type_Item_Record;
+      Cr               : in out Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -1513,6 +1519,7 @@ package body Browsers.Entities is
       Meth_Lines                     : Xref_List;
       Parent                         : Entity_Information;
       Added                          : Boolean;
+      Style                          : Gtk_Style;
 
    begin
       Trace (Me, "Resize_And_Draw: " & Get_Full_Name (Item.Entity));
@@ -1619,29 +1626,29 @@ package body Browsers.Entities is
       H := H + Layout_H + 2 * Margin + Meth_Layout_H;
 
       Resize_And_Draw
-        (Arrow_Item_Record (Item.all)'Access, W, H,
+        (Arrow_Item_Record (Item.all)'Access, Cr, W, H,
          Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
 
       Y := Margin + Yoffset;
 
-      Display_Lines (Item, General_Lines, Margin + Xoffset, Y, 0, Layout);
+      Display_Lines (Item, Cr, General_Lines, Margin + Xoffset, Y, 0, Layout);
 
-      Display_Lines (Item, Attr_Lines, Margin + Xoffset + Left_Margin, Y,
+      Display_Lines (Item, Cr, Attr_Lines, Margin + Xoffset + Left_Margin, Y,
                      Layout_W1, Layout);
 
       if Layout_H /= 0 and then Meth_Layout_H /= 0 then
          Y := Y + 2;
+         Style := Get_Item_Style (Item);
          Draw_Line
-           (Drawable => Pixmap (Item),
-            GC       => Get_Black_GC (Get_Style (Get_Browser (Item))),
-            X1       => 0,
+           (Cr, Get_Fg (Style, State_Normal),
+            X1       => X_Thickness (Style),
             Y1       => Y,
-            X2       => Get_Coord (Item).Width,
+            X2       => Get_Coord (Item).Width - X_Thickness (Style) - 1,
             Y2       => Y);
          Y := Y + 1;
       end if;
 
-      Display_Lines (Item, Meth_Lines, Margin + Xoffset + Left_Margin, Y,
+      Display_Lines (Item, Cr, Meth_Lines, Margin + Xoffset + Left_Margin, Y,
                      Meth_Layout_W1, Layout);
 
       Free (Item.General_Lines);
@@ -1658,9 +1665,12 @@ package body Browsers.Entities is
    -- Redraw_Title_Bar --
    ----------------------
 
-   overriding procedure Redraw_Title_Bar (Item : access Type_Item_Record) is
+   overriding procedure Redraw_Title_Bar
+     (Item : access Type_Item_Record;
+      Cr   : Cairo_Context)
+   is
    begin
-      Redraw_Title_Bar (Arrow_Item_Record (Item.all)'Access);
+      Redraw_Title_Bar (Arrow_Item_Record (Item.all)'Access, Cr);
 
       if Get_Kind (Item.Entity).Is_Type then
          case Get_Kind (Item.Entity).Kind is
@@ -1673,7 +1683,7 @@ package body Browsers.Entities is
                --  ??? Should use a different icon depending on
                --  Item.Inherited_Primitives.
                Draw_Title_Bar_Button
-                 (Item,
+                 (Item, Cr,
                   Num    => Get_Last_Button_Number (Item),
                   Pixbuf => Type_Browser (Get_Browser (Item)).Primitive_Button,
                   Cb     => Build (Hide_Show_Inherited'Access, Item));
@@ -1866,58 +1876,33 @@ package body Browsers.Entities is
 
    overriding procedure Draw_Straight_Line
      (Link        : access Parent_Link_Record;
-      Window      : Gdk.Window.Gdk_Window;
-      GC          : Gdk.GC.Gdk_GC;
+      Cr          : Cairo_Context;
       Parent_Side : Gtkada.Canvas.Item_Side;
-      X1, Y1      : Glib.Gint;
+      X1, Y1      : Glib.Gdouble;
       Child_Side  : Gtkada.Canvas.Item_Side;
-      X2, Y2      : Glib.Gint)
+      X2, Y2      : Glib.Gdouble)
    is
-      Depth : constant := 10;
-      Width : constant := 5;
-      pragma Unreferenced (Link, Child_Side);
+      Width : constant := 5.0;
+      pragma Unreferenced (Link, Child_Side, Parent_Side);
+      Length : constant Gdouble := Sqrt ((X1 - X2) ** 2 + (Y1 - Y2) ** 2);
    begin
-      case Parent_Side is
-         when West =>
-            Draw_Polygon
-              (Window,
-               GC,
-               Filled => False,
-               Points => ((X => X1, Y => Y1),
-                          (X => X1 - Depth, Y => Y1 - Width),
-                          (X => X1 - Depth, Y => Y1 + Width)));
-            Draw_Line (Window, GC, X1 - Depth, Y1, X2, Y2);
+      Cairo.Save (Cr);
+      Cairo.Translate (Cr, X2, Y2);
+      if Y1 /= Y2 then
+         Cairo.Rotate (Cr, Arctan (Y1 - Y2, X1 - X2));
+      end if;
 
-         when East =>
-            Draw_Polygon
-              (Window,
-               GC,
-               Filled => False,
-               Points => ((X => X1, Y => Y1),
-                          (X => X1 + Depth, Y => Y1 - Width),
-                          (X => X1 + Depth, Y => Y1 + Width)));
-            Draw_Line (Window, GC, X1 + Depth, Y1, X2, Y2);
+      Move_To (Cr, 0.5, 0.5);
+      Line_To (Cr, Length - Width * 2.0 - 0.5, 0.0);
+      Cairo.Stroke (Cr);
 
-         when North =>
-            Draw_Polygon
-              (Window,
-               GC,
-               Filled => False,
-               Points => ((X => X1, Y => Y1),
-                          (X => X1 + Width, Y => Y1 - Depth),
-                          (X => X1 - Width, Y => Y1 - Depth)));
-            Draw_Line (Window, GC, X1, Y1 - Depth, X2, Y2);
-
-         when South =>
-            Draw_Polygon
-              (Window,
-               GC,
-               Filled => False,
-               Points => ((X => X1, Y => Y1),
-                          (X => X1 + Width, Y => Y1 + Depth),
-                          (X => X1 - Width, Y => Y1 + Depth)));
-            Draw_Line (Window, GC, X1, Y1 + Depth, X2, Y2);
-      end case;
+      --  Draw the arrow head
+      Move_To (Cr, Length - Width * 2.0 - 0.5, -Width + 0.5);
+      Line_To (Cr, Length - 0.5, 0.5);
+      Line_To (Cr, Length - Width * 2.0 - 0.5, Width + 0.5);
+      Close_Path (Cr);
+      Cairo.Stroke (Cr);
+      Cairo.Restore (Cr);
    end Draw_Straight_Line;
 
    ---------------
@@ -1925,19 +1910,21 @@ package body Browsers.Entities is
    ---------------
 
    overriding procedure Highlight (Item : access Type_Item_Record) is
+      Cr : constant Cairo_Context := Create (Item);
    begin
-      Redraw_Title_Bar (Browser_Item (Item));
+      Redraw_Title_Bar (Browser_Item (Item), Cr);
+      Destroy (Cr);
    end Highlight;
 
    -----------------------
    -- Get_Background_GC --
    -----------------------
 
-   overriding function Get_Background_GC
-     (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC is
+   overriding function Get_Item_Style
+     (Item : access Type_Item_Record) return Gtk.Style.Gtk_Style is
    begin
-      return Get_Default_Item_Background_GC (Get_Browser (Item));
-   end Get_Background_GC;
+      return Get_Default_Item_Style (Item);
+   end Get_Item_Style;
 
    ---------------------
    -- Resize_And_Draw --
@@ -1945,6 +1932,7 @@ package body Browsers.Entities is
 
    overriding procedure Resize_And_Draw
      (Item             : access Generic_Item_Record;
+      Cr               : in out Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -1953,23 +1941,21 @@ package body Browsers.Entities is
    begin
       Yoffset := Yoffset + Generic_Item_Box_Height_Top;
       Resize_And_Draw
-        (Type_Item_Record (Item.all)'Access,
+        (Type_Item_Record (Item.all)'Access, Cr,
          Width, Height + Generic_Item_Box_Height_Top,
          Width_Offset + Generic_Item_Box_Width_Right,
          Height_Offset, Xoffset, Yoffset, Layout);
 
       Draw_Rectangle
-        (Pixmap (Item),
-         GC     => Get_Title_Background_GC (Item),
+        (Cr, Get_Base (Get_Item_Style (Item), State_Normal),
          Filled => True,
          X      => Get_Coord (Item).Width - Generic_Item_Box_Width + 1,
          Y      => 1,
          Width  => Generic_Item_Box_Width - 2,
          Height => Generic_Item_Box_Height - 2);
       Draw_Shadow
-        (Style       => Get_Style (Get_Browser (Item)),
-         Window      => Pixmap (Item),
-         State_Type  => State_Normal,
+        (Cr,
+         Style       => Get_Style (Get_Browser (Item)),
          Shadow_Type => Shadow_Out,
          X           => Get_Coord (Item).Width - Generic_Item_Box_Width,
          Y           => 0,
@@ -1983,34 +1969,26 @@ package body Browsers.Entities is
 
    overriding procedure Draw
      (Item   : access Generic_Item_Record;
-      Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      GC     : Gdk.GC.Gdk_GC;
-      Xdest  : Glib.Gint;
-      Ydest  : Glib.Gint)
+      Cr     : Cairo_Context)
    is
-      Region : Gdk_Region;
       Item_Width : constant Gint := Get_Coord (Item).Width;
       Item_Height : constant Gint := Get_Coord (Item).Height;
    begin
-      Region := Rectangle
-        ((0,
-          To_Canvas_Coordinates (Canvas, Generic_Item_Box_Height_Top),
-          To_Canvas_Coordinates
-             (Canvas, Item_Width - Generic_Item_Box_Width_Right),
-          To_Canvas_Coordinates (Canvas, Item_Height)));
-      Union_With_Rect
-        (Region,
-         (To_Canvas_Coordinates (Canvas, Item_Width - Generic_Item_Box_Width),
-          0,
-          To_Canvas_Coordinates (Canvas, Generic_Item_Box_Width),
-          To_Canvas_Coordinates (Canvas, Generic_Item_Box_Height)));
-
-      Set_Clip_Region (GC, Region);
-      Set_Clip_Origin (GC, Xdest, Ydest);
-      Draw (Type_Item_Record (Item.all)'Access, Canvas, GC,  Xdest, Ydest);
-      Set_Clip_Mask (GC, null);
-
-      Destroy (Region);
+      Cairo.Set_Fill_Rule (Cr, Cairo_Fill_Rule_Winding);
+      Cairo.Rectangle
+        (Cr,
+         0.0,
+         Gdouble (Generic_Item_Box_Height_Top),
+         Gdouble (Item_Width - Generic_Item_Box_Width_Right),
+         Gdouble (Item_Height));
+      Cairo.Rectangle
+        (Cr,
+         Gdouble (Item_Width - Generic_Item_Box_Width),
+         0.0,
+         Gdouble (Generic_Item_Box_Width),
+         Gdouble (Generic_Item_Box_Height));
+      Cairo.Clip (Cr);
+      Draw (Type_Item_Record (Item.all)'Access, Cr);
    end Draw;
 
    -------------------
@@ -2069,61 +2047,6 @@ package body Browsers.Entities is
             null;
       end case;
    end Clip_Line;
-
-   -----------------------------
-   -- Output_SVG_Item_Content --
-   -----------------------------
-
-   overriding function Output_SVG_Item_Content
-     (Item : access Type_Item_Record) return String
-   is
-      Output   : Unbounded_String;
-      Line     : GNAT.Strings.String_Access;
-      Dummy_Cb : Active_Area_Cb := null;
-      J, K, L  : Positive := 1;
-
-   begin
-      Get_Line (Item.General_Lines, J, Callback => Dummy_Cb, Text => Line);
-
-      while Line /= null loop
-         Append
-           (Output,
-            "<tspan x="".3em"" y=""" & Image (J + 1) & ".3em"">"
-            & Strip_Character (Line.all, '@') & "</tspan>"
-            & ASCII.LF);
-
-         J := J + 1;
-         Get_Line (Item.General_Lines, J, Callback => Dummy_Cb, Text => Line);
-      end loop;
-
-      Get_Line (Item.Attr_Lines, K, Callback => Dummy_Cb, Text => Line);
-
-      while Line /= null loop
-         Append
-           (Output,
-            "<tspan x="".3em"" y=""" & Image (J + K) & ".3em"">"
-            & Strip_Character (Line.all, '@') & "</tspan>"
-            & ASCII.LF);
-
-         K := K + 1;
-         Get_Line (Item.Attr_Lines, K, Callback => Dummy_Cb, Text => Line);
-      end loop;
-
-      Get_Line (Item.Meth_Lines, L, Callback => Dummy_Cb, Text => Line);
-
-      while Line /= null loop
-         Append
-           (Output,
-            "<tspan x="".3em"" y=""" & Image (J + K + L - 1) & ".3em"">"
-            & Strip_Character (Line.all, '@') & "</tspan>"
-            & ASCII.LF);
-
-         L := L + 1;
-         Get_Line (Item.Meth_Lines, L, Callback => Dummy_Cb, Text => Line);
-      end loop;
-
-      return "<text>" & ASCII.LF & To_String (Output) & "</text>";
-   end Output_SVG_Item_Content;
 
    ------------------------------
    -- Filter_Matches_Primitive --

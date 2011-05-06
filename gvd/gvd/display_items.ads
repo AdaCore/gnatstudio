@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2008, AdaCore              --
+--                     Copyright (C) 2000-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -92,9 +92,9 @@ package Display_Items is
       Num    : Integer) return Display_Item;
    --  Return the item whose identifier is Num, or null if there is none
 
-   procedure On_Button_Click
+   overriding function On_Button_Click
      (Item   : access Display_Item_Record;
-      Event  : Gdk.Event.Gdk_Event_Button);
+      Event  : Gdk.Event.Gdk_Event_Button) return Boolean;
    --  React to button clicks on an item.
 
    procedure Set_Auto_Refresh
@@ -217,10 +217,6 @@ package Display_Items is
    --  It also warns the canvas that the item has changed.
    --  If Hide_Big_Items, then components higher than a specific limit are
    --  forced to hidden state.
-
-   overriding function Output_SVG_Item_Content
-     (Item : access Display_Item_Record) return String;
-   --  See inherited documentation
 
 private
 

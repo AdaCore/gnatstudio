@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2008, AdaCore               --
+--                    Copyright (C) 2000-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,15 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.IO;  use GNAT.IO;
-with Ada.Tags; use Ada.Tags;
+with GNAT.IO;         use GNAT.IO;
+with Ada.Tags;        use Ada.Tags;
 
-with Glib;         use Glib;
-with Gdk.Drawable; use Gdk.Drawable;
-with Language;     use Language;
-with Pango.Layout; use Pango.Layout;
+with Glib;            use Glib;
+with Pango.Layout;    use Pango.Layout;
 
-with Items.Repeats; use Items.Repeats;
+with Gtkada.Style;    use Gtkada.Style;
+
+with Language;        use Language;
+with Items.Repeats;   use Items.Repeats;
 
 package body Items.Arrays is
 
@@ -565,7 +566,7 @@ package body Items.Arrays is
    overriding procedure Paint
      (Item    : in out Array_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo.Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Gint := 0)
@@ -590,23 +591,18 @@ package body Items.Arrays is
       end if;
 
       if not Item.Valid then
-         Display_Pixmap
-           (Pixmap, Context.GC, Context.Unknown_Pixmap,
-            Context.Unknown_Mask, X + Left_Border, Y);
+         Draw_Pixbuf (Cr, Context.Unknown_Pixmap, X + Left_Border, Y);
          return;
       end if;
 
       if not Item.Visible then
-         Display_Pixmap
-           (Pixmap, Context.GC, Context.Hidden_Pixmap,
-            Context.Hidden_Mask, X + Left_Border, Current_Y);
+         Draw_Pixbuf (Cr, Context.Hidden_Pixmap, X + Left_Border, Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Pixmap,
-            Context.Selection_GC,
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y,
@@ -619,8 +615,7 @@ package body Items.Arrays is
       then
          Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
          Draw_Layout
-           (Drawable => Pixmap,
-            GC       => Context.GC,
+           (Cr, Context.Foreground,
             X        => X,
             Y        => Current_Y,
             Layout   => Context.Type_Layout);
@@ -635,14 +630,13 @@ package body Items.Arrays is
                (Item, Item.Values (V).Index, Item.Num_Dimensions)
                & ASCII.HT & " => ");
             Draw_Layout
-              (Drawable => Pixmap,
-               GC       => Context.GC,
+              (Cr, Context.Foreground,
                X        => X,
                Y        => Current_Y,
                Layout   => Context.Text_Layout);
 
             Paint
-              (Item.Values (V).Value.all, Context, Pixmap, Lang, Mode,
+              (Item.Values (V).Value.all, Context, Cr, Lang, Mode,
                X + Left_Border + Border_Spacing + Item.Index_Width,
                Current_Y);
             Current_Y :=
@@ -652,8 +646,7 @@ package body Items.Arrays is
 
       --  Draw a border
       Draw_Rectangle
-        (Pixmap,
-         Context.GC,
+        (Cr, Context.Foreground,
          Filled => False,
          X      => X,
          Y      => Y,
@@ -676,7 +669,9 @@ package body Items.Arrays is
       W, H : Gint;
    begin
       if not Item.Valid then
-         Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
+         Item.Width := Get_Width (Context.Unknown_Pixmap);
+         Item.Height := Get_Height (Context.Unknown_Pixmap);
+
          return;
       end if;
 
@@ -746,9 +741,11 @@ package body Items.Arrays is
 
       if not Item.Visible then
          Item.Index_Width := 0;
-         Get_Size (Context.Hidden_Pixmap, Item.Width, Item.Height);
-         Item.Width := Left_Border + 2 * Border_Spacing + Item.Width;
-         Item.Height := 2 * Border_Spacing + Item.Height;
+         Item.Width :=
+           Get_Width (Context.Hidden_Pixmap) +
+           Left_Border + 2 * Border_Spacing;
+         Item.Height :=
+           Get_Height (Context.Hidden_Pixmap) + 2 * Border_Spacing;
       end if;
    end Size_Request;
 

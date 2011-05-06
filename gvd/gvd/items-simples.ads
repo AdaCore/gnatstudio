@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2008, AdaCore               --
+--                    Copyright (C) 2000-2011, AdaCore               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -132,7 +132,7 @@ private
    overriding procedure Paint
      (Item    : in out Simple_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo.Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
@@ -188,7 +188,7 @@ private
    overriding procedure Paint
      (Item    : in out Access_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo.Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
@@ -224,12 +224,13 @@ private
       Lang           : Language.Language_Access;
       Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
-   overriding procedure Paint (Item    : in out Debugger_Output_Type;
-                    Context : Drawing_Context;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
-                    Lang    : Language.Language_Access;
-                    Mode    : Display_Mode;
-                    X, Y    : Glib.Gint := 0);
+   overriding procedure Paint
+     (Item    : in out Debugger_Output_Type;
+      Context : Drawing_Context;
+      Cr      : Cairo.Cairo_Context;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
+      X, Y    : Glib.Gint := 0);
    overriding procedure Reset_Recursive (Item : access Debugger_Output_Type);
    overriding function Structurally_Equivalent
      (Item1 : access Debugger_Output_Type; Item2 : access Generic_Type'Class)

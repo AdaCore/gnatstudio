@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2008, AdaCore               --
+--                    Copyright (C) 2000-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,14 +19,16 @@
 
 --  Generic items used to display things in the canvas.
 
-with Pango.Layout;
-with Gdk.Pixmap;
-with Gdk.Bitmap;
-with Gdk.GC;
-with Glib;
-with Language;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
+
+with Glib;
+with Cairo;
+with Pango.Layout;
+with Gdk.Color;
+with Gdk.Pixbuf;    use Gdk.Pixbuf;
+
+with Language;
 
 package Items is
 
@@ -91,15 +93,13 @@ package Items is
    --  Whether we should display the type of the item
 
    type Drawing_Context is record
-      GC             : Gdk.GC.Gdk_GC;
-      Xref_GC        : Gdk.GC.Gdk_GC;
-      Modified_GC    : Gdk.GC.Gdk_GC;
-      Selection_GC   : Gdk.GC.Gdk_GC;
+      Foreground      : Gdk.Color.Gdk_Color;
+      Xref_Color      : Gdk.Color.Gdk_Color;
+      Modified_Color  : Gdk.Color.Gdk_Color;
+      Selection_Color : Gdk.Color.Gdk_Color;
 
-      Unknown_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Unknown_Mask   : Gdk.Bitmap.Gdk_Bitmap;
-      Hidden_Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
-      Hidden_Mask    : Gdk.Bitmap.Gdk_Bitmap;
+      Unknown_Pixmap : Gdk.Pixbuf.Gdk_Pixbuf;
+      Hidden_Pixmap  : Gdk.Pixbuf.Gdk_Pixbuf;
 
       Text_Layout    : Pango.Layout.Pango_Layout;
       Type_Layout    : Pango.Layout.Pango_Layout;
@@ -141,7 +141,7 @@ package Items is
    procedure Paint
      (Item    : in out Generic_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo.Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0) is abstract;
@@ -345,12 +345,12 @@ package Items is
 
 private
 
-   procedure Display_Pixmap
-     (On_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      GC        : Gdk.GC.Gdk_GC;
-      Pixmap    : Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : Gdk.Bitmap.Gdk_Bitmap;
-      X, Y      : Glib.Gint);
+--     procedure Display_Pixmap
+--       (On_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+--        GC        : Gdk.GC.Gdk_GC;
+--        Pixmap    : Gdk.Pixmap.Gdk_Pixmap;
+--        Mask      : Gdk.Bitmap.Gdk_Bitmap;
+--        X, Y      : Glib.Gint);
    --  Display a masked pixmap at specific coordinates.
 
    type Generic_Type is abstract tagged record

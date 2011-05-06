@@ -19,6 +19,9 @@
 
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
+
+with Cairo;                   use Cairo;
+
 with Gdk.Event;               use Gdk.Event;
 
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
@@ -166,6 +169,7 @@ package body Browsers.Dependency_Items is
 
    overriding procedure Resize_And_Draw
      (Item             : access File_Item_Record;
+      Cr               : in out Cairo.Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -370,6 +374,7 @@ package body Browsers.Dependency_Items is
       B    : constant Dependency_Browser := Dependency_Browser (Browser);
       Iter : Item_Iterator := Start (Get_Canvas (B));
       File : File_Item;
+      Cr   : Cairo_Context;
    begin
       --  All we do for now is check the currently displayed links, and reset
       --  the title bar buttons. It would be too costly to recompute all the
@@ -383,7 +388,9 @@ package body Browsers.Dependency_Items is
 
          Set_Children_Shown (File, False);
          Set_Parents_Shown (File, False);
-         Redraw_Title_Bar (File);
+         Cr := Create (File);
+         Redraw_Title_Bar (File, Cr);
+         Destroy (Cr);
 
          Next (Iter);
       end loop;
@@ -562,6 +569,7 @@ package body Browsers.Dependency_Items is
       New_Item      : Boolean;
       Must_Add_Link : Boolean;
       Iter          : File_Dependency_Iterator;
+      Cr            : Cairo_Context;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -581,7 +589,9 @@ package body Browsers.Dependency_Items is
 
       if not Children_Shown (Initial) then
          Set_Children_Shown (Initial, True);
-         Redraw_Title_Bar (Initial);
+         Cr := Create (Initial);
+         Redraw_Title_Bar (Initial, Cr);
+         Destroy (Cr);
 
          Find_Dependencies (Iter => Iter, File => Source);
 
@@ -610,11 +620,11 @@ package body Browsers.Dependency_Items is
                             Dest => Item);
                end if;
 
-               Refresh (Item);
-
                if New_Item then
                   Put (Get_Canvas (Browser), Item);
                end if;
+
+               Refresh (Item);
             end if;
 
             Next (Iter);
@@ -738,6 +748,7 @@ package body Browsers.Dependency_Items is
       Browser       : Dependency_Browser;
       Child_Browser : MDI_Child;
       Item          : File_Item;
+      Cr            : Cairo_Context;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -756,7 +767,9 @@ package body Browsers.Dependency_Items is
       end if;
 
       Set_Parents_Shown (Item, True);
-      Redraw_Title_Bar (Item);
+      Cr := Create (Item);
+      Redraw_Title_Bar (Item, Cr);
+      Destroy (Cr);
 
       Data := (Iter             => new Dependency_Iterator,
                Browser          => Browser,
@@ -1351,6 +1364,7 @@ package body Browsers.Dependency_Items is
 
    overriding procedure Resize_And_Draw
      (Item             : access File_Item_Record;
+      Cr               : in out Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -1361,7 +1375,7 @@ package body Browsers.Dependency_Items is
       --  than the title bar.
 
       Resize_And_Draw
-        (Arrow_Item_Record (Item.all)'Access,
+        (Arrow_Item_Record (Item.all)'Access, Cr,
          Width, Height + 10,
          Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
    end Resize_And_Draw;

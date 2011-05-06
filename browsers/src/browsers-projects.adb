@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2010, AdaCore             --
+--                      Copyright (C) 2001-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
+with Cairo;                  use Cairo;
 with Gdk.Event;              use Gdk.Event;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Stock;              use Gtk.Stock;
@@ -102,6 +103,7 @@ package body Browsers.Projects is
       Menu    : Gtk.Menu.Gtk_Menu);
    overriding procedure Resize_And_Draw
      (Item             : access Browser_Project_Vertex;
+      Cr               : in out Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -319,6 +321,7 @@ package body Browsers.Projects is
       is
          Dest : Browser_Project_Vertex_Access;
          Iter : Project_Iterator;
+         Cr   : Cairo_Context;
       begin
          Set_Children_Shown (Src, True);
 
@@ -346,7 +349,9 @@ package body Browsers.Projects is
             Next (Iter);
          end loop;
 
-         Redraw_Title_Bar (Browser_Item (Src));
+         Cr := Create (Src);
+         Redraw_Title_Bar (Browser_Item (Src), Cr);
+         Destroy (Cr);
       end Process_Project;
 
       Src : Browser_Project_Vertex_Access;
@@ -399,6 +404,7 @@ package body Browsers.Projects is
       Kernel    : constant Kernel_Handle := Get_Kernel (Browser);
       Src, Dest : Browser_Project_Vertex_Access;
       Iter      : Project_Iterator;
+      Cr        : Cairo_Context;
    begin
       Trace (Me, "Examine_Ancestor_Project_Hierarchy for " & Project.Name);
       Push_State (Kernel, Busy);
@@ -420,7 +426,9 @@ package body Browsers.Projects is
          Next (Iter);
       end loop;
 
-      Redraw_Title_Bar (Browser_Item (Dest));
+      Cr := Create (Dest);
+      Redraw_Title_Bar (Browser_Item (Dest), Cr);
+      Destroy (Cr);
 
       Layout (Browser, Force => False);
       Refresh_Canvas (Get_Canvas (Browser));
@@ -438,6 +446,7 @@ package body Browsers.Projects is
 
    overriding procedure Resize_And_Draw
      (Item             : access Browser_Project_Vertex;
+      Cr               : in out Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -458,7 +467,7 @@ package body Browsers.Projects is
       H := 10;
 
       Resize_And_Draw
-        (Arrow_Item_Record (Item.all)'Access,
+        (Arrow_Item_Record (Item.all)'Access, Cr,
          Gint'Max (Width, W + 2 * Margin), H + Height,
          Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
 

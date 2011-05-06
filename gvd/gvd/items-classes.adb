@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                G P S                              --
 --                                                                   --
---                     Copyright (C) 2000-2008, AdaCore              --
+--                     Copyright (C) 2000-2011, AdaCore              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,14 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.IO;  use GNAT.IO;
+with GNAT.IO;         use GNAT.IO;
 
-with Glib;         use Glib;
-with Gdk.Drawable; use Gdk.Drawable;
-with Gdk.GC;       use Gdk.GC;
-with Language;     use Language;
+with Cairo;           use Cairo;
+with Glib;            use Glib;
 
-with Items.Records;       use Items.Records;
+with Gtkada.Style;    use Gtkada.Style;
+
+with Language;        use Language;
+with Items.Records;   use Items.Records;
 
 package body Items.Classes is
 
@@ -178,7 +179,7 @@ package body Items.Classes is
    overriding procedure Paint
      (Item    : in out Class_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo.Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0)
@@ -192,23 +193,20 @@ package body Items.Classes is
         or else (Item.Ancestors'Length = 0
                  and then not Is_Valid (Item.Child))
       then
-         Display_Pixmap
-           (Pixmap, Context.GC, Context.Unknown_Pixmap,
-            Context.Unknown_Mask, X + Left_Border, Y + Item.Border_Spacing);
+         Draw_Pixbuf
+           (Cr, Context.Unknown_Pixmap,
+            X + Left_Border, Y + Item.Border_Spacing);
          return;
       end if;
 
       if not Item.Visible then
-         Display_Pixmap
-           (Pixmap, Context.GC, Context.Hidden_Pixmap,
-            Context.Hidden_Mask, X + Left_Border, Current_Y);
+         Draw_Pixbuf (Cr, Context.Hidden_Pixmap, X + Left_Border, Current_Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Pixmap,
-            Context.Selection_GC,
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y,
@@ -225,24 +223,23 @@ package body Items.Classes is
          then
             --  Do not add Left_Border to X, since each of the ancestor is
             --  itself a Class_Type and will already draw it.
-            Paint (Item.Ancestors (A).all, Context, Pixmap, Lang, Mode,
+            Paint (Item.Ancestors (A).all, Context, Cr, Lang, Mode,
                    X + Item.Border_Spacing, Current_Y);
             Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing;
 
             if Item.Ancestors (A).Child /= null
               and then Num_Fields (Item.Ancestors (A).Child.all) > 0
             then
-               Set_Line_Attributes
-                 (Context.GC, Line_Width => 0, Line_Style => Line_On_Off_Dash,
-                  Cap_Style => Cap_Not_Last, Join_Style => Join_Miter);
-               Draw_Line (Pixmap, Context.GC,
+               Save (Cr);
+               Set_Dash (Cr, (1 .. 2 => 2.0), 0.0);
+               Set_Line_Cap (Cr, Cairo_Line_Cap_Butt);
+               Set_Line_Join (Cr, Cairo_Line_Join_Miter);
+               Draw_Line (Cr, Context.Foreground,
                           X + Item.Border_Spacing,
                           Current_Y,
                           X + Item.Width - Item.Border_Spacing,
                           Current_Y);
-               Set_Line_Attributes
-                 (Context.GC, Line_Width => 0, Line_Style => Line_Solid,
-                  Cap_Style => Cap_Not_Last, Join_Style => Join_Miter);
+               Restore (Cr);
                Current_Y := Current_Y + 2;
             end if;
 
@@ -250,15 +247,14 @@ package body Items.Classes is
       end loop;
 
       if Get_Height (Item.Child.all) > 2 * Item.Border_Spacing then
-         Paint (Item.Child.all, Context, Pixmap, Lang, Mode, X + Left_Border
+         Paint (Item.Child.all, Context, Cr, Lang, Mode, X + Left_Border
                 + Item.Border_Spacing, Current_Y);
       end if;
 
       --  Draw a border
       if Item.Border_Spacing /= 0 then
          Draw_Rectangle
-           (Pixmap,
-            Context.GC,
+           (Cr, Context.Foreground,
             Filled => False,
             X      => X,
             Y      => Y,
@@ -281,7 +277,8 @@ package body Items.Classes is
       Total_Height, Total_Width : Gint := 0;
    begin
       if not Item.Valid then
-         Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
+         Item.Width := Get_Width (Context.Unknown_Pixmap);
+         Item.Height := Get_Height (Context.Unknown_Pixmap);
          return;
       end if;
 
@@ -330,9 +327,10 @@ package body Items.Classes is
       end if;
 
       if not Item.Visible then
-         Get_Size (Context.Hidden_Pixmap, Item.Width, Item.Height);
-         Item.Width := Left_Border + 2 * Item.Border_Spacing + Item.Width;
-         Item.Height := 2 * Item.Border_Spacing + Item.Height;
+         Item.Width := Left_Border + 2 * Item.Border_Spacing +
+           Get_Width (Context.Hidden_Pixmap);
+         Item.Height := 2 * Item.Border_Spacing +
+           Get_Height (Context.Hidden_Pixmap);
       end if;
    end Size_Request;
 

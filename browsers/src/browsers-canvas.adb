@@ -17,31 +17,38 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Numerics.Elementary_Functions; use Ada.Numerics.Elementary_Functions;
 with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
 
-with GNAT.OS_Lib;
 with GNAT.Strings;                      use GNAT.Strings;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
-
-with Gdk.Color;                         use Gdk.Color;
-with Gdk.GC;                            use Gdk.GC;
-with Gdk.Drawable;                      use Gdk.Drawable;
-with Gdk.Event;                         use Gdk.Event;
-with Gdk.Pixbuf;                        use Gdk.Pixbuf;
-with Gdk.Pixmap;                        use Gdk.Pixmap;
-with Gdk.Rectangle;                     use Gdk.Rectangle;
-with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
-with Gdk.Window;                        use Gdk.Window;
 
 with Glib;                              use Glib;
 with Glib.Error;                        use Glib.Error;
 with Glib.Graphs;                       use Glib.Graphs;
+with Glib.Main;                         use Glib.Main;
 with Glib.Object;                       use Glib.Object;
-with XML_Utils;                      use XML_Utils;
+
+with Cairo;                             use Cairo;
+with Cairo.Pattern;                     use Cairo.Pattern;
+with Cairo.PDF;                         use Cairo.PDF;
+with Cairo.Png;                         use Cairo.Png;
+with Cairo.Surface;                     use Cairo.Surface;
+with Cairo.SVG;                         use Cairo.SVG;
+
+with Pango.Cairo;                       use Pango.Cairo;
+with Pango.Enums;                       use Pango.Enums;
+with Pango.Font;                        use Pango.Font;
+with Pango.Layout;                      use Pango.Layout;
+
+with Gdk.Cairo;                         use Gdk.Cairo;
+with Gdk.Color;                         use Gdk.Color;
+with Gdk.Event;                         use Gdk.Event;
+with Gdk.Pixbuf;                        use Gdk.Pixbuf;
+with Gdk.Rectangle;                     use Gdk.Rectangle;
+with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
+with Gdk.Window;                        use Gdk.Window;
 
 with Gtk.Accel_Group;                   use Gtk.Accel_Group;
-with Gtk.Adjustment;                    use Gtk.Adjustment;
 with Gtk.Button;                        use Gtk.Button;
 with Gtk.Check_Menu_Item;               use Gtk.Check_Menu_Item;
 with Gtk.Enums;                         use Gtk.Enums;
@@ -57,14 +64,11 @@ with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Style;                         use Gtk.Style;
 with Gtk.Widget;                        use Gtk.Widget;
 
-with Pango.Enums;                       use Pango.Enums;
-with Pango.Font;                        use Pango.Font;
-with Pango.Layout;                      use Pango.Layout;
-
 with Gtkada.Canvas;                     use Gtkada.Canvas;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Handlers;                   use Gtkada.Handlers;
 with Gtkada.MDI;                        use Gtkada.MDI;
+with Gtkada.Style;                      use Gtkada.Style;
 
 with Commands;                          use Commands;
 with Commands.Interactive;              use Commands.Interactive;
@@ -76,21 +80,31 @@ with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with Layouts;                           use Layouts;
-with OS_Utils;                          use OS_Utils;
-with String_Utils;
 with Traces;                            use Traces;
+with XML_Utils;                         use XML_Utils;
 
 package body Browsers.Canvas is
 
-   Zoom_Levels : constant array (Positive range <>) of Guint :=
-                   (25, 50, 75, 100, 150, 200, 300, 400);
+   Zoom_Levels : constant array (Positive range <>) of Gdouble :=
+                   (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0);
    --  All the possible zoom levels. We have to use such an array, instead
    --  of doing the computation directly, so as to avoid rounding errors that
    --  would appear in the computation and make zoom_in not the reverse of
    --  zoom_out.
 
-   Zoom_Steps : constant := 3;
-   --  Number of steps while zooming in or out
+   Zoom_Duration : constant := 0.25;
+   --  Duration of the zoom animation
+
+   type Export_File_Format is
+     (Export_PNG, Export_PDF, Export_SVG);
+
+   type Export_Idle_Data is record
+      Browser : General_Browser;
+      Format  : Export_File_Format;
+   end record;
+
+   package Export_Idle is
+     new Glib.Main.Generic_Sources (Export_Idle_Data);
 
    package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Check_Menu_Item_Record, General_Browser);
@@ -101,7 +115,7 @@ package body Browsers.Canvas is
    type Cb_Data is record
       Browser       : General_Browser;
       Item          : Canvas_Item;
-      Zoom          : Guint;
+      Zoom          : Gdouble;
       Keep_Selected : Boolean;
    end record;
 
@@ -126,11 +140,18 @@ package body Browsers.Canvas is
       return Boolean;
    --  Callback for the key press event
 
-   procedure On_Export (Browser : access Gtk_Widget_Record'Class);
+   function On_Export_Idle (Data : Export_Idle_Data) return Boolean;
+   --  Does the actual export in an idle, called by the bellow export
+   --  subprograms
+
+   procedure On_Export_To_PNG (Browser : access Gtk_Widget_Record'Class);
    --  Export the contents of the browser as an image
 
    procedure On_Export_To_SVG (Browser : access Gtk_Widget_Record'Class);
    --  Export the contents of the browser to SVG
+
+   procedure On_Export_To_PDF (Browser : access Gtk_Widget_Record'Class);
+   --  Export the contents of the browser to PDF
 
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class);
    --  Recompute the layout of the canvas
@@ -193,7 +214,6 @@ package body Browsers.Canvas is
    record
       Background        : Gdk.Pixbuf.Gdk_Pixbuf;
       Scaled_Background : Gdk.Pixbuf.Gdk_Pixbuf;
-      Bg_GC             : Gdk.GC.Gdk_GC;
       Draw_Grid         : Boolean;
       Pixmap            : Gdk.Gdk_Pixmap;
    end record;
@@ -204,25 +224,13 @@ package body Browsers.Canvas is
    --  Override Gtk.Widget.Get_Window, so that a different Window can be
    --  returned if needed (e.g. when exporting the canvas).
 
+   overriding procedure Draw_Grid
+     (Canvas : access Image_Canvas_Record;
+      Cr     : Cairo_Context);
+
    overriding procedure Draw_Background
-     (Canvas        : access Image_Canvas_Record;
-      Screen_Rect   : Gdk.Rectangle.Gdk_Rectangle);
-
-   procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class);
-   --  Called when the canvas has been zoomed
-
-   procedure Browser_To_SVG
-     (Browser     : access General_Browser_Record'Class;
-      SVG_File_FD : GNAT.OS_Lib.File_Descriptor);
-   --  Output an SVG representation of a browser in a file
-
-   function Arrow_Head_To_SVG
-     (Canvas : access Interactive_Canvas_Record'Class;
-      X, Y   : Gint;
-      Angle  : Float)
-      return String;
-   --  Return a SVG representation of an arrow head defined by it coordinates
-   --  (X, Y, Angle).
+     (Canvas : access Image_Canvas_Record;
+      Cr     : Cairo_Context);
 
    procedure Foreach_Active_Area
      (Str : String;
@@ -274,91 +282,34 @@ package body Browsers.Canvas is
       end if;
    end Get_Window;
 
-   -------------
-   -- On_Zoom --
-   -------------
+   ---------------
+   -- Draw_Grid --
+   ---------------
 
-   procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class) is
-      C : constant Image_Canvas := Image_Canvas (Canvas);
+   overriding procedure Draw_Grid
+     (Canvas : access Image_Canvas_Record;
+      Cr     : Cairo_Context)
+   is
    begin
-      if C.Scaled_Background /= null
-        and then C.Scaled_Background /= C.Background
-      then
-         Unref (C.Scaled_Background);
+      if Canvas.Draw_Grid then
+         Draw_Grid (Interactive_Canvas_Record (Canvas.all)'Access, Cr);
       end if;
-
-      if Get_Zoom (C) /= 100
-        and then C.Background /= null
-      then
-         C.Scaled_Background := Scale_Simple
-           (C.Background,
-            To_Canvas_Coordinates (C, Get_Width (C.Background)),
-            To_Canvas_Coordinates (C, Get_Height (C.Background)));
-      else
-         C.Scaled_Background := C.Background;
-      end if;
-   end On_Zoom;
+   end Draw_Grid;
 
    ---------------------
    -- Draw_Background --
    ---------------------
 
    overriding procedure Draw_Background
-     (Canvas      : access Image_Canvas_Record;
-      Screen_Rect : Gdk.Rectangle.Gdk_Rectangle)
+     (Canvas : access Image_Canvas_Record;
+      Cr     : Cairo_Context)
    is
-      X_Left : constant Gint := Left_World_Coordinates (Canvas);
-      Y_Top  : constant Gint := Top_World_Coordinates (Canvas);
    begin
       if Canvas.Background = null then
-         Draw_Rectangle
-           (Get_Window (Canvas),
-            Canvas.Bg_GC,
-            Filled => True,
-            X      => Screen_Rect.X,
-            Y      => Screen_Rect.Y,
-            Width  => Gint (Screen_Rect.Width),
-            Height => Gint (Screen_Rect.Height));
+         Draw_Background (Interactive_Canvas_Record (Canvas.all)'Access, Cr);
       else
-         declare
-            X, Y, W, H, Ys : Gint;
-            Xs : Gint := Screen_Rect.X;
-            Bw : constant Gint := Get_Width (Canvas.Scaled_Background);
-            Bh : constant Gint := Get_Height (Canvas.Scaled_Background);
-         begin
-            while Xs < Screen_Rect.X + Screen_Rect.Width loop
-               Ys := Screen_Rect.Y;
-               X := (X_Left + Xs) mod Bw;
-               W := Gint'Min (Screen_Rect.Width + Screen_Rect.X - Xs, Bw - X);
-
-               while Ys < Screen_Rect.Y + Screen_Rect.Height loop
-                  Y := (Y_Top  + Ys) mod Bh;
-                  H := Gint'Min
-                    (Screen_Rect.Height + Screen_Rect.Y - Ys, Bh - Y);
-
-                  Render_To_Drawable
-                    (Pixbuf   => Canvas.Scaled_Background,
-                     Drawable => Get_Window (Canvas),
-                     GC       => Get_Black_GC (Get_Style (Canvas)),
-                     Src_X    => X,
-                     Src_Y    => Y,
-                     Dest_X   => Xs,
-                     Dest_Y   => Ys,
-                     Width    => W,
-                     Height   => H);
-                  Ys := Ys + H;
-               end loop;
-
-               Xs := Xs + W;
-            end loop;
-         end;
-      end if;
-
-      if Canvas.Draw_Grid then
-         Draw_Grid
-           (Interactive_Canvas (Canvas),
-            Get_Black_GC (Get_Style (Canvas)),
-            Screen_Rect);
+         Gdk.Cairo.Set_Source_Pixbuf (Cr, Canvas.Background, 0.0, 0.0);
+         Cairo.Paint (Cr);
       end if;
    end Draw_Background;
 
@@ -387,8 +338,6 @@ package body Browsers.Canvas is
       Canvas := new Image_Canvas_Record;
       Gtkada.Canvas.Initialize (Canvas);
       Browser.Canvas := Interactive_Canvas (Canvas);
-
-      Widget_Callback.Connect (Browser.Canvas, Signal_Zoomed, On_Zoom'Access);
 
       Add (Scrolled, Browser.Canvas);
       Add_Events (Browser.Canvas, Key_Press_Mask);
@@ -435,8 +384,8 @@ package body Browsers.Canvas is
    ---------------
 
    procedure Destroyed (Browser : access Gtk_Widget_Record'Class) is
-      use type Gdk_GC, Gdk_Pixmap;
       B : constant General_Browser := General_Browser (Browser);
+
    begin
       if B.Up_Arrow /= null then
          Unref (B.Up_Arrow);
@@ -450,36 +399,20 @@ package body Browsers.Canvas is
          Unref (B.Close_Pixmap);
       end if;
 
-      if B.Default_Item_GC /= null then
-         Unref (B.Default_Item_GC);
+      if B.Item_Style /= null then
+         Unref (B.Item_Style);
       end if;
 
-      if B.Selected_Item_GC /= null then
-         Unref (B.Selected_Item_GC);
+      if B.Item_Style_Parent_Linked /= null then
+         Unref (B.Item_Style_Parent_Linked);
       end if;
 
-      if B.Parent_Linked_Item_GC /= null then
-         Unref (B.Parent_Linked_Item_GC);
-      end if;
-
-      if B.Child_Linked_Item_GC /= null then
-         Unref (B.Child_Linked_Item_GC);
-      end if;
-
-      if B.Text_GC /= null then
-         Unref (B.Text_GC);
-      end if;
-
-      if B.Title_GC /= null then
-         Unref (B.Title_GC);
+      if B.Item_Style_Child_Linked /= null then
+         Unref (B.Item_Style_Child_Linked);
       end if;
 
       if Image_Canvas (B.Canvas).Background /= null then
          Unref (Image_Canvas (B.Canvas).Background);
-      end if;
-
-      if Image_Canvas (B.Canvas).Bg_GC /= null then
-         Unref (Image_Canvas (B.Canvas).Bg_GC);
       end if;
    end Destroyed;
 
@@ -495,31 +428,48 @@ package body Browsers.Canvas is
       Error           : GError;
       Iter            : Item_Iterator;
       Annotation_Font : Pango_Font_Description;
+      Style           : Gtk_Style;
 
       use type Gdk.Gdk_GC;
    begin
-      if Hook.Browser.Selected_Item_GC /= null then
+      if Hook.Browser.Item_Style /= null then
          Hook.Browser.Selected_Link_Color :=
-           Selected_Link_Color.Get_Pref;
+           To_Cairo (Selected_Link_Color.Get_Pref);
          Hook.Browser.Unselected_Link_Color :=
-           Unselected_Link_Color.Get_Pref;
+           To_Cairo (Unselected_Link_Color.Get_Pref);
 
-         Set_Foreground
-           (Hook.Browser.Selected_Item_GC,
-            GPS.Kernel.Preferences.Selected_Item_Color.Get_Pref);
-         Set_Foreground
-           (Hook.Browser.Parent_Linked_Item_GC,
+         Style := Hook.Browser.Item_Style;
+
+         Set_Bg (Style, State_Normal,
+                 Gdk_Color'(Get_Light (Get_Default_Style, State_Normal)));
+         Set_Bg (Style, State_Selected,
+                 Gdk_Color'(Get_Light (Get_Default_Style, State_Normal)));
+
+         Set_Text (Style, State_Active,
+                   Browsers_Hyper_Link_Color.Get_Pref);
+
+         Set_Base (Style, State_Normal,
+                   Title_Color.Get_Pref);
+         Set_Base (Style, State_Selected,
+                   GPS.Kernel.Preferences.Selected_Item_Color.Get_Pref);
+
+         if Hook.Browser.Item_Style_Parent_Linked /= null then
+            Unref (Hook.Browser.Item_Style_Parent_Linked);
+            Unref (Hook.Browser.Item_Style_Child_Linked);
+         end if;
+
+         Hook.Browser.Item_Style_Parent_Linked := Gtk.Style.Copy (Style);
+         Hook.Browser.Item_Style_Child_Linked := Gtk.Style.Copy (Style);
+
+         Set_Base
+           (Hook.Browser.Item_Style_Parent_Linked, State_Normal,
             Parent_Linked_Item_Color.Get_Pref);
-         Set_Foreground
-           (Hook.Browser.Child_Linked_Item_GC,
+         Set_Base
+           (Hook.Browser.Item_Style_Child_Linked, State_Normal,
             Child_Linked_Item_Color.Get_Pref);
-         Set_Foreground
-           (Hook.Browser.Text_GC,
-            Browsers_Hyper_Link_Color.Get_Pref);
-         Set_Foreground
-           (Hook.Browser.Title_GC, Title_Color.Get_Pref);
-         Set_Foreground (Image_Canvas (Hook.Browser.Canvas).Bg_GC,
-                         Browsers_Bg_Color.Get_Pref);
+
+         Set_Bg (Get_Style (Hook.Browser.Canvas), State_Normal,
+                 Browsers_Bg_Color.Get_Pref);
       end if;
 
       Annotation_Font := Copy (Default_Font.Get_Pref_Font);
@@ -546,8 +496,6 @@ package body Browsers.Canvas is
       end if;
 
       Refresh_Layout_Orientation (Hook.Browser);
-
-      On_Zoom (Hook.Browser.Canvas);
 
       Iter := Start (Hook.Browser.Canvas);
       while Get (Iter) /= null loop
@@ -630,42 +578,17 @@ package body Browsers.Canvas is
    --------------
 
    procedure Realized (Browser : access Gtk_Widget_Record'Class) is
-      use type Gdk_GC;
       B      : constant General_Browser := General_Browser (Browser);
-      Color  : Gdk_Color;
+      Hook   : Preferences_Hook_Record;
 
    begin
-      if B.Selected_Item_GC = null then
-         B.Selected_Link_Color := Selected_Link_Color.Get_Pref;
-         B.Unselected_Link_Color := Unselected_Link_Color.Get_Pref;
+      if B.Item_Style = null then
+         B.Selected_Link_Color := To_Cairo (Selected_Link_Color.Get_Pref);
+         B.Unselected_Link_Color := To_Cairo (Unselected_Link_Color.Get_Pref);
 
-         Gdk_New (B.Selected_Item_GC, Get_Window (B.Canvas));
-         Color := GPS.Kernel.Preferences.Selected_Item_Color.Get_Pref;
-         Set_Foreground (B.Selected_Item_GC, Color);
-
-         Gdk_New (B.Default_Item_GC, Get_Window (B.Canvas));
-         Color := Parse ("#FEFEFE");
-         Alloc (Get_Default_Colormap, Color);
-         Set_Foreground (B.Default_Item_GC, Color);
-
-         Gdk_New (B.Parent_Linked_Item_GC, Get_Window (B.Canvas));
-         Color := Parent_Linked_Item_Color.Get_Pref;
-         Set_Foreground (B.Parent_Linked_Item_GC, Color);
-
-         Gdk_New (B.Child_Linked_Item_GC, Get_Window (B.Canvas));
-         Color := Child_Linked_Item_Color.Get_Pref;
-         Set_Foreground (B.Child_Linked_Item_GC, Color);
-
-         Gdk_New (B.Text_GC, Get_Window (B.Canvas));
-         Set_Foreground
-           (B.Text_GC, Browsers_Hyper_Link_Color.Get_Pref);
-
-         Gdk_New (B.Title_GC, Get_Window (B.Canvas));
-         Set_Foreground (B.Title_GC, Title_Color.Get_Pref);
-
-         Gdk_New (Image_Canvas (B.Canvas).Bg_GC, Get_Window (B.Canvas));
-         Set_Foreground (Image_Canvas (B.Canvas).Bg_GC,
-                         Browsers_Bg_Color.Get_Pref);
+         B.Item_Style := Copy (Get_Style (B.Canvas));
+         Hook.Browser := B;
+         Hook.Execute (null);
       end if;
    end Realized;
 
@@ -713,6 +636,7 @@ package body Browsers.Canvas is
       Sep          : Gtk_Separator_Menu_Item;
       Check        : Gtk_Check_Menu_Item;
       Zooms_Menu   : Gtk_Menu;
+      Export_Menu  : Gtk_Menu;
       Item         : Canvas_Item;
       Xr, Yr       : Gint;
       Xsave, Ysave : Gdouble;
@@ -739,19 +663,19 @@ package body Browsers.Canvas is
          Append (Menu, Mitem);
          Contextual_Cb.Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Toggle_Links'Access,
-            (Browser => B, Item => Item, Zoom => 100, Keep_Selected => True));
+            (Browser => B, Item => Item, Zoom => 1.0, Keep_Selected => True));
 
          Gtk_New (Mitem, Label => -"Remove unselected items");
          Append (Menu, Mitem);
          Contextual_Cb.Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Set_Root'Access,
-            (Browser => B, Item => Item, Zoom => 100, Keep_Selected => True));
+            (Browser => B, Item => Item, Zoom => 1.0, Keep_Selected => True));
 
          Gtk_New (Mitem, Label => -"Remove selected items");
          Append (Menu, Mitem);
          Contextual_Cb.Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Set_Root'Access,
-            (Browser => B, Item => Item, Zoom => 100, Keep_Selected => False));
+            (Browser => B, Item => Item, Zoom => 1.0, Keep_Selected => False));
 
          Xsave := Get_X (Event);
          Ysave := Get_Y (Event);
@@ -787,15 +711,26 @@ package body Browsers.Canvas is
          Widget_Callback.Object_Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Toggle_Orthogonal'Access, B);
 
-         Gtk_New (Mitem, Label => -"Export to SVG...");
-         Append (Menu, Mitem);
+         Gtk_New (Export_Menu);
+
+         Gtk_New (Mitem, Label => -"PDF");
+         Append (Export_Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export_To_PDF'Access, B);
+
+         Gtk_New (Mitem, Label => -"PNG");
+         Append (Export_Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export_To_PNG'Access, B);
+
+         Gtk_New (Mitem, Label => -"SVG");
+         Append (Export_Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export_To_SVG'Access, B);
 
-         Gtk_New (Mitem, Label => -"Export to PNG...");
+         Gtk_New (Mitem, Label => -"Export to ...");
          Append (Menu, Mitem);
-         Widget_Callback.Object_Connect
-           (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export'Access, B);
+         Set_Submenu (Mitem, Export_Menu);
 
          Gtk_New (Mitem, Label => -"Zoom in");
          Append (Menu, Mitem);
@@ -816,7 +751,9 @@ package body Browsers.Canvas is
          Gtk_New (Zooms_Menu);
 
          for J in Zoom_Levels'Range loop
-            Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
+            Gtk_New
+              (Mitem,
+               Label => Guint'Image (Guint (Zoom_Levels (J) * 100.0)) & '%');
             Append (Zooms_Menu, Mitem);
             Contextual_Cb.Connect
               (Mitem, Gtk.Menu_Item.Signal_Activate, Zoom_Level'Access,
@@ -918,100 +855,175 @@ package body Browsers.Canvas is
       Refresh_Canvas (Get_Canvas (Data.Browser));
    end Toggle_Links;
 
-   ---------------
-   -- On_Export --
-   ---------------
+   --------------------
+   -- On_Export_Idle --
+   --------------------
 
-   procedure On_Export (Browser : access Gtk_Widget_Record'Class) is
+   function On_Export_Idle (Data : Export_Idle_Data) return Boolean is
       State_Pushed : Boolean := False;
-      B            : constant General_Browser := General_Browser (Browser);
-      Kernel       : constant Kernel_Handle := Get_Kernel (B);
+      Canvas       : constant Interactive_Canvas := Get_Canvas (Data.Browser);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Data.Browser);
+
+      function Extension return String;
+      --  Return the expected extension according to the exported format
+
+      function Description return String;
+      --  Return the file format description
+
+      ---------------
+      -- Extension --
+      ---------------
+
+      function Extension return String is
+      begin
+         case Data.Format is
+            when Export_PNG =>
+               return ".png";
+            when Export_PDF =>
+               return ".pdf";
+            when Export_SVG =>
+               return ".svg";
+         end case;
+      end Extension;
+
+      -----------------
+      -- Description --
+      -----------------
+
+      function Description return String is
+      begin
+         case Data.Format is
+            when Export_PNG =>
+               return "PNG Image";
+            when Export_PDF =>
+               return "PDF Image";
+            when Export_SVG =>
+               return "SVG Image";
+         end case;
+      end Description;
 
    begin
       declare
          Name   : constant Virtual_File :=
                     Select_File
-                      (Title             => -"Export Browser As PNG Image",
+                      (Title             => -("Export Browser As " &
+                                                Description),
                        Parent            => Get_Main_Window (Kernel),
-                       Default_Name      => "noname.png",
+                       File_Pattern      => +("*" & Extension),
+                       Pattern_Name      => -Description,
+                       Default_Name      => +("gpsbrowser" & Extension),
                        Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                        Kind              => Save_File,
                        History           => Get_History (Kernel));
-         Pixbuf : Gdk_Pixbuf;
-         Error  : GError;
+         Surface : Cairo_Surface;
+         Width   : Gdouble;
+         Height  : Gdouble;
+         Cr      : Cairo_Context;
+         Status  : Cairo_Status;
 
       begin
          if Name /= GNATCOLL.VFS.No_File then
-            Push_State (Get_Kernel (B), Busy);
+            Push_State (Kernel, Busy);
             State_Pushed := True;
-            Pixbuf := Get_Pixbuf (B);
 
-            if Pixbuf /= null then
-               Save (Pixbuf, +Full_Name (Name), PNG, Error);
-               Unref (Pixbuf);
+            Gtkada.Canvas.Get_Bounding_Box (Canvas, Width, Height);
+
+            case Data.Format is
+               when Export_PNG =>
+                  Surface := Create_Similar_Surface
+                    (Get_Window (Canvas), Cairo.Cairo_Content_Color_Alpha,
+                     Gint (Width), Gint (Height));
+               when Export_PDF =>
+                  Surface := Cairo.PDF.Create
+                    (+Full_Name (Name), Width, Height);
+               when Export_SVG =>
+                  Surface := Cairo.SVG.Create
+                    (+Full_Name (Name), Width, Height);
+            end case;
+
+            Status := Cairo.Surface.Status (Surface);
+
+            if Status = Cairo_Status_Success then
+               Cr := Create (Surface);
+               Set_Line_Width (Cr, 0.5);
+
+               Canvas.Draw_All (Cr);
+
+               Destroy (Cr);
+            end if;
+
+            case Data.Format is
+               when Export_PNG =>
+                  Status :=
+                    Cairo.Png.Write_To_Png (Surface, +Full_Name (Name));
+               when Export_PDF | Export_SVG =>
+                  Status := Cairo.Surface.Status (Surface);
+            end case;
+
+            Destroy (Surface);
+
+            if Status /= Cairo_Status_Success then
+               GPS.Kernel.Console.Insert
+                 (Kernel, "Cannot create " & Display_Full_Name (Name),
+                  Mode => GPS.Kernel.Console.Error);
             end if;
 
             State_Pushed := False;
-            Pop_State (Get_Kernel (B));
+            Pop_State (Kernel);
          end if;
       end;
 
+      return False;
    exception
       when E : others => Trace (Exception_Handle, E);
 
          if State_Pushed then
-            Pop_State (Get_Kernel (B));
+            Pop_State (Kernel);
          end if;
-   end On_Export;
+
+         return False;
+   end On_Export_Idle;
+
+   ---------------
+   -- On_Export --
+   ---------------
+
+   procedure On_Export_To_PNG (Browser : access Gtk_Widget_Record'Class) is
+      Id : G_Source_Id;
+      pragma Unreferenced (Id);
+   begin
+      Id := Export_Idle.Idle_Add
+        (On_Export_Idle'Access,
+         (Browser => General_Browser (Browser),
+          Format  => Export_PNG));
+   end On_Export_To_PNG;
+
+   ----------------------
+   -- On_Export_To_PDF --
+   ----------------------
+
+   procedure On_Export_To_PDF (Browser : access Gtk_Widget_Record'Class) is
+      Id : G_Source_Id;
+      pragma Unreferenced (Id);
+   begin
+      Id := Export_Idle.Idle_Add
+        (On_Export_Idle'Access,
+         (Browser => General_Browser (Browser),
+          Format  => Export_PDF));
+   end On_Export_To_PDF;
 
    ----------------------
    -- On_Export_To_SVG --
    ----------------------
 
    procedure On_Export_To_SVG (Browser : access Gtk_Widget_Record'Class) is
-      use GNAT.OS_Lib;
-
-      B            : constant General_Browser := General_Browser (Browser);
-      Kernel       : constant Kernel_Handle := Get_Kernel (B);
-      SVG_File_FD  : File_Descriptor;
-      State_Pushed : Boolean := False;
+      Id : G_Source_Id;
+      pragma Unreferenced (Id);
    begin
-      declare
-         Name : constant Virtual_File :=
-                  Select_File
-                    (Title             => -"Export Browser as SVG",
-                     Parent            => Get_Main_Window (Kernel),
-                     Default_Name      => "browser.svg",
-                     Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                     Kind              => Save_File,
-                     History           => Get_History (Kernel));
-      begin
-         if Name /= GNATCOLL.VFS.No_File then
-            Push_State (Get_Kernel (B), Busy);
-            State_Pushed := True;
-
-            SVG_File_FD := Create_File (+Full_Name (Name), Text);
-
-            if SVG_File_FD = Invalid_FD then
-               GPS.Kernel.Console.Insert
-                 (Kernel, "Cannot create " & Display_Full_Name (Name),
-                  Mode => GPS.Kernel.Console.Error);
-            else
-               Browser_To_SVG (B, SVG_File_FD);
-               Close (SVG_File_FD);
-            end if;
-
-            State_Pushed := False;
-            Pop_State (Get_Kernel (B));
-         end if;
-      end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-
-         if State_Pushed then
-            Pop_State (Get_Kernel (B));
-         end if;
+      Id := Export_Idle.Idle_Add
+        (On_Export_Idle'Access,
+         (Browser => General_Browser (Browser),
+          Format  => Export_SVG));
    end On_Export_To_SVG;
 
    ----------------
@@ -1087,12 +1099,12 @@ package body Browsers.Canvas is
 
    procedure Zoom_In (Browser : access Gtk_Widget_Record'Class) is
       Canvas : constant Interactive_Canvas := General_Browser (Browser).Canvas;
-      Z : constant Guint := Get_Zoom (Canvas);
+      Z : constant Gdouble := Get_Zoom (Canvas);
    begin
       for J in Zoom_Levels'Range loop
          if Zoom_Levels (J) = Z then
             if J /= Zoom_Levels'Last then
-               Zoom (Canvas, Zoom_Levels (J + 1), Zoom_Steps);
+               Zoom (Canvas, Zoom_Levels (J + 1), Zoom_Duration);
             end if;
          end if;
       end loop;
@@ -1104,12 +1116,12 @@ package body Browsers.Canvas is
 
    procedure Zoom_Out (Browser : access Gtk_Widget_Record'Class) is
       Canvas : constant Interactive_Canvas := General_Browser (Browser).Canvas;
-      Z      : constant Guint := Get_Zoom (Canvas);
+      Z      : constant Gdouble := Get_Zoom (Canvas);
    begin
       for J in Zoom_Levels'Range loop
          if Zoom_Levels (J) = Z then
             if J /= Zoom_Levels'First then
-               Zoom (Canvas, Zoom_Levels (J - 1), Zoom_Steps);
+               Zoom (Canvas, Zoom_Levels (J - 1), Zoom_Duration);
             end if;
          end if;
       end loop;
@@ -1124,7 +1136,7 @@ package body Browsers.Canvas is
    is
       pragma Unreferenced (Browser);
    begin
-      Zoom (Data.Browser.Canvas, Data.Zoom, 1);
+      Zoom (Data.Browser.Canvas, Data.Zoom, 0.0);
    end Zoom_Level;
 
    ---------------
@@ -1143,8 +1155,11 @@ package body Browsers.Canvas is
    ---------------
 
    procedure Highlight (Item : access Browser_Item_Record) is
+      Cr : Cairo_Context;
    begin
-      Redraw_Title_Bar (Browser_Item (Item));
+      Cr := Create (Item);
+      Redraw_Title_Bar (Browser_Item (Item), Cr);
+      Destroy (Cr);
    end Highlight;
 
    ---------------
@@ -1154,35 +1169,31 @@ package body Browsers.Canvas is
    overriding procedure Draw_Link
      (Canvas      : access Interactive_Canvas_Record'Class;
       Link        : access Browser_Link_Record;
-      Invert_Mode : Boolean;
-      GC          : Gdk.GC.Gdk_GC;
+      Cr          : Cairo_Context;
       Edge_Number : Glib.Gint;
       Show_Annotation : Boolean := True)
    is
       Browser : constant General_Browser := To_Browser (Canvas);
    begin
+      if not Show_Annotation then
+         Draw_Link (Canvas, Canvas_Link_Access (Link), Cr, Edge_Number, False);
+
+         return;
+      end if;
+
       if not Browser_Item (Get_Src (Link)).Hide_Links
         and then not Browser_Item (Get_Dest (Link)).Hide_Links
       then
-         if Invert_Mode
-           or else not
-           (Is_Selected (Canvas, Canvas_Item (Get_Src (Link)))
-            or else Is_Selected (Canvas, Canvas_Item (Get_Dest (Link))))
+         if not Is_Selected (Canvas, Canvas_Item (Get_Src (Link)))
+           and then not Is_Selected (Canvas, Canvas_Item (Get_Dest (Link)))
          then
-            --  ??? Should force recomputation of the annotations so that they
-            --  can have the same color as the link themselves. But since they
-            --  are cached, the cache needs to be freed whenever we change the
-            --  GC.
-            Set_Foreground (GC, Browser.Unselected_Link_Color);
-            Draw_Link
-              (Canvas, Canvas_Link_Access (Link),
-               Invert_Mode, GC, Edge_Number, Show_Annotation);
+            Set_Source_Color (Cr, Browser.Unselected_Link_Color);
          else
-            Set_Foreground (GC, Browser.Selected_Link_Color);
-            Draw_Link
-              (Canvas, Canvas_Link_Access (Link),
-               Invert_Mode, GC, Edge_Number, Show_Annotation);
+            Set_Source_Color (Cr, Browser.Selected_Link_Color);
          end if;
+
+         Draw_Link
+           (Canvas, Canvas_Link_Access (Link), Cr, Edge_Number, True);
       end if;
    end Draw_Link;
 
@@ -1295,17 +1306,26 @@ package body Browsers.Canvas is
 
    procedure Draw_Title_Bar_Button
      (Item   : access Browser_Item_Record;
+      Cr     : Cairo_Context;
       Num    : Gint;
       Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
       Cb     : Active_Area_Callback'Class)
    is
-      Button_Width  : constant Gint := Get_Width  (Item.Browser.Close_Pixmap);
-      Button_Height : constant Gint := Get_Height (Item.Browser.Close_Pixmap);
-      X             : constant Gint := Item.Title_Width + Item.Title_X -
-        (Num + 1) * (Margin + Button_Width);
-      Y, W, H       : Gint;
       Thick         : constant Gint :=
-                        Y_Thickness (Get_Style (Item.Browser.Canvas));
+                        X_Thickness (Get_Item_Style (Item));
+      Button_Width  : constant Gint :=
+                        Get_Width  (Item.Browser.Close_Pixmap);
+      Button_Height : constant Gint :=
+                        Get_Height (Item.Browser.Close_Pixmap);
+      X             : Gint :=
+                        Item.Title_Coord.X + Item.Title_Coord.Width + Thick -
+                          (Num + 1) * (Margin + Button_Width);
+      Y, W, H       : Gint;
+      Base          : Cairo_Color;
+      Color         : Cairo_Color;
+      Style         : Gtk_Style renames Get_Item_Style (Item);
+      Ptrn          : Cairo_Pattern;
+      State         : Gtk_State_Type;
 
       use type Gdk.Gdk_Drawable;
 
@@ -1313,86 +1333,146 @@ package body Browsers.Canvas is
       --  No title ? Don't draw any button
 
       if Item.Title_Layout = null
-        or else Pixmap (Item) = null
+        or else Surface (Item) = Null_Surface
       then
          return;
       end if;
 
       Get_Pixel_Size (Item.Title_Layout, W, H);
-      Y := (H - Button_Height) / 2 + Thick + Item.Title_Y;
-
-      Draw_Shadow
-        (Style       => Get_Style (Item.Browser),
-         Window      => Pixmap (Item),
-         State_Type  => State_Normal,
-         Shadow_Type => Shadow_Out,
-         X           => X,
-         Y           => Y,
-         Width       => Button_Width,
-         Height      => Button_Height);
-
-      Render_To_Drawable_Alpha
-        (Pixbuf       => Pixbuf,
-         Drawable     => Pixmap (Item),
-         Src_X        => 0,
-         Src_Y        => 0,
-         Dest_X       => X,
-         Dest_Y       => Y,
-         Width        => -1,
-         Height       => -1,
-         Alpha        => Alpha_Full,
-         Alpha_Threshold => 128);
+      Y := Item.Title_Coord.Y + (Item.Title_Coord.Height - Button_Height) / 2;
 
       Add_Active_Area
         (Item,
          Gdk_Rectangle'(X, Y, Button_Width, Button_Height),
          Cb);
+
+      --  Button's background
+      Rounded_Rectangle
+        (Cr,
+         Gdouble (X), Gdouble (Y),
+         Gdouble (Button_Width), Gdouble (Button_Height),
+         2.0);
+      Ptrn := Cairo.Pattern.Create_Linear
+        (0.0, Gdouble (Y), 0.0, Gdouble (Y + Button_Height - 1));
+
+      if Is_Selected (Canvas (Item), Item) then
+         State := State_Selected;
+      else
+         State := State_Normal;
+      end if;
+
+      Base := To_Cairo (Get_Base (Style, State));
+
+      Color := Shade (Base, 1.3);
+      Cairo.Pattern.Add_Color_Stop_Rgb (Ptrn, 0.0, Color.R, Color.G, Color.B);
+      Color := Shade (Base, 0.95);
+      Cairo.Pattern.Add_Color_Stop_Rgb (Ptrn, 1.0, Color.R, Color.G, Color.B);
+      Set_Source (Cr, Ptrn);
+      Destroy (Ptrn);
+      Cairo.Fill (Cr);
+
+      --  Button's borders
+      Draw_Shadow
+        (Cr, Get_Item_Style (Item),
+         Shadow_Out,
+         X - X_Thickness (Style),
+         Y - Y_Thickness (Style),
+         Button_Width + 2 * X_Thickness (Style),
+         Button_Height + 2 * Y_Thickness (Style),
+         2.0);
+
+      --  The icon
+      X := X + (Button_Width - Get_Width (Pixbuf)) / 2;
+      Y := Item.Title_Coord.Y +
+        (Item.Title_Coord.Height - Get_Height (Pixbuf)) / 2;
+      Draw_Pixbuf (Cr, Pixbuf, X, Y);
    end Draw_Title_Bar_Button;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Item : access Browser_Item_Record) return Cairo.Cairo_Context
+   is
+      Ret : Cairo_Context;
+   begin
+      Ret := Create (Surface (Item));
+      Set_Line_Width (Ret, 0.5);
+      return Ret;
+   end Create;
 
    ----------------------
    -- Redraw_Title_Bar --
    ----------------------
 
-   procedure Redraw_Title_Bar (Item : access Browser_Item_Record) is
-      W, H : Gint;
-      XThick : constant Gint := X_Thickness (Get_Style (Item.Browser.Canvas));
-      YThick : constant Gint := Y_Thickness (Get_Style (Item.Browser.Canvas));
+   procedure Redraw_Title_Bar
+     (Item : access Browser_Item_Record;
+      Cr   : Cairo.Cairo_Context)
+   is
+      State    : Gtk_State_Type := State_Normal;
+      Style    : constant Gtk_Style := Get_Item_Style (Item);
+      W_L, H_L : Gint;
+      Ptrn     : Cairo_Pattern;
+      Base     : Cairo_Color;
+      Color    : Cairo_Color;
 
       use type Gdk.Gdk_Drawable;
 
    begin
       if Item.Title_Layout = null
-        or else Pixmap (Item) = null
+        or else Surface (Item) = Null_Surface
       then
          return;
       end if;
 
       Reset_Active_Areas (Item.all, Other_Areas => False);
 
-      Get_Pixel_Size (Item.Title_Layout, W, H);
-      Draw_Rectangle
-        (Pixmap (Item),
-         GC     => Get_Title_Background_GC (Browser_Item (Item)),
-         Filled => True,
-         X      => Item.Title_X + YThick,
-         Y      => Item.Title_Y + YThick,
-         Width  => Item.Title_Width - 2 * XThick,
-         Height => H);
+      if Is_Selected (Item.Browser.Canvas, Item) then
+         State := State_Selected;
+      end if;
+
+      --  The title background
+      Rectangle
+        (Cr, Gdouble (Item.Title_Coord.X), Gdouble (Item.Title_Coord.Y),
+         Gdouble (Item.Title_Coord.Width), Gdouble (Item.Title_Coord.Height));
+
+      Ptrn := Create_Linear
+        (0.0, Gdouble (Item.Title_Coord.Y), 0.0,
+         Gdouble (Item.Title_Coord.Y + Item.Title_Coord.Height - 1));
+      Base := To_Cairo (Get_Base (Style, State));
+
+      Color := Shade (Base, 1.15);
+      Add_Color_Stop_Rgb (Ptrn, 0.0, Color.R, Color.G, Color.B);
+
+      Color := Shade (Base, 0.85);
+      Add_Color_Stop_Rgb (Ptrn, 1.0, Color.R, Color.G, Color.B);
+
+      Set_Source (Cr, Ptrn);
+      Destroy (Ptrn);
+
+      Cairo.Fill (Cr);
+
+      --  The title string
+      Get_Pixel_Size (Item.Title_Layout, W_L, H_L);
       Draw_Layout
-        (Drawable => Pixmap (Item),
-         GC       => Get_Black_GC (Get_Style (Item.Browser)),
-         X        => Margin + XThick + Item.Title_X,
-         Y        => YThick + Item.Title_Y,
-         Layout   => Item.Title_Layout);
+        (Cr, Get_Black (Style),
+         X      => Margin + Item.Title_Coord.X - X_Thickness (Style),
+         Y      => Item.Title_Coord.Y + (Item.Title_Coord.Height - H_L) / 2,
+         Layout => Item.Title_Layout);
+
+      --  The separator between the title and the child part
       Draw_Line
-        (Pixmap (Item),
-         GC     => Get_Black_GC (Get_Style (Item.Browser)),
-         X1     => XThick + Item.Title_X,
-         Y1     => H + YThick + Item.Title_Y,
-         X2     => Item.Title_Width + Item.Title_X - XThick - 1,
-         Y2     => H + YThick + Item.Title_Y);
+        (Cr, Get_Black (Style),
+         X1     => Item.Title_Coord.X,
+         Y1     => Item.Title_Coord.Y + Item.Title_Coord.Height,
+         X2     => Item.Title_Coord.X + Item.Title_Coord.Width,
+         Y2     => Item.Title_Coord.Y + Item.Title_Coord.Height);
+
+      --  And now the buttons
       Draw_Title_Bar_Button
         (Item   => Item,
+         Cr     => Cr,
          Num    => 0,
          Pixbuf => Item.Browser.Close_Pixmap,
          Cb     => Build (Close_Item'Access, Item));
@@ -1410,47 +1490,45 @@ package body Browsers.Canvas is
       return 0;
    end Get_Last_Button_Number;
 
-   -----------------------------
-   -- Get_Title_Background_GC --
-   -----------------------------
+   --------------------
+   -- Get_Item_Style --
+   --------------------
 
-   function Get_Title_Background_GC
-     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC
+   function Get_Item_Style (Item : access Browser_Item_Record) return Gtk_Style
    is
       B      : constant General_Browser := Get_Browser (Item);
       Canvas : constant Interactive_Canvas := Get_Canvas (B);
       Iter   : Item_Iterator;
+
    begin
       if Is_Selected (Canvas, Item) then
-         return Get_Selected_Item_GC (B);
-
+         return B.Item_Style;
       else
          Iter := Start (Canvas, Linked_From_Or_To => Canvas_Item (Item));
          while Get (Iter) /= null loop
             if Is_Selected (Canvas, Get (Iter)) then
                if Is_Linked_From (Iter) then
-                  return Get_Child_Linked_Item_GC (B);
+                  return B.Item_Style_Child_Linked;
                else
-                  return Get_Parent_Linked_Item_GC (B);
+                  return B.Item_Style_Parent_Linked;
                end if;
             end if;
             Next (Iter);
          end loop;
       end if;
 
-      --  ??? Should use different color
-      return Item.Browser.Title_GC;
-   end Get_Title_Background_GC;
+      return B.Item_Style;
+   end Get_Item_Style;
 
-   -----------------------
-   -- Get_Background_GC --
-   -----------------------
+   ----------------------------
+   -- Get_Default_Item_Style --
+   ----------------------------
 
-   function Get_Background_GC
-     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC is
+   function Get_Default_Item_Style
+     (Item : access Browser_Item_Record) return Gtk.Style.Gtk_Style is
    begin
-      return Item.Browser.Default_Item_GC;
-   end Get_Background_GC;
+      return Item.Browser.Item_Style;
+   end Get_Default_Item_Style;
 
    ---------------------
    -- Resize_And_Draw --
@@ -1458,6 +1536,7 @@ package body Browsers.Canvas is
 
    procedure Resize_And_Draw
      (Item             : access Browser_Item_Record;
+      Cr               : in out Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -1468,9 +1547,11 @@ package body Browsers.Canvas is
       Num_Buttons   : constant Gint := 1 + Get_Last_Button_Number
         (Browser_Item (Item));  --  dispatching call
       Button_Width  : constant Gint := Get_Width (Item.Browser.Close_Pixmap);
+      Button_Height : constant Gint := Get_Height (Item.Browser.Close_Pixmap);
       W, H          : Gint;
       Layout_H      : Gint := 0;
-      Bg_GC         : Gdk_GC;
+      State         : Gtk_State_Type := State_Normal;
+      Style         : constant Gtk_Style := Get_Item_Style (Item);
 
       use Gdk;
 
@@ -1480,48 +1561,60 @@ package body Browsers.Canvas is
       if Item.Title_Layout /= null then
          Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
          W := Gint'Max
-           (W + 2 * Margin + Num_Buttons * (Margin + Button_Width), Width);
-         H := Layout_H + Height
-           + 2 * Y_Thickness (Get_Style (Item.Browser.Canvas));
+           (W + 2 * Margin +
+              Num_Buttons * (Margin + Button_Width),
+            Width);
+         Item.Title_Coord :=
+           (X      => Xoffset + X_Thickness (Style),
+            Y      => Yoffset + Y_Thickness (Style),
+            Width  => W - 2 * X_Thickness (Style),
+            Height =>
+              Gint'Max
+                (Layout_H,
+                 Button_Height + 2 * Y_Thickness (Style)));
+
+         H := Item.Title_Coord.Height + 1 + Height + 2 * Y_Thickness (Style);
+
       else
+         Item.Title_Coord := (others => 0);
          W := Width;
          H := Height;
       end if;
 
-      Item.Title_Width := W;
-      Item.Title_X := Xoffset;
-      Item.Title_Y := Yoffset;
-
       W := W + Width_Offset;
       H := H + Height_Offset;
 
+      --  Actual resize of the item. Let's replace the context, as we're going
+      --  to replace the surface.
+      if Cr /= Cairo.Null_Context then
+         Destroy (Cr);
+      end if;
       Set_Screen_Size (Browser_Item (Item), W, H);
+      Cr := Create (Item);
 
-      Bg_GC := Get_Background_GC (Browser_Item (Item));
-
-      if Pixmap (Item) /= Null_Pixmap then
-         Draw_Rectangle
-           (Pixmap (Item),
-            GC     => Bg_GC,
-            Filled => True,
-            X      => Xoffset,
-            Y      => Layout_H + Yoffset,
-            Width  => W - Width_Offset,
-            Height => H - Layout_H - Height_Offset);
-
-         Draw_Shadow
-           (Style       => Get_Style (Item.Browser.Canvas),
-            Window      => Pixmap (Item),
-            State_Type  => State_Normal,
-            Shadow_Type => Shadow_Out,
-            X           => Xoffset,
-            Y           => Yoffset,
-            Width       => W - Width_Offset - Xoffset,
-            Height      => H - Height_Offset - Yoffset);
+      if Is_Selected (Canvas (Item), Item) then
+         State := State_Selected;
       end if;
 
+      Draw_Rectangle
+        (Cr, Get_Bg (Style, State),
+         Filled => True,
+         X      => Xoffset,
+         Y      => Layout_H + Yoffset,
+         Width  => W - Width_Offset,
+         Height => H - Layout_H - Height_Offset,
+         Corner_Radius => Gdouble (Margin - X_Thickness (Style)));
+
+      Draw_Shadow
+        (Cr, Style, Shadow_Out,
+         X      => Xoffset,
+         Y      => Yoffset,
+         Width  => W - Width_Offset - Xoffset,
+         Height => H - Height_Offset - Yoffset,
+         Corner_Radius => Gdouble (Margin - X_Thickness (Style)));
+
       if Item.Title_Layout /= null then
-         Yoffset := Yoffset + Layout_H;
+         Yoffset := Yoffset + Item.Title_Coord.Height + 1;
       end if;
    end Resize_And_Draw;
 
@@ -1529,15 +1622,17 @@ package body Browsers.Canvas is
    -- On_Button_Click --
    ---------------------
 
-   overriding procedure On_Button_Click
+   overriding function On_Button_Click
      (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button) is
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean is
    begin
       Raise_Item (Get_Canvas (Get_Browser (Item)), Item);
-      Activate (Browser_Item (Item), Event);
+      return Activate (Browser_Item (Item), Event);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
    end On_Button_Click;
 
    -----------------
@@ -1594,6 +1689,19 @@ package body Browsers.Canvas is
       --  gtk+ will coalesce the two events anyway.
       Refresh_Canvas (Canvas);
    end Selected;
+
+   -------------------
+   -- Draw_Selected --
+   -------------------
+
+   overriding procedure Draw_Selected
+     (Item : access Browser_Item_Record;
+      Cr   : Cairo.Cairo_Context) is
+   begin
+      --  Just use the regular Draw method, as hilighting is handled in the
+      --  Selected procedure above.
+      Draw (Item, Cr);
+   end Draw_Selected;
 
    ----------
    -- Call --
@@ -1740,9 +1848,9 @@ package body Browsers.Canvas is
    -- Activate --
    --------------
 
-   procedure Activate
+   function Activate
      (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event)
+      Event : Gdk.Event.Gdk_Event) return Boolean
    is
       X : constant Glib.Gint := Gint (Get_X (Event));
       Y : constant Glib.Gint := Gint (Get_Y (Event));
@@ -1777,10 +1885,8 @@ package body Browsers.Canvas is
          return False;
       end Check_Area;
 
-      Tmp : Boolean;
-      pragma Unreferenced (Tmp);
    begin
-      Tmp := Check_Area (Item.Active_Areas);
+      return Check_Area (Item.Active_Areas);
    end Activate;
 
    ----------
@@ -1928,13 +2034,16 @@ package body Browsers.Canvas is
 
    procedure Refresh (Item : access Browser_Item_Record'Class) is
       Xoffset, Yoffset : Gint := 0;
-      Layout : Pango_Layout;
+      Layout           : Pango_Layout;
+      Cr               : Cairo_Context;
    begin
       Layout := Create_Pango_Layout (Get_Browser (Item), "");
       Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
 
-      Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset, Layout);
-      Redraw_Title_Bar (Item);
+      Cr := Cairo.Null_Context;
+      Resize_And_Draw (Item, Cr, 0, 0, 0, 0, Xoffset, Yoffset, Layout);
+      Redraw_Title_Bar (Item, Cr);
+      Destroy (Cr);
 
       Unref (Layout);
    end Refresh;
@@ -1976,46 +2085,6 @@ package body Browsers.Canvas is
    begin
       Layout (Get_Canvas (Browser), Force => Force);
    end Layout;
-
-   ------------------------------------
-   -- Get_Default_Item_Background_GC --
-   ------------------------------------
-
-   function Get_Default_Item_Background_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
-   begin
-      return Browser.Default_Item_GC;
-   end Get_Default_Item_Background_GC;
-
-   --------------------------
-   -- Get_Selected_Item_GC --
-   --------------------------
-
-   function Get_Selected_Item_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
-   begin
-      return Browser.Selected_Item_GC;
-   end Get_Selected_Item_GC;
-
-   -------------------------------
-   -- Get_Parent_Linked_Item_GC --
-   -------------------------------
-
-   function Get_Parent_Linked_Item_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
-   begin
-      return Browser.Parent_Linked_Item_GC;
-   end Get_Parent_Linked_Item_GC;
-
-   ------------------------------
-   -- Get_Child_Linked_Item_GC --
-   ------------------------------
-
-   function Get_Child_Linked_Item_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
-   begin
-      return Browser.Child_Linked_Item_GC;
-   end Get_Child_Linked_Item_GC;
 
    ----------
    -- Free --
@@ -2266,20 +2335,21 @@ package body Browsers.Canvas is
 
    procedure Display_Lines
      (Item          : access Browser_Item_Record'Class;
+      Cr            : Cairo_Context;
       List          : Xref_List;
       X             : Gint;
       Y             : in out Gint;
       Second_Column : Gint;
       Layout        : access Pango_Layout_Record'Class)
    is
-      Browser     : constant General_Browser := Get_Browser (Item);
       X2          : Gint;
       First, Last : Integer;
       In_Xref     : Boolean;
-      GC          : Gdk_GC;
+      Color       : Gdk_Color;
       W, H        : Gint;
       Num_In_Line : Natural;
       Text        : String_Access;
+      Style       : constant Gtk_Style := Get_Item_Style (Item);
 
       procedure Display (Text : String; Line : Xref_Line);
       --  Display Text on Item
@@ -2293,22 +2363,21 @@ package body Browsers.Canvas is
          Set_Text (Layout, Text);
 
          if In_Xref then
-            GC := Browser.Text_GC;
+            Color := Get_Text (Style, State_Active);
          else
-            GC := Get_Black_GC (Get_Style (Browser));
+            Color := Get_Text (Style, State_Normal);
          end if;
 
-         Draw_Layout
-           (Drawable => Pixmap (Item),
-            GC       => GC,
-            X        => X2,
-            Y        => Y,
-            Layout   => Pango_Layout (Layout));
+         Set_Source_Color (Cr, Color);
+         Move_To (Cr, Gdouble (X2), Gdouble (Y));
+         Pango.Cairo.Show_Layout (Cr, Pango_Layout (Layout));
 
          Get_Pixel_Size (Layout, W, H);
 
          if In_Xref then
-            Draw_Line (Pixmap (Item), GC, X2, Y + H, X2 + W, Y + H);
+            Move_To (Cr, Gdouble (X2), Gdouble (Y + H));
+            Line_To (Cr, Gdouble (X2 + W), Gdouble (Y + H));
+            Stroke (Cr);
 
             if Num_In_Line <= Line.Callbacks'Length
               and then Line.Callbacks
@@ -2500,13 +2569,16 @@ package body Browsers.Canvas is
    -- Redraw_Title_Bar --
    ----------------------
 
-   overriding procedure Redraw_Title_Bar (Item : access Arrow_Item_Record) is
+   overriding procedure Redraw_Title_Bar
+     (Item : access Arrow_Item_Record;
+      Cr   : Cairo_Context)
+   is
    begin
-      Redraw_Title_Bar (Browser_Item_Record (Item.all)'Access);
+      Redraw_Title_Bar (Browser_Item_Record (Item.all)'Access, Cr);
 
       if not Item.Parents_Shown then
          Draw_Title_Bar_Button
-           (Item,
+           (Item, Cr,
             Num    => Get_Last_Button_Number (Item),
             Pixbuf => Get_Parents_Arrow (Get_Browser (Item)),
             Cb     => Build (Compute_Parents'Access, Item));
@@ -2514,77 +2586,12 @@ package body Browsers.Canvas is
 
       if not Item.Children_Shown then
          Draw_Title_Bar_Button
-           (Item,
+           (Item, Cr,
             Num    => Get_Last_Button_Number (Item) - 1,
             Pixbuf => Get_Children_Arrow (Get_Browser (Item)),
             Cb     => Build (Compute_Children'Access, Item));
       end if;
    end Redraw_Title_Bar;
-
-   ----------------
-   -- Get_Pixbuf --
-   ----------------
-
-   function Get_Pixbuf
-     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf
-   is
-      use type Gdk.Gdk_Drawable;
-
-      Canvas              : constant Image_Canvas :=
-                              Image_Canvas (Browser.Canvas);
-      X, Y, Width, Height : Gint;
-      X_Value, Y_Value    : Gdouble;
-      Src                 : Gdk_Window;
-      Pixbuf              : Gdk_Pixbuf;
-      Zoom_Level          : Guint;
-      Hadj, Vadj          : Gtk_Adjustment;
-
-   begin
-      Src := Get_Window (Canvas);
-
-      --  Temporarily reset zoom level
-
-      Zoom_Level := Get_Zoom (Canvas);
-      Zoom (Canvas);
-
-      Get_World_Coordinates (Canvas, X, Y, Width, Height);
-      Gdk_New (Canvas.Pixmap, Src, Width, Height);
-
-      if Canvas.Pixmap = null then
-         return null;
-      end if;
-
-      --  Temporarily reset scroll values
-
-      Hadj := Get_Hadj (Canvas);
-      Vadj := Get_Vadj (Canvas);
-      X_Value := Get_Value (Hadj);
-      Y_Value := Get_Value (Vadj);
-      Set_Value (Hadj, Get_Lower (Hadj));
-      Set_Value (Vadj, Get_Lower (Vadj));
-
-      --  Force a complete redraw on Canvas.Pixmap, so that we can
-      --  copy the whole contents of Canvas to a pixbuf.
-
-      Draw_Area (Canvas, (0, 0, Width, Height));
-      Pixbuf := Get_From_Drawable
-        (Dest   => null,
-         Src    => Canvas.Pixmap,
-         Cmap   => null,
-         Src_X  => 0,
-         Src_Y  => 0,
-         Dest_X => 0,
-         Dest_Y => 0,
-         Width  => -1,
-         Height => -1);
-      Set_Value (Hadj, X_Value);
-      Set_Value (Vadj, Y_Value);
-      Gdk.Pixmap.Unref (Canvas.Pixmap);
-      Canvas.Pixmap := null;
-      Zoom (Canvas, Zoom_Level);
-
-      return Pixbuf;
-   end Get_Pixbuf;
 
    -----------------------------
    -- Add_Navigation_Location --
@@ -2730,274 +2737,5 @@ package body Browsers.Canvas is
            Commands.Failure;
       end if;
    end Execute;
-
-   --------------------
-   -- Browser_To_SVG --
-   --------------------
-
-   procedure Browser_To_SVG
-     (Browser     : access General_Browser_Record'Class;
-      SVG_File_FD : GNAT.OS_Lib.File_Descriptor)
-   is
-      use String_Utils;
-
-      Canvas        : constant Interactive_Canvas := Get_Canvas (Browser);
-      Kernel        : constant Kernel_Handle := Get_Kernel (Browser);
-      Font          : constant Pango_Font_Description :=
-                        Default_Font.Get_Pref_Font;
-      Iterator      : Item_Iterator;
-      Item          : Canvas_Item;
-      World_X,
-      World_Y,
-      World_Width,
-      World_Height  : Gint;
-
-      function Link_Callback
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean;
-
-      -------------------
-      -- Link_Callback --
-      -------------------
-
-      function Link_Callback
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean
-      is
-         Src        : constant Canvas_Item := Canvas_Item (Get_Src (Link));
-         Dest       : constant Canvas_Item := Canvas_Item (Get_Dest (Link));
-         Link_Arrow : constant Arrow_Type := Get_Arrow_Type (Link);
-
-         Src_Coord, Dest_Coord : Gdk_Rectangle;
-         Link_Src_X_Pos, Link_Src_Y_Pos,
-         Link_Dest_X_Pos, Link_Dest_Y_Pos : Gfloat;
-         X1, Y1, X2, Y2 : Gint;
-         Src_Side, Dest_Side : Item_Side;
-      begin
-         Src_Coord := Get_Coord (Src);
-         Dest_Coord := Get_Coord (Dest);
-
-         Get_Src_Pos (Link, Link_Src_X_Pos, Link_Src_Y_Pos);
-         Get_Dest_Pos (Link, Link_Dest_X_Pos, Link_Dest_Y_Pos);
-
-         --  Link line
-
-         Clip_Line
-           (Src,
-            Canvas,
-            Dest_Coord.X + Gint (Gfloat (Dest_Coord.Width) * Link_Dest_X_Pos),
-            Dest_Coord.Y + Gint (Gfloat (Dest_Coord.Height) * Link_Dest_Y_Pos),
-            X_Pos => Link_Src_X_Pos, Y_Pos => Link_Src_Y_Pos,
-            Side  => Src_Side, X_Out => X1, Y_Out => Y1);
-         Clip_Line
-           (Dest,
-            Canvas,
-            Src_Coord.X + Gint (Gfloat (Src_Coord.Width) * Link_Src_X_Pos),
-            Src_Coord.Y + Gint (Gfloat (Src_Coord.Height) * Link_Src_Y_Pos),
-            X_Pos => Link_Dest_X_Pos, Y_Pos => Link_Dest_Y_Pos,
-            Side  => Dest_Side, X_Out => X2, Y_Out => Y2);
-
-         Put_Line
-           (SVG_File_FD,
-            "<line x1=""" & Image (Integer (X1))
-            & """ y1=""" & Image (Integer (Y1)) & """ "
-            & "x2=""" & Image (Integer (X2))
-            & """ y2=""" & Image (Integer (Y2)) & """ />");
-
-         --  Export the end arrow head
-
-         if Link_Arrow = End_Arrow or else Link_Arrow = Both_Arrow then
-            if X1 /= X2 then
-               Put_Line
-                 (SVG_File_FD,
-                  Arrow_Head_To_SVG
-                    (Canvas, X2, Y2,
-                     Arctan (Float (Y1 - Y2), Float (X1 - X2))));
-            elsif Y1 > Y2 then
-               Put_Line
-                 (SVG_File_FD,
-                  Arrow_Head_To_SVG
-                    (Canvas, X2, Y2, Ada.Numerics.Pi / 2.0));
-            else
-               Put_Line
-                 (SVG_File_FD,
-                  Arrow_Head_To_SVG
-                    (Canvas, X2, Y2, -Ada.Numerics.Pi / 2.0));
-            end if;
-         end if;
-
-         --  Export the start arrow head
-
-         if Link_Arrow = Start_Arrow or else Link_Arrow = Both_Arrow then
-            if X1 /= X2 then
-               Put_Line
-                 (SVG_File_FD,
-                  Arrow_Head_To_SVG
-                    (Canvas, X1, Y1,
-                     Arctan (Float (Y2 - Y1), Float (X2 - X1))));
-            elsif Y1 > Y2 then
-               Put_Line
-                 (SVG_File_FD,
-                  Arrow_Head_To_SVG
-                    (Canvas, X1, Y1, -Ada.Numerics.Pi / 2.0));
-            else
-               Put_Line
-                 (SVG_File_FD,
-                  Arrow_Head_To_SVG
-                    (Canvas, X1, Y1, +Ada.Numerics.Pi / 2.0));
-            end if;
-         end if;
-
-         return True;
-      end Link_Callback;
-   begin
-      --  Header
-
-      Get_World_Coordinates
-        (Canvas, World_X, World_Y, World_Width, World_Height);
-
-      Put_Line (SVG_File_FD, "<?xml version=""1.0"" standalone=""no""?>");
-      Put_Line (SVG_File_FD, "<svg xmlns=""http://www.w3.org/2000/svg"" "
-                & "x=""0"" y=""0"" "
-                & "width=""" & Image (Integer (World_Width)) & """ "
-                & "height=""" & Image (Integer (World_Height)) & """ >");
-
-      --  Styles
-
-      Put_Line (SVG_File_FD, "<style type=""text/css""> <![CDATA[");
-      Put_Line (SVG_File_FD, "text, tspan {font-family: " & Get_Family (Font)
-                & "; font-size:"
-                & Image (Integer (To_Pixels (Get_Size (Font)))) & "}");
-      Put_Line (SVG_File_FD, "rect {stroke:black; stroke-width: 1}");
-      Put_Line (SVG_File_FD, "line {stroke: black; stroke-width: 1}");
-      Put_Line (SVG_File_FD, "]]>");
-      Put_Line (SVG_File_FD, "</style>");
-
-      --  Title
-
-      Put_Line (SVG_File_FD, "<title>"
-                & Get_Title (Get (First_Child (Get_MDI (Kernel))))
-                & "</title>" & ASCII.LF);
-
-      --  Translation that simulates world coodinates
-
-      Put_Line (SVG_File_FD, "<g transform=""translate("
-                & Image (-Integer (World_X)) & ","
-                & Image (-Integer (World_Y)) & ")"">");
-
-      --  Links
-
-      For_Each_Link (Canvas, Link_Callback'Unrestricted_Access);
-
-      --  Items
-
-      Iterator := Start (Canvas);
-      Item := Get (Iterator);
-
-      while Item /= null loop
-         Put_Line (SVG_File_FD, Output_SVG (Browser_Item (Item)));
-         Next (Iterator);
-         Item := Get (Iterator);
-      end loop;
-
-      --  Footer
-
-      Put_Line (SVG_File_FD, "</g>");
-      Put_Line (SVG_File_FD, "</svg>");
-   end Browser_To_SVG;
-
-   ----------------
-   -- Output_SVG --
-   ----------------
-
-   function Output_SVG
-     (Item : access Browser_Item_Record'Class) return String
-   is
-      use String_Utils;
-      Coord : constant Gdk.Rectangle.Gdk_Rectangle := Get_Coord (Item);
-
-      function Title_To_SVG return String;
-      --  Return the SVG for the title, if the latter is defined
-
-      function Title_To_SVG return String is
-      begin
-         if Item.Title_Layout /= null then
-            return
-              "<rect style=""fill: silver"" "
-              & "width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
-              & "height=""1.3em"" "
-              & "class=""title""" & "/>"
-              & ASCII.LF
-              & "<text x=""" & Image (Integer (Item.Title_X))
-              & """ dx="".3em"" "
-              & "y=""" & Image (Integer (Item.Title_X)) & """ dy=""1em"">"
-              & Get_Text (Item.Title_Layout)
-              & "</text>"
-              & ASCII.LF;
-         else
-            return "";
-         end if;
-      end Title_To_SVG;
-
-   begin
-      return
-        "<g transform=""translate(" & String_Utils.Image (Integer (Coord.X))
-        & "," & String_Utils.Image (Integer (Coord.Y)) & ")"">"
-        & ASCII.LF
-        & "<rect style=""fill: white"" "
-        & "width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
-        & "height=""" & String_Utils.Image (Integer (Coord.Height)) & """ "
-        & "class=""item""" & "/>"
-        & ASCII.LF
-        & Title_To_SVG
-        & Output_SVG_Item_Content (Item)
-        & ASCII.LF
-        & "</g>"
-        & ASCII.LF;
-   end Output_SVG;
-
-   -----------------------------
-   -- Output_SVG_Item_Content --
-   -----------------------------
-
-   function Output_SVG_Item_Content
-     (Item : access Browser_Item_Record) return String is
-      pragma Unreferenced (Item);
-   begin
-      return "";
-   end Output_SVG_Item_Content;
-
-   -----------------------
-   -- Arrow_Head_To_SVG --
-   -----------------------
-
-   function Arrow_Head_To_SVG
-     (Canvas : access Interactive_Canvas_Record'Class;
-      X, Y   : Gint;
-      Angle  : Float)
-      return String
-   is
-      use String_Utils;
-
-      Canvas_Arrow_Angle     : constant Float :=
-                                 Get_Arrow_Angle (Canvas);
-      Length                 : constant Float :=
-                                 Float (Get_Arrow_Length (Canvas));
-      X1, X2, X3, Y1, Y2, Y3 : Gint;
-   begin
-      X1 := X;
-      Y1 := Y;
-      X2 := X + Gint (Length * Cos (Angle + Canvas_Arrow_Angle));
-      Y2 := Y + Gint (Length * Sin (Angle + Canvas_Arrow_Angle));
-      X3 := X + Gint (Length * Cos (Angle - Canvas_Arrow_Angle));
-      Y3 := Y + Gint (Length * Sin (Angle - Canvas_Arrow_Angle));
-
-      return "<path"
-        & " d=""M " & Image (Integer (X1)) & " " & Image (Integer (Y1))
-        & " L " & Image (Integer (X2)) & " " & Image (Integer (Y2))
-        & " L " & Image (Integer (X3)) & " " & Image (Integer (Y3))
-        & " Z"" />";
-
-   end Arrow_Head_To_SVG;
 
 end Browsers.Canvas;

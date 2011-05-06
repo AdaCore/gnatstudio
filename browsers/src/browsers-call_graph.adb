@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2011, AdaCore             --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,14 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
 with Ada.Text_IO;                   use Ada.Text_IO;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Symbols;              use GNATCOLL.Symbols;
-with GNATCOLL.Utils;                use GNATCOLL.Utils;
 with GNAT.Strings;                  use GNAT.Strings;
 
-with Gdk.GC;                        use Gdk.GC;
+with Cairo;                         use Cairo;
+
 with Gdk.Event;                     use Gdk.Event;
 
 with Glib;                          use Glib;
@@ -284,14 +283,11 @@ package body Browsers.Call_Graph is
 
    overriding procedure Resize_And_Draw
      (Item                        : access Entity_Item_Record;
+      Cr                          : in out Cairo.Cairo_Context;
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset            : in out Glib.Gint;
       Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
-   --  See doc for inherited subprogram
-
-   overriding function Output_SVG_Item_Content
-     (Item : access Entity_Item_Record) return String;
    --  See doc for inherited subprogram
 
    function Build
@@ -325,8 +321,7 @@ package body Browsers.Call_Graph is
    overriding procedure Draw_Link
      (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Link        : access Renaming_Link_Record;
-      Invert_Mode : Boolean;
-      GC          : Gdk.GC.Gdk_GC;
+      Cr          : Cairo_Context;
       Edge_Number : Glib.Gint;
       Show_Annotation : Boolean := True);
    --  Override the default drawing procedure for links
@@ -777,11 +772,14 @@ package body Browsers.Call_Graph is
       Item          : constant Entity_Item :=
                         Add_Entity_If_Not_Present (Browser, Entity);
       Canvas        : Interactive_Canvas;
+      Cr            : Cairo_Context;
 
    begin
       if not Children_Shown (Item) then
          Set_Children_Shown (Item, True);
-         Redraw_Title_Bar (Item);
+         Cr := Create (Item);
+         Redraw_Title_Bar (Item, Cr);
+         Destroy (Cr);
 
          declare
             Data : constant Examine_Ancestors_Data_Access :=
@@ -974,6 +972,7 @@ package body Browsers.Call_Graph is
    is
       Child_Browser : constant MDI_Child := Open_Call_Graph_Browser (Kernel);
       Data          : Examine_Ancestors_Data_Access;
+      Cr            : Cairo_Context;
    begin
       Data := new Examine_Ancestors_Data'
         (Commands_User_Data_Record with
@@ -982,7 +981,9 @@ package body Browsers.Call_Graph is
          Link_From_Item => False);
       Data.Item := Add_Entity_If_Not_Present (Data.Browser, Entity);
       Set_Parents_Shown (Data.Item, True);
-      Redraw_Title_Bar (Data.Item);
+      Cr := Create (Surface (Data.Item));
+      Redraw_Title_Bar (Data.Item, Cr);
+      Destroy (Cr);
 
       Examine_Ancestors_Call_Graph
         (Kernel            => Kernel,
@@ -2502,29 +2503,21 @@ package body Browsers.Call_Graph is
    overriding procedure Draw_Link
      (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Link        : access Renaming_Link_Record;
-      Invert_Mode : Boolean;
-      GC          : Gdk.GC.Gdk_GC;
+      Cr          : Cairo_Context;
       Edge_Number : Glib.Gint;
       Show_Annotation : Boolean := True)
    is
    begin
-      Set_Line_Attributes
-        (GC,
-         Line_Width => 0,
-         Line_Style => Line_On_Off_Dash,
-         Cap_Style  => Cap_Butt,
-         Join_Style => Join_Miter);
+      Cairo.Save (Cr);
+      Cairo.Set_Dash (Cr, (1 .. 2 => 2.0), 0.0);
+      Cairo.Set_Line_Cap (Cr, Cairo_Line_Cap_Butt);
+      Cairo.Set_Line_Join (Cr, Cairo_Line_Join_Miter);
 
       Draw_Link
         (Canvas, Browser_Link_Record (Link.all)'Access,
-         Invert_Mode, GC, Edge_Number, Show_Annotation);
+         Cr, Edge_Number, Show_Annotation);
 
-      Set_Line_Attributes
-        (GC,
-         Line_Width => 0,
-         Line_Style => Line_Solid,
-         Cap_Style  => Cap_Butt,
-         Join_Style => Join_Miter);
+      Cairo.Restore (Cr);
    end Draw_Link;
 
    -----------
@@ -2568,6 +2561,7 @@ package body Browsers.Call_Graph is
 
    overriding procedure Resize_And_Draw
      (Item                        : access Entity_Item_Record;
+      Cr                          : in out Cairo_Context;
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset            : in out Glib.Gint;
@@ -2579,45 +2573,14 @@ package body Browsers.Call_Graph is
         (Get_Browser (Item), Item.Refs, Ref_W1, Ref_W2, Ref_H,  Layout);
 
       Resize_And_Draw
-        (Arrow_Item_Record (Item.all)'Access,
+        (Arrow_Item_Record (Item.all)'Access, Cr,
          Gint'Max (Ref_W1 + Ref_W2 + 2 * Margin, Width),
          Height + Ref_H,
          Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
 
       Y := Yoffset + 1;
-      Display_Lines (Item, Item.Refs, Margin + Xoffset, Y, Ref_W1, Layout);
+      Display_Lines (Item, Cr, Item.Refs, Margin + Xoffset, Y, Ref_W1, Layout);
    end Resize_And_Draw;
-
-   -----------------------------
-   -- Output_SVG_Item_Content --
-   -----------------------------
-
-   overriding function Output_SVG_Item_Content
-     (Item : access Entity_Item_Record) return String
-   is
-      use Ada.Strings.Unbounded;
-
-      Output   : Unbounded_String;
-      Line     : GNAT.Strings.String_Access;
-      Dummy_Cb : Active_Area_Cb := null;
-      J        : Positive := 1;
-
-   begin
-      Get_Line (Item.Refs, J, Callback => Dummy_Cb, Text => Line);
-
-      while Line /= null loop
-         Append
-           (Output,
-            "<tspan x="".3em"" y=""" & Image (J + 1) & ".3em"">"
-            & Strip_Character (Line.all, '@') & "</tspan>"
-            & ASCII.LF);
-
-         J := J + 1;
-         Get_Line (Item.Refs, J, Callback => Dummy_Cb, Text => Line);
-      end loop;
-
-      return "<text>" & ASCII.LF & To_String (Output) & "</text>";
-   end Output_SVG_Item_Content;
 
    ----------
    -- Free --

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2000-2008, AdaCore                   --
+--                Copyright (C) 2000-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -227,8 +227,8 @@ package body Tooltips is
    begin
       Get_Pointer (Get_Window (Tooltip.Widget), X, Y, Mask, Window);
 
-      if X <= Tooltip.Area.X + GRectangle_Coord (Tooltip.Area.Width)
-        and then Y <= Tooltip.Area.Y + GRectangle_Coord (Tooltip.Area.Height)
+      if X <= Tooltip.Area.X + Tooltip.Area.Width
+        and then Y <= Tooltip.Area.Y + Tooltip.Area.Height
         and then X >= Tooltip.Area.X
         and then Y >= Tooltip.Area.Y
       then

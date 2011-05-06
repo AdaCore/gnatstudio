@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2000-2010, AdaCore              --
+--                     Copyright (C) 2000-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,13 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.IO;      use GNAT.IO;
+with GNAT.IO;         use GNAT.IO;
 
-with Glib;         use Glib;
-with Gdk.Drawable; use Gdk.Drawable;
-with Pango.Layout; use Pango.Layout;
+with Cairo;           use Cairo;
+with Glib;            use Glib;
+with Pango.Layout;    use Pango.Layout;
 
-with Language;     use Language;
+with Gtkada.Style;    use Gtkada.Style;
+
+with Language;        use Language;
 
 package body Items.Records is
 
@@ -389,7 +391,7 @@ package body Items.Records is
    overriding procedure Paint
      (Item    : in out Record_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Gint := 0)
@@ -412,8 +414,7 @@ package body Items.Records is
          Set_Text (Context.Text_Layout,
                    Item.Fields (F).Name.all & ASCII.HT & " => ");
          Draw_Layout
-           (Drawable => Pixmap,
-            GC       => Context.GC,
+           (Cr, Context.Foreground,
             X        => X + Left_Border + Item.Border_Spacing,
             Y        => Current_Y,
             Layout   => Context.Text_Layout);
@@ -425,9 +426,7 @@ package body Items.Records is
       Item.Y := Y;
 
       if not Item.Valid then
-         Display_Pixmap
-           (Pixmap, Context.GC, Context.Unknown_Pixmap,
-            Context.Unknown_Mask, X + Left_Border, Y);
+         Draw_Pixbuf (Cr, Context.Unknown_Pixmap, X + Left_Border, Y);
          return;
       end if;
 
@@ -438,16 +437,13 @@ package body Items.Records is
       end if;
 
       if not Item.Visible then
-         Display_Pixmap
-           (Pixmap, Context.GC, Context.Hidden_Pixmap,
-            Context.Hidden_Mask, X + Left_Border, Current_Y);
+         Draw_Pixbuf (Cr, Context.Hidden_Pixmap, X + Left_Border, Current_Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Pixmap,
-            Context.Selection_GC,
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y,
@@ -460,8 +456,7 @@ package body Items.Records is
       then
          Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
          Draw_Layout
-           (Drawable => Pixmap,
-            GC       => Context.GC,
+           (Cr, Context.Foreground,
             X        => X + Left_Border + Item.Border_Spacing,
             Y        => Current_Y,
             Layout   => Context.Type_Layout);
@@ -474,7 +469,7 @@ package body Items.Records is
 
          if Item.Fields (F).Value /= null then
             Paint
-              (Item.Fields (F).Value.all, Context, Pixmap, Lang, Mode,
+              (Item.Fields (F).Value.all, Context, Cr, Lang, Mode,
                X + Left_Border + Item.Border_Spacing
                + Item.Gui_Fields_Width,
                Current_Y);
@@ -489,7 +484,7 @@ package body Items.Records is
             for V in Item.Fields (F).Variant_Part'Range loop
                if Item.Fields (F).Variant_Part (V).Valid then
                   Paint
-                    (Item.Fields (F).Variant_Part (V).all, Context, Pixmap,
+                    (Item.Fields (F).Variant_Part (V).all, Context, Cr,
                      Lang, Mode, X + Left_Border + Item.Border_Spacing
                      + Item.Gui_Fields_Width,
                      Current_Y);
@@ -506,8 +501,7 @@ package body Items.Records is
       --  Draw a border
       if Item.Border_Spacing /= 0 then
          Draw_Rectangle
-           (Pixmap,
-            Context.GC,
+           (Cr, Context.Foreground,
             Filled => False,
             X      => X,
             Y      => Y,
@@ -533,7 +527,8 @@ package body Items.Records is
 
    begin
       if not Item.Valid then
-         Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
+         Item.Width := Get_Width (Context.Unknown_Pixmap);
+         Item.Height := Get_Height (Context.Unknown_Pixmap);
          return;
       end if;
 
@@ -625,9 +620,10 @@ package body Items.Records is
 
       if not Item.Visible then
          Item.Gui_Fields_Width := 0;
-         Get_Size (Context.Hidden_Pixmap, Item.Width, Item.Height);
-         Item.Width := Left_Border + 2 * Item.Border_Spacing + Item.Width;
-         Item.Height := 2 * Item.Border_Spacing + Item.Height;
+         Item.Width := Left_Border + 2 * Item.Border_Spacing +
+           Get_Width (Context.Hidden_Pixmap);
+         Item.Height := 2 * Item.Border_Spacing +
+           Get_Height (Context.Hidden_Pixmap);
       end if;
    end Size_Request;
 

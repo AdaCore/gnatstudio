@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                Copyright (C) 2000-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,10 +18,6 @@
 -----------------------------------------------------------------------
 
 with Glib;              use Glib;
-with Gdk.Drawable;      use Gdk.Drawable;
-with Gdk.Pixmap;        use Gdk.Pixmap;
-with Gdk.Bitmap;        use Gdk.Bitmap;
-with Gdk.GC;            use Gdk.GC;
 with Language;          use Language;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
@@ -155,23 +150,23 @@ package body Items is
       Found := False;
    end Component_Is_Visible;
 
-   --------------------
-   -- Display_Pixmap --
-   --------------------
-
-   procedure Display_Pixmap
-     (On_Pixmap : Gdk_Pixmap;
-      GC        : Gdk_GC;
-      Pixmap    : Gdk_Pixmap;
-      Mask      : Gdk_Bitmap;
-      X, Y      : Gint) is
-   begin
-      Set_Clip_Mask (GC, Mask);
-      Set_Clip_Origin (GC, X, Y);
-      Draw_Pixmap (On_Pixmap, GC, Pixmap, 0, 0, X, Y);
-      Set_Clip_Mask (GC, Null_Pixmap);
-      Set_Clip_Origin (GC, 0, 0);
-   end Display_Pixmap;
+--     --------------------
+--     -- Display_Pixmap --
+--     --------------------
+--
+--     procedure Display_Pixmap
+--       (On_Pixmap : Gdk_Pixmap;
+--        GC        : Gdk_GC;
+--        Pixmap    : Gdk_Pixmap;
+--        Mask      : Gdk_Bitmap;
+--        X, Y      : Gint) is
+--     begin
+--        Set_Clip_Mask (GC, Mask);
+--        Set_Clip_Origin (GC, X, Y);
+--        Draw_Pixmap (On_Pixmap, GC, Pixmap, 0, 0, X, Y);
+--        Set_Clip_Mask (GC, Null_Pixmap);
+--        Set_Clip_Origin (GC, 0, 0);
+--     end Display_Pixmap;
 
    ---------------------
    -- Propagate_Width --

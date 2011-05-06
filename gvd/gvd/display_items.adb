@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2000-2009, AdaCore                  --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,21 +18,25 @@
 -----------------------------------------------------------------------
 
 with Glib;              use Glib;
-with Gdk.Drawable;      use Gdk.Drawable;
-with Gdk.GC;            use Gdk.GC;
-with Gdk.Pixmap;        use Gdk.Pixmap;
+
+with Cairo;             use Cairo;
+with Pango.Cairo;       use Pango.Cairo;
+with Pango.Layout;      use Pango.Layout;
+
+with Gdk.Cairo;         use Gdk.Cairo;
 with Gdk.Rectangle;     use Gdk.Rectangle;
 with Gdk.Event;         use Gdk.Event;
+
 with Gtk.Enums;         use Gtk.Enums;
-with Gtk.Style;         use Gtk.Style;
 with Gtkada.Canvas;     use Gtkada.Canvas;
-with Pango.Layout;      use Pango.Layout;
+with Gtkada.Style;      use Gtkada.Style;
 
 with Debugger;          use Debugger;
 with Language;          use Language;
 with Items;             use Items;
 with Items.Simples;     use Items.Simples;
 
+with Browsers.Canvas;     use Browsers.Canvas;
 with GPS.Intl;            use GPS.Intl;
 with GVD.Canvas;          use GVD.Canvas;
 with Default_Preferences; use Default_Preferences;
@@ -381,7 +385,6 @@ package body Display_Items is
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Context : Drawing_Context)
    is
-      use type Gdk.GC.Gdk_GC;
       Lang : constant Language.Language_Access :=
                Get_Language (Item.Debugger.Debugger);
    begin
@@ -491,8 +494,8 @@ package body Display_Items is
    -- Update_Display --
    --------------------
 
-   procedure Update_Display (Item : access Display_Item_Record'Class) is
-
+   procedure Update_Display (Item : access Display_Item_Record'Class)
+   is
       Context                   : constant Drawing_Context :=
                                     Get_Item_Context (Item.Debugger);
       Box_Context               : constant Box_Drawing_Context :=
@@ -500,7 +503,8 @@ package body Display_Items is
       Valid                     : constant Boolean :=
                                     Item.Entity /= null
                                     and then Is_Valid (Item.Entity);
-      W, H                      : Gint;
+--        W, H                      : Gint;
+      Cr                        : Cairo_Context;
       Layout                    : Pango_Layout;
       Alloc_Width               : Gint;
       Alloc_Height              : Gint;
@@ -548,11 +552,11 @@ package body Display_Items is
       --  Keep some space for the shadow (3d look)
 
       Set_Screen_Size (Item, Alloc_Width + 1, Alloc_Height + 1);
+      Cr := Create (Item);
 
       if Item.Auto_Refresh then
          Draw_Rectangle
-           (Pixmap (Item),
-            GC     => Box_Context.Thaw_Bg_GC,
+           (Cr, Box_Context.Thaw_Bg_Color,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -561,8 +565,7 @@ package body Display_Items is
 
       else
          Draw_Rectangle
-           (Pixmap (Item),
-            GC     => Box_Context.Freeze_Bg_GC,
+           (Cr, Box_Context.Freeze_Bg_Color,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -571,8 +574,7 @@ package body Display_Items is
       end if;
 
       Draw_Rectangle
-        (Pixmap (Item),
-         GC     => Box_Context.Grey_GC,
+        (Cr, Box_Context.Grey_Color,
          Filled => True,
          X      => 0,
          Y      => 0,
@@ -580,9 +582,7 @@ package body Display_Items is
          Height => Title_Height);
 
       Draw_Shadow
-        (Style       => Get_Style (Get_Canvas (Item.Debugger)),
-         Window      => Pixmap (Item),
-         State_Type  => State_Normal,
+        (Cr, Get_Style (Get_Canvas (Item.Debugger)),
          Shadow_Type => Shadow_Out,
          X           => 0,
          Y           => 0,
@@ -590,19 +590,15 @@ package body Display_Items is
          Height      => Alloc_Height + 1);
 
       Draw_Line
-        (Pixmap (Item),
-         GC     => Box_Context.Black_GC,
+        (Cr, Box_Context.Black_Color,
          X1     => 0,
          Y1     => Title_Height,
          X2     => Alloc_Width - 1,
          Y2     => Title_Height);
 
-      Draw_Layout
-        (Drawable => Pixmap (Item),
-         GC       => Box_Context.Black_GC,
-         X        => Spacing,
-         Y        => Spacing,
-         Layout   => Layout);
+      Set_Source_Color (Cr, Box_Context.Black_Color);
+      Move_To (Cr, Gdouble (Spacing), Gdouble (Spacing));
+      Pango.Cairo.Show_Layout (Cr, Layout);
 
       --  First button
 
@@ -610,41 +606,27 @@ package body Display_Items is
 
       --  Second button
 
-      Set_Clip_Mask (Box_Context.Black_GC, Box_Context.Close_Mask);
-      Set_Clip_Origin
-        (Box_Context.Black_GC, Alloc_Width - Buttons_Size - Spacing, Spacing);
-      Get_Size (Box_Context.Close_Pixmap, W, H);
-      Draw_Pixmap
-        (Pixmap (Item),
-         GC     => Box_Context.Black_GC,
-         Src    => Box_Context.Close_Pixmap,
-         Xsrc   => 0,
-         Ysrc   => 0,
-         Xdest  => Alloc_Width - Buttons_Size - Spacing,
-         Ydest  => Spacing,
-         Width  => W,
-         Height => H);
-      Set_Clip_Mask (Box_Context.Black_GC, Null_Pixmap);
-      Set_Clip_Origin (Box_Context.Black_GC, 0, 0);
+      Draw_Pixbuf (Cr, Box_Context.Close_Pixmap,
+                   Alloc_Width - Buttons_Size - Spacing,
+                   Spacing);
 
       if Valid then
          Paint
            (Item.Entity.all,
-            Context,
-            Pixmap => Pixmap (Item),
+            Context, Cr,
             Lang   => Get_Language (Item.Debugger.Debugger),
             Mode   => Item.Mode,
             X      => Border_Spacing,
             Y      => Title_Height + Border_Spacing);
       else
-         Draw_Layout
-           (Drawable => Pixmap (Item),
-            GC       => Context.GC,
-            X        => Border_Spacing,
-            Y        => Title_Height + Border_Spacing,
-            Layout   => Context.Text_Layout);
+         Set_Source_Color (Cr, Context.Foreground);
+         Move_To
+           (Cr, Gdouble (Border_Spacing),
+            Gdouble (Title_Height + Border_Spacing));
+         Pango.Cairo.Show_Layout (Cr, Context.Text_Layout);
       end if;
 
+      Destroy (Cr);
       Unref (Layout);
    end Update_Display;
 
@@ -660,12 +642,13 @@ package body Display_Items is
                       Get_Item_Context (Item.Debugger);
       Box_Context : constant Box_Drawing_Context :=
                       Get_Box_Context (Item.Debugger);
+      Cr          : constant Cairo_Context := Create (Item);
+
    begin
       if not Get_Selected (Component) then
          if Item.Auto_Refresh then
             Draw_Rectangle
-              (Pixmap (Item),
-               GC     => Box_Context.Thaw_Bg_GC,
+              (Cr, Box_Context.Thaw_Bg_Color,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
@@ -674,8 +657,7 @@ package body Display_Items is
 
          else
             Draw_Rectangle
-              (Pixmap (Item),
-               GC     => Box_Context.Freeze_Bg_GC,
+              (Cr, Box_Context.Freeze_Bg_Color,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
@@ -686,25 +668,14 @@ package body Display_Items is
 
       Paint
         (Component.all,
-         Context,
-         Pixmap => Pixmap (Item),
+         Context, Cr,
          Lang   => Get_Language (Item.Debugger.Debugger),
          Mode   => Item.Mode,
          X      => Get_X (Component.all),
          Y      => Get_Y (Component.all));
+
+      Destroy (Cr);
    end Update_Component;
-
-   -----------------------------
-   -- Output_SVG_Item_Content --
-   -----------------------------
-
-   overriding function Output_SVG_Item_Content
-     (Item : access Display_Item_Record) return String is
-   begin
-      return "<g><text>" & Item.Name.all & "</text>"
-        & "<text>value not available</text>"
-        & "</g>";
-   end Output_SVG_Item_Content;
 
    -----------------
    -- Search_Item --
@@ -1024,28 +995,50 @@ package body Display_Items is
    -- On_Button_Click --
    ---------------------
 
-   overriding procedure On_Button_Click
+   overriding function On_Button_Click
      (Item  : access Display_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button)
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean
    is
-      Buttons_Start : Gint :=
-                        Gint (Get_Coord (Item).Width) -
-                              Num_Buttons * Buttons_Size -
-                              Num_Buttons * Spacing + 1;
+      Buttons_Start : constant Gint :=
+                        Get_Coord (Item).Width -
+                          Num_Buttons * Buttons_Size -
+                            Num_Buttons * Spacing + 1;
       Component     : Generic_Type_Access;
+      X             : Gint;
 
    begin
       --  Click on a button ?
 
       if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Press
+        and then Gint (Get_Y (Event)) > Spacing
+        and then Gint (Get_Y (Event)) <= Spacing + Buttons_Size
+      then
+         X := Buttons_Start;
+
+         for B in 0 .. Num_Buttons - 1 loop
+            if Gint (Get_X (Event)) >= X
+              and then Gint (Get_X (Event)) <= X + Buttons_Size
+            then
+               --  Just inform the caller that we handle the click
+               return True;
+            end if;
+
+            X := X + Buttons_Size + Spacing;
+         end loop;
+
+         return False;
+
+      elsif Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Release
         and then Gint (Get_Y (Event)) > Spacing
         and then Gint (Get_Y (Event)) <= Spacing + Buttons_Size
       then
+         X := Buttons_Start;
+
          for B in 0 .. Num_Buttons - 1 loop
-            if Gint (Get_X (Event)) >= Buttons_Start
-              and then Gint (Get_X (Event)) <=
-              Buttons_Start + Buttons_Size
+            if Gint (Get_X (Event)) >= X
+              and then Gint (Get_X (Event)) <= X + Buttons_Size
             then
                case B is
                   when 0 =>
@@ -1071,13 +1064,13 @@ package body Display_Items is
                         Output_Command => True);
                end case;
 
-               return;
+               return True;
             end if;
 
-            Buttons_Start := Buttons_Start + Buttons_Size + Spacing;
+            X := X + Buttons_Size + Spacing;
          end loop;
 
-         return;
+         return False;
       end if;
 
       --  Raise or lower the item
@@ -1096,7 +1089,7 @@ package body Display_Items is
       --  Get the selected component
 
       if Item.Entity = null then
-         return;
+         return False;
       end if;
 
       Component := Get_Component
@@ -1116,6 +1109,8 @@ package body Display_Items is
             Gint (Get_X (Event)),
             Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
 
+         return True;
+
       --  Hiding a component
 
       elsif Get_Button (Event) = 1
@@ -1124,6 +1119,8 @@ package body Display_Items is
       then
          Change_Visibility (Item, Component);
 
+         return True;
+
       --  Selecting a component
 
       elsif Get_Button (Event) = 1
@@ -1131,10 +1128,16 @@ package body Display_Items is
         and then Gint (Get_Y (Event)) > Item.Title_Height
       then
          Select_Item (Item.Debugger, Item, Component);
+
+         return True;
       end if;
 
+      return False;
+
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
    end On_Button_Click;
 
    -----------------------
@@ -1198,56 +1201,30 @@ package body Display_Items is
       Auto_Refresh : Boolean;
       Update_Value : Boolean := False)
    is
-      Width   : constant Gint := Gint (Get_Coord (Item).Width);
+      Width   : constant Gint := Get_Coord (Item).Width;
       Context : constant Box_Drawing_Context :=
                   Get_Box_Context (Item.Debugger);
-      W, H    : Gint;
+      Cr      : constant Cairo_Context := Create (Item);
    begin
       Item.Auto_Refresh := Auto_Refresh;
 
       Draw_Rectangle
-        (Pixmap (Item),
-         GC     => Context.Grey_GC,
+        (Cr, Context.Grey_Color,
          Filled => True,
          X      => Width - 2 * Buttons_Size - 2 * Spacing,
          Y      => Spacing,
          Width  => Buttons_Size,
          Height => Buttons_Size);
-      Set_Clip_Origin
-        (Context.Black_GC,
-         Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
 
       if Item.Auto_Refresh then
-         Set_Clip_Mask (Context.Black_GC, Context.Auto_Display_Mask);
-         Get_Size (Context.Auto_Display_Pixmap, W, H);
-         Draw_Pixmap
-           (Pixmap (Item),
-            GC     => Context.Black_GC,
-            Src    => Context.Auto_Display_Pixmap,
-            Xsrc   => 0,
-            Ysrc   => 0,
-            Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
-            Ydest  => Spacing,
-            Width  => W,
-            Height => H);
-
+         Draw_Pixbuf
+           (Cr, Context.Auto_Display_Pixmap,
+            Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
       else
-         Set_Clip_Mask (Context.Black_GC, Context.Locked_Mask);
-         Get_Size (Context.Locked_Pixmap, W, H);
-         Draw_Pixmap
-           (Pixmap (Item),
-            GC     => Context.Black_GC,
-            Src    => Context.Locked_Pixmap,
-            Xsrc   => 0,
-            Ysrc   => 0,
-            Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
-            Ydest  => Spacing,
-            Width  => W,
-            Height => H);
+         Draw_Pixbuf
+           (Cr, Context.Locked_Pixmap,
+            Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
       end if;
-
-      Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
-      Set_Clip_Origin (Context.Black_GC, 0, 0);
 
       if Update_Value then
          --  If we moved back to the auto-refresh state, force an

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2008, AdaCore               --
+--                    Copyright (C) 2000-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +19,10 @@
 
 with GNAT.IO;         use GNAT.IO;
 with Glib;            use Glib;
-with Gdk.Drawable;    use Gdk.Drawable;
+with Cairo;           use Cairo;
 with Pango.Layout;    use Pango.Layout;
+with Gtkada.Style;    use Gtkada.Style;
+
 with Language;        use Language;
 
 package body Items.Repeats is
@@ -134,7 +136,7 @@ package body Items.Repeats is
    overriding procedure Paint
      (Item    : in out Repeat_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Gint := 0)
@@ -149,16 +151,13 @@ package body Items.Repeats is
       Item.Y := Y;
 
       if not Item.Valid then
-         Display_Pixmap
-           (Pixmap, Context.GC, Context.Unknown_Pixmap,
-            Context.Unknown_Mask, X + Border_Spacing, Y);
+         Draw_Pixbuf (Cr, Context.Unknown_Pixmap, X + Border_Spacing, Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Pixmap,
-            Context.Selection_GC,
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y,
@@ -168,19 +167,17 @@ package body Items.Repeats is
 
       Set_Text (Context.Text_Layout, Str);
       Draw_Layout
-        (Drawable => Pixmap,
-         GC       => Context.GC,
+        (Cr, Context.Foreground,
          X        => X + Border_Spacing,
          Y        => Y + Border_Spacing,
          Layout   => Context.Text_Layout);
 
-      Paint (Item.Value.all, Context, Pixmap, Lang, Mode,
+      Paint (Item.Value.all, Context, Cr, Lang, Mode,
              X + Item.Repeat_Str_Width, Y + Border_Spacing);
 
       --  Draw a border
       Draw_Rectangle
-        (Pixmap,
-         Context.GC,
+        (Cr, Context.Foreground,
          Filled => False,
          X      => X,
          Y      => Y,
@@ -203,7 +200,8 @@ package body Items.Repeats is
         "<repeat" & Integer'Image (Item.Repeat_Num) & "> ";
    begin
       if not Item.Valid then
-         Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
+         Item.Width := Get_Width (Context.Unknown_Pixmap);
+         Item.Height := Get_Height (Context.Unknown_Pixmap);
       else
          Size_Request (Item.Value.all, Context, Lang, Mode, Hide_Big_Items);
          Set_Text (Context.Text_Layout, Str);

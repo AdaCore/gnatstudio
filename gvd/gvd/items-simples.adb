@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2010, AdaCore               --
+--                    Copyright (C) 2000-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,10 +21,17 @@ with GNAT.IO;         use GNAT.IO;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Glib;            use Glib;
-with Gdk.Drawable;    use Gdk.Drawable;
-with Gdk.GC;          use Gdk.GC;
-with Language;        use Language;
+with Cairo;           use Cairo;
+
+with Pango.Cairo;     use Pango.Cairo;
 with Pango.Layout;    use Pango.Layout;
+
+with Gdk.Cairo;       use Gdk.Cairo;
+with Gdk.Color;       use Gdk.Color;
+
+with Gtkada.Style;    use Gtkada.Style;
+
+with Language;        use Language;
 
 with String_Utils;    use String_Utils;
 
@@ -47,10 +54,10 @@ package body Items.Simples is
    procedure Paint_Simple
      (Item    : in out Simple_Type'Class;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
-      GC      : Gdk_GC;
+      Color   : Gdk_Color;
       X, Y    : Gint := 0);
    --  Paint a simple type or one of its children
 
@@ -165,15 +172,15 @@ package body Items.Simples is
    procedure Paint_Simple
      (Item    : in out Simple_Type'Class;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
-      GC      : Gdk_GC;
+      Color   : Gdk_Color;
       X, Y    : Gint := 0)
    is
-      Text_GC : Gdk_GC := GC;
-      Y2      : Gint := Y;
-      W, H    : Gint;
+      Text_Color : Gdk_Color := Color;
+      Y2         : Gint := Y;
+      W, H       : Gint;
 
       use Gdk;
 
@@ -182,16 +189,13 @@ package body Items.Simples is
       Item.Y := Y2;
 
       if not Item.Valid or else Item.Value = null then
-         Display_Pixmap
-           (Pixmap, Text_GC, Context.Unknown_Pixmap,
-            Context.Unknown_Mask, X + Border_Spacing, Y2);
+         Draw_Pixbuf (Cr, Context.Unknown_Pixmap, X + Border_Spacing, Y2);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Pixmap,
-            Context.Selection_GC,
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y2,
@@ -200,31 +204,25 @@ package body Items.Simples is
       end if;
 
       if Item.Has_Changed then
-         Text_GC := Context.Modified_GC;
+         Text_Color := Context.Modified_Color;
       end if;
 
       if Show_Type (Mode)
         and then Item.Type_Name /= null
       then
          Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
-         Draw_Layout
-           (Drawable => Pixmap,
-            GC       => Text_GC,
-            X        => X,
-            Y        => Y2,
-            Layout   => Context.Type_Layout);
+         Set_Source_Color (Cr, Text_Color);
+         Move_To (Cr, Gdouble (X), Gdouble (Y2));
+         Pango.Cairo.Show_Layout (Cr, Context.Type_Layout);
          Get_Pixel_Size (Context.Type_Layout, W, H);
          Y2 := Y2 + H;
       end if;
 
       if Show_Value (Mode) then
          Set_Text (Context.Text_Layout, Item.Value.all);
-         Draw_Layout
-           (Drawable => Pixmap,
-            GC       => Text_GC,
-            X        => X,
-            Y        => Y2,
-            Layout   => Context.Text_Layout);
+         Set_Source_Color (Cr, Text_Color);
+         Move_To (Cr, Gdouble (X), Gdouble (Y2));
+         Pango.Cairo.Show_Layout (Cr, Context.Text_Layout);
       end if;
    end Paint_Simple;
 
@@ -235,13 +233,13 @@ package body Items.Simples is
    overriding procedure Paint
      (Item    : in out Simple_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Gint := 0)
    is
    begin
-      Paint_Simple (Item, Context, Pixmap, Lang, Mode, Context.GC, X, Y);
+      Paint_Simple (Item, Context, Cr, Lang, Mode, Context.Foreground, X, Y);
    end Paint;
 
    ------------------
@@ -259,7 +257,8 @@ package body Items.Simples is
 
       Unknown_Height, Unknown_Width, W, H  : Glib.Gint;
    begin
-      Get_Size (Context.Unknown_Pixmap, Unknown_Width, Unknown_Height);
+      Unknown_Width := Get_Width (Context.Unknown_Pixmap);
+      Unknown_Height := Get_Height (Context.Unknown_Pixmap);
 
       Item.Width := Unknown_Width;
       Item.Height := 0;
@@ -460,12 +459,12 @@ package body Items.Simples is
    overriding procedure Paint
      (Item    : in out Access_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0) is
    begin
-      Paint_Simple (Item, Context, Pixmap, Lang, Mode, Context.Xref_GC, X, Y);
+      Paint_Simple (Item, Context, Cr, Lang, Mode, Context.Xref_Color, X, Y);
    end Paint;
 
    -----------------------
@@ -550,7 +549,8 @@ package body Items.Simples is
          Set_Text (Context.Text_Layout, Item.Value.all);
          Get_Pixel_Size (Context.Text_Layout, Item.Width, Item.Height);
       else
-         Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
+         Item.Width := Get_Width (Context.Unknown_Pixmap);
+         Item.Height := Get_Height (Context.Unknown_Pixmap);
       end if;
    end Size_Request;
 
@@ -561,13 +561,13 @@ package body Items.Simples is
    overriding procedure Paint
      (Item    : in out Debugger_Output_Type;
       Context : Drawing_Context;
-      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Gint := 0)
    is
       pragma Unreferenced (Lang, Mode);
-      Text_GC    : Gdk_GC;
+      Text_Color : Gdk_Color;
       Line       : Gint := Y;
       Line_Start : Positive;
       W, H       : Gint;
@@ -579,16 +579,13 @@ package body Items.Simples is
       Item.Y := Y;
 
       if not Item.Valid or else Item.Value = null then
-         Display_Pixmap
-           (Pixmap, Context.GC, Context.Unknown_Pixmap,
-            Context.Unknown_Mask, X + Border_Spacing, Y);
+         Draw_Pixbuf (Cr, Context.Unknown_Pixmap, X + Border_Spacing, Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Pixmap,
-            Context.Selection_GC,
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y,
@@ -601,19 +598,16 @@ package body Items.Simples is
       for J in Item.Value'Range loop
          if Item.Value (J) = ASCII.LF then
             if Item.Value (Line_Start) = Line_Highlighted then
-               Text_GC := Context.Modified_GC;
+               Text_Color := Context.Modified_Color;
             else
-               Text_GC := Context.GC;
+               Text_Color := Context.Foreground;
             end if;
 
             Set_Text
               (Context.Text_Layout, Item.Value (Line_Start + 1 .. J - 1));
-            Draw_Layout
-              (Drawable => Pixmap,
-               GC       => Text_GC,
-               X        => X,
-               Y        => Line,
-               Layout   => Context.Text_Layout);
+            Set_Source_Color (Cr, Text_Color);
+            Move_To (Cr, Gdouble (X), Gdouble (Line));
+            Show_Layout (Cr, Context.Text_Layout);
             Get_Pixel_Size (Context.Text_Layout, W, H);
             Line := Line + H;
             Line_Start := J + 1;
@@ -621,19 +615,16 @@ package body Items.Simples is
       end loop;
 
       if Item.Value (Line_Start) = Line_Highlighted then
-         Text_GC := Context.Modified_GC;
+         Text_Color := Context.Modified_Color;
       else
-         Text_GC := Context.GC;
+         Text_Color := Context.Foreground;
       end if;
 
       Set_Text
         (Context.Text_Layout, Item.Value (Line_Start + 1 .. Item.Value'Last));
-      Draw_Layout
-        (Drawable => Pixmap,
-         GC       => Text_GC,
-         X        => X,
-         Y        => Line,
-         Layout   => Context.Text_Layout);
+      Set_Source_Color (Cr, Text_Color);
+      Move_To (Cr, Gdouble (X), Gdouble (Line));
+      Show_Layout (Cr, Context.Text_Layout);
    end Paint;
 
    ---------------
