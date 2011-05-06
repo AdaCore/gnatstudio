@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2010, AdaCore                  --
+--                 Copyright (C) 2005-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,16 +21,16 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;
 
-with Cairo; use Cairo;
+with Cairo;                     use Cairo;
+with Cairo.Image_Surface;       use Cairo.Image_Surface;
+with Cairo.Surface;             use Cairo.Surface;
 
 with Glib;                      use Glib;
 with Gdk.Color;                 use Gdk, Gdk.Color;
 with Gdk.Cairo;                 use Gdk.Cairo;
-with Gdk.Drawable;              use Gdk.Drawable;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Window;                use Gdk.Window;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -63,15 +63,13 @@ package body Src_Editor_Box.Tooltips is
    Me : constant Debug_Handle := Create ("Editor.Tooltips");
 
    package Pixmap_List is new Ada.Containers.Doubly_Linked_Lists
-     (Gdk.Pixmap.Gdk_Pixmap);
+     (Cairo.Cairo_Surface);
 
    type Editor_Tooltips is new Standard.Tooltips.Pixmap_Tooltips with record
       Box : Source_Editor_Box;
    end record;
 
-   function To_Single_Pixmap
-     (List   : Pixmap_List.List;
-      Widget : Source_View) return Gdk.Pixmap.Gdk_Pixmap;
+   function To_Single_Pixmap (List : Pixmap_List.List) return Cairo_Surface;
    --  Concatenate all pixmaps in List to create one single pixmap suitable for
    --  displaying in a tooltip.
    --  This frees the pixmaps allocated in List.
@@ -81,12 +79,12 @@ package body Src_Editor_Box.Tooltips is
       Icon        : Gdk_Pixbuf;
       Widget      : Source_View;
       Draw_Border : Boolean;
-      Pixmap      : in out Gdk.Pixmap.Gdk_Pixmap);
+      Pixmap      : in out Cairo_Surface);
    --  Render a string to a pixmap
 
    overriding procedure Draw
      (Tooltip : access Editor_Tooltips;
-      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap  : out Cairo.Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
    --  See inherited documentation
 
@@ -164,12 +162,10 @@ package body Src_Editor_Box.Tooltips is
    -- To_Single_Pixmap --
    ----------------------
 
-   function To_Single_Pixmap
-     (List   : Pixmap_List.List;
-      Widget : Source_View) return Gdk.Pixmap.Gdk_Pixmap
+   function To_Single_Pixmap (List : Pixmap_List.List) return Cairo_Surface
    is
       Separator_Width             : constant := 1;
-      Pixmap, Result              : Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap, Result              : Cairo_Surface;
       Width, Height               : Gint := 0;
       Pixmap_Width, Pixmap_Height : Gint;
       Current_Y                   : Gdouble := 0.0;
@@ -184,7 +180,8 @@ package body Src_Editor_Box.Tooltips is
 
       while Has_Element (Cursor) loop
          Pixmap := Element (Cursor);
-         Get_Size (Pixmap, Pixmap_Width, Pixmap_Height);
+         Pixmap_Width := Get_Width (Pixmap);
+         Pixmap_Height := Get_Height (Pixmap);
          Width := Gint'Max (Pixmap_Width, Width);
          Height := Height + Pixmap_Height + Separator_Width;
          Next (Cursor);
@@ -192,7 +189,8 @@ package body Src_Editor_Box.Tooltips is
 
       --  Create the final pixmap
 
-      Gdk.Pixmap.Gdk_New (Result, Get_Window (Widget), Width, Height);
+      Result := Cairo.Image_Surface.Create
+        (Cairo_Format_ARGB32, Width, Height);
       Cr := Create (Result);
 
       --  Background
@@ -206,11 +204,12 @@ package body Src_Editor_Box.Tooltips is
 
       while Has_Element (Cursor) loop
          Pixmap := Element (Cursor);
-         Get_Size (Pixmap, Pixmap_Width, Pixmap_Height);
+         Pixmap_Width := Cairo.Image_Surface.Get_Width (Pixmap);
+         Pixmap_Height := Cairo.Image_Surface.Get_Height (Pixmap);
 
          Save (Cr);
          Translate (Cr, 0.0, Current_Y);
-         Set_Source_Pixmap (Cr, Pixmap, 0.0, 0.0);
+         Cairo.Set_Source_Surface (Cr, Pixmap, 0.0, 0.0);
          Paint (Cr);
          Restore (Cr);
 
@@ -225,7 +224,7 @@ package body Src_Editor_Box.Tooltips is
             Stroke (Cr);
          end if;
 
-         Gdk.Pixmap.Unref (Pixmap);
+         Destroy (Pixmap);
       end loop;
 
       --  Border
@@ -247,7 +246,7 @@ package body Src_Editor_Box.Tooltips is
       Icon        : Gdk_Pixbuf;
       Widget      : Source_View;
       Draw_Border : Boolean;
-      Pixmap      : in out Gdk.Pixmap.Gdk_Pixmap)
+      Pixmap      : in out Cairo_Surface)
    is
       Layout : Pango_Layout;
       Cr     : Cairo_Context;
@@ -276,7 +275,7 @@ package body Src_Editor_Box.Tooltips is
 
       Height := Gint'Max (Layout_Height, Icon_Height) + V_Padding * 2;
 
-      Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
+      Pixmap := Create (Cairo_Format_ARGB32, Width, Height);
 
       Cr := Create (Pixmap);
       Set_Source_Color (Cr, Tooltip_Color.Get_Pref);
@@ -318,7 +317,7 @@ package body Src_Editor_Box.Tooltips is
 
    overriding procedure Draw
      (Tooltip : access Editor_Tooltips;
-      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap  : out Cairo.Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
       use type GNAT.Strings.String_Access;
@@ -340,7 +339,7 @@ package body Src_Editor_Box.Tooltips is
       Line_Info        : Line_Info_Width_Array_Access;
 
    begin
-      Pixmap := null;
+      Pixmap := Null_Surface;
       Area   := (0, 0, 0, 0);
 
       if not Display_Tooltip.Get_Pref then
@@ -457,7 +456,7 @@ package body Src_Editor_Box.Tooltips is
          Status     : Find_Decl_Or_Body_Query_Status;
          Context    : Selection_Context := New_Context;
 
-         Pix        : Gdk.Pixmap.Gdk_Pixmap;
+         Pix        : Cairo.Cairo_Surface;
          Pixmaps    : Pixmap_List.List;
       begin
          Get_Contextual_Menu
@@ -469,7 +468,7 @@ package body Src_Editor_Box.Tooltips is
          Trace (Me, "Tooltip on " & Entity_Name_Information (Context));
          Compute_Tooltip (Box.Kernel, Context, Pixmap);
 
-         if Pixmap /= null then
+         if Pixmap /= Null_Surface then
             return;
          end if;
 
@@ -547,7 +546,7 @@ package body Src_Editor_Box.Tooltips is
             Draw_Border => False);
 
          Pixmaps.Prepend (Pix);
-         Pixmap := To_Single_Pixmap (Pixmaps, Widget);
+         Pixmap := To_Single_Pixmap (Pixmaps);
 
          Unref (Entity);
       end;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -62,11 +62,11 @@ package body GPS.Kernel.Modules is
 
    function Tooltip_Handler
      (Module  : access Module_ID_Record;
-      Context : Selection_Context) return Gdk.Gdk_Pixmap
+      Context : Selection_Context) return Cairo.Cairo_Surface
    is
       pragma Unreferenced (Module, Context);
    begin
-      return null;
+      return Cairo.Null_Surface;
    end Tooltip_Handler;
 
    ----------------------

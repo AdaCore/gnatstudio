@@ -27,11 +27,14 @@ with GNAT.Strings;
 with Glib.Object;
 with Glib.Values;
 with Glib;                     use Glib;
+
+with Cairo;
+
 with Gdk.Color;
 with Gdk.Event;
-with Gtk.Menu_Item;
 with Gdk.Types;
 with Gdk.Window;
+
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -47,6 +50,7 @@ with Gtk.List;
 with Gtk.List_Item;
 with Gtk.Menu;
 with Gtk.Menu_Bar;
+with Gtk.Menu_Item;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
@@ -403,7 +407,7 @@ package GUI_Utils is
       Font       : Pango.Font.Pango_Font_Description;
       Bg_Color   : Gdk.Color.Gdk_Color;
       Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Pixmap     : out Gdk.Gdk_Pixmap;
+      Pixmap     : out Cairo.Cairo_Surface;
       Wrap_Width : Gint := -1;
       Use_Markup : Boolean := False);
    --  Create a new pixmap that contains Text. Bg_Color is used for the

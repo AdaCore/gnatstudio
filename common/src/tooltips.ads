@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2000-2008, AdaCore                 --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,8 +26,8 @@
 --  the pointer at the time the tooltip is displayed)
 
 with Glib;
+with Cairo;      use Cairo;
 with Gtk.Widget; use Gtk.Widget;
-with Gdk.Pixmap;
 with Gdk.Rectangle;
 with Gtk.Main;
 with Gtk.Tree_Model;
@@ -95,7 +95,7 @@ package Tooltips is
 
    procedure Draw
      (Tooltip : access Pixmap_Tooltips;
-      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap  : out Cairo.Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle) is abstract;
    --  Create the contents of the tooltip.
    --  The tooltip is hidden when the mouse leaves the area defined by Area,

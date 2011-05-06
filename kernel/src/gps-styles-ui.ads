@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2010, AdaCore                      --
+--                  Copyright (C) 2010-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.GC;     use Gdk.GC;
 with Gdk.Color;  use Gdk.Color;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
 
@@ -31,9 +30,7 @@ package GPS.Styles.UI is
       Editor_Icon : Gdk_Pixbuf := Null_Pixbuf;
 
       Fg_Color   : Gdk_Color := Null_Color;
-      Fg_GC      : Gdk_GC    := Null_GC;
       Bg_Color   : Gdk_Color := Null_Color;
-      Bg_GC      : Gdk_GC    := Null_GC;
    end record;
 
    type Style_Access is access all Style_Record'Class;
@@ -60,8 +57,6 @@ package GPS.Styles.UI is
    --  Note: when adding default styles, do not forget to update
    --  Initialize_Predefined_Styles and Preferences_Changed.
 
-   function Get_Background_GC
-     (Style : not null access Style_Record) return Gdk_GC;
    function Get_Background_Color
      (Style : not null access Style_Record) return Gdk_Color;
    --  Return the background GC stored in Style. Return Null_GC if there is

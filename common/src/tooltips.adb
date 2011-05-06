@@ -19,7 +19,11 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Gdk.Drawable;         use Gdk.Drawable;
+with Cairo.Image_Surface;  use Cairo.Image_Surface;
+with Cairo.Pattern;        use Cairo.Pattern;
+with Cairo.Surface;        use Cairo.Surface;
+
+with Gdk.Cairo;            use Gdk.Cairo;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixmap;           use Gdk.Pixmap;
 with Gdk.Rectangle;        use Gdk.Rectangle;
@@ -197,13 +201,34 @@ package body Tooltips is
       Area     : out Gdk.Rectangle.Gdk_Rectangle)
    is
       use type Gdk_Window;
-      Pixmap : Gdk_Pixmap;
-      Pix    : Gtk_Image;
+      Surface : Cairo_Surface;
+      Ptrn    : Cairo_Pattern;
+      Pix     : Gtk_Image;
+      Pixmap  : Gdk_Pixmap;
+      Cr      : Cairo_Context;
    begin
-      Draw (Pixmap_Tooltips_Access (Tooltip), Pixmap, Tooltip.Area);
+      Draw (Pixmap_Tooltips_Access (Tooltip), Surface, Tooltip.Area);
 
-      if Pixmap /= null then
-         Gdk.Drawable.Get_Size (Pixmap, Tooltip.Width, Tooltip.Height);
+      if Surface /= Null_Surface then
+         Tooltip.Width := Cairo.Image_Surface.Get_Width (Surface);
+         Tooltip.Height := Cairo.Image_Surface.Get_Height (Surface);
+
+         Gdk.Pixmap.Gdk_New
+           (Pixmap, Get_Window (Tooltip.Widget),
+            Width => Tooltip.Width, Height => Tooltip.Height);
+
+         Ptrn := Cairo.Pattern.Create_For_Surface (Surface);
+         Cairo.Pattern.Set_Extend (Ptrn, Cairo_Extend_Repeat);
+
+         Cr := Gdk.Cairo.Create (Pixmap);
+         Set_Source (Cr, Ptrn);
+         Cairo.Paint (Cr);
+
+         Destroy (Cr);
+         Destroy (Ptrn);
+         Destroy (Surface);
+
+         Gtk.Image.Gtk_New (Pix);
          Gtk_New (Pix, Pixmap, null);
          Set_Size_Request (Pix, Tooltip.Width, Tooltip.Height);
          Gdk.Pixmap.Unref (Pixmap);

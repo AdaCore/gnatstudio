@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2010, AdaCore                      --
+--                  Copyright (C) 2010-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,7 +32,7 @@ package body GPS.Styles.UI is
    Me : constant Debug_Handle := Create ("Styles");
 
    procedure Allocate_Color
-     (Name : String; Color : out Gdk_Color; GC : out Gdk.Gdk_GC);
+     (Name : String; Color : out Gdk_Color);
    --  Allocates the low-level structures for Color.
 
    function Get_A_Widget return Gtk_Widget;
@@ -58,14 +58,10 @@ package body GPS.Styles.UI is
    --------------------
 
    procedure Allocate_Color
-     (Name : String; Color : out Gdk_Color; GC : out Gdk.Gdk_GC)
+     (Name : String; Color : out Gdk_Color)
    is
-      Success : Boolean;
-      Widget  : Gtk_Widget;
-      Tops    : Gtk.Widget.Widget_List.Glist;
    begin
       Color := Null_Color;
-      GC    := Null_GC;
 
       if Name = "" then
          Trace (Me, "Color field not filled");
@@ -79,27 +75,6 @@ package body GPS.Styles.UI is
             Trace (Me, "Could not parse color " & Name);
             return;
       end;
-
-      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-
-      if not Success then
-         Trace (Me, "Could not allocate color " & Name);
-         return;
-      end if;
-
-      Tops := List_Toplevels;
-      Widget := Widget_List.Get_Data (Tops);
-      Widget_List.Free (Tops);
-
-      if Widget = null
-        or else not Realized_Is_Set (Widget)
-      then
-         Trace (Me, "Cannot create GC: toplevel window not realized");
-         return;
-      end if;
-
-      Gdk_New (GC, Get_Window (Widget));
-      Set_Foreground (GC, Color);
    end Allocate_Color;
 
    ----------
@@ -136,7 +111,6 @@ package body GPS.Styles.UI is
    begin
       Set_Foreground (Simple_Style_Record (Style.all)'Access, Color);
       Style.Fg_Color := Null_Color;
-      Style.Fg_GC    := Null_GC;
    end Set_Foreground;
 
    --------------------
@@ -148,24 +122,7 @@ package body GPS.Styles.UI is
    begin
       Set_Background (Simple_Style_Record (Style.all)'Access, Color);
       Style.Bg_Color := Null_Color;
-      Style.Bg_GC    := Null_GC;
    end Set_Background;
-
-   -----------------------
-   -- Get_Background_GC --
-   -----------------------
-
-   function Get_Background_GC
-     (Style : not null access Style_Record) return Gdk.GC.Gdk_GC is
-   begin
-      if Style.Bg_GC = null
-        and then Style.Background /= null
-      then
-         Allocate_Color (Get_Background (Style), Style.Bg_Color, Style.Bg_GC);
-      end if;
-
-      return Style.Bg_GC;
-   end Get_Background_GC;
 
    --------------------------
    -- Get_Background_Color --
@@ -174,10 +131,10 @@ package body GPS.Styles.UI is
    function Get_Background_Color
      (Style : not null access Style_Record) return Gdk_Color is
    begin
-      if Style.Bg_GC = null
+      if Style.Bg_Color = Null_Color
         and then Style.Background /= null
       then
-         Allocate_Color (Get_Background (Style), Style.Bg_Color, Style.Bg_GC);
+         Allocate_Color (Get_Background (Style), Style.Bg_Color);
       end if;
 
       return Style.Bg_Color;

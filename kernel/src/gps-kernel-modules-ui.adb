@@ -36,6 +36,8 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
+with Cairo;                     use Cairo;
+
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -456,21 +458,20 @@ package body GPS.Kernel.Modules.UI is
    procedure Compute_Tooltip
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context;
-      Pixmap  : out Gdk.Gdk_Pixmap)
+      Pixmap  : out Cairo_Surface)
    is
       use type Module_List.List_Node;
-      use type Gdk.Gdk_Pixmap;
       Current : Module_List.List_Node :=
                   Module_List.First (List_Of_Modules (Kernel));
       Module  : Module_ID;
    begin
-      Pixmap := null;
+      Pixmap := Null_Surface;
 
       while Current /= Module_List.Null_Node loop
          Module := Module_List.Data (Current);
          if Module /= null then
             Pixmap := Tooltip_Handler (Module, Context);
-            if Pixmap /= null then
+            if Pixmap /= Null_Surface then
                return;
             end if;
          end if;

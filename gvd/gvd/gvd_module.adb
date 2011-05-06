@@ -28,6 +28,8 @@ with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
+with Cairo;                     use Cairo;
+
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -166,7 +168,7 @@ package body GVD_Module is
 
    overriding function Tooltip_Handler
      (Module  : access GVD_Module_Record;
-      Context : Selection_Context) return Gdk.Gdk_Pixmap;
+      Context : Selection_Context) return Cairo_Surface;
    --  See inherited documentation
 
    GVD_Module_Name : constant String := "Debugger";
@@ -1666,10 +1668,10 @@ package body GVD_Module is
 
    overriding function Tooltip_Handler
      (Module  : access GVD_Module_Record;
-      Context : Selection_Context) return Gdk.Gdk_Pixmap
+      Context : Selection_Context) return Cairo_Surface
    is
       pragma Unreferenced (Module);
-      Pixmap   : Gdk.Gdk_Pixmap;
+      Pixmap   : Cairo_Surface;
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Debugger : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Kernel));
@@ -1681,7 +1683,7 @@ package body GVD_Module is
         or else not Has_Entity_Name_Information (Context)
         or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
-         return null;
+         return Null_Surface;
       end if;
 
       Push_State (Kernel, Busy);
@@ -1695,7 +1697,7 @@ package body GVD_Module is
              (Get_Language (Debugger.Debugger), Variable_Name)
          then
             Pop_State (Kernel);
-            return null;
+            return Null_Surface;
 
          else
             Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
@@ -1719,10 +1721,10 @@ package body GVD_Module is
    exception
       when Language.Unexpected_Type | Constraint_Error =>
          Pop_State (Kernel);
-         return null;
+         return Null_Surface;
       when E : others => Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         return null;
+         return Null_Surface;
    end Tooltip_Handler;
 
    -------------------

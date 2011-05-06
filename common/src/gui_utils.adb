@@ -32,15 +32,15 @@ with Glib.Properties;           use Glib.Properties;
 with Glib.Unicode;              use Glib.Unicode;
 with Glib.Values;               use Glib.Values;
 
+with Cairo;                     use Cairo;
+with Cairo.Image_Surface;       use Cairo.Image_Surface;
+
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Cursor;                use Gdk.Cursor;
-with Gdk.Drawable;              use Gdk.Drawable;
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.GC;                    use Gdk.GC;
 with Gdk.Keyval;                use Gdk.Keyval;
 with Gdk.Main;                  use Gdk.Main;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Types;                 use Gdk.Types;
@@ -86,6 +86,7 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Style;              use Gtkada.Style;
 
 with Pango.Context;             use Pango.Context;
 with Pango.Enums;               use Pango.Enums;
@@ -842,12 +843,12 @@ package body GUI_Utils is
       Font       : Pango.Font.Pango_Font_Description;
       Bg_Color   : Gdk.Color.Gdk_Color;
       Widget     : access Gtk_Widget_Record'Class;
-      Pixmap     : out Gdk.Gdk_Pixmap;
+      Pixmap     : out Cairo_Surface;
       Wrap_Width : Glib.Gint := -1;
       Use_Markup : Boolean := False)
    is
       Margin        : constant := 2;
-      GC            : Gdk_GC;
+      Color         : Cairo_Color;
       Layout        : Pango_Layout;
       Width, Height : Gint;
       Line_Height   : Gint;
@@ -859,15 +860,13 @@ package body GUI_Utils is
       Last          : Natural;
       Ellipsis      : String (1 .. 6);
       Ellipsis_Last : Integer;
+      Cr            : Cairo_Context;
 
    begin
       if Text = "" then
-         Pixmap := null;
+         Pixmap := Null_Surface;
          return;
       end if;
-
-      Gdk_New (GC, Get_Window (Widget));
-      Set_Foreground (GC, Bg_Color);
 
       Layout := Create_Pango_Layout (Widget);
       Set_Font_Description (Layout, Font);
@@ -925,31 +924,31 @@ package body GUI_Utils is
       Width := Width + Margin * 2;
       Height := Height + Margin * 2;
 
-      Gdk.Pixmap.Gdk_New
-        (Pixmap, Get_Window (Widget), Width, Height);
+      Pixmap := Create (Cairo_Format_ARGB32, Width, Height);
+      Cr := Create (Pixmap);
+      Set_Line_Width (Cr, 0.5);
+
       Draw_Rectangle
-        (Pixmap,
-         GC,
+        (Cr, To_Cairo (Bg_Color),
          Filled => True,
          X      => 0,
          Y      => 0,
-         Width  => Width - 1,
-         Height => Height - 1);
+         Width  => Width,
+         Height => Height);
 
-      Set_Foreground (GC, Black (Get_Default_Colormap));
+      Color := To_Cairo (Get_Black (Get_Default_Style));
       Draw_Rectangle
-        (Pixmap,
-         GC,
+        (Cr, Color,
          Filled => False,
          X      => 0,
          Y      => 0,
-         Width  => Width - 1,
-         Height => Height - 1);
+         Width  => Width,
+         Height => Height);
 
-      Draw_Layout (Pixmap, GC, Margin, Margin, Layout);
+      Draw_Layout (Cr, Color, Margin, Margin, Layout);
 
       Unref (Layout);
-      Unref (GC);
+      Destroy (Cr);
    end Create_Pixmap_From_Text;
 
    -------------

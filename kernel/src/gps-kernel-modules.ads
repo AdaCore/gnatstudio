@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -74,7 +74,7 @@
 
 with GNAT.Strings;
 with Glib.Object;
-with Gdk;
+with Cairo;
 with Generic_List;
 with XML_Utils;
 
@@ -138,7 +138,7 @@ package GPS.Kernel.Modules is
 
    function Tooltip_Handler
      (Module  : access Module_ID_Record;
-      Context : Selection_Context) return Gdk.Gdk_Pixmap;
+      Context : Selection_Context) return Cairo.Cairo_Surface;
    --  Callback used every time some tooltip event happens in GPS.
    --  Context contains all the information about the context of the tooltip.
    --

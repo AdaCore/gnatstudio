@@ -22,17 +22,19 @@ with Ada.Strings.Unbounded;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Gdk.Color;                 use Gdk, Gdk.Color;
+with Cairo.Image_Surface;       use Cairo.Image_Surface;
+
+with Pango.Font;                use Pango.Font;
+with Pango.Layout;              use Pango.Layout;
+with Gdk.Color;                 use Gdk.Color;
 with Gdk.Display;               use Gdk.Display;
-with Gdk.Drawable;              use Gdk.Drawable;
-with Gdk.GC;                    use Gdk.GC;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Screen;                use Gdk.Screen;
+with Gdk.Window;                use Gdk.Window;
 with Glib.Convert;              use Glib.Convert;
 with Glib;                      use Glib;
 with Gtk.Widget;                use Gtk.Widget;
-with Pango.Font;                use Pango.Font;
-with Pango.Layout;              use Pango.Layout;
+with Gtkada.Style;              use Gtkada.Style;
 
 with Entities.Tooltips_Assistant; use Entities.Tooltips_Assistant;
 with Doc_Utils;                 use Doc_Utils;
@@ -143,7 +145,7 @@ package body Entities.Tooltips is
       Doc         : String;
       Pixbuf      : Gdk_Pixbuf;
       Draw_Border : Boolean;
-      Guess       : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap;
+      Guess       : Boolean := False) return Cairo.Cairo_Surface;
    --  Helper function, factorizing the tooltip widget creation
 
    function Draw_Tooltip
@@ -152,7 +154,7 @@ package body Entities.Tooltips is
       Ref           : Entity_Reference;
       Status        : Find_Decl_Or_Body_Query_Status;
       Accurate_Xref : Boolean;
-      Draw_Border   : Boolean) return Gdk.Gdk_Pixmap
+      Draw_Border   : Boolean) return Cairo.Cairo_Surface
    is
       Doc : constant String :=
               Get_Instance (Ref) & Get_Documentation (Kernel, Entity);
@@ -170,7 +172,7 @@ package body Entities.Tooltips is
      (Kernel      : access Kernel_Handle_Record'Class;
       Entity      : Entity_Access;
       Draw_Border : Boolean;
-      Guess       : Boolean := False) return Gdk.Gdk_Pixmap
+      Guess       : Boolean := False) return Cairo.Cairo_Surface
    is
       pragma Unreferenced (Guess);
 
@@ -196,10 +198,11 @@ package body Entities.Tooltips is
       Doc         : String;
       Pixbuf      : Gdk_Pixbuf;
       Draw_Border : Boolean;
-      Guess       : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap
+      Guess       : Boolean := False) return Cairo.Cairo_Surface
    is
       Widget : constant Gtk_Widget := Gtk_Widget (Get_Main_Window (Kernel));
-      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap : Cairo.Cairo_Surface;
+      Cr     : Cairo.Cairo_Context;
 
       Font   : constant Pango_Font_Description := Default_Font.Get_Pref_Font;
       Fixed  : constant Pango_Font_Description := View_Fixed_Font.Get_Pref;
@@ -207,7 +210,7 @@ package body Entities.Tooltips is
       Header_Layout, Doc_Layout : Pango_Layout;
 
       Width, Height, W1, H1, W2, H2 : Gint := 0;
-      GC     : Gdk.Gdk_GC;
+      Color  : Gtkada.Style.Cairo_Color;
       Max_Height, Max_Width : Gint;
 
       H_Pad : constant := 4;
@@ -237,8 +240,7 @@ package body Entities.Tooltips is
 
       Width  := Gint'Max (W1 + Get_Width (Pixbuf) + H_Pad * 2, W2 + H_Pad * 2);
 
-      Gdk_New (GC, Get_Window (Widget));
-      Set_Foreground (GC, Tooltip_Color.Get_Pref);
+      Color := To_Cairo (Tooltip_Color.Get_Pref);
 
       Max_Height := Get_Height (Get_Default_Screen (Gdk.Display.Get_Default));
       Height := Gint'Min (Height, Max_Height);
@@ -246,28 +248,29 @@ package body Entities.Tooltips is
       Max_Width := Get_Width (Get_Default_Screen (Gdk.Display.Get_Default));
       Width := Gint'Min (Width, Max_Width);
 
-      Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
-      Draw_Rectangle (Pixmap, GC, True, 0, 0, Width, Height);
+      Pixmap := Create (Cairo_Format_ARGB32, Width, Height);
+      Cr := Create (Pixmap);
+      Set_Line_Width (Cr, 0.5);
+      Draw_Rectangle (Cr, Color, True, 0, 0, Width, Height);
 
-      Set_Foreground (GC, Black (Get_Default_Colormap));
+      Color := To_Cairo (Gdk_Color'(Black (Get_Default_Colormap)));
       if Draw_Border then
-         Draw_Rectangle (Pixmap, GC, False, 0, 0, Width - 1, Height - 1);
+         Draw_Rectangle (Cr, Color, False, 0, 0, Width, Height);
       end if;
 
-      Render_To_Drawable (Pixbuf, Pixmap, GC, 0, 0, V_Pad, H_Pad,
-                          Get_Width (Pixbuf), Get_Height (Pixbuf));
+      Draw_Pixbuf (Cr, Pixbuf, V_Pad, H_Pad);
 
       Draw_Layout
-        (Pixmap, GC, V_Pad + Get_Width (Pixbuf), H_Pad, Header_Layout);
+        (Cr, Color, V_Pad + Get_Width (Pixbuf), H_Pad, Header_Layout);
       Unref (Header_Layout);
 
       if Doc_Layout /= null then
-         Draw_Line (Pixmap, GC, 0, H1 + V_Pad * 2, Width - 1, H1 + V_Pad * 2);
-         Draw_Layout (Pixmap, GC, H_Pad, H1 + 1 + V_Pad * 3, Doc_Layout);
+         Draw_Line (Cr, Color, 0, H1 + V_Pad * 2, Width - 1, H1 + V_Pad * 2);
+         Draw_Layout (Cr, Color, H_Pad, H1 + 1 + V_Pad * 3, Doc_Layout);
          Unref (Doc_Layout);
       end if;
 
-      Unref (GC);
+      Destroy (Cr);
 
       return Pixmap;
    end Draw_Tooltip;

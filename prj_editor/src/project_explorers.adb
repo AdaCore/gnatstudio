@@ -35,12 +35,13 @@ with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
+with Cairo;                     use Cairo;
+
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
-with Gdk.Pixmap;                use Gdk.Pixmap;
 
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -247,7 +248,7 @@ package body Project_Explorers is
    type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
    overriding procedure Draw
      (Tooltip : access Explorer_Tooltips;
-      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap  : out Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
    --  See inherited documentatoin
 
@@ -1362,7 +1363,7 @@ package body Project_Explorers is
 
    overriding procedure Draw
      (Tooltip : access Explorer_Tooltips;
-      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap  : out Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
       Font       : Pango_Font_Description;
@@ -1382,12 +1383,12 @@ package body Project_Explorers is
 
       Text       : String_Access;
    begin
+      Pixmap := Null_Surface;
+      Area   := (0, 0, 0, 0);
+
       if not Active (Explorers_Tooltips) then
          return;
       end if;
-
-      Pixmap := null;
-      Area   := (0, 0, 0, 0);
 
       Window := Get_Bin_Window (Tooltip.Explorer.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);

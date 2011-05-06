@@ -21,12 +21,12 @@ with Ada.Unchecked_Deallocation;
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with XML_Utils;                 use XML_Utils;
+
+with Cairo;                     use Cairo;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
@@ -48,7 +48,10 @@ with Gtkada.Abstract_Tree_Model;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Language;                  use Language;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Entities.Tooltips;         use Entities.Tooltips;
@@ -61,14 +64,13 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
-with Histories;                 use Histories;
 with GUI_Utils;                 use GUI_Utils;
+with Histories;                 use Histories;
+with Language;                  use Language;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Tooltips;                  use Tooltips;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Traces;                    use Traces;
+with XML_Utils;                 use XML_Utils;
 
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -230,7 +232,7 @@ package body Outline_View is
    type Outline_View_Tooltips_Access is access all Outline_View_Tooltips;
    overriding procedure Draw
      (Tooltip : access Outline_View_Tooltips;
-      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap  : out Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
 
    ------------------------
@@ -251,14 +253,14 @@ package body Outline_View is
 
    overriding procedure Draw
      (Tooltip : access Outline_View_Tooltips;
-      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap  : out Cairo.Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
       Iter     : Gtk_Tree_Iter;
       P_Entity : Entity_Persistent_Access;
       Entity   : Entity_Access;
    begin
-      Pixmap := null;
+      Pixmap := Null_Surface;
       Initialize_Tooltips (Tooltip.Outline.Tree, Area, Iter);
 
       if Iter /= Null_Iter then

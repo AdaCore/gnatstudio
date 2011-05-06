@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005-2010, AdaCore                --
+--                   Copyright (C) 2005-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,10 +20,11 @@
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;              use GNAT.Strings;
 
+with Cairo;                     use Cairo;
+
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -132,7 +133,7 @@ package body Clipboard_Views is
      access all Clipboard_View_Tooltips'Class;
    overriding procedure Draw
      (Tooltip : access Clipboard_View_Tooltips;
-      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap  : out Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
 
    ----------
@@ -141,7 +142,7 @@ package body Clipboard_Views is
 
    overriding procedure Draw
      (Tooltip : access Clipboard_View_Tooltips;
-      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Pixmap  : out Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
       Model      : constant Gtk_Tree_Model :=
@@ -151,7 +152,7 @@ package body Clipboard_Views is
 
       Text       : GNAT.Strings.String_Access;
    begin
-      Pixmap := null;
+      Pixmap := Null_Surface;
 
       Initialize_Tooltips (Tooltip.Clipboard_View.Tree, Area, Iter);
       if Iter /= Null_Iter then
