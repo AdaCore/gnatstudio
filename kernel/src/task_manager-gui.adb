@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,38 +17,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Cairo; use Cairo;
+with GNAT.Strings;
+with System;                     use System;
+with System.Storage_Elements;    use System.Storage_Elements;
 
-with Pango.Cairo; use Pango.Cairo;
+with Gdk.Event;                  use Gdk.Event;
 
-with Gdk.Cairo;                use Gdk.Cairo;
-with Gdk.Event;                use Gdk.Event;
+with Glib.Object;                use Glib.Object;
+with Glib.Values;                use Glib.Values;
 
-with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
-
-with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
+with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Object;               use Gtk.Object;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Icon_Factory;
+with Gtk.Object;                 use Gtk.Object;
+with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Settings;
+with Gtk.Stock;                  use Gtk.Stock;
 
 with Gtkada.Abstract_List_Model; use Gtkada.Abstract_List_Model;
-with Gtk.Tree_Model.Utils;     use Gtk.Tree_Model.Utils;
+with Gtk.Tree_Model.Utils;       use Gtk.Tree_Model.Utils;
 
-with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.Handlers;            use Gtkada.Handlers;
 
-with GPS.Intl;                 use GPS.Intl;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Task_Manager;  use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GUI_Utils;                use GUI_Utils;
-with String_Utils;             use String_Utils;
-with Traces;                   use Traces;
-with GNAT.Strings;
-with System; use System;
-with System.Storage_Elements; use System.Storage_Elements;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with GUI_Utils;                  use GUI_Utils;
+with String_Utils;               use String_Utils;
+with Traces;                     use Traces;
 
 package body Task_Manager.GUI is
 
@@ -75,8 +73,9 @@ package body Task_Manager.GUI is
    Icon_Column             : constant := 0;
    Command_Name_Column     : constant := 1;
    Command_Progress_Column : constant := 2;
-   Command_Button_Column   : constant := 3;
-   Pause_Button_Column     : constant := 4;
+   Command_Text_Column     : constant := 3;
+   Command_Button_Column   : constant := 4;
+   Pause_Button_Column     : constant := 5;
 
    -----------------
    -- Local types --
@@ -207,12 +206,6 @@ package body Task_Manager.GUI is
      (Manager    : access Task_Manager_Record'Class;
       As_Percent : Boolean) return Progress_Data;
    --  Get the text for the global progress bar
-
-   function To_Pixbuf
-     (GUI      : Task_Manager_Interface;
-      Progress : Progress_Data) return Gdk_Pixbuf;
-   --  Return a pixbuf representing Progress.
-   --  The result should be freed by the caller.
 
    procedure Refresh_One_Index
      (GUI   : Task_Manager_Interface;
@@ -503,14 +496,20 @@ package body Task_Manager.GUI is
    procedure Set_Column_Types
      (View : access Task_Manager_Widget_Record'Class)
    is
-      Tree        : constant Gtk_Tree_View := View.Tree;
-      Col         : Gtk_Tree_View_Column;
-      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
-      Dummy       : Gint;
+      Tree          : constant Gtk_Tree_View := View.Tree;
+      Col           : Gtk_Tree_View_Column;
+      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
+      Progress_Rend : Gtk_Cell_Renderer_Progress;
+      Dummy         : Gint;
+      W, H          : Gint;
       pragma Unreferenced (Dummy);
 
    begin
       Set_Rules_Hint (Tree, False);
+
+      Gtk.Icon_Factory.Icon_Size_Lookup_For_Settings
+        (Gtk.Settings.Get_Default, Icon_Size_Menu,
+         W, H);
 
       Gtk_New (View.Quit_Button_Col);
       Gtk_New (Pixbuf_Rend);
@@ -521,9 +520,11 @@ package body Task_Manager.GUI is
 
       Gtk_New (Col);
       Set_Expand (Col, False);
-      Gtk_New (Pixbuf_Rend);
-      Pack_Start (Col, Pixbuf_Rend, False);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Command_Progress_Column);
+      Gtk_New (Progress_Rend);
+      Progress_Rend.Set_Fixed_Size (Progress_Bar_Length, H);
+      Pack_Start (Col, Progress_Rend, False);
+      Add_Attribute (Col, Progress_Rend, "value", Command_Progress_Column);
+      Add_Attribute (Col, Progress_Rend, "text", Command_Text_Column);
       Dummy := Append_Column (Tree, Col);
 
       Gtk_New (View.Pause_Button_Col);
@@ -543,7 +544,8 @@ package body Task_Manager.GUI is
       return GType_Array'
         (Icon_Column             => Gdk.Pixbuf.Get_Type,
          Command_Name_Column     => GType_String,
-         Command_Progress_Column => Gdk.Pixbuf.Get_Type,
+         Command_Progress_Column => GType_Int,
+         Command_Text_Column     => GType_String,
          Command_Button_Column   => Gdk.Pixbuf.Get_Type,
          Pause_Button_Column     => Gdk.Pixbuf.Get_Type);
    end Columns_Types;
@@ -857,11 +859,10 @@ package body Task_Manager.GUI is
    begin
       --  If the graphics have been initialized, free them now
 
-      if GUI.Progress_Template /= null then
+      if GUI.Close_Button_Pixbuf /= null then
          Unref (GUI.Close_Button_Pixbuf);
          Unref (GUI.Pause_Button_Pixbuf);
          Unref (GUI.Play_Button_Pixbuf);
-         Unref (GUI.Progress_Layout);
       end if;
 
       Unregister_Timeout (GUI);
@@ -879,35 +880,13 @@ package body Task_Manager.GUI is
    procedure Init_Graphics
      (GUI : access Task_Manager_Interface_Record'Class)
    is
-      Iface                       : constant Gtk_Widget :=
-                                      GUI.Reference_Widget;
-      Layout_Width, Layout_Height : Gint;
-      use Gdk;
    begin
-      if GUI.Progress_Template /= null
-        or else not Iface.Mapped_Is_Set
+      if GUI.Close_Button_Pixbuf /= null
+        or else GUI.Main_Progress_Bar = null
       then
          --  Already initialized or cannot initialize now
          return;
       end if;
-
-      GUI.Progress_Text_Color := Black (Get_Default_Colormap);
-      GUI.Progress_Background_Color := Parse ("#cccccc");
-      GUI.Progress_Foreground_Color := Parse ("#aaaaff");
-
-      GUI.Progress_Layout := Create_Pango_Layout (Iface);
-      Set_Font_Description (GUI.Progress_Layout, Default_Font.Get_Pref_Font);
-
-      Set_Text (GUI.Progress_Layout, "L");
-      Get_Pixel_Size (GUI.Progress_Layout, Layout_Width, Layout_Height);
-      GUI.Progress_Width := Progress_Bar_Length;
-      GUI.Progress_Height := Layout_Height + 4;
-
-      Gdk_New
-        (GUI.Progress_Template,
-         Get_Window (Iface),
-         GUI.Progress_Width,
-         GUI.Progress_Height);
 
       GUI.Close_Button_Pixbuf := Render_Icon
         (GUI.Main_Progress_Bar, Stock_Close, Icon_Size_Menu);
@@ -953,25 +932,28 @@ package body Task_Manager.GUI is
                Set_String (Value, Commands.Name (Command));
 
             when Command_Progress_Column =>
-               Init (Value, Gdk.Pixbuf.Get_Type);
-               declare
-                  Pix : constant Gdk_Pixbuf := To_Pixbuf
-                    (Self.GUI,
-                     Get_Progress_Text
-                       (Task_Manager_Access (Self.GUI.Manager),
-                        Integer (Index), False, True));
-               begin
-                  if Pix /= Null_Pixbuf then
-                     Set_Object (Value, GObject (Pix));
-                     Unref (Pix);
-                  end if;
-               end;
+               Init (Value, GType_Int);
+               Set_Int
+                 (Value,
+                  Gint
+                    (Get_Fraction (Self.GUI.Manager, Integer (Index)) *
+                       100.0));
+
+            when Command_Text_Column =>
+               Init (Value, GType_String);
+               Set_String
+                 (Value,
+                  Get_Progress_Text
+                    (Task_Manager_Access (Self.GUI.Manager),
+                     Integer (Index), False, True).Text);
 
             when Command_Button_Column =>
+               Init_Graphics (Self.GUI);
                Init (Value, Gdk.Pixbuf.Get_Type);
                Set_Object (Value, GObject (Self.GUI.Close_Button_Pixbuf));
 
             when Pause_Button_Column =>
+               Init_Graphics (Self.GUI);
                Init (Value, Gdk.Pixbuf.Get_Type);
 
                if Task_Queue.Status = Paused then
@@ -992,63 +974,6 @@ package body Task_Manager.GUI is
          Init (Value, GType_String);
          Set_String (Value, "");
    end Get_Value;
-
-   ---------------
-   -- To_Pixbuf --
-   ---------------
-
-   function To_Pixbuf
-     (GUI      : Task_Manager_Interface;
-      Progress : Progress_Data) return Gdk_Pixbuf
-   is
-      Pix                         : Gdk_Pixbuf;
-      Layout_Width, Layout_Height : Gint;
-      Cr : Cairo_Context;
-   begin
-      if GUI.Progress_Layout = null then
-         --  Attempt to initialize graphics now
-         GUI.Init_Graphics;
-
-         --  Check that graphics could be initialized
-         if GUI.Progress_Layout = null then
-            return Null_Pixbuf;
-         end if;
-      end if;
-
-      Cr := Create (GUI.Progress_Template);
-
-      Set_Source_Color (Cr, GUI.Progress_Background_Color);
-      Rectangle
-        (Cr,
-         0.0, 0.0,
-         Gdouble (GUI.Progress_Width), Gdouble (GUI.Progress_Height));
-      Cairo.Fill (Cr);
-
-      Set_Source_Color (Cr, GUI.Progress_Foreground_Color);
-      Rectangle
-        (Cr,
-         0.0, 0.0,
-         Gdouble (GUI.Progress_Width) * Progress.Fraction,
-         Gdouble (GUI.Progress_Height));
-      Cairo.Fill (Cr);
-
-      Set_Text (GUI.Progress_Layout, Progress.Text);
-      Get_Pixel_Size (GUI.Progress_Layout, Layout_Width, Layout_Height);
-
-      Set_Source_Color (Cr, GUI.Progress_Text_Color);
-      Move_To (Cr, Gdouble ((GUI.Progress_Width - Layout_Width) / 2), 2.0);
-      Show_Layout (Cr, GUI.Progress_Layout);
-
-      Destroy (Cr);
-
-      Pix := Get_From_Drawable
-        (Pix, GUI.Progress_Template,
-         Get_Default_Colormap, 0, 0, 0, 0,
-         GUI.Progress_Width,
-         GUI.Progress_Height);
-
-      return Pix;
-   end To_Pixbuf;
 
    ------------------------
    -- Unregister_Timeout --

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2010, AdaCore                 --
+--                  Copyright (C) 2003-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,12 +21,8 @@
 
 with Glib; use Glib;
 
-with Gdk.Color;  use Gdk.Color;
-with Gdk.Pixmap; use Gdk.Pixmap;
 with Gtk.Image;                use Gtk.Image;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
-
-with Pango.Layout;             use Pango.Layout;
 
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Button;               use Gtk.Button;
@@ -162,16 +158,6 @@ private
 
       Button_Image           : Gtk_Image;
       Label                  : Gtk_Label;
-
-      Progress_Template      : Gdk_Pixmap;
-      Progress_Background_Color : Gdk_Color;
-      Progress_Foreground_Color : Gdk_Color;
-      Progress_Text_Color       : Gdk_Color;
-      Progress_Width         : Gint;
-      Progress_Height        : Gint;
-
-      Progress_Image         : Gtk_Image;
-      Progress_Layout        : Pango_Layout;
 
       Reference_Widget       : Gtk_Widget;
       --  A reference widget to create the graphical contexts
