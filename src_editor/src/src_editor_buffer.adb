@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2010, AdaCore                   --
+--                Copyright (C) 2001-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,10 +24,16 @@ with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
 pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
+with Ada.Strings.Maps;                    use Ada.Strings.Maps;
+
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
+with GNAT.Expect;                         use GNAT.Expect;
+with GNAT.Regpat;                         use GNAT.Regpat;
+
 with GNATCOLL.Arg_Lists;                  use GNATCOLL.Arg_Lists;
+with GNATCOLL.Paragraph_Filling;          use GNATCOLL.Paragraph_Filling;
 with GNATCOLL.Symbols;                    use GNATCOLL.Symbols;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
@@ -5810,313 +5816,64 @@ package body Src_Editor_Buffer is
    ---------------
 
    function Do_Refill (Buffer : Source_Buffer) return Boolean is
-      Tab_Width : constant Integer := Integer (Buffer.Tab_Width);
-      Max       : constant Positive := Highlight_Column.Get_Pref;
-      --  Right margin, wrap line if longer than Max character
+      type Comment_Kind is (None, Single_Line, Multiple_Lines);
+      --  We classify programming language comments in two main kinds:
+      --  (1) Single-line comments: they have a Begin-Comment delimiter and
+      --      implicitly terminate at newline.
+      --  (2) Multiple-line comments: they have Begin-Comment (BC) and
+      --      End-Comment (EC) delimiters.
+      --  There are languages which simultaneously support both kinds of
+      --  comments (for example, C++).
 
-      From, To  : Gtk_Text_Iter;
-      From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type;
-      --  Block to work on
+      Single_Line_BC_Len        : Natural := 0;
+      Single_Line_BC_Pattern    : Pattern_Matcher_Access;
 
-      B_Sep     : GNAT.Strings.String_Access; -- Spaces/TAB before comment line
-      Sep       : GNAT.Strings.String_Access; -- Comment symbol
-      After     : Natural;                    -- Spaces after comment symbol
-      --  Note that if Sep is null we are not working on a comment, in this
-      --  case Indent and After must be ignored.
+      Multiple_Lines_BC_Len     : Natural := 0;
+      Multiple_Lines_BC_Pattern : Pattern_Matcher_Access;
 
-      New_Text  : Unbounded_String;
-      --  The new content, will replace the selection
+      Multiple_Lines_EC_Len     : Natural := 0;
+      Multiple_Lines_EC_Pattern : Pattern_Matcher_Access;
 
-      Is_First  : Boolean := True; -- True if first iteration (first line)
-      Is_Start  : Boolean := True; -- True if at the start of a new line
-      Line_Size : Natural := 0;    -- Current line size
-
-      procedure Analyse_Line
-        (Buffer : Source_Buffer;
-         Line   : Editable_Line_Type);
-      --  Analyse line content and set refill separator if comment
-
-      procedure Add_Result (Str : String);
-      --  Add Str to the result string, Last_Line is set to true if Str is
-      --  the last line content.
-
-      procedure Add (Str : String);
-      pragma Inline (Add);
-      --  Add Str to the result string
-
-      procedure Add_EOL;
-      --  Add LF to the result string
+      Lang_Context              : constant Language_Context_Access :=
+                                    Get_Language_Context (Buffer.Lang);
 
       function Is_Empty (Line : Src_String) return Boolean;
-      --  Returns True if Line is empty (no content or only spaces/HT)
+      --  Return True if Line is empty (no contents it has only spaces/HT)
 
-      ---------
-      -- Add --
-      ---------
+      procedure Refill_Comments
+        (From_Line : Editable_Line_Type;
+         To_Line   : Editable_Line_Type);
+      --  Scan the Buffer in the range From_Line .. To_Line and refill the
+      --  comments. Lines not containing comments are left unmodified.
 
-      procedure Add (Str : String) is
-      begin
-         Append (New_Text, Str);
+      procedure Refill_Plain_Text
+        (From_Line : Editable_Line_Type;
+         To_Line   : Editable_Line_Type);
+      --  Refill the contents of the buffer. It assumes that the contents of
+      --  the buffer is plain text.
 
-         for K in Str'Range loop
-            if Str (K) = ASCII.HT then
-               Line_Size := Line_Size + Tab_Width;
-            else
-               Line_Size := Line_Size + 1;
-            end if;
-         end loop;
-      end Add;
+      procedure Scan_Comment
+        (Line : String;
+         Kind : out Comment_Kind;
+         Last : out Natural);
+      --  Search in Line for the Begin-Comment pattern of single-line and
+      --  multiple-line comment. If the pattern of a single line comment
+      --  is found then Kind is set to Single_Line; if the pattern of a
+      --  multiple-line comment is found then Kind is set to Multiple_Lines.
+      --  In both cases Last returns the position of the last character of
+      --  the comment prefix. Example: for " -- xxx", returns 4, pointing just
+      --  before the first x. If no comment is found then Kind is None and Last
+      --  is 0.
+      --
+      --  Special case: If the pattern to start a multiple-line comment and the
+      --  pattern to terminate the comment are simultaneously found in Line,
+      --  and the pattern to terminate the comment is found after the last
+      --  position of the pattern to begin the comment, then the comment is
+      --  not considered a candidate to be refilled and Kind is set to None
+      --  and Last is 0.
 
-      -------------
-      -- Add_EOL --
-      -------------
-
-      procedure Add_EOL is
-      begin
-         Add ((1 => ASCII.LF));
-         Is_Start := True;
-         Line_Size := 0;
-      end Add_EOL;
-
-      ----------------
-      -- Add_Result --
-      ----------------
-
-      procedure Add_Result (Str : String) is
-
-         procedure Add_Word (Word : String);
-         --  Add Word to the result string, properly insert a new-line if
-         --  line goes over the right margin.
-
-         --------------
-         -- Add_Word --
-         --------------
-
-         procedure Add_Word (Word : String) is
-            Space : constant String := (1 => ' ');
-         begin
-            --  Does this word fit on the line
-
-            if Line_Size + Word'Length + 1 > Max then
-               --  +1 for the space before the word
-               Add_EOL;
-            end if;
-
-            if Is_Start then
-               --  Add spaces before comment line
-
-               if B_Sep /= null then
-                  Add (B_Sep.all);
-               end if;
-
-               if Sep /= null then
-                  if Is_First then
-                     Is_First := False;
-                     Add (Sep.all);
-
-                  else
-                     if Sep'Length > 1
-                       and then Sep (Sep'First) /= Sep (Sep'First + 1)
-                     then
-                        --  Comment separator is composed of 2 different
-                        --  characters, treat it a a multi-line comment, just
-                        --  add Sep'length spaces
-
-                        for K in Sep'Range loop
-                           Add (Space);
-                        end loop;
-
-                     else
-                        Add (Sep.all);
-                     end if;
-                  end if;
-
-                  --  Add spaces after comment separator
-
-                  for K in 1 .. After loop
-                     Add (Space);
-                  end loop;
-               end if;
-
-               Is_Start := False;
-
-            else
-               --  Add a space before this word, this is not done for the
-               --  first word on the line.
-               Add (Space);
-            end if;
-
-            Add (Word);
-         end Add_Word;
-
-         F, L : Natural;
-
-      begin
-         F := Str'First;
-
-         --  Skip spaces and HT
-
-         while F < Str'Last
-           and then (Str (F) = ' ' or else Str (F) = ASCII.HT)
-         loop
-            F := F + 1;
-         end loop;
-
-         --  Skip comment separator
-
-         if Sep /= null
-           and then F + Sep'Length - 1 <= Str'Last
-           and then Str (F .. F + Sep'Length - 1) = Sep.all
-         then
-            F := F + Sep'Length;
-         end if;
-
-         --  Is there something remaining
-
-         declare
-            Is_Empty : Boolean := True;
-            --  True if only spaces or HT remaining on the line
-            N        : Natural := 0;
-            --  Number of spaces after the comment separator if any
-         begin
-            for K in F .. Str'Last loop
-               if Str (K) /= ' ' and then Str (K) /= ASCII.HT then
-                  Is_Empty := False;
-                  exit;
-               end if;
-               N := N + 1;
-            end loop;
-
-            if Is_Empty then
-               --  No word found, we want to keep the current empty comment
-               --  line as-is.
-               Add_EOL; --  Terminate current line
-               Add_Word ("");
-               Add_EOL;
-
-            else
-               --  There is something after, record the new indent level
-               --  inside the comment.
-               After := N;
-            end if;
-         end;
-
-         --  Read all words on the line
-
-         while F <= Str'Last loop
-            --  Skip spaces
-
-            while F < Str'Last and then Str (F) = ' ' loop
-               F := F + 1;
-            end loop;
-
-            --  Get word
-
-            L := F;
-            while L < Str'Last and then Str (L) /= ' ' loop
-               L := L + 1;
-            end loop;
-
-            if Str (L) = ' ' then
-               Add_Word (Str (F .. L - 1));
-            else
-               Add_Word (Str (F .. L));
-            end if;
-
-            F := L + 1;
-         end loop;
-      end Add_Result;
-
-      ------------------
-      -- Analyse_Line --
-      ------------------
-
-      procedure Analyse_Line
-        (Buffer : Source_Buffer;
-         Line   : Editable_Line_Type)
-      is
-         F, L : Natural;
-
-         procedure Detect_Start_Pattern
-           (Line : Src_String; P : in out Natural);
-         --  Detect possible patterns starting a line.
-         --  Currently, only detect Ada, C, C++ and Shell comments
-         --  Start at position P in Line. Set P to last character in pattern.
-
-         --------------------------
-         -- Detect_Start_Pattern --
-         --------------------------
-
-         procedure Detect_Start_Pattern
-           (Line : Src_String; P : in out Natural) is
-         begin
-            if P < Line.Length + 1
-              and then
-                (Line.Contents (P + 1 .. P + 2) = "/*"
-                 or else Line.Contents (P + 1 .. P + 2) = "//"
-                 or else Line.Contents (P + 1 .. P + 2) = "--")
-            then
-               --  This is a 2 characters comment separator
-               P := P + 2;
-
-            elsif P < Line.Length
-              and then Line.Contents (P + 1) = '#'
-            then
-               --  A single character comment separator
-               P := P + 1;
-            end if;
-         end Detect_Start_Pattern;
-
-      begin
-         declare
-            First_Line : constant Src_String := Get_String (Buffer, Line);
-         begin
-            if First_Line.Contents = null then
-               --  Emptry line, nothing to do
-               return;
-            end if;
-
-            --  Get current indent level based on the first line. Note that
-            --  this routine will change the indentation level based on the
-            --  first Line.
-
-            F := 0;
-            while F + 1 <= First_Line.Length
-              and then (First_Line.Contents (F + 1) = ' '
-                        or else First_Line.Contents (F + 1) = ASCII.HT)
-            loop
-               F := F + 1;
-            end loop;
-
-            if F > 0 then
-               B_Sep := new String'(First_Line.Contents (1 .. F));
-            end if;
-
-            --  Get comment separator if any
-
-            L := F;
-            F := F + 1;
-
-            Detect_Start_Pattern (First_Line, L);
-
-            if L >= F then
-               Sep := new String'(First_Line.Contents (F .. L));
-            end if;
-
-            --  Get spaces after comment separator
-
-            if Sep /= null then
-               After := 0;
-               while L < First_Line.Length + 1
-                 and then First_Line.Contents (L + 1) = ' '
-               loop
-                  L := L + 1;
-                  After := After + 1;
-               end loop;
-            end if;
-         end;
-      end Analyse_Line;
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Pattern_Matcher, Pattern_Matcher_Access);
 
       --------------
       -- Is_Empty --
@@ -6127,12 +5884,9 @@ package body Src_Editor_Buffer is
          function Only_Spaces return Boolean;
          --  Return True is Line contains only spaces or HT
 
-         -----------------
-         -- Only_Spaces --
-         -----------------
-
          function Only_Spaces return Boolean is
             Result : Boolean := True;
+
          begin
             for K in 1 .. Line.Length loop
                if Line.Contents (K) /= ' '
@@ -6141,6 +5895,7 @@ package body Src_Editor_Buffer is
                   Result := False;
                end if;
             end loop;
+
             return Result;
          end Only_Spaces;
 
@@ -6148,88 +5903,649 @@ package body Src_Editor_Buffer is
          return Line.Contents = null or else Only_Spaces;
       end Is_Empty;
 
-   begin -- Do_Refill
+      ---------------------
+      -- Refill_Comments --
+      ---------------------
+
+      procedure Refill_Comments
+        (From_Line : Editable_Line_Type;
+         To_Line   : Editable_Line_Type)
+      is
+         Max_Line_Length : constant Positive := Highlight_Column.Get_Pref;
+         Tab_Width       : constant Integer := Integer (Buffer.Tab_Width);
+         Comment         : Unbounded_String;
+         In_ML_Comment   : Boolean := False;
+         Max_Line        : Natural := 0;
+         New_Text        : Unbounded_String := To_Unbounded_String ("");
+         Prefix          : Unbounded_String;
+
+         function ML_End_Comment_Last (Line : String) return Natural;
+         --  If the pattern that terminates a comment of a multi-line comment
+         --  is found then return the position of its last character. Example,
+         --  for " */" return 3. Return 0 if the pattern is not found.
+
+         procedure Refill_One_Comment;
+         --  Refill the current comment
+
+         -------------------------
+         -- ML_End_Comment_Last --
+         -------------------------
+
+         function ML_End_Comment_Last (Line : String) return Natural is
+            Matches : Match_Array (0 .. 0);
+
+         begin
+            pragma Assert (Multiple_Lines_EC_Len > 0);
+            Match (Multiple_Lines_EC_Pattern.all, Line, Matches);
+
+            if Matches (0) /= No_Match then
+               return Matches (0).Last;
+            end if;
+
+            return 0;
+         end ML_End_Comment_Last;
+
+         ------------------------
+         -- Refill_One_Comment --
+         ------------------------
+
+         procedure Refill_One_Comment is
+            Blanks_Prefix : constant String (1 .. Length (Prefix)) :=
+                             (others => ' ');
+            Search_For    : constant Character_Set := To_Set (ASCII.LF);
+            From          : Positive;
+            Is_First_Line : Boolean;
+            Len           : Natural;
+            New_Comment   : Unbounded_String;
+            Pos           : Natural;
+
+         begin
+            --  Terminate the last line of the current comment
+
+            Append (Comment, ASCII.LF);
+
+            --  Reformat this comment
+
+            New_Comment := Pretty_Fill (To_String (Comment), Max_Line);
+
+            --  For single-line comments add Prefix before each line of the
+            --  refilled comment. For multi-line comments Prefix is added only
+            --  to the first line of the comment and blanks are added for
+            --  subsequent lines. For example the C-style comment:
+            --
+            --         /* This is an example of refilling text */
+            --
+            --  can be refilled as follows (assumming Max_Line = 24):
+            --
+            --         /* This is an example
+            --            of refilling text */
+
+            Is_First_Line := True;
+            Len  := Length (New_Comment);
+            From := 1;
+
+            while From <= Len loop
+               Pos := Index (New_Comment, Search_For, From);
+
+               if In_ML_Comment
+                 and then not Is_First_Line
+               then
+                  Append (New_Text, Blanks_Prefix);
+               else
+                  Append (New_Text, To_String (Prefix));
+               end if;
+
+               Append (New_Text, Slice (New_Comment, From, Pos));
+
+               Is_First_Line := False;
+               From := Pos + 1;
+            end loop;
+         end Refill_One_Comment;
+
+         --  Local variables
+
+         In_Comment : Boolean := False;
+         BC_Last    : Natural;
+         EC_Last    : Natural;
+         Line       : Src_String;
+
+      begin  --  Refill_Comments
+         for K in From_Line .. To_Line loop
+            Line := Get_String (Buffer, K);
+
+            --  Handle continuation of multi-line comment
+
+            if In_ML_Comment then
+
+               --  Empty line in multi-line comment; continue acumulating
+               --  all the text of the current comment
+
+               if Is_Empty (Line) then
+                  Append (Comment, ASCII.LF);
+
+               --  Non-empty line. Check if this line has the end-comment
+               --  delimiter
+
+               else
+                  declare
+                     S : String renames Line.Contents (1 .. Line.Length);
+
+                  begin
+                     EC_Last := ML_End_Comment_Last (S);
+
+                     --  End of multi-line comment not found yet; continue
+                     --  acumulating all the text of the current comment
+
+                     if EC_Last = 0 then
+                        Append (Comment,
+                          To_Unbounded_String (ASCII.LF & S));
+
+                     --  End of multi-line comment found
+
+                     else
+                        --  Add the last line of this comment (including the
+                        --  end-comment delimiter) to the buffer of acumulated
+                        --  comments and refill the whole comment
+
+                        Append (Comment,
+                          To_Unbounded_String (ASCII.LF & S (1 .. EC_Last)));
+                        Refill_One_Comment;
+
+                        --  If there is some text after the end-comment
+                        --  delimiter then move it to the next line
+
+                        if EC_Last < Line.Length then
+                           Append (New_Text,
+                             S (EC_Last + 1 .. Line.Length) & ASCII.LF);
+                        end if;
+
+                        In_ML_Comment := False;
+                        In_Comment := False;
+                     end if;
+                  end;
+               end if;
+
+            --  Empty line
+
+            elsif Is_Empty (Line) then
+
+               --  For single-line comments an empty line means that we must
+               --  stop acumulating comments and we must refill the text of
+               --  the acumulated comments
+
+               if In_Comment then
+                  pragma Assert (not In_ML_Comment);
+                  Refill_One_Comment;
+                  In_Comment := False;
+               end if;
+
+               Append (New_Text, ASCII.LF);
+
+            --  Line containing text
+
+            else
+               declare
+                  S    : String renames Line.Contents (1 .. Line.Length);
+                  Kind : Comment_Kind;
+
+               begin
+                  Scan_Comment (S, Kind, BC_Last);
+
+                  --  The line does not have a begin-comment delimiter
+
+                  if Kind = None then
+                     pragma Assert (not In_ML_Comment);
+
+                     --  If we were acumulating single-line comments and this
+                     --  line does not have a begin-comment delimiter then it
+                     --  is time to refill the acumulated comment.
+
+                     if In_Comment then
+                        Refill_One_Comment;
+                        In_Comment := False;
+                     end if;
+
+                     Append (New_Text, To_Unbounded_String (S));
+                     Append (New_Text, ASCII.LF);
+
+                  --  The line has some begin-comment delimiter: let's start
+                  --  acumulating comments.
+
+                  elsif not In_Comment then
+
+                     --  Calculate the length of the prefix taking into account
+                     --  spaces and horizontal tabs
+
+                     declare
+                        Prefix_Length : Natural := 0;
+
+                     begin
+                        for K in 1 .. BC_Last loop
+                           if S (K) = ASCII.HT then
+                              Prefix_Length := Prefix_Length + Tab_Width;
+                           else
+                              Prefix_Length := Prefix_Length + 1;
+                           end if;
+                        end loop;
+
+                        --  Calculate the maximum line length to refill
+
+                        Max_Line := Max_Line_Length - Prefix_Length + 1;
+                     end;
+
+                     Prefix := To_Unbounded_String (S (1 .. BC_Last - 1));
+                     In_ML_Comment := Kind = Multiple_Lines;
+
+                     if In_ML_Comment then
+                        EC_Last :=
+                          ML_End_Comment_Last (S (BC_Last .. Line.Length));
+                     else
+                        EC_Last := 0;
+                     end if;
+
+                     --  Check if this line has the end-comment delimiter
+
+                     if EC_Last = 0 then
+                        Comment :=
+                          To_Unbounded_String (S (BC_Last .. Line.Length));
+                        In_Comment := True;
+                     else
+                        Comment :=
+                          To_Unbounded_String (S (BC_Last .. EC_Last));
+                        Refill_One_Comment;
+
+                        --  If there is some text after the end-comment
+                        --  delimiter then move it to the next line
+
+                        if EC_Last < Line.Length then
+                           Append (New_Text,
+                             S (EC_Last + 1 .. Line.Length) & ASCII.LF);
+                        end if;
+                     end if;
+
+                  --  We are acumulating text of single-line comments; let's
+                  --  continue acumulating comments
+
+                  else
+                     Append (Comment,
+                       To_Unbounded_String
+                         (ASCII.LF & S (BC_Last .. Line.Length)));
+                  end if;
+               end;
+            end if;
+         end loop;
+
+         if In_Comment then
+            Refill_One_Comment;
+         end if;
+
+         --  Replace selected text by the new one
+
+         if Get_Line_Count (Buffer) >= Gint (To_Line + 1) then
+            Replace_Slice
+              (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
+         else
+            Replace_Slice
+              (Buffer, From_Line, 1,
+               To_Line, Character_Offset_Type (Length (New_Text)),
+               To_String (New_Text));
+         end if;
+
+      exception
+         when E : others =>
+            Trace (Traces.Exception_Handle, E);
+      end Refill_Comments;
+
+      -----------------------
+      -- Refill_Plain_Text --
+      -----------------------
+
+      procedure Refill_Plain_Text
+        (From_Line : Editable_Line_Type;
+         To_Line   : Editable_Line_Type)
+      is
+         Max_Line_Length : constant Positive := Highlight_Column.Get_Pref;
+         Tab_Width       : constant Integer := Integer (Buffer.Tab_Width);
+         Comment         : Unbounded_String;
+         Max_Line        : Natural := 0;
+         New_Text        : Unbounded_String := To_Unbounded_String ("");
+         Prefix          : Unbounded_String;
+
+         procedure Refill_Text;
+         --  Refill the acumulated text
+
+         -----------------
+         -- Refill_Text --
+         -----------------
+
+         procedure Refill_Text is
+            Search_For  : constant Character_Set := To_Set (ASCII.LF);
+            From        : Positive;
+            Len         : Natural;
+            New_Comment : Unbounded_String;
+            Pos         : Natural;
+
+         begin
+            --  Terminate the last line of the current comment
+
+            Append (Comment, ASCII.LF);
+
+            --  Reformat this comment
+
+            New_Comment := Pretty_Fill (To_String (Comment), Max_Line);
+
+            --  Add Prefix before each line. Thus we ensure that all the
+            --  refilled text has the same left margin.
+
+            Len  := Length (New_Comment);
+            From := 1;
+
+            while From <= Len loop
+               Pos := Index (New_Comment, Search_For, From);
+               Append (New_Text, To_String (Prefix));
+               Append (New_Text, Slice (New_Comment, From, Pos));
+
+               From := Pos + 1;
+            end loop;
+         end Refill_Text;
+
+         --  Local variables
+
+         Acumulating : Boolean := False;
+         Line        : Src_String;
+
+      begin  --  Refill_Plain_Text
+         for K in From_Line .. To_Line loop
+            Line := Get_String (Buffer, K);
+
+            --  Empty line
+
+            if Is_Empty (Line) then
+
+               --  For single-line comments an empty line means that we must
+               --  stop acumulating comments and we must refill the text of
+               --  the acumulated comments
+
+               if Acumulating then
+                  Refill_Text;
+                  Acumulating := False;
+               end if;
+
+               Append (New_Text, ASCII.LF);
+
+            --  Line containing text
+
+            else
+               declare
+                  S    : String renames Line.Contents (1 .. Line.Length);
+
+               begin
+                  --  If we are acumulating text then let's continue
+                  --  acumulating text to refill
+
+                  if Acumulating then
+                     Append (Comment, To_Unbounded_String (ASCII.LF & S));
+
+                  else
+                     --  Calculate the length of the prefix taking into account
+                     --  spaces and horizontal tabs
+
+                     declare
+                        Prefix_Length : Natural  := 0;
+                        J             : Positive := 1;
+
+                     begin
+                        while S (J) = ASCII.HT or else S (J) = ' ' loop
+                           if S (J) = ASCII.HT then
+                              Prefix_Length := Prefix_Length + Tab_Width;
+                           else
+                              Prefix_Length := Prefix_Length + 1;
+                           end if;
+
+                           J := J + 1;
+                        end loop;
+
+                        --  Calculate the maximum line length to refill
+
+                        Max_Line := Max_Line_Length - Prefix_Length;
+                        Prefix   := To_Unbounded_String (S (1 .. J - 1));
+                        Comment  := To_Unbounded_String (S (J .. Line.Length));
+                     end;
+
+                     Acumulating := True;
+                  end if;
+               end;
+            end if;
+         end loop;
+
+         if Acumulating then
+            Refill_Text;
+         end if;
+
+         --  Replace selected text by the new one
+
+         if Get_Line_Count (Buffer) >= Gint (To_Line + 1) then
+            Replace_Slice
+              (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
+         else
+            Replace_Slice
+              (Buffer, From_Line, 1,
+               To_Line, Character_Offset_Type (Length (New_Text)),
+               To_String (New_Text));
+         end if;
+
+      exception
+         when E : others =>
+            Trace (Traces.Exception_Handle, E);
+      end Refill_Plain_Text;
+
+      -------------------
+      -- Scan_Commment --
+      -------------------
+
+      procedure Scan_Comment
+        (Line : String;
+         Kind : out Comment_Kind;
+         Last : out Natural)
+      is
+         Matches        : Match_Array (0 .. 0);
+         Single_Line_BC : constant GNAT.Strings.String_Access :=
+                            Lang_Context.New_Line_Comment_Start;
+      begin
+         Kind := None;
+         Last := 0;
+
+         --  If the language supports single-line comments then search for its
+         --  pattern in the current line
+
+         if Single_Line_BC_Len /= 0 then
+            Match (Single_Line_BC_Pattern.all, Line, Matches);
+
+            if Matches (0) /= No_Match then
+               pragma Assert (Matches (0).First = Line'First);
+
+               --  Single-line comments that end with the characters sequence
+               --  used to begin the comment are not considered comments to be
+               --  refilled. Such comments are probably part of the copyright
+               --  header, which we don't want to reformat. For example:
+
+               --      This line is an example of a non-refilled comment    --
+
+               if Line (Line'Last - Single_Line_BC_Len + 1 .. Line'Last)
+                    /= Single_Line_BC.all
+               then
+                  Kind := Single_Line;
+                  Last := Matches (0).Last;
+               end if;
+
+               return;
+            end if;
+         end if;
+
+         --  If the language supports multiple-line comments then search for
+         --  the pattern that begin a comment in the current line
+
+         if Multiple_Lines_BC_Len /= 0 then
+            Match (Multiple_Lines_BC_Pattern.all, Line, Matches);
+
+            if Matches (0) /= No_Match then
+               Kind := Multiple_Lines;
+               Last := Matches (0).Last;
+            end if;
+         end if;
+      end Scan_Comment;
+
+      --  Local variables
+
+      From, To  : Gtk_Text_Iter;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type;
+      Success   : Boolean;
+
+   --  Start of processing for Do_Refill
+
+   begin
       if not Buffer.Writable then
          End_Action (Buffer);
          return False;
       end if;
 
+      Get_Selection_Bounds (Buffer, From, To, Success);
+
+      --  No selection; get the current position
+
+      if not Success then
+         declare
+            Dummy : Character_Offset_Type;
+         begin
+            Get_Cursor_Position (Buffer, From_Line, Dummy);
+            To_Line := From_Line;
+         end;
+
+      else
+         --  Do not consider a line selected if only the first character is
+         --  selected.
+
+         if Get_Line_Offset (To) = 0 then
+            Backward_Char (To, Success);
+         end if;
+
+         --  Do not consider a line selected if only the last character is
+         --  selected.
+
+         if Ends_Line (From) then
+            Forward_Char (From, Success);
+         end if;
+
+         --  Get editable lines
+
+         From_Line :=
+           Get_Editable_Line
+             (Buffer, Buffer_Line_Type (Get_Line (From) + 1));
+
+         To_Line :=
+           Get_Editable_Line
+             (Buffer, Buffer_Line_Type (Get_Line (To) + 1));
+      end if;
+
       declare
-         Result : Boolean;
+         Start_Comment_Pattern : constant String := "^\s*";
+         --  Start of line, followed by zero or more spaces
+
+         End_Comment_Pattern   : constant String := "\s\s?[^\s]";
+         --  One or two spaces, followed by a non-space. If there are more than
+         --  two spaces after the command marker, then we don't recognize it as
+         --  a comment line (it's an indented comment, which should not be
+         --  reformatted). We also don't recognize it as a comment line if
+         --  there is no space after the command marker.
+
+         S : Unbounded_String;
+
+         function Filter_Metachars (S : String) return String;
+         --  Filter regexp metacharacters. Currently only '*' needs to be
+         --  filtered.
+
+         function Filter_Metachars (S : String) return String is
+            Result : String (1 .. 2 * S'Length);
+            Pos    : Natural := 0;
+
+         begin
+            for J in S'Range loop
+               if S (J) = '*' then
+                  Pos := Pos + 1;
+                  Result (Pos) := '\';
+               end if;
+
+               Pos := Pos + 1;
+               Result (Pos) := S (J);
+            end loop;
+
+            return Result (1 .. Pos);
+         end Filter_Metachars;
+
+         --  Local variables
+
+         Single_Line_BC : constant GNAT.Strings.String_Access :=
+                            Lang_Context.New_Line_Comment_Start;
       begin
-         Get_Selection_Bounds (Buffer, From, To, Result);
+         --  Handle single-line comments
 
-         if Result then
-            --  Do not consider a line selected if only the first character
-            --  is selected.
+         if Single_Line_BC /= null then
+            Single_Line_BC_Len := Single_Line_BC.all'Length;
 
-            if Get_Line_Offset (To) = 0 then
-               Backward_Char (To, Result);
-            end if;
+            S := To_Unbounded_String (Start_Comment_Pattern);
+            Append (S, Filter_Metachars (Single_Line_BC.all));
+            Append (S, End_Comment_Pattern);
 
-            --  Do not consider a line selected if only the last character is
-            --  selected.
+            Single_Line_BC_Pattern :=
+              new Pattern_Matcher'(Compile (To_String (S)));
+         end if;
 
-            if Ends_Line (From) then
-               Forward_Char (From, Result);
-            end if;
+         --  Handle multi-line comments
 
-            --  Get editable lines
+         if Lang_Context.Comment_Start_Length /= 0 then
+            pragma Assert (Lang_Context.Comment_End_Length /= 0);
 
-            From_Line := Get_Editable_Line
-              (Buffer, Buffer_Line_Type (Get_Line (From) + 1));
-            To_Line := Get_Editable_Line
-              (Buffer, Buffer_Line_Type (Get_Line (To) + 1));
+            Multiple_Lines_BC_Len := Lang_Context.Comment_Start_Length;
+            Multiple_Lines_EC_Len := Lang_Context.Comment_End_Length;
 
-         else
-            --  No selection, get the current position
-            declare
-               Dummy : Character_Offset_Type;
-            begin
-               Get_Cursor_Position (Buffer, From_Line, Dummy);
-               To_Line := From_Line;
-            end;
+            S := To_Unbounded_String (Start_Comment_Pattern);
+            Append (S, Filter_Metachars (Lang_Context.Comment_Start));
+            Append (S, End_Comment_Pattern);
+
+            Multiple_Lines_BC_Pattern :=
+              new Pattern_Matcher'(Compile (To_String (S)));
+
+            S := To_Unbounded_String
+                   (Filter_Metachars (Lang_Context.Comment_End));
+            Multiple_Lines_EC_Pattern :=
+              new Pattern_Matcher'(Compile (To_String (S)));
          end if;
       end;
 
-      Analyse_Line (Buffer, From_Line);
+      --  Refill comments in selected lines
 
-      --  Create new content
+      if Single_Line_BC_Pattern /= null
+        or else Multiple_Lines_BC_Pattern /= null
+      then
+         Refill_Comments (From_Line, To_Line);
 
-      for K in From_Line .. To_Line loop
-         declare
-            Line : constant Src_String := Get_String (Buffer, K);
-         begin
-            if Is_Empty (Line) then
-               --  Terminate current line and skip one line
-               Add_EOL;
-               Add_EOL;
-            else
-               Add_Result (Line.Contents (1 .. Line.Length));
-            end if;
-         end;
-      end loop;
+      --  This is a text file
 
-      --  Add final LF
-
-      Add_EOL;
-
-      --  Replace text with the new one
-
-      if Get_Line_Count (Buffer) >= Gint (To_Line + 1) then
-         Replace_Slice
-           (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
       else
-         --  Not valid, To_Line + 1 does not exist, To_Line is the last line
-         --  and has not line-feed.
-         Replace_Slice
-           (Buffer, From_Line, 1,
-            To_Line, Character_Offset_Type (Length (New_Text)),
-            To_String (New_Text));
+         Refill_Plain_Text (From_Line, To_Line);
       end if;
 
-      GNAT.Strings.Free (B_Sep);
-      GNAT.Strings.Free (Sep);
+      --  Free allocated memory
+
+      if Single_Line_BC_Pattern /= null then
+         Unchecked_Free (Single_Line_BC_Pattern);
+      end if;
+
+      if Multiple_Lines_BC_Pattern /= null then
+         Unchecked_Free (Multiple_Lines_BC_Pattern);
+         Unchecked_Free (Multiple_Lines_EC_Pattern);
+      end if;
 
       return True;
    end Do_Refill;
