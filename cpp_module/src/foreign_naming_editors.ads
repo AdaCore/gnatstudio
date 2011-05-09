@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2010, AdaCore                --
+--                   Copyright (C) 2002-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,7 @@ with Naming_Exceptions;
 with GNAT.Strings;
 with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with Gtk.Box;
-with Gtk.Combo;
+with Gtk.Combo_Box;
 
 package Foreign_Naming_Editors is
 
@@ -60,6 +60,6 @@ private
       GUI        : Gtk.Box.Gtk_Box;
       Language   : GNAT.Strings.String_Access;
       Exceptions : Naming_Exceptions.Exceptions_Editor;
-      Spec_Ext, Body_Ext : Gtk.Combo.Gtk_Combo;
+      Spec_Ext, Body_Ext : Gtk.Combo_Box.Gtk_Combo_Box;
    end record;
 end Foreign_Naming_Editors;

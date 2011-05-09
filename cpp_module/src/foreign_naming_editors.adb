@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2010, AdaCore                 --
+--                  Copyright (C) 2002-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,18 +17,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Project;               use GPS.Kernel.Project;
+with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+
+with Glib;                             use Glib;
 with Gtk.Box;                          use Gtk.Box;
-with Gtk.Combo;                        use Gtk.Combo;
+with Gtk.Combo_Box;                    use Gtk.Combo_Box;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Frame;                        use Gtk.Frame;
-with Gtk.Label;                        use Gtk.Label;
 with Gtk.GEntry;                       use Gtk.GEntry;
+with Gtk.Label;                        use Gtk.Label;
+with Gtk.List_Store;                   use Gtk.List_Store;
 with Gtk.Size_Group;                   use Gtk.Size_Group;
 with Gtk.Widget;                       use Gtk.Widget;
+
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Project;               use GPS.Kernel.Project;
+
 with Naming_Exceptions;                use Naming_Exceptions;
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 
 package body Foreign_Naming_Editors is
 
@@ -44,7 +49,8 @@ package body Foreign_Naming_Editors is
       Box, Vbox : Gtk_Box;
       Label     : Gtk_Label;
       Group     : Gtk_Size_Group;
-      Items     : Gtk.Enums.String_List.Glist;
+      List      : Gtk_List_Store;
+
    begin
       Editor := new Foreign_Naming_Editor_Record;
       Editor.Language := new String'(Language);
@@ -67,14 +73,14 @@ package body Foreign_Naming_Editors is
       Add_Widget (Group, Label);
       Pack_Start (Box, Label);
 
-      Gtk_New (Editor.Spec_Ext);
+      Gtk_New (List, (0 => GType_String));
+      Gtk_New_With_Model_And_Entry (Editor.Spec_Ext, List);
+      Editor.Spec_Ext.Set_Entry_Text_Column (0);
       Pack_Start (Box, Editor.Spec_Ext);
-      Gtk.Enums.String_List.Append (Items, ".h");
-      Gtk.Enums.String_List.Append (Items, ".hh");
-      Gtk.Enums.String_List.Append (Items, ".H");
-      Gtk.Enums.String_List.Append (Items, ".hpp");
-      Set_Popdown_Strings (Editor.Spec_Ext, Items);
-      Gtk.Enums.String_List.Free (Items);
+      Editor.Spec_Ext.Append_Text (".h");
+      Editor.Spec_Ext.Append_Text (".hh");
+      Editor.Spec_Ext.Append_Text (".H");
+      Editor.Spec_Ext.Append_Text (".hpp");
 
       Gtk_New_Hbox (Box, Homogeneous => False);
       Pack_Start (Vbox, Box, Expand => False);
@@ -84,14 +90,14 @@ package body Foreign_Naming_Editors is
       Add_Widget (Group, Label);
       Pack_Start (Box, Label);
 
-      Gtk_New (Editor.Body_Ext);
+      Gtk_New (List, (0 => GType_String));
+      Gtk_New_With_Model_And_Entry (Editor.Body_Ext, List);
+      Editor.Body_Ext.Set_Entry_Text_Column (0);
       Pack_Start (Box, Editor.Body_Ext);
-      Gtk.Enums.String_List.Append (Items, ".c");
-      Gtk.Enums.String_List.Append (Items, ".cc");
-      Gtk.Enums.String_List.Append (Items, ".C");
-      Gtk.Enums.String_List.Append (Items, ".cpp");
-      Set_Popdown_Strings (Editor.Body_Ext, Items);
-      Gtk.Enums.String_List.Free (Items);
+      Editor.Body_Ext.Append_Text (".c");
+      Editor.Body_Ext.Append_Text (".cc");
+      Editor.Body_Ext.Append_Text (".C");
+      Editor.Body_Ext.Append_Text (".cpp");
 
       Gtk_New (Frame, -"Exceptions");
       Pack_Start (Editor.GUI, Frame, Expand => True, Fill => True);
@@ -143,12 +149,12 @@ package body Foreign_Naming_Editors is
         or else Project.Attribute_Value
           (Attribute      => Spec_Suffix_Attribute,
            Index          => Editor.Language.all) /=
-              Get_Text (Get_Entry (Editor.Spec_Ext))
+              Get_Active_Text (Editor.Spec_Ext)
       then
          Project.Set_Attribute
            (Scenario  => Scenario_Variables,
             Attribute => Spec_Suffix_Attribute,
-            Value     => Get_Text (Get_Entry (Editor.Spec_Ext)),
+            Value     => Get_Active_Text (Editor.Spec_Ext),
             Index     => Editor.Language.all);
          Changed := True;
       end if;
@@ -157,12 +163,12 @@ package body Foreign_Naming_Editors is
         or else Project.Attribute_Value
           (Attribute      => Impl_Suffix_Attribute,
            Index          => Editor.Language.all) /=
-              Get_Text (Get_Entry (Editor.Body_Ext))
+              Get_Active_Text (Editor.Body_Ext)
       then
          Project.Set_Attribute
            (Scenario  => Scenario_Variables,
             Attribute => Impl_Suffix_Attribute,
-            Value     => Get_Text (Get_Entry (Editor.Body_Ext)),
+            Value     => Get_Active_Text (Editor.Body_Ext),
             Index     => Editor.Language.all);
          Changed := True;
       end if;
@@ -193,12 +199,12 @@ package body Foreign_Naming_Editors is
       --  ??? Do we get access to the default extensions correctly ?
 
       Set_Text
-        (Get_Entry (Editor.Spec_Ext),
+        (Gtk_Entry (Get_Child (Editor.Spec_Ext)),
          P.Attribute_Value
             (Spec_Suffix_Attribute,
              Index => Editor.Language.all));
       Set_Text
-        (Get_Entry (Editor.Body_Ext),
+        (Gtk_Entry (Get_Child (Editor.Body_Ext)),
          P.Attribute_Value
             (Impl_Suffix_Attribute,
              Index => Editor.Language.all));
