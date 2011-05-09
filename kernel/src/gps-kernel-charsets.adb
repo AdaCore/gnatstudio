@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2010, AdaCore             --
+--                      Copyright (C) 2005-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,19 +21,16 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib.Object;                use Glib.Object;
 
-with Gtk.Combo;                  use Gtk.Combo;
-with Gtk.Editable;               use Gtk.Editable;
+with Gtk.Combo_Box;              use Gtk.Combo_Box;
 with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.Item;                   use Gtk.Item;
-with Gtk.List;                   use Gtk.List;
-with Gtk.List_Item;              use Gtk.List_Item;
 with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Widget;                 use Gtk.Widget;
 
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with GUI_Utils;                  use GUI_Utils;
 
 package body GPS.Kernel.Charsets is
 
@@ -97,7 +94,7 @@ package body GPS.Kernel.Charsets is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference)
    is
-      Value : constant String := Get_Text (Get_Entry (Gtk_Combo (Combo)));
+      Value : constant String := Get_Active_Text (Gtk_Combo_Box (Combo));
    begin
       for C in Charsets'Range loop
          if Charsets (C).Description.all = Value then
@@ -117,7 +114,8 @@ package body GPS.Kernel.Charsets is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference) is
    begin
-      Set_Text (Get_Entry (Gtk_Combo (Combo)), Data.Pref.Get_Pref);
+      Set_Text
+        (Gtk_Entry (Gtk_Combo_Box (Combo).Get_Child), Data.Pref.Get_Pref);
    end Update_Charset;
 
    --------------------------
@@ -126,22 +124,17 @@ package body GPS.Kernel.Charsets is
 
    function Create_Charset_Combo
      (File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo.Gtk_Combo
+      Default : String := "") return Gtk.Combo_Box.Gtk_Combo_Box
    is
-      Combo : Gtk_Combo;
+      Combo : Gtk_Combo_Box;
       Found : Boolean := False;
       Prop  : String_Property;
-      Item    : Gtk_List_Item;
+
    begin
-      Gtk_New (Combo);
-      Set_Value_In_List (Combo, False, Ok_If_Empty => False);
-      Set_Editable (Get_Entry (Combo), True);
+      Gtk_New_Combo_Text_With_Entry (Combo);
 
       for C in Charsets'Range loop
-         Gtk_New (Item, Charsets (C).Description.all);
-         Set_Item_String (Combo, Gtk_Item (Item), Charsets (C).Name.all);
-         Add (Get_List (Combo), Item);
-         Show_All (Item);
+         Combo.Append_Text (Charsets (C).Description.all);
       end loop;
 
       if File /= GNATCOLL.VFS.No_File then
@@ -149,11 +142,11 @@ package body GPS.Kernel.Charsets is
       end if;
 
       if Found then
-         Set_Text (Get_Entry (Combo), Prop.Value.all);
+         Set_Text (Gtk_Entry (Get_Child (Combo)), Prop.Value.all);
       elsif Default /= "" then
-         Set_Text (Get_Entry (Combo), Default);
+         Set_Text (Gtk_Entry (Get_Child (Combo)), Default);
       else
-         Set_Text (Get_Entry (Combo), Get_Pref (Default_Charset));
+         Set_Text (Gtk_Entry (Get_Child (Combo)), Get_Pref (Default_Charset));
       end if;
 
       return Combo;
@@ -171,31 +164,27 @@ package body GPS.Kernel.Charsets is
    is
       pragma Unreferenced (Tips);
       Value    : constant String := Pref.Get_Pref;
-      Combo   : Gtk_Combo;
-      Item    : Gtk_List_Item;
+      Combo    : Gtk_Combo_Box;
       Selected : Integer := -1;
    begin
-      Gtk_New (Combo);
-      Set_Value_In_List (Combo, False, Ok_If_Empty => False);
-      Set_Editable (Get_Entry (Combo), True);
+      Gtk_New_Combo_Text_With_Entry (Combo);
 
       for C in Charsets'Range loop
+         Combo.Append_Text (Charsets (C).Description.all);
+
          if Charsets (C).Name.all = Value then
             Selected := C;
          end if;
-         Gtk_New (Item, Charsets (C).Description.all);
-         Add (Get_List (Combo), Item);
-         Show_All (Item);
       end loop;
 
       if Selected /= -1 then
-         Set_Text (Get_Entry (Combo), Charsets (Selected).Description.all);
+         Combo.Set_Active (Gint (Selected));
       else
-         Set_Text (Get_Entry (Combo), Value);
+         Set_Text (Gtk_Entry (Combo.Get_Child), Value);
       end if;
 
       Preference_Handlers.Object_Connect
-        (Get_Entry (Combo), Signal_Changed,
+        (Combo, Gtk.Combo_Box.Signal_Changed,
          Charset_Changed'Access,
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
          Slot_Object => Combo,

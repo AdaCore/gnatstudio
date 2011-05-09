@@ -36,7 +36,7 @@ with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;                       use Glib.Values;
 
 with Gtk.Box;                           use Gtk.Box;
-with Gtk.Combo;                         use Gtk.Combo;
+with Gtk.Combo_Box;                     use Gtk.Combo_Box;
 with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.GEntry;                        use Gtk.GEntry;
@@ -2347,8 +2347,8 @@ package body Src_Editor_Module is
       Dialog  : Gtk_Dialog;
       Button  : Gtk_Widget;
       Label   : Gtk_Label;
-      Lang    : Gtk_Combo;
-      Charset : Gtk_Combo;
+      Lang    : Gtk_Combo_Box;
+      Charset : Gtk_Combo_Box;
       Box     : Gtk_Box;
       Size    : Gtk_Size_Group;
       Buffer  : Source_Buffer;
@@ -2429,7 +2429,7 @@ package body Src_Editor_Module is
 
       if Run (Dialog) = Gtk_Response_OK then
          declare
-            Text   : constant String := Get_Text (Get_Entry (Lang));
+            Text   : constant String := Get_Active_Text (Lang);
             Header : constant String := -"(From project) ";
             Index  : Natural := Text'First;
          begin
@@ -2443,7 +2443,7 @@ package body Src_Editor_Module is
               (Buffer, Get_Language_By_Name
                  (Get_Language_Handler (Kernel),
                   Text (Index .. Text'Last)));
-            Set_Charset (Buffer, Get_Text (Get_Entry (Charset)));
+            Set_Charset (Buffer, Get_Active_Text (Charset));
          end;
       end if;
 

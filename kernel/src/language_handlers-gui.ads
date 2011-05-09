@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2007                         --
---                              AdaCore                              --
+--                  Copyright (C) 2007-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +19,7 @@
 
 --  This package contains graphical utilities related to Language_Handlers.
 
-with Gtk.Combo;
+with Gtk.Combo_Box;
 with GNATCOLL.VFS;
 
 package Language_Handlers.GUI is
@@ -28,7 +27,7 @@ package Language_Handlers.GUI is
    function Create_Language_Combo
      (Handler : access Language_Handler_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo.Gtk_Combo;
+      Default : String := "") return Gtk.Combo_Box.Gtk_Combo_Box;
    --  Create a combo box to select the language for File.
    --  File is used to select the default value in the combo.
    --  The first entry in the combo always indicates that the language from the

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2007-2008, AdaCore           --
+--                  Copyright (C) 2007-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,11 +21,10 @@ with Case_Handling;             use Case_Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GPS.Intl;                  use GPS.Intl;
-with Gtk.Combo;                 use Gtk.Combo;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.List;                  use Gtk.List;
-with Gtk.List_Item;             use Gtk.List_Item;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with Gtk.Combo_Box;             use Gtk.Combo_Box;
+
+with GUI_Utils;                 use GUI_Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Language_Handlers.GUI is
 
@@ -36,45 +35,39 @@ package body Language_Handlers.GUI is
    function Create_Language_Combo
      (Handler : access Language_Handler_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk_Combo
+      Default : String := "") return Gtk_Combo_Box
    is
-      Combo     : Gtk_Combo;
+      Combo     : Gtk_Combo_Box;
       Languages : Argument_List := Known_Languages (Handler, Sorted => True);
       Project_Lang : String :=
         Get_Language_From_File (Handler, File, From_Project_Only => True);
-      Item : Gtk_List_Item;
+
    begin
-      Gtk_New (Combo);
-      Set_Editable (Get_Entry (Combo), False);
+      Gtk_New_Text (Combo);
 
       if Project_Lang = "" then
-         Gtk_New (Item, -"(From project) unknown");
+         Combo.Append_Text (-"(From project) unknown");
       else
          Mixed_Case (Project_Lang);
-         Gtk_New (Item, -"(From project) " & Project_Lang);
+         Combo.Append_Text (-"(From project) " & Project_Lang);
       end if;
 
-      Add (Get_List (Combo), Item);
-      Show_All (Item);
-
       for L in Languages'Range loop
-         Gtk_New (Item, Languages (L).all);
-         Add (Get_List (Combo), Item);
-         Show_All (Item);
+         Combo.Append_Text (Languages (L).all);
       end loop;
 
       Free (Languages);
 
       if File = GNATCOLL.VFS.No_File and then Default /= "" then
-         Set_Text (Get_Entry (Combo), Default);
+         Set_Active_Text (Combo, Default);
       elsif File /= GNATCOLL.VFS.No_File
         and then Language_Is_Overriden (Handler, File)
       then
-         Set_Text (Get_Entry (Combo), Get_Language_From_File (Handler, File));
+         Set_Active_Text (Combo, Get_Language_From_File (Handler, File));
       elsif Project_Lang = "" then
-         Set_Text (Get_Entry (Combo), -"(From project) unknown");
+         Set_Active_Text (Combo, -"(From project) unknown");
       else
-         Set_Text (Get_Entry (Combo), -"(From project) " & Project_Lang);
+         Set_Active_Text (Combo, -"(From project) " & Project_Lang);
       end if;
 
       return Combo;

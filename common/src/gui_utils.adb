@@ -172,6 +172,20 @@ package body GUI_Utils is
       Output    : Event_Access) return Boolean;
    --  Temporary event filter set when grabing the key for a key preference
 
+   -----------------------------------
+   -- Gtk_New_Combo_Text_With_Entry --
+   -----------------------------------
+
+   procedure Gtk_New_Combo_Text_With_Entry
+     (Combo : out Gtk.Combo_Box.Gtk_Combo_Box)
+   is
+      List : Gtk_List_Store;
+   begin
+      Gtk_New (List, (0 => GType_String));
+      Gtk_New_With_Model_And_Entry (Combo, List);
+      Combo.Set_Entry_Text_Column (0);
+   end Gtk_New_Combo_Text_With_Entry;
+
    ---------------------------
    -- Add_Unique_List_Entry --
    ---------------------------

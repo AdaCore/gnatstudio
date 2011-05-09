@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2010, AdaCore             --
+--                      Copyright (C) 2005-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 --  This package handles the charsets supported by GPS
 
 with Default_Preferences;  use Default_Preferences;
-with Gtk.Combo;
+with Gtk.Combo_Box;
 with Gtk.Tooltips;
 with Gtk.Widget;
 
@@ -57,7 +57,7 @@ package GPS.Kernel.Charsets is
 
    function Create_Charset_Combo
      (File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo.Gtk_Combo;
+      Default : String := "") return Gtk.Combo_Box.Gtk_Combo_Box;
    --  Return a combo box that can be used to edit the charset associated with
    --  a file.
    --  Default is used if File is VFS.No_File. If unspecified, the

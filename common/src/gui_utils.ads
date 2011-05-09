@@ -112,6 +112,10 @@ package GUI_Utils is
    -- Combos and lists --
    ----------------------
 
+   procedure Gtk_New_Combo_Text_With_Entry
+     (Combo : out Gtk.Combo_Box.Gtk_Combo_Box);
+   --  Similar to Gtk_New_Text *and* Gtk_New_With_Entry
+
    procedure Add_Unique_List_Entry
      (List    : access Gtk.List.Gtk_List_Record'Class;
       Text    : String;
