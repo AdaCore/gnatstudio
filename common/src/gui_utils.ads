@@ -170,6 +170,12 @@ package GUI_Utils is
    --  Same as above, but return the inserted iter (or the previously existing
    --  one).
 
+   procedure Set_Active_Text
+     (Combo : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text  : String;
+      Col   : Gint := 0);
+   --  Select the item containing Text in the Combo.
+
    function Get_Index_In_List
      (Combo : access Gtk.Combo.Gtk_Combo_Record'Class) return Integer;
    --  Return the index of the selected item in the list of Combo.

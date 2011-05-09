@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2010, AdaCore                --
+--                   Copyright (C) 2001-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,10 +27,10 @@ with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 
 with Gtk.Box;                  use Gtk.Box;
-with Gtk.Combo;                use Gtk.Combo;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.List;                 use Gtk.List;
+with Gtk.List_Store;           use Gtk.List_Store;
 with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -97,8 +97,8 @@ package body Ada_Naming_Editors is
    -------------
 
    procedure Gtk_New (Editor : out Ada_Naming_Editor) is
-      Casing_Items : Gtk.Enums.String_List.Glist;
       Size_Group   : Gtk_Size_Group;
+      Idx          : Gint := 0;
    begin
       Editor := new Ada_Naming_Editor_Record;
       Gtk_New (Editor.GUI);
@@ -129,17 +129,21 @@ package body Ada_Naming_Editors is
 
       Reset_Exception_Fields (Editor.GUI);
 
+      Gtk_List_Store (Editor.GUI.Casing.Get_Model).Clear;
+
       for Casing in Casing_Type loop
          if Casing /= Unknown then
-            Gtk.Enums.String_List.Append (Casing_Items, -Prj.Image (Casing));
+            Editor.GUI.Casing.Append_Text (-Prj.Image (Casing));
+
+            if Casing = All_Lower_Case then
+               Editor.GUI.Casing.Set_Active (Idx);
+            end if;
+
+            Idx := Idx + 1;
          end if;
       end loop;
 
-      Set_Popdown_Strings (Editor.GUI.Casing, Casing_Items);
-      Set_Text (Get_Entry (Editor.GUI.Casing), -Prj.Image (All_Lower_Case));
-      Free_String_List (Casing_Items);
-
-      Select_Item (Get_List (Editor.GUI.Standard_Scheme), Gnat_Naming_Scheme);
+      Set_Active (Editor.GUI.Standard_Scheme, Gnat_Naming_Scheme);
    end Gtk_New;
 
    -------------
@@ -198,31 +202,28 @@ package body Ada_Naming_Editors is
       case Scheme_Num is
          when Gnat_Naming_Scheme =>
             --  GNAT Default
-            Set_Text (Get_Entry (Editor.Casing), -Prj.Image (All_Lower_Case));
+            Set_Active_Text (Editor.Casing, -Prj.Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
-            Set_Text (Get_Entry (Editor.Spec_Extension),
-                      Default_Gnat_Spec_Suffix);
-            Set_Text (Get_Entry (Editor.Body_Extension),
-                      Default_Gnat_Body_Suffix);
-            Set_Text (Get_Entry (Editor.Separate_Extension),
-                      Default_Gnat_Separate_Suffix);
+            Set_Active_Text (Editor.Spec_Extension, Default_Gnat_Spec_Suffix);
+            Set_Active_Text (Editor.Body_Extension, Default_Gnat_Body_Suffix);
+            Set_Active_Text (Editor.Separate_Extension,
+                             Default_Gnat_Separate_Suffix);
 
          when Apex_Naming_Scheme =>
             --  APEX Default
-            Set_Text (Get_Entry (Editor.Casing),
-                      -Prj.Image (All_Lower_Case));
+            Set_Active_Text (Editor.Casing, -Prj.Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, ".");
-            Set_Text (Get_Entry (Editor.Spec_Extension), ".1.ada");
-            Set_Text (Get_Entry (Editor.Body_Extension), ".2.ada");
-            Set_Text (Get_Entry (Editor.Separate_Extension), ".2.ada");
+            Set_Active_Text (Editor.Spec_Extension, ".1.ada");
+            Set_Active_Text (Editor.Body_Extension, ".2.ada");
+            Set_Active_Text (Editor.Separate_Extension, ".2.ada");
 
          when Dec_Naming_Scheme =>
             --  DEC Ada Default
-            Set_Text (Get_Entry (Editor.Casing), -Prj.Image (All_Lower_Case));
+            Set_Active_Text (Editor.Casing, -Prj.Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, "__");
-            Set_Text (Get_Entry (Editor.Spec_Extension), "_.ada");
-            Set_Text (Get_Entry (Editor.Body_Extension), ".ada");
-            Set_Text (Get_Entry (Editor.Separate_Extension), ".ada");
+            Set_Active_Text (Editor.Spec_Extension, "_.ada");
+            Set_Active_Text (Editor.Body_Extension, ".ada");
+            Set_Active_Text (Editor.Separate_Extension, ".ada");
 
          when others =>
             null;
@@ -243,7 +244,7 @@ package body Ada_Naming_Editors is
       Changed    : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       Ada_Scheme : constant Boolean :=
-                     Get_Index_In_List (Editor.GUI.Standard_Scheme) = 0;
+                     Get_Active (Editor.GUI.Standard_Scheme) = 0;
       Cache      : Naming_Hash.String_Hash_Table.Instance;
       Data       : Naming_Data;
 
@@ -401,17 +402,17 @@ package body Ada_Naming_Editors is
    begin
       Update_If_Required
         (Spec_Suffix_Attribute,
-         Get_Text (Get_Entry (Editor.GUI.Spec_Extension)), "ada");
+         Get_Active_Text (Editor.GUI.Spec_Extension), "ada");
       Update_If_Required
         (Impl_Suffix_Attribute,
-         Get_Text (Get_Entry (Editor.GUI.Body_Extension)), "ada");
+         Get_Active_Text (Editor.GUI.Body_Extension), "ada");
       Update_If_Required
         (Separate_Suffix_Attribute,
-         Get_Text (Get_Entry (Editor.GUI.Separate_Extension)), "");
+         Get_Active_Text (Editor.GUI.Separate_Extension), "");
       Update_If_Required
         (Casing_Attribute,
          Prj.Image (Casing_Type'Val
-                    (Get_Index_In_List (Editor.GUI.Casing))), "");
+                    (Get_Active (Editor.GUI.Casing))), "");
       Update_If_Required
         (Dot_Replacement_Attribute, Get_Text (Editor.GUI.Dot_Replacement), "");
 
@@ -506,11 +507,11 @@ package body Ada_Naming_Editors is
       Id              : Gint;
 
    begin
-      Set_Text (Editor.GUI.Dot_Replacement,                Dot_Replacement);
-      Set_Text (Get_Entry (Editor.GUI.Casing),            -Casing);
-      Set_Text (Get_Entry (Editor.GUI.Spec_Extension),     Spec_Suffix);
-      Set_Text (Get_Entry (Editor.GUI.Body_Extension),     Body_Suffix);
-      Set_Text (Get_Entry (Editor.GUI.Separate_Extension), Separate_Suffix);
+      Set_Text (Editor.GUI.Dot_Replacement,           Dot_Replacement);
+      Set_Active_Text (Editor.GUI.Casing,            -Casing);
+      Set_Active_Text (Editor.GUI.Spec_Extension,     Spec_Suffix);
+      Set_Active_Text (Editor.GUI.Body_Extension,     Body_Suffix);
+      Set_Active_Text (Editor.GUI.Separate_Extension, Separate_Suffix);
 
       Clear (Editor.GUI.Exception_List_Model);
       Id := Freeze_Sort (Editor.GUI.Exception_List_Model);
@@ -581,44 +582,38 @@ package body Ada_Naming_Editors is
 
       --  GNAT naming scheme ?
       if Get_Iter_First (Editor.GUI.Exception_List_Model) /= Null_Iter
-        or else Get_Text (Get_Entry (Editor.GUI.Casing)) /=
+        or else Get_Active_Text (Editor.GUI.Casing) /=
           -Prj.Image (All_Lower_Case)
       then
-         Select_Item
-           (Get_List (Editor.GUI.Standard_Scheme), Custom_Naming_Scheme);
+         Set_Active (Editor.GUI.Standard_Scheme, Custom_Naming_Scheme);
 
       elsif Get_Text (Editor.GUI.Dot_Replacement) =
           Default_Gnat_Dot_Replacement
-        and then Get_Text (Get_Entry (Editor.GUI.Spec_Extension)) =
+        and then Get_Active_Text (Editor.GUI.Spec_Extension) =
         Default_Gnat_Spec_Suffix
-        and then Get_Text (Get_Entry (Editor.GUI.Body_Extension)) =
+        and then Get_Active_Text (Editor.GUI.Body_Extension) =
         Default_Gnat_Body_Suffix
-        and then Get_Text (Get_Entry (Editor.GUI.Separate_Extension)) =
+        and then Get_Active_Text (Editor.GUI.Separate_Extension) =
         Default_Gnat_Separate_Suffix
       then
-         Select_Item
-           (Get_List (Editor.GUI.Standard_Scheme), Gnat_Naming_Scheme);
+         Set_Active (Editor.GUI.Standard_Scheme, Gnat_Naming_Scheme);
 
       elsif Get_Text (Editor.GUI.Dot_Replacement) = "."
-        and then Get_Text (Get_Entry (Editor.GUI.Spec_Extension)) = ".1.ada"
-        and then Get_Text (Get_Entry (Editor.GUI.Body_Extension)) = ".2.ada"
-        and then Get_Text (Get_Entry (Editor.GUI.Separate_Extension)) =
-          ".2.ada"
+        and then Get_Active_Text (Editor.GUI.Spec_Extension) = ".1.ada"
+        and then Get_Active_Text (Editor.GUI.Body_Extension) = ".2.ada"
+        and then Get_Active_Text (Editor.GUI.Separate_Extension) = ".2.ada"
       then
-         Select_Item
-           (Get_List (Editor.GUI.Standard_Scheme), Apex_Naming_Scheme);
+         Set_Active (Editor.GUI.Standard_Scheme, Apex_Naming_Scheme);
 
       elsif Get_Text (Editor.GUI.Dot_Replacement) = "__"
-        and then Get_Text (Get_Entry (Editor.GUI.Spec_Extension)) = "_.ada"
-        and then Get_Text (Get_Entry (Editor.GUI.Body_Extension)) = ".ada"
-        and then Get_Text (Get_Entry (Editor.GUI.Separate_Extension)) = ".ada"
+        and then Get_Active_Text (Editor.GUI.Spec_Extension) = "_.ada"
+        and then Get_Active_Text (Editor.GUI.Body_Extension) = ".ada"
+        and then Get_Active_Text (Editor.GUI.Separate_Extension) = ".ada"
       then
-         Select_Item
-           (Get_List (Editor.GUI.Standard_Scheme), Dec_Naming_Scheme);
+         Set_Active (Editor.GUI.Standard_Scheme, Dec_Naming_Scheme);
 
       else
-         Select_Item
-           (Get_List (Editor.GUI.Standard_Scheme), Custom_Naming_Scheme);
+         Set_Active (Editor.GUI.Standard_Scheme, Custom_Naming_Scheme);
       end if;
    end Show_Project_Settings;
 

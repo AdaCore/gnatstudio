@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,23 +17,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;                   use Glib;
+
 with Gtk;                    use Gtk;
 with Gtk.Alignment;          use Gtk.Alignment;
 with Gtk.Frame;              use Gtk.Frame;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Enums;              use Gtk.Enums;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-with GPS.Intl;               use GPS.Intl;
-with Naming_Scheme_Editor_Pkg.Callbacks;
-use Naming_Scheme_Editor_Pkg.Callbacks;
+with Gtk.List_Store;         use Gtk.List_Store;
 with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
-with Glib;                   use Glib;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
-with GUI_Utils;              use GUI_Utils;
 with Gtk.Widget;             use Gtk.Widget;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+
+with GPS.Intl;               use GPS.Intl;
+with GUI_Utils;              use GUI_Utils;
+
+with Naming_Scheme_Editor_Pkg.Callbacks;
+use Naming_Scheme_Editor_Pkg.Callbacks;
 
 package body Naming_Scheme_Editor_Pkg is
 
@@ -68,22 +71,13 @@ package body Naming_Scheme_Editor_Pkg is
       Hbox9                    : Gtk_Hbox;
       Vbox29                   : Gtk_Vbox;
       Vbox53                   : Gtk_Vbox;
-      Combo_Entry2             : Gtk_Entry;
-      Combo_Entry3             : Gtk_Entry;
-      Combo_Entry4             : Gtk_Entry;
-      Combo_Entry5             : Gtk_Entry;
-      Combo_Entry6             : Gtk_Entry;
       Frame28                  : Gtk_Frame;
       Frame30                  : Gtk_Frame;
       Scrolledwindow1          : Gtk_Scrolled_Window;
-      Standard_Scheme_Items    : String_List.Glist;
-      Casing_Items             : String_List.Glist;
-      Spec_Extension_Items     : String_List.Glist;
-      Body_Extension_Items     : String_List.Glist;
-      Separate_Extension_Items : String_List.Glist;
       Render                   : Gtk_Cell_Renderer_Text;
       Col                      : Gtk_Tree_View_Column;
       Col_Number               : Gint;
+      List                     : Gtk_List_Store;
       pragma Unreferenced (Col_Number);
 
    begin
@@ -111,26 +105,17 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox4, Naming_Scheme_Editor.Label_Naming_Scheme, False, False, 0);
 
-      Gtk_New (Naming_Scheme_Editor.Standard_Scheme);
-      Set_Case_Sensitive (Naming_Scheme_Editor.Standard_Scheme, False);
-      Set_Use_Arrows (Naming_Scheme_Editor.Standard_Scheme, True);
-      Set_Use_Arrows_Always (Naming_Scheme_Editor.Standard_Scheme, False);
-      String_List.Append (Standard_Scheme_Items, -"GNAT default");
-      String_List.Append (Standard_Scheme_Items, -"unit.separate.1.ada");
-      String_List.Append (Standard_Scheme_Items, -"unit__separate_.ada");
-      String_List.Append (Standard_Scheme_Items, -"<custom>");
-      Combo.Set_Popdown_Strings
-        (Naming_Scheme_Editor.Standard_Scheme, Standard_Scheme_Items);
-      Free_String_List (Standard_Scheme_Items);
+      Gtk_New_Text (Naming_Scheme_Editor.Standard_Scheme);
+      Naming_Scheme_Editor.Standard_Scheme.Append_Text (-"GNAT default");
+      Naming_Scheme_Editor.Standard_Scheme.Append_Text
+        (-"unit.separate.1.ada");
+      Naming_Scheme_Editor.Standard_Scheme.Append_Text
+        (-"unit__separate_.ada");
+      Naming_Scheme_Editor.Standard_Scheme.Append_Text (-"<custom>");
+      Naming_Scheme_Editor.Standard_Scheme.Set_Active (0);
       Pack_Start (Hbox4, Naming_Scheme_Editor.Standard_Scheme, True, True, 0);
-
-      Combo_Entry3 := Get_Entry (Naming_Scheme_Editor.Standard_Scheme);
-      Set_Editable (Combo_Entry3, False);
-      Set_Max_Length (Combo_Entry3, 0);
-      Set_Text (Combo_Entry3, -"GNAT default");
-      Set_Visibility (Combo_Entry3, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry3, Signal_Changed,
+        (Naming_Scheme_Editor.Standard_Scheme, Gtk.Combo_Box.Signal_Changed,
          On_Standard_Scheme_Changed'Access, Naming_Scheme_Editor);
 
       Gtk_New (Frame28, -"Details");
@@ -150,22 +135,12 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Line_Wrap (Naming_Scheme_Editor.Label_Casing, False);
       Pack_Start (Hbox5, Naming_Scheme_Editor.Label_Casing, False, False, 0);
 
-      Gtk_New (Naming_Scheme_Editor.Casing);
-      Set_Case_Sensitive (Naming_Scheme_Editor.Casing, False);
-      Set_Use_Arrows (Naming_Scheme_Editor.Casing, True);
-      Set_Use_Arrows_Always (Naming_Scheme_Editor.Casing, False);
-      String_List.Append (Casing_Items, -"");
-      Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Casing, Casing_Items);
-      Free_String_List (Casing_Items);
+      Gtk_New_Text (Naming_Scheme_Editor.Casing);
+      Naming_Scheme_Editor.Casing.Append_Text (-"");
+      Naming_Scheme_Editor.Casing.Set_Active (0);
       Pack_Start (Hbox5, Naming_Scheme_Editor.Casing, True, True, 0);
-
-      Combo_Entry2 := Get_Entry (Naming_Scheme_Editor.Casing);
-      Set_Editable (Combo_Entry2, False);
-      Set_Max_Length (Combo_Entry2, 0);
-      Set_Text (Combo_Entry2, -"");
-      Set_Visibility (Combo_Entry2, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry2, Signal_Changed,
+        (Naming_Scheme_Editor.Casing, Gtk.Combo_Box.Signal_Changed,
          Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New_Hbox (Hbox7, False, 0);
@@ -187,7 +162,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Visibility (Naming_Scheme_Editor.Dot_Replacement, True);
       Pack_Start (Hbox7, Naming_Scheme_Editor.Dot_Replacement, True, True, 0);
       Widget_Callback.Object_Connect
-        (Naming_Scheme_Editor.Dot_Replacement, Signal_Changed,
+        (Naming_Scheme_Editor.Dot_Replacement, Gtk.Combo_Box.Signal_Changed,
          Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New_Hbox (Hbox6, False, 0);
@@ -202,25 +177,16 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox6, Naming_Scheme_Editor.Label_Spec_Extensions, False, False, 0);
 
-      Gtk_New (Naming_Scheme_Editor.Spec_Extension);
-      Set_Case_Sensitive (Naming_Scheme_Editor.Spec_Extension, False);
-      Set_Use_Arrows (Naming_Scheme_Editor.Spec_Extension, True);
-      Set_Use_Arrows_Always (Naming_Scheme_Editor.Spec_Extension, False);
-      String_List.Append (Spec_Extension_Items, -".ads");
-      String_List.Append (Spec_Extension_Items, -".1.ada");
-      String_List.Append (Spec_Extension_Items, -"_.ada");
-      Combo.Set_Popdown_Strings
-        (Naming_Scheme_Editor.Spec_Extension, Spec_Extension_Items);
-      Free_String_List (Spec_Extension_Items);
+      Gtk.List_Store.Gtk_New (List, (0 => GType_String));
+      Gtk_New_With_Model_And_Entry (Naming_Scheme_Editor.Spec_Extension, List);
+      Naming_Scheme_Editor.Spec_Extension.Set_Entry_Text_Column (0);
+      Naming_Scheme_Editor.Spec_Extension.Append_Text (".ads");
+      Naming_Scheme_Editor.Spec_Extension.Append_Text (".1.ada");
+      Naming_Scheme_Editor.Spec_Extension.Append_Text ("_.ada");
+      Naming_Scheme_Editor.Spec_Extension.Set_Active (0);
       Pack_Start (Hbox6, Naming_Scheme_Editor.Spec_Extension, True, True, 0);
-
-      Combo_Entry4 := Get_Entry (Naming_Scheme_Editor.Spec_Extension);
-      Set_Editable (Combo_Entry4, True);
-      Set_Max_Length (Combo_Entry4, 0);
-      Set_Text (Combo_Entry4, -".ads");
-      Set_Visibility (Combo_Entry4, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry4, Signal_Changed,
+        (Naming_Scheme_Editor.Spec_Extension, Gtk.Combo_Box.Signal_Changed,
          Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New_Hbox (Hbox8, False, 0);
@@ -235,25 +201,16 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox8, Naming_Scheme_Editor.Label_Body_Extensions, False, False, 0);
 
-      Gtk_New (Naming_Scheme_Editor.Body_Extension);
-      Set_Case_Sensitive (Naming_Scheme_Editor.Body_Extension, False);
-      Set_Use_Arrows (Naming_Scheme_Editor.Body_Extension, True);
-      Set_Use_Arrows_Always (Naming_Scheme_Editor.Body_Extension, False);
-      String_List.Append (Body_Extension_Items, -".adb");
-      String_List.Append (Body_Extension_Items, -".2.ada");
-      String_List.Append (Body_Extension_Items, -".ada");
-      Combo.Set_Popdown_Strings
-        (Naming_Scheme_Editor.Body_Extension, Body_Extension_Items);
-      Free_String_List (Body_Extension_Items);
+      Gtk.List_Store.Gtk_New (List, (0 => GType_String));
+      Gtk_New_With_Model_And_Entry (Naming_Scheme_Editor.Body_Extension, List);
+      Naming_Scheme_Editor.Body_Extension.Set_Entry_Text_Column (0);
+      Naming_Scheme_Editor.Body_Extension.Append_Text (".adb");
+      Naming_Scheme_Editor.Body_Extension.Append_Text (".2.ada");
+      Naming_Scheme_Editor.Body_Extension.Append_Text (".ada");
+      Naming_Scheme_Editor.Body_Extension.Set_Active (0);
       Pack_Start (Hbox8, Naming_Scheme_Editor.Body_Extension, True, True, 0);
-
-      Combo_Entry5 := Get_Entry (Naming_Scheme_Editor.Body_Extension);
-      Set_Editable (Combo_Entry5, True);
-      Set_Max_Length (Combo_Entry5, 0);
-      Set_Text (Combo_Entry5, -".adb");
-      Set_Visibility (Combo_Entry5, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry5, Signal_Changed,
+        (Naming_Scheme_Editor.Body_Extension, Gtk.Combo_Box.Signal_Changed,
          Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New_Hbox (Hbox9, False, 0);
@@ -271,26 +228,18 @@ package body Naming_Scheme_Editor_Pkg is
         (Hbox9, Naming_Scheme_Editor.Label_Separate_Extensions,
          False, False, 0);
 
-      Gtk_New (Naming_Scheme_Editor.Separate_Extension);
-      Set_Case_Sensitive (Naming_Scheme_Editor.Separate_Extension, False);
-      Set_Use_Arrows (Naming_Scheme_Editor.Separate_Extension, True);
-      Set_Use_Arrows_Always (Naming_Scheme_Editor.Separate_Extension, False);
-      String_List.Append (Separate_Extension_Items, -".adb");
-      String_List.Append (Separate_Extension_Items, -".2.ada");
-      String_List.Append (Separate_Extension_Items, -".ada");
-      Combo.Set_Popdown_Strings
-        (Naming_Scheme_Editor.Separate_Extension, Separate_Extension_Items);
-      Free_String_List (Separate_Extension_Items);
+      Gtk.List_Store.Gtk_New (List, (0 => GType_String));
+      Gtk_New_With_Model_And_Entry
+        (Naming_Scheme_Editor.Separate_Extension, List);
+      Naming_Scheme_Editor.Separate_Extension.Set_Entry_Text_Column (0);
+      Naming_Scheme_Editor.Separate_Extension.Append_Text (".adb");
+      Naming_Scheme_Editor.Separate_Extension.Append_Text (".2.ada");
+      Naming_Scheme_Editor.Separate_Extension.Append_Text (".ada");
+      Naming_Scheme_Editor.Separate_Extension.Set_Active (0);
       Pack_Start
         (Hbox9, Naming_Scheme_Editor.Separate_Extension, True, True, 0);
-
-      Combo_Entry6 := Get_Entry (Naming_Scheme_Editor.Separate_Extension);
-      Set_Editable (Combo_Entry6, True);
-      Set_Max_Length (Combo_Entry6, 0);
-      Set_Text (Combo_Entry6, -".adb");
-      Set_Visibility (Combo_Entry6, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry6, Signal_Changed,
+        (Naming_Scheme_Editor.Separate_Extension, Gtk.Combo_Box.Signal_Changed,
          Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New (Frame30, -"Exceptions");
@@ -363,7 +312,8 @@ package body Naming_Scheme_Editor_Pkg is
         (Naming_Scheme_Editor.Exception_List, Signal_Key_Press_Event,
          On_Exception_List_Key_Press_Event'Access, Naming_Scheme_Editor);
       Widget_Callback.Object_Connect
-        (Get_Selection (Naming_Scheme_Editor.Exception_List), Signal_Changed,
+        (Get_Selection (Naming_Scheme_Editor.Exception_List),
+         Gtk.Tree_Selection.Signal_Changed,
          On_Exceptions_List_Select_Row'Access, Naming_Scheme_Editor);
       Add (Scrolledwindow1, Naming_Scheme_Editor.Exception_List);
 

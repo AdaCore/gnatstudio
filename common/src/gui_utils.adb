@@ -358,6 +358,26 @@ package body GUI_Utils is
       return Iter;
    end Add_Unique_Combo_Entry;
 
+   procedure Set_Active_Text
+     (Combo : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text  : String;
+      Col   : Gint := 0)
+   is
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_List_Store;
+   begin
+      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
+      Iter := Get_Iter_First (Model);
+
+      while Iter /= Null_Iter loop
+         if Model.Get_String (Iter, Col) = Text then
+            Combo.Set_Active_Iter (Iter);
+            return;
+         end if;
+         Model.Next (Iter);
+      end loop;
+   end Set_Active_Text;
+
    -----------------------
    -- Get_Index_In_List --
    -----------------------

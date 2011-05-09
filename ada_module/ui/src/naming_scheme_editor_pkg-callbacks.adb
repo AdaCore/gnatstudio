@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2009, AdaCore              --
+--                     Copyright (C) 2001-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +25,6 @@ with Gdk.Types;          use Gdk.Types;
 
 with Glib;               use Glib;
 
-with Gtk.List;           use Gtk.List;
 with Gtk.Tree_Model;     use Gtk.Tree_Model;
 with Gtk.Tree_Selection; use Gtk.Tree_Selection;
 with Gtk.Tree_Store;     use Gtk.Tree_Store;
@@ -52,13 +51,12 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       use Widget_List;
 
       E     : constant Naming_Scheme_Editor_Access :=
-        Naming_Scheme_Editor_Access (Object);
-      List  : constant Gtk_List := Get_List (E.Standard_Scheme);
+                Naming_Scheme_Editor_Access (Object);
       Value : Gint;
 
    begin
-      if Get_Selection (List) /= Widget_List.Null_List then
-         Value := Child_Position (List, Get_Data (Get_Selection (List)));
+      if Get_Active_Iter (E.Standard_Scheme) /= Null_Iter then
+         Value := Get_Active (E.Standard_Scheme);
 
          if Value /= Custom_Scheme then
             Set_Predefined_Scheme (E, Natural (Value));
@@ -67,7 +65,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
             --  been changed through callbacks when the changed the contents of
             --  the GUI.
 
-            Select_Item (Get_List (E.Standard_Scheme), Value);
+            Set_Active (E.Standard_Scheme, Value);
          end if;
       end if;
    end On_Standard_Scheme_Changed;
@@ -82,7 +80,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       E : constant Naming_Scheme_Editor_Access :=
         Naming_Scheme_Editor_Access (Object);
    begin
-      Select_Item (Get_List (E.Standard_Scheme), Custom_Scheme);
+      Set_Active (E.Standard_Scheme, Custom_Scheme);
    end Customized;
 
    -----------------------------------
