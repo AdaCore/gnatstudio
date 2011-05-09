@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2004-2010, AdaCore              --
+--                     Copyright (C) 2004-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,19 +17,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
 with Glib;               use Glib;
 with Glib.Object;        use Glib.Object;
 with Glib.Properties;    use Glib.Properties;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
-with Gtk.Combo;          use Gtk.Combo;
-with Gtk.Editable;       use Gtk.Editable;
-with Gtk.GEntry;         use Gtk.GEntry;
-with Gtk.List_Item;      use Gtk.List_Item;
+with Gtk.Combo_Box;      use Gtk.Combo_Box;
+with Gtk.List_Store;     use Gtk.List_Store;
 with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Toolbar;        use Gtk.Toolbar;
 with Gtk.Tool_Item;      use Gtk.Tool_Item;
 with Gtk.Tool_Button;    use Gtk.Tool_Button;
+with Gtk.Tree_Model;     use Gtk.Tree_Model;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.Widget;         use Gtk.Widget;
 
@@ -42,8 +43,6 @@ with GPS.Intl;           use GPS.Intl;
 
 with Custom_Module;      use Custom_Module;
 with GUI_Utils;          use GUI_Utils;
-
-with Gtk.List;           use Gtk.List;
 
 package body Custom_Combos is
 
@@ -88,23 +87,22 @@ package body Custom_Combos is
                             (1 => Label_Cst'Access);
 
    type Custom_Combo_Record is new Gtk_Box_Record with record
-      Combo : Gtk_Combo;
+      Combo : Gtk_Combo_Box;
    end record;
    type Custom_Combo is access all Custom_Combo_Record'Class;
+
+   type Changed_Callback_Data_Type is record
+      Subprogram : Subprogram_Type;
+      Item       : Unbounded_String;
+   end record;
+
+   package Combo_Callback is new Gtk.Handlers.User_Callback
+     (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
+      User_Type   => Changed_Callback_Data_Type);
 
    -----------------------
    -- Local subprograms --
    -----------------------
-
-   type Item_Callback is record
-      Combo       : Custom_Combo;
-      On_Selected : Subprogram_Type;
-   end record;
-
-   package Item_Handlers is new Gtk.Handlers.User_Return_Callback
-     (Widget_Type => Gtk_List_Item_Record,
-      Return_Type => Boolean,
-      User_Type   => Item_Callback);
 
    function Create_Combo
      (Kernel     : access Kernel_Handle_Record'Class;
@@ -154,14 +152,9 @@ package body Custom_Combos is
       Pos    : Integer) return Gtk_Widget;
    --  Return the Pos-th component
 
-   function Item_Selected
-     (Item : access Gtk_List_Item_Record'Class;
-      Data : Item_Callback) return Boolean;
-   --  Called when an item is selected
-
    procedure Combo_Changed
-     (Combo_Box  : access Gtk_Widget_Record'Class;
-      Subprogram : Subprogram_Type);
+     (Combo_Box : access Gtk_Widget_Record'Class;
+      Data      : Changed_Callback_Data_Type);
    --  Called whenever the text in GPS_Combo is changed.
 
    procedure Remove_Combo_Item
@@ -177,19 +170,18 @@ package body Custom_Combos is
      (Combo : access Custom_Combo_Record'Class;
       Label : String)
    is
-      use Gtk.Widget.Widget_List;
-      Entries : constant Glist := Get_Children (Get_List (Combo.Combo));
-      Tmp     : Glist := Entries;
-      Item    : Gtk_List_Item;
+      Iter : Gtk_Tree_Iter;
+      List : constant Gtk_List_Store := Gtk_List_Store (Combo.Combo.Get_Model);
+
    begin
-      while Tmp /= Null_List loop
-         Item := Gtk_List_Item (Get_Data (Tmp));
-         if Get_Text (Gtk_Label (Get_Child (Item))) = Label then
-            Remove (Get_List (Combo.Combo), Get_Data (Tmp));
+      Iter := List.Get_Iter_First;
+      while Iter /= Null_Iter loop
+         if List.Get_String (Iter, 0) = Label then
+            List.Remove (Iter);
             exit;
          end if;
 
-         Tmp := Next (Tmp);
+         List.Next (Iter);
       end loop;
    end Remove_Combo_Item;
 
@@ -259,56 +251,32 @@ package body Custom_Combos is
    end Lookup_Component;
 
    -------------------
-   -- Item_Selected --
-   -------------------
-
-   function Item_Selected
-     (Item : access Gtk_List_Item_Record'Class;
-      Data : Item_Callback) return Boolean
-   is
-      Text : constant String := Get_Text (Gtk_Label (Get_Child (Item)));
-   begin
-      if Data.On_Selected /= null then
-         declare
-            D : Callback_Data'Class := Create
-              (Get_Script (Data.On_Selected.all),
-               Arguments_Count => 2);
-            Tmp : Boolean;
-            pragma Unreferenced (Tmp);
-         begin
-            Set_Nth_Arg (D, 1,
-                         Get_Instance (Get_Script (Data.On_Selected.all),
-                                       Data.Combo));
-            Set_Nth_Arg (D, 2, Text);
-            Tmp := Execute (Data.On_Selected, D);
-            Free (D);
-         end;
-      end if;
-
-      return False;
-   end Item_Selected;
-
-   -------------------
    -- Combo_Changed --
    -------------------
 
    procedure Combo_Changed
-     (Combo_Box  : access Gtk_Widget_Record'Class;
-      Subprogram : Subprogram_Type)
+     (Combo_Box : access Gtk_Widget_Record'Class;
+      Data      : Changed_Callback_Data_Type)
    is
       Combo      : constant Custom_Combo := Custom_Combo (Combo_Box);
-      Combo_Text : constant String := Get_Text (Get_Entry (Combo.Combo));
+      Combo_Text : constant String := Get_Active_Text (Combo.Combo);
+
    begin
-      if Combo_Text /= "" and then Subprogram /= null then
+      if Combo_Text /= "" and then Data.Subprogram /= null
+        and then
+          (Data.Item = Null_Unbounded_String --  Execute every time
+           or else To_String (Data.Item) = Combo_Text) --  item specific cb
+      then
          declare
-            S   : constant Scripting_Language := Get_Script (Subprogram.all);
+            S   : constant Scripting_Language :=
+                    Get_Script (Data.Subprogram.all);
             D   : Callback_Data'Class := Create (S, Arguments_Count => 2);
             Tmp : Boolean;
             pragma Unreferenced (Tmp);
          begin
             Set_Nth_Arg (D, 1, Get_Instance (S, Combo));
             Set_Nth_Arg (D, 2, Combo_Text);
-            Tmp := Execute (Subprogram, D);
+            Tmp := Execute (Data.Subprogram, D);
             Free (D);
          end;
       end if;
@@ -343,16 +311,16 @@ package body Custom_Combos is
             Pack_Start (Combo, Label, Expand => False, Padding => 4);
          end if;
 
-         Gtk_New (Combo.Combo);
+         Gtk_New_Text (Combo.Combo);
          Set_Name (Combo, Id);
          Pack_Start
            (Combo, Combo.Combo, Expand => True, Fill => True, Padding => 4);
-         Set_Editable (Get_Entry (Combo.Combo), False);
 
-         Subprogram_Callback.Object_Connect
-           (Get_Entry (Combo.Combo), Signal_Changed, Combo_Changed'Access,
+         Combo_Callback.Object_Connect
+           (Combo.Combo, Gtk.Combo_Box.Signal_Changed, Combo_Changed'Access,
             Slot_Object => Combo,
-            User_Data   => On_Changed,
+            User_Data   => (Subprogram => On_Changed,
+                            Item       => Null_Unbounded_String),
             After       => True);
 
          Set_Data (Instance, Widget => GObject (Combo));
@@ -369,16 +337,15 @@ package body Custom_Combos is
       Label       : String;
       On_Selected : Subprogram_Type)
    is
-      Item : constant Gtk_List_Item :=
-               Add_Unique_Combo_Entry (Combo.Combo, Label);
    begin
+      Add_Unique_Combo_Entry (Combo.Combo, Label);
       if On_Selected /= null then
-         Item_Handlers.Connect
-           (Item, Signal_Button_Release_Event,
-            Item_Handlers.To_Marshaller (Item_Selected'Access),
-            User_Data   => (Combo       => Custom_Combo (Combo),
-                            On_Selected => On_Selected),
-            After => True);
+         Combo_Callback.Object_Connect
+           (Combo.Combo, Gtk.Combo_Box.Signal_Changed, Combo_Changed'Access,
+            Slot_Object => Combo,
+            User_Data   => (Subprogram => On_Selected,
+                            Item       => To_Unbounded_String (Label)),
+            After       => True);
       end if;
    end Add_Combo_Entry;
 
@@ -541,21 +508,20 @@ package body Custom_Combos is
 
       elsif Command = "clear" then
          Name_Parameters (Data, Simple_Args);
-         Clear_Items
-           (Get_List (Custom_Combo (GObject'(Get_Data (Inst))).Combo),
-            0, -1);
+         Clear
+           (Gtk_List_Store
+              (Get_Model (Custom_Combo (GObject'(Get_Data (Inst))).Combo)));
 
       elsif Command = "get_text" then
          Name_Parameters (Data, Simple_Args);
          Set_Return_Value
            (Data,
-            Get_Text (Get_Entry (Custom_Combo
-                                   (GObject'(Get_Data (Inst))).Combo)));
+            Get_Active_Text (Custom_Combo (GObject'(Get_Data (Inst))).Combo));
 
       elsif Command = "set_text" then
          Name_Parameters (Data, Set_Text_Args);
-         Set_Text
-           (Get_Entry (Custom_Combo (GObject'(Get_Data (Inst))).Combo),
+         Set_Active_Text
+           (Custom_Combo (GObject'(Get_Data (Inst))).Combo,
             Nth_Arg (Data, 2));
       end if;
    end Custom_Entry_Handler;
