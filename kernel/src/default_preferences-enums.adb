@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2010, AdaCore                   --
+--                Copyright (C) 2001-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +18,7 @@
 -----------------------------------------------------------------------
 
 with Case_Handling;            use Case_Handling;
-with Gtk.Combo;                use Gtk.Combo;
-with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.List_Item;            use Gtk.List_Item;
-with Gtk.List;                 use Gtk.List;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Glib.Object;              use Glib.Object;
 with GUI_Utils;                use GUI_Utils;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
@@ -34,7 +31,7 @@ package body Default_Preferences.Enums is
       Data  : Manager_Preference);
    --  Called when an enumeration preference has been changed.
 
-   procedure Update_Entry
+   procedure Update_Combo
      (Ent  : access GObject_Record'Class;
       Data : Manager_Preference);
    --  Called when the preference Data has changed, to update Ent
@@ -47,21 +44,21 @@ package body Default_Preferences.Enums is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference)
    is
-      C     : constant Gtk_Combo := Gtk_Combo (Combo);
+      C     : constant Gtk_Combo_Box := Gtk_Combo_Box (Combo);
    begin
-      Enum_Preference (Data.Pref).Enum_Value := Get_Index_In_List (C);
+      Enum_Preference (Data.Pref).Enum_Value := Integer (Get_Active (C));
    end Enum_Changed;
 
    ------------------
-   -- Update_Entry --
+   -- Update_Combo --
    ------------------
 
-   procedure Update_Entry
+   procedure Update_Combo
      (Ent  : access GObject_Record'Class;
       Data : Manager_Preference) is
    begin
-      Set_Text (Gtk_Entry (Ent), String'(Get_Pref (Data.Pref)));
-   end Update_Entry;
+      Set_Active_Text (Gtk_Combo_Box (Ent), String'(Get_Pref (Data.Pref)));
+   end Update_Combo;
 
    ------------
    -- Create --
@@ -103,37 +100,35 @@ package body Default_Preferences.Enums is
       return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Tips);
-      Combo   : Gtk_Combo;
-      Item    : Gtk_List_Item;
+      Combo : Gtk_Combo_Box;
+      Idx   : Gint := 0;
+
    begin
-      Gtk_New (Combo);
-      Set_Value_In_List (Combo, True, Ok_If_Empty => False);
-      Set_Editable (Get_Entry (Combo), False);
+      Gtk_New_Text (Combo);
 
       for K in Pref.Choices'Range loop
          declare
             S : String := Pref.Choices (K).all;
          begin
             Mixed_Case (S);
-            Gtk_New (Item, S);
+            Combo.Append_Text (S);
          end;
 
-         Add (Get_List (Combo), Item);
          if K = Pref.Enum_Value + Pref.Choices'First then
-            Set_Text (Get_Entry (Combo), Pref.Choices (K).all);
+            Combo.Set_Active (Idx);
          end if;
-         Show_All (Item);
+
+         Idx := Idx + 1;
       end loop;
 
-      Preference_Handlers.Object_Connect
-        (Get_List (Combo), "select_child",
+      Preference_Handlers.Connect
+        (Combo, Gtk.Combo_Box.Signal_Changed,
          Enum_Changed'Access,
-         Slot_Object => Combo,
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Entry'Access,
-         Get_Entry (Combo),
+         Update_Combo'Access,
+         Combo,
          User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
       return Gtk.Widget.Gtk_Widget (Combo);
@@ -205,38 +200,36 @@ package body Default_Preferences.Enums is
       is
          pragma Unreferenced (Tips);
          V       : constant Integer := Enum_Preference (Pref).Enum_Value;
-         Combo   : Gtk_Combo;
-         Item    : Gtk_List_Item;
+         Combo   : Gtk_Combo_Box;
+         Idx     : Gint := 0;
+
       begin
-         Gtk_New (Combo);
-         Set_Value_In_List (Combo, True, Ok_If_Empty => False);
-         Set_Editable (Get_Entry (Combo), False);
+         Gtk_New_Text (Combo);
 
          for K in Enumeration'Range loop
             declare
                S : String := Enumeration'Image (K);
             begin
                Mixed_Case (S);
-               Gtk_New (Item, S);
+               Combo.Append_Text (S);
             end;
 
-            Add (Get_List (Combo), Item);
             if Enumeration'Pos (K) = V then
-               Set_Text (Get_Entry (Combo), Enumeration'Image (K));
+               Combo.Set_Active (Idx);
             end if;
-            Show_All (Item);
+
+            Idx := Idx + 1;
          end loop;
 
-         Preference_Handlers.Object_Connect
-           (Get_List (Combo), "select_child",
+         Preference_Handlers.Connect
+           (Combo, Gtk.Combo_Box.Signal_Changed,
             Enum_Changed'Access,
-            Slot_Object => Combo,
             User_Data   => (Preferences_Manager (Manager),
                             Default_Preferences.Preference (Pref)));
          Preference_Handlers.Object_Connect
            (Manager.Pref_Editor, Signal_Preferences_Changed,
-            Update_Entry'Access,
-            Get_Entry (Combo),
+            Update_Combo'Access,
+            Combo,
             User_Data => (Preferences_Manager (Manager),
                           Default_Preferences.Preference (Pref)));
 
