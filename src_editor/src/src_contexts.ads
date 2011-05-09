@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,10 +23,10 @@ with GNAT.Regpat;
 
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
-with Gtk.Widget;
-with Gtk.Combo;
 with Gtk.Box;
+with Gtk.Combo_Box;
 with Gtk.Text_Iter;
+with Gtk.Widget;
 
 with Basic_Types;
 with Find_Utils;                    use Find_Utils;
@@ -65,6 +65,7 @@ package Src_Contexts is
       Comments_And_Strings,
       Strings_Only,
       All_But_Comments);
+   pragma Convention (C, Search_Scope);
    --  Scope wanted for the search.
    --  Whole scope means never use any context (i.e. files are whole scanned).
    --  This scope mostly applies to source files.
@@ -431,13 +432,13 @@ private
    overriding procedure Free (Context : in out Open_Files_Context);
 
    type Scope_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
-      Combo : Gtk.Combo.Gtk_Combo;
+      Combo : Gtk.Combo_Box.Gtk_Combo_Box;
    end record;
 
    type Files_Extra_Scope_Record is new
      Files_Extra_Info_Pkg.Files_Extra_Info_Record with
    record
-      Combo : Gtk.Combo.Gtk_Combo;
+      Combo : Gtk.Combo_Box.Gtk_Combo_Box;
    end record;
 
 end Src_Contexts;

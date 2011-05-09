@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2009, AdaCore                  --
+--                 Copyright (C) 2002-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,14 +27,17 @@ with Glib;                use Glib;
 
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Combo;           use Gtk.Combo;
+with Gtk.Combo_Box;       use Gtk.Combo_Box;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.List;            use Gtk.List;
 with Gtk.List_Item;       use Gtk.List_Item;
+with Gtk.List_Store;      use Gtk.List_Store;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Object;          use Gtk.Object;
 with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
+with Gtk.Tree_Model;      use Gtk.Tree_Model;
 with Gtk.Widget;          use Gtk.Widget;
 
 with GUI_Utils;           use GUI_Utils;
@@ -458,6 +461,52 @@ package body Histories is
 
       else
          Set_Text (Get_Entry (Combo), "");
+      end if;
+   end Get_History;
+
+   -----------------
+   -- Get_History --
+   -----------------
+
+   procedure Get_History
+     (Hist        : History_Record;
+      Key         : History_Key;
+      Combo       : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Clear_Combo : Boolean := True;
+      Prepend     : Boolean := False;
+      Col         : Gint := 0)
+   is
+      List  : constant Gtk_List_Store := Gtk_List_Store (Get_Model (Combo));
+      Value : constant String_List_Access := Get_History (Hist, Key);
+      Iter  : Gtk_Tree_Iter;
+
+   begin
+      if Clear_Combo then
+         List.Clear;
+      end if;
+
+      if Value /= null then
+         for V in Value'Range loop
+            --  Do not add the empty item. It is stored internally to properly
+            --  restore the contents of the entry, but shouldn't appear in the
+            --  list.
+            if Value (V).all /= "" then
+               --  Do not add the item directly, in case there was already a
+               --  similar entry in the list if it wasn't cleared
+               if Clear_Combo then
+                  List.Append (Iter);
+                  List.Set (Iter, Col, Value (V).all);
+               else
+                  Iter := Add_Unique_List_Entry (List, Value (V).all, Prepend);
+               end if;
+            end if;
+         end loop;
+
+         Set_Active (Combo, 0);
+         Select_Region (Gtk_Entry (Get_Child (Combo)), 0, -1);
+
+      else
+         Set_Text (Gtk_Entry (Get_Child (Combo)), "");
       end if;
    end Get_History;
 

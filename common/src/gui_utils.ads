@@ -41,6 +41,7 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;
 with Gtk.Combo;
+with Gtk.Combo_Box;
 with Gtk.Container;
 with Gtk.Enums;
 with Gtk.Event_Box;
@@ -48,6 +49,7 @@ with Gtk.Handlers;
 with Gtk.Label;
 with Gtk.List;
 with Gtk.List_Item;
+with Gtk.List_Store;
 with Gtk.Menu;
 with Gtk.Menu_Bar;
 with Gtk.Menu_Item;
@@ -117,6 +119,14 @@ package GUI_Utils is
    --  Add Text to List if it is not already there. Nothing is done if Text
    --  is already visible in the list. Text must be UTF8-encoded.
 
+   function Add_Unique_List_Entry
+     (List    : access Gtk.List_Store.Gtk_List_Store_Record'Class;
+      Text    : String;
+      Prepend : Boolean := False;
+      Col     : Gint := 0) return Gtk.Tree_Model.Gtk_Tree_Iter;
+   --  Add Text to List if it is not already there. Nothing is done if Text
+   --  is already visible in the list. Text must be UTF8-encoded.
+
    procedure Add_Unique_Combo_Entry
      (Combo           : access Gtk.Combo.Gtk_Combo_Record'Class;
       Text            : String;
@@ -136,6 +146,28 @@ package GUI_Utils is
       Use_Item_String : Boolean := False;
       Prepend         : Boolean := False) return Gtk.List_Item.Gtk_List_Item;
    --  Same as above, but return the inserted item (or the previously existing
+   --  one).
+
+   procedure Add_Unique_Combo_Entry
+     (Combo       : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text        : String;
+      Select_Text : Boolean := False;
+      Prepend     : Boolean := False;
+      Col         : Gint := 0);
+   --  Add Text to the popdown list of a text combo_box, if it is not already
+   --  there.
+   --  If the Text is already in the combo box, nothing is done.
+   --  If Select_Text is set, then the already existing text or the newly
+   --  inserted one will be selected.
+   --  Text must be UTF8-encoded.
+
+   function Add_Unique_Combo_Entry
+     (Combo       : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text        : String;
+      Select_Text : Boolean := False;
+      Prepend     : Boolean := False;
+      Col         : Gint := 0) return Gtk.Tree_Model.Gtk_Tree_Iter;
+   --  Same as above, but return the inserted iter (or the previously existing
    --  one).
 
    function Get_Index_In_List

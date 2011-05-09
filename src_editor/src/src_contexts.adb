@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2001-2010, AdaCore                 --
+--                  Copyright (C) 2001-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,7 +30,7 @@ with Glib;                       use Glib;
 with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Check_Button;           use Gtk.Check_Button;
-with Gtk.Combo;                  use Gtk.Combo;
+with Gtk.Combo_Box;              use Gtk.Combo_Box;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Label;                  use Gtk.Label;
@@ -229,7 +229,7 @@ package body Src_Contexts is
    --  Free Result and its components
 
    procedure Initialize_Scope_Combo
-     (Combo  : access Gtk_Combo_Record'Class;
+     (Combo  : access Gtk_Combo_Box_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
    --  Initialize the combo box with all the entries for the selection of the
    --  scope.
@@ -1266,7 +1266,7 @@ package body Src_Contexts is
    begin
       return Current_File_Factory
         (Kernel, All_Occurrences,
-         Scope => Search_Scope'Val (Get_Index_In_List (Scope.Combo)));
+         Scope => Search_Scope'Val (Get_Active (Scope.Combo)));
    end Current_File_Factory;
 
    --------------------------
@@ -1304,7 +1304,7 @@ package body Src_Contexts is
       Context : constant Files_Project_Context_Access :=
                   new Files_Project_Context;
    begin
-      Context.Scope      := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+      Context.Scope      := Search_Scope'Val (Get_Active (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
       Context.Begin_Line      := 0;
       Set_File_List (Context, Get_Project (Kernel).Source_Files (True));
@@ -1366,7 +1366,7 @@ package body Src_Contexts is
 
       Open_File_List          := new File_Array'(Open_Files (Kernel));
       Context.Scope           :=
-        Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+        Search_Scope'Val (Get_Active (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
       Context.Begin_Line      := 0;
       Set_File_List (Context, Open_File_List);
@@ -1427,7 +1427,7 @@ package body Src_Contexts is
       if Get_Text (Extra.Files_Entry) /= "" then
          Context := Files_Factory
            (All_Occurrences,
-            Search_Scope'Val (Get_Index_In_List (Extra.Combo)));
+            Search_Scope'Val (Get_Active (Extra.Combo)));
          Re := Compile
            (Get_Text (Extra.Files_Entry),
             Glob => True,
@@ -2579,30 +2579,21 @@ package body Src_Contexts is
    ----------------------------
 
    procedure Initialize_Scope_Combo
-     (Combo  : access Gtk_Combo_Record'Class;
+     (Combo  : access Gtk_Combo_Box_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Scope_Combo_Items : Gtk.Enums.String_List.Glist;
    begin
-      Set_Case_Sensitive (Combo, False);
-      Gtk.Enums.String_List.Append (Scope_Combo_Items, -"Whole Text");
-      Gtk.Enums.String_List.Append (Scope_Combo_Items, -"Comments Only");
-      Gtk.Enums.String_List.Append (Scope_Combo_Items, -"Comments + Strings");
-      Gtk.Enums.String_List.Append (Scope_Combo_Items, -"Strings Only");
-      Gtk.Enums.String_List.Append (Scope_Combo_Items, -"All but Comments");
-      Gtk.Combo.Set_Popdown_Strings (Combo, Scope_Combo_Items);
-      Free_String_List (Scope_Combo_Items);
+      Add_Unique_Combo_Entry (Combo, -"Whole Text", True);
+      Add_Unique_Combo_Entry (Combo, -"Comments Only");
+      Add_Unique_Combo_Entry (Combo, -"Comments + Strings");
+      Add_Unique_Combo_Entry (Combo, -"Strings Only");
+      Add_Unique_Combo_Entry (Combo, -"All but Comments");
 
-      Set_Text (Get_Entry (Combo), -"Whole Text");
-
-      Set_Editable (Get_Entry (Combo), False);
-      Set_Max_Length (Get_Entry (Combo), 0);
       Set_Tip (Get_Tooltips (Kernel),
-               Get_Entry (Combo),
-               -"Restrict the scope of the search");
+               Combo, -"Restrict the scope of the search");
 
       Kernel_Callback.Connect
-        (Get_Entry (Combo), Signal_Changed, Vsearch.Reset_Search'Access,
+        (Combo, Gtk.Combo_Box.Signal_Changed, Vsearch.Reset_Search'Access,
          Kernel_Handle (Kernel));
    end Initialize_Scope_Combo;
 
@@ -2618,7 +2609,7 @@ package body Src_Contexts is
       Selector := new Scope_Selector_Record;
       Gtk.Box.Initialize_Vbox (Gtk.Box.Gtk_Box (Selector));
 
-      Gtk_New (Selector.Combo);
+      Gtk_New_Text (Selector.Combo);
       Pack_Start (Selector, Selector.Combo, False, True, 2);
       Initialize_Scope_Combo (Selector.Combo, Kernel);
    end Gtk_New;
@@ -2640,7 +2631,7 @@ package body Src_Contexts is
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Extra.Files_Table, Label, 0, 1, 2, 3, Fill, 0);
 
-      Gtk_New (Extra.Combo);
+      Gtk_New_Text (Extra.Combo);
       Initialize_Scope_Combo (Extra.Combo, Kernel);
       Attach (Extra.Files_Table, Extra.Combo, 1, 3, 2, 3, Fill, 0);
 
@@ -2648,11 +2639,11 @@ package body Src_Contexts is
         (Extra.Subdirs_Check, Signal_Toggled, Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Files_Entry, Signal_Changed, Reset_Search'Access,
+        (Extra.Files_Entry, Gtk.Combo_Box.Signal_Changed, Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Directory_Entry, Signal_Changed, Reset_Search'Access,
-         Kernel_Handle (Kernel));
+        (Extra.Directory_Entry, Gtk.Combo_Box.Signal_Changed,
+         Reset_Search'Access, Kernel_Handle (Kernel));
    end Gtk_New;
 
    ---------------------

@@ -55,6 +55,7 @@ with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Clist;                 use Gtk.Clist;
 with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -66,6 +67,7 @@ with Gtk.Item;                  use Gtk.Item;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.List;                  use Gtk.List;
 with Gtk.List_Item;             use Gtk.List_Item;
+with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
@@ -227,6 +229,39 @@ package body GUI_Utils is
       Item := Add_Unique_List_Entry (List, Text, Prepend);
    end Add_Unique_List_Entry;
 
+   ---------------------------
+   -- Add_Unique_List_Entry --
+   ---------------------------
+
+   function Add_Unique_List_Entry
+     (List    : access Gtk.List_Store.Gtk_List_Store_Record'Class;
+      Text    : String;
+      Prepend : Boolean := False;
+      Col     : Gint := 0) return Gtk.Tree_Model.Gtk_Tree_Iter
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      Iter := List.Get_Iter_First;
+
+      while Iter /= Null_Iter loop
+         if List.Get_String (Iter, Col) = Text then
+            return Iter;
+         end if;
+
+         List.Next (Iter);
+      end loop;
+
+      if Prepend then
+         List.Prepend (Iter);
+      else
+         List.Append (Iter);
+      end if;
+
+      List.Set (Iter, Col, Text);
+
+      return Iter;
+   end Add_Unique_List_Entry;
+
    ----------------------------
    -- Add_Unique_Combo_Entry --
    ----------------------------
@@ -265,6 +300,62 @@ package body GUI_Utils is
          Set_Item_String (Combo, Gtk_Item (Item), Item_String);
       end if;
       return Item;
+   end Add_Unique_Combo_Entry;
+
+   ----------------------------
+   -- Add_Unique_Combo_Entry --
+   ----------------------------
+
+   procedure Add_Unique_Combo_Entry
+     (Combo       : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text        : String;
+      Select_Text : Boolean := False;
+      Prepend     : Boolean := False;
+      Col         : Gint := 0)
+   is
+      Iter : Gtk_Tree_Iter;
+      pragma Unreferenced (Iter);
+   begin
+      Iter := Add_Unique_Combo_Entry (Combo, Text, Select_Text, Prepend, Col);
+   end Add_Unique_Combo_Entry;
+
+   ----------------------------
+   -- Add_Unique_Combo_Entry --
+   ----------------------------
+
+   function Add_Unique_Combo_Entry
+     (Combo       : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text        : String;
+      Select_Text : Boolean := False;
+      Prepend     : Boolean := False;
+      Col         : Gint := 0) return Gtk_Tree_Iter
+   is
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_List_Store;
+   begin
+      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
+      Iter := Get_Iter_First (Model);
+
+      while Iter /= Null_Iter loop
+         exit when Model.Get_String (Iter, Col) = Text;
+         Model.Next (Iter);
+      end loop;
+
+      if Iter = Null_Iter then
+         if Prepend then
+            Gtk.List_Store.Prepend (Model, Iter);
+         else
+            Gtk.List_Store.Append (Model, Iter);
+         end if;
+
+         Model.Set (Iter, Col, Text);
+      end if;
+
+      if Select_Text then
+         Gtk.Combo_Box.Set_Active_Iter (Combo, Iter);
+      end if;
+
+      return Iter;
    end Add_Unique_Combo_Entry;
 
    -----------------------

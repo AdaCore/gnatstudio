@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2010, AdaCore              --
+--                     Copyright (C) 2001-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,21 +17,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;
+
+with Glib.Object;
+
+with Gdk.Pixbuf;
+
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Button;        use Gtk.Button;
+with Gtk.Check_Button;  use Gtk.Check_Button;
+with Gtk.Combo_Box;     use Gtk.Combo_Box;
+with Gtk.GEntry;        use Gtk.GEntry;
+with Gtk.Label;         use Gtk.Label;
+with Gtk.Main;          use Gtk.Main;
+with Gtk.Table;         use Gtk.Table;
+with Gtk.Widget;        use Gtk.Widget;
+
+with Collapsing_Pane;   use Collapsing_Pane;
 with Find_Utils;        use Find_Utils;
 with GPS.Kernel;        use GPS.Kernel;
-with Glib.Object;
-with Gtk.Button;        use Gtk.Button;
-with Gtk.Main;          use Gtk.Main;
-with Gtk.Widget;        use Gtk.Widget;
-with Gtk.Box;           use Gtk.Box;
-with Gtk.Label;         use Gtk.Label;
-with Gtk.Check_Button;  use Gtk.Check_Button;
-with Gtk.Table;         use Gtk.Table;
-with Gtk.GEntry;        use Gtk.GEntry;
-with Gtk.Combo;         use Gtk.Combo;
-with Collapsing_Pane;   use Collapsing_Pane;
-with Gdk.Pixbuf;
-with GNAT.Strings;
 
 --  This package provides an extended version of the visual search
 --  widget that can be found in module vsearch, so that it can be integrated
@@ -165,11 +169,10 @@ private
       Replace_Label       : Gtk_Label;
       Search_For_Label    : Gtk_Label;
       Search_In_Label     : Gtk_Label;
-      Replace_Combo       : Gtk_Combo;
+      Replace_Combo       : Gtk_Combo_Box;
       Replace_Entry       : Gtk_Entry;
-      Context_Combo       : Gtk_Combo;
-      Context_Entry       : Gtk_Entry;
-      Pattern_Combo       : Gtk_Combo;
+      Context_Combo       : Gtk_Combo_Box;
+      Pattern_Combo       : Gtk_Combo_Box;
       Pattern_Entry       : Gtk_Entry;
       Buttons_Table       : Gtk_Table;
       Options_Frame       : Gtk_Box;
