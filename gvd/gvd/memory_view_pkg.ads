@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2010, AdaCore              --
+--                     Copyright (C) 2000-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Check_Button;    use Gtk.Check_Button;
-with Gtk.Combo;           use Gtk.Combo;
+with Gtk.Combo_Box;       use Gtk.Combo_Box;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;     use Gtk.Spin_Button;
@@ -39,14 +39,12 @@ package Memory_View_Pkg is
       Submit         : Gtk_Button;
       Close          : Gtk_Button;
       Address_View   : Gtk_Button;
-      Format         : Gtk_Combo;
+      Format         : Gtk_Combo_Box;
       Search_Button  : Gtk_Button;
       Show_Ascii     : Gtk_Check_Button;
-      Size           : Gtk_Combo;
-      Size_Entry     : Gtk_Entry;
+      Size           : Gtk_Combo_Box;
       Address_Entry  : Gtk_Entry;
       Search_Entry   : Gtk_Entry;
-      Data_Entry     : Gtk_Entry;
       Lines_Spin     : Gtk_Spin_Button;
    end record;
    type Memory_View_Access is access all Memory_View_Record'Class;

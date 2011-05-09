@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2010, AdaCore              --
+--                     Copyright (C) 2000-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,8 +49,6 @@ package body Memory_View_Pkg is
    procedure Initialize (Memory_View : access Memory_View_Record'Class) is
       pragma Suppress (All_Checks);
 
-      Size_Items   : String_List.Glist;
-      Format_Items : String_List.Glist;
       Label95      : Gtk_Label;
       Label96      : Gtk_Label;
       Hbox12       : Gtk_Hbox;
@@ -135,22 +133,12 @@ package body Memory_View_Pkg is
       Set_Line_Wrap (Label98, False);
       Pack_Start (Hbox12, Label98, True, True, 4);
 
-      Gtk_New (Memory_View.Size);
-      Set_Case_Sensitive (Memory_View.Size, False);
-      Set_Use_Arrows (Memory_View.Size, True);
-      Set_Use_Arrows_Always (Memory_View.Size, False);
-      String_List.Append (Size_Items, -"Byte");
-      String_List.Append (Size_Items, -"Halfword");
-      String_List.Append (Size_Items, -"Word");
-      Combo.Set_Popdown_Strings (Memory_View.Size, Size_Items);
-      Free_String_List (Size_Items);
+      Gtk_New_Text (Memory_View.Size);
+      Memory_View.Size.Append_Text (-"Byte");
+      Memory_View.Size.Append_Text (-"Halfword");
+      Memory_View.Size.Append_Text (-"Word");
+      Memory_View.Size.Set_Active (0);
       Pack_Start (Hbox12, Memory_View.Size, True, True, 0);
-
-      Memory_View.Size_Entry := Get_Entry (Memory_View.Size);
-      Set_Editable (Memory_View.Size_Entry, False);
-      Set_Max_Length (Memory_View.Size_Entry, 0);
-      Set_Text (Memory_View.Size_Entry, -"Byte");
-      Set_Visibility (Memory_View.Size_Entry, True);
 
       Gtk_New_Vseparator (Vseparator7);
       Pack_Start (Hbox12, Vseparator7, False, True, 10);
@@ -162,23 +150,13 @@ package body Memory_View_Pkg is
       Set_Line_Wrap (Label97, False);
       Pack_Start (Hbox12, Label97, True, True, 0);
 
-      Gtk_New (Memory_View.Format);
-      Set_Case_Sensitive (Memory_View.Format, False);
-      Set_Use_Arrows (Memory_View.Format, True);
-      Set_Use_Arrows_Always (Memory_View.Format, False);
-      String_List.Append (Format_Items, -"Hex");
-      String_List.Append (Format_Items, -"Decimal");
-      String_List.Append (Format_Items, -"Octal");
-      String_List.Append (Format_Items, -"ASCII");
-      Combo.Set_Popdown_Strings (Memory_View.Format, Format_Items);
-      Free_String_List (Format_Items);
+      Gtk_New_Text (Memory_View.Format);
+      Memory_View.Format.Append_Text (-"Hex");
+      Memory_View.Format.Append_Text (-"Decimal");
+      Memory_View.Format.Append_Text (-"Octal");
+      Memory_View.Format.Append_Text (-"ASCII");
+      Memory_View.Format.Set_Active (0);
       Pack_Start (Hbox12, Memory_View.Format, True, True, 7);
-
-      Memory_View.Data_Entry := Get_Entry (Memory_View.Format);
-      Set_Editable (Memory_View.Data_Entry, False);
-      Set_Max_Length (Memory_View.Data_Entry, 0);
-      Set_Text (Memory_View.Data_Entry, -"Hex");
-      Set_Visibility (Memory_View.Data_Entry, True);
 
       Gtk_New_Vseparator (Vseparator10);
       Pack_Start (Hbox12, Vseparator10, True, True, 0);

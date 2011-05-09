@@ -36,6 +36,7 @@ with Gtk.Arguments;            use Gtk.Arguments;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
@@ -689,8 +690,8 @@ package body GVD.Memory_View is
       --  internationalization of strings properly.
 
       declare
-         Size : constant String := Get_Text (View.Editor.Size_Entry);
-         Data : constant String := Get_Text (View.Editor.Data_Entry);
+         Size : constant String := Get_Active_Text (View.Editor.Size);
+         Data : constant String := Get_Active_Text (View.Editor.Format);
       begin
          if Size = -"Byte" then
             View.Data := Byte;
@@ -1009,11 +1010,11 @@ package body GVD.Memory_View is
          Widget_Callback.To_Marshaller (On_Address_View_Clicked'Access),
          Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Size_Entry, Signal_Changed,
+        (Widget.Editor.Size, Gtk.Combo_Box.Signal_Changed,
          Widget_Callback.To_Marshaller (On_Size_Entry_Changed'Access),
          Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Data_Entry, Signal_Changed,
+        (Widget.Editor.Format, Gtk.Combo_Box.Signal_Changed,
          Widget_Callback.To_Marshaller (On_Data_Entry_Changed'Access),
          Widget);
       Widget_Callback.Object_Connect
