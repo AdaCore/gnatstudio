@@ -65,7 +65,6 @@ with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
 with GPS.Intl;                   use GPS.Intl;
-
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
@@ -947,7 +946,7 @@ package body Src_Editor_View is
          Top_In_Buffer    : Gint;
          Bottom_In_Buffer : Gint;
          Color            : Gdk_Color;
-         C_Color          : Cairo_Color;
+         Tmp_Color        : HSV_Color;
          Cr               : Cairo_Context;
 
          procedure Draw_Block (B : in out Block_Record);
@@ -978,6 +977,7 @@ package body Src_Editor_View is
             First          : constant Gint := Gint (Buffer_First - 1);
             Last           : Gint := Gint (Buffer_Last - 1);
             Offset         : Integer;
+
          begin
             if Buffer_First > Bottom_Line
               or else Buffer_Last < Top_Line
@@ -1138,11 +1138,19 @@ package body Src_Editor_View is
             X := (Column * View.Width_Of_256_Chars) / 256 - Rect.X + Margin;
 
             Save (Cr);
-            Set_Line_Width (Cr, 0.5);
-            C_Color := To_Cairo (View.Text_Color);
-            C_Color.Alpha := 0.1;
+            Set_Line_Width (Cr, 1.0);
+            Tmp_Color := To_HSV (To_Cairo (View.Text_Color));
+
+            if Tmp_Color.V > 0.5 then
+               --  Light color: let's reduce its luminance by 2
+               Tmp_Color.V := Tmp_Color.V * 0.7;
+            else
+               --  Dark color, lighten it
+               Tmp_Color.V := (1.0 - Tmp_Color.V) * 0.7;
+            end if;
+
             Draw_Line
-              (Cr, C_Color, X, Y, X, Y + Rect.Height);
+              (Cr, To_Cairo (Tmp_Color), X, Y, X, Y + Rect.Height);
             Restore (Cr);
          end if;
 
