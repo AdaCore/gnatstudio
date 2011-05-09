@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,27 +17,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Box;   use Gtk.Box;
-with Gtk.Table; use Gtk.Table;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Combo; use Gtk.Combo;
-with Gtk.GEntry; use Gtk.GEntry;
+with Gtk.Box;          use Gtk.Box;
+with Gtk.Button;       use Gtk.Button;
 with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Button; use Gtk.Button;
+with Gtk.Gentry;       use Gtk.GEntry;
+with Gtk.Label;        use Gtk.Label;
+with Gtk.Table;        use Gtk.Table;
 with GPS.Kernel;
+
 package Files_Extra_Info_Pkg is
 
    type Files_Extra_Info_Record is new Gtk_Box_Record with record
       --  Files_Frame : Gtk_Frame;
-      Files_Table : Gtk_Table;
-      Files_Label : Gtk_Label;
+      Files_Table     : Gtk_Table;
+      Files_Label     : Gtk_Label;
       Directory_Label : Gtk_Label;
-      Files_Combo : Gtk_Combo;
-      Files_Entry : Gtk_Entry;
-      Directory_Combo : Gtk_Combo;
+      Files_Entry     : Gtk_Entry;
       Directory_Entry : Gtk_Entry;
-      Browse_Button : Gtk_Button;
-      Subdirs_Check : Gtk_Check_Button;
+      Browse_Button   : Gtk_Button;
+      Subdirs_Check   : Gtk_Check_Button;
    end record;
    type Files_Extra_Info_Access is access all Files_Extra_Info_Record'Class;
 

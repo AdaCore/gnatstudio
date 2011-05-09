@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2010, AdaCore              --
+--                     Copyright (C) 2001-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,12 +17,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk; use Gtk;
+with Gtk;             use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
-with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Tooltips;    use Gtk.Tooltips;
-with GPS.Intl;        use GPS.Intl;
+with Gtkada.Handlers; use Gtkada.Handlers;
+
 with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
+
+with GPS.Intl;        use GPS.Intl;
 with GPS.Kernel;      use GPS.Kernel;
 with GPS.Kernel.MDI;  use GPS.Kernel.MDI;
 
@@ -48,10 +50,7 @@ package body Files_Extra_Info_Pkg is
      (Files_Extra_Info : access Files_Extra_Info_Record'Class;
       Handle           : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      pragma Suppress (All_Checks);
-      Files_Combo_Items     : String_List.Glist;
-      Tooltips              : Gtk_Tooltips;
-      Directory_Combo_Items : String_List.Glist;
+      Tooltips : Gtk_Tooltips;
 
    begin
       --  Gtk.Window.Initialize (Files_Extra_Info, Window_Toplevel);
@@ -88,43 +87,21 @@ package body Files_Extra_Info_Pkg is
       Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Directory_Label,
               0, 1, 1, 2, Fill, 0, 0, 0);
 
-      Gtk_New (Files_Extra_Info.Files_Combo);
-      Set_Case_Sensitive (Files_Extra_Info.Files_Combo, False);
-      Set_Use_Arrows (Files_Extra_Info.Files_Combo, True);
-      Set_Use_Arrows_Always (Files_Extra_Info.Files_Combo, False);
-      --  String_List.Append (Files_Combo_Items, -"");
-      --  Combo.Set_Popdown_Strings (Files_Extra_Info.Files_Combo,
-      --  Files_Combo_Items);
-      Free_String_List (Files_Combo_Items);
-      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Files_Combo,
-              1, 3, 0, 1, Fill, 0, 0, 0);
-
-      Files_Extra_Info.Files_Entry := Get_Entry (Files_Extra_Info.Files_Combo);
+      Gtk_New (Files_Extra_Info.Files_Entry);
       Set_Editable (Files_Extra_Info.Files_Entry, True);
       Set_Max_Length (Files_Extra_Info.Files_Entry, 0);
       Set_Text (Files_Extra_Info.Files_Entry, -"");
-      Set_Visibility (Files_Extra_Info.Files_Entry, True);
-      --  Gtk_New (Tooltips);
+      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Files_Entry,
+              1, 3, 0, 1, Fill, 0, 0, 0);
       Tooltips := Get_Tooltips (Handle);
       Set_Tip (Tooltips, Files_Extra_Info.Files_Entry, -"File(s) to scan");
 
-      Gtk_New (Files_Extra_Info.Directory_Combo);
-      Set_Case_Sensitive (Files_Extra_Info.Directory_Combo, False);
-      Set_Use_Arrows (Files_Extra_Info.Directory_Combo, True);
-      Set_Use_Arrows_Always (Files_Extra_Info.Directory_Combo, False);
-      String_List.Append (Directory_Combo_Items, -"");
-      Combo.Set_Popdown_Strings
-        (Files_Extra_Info.Directory_Combo, Directory_Combo_Items);
-      Free_String_List (Directory_Combo_Items);
-      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Directory_Combo,
-              1, 3, 1, 2, Fill, 0, 0, 0);
-
-      Files_Extra_Info.Directory_Entry :=
-        Get_Entry (Files_Extra_Info.Directory_Combo);
+      Gtk_New (Files_Extra_Info.Directory_Entry);
       Set_Editable (Files_Extra_Info.Directory_Entry, True);
       Set_Max_Length (Files_Extra_Info.Directory_Entry, 0);
       Set_Text (Files_Extra_Info.Directory_Entry, -"");
-      Set_Visibility (Files_Extra_Info.Directory_Entry, True);
+      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Directory_Entry,
+              1, 3, 1, 2, Fill, 0, 0, 0);
       Set_Tip
         (Tooltips, Files_Extra_Info.Directory_Entry, -"Directory to scan");
 

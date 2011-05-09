@@ -31,6 +31,7 @@ with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box;              use Gtk.Combo_Box;
+with Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Label;                  use Gtk.Label;
@@ -2639,10 +2640,10 @@ package body Src_Contexts is
         (Extra.Subdirs_Check, Signal_Toggled, Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Files_Entry, Gtk.Combo_Box.Signal_Changed, Reset_Search'Access,
+        (Extra.Files_Entry, Gtk.Editable.Signal_Changed, Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Directory_Entry, Gtk.Combo_Box.Signal_Changed,
+        (Extra.Directory_Entry, Gtk.Editable.Signal_Changed,
          Reset_Search'Access, Kernel_Handle (Kernel));
    end Gtk_New;
 

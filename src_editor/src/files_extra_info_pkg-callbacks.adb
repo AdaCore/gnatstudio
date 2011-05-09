@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window; use Gtk.Window;
+with Gtk.Window;             use Gtk.Window;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
@@ -45,8 +45,7 @@ package body Files_Extra_Info_Pkg.Callbacks is
 
    begin
       if S /= No_File then
-         Set_Text (Extra.Directory_Entry,
-                   GNATCOLL.VFS.Display_Full_Name (S));
+         Set_Text (Extra.Directory_Entry, GNATCOLL.VFS.Display_Full_Name (S));
          --  ??? What if the filesystem path is non-UTF8?
       end if;
    end On_Browse_Button_Clicked;
