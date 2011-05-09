@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Gtk.Box;
-with Gtk.Combo;
 with Gtk.GEntry;
 with Gtk.Tree_Store;
 with Gtk.Tree_View;
@@ -31,26 +30,15 @@ package Gtkada.Entry_Completion is
 
    procedure Gtk_New
      (The_Entry      : out Gtkada_Entry;
-      Use_Combo      : Boolean := True;
       Case_Sensitive : Boolean := True);
-   --  Create a new entry. If Use_Combo is true, then the top field will be
-   --  a combo box, to which you can associate a history. Otherwise, it will
-   --  be a simple entry field.
+   --  Create a new entry.
    --  If Case_Sensitive is False, then the matching of what the user typed
    --  with the completion list is done in a case insensitive manner
 
    procedure Initialize
      (The_Entry      : access Gtkada_Entry_Record'Class;
-      Use_Combo      : Boolean := True;
       Case_Sensitive : Boolean := True);
    --  Internal procedure
-
-   function Get_Combo (The_Entry : access Gtkada_Entry_Record)
-      return Gtk.Combo.Gtk_Combo;
-   --  Return the combo box used to store the history of previously selected
-   --  values through this completion entry. It is the responsability of the
-   --  user to add new items in this history list.
-   --  This returns null if the widget wasn't created as a combo.
 
    function Get_Entry (The_Entry : access Gtkada_Entry_Record)
       return Gtk.GEntry.Gtk_Entry;
@@ -126,9 +114,7 @@ private
    type Completions_Factory_Access is access Completions_Factory'Class;
 
    type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with record
-      Combo            : Gtk.Combo.Gtk_Combo;
       GEntry           : Gtk.GEntry.Gtk_Entry;
-         --  null if a combo was created.
       Case_Sensitive   : Boolean;
 
       Completions      : Completions_Factory_Access;

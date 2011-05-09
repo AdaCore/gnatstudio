@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,6 @@ with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Glib;                       use Glib;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
-with Gtk.Combo;                  use Gtk.Combo;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Frame;                  use Gtk.Frame;
@@ -80,12 +79,11 @@ package body Gtkada.Entry_Completion is
 
    procedure Gtk_New
      (The_Entry : out Gtkada_Entry;
-      Use_Combo : Boolean := True;
       Case_Sensitive : Boolean := True) is
    begin
       The_Entry := new Gtkada_Entry_Record;
       Gtkada.Entry_Completion.Initialize
-        (The_Entry, Use_Combo, Case_Sensitive);
+        (The_Entry, Case_Sensitive);
    end Gtk_New;
 
    ----------------
@@ -94,7 +92,6 @@ package body Gtkada.Entry_Completion is
 
    procedure Initialize
      (The_Entry : access Gtkada_Entry_Record'Class;
-      Use_Combo : Boolean := True;
       Case_Sensitive : Boolean := True)
    is
       Renderer : Gtk_Cell_Renderer_Text;
@@ -110,17 +107,11 @@ package body Gtkada.Entry_Completion is
       Initialize_Vbox (The_Entry, Homogeneous => False, Spacing => 5);
       The_Entry.Case_Sensitive := Case_Sensitive;
 
-      if Use_Combo then
-         Gtk_New (The_Entry.Combo);
-         Disable_Activate (The_Entry.Combo);
-         Pack_Start (The_Entry, The_Entry.Combo, Expand => False);
-      else
-         Gtk_New (The_Entry.GEntry);
-         Pack_Start (The_Entry, The_Entry.GEntry, Expand => False);
-      end if;
+      Gtk_New (The_Entry.GEntry);
+      Pack_Start (The_Entry, The_Entry.GEntry, Expand => False);
 
-      Set_Activates_Default (Get_Entry (The_Entry), True);
-      Set_Width_Chars (Get_Entry (The_Entry), 25);
+      Set_Activates_Default (The_Entry.GEntry, True);
+      Set_Width_Chars (The_Entry.GEntry, 25);
 
       Gtk_New (Frame);
       Pack_Start (The_Entry, Frame, Expand => True, Fill => True);
@@ -227,11 +218,7 @@ package body Gtkada.Entry_Completion is
    function Get_Entry (The_Entry : access Gtkada_Entry_Record)
       return Gtk.GEntry.Gtk_Entry is
    begin
-      if The_Entry.GEntry /= null then
-         return The_Entry.GEntry;
-      else
-         return Get_Entry (The_Entry.Combo);
-      end if;
+      return The_Entry.GEntry;
    end Get_Entry;
 
    -----------------------
@@ -264,16 +251,6 @@ package body Gtkada.Entry_Completion is
          Grab_Focus (Get_Entry (Ent));
       end if;
    end Selection_Changed;
-
-   ---------------
-   -- Get_Combo --
-   ---------------
-
-   function Get_Combo (The_Entry : access Gtkada_Entry_Record)
-      return Gtk.Combo.Gtk_Combo is
-   begin
-      return The_Entry.Combo;
-   end Get_Combo;
 
    ----------------
    -- On_Destroy --
