@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,13 +22,11 @@ with Glib;                     use Glib;
 with Glib.Convert;             use Glib.Convert;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Combo;                use Gtk.Combo;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.List;                 use Gtk.List;
-with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
@@ -133,7 +131,6 @@ package body Variable_Editors is
       Var    : Scenario_Variable :=  No_Variable;
       Title  : String)
    is
-      Item            : Gtk_List_Item;
       Index           : Natural := 0;
       S               : chars_ptr;
       Col             : Gtk_Tree_View_Column;
@@ -224,9 +221,7 @@ package body Variable_Editors is
             while J <= S2'Last and then S2 (J) /= '=' loop
                J := J + 1;
             end loop;
-            Gtk_New (Item, S2 (S2'First .. J - 1));
-            Show (Item);
-            Add (Get_List (Editor.Variable_Name), Item);
+            Editor.Variable_Name.Append_Text (S2 (S2'First .. J - 1));
             Index := Index + 1;
          end;
       end loop;
@@ -238,7 +233,9 @@ package body Variable_Editors is
             Values : GNAT.Strings.String_List :=
               Get_Registry (Kernel).Tree.Possible_Values_Of (Var);
          begin
-            Set_Text (Get_Entry (Editor.Variable_Name), External_Name (Var));
+            Set_Text
+              (Gtk_Entry (Editor.Variable_Name.Get_Child),
+               External_Name (Var));
 
             Is_Default := True;
 
@@ -329,7 +326,7 @@ package body Variable_Editors is
      (Editor : access New_Var_Edit_Record) return Boolean
    is
       New_Name : constant String :=
-                   Get_Text (Get_Entry (Editor.Variable_Name));
+                   Get_Active_Text (Editor.Variable_Name);
       Ada_Name : String (New_Name'Range);
       Changed  : Boolean := False;
       Iter     : Gtk_Tree_Iter;
