@@ -52,6 +52,7 @@ with Gtk.Window;                 use Gtk.Window;
 
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Style;               use Gtkada.Style;
 with Gtkada.Text_Buffer;         use Gtkada.Text_Buffer;
 
 with Pango.Layout;               use Pango.Layout;
@@ -71,7 +72,6 @@ with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
-with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
@@ -947,6 +947,7 @@ package body Src_Editor_View is
          Top_In_Buffer    : Gint;
          Bottom_In_Buffer : Gint;
          Color            : Gdk_Color;
+         C_Color          : Cairo_Color;
          Cr               : Cairo_Context;
 
          procedure Draw_Block (B : in out Block_Record);
@@ -1136,10 +1137,13 @@ package body Src_Editor_View is
          if Column > 0 then
             X := (Column * View.Width_Of_256_Chars) / 256 - Rect.X + Margin;
 
-            Set_Source_Color (Cr, View.Background_Color_Other);
-            Move_To (Cr, Gdouble (X), Gdouble (Y));
-            Rel_Line_To (Cr, 0.0, Gdouble (Rect.Height));
-            Stroke (Cr);
+            Save (Cr);
+            Set_Line_Width (Cr, 0.5);
+            C_Color := To_Cairo (View.Text_Color);
+            C_Color.Alpha := 0.1;
+            Draw_Line
+              (Cr, C_Color, X, Y, X, Y + Rect.Height);
+            Restore (Cr);
          end if;
 
          Destroy (Cr);
@@ -1527,6 +1531,7 @@ package body Src_Editor_View is
       Color  : Gdk_Color;
       Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
       Ink_Rect, Logical_Rect : Gdk_Rectangle;
+      Tmp    : HSV_Color;
    begin
       --  Recompute the width of one character
 
@@ -1578,7 +1583,9 @@ package body Src_Editor_View is
 
       if Color /= Source.Background_Color then
          Source.Background_Color := Color;
-         Source.Background_Color_Other := Darken_Or_Lighten (Color);
+         Tmp := To_HSV (To_Cairo (Color));
+         Tmp.V := Tmp.V * 0.97;
+         Source.Background_Color_Other := To_Cairo (Tmp);
          Modify_Base (Source, State_Normal, Color);
       end if;
 
@@ -2187,6 +2194,7 @@ package body Src_Editor_View is
 
       Total_Width : Gint;
       Cr          : Cairo_Context;
+      Color       : Cairo_Color;
 
    begin
       Total_Width := Gint (Get_Total_Column_Width (Src_Buffer));
@@ -2243,10 +2251,18 @@ package body Src_Editor_View is
 
          Cr := Create (View.Side_Column_Buffer);
          Set_Source_Color (Cr, View.Background_Color_Other);
-         Cairo.Rectangle
-           (Cr,  Gdouble (X), Gdouble (Y),
-            Gdouble (Total_Width), Gdouble (Height));
-         Cairo.Fill (Cr);
+         Cairo.Paint (Cr);
+
+         Color := To_Cairo (View.Text_Color);
+         Color.Alpha := 0.5;
+         Set_Line_Width (Cr, 0.5);
+         Draw_Line
+           (Cr, Color,
+            X + Total_Width - 1,
+            0,
+            X + Total_Width - 1,
+            Height);
+
          Destroy (Cr);
 
          Draw_Line_Info
@@ -2276,7 +2292,7 @@ package body Src_Editor_View is
       Src_Buffer   : constant Source_Buffer :=
                        Source_Buffer (Get_Buffer (View));
 
-      Line_Height  : Gint;
+      Line_Height  : Gdouble;
       Total_Lines  : Gint;
 
       Info_Exists  : Boolean := False;
@@ -2307,21 +2323,20 @@ package body Src_Editor_View is
             Height);
 
          Cr := Create (View.Speed_Column_Buffer);
-         Set_Antialias (Cr, Cairo_Antialias_None);
 
          Set_Source_Color (Cr, View.Background_Color_Other);
-         Cairo.Rectangle
-           (Cr, Gdouble (X), Gdouble (Y),
-            Gdouble (Speed_Column_Width), Gdouble (Height));
-         Cairo.Fill (Cr);
+         Cairo.Paint (Cr);
 
-         Line_Height := Height / Total_Lines + 1;
+         Line_Height := Gdouble (Height) / Gdouble (Total_Lines + 1);
 
          --  Make the line height at least 2 pixels high
 
-         if Line_Height <= 1 then
-            Line_Height := 2;
+         if Line_Height < 1.0 then
+            Line_Height := 1.0;
          end if;
+
+         Set_Line_Width (Cr, Line_Height);
+         Set_Line_Cap (Cr, Cairo_Line_Cap_Square);
 
          Info_Exists := False;
 
@@ -2332,11 +2347,12 @@ package body Src_Editor_View is
 
             if Color /= Null_Color then
                Set_Source_Color (Cr, Color);
-               Cairo.Rectangle
-                 (Cr,
-                  0.0, Gdouble ((Height * J) / Total_Lines),
-                  Gdouble (Speed_Column_Width), Gdouble (Line_Height));
-               Cairo.Fill (Cr);
+               Draw_Line
+                 (Cr, To_Cairo (Color),
+                  0,
+                  (Height * J) / Total_Lines,
+                  Speed_Column_Width,
+                  (Height * J) / Total_Lines);
 
                Info_Exists := True;
             end if;
@@ -2376,15 +2392,14 @@ package body Src_Editor_View is
          return;
       end if;
 
-      Set_Source_Rgba (Cr, 0.0, 0.0, 0.0, 0.2);
-      Cairo.Rectangle
-        (Cr,
-         0.0,
-         Gdouble ((Height * Gint (View.Top_Line)) / Total_Lines),
-         Gdouble (Speed_Column_Width),
-         Gdouble ((Gint (View.Bottom_Line - View.Top_Line) * Height)
-           / Total_Lines));
-      Cairo.Fill (Cr);
+      Set_Line_Width (Cr, 0.5);
+      Draw_Rectangle
+        (Cr, (0.0, 0.0, 0.0, Alpha => 0.1), True,
+         1,
+         (Height * Gint (View.Top_Line)) / Total_Lines,
+         Speed_Column_Width - 2,
+         (Height * Gint (View.Bottom_Line - View.Top_Line)) / Total_Lines,
+         2.0);
 
       Destroy (Cr);
    end Redraw_Speed_Column;

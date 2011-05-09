@@ -32,6 +32,7 @@ with Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtk.Handlers;
+with Gtkada.Style;
 with Gtkada.Text_View;       use Gtkada.Text_View;
 
 with GPS.Editors;            use GPS.Editors;
@@ -241,7 +242,7 @@ private
       Scroll_Requested     : Boolean := False;
 
       Background_Color       : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      Background_Color_Other : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Background_Color_Other : Gtkada.Style.Cairo_Color := (others => 0.0);
       --  The editor background color and its ligthened/darkened version
 
       Text_Color           : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
