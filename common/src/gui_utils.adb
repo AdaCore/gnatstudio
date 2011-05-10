@@ -55,7 +55,6 @@ with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Clist;                 use Gtk.Clist;
-with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -64,10 +63,7 @@ with Gtk.Event_Box;             use Gtk.Event_Box;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
-with Gtk.Item;                  use Gtk.Item;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.List;                  use Gtk.List;
-with Gtk.List_Item;             use Gtk.List_Item;
 with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -156,13 +152,6 @@ package body GUI_Utils is
       Data   : Glib.Gint);
    --  Callback for the editable renderer
 
-   function Add_Unique_List_Entry
-     (List    : access Gtk.List.Gtk_List_Record'Class;
-      Text    : String;
-      Prepend : Boolean := False) return Gtk_List_Item;
-   --  Internal version of Add_Unique_List_Entry, that also returns the added
-   --  item.
-
    type Event_Access is access all Gdk_Event;
    package Event_Callback is new Gtk.Handlers.User_Return_Callback
      (Gtk_Widget_Record, Boolean, Event_Access);
@@ -186,63 +175,6 @@ package body GUI_Utils is
       Gtk_New_With_Model_And_Entry (Combo, List);
       Combo.Set_Entry_Text_Column (0);
    end Gtk_New_Combo_Text_With_Entry;
-
-   ---------------------------
-   -- Add_Unique_List_Entry --
-   ---------------------------
-
-   function Add_Unique_List_Entry
-     (List    : access Gtk.List.Gtk_List_Record'Class;
-      Text    : String;
-      Prepend : Boolean := False) return Gtk_List_Item
-   is
-      use Widget_List;
-
-      Item     : Gtk_List_Item;
-      Children : Widget_List.Glist := Get_Children (List);
-
-   begin
-      --  Check whether Text is already in the list
-
-      while Children /= Null_List loop
-         Item := Gtk_List_Item (Get_Data (Children));
-
-         if Get (Gtk_Label (Get_Child (Item))) = Text then
-            return Item;
-         end if;
-
-         Children := Next (Children);
-      end loop;
-
-      --  Add the new item in the list
-
-      Gtk_New (Item, Text);
-      Show (Item);
-
-      if Prepend then
-         Append (Children, Gtk_Widget (Item));
-         Prepend_Items (List, Children);
-      else
-         Add (List, Item);
-      end if;
-
-      return Item;
-   end Add_Unique_List_Entry;
-
-   ---------------------------
-   -- Add_Unique_List_Entry --
-   ---------------------------
-
-   procedure Add_Unique_List_Entry
-     (List    : access Gtk.List.Gtk_List_Record'Class;
-      Text    : String;
-      Prepend : Boolean := False)
-   is
-      Item : Gtk_List_Item;
-      pragma Unreferenced (Item);
-   begin
-      Item := Add_Unique_List_Entry (List, Text, Prepend);
-   end Add_Unique_List_Entry;
 
    ---------------------------
    -- Add_Unique_List_Entry --
@@ -276,46 +208,6 @@ package body GUI_Utils is
 
       return Iter;
    end Add_Unique_List_Entry;
-
-   ----------------------------
-   -- Add_Unique_Combo_Entry --
-   ----------------------------
-
-   procedure Add_Unique_Combo_Entry
-     (Combo           : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text            : String;
-      Item_String     : String  := "";
-      Use_Item_String : Boolean := False;
-      Prepend         : Boolean := False)
-   is
-      Item : Gtk_List_Item;
-      pragma Unreferenced (Item);
-
-   begin
-      Item := Add_Unique_Combo_Entry
-        (Combo, Text, Item_String, Use_Item_String, Prepend);
-   end Add_Unique_Combo_Entry;
-
-   ----------------------------
-   -- Add_Unique_Combo_Entry --
-   ----------------------------
-
-   function Add_Unique_Combo_Entry
-     (Combo           : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text            : String;
-      Item_String     : String := "";
-      Use_Item_String : Boolean := False;
-      Prepend         : Boolean := False) return Gtk.List_Item.Gtk_List_Item
-   is
-      Item : Gtk_List_Item;
-   begin
-      Item := Add_Unique_List_Entry (Get_List (Combo), Text, Prepend);
-
-      if Use_Item_String then
-         Set_Item_String (Combo, Gtk_Item (Item), Item_String);
-      end if;
-      return Item;
-   end Add_Unique_Combo_Entry;
 
    ----------------------------
    -- Add_Unique_Combo_Entry --
@@ -420,39 +312,6 @@ package body GUI_Utils is
          Gtk_Entry (Combo.Get_Child).Set_Text (Text);
       end if;
    end Set_Active_Text;
-
-   -----------------------
-   -- Get_Index_In_List --
-   -----------------------
-
-   function Get_Index_In_List
-     (Combo : access Gtk.Combo.Gtk_Combo_Record'Class) return Integer
-   is
-      use type Widget_List.Glist;
-      Entry_Text : constant String := Get_Text (Get_Entry (Combo));
-      Children   : Widget_List.Glist := Get_Children (Get_List (Combo));
-      Item       : Gtk_List_Item;
-      Label      : Gtk_Label;
-      Index      : Integer := -1;
-   begin
-      --  We have to search explicitely in the list, since the selection might
-      --  be different from what is actually displayed in the list, for
-      --  instance if the text in the entry was modified programmatically.
-
-      while Children /= Widget_List.Null_List loop
-         Item := Gtk_List_Item (Widget_List.Get_Data (Children));
-         Label := Gtk_Label (Get_Child (Item));
-         Index := Index + 1;
-
-         if Get_Text (Label) = Entry_Text then
-            return Index;
-         end if;
-
-         Children := Widget_List.Next (Children);
-      end loop;
-
-      return -1;
-   end Get_Index_In_List;
 
    -----------------------------
    -- Find_First_Row_Matching --

@@ -40,15 +40,12 @@ with Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;
-with Gtk.Combo;
 with Gtk.Combo_Box;
 with Gtk.Container;
 with Gtk.Enums;
 with Gtk.Event_Box;
 with Gtk.Handlers;
 with Gtk.Label;
-with Gtk.List;
-with Gtk.List_Item;
 with Gtk.List_Store;
 with Gtk.Menu;
 with Gtk.Menu_Bar;
@@ -116,13 +113,6 @@ package GUI_Utils is
      (Combo : out Gtk.Combo_Box.Gtk_Combo_Box);
    --  Similar to Gtk_New_Text *and* Gtk_New_With_Entry
 
-   procedure Add_Unique_List_Entry
-     (List    : access Gtk.List.Gtk_List_Record'Class;
-      Text    : String;
-      Prepend : Boolean := False);
-   --  Add Text to List if it is not already there. Nothing is done if Text
-   --  is already visible in the list. Text must be UTF8-encoded.
-
    function Add_Unique_List_Entry
      (List    : access Gtk.List_Store.Gtk_List_Store_Record'Class;
       Text    : String;
@@ -130,27 +120,6 @@ package GUI_Utils is
       Col     : Gint := 0) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Add Text to List if it is not already there. Nothing is done if Text
    --  is already visible in the list. Text must be UTF8-encoded.
-
-   procedure Add_Unique_Combo_Entry
-     (Combo           : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text            : String;
-      Item_String     : String := "";
-      Use_Item_String : Boolean := False;
-      Prepend         : Boolean := False);
-   --  Add Text to the popdown list of Combo, if it is not already there.
-   --  If the Text is already in the combo box, nothing is done.
-   --  If Use_Item_String is True, then Item_String will be inserted in the
-   --  combo box instead of text.
-   --  Text must be UTF8-encoded.
-
-   function Add_Unique_Combo_Entry
-     (Combo           : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text            : String;
-      Item_String     : String := "";
-      Use_Item_String : Boolean := False;
-      Prepend         : Boolean := False) return Gtk.List_Item.Gtk_List_Item;
-   --  Same as above, but return the inserted item (or the previously existing
-   --  one).
 
    procedure Add_Unique_Combo_Entry
      (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
@@ -182,12 +151,6 @@ package GUI_Utils is
       Col            : Gint := 0;
       Case_Sensitive : Boolean := True);
    --  Select the item containing Text in the Combo.
-
-   function Get_Index_In_List
-     (Combo : access Gtk.Combo.Gtk_Combo_Record'Class) return Integer;
-   --  Return the index of the selected item in the list of Combo.
-   --  This is will return -1 if the current value of the combo is not in the
-   --  list, which can not happen if Combo is read-only.
 
    procedure Set_Busy_Cursor
      (Window        : Gdk.Window.Gdk_Window;
