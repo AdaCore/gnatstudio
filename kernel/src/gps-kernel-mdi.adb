@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2010, AdaCore                  --
+--                 Copyright (C) 2005-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,7 +32,7 @@ with Gdk.Window;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Combo;                use Gtk.Combo;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Container;            use Gtk.Container;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
@@ -1304,8 +1304,10 @@ package body GPS.Kernel.MDI is
             W := W2;
          end if;
 
-         if W.all in Gtk_Combo_Record'Class then
-            W := Gtk_Widget (Get_Entry (Gtk_Combo (W)));
+         if W.all in Gtk_Combo_Box_Record'Class
+           and then Gtk_Combo_Box (W).Get_Has_Entry
+         then
+            W := Gtk_Combo_Box (W).Get_Child;
          end if;
       end if;
 
