@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,14 +25,15 @@ with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Label;             use Gtk.Label;
-with Gtk.Combo;             use Gtk.Combo;
+with Gtk.Combo_Box;         use Gtk.Combo_Box;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
+with GUI_Utils;             use GUI_Utils;
 
 package body Std_Dialogs is
 
    type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
-      Entry_Field : Gtk_Combo;
+      Entry_Field : Gtk_Combo_Box;
       Label       : Gtk_Label;
    end record;
    type Simple_Entry_Dialog_Access is access
@@ -100,12 +100,10 @@ package body Std_Dialogs is
       Set_Alignment (Dialog.Label, 0.0, 0.5);
       Pack_Start (Box, Dialog.Label, False, Padding => 10);
 
-      Gtk_New (Dialog.Entry_Field);
-      Set_Case_Sensitive (Dialog.Entry_Field);
+      Gtk_New_Combo_Text_With_Entry (Dialog.Entry_Field);
       Pack_Start (Box, Dialog.Entry_Field, Padding => 10);
-      Disable_Activate (Dialog.Entry_Field);
       Widget_Callback.Object_Connect
-        (Get_Entry (Dialog.Entry_Field), Signal_Activate,
+        (Dialog.Entry_Field.Get_Child, Signal_Activate,
          Widget_Callback.To_Marshaller (Ok_Simple_Entry'Access),
          Dialog);
 
@@ -134,7 +132,7 @@ package body Std_Dialogs is
 
       if Run (Dialog) = Gtk_Response_OK then
          declare
-            S : constant String := Get_Text (Get_Entry (Dialog.Entry_Field));
+            S : constant String := Get_Active_Text (Dialog.Entry_Field);
          begin
             if History /= null then
                Add_To_History (History.all, Key, S);
