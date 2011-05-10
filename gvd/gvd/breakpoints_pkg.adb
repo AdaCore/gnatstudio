@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2010, AdaCore              --
+--                     Copyright (C) 2000-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,10 +20,12 @@
 with GNAT.Strings;
 with Gtk;                       use Gtk;
 with Gtk.Adjustment;            use Gtk.Adjustment;
+with Gtk.Alignment;             use Gtk.Alignment;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Enums;                 use Gtk.Enums;
+
 with GPS.Intl;                  use GPS.Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -48,14 +50,13 @@ package body Breakpoints_Pkg is
 
    procedure Initialize (Breakpoints : access Breakpoints_Record'Class) is
       pragma Suppress (All_Checks);
-      Vbox15_Group           : Widget_SList.GSlist;
-      File_Combo_Items       : String_List.Glist;
-      Line_Spin_Adj          : Gtk_Adjustment;
-      Subprogram_Combo_Items : String_List.Glist;
-      Regexp_Combo_Items     : String_List.Glist;
-      Watchpoint_Type_Items  : String_List.Glist;
-      Exception_Name_Items   : String_List.Glist;
-      Vbox9_Group            : Widget_SList.GSlist;
+      Bp_Kind_Group  : Widget_SList.GSlist;
+      Bp_Kind_Vbox   : Gtk_Vbox;
+      Line_Spin_Adj  : Gtk_Adjustment;
+      Vbox9_Group    : Widget_SList.GSlist;
+      Alignment      : Gtk_Alignment;
+      HBox           : Gtk_Hbox;
+      Label          : Gtk_Label;
 
    begin
       Gtk.Box.Initialize_Vbox (Breakpoints, False, 0);
@@ -80,57 +81,44 @@ package body Breakpoints_Pkg is
       Set_Shadow_Type (Breakpoints.Frame12, Shadow_Etched_In);
       Pack_Start (Breakpoints.Vbox2, Breakpoints.Frame12, True, True, 0);
 
-      Gtk_New_Vbox (Breakpoints.Vbox15, False, 0);
-      Set_Border_Width (Breakpoints.Vbox15, 3);
-      Add (Breakpoints.Frame12, Breakpoints.Vbox15);
+      Gtk_New_Vbox (Bp_Kind_Vbox, False, 0);
+      Set_Border_Width (Bp_Kind_Vbox, 3);
+      Add (Breakpoints.Frame12, Bp_Kind_Vbox);
 
-      Gtk_New (Breakpoints.Location_Selected,
-               Vbox15_Group, -"Source location");
-      Vbox15_Group := Group (Breakpoints.Location_Selected);
+      --  Source location
+
+      Gtk_New (Breakpoints.Location_Selected, Label => -"Source location");
+      Bp_Kind_Group := Group (Breakpoints.Location_Selected);
       Set_Active (Breakpoints.Location_Selected, False);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Location_Selected,
-                  False, False, 0);
+      Pack_Start
+        (Bp_Kind_Vbox, Breakpoints.Location_Selected, False, False, 0);
       Widget_Callback.Object_Connect
         (Breakpoints.Location_Selected, Signal_Toggled,
          Widget_Callback.To_Marshaller (On_Location_Selected_Toggled'Access),
          Breakpoints);
 
-      Gtk_New
-        (Breakpoints.Alignment5, 0.5, 0.5, 0.88,
-         0.88);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Alignment5, False, False, 1);
+      Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
+      Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
+      Gtk_New_Hbox (HBox, False, 0);
+      Add (Alignment, HBox);
 
-      Gtk_New_Hbox (Breakpoints.Hbox5, False, 0);
-      Add (Breakpoints.Alignment5, Breakpoints.Hbox5);
+      Gtk_New (Label, -("File:"));
+      Set_Alignment (Label, 0.5, 0.5);
+      Set_Padding (Label, 5, 0);
+      Set_Justify (Label, Justify_Center);
+      Set_Line_Wrap (Label, False);
+      Pack_Start (HBox, Label, False, False, 0);
 
-      Gtk_New (Breakpoints.Label61, -("File:"));
-      Set_Alignment (Breakpoints.Label61, 0.5, 0.5);
-      Set_Padding (Breakpoints.Label61, 5, 0);
-      Set_Justify (Breakpoints.Label61, Justify_Center);
-      Set_Line_Wrap (Breakpoints.Label61, False);
-      Pack_Start (Breakpoints.Hbox5, Breakpoints.Label61, False, False, 0);
+      Gtk_New_Combo_Text_With_Entry (Breakpoints.File_Combo);
+      Breakpoints.File_Combo.Append_Text ("");
+      Pack_Start (HBox, Breakpoints.File_Combo, True, True, 0);
 
-      Gtk_New (Breakpoints.File_Combo);
-      Set_Case_Sensitive (Breakpoints.File_Combo, False);
-      Set_Use_Arrows (Breakpoints.File_Combo, True);
-      Set_Use_Arrows_Always (Breakpoints.File_Combo, False);
-      String_List.Append (File_Combo_Items, -"");
-      Combo.Set_Popdown_Strings (Breakpoints.File_Combo, File_Combo_Items);
-      Free_String_List (File_Combo_Items);
-      Pack_Start (Breakpoints.Hbox5, Breakpoints.File_Combo, True, True, 0);
-
-      Breakpoints.Combo_Entry5 := Get_Entry (Breakpoints.File_Combo);
-      Set_Editable (Breakpoints.Combo_Entry5, True);
-      Set_Max_Length (Breakpoints.Combo_Entry5, 0);
-      Set_Text (Breakpoints.Combo_Entry5, -"");
-      Set_Visibility (Breakpoints.Combo_Entry5, True);
-
-      Gtk_New (Breakpoints.Label62, -("Line:"));
-      Set_Alignment (Breakpoints.Label62, 1.0, 0.5);
-      Set_Padding (Breakpoints.Label62, 8, 0);
-      Set_Justify (Breakpoints.Label62, Justify_Center);
-      Set_Line_Wrap (Breakpoints.Label62, False);
-      Pack_Start (Breakpoints.Hbox5, Breakpoints.Label62, False, False, 0);
+      Gtk_New (Label, -("Line:"));
+      Set_Alignment (Label, 1.0, 0.5);
+      Set_Padding (Label, 8, 0);
+      Set_Justify (Label, Justify_Center);
+      Set_Line_Wrap (Label, False);
+      Pack_Start (HBox, Label, False, False, 0);
 
       Gtk_New (Line_Spin_Adj, 1.0, 1.0, 1.0e+08, 1.0, 10.0);
       Gtk_New (Breakpoints.Line_Spin, Line_Spin_Adj, 1.0, 0);
@@ -139,100 +127,67 @@ package body Breakpoints_Pkg is
       Set_Update_Policy (Breakpoints.Line_Spin, Update_Always);
       Set_Value (Breakpoints.Line_Spin, 1.0);
       Set_Wrap (Breakpoints.Line_Spin, False);
-      Pack_Start (Breakpoints.Hbox5, Breakpoints.Line_Spin, True, True, 0);
+      Pack_Start (HBox, Breakpoints.Line_Spin, True, True, 0);
 
-      Gtk_New (Breakpoints.Subprogram_Selected,
-               Vbox15_Group, -"Subprogram Name");
-      Vbox15_Group := Group (Breakpoints.Subprogram_Selected);
+      --  Subprogram name
+
+      Gtk_New
+        (Breakpoints.Subprogram_Selected, Bp_Kind_Group, -"Subprogram Name");
+      Bp_Kind_Group := Group (Breakpoints.Subprogram_Selected);
       Set_Active (Breakpoints.Subprogram_Selected, False);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Subprogram_Selected,
-                  False, False, 0);
+      Pack_Start
+        (Bp_Kind_Vbox, Breakpoints.Subprogram_Selected, False, False, 0);
       Widget_Callback.Object_Connect
         (Breakpoints.Subprogram_Selected, Signal_Toggled,
          Widget_Callback.To_Marshaller (On_Subprogam_Selected_Toggled'Access),
          Breakpoints);
 
-      Gtk_New
-        (Breakpoints.Alignment6, 0.5, 0.5, 0.88,
-         0.88);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Alignment6, True, True, 0);
+      Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
+      Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
 
-      Gtk_New (Breakpoints.Subprogram_Combo);
-      Set_Case_Sensitive (Breakpoints.Subprogram_Combo, False);
-      Set_Use_Arrows (Breakpoints.Subprogram_Combo, True);
-      Set_Use_Arrows_Always (Breakpoints.Subprogram_Combo, False);
-      String_List.Append (Subprogram_Combo_Items, -"");
-      Combo.Set_Popdown_Strings
-        (Breakpoints.Subprogram_Combo, Subprogram_Combo_Items);
-      Free_String_List (Subprogram_Combo_Items);
+      Gtk_New_Combo_Text_With_Entry (Breakpoints.Subprogram_Combo);
+      Breakpoints.Subprogram_Combo.Append_Text ("");
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
-      Add (Breakpoints.Alignment6, Breakpoints.Subprogram_Combo);
+      Add (Alignment, Breakpoints.Subprogram_Combo);
 
-      Breakpoints.Entry20 := Get_Entry (Breakpoints.Subprogram_Combo);
-      Set_Editable (Breakpoints.Entry20, True);
-      Set_Max_Length (Breakpoints.Entry20, 0);
-      Set_Text (Breakpoints.Entry20, -"");
-      Set_Visibility (Breakpoints.Entry20, True);
+      --  Address
 
-      Gtk_New (Breakpoints.Address_Selected, Vbox15_Group, -"Address");
-      Vbox15_Group := Group (Breakpoints.Address_Selected);
+      Gtk_New (Breakpoints.Address_Selected, Bp_Kind_Group, -"Address");
+      Bp_Kind_Group := Group (Breakpoints.Address_Selected);
       Set_Active (Breakpoints.Address_Selected, False);
-      Pack_Start
-        (Breakpoints.Vbox15, Breakpoints.Address_Selected, False, False, 0);
+      Pack_Start (Bp_Kind_Vbox, Breakpoints.Address_Selected, False, False, 0);
       Widget_Callback.Object_Connect
         (Breakpoints.Address_Selected, Signal_Toggled,
          Widget_Callback.To_Marshaller
            (On_Address_Selected_Toggled'Access), Breakpoints);
 
       Gtk_New
-        (Breakpoints.Alignment7, 0.5, 0.5, 0.88,
-         0.88);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Alignment7, True, True, 0);
+        (Alignment, 0.5, 0.5, 0.88, 0.88);
+      Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
 
-      Gtk_New (Breakpoints.Address_Combo);
-      Set_Case_Sensitive (Breakpoints.Address_Combo, False);
-      Set_Use_Arrows (Breakpoints.Address_Combo, True);
-      Set_Use_Arrows_Always (Breakpoints.Address_Combo, False);
+      Gtk_New_Combo_Text_With_Entry (Breakpoints.Address_Combo);
+      Breakpoints.Address_Combo.Append_Text ("");
       Set_Sensitive (Breakpoints.Address_Combo, False);
-      Add (Breakpoints.Alignment7, Breakpoints.Address_Combo);
+      Add (Alignment, Breakpoints.Address_Combo);
 
-      Breakpoints.Entry21 := Get_Entry (Breakpoints.Address_Combo);
-      Set_Editable (Breakpoints.Entry21, True);
-      Set_Max_Length (Breakpoints.Entry21, 0);
-      Set_Text (Breakpoints.Entry21, -"");
-      Set_Visibility (Breakpoints.Entry21, True);
+      --  Regular expressions
 
-      Gtk_New (Breakpoints.Regexp_Selected,
-               Vbox15_Group, -"Regular expression");
-      Vbox15_Group := Group (Breakpoints.Regexp_Selected);
+      Gtk_New
+        (Breakpoints.Regexp_Selected, Bp_Kind_Group, -"Regular expression");
       Set_Active (Breakpoints.Regexp_Selected, False);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Regexp_Selected,
-                  False, False, 0);
+      Pack_Start (Bp_Kind_Vbox, Breakpoints.Regexp_Selected, False, False, 0);
       Widget_Callback.Object_Connect
         (Breakpoints.Regexp_Selected, Signal_Toggled,
          Widget_Callback.To_Marshaller (On_Regexp_Selected_Toggled'Access),
          Breakpoints);
 
-      Gtk_New
-        (Breakpoints.Alignment8, 0.5, 0.5, 0.88,
-         0.88);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Alignment8, True, True, 0);
+      Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
+      Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
 
-      Gtk_New (Breakpoints.Regexp_Combo);
-      Set_Case_Sensitive (Breakpoints.Regexp_Combo, False);
-      Set_Use_Arrows (Breakpoints.Regexp_Combo, True);
-      Set_Use_Arrows_Always (Breakpoints.Regexp_Combo, False);
-      String_List.Append (Regexp_Combo_Items, -"");
-      Combo.Set_Popdown_Strings (Breakpoints.Regexp_Combo, Regexp_Combo_Items);
-      Free_String_List (Regexp_Combo_Items);
+      Gtk_New_Combo_Text_With_Entry (Breakpoints.Regexp_Combo);
+      Breakpoints.Regexp_Combo.Append_Text ("");
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
-      Add (Breakpoints.Alignment8, Breakpoints.Regexp_Combo);
-
-      Breakpoints.Entry22 := Get_Entry (Breakpoints.Regexp_Combo);
-      Set_Editable (Breakpoints.Entry22, True);
-      Set_Max_Length (Breakpoints.Entry22, 0);
-      Set_Text (Breakpoints.Entry22, -"");
-      Set_Visibility (Breakpoints.Entry22, True);
+      Add (Alignment, Breakpoints.Regexp_Combo);
 
       Gtk_New (Breakpoints.Temporary_Location, -"Temporary breakpoint");
       Set_Active (Breakpoints.Temporary_Location, False);
@@ -289,24 +244,13 @@ package body Breakpoints_Pkg is
       Set_Line_Wrap (Breakpoints.Label10, False);
       Pack_Start (Breakpoints.Vbox7, Breakpoints.Label10, False, False, 5);
 
-      Gtk_New (Breakpoints.Watchpoint_Type);
-      Set_Case_Sensitive (Breakpoints.Watchpoint_Type, False);
-      Set_Use_Arrows (Breakpoints.Watchpoint_Type, True);
-      Set_Use_Arrows_Always (Breakpoints.Watchpoint_Type, False);
-      String_List.Append (Watchpoint_Type_Items, -"written");
-      String_List.Append (Watchpoint_Type_Items, -"read");
-      String_List.Append (Watchpoint_Type_Items, -"read or written");
-      Combo.Set_Popdown_Strings
-        (Breakpoints.Watchpoint_Type, Watchpoint_Type_Items);
-      Free_String_List (Watchpoint_Type_Items);
+      Gtk_New_Text (Breakpoints.Watchpoint_Type);
+      Breakpoints.Watchpoint_Type.Append_Text (-"written");
+      Breakpoints.Watchpoint_Type.Append_Text (-"read");
+      Breakpoints.Watchpoint_Type.Append_Text (-"read or written");
+      Breakpoints.Watchpoint_Type.Set_Active (1); --  "read"
       Pack_Start
         (Breakpoints.Vbox7, Breakpoints.Watchpoint_Type, False, False, 0);
-
-      Breakpoints.Combo_Entry3 := Get_Entry (Breakpoints.Watchpoint_Type);
-      Set_Editable (Breakpoints.Combo_Entry3, False);
-      Set_Max_Length (Breakpoints.Combo_Entry3, 0);
-      Set_Text (Breakpoints.Combo_Entry3, -"read");
-      Set_Visibility (Breakpoints.Combo_Entry3, True);
 
       Gtk_New (Breakpoints.Label12, -("Condition:"));
       Set_Alignment (Breakpoints.Label12, 0.0, 0.5);
@@ -362,22 +306,11 @@ package body Breakpoints_Pkg is
       Gtk_New_Hbox (Breakpoints.Hbox14, False, 8);
       Pack_Start (Breakpoints.Vbox8, Breakpoints.Hbox14, False, True, 0);
 
-      Gtk_New (Breakpoints.Exception_Name);
-      Set_Case_Sensitive (Breakpoints.Exception_Name, False);
-      Set_Use_Arrows (Breakpoints.Exception_Name, True);
-      Set_Use_Arrows_Always (Breakpoints.Exception_Name, False);
-      String_List.Append (Exception_Name_Items, -"");
-      Combo.Set_Popdown_Strings
-        (Breakpoints.Exception_Name, Exception_Name_Items);
-      Free_String_List (Exception_Name_Items);
+      Gtk_New_Combo_Text_With_Entry (Breakpoints.Exception_Name);
+      Breakpoints.Exception_Name.Append_Text ("All exceptions");
+      Breakpoints.Exception_Name.Set_Active (0);
       Pack_Start
         (Breakpoints.Hbox14, Breakpoints.Exception_Name, True, True, 0);
-
-      Breakpoints.Combo_Entry25 := Get_Entry (Breakpoints.Exception_Name);
-      Set_Editable (Breakpoints.Combo_Entry25, True);
-      Set_Max_Length (Breakpoints.Combo_Entry25, 0);
-      Set_Text (Breakpoints.Combo_Entry25, -"All exceptions");
-      Set_Visibility (Breakpoints.Combo_Entry25, True);
 
       Gtk_New (Breakpoints.Load_Exception_List, -"Load List");
       Set_Relief (Breakpoints.Load_Exception_List, Relief_Normal);

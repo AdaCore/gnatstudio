@@ -21,7 +21,6 @@ with GNAT.Strings;     use GNAT.Strings;
 
 with Glib;             use Glib;
 with Glib.Object;      use Glib.Object;
-with Gdk.Color;        use Gdk.Color;
 with Gdk.Event;        use Gdk.Event;
 with Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
@@ -32,16 +31,15 @@ with Gtk.Arguments;    use Gtk.Arguments;
 with Gtk.Box;          use Gtk.Box;
 with Gtk.Button;       use Gtk.Button;
 with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Combo;        use Gtk.Combo;
+with Gtk.Combo_Box;    use Gtk.Combo_Box;
 with Gtk.Dialog;       use Gtk.Dialog;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.GEntry;       use Gtk.GEntry;
-with Gtk.List;         use Gtk.List;
+with Gtk.List_Store;   use Gtk.List_Store;
 with Gtk.Main;         use Gtk.Main;
 with Gtk.Notebook;     use Gtk.Notebook;
 with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Spin_Button;  use Gtk.Spin_Button;
-with Gtk.Style;        use Gtk.Style;
 with Gtk.Widget;       use Gtk.Widget;
 
 with Gtk.Text_View;    use Gtk.Text_View;
@@ -343,13 +341,13 @@ package body Breakpoints_Editor is
 
       --  Reinitialize the contents of the file combo boxes
       Set_Text
-        (Get_Entry (View.Editor.File_Combo),
+        (Gtk_Entry (View.Editor.File_Combo.Get_Child),
          +Base_Name (Get_Current_File (Get_Process (View).Editor_Text)));
       --  ??? What if the filesystem path is non-UTF8?
 
       --  Clear the contents of the exceptions combo (its contents is in fact
       --  cached in gdb, so it is fast enough to call "info exceptions" again)
-      Clear_Items (Get_List (View.Editor.Exception_Name), 0, -1);
+      Gtk_List_Store (View.Editor.Exception_Name.Get_Model).Clear;
       Add_Unique_Combo_Entry
         (View.Editor.Exception_Name, -"All exceptions");
       Add_Unique_Combo_Entry
@@ -399,9 +397,6 @@ package body Breakpoints_Editor is
      (Widget : access Breakpoint_Editor_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
-      use Gdk;
-
-      Style : Gtk_Style;
    begin
       Gtk.Box.Initialize_Hbox (Widget);
       Gtk_New (Widget.Editor);
@@ -411,38 +406,26 @@ package body Breakpoints_Editor is
       Set_Sensitive (Widget.Editor.Remove, False);
       Set_Sensitive (Widget.Editor.View, False);
 
-      --  Grey background when the combo boxes are insensitive
-      Gtk_New (Style);
-      Set_Base
-        (Style, State_Insensitive,
-         Gdk_Color'
-           (Get_Background (Get_Style (Widget), State_Normal)));
-      Set_Style (Get_Entry (Widget.Editor.File_Combo), Style);
-      Set_Style (Get_Entry (Widget.Editor.Address_Combo), Style);
-      Set_Style (Get_Entry (Widget.Editor.Subprogram_Combo), Style);
-      Set_Style (Get_Entry (Widget.Editor.Regexp_Combo), Style);
-
       --  Return in the combo boxes should activate them
 
-      Disable_Activate (Widget.Editor.File_Combo);
       Widget_Callback.Object_Connect
-        (Get_Entry (Widget.Editor.File_Combo), Gtk.GEntry.Signal_Activate,
-         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-         Widget);
-      Disable_Activate (Widget.Editor.Address_Combo);
-      Widget_Callback.Object_Connect
-        (Get_Entry (Widget.Editor.Address_Combo), Gtk.GEntry.Signal_Activate,
-         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-         Widget);
-      Disable_Activate (Widget.Editor.Subprogram_Combo);
-      Widget_Callback.Object_Connect
-        (Get_Entry (Widget.Editor.Subprogram_Combo),
+        (Gtk_Entry (Widget.Editor.File_Combo.Get_Child),
          Gtk.GEntry.Signal_Activate,
          Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
          Widget);
-      Disable_Activate (Widget.Editor.Regexp_Combo);
       Widget_Callback.Object_Connect
-        (Get_Entry (Widget.Editor.Regexp_Combo), Gtk.GEntry.Signal_Activate,
+        (Gtk_Entry (Widget.Editor.Address_Combo.Get_Child),
+         Gtk.GEntry.Signal_Activate,
+         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Gtk_Entry (Widget.Editor.Subprogram_Combo.Get_Child),
+         Gtk.GEntry.Signal_Activate,
+         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Gtk_Entry (Widget.Editor.Regexp_Combo.Get_Child),
+         Gtk.GEntry.Signal_Activate,
          Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
          Widget);
 
@@ -572,15 +555,15 @@ package body Breakpoints_Editor is
          Set_Active (View.Editor.Stop_Always_Exception, True);
 
          if Br.Except.all = "all" then
-            Set_Text
-              (Get_Entry (View.Editor.Exception_Name), -"All exceptions");
+            Set_Active_Text
+              (View.Editor.Exception_Name, -"All exceptions");
          elsif Br.Except.all = "unhandled" then
-            Set_Text
-              (Get_Entry (View.Editor.Exception_Name), -"All exceptions");
+            Set_Active_Text
+              (View.Editor.Exception_Name, -"All exceptions");
             Set_Active (View.Editor.Stop_Not_Handled_Exception, True);
          else
-            Add_Unique_Combo_Entry (View.Editor.Exception_Name, Br.Except.all);
-            Set_Text (Get_Entry (View.Editor.Exception_Name), Br.Except.all);
+            Add_Unique_Combo_Entry
+              (View.Editor.Exception_Name, Br.Except.all, Select_Text => True);
          end if;
 
          Set_Active (View.Editor.Temporary_Exception, Br.Disposition /= Keep);
@@ -591,18 +574,21 @@ package body Breakpoints_Editor is
          if Br.File /= GNATCOLL.VFS.No_File then
             Set_Active (View.Editor.Location_Selected, True);
             Add_Unique_Combo_Entry
-              (View.Editor.File_Combo, +Base_Name (Br.File));
-            --  ??? What if the filesystem path is non-UTF8?
-            Set_Text
-              (Get_Entry (View.Editor.File_Combo), +Base_Name (Br.File));
+              (View.Editor.File_Combo, +Base_Name (Br.File), True);
             --  ??? What if the filesystem path is non-UTF8?
             Set_Value (View.Editor.Line_Spin, Grange_Float (Br.Line));
+
+            if Br.Subprogram /= null then
+               Add_Unique_Combo_Entry
+                 (View.Editor.Subprogram_Combo, Br.Subprogram.all, True);
+            end if;
+
          else
             Set_Active (View.Editor.Address_Selected, True);
             Add_Unique_Combo_Entry
               (View.Editor.Address_Combo, Address_To_String (Br.Address));
             Set_Text
-              (Get_Entry (View.Editor.Address_Combo),
+              (Gtk_Entry (View.Editor.Address_Combo.Get_Child),
                Address_To_String (Br.Address));
          end if;
       end if;
@@ -716,10 +702,9 @@ package body Breakpoints_Editor is
 
       if Br.Condition /= null then
          Add_Unique_Combo_Entry
-           (Advanced.Condition_Combo, Br.Condition.all);
-         Set_Text (Get_Entry (Advanced.Condition_Combo), Br.Condition.all);
+           (Advanced.Condition_Combo, Br.Condition.all, Select_Text => True);
       else
-         Set_Text (Get_Entry (Advanced.Condition_Combo), "");
+         Advanced.Condition_Combo.Set_Active (-1);
       end if;
 
       Set_Value (Advanced.Ignore_Count_Combo, Grange_Float (Br.Ignore));
@@ -776,9 +761,9 @@ package body Breakpoints_Editor is
 
          declare
             S : constant String :=
-              Get_Text (Get_Entry (Adv.Condition_Combo));
+                  Get_Active_Text (Adv.Condition_Combo);
             C : constant Integer :=
-              Integer (Get_Value_As_Int (Adv.Ignore_Count_Combo));
+                  Integer (Get_Value_As_Int (Adv.Ignore_Count_Combo));
             T : constant String := Get_Text
               (Get_Buffer (Adv.Command_Descr), Start, The_End);
 
@@ -825,23 +810,17 @@ package body Breakpoints_Editor is
    procedure On_Add_Exception_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      View : constant Breakpoint_Editor := Breakpoint_Editor (Object);
-      Current : constant Integer := -1;
+      View    : constant Breakpoint_Editor := Breakpoint_Editor (Object);
 
       Temporary : Boolean;
-      Process : constant Visual_Debugger := Get_Process (View);
+      Process   : constant Visual_Debugger := Get_Process (View);
       Name      : constant String :=
-        Get_Text (Get_Entry (View.Editor.Exception_Name));
+                    Get_Text
+                      (Gtk_Entry (View.Editor.Exception_Name.Get_Child));
       Unhandled : constant Boolean :=
-        Get_Active (View.Editor.Stop_Not_Handled_Exception);
-      Br        : Breakpoint_Data;
-      Remove    : Boolean := False;
+                    Get_Active (View.Editor.Stop_Not_Handled_Exception);
 
    begin
-      if Current /= -1 then
-         Br := Process.Breakpoints (Current);
-      end if;
-
       Temporary := Get_Active (View.Editor.Temporary_Exception);
 
       --  Some of the strings below deal with the GUI, and thus should be
@@ -850,51 +829,27 @@ package body Breakpoints_Editor is
       --  This explains why some are preceded by '-'.
 
       if Name = -"All exceptions" then
-         if Current = -1
-           or else Br.Except = null
-           or else (Unhandled and then Br.Except.all /= "unhandled exception")
-           or else (not Unhandled and then Br.Except.all /= "all exceptions")
-         then
-            Remove := True;
-            Break_Exception
-              (Process.Debugger,
-               Name      => "",
-               Unhandled => Unhandled,
-               Temporary => Temporary,
-               Mode      => GVD.Types.Visible);
-         end if;
+         Break_Exception
+           (Process.Debugger,
+            Name      => "",
+            Unhandled => Unhandled,
+            Temporary => Temporary,
+            Mode      => GVD.Types.Visible);
 
       elsif Name = -"All assertions" then
-         if Current = -1
-           or else Br.Except = null
-           or else Br.Except.all /= "assert failure"
-         then
-            Remove := True;
-            Break_Subprogram
-              (Process.Debugger,
-               Name      => "assert",
-               Temporary => Temporary,
-               Mode      => GVD.Types.Visible);
-         end if;
+         Break_Subprogram
+           (Process.Debugger,
+            Name      => "assert",
+            Temporary => Temporary,
+            Mode      => GVD.Types.Visible);
 
-      elsif Current = -1
-        or else Br.Except = null
-        or else (not Unhandled and then Br.Except.all /= Name)
-        or else (Unhandled and then Br.Except.all /= "unhandled exception")
-      then
-         Remove := True;
+      else
          Break_Exception
            (Process.Debugger,
             Name      => Name,
             Unhandled => Unhandled,
             Temporary => Temporary,
             Mode      => GVD.Types.Visible);
-      end if;
-
-      if Remove and then Current /= -1 then
-         Remove_Breakpoint
-           (Process.Debugger,
-            Process.Breakpoints (Current).Num);
       end if;
    end On_Add_Exception_Clicked;
 
@@ -906,23 +861,16 @@ package body Breakpoints_Editor is
      (Object : access Gtk_Widget_Record'Class)
    is
       View      : constant Breakpoint_Editor := Breakpoint_Editor (Object);
-      Current   : constant Integer := -1;
       Process   : constant Visual_Debugger := Get_Process (View);
       Temporary : Boolean;
-      Br        : Breakpoint_Data;
-      Remove    : Boolean := False;
 
    begin
-      if Current /= -1 then
-         Br := Process.Breakpoints (Current);
-      end if;
-
       Temporary := Get_Active (View.Editor.Temporary_Location);
 
       if Get_Active (View.Editor.Location_Selected) then
          declare
             File : constant Filesystem_String :=
-              +Get_Text (Get_Entry (View.Editor.File_Combo));
+                     +Get_Active_Text (View.Editor.File_Combo);
             --  ??? What if the filesystem path is non-UTF8?
 
             Line : constant Integer :=
@@ -930,72 +878,47 @@ package body Breakpoints_Editor is
 
          begin
             --  ??? Should also check Temporary
-
-            if Current = -1
-              or else not Equal (Base_Name (Br.File), File)
-              or else Br.Line /= Line
-            then
-               Remove := True;
-               Break_Source
-                 (Process.Debugger,
-                  File      => Create_From_Base (File),
-                  Line      => Line,
-                  Temporary => Temporary,
-                  Mode      => GVD.Types.Visible);
-            end if;
+            Break_Source
+              (Process.Debugger,
+               File      => Create_From_Base (File),
+               Line      => Line,
+               Temporary => Temporary,
+               Mode      => GVD.Types.Visible);
          end;
 
       elsif Get_Active (View.Editor.Subprogram_Selected) then
          declare
             Name : constant String :=
-              Get_Text (Get_Entry (View.Editor.Subprogram_Combo));
+                     Get_Active_Text (View.Editor.Subprogram_Combo);
 
          begin
             --  ??? Should also check Temporary
-
-            if Current = -1
-              or else Br.Except = null
-              or else Br.Except.all = Name
-            then
-               Remove := True;
-               Break_Subprogram
-                 (Process.Debugger,
-                  Name      => Name,
-                  Temporary => Temporary,
-                  Mode      => GVD.Types.Visible);
-            end if;
+            Break_Subprogram
+              (Process.Debugger,
+               Name      => Name,
+               Temporary => Temporary,
+               Mode      => GVD.Types.Visible);
          end;
 
       elsif Get_Active (View.Editor.Address_Selected) then
          declare
             Address : constant Address_Type :=
                         String_To_Address
-                          (Get_Text (Get_Entry (View.Editor.Address_Combo)));
+                          (Get_Active_Text (View.Editor.Address_Combo));
          begin
-            if Current = -1
-              or else Br.Address = Invalid_Address
-              or else Br.Address = Address
-            then
-               Remove := True;
-               Break_Address
-                 (Process.Debugger,
-                  Address   => Address,
-                  Temporary => Temporary,
-                  Mode      => GVD.Types.Visible);
-            end if;
+            Break_Address
+              (Process.Debugger,
+               Address   => Address,
+               Temporary => Temporary,
+               Mode      => GVD.Types.Visible);
          end;
 
       else
-         Remove := True;
          Break_Regexp
            (Process.Debugger,
-            Regexp    => Get_Text (Get_Entry (View.Editor.Regexp_Combo)),
+            Regexp    => Get_Active_Text (View.Editor.Regexp_Combo),
             Temporary => Temporary,
             Mode      => GVD.Types.Visible);
-      end if;
-
-      if Remove and then Current /= -1 then
-         Remove_Breakpoint (Process.Debugger, Br.Num);
       end if;
    end On_Add_Location_Clicked;
 
@@ -1086,31 +1009,19 @@ package body Breakpoints_Editor is
    procedure On_Add_Watchpoint_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      View : constant Breakpoint_Editor := Breakpoint_Editor (Object);
-      Current : constant Integer := -1;
-
-      Process : constant Visual_Debugger := Get_Process (View);
+      View    : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+      Process         : constant Visual_Debugger := Get_Process (View);
       Watchpoint_Name : constant String :=
-        Get_Text (View.Editor.Watchpoint_Name);
+                          Get_Text (View.Editor.Watchpoint_Name);
       Watchpoint_Type : constant String :=
-        Get_Text (Get_Entry (View.Editor.Watchpoint_Type));
+                          Get_Active_Text (View.Editor.Watchpoint_Type);
       Watchpoint_Cond : constant String :=
-        Get_Text (View.Editor.Watchpoint_Cond);
+                          Get_Text (View.Editor.Watchpoint_Cond);
 
       Trigger : GVD.Types.Watchpoint_Trigger;
       --  Encodes the value we get from Watchpoint_Type for the call to Watch
 
-      Br : Breakpoint_Data;
-      --  Used to manipulate breakpoint list if Current is set
-
-      Remove : Boolean := False;
-      --  If set, will remove the currently selected breakpoint from the
-      --  breakpoint list.
    begin
-      if Current /= -1 then
-         Br := Process.Breakpoints (Current);
-      end if;
-
       if Watchpoint_Type = -"read" then
          Trigger := GVD.Types.Read;
       elsif Watchpoint_Type = -"read or written" then
@@ -1120,23 +1031,12 @@ package body Breakpoints_Editor is
          Trigger := GVD.Types.Write;
       end if;
 
-      if Current = -1
-        or else Br.Expression.all /= Watchpoint_Name
-        or else Br.Trigger /= Trigger
-        or else Br.Condition.all /= Watchpoint_Cond
-      then
-         Remove := True;
-         Watch
-           (Process.Debugger,
-            Name      => Watchpoint_Name,
-            Trigger   => Trigger,
-            Condition => Watchpoint_Cond,
-            Mode      => GVD.Types.Visible);
-      end if;
-
-      if Remove and Current /= -1 then
-         Remove_Breakpoint (Process.Debugger, Br.Num);
-      end if;
+      Watch
+        (Process.Debugger,
+         Name      => Watchpoint_Name,
+         Trigger   => Trigger,
+         Condition => Watchpoint_Cond,
+         Mode      => GVD.Types.Visible);
    end On_Add_Watchpoint_Clicked;
 
    ------------------------------------

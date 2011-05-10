@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2008, AdaCore              --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Adjustment;  use Gtk.Adjustment;
 with GVD.Callbacks;   use GVD.Callbacks;
 with GPS.Intl;        use GPS.Intl;
+with GUI_Utils;       use GUI_Utils;
 with Advanced_Breakpoint_Pkg.Callbacks; use Advanced_Breakpoint_Pkg.Callbacks;
 
 package body Advanced_Breakpoint_Pkg is
@@ -95,18 +96,9 @@ package body Advanced_Breakpoint_Pkg is
       Pack_Start (Advanced_Breakpoint.Vbox32,
                   Advanced_Breakpoint.Label104, False, False, 0);
 
-      Gtk_New (Advanced_Breakpoint.Condition_Combo);
-      Set_Case_Sensitive (Advanced_Breakpoint.Condition_Combo, False);
-      Set_Use_Arrows (Advanced_Breakpoint.Condition_Combo, True);
-      Set_Use_Arrows_Always (Advanced_Breakpoint.Condition_Combo, False);
+      Gtk_New_Combo_Text_With_Entry (Advanced_Breakpoint.Condition_Combo);
       Pack_Start (Advanced_Breakpoint.Vbox32,
                   Advanced_Breakpoint.Condition_Combo, False, False, 0);
-
-      Advanced_Breakpoint.Combo_Entry2 :=
-        Get_Entry (Advanced_Breakpoint.Condition_Combo);
-      Set_Editable (Advanced_Breakpoint.Combo_Entry2, True);
-      Set_Max_Length (Advanced_Breakpoint.Combo_Entry2, 0);
-      Set_Visibility (Advanced_Breakpoint.Combo_Entry2, True);
 
       Gtk_New (Advanced_Breakpoint.Ignore_Count_Frame, -"Ignore");
       Set_Shadow_Type
