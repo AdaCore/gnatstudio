@@ -124,11 +124,11 @@ package body Gtkada.File_Selector is
    -----------------------
 
    procedure Set_Location
-     (Location_Combo : Gtk_Combo;
+     (Location_Combo : Gtk_Combo_Box;
       Dir            : Virtual_File);
    --  Sets the location in the combo
 
-   function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File;
+   function Get_Location (Location_Combo : Gtk_Combo_Box) return Virtual_File;
    --  Gets the location from the combo
 
    function Columns_Types return GType_Array;
@@ -280,21 +280,18 @@ package body Gtkada.File_Selector is
    ------------------
 
    procedure Set_Location
-     (Location_Combo : Gtk_Combo;
+     (Location_Combo : Gtk_Combo_Box;
       Dir            : Virtual_File) is
    begin
       if Is_Local (Dir) then
          Add_Unique_Combo_Entry (Location_Combo,
-                                 Display_Full_Name (Dir, True));
-         --  ??? What if the filesystem path is non-UTF8?
-         Set_Text (Get_Entry (Location_Combo),
-                   Display_Full_Name (Dir, True));
+                                 Display_Full_Name (Dir, True),
+                                 True);
       else
          Add_Unique_Combo_Entry
            (Location_Combo,
-            Get_Host (Dir) & ":|" & Display_Full_Name (Dir, True));
-         Set_Text (Get_Entry (Location_Combo),
-                   Get_Host (Dir) & ":|" & Display_Full_Name (Dir, True));
+            Get_Host (Dir) & ":|" & Display_Full_Name (Dir, True),
+            Select_Text => True);
       end if;
    end Set_Location;
 
@@ -302,8 +299,9 @@ package body Gtkada.File_Selector is
    -- Get_Location --
    ------------------
 
-   function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File is
-      Str : constant String := Get_Text (Get_Entry (Location_Combo));
+   function Get_Location (Location_Combo : Gtk_Combo_Box) return Virtual_File
+   is
+      Str : constant String := Get_Active_Text (Location_Combo);
 
    begin
       for J in Str'First .. Str'Last - 1 loop
@@ -941,6 +939,9 @@ package body Gtkada.File_Selector is
    begin
       Append (Win.Filters, File_Filter (Filter));
       Add_Unique_Combo_Entry (Win.Filter_Combo, Filter.Label.all);
+      if Get_Active (Win.Filter_Combo) = -1 then
+         Set_Active (Win.Filter_Combo, 0);
+      end if;
       Refresh_Files (Win);
    end Register_Filter;
 
@@ -989,7 +990,7 @@ package body Gtkada.File_Selector is
 
       declare
          S : constant String :=
-               Locale_From_UTF8 (Get_Text (Win.Filter_Combo_Entry));
+               Locale_From_UTF8 (Get_Active_Text (Win.Filter_Combo));
          C : Filter_List.List_Node := First (Win.Filters);
 
       begin
@@ -2030,13 +2031,12 @@ package body Gtkada.File_Selector is
       Gtk_New (Label1, -("Exploring :"));
       Pack_Start (Hbox3, Label1, False, False, 3);
 
-      Gtk_New (File_Selector_Window.Location_Combo);
-      Set_Case_Sensitive (File_Selector_Window.Location_Combo, True);
+      Gtk_New_Combo_Text_With_Entry (File_Selector_Window.Location_Combo);
       Pack_Start (Hbox3,
                   File_Selector_Window.Location_Combo, True, True, 3);
       Widget_Callback.Object_Connect
-        (Get_Popup_Window (File_Selector_Window.Location_Combo),
-         Signal_Hide,
+        (File_Selector_Window.Location_Combo,
+         Gtk.Combo_Box.Signal_Changed,
          Directory_Selected'Access, File_Selector_Window.Location_Combo);
 
       if History /= null then
@@ -2044,16 +2044,12 @@ package body Gtkada.File_Selector is
                       File_Selector_Window.Location_Combo);
       end if;
 
-      File_Selector_Window.Location_Combo_Entry :=
-        Get_Entry (File_Selector_Window.Location_Combo);
-      Set_Editable (File_Selector_Window.Location_Combo_Entry, True);
-      Set_Max_Length (File_Selector_Window.Location_Combo_Entry, 0);
-      Set_Visibility (File_Selector_Window.Location_Combo_Entry, True);
       Widget_Callback.Connect
-        (File_Selector_Window.Location_Combo_Entry, Gtk.GEntry.Signal_Activate,
+        (File_Selector_Window.Location_Combo.Get_Child,
+         Gtk.GEntry.Signal_Activate,
          On_Location_Combo_Entry_Activate'Access);
       Return_Callback.Connect
-        (File_Selector_Window.Location_Combo_Entry,
+        (File_Selector_Window.Location_Combo.Get_Child,
          Signal_Key_Press_Event, On_Location_Entry_Key_Press_Event'Access,
          After => False);
 
@@ -2125,22 +2121,15 @@ package body Gtkada.File_Selector is
         (Get_Vbox (File_Selector_Window),
          Hbox4, False, False, 3);
 
-      Gtk_New (File_Selector_Window.Filter_Combo);
-      Set_Case_Sensitive (File_Selector_Window.Filter_Combo, False);
+      Gtk_New_Text (File_Selector_Window.Filter_Combo);
 
-      Widget_Callback.Object_Connect
-        (Get_Popup_Window (File_Selector_Window.Filter_Combo),
-         Signal_Hide, Filter_Selected'Access,
-         File_Selector_Window.Filter_Combo);
+      Widget_Callback.Connect
+        (File_Selector_Window.Filter_Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         Filter_Selected'Access);
 
       Pack_Start (Hbox4,
                   File_Selector_Window.Filter_Combo, True, True, 3);
-
-      File_Selector_Window.Filter_Combo_Entry :=
-        Get_Entry (File_Selector_Window.Filter_Combo);
-      Set_Editable (File_Selector_Window.Filter_Combo_Entry, False);
-      Set_Max_Length (File_Selector_Window.Filter_Combo_Entry, 0);
-      Set_Visibility (File_Selector_Window.Filter_Combo_Entry, True);
 
       Gtk_New_Hbox (Hbox5, False, 0);
       Pack_Start

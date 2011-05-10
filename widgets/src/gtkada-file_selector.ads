@@ -66,7 +66,6 @@ with Gdk.Color;           use Gdk.Color;
 with Gdk.Pixbuf;          use Gdk.Pixbuf;
 
 with Gtk.Button;          use Gtk.Button;
-with Gtk.Combo;           use Gtk.Combo;
 with Gtk.Combo_Box;       use Gtk.Combo_Box;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.GEntry;          use Gtk.GEntry;
@@ -332,8 +331,8 @@ private
 
       Hosts_Combo            : Gtk_Combo_Box;
 
-      Location_Combo         : Gtk_Combo;
-      Location_Combo_Entry   : Gtk_Entry;
+      Location_Combo         : Gtk_Combo_Box;
+--        Location_Combo_Entry   : Gtk_Entry;
 
       Explorer_Tree          : Dir_Tree;
 
@@ -346,8 +345,8 @@ private
       File_Name_Label        : Gtk_Label;
       File_Text_Label        : Gtk_Label;
 
-      Filter_Combo           : Gtk_Combo;
-      Filter_Combo_Entry     : Gtk_Entry;
+      Filter_Combo           : Gtk_Combo_Box;
+--        Filter_Combo_Entry     : Gtk_Entry;
       Selection_Entry        : Gtk_Entry;
 
       OK_Button              : Gtk_Button;
