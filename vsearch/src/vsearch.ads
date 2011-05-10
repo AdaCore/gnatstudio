@@ -181,7 +181,6 @@ private
       Auto_Hide_Check         : Gtk_Check_Button;
       Regexp_Check            : Gtk_Check_Button;
       Context_Specific        : Gtk_Box;
-      Saved_Expanded_State    : Boolean;
 
       Kernel                  : GPS.Kernel.Kernel_Handle;
       Search_Next_Button      : Gtk.Button.Gtk_Button;

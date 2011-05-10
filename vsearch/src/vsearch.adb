@@ -16,7 +16,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
 with System;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
@@ -1257,12 +1256,6 @@ package body Vsearch is
    function Idle_Resize (Vsearch : Vsearch_Access) return Boolean is
       Win : Gtk_Widget;
    begin
-      if Vsearch.Saved_Expanded_State = Vsearch.Options_Box.Get_Expanded then
-         --  still not taken into account, requeue
-         return True;
-      end if;
-
-      Vsearch.Saved_Expanded_State := Vsearch.Options_Box.Get_Expanded;
       Win := Get_Toplevel (Vsearch);
       Gtk_Window (Win).Resize (-1, -1);
 
@@ -1285,8 +1278,8 @@ package body Vsearch is
          if Is_Floating (Child) then
             --  We save the expanded state, and wait until it's actually
             --  changed to resize the view
-            Vsearch.Saved_Expanded_State := Vsearch.Options_Box.Get_Expanded;
-            Ret := Vsearch_Source.Idle_Add (Idle_Resize'Access, Vsearch);
+            Ret := Vsearch_Source.Timeout_Add
+              (100, Idle_Resize'Access, Vsearch);
          end if;
       end if;
 
@@ -1666,8 +1659,7 @@ package body Vsearch is
 
       Widget_Callback.Object_Connect
         (Vsearch.Options_Box,
-         Gtk.Expander.Signal_Activate, On_Toggled'Access, Vsearch,
-         After => True);
+         Gtk.Expander.Signal_Activate, On_Toggled'Access, Vsearch);
 
       Gtk_New_Vbox (Vsearch.Options_Frame, Homogeneous => False);
       Add (Vsearch.Options_Box, Vsearch.Options_Frame);
