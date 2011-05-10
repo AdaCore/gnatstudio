@@ -26,7 +26,7 @@ with Gtk.Button;             use Gtk.Button;
 with Gtk.Check_Button;       use Gtk.Check_Button;
 with Gtkada.Check_Button;    use Gtkada.Check_Button;
 with Gtk.Container;          use Gtk.Container;
-with Gtk.Combo;              use Gtk.Combo;
+with Gtk.Combo_Box;          use Gtk.Combo_Box;
 with Gtk.Dialog;             use Gtk.Dialog;
 with Gtk.Editable;           use Gtk.Editable;
 with Gtk.Enums;              use Gtk.Enums;
@@ -48,7 +48,9 @@ with Gtk.Window;             use Gtk.Window;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.Intl;            use Gtkada.Intl;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+
+with GUI_Utils;              use GUI_Utils;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 package body Switches_Chooser.Gtkada is
 
@@ -273,7 +275,7 @@ package body Switches_Chooser.Gtkada is
       Data   : Switch_Data) is
    begin
       Change_Switch
-        (Data.Editor.all, Combo, Get_Text (Get_Entry (Gtk_Combo (Combo))));
+        (Data.Editor.all, Combo, Get_Active_Text (Gtk_Combo_Box (Combo)));
    end On_Combo_Changed;
 
    ---------------------
@@ -342,7 +344,7 @@ package body Switches_Chooser.Gtkada is
             Set_Value (Gtk_Spin_Button (Widget), Gdouble'Value (Parameter));
 
          when Switch_Combo =>
-            Set_Text (Get_Entry (Gtk_Combo (Widget)), Parameter);
+            Set_Active_Text (Gtk_Combo_Box (Widget), Parameter);
 
          when Switch_Popup =>
             null;
@@ -453,10 +455,9 @@ package body Switches_Chooser.Gtkada is
       Radio    : Gtk_Radio_Button;
       Hbox     : Gtk_Box;
       Button   : Gtk_Button;
-      Combo    : Gtk_Combo;
+      Combo    : Gtk_Combo_Box;
       Combo_Iter : Combo_Switch_Vectors.Cursor;
       Switch2  : Switch_Description_Vectors.Cursor;
-      List     : Gtk.Enums.String_List.Glist;
       Pop      : Popup_Button;
 
    begin
@@ -553,21 +554,18 @@ package body Switches_Chooser.Gtkada is
             end if;
 
          when Switch_Combo =>
-            Gtk_New (Combo);
+            Gtk_New_Text (Combo);
             Set_Tooltip (Editor, Combo, Switch, S);
             Pack_Start (Hbox, Combo, True, True, Padding => 0);
 
             Combo_Iter := First (S.Entries);
             while Has_Element (Combo_Iter) loop
-               Gtk.Enums.String_List.Append
-                 (List, To_String (Element (Combo_Iter).Label));
+               Combo.Append_Text (To_String (Element (Combo_Iter).Label));
                Next (Combo_Iter);
             end loop;
 
-            Set_Popdown_Strings (Combo, List);
-
             User_Widget_Callback.Object_Connect
-              (Get_Entry (Combo), Gtk.Editable.Signal_Changed,
+              (Combo, Gtk.Combo_Box.Signal_Changed,
                On_Combo_Changed'Access, Combo,
                (Switches_Editor (Editor), Switch));
 
@@ -793,7 +791,7 @@ package body Switches_Chooser.Gtkada is
       History            : Histories.History;
       Key                : History_Key)
    is
-      Combo                   : Gtk_Combo;
+      Combo                   : Gtk_Combo_Box;
       Widget_For_Command_Line : Gtk_Widget;
    begin
       Editor.Native_Dialogs := Use_Native_Dialogs;
@@ -816,8 +814,8 @@ package body Switches_Chooser.Gtkada is
          Gtk_New (Editor.Ent);
          Widget_For_Command_Line := Gtk_Widget (Editor.Ent);
       else
-         Gtk_New (Combo);
-         Editor.Ent := Get_Entry (Combo);
+         Gtk_New_Combo_Text_With_Entry (Combo);
+         Editor.Ent := Gtk_Entry (Get_Child (Combo));
          Widget_For_Command_Line := Gtk_Widget (Combo);
          Get_History (History.all, Key, Combo, False, False);
       end if;
