@@ -28,7 +28,6 @@ with GNATCOLL.VFS;
 
 with Glib;
 with Gtk.Check_Menu_Item;
-with Gtk.Combo;
 with Gtk.Combo_Box;
 with Gtk.Toggle_Button;
 with Gtk.Menu_Item;
@@ -105,16 +104,6 @@ package Histories is
    --  The returned array mustn't be freed by the user, it references internal
    --  data.
    --  The most recent entry is returned first.
-
-   procedure Get_History
-     (Hist        : History_Record;
-      Key         : History_Key;
-      Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Clear_Combo : Boolean := True;
-      Prepend     : Boolean := False);
-   --  Set the contents of the combo to the list of strings associated with
-   --  Key.
-   --  If Clear_Combo is False, then the previous contents of the combo is kept
 
    procedure Get_History
      (Hist        : History_Record;

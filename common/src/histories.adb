@@ -26,12 +26,9 @@ with GNATCOLL.VFS;        use GNATCOLL.VFS;
 with Glib;                use Glib;
 
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
-with Gtk.Combo;           use Gtk.Combo;
 with Gtk.Combo_Box;       use Gtk.Combo_Box;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.List;            use Gtk.List;
-with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.List_Store;      use Gtk.List_Store;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
@@ -417,51 +414,6 @@ package body Histories is
               Create_New_Key_If_Necessary (Hist, Key, Strings);
    begin
       return Val.List;
-   end Get_History;
-
-   -----------------
-   -- Get_History --
-   -----------------
-
-   procedure Get_History
-     (Hist        : History_Record;
-      Key         : History_Key;
-      Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Clear_Combo : Boolean := True;
-      Prepend     : Boolean := False)
-   is
-      List  : constant Gtk_List := Get_List (Combo);
-      Value : constant String_List_Access := Get_History (Hist, Key);
-      Item  : Gtk_List_Item;
-   begin
-      if Clear_Combo then
-         Clear_Items (List, 0, -1);
-      end if;
-
-      if Value /= null then
-         for V in Value'Range loop
-            --  Do not add the empty item. It is stored internally to properly
-            --  restore the contents of the entry, but shouldn't appear in the
-            --  list.
-            if Value (V).all /= "" then
-               --  Do not add the item directly, in case there was already a
-               --  similar entry in the list if it wasn't cleared
-               if Clear_Combo then
-                  Gtk_New (Item, Value (V).all);
-                  Show (Item);
-                  Add (List, Item);
-               else
-                  Add_Unique_List_Entry (List, Value (V).all, Prepend);
-               end if;
-            end if;
-         end loop;
-
-         Set_Text (Get_Entry (Combo), Value (Value'First).all);
-         Select_Region (Get_Entry (Combo), 0, -1);
-
-      else
-         Set_Text (Get_Entry (Combo), "");
-      end if;
    end Get_History;
 
    -----------------
