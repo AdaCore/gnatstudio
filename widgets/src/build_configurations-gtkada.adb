@@ -30,7 +30,6 @@ with Glib.Object;              use Glib.Object;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Image;                use Gtk.Image;
-with Gtk.Combo_Box_Entry;      use Gtk.Combo_Box_Entry;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;             use Gtk.Handlers;
@@ -530,7 +529,7 @@ package body Build_Configurations.Gtkada is
       Label         : Gtk_Label;
       Main_Hbox     : Gtk_Hbox;
       Box           : Target_UI_Access;
-      Combo         : Gtk_Combo_Box_Entry;
+      Combo         : Gtk_Combo_Box;
       Top_Box       : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
       Locations_Frame : Gtk_Frame;

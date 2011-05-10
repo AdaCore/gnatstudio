@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                 Copyright (C) 2008-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,12 +19,10 @@
 
 --  This package defines utilities and dialogs used by the GtkAda-based GUI
 
-with Gtk.Combo_Box_Entry; use Gtk.Combo_Box_Entry;
-
 package Build_Configurations.Gtkada.Dialogs is
 
    function Models_Combo
-     (UI : access Build_UI_Record'Class) return Gtk_Combo_Box_Entry;
+     (UI : access Build_UI_Record'Class) return Gtk_Combo_Box;
    --  Create and return a combo box allowing choice between the models in UI
 
    procedure Add_Target_Dialog

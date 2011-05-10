@@ -39,7 +39,7 @@ with Gdk.Event;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Combo_Box_Entry;      use Gtk.Combo_Box_Entry;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
@@ -1432,11 +1432,9 @@ package body Toolchains_Editor is
    procedure On_Add_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
       Editor     : constant Toolchains_Edit := Toolchains_Edit (W);
       Dialog     : Gtk.Dialog.Gtk_Dialog;
-      Name_Entry : Gtk.Combo_Box_Entry.Gtk_Combo_Box_Entry;
-      Name_Model : Gtk.Tree_Store.Gtk_Tree_Store;
+      Name_Entry : Gtk.Combo_Box.Gtk_Combo_Box;
       Btn        : Gtk_Widget;
       Res        : Gtk_Response_Type;
-      Iter       : Gtk_Tree_Iter := Null_Iter;
       Known_Tc   : GNAT.Strings.String_List_Access :=
                      Toolchains.Known.Get_Known_Toolchain_Names;
       pragma Unreferenced (Btn);
@@ -1446,19 +1444,19 @@ package body Toolchains_Editor is
         (Dialog, -"New toolchain",
          Gtk_Window (Editor.Get_Toplevel),
          Modal);
-      Gtk.Tree_Store.Gtk_New (Name_Model, (0 => GType_String));
-      Gtk.Combo_Box_Entry.Gtk_New_With_Model (Name_Entry, Name_Model, 0);
+      Gtk_New_Combo_Text_With_Entry (Name_Entry);
       Dialog.Get_Content_Area.Pack_Start (Name_Entry, False, False, 5);
+      Gtk_Entry (Name_Entry.Get_Child).Set_Activates_Default (True);
 
       for J in Known_Tc'Range loop
-         Name_Model.Append (Iter, Null_Iter);
-         Name_Model.Set (Iter, 0, Known_Tc (J).all);
+         Name_Entry.Append_Text (Known_Tc (J).all);
       end loop;
 
       GNAT.Strings.Free (Known_Tc);
 
       Btn := Dialog.Add_Button
         (Gtk.Stock.Stock_Ok, Response_Id => Gtk_Response_OK);
+      Dialog.Set_Default_Response (Gtk_Response_OK);
       Btn := Dialog.Add_Button
         (Gtk.Stock.Stock_Cancel, Response_Id => Gtk_Response_Cancel);
 

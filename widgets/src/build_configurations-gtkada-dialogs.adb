@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                 Copyright (C) 2008-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,7 +57,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
    procedure Fill_Combo
      (UI    : access Build_UI_Record'Class;
-      Combo : Gtk_Combo_Box_Entry;
+      Combo : Gtk_Combo_Box;
       Cat_E : Gtk_Entry);
    --  Fill Combo and Cat_E from information stored in UI
 
@@ -93,9 +93,9 @@ package body Build_Configurations.Gtkada.Dialogs is
    ------------------
 
    function Models_Combo
-     (UI : access Build_UI_Record'Class) return Gtk_Combo_Box_Entry
+     (UI : access Build_UI_Record'Class) return Gtk_Combo_Box
    is
-      Combo     : Gtk_Combo_Box_Entry;
+      Combo     : Gtk_Combo_Box;
       Model     : Gtk_Tree_Store;
 
       function Columns return GType_Array;
@@ -151,13 +151,13 @@ package body Build_Configurations.Gtkada.Dialogs is
       C  : Cursor;
       M  : Target_Model_Access;
    begin
-      Gtk_New (Combo);
+      Gtk_New_With_Entry (Combo);
       Gtk_New (Model, Columns);
 
       Set_Model (Combo, Gtk_Tree_Model (Model));
 
-      Set_Text_Column (Combo, Name_Column);
-      Col := Gtk.Combo_Box_Entry."+" (Combo);
+      Set_Entry_Text_Column (Combo, Name_Column);
+      Col := Gtk.Combo_Box."+" (Combo);
 
       Gtk_New (Text_Renderer);
       Pack_Start (Col, Text_Renderer, False);
@@ -229,7 +229,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
    procedure Fill_Combo
      (UI    : access Build_UI_Record'Class;
-      Combo : Gtk_Combo_Box_Entry;
+      Combo : Gtk_Combo_Box;
       Cat_E : Gtk_Entry)
    is
       function Strip (S : String) return String;
@@ -301,7 +301,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       pragma Unreferenced (Button);
       Parent : constant Gtk_Window := Gtk_Window (Get_Toplevel (UI));
       Dialog : Gtk_Dialog;
-      Combo  : Gtk_Combo_Box_Entry;
+      Combo  : Gtk_Combo_Box;
       Label  : Gtk_Label;
 
       Model_E : Gtk_Entry;
@@ -378,7 +378,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       Attach (Table, Hbox, 0, 1, 2, 3, Expand or Fill, 0, 3, 3);
 
       Gtk_New (M, GType_Array'(0 => GType_String));
-      Gtk_New_With_Model (Combo, M, 0);
+      Gtk_New_With_Model_And_Entry (Combo, M);
+      Combo.Set_Entry_Text_Column (0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
       Set_Tip
         (UI.Tooltips,
@@ -446,7 +447,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Button : Gtk_Button;
       pragma Unreferenced (Button);
       Parent : constant Gtk_Window := Gtk_Window (Get_Toplevel (UI));
-      Combo  : Gtk_Combo_Box_Entry;
+      Combo  : Gtk_Combo_Box;
       Label  : Gtk_Label;
 
       Name_E  : Gtk_Entry;
@@ -493,7 +494,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       Attach (Table, Hbox, 0, 1, 2, 3, Expand or Fill, 0, 3, 3);
 
       Gtk_New (M, GType_Array'(0 => GType_String));
-      Gtk_New_With_Model (Combo, M, 0);
+      Gtk_New_With_Model_And_Entry (Combo, M);
+      Combo.Set_Entry_Text_Column (0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
       Set_Tip
         (UI.Tooltips,
