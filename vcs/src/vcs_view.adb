@@ -277,6 +277,8 @@ package body VCS_View is
       Text       : GNAT.Strings.String_Access;
 
    begin
+      Pixmap := Null_Surface;
+
       if Tooltip.Explorer.Tree = null then
          return;
       end if;
