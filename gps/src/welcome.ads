@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2001-2010, AdaCore               --
+--                    Copyright (C) 2001-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 with Gtk.Button;
 with Gtk.Check_Button;
 with Gtk.Radio_Button;
-with Gtk.Combo;
+with Gtk.Combo_Box;
 with Gtk.GEntry;
 
 with GPS.Kernel;
@@ -63,7 +63,7 @@ private
       Default_Dir         : Gtk.GEntry.Gtk_Entry;
       Default_Browse      : Gtk.Button.Gtk_Button;
       Create_Project      : Gtk.Radio_Button.Gtk_Radio_Button;
-      Open_Project        : Gtk.Combo.Gtk_Combo;
+      Open_Project        : Gtk.Combo_Box.Gtk_Combo_Box;
       Open_Project_Button : Gtk.Radio_Button.Gtk_Radio_Button;
       Open_Browse         : Gtk.Button.Gtk_Button;
       Always_Show         : Gtk.Check_Button.Gtk_Check_Button;

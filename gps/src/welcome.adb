@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,7 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Radio_Button;          use Gtk.Radio_Button;
-with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
@@ -44,6 +44,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
+with GUI_Utils;                 use GUI_Utils;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
 with Project_Templates.GPS;
@@ -207,15 +208,15 @@ package body Welcome is
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => False);
 
-      Gtk_New (Screen.Open_Project);
+      Gtk_New_Combo_Text_With_Entry (Screen.Open_Project);
       Get_History (Get_History (Kernel).all,
                    "project_files", Screen.Open_Project);
       Pack_Start (Hbox, Screen.Open_Project, Expand => True, Fill => True);
       --  Synchronize the name of the key with gps-menu.adb
 
       if Project_Name /= No_File then
-         Set_Text
-           (Get_Entry (Screen.Open_Project),
+         Set_Active_Text
+           (Screen.Open_Project,
             Display_Full_Name (Project_Name, Normalize => False));
          --  ??? What if the filesystem path is non-UTF8?
       end if;
@@ -226,7 +227,7 @@ package body Welcome is
       Widget_Callback.Object_Connect
         (Screen.Open_Browse, Signal_Clicked, On_Browse_Load'Access, Screen);
 
-      if Get_Text (Get_Entry (Screen.Open_Project)) = "" then
+      if Get_Active_Text (Screen.Open_Project) = "" then
          Clicked (Screen.Default_Project);
       else
          Clicked (Screen.Open_Project_Button);
@@ -369,8 +370,8 @@ package body Welcome is
      (Screen : access Gtk_Widget_Record'Class) return Boolean
    is
       S            : constant Welcome_Screen := Welcome_Screen (Screen);
-      Project_Name : Virtual_File := Create
-        (+Get_Text (Get_Entry (S.Open_Project)));
+      Project_Name : Virtual_File :=
+                       Create (+Get_Active_Text (S.Open_Project));
       --  ??? What if the filesystem path is non-UTF8?
       Button       : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
@@ -433,7 +434,7 @@ package body Welcome is
    procedure On_Browse_Load (Screen : access Gtk_Widget_Record'Class) is
       S            : constant Welcome_Screen := Welcome_Screen (Screen);
       Project_Name : constant Filesystem_String :=
-        +Get_Text (Get_Entry (S.Open_Project));
+                       +Get_Active_Text (S.Open_Project);
       --  ??? What if the filesystem path is non-UTF8?
       Dir          : Virtual_File;
    begin
@@ -457,7 +458,7 @@ package body Welcome is
 
       begin
          if File /= GNATCOLL.VFS.No_File then
-            Set_Text (Get_Entry (S.Open_Project), Display_Full_Name (File));
+            Set_Active_Text (S.Open_Project, Display_Full_Name (File));
          end if;
       end;
 
