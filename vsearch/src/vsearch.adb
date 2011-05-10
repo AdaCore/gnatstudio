@@ -27,6 +27,7 @@ with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Window;               use Gdk.Window;
 
 with Glib;                     use Glib;
+with Glib.Main;
 with Glib.Object;              use Glib.Object;
 
 with Gtk.Alignment;            use Gtk.Alignment;
@@ -532,15 +533,12 @@ package body Vsearch is
 
          --  Set the position of the floating window
          Restore_Position (Vsearch);
-         Set_Reduce_Window (Vsearch.Options_Box, True);
       else
          Hide_All (Vsearch.Auto_Hide_Check);
          Set_Child_Visible (Vsearch.Auto_Hide_Check, False);
 
          --  Store the position of the floating window
          Store_Position (Vsearch);
-
-         Set_Reduce_Window (Vsearch.Options_Box, False);
       end if;
 
    exception
@@ -1252,32 +1250,50 @@ package body Vsearch is
       when E : others => Trace (Exception_Handle, E);
    end On_Context_Combo_Changed;
 
+   package Vsearch_Source is new Glib.Main.Generic_Sources (Vsearch_Access);
+
+   function Idle_Resize (Vsearch : Vsearch_Access) return Boolean;
+
+   function Idle_Resize (Vsearch : Vsearch_Access) return Boolean is
+      Win : Gtk_Widget;
+   begin
+      if Vsearch.Saved_Expanded_State = Vsearch.Options_Box.Get_Expanded then
+         --  still not taken into account, requeue
+         return True;
+      end if;
+
+      Vsearch.Saved_Expanded_State := Vsearch.Options_Box.Get_Expanded;
+      Win := Get_Toplevel (Vsearch);
+      Gtk_Window (Win).Resize (-1, -1);
+
+      return False;
+   end Idle_Resize;
+
    ----------------
    -- On_Toggled --
    ----------------
 
    procedure On_Toggled (Object : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
+      Child   : constant MDI_Child :=
+                  Find_MDI_Child (Get_MDI (Vsearch.Kernel), Vsearch);
+      Ret     : Glib.Main.G_Source_Id;
+      pragma Unreferenced (Ret);
 
-      Child : constant MDI_Child := Find_MDI_Child
-        (Get_MDI (Vsearch.Kernel), Vsearch);
-      Req : Gtk_Requisition;
    begin
       if Child /= null then
-         if not Is_Floating (Child) then
-            Size_Request (Child, Req);
-            Set_Size
-              (Get_MDI (Vsearch.Kernel),
-               Child      => Child,
-               Width      => Req.Width,
-               Height     => Req.Height,
-               Fixed_Size => True);
+         if Is_Floating (Child) then
+            --  We save the expanded state, and wait until it's actually
+            --  changed to resize the view
+            Vsearch.Saved_Expanded_State := Vsearch.Options_Box.Get_Expanded;
+            Ret := Vsearch_Source.Idle_Add (Idle_Resize'Access, Vsearch);
          end if;
       end if;
 
       Set_History
-        (Get_History (Vsearch.Kernel).all, Options_Collapsed_Hist_Key,
-         Get_State (Vsearch.Options_Box) = Collapsed);
+        (Get_History (Vsearch.Kernel).all,
+         Options_Collapsed_Hist_Key,
+         not Get_Expanded (Vsearch.Options_Box));
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1643,17 +1659,18 @@ package body Vsearch is
       if Get_History
         (Get_History (Handle).all, Options_Collapsed_Hist_Key)
       then
-         Set_State (Vsearch.Options_Box, Collapsed);
+         Set_Expanded (Vsearch.Options_Box, False);
       else
-         Set_State (Vsearch.Options_Box, Expanded);
+         Set_Expanded (Vsearch.Options_Box, True);
       end if;
 
       Widget_Callback.Object_Connect
         (Vsearch.Options_Box,
-         Gtk.Toggle_Button.Signal_Toggled, On_Toggled'Access, Vsearch);
+         Gtk.Expander.Signal_Activate, On_Toggled'Access, Vsearch,
+         After => True);
 
       Gtk_New_Vbox (Vsearch.Options_Frame, Homogeneous => False);
-      Set_Expanded_Widget (Vsearch.Options_Box, Vsearch.Options_Frame);
+      Add (Vsearch.Options_Box, Vsearch.Options_Frame);
 
       Gtk_New_Vbox (Vsearch.Context_Specific, Homogeneous => False);
       Pack_Start (Vsearch.Options_Frame, Vsearch.Context_Specific, False);

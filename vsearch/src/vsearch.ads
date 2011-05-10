@@ -27,12 +27,12 @@ with Gtk.Box;           use Gtk.Box;
 with Gtk.Button;        use Gtk.Button;
 with Gtk.Check_Button;  use Gtk.Check_Button;
 with Gtk.Combo_Box;     use Gtk.Combo_Box;
+with Gtk.Expander;      use Gtk.Expander;
 with Gtk.Label;         use Gtk.Label;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Table;         use Gtk.Table;
 with Gtk.Widget;        use Gtk.Widget;
 
-with Collapsing_Pane;   use Collapsing_Pane;
 with Find_Utils;        use Find_Utils;
 with GPS.Kernel;        use GPS.Kernel;
 
@@ -164,23 +164,24 @@ private
    Close_Options_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
 
    type Vsearch_Record is new Gtk_Box_Record with record
-      Table               : Gtk_Table;
-      Replace_Label       : Gtk_Label;
-      Search_For_Label    : Gtk_Label;
-      Search_In_Label     : Gtk_Label;
-      Replace_Combo       : Gtk_Combo_Box;
-      Context_Combo       : Gtk_Combo_Box;
-      Pattern_Combo       : Gtk_Combo_Box;
-      Buttons_Table       : Gtk_Table;
-      Options_Frame       : Gtk_Box;
-      Options_Vbox        : Gtk_Table;
-      Select_Editor_Check : Gtk_Check_Button;
-      Case_Check          : Gtk_Check_Button;
+      Table                   : Gtk_Table;
+      Replace_Label           : Gtk_Label;
+      Search_For_Label        : Gtk_Label;
+      Search_In_Label         : Gtk_Label;
+      Replace_Combo           : Gtk_Combo_Box;
+      Context_Combo           : Gtk_Combo_Box;
+      Pattern_Combo           : Gtk_Combo_Box;
+      Buttons_Table           : Gtk_Table;
+      Options_Frame           : Gtk_Box;
+      Options_Vbox            : Gtk_Table;
+      Select_Editor_Check     : Gtk_Check_Button;
+      Case_Check              : Gtk_Check_Button;
       Case_Preserving_Replace : Gtk_Check_Button;
-      Whole_Word_Check    : Gtk_Check_Button;
-      Auto_Hide_Check     : Gtk_Check_Button;
-      Regexp_Check        : Gtk_Check_Button;
-      Context_Specific    : Gtk_Box;
+      Whole_Word_Check        : Gtk_Check_Button;
+      Auto_Hide_Check         : Gtk_Check_Button;
+      Regexp_Check            : Gtk_Check_Button;
+      Context_Specific        : Gtk_Box;
+      Saved_Expanded_State    : Boolean;
 
       Kernel                  : GPS.Kernel.Kernel_Handle;
       Search_Next_Button      : Gtk.Button.Gtk_Button;
@@ -191,7 +192,7 @@ private
       Search_All_Button       : Gtk.Button.Gtk_Button;
       Replace_Only_Button     : Gtk.Button.Gtk_Button;
       Extra_Information       : Gtk.Widget.Gtk_Widget;
-      Options_Box             : Collapsing_Pane.Collapsing_Pane;
+      Options_Box             : Gtk.Expander.Gtk_Expander;
       Search_Idle_Handler     : Gtk.Main.Idle_Handler_Id := 0;
       Last_Search_Context     : Find_Utils.Search_Context_Access;
       --  This is the context used for single Find/Next and Replace operations.
