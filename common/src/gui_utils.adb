@@ -19,6 +19,7 @@
 
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Equal_Case_Insensitive; use Ada.Strings;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
@@ -321,16 +322,18 @@ package body GUI_Utils is
    ----------------------------
 
    procedure Add_Unique_Combo_Entry
-     (Combo       : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text        : String;
-      Select_Text : Boolean := False;
-      Prepend     : Boolean := False;
-      Col         : Gint := 0)
+     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text           : String;
+      Select_Text    : Boolean := False;
+      Prepend        : Boolean := False;
+      Col            : Gint := 0;
+      Case_Sensitive : Boolean := True)
    is
       Iter : Gtk_Tree_Iter;
       pragma Unreferenced (Iter);
    begin
-      Iter := Add_Unique_Combo_Entry (Combo, Text, Select_Text, Prepend, Col);
+      Iter := Add_Unique_Combo_Entry
+        (Combo, Text, Select_Text, Prepend, Col, Case_Sensitive);
    end Add_Unique_Combo_Entry;
 
    ----------------------------
@@ -338,11 +341,12 @@ package body GUI_Utils is
    ----------------------------
 
    function Add_Unique_Combo_Entry
-     (Combo       : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text        : String;
-      Select_Text : Boolean := False;
-      Prepend     : Boolean := False;
-      Col         : Gint := 0) return Gtk_Tree_Iter
+     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text           : String;
+      Select_Text    : Boolean := False;
+      Prepend        : Boolean := False;
+      Col            : Gint := 0;
+      Case_Sensitive : Boolean := True) return Gtk_Tree_Iter
    is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_List_Store;
@@ -351,7 +355,14 @@ package body GUI_Utils is
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
-         exit when Model.Get_String (Iter, Col) = Text;
+         declare
+            Str : String renames Model.Get_String (Iter, Col);
+         begin
+            exit when Str = Text
+              or else (not Case_Sensitive
+                       and then Equal_Case_Insensitive (Text, Str));
+         end;
+
          Model.Next (Iter);
       end loop;
 
@@ -377,9 +388,10 @@ package body GUI_Utils is
    ---------------------
 
    procedure Set_Active_Text
-     (Combo : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text  : String;
-      Col   : Gint := 0)
+     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text           : String;
+      Col            : Gint := 0;
+      Case_Sensitive : Boolean := True)
    is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_List_Store;
@@ -388,7 +400,12 @@ package body GUI_Utils is
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
-         if Model.Get_String (Iter, Col) = Text then
+         if (Case_Sensitive and then Model.Get_String (Iter, Col) = Text)
+           or else
+             (not Case_Sensitive
+              and then
+                Equal_Case_Insensitive (Model.Get_String (Iter, Col), Text))
+         then
             Combo.Set_Active_Iter (Iter);
             return;
          end if;

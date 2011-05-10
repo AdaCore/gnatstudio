@@ -2748,12 +2748,14 @@ package body Project_Properties is
 
          Pack_Start (Editor, Editor.Combo, Expand => True, Fill => True);
 
-         Set_Active_Text
+         GUI_Utils.Add_Unique_Combo_Entry
            (Editor.Combo,
             Get_Current_Value
               (Project => Project,
                Attr    => Description,
-               Index   => ""));
+               Index   => ""),
+            Select_Text    => True,
+            Case_Sensitive => Description.Case_Sensitive_Index);
       end if;
 
       return Editor;
@@ -3448,7 +3450,8 @@ package body Project_Properties is
             Set_Active_Text
               (W.Combo,
                Get_Current_Value
-                 (Project, Description, Index => Attribute_Index));
+                 (Project, Description, Index => Attribute_Index),
+               Case_Sensitive => Description.Case_Sensitive_Index);
             Pack_Start (Get_Vbox (Dialog), W, Expand => True, Fill => True);
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
