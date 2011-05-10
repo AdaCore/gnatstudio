@@ -95,7 +95,6 @@ with Welcome_Page;                     use Welcome_Page;
 
 --  Modules registered by GPS
 
-with Action_Editor;
 with Ada_Module;
 with Aliases_Module;
 with Aunit_Module;
@@ -192,8 +191,6 @@ procedure GPS.Main is
                         Create ("MODULE.Custom", GNATCOLL.Traces.On);
    Project_Templates_Trace : constant Debug_Handle :=
                        Create ("MODULE.Project_Templates", GNATCOLL.Traces.On);
-   Action_Editor_Trace    : constant Debug_Handle :=
-                        Create ("MODULE.Action_Editor", GNATCOLL.Traces.Off);
    Code_Analysis_Trace    : constant Debug_Handle :=
                         Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
    Code_Peer_Trace        : constant Debug_Handle :=
@@ -1542,16 +1539,6 @@ procedure GPS.Main is
       end if;
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);
-
-      --  Do this after the custom files, since this will override other
-      --  The comment above is unfinished ???
-      --  Especially since the comment on body of Add_Customization_String
-      --  (gps-kernel-custom.adb) says that if the custom files have been
-      --  loaded then all modules are registered ???
-
-      if Active (Action_Editor_Trace) then
-         Action_Editor.Register_Module (GPS_Main.Kernel);
-      end if;
 
       if Server_Mode then
          Socket_Module.Register_Module (GPS_Main.Kernel, Port_Number);
