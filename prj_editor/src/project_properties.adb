@@ -42,8 +42,9 @@ with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with Gtk.Frame;                 use Gtk.Frame;
@@ -430,7 +431,7 @@ package body Project_Properties is
 
    type List_Attribute_Editor_Record is new Attribute_Editor_Record with record
       Model : Gtk_Tree_Store;
-      Combo : Gtk_Combo;
+      Combo : Gtk_Combo_Box;
    end record;
    type List_Attribute_Editor is access all List_Attribute_Editor_Record'Class;
 
@@ -1293,7 +1294,7 @@ package body Project_Properties is
            (Attr               => Editor.Attribute,
             Project            => Project,
             Scenario_Variables => Scenario_Variables,
-            Value              => Get_Text (Get_Entry (Editor.Combo)),
+            Value              => Get_Active_Text (Editor.Combo),
             Project_Changed    => Project_Changed);
 
       else
@@ -2627,7 +2628,6 @@ package body Project_Properties is
    is
       use Gtk.Enums.String_List;
       Editor     : List_Attribute_Editor;
-      Items      : Gtk.Enums.String_List.Glist;
       Scrolled   : Gtk_Scrolled_Window;
       View       : Gtk_Tree_View;
       Toggle     : Gtk_Cell_Renderer_Toggle;
@@ -2665,13 +2665,15 @@ package body Project_Properties is
 
             Set (Editor.Model, Iter, 1, Selected);
          else
-            Append (Items, Value);
+            Editor.Combo.Append_Text (Value);
          end if;
       end Value_Cb;
 
-      Attr : constant Attribute_Type :=
-        Get_Attribute_Type_From_Description
-          (Description, Attribute_Index);
+      Attr     : constant Attribute_Type :=
+                   Get_Attribute_Type_From_Description
+                     (Description, Attribute_Index);
+      Editable : Boolean;
+
    begin
       Editor := new List_Attribute_Editor_Record;
       Initialize_Vbox (Editor, Homogeneous => False);
@@ -2685,8 +2687,18 @@ package body Project_Properties is
            (0 => GType_String,    --  Attribute value
             1 => GType_Boolean)); --  Selected ?
       else
-         Gtk_New (Editor.Combo);
-         Set_Activates_Default (Get_Entry (Editor.Combo), True);
+         if Attr.Typ = Attribute_As_Static_List then
+            Editable := Attr.Static_Allows_Any_String;
+         else
+            Editable := Attr.Dynamic_Allows_Any_String;
+         end if;
+
+         if Editable then
+            Gtk_New_Combo_Text_With_Entry (Editor.Combo);
+            Set_Activates_Default (Gtk_Entry (Editor.Combo.Get_Child), True);
+         else
+            Gtk_New_Text (Editor.Combo);
+         end if;
       end if;
 
       if Is_List then
@@ -2735,23 +2747,13 @@ package body Project_Properties is
          For_Each_Item_In_List (Kernel, Attr, Value_Cb'Unrestricted_Access);
 
          Pack_Start (Editor, Editor.Combo, Expand => True, Fill => True);
-         Set_Width_Chars (Get_Entry (Editor.Combo), 0);
-         Set_Popdown_Strings (Editor.Combo, Items);
-         Free_String_List (Items);
 
-         Set_Text (Get_Entry (Editor.Combo),
-           Get_Current_Value
-             (Project => Project,
-              Attr    => Description,
-              Index   => ""));
-
-         if Attr.Typ = Attribute_As_Static_List then
-            Set_Editable
-              (Get_Entry (Editor.Combo), Attr.Static_Allows_Any_String);
-         else
-            Set_Editable
-              (Get_Entry (Editor.Combo), Attr.Dynamic_Allows_Any_String);
-         end if;
+         Set_Active_Text
+           (Editor.Combo,
+            Get_Current_Value
+              (Project => Project,
+               Attr    => Description,
+               Index   => ""));
       end if;
 
       return Editor;
@@ -3255,8 +3257,8 @@ package body Project_Properties is
             Add_Attribute (Col, Toggle, "active", 1);
 
             Widget_Callback.Object_Connect
-              (Path_Widget, Signal_Changed, Project_Path_Changed'Access,
-               Slot_Object => Editor);
+              (Path_Widget, Gtk.Editable.Signal_Changed,
+               Project_Path_Changed'Access, Slot_Object => Editor);
          end if;
 
          declare
@@ -3321,7 +3323,7 @@ package body Project_Properties is
 
          if Wiz /= null then
             Widget_Callback.Object_Connect
-              (Editor.Ent, Signal_Changed,
+              (Editor.Ent, Gtk.Editable.Signal_Changed,
                Update_Buttons_Sensitivity'Access, Wiz);
          end if;
 
@@ -3443,9 +3445,10 @@ package body Project_Properties is
             W := Create_List_Attribute_Editor
               (Kernel, Project, Description, Attribute_Index,
                Is_List => False);
-            Set_Text (Get_Entry (W.Combo),
-                      Get_Current_Value
-                        (Project, Description, Index => Attribute_Index));
+            Set_Active_Text
+              (W.Combo,
+               Get_Current_Value
+                 (Project, Description, Index => Attribute_Index));
             Pack_Start (Get_Vbox (Dialog), W, Expand => True, Fill => True);
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
@@ -3457,7 +3460,7 @@ package body Project_Properties is
             case Run (Dialog) is
                when Gtk_Response_OK =>
                   declare
-                     S : constant String := Get_Text (Get_Entry (W.Combo));
+                     S : constant String := Get_Active_Text (W.Combo);
                   begin
                      Destroy (Dialog);
                      return (1 .. 1 => new String'(S));
@@ -3631,7 +3634,7 @@ package body Project_Properties is
    is
       pragma Unreferenced (Attribute_Index);
    begin
-      return Get_Text (Get_Entry (Editor.Combo));
+      return Get_Active_Text (Editor.Combo);
    end Get_Value_As_String;
 
    -------------------------
