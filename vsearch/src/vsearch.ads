@@ -27,7 +27,6 @@ with Gtk.Box;           use Gtk.Box;
 with Gtk.Button;        use Gtk.Button;
 with Gtk.Check_Button;  use Gtk.Check_Button;
 with Gtk.Combo_Box;     use Gtk.Combo_Box;
-with Gtk.GEntry;        use Gtk.GEntry;
 with Gtk.Label;         use Gtk.Label;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Table;         use Gtk.Table;
@@ -170,10 +169,8 @@ private
       Search_For_Label    : Gtk_Label;
       Search_In_Label     : Gtk_Label;
       Replace_Combo       : Gtk_Combo_Box;
-      Replace_Entry       : Gtk_Entry;
       Context_Combo       : Gtk_Combo_Box;
       Pattern_Combo       : Gtk_Combo_Box;
-      Pattern_Entry       : Gtk_Entry;
       Buttons_Table       : Gtk_Table;
       Options_Frame       : Gtk_Box;
       Options_Vbox        : Gtk_Table;

@@ -36,6 +36,7 @@ with Gtk.Clipboard;            use Gtk.Clipboard;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Hbutton_Box;          use Gtk.Hbutton_Box;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.List_Store;           use Gtk.List_Store;
@@ -717,9 +718,8 @@ package body Vsearch is
       use Widget_List;
       Data    : constant Search_Module_Data :=
                   Find_Module
-                    (Vsearch.Kernel,
-                     Gtk.Combo_Box.Get_Active_Text (Vsearch.Context_Combo));
-      Pattern : constant String := Get_Text (Vsearch.Pattern_Entry);
+                    (Vsearch.Kernel, Get_Active_Text (Vsearch.Context_Combo));
+      Pattern : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
       Iter    : Gtk_Tree_Iter;
       List    : Gtk_List_Store;
       Options : Search_Options;
@@ -772,20 +772,21 @@ package body Vsearch is
          --  It sometimes happens that another entry is selected, for some
          --  reason. This also resets the options to the unwanted selection,
          --  so we also need to override them.
-         Set_Text (Vsearch.Pattern_Entry, Pattern);
+         Set_Active_Text (Vsearch.Pattern_Combo, Pattern);
          Set_Active (Vsearch.Case_Check, Options.Case_Sensitive);
          Set_Active (Vsearch.Whole_Word_Check, Options.Whole_Word);
          Set_Active (Vsearch.Regexp_Check, Options.Regexp);
       end if;
 
       declare
-         Replace_Text : constant String := Get_Text (Vsearch.Replace_Entry);
+         Replace_Text : constant String :=
+                          Get_Active_Text (Vsearch.Replace_Combo);
       begin
          Add_Unique_Combo_Entry
            (Vsearch.Replace_Combo, Replace_Text, Prepend => True);
          Add_To_History
            (Get_History (Vsearch.Kernel).all, Replace_Hist_Key, Replace_Text);
-         Set_Text (Vsearch.Replace_Entry, Replace_Text);
+         Set_Active_Text (Vsearch.Replace_Combo, Replace_Text);
       end;
    end Create_Context;
 
@@ -807,11 +808,12 @@ package body Vsearch is
       Button   : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
-      Pattern  : constant String := Get_Text (Vsearch.Pattern_Entry);
+      Pattern  : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
       C        : Search_Commands.Generic_Asynchronous_Command_Access;
 
       Search_Category : constant String :=
-        -"Search for: " & Get_Text (Vsearch.Pattern_Entry);
+                          -"Search for: " &
+                          Vsearch.Pattern_Combo.Get_Active_Text;
    begin
       if All_Occurrences then
          --  If there is already a search going on for this category, do not
@@ -1021,7 +1023,7 @@ package body Vsearch is
       Has_Next := Replace
         (Vsearch.Last_Search_Context,
          Vsearch.Kernel,
-         Get_Text (Vsearch.Replace_Entry),
+         Get_Active_Text (Vsearch.Replace_Combo),
          Get_Active (Vsearch.Case_Preserving_Replace),
          Search_Backward => False,
          Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
@@ -1051,7 +1053,7 @@ package body Vsearch is
       Has_Next := Replace
         (Vsearch.Last_Search_Context,
          Vsearch.Kernel,
-         Get_Text (Vsearch.Replace_Entry),
+         Get_Active_Text (Vsearch.Replace_Combo),
          Get_Active (Vsearch.Case_Preserving_Replace),
          Search_Backward => False,
          Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
@@ -1078,7 +1080,7 @@ package body Vsearch is
 
       Dialog : constant Gtk_Dialog := Create_Gtk_Dialog
         (Msg      => (-"You are about to replace all occurrences of """)
-         & Get_Text (Vsearch.Pattern_Entry) & """."
+         & Get_Active_Text (Vsearch.Pattern_Combo) & """."
          & ASCII.LF & (-"Continue?"),
          Dialog_Type => Warning,
          Title       => -"Replacing all occurrences",
@@ -1131,7 +1133,8 @@ package body Vsearch is
           Context         => Vsearch.Last_Search_All_Context,
           Case_Preserving => Get_Active (Vsearch.Case_Preserving_Replace),
           Found           => False,
-          Replace_With    => new String'(Get_Text (Vsearch.Replace_Entry))),
+          Replace_With    =>
+            new String'(Get_Active_Text (Vsearch.Replace_Combo))),
          Replace_Iterate'Access);
 
       Launch_Background_Command
@@ -1596,12 +1599,8 @@ package body Vsearch is
       Gtk_New_With_Model_And_Entry (Vsearch.Replace_Combo, Model);
       Vsearch.Replace_Combo.Set_Entry_Text_Column (0);
       Attach (Vsearch.Table, Vsearch.Replace_Combo, 1, 2, 1, 2);
-
-      Vsearch.Replace_Entry := Gtk_Entry (Get_Child (Vsearch.Replace_Combo));
-      Set_Size_Request (Vsearch.Replace_Entry, 0, -1);
-      Set_Text (Vsearch.Replace_Entry, -"");
       Tooltips := Get_Tooltips (Handle);
-      Set_Tip (Tooltips, Vsearch.Replace_Entry,
+      Set_Tip (Tooltips, Vsearch.Replace_Combo,
                -"The text that will replace each match");
 
       Gtk_New_Text (Vsearch.Context_Combo);
@@ -1623,11 +1622,7 @@ package body Vsearch is
       Gtk.Cell_Layout.Clear (Layout);
       Gtk.Cell_Layout.Pack_Start (Layout, Renderer, True);
       Gtk.Cell_Layout.Add_Attribute (Layout, Renderer, "text", Column_Text);
-
-      Vsearch.Pattern_Entry := Gtk_Entry (Get_Child (Vsearch.Pattern_Combo));
-      Set_Size_Request (Vsearch.Pattern_Entry, 0, -1);
-      Set_Text (Vsearch.Pattern_Entry, -"");
-      Set_Tip (Tooltips, Vsearch.Pattern_Entry,
+      Set_Tip (Tooltips, Vsearch.Pattern_Combo,
                -"The searched word or pattern");
 
       Gtk_New (Vsearch.Buttons_Table, 2, 3, False);
@@ -1810,16 +1805,16 @@ package body Vsearch is
 
       --  Any change to the fields resets the search mode
       Return_Callback.Object_Connect
-        (Vsearch.Pattern_Entry, Signal_Key_Press_Event,
+        (Vsearch.Pattern_Combo.Get_Child, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Key_Press'Access), Vsearch);
       Return_Callback.Object_Connect
-        (Vsearch.Replace_Entry, Signal_Key_Press_Event,
+        (Vsearch.Replace_Combo.Get_Child, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Key_Press_Replace'Access), Vsearch);
       Kernel_Callback.Connect
-        (Vsearch.Pattern_Entry, Gtk.Editable.Signal_Changed,
+        (Vsearch.Pattern_Combo, Gtk.Combo_Box.Signal_Changed,
          Reset_Search'Access, Handle);
       Widget_Callback.Object_Connect
-        (Vsearch.Replace_Entry, Gtk.Editable.Signal_Changed,
+        (Vsearch.Replace_Combo, Gtk.Combo_Box.Signal_Changed,
          Replace_Text_Changed'Access, Vsearch);
       Kernel_Callback.Connect
         (Vsearch.Context_Combo, Gtk.Combo_Box.Signal_Changed,
@@ -1864,10 +1859,10 @@ package body Vsearch is
          end loop;
 
          Set_Active (Vsearch.Pattern_Combo, 0);
-         Select_Region (Vsearch.Pattern_Entry, 0, -1);
+         Select_Region (Gtk_Entry (Vsearch.Pattern_Combo.Get_Child), 0, -1);
 
       else
-         Set_Text (Vsearch.Pattern_Entry, "");
+         Set_Active_Text (Vsearch.Pattern_Combo, "");
       end if;
 
       Add_Hook (Handle, Search_Reset_Hook,
@@ -1932,7 +1927,8 @@ package body Vsearch is
               and then Ada_Text'Length < 128
               and then Index (Ada_Text, (1 => ASCII.LF)) = 0
             then
-               Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, Ada_Text);
+               Set_Active_Text
+                 (Vsearch_Module_Id.Search.Pattern_Combo, Ada_Text);
             end if;
          end;
       end if;
@@ -2037,7 +2033,7 @@ package body Vsearch is
                   Flags => All_Buttons or Float_As_Transient
                   or Always_Destroy_Float,
                   Focus_Widget =>
-                    Gtk_Widget (Vsearch_Module_Id.Search.Pattern_Entry),
+                    Vsearch_Module_Id.Search.Pattern_Combo.Get_Child,
                   Group    => Group_View,
                   Module => Vsearch_Module_Id,
                   Desktop_Independent => True);
@@ -2057,8 +2053,8 @@ package body Vsearch is
       --  there is one which does not contain multiple lines.
 
       if Default_Pattern /= null then
-         Set_Text
-           (Vsearch_Module_Id.Search.Pattern_Entry, Default_Pattern.all);
+         Set_Active_Text
+           (Vsearch_Module_Id.Search.Pattern_Combo, Default_Pattern.all);
          Free (Default_Pattern);
       else
          Request_Text
@@ -2097,7 +2093,7 @@ package body Vsearch is
                  (Vsearch.Context_Combo, Context.all, True);
             end if;
 
-            Grab_Focus (Vsearch.Pattern_Entry);
+            Grab_Focus (Vsearch.Pattern_Combo.Get_Child);
          end;
       end if;
 

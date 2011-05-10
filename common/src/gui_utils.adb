@@ -372,6 +372,10 @@ package body GUI_Utils is
       return Iter;
    end Add_Unique_Combo_Entry;
 
+   ---------------------
+   -- Set_Active_Text --
+   ---------------------
+
    procedure Set_Active_Text
      (Combo : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
       Text  : String;
@@ -388,8 +392,16 @@ package body GUI_Utils is
             Combo.Set_Active_Iter (Iter);
             return;
          end if;
+
          Model.Next (Iter);
       end loop;
+
+      --  No such existing item found. If the combo has an entry, let's enter
+      --  the text in there
+
+      if Combo.Get_Has_Entry then
+         Gtk_Entry (Combo.Get_Child).Set_Text (Text);
+      end if;
    end Set_Active_Text;
 
    -----------------------
