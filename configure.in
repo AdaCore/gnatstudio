@@ -135,7 +135,7 @@ case "${host}" in
 
       *-darwin* )
 	STRIP_CR=True
-	DEFAULT_FIXED_FONT="Monospace 7.5"
+	DEFAULT_FIXED_FONT="Monaco 7.5"
 	;;
       # Otherwise we'll fall through to the generic opsys code at the bottom.
     esac
