@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2010, AdaCore                 --
+--                  Copyright (C) 2007-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -115,13 +115,29 @@ package body Ada_Semantic_Tree.Type_Tree is
    ------------------------
 
    procedure Free_Parents_Array (The_Type : Ada_Type_Access) is
+      use Language.Tree.Construct_Annotations_Pckg;
+
       Tmp : Entity_Persistent_Access;
+
+      Assistant    : Database_Assistant_Access;
+      Ada_Type_Key : Annotation_Key;
+      pragma Unreferenced (Ada_Type_Key);
    begin
       for J in The_Type.Parents'Range loop
          if Exists (The_Type.Parents (J).Entity) then
+            Assistant := Get_Assistant
+              (Get_Database (Get_File (The_Type.Entity)),
+               Ada_Type_Assistant_Id);
+            Ada_Type_Key :=
+              Ada_Type_Assistant (Assistant.all).Ada_Type_Key;
+
             declare
+               --  WARNING! Do not use Get_Ada_Type here, as it will recompute
+               --  the type and parts, may be in the process of being freed.
                Parent_Info : constant Ada_Type_Access :=
-                 Get_Ada_Type (To_Entity_Access (The_Type.Parents (J).Entity));
+                 Get_Type_Info
+                   (Ada_Type_Key,
+                    To_Entity_Access (The_Type.Parents (J).Entity));
             begin
                if Parent_Info /= null then
                   if Parent_Info.Children.Contains (The_Type.Entity) then
