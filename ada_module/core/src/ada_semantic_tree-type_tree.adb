@@ -121,7 +121,6 @@ package body Ada_Semantic_Tree.Type_Tree is
 
       Assistant    : Database_Assistant_Access;
       Ada_Type_Key : Annotation_Key;
-      pragma Unreferenced (Ada_Type_Key);
    begin
       for J in The_Type.Parents'Range loop
          if Exists (The_Type.Parents (J).Entity) then
