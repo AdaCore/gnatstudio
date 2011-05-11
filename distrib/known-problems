@@ -8,10 +8,11 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- K502-008 errors when using smart completion
-  Problem:    When using extensively smart completion, through e.g. Dynamic
-              smart completion in GPS, the completion may start working.
-  Workaround: Relaunch Eclipse or GPS.
+- K502-008 Spurious errors when using smart completion
+  Problem:    When using extensively the smart completion through e.g. Dynamic
+              smart completion in GPS, the completion may stop working and
+              possibly leading to a crash.
+  Workaround: Relaunch GPS or GNATbench.
 
 - K425-003 GPS: some toolchains not properly loaded from project
   Problem:    If a toolchain is not defined in the 'toolchains.xml' file, then
