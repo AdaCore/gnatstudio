@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K430-002 GPS: Improve support on refilling comments (2011-05-08)
+
+  Edit->Selection->Refill has been improved to search for comments in the
+  selected lines and refill them using an algorithm that, after refilling
+  the contents of the comment, compares adjacent lines and decides whether
+  a word should be moved to the next line to make the lines more even.
+
 NF-51-K412-030 GPS: Add support to align on renames keyword (2011-04-17)
 
   The align plug-in has been enhanced to align on renames keyword.
