@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,9 +24,7 @@
 
 with Glib;          use Glib;
 
-with Gdk.GC;
-with Gdk.Pixbuf;
-
+with Gtk.Arrow;
 with Gtk.Box;
 with Gtk.Container;
 with Gtk.Event_Box;
@@ -70,12 +67,6 @@ package Collapsing_Pane is
      (Pane : access Collapsing_Pane_Record'Class) return Foldable_Box_State;
    --  Get the state of Pane.
 
-   procedure Set_Reduce_Window
-     (Pane : access Collapsing_Pane_Record'Class; Reduce_Window : Boolean);
-   --  When the collapsing pane is collapsed or expanded, it can automatically
-   --  resize the whole window. This is controlled by the parameter
-   --  Reduce_Window of this procedure, False by default.
-
    -------------
    -- Signals --
    -------------
@@ -96,16 +87,9 @@ private
          State            : Foldable_Box_State := Expanded;
          Label            : Gtk.Label.Gtk_Label;
          Label_Box        : Gtk.Event_Box.Gtk_Event_Box;
-         Label_Image      : Gtk.Box.Gtk_Box;
          Expanded_Box     : Gtk.Box.Gtk_Box;
          Collapsed_Box    : Gtk.Box.Gtk_Box;
-
-         Reduce_Window    : Boolean := False;
-         --  Do we want to reduce de window when we collapse the pane ?
-
-         Collapsed_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
-         Expanded_Pixbuf  : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
-         GC               : Gdk.GC.Gdk_GC := Gdk.GC.Null_GC;
+         Arrow            : Gtk.Arrow.Gtk_Arrow;
       end record;
 
 end Collapsing_Pane;

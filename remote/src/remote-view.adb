@@ -253,7 +253,6 @@ package body Remote.View is
       Gtk_New (View.Pane, "Servers assignment");
       Attach (View.Main_Table, View.Pane, 0, 2, 0, 1,
               Expand or Fill, 0);
-      Set_Reduce_Window (View.Pane, False);
 
       Gtk_New (Simple_Table, 1, 2, False);
       Set_Collapsed_Widget (View.Pane,
