@@ -30,6 +30,19 @@ NF-51-K430-002 GPS: Improve support on refilling comments (2011-05-08)
   the contents of the comment, compares adjacent lines and decides whether
   a word should be moved to the next line to make the lines more even.
 
+NF-51-K422-015 GPS: General GUI cleaup (2011-05-12)
+
+  Many graphical elements of the GPS interface have been refreshed. In
+  particular:
+  - The close buttons in the title bars have been changed, and tabs now contain
+    a close button.
+  - The Search view has been also modified to present search options in a
+    clearer and nicer way.
+  - The browsers have been refreshed, with some added capabilities such as the
+    capability to export to PDF, and a more complete export to SVG.
+  - The different Combo boxes used in GPS have been reviewed, and their
+    appearance now correctly reflects whether they can be edited or not.
+
 NF-51-K412-030 GPS: Add support to align on renames keyword (2011-04-17)
 
   The align plug-in has been enhanced to align on renames keyword.
