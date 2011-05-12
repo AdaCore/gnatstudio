@@ -1301,7 +1301,7 @@ package body Src_Contexts is
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
-      Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
+      Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : constant Files_Project_Context_Access :=
                   new Files_Project_Context;
    begin
@@ -2606,12 +2606,22 @@ package body Src_Contexts is
      (Selector : out Scope_Selector;
       Kernel   : access Kernel_Handle_Record'Class)
    is
+      Box   : Gtk.Box.Gtk_Hbox;
+      Label : Gtk_Label;
+
    begin
       Selector := new Scope_Selector_Record;
       Gtk.Box.Initialize_Vbox (Gtk.Box.Gtk_Box (Selector));
 
+      Gtk.Box.Gtk_New_Hbox (Box);
+      Pack_Start (Selector, Box, False, True, 2);
+
+      Gtk_New (Label, -"In:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Gtk.Box.Pack_Start (Box, Label, False);
+
       Gtk_New_Text (Selector.Combo);
-      Pack_Start (Selector, Selector.Combo, False, True, 2);
+      Gtk.Box.Pack_Start (Box, Selector.Combo, True, True, 2);
       Initialize_Scope_Combo (Selector.Combo, Kernel);
    end Gtk_New;
 
@@ -2626,15 +2636,15 @@ package body Src_Contexts is
       Label : Gtk_Label;
    begin
       Extra := new Files_Extra_Scope_Record;
-      Files_Extra_Info_Pkg.Initialize (Extra, Kernel);
+      Files_Extra_Info_Pkg.Initialize (Extra, Kernel, 1);
 
-      Gtk_New (Label, -"Scope:");
+      Gtk_New (Label, -"In:");
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Extra.Files_Table, Label, 0, 1, 2, 3, Fill, 0);
+      Attach (Extra.Files_Table, Label, 0, 1, 0, 1, Fill, 0);
 
       Gtk_New_Text (Extra.Combo);
       Initialize_Scope_Combo (Extra.Combo, Kernel);
-      Attach (Extra.Files_Table, Extra.Combo, 1, 3, 2, 3, Fill, 0);
+      Attach (Extra.Files_Table, Extra.Combo, 1, 2, 0, 1, Fill, 0);
 
       Kernel_Callback.Connect
         (Extra.Subdirs_Check, Signal_Toggled, Reset_Search'Access,

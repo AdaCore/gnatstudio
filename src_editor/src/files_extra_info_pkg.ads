@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
+
 with Gtk.Box;          use Gtk.Box;
 with Gtk.Button;       use Gtk.Button;
 with Gtk.Check_Button; use Gtk.Check_Button;
@@ -44,6 +46,7 @@ package Files_Extra_Info_Pkg is
       Handle : access GPS.Kernel.Kernel_Handle_Record'Class);
    procedure Initialize
      (Files_Extra_Info : access Files_Extra_Info_Record'Class;
-      Handle : access GPS.Kernel.Kernel_Handle_Record'Class);
+      Handle           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Start_Row_Number : Glib.Guint);
 
 end Files_Extra_Info_Pkg;

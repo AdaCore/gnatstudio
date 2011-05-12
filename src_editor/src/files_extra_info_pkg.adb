@@ -17,8 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;            use Glib;
 with Gtk;             use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Image;       use Gtk.Image;
+with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Tooltips;    use Gtk.Tooltips;
 with Gtkada.Handlers; use Gtkada.Handlers;
 
@@ -39,7 +42,7 @@ package body Files_Extra_Info_Pkg is
       Handle           : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Files_Extra_Info := new Files_Extra_Info_Record;
-      Files_Extra_Info_Pkg.Initialize (Files_Extra_Info, Handle);
+      Files_Extra_Info_Pkg.Initialize (Files_Extra_Info, Handle, 0);
    end Gtk_New;
 
    ----------------
@@ -48,23 +51,18 @@ package body Files_Extra_Info_Pkg is
 
    procedure Initialize
      (Files_Extra_Info : access Files_Extra_Info_Record'Class;
-      Handle           : access GPS.Kernel.Kernel_Handle_Record'Class)
+      Handle           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Start_Row_Number : Glib.Guint)
    is
       Tooltips : Gtk_Tooltips;
+      Icon     : Gtk_Image;
+      Hbox     : Gtk_Hbox;
+      Start    : Guint renames Start_Row_Number;
 
    begin
-      --  Gtk.Window.Initialize (Files_Extra_Info, Window_Toplevel);
-      --  Set_Title (Files_Extra_Info, -"window1");
-      --  Set_Policy (Files_Extra_Info, False, True, False);
-      --  Set_Position (Files_Extra_Info, Win_Pos_None);
-      --  Set_Modal (Files_Extra_Info, False);
-
-      --  Gtk_New (Files_Extra_Info.Files_Frame, -"Files");
-      --  Set_Shadow_Type (Files_Extra_Info.Files_Frame, Shadow_Etched_In);
-      --  Add (Files_Extra_Info, Files_Extra_Info.Files_Frame);
       Gtk.Box.Initialize_Vbox (Files_Extra_Info);
 
-      Gtk_New (Files_Extra_Info.Files_Table, 4, 3, False);
+      Gtk_New (Files_Extra_Info.Files_Table, 3 + Start, 2, False);
       Set_Border_Width (Files_Extra_Info.Files_Table, 5);
       Set_Row_Spacings (Files_Extra_Info.Files_Table, 5);
       Set_Col_Spacings (Files_Extra_Info.Files_Table, 5);
@@ -77,7 +75,16 @@ package body Files_Extra_Info_Pkg is
       Set_Justify (Files_Extra_Info.Files_Label, Justify_Center);
       Set_Line_Wrap (Files_Extra_Info.Files_Label, False);
       Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Files_Label,
-              0, 1, 0, 1, Fill, 0, 0, 0);
+              0, 1, Start, Start + 1, Fill, 0, 0, 0);
+
+      Gtk_New (Files_Extra_Info.Files_Entry);
+      Set_Editable (Files_Extra_Info.Files_Entry, True);
+      Set_Max_Length (Files_Extra_Info.Files_Entry, 0);
+      Set_Text (Files_Extra_Info.Files_Entry, "*");
+      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Files_Entry,
+              1, 2, Start, Start + 1, Fill, 0, 0, 0);
+      Tooltips := Get_Tooltips (Handle);
+      Set_Tip (Tooltips, Files_Extra_Info.Files_Entry, -"File(s) to scan");
 
       Gtk_New (Files_Extra_Info.Directory_Label, -("Directory:"));
       Set_Alignment (Files_Extra_Info.Directory_Label, 0.0, 0.5);
@@ -85,30 +92,24 @@ package body Files_Extra_Info_Pkg is
       Set_Justify (Files_Extra_Info.Directory_Label, Justify_Center);
       Set_Line_Wrap (Files_Extra_Info.Directory_Label, False);
       Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Directory_Label,
-              0, 1, 1, 2, Fill, 0, 0, 0);
+              0, 1, Start + 1, Start + 2, Fill, 0, 0, 0);
 
-      Gtk_New (Files_Extra_Info.Files_Entry);
-      Set_Editable (Files_Extra_Info.Files_Entry, True);
-      Set_Max_Length (Files_Extra_Info.Files_Entry, 0);
-      Set_Text (Files_Extra_Info.Files_Entry, -"");
-      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Files_Entry,
-              1, 3, 0, 1, Fill, 0, 0, 0);
-      Tooltips := Get_Tooltips (Handle);
-      Set_Tip (Tooltips, Files_Extra_Info.Files_Entry, -"File(s) to scan");
+      Gtk_New_Hbox (Hbox);
+      Attach (Files_Extra_Info.Files_Table, Hbox,
+              1, 2, Start + 1, Start + 2, Fill, 0, 0, 0);
 
       Gtk_New (Files_Extra_Info.Directory_Entry);
       Set_Editable (Files_Extra_Info.Directory_Entry, True);
       Set_Max_Length (Files_Extra_Info.Directory_Entry, 0);
       Set_Text (Files_Extra_Info.Directory_Entry, -"");
-      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Directory_Entry,
-              1, 3, 1, 2, Fill, 0, 0, 0);
       Set_Tip
         (Tooltips, Files_Extra_Info.Directory_Entry, -"Directory to scan");
+      Pack_Start (Hbox, Files_Extra_Info.Directory_Entry, True, True);
 
-      Gtk_New (Files_Extra_Info.Browse_Button, -"Browse");
-      Set_Relief (Files_Extra_Info.Browse_Button, Relief_Normal);
-      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Browse_Button,
-              1, 2, 3, 4, Fill, 0, 0, 0);
+      Gtk_New (Icon, Stock_Directory, Icon_Size_Button);
+      Gtk.Button.Gtk_New (Files_Extra_Info.Browse_Button);
+      Files_Extra_Info.Browse_Button.Add (Icon);
+      Pack_Start (Hbox, Files_Extra_Info.Browse_Button, False, False);
       Set_Tip
         (Tooltips, Files_Extra_Info.Browse_Button, -"Select a directory");
       Widget_Callback.Object_Connect
@@ -118,7 +119,7 @@ package body Files_Extra_Info_Pkg is
       Gtk_New (Files_Extra_Info.Subdirs_Check, -"Recursive Search");
       Set_Active (Files_Extra_Info.Subdirs_Check, False);
       Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Subdirs_Check,
-              2, 3, 3, 4, Expand or Fill, 0, 0, 0);
+              1, 2, Start + 2, Start + 3, Expand or Fill, 0, 0, 0);
    end Initialize;
 
 end Files_Extra_Info_Pkg;
