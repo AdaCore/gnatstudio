@@ -35,7 +35,7 @@ with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;         use Gtk.Check_Button;
-with Gtk.Color_Selection;      use Gtk.Color_Selection;
+with Gtk.Color_Button;         use Gtk.Color_Button;
 with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
@@ -65,7 +65,6 @@ with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 
-with Gtkada.Color_Combo;       use Gtkada.Color_Combo;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Pango.Context;
@@ -113,8 +112,7 @@ package body Default_Preferences is
      (Box     : Gtk_Box;
       Pref    : access Style_Preference_Record'Class;
       Manager : access Preferences_Manager_Record'Class;
-      Tips    : Gtk.Tooltips.Gtk_Tooltips;
-      Event   : in out Gtk_Event_Box);
+      Tips    : Gtk.Tooltips.Gtk_Tooltips);
    --  Factorize code that creates the color buttons
 
    procedure Free (Pref : in out Preference);
@@ -173,25 +171,25 @@ package body Default_Preferences is
    --  Update the font used for the entry Ent, based on its contents.
 
    procedure Color_Changed
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference);
+     (Button : access GObject_Record'Class;
+      Data   : Manager_Preference);
    --  Called when a color has changed.
 
    procedure Update_Font_Entry
      (Ent  : access GObject_Record'Class;
       Data : Manager_Preference);
    procedure Update_Fg
-     (Combo  : access GObject_Record'Class;
-      Data : Manager_Preference);
+     (Button  : access GObject_Record'Class;
+      Data    : Manager_Preference);
    procedure Update_Bg
-     (Combo  : access GObject_Record'Class;
-      Data : Manager_Preference);
+     (Button : access GObject_Record'Class;
+      Data   : Manager_Preference);
    --  Called when the preference Data has changed, to update Combo for the
    --  Font, foreground or background of the preference
 
    procedure Update_Color
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference);
+     (Button : access GObject_Record'Class;
+      Data   : Manager_Preference);
    --  Update the contents of the combo based on the color found in Data
 
    procedure Bg_Color_Changed
@@ -1168,12 +1166,12 @@ package body Default_Preferences is
    -------------------
 
    procedure Color_Changed
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference)
+     (Button : access GObject_Record'Class;
+      Data   : Manager_Preference)
    is
-      C     : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
+      Btn : constant Gtk_Color_Button := Gtk_Color_Button (Button);
    begin
-      Set_Pref (Color_Preference (Data.Pref), null, Get_Color (C));
+      Set_Pref (Color_Preference (Data.Pref), null, To_String (Btn.Get_Color));
    end Color_Changed;
 
    ---------------
@@ -1181,10 +1179,10 @@ package body Default_Preferences is
    ---------------
 
    procedure Update_Fg
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference) is
+     (Button : access GObject_Record'Class;
+      Data   : Manager_Preference) is
    begin
-      Set_Color (Gtk_Color_Combo (Combo),
+      Set_Color (Gtk_Color_Button (Button),
                  Get_Pref_Fg (Style_Preference (Data.Pref)));
    end Update_Fg;
 
@@ -1193,10 +1191,10 @@ package body Default_Preferences is
    ---------------
 
    procedure Update_Bg
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference) is
+     (Button : access GObject_Record'Class;
+      Data   : Manager_Preference) is
    begin
-      Set_Color (Gtk_Color_Combo (Combo),
+      Set_Color (Gtk_Color_Button (Button),
                  Get_Pref_Bg (Style_Preference (Data.Pref)));
    end Update_Bg;
 
@@ -1222,11 +1220,12 @@ package body Default_Preferences is
    ------------------
 
    procedure Update_Color
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference) is
+     (Button : access GObject_Record'Class;
+      Data   : Manager_Preference) is
    begin
       Set_Color
-        (Gtk_Color_Combo (Combo), Get_Pref (Color_Preference (Data.Pref)));
+        (Gtk_Color_Button (Button),
+         Parse (Get_Pref (Color_Preference (Data.Pref))));
    end Update_Color;
 
    ----------------------
@@ -1237,10 +1236,11 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference)
    is
-      C     : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
+      C : constant Gtk_Color_Button := Gtk_Color_Button (Combo);
    begin
       Free (Style_Preference (Data.Pref).Style_Fg);
-      Style_Preference (Data.Pref).Style_Fg := new String'(Get_Color (C));
+      Style_Preference (Data.Pref).Style_Fg :=
+        new String'(To_String (Get_Color (C)));
       Style_Preference (Data.Pref).Fg_Color := Get_Color (C);
    end Fg_Color_Changed;
 
@@ -1265,10 +1265,11 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference)
    is
-      C     : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
+      C : constant Gtk_Color_Button := Gtk_Color_Button (Combo);
    begin
       Free (Style_Preference (Data.Pref).Style_Bg);
-      Style_Preference (Data.Pref).Style_Bg := new String'(Get_Color (C));
+      Style_Preference (Data.Pref).Style_Bg :=
+        new String'(To_String (Get_Color (C)));
       Style_Preference (Data.Pref).Bg_Color := Get_Color (C);
    end Bg_Color_Changed;
 
@@ -1554,21 +1555,20 @@ package body Default_Preferences is
       return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Tips);
-      Combo : Gtk_Color_Combo;
+      Button : Gtk_Color_Button;
    begin
-      Gtk_New (Combo);
-      Set_Color (Combo, Get_Pref (Color_Preference (Pref)));
+      Gtk_New_With_Color (Button, Get_Pref (Color_Preference (Pref)));
 
       Preference_Handlers.Connect
-        (Combo, Signal_Color_Changed,
+        (Button, Signal_Color_Set,
          Color_Changed'Access,
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Color'Access, Combo,
+         Update_Color'Access, Button,
          User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
-      return Gtk_Widget (Combo);
+      return Gtk_Widget (Button);
    end Edit;
 
    ----------
@@ -1662,39 +1662,32 @@ package body Default_Preferences is
      (Box     : Gtk_Box;
       Pref    : access Style_Preference_Record'Class;
       Manager : access Preferences_Manager_Record'Class;
-      Tips    : Gtk.Tooltips.Gtk_Tooltips;
-      Event   : in out Gtk_Event_Box)
+      Tips    : Gtk.Tooltips.Gtk_Tooltips)
    is
-      Combo : Gtk_Color_Combo;
+      Button : Gtk_Color_Button;
    begin
-      Gtk_New (Event);
-      Gtk_New (Combo);
-      Add (Event, Combo);
-      Set_Tip (Tips, Event, -"Foreground color");
-      Pack_Start (Box, Event, Expand => False);
-      Set_Color (Combo, Get_Pref_Fg (Style_Preference (Pref)));
+      Gtk_New_With_Color (Button, Get_Pref_Fg (Style_Preference (Pref)));
+      Set_Tip (Tips, Button, -"Foreground color");
+      Pack_Start (Box, Button, Expand => False);
       Preference_Handlers.Connect
-        (Combo, Signal_Color_Changed,
+        (Button, Signal_Color_Set,
          Fg_Color_Changed'Access,
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Fg'Access, Combo,
+         Update_Fg'Access, Button,
          User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
-      Gtk_New (Event);
-      Gtk_New (Combo);
-      Add (Event, Combo);
-      Set_Tip (Tips, Event, -"Background color");
-      Pack_Start (Box, Event, Expand => False);
-      Set_Color (Combo, Get_Pref_Bg (Style_Preference (Pref)));
+      Gtk_New_With_Color (Button, Get_Pref_Bg (Style_Preference (Pref)));
+      Set_Tip (Tips, Button, -"Background color");
+      Pack_Start (Box, Button, Expand => False);
       Preference_Handlers.Connect
-        (Combo, Signal_Color_Changed,
+        (Button, Signal_Color_Set,
          Bg_Color_Changed'Access,
          User_Data => (Preferences_Manager (Manager), Preference (Pref)));
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Bg'Access, Combo,
+         Update_Bg'Access, Button,
          User_Data => (Preferences_Manager (Manager), Preference (Pref)));
    end Create_Color_Buttons;
 
@@ -1723,7 +1716,7 @@ package body Default_Preferences is
       Gtk_New_Hbox (Box, Homogeneous => False);
       Pack_Start (Box, Event, Expand => True, Fill => True);
 
-      Create_Color_Buttons (Box, Pref, Manager, Tips, Event);
+      Create_Color_Buttons (Box, Pref, Manager, Tips);
 
       return Gtk_Widget (Box);
    end Edit;
@@ -1738,13 +1731,11 @@ package body Default_Preferences is
       Tips               : Gtk.Tooltips.Gtk_Tooltips)
       return Gtk.Widget.Gtk_Widget
    is
-      Event : Gtk_Event_Box;
       Box   : Gtk_Box;
       Variant_Combo : Gtk_Combo_Box;
       Count : Gint := 0;
 
    begin
-      Gtk_New (Event);
       Gtk_New_Text (Variant_Combo);
       for J in Variant_Enum loop
          Append_Text (Variant_Combo, To_String (J));
@@ -1754,16 +1745,15 @@ package body Default_Preferences is
          Count := Count + 1;
       end loop;
 
-      Add (Event, Variant_Combo);
-      Set_Tip (Tips, Event, -"Font variant");
+      Set_Tip (Tips, Variant_Combo, -"Font variant");
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Box, Event, Expand => True, Fill => True);
+      Pack_Start (Box, Variant_Combo, Expand => True, Fill => True);
       Preference_Handlers.Connect
         (Variant_Combo, Gtk.Combo_Box.Signal_Changed,
          Variant_Changed'Access,
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
 
-      Create_Color_Buttons (Box, Pref, Manager, Tips, Event);
+      Create_Color_Buttons (Box, Pref, Manager, Tips);
 
       return Gtk_Widget (Box);
    end Edit;
