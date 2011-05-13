@@ -8,6 +8,11 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K513-009 GPS: improved support for listing classes in Python outline
+  Problem:    Classes were not always listed in the Outline for Python sources.
+  Workaround: In plugin python_support.py, line 187, set the pattern to
+    ^\s*class\s+([\w_][\w\d_]+)\s*(\([^\)]*\))?:
+
 - K502-008 Spurious errors when using smart completion
   Problem:    When using extensively the smart completion through e.g. Dynamic
               smart completion in GPS, the completion may stop working and
