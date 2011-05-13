@@ -2196,15 +2196,18 @@ package body Project_Explorers is
                when Project_Node | Modified_Project_Node =>
                   declare
                      Files : File_Array_Access := Files_In_Project;
+
                   begin
-                     if Files = null then
-                        Files := Prj.Source_Files (Recursive => False);
-                     end if;
+                     if Prj /= No_Project then
+                        if Files_In_Project = null then
+                           Files := Prj.Source_Files (Recursive => False);
+                        end if;
 
-                     Update_Project_Node (Explorer, Files.all, Node);
+                        Update_Project_Node (Explorer, Files.all, Node);
 
-                     if Files_In_Project = null then
-                        Unchecked_Free (Files);
+                        if Files_In_Project = null then
+                           Unchecked_Free (Files);
+                        end if;
                      end if;
                   end;
 
@@ -2232,9 +2235,7 @@ package body Project_Explorers is
       if Node_Type = Project_Node
         or else Node_Type = Modified_Project_Node
       then
-         if Get_Project_From_Node
-           (Explorer.Tree.Model, Explorer.Kernel, Node, False).Modified
-         then
+         if Prj /= No_Project and then Prj.Modified then
             N_Type := Modified_Project_Node;
          else
             N_Type := Project_Node;
