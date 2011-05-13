@@ -1268,9 +1268,12 @@ package body GPS.Kernel.Messages is
                     Get_Messages_Container (Kernel);
 
    begin
-      --  Save messages for previous project
+      --  Save messages for current project
 
       Container.Save;
+
+      --  Remove all messages from container.
+
       Container.Remove_All_Messages (Empty_Message_Flags);
    end On_Project_Changing_Hook;
 
@@ -1568,11 +1571,19 @@ package body GPS.Kernel.Messages is
    ----------
 
    procedure Save (Self : not null access Messages_Container'Class) is
+      use type GNATCOLL.Projects.Project_Status;
+
    begin
-      Self.Save
-        (Create_From_Dir (Self.Kernel.Home_Dir, Messages_File_Name),
-         (True, True),
-         False);
+      --  Save messages only for ordinary projects (not empty nor default)
+
+      if GPS.Kernel.Project.Get_Registry (Self.Kernel).Tree.Status
+        = GNATCOLL.Projects.From_File
+      then
+         Self.Save
+           (Create_From_Dir (Self.Kernel.Home_Dir, Messages_File_Name),
+            (True, True),
+            False);
+      end if;
    end Save;
 
    ----------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2010, AdaCore                --
+--                   Copyright (C) 2001-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -55,12 +55,11 @@ package GPS.Kernel.Project is
    -------------------
 
    procedure Load_Project
-     (Kernel                   : access Kernel_Handle_Record'Class;
-      Project                  : GNATCOLL.VFS.Virtual_File;
-      No_Save                  : Boolean := False;
-      Clear                    : Boolean := True;
-      Is_Default               : Boolean := False;
-      Empty_Project_On_Failure : Boolean := False);
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Project    : GNATCOLL.VFS.Virtual_File;
+      No_Save    : Boolean := False;
+      Clear      : Boolean := True;
+      Is_Default : Boolean := False);
    --  Load project Project as the current project.
    --  This emits the "project_changed" and "project_view_changed" signals.
    --  If the project isn't found, nothing is done (the previous project is
@@ -70,9 +69,6 @@ package GPS.Kernel.Project is
    --  If Clear is true, the Messages window is cleared before loading the
    --  project
    --  If Is_Default is true, the project is considered the default project
-   --  If Empty_Project_On_Failure is True, Load_Project will not attempt
-   --  to load the default project in case of failure, and will load the
-   --  empty project instead.
 
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;

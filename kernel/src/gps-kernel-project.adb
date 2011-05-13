@@ -567,9 +567,8 @@ package body GPS.Kernel.Project is
       if Found then
          Load_Project
            (Kernel, Project,
-            Clear                    => Clear,
-            Is_Default               => Is_Default,
-            Empty_Project_On_Failure => True);
+            Clear      => Clear,
+            Is_Default => Is_Default);
       else
          Load_Empty_Project (Kernel);
       end if;
@@ -650,13 +649,13 @@ package body GPS.Kernel.Project is
    ------------------
 
    procedure Load_Project
-     (Kernel                   : access Kernel_Handle_Record'class;
-      Project                  : GNATCOLL.VFS.Virtual_File;
-      No_Save                  : Boolean := False;
-      Clear                    : Boolean := True;
-      Is_Default               : Boolean := False;
-      Empty_Project_On_Failure : Boolean := False)
+     (Kernel     : access Kernel_Handle_Record'class;
+      Project    : GNATCOLL.VFS.Virtual_File;
+      No_Save    : Boolean := False;
+      Clear      : Boolean := True;
+      Is_Default : Boolean := False)
    is
+
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console
 
@@ -815,10 +814,10 @@ package body GPS.Kernel.Project is
          begin
             New_Project_Loaded := True;
             Kernel.Registry.Tree.Load
-              (Root_Project_Path  => Local_Project,
-               Env                => Kernel.Registry.Environment,
-               Errors             => Report_Error'Unrestricted_Access,
-               Recompute_View     => False);
+              (Root_Project_Path => Local_Project,
+               Env               => Kernel.Registry.Environment,
+               Errors            => Report_Error'Unrestricted_Access,
+               Recompute_View    => False);
 
          exception
             when Invalid_Project =>
@@ -852,63 +851,14 @@ package body GPS.Kernel.Project is
 
                begin
                   Kernel.Registry.Tree.Load
-                    (Root_Project_Path  => Local_Project,
-                     Errors             => Report_Error'Unrestricted_Access,
-                     Env                => Kernel.Registry.Environment);
+                    (Root_Project_Path => Local_Project,
+                     Errors            => Report_Error'Unrestricted_Access,
+                     Env               => Kernel.Registry.Environment);
                   New_Project_Loaded := True;
 
                exception
                   when Invalid_Project => null;
                end;
-
-            elsif Previous_Project /= GNATCOLL.VFS.No_File then
-               Report_Error (-"Couldn't parse the project "
-                             & Display_Full_Name (Local_Project)
-                             & ASCII.LF & (-"Reverting to previous project ")
-                             & Display_Full_Name (Previous_Project)
-                             & ASCII.LF);
-               Data.File := Previous_Project;
-               Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
-               Compute_Predefined_Paths (Kernel);
-
-               begin
-                  Kernel.Registry.Tree.Load
-                    (Root_Project_Path  => Previous_Project,
-                     Errors             => Report_Error'Unrestricted_Access,
-                     Env                => Kernel.Registry.Environment);
-
-                  --  Will no reload the desktop, since this is the same
-                  --  project
-                  New_Project_Loaded := False;
-
-               exception
-                  when Invalid_Project => null;
-               end;
-
-            else
-               if Empty_Project_On_Failure
-
-               --  Do not try to load the default project if that's already
-               --  what we were loading
-                 or else Base_Name (Local_Project) = "default.gpr"
-               then
-                  Report_Error
-                    (-"Error while loading project '" &
-                     Display_Full_Name (Local_Project, True) &
-                     (-"'. Loading the empty project.") & ASCII.LF);
-                  Load_Empty_Project (Kernel);
-
-               else
-                  Report_Error
-                    (-"Error while loading project '" &
-                     Display_Full_Name (Local_Project, True) &
-                     (-"'. Loading the default project.") & ASCII.LF);
-                  Load_Default_Project
-                    (Kernel, Dir (Local_Project), Clear => False);
-               end if;
-
-               Pop_State (Kernel_Handle (Kernel));
-               return;
             end if;
 
          elsif Is_Default then
@@ -918,8 +868,6 @@ package body GPS.Kernel.Project is
 
          if not New_Project_Loaded then
             Had_Project_Desktop := Load_Desktop (Kernel);
-            Pop_State (Kernel_Handle (Kernel));
-            return;
          end if;
 
          Run_Hook (Kernel, Project_Changed_Hook);
