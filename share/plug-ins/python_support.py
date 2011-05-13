@@ -184,7 +184,7 @@ GPS.parse_xml ("""
     <Categories>
       <Category>
         <Name>class</Name>
-        <Pattern>^\s*class\s+([\w_][\w\d_]+)\s*:</Pattern>
+        <Pattern>^\s*class\s+([\w_][\w\d_]+)\s*(\([^\)]*\))?:</Pattern>
         <Index>1</Index>
         <Icon>package_xpm</Icon>
       </Category>
