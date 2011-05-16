@@ -205,7 +205,7 @@ package Default_Preferences is
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String)
-     return Theme_Preference;
+      return Theme_Preference;
    --  Create a new preference and register it in the Manager.
    --  Name is the name used when saving in the XML file, and when referencing
    --    that preference from a python file. It can contain any character.
@@ -338,7 +338,7 @@ package Default_Preferences is
      (Manager   : access Preferences_Manager_Record;
       File_Name : Virtual_File;
       Success   : out Boolean);
-   --  Save the default preferences to File_Name.
+   --  Save the default preferences to File_Name
 
    -------------------------
    -- Editing preferences --
@@ -365,7 +365,7 @@ package Default_Preferences is
    function Create
      (Pref : access Preferences_Page_Record) return Gtk.Widget.Gtk_Widget
       is abstract;
-   --  Return a widget to display in the preferences dialog.
+   --  Return a widget to display in the preferences dialog
 
    procedure Validate
      (Pref   : access Preferences_Page_Record;

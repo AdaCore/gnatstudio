@@ -124,18 +124,18 @@ package body GPS.Main_Window is
    package Toolbar_Icons_Size_Preferences is new
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
 
-   Pref_Toolbar_Style   : Toolbar_Icons_Size_Preferences.Preference;
-   Pref_Show_Statusbar  : Boolean_Preference;
-   Pref_Theme           : Theme_Preference;
+   Pref_Toolbar_Style  : Toolbar_Icons_Size_Preferences.Preference;
+   Pref_Show_Statusbar : Boolean_Preference;
+   Pref_Theme          : Theme_Preference;
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
-   --  Callback for the delete event.
+   --  Callback for the delete event
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
+   --  Called when the preferences have changed
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
    --  Called when the the main window is destroyed
@@ -170,10 +170,10 @@ package body GPS.Main_Window is
    --  Act on the layout of windows
 
    procedure Put_Animation (Main_Window : access GPS_Window_Record'Class);
-   --  Add the animated icon in the main window.
+   --  Add the animated icon in the main window
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the project is changed.
+   --  Called when the project is changed
 
    procedure Default_Command_Handler
      (Data    : in out Callback_Data'Class; Command : String);
@@ -192,7 +192,7 @@ package body GPS.Main_Window is
      (UI            : User_Interface;
       Prompt        : String;
       Password_Mode : Boolean) return String;
-   --  See inherited for documentation.
+   --  See inherited for documentation
 
    ----------------
    -- Query_User --
@@ -522,11 +522,11 @@ package body GPS.Main_Window is
 
       Pref_Theme := Create
         (Get_Preferences (Main_Window.Kernel),
-         Name    => "Gtk-Theme-Name",
-         Label   => -"Theme",
-         Page    => -"General",
-         Doc     => -("Select a theme from the list to change the general "
-                       & "appearance of GPS"));
+         Name  => "Gtk-Theme-Name",
+         Label => -"Theme",
+         Page  => -"General",
+         Doc   => -("Select a theme from the list to change the general "
+                     & "appearance of GPS"));
 
       Set_Policy (Main_Window, False, True, False);
       --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many
@@ -556,7 +556,7 @@ package body GPS.Main_Window is
         (Main_Window.Statusbar, Homogeneous => False, Spacing => 4);
       Set_Size_Request (Main_Window.Statusbar, 0, -1);
 
-      --  Avoid resizing the main window whenever a label is changed.
+      --  Avoid resizing the main window whenever a label is changed
       Set_Resize_Mode (Main_Window.Statusbar, Resize_Queue);
 
       Gtk_New (Progress);
@@ -1210,7 +1210,7 @@ package body GPS.Main_Window is
             Ent : Ent_Array;
 
             procedure Create_Entry (N : Natural);
-            --  Create the Nth entry. N must be in Ent_Array'Range.
+            --  Create the Nth entry. N must be in Ent_Array'Range
 
             ------------------
             -- Create_Entry --
