@@ -2404,9 +2404,9 @@ package body Src_Editor_View is
       Draw_Rectangle
         (Cr, (0.0, 0.0, 0.0, Alpha => 0.1), True,
          1,
-         (Height * Gint (View.Top_Line)) / Total_Lines,
+         (Height * Gint (View.Top_Line - 1)) / Total_Lines,
          Speed_Column_Width - 2,
-         (Height * Gint (View.Bottom_Line - View.Top_Line)) / Total_Lines,
+         (Height * Gint (View.Bottom_Line - View.Top_Line + 1)) / Total_Lines,
          2.0);
 
       Destroy (Cr);
