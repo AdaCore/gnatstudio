@@ -47,8 +47,10 @@ with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Object;               use Gtk.Object;
+with Gtk.Rc;                   use Gtk.Rc;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
+with Gtk.Settings;             use Gtk.Settings;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
@@ -151,6 +153,16 @@ package body Default_Preferences is
      (Ent  : access GObject_Record'Class;
       Data : Manager_Preference);
    --  Called when the preference Data has changed, to update Ent
+
+   procedure Combo_Changed
+     (Combo : access GObject_Record'Class;
+      Data  : Manager_Preference);
+   --  Called when the combo_box changed
+
+   procedure Update_Combo
+     (Combo : access GObject_Record'Class;
+      Data  : Manager_Preference);
+   --  Called when the preference Data has changed, to update Combo
 
    function Font_Entry_Changed
      (Ent  : access GObject_Record'Class;
@@ -1103,6 +1115,31 @@ package body Default_Preferences is
       Set_Text (Gtk_Entry (Ent), String'(Get_Pref (Data.Pref)));
    end Update_Entry;
 
+   -------------------
+   -- Combo_Changed --
+   -------------------
+
+   procedure Combo_Changed
+     (Combo : access GObject_Record'Class;
+      Data  : Manager_Preference)
+   is
+      C : constant Gtk_Combo_Box := Gtk_Combo_Box (Combo);
+   begin
+      Set_Pref (Data.Pref, null, Get_Active_Text (C));
+   end Combo_Changed;
+
+   ------------------
+   -- Update_Combo --
+   ------------------
+
+   procedure Update_Combo
+     (Combo : access GObject_Record'Class;
+      Data  : Manager_Preference)
+   is
+   begin
+      Set_Active_Text (Gtk_Combo_Box (Combo), String'(Get_Pref (Data.Pref)));
+   end Update_Combo;
+
    ----------------
    -- Reset_Font --
    ----------------
@@ -1768,6 +1805,183 @@ package body Default_Preferences is
       Free (Pref.Font_Descr);
       Free (Pref.Style_Fg);
       Free (Pref.Style_Bg);
+      Free (Preference_Record (Pref));
+   end Free;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   overriding function Get_Pref
+     (Pref : access Theme_Preference_Record) return String is
+   begin
+      if Pref.Themes = null or else Pref.Current not in Pref.Themes'Range then
+         return "";
+      else
+         return Pref.Themes (Pref.Current).all;
+      end if;
+   end Get_Pref;
+
+   --------------
+   -- Set_Pref --
+   --------------
+
+   overriding procedure Set_Pref
+     (Pref    : access Theme_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String)
+   is
+      pragma Unreferenced (Manager);
+   begin
+      if Pref.Themes = null then
+         return;
+      end if;
+
+      for J in Pref.Themes'Range loop
+         if Pref.Themes (J).all = Value then
+            Pref.Current := J;
+
+            return;
+         end if;
+      end loop;
+   end Set_Pref;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Manager                : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc : String)
+      return Theme_Preference
+   is
+      Ret         : constant Theme_Preference := new Theme_Preference_Record;
+      Search_Path : constant Filesystem_String := +Gtk.Rc.Get_Theme_Dir;
+      Default     : constant String :=
+                      Glib.Properties.Get_Property
+                        (Gtk.Settings.Get_Default,
+                         Gtk.Settings.Gtk_Theme_Name);
+      Dir         : GNATCOLL.VFS.Virtual_File;
+      Gtk_Default : Natural := 0;
+      Win_Default : Natural := 0;
+      N_Themes    : Natural := 0;
+      Num         : Positive;
+
+   begin
+      if Search_Path'Length > 0 then
+         Dir := Create (Search_Path);
+
+         declare
+            Subdirs : File_Array_Access := Dir.Read_Dir (Dirs_Only);
+            Rc_File : Virtual_File;
+
+         begin
+            --  Count the total number of available themes
+            for J in Subdirs'Range loop
+               Rc_File := Subdirs (J).Create_From_Dir ("gtk-2.0/gtkrc");
+
+               if Rc_File.Is_Regular_File then
+                  N_Themes := N_Themes + 1;
+               end if;
+            end loop;
+
+            Ret.Themes := new GNAT.Strings.String_List (1 .. N_Themes);
+            Ret.Current := 0;
+
+            --  Fill the list of themes
+            Num := Ret.Themes'First;
+
+            for J in Subdirs'Range loop
+               Rc_File := Subdirs (J).Create_From_Dir ("gtk-2.0/gtkrc");
+
+               if Rc_File.Is_Regular_File then
+                  declare
+                     Theme : constant String := +Base_Dir_Name (Subdirs (J));
+                  begin
+                     Ret.Themes (Num) := new String'(Theme);
+
+                     if Theme = Default then
+                        --  We found the active theme
+                        Ret.Current := Num;
+
+                     elsif Theme = "Raleigh" then
+                        --  Fallback in case the active theme cannot be
+                        --  determined
+                        Gtk_Default := Num;
+
+                     elsif Theme = "MS-Windows" then
+                        --  Fallback in the windows case
+                        Win_Default := Num;
+                     end if;
+
+                     Num := Num + 1;
+                  end;
+               end if;
+            end loop;
+
+            if Ret.Current = 0 then
+               if Win_Default > 0 then
+                  Ret.Current := Win_Default;
+               elsif Gtk_Default > 0 then
+                  Ret.Current := Gtk_Default;
+               end if;
+            end if;
+
+            Unchecked_Free (Subdirs);
+         end;
+      end if;
+
+      Register (Manager, Name, Label, Page, Doc, Ret);
+
+      return Ret;
+   end Create;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref    : access Theme_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Tips    : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Theme_Combo : Gtk_Combo_Box;
+
+   begin
+      Gtk_New_Text (Theme_Combo);
+      Set_Tip (Tips, Theme_Combo, -"Theme list");
+
+      for J in Pref.Themes'Range loop
+         Append_Text (Theme_Combo, Pref.Themes (J).all);
+
+         if J = Pref.Current then
+            Theme_Combo.Set_Active (Gint (J) - Gint (Pref.Themes'First));
+         end if;
+      end loop;
+
+      Preference_Handlers.Connect
+        (Theme_Combo, Gtk.Combo_Box.Signal_Changed, Combo_Changed'Access,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+      Preference_Handlers.Object_Connect
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
+         Update_Combo'Access,
+         Theme_Combo,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+
+      return Gtk_Widget (Theme_Combo);
+   end Edit;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Pref : in out Theme_Preference_Record) is
+   begin
+      if Pref.Themes /= null then
+         Free (Pref.Themes);
+      end if;
+
       Free (Preference_Record (Pref));
    end Free;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2010, AdaCore                 --
+--                  Copyright (C) 2001-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -126,6 +126,7 @@ package body GPS.Main_Window is
 
    Pref_Toolbar_Style   : Toolbar_Icons_Size_Preferences.Preference;
    Pref_Show_Statusbar  : Boolean_Preference;
+   Pref_Theme           : Theme_Preference;
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -421,6 +422,9 @@ package body GPS.Main_Window is
       Win    : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
    begin
       Gtk.Rc.Parse_String
+        ("gtk-theme-name=""" & Get_Pref (Pref_Theme) & '"' & ASCII.LF);
+
+      Gtk.Rc.Parse_String
         ("gtk-font-name="""
          & To_String (Default_Font.Get_Pref_Font) & '"' & ASCII.LF);
 
@@ -515,6 +519,14 @@ package body GPS.Main_Window is
                        & " same information is available from the Task"
                        & " Manager"),
          Default => True);
+
+      Pref_Theme := Create
+        (Get_Preferences (Main_Window.Kernel),
+         Name    => "Gtk-Theme-Name",
+         Label   => -"Theme",
+         Page    => -"General",
+         Doc     => -("Select a theme from the list to change the general "
+                       & "appearance of GPS"));
 
       Set_Policy (Main_Window, False, True, False);
       --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many

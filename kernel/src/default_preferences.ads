@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2010, AdaCore                   --
+--                Copyright (C) 2001-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -111,6 +111,7 @@ package Default_Preferences is
    type Style_Preference_Record   is new Preference_Record with private;
    type Variant_Preference_Record is new Style_Preference_Record with private;
    type Enum_Preference_Record  is abstract new Preference_Record with private;
+   type Theme_Preference_Record   is new Preference_Record with private;
 
    type Integer_Preference is access all Integer_Preference_Record'Class;
    type Boolean_Preference is access all Boolean_Preference_Record'Class;
@@ -121,6 +122,7 @@ package Default_Preferences is
    type Style_Preference   is access all Style_Preference_Record'Class;
    type Variant_Preference is access all Variant_Preference_Record'Class;
    type Enum_Preference    is access all Enum_Preference_Record'Class;
+   type Theme_Preference   is access all Theme_Preference_Record'Class;
 
    procedure Register
      (Manager                   : access Preferences_Manager_Record'Class;
@@ -200,6 +202,10 @@ package Default_Preferences is
       Default_Fg                : String;
       Default_Bg                : String)
       return Variant_Preference;
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String)
+     return Theme_Preference;
    --  Create a new preference and register it in the Manager.
    --  Name is the name used when saving in the XML file, and when referencing
    --    that preference from a python file. It can contain any character.
@@ -582,6 +588,23 @@ private
      (Pref    : access Enum_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
+
+   type Theme_Preference_Record is new Preference_Record with record
+      Themes  : GNAT.Strings.String_List_Access;
+      Current : Natural := 0;
+   end record;
+   overriding function Get_Pref
+     (Pref : access Theme_Preference_Record) return String;
+   overriding procedure Set_Pref
+     (Pref    : access Theme_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String);
+   overriding function Edit
+     (Pref    : access Theme_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Tips    : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget;
+   overriding procedure Free (Pref : in out Theme_Preference_Record);
 
    package Preferences_Maps is new Ada.Containers.Doubly_Linked_Lists
      (Preference);
