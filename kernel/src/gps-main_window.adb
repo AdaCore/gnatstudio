@@ -27,6 +27,7 @@ with Gdk.Dnd;                   use Gdk.Dnd;
 with Glib;                      use Glib;
 with Glib.Error;                use Glib.Error;
 with Glib.Object;
+with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
 with Pango.Font;                use Pango.Font;
@@ -43,6 +44,7 @@ with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
 with Gtk.Rc;                    use Gtk.Rc;
+with Gtk.Settings;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
@@ -419,10 +421,17 @@ package body GPS.Main_Window is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Win    : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Win   : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Theme : constant String :=
+                Glib.Properties.Get_Property
+                  (Gtk.Settings.Get_Default,
+                   Gtk.Settings.Gtk_Theme_Name);
+
    begin
-      Gtk.Rc.Parse_String
-        ("gtk-theme-name=""" & Get_Pref (Pref_Theme) & '"' & ASCII.LF);
+      if Theme /= Get_Pref (Pref_Theme) then
+         Gtk.Rc.Parse_String
+           ("gtk-theme-name=""" & Get_Pref (Pref_Theme) & '"' & ASCII.LF);
+      end if;
 
       Gtk.Rc.Parse_String
         ("gtk-font-name="""

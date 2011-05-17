@@ -1869,6 +1869,11 @@ package body Default_Preferences is
 
    begin
       if Search_Path'Length > 0 then
+         if Active (Me) then
+            Trace (Me, "Theme search path is " & (+Search_Path));
+            Trace (Me, "Active theme is " & Default);
+         end if;
+
          Dir := Create (Search_Path);
 
          declare
