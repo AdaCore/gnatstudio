@@ -1864,6 +1864,7 @@ package body Default_Preferences is
       Dir         : GNATCOLL.VFS.Virtual_File;
       Gtk_Default : Natural := 0;
       Win_Default : Natural := 0;
+      Unx_Default : Natural := 0;
       N_Themes    : Natural := 0;
       Num         : Positive;
 
@@ -1905,11 +1906,7 @@ package body Default_Preferences is
                   begin
                      Ret.Themes (Num) := new String'(Theme);
 
-                     if Theme = Default then
-                        --  We found the active theme
-                        Ret.Current := Num;
-
-                     elsif Theme = "Raleigh" then
+                     if Theme = "Raleigh" then
                         --  Fallback in case the active theme cannot be
                         --  determined
                         Gtk_Default := Num;
@@ -1917,6 +1914,17 @@ package body Default_Preferences is
                      elsif Theme = "MS-Windows" then
                         --  Fallback in the windows case
                         Win_Default := Num;
+
+                     elsif Theme = "Clearlooks" then
+                        --  Fallback in the unix case
+                        Unx_Default := Num;
+
+                     elsif Theme = Default then
+                        --  We found the active theme, and it's not a default.
+                        --  This must then come from user-specified gtkrc file.
+                        --  Let's keep this value.
+                        Ret.Current := Num;
+
                      end if;
 
                      Num := Num + 1;
@@ -1927,6 +1935,8 @@ package body Default_Preferences is
             if Ret.Current = 0 then
                if Win_Default > 0 then
                   Ret.Current := Win_Default;
+               elsif Unx_Default > 0 then
+                  Ret.Current := Unx_Default;
                elsif Gtk_Default > 0 then
                   Ret.Current := Gtk_Default;
                end if;
