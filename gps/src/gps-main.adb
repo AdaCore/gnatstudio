@@ -498,6 +498,8 @@ procedure GPS.Main is
         (+Create_From_Dir (Prefix_Dir, "etc/gps/gtkrc").Full_Name);
       Gtk.Rc.Add_Default_File
         (+Create_From_Dir (GPS_Home_Dir, "gtkrc").Full_Name);
+      Gtk.Rc.Add_Default_File
+        (+Create_From_Dir (GPS_Home_Dir, "gtkrc-theme").Full_Name);
 
       Gtk.Main.Init;
 

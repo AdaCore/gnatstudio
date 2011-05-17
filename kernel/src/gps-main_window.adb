@@ -17,9 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Gtkada;       use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.VFS_Utils;            use GNATCOLL.VFS_Utils;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
@@ -426,11 +426,22 @@ package body GPS.Main_Window is
                 Glib.Properties.Get_Property
                   (Gtk.Settings.Get_Default,
                    Gtk.Settings.Gtk_Theme_Name);
+      File   : Virtual_File;
+      W_File : Writable_File;
+      Dead   : Boolean;
+      pragma Unreferenced (Dead);
 
    begin
       if Theme /= Get_Pref (Pref_Theme) then
-         Gtk.Rc.Parse_String
-           ("gtk-theme-name=""" & Get_Pref (Pref_Theme) & '"' & ASCII.LF);
+         File := Create_From_Dir
+           (GPS.Kernel.Get_Home_Dir (Kernel), "gtkrc-theme");
+         W_File := Write_File (File);
+         Write
+           (W_File,
+            "gtk-theme-name=""" & Get_Pref (Pref_Theme) & '"' & ASCII.LF);
+         Close (W_File);
+         Dead :=
+           Gtk.Rc.Reparse_All_For_Settings (Gtk.Settings.Get_Default, True);
       end if;
 
       Gtk.Rc.Parse_String
