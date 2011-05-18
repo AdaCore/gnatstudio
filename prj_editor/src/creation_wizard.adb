@@ -290,8 +290,10 @@ package body Creation_Wizard is
       Location       : constant Virtual_File :=
                          Create_From_UTF8 (Get_Text (Page.Project_Location));
       Prj_File       : Virtual_File;
+      Parent_Window  : Gtk_Window;
 
    begin
+      Parent_Window := Gtk_Window (Get_Toplevel (Page.Get_Content));
       Prj_File := Create_From_Dir
         (Location, Prj_Base_File & Project_File_Extension);
       if Is_Regular_File (Prj_File) then
@@ -300,7 +302,8 @@ package body Creation_Wizard is
                & (-" already exists. Do you want to overwrite ?"),
             Title       => -"File exists",
             Dialog_Type => Gtkada.Dialogs.Error,
-            Buttons     => Button_Yes or Button_No) = Button_No
+            Buttons     => Button_Yes or Button_No,
+            Parent      => Parent_Window) = Button_No
          then
             raise Invalid_Project_Page;
          end if;
@@ -312,7 +315,8 @@ package body Creation_Wizard is
             & (-" is not a directory, would you like to create it ?"),
             Title       => -"Directory not found",
             Dialog_Type => Information,
-            Buttons     => Button_Yes or Button_No) = Button_Yes
+            Buttons     => Button_Yes or Button_No,
+            Parent      => Parent_Window) = Button_Yes
          then
             begin
                Make_Dir (Location);
@@ -363,7 +367,8 @@ package body Creation_Wizard is
                            & "and a dependency to it couldn't be added."
                            & ASCII.LF
                            & "Please fix the project manually"),
-                  Buttons => Button_OK);
+                  Buttons => Button_OK,
+                  Parent  => Parent_Window);
             end if;
             exit;
          end if;
