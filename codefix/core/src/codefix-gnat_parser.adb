@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2010, AdaCore                 --
+--                  Copyright (C) 2007-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -621,6 +621,21 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'pckg is already use_visible'
+
+   type Redundant_With is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Redundant_With);
+
+   overriding
+   procedure Fix
+     (This         : Redundant_With;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix for 'redundant with clause'
 
    type Redundant_With_In_Body is new Error_Parser (1) with null record;
 
@@ -2397,6 +2412,33 @@ package body Codefix.GNAT_Parser is
         (Current_Text, Message, Cat_Use, After);
    end Fix;
 
+   --------------------
+   -- Redundant_With --
+   --------------------
+
+   overriding procedure Initialize (This : in out Redundant_With) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("redundant with clause")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Redundant_With;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Matches, Options);
+
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Remove_Dependency_Clause
+        (Current_Text, Message, Cat_With, Before, Look_For_Use => False);
+   end Fix;
+
    ----------------------------
    -- Redundant_With_In_Body --
    ----------------------------
@@ -3891,6 +3933,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Use_Missing);
       Add_Parser (Processor, new Non_Visible_Declaration);
       Add_Parser (Processor, new Redundant_With_In_Body);
+      Add_Parser (Processor, new Redundant_With);
       Add_Parser (Processor, new Consecutive_Underlines);
       Add_Parser (Processor, new Multiple_Blank_Lines);
       Add_Parser (Processor, new EOF_Blank_Lines);
