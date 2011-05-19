@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                Copyright (C) 2000-2008, AdaCore                   --
+--                Copyright (C) 2000-2011, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -266,7 +266,7 @@ package body Gtkada.Macro is
             C : constant Gtk_Widget := Get_Child (Gtk_Bin (Widget));
          begin
             if C /= null and then C.all in Gtk_Label_Record'Class then
-               return (Label, new String'(Get (Gtk_Label (C))));
+               return (Label, new String'(Get_Text (Gtk_Label (C))));
             end if;
          end;
       end if;
