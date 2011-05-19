@@ -98,6 +98,10 @@ NF-51-K128-036 GPS: Add support to align on comas (2011-02-19)
 
   The align plug-in has been enhanced to align on comas.
 
+NF-51-K121-029 GPS: Extend support for redundant with clauses (2011-05-19)
+
+  Added support to Codefix to help fixing redundant with-clauses
+
 NF-51-K113-012 GPS: improvements in createfile.py plug-in (2011-01-13)
 
   The dialog provided by this plug-in has been improved and the file created
