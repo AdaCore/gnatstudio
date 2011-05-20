@@ -271,15 +271,8 @@ package body Welcome is
          loop
             Response := Run (Screen);
 
-            --  If the [X] in title bar, the Close menu entry or ALT-F4 is
-            --  selected we convert to a close event to ensure this is closing
-            --  GPS.
-
-            if Response = Gtk_Response_Delete_Event then
-               Response := Gtk_Response_Close;
-            end if;
-
             exit when Response = Gtk_Response_Close
+              or else Response = Gtk_Response_Delete_Event
               or else (Response = Gtk_Response_OK
                        and then (not Get_Active (Screen.Create_Project)
                                  or else On_New_Project (Screen)));
@@ -329,6 +322,7 @@ package body Welcome is
                --  A new project was loaded
                return Project_Loaded;
             end if;
+
          else
             return Quit_GPS;
          end if;
