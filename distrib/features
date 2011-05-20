@@ -98,7 +98,7 @@ NF-51-K128-036 GPS: Add support to align on comas (2011-02-19)
 
   The align plug-in has been enhanced to align on comas.
 
-NF-51-K121-029 GPS: Extend support for redundant with clauses (2011-05-19)
+NF-51-K121-029 Extend support for redundant with clauses (2011-05-19)
 
   Added support to Codefix to help fixing redundant with-clauses
 
