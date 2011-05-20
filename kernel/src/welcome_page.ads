@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005-2008, AdaCore                --
+--                 Copyright (C) 2005-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,8 +21,8 @@
 --  when beginning with GPS.
 
 with GPS.Kernel; use GPS.Kernel;
-with Gtk.Box;      use Gtk.Box;
-with Gtkada.MDI;   use Gtkada.MDI;
+with Gtk.Box;    use Gtk.Box;
+with Gtkada.MDI; use Gtkada.MDI;
 
 package Welcome_Page is
 
@@ -30,9 +30,9 @@ package Welcome_Page is
    type Welcome_Page_Access is access all Welcome_Page_Record'Class;
 
    procedure Display_Welcome_Page (Kernel : Kernel_Handle);
-   --  Display the welcome page in the central GPS dialog.
+   --  Display the welcome page in the central GPS dialog
 
    function Create_Welcome_Page (Kernel : Kernel_Handle) return MDI_Child;
-   --  Internal function to create the welcome page.
+   --  Internal function to create the welcome page
 
 end Welcome_Page;
