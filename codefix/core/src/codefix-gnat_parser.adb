@@ -940,7 +940,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'use would make operation legal'
 
-   type Redundant_Conversion is new Error_Parser (2) with null record;
+   type Redundant_Conversion is new Error_Parser (3) with null record;
 
    overriding
    procedure Initialize (This : in out Redundant_Conversion);
@@ -3245,7 +3245,10 @@ package body Codefix.GNAT_Parser is
         (1 => new Pattern_Matcher'
            (Compile ("useless conversion, ""([^""])"" has this type")),
          2 => new Pattern_Matcher'
-           (Compile ("redundant conversion, ""([^""])"" is of type")));
+           (Compile ("redundant conversion, ""([^""])"" is of type")),
+         3 => new Pattern_Matcher'
+           (Compile
+             ("redundant conversion, expression is of type ""([^""]+)""")));
    end Initialize;
 
    overriding procedure Fix
