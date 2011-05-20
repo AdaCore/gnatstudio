@@ -268,10 +268,16 @@ package body Welcome is
       --  While the user hasn't selected a valid project...
 
       loop
-         --  Prevent deleting of the dialog through the title bar's X button
-         --  (which is shown on some window managers)
          loop
             Response := Run (Screen);
+
+            --  If the [X] in title bar, the Close menu entry or ALT-F4 is
+            --  selected we convert to a close event to ensure this is closing
+            --  GPS.
+
+            if Response = Gtk_Response_Delete_Event then
+               Response := Gtk_Response_Close;
+            end if;
 
             exit when Response = Gtk_Response_Close
               or else (Response = Gtk_Response_OK
