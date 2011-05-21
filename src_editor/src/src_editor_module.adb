@@ -1967,11 +1967,10 @@ package body Src_Editor_Module is
    procedure Comment_Uncomment
      (Kernel : Kernel_Handle; Comment : Boolean)
    is
-      Context      : constant Selection_Context :=
-                       Get_Current_Context (Kernel);
-      Start_Line   : Editable_Line_Type;
-      End_Line     : Editable_Line_Type;
-      Buffer       : Source_Buffer;
+      Context    : constant Selection_Context := Get_Current_Context (Kernel);
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type;
+      Buffer     : Source_Buffer;
    begin
       if Has_File_Information (Context)
         and then Has_Directory_Information (Context)

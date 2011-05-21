@@ -1650,7 +1650,7 @@ package body Src_Editor_Buffer is
         (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
 
       if Line = 0 then
-         --  In a special line: we simply stop propagation.
+         --  In a special line: we simply stop propagation
          Emit_Stop_By_Name (Object => Buffer, Name => "insert_text");
          return;
       end if;
@@ -1893,7 +1893,7 @@ package body Src_Editor_Buffer is
       Editable_Line_End :=
         Get_Editable_Line (Buffer, Buffer_Line_Type (Line_End + 1));
 
-      --  If there are non-editable lines in the range, intercept the deletion.
+      --  If there are non-editable lines in the range, intercept the deletion
 
       if not Buffer.Inserting
         and then Has_Special_Lines
@@ -4787,8 +4787,7 @@ package body Src_Editor_Buffer is
    ----------------
 
    function Get_Kernel
-     (Buffer : access Source_Buffer_Record)
-     return GPS.Kernel.Kernel_Handle is
+     (Buffer : access Source_Buffer_Record) return GPS.Kernel.Kernel_Handle is
    begin
       return Buffer.Kernel;
    end Get_Kernel;
