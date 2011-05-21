@@ -2430,6 +2430,7 @@ package body Src_Editor_Box is
    is
       File          : constant GNATCOLL.VFS.Virtual_File :=
                         Get_Filename (Editor.Source_Buffer);
+      Directory     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Constructs    : Construct_List;
       Info          : Construct_Access;
       New_Base_Name : Filesystem_String_Access;
@@ -2454,8 +2455,8 @@ package body Src_Editor_Box is
 
       Success := True;
 
-      if Filename = GNATCOLL.VFS.No_File then
-         if File = GNATCOLL.VFS.No_File then
+      if Filename = GNATCOLL.VFS.No_File or else Filename.Is_Directory then
+         if File = GNATCOLL.VFS.No_File or else File.Is_Directory then
             --  ??? This is Ada specific
             --  Figure out what the name of the file should be, based on the
             --  unit <-> file name mapping
@@ -2494,9 +2495,14 @@ package body Src_Editor_Box is
 
             Free (Constructs);
 
+            if File.Is_Directory then
+               Directory := File;
+            end if;
+
             declare
                Name : constant Virtual_File := Select_File
                  (Title             => -"Save File As",
+                  Base_Directory    => Directory,
                   Parent            => Get_Current_Window (Editor.Kernel),
                   Default_Name      => New_Base_Name.all,
                   Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,

@@ -1100,7 +1100,7 @@ package body Src_Editor_Module is
          --  anyway (for instance a remote file for which we couldn't establish
          --  the connection)
 
-         if File = GNATCOLL.VFS.No_File then
+         if File = GNATCOLL.VFS.No_File or else File.Is_Directory then
             Is_Writable := True;
 
          else
@@ -1210,7 +1210,7 @@ package body Src_Editor_Module is
                 & " Focus=" & Focus'Img);
       end if;
 
-      if File /= GNATCOLL.VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
          Child2 := Find_Editor (Kernel, File);
 
          if Child2 /= null then
@@ -1289,7 +1289,7 @@ package body Src_Editor_Module is
 
          Jump_To_Location;
 
-         if File /= GNATCOLL.VFS.No_File then
+         if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
             if Is_Local (File) then
                Set_Title
                  (Child, Display_Full_Name (File), Display_Base_Name (File));
@@ -1672,11 +1672,18 @@ package body Src_Editor_Module is
    procedure On_New_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Editor : Source_Editor_Box;
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      Editor  : Source_Editor_Box;
       pragma Unreferenced (Widget, Editor);
+      Dir     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
    begin
+      if Has_Directory_Information (Context) then
+         Dir := Directory_Information (Context);
+      end if;
+
       Editor := Open_File
-        (Kernel, File => GNATCOLL.VFS.No_File,
+        (Kernel,
+         File => Dir,
          Line => 1, Column => 1, Column_End => 1);
 
    exception
