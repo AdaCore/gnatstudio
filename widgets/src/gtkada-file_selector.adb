@@ -2063,8 +2063,6 @@ package body Gtkada.File_Selector is
       if Show_Files then
          Gtk_New_Hpaned (Hpaned1);
          Set_Position (Hpaned1, 200);
-         Set_Handle_Size (Hpaned1, 10);
-         Set_Gutter_Size (Hpaned1, 6);
 
          Gtk_New_Hbox (Hbox7, False, 0);
          Pack_Start
