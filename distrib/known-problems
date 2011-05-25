@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 5.0.2
 
+- K519-012 GPS: asian fonts issues on Windows
+  Problem:    On Windows with asian languages, some system fonts are
+              incorrectly loaded at GPS startup, leading to a Pango-Warning
+              message being displayed in the Messages view.
+  Workaround: This is harmless as 'Sans' font is then replacing those system
+              fonts.
+
 - K427-016 Dialogs displayed when launching debug session from prompt
   Problem:    When launching GPS using the command line, with the option
               --debug=, if the parameter given to the --debug option is
