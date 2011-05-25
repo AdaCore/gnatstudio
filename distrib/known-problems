@@ -8,13 +8,6 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- K519-012 GPS: asian fonts issues on Windows
-  Problem:    On Windows with asian languages, some system fonts are
-              incorrectly loaded at GPS startup, leading to a Pango-Warning
-              message being displayed in the Messages view.
-  Workaround: This is harmless as 'Sans' font is then replacing those system
-              fonts.
-
 - K513-009 GPS: improved support for listing classes in Python outline
   Problem:    Classes were not always listed in the Outline for Python sources.
   Workaround: In plugin python_support.py, line 187, set the pattern to
