@@ -1,0 +1,2 @@
+38^done,threads=[{id="2",target-id="Thread 0xb7e65b70 (LWP 16780)",frame={level="0",addr="0xb7fe1424",func="__kernel_vsyscall",args=[]},state="stopped",core="0"},{id="1",target-id="Thread 0xb7e668d0 (LWP 16777)",frame={level="0",addr="0x0804a742",func="debugger_test_vars",args=[],file="/home/charly/Workspace/adagdbmitest/src/debugger_test_vars.adb",fullname="/home/charly/Workspace/adagdbmitest/src/debugger_test_vars.adb",line="127"},state="stopped",core="0"}]
+(gdb)

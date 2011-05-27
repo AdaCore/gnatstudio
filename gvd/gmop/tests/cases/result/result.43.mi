@@ -1,0 +1,2 @@
+45^done,numchild="2",children=[child={name="var7._tag",exp="_tag",numchild="1",type="access da.tags.dispatch_table"},child={name="var7.x",exp="x",numchild="0",type="integer"}],has_more="0"
+(gdb)

@@ -1,0 +1,2 @@
+46^done,numchild="2",children=[child={name="var6.d",exp="d",numchild="0",type="natural"},child={name="var6.S",exp="S",numchild="1",type="debugger_test_vars.discriminated_record"}],has_more="0"
+(gdb)

@@ -1,0 +1,2 @@
+^done,memory=[{begin="0xbffff154",offset="0x00000000",end="0xbffff15e",contents="01000000020000000300"}]
+(gdb)

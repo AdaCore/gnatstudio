@@ -1,0 +1,2 @@
+=library-loaded,id="/lib/libpthread.so.0",target-name="/lib/libpthread.so.0",host-name="/lib/libpthread.so.0",symbols-loaded="0",thread-group="i1"
+(gdb)

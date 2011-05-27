@@ -1,0 +1,2 @@
+*stopped,reason="breakpoint-hit",disp="del",bkptno="8",frame={addr="0x08049f2f",func="main",args=[{name="argc",value="1"},{name="argv",value="(system.address) 0xbfffef44"},{name="envp",value="(system.address) 0xbfffef4c"}],file="/home/charly/Workspace/adagdbmitest/src/b~debugger_test_vars.adb",fullname="/home/charly/Workspace/adagdbmitest/src/b~debugger_test_vars.adb",line="184"},thread-id="1",stopped-threads="all",core="0"
+(gdb)

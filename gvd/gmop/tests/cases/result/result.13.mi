@@ -1,0 +1,2 @@
+15^done,bkpt={number="8",type="breakpoint",disp="del",enabled="y",addr="0x08049f2f",func="main",file="/home/charly/Workspace/adagdbmitest/src/b~debugger_test_vars.adb",fullname="/home/charly/Workspace/adagdbmitest/src/b~debugger_test_vars.adb",line="184",times="0",original-location="main"}
+(gdb)

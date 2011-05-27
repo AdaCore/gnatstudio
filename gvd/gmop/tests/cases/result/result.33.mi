@@ -1,0 +1,2 @@
+35^done,stack=[frame={level="0",addr="0x08049f2f",func="main",file="/home/charly/Workspace/adagdbmitest/src/b~debugger_test_vars.adb",fullname="/home/charly/Workspace/adagdbmitest/src/b~debugger_test_vars.adb",line="184"},frame={level="1",addr="0xb7e7ddb6",func="__libc_start_main",from="/lib/libc.so.6"},frame={level="2",addr="0x08049ca1",func="_start"}]
+(gdb)

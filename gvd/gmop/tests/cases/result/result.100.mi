@@ -1,0 +1,2 @@
+102^done,stack=[frame={level="0",addr="0xb7fb7c80",func="__nptl_death_event",from="/lib/libpthread.so.0"},frame={level="1",addr="0xb7fb8f74",func="start_thread",from="/lib/libpthread.so.0"},frame={level="2",addr="0xb7f3589e",func="clone",from="/lib/libc.so.6"}]
+(gdb)

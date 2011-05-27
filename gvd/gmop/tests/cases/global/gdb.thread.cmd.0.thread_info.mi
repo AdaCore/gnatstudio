@@ -1,0 +1,2 @@
+^done,threads=[{id="2",target-id="Thread 0xb7e14b90 (LWP 21257)",frame={level="0",addr="0xffffe410",func="__kernel_vsyscall",args=[]},state="running"},{id="1",target-id="Thread 0xb7e156b0 (LWP 21254)",frame={level="0",addr="0x0804891f",func="foo",args=[{name="i",value="10"}],file="/tmp/a.c",fullname="/tmp/a.c",line="158"},state="running"}],current-thread-id="1"
+(gdb)

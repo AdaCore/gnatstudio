@@ -1,0 +1,10 @@
+^done,stack=[frame={level="0",addr="0x00010734",func="callee4",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="8"},frame={level="1",addr="0x0001076c",func="callee3",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="17"},frame={level="2",addr="0x0001078c",func="callee2",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="22"},frame={level="3",addr="0x000107b4",func="callee1",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="27"},frame={level="4",addr="0x000107e0",func="main",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="32"}]
+(gdb)
+^done,stack-args=[frame={level="0",args=[]},frame={level="1",args=[name="strarg"]},frame={level="2",args=[name="intarg",name="strarg"]},frame={level="3",args=[name="intarg",name="strarg",name="fltarg"]},frame={level="4",args=[]}]
+(gdb)
+^done,stack-args=[frame={level="0",args=[]},frame={level="1",args=[{name="strarg",value="0x11940 \"A string argument.\""}]},frame={level="2",args=[{name="intarg",value="2"},{name="strarg",value="0x11940 \"A string argument.\""}]},frame={level="3",args=[{name="intarg",value="2"},{name="strarg",value="0x11940 \"A string argument.\""},{name="fltarg",value="3.5"}]},frame={level="4",args=[]}]
+(gdb)
+^done,stack-args=[frame={level="2",args=[name="intarg",name="strarg"]}]
+(gdb)
+^done,stack-args=[frame={level="2",args=[{name="intarg",value="2"},{name="strarg",value="0x11940 \"A string argument.\""}]}]
+(gdb)

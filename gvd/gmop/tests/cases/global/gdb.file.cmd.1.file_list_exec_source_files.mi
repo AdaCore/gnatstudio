@@ -1,0 +1,2 @@
+^done,files=[{file="foo.c",fullname="/home/foo.c"},{file="/home/bar.c",fullname="/home/bar.c"},{file="gdb_could_not_find_fullpath.c"}]
+(gdb)

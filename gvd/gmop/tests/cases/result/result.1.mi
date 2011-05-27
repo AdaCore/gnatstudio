@@ -1,0 +1,2 @@
+3^error,msg=".gdbinit: No such file or directory."
+(gdb)

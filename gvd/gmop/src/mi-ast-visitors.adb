@@ -1,0 +1,138 @@
+------------------------------------------------------------------------------
+--                                  G P S                                   --
+--                                                                          --
+--                       Copyright (C) 2011, AdaCore                        --
+--                                                                          --
+-- GPS is free software;  you can  redistribute it  and/or modify it  under --
+-- terms of the  GNU General Public License as published  by the Free Soft- --
+-- ware  Foundation;  either version 3,  or (at your option) any later ver- --
+-- sion.  GNAT is distributed in the hope that it will be useful, but WITH- --
+-- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
+-- or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License --
+-- for  more details.  You should have  received  a copy of the GNU General --
+-- Public License  distributed with GNAT; see file COPYING3.  If not, go to --
+-- http://www.gnu.org/licenses for a complete copy of the license.          --
+--                                                                          --
+------------------------------------------------------------------------------
+
+package body MI.Ast.Visitors is
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Consistency_Visitor;
+      Object : Record_List)
+   is
+      Cursor : Record_Lists.Cursor := Object.First;
+   begin
+      while Record_Lists.Has_Element (Cursor) loop
+         pragma Assert (Record_Lists.Element (Cursor) /= null);
+         Record_Lists.Element (Cursor).all.Accept_Visitor (This);
+         Cursor := Record_Lists.Next (Cursor);
+      end loop;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Consistency_Visitor;
+      Object : Result_List_Value'Class)
+   is
+      Cursor : Result_Pair_Lists.Cursor := Object.Value.First;
+   begin
+      while Result_Pair_Lists.Has_Element (Cursor) loop
+         This.Visit (Result_Pair_Lists.Element (Cursor));
+         Cursor := Result_Pair_Lists.Next (Cursor);
+      end loop;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Consistency_Visitor;
+      Object : Result_Pair) is
+   begin
+      pragma Assert (Object.Variable /= null);
+
+      if Object.Value /= null then
+         Object.Value.all.Accept_Visitor (This);
+      end if;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Consistency_Visitor;
+      Object : Result_Record'Class)
+   is
+      Cursor : Result_Pair_Lists.Cursor := Object.Results.First;
+   begin
+      pragma Assert (Object.Class /= null);
+
+      while Result_Pair_Lists.Has_Element (Cursor) loop
+         This.Visit (Result_Pair_Lists.Element (Cursor));
+         Cursor := Result_Pair_Lists.Next (Cursor);
+      end loop;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Consistency_Visitor;
+      Object : Stream_Output_Record'Class)
+   is
+      pragma Unreferenced (This);
+   begin
+      pragma Assert (Object.Content /= null);
+      null;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Consistency_Visitor;
+      Object : String_Value'Class)
+   is
+      pragma Unreferenced (This);
+   begin
+      pragma Assert (Object.Value /= null);
+      null;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Consistency_Visitor;
+      Object : Value_List_Value'Class)
+   is
+      Cursor : Value_Lists.Cursor := Object.Value.First;
+   begin
+      while Value_Lists.Has_Element (Cursor) loop
+         pragma Assert (Value_Lists.Element (Cursor) /= null);
+         Value_Lists.Element (Cursor).all.Accept_Visitor (This);
+         Cursor := Value_Lists.Next (Cursor);
+      end loop;
+   end Visit;
+
+end MI.Ast.Visitors;

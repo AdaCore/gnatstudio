@@ -1,0 +1,2 @@
+49^done,numchild="2",children=[child={name="var8._parent",exp="_parent",numchild="2",type="sample_package.base"},child={name="var8.y",exp="y",numchild="0",type="float"}],has_more="0"
+(gdb)

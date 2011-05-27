@@ -1,0 +1,2 @@
+^done,trace-variables={nr_rows="1",nr_cols="3",hdr=[{width="15",alignment="-1",col_name="name",colhdr="Name"},{width="11",alignment="-1",col_name="initial",colhdr="Initial"},{width="11",alignment="-1",col_name="current",colhdr="Current"}],body=[variable={name="$trace_timestamp",initial="0"},variable={name="$foo",initial="10",current="15"}]}
+(gdb)

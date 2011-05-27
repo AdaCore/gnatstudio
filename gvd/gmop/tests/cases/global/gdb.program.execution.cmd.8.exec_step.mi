@@ -1,0 +1,8 @@
+^running
+(gdb)
+*stopped,reason="end-stepping-range",frame={func="foo",args=[{name="a",value="10"},{name="b",value="0"}],file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="11"}
+(gdb)
+^running
+(gdb)
+*stopped,reason="end-stepping-range",line="14",file="recursive2.c"
+(gdb)

@@ -1,0 +1,2 @@
+30^done,numchild="2",children=[child={name="var4.1",exp="1",numchild="0",type="integer"},child={name="var4.2",exp="2",numchild="0",type="integer"}],has_more="0"
+(gdb)

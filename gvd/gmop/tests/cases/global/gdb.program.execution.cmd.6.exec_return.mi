@@ -1,0 +1,10 @@
+200^done,bkpt={number="1",addr="0x00010734",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",line="8"}
+(gdb)
+000^running
+(gdb)
+000*stopped,reason="breakpoint-hit",disp="keep",bkptno="1",frame={func="callee4",args=[],file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="8"}
+(gdb)
+205^done
+(gdb)
+111^done,frame={level="0",func="callee3",args=[{name="strarg",value="0x11940 \"A string argument.\""}],file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="18"}
+(gdb)

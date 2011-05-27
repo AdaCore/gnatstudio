@@ -1,0 +1,9 @@
+^running
+(gdb)
+@"hello from foo"
+*stopped,reason="function-finished",frame={func="main",args=[],file="hello.c",fullname="/home/foo/bar/hello.c",line="7"}
+(gdb)
+^running
+(gdb)
+*stopped,reason="function-finished",frame={addr="0x000107b0",func="foo",args=[{name="a",value="1"}],value={name="b",value="9"},file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},gdb-result-var="$1",return-value="0"
+(gdb)

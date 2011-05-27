@@ -1,0 +1,2 @@
+63^done,threads=[{id="2",target-id="Thread 0xb7e65b70 (LWP 16780)",frame={level="0",addr="0xb7fe1424",func="__kernel_vsyscall",args=[]},state="stopped",core="0"}]
+(gdb)

@@ -1,0 +1,3 @@
+&"source .gdbinit\n"
+&".gdbinit: No such file or directory.\n"
+(gdb)

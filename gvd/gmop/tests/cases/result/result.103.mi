@@ -1,0 +1,2 @@
+105^done,threads=[{id="1",target-id="Thread 0xb7e668d0 (LWP 16777)",frame={level="0",addr="0x0804aeaf",func="debugger_test_vars",args=[],file="/home/charly/Workspace/adagdbmitest/src/debugger_test_vars.adb",fullname="/home/charly/Workspace/adagdbmitest/src/debugger_test_vars.adb",line="140"},state="stopped",core="0"}]
+(gdb)

@@ -1,0 +1,4 @@
+^running
+(gdb)
+*stopped,reason="location-reached",frame={func="main",args=[],file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="6"}
+(gdb)

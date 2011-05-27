@@ -1,0 +1,32 @@
+^done,wpt={number="2",exp="x"}
+(gdb)
+^running
+(gdb)
+*stopped,reason="watchpoint-trigger",wpt={number="2",exp="x"},value={old="-268439212",new="55"},frame={func="main",args=[],file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="5"}
+(gdb)
+^done,wpt={number="5",exp="C"}
+(gdb)
+^running
+(gdb)
+*stopped,reason="watchpoint-trigger",wpt={number="5",exp="C"},value={old="-276895068",new="3"},frame={func="callee4",args=[],file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="13"}
+(gdb)
+^running
+(gdb)
+*stopped,reason="watchpoint-scope",wpnum="5",frame={func="callee3",args=[{name="strarg",value="0x11940 \"A string argument.\""}],file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="18"}
+(gdb)
+^done,wpt={number="2",exp="C"}
+(gdb)
+^done,BreakpointTable={nr_rows="2",nr_cols="6",hdr=[{width="3",alignment="-1",col_name="number",colhdr="Num"},{width="14",alignment="-1",col_name="type",colhdr="Type"},{width="4",alignment="-1",col_name="disp",colhdr="Disp"},{width="3",alignment="-1",col_name="enabled",colhdr="Enb"},{width="10",alignment="-1",col_name="addr",colhdr="Address"},{width="40",alignment="2",col_name="what",colhdr="What"}],body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",addr="0x00010734",func="callee4",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/devo/gdb/testsuite/gdb.mi/basics.c",line="8",times="1"},bkpt={number="2",type="watchpoint",disp="keep",enabled="y",addr="",what="C",times="0"}]}
+(gdb)
+^running
+(gdb)
+*stopped,reason="watchpoint-trigger",wpt={number="2",exp="C"},value={old="-276895068",new="3"},frame={func="callee4",args=[],file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="13"}
+(gdb)
+^done,BreakpointTable={nr_rows="2",nr_cols="6",hdr=[{width="3",alignment="-1",col_name="number",colhdr="Num"},{width="14",alignment="-1",col_name="type",colhdr="Type"},{width="4",alignment="-1",col_name="disp",colhdr="Disp"},{width="3",alignment="-1",col_name="enabled",colhdr="Enb"},{width="10",alignment="-1",col_name="addr",colhdr="Address"},{width="40",alignment="2",col_name="what",colhdr="What"}],body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",addr="0x00010734",func="callee4",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/devo/gdb/testsuite/gdb.mi/basics.c",line="8",times="1"},bkpt={number="2",type="watchpoint",disp="keep",enabled="y",addr="",what="C",times="-5"}]}
+(gdb)
+^running
+(gdb)
+^done,reason="watchpoint-scope",wpnum="2",frame={func="callee3",args=[{name="strarg",value="0x11940 \"A string argument.\""}],file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="18"}
+(gdb)
+^done,BreakpointTable={nr_rows="1",nr_cols="6",hdr=[{width="3",alignment="-1",col_name="number",colhdr="Num"},{width="14",alignment="-1",col_name="type",colhdr="Type"},{width="4",alignment="-1",col_name="disp",colhdr="Disp"},{width="3",alignment="-1",col_name="enabled",colhdr="Enb"},{width="10",alignment="-1",col_name="addr",colhdr="Address"},{width="40",alignment="2",col_name="what",colhdr="What"}],body=[bkpt={number="1",type="breakpoint",disp="keep",enabled="y",addr="0x00010734",func="callee4",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/devo/gdb/testsuite/gdb.mi/basics.c",line="8",times="1"}]}
+(gdb)

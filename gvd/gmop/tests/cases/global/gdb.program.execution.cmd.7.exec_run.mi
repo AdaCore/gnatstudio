@@ -1,0 +1,12 @@
+^done,bkpt={number="1",addr="0x0001072c",file="recursive2.c",line="4"}
+(gdb)
+^running
+(gdb)
+*stopped,reason="breakpoint-hit",disp="keep",bkptno="1",frame={func="main",args=[],file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="4"}
+(gdb)
+^running
+(gdb)
+*stopped,reason="exited",exit-code="01"
+(gdb)
+*stopped,reason="exited-signalled",signal-name="SIGINT",signal-meaning="Interrupt"
+(gdb)

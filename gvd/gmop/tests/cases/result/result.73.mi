@@ -1,0 +1,2 @@
+75^error,msg="mi_cmd_stack_list_frames: Not enough frames in stack."
+(gdb)
