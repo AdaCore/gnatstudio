@@ -354,6 +354,25 @@ package body Code_Peer.Bridge.Inspection_Readers is
             --  Append message to the list of subprogram's messages
 
             Self.Subprogram_Data.Messages.Append (Message);
+
+            --  Append message's category to the list of corresponding
+            --  categories.
+
+            if Message.Is_Warning then
+               Code_Peer.Project_Data'Class
+                 (Self.Root_Inspection.all).Warning_Categories.Include
+                 (Message.Category);
+
+            elsif Message.Is_Check then
+               Code_Peer.Project_Data'Class
+                 (Self.Root_Inspection.all).Check_Categories.Include
+                 (Message.Category);
+
+            else
+               Code_Peer.Project_Data'Class
+                 (Self.Root_Inspection.all).General_Categories.Include
+                 (Message.Category);
+            end if;
          end;
 
       elsif Qname = Annotation_Tag then

@@ -124,6 +124,7 @@ package body Code_Peer.Summary_Reports is
         Code_Peer.Categories_Criteria_Editors.
           Categories_Criteria_Editor_Record'Class;
       Self   : Summary_Report);
+   --  Handles change of set of visible message's categories.
 
    procedure Context_Func
      (Context      : in out GPS.Kernel.Selection_Context;
@@ -915,24 +916,70 @@ package body Code_Peer.Summary_Reports is
            (On_Show_High_Messages_Toggled'Access),
          Summary_Report (Self));
 
-      --  Messages categories
+      --  General messages categories
 
       Gtk.Separator.Gtk_New_Hseparator (Separator);
       Filter_Box.Pack_Start (Separator, False);
 
       Code_Peer.Categories_Criteria_Editors.Gtk_New
-        (Self.Categories_Editor,
+        (Self.General_Categories_Editor,
          Self.Kernel,
+         -"Message categories",
+         "codepeer-summary_report-categories-general",
          Code_Peer.Project_Data'Class
            (Code_Analysis.Get_Or_Create
               (Tree,
                GPS.Kernel.Project.Get_Project
                  (Kernel)).Analysis_Data.Code_Peer_Data.all).
-                    Message_Categories);
-      Filter_Box.Pack_Start (Self.Categories_Editor);
+                    General_Categories);
+      Filter_Box.Pack_Start (Self.General_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
-        (Self.Categories_Editor,
+        (Self.General_Categories_Editor,
+         Code_Peer.Categories_Criteria_Editors.Signal_Criteria_Changed,
+         Message_Categories_Criteria_Callbacks.To_Marshaller
+           (On_Categories_Criteria_Changed'Access),
+         Summary_Report (Self));
+
+      --  Warning messages categories
+
+      Code_Peer.Categories_Criteria_Editors.Gtk_New
+        (Self.Warning_Categories_Editor,
+         Self.Kernel,
+         -"Warning categories",
+         "codepeer-summary_report-categories-warning",
+         Code_Peer.Project_Data'Class
+           (Code_Analysis.Get_Or_Create
+              (Tree,
+               GPS.Kernel.Project.Get_Project
+                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
+                    Warning_Categories);
+      Filter_Box.Pack_Start (Self.Warning_Categories_Editor);
+
+      Message_Categories_Criteria_Callbacks.Connect
+        (Self.Warning_Categories_Editor,
+         Code_Peer.Categories_Criteria_Editors.Signal_Criteria_Changed,
+         Message_Categories_Criteria_Callbacks.To_Marshaller
+           (On_Categories_Criteria_Changed'Access),
+         Summary_Report (Self));
+
+      --  Checks messages categories
+
+      Code_Peer.Categories_Criteria_Editors.Gtk_New
+        (Self.Check_Categories_Editor,
+         Self.Kernel,
+         -"Checks categories",
+         "codepeer-summary_report-categories-check",
+         Code_Peer.Project_Data'Class
+           (Code_Analysis.Get_Or_Create
+              (Tree,
+               GPS.Kernel.Project.Get_Project
+                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
+                    Check_Categories);
+      Filter_Box.Pack_Start (Self.Check_Categories_Editor);
+
+      Message_Categories_Criteria_Callbacks.Connect
+        (Self.Check_Categories_Editor,
          Code_Peer.Categories_Criteria_Editors.Signal_Criteria_Changed,
          Message_Categories_Criteria_Callbacks.To_Marshaller
            (On_Categories_Criteria_Changed'Access),
@@ -961,6 +1008,7 @@ package body Code_Peer.Summary_Reports is
 
       Value    : Glib.Values.GValue;
       Category : Message_Category_Access;
+      Visible  : Boolean := False;
 
    begin
       Model.Get_Value
@@ -973,12 +1021,21 @@ package body Code_Peer.Summary_Reports is
                (Glib.Values.Get_Address (Value)));
       Glib.Values.Unset (Value);
 
+      --  Is_Messages_Category_Visible is called during initialization,
+      --  thus this member can be null, just because editor is not created.
+
+      if Self.General_Categories_Editor /= null then
+         Visible :=
+           Self.General_Categories_Editor.Get_Visible_Categories.Contains
+             (Category)
+           or Self.Warning_Categories_Editor.Get_Visible_Categories.Contains
+             (Category)
+           or Self.Check_Categories_Editor.Get_Visible_Categories.Contains
+             (Category);
+      end if;
+
       return
-        Self.Categories_Editor /= null
-        --  Is_Messages_Category_Visible is called during initialization,
-        --  thus this member can be null, just because editor is not created.
-        and then Self.Categories_Editor.Get_Visible_Categories.Contains
-          (Category)
+        Visible
         and then
           (Model.Get_String
                (Iter, Code_Peer.Entity_Messages_Models.Low_Count_Column) /= ""
@@ -1071,9 +1128,13 @@ package body Code_Peer.Summary_Reports is
           Categories_Criteria_Editor_Record'Class;
       Self   : Summary_Report)
    is
+      pragma Unreferenced (Object);
+
    begin
       Self.Analysis_Model.Set_Visible_Message_Categories
-        (Object.Get_Visible_Categories);
+        (Self.General_Categories_Editor.Get_Visible_Categories.Union
+           (Self.Warning_Categories_Editor.Get_Visible_Categories.Union
+              (Self.Check_Categories_Editor.Get_Visible_Categories)));
       Self.Messages_Filter.Refilter;
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
@@ -1252,7 +1313,10 @@ package body Code_Peer.Summary_Reports is
       Criteria : in out Code_Peer.Message_Filter_Criteria)
    is
    begin
-      Criteria.Categories := Self.Categories_Editor.Get_Visible_Categories;
+      Criteria.Categories :=
+        Self.General_Categories_Editor.Get_Visible_Categories.Union
+          (Self.Warning_Categories_Editor.Get_Visible_Categories.Union
+               (Self.Check_Categories_Editor.Get_Visible_Categories));
       Criteria.Rankings   := Self.Show_Ranking;
       Criteria.Lineages   := Self.Show_Lifeage;
    end Update_Criteria;

@@ -37,15 +37,19 @@ package Code_Peer.Categories_Criteria_Editors is
      access all Categories_Criteria_Editor_Record'Class;
 
    procedure Gtk_New
-     (Editor     : in out Categories_Criteria_Editor;
-      Kernel     : GPS.Kernel.Kernel_Handle;
-      Categories : Code_Peer.Message_Category_Sets.Set);
+     (Editor         : in out Categories_Criteria_Editor;
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      Title          : String;
+      History_Prefix : String;
+      Categories     : Code_Peer.Message_Category_Sets.Set);
 
    procedure Initialize
-     (Self       :
+     (Self           :
         not null access Categories_Criteria_Editor_Record'Class;
-      Kernel     : GPS.Kernel.Kernel_Handle;
-      Categories : Code_Peer.Message_Category_Sets.Set);
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      Title          : String;
+      History_Prefix : String;
+      Categories     : Code_Peer.Message_Category_Sets.Set);
 
    function Get_Visible_Categories
      (Self : access Categories_Criteria_Editor_Record'Class)

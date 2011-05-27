@@ -29,7 +29,6 @@ with Gtk.Object;
 with Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 
-with GPS.Intl; use GPS.Intl;
 with Histories;
 
 package body Code_Peer.Categories_Criteria_Editors is
@@ -109,12 +108,14 @@ package body Code_Peer.Categories_Criteria_Editors is
    -------------
 
    procedure Gtk_New
-     (Editor     : in out Categories_Criteria_Editor;
-      Kernel     : GPS.Kernel.Kernel_Handle;
-      Categories : Code_Peer.Message_Category_Sets.Set) is
+     (Editor         : in out Categories_Criteria_Editor;
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      Title          : String;
+      History_Prefix : String;
+      Categories     : Code_Peer.Message_Category_Sets.Set) is
    begin
       Editor := new Categories_Criteria_Editor_Record;
-      Initialize (Editor, Kernel, Categories);
+      Initialize (Editor, Kernel, Title, History_Prefix, Categories);
    end Gtk_New;
 
    ----------------
@@ -122,10 +123,12 @@ package body Code_Peer.Categories_Criteria_Editors is
    ----------------
 
    procedure Initialize
-     (Self       :
+     (Self           :
         not null access Categories_Criteria_Editor_Record'Class;
-      Kernel     : GPS.Kernel.Kernel_Handle;
-      Categories : Code_Peer.Message_Category_Sets.Set)
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      Title          : String;
+      History_Prefix : String;
+      Categories     : Code_Peer.Message_Category_Sets.Set)
    is
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
@@ -151,7 +154,7 @@ package body Code_Peer.Categories_Criteria_Editors is
       Self.Set_Policy (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
 
       Code_Peer.Categories_Criteria_Models.Gtk_New
-        (Self.Model, Kernel, "codepeer-summary_report-categories", Categories);
+        (Self.Model, Kernel, History_Prefix, Categories);
       Message_Categories_Criteria_Model_Callbacks.Connect
         (Self.Model,
          Gtk.Tree_Model.Signal_Row_Changed,
@@ -191,7 +194,7 @@ package body Code_Peer.Categories_Criteria_Editors is
          True);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"Message categories");
+      Column.Set_Title (Title);
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_End (Text_Renderer, False);
       Column.Add_Attribute

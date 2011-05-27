@@ -84,7 +84,11 @@ private
         Code_Peer.Entity_Messages_Models.Entity_Messages_Model;
       Messages_Filter     : Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
       Messages_View       : Gtk.Tree_View.Gtk_Tree_View;
-      Categories_Editor   :
+      General_Categories_Editor :
+        Code_Peer.Categories_Criteria_Editors.Categories_Criteria_Editor;
+      Warning_Categories_Editor :
+        Code_Peer.Categories_Criteria_Editors.Categories_Criteria_Editor;
+      Check_Categories_Editor :
         Code_Peer.Categories_Criteria_Editors.Categories_Criteria_Editor;
 
       Show_Lifeage        : Lifeage_Kinds_Flags;

@@ -125,6 +125,12 @@ package Code_Peer is
       Baseline_Inspection   : Natural;
       Message_Categories    : Message_Category_Sets.Set;
       Annotation_Categories : Annotation_Category_Sets.Set;
+
+      Check_Categories      : Message_Category_Sets.Set;
+      Warning_Categories    : Message_Category_Sets.Set;
+      General_Categories    : Message_Category_Sets.Set;
+      --  These sets of categories are subsets of Message_Categories and
+      --  are used by messages filter.
    end record;
    --  This record has only one instance and associated with the node
    --  of the root project. It is an owner of the message categories and
