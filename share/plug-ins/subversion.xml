@@ -131,7 +131,7 @@
    <action name="generic_svn_commit" show-command="false" output="none" category="">
       <shell output="">echo "Committing file(s) $2-"</shell>
       <shell>dump "$1" TRUE</shell>
-      <external check-password="true">svn --non-interactive --non-recursive commit -F "%1" $2-</external>
+      <external check-password="true">svn --non-interactive commit --non-recursive -F "%1" $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
