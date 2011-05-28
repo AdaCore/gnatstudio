@@ -139,6 +139,9 @@
          <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
+      <shell>dump "%2" TRUE</shell>
+      <shell lang="python" output="">import subversion; subversion.status_from_commit("%1")</shell>
+      <shell>delete "%2"</shell>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
    </action>

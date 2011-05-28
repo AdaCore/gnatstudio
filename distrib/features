@@ -38,6 +38,13 @@ NF-51-K430-002 GPS: Improve support on refilling comments (2011-05-08)
   the contents of the comment, compares adjacent lines and decides whether
   a word should be moved to the next line to make the lines more even.
 
+NF-51-K428-011 GPS: Reduce needs for status update in VCS (2011-05-28)
+
+  GPS now takes advantage of Subversion commit output to update the
+  file statuses. This avoids the need of running a query status after
+  a commit action. This is motivated by the fact that Subversion status
+  may be really slow across network.
+
 NF-51-K422-015 GPS: General GUI cleanup (2011-05-12)
 
   Many graphical elements of the GPS interface have been refreshed. In

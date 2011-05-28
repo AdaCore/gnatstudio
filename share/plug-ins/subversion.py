@@ -4,7 +4,7 @@
 
 
 
-import GPS
+import GPS, string
 
 from vcs import *
 
@@ -80,3 +80,44 @@ actions = [
 ]
 
 register_vcs_actions ("Subversion", actions)
+
+# Parse commit output to set corresponding file statuses. The commit output is:
+#
+#    Adding         proj.gpr
+#    Sending        file1.adb
+#    Sending        file3.adb
+#    Transmitting file data ..
+#    Committed revision 50.
+#
+# This output is parsed and transformed to a format compatible with the output
+# of the status command:
+#
+#                 50   50   nobody   proj.gpr
+#                 50   50   nobody   file1.adb
+#                 50   50   nobody   file3.adb
+#
+# These data are sent to the status parser to update the file statuses. This
+# way the status are up-to-date in GPS interface and we avoid a query status
+# which is somewhat slow.
+#
+def status_from_commit (filename):
+    file = open(filename)
+    lines = file.readlines()
+    file.close()
+
+    files=[]
+    version=""
+    for l in lines:
+        if len(l)>18 and l[0:18] == 'Committed revision':
+            version=string.split(l)[2].replace('.','')
+        elif len(l)>7 and l[0:7]=='Sending':
+            files.append(string.split(l)[1])
+        elif len(l)>6 and l[0:6]=='Adding':
+            files.append(string.split(l)[1])
+
+    status=""
+    for f in files:
+        line = "          " + version + "    " + version + " nobody " + f + "\n"
+        status = status + line
+
+    GPS.VCS.status_parse ("Subversion", status, True, True, GPS.pwd())
