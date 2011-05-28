@@ -38,7 +38,7 @@ NF-51-K430-002 GPS: Improve support on refilling comments (2011-05-08)
   the contents of the comment, compares adjacent lines and decides whether
   a word should be moved to the next line to make the lines more even.
 
-NF-51-K422-015 GPS: General GUI cleaup (2011-05-12)
+NF-51-K422-015 GPS: General GUI cleanup (2011-05-12)
 
   Many graphical elements of the GPS interface have been refreshed. In
   particular:
@@ -177,7 +177,7 @@ NF-51-JA25-028 Improved indentation of continuation lines (2011-03-22)
 NF-51-JA25-016 GPS: ispell module stops at underscores (2010-11-05)
 
   When looking for the word to spell check, the ispell.py module will now
-  stop at '_' characters, thus allowing you to fix mispelling in words like
+  stop at '_' characters, thus allowing you to fix misspelling in words like
   'lookng_for'
 
 NF-51-J805-009 Based literals not auto cased (2010-10-17)
