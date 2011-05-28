@@ -540,6 +540,9 @@ package body Gtkada.File_Selector is
       if Remote_Browsing then
          Initial_Dir := Last_Remote_Directory;
       else
+         if Last_Directory = No_File then
+            Last_Directory := Get_Current_Dir;
+         end if;
          Initial_Dir := Last_Directory;
       end if;
 
