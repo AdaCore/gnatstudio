@@ -918,7 +918,7 @@ package body Gtkada.File_Selector is
 
       exception
          when GNATCOLL.VFS.VFS_Directory_Error =>
-            --  Cannot read the selected directory. Exiting.
+            --  Cannot read the selected directory. Exiting
             Clear (Win.File_Model);
             return False;
       end;
