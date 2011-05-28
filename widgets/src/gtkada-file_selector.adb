@@ -558,8 +558,7 @@ package body Gtkada.File_Selector is
       if Default_Name /= "" then
          Default_File := Create_From_Dir (Initial_Dir, Default_Name);
          Set_Text
-           (File_Selector.Selection_Entry,
-            Display_Base_Name (Default_File));
+           (File_Selector.Selection_Entry, Display_Base_Name (Default_File));
       end if;
 
       if File_Pattern /= "" then
