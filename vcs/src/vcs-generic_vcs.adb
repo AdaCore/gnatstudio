@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -797,8 +797,7 @@ package body VCS.Generic_VCS is
 
    overriding function Local_Get_Status
      (Rep       : access Generic_VCS_Record;
-      Filenames : File_Array)
-      return File_Status_List.List
+      Filenames : File_Array) return File_Status_List.List
    is
       pragma Unreferenced (Rep);
 
@@ -826,7 +825,7 @@ package body VCS.Generic_VCS is
       Tag       : String;
       As_Branch : Boolean)
    is
-      Args     : GNAT.Strings.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
    begin
       Args := new GNAT.Strings.String_List (1 .. 2);
       Args (1) := new String'(+Base_Dir_Name (Dir)); -- root dir
