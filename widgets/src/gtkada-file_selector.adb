@@ -87,7 +87,7 @@ package body Gtkada.File_Selector is
    Icon_Column       : constant := 3;
    File_Column       : constant := 4;
 
-   Last_Directory : Virtual_File := GNATCOLL.VFS.Get_Current_Dir;
+   Last_Directory : Virtual_File := GNATCOLL.VFS.No_File;
    Last_Remote_Directory : Virtual_File := GNATCOLL.VFS.Get_Current_Dir;
    --  It would be nice to use a user data instead of this global variable,
    --  but this is in any case better than changing the current directory
