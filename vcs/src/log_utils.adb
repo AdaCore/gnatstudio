@@ -37,6 +37,7 @@ with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
@@ -800,24 +801,33 @@ package body Log_Utils is
       Commit_Command_Wrapper := Create
         (Kernel, Command_Access (Commit_Command), Name (Ref));
 
-      --  Create the Get_Status command
+      if Implicit_Status.Get_Pref then
+         --  Create the Get_Status command
 
-      Create (Get_Status_Command, Ref, Files);
-      Get_Status_Command_Wrapper := Create
-        (Kernel, Command_Access (Get_Status_Command), Name (Ref));
+         Create (Get_Status_Command, Ref, Files);
+         Get_Status_Command_Wrapper := Create
+           (Kernel, Command_Access (Get_Status_Command), Name (Ref));
 
-      --  The Get_Status command is a consequence of the Commit command
+         --  The Get_Status command is a consequence of the Commit command
 
-      VCS.Branching_Commands.Add_Consequence_Action
-        (Commit_Command_Wrapper,
-         Command_Access (Get_Status_Command_Wrapper));
+         VCS.Branching_Commands.Add_Consequence_Action
+           (Commit_Command_Wrapper,
+            Command_Access (Get_Status_Command_Wrapper));
+      end if;
 
       --  The Check_Activity command is a consequence of the Get_Status command
+      --  or the Commit_Command if no status required.
 
       if Activity /= No_Activity and then Action = Commit then
-         VCS.Branching_Commands.Add_Consequence_Action
-           (Get_Status_Command_Wrapper,
-            Command_Access (Check_Activity_Command));
+         if Implicit_Status.Get_Pref then
+            VCS.Branching_Commands.Add_Consequence_Action
+              (Get_Status_Command_Wrapper,
+               Command_Access (Check_Activity_Command));
+         else
+            VCS.Branching_Commands.Add_Consequence_Action
+              (Commit_Command_Wrapper,
+               Command_Access (Check_Activity_Command));
+         end if;
       end if;
 
       --  Check if the activity log is not empty
