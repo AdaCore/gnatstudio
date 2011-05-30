@@ -34,7 +34,6 @@ with Gtk.Object;                use Gtk.Object;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
