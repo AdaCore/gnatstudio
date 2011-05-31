@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2010, AdaCore                   --
+--                   Copyright (C) 2010-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -389,14 +389,12 @@ package body Ada_Semantic_Tree.Generics is
       Cached : Cache_Access := Get_Cache (Info);
    begin
       if Cached /= null then
-         Result := new Declaration_View_Record'
-           (Entity          =>
-              To_Entity_Access
-                (Instanciated_Package (Cached.all).Generic_Package),
-            Generic_Context =>
+         Result := new Declaration_View_Record;
+         Declaration_View_Record (Result.all).Generic_Context :=
               To_Active
-                (Instanciated_Package (Cached.all).Generic_Context),
-            others => <>);
+                (Instanciated_Package (Cached.all).Generic_Context);
+         Result.Entity := To_Entity_Access
+           (Instanciated_Package (Cached.all).Generic_Package);
 
          Ref (Declaration_View_Record (Result.all).Generic_Context);
 
