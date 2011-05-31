@@ -8,9 +8,9 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- K518-016: Directory creation is now recursive
-  Problem:    When the IDE is creating a directory, for instance when creating
-              a new project through the project Wizard, the IDE fails to create
+- K518-016: Cannot create directories recursively
+  Problem:    When creating a directory, for instance when creating a new
+              project through the project Wizard, the IDE fails to create
               the directory if there are intermediate directories that need
               to be created.
   Workaround: Create the directory manually on the filesystem.
