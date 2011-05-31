@@ -8,13 +8,6 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- K525-024 GPS: Reloading a file which contains folded lines
-  Problem:    Reloading a file which contains folded lines (for instance
-              when using the menu Edit->Pretty Print) might cause text
-              corruption.
-  Workaround: Use the menu Edit->Unfold all blocks to unfold lines before
-              reloading files.
-
 - K518-016: Cannot create directories recursively
   Problem:    When creating a directory, for instance when creating a new
               project through the project Wizard, the IDE fails to create
