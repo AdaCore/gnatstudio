@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2010, AdaCore                   --
+--                Copyright (C) 2001-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -3019,6 +3019,9 @@ package body Src_Editor_Buffer is
       begin
          --  Clear the buffer
 
+         --  The presence of folded lines stops propagation of delete_range:
+         --  unfold all lines before clearing.
+         Unfold_All (Buffer);
          Clear (Buffer);
 
          --  Clear the side column information
