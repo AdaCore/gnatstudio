@@ -3029,6 +3029,9 @@ package body Src_Editor_Buffer is
       begin
          --  Clear the buffer
 
+         --  The presence of folded lines stops propagation of delete_range:
+         --  unfold all lines before clearing.
+         Unfold_All (Buffer);
          Clear (Buffer);
 
          --  Clear the side column information
@@ -3055,17 +3058,7 @@ package body Src_Editor_Buffer is
 
          Unchecked_Free (Buffer.Line_Data);
 
-         Buffer.Editable_Lines := new Editable_Line_Array (1 .. 1);
-         Buffer.Editable_Lines (1) :=
-           (Where          => In_Buffer,
-            Buffer_Line    => 1,
-            Stored_Lines   => Lines_List.Empty_List,
-            Block          => null,
-            Stored_Editable_Lines => 0);
-
-         Buffer.Line_Data := new Line_Data_Array (1 .. 1);
-         Buffer.Line_Data (1) := New_Line_Data;
-         Buffer.Line_Data (1).Editable_Line := 1;
+         Initialize_Hook (Buffer);
 
          Buffer.First_Removed_Line := 0;
          Buffer.Last_Removed_Line  := 0;
@@ -3088,10 +3081,6 @@ package body Src_Editor_Buffer is
          Buffer.Blank_Lines := 0;
          Buffer.Hidden_Lines := 0;
          Buffer.Block_Highlighting_Column := -1;
-
-         --  Request the new blocks
-
-         Register_Edit_Timeout (Buffer);
       end Reset_Buffer;
 
       Contents      : GNAT.Strings.String_Access;
