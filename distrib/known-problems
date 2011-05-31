@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 5.0.2
 
+- K525-024 GPS: Reloading a file which contains folded lines
+  Problem:    Reloading a file which contains folded lines (for instance
+              when using the menu Edit->Pretty Print) might cause text
+              corruption.
+  Workaround: Use the menu Edit->Unfold all blocks to unfold lines before
+              reloading files.
+
 - K519-012 GPS: asian fonts issues on Windows
   Problem:    On Windows with asian languages, some system fonts are
               incorrectly loaded at GPS startup, leading to a Pango-Warning
