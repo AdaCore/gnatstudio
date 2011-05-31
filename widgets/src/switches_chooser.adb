@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007-2010, AdaCore             --
+--                      Copyright (C) 2007-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -135,6 +135,9 @@ package body Switches_Chooser is
          Switches          => <>,
          Frames            => <>,
          Dependencies      => null);
+
+      --  Add star to getopt switches
+      Define_Switch (Config.Config, "*");
 
       --  Add sections to getopt switches
       Start := Sections'First;
