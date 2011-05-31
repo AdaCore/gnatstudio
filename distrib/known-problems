@@ -8,6 +8,13 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K518-016: Directory creation is now recursive
+  Problem:    When the IDE is creating a directory, for instance when creating
+              a new project through the project Wizard, the IDE fails to create
+              the directory if there are intermediate directories that need
+              to be created.
+  Workaround: Create the directory manually on the filesystem.
+
 - K513-009 GPS: improved support for listing classes in Python outline
   Problem:    Classes were not always listed in the Outline for Python sources.
   Workaround: In plugin python_support.py, line 187, set the pattern to
