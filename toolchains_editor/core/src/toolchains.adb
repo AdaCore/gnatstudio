@@ -889,6 +889,7 @@ package body Toolchains is
                return This.Full_Compiler_List.Element (Idx);
             end if;
          end;
+
       else
          return No_Compiler;
       end if;
@@ -2118,9 +2119,9 @@ package body Toolchains is
          Output : constant String :=
                     Toolchain_Manager (Manager).Execute
                       (This.GNATls_Command.all & " -v", 5_000, False);
-         Lines           : String_List_Access := Split (Output, ASCII.LF);
-         Garbage         : GNAT.Strings.String_Access;
-         Current_Line    : Integer;
+         Lines        : String_List_Access := Split (Output, ASCII.LF);
+         Garbage      : GNAT.Strings.String_Access;
+         Current_Line : Integer;
       begin
          for J in Lines'Range loop
             for K in Lines (J)'Range loop
@@ -2304,7 +2305,7 @@ package body Toolchains is
       use Toolchain_Maps;
 
       Cur : Toolchain_Maps.Cursor;
-      Tc : Toolchain;
+      Tc  : Toolchain;
 
    begin
       while not Manager.Saved_Toolchains.Is_Empty loop
