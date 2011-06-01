@@ -132,14 +132,13 @@ package body Toolchains is
                         Toolchain_Manager (Mgr).Execute
                           ("gprconfig --mi-show-compilers --target=all",
                            50_000, True);
-         package TC_Set is new Ada.Containers.Indefinite_Vectors
-           (Positive, String);
+         package TC_Set is new Indefinite_Vectors (Positive, String);
          Toolchains : TC_Set.Vector;
          First      : Boolean;
 
       begin
          loop
-            exit when Ada.Strings.Fixed.Index (Output, Comp_Num'Img & " ")
+            exit when Fixed.Index (Output, Comp_Num'Img & " ")
               not in Output'Range;
 
             declare
@@ -207,7 +206,7 @@ package body Toolchains is
                      Lang      => To_Unbounded_String (Lang),
                      Base_Name => False);
 
-                  if Ada.Strings.Equal_Case_Insensitive (Lang, "Ada") then
+                  if Equal_Case_Insensitive (Lang, "Ada") then
                      --  If it's the first one for this target, then we have
                      --  the default ada compiler not in the path
                      First := True;
@@ -795,9 +794,7 @@ package body Toolchains is
             Comp : constant Compiler := This.Full_Compiler_List.Element (J);
 
          begin
-            if Ada.Strings.Equal_Case_Insensitive
-              (To_String (Comp.Lang), Lang)
-            then
+            if Equal_Case_Insensitive (To_String (Comp.Lang), Lang) then
                --  If a compiler exists for the same language and comes from
                --  default (e.g. xml definition file), then we replace it if we
                --  have more accurate information (e.g. new one is coming from
@@ -847,8 +844,8 @@ package body Toolchains is
 
    begin
       for J in Full.First_Index .. Full.Last_Index loop
-         if Ada.Strings.Equal_Case_Insensitive
-              (To_String (Full.Element (J).Lang), Lang)
+         if Equal_Case_Insensitive
+           (To_String (Full.Element (J).Lang), Lang)
          then
             --  The compiler already exists. Let's just modify the in-use
             --  compiler list to point to this existing compiler.
@@ -906,7 +903,7 @@ package body Toolchains is
       N    : Natural := 0;
    begin
       for J in Vect.First_Index .. Vect.Last_Index loop
-         if Ada.Strings.Equal_Case_Insensitive
+         if Equal_Case_Insensitive
            (Lang, To_String (Vect.Element (J).Lang))
          then
             N := N + 1;
@@ -918,7 +915,7 @@ package body Toolchains is
          Idx : Natural := 0;
       begin
          for J in Vect.First_Index .. Vect.Last_Index loop
-            if Ada.Strings.Equal_Case_Insensitive
+            if Equal_Case_Insensitive
               (Lang, To_String (Vect.Element (J).Lang))
             then
                Idx := Idx + 1;
@@ -979,7 +976,7 @@ package body Toolchains is
       Full_List : Compiler_Vector.Vector renames This.Full_Compiler_List;
    begin
       for J in Full_List.First_Index .. Full_List.Last_Index loop
-         if Ada.Strings.Equal_Case_Insensitive
+         if Equal_Case_Insensitive
               (To_String (Full_List.Element (J).Lang), Lang)
            and then Full_List.Element (J).Origin in Default_Compiler_Origin
          then
@@ -2075,8 +2072,7 @@ package body Toolchains is
      (Manager : access Toolchain_Manager_Record;
       This    : in out Ada_Library_Info)
    is
-      package String_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-        (String);
+      package String_Lists is new Indefinite_Doubly_Linked_Lists (String);
 
       use String_Lists;
 
