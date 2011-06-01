@@ -683,7 +683,9 @@ package body Toolchains is
 
    procedure Compute_Predefined_Paths (This : Toolchain) is
    begin
-      if This.Library /= null and then This.Library.Is_Computed then
+      if This = null or else
+        (This.Library /= null and then This.Library.Is_Computed)
+      then
          return;
       end if;
 
@@ -732,7 +734,10 @@ package body Toolchains is
       end Base_Tool_Name;
 
    begin
-      if This.Tools (Name) = No_Tool then
+      if This = null then
+         return "";
+
+      elsif This.Tools (Name) = No_Tool then
          if This.Default_Tools (Name) /= No_Tool then
             This.Tools (Name) := This.Default_Tools (Name);
 
@@ -869,11 +874,11 @@ package body Toolchains is
    function Get_Compiler (This : Toolchain; Lang : String) return Compiler is
    begin
       --  Make sure this is properly initialized
-      if not This.Used_Compiler_List.Contains (Lang) then
+      if This /= null and then not This.Used_Compiler_List.Contains (Lang) then
          Reset_To_Default (This, Lang);
       end if;
 
-      if This.Used_Compiler_List.Contains (Lang) then
+      if This /= null and then This.Used_Compiler_List.Contains (Lang) then
          declare
             Idx : constant Natural :=
                     This.Used_Compiler_List.Element (Lang);
