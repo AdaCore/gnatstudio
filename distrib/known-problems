@@ -15,12 +15,6 @@ If no tag is specified, the entry is relevant to all IDEs.
               to be created.
   Workaround: Create the directory manually on the filesystem.
 
-- K517-001 GPS: Fixed support for some international keyboards under Windows
-  Problem:    Under Windows, on some keyboard layouts (for instance Swiss
-              German), the Control-Alt combination is not recognized as an
-              equivalent of Alt-Gr.
-  Workaround: Use Alt-Gr.
-
 - K513-009 GPS: improved support for listing classes in Python outline
   Problem:    Classes were not always listed in the Outline for Python sources.
   Workaround: In plugin python_support.py, line 187, set the pattern to
