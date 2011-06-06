@@ -14,6 +14,12 @@ Known Problems fixed in GPS 5.0.2
   Workaround: This is harmless as 'Sans' font is then replacing those system
               fonts.
 
+- K517-001 GPS: Fixed support for some international keyboards under Windows
+  Problem:    Under Windows, on some keyboard layouts (for instance Swiss
+              German), the Control-Alt combination is not recognized as an
+              equivalent of Alt-Gr.
+  Workaround: Use Alt-Gr.
+
 - K427-016 Dialogs displayed when launching debug session from prompt
   Problem:    When launching GPS using the command line, with the option
               --debug=, if the parameter given to the --debug option is
