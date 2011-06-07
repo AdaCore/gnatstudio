@@ -482,6 +482,7 @@ a = """<?xml version="1.0"?>
       <title column="2" line="2">Analysis</title>
       <radio column="2" line="2">
         <radio-entry label="Information and Data Flow" switch="~flow_analysis=information" />
+        <radio-entry label="Automatic Selection" switch="~flow_analysis=auto" />
         <radio-entry label="Data Flow only" switch="~flow_analysis=data" />
       </radio>
       <check column="2" line="2" label="Generate VCs" switch="~vcg" />
@@ -531,7 +532,7 @@ a = """<?xml version="1.0"?>
       <check line="2" label="Echo Simplifier output" switch="~e" />
       <title line="3">Simplification</title>
       <check line="3" label="No Simplification" switch="~ns" />
-      <title line="4">ViCToR (Currently available on GNU/Linux only)</title>
+      <title line="4">ViCToR (Currently available on GNU/Linux and Windows)</title>
       <check line="4" label="Prove with ViCToR" switch="~victor" />
       <title line="5">ZombieScope</title>
       <check line="5" label="No ZombieScope" switch="~nz" />
@@ -572,9 +573,11 @@ a = """<?xml version="1.0"?>
         <combo-entry label="Alt-Ergo" value="alt-ergo" />
       </combo>
       <title line="2">Limits</title>
-      <spin line="2" label="Timeout (in s)" switch="~t=" min="0" max="1000" default="5"
-            tip="Timeout for each invocation of the prover. 5s timeout by default." />
-      <spin line="2" label="Memory Limit (in megabytes)" switch="~m=" min="0" max="10000" default="0"
+      <spin line="2" label="Proof step limit for Alt-Ergo" switch="~steps=" min="0" max="10000" default="5000"
+            tip="A deterministic (unlike timeouts) proof step limit. Zero means no limit." />
+      <spin line="2" label="Timeout (in s) (GNU/Linux only)" switch="~t=" min="0" max="1000" default="0"
+            tip="Timeout for each invocation of the prover. No timeout by default." />
+      <spin line="2" label="Memory Limit (in megabytes) (GNU/Linux only)" switch="~m=" min="0" max="10000" default="0"
             tip="Memory limit for each invocation of the prover. No limit by default." />
     </switches>
   </tool>
@@ -965,6 +968,13 @@ b = """<?xml version="1.0"?>
      <descr>Checker User Manual</descr>
      <category>Spark</category>
      <menu before="About">/Help/SPARK/Tools/Checker User Manual</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>Release_Note_10.htm</name>
+     <descr>Release Note 10.0</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Release Notes/Release Note 10.0</menu>
   </documentation_file>
 
   <documentation_file>
