@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2010, AdaCore                  --
+--                 Copyright (C) 2007-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -848,7 +848,9 @@ begin
       --  Then, execute the tests
 
       if Argument_Count > 1 then
-         Analyze_File (Tree.Create (+Argument (2)));
+         for J in 2 .. Argument_Count loop
+            Analyze_File (Tree.Create (+Argument (J)));
+         end loop;
       else
          for J in Files.all'Range loop
             Analyze_File (Files.all (J));
