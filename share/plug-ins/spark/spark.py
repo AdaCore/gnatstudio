@@ -1,6 +1,4 @@
-"""This file provides a fallback for SPARK support in GPS.
-Recent versions of the SPARK toolset typically come with a more up-to-date
-plug-in.
+"""This file provides SPARK support in GPS.
 
 Copyright (c) 2004-2010 Altran Praxis Limited
 Copyright (c) 2005-2010 AdaCore
@@ -23,10 +21,10 @@ spark_category="Examiner"
 
 spark_separator='-'
 
-# Global variable to pass filename to on_exit which will then raise a 
+# Global variable to pass filename to on_exit which will then raise a
 # window containing the file.
 
-focus_file = "" 
+focus_file = ""
 
 def on_match (process, match, since_last):
   try:
@@ -49,7 +47,7 @@ def on_exit (process, status, remaining_output):
 
   # Take into account new files and directories created by the Examiner,
   # in particular in the project view.
-  
+
   if focus_file != "":
     buf = GPS.EditorBuffer.get (GPS.File (focus_file))
     GPS.MDI.get_by_child (buf.current_view()).raise_window()
@@ -131,7 +129,7 @@ def show_pogs_file():
 
   sw = GPS.Project.root().get_tool_switches_as_string ("pogs")
 
-  cmd = "pogs "+ sw 
+  cmd = "pogs "+ sw
 
   if not re.search("-d=", cmd):
     # The default directory from where POGS will be run is the directory
@@ -139,15 +137,15 @@ def show_pogs_file():
     cmd = cmd + " -d=" + os.path.dirname (GPS.Project.root().file().name())
 
   summary_file_option = re.search("-o=[^ ]+", cmd)
-  if not summary_file_option: 
+  if not summary_file_option:
     # If the user has not specified an output file then the summary file
     # is set to <project_name>.sum
-    summary_file = re.sub("gpr$", "sum", GPS.Project.root().file().name()) 
+    summary_file = re.sub("gpr$", "sum", GPS.Project.root().file().name())
     cmd = cmd + " -o=" + summary_file
   else:
     summary_file = \
         summary_file_option.string[summary_file_option.start():summary_file_option.end()].lstrip("-o=")
-    
+
   GPS.Console (spark_console, accept_input=False).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
   # Pass the summary_file to on_exit which raise a window with the file open.
@@ -179,7 +177,7 @@ def do_pogs_xref (context, siv, dpc, zlg):
      (frm,to) = loc.search ("^@@@@@@@@@@  VC: (procedure|function)_\S+_" + number + "\.", regexp=True)
   else:
      (frm,to) = loc.search ("^(procedure|function)_\S+_" + number + "\.$", regexp=True)
-     
+
   GPS.MDI.get_by_child (f.current_view()).raise_window()
 
   # Goto the VC or DPC and then scroll the window down so the selected VC or DPC is not at the
@@ -281,11 +279,29 @@ def simplify_file (file):
   relative_filename = file.name().replace(file.project().file().directory(), "")
   siv_filename = relative_filename.replace(".vcg", ".siv")
 
-  cmd = "spadesimp "+sw + " " + relative_filename 
+  cmd = "spadesimp "+sw + " " + relative_filename
   GPS.Console (spark_console, accept_input=False).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
-  # Pass the summary_file to on_exit which raise a window with the file open.
+  # Pass the siv_file to on_exit which raise a window with the file open.
   focus_file = siv_filename
+  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
+  GPS.MDI.get (spark_console).raise_window ()
+
+def victor_file (file):
+  """Apply victor to the current file. file is an instance of GPS.File"""
+  global focus_file
+
+  GPS.MDI.save_all (False)
+  GPS.Locations.remove_category (spark_category)
+  sw = file.project().get_tool_switches_as_string ("ViCToR")
+  relative_filename = file.name().replace(file.project().file().directory(), "")
+  vct_filename = relative_filename.replace(".vcg", ".vct").replace(".siv", ".vct")
+
+  cmd = "victor " + sw + " " + relative_filename.replace(".vcg", "").replace(".siv", "")
+  GPS.Console (spark_console, accept_input=False).clear()
+  GPS.Console (spark_console).write (cmd + "\n")
+  # Pass the vct_file to on_exit which raise a window with the file open.
+  focus_file = vct_filename
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
   GPS.MDI.get (spark_console).raise_window ()
 
@@ -299,10 +315,10 @@ def zombiescope_file (file):
   relative_filename = file.name().replace(file.project().file().directory(), "")
   sdp_filename = relative_filename.replace(".dpc", ".sdp")
 
-  cmd = "zombiescope "+sw + " " + relative_filename 
+  cmd = "zombiescope "+sw + " " + relative_filename
   GPS.Console (spark_console, accept_input=False).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
-  # Pass the summary_file to on_exit which raise a window with the file open.
+  # Pass the sdp_file to on_exit which raise a window with the file open.
   focus_file = sdp_filename
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
   GPS.MDI.get (spark_console).raise_window ()
@@ -310,11 +326,19 @@ def zombiescope_file (file):
 def sparksimp_project ():
   """Simplify all files in the project"""
   GPS.MDI.save_all (False)
-  simplifier_sw = GPS.Project.root().get_tool_switches_as_string ("Simplifier")
   sparksimp_sw = GPS.Project.root().get_tool_switches_as_string ("SPARKSimp")
+  simplifier_sw = GPS.Project.root().get_tool_switches_as_string ("Simplifier")
+  zombiescope_sw = GPS.Project.root().get_tool_switches_as_string ("ZombieScope")
   victor_sw = GPS.Project.root().get_tool_switches_as_string ("ViCToR")
-   
-  cmd = "sparksimp "+ sparksimp_sw + victor_sw + " -sargs " + simplifier_sw
+
+  cmd = ("sparksimp " + sparksimp_sw)
+  if len(simplifier_sw.strip()) > 0:
+    cmd = (cmd + " -sargs " + simplifier_sw)
+  if len(zombiescope_sw.strip()) > 0:
+    cmd = (cmd + " -zargs " + zombiescope_sw)
+  if len(victor_sw.strip()) > 0:
+    cmd = (cmd + " -vargs " + victor_sw)
+
   GPS.Console (spark_console, accept_input=False).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
@@ -405,6 +429,16 @@ a = """<?xml version="1.0"?>
     <Spec_Suffix>.zlg</Spec_Suffix>
   </Language>
 
+  <Language>
+    <Name>VCT</Name>
+    <Spec_Suffix>.vct</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>VLG</Name>
+    <Spec_Suffix>.vlg</Spec_Suffix>
+  </Language>
+
   <!-- Index and Listing are just set up so that GPS can recognise them -->
 
   <Language>
@@ -443,10 +477,12 @@ a = """<?xml version="1.0"?>
         <combo-entry label="Sequential" value="sequential" />
         <combo-entry label="Ravenscar" value="ravenscar" />
       </combo>
+      <check column="1" line="2" label="Use SPARK Library" switch="~sparklib" />
 
       <title column="2" line="2">Analysis</title>
       <radio column="2" line="2">
         <radio-entry label="Information and Data Flow" switch="~flow_analysis=information" />
+        <radio-entry label="Automatic Selection" switch="~flow_analysis=auto" />
         <radio-entry label="Data Flow only" switch="~flow_analysis=data" />
       </radio>
       <check column="2" line="2" label="Generate VCs" switch="~vcg" />
@@ -486,7 +522,7 @@ a = """<?xml version="1.0"?>
   <tool name="SPARKSimp">
     <language>Ada</language>
     <switches columns="2" lines="6" switch_char="~">
-      <title line="1">Simplification order</title>
+      <title line="1">Analysis order</title>
       <check line="1" label="Process all files" switch="~a" />
       <check line="1" label="Sort files, largest first" switch="~t" />
       <check line="1" label="Reverse sort order" switch="~r" />
@@ -496,14 +532,14 @@ a = """<?xml version="1.0"?>
       <check line="2" label="Echo Simplifier output" switch="~e" />
       <title line="3">Simplification</title>
       <check line="3" label="No Simplification" switch="~ns" />
-      <title line="4">ViCToR</title>
-      <check line="4" label="Prove with Alt-Ergo" switch="~victor" />
+      <title line="4">ViCToR (Currently available on GNU/Linux and Windows)</title>
+      <check line="4" label="Prove with ViCToR" switch="~victor" />
       <title line="5">ZombieScope</title>
       <check line="5" label="No ZombieScope" switch="~nz" />
       <title line="6">Process control</title>
       <check line="6" label="Dry run" switch="~n" />
       <spin line="6" label="Multiprocessing" switch="~p=" min="1" max="100" default="1"
-            tip="Use N processes to run the Simplifier/ZombieScope. On a multiprocessor machine simplifications will occur in parallel" />
+            tip="Use N processes to run the Simplifier/ZombieScope/ViCToR. On a multiprocessor machine analysis will occur in parallel" />
     </switches>
   </tool>
 
@@ -529,10 +565,20 @@ a = """<?xml version="1.0"?>
 
   <tool name="ViCToR">
     <language>Ada</language>
-    <switches lines="1" switch_char="~">
-      <title line="1">Limits</title>
-      <spin line="1" label="Timeout (in s)" switch="~vtimeout=" min="0" max="1000" default="0"
+    <switches lines="2" switch_char="~">
+      <title line="1">General behaviour</title>
+      <check line="1" label="Plain output" switch="~plain" />
+      <check line="1" label="Ignore SIV files" switch="~v" />
+      <combo line="1" label="SMT solver used" switch="~solver" separator="=" noswitch="alt-ergo">
+        <combo-entry label="Alt-Ergo" value="alt-ergo" />
+      </combo>
+      <title line="2">Limits</title>
+      <spin line="2" label="Proof step limit for Alt-Ergo" switch="~steps=" min="0" max="10000" default="5000"
+            tip="A deterministic (unlike timeouts) proof step limit. Zero means no limit." />
+      <spin line="2" label="Timeout (in s) (GNU/Linux only)" switch="~t=" min="0" max="1000" default="0"
             tip="Timeout for each invocation of the prover. No timeout by default." />
+      <spin line="2" label="Memory Limit (in megabytes) (GNU/Linux only)" switch="~m=" min="0" max="10000" default="0"
+            tip="Memory limit for each invocation of the prover. No limit by default." />
     </switches>
   </tool>
 
@@ -665,6 +711,12 @@ a = """<?xml version="1.0"?>
      <shell lang="python">"""+spark_module+""".simplify_file (GPS.File("%F"))</shell>
   </action>
 
+  <action name="ViCToR file" category="Spark" output="none">
+    <filter language="VCG" />
+    <filter language="SIV" />
+     <shell lang="python">"""+spark_module+""".victor_file (GPS.File("%F"))</shell>
+  </action>
+
   <action name="ZombieScope file" category="Spark" output="none">
     <filter language="DPC" />
      <shell lang="python">spark.zombiescope_file (GPS.File("%F"))</shell>
@@ -727,6 +779,9 @@ a = """<?xml version="1.0"?>
       <menu action="Simplify file">
         <Title>_Simplify File</Title>
       </menu>
+      <menu action="ViCToR file">
+        <Title>_ViCToR File</Title>
+      </menu>
       <menu action="ZombieScope file">
         <Title>_ZombieScope File</Title>
       </menu>
@@ -759,6 +814,10 @@ a = """<?xml version="1.0"?>
 
   <contextual action="Simplify file" >
     <Title>SPARK/Simplify File</Title>
+  </contextual>
+
+  <contextual action="ViCToR file" >
+    <Title>SPARK/ViCToR File</Title>
   </contextual>
 
   <contextual action="ZombieScope file" >
@@ -856,10 +915,17 @@ b = """<?xml version="1.0"?>
   </documentation_file>
 
   <documentation_file>
-     <name>Simp_UM.htm</name>
+     <name>Simplifier_UM.htm</name>
      <descr>Simplifier User Manual</descr>
      <category>Spark</category>
      <menu before="About">/Help/SPARK/Tools/Simplifier User Manual</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>SPARKSimp_UM.htm</name>
+     <descr>SPARKSimp User Manual</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Tools/SPARKSimp User Manual</menu>
   </documentation_file>
 
   <documentation_file>
@@ -874,6 +940,13 @@ b = """<?xml version="1.0"?>
      <descr>ZombieScope User Manual</descr>
      <category>Spark</category>
      <menu before="About">/Help/SPARK/Tools/ZombieScope User Manual</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>VictorWrapper_UM.htm</name>
+     <descr>Victor Wrapper User Manual</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Tools/Victor Wrapper User Manual</menu>
   </documentation_file>
 
   <documentation_file>
@@ -898,10 +971,31 @@ b = """<?xml version="1.0"?>
   </documentation_file>
 
   <documentation_file>
+     <name>Release_Note_10.htm</name>
+     <descr>Release Note 10.0</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Release Notes/Release Note 10.0</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>Release_Note_9p1p0.htm</name>
+     <descr>Release Note 9.1</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Release Notes/Release Note 9.1</menu>
+  </documentation_file>
+
+  <documentation_file>
      <name>Release_Note_9.htm</name>
      <descr>Release Note 9.0</descr>
      <category>Spark</category>
      <menu before="About">/Help/SPARK/Release Notes/Release Note 9.0</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>Release_Note_GPL.htm</name>
+     <descr>Release Note</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Release Notes/Release Note</menu>
   </documentation_file>
 
   <documentation_file>
@@ -1073,10 +1167,10 @@ b = """<?xml version="1.0"?>
   </documentation_file>
 
   <documentation_file>
-     <name>SPARK_IO.htm</name>
-     <descr>SPARK_IO</descr>
+     <name>SPARK_Library_UM.htm</name>
+     <descr>SPARK Library</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Reference/SPARK__IO</menu>
+     <menu before="About">/Help/SPARK/Reference/SPARK Library</menu>
   </documentation_file>
 
   <documentation_file>
