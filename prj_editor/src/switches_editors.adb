@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -478,7 +478,10 @@ package body Switches_Editors is
             else
                --  Tool's attribute is defined in tool's descriptor.
 
-               if Args'Length /= 0 then
+               if Args'Length /= 0 and then not Is_Default_Value then
+                  Trace (Me, "Now has switches for '"
+                         & Tool.Project_Package.all & "."
+                         & Tool.Project_Attribute.all & "' when we had none");
                   Project.Set_Attribute
                     (Scenario  => Scenario_Variables,
                      Attribute =>
@@ -491,7 +494,10 @@ package body Switches_Editors is
                      Prepend   => False);
                   Changed := True;
 
-               else
+               elsif To_Remove then
+                  Trace (Me, "No more switches for '"
+                         & Tool.Project_Package.all & "."
+                         & Tool.Project_Attribute.all & "'");
                   Project.Delete_Attribute
                     (Scenario  => Scenario_Variables,
                      Attribute =>

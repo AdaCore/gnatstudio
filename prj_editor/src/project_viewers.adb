@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -300,9 +300,6 @@ package body Project_Viewers is
 
    type Switches_Editor_Record is
      new Project_Editor_Page_Record with null record;
---     function Create_Content
---       (Page : access Switches_Editor_Record;
---        Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    overriding function Widget_Factory
      (Page         : access Switches_Editor_Record;
       Project      : Project_Type;
@@ -1072,13 +1069,19 @@ package body Project_Viewers is
       Ref_Project        : Project_Type) return Boolean
    is
       pragma Unreferenced (Kernel, Page, Ref_Project);
+      Result : Boolean;
    begin
-      return Generate_Project
+      Result := Generate_Project
         (Switches           => Switches_Edit (Widget),
          Project            => Project,
          Languages          => Languages,
          Scenario_Variables => Scenario_Variables,
          Files              => (1 .. 0 => GNATCOLL.VFS.No_File));
+      if Result then
+         Trace (Me, "Switches editor: project was modified");
+      end if;
+
+      return Result;
 
    exception
       when E : others =>
