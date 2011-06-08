@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2010, AdaCore                 --
+--                  Copyright (C) 2001-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -261,9 +261,12 @@ package Src_Editor_Buffer is
       On_Cursor_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
       First_Delim_Iter : out Gtk.Text_Iter.Gtk_Text_Iter;
       Last_Delim_Iter  : out Gtk.Text_Iter.Gtk_Text_Iter;
-      Found            : out Natural);
+      Found            : out Natural;
+      Counter_Max      : Natural := 16_384);
    --  Return the two delimiters surrounding the iter given in parameter.
    --  Found holds the number of delimiters found (0, 1 or 2)
+   --  Counter_Max indicates the number of characters to explore around the
+   --  delimiter: give a low value when this needs to return quickly.
 
    procedure Get_Screen_Position
      (Buffer : access Source_Buffer_Record;

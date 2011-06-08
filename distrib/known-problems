@@ -8,6 +8,12 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K607-047: Jumping to distant delimitor does not work
+  Problem:    When using the menu Navigate->Goto Matching Delimiter, if the
+              matching delimiter is too far away (more than 8192 characters),
+              GPS does not jump to the position of the matching delimiter.
+  Workaround: Go to the position manually.
+
 - K518-016: Cannot create directories recursively
   Problem:    When creating a directory, for instance when creating a new
               project through the project Wizard, the IDE fails to create

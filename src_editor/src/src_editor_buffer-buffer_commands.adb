@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2003-2008, AdaCore                --
+--                   Copyright (C) 2003-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,7 +64,8 @@ package body Src_Editor_Buffer.Buffer_Commands is
         (Buffer,
          On_Cursor_Iter,
          First_Highlight_Iter, Last_Highlight_Iter,
-         Found);
+         Found,
+         Counter_Max => Natural'Last);
 
       if Found > 0 then
          if Equal (First_Highlight_Iter, On_Cursor_Iter) then

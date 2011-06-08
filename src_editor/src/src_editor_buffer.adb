@@ -859,14 +859,13 @@ package body Src_Editor_Buffer is
       On_Cursor_Iter   : Gtk_Text_Iter;
       First_Delim_Iter : out Gtk_Text_Iter;
       Last_Delim_Iter  : out Gtk_Text_Iter;
-      Found            : out Natural)
+      Found            : out Natural;
+      Counter_Max      : Natural := 16_384)
    is
       Current      : Gtk_Text_Iter;
 
       Success      : Boolean;
       Counter      : Natural;
-      Counter_Max  : constant := 8192;
-      --  ??? Should that be a preference ?
 
       Stack        : Natural;
       String_Tag   : Boolean;
