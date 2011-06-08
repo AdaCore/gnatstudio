@@ -4910,7 +4910,12 @@ package body Src_Editor_Buffer is
                Disk : GNAT.Strings.String_Access :=
                         Read_File (Buffer.Filename);
             begin
-               Result := Txt.all = Disk.all;
+               if Disk = null then
+                  Result := True;
+               else
+                  Result := Txt.all = Disk.all;
+               end if;
+
                Trace (Me, "Timestamps differ, files equal ? " & Result'Img);
                GNAT.Strings.Free (Disk);
                GNAT.Strings.Free (Txt);
