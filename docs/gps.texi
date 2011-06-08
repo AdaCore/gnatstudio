@@ -1,6 +1,14 @@
 \input texinfo   @c -*-texinfo-*-
 @input texiplus
 
+@c oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+@c                                                                            o
+@c                             GPS DOCUMENTATION                              o
+@c                                                                            o
+@c                     Copyright (C) 2011-2011, AdaCore                       o
+@c                                                                            o
+@c oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+
 @c For uniformity, screenshots are generated using the following setup:
 @c   - Under Windows XP, using the default XP theme
 @c   - Using the standard Windows screen or window capture
@@ -4472,8 +4480,7 @@ Each project contains the following information
 @itemize @bullet
 @item @b{List of imported projects}:
 @cindex imported project
-   When you are compiling sources from this project, the compiler
-   (either through GNAT or the automatically generated Makefiles) will
+   When you are compiling sources from this project, the builder will
    first make sure that all the imported projects have been correctly
    recompiled and are up-to-date. This way, dependencies between
    source files are properly handled.
@@ -6052,11 +6059,20 @@ the Locations View.
    @end table
 
 @item Makefile
-If you have a file called @file{Makefile} in the same directory as your
+If you have the @command{make} utility in your PATH, and have a file
+called @file{Makefile} in the same directory as your
 project file is, or if you've set the @code{makefile} property in the
 @code{Make} section of the project properties (see
 @ref{The Project Properties Editor}), this menu will be displayed, giving
 access to all the targets defined in your makefile.
+
+@item Ant
+If you have the @command{ant} utility in your PATH, and have a file
+called @file{build.xml} in the same directory as your
+project file is, or if you've set the @code{antfile} property in the
+@code{Ant} section of the project properties (see
+@ref{The Project Properties Editor}), this menu will be displayed, giving
+access to all the targets defined in your ant file.
 
 @item Run
    @table @i
