@@ -853,8 +853,8 @@ package body Code_Peer.Module is
 
          --  Update location view
 
-         Self.Update_Location_View;
          Editors.Show_Annotations_In_Opened_Editors (Self);
+         Self.Update_Location_View;
 
          --  Raise report window
 
