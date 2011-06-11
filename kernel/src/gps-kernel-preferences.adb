@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -259,6 +259,13 @@ package body GPS.Kernel.Preferences is
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
       -- General --
+      Gtk_Theme := Create
+        (Kernel.Preferences,
+         Name  => "Gtk-Theme-Name",
+         Label => -"Theme",
+         Page  => -"General",
+         Doc   => -("Select a theme from the list to change the general "
+                     & "appearance of GPS"));
 
       Default_Font := Create
         (Manager => Kernel.Preferences,
