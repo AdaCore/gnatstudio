@@ -88,7 +88,7 @@ package body Breakpoints_Pkg is
       --  Source location
 
       Gtk_New (Breakpoints.Location_Selected, Label => -"Source location");
-      Bp_Kind_Group := Group (Breakpoints.Location_Selected);
+      Bp_Kind_Group := Get_Group (Breakpoints.Location_Selected);
       Set_Active (Breakpoints.Location_Selected, False);
       Pack_Start
         (Bp_Kind_Vbox, Breakpoints.Location_Selected, False, False, 0);
@@ -133,7 +133,7 @@ package body Breakpoints_Pkg is
 
       Gtk_New
         (Breakpoints.Subprogram_Selected, Bp_Kind_Group, -"Subprogram Name");
-      Bp_Kind_Group := Group (Breakpoints.Subprogram_Selected);
+      Bp_Kind_Group := Get_Group (Breakpoints.Subprogram_Selected);
       Set_Active (Breakpoints.Subprogram_Selected, False);
       Pack_Start
         (Bp_Kind_Vbox, Breakpoints.Subprogram_Selected, False, False, 0);
@@ -153,7 +153,7 @@ package body Breakpoints_Pkg is
       --  Address
 
       Gtk_New (Breakpoints.Address_Selected, Bp_Kind_Group, -"Address");
-      Bp_Kind_Group := Group (Breakpoints.Address_Selected);
+      Bp_Kind_Group := Get_Group (Breakpoints.Address_Selected);
       Set_Active (Breakpoints.Address_Selected, False);
       Pack_Start (Bp_Kind_Vbox, Breakpoints.Address_Selected, False, False, 0);
       Widget_Callback.Object_Connect
@@ -331,14 +331,14 @@ package body Breakpoints_Pkg is
       Add (Breakpoints.Frame4, Breakpoints.Vbox9);
 
       Gtk_New (Breakpoints.Stop_Always_Exception, Vbox9_Group, -"Stop always");
-      Vbox9_Group := Group (Breakpoints.Stop_Always_Exception);
+      Vbox9_Group := Get_Group (Breakpoints.Stop_Always_Exception);
       Set_Active (Breakpoints.Stop_Always_Exception, True);
       Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Always_Exception,
                   False, False, 0);
 
       Gtk_New (Breakpoints.Stop_Not_Handled_Exception,
                Vbox9_Group, -"Stop if not handled");
-      Vbox9_Group := Group (Breakpoints.Stop_Not_Handled_Exception);
+      Vbox9_Group := Get_Group (Breakpoints.Stop_Not_Handled_Exception);
       Set_Active (Breakpoints.Stop_Not_Handled_Exception, False);
       Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Not_Handled_Exception,
                   False, False, 0);

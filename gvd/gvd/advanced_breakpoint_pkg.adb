@@ -207,20 +207,20 @@ package body Advanced_Breakpoint_Pkg is
       Add (Advanced_Breakpoint.Frame13, Advanced_Breakpoint.Vbox30);
 
       Gtk_New (Advanced_Breakpoint.Scope_Task, Vbox30_Group, -"Running task");
-      Vbox30_Group := Group (Advanced_Breakpoint.Scope_Task);
+      Vbox30_Group := Get_Group (Advanced_Breakpoint.Scope_Task);
       Set_Active (Advanced_Breakpoint.Scope_Task, True);
       Pack_Start (Advanced_Breakpoint.Vbox30,
                   Advanced_Breakpoint.Scope_Task, False, False, 0);
 
       Gtk_New (Advanced_Breakpoint.Scope_Pd, Vbox30_Group,
                -"All tasks in current Protection Domain");
-      Vbox30_Group := Group (Advanced_Breakpoint.Scope_Pd);
+      Vbox30_Group := Get_Group (Advanced_Breakpoint.Scope_Pd);
       Set_Active (Advanced_Breakpoint.Scope_Pd, False);
       Pack_Start (Advanced_Breakpoint.Vbox30,
                   Advanced_Breakpoint.Scope_Pd, False, False, 0);
 
       Gtk_New (Advanced_Breakpoint.Scope_Any, Vbox30_Group, -"Any task");
-      Vbox30_Group := Group (Advanced_Breakpoint.Scope_Any);
+      Vbox30_Group := Get_Group (Advanced_Breakpoint.Scope_Any);
       Set_Active (Advanced_Breakpoint.Scope_Any, False);
       Pack_Start (Advanced_Breakpoint.Vbox30,
                   Advanced_Breakpoint.Scope_Any, False, False, 0);
@@ -236,21 +236,21 @@ package body Advanced_Breakpoint_Pkg is
 
       Gtk_New (Advanced_Breakpoint.Action_Task, Vbox31_Group,
                -"Task that hits the breakpoint");
-      Vbox31_Group := Group (Advanced_Breakpoint.Action_Task);
+      Vbox31_Group := Get_Group (Advanced_Breakpoint.Action_Task);
       Set_Active (Advanced_Breakpoint.Action_Task, True);
       Pack_Start (Advanced_Breakpoint.Vbox31,
                   Advanced_Breakpoint.Action_Task, False, False, 0);
 
       Gtk_New (Advanced_Breakpoint.Action_Pd, Vbox31_Group,
                -"All tasks in current Protection Domain");
-      Vbox31_Group := Group (Advanced_Breakpoint.Action_Pd);
+      Vbox31_Group := Get_Group (Advanced_Breakpoint.Action_Pd);
       Set_Active (Advanced_Breakpoint.Action_Pd, False);
       Pack_Start (Advanced_Breakpoint.Vbox31,
                   Advanced_Breakpoint.Action_Pd, False, False, 0);
 
       Gtk_New (Advanced_Breakpoint.Action_All, Vbox31_Group,
                -"All breakable tasks");
-      Vbox31_Group := Group (Advanced_Breakpoint.Action_All);
+      Vbox31_Group := Get_Group (Advanced_Breakpoint.Action_All);
       Set_Active (Advanced_Breakpoint.Action_All, False);
       Pack_Start (Advanced_Breakpoint.Vbox31,
                   Advanced_Breakpoint.Action_All, False, False, 0);
