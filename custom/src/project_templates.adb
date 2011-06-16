@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2010, AdaCore                  --
+--                    Copyright (C) 2010-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,13 +39,6 @@ package body Project_Templates is
    --  Return the index of the next occurrence of C in S, and return S'Last + 1
    --  if this was not found. If Start_Index is specified, start searching
    --  at Start_Index.
-   --  ??? This should be in a general-purpose string handling package
-
-   procedure Replace
-     (S           : in out Unbounded_String;
-      Pattern     : String;
-      Replacement : String);
-   --  Return S, with all occurrences of Pattern replaced with Replacement
    --  ??? This should be in a general-purpose string handling package
 
    function To_Mixed (S : String) return String;
@@ -95,27 +88,6 @@ package body Project_Templates is
 
       return True;
    end CISW;
-
-   -------------
-   -- Replace --
-   -------------
-
-   procedure Replace
-     (S           : in out Unbounded_String;
-      Pattern     : String;
-      Replacement : String)
-   is
-      Ind : Natural := Index_Non_Blank (S);
-   begin
-      while Ind < Length (S) loop
-         Ind := Index (S, Pattern, Ind);
-
-         exit when Ind = 0;
-
-         S := Replace_Slice (S, Ind, Ind + Pattern'Length - 1, Replacement);
-         Ind := Ind + Replacement'Length;
-      end loop;
-   end Replace;
 
    ----------
    -- Find --
