@@ -1,2 +1,0 @@
-42*stopped,reason="stop",address="0x123",source="a.c:123"
-(gdb)

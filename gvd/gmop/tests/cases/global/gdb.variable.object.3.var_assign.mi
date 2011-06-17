@@ -1,4 +1,0 @@
-^done,value="3"
-(gdb)
-^done,changelist=[{name="var1",in_scope="true",type_changed="false"}]
-(gdb)

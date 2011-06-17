@@ -1,2 +1,0 @@
-^done,variables=[{name="x",value="11"},{name="s",value="{a = 1, b = 2}"}]
-(gdb)

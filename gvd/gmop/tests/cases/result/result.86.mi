@@ -1,2 +1,0 @@
-88^done,stack=[frame={level="0",addr="0xb7fe1424",func="__kernel_vsyscall"}]
-(gdb)

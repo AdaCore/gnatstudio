@@ -1,4 +1,0 @@
-^done,numchild="1",children=[child={name="name",exp="exp",numchild="n",type="type"}]
-(gdb)
-^done,numchild="1",children=[child={name="name",exp="exp",numchild="n",value="value",type="type"}]
-(gdb)

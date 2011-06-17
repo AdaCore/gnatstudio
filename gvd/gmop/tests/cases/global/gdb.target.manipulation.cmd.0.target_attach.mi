@@ -1,4 +1,0 @@
-=thread-created,id="1"
-*stopped,thread-id="1",frame={addr="0xb7f7e410",func="bar",args=[]}
-^done
-(gdb)

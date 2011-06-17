@@ -1,6 +1,0 @@
-222^done
-(gdb)
-111*stopped,signal-name="SIGINT",signal-meaning="Interrupt",frame={addr="0x00010140",func="foo",args=[],file="try.c",fullname="/home/foo/bar/try.c",line="13"}
-(gdb)
-^error,msg="mi_cmd_exec_interrupt: Inferior not executing."
-(gdb)

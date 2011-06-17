@@ -1,8 +1,0 @@
-^running
-(gdb)
-*stopped,reason="end-stepping-range",frame={func="foo",args=[],file="try.c",fullname="/home/foo/bar/try.c",line="10"}
-(gdb)
-^running
-(gdb)
-*stopped,reason="end-stepping-range",frame={addr="0x000100f4",func="foo",args=[],file="try.c",fullname="/home/foo/bar/try.c",line="10"}
-(gdb)

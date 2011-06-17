@@ -1,2 +1,0 @@
-18^done,groups=[{id="i1",type="process",pid="16777",executable="/home/charly/Workspace/adagdbmitest/obj_debug/debugger_test_vars",cores=["0"]}]
-(gdb)

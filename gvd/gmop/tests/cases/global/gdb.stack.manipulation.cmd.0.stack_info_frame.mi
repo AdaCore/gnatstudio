@@ -1,2 +1,0 @@
-^done,frame={level="1",addr="0x0001076c",func="callee3",file="../../../devo/gdb/testsuite/gdb.mi/basics.c",fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="17"}
-(gdb)

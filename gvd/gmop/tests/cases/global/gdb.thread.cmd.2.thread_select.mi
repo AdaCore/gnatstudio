@@ -1,8 +1,0 @@
-^running
-(gdb)
-*stopped,reason="end-stepping-range",thread-id="2",line="187",file="../../../devo/gdb/testsuite/gdb.threads/linux-dp.c"
-(gdb)
-^done,thread-ids={thread-id="3",thread-id="2",thread-id="1"},number-of-threads="3"
-(gdb)
-^done,new-thread-id="3",frame={level="0",func="vprintf",args=[{name="format",value="0x8048e9c \"%*s%c %d %c\\n\""},{name="arg",value="0x2"}],file="vprintf.c",line="31"}
-(gdb)

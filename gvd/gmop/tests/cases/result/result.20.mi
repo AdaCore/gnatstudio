@@ -1,2 +1,0 @@
-22^done,threads=[{id="1",target-id="Thread 0xb7e668d0 (LWP 16777)",frame={level="0",addr="0x08049f2f",func="main",args=[{name="argc",value="1"},{name="argv",value="(system.address) 0xbfffef44"},{name="envp",value="(system.address) 0xbfffef4c"}],file="/home/charly/Workspace/adagdbmitest/src/b~debugger_test_vars.adb",fullname="/home/charly/Workspace/adagdbmitest/src/b~debugger_test_vars.adb",line="184"},state="stopped",core="0"}]
-(gdb)

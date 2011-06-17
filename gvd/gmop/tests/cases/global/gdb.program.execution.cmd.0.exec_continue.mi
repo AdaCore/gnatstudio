@@ -1,5 +1,0 @@
-^running
-(gdb)
-@"Hello world"
-*stopped,reason="breakpoint-hit",disp="keep",bkptno="2",frame={func="foo",args=[],file="hello.c",fullname="/home/foo/bar/hello.c",line="13"}
-(gdb)

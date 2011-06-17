@@ -1,4 +1,0 @@
-^running
-(gdb)
-*stopped,reason="end-stepping-range",line="8",file="hello.c"
-(gdb)

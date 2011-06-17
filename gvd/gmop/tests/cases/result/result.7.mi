@@ -1,2 +1,0 @@
-9^done,bkpt={number="2",type="breakpoint",disp="keep",enabled="y",addr="0x0804b294",func="debugger_test_vars",file="/home/charly/Workspace/adagdbmitest/src/debugger_test_vars.adb",fullname="/home/charly/Workspace/adagdbmitest/src/debugger_test_vars.adb",line="145",times="0",original-location="/home/charly/Workspace/adagdbmitest/src/debugger_test_vars.adb:145"}
-(gdb)

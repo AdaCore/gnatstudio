@@ -1,6 +1,0 @@
-^done,locals=[name="A",name="B",name="C"]
-(gdb)
-^done,locals=[{name="A",value="1"},{name="B",value="2"},{name="C",value="{1, 2, 3}"}]
-(gdb)
-^done,locals=[{name="A",type="int",value="1"},{name="B",type="int",value="2"},{name="C",type="int [3]"}]
-(gdb)
