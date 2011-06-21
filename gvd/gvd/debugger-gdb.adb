@@ -925,9 +925,11 @@ package body Debugger.Gdb is
    ----------------
 
    overriding procedure Initialize (Debugger : access Gdb_Debugger) is
-      Num  : Expect_Match;
-      Lang : Language_Access;
+      Num     : Expect_Match;
+      Lang    : Language_Access;
       Process : Visual_Debugger;
+      Ignored : Version_Number;
+      pragma Unreferenced (Ignored);
 
       use GVD;
 
@@ -942,10 +944,16 @@ package body Debugger.Gdb is
          Timeout => -1);
 
       --  Make sure that the prompt is what we are expecting
+
       Send (Debugger, "set prompt (gdb) ", Mode => Internal);
       Send (Debugger, "set width 0", Mode => Internal);
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
+
+      --  Cache result of 'show version', and also as a side effect, includes
+      --  output of 'show version' in the log file.
+
+      Ignored := Get_GDB_Version (Debugger);
 
       if not Is_Local (Debug_Server) then
          --  Workaround the following problem: when telneting to Windows,
