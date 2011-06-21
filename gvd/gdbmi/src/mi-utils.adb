@@ -15,6 +15,8 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 package body MI.Utils is
 
    --------------
@@ -23,17 +25,37 @@ package body MI.Utils is
 
    function Is_Error (Result : Result_Record) return Boolean is
    begin
-      return Result.Class.all = "Error";
+      return Result.Class.all = "error";
    end Is_Error;
 
    -------------------
    -- Process_Error --
    -------------------
 
-   function Process_Error (Result : Result_Record) return String_Access is
+   function Process_Error (Result : Result_Record) return String_Access
+   is
+      Cursor : constant Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair   : Result_Pair;
    begin
-      raise Not_Yet_Implemented_Error with "Process_Error";
-      return null;
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "error" then
+         return null;
+      end if;
+
+      if Result.Results.Length /= 1 then
+         raise Utils_Error with ("Ill-formatted error result record: expected "
+                                 & "one and only one attribute 'msg'.");
+      end if;
+
+      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
+      Pair := Result_Pair_Lists.Element (Cursor);
+
+      if Pair.Variable.all /= "msg"
+         or else Pair.Value.all not in String_Value then
+         raise Utils_Error with ("Ill-formatted error result record: expected "
+                                 & "attribute `msg' followed by a c-string.");
+      end if;
+
+      return String_Value (Pair.Value.all).Value;
    end Process_Error;
 
    -------------------
@@ -53,8 +75,16 @@ package body MI.Utils is
 
    function Process_Exec_Run (Result : Result_Record) return Boolean is
    begin
-      raise Not_Yet_Implemented_Error with "Process_Exec_Run";
-      return False;
+      if Result.R_Type /= Sync_Result
+         or else Result.Class.all /= "running" then
+         return False;
+      end if;
+
+      if Result.Results.Length /= 0 then
+         raise Utils_Error with "unexpected attribute to result-record";
+      end if;
+
+      return True;
    end Process_Exec_Run;
 
    -------------------
@@ -90,8 +120,7 @@ package body MI.Utils is
    function Process_Stream_Output
      (Stream : Stream_Output_Record) return String_Access is
    begin
-      raise Not_Yet_Implemented_Error with "Process_Stream_Output";
-      return null;
+      return Stream.Content;
    end Process_Stream_Output;
 
    ------------------------
@@ -109,10 +138,31 @@ package body MI.Utils is
    -- Process_Var_Delete --
    ------------------------
 
-   function Process_Var_Delete (Result : Result_Record) return Boolean is
+   function Process_Var_Delete (Result : Result_Record) return Boolean
+   is
+      Cursor : constant Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair   : Result_Pair;
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_Delete";
-      return False;
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         return False;
+      end if;
+
+      if Result.Results.Length /= 1 then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "one and only one attribute: ndelete.");
+      end if;
+
+      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
+      Pair := Result_Pair_Lists.Element (Cursor);
+
+      if Pair.Variable.all /= "ndelete"
+         or else Pair.Value.all not in String_Value then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "attribute `ndelete' followed by a "
+                                 & "c-string.");
+      end if;
+
+      return True;  -- ??? Should return the value of ndelete
    end Process_Var_Delete;
 
    ----------------------------
@@ -132,9 +182,34 @@ package body MI.Utils is
 
    procedure Process_Var_Info_Num_Children
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Type) is
+      Var_Obj : in out Var_Obj_Type)
+   is
+      Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair    : Result_Pair;
+      pragma Unreferenced (Var_Obj);
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_Info_Num_Children";
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         raise Utils_Error with ("Invalid result-record for "
+                                 & "-var-info-num-children");
+      end if;
+
+      if Result.Results.Length /= 1 then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "one and only one attribute: numchild.");
+      end if;
+
+      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
+      Pair := Result_Pair_Lists.Element (Cursor);
+
+      if Pair.Variable.all /= "numchild"
+         or else Pair.Value.all not in String_Value then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "attribute `numchild' followed by a "
+                                 & "c-string.");
+      end if;
+
+      Var_Obj.Num_Child := Natural'Value
+                              (String_Value (Pair.Value.all).Value.all);
    end Process_Var_Info_Num_Children;
 
    -------------------------------
@@ -154,9 +229,39 @@ package body MI.Utils is
 
    procedure Process_Var_Info_Type
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Type) is
+      Var_Obj : in out Var_Obj_Type)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (String, String_Access);
+
+      Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair    : Result_Pair;
+
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_Info_Type";
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         raise Utils_Error with ("Invalid result-record for "
+                                 & "-var-info-type");
+      end if;
+
+      if Result.Results.Length /= 1 then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "one and only one attribute: type.");
+      end if;
+
+      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
+      Pair := Result_Pair_Lists.Element (Cursor);
+
+      if Pair.Variable.all /= "type"
+         or else Pair.Value.all not in String_Value then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "attribute `type' followed by a c-string.");
+      end if;
+
+      if Var_Obj.Type_Desc /= null then
+         Unchecked_Free (Var_Obj.Type_Desc);
+      end if;
+
+      Var_Obj.Type_Desc := String_Value (Pair.Value.all).Value;
    end Process_Var_Info_Type;
 
    ---------------------------------
@@ -176,9 +281,33 @@ package body MI.Utils is
 
    procedure Process_Var_Info_Path_Expression
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Type) is
+      Var_Obj : in out Var_Obj_Type)
+   is
+      Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair    : Result_Pair;
+      pragma Unreferenced (Var_Obj);
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_Info_Path_Expression";
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         raise Utils_Error with ("Invalid result-record for "
+                                 & "-var-info-path-expression");
+      end if;
+
+      if Result.Results.Length /= 1 then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "one and only one attribute: path_expr.");
+      end if;
+
+      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
+      Pair := Result_Pair_Lists.Element (Cursor);
+
+      if Pair.Variable.all /= "path_expr"
+         or else Pair.Value.all not in String_Value then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "attribute `path_expr' followed by a "
+                                 & "c-string.");
+      end if;
+
+      --  ??? Convert Pair.Value.all and store it into Var_Obj
    end Process_Var_Info_Path_Expression;
 
    --------------------------------
@@ -187,7 +316,7 @@ package body MI.Utils is
 
    procedure Process_Var_Show_Attribute
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Access) is
+      Var_Obj : in out Var_Obj_Type) is
    begin
       raise Not_Yet_Implemented_Error with "Process_Var_Show_Attribute";
    end Process_Var_Show_Attribute;
@@ -198,9 +327,40 @@ package body MI.Utils is
 
    procedure Process_Var_Evaluate_Expression
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Access) is
+      Var_Obj : in out Var_Obj_Type)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (String, String_Access);
+
+      Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair    : Result_Pair;
+
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_Evaluate_Expression";
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         raise Utils_Error with ("Invalid result-record for "
+                                 & "-var-evaluate-expression");
+      end if;
+
+      if Result.Results.Length /= 1 then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "one and only one attribute: value.");
+      end if;
+
+      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
+      Pair := Result_Pair_Lists.Element (Cursor);
+
+      if Pair.Variable.all /= "value"
+         or else Pair.Value.all not in String_Value then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "attribute `value' followed by a "
+                                 & "c-string.");
+      end if;
+
+      if Var_Obj.Value /= null then
+         Unchecked_Free (Var_Obj.Value);
+      end if;
+
+      Var_Obj.Value := String_Value (Pair.Value.all).Value;
    end Process_Var_Evaluate_Expression;
 
    ------------------------

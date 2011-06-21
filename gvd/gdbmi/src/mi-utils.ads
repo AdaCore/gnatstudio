@@ -205,13 +205,13 @@ package MI.Utils is
 
    procedure Process_Var_Show_Attribute
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Access);
+      Var_Obj : in out Var_Obj_Type);
    --  Handles the result of the MI command `-var-show-attribute' and updates
    --  the Var_Obj_Type accordingly.
 
    procedure Process_Var_Evaluate_Expression
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Access);
+      Var_Obj : in out Var_Obj_Type);
    --  Handles the result of the MI command `-var-evaluate-expression' and
    --  updates the Var_Obj_Type accordingly.
 
