@@ -6832,11 +6832,8 @@ A knowledge of the basics of the underlying debugger used by GPS will help
 understanding how GPS works and what kind of functionalities it provides.
 
 Please refer to the debugger-specific documentation -
-e.g. the GDB documentation
-@ifhtml
-(@url{gdb.html})
-@end ifhtml
-- for more details.
+e.g. the GNAT User's Guide (chapter @i{Running and Debugging Ada Programs})
+or the GDB documentation for more details.
 
 Debugging is tightly integrated with the other components of GPS. For
 example, it is possible to edit files and navigate through your sources
@@ -6848,6 +6845,10 @@ either the name of your executable, if you have specified the name of
 your main program(s) in the project properties, or start an empty debug
 session using the @code{<no main file>} item. It is then possible to load
 any file to debug, by using the menu @code{Debug->Debug->Load File...}
+
+Note that you first need to build your executable with debug information
+(@code{-g} switch), either explicitly as part of your project properties,
+or via the @code{Debug} build mode (see @ref{The Build Mode} for more details).
 
 Note that you can create multiple debuggers by using the @code{Initialize}
 menu several times: this will create a new debugger each time.
