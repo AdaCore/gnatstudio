@@ -498,25 +498,9 @@ package GUI_Utils is
    --  This function is only called for the right mouse button, so it doesn't
    --  need to check that.
 
-   type Contextual_Menu_Destroy is access procedure
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Menu   : Gtk.Menu.Gtk_Menu);
-   --  Subprogram called when a contextual menu is unmapped from the
-   --  screen. The Menu itself and any associated memory should be freed at
-   --  that point, unless you are keeping this handle somewhere else for later
-   --  use.
-   --  If you do not destroy the menu yourself, then there is a memory leak.
-
-   procedure Default_Menu_Destroy
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Menu   : Gtk.Menu.Gtk_Menu);
-   --  A default implementation for Contextual_Menu_Detroy, which simply
-   --  destroys the contextual menu.
-
    procedure Register_Contextual_Menu
      (Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Menu_Create  : Contextual_Menu_Create;
-      Menu_Destroy : Contextual_Menu_Destroy := Default_Menu_Destroy'Access);
+      Menu_Create  : Contextual_Menu_Create);
    --  Widget will have an associated contextual menu, that is automatically
    --  popped up when the right mouse button is pressed.
    --  This contextual menu can be fully dynamic, since it is created through
@@ -531,19 +515,10 @@ package GUI_Utils is
         (User  : User_Data;
          Event : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
 
-      type Contextual_Menu_Destroy is access procedure
-        (User : User_Data;
-         Menu : Gtk.Menu.Gtk_Menu);
-
       type Callback_User_Data is record
          Menu_Create  : Contextual_Menu_Create;
-         Menu_Destroy : Contextual_Menu_Destroy;
          User         : User_Data;
       end record;
-
-      procedure Default_Menu_Destroy
-        (User : User_Data; Menu : Gtk.Menu.Gtk_Menu);
-      --  Default implementation is just to destroy the menu
 
       package Contextual_Callback is new Gtk.Handlers.User_Return_Callback
         (Gtk.Widget.Gtk_Widget_Record, Boolean, Callback_User_Data);
@@ -551,9 +526,7 @@ package GUI_Utils is
       procedure Register_Contextual_Menu
         (Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
          User         : User_Data;
-         Menu_Create  : Contextual_Menu_Create;
-         Menu_Destroy : Contextual_Menu_Destroy :=
-           Default_Menu_Destroy'Access);
+         Menu_Create  : Contextual_Menu_Create);
 
    end User_Contextual_Menus;
    --  Same as the procedure Register_Contextual_Menu, but the callbacks for

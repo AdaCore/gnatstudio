@@ -104,7 +104,6 @@ package body GUI_Utils is
 
    type Contextual_Menu_Data is record
       Create  : Contextual_Menu_Create;
-      Destroy : Contextual_Menu_Destroy;
       Widget  : Gtk_Widget;
    end record;
 
@@ -135,10 +134,6 @@ package body GUI_Utils is
       Event  : Gdk.Event.Gdk_Event;
       Data   : Contextual_Menu_Data) return Boolean;
    --  Callback that pops up the contextual menu if needed
-
-   function Unmap_Menu
-     (Menu : access Gtk_Widget_Record'Class;
-      Data : Contextual_Menu_Data) return Boolean;
 
    procedure Radio_Callback
      (Model  : access GObject_Record'Class;
@@ -368,25 +363,6 @@ package body GUI_Utils is
       end if;
    end Set_Busy_Cursor;
 
-   ----------------
-   -- Unmap_Menu --
-   ----------------
-
-   function Unmap_Menu
-     (Menu : access Gtk_Widget_Record'Class;
-      Data : Contextual_Menu_Data) return Boolean is
-   begin
-      if Data.Destroy /= null then
-         Data.Destroy (Data.Widget, Gtk_Menu (Menu));
-      end if;
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
-   end Unmap_Menu;
-
    -----------------------------------
    -- Key_Press_For_Contextual_Menu --
    -----------------------------------
@@ -403,19 +379,16 @@ package body GUI_Utils is
          Menu := Data.Create (Widget, Event);
 
          if Menu /= null then
-            --  ??? Do we need to sink the menu to avoid leaks ?
-            Contextual_Callback.Connect
-              (Menu, Signal_Unmap_Event,
-               Unmap_Menu'Access, Data);
-
             Grab_Focus (Widget);
             Show_All (Menu);
-            --  Do we need to sink the menu to avoid leaks ?
+            --  We need to ref_sink and then unref the menu to avoid leaks.
             --  See http://blogs.gnome.org/xclaesse/2010/02/11/
             --     common-mistake-with-gtkmenu/
             Popup (Menu,
                    Button        => 3,
                    Activate_Time => Gdk.Event.Get_Time (Event));
+            Menu.Ref_Sink;
+            Menu.Unref;
             Emit_Stop_By_Name (Widget, "key_press_event");
             return True;
          end if;
@@ -452,11 +425,6 @@ package body GUI_Utils is
          Menu := Data.Create (Widget, Event);
 
          if Menu /= null then
-            --  ??? Do we need to sink the menu to avoid leaks ?
-
-            Contextual_Callback.Connect
-              (Menu, Signal_Unmap_Event, Unmap_Menu'Access, Data);
-
             Grab_Focus (Widget);
             Show_All (Menu);
 
@@ -482,6 +450,8 @@ package body GUI_Utils is
                       Button        => Gdk.Event.Get_Button (Event),
                       Activate_Time => Gdk.Event.Get_Time (Event));
             end if;
+            Menu.Ref_Sink;
+            Menu.Unref;
 
             Emit_Stop_By_Name (Widget, "button_press_event");
             return True;
@@ -502,9 +472,7 @@ package body GUI_Utils is
 
    procedure Register_Contextual_Menu
      (Widget       : access Gtk_Widget_Record'Class;
-      Menu_Create  : Contextual_Menu_Create;
-      Menu_Destroy : Contextual_Menu_Destroy :=
-        Default_Menu_Destroy'Access) is
+      Menu_Create  : Contextual_Menu_Create) is
    begin
       --  If the widget doesn't have a window, it might not work. But then, if
       --  the children have windows and do not handle the event, this might get
@@ -521,12 +489,12 @@ package body GUI_Utils is
         (Widget, Signal_Button_Press_Event,
          Contextual_Callback.To_Marshaller
            (Button_Press_For_Contextual_Menu'Access),
-         (Menu_Create, Menu_Destroy, Gtk_Widget (Widget)));
+         (Menu_Create, Gtk_Widget (Widget)));
       Contextual_Callback.Connect
         (Widget, Signal_Key_Press_Event,
          Contextual_Callback.To_Marshaller
            (Key_Press_For_Contextual_Menu'Access),
-         (Menu_Create, Menu_Destroy, Gtk_Widget (Widget)));
+         (Menu_Create, Gtk_Widget (Widget)));
    end Register_Contextual_Menu;
 
    ---------------------------
@@ -545,42 +513,6 @@ package body GUI_Utils is
          Event  : Gdk.Event.Gdk_Event;
          User   : Callback_User_Data) return Boolean;
 
-      function Unmap_User_Menu
-        (Menu : access Gtk_Widget_Record'Class;
-         User : Callback_User_Data) return Boolean;
-
-      --------------------------
-      -- Default_Menu_Destroy --
-      --------------------------
-
-      procedure Default_Menu_Destroy
-        (User : User_Data;
-         Menu : Gtk_Menu)
-      is
-         pragma Unreferenced (User);
-      begin
-         Destroy (Menu);
-      end Default_Menu_Destroy;
-
-      ---------------------
-      -- Unmap_User_Menu --
-      ---------------------
-
-      function Unmap_User_Menu
-        (Menu : access Gtk_Widget_Record'Class;
-         User : Callback_User_Data) return Boolean is
-      begin
-         if User.Menu_Destroy /= null then
-            User.Menu_Destroy (User.User, Gtk_Menu (Menu));
-         end if;
-         return False;
-
-      exception
-         when E : others =>
-            Trace (Exception_Handle, E);
-            return False;
-      end Unmap_User_Menu;
-
       -----------------------------------
       -- Key_Press_For_Contextual_Menu --
       -----------------------------------
@@ -597,17 +529,13 @@ package body GUI_Utils is
             Menu := User.Menu_Create (User.User, Event);
 
             if Menu /= null then
-               --  ??? Do we need to sink the menu to avoid leaks ?
-
-               Contextual_Callback.Connect
-                 (Menu, Signal_Unmap_Event,
-                  Unmap_User_Menu'Unrestricted_Access, User);
-
                Grab_Focus (Widget);
                Show_All (Menu);
                Popup (Menu,
                       Button        => 3,
                       Activate_Time => Gdk.Event.Get_Time (Event));
+               Menu.Ref_Sink;
+               Menu.Unref;
                Show_All (Menu);
                Emit_Stop_By_Name (Widget, "key_press_event");
                return True;
@@ -645,12 +573,6 @@ package body GUI_Utils is
             Menu := User.Menu_Create (User.User, Event);
 
             if Menu /= null then
-               --  ??? Do we need to sink the menu to avoid leaks ?
-
-               Contextual_Callback.Connect
-                 (Menu, Signal_Unmap_Event,
-                  Unmap_User_Menu'Unrestricted_Access, User);
-
                Grab_Focus (Widget);
                Show_All (Menu);
 
@@ -666,6 +588,8 @@ package body GUI_Utils is
                          Button        => Gdk.Event.Get_Button (Event),
                          Activate_Time => Gdk.Event.Get_Time (Event));
                end if;
+               Menu.Ref_Sink;
+               Menu.Unref;
 
                Emit_Stop_By_Name (Widget, "button_press_event");
                return True;
@@ -687,9 +611,7 @@ package body GUI_Utils is
       procedure Register_Contextual_Menu
         (Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
          User         : User_Data;
-         Menu_Create  : Contextual_Menu_Create;
-         Menu_Destroy : Contextual_Menu_Destroy :=
-           Default_Menu_Destroy'Access) is
+         Menu_Create  : Contextual_Menu_Create) is
       begin
          if not No_Window_Is_Set (Widget) then
             Add_Events
@@ -703,7 +625,6 @@ package body GUI_Utils is
               (User_Contextual_Menus.Button_Press_For_Contextual_Menu'
                  Unrestricted_Access),
             (Menu_Create  => Menu_Create,
-             Menu_Destroy => Menu_Destroy,
              User         => User));
          Contextual_Callback.Connect
            (Widget, Signal_Key_Press_Event,
@@ -711,7 +632,6 @@ package body GUI_Utils is
               (User_Contextual_Menus.Key_Press_For_Contextual_Menu'
                  Unrestricted_Access),
             (Menu_Create  => Menu_Create,
-             Menu_Destroy => Menu_Destroy,
              User         => User));
       end Register_Contextual_Menu;
 
@@ -2061,22 +1981,6 @@ package body GUI_Utils is
          return D & '/';
       end if;
    end Format;
-
-   --------------------------
-   -- Default_Menu_Destroy --
-   --------------------------
-
-   procedure Default_Menu_Destroy
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Menu   : Gtk.Menu.Gtk_Menu)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Destroy (Menu);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Default_Menu_Destroy;
 
    ------------
    -- Darken --
