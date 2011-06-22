@@ -185,6 +185,15 @@ If no tag is specified, the entry is relevant to all IDEs.
               for ctrl-x+b if some actions are using ctrl-x as prefix.
   Workaround: Edit .gps/keys.xml manually.
 
+- J929-004 Keys '-' and '=' unuseable after using browsers
+  Problem:    When using browsers (such as the Call Graph browser or the
+              Entity browser), if you bring up the contextual menu on the
+              browser, then the '-' and '=' keys can no longer be used in
+              text editors.
+  Workaround: Do not use the contextual menu on the browsers, or restart GPS
+              afterwards. For intensive use of browsers, you can also open
+              another instance of GPS on the same project for browser use.
+
 - J914-003 Navigation errors when switching scenario variables
   Problem:    When switching back and forth scenario variables involving a
               change in the set of sources, the navigation may be confused
