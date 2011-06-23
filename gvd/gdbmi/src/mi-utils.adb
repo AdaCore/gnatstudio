@@ -171,9 +171,60 @@ package body MI.Utils is
 
    procedure Process_Var_Set_Format
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Type) is
+      Var_Obj : in out Var_Obj_Type)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (String, String_Access);
+
+      Cursor  : Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair    : Result_Pair;
+
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_Set_Format";
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         raise Utils_Error with ("Invalid result-record for "
+                                 & "-var-set-format");
+      end if;
+
+      if Result.Results.Length /= 2 then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "two attributes: format and value.");
+      end if;
+
+      while Result_Pair_Lists.Has_Element (Cursor) loop
+         Pair := Result_Pair_Lists.Element (Cursor);
+         Cursor := Result_Pair_Lists.Next (Cursor);
+
+         if Pair.Variable.all = "format" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `format' to be a "
+                                       & "c-string");
+            end if;
+
+            if Var_Obj.Format /= null then
+               Unchecked_Free (Var_Obj.Format);
+            end if;
+
+            Var_Obj.Format := String_Value (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "value" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `value' to be a "
+                                       & "c-string");
+            end if;
+
+            if Var_Obj.Value /= null then
+               Unchecked_Free (Var_Obj.Value);
+            end if;
+
+            Var_Obj.Value := String_Value (Pair.Value.all).Value;
+
+         else
+            raise Utils_Error with ("Ill-formatted done result record: "
+                                    & "expected attribute `format' or "
+                                    & "`value'.");
+         end if;
+      end loop;
+
    end Process_Var_Set_Format;
 
    -----------------------------------
@@ -186,7 +237,6 @@ package body MI.Utils is
    is
       Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
-      pragma Unreferenced (Var_Obj);
    begin
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
          raise Utils_Error with ("Invalid result-record for "

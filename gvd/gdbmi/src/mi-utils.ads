@@ -49,6 +49,7 @@ package MI.Utils is
       Name             : String_Access  := null;
       Num_Child        : Natural        := 0;
       Value            : String_Access  := null;
+      Format           : String_Access  := null;
       Type_Desc        : String_Access  := null;
       Has_More         : Natural        := 0;
       Children         : Var_Obj_List;
