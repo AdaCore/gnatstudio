@@ -45,8 +45,9 @@ with Types;                     use Types;
 with Namet;                     use Namet;
 
 package body ALI_Parser is
-   Me        : constant Trace_Handle := Create ("ALI", Off);
-   Assert_Me : constant Trace_Handle := Create ("ALI.Assert", Off);
+   Me         : constant Trace_Handle := Create ("ALI", Off);
+   Assert_Me  : constant Trace_Handle := Create ("ALI.Assert", Off);
+   MU_Trace   : constant Trace_Handle := Create ("ALI.Multi_Unit", Off);
 
    SLI_Support : constant Trace_Handle := Create ("SPARK.SLI", Off);
 
@@ -1820,6 +1821,8 @@ package body ALI_Parser is
                              and then Check_LI_And_Source
                                (LI, Source_Filename)
                            then
+                              Trace (MU_Trace, String (Files (J).Base_Name));
+
                               --  For multi-unit sources we return the first
                               --  ALI file found but we continue processing all
                               --  the ALI files associated with this file.
