@@ -633,7 +633,10 @@ package body Entities is
    -----------
 
    procedure Reset (File : Source_File) is
+      use LI_File_Arrays;
+
       Tmp : Source_File;
+
    begin
       if Active (Assert_Me) then
          Trace (Assert_Me, "Reseting " & Display_Full_Name (File.Name));
@@ -738,13 +741,15 @@ package body Entities is
 
       File.Scope_Tree_Computed := False;
 
-      if File.LI /= null then
+      if File.LI_Files /= Null_LI_File_List then
          --  The LI may need to be reloaded afterwards if the same file is
          --  integrated again in the project sources (through e.g. a scenario
          --  variable). Reseting the timestamp ensure that the references of
          --  this file will be extracted again.
 
-         File.LI.Timestamp := No_Time;
+         for J in LI_File_Arrays.First .. Last (File.LI_Files) loop
+            File.LI_Files.Table (J).Timestamp := No_Time;
+         end loop;
       end if;
 
       --  Fields which have not been cleaned (see comments above):
@@ -908,6 +913,8 @@ package body Entities is
    procedure Unref (LI : in out LI_File) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (LI_File_Record'Class, LI_File);
+      use LI_File_Arrays;
+
    begin
       if LI /= null then
          Assert (Assert_Me, LI.Ref_Count > 0, "Too many calls to unref");
@@ -917,8 +924,8 @@ package body Entities is
             --  Do not remove the file from the htable, since Unref is
             --  called after a removal, and the user shouldn't call Unref
             --  more often than Ref
-            for L in Source_File_Arrays.First .. Last (LI.Files) loop
-               LI.Files.Table (L).LI := null;
+            for Source_File in Source_File_Arrays.First .. Last (LI.Files) loop
+               Free (LI.Files.Table (Source_File).LI_Files);
             end loop;
 
             if Active (Debug_Me) then
@@ -1367,6 +1374,8 @@ package body Entities is
    is
       S : Source_File_Item := Get (Db.Files, Full_Filename);
       F : Source_File;
+      use LI_File_Arrays;
+
    begin
       if S = null and then not Allow_Create then
          null;
@@ -1377,8 +1386,11 @@ package body Entities is
          F.Depends_On   := Null_Dependency_List;
          F.Depended_On  := Null_Dependency_List;
          F.Scope_Tree_Computed := False;
-         F.LI           := LI;
          F.Ref_Count    := 1;
+
+         if LI /= null then
+            Append (F.LI_Files, LI);
+         end if;
 
          if File = GNATCOLL.VFS.No_File then
             F.Name := Full_Filename;
@@ -1398,12 +1410,18 @@ package body Entities is
          end if;
 
       else
-         if LI /= null and then S.File.LI /= LI then
-            if S.File.LI /= null then
-               Remove (S.File.LI.Files, S.File);
+         --  If the source was not already associated with LI
+
+         if LI /= null
+           and then Find (S.File.LI_Files, LI) = LI_File_Arrays.First - 1
+         then
+            if S.File.LI_Files /= Null_LI_File_List then
+               for J in LI_File_Arrays.First .. Last (S.File.LI_Files) loop
+                  Remove (S.File.LI_Files.Table (J).Files, S.File);
+               end loop;
             end if;
 
-            S.File.LI := LI;
+            Append (S.File.LI_Files, LI);
             Append (LI.Files, S.File);
          end if;
 
@@ -2226,8 +2244,15 @@ package body Entities is
    ------------
 
    function Get_LI (File : Source_File) return LI_File is
+      use LI_File_Arrays;
    begin
-      return File.LI;
+      if File.LI_Files /= Null_LI_File_List
+        and then Length (File.LI_Files) /= 0
+      then
+         return File.LI_Files.Table (LI_File_Arrays.First);
+      else
+         return null;
+      end if;
    end Get_LI;
 
    --------------------
@@ -2277,19 +2302,28 @@ package body Entities is
    function Is_Up_To_Date (File : Source_File) return Boolean is
       From_Disk, Src_From_Disk : Time;
       Result    : Boolean := False;
+      use LI_File_Arrays;
    begin
-      if File.LI /= null then
-         --  First check whether we have indeed loaded the latest LI file
-         From_Disk := File_Time_Stamp (File.LI.Name);
-         Result    := From_Disk = File.LI.Timestamp;
+      if File.LI_Files /= Null_LI_File_List then
 
-         if Active (Assert_Me) then
-            Trace (Assert_Me, "Is_Up_To_Date: "
+         --  First check whether we have indeed loaded the latest LI files
+
+         Result := True;
+
+         for J in LI_File_Arrays.First .. Last (File.LI_Files) loop
+            From_Disk := File_Time_Stamp (File.LI_Files.Table (J).Name);
+            Result := Result and then
+                        From_Disk = File.LI_Files.Table (J).Timestamp;
+
+            if Active (Assert_Me) then
+               Trace (Assert_Me, "Is_Up_To_Date: "
                    & (+Base_Name (Get_Filename (File)))
                    & " LI file time:" & Image (From_Disk, "%D-%T")
-                   & " memory: " & Image (File.LI.Timestamp, "%D-%T")
+                   & " memory: "
+                   & Image (File.LI_Files.Table (J).Timestamp, "%D-%T")
                    & " => " & Result'Img);
-         end if;
+            end if;
+         end loop;
 
          if Result then
             --  Then check that LI file was indeed more recent than the source.

@@ -445,8 +445,12 @@ package Entities is
 
    function Get_LI (File : Source_File) return LI_File;
    pragma Inline (Get_LI);
-   --  Return the LI file that contains the information for File.
-   --  null can be returned if the information is not known.
+   --  Return the first LI file that has information associated with File.
+   --  For multi-unit source files, returning only the first LI file means
+   --  the following assumption: "if what we have in memory is up-to-date
+   --  compared to the first LI, then it is up-to-date for all LI" (note that
+   --  Is_Up_To_Date compares all LI files anyway). Null can be returned if the
+   --  information is not known.
 
    function Get_Database (File : Source_File) return Entities_Database;
    pragma Inline (Get_Database);
@@ -495,6 +499,7 @@ package Entities is
    --  information is available. For instance, if we have only run
    --  cbrowser, we only have the info for decls and bodies, not for
    --  references. However, Is_Up_To_Date will still return True in that case.
+   --  For multi-unit files all the LI files must be up-to-date to return True.
 
    procedure Update_Xref
      (File                  : Source_File;
@@ -1285,6 +1290,15 @@ private
       Explicit : Boolean;
    end record;
 
+   package LI_File_Arrays is new Dynamic_Arrays
+     (Data                    => LI_File,
+      Table_Multiplier        => 1,
+      Table_Minimum_Increment => 10,
+      Table_Initial_Size      => 1);
+   subtype LI_File_List is LI_File_Arrays.Instance;
+   Null_LI_File_List : constant LI_File_List :=
+     LI_File_Arrays.Empty_Instance;
+
    package Dependency_Arrays is new Dynamic_Arrays
      (Data                    => File_Dependency,
       Table_Multiplier        => 1,
@@ -1322,7 +1336,7 @@ private
       Handler   : LI_Handler;
       --  The handler used to compute xrefs for that file
 
-      LI          : LI_File;
+      LI_Files     : LI_File_List := Null_LI_File_List;
       --  The LI file used to parse the file. This might be left to null if
       --  the file was created appart from parsing a LI file.
 

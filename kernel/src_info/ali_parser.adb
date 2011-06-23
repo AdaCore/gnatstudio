@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1728,6 +1728,10 @@ package body ALI_Parser is
       Char     : constant Character :=
                    Multi_Unit_Index_Char (Build_Server);
       ALI_Ext  : constant Filesystem_String := Get_ALI_Ext (Handler);
+      Src_Base : constant Filesystem_String :=
+                   Base_Name
+                     (Source_Filename,
+                      File_Extension (Source_Filename));
 
       P        : Project_Type := Project;
       Index    : Natural;
@@ -1765,6 +1769,7 @@ package body ALI_Parser is
                       Object_Path (P, False, True, True);
             Path  : Virtual_File;
             Files : File_Array_Access;
+            F_Idx : Natural := 0;
          begin
             if Paths'Length > 0 then
                Path := Paths (Paths'First);
@@ -1775,7 +1780,13 @@ package body ALI_Parser is
                      Base : constant Filesystem_String :=
                               Files (J).Base_Name (ALI_Ext);
                   begin
-                     if Files (J).Has_Suffix (ALI_Ext) then
+                     --  The base name of the candidates must match the base
+                     --  name of Source_Filename and must have extension .ali
+
+                     if Base'Length > Src_Base'Length
+                       and then Base (Src_Base'Range) = Src_Base
+                       and then Files (J).Has_Suffix (ALI_Ext)
+                     then
                         --  If we have a '~' followed by a digit, we likely
                         --  are seeing a multi-unit source file ALI, so
                         --  parse it anyway. We need to test for the digit
@@ -1809,12 +1820,24 @@ package body ALI_Parser is
                              and then Check_LI_And_Source
                                (LI, Source_Filename)
                            then
-                              return Files (J);
+                              --  For multi-unit sources we return the first
+                              --  ALI file found but we continue processing all
+                              --  the ALI files associated with this file.
+
+                              if F_Idx = 0 then
+                                 F_Idx := J;
+                              end if;
                            end if;
                         end if;
                      end if;
                   end;
                end loop;
+
+               --  If some ALI was found then return it!
+
+               if F_Idx /= 0 then
+                  return Files (F_Idx);
+               end if;
 
                Unchecked_Free (Files);
             end if;

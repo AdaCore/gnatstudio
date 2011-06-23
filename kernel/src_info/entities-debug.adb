@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003-2010, AdaCore           --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -398,17 +398,25 @@ package body Entities.Debug is
    ----------
 
    procedure Dump
-     (File : Source_File; Show_Entities : Boolean; Full : Boolean) is
+     (File          : Source_File;
+      Show_Entities : Boolean;
+      Full          : Boolean)
+   is
+      use type LI_File_List;
    begin
       Dump (Get_Filename (File), Full);
       Output_Line
         (" ref_count=" & Image (File.Ref_Count)
          & " has_scope_tree=" & Boolean'Image (File.Scope_Tree_Computed));
 
-      if File.LI /= null then
-         Output ("   li=");
-         Dump (Get_LI_Filename (File.LI));
-         Output_Line ("");
+      if File.LI_Files /= Null_LI_File_List then
+         for J in LI_File_Arrays.First
+                    .. LI_File_Arrays.Last (File.LI_Files)
+         loop
+            Output ("   li=");
+            Dump (Get_LI_Filename (File.LI_Files.Table (J)));
+            Output_Line ("");
+         end loop;
       end if;
 
       Dump (File.Depends_On,  "depends_on");
