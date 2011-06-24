@@ -219,6 +219,11 @@ If no tag is specified, the entry is relevant to all IDEs.
               unreferenced.
   Workaround: Manually fix the code.
 
+- I416-040 xref does not work correctly in multi-unit files
+  Problem:    External references in multi-unit source files are not fully
+              supported.
+  Workaround: Use gnatchop with multi-unit source files
+
 - H423-012 GB: "New Ada Source Dir" wizard always puts updated gpr file at root
   Problem:    When using the New Ada Source Dir wizard, the updated gpr file is
               unconditionally written to the project root instead of to the
