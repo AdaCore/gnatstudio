@@ -1776,6 +1776,14 @@ package body ALI_Parser is
                Path := Paths (Paths'First);
                Files := Read_Dir (Path);
 
+               --  If Multi_Unit tracing is active then sort the list of files
+               --  to generate the same output independently of the ordering of
+               --  files in the directory.
+
+               if Active (MU_Trace) then
+                  Sort (Files.all);
+               end if;
+
                for J in Files'Range loop
                   declare
                      Base : constant Filesystem_String :=
