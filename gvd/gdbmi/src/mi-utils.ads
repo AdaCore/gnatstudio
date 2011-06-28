@@ -146,7 +146,8 @@ package MI.Utils is
    -- Break command handlers --
    ----------------------------
 
-   function Process_Break (Result : Result_Record) return Breakpoint_Type;
+   function Process_Break_Insert
+     (Result : Result_Record) return Breakpoint_Type;
    --  This function processes a synchronous result-record received after a
    --  break instruction.  It returns a Breakpoint_Type, which is the internal
    --  representation of a breakpoint.

@@ -91,13 +91,145 @@ package body MI.Utils is
    -- Process_Break --
    -------------------
 
-   function Process_Break (Result : Result_Record) return Breakpoint_Type is
+   function Process_Break_Insert
+     (Result     : Result_Record) return Breakpoint_Type
+   is
+      Cursor     : Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair       : Result_Pair;
       Breakpoint : Breakpoint_Type;
-      pragma Unreferenced (Result);
+
    begin
-      raise Not_Yet_Implemented_Error with "Process_Break";
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         raise Utils_Error with ("Invalid result-record for "
+                                 & "-break-insert");
+      end if;
+
+      if Result.Results.Length /= 1 then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "one attribute: bkpt");
+      end if;
+
+      Pair := Result_Pair_Lists.Element (Cursor);
+
+      if Pair.Variable.all /= "bkpt"
+         or else Pair.Value.all not in Result_List_Value then
+         raise Utils_Error with "Ill-formated `bkpt' attribute";
+      end if;
+
+      Cursor := Result_List_Value (Pair.Value.all).Value.First;
+
+      while Result_Pair_Lists.Has_Element (Cursor) loop
+         Pair := Result_Pair_Lists.Element (Cursor);
+         Cursor := Result_Pair_Lists.Next (Cursor);
+
+         if Pair.Variable.all = "number" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `number' to be a "
+                                       & "c-string");
+            end if;
+
+            Breakpoint.Number := Natural'Value (
+               String_Value (Pair.Value.all).Value.all
+            );
+
+         elsif Pair.Variable.all = "type" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `type' to be a "
+                                       & "c-string");
+            end if;
+
+            Breakpoint.Type_Desc := String_Value (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "disp" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `disp' to be a "
+                                       & "c-string");
+            end if;
+
+            Breakpoint.Disp := String_Value (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "enabled" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `enable' to be a "
+                                       & "c-string");
+            end if;
+
+            if String_Value (Pair.Value.all).Value.all = "y" then
+               Breakpoint.Enabled := True;
+            else
+               Breakpoint.Enabled := False;
+            end if;
+
+         elsif Pair.Variable.all = "addr" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `addr' to be a "
+                                       & "c-string");
+            end if;
+
+            Breakpoint.Frame.Address := String_Value (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "func" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `func' to be a "
+                                       & "c-string");
+            end if;
+
+            Breakpoint.Frame.Function_Name := String_Value
+                                                (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "file" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `file' to be a "
+                                       & "c-string");
+            end if;
+
+            Breakpoint.Frame.File_Name := String_Value (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "fullname" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `fullname' to be a "
+                                       & "c-string");
+            end if;
+
+            Breakpoint.Frame.File_Fullname := String_Value
+                                                (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "line" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `line' to be a "
+                                       & "c-string");
+            end if;
+
+            Breakpoint.Frame.Line := Natural'Value
+                                       (String_Value
+                                          (Pair.Value.all).Value.all);
+
+         elsif Pair.Variable.all = "times" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `times' to be a "
+                                       & "c-string");
+            end if;
+
+            Breakpoint.Times := Natural'Value
+                                  (String_Value (Pair.Value.all).Value.all);
+
+         elsif Pair.Variable.all = "original-location" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `original-location'"
+                                       & " to be a c-string");
+            end if;
+
+            Breakpoint.Original_Location := String_Value
+                                              (Pair.Value.all).Value;
+
+         else
+            raise Utils_Error with ("Unexpected attribute: "
+                                    & Pair.Variable.all);
+         end if;
+      end loop;
+
       return Breakpoint;
-   end Process_Break;
+   end Process_Break_Insert;
 
    ------------------------
    -- Process_Break_List --

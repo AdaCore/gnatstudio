@@ -1096,9 +1096,10 @@ package body MI.Parser is
                                         & "follower");
             end if;
 
+            V_List.all.Value.Append (Result);
+
             exit when Token.Code /= Comma;
 
-            V_List.all.Value.Append (Result);
             Eat (Tokens);
          end loop;
 
@@ -1151,9 +1152,10 @@ package body MI.Parser is
                                               & "follower");
                   end if;
 
+                  V_List.all.Value.Append (Result);
+
                   exit when Token.Code /= Comma;
 
-                  V_List.all.Value.Append (Result);
                   Eat (Tokens);
                end loop;
 
@@ -1176,9 +1178,10 @@ package body MI.Parser is
                                               & "follower");
                   end if;
 
+                  V_List.all.Value.Append (Val);
+
                   exit when Token.Code /= Comma;
 
-                  V_List.all.Value.Append (Val);
                   Eat (Tokens);
                end loop;
 
