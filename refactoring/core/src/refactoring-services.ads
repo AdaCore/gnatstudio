@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -88,7 +88,7 @@ package Refactoring.Services is
 
    type Ada_Statement is private;
    --  This type represent a "statement", that is to say an ada declaration
-   --  or intstruction.
+   --  or instruction.
 
    procedure Free (This : in out Ada_Statement);
    --  Free the memory associated to this statement

@@ -1703,14 +1703,13 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Change_To_Tick_Valid_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Cursor : constant File_Cursor'Class :=
-        File_Cursor (Current_Text.Get_Current_Cursor (This.Location.all));
-      Depth : Integer := 0;
-      Begin_Cursor, End_Cursor : File_Cursor;
+      Cursor       : constant File_Cursor'Class :=
+                       File_Cursor
+                         (Current_Text.Get_Current_Cursor (This.Location.all));
 
-      Is_First : Boolean := True;
-
-      No_Fix : Boolean := False;
+      Begin_Cursor : File_Cursor;
+      End_Cursor   : File_Cursor;
+      No_Fix       : Boolean := False;
 
       function Entity_Callback
         (Entity         : Language_Entity;
@@ -1718,10 +1717,15 @@ package body Codefix.Text_Manager.Ada_Commands is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean;
          Line           : String) return Boolean;
+      --  Scan forward the expression located after the keyword "in".
+      --  Updates End_Cursor to reference the end of such expression.
 
       ---------------------
       -- Entity_Callback --
       ---------------------
+
+      Depth    : Integer := 0;     --  Parenthesis nesting level
+      Is_First : Boolean := True;  --  True if processing the first entity
 
       function Entity_Callback
         (Entity         : Language_Entity;
@@ -1734,22 +1738,42 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Name : constant String := Line (Sloc_Start.Column .. Sloc_End.Column);
       begin
+         --  Check unsupported case: "V not in T". More work needed here???
+
          if Is_First and then To_Lower (Name) = "not" then
             No_Fix := True;
+
+            --  Seems wrong to continue scanning since we know that we do not
+            --  support this construct???
+
             return True;
          end if;
 
          Is_First := False;
 
+         --  Handle cases in which we must continue scanning the expression
+
          if Name = "(" then
             Depth := Depth + 1;
+
          elsif Name = ")" then
             if Depth = 0 then
+               --  We should stop scanning since there is an extra closing
+               --  parenthesis and this is a serious bug in sources. In this
+               --  case the compiler should not have reported the warning
+               --  suggesting 'Valid replacement. Must check if this case
+               --  needs to be handled???
                return True;
             end if;
 
             Depth := Depth - 1;
+
          elsif Depth = 0 then
+
+            --  Handle attributes, expanded names, etc. It is unclear why they
+            --  are not supported when found in englosing parenthesis (for
+            --  example as part of the index of an array). Must investigate???
+
             if (Entity = Keyword_Text and then To_Lower (Name) /= "in")
               or else
                 (Entity = Operator_Text
@@ -1760,6 +1784,9 @@ package body Codefix.Text_Manager.Ada_Commands is
             end if;
          end if;
 
+         --  Scan finished: Update End_Cursor to reference the end of the
+         --  expression
+
          Set_Location
            (End_Cursor,
             Sloc_End.Line,
@@ -1767,55 +1794,100 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          return False;
       end Entity_Callback;
+
+      --  Start of processing for Change_To_Tick_Valid_Cmd.Execute
+
    begin
+      --  Context: When the expression found in the Ada sources has the form
+      --  "expr in ..." the warning reported by the compiler points to the
+      --  location of the keyword "in"; when the expression found in the
+      --  Ada sources has the form "expr not in ..." the warning reported
+      --  by the compiler points to the location of keyword "not" (see
+      --  exp_ch4.Expand_N_In).
+
+      --  Examples:
+      --    V in T
+      --    V in T'Range
+      --
+      --  Unsupported cases:
+      --    V in T'First .. T'Last
+      --    V not in ...
+
+      --  Step 1: Locate Begin_Cursor at the end of the preceding word
+
       Begin_Cursor := File_Cursor (Cursor);
-      End_Cursor := File_Cursor (Cursor);
 
       loop
          declare
-            Line       : constant String :=
-              Get_Line (Current_Text, Begin_Cursor, 1);
-            Real_Begin : String_Index_Type :=
-              To_Char_Index (Get_Column (Begin_Cursor), Line) - 1;
+            Full_Line  : constant String :=
+                           Get_Line (Current_Text, Begin_Cursor, 1);
+            J          : String_Index_Type :=
+                           To_Char_Index
+                             (Get_Column (Begin_Cursor), Full_Line) - 1;
+
          begin
-            while Real_Begin > 1
-              and then Is_Blank (Line (Natural (Real_Begin)))
+            --  Skip blanks located before keyword "in"
+
+            while J > 1
+              and then Is_Blank (Full_Line (Natural (J)))
             loop
-               Real_Begin := Real_Begin - 1;
+               J := J - 1;
             end loop;
 
-            if Is_Blank (Line (Natural (Real_Begin))) then
-               if Get_Line (Begin_Cursor) = 1 then
-                  Set_Location
-                    (Begin_Cursor,
-                     Get_Line (Begin_Cursor),
-                     To_Column_Index (Real_Begin, Line));
+            --  Found the end of the preceding word. Leave Begin_Cursor located
+            --  in the first blank after the preceding word.
 
-                  exit;
-               else
-                  Set_Location (Begin_Cursor, Get_Line (Begin_Cursor) - 1, 1);
-                  Set_Location
-                    (Begin_Cursor,
-                     Get_Line (Begin_Cursor),
-                     Visible_Column_Type
-                       (Get_Line (Current_Text, Begin_Cursor)'Last + 1));
-               end if;
+            if not Is_Blank (Full_Line (Natural (J))) then
+               Set_Location
+                 (Begin_Cursor,
+                  Get_Line (Begin_Cursor),
+                  To_Column_Index (J, Full_Line) + 1);
+
+               exit;
+
+            --  The beginning of this line is still a blank. Locate us at the
+            --  end of the previous line and continue skiping blanks.
+
+            elsif Get_Line (Begin_Cursor) /= 1 then
+               Set_Location (Begin_Cursor, Get_Line (Begin_Cursor) - 1, 1);
+               Set_Location
+                 (Begin_Cursor,
+                  Get_Line (Begin_Cursor),
+                  Visible_Column_Type
+                    (Get_Line (Current_Text, Begin_Cursor)'Last + 1));
+
+            --  First line of this buffer. Stop searching for the preceding
+            --  word. Set location to line 1, column 1.
+
+            --  Note: This case is handled for completeness of the automation
+            --  seaching backward for the end of the previous word since it is
+            --  not possible to write a membership test in the first line of
+            --  an Ada compilation unit (and hence the compiler could not have
+            --  reported the "change to 'valid" warning such line).
+
             else
                Set_Location
                  (Begin_Cursor,
                   Get_Line (Begin_Cursor),
-                  To_Column_Index (Real_Begin, Line) + 1);
+                  To_Column_Index (J, Full_Line));
 
                exit;
             end if;
          end;
       end loop;
 
+      --  Step 2: Locate End_Cursor at the end of the expression
+
+      End_Cursor := File_Cursor (Cursor);
+
       Parse_Entities
-        (Ada_Lang,
-         Current_Text,
-         Entity_Callback'Unrestricted_Access,
-         Begin_Cursor);
+        (Lang     => Ada_Lang,
+         This     => Current_Text,
+         Callback => Entity_Callback'Unrestricted_Access,
+         Start    => Begin_Cursor);
+
+      --  Step 3: If the parsed expression is supported by Codefix then replace
+      --  all the text located between Begin_Cursor and End_Cursor by "'Valid"
 
       if not No_Fix then
          Current_Text.Replace (Begin_Cursor, End_Cursor, "'Valid");

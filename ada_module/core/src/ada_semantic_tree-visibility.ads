@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2010, AdaCore                 --
+--                  Copyright (C) 2007-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,7 +56,7 @@ package Ada_Semantic_Tree.Visibility is
      );
 
    --  ??? The computation of this subprogram is currently quite expensive -
-   --  based on name comparaisons. See if it would be more efficient to base
+   --  based on name comparisons. See if it would be more efficient to base
    --  it on computed parts informations
    function Get_Location_Relation
      (Tree_To     : Construct_Tree;
