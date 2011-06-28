@@ -128,10 +128,82 @@ package body MI.Utils is
    ------------------------
 
    function Process_Var_Create
-     (Result : Result_Record) return Var_Obj_Access is
+     (Result : Result_Record) return Var_Obj_Access
+   is
+      Cursor  : Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair    : Result_Pair;
+      Var_Obj : Var_Obj_Access := null;
+
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_Create";
-      return null;
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         raise Utils_Error with ("Invalid result-record for "
+                                 & "-var-create");
+      end if;
+
+      if Result.Results.Length /= 5 then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "five attributes: name, numchild, value, "
+                                 & "type and has_more.");
+      end if;
+
+      Var_Obj := new Var_Obj_Type;
+
+      while Result_Pair_Lists.Has_Element (Cursor) loop
+         Pair := Result_Pair_Lists.Element (Cursor);
+         Cursor := Result_Pair_Lists.Next (Cursor);
+
+         if Pair.Variable.all = "name" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `name' to be a "
+                                       & "c-string");
+            end if;
+
+            Var_Obj.all.Name := String_Value (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "numchild" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `numchild' to be a "
+                                       & "c-string");
+            end if;
+
+            Var_Obj.all.Num_Child := Natural'Value (
+               String_Value (Pair.Value.all).Value.all
+            );
+
+         elsif Pair.Variable.all = "value" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `value' to be a "
+                                       & "c-string");
+            end if;
+
+            Var_Obj.all.Value := String_Value (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "type" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `type' to be a "
+                                       & "c-string");
+            end if;
+
+            Var_Obj.all.Type_Desc := String_Value (Pair.Value.all).Value;
+
+         elsif Pair.Variable.all = "has_more" then
+            if Pair.Value.all not in String_Value then
+               raise Utils_Error with ("Expected attribute `has_more' to be a "
+                                       & "c-string");
+            end if;
+
+            Var_Obj.all.Has_More := Natural'Value (
+               String_Value (Pair.Value.all).Value.all
+            );
+
+         else
+            raise Utils_Error with ("Ill-formatted done result record: "
+                                    & "expected attribute `name', `numchild', "
+                                    & "`value', `type' or `has_more'.");
+         end if;
+      end loop;
+
+      return Var_Obj;
    end Process_Var_Create;
 
    ------------------------
