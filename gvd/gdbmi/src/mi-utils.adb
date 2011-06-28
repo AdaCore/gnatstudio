@@ -19,6 +19,26 @@ with Ada.Unchecked_Deallocation;
 
 package body MI.Utils is
 
+   procedure Check_Is_String_Value_Or_Die
+     (Name  : String;
+      Value : MI_Value'Class);
+   --  Checks that the given MI_Value is a String_Value and raise an exception
+   --  if the assertion if False.
+
+   ----------------------------------
+   -- Check_Is_String_Value_Or_Die --
+   ----------------------------------
+
+   procedure Check_Is_String_Value_Or_Die
+     (Name  : String;
+      Value : MI_Value'Class) is
+   begin
+      if Value not in String_Value then
+         raise Utils_Error with ("Expected attribute `" & Name & "' to be a "
+                                 & "c-string");
+      end if;
+   end Check_Is_String_Value_Or_Die;
+
    --------------
    -- Is_Error --
    --------------
@@ -123,36 +143,21 @@ package body MI.Utils is
          Cursor := Result_Pair_Lists.Next (Cursor);
 
          if Pair.Variable.all = "number" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `number' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Number := Natural'Value (
                String_Value (Pair.Value.all).Value.all
             );
 
          elsif Pair.Variable.all = "type" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `type' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Type_Desc := String_Value (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "disp" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `disp' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Disp := String_Value (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "enabled" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `enable' to be a "
-                                       & "c-string");
-            end if;
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
             if String_Value (Pair.Value.all).Value.all = "y" then
                Breakpoint.Enabled := True;
@@ -161,64 +166,36 @@ package body MI.Utils is
             end if;
 
          elsif Pair.Variable.all = "addr" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `addr' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.Address := String_Value (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "func" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `func' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.Function_Name := String_Value
                                                 (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "file" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `file' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.File_Name := String_Value (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "fullname" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `fullname' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.File_Fullname := String_Value
                                                 (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "line" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `line' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.Line := Natural'Value
                                        (String_Value
                                           (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "times" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `times' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Times := Natural'Value
                                   (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "original-location" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `original-location'"
-                                       & " to be a c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Original_Location := String_Value
                                               (Pair.Value.all).Value;
 
@@ -285,45 +262,25 @@ package body MI.Utils is
          Cursor := Result_Pair_Lists.Next (Cursor);
 
          if Pair.Variable.all = "name" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `name' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Var_Obj.all.Name := String_Value (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "numchild" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `numchild' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Var_Obj.all.Num_Child := Natural'Value (
                String_Value (Pair.Value.all).Value.all
             );
 
          elsif Pair.Variable.all = "value" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `value' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Var_Obj.all.Value := String_Value (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "type" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `type' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Var_Obj.all.Type_Desc := String_Value (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "has_more" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `has_more' to be a "
-                                       & "c-string");
-            end if;
-
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Var_Obj.all.Has_More := Natural'Value (
                String_Value (Pair.Value.all).Value.all
             );
@@ -399,10 +356,7 @@ package body MI.Utils is
          Cursor := Result_Pair_Lists.Next (Cursor);
 
          if Pair.Variable.all = "format" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `format' to be a "
-                                       & "c-string");
-            end if;
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
             if Var_Obj.Format /= null then
                Unchecked_Free (Var_Obj.Format);
@@ -411,10 +365,7 @@ package body MI.Utils is
             Var_Obj.Format := String_Value (Pair.Value.all).Value;
 
          elsif Pair.Variable.all = "value" then
-            if Pair.Value.all not in String_Value then
-               raise Utils_Error with ("Expected attribute `value' to be a "
-                                       & "c-string");
-            end if;
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
             if Var_Obj.Value /= null then
                Unchecked_Free (Var_Obj.Value);
