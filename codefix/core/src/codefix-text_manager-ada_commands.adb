@@ -1778,7 +1778,8 @@ package body Codefix.Text_Manager.Ada_Commands is
               or else
                 (Entity = Operator_Text
                  and then Name /= "'"
-                 and then Name /= ".")
+                 and then Name /= "."
+                 and then Name /= "..")
             then
                return True;
             end if;
@@ -1808,9 +1809,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       --  Examples:
       --    V in T
       --    V in T'Range
-      --
-      --  Unsupported cases:
       --    V in T'First .. T'Last
+      --
+      --  Unsupported case:
       --    V not in ...
 
       --  Step 1: Locate Begin_Cursor at the end of the preceding word
