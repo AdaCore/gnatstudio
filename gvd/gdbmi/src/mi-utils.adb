@@ -101,7 +101,7 @@ package body MI.Utils is
       end if;
 
       if Result.Results.Length /= 0 then
-         raise Utils_Error with "unexpected attribute to result-record";
+         raise Utils_Error with "Unexpected attribute to result-record";
       end if;
 
       return True;

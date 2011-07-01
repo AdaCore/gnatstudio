@@ -650,14 +650,14 @@ package body MI.Parser is
 
             if not Is_Output_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("syntax error, expected output "
+               raise Parser_Error with ("Syntax error, expected output "
                                         & "follower");
             end if;
          end loop;
 
          if Token.Code /= End_Of_File then
             --  ??? try to do some error recovery
-            raise Parser_Error with "garbage at the end of expression";
+            raise Parser_Error with "Garbage at the end of expression";
          end if;
       end Parse_Unit;
 
@@ -690,7 +690,7 @@ package body MI.Parser is
 
             if not Is_Out_Of_Band_Record_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("syntax error, expected "
+               raise Parser_Error with ("Syntax error, expected "
                                         & "out-of-band-record follower");
             end if;
          end loop;
@@ -706,21 +706,21 @@ package body MI.Parser is
 
             if not Is_Result_Record_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("syntax error, expected "
+               raise Parser_Error with ("Syntax error, expected "
                                         & "result-record follower");
             end if;
          end if;
 
          if Token.Code /= Gdb_Prompt then
             --  ??? try to do some error recovery
-            raise Parser_Error with "unexpected token, expected '(gdb)'";
+            raise Parser_Error with "Unexpected token, expected '(gdb)'";
          end if;
 
          Step (Tokens, Token);
 
          if Token.Code /= Newline then
             --  ??? try to do some error recovery
-            raise Parser_Error with "unexpected token, expected newline";
+            raise Parser_Error with "Unexpected token, expected newline";
          end if;
 
          Eat (Tokens);
@@ -745,7 +745,7 @@ package body MI.Parser is
 
             if not Is_Async_Output_Record_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("syntax error, expected "
+               raise Parser_Error with ("Syntax error, expected "
                                         & "async-output-record follower");
             end if;
          else  --  Token MUST be first of Stream_Output_Record
@@ -756,7 +756,7 @@ package body MI.Parser is
 
             if not Is_Stream_Output_Record_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("syntax error, expected "
+               raise Parser_Error with ("Syntax error, expected "
                                         & "stream-output-record follower");
             end if;
          end if;
@@ -788,7 +788,7 @@ package body MI.Parser is
 
          if Token.Code /= Caret then
             --  ??? try to do some error recovery
-            raise Parser_Error with "unexpected token, expected '^'";
+            raise Parser_Error with "Unexpected token, expected '^'";
          end if;
 
          Result.all.R_Type := Sync_Result;
@@ -798,7 +798,7 @@ package body MI.Parser is
 
          if Token.Code /= Identifier then
             --  ??? try to do some error recovery
-            raise Parser_Error with "unexpected token, expected result-class";
+            raise Parser_Error with "Unexpected token, expected result-class";
          end if;
 
          if not Is_Known_Result_Class (Token.Text.all) then
@@ -821,7 +821,7 @@ package body MI.Parser is
             begin
                if not Is_Result_First (Token) then
                   --  ??? try to do some error recovery
-                  raise Parser_Error with ("unexpected token, expected result "
+                  raise Parser_Error with ("Unexpected token, expected result "
                                            & "first");
                end if;
 
@@ -830,7 +830,7 @@ package body MI.Parser is
 
                if not Is_Result_Follower (Token) then
                   --  ??? try to do some error recovery
-                  raise Parser_Error with ("unexpected token, expected result"
+                  raise Parser_Error with ("Unexpected token, expected result"
                                            & "follower");
                end if;
 
@@ -840,7 +840,7 @@ package body MI.Parser is
 
          if Token.Code /= Newline then
             --  ??? try to do some error recovery
-            raise Parser_Error with "unexpected token, expected newline";
+            raise Parser_Error with "Unexpected token, expected newline";
          end if;
 
          Eat (Tokens);
@@ -878,7 +878,7 @@ package body MI.Parser is
             Result.all.R_Type := Async_Notify;
          else
             --  ??? try to do some error recovery
-            raise Parser_Error with ("unexpected token, expected either "
+            raise Parser_Error with ("Unexpected token, expected either "
                                      & "'*', '+' or '='");
          end if;
 
@@ -888,7 +888,7 @@ package body MI.Parser is
 
          if Token.Code /= Identifier then
             --  ??? try to do some error recovery
-            raise Parser_Error with "unexpected token, expected async-class";
+            raise Parser_Error with "Unexpected token, expected async-class";
          end if;
 
          if not Is_Known_Async_Class (Token.Text.all) then
@@ -912,7 +912,7 @@ package body MI.Parser is
             begin
                if not Is_Result_First (Token) then
                   --  ??? try to do some error recovery
-                  raise Parser_Error with ("unexpected token, expected result "
+                  raise Parser_Error with ("Unexpected token, expected result "
                                            & "first");
                end if;
 
@@ -921,7 +921,7 @@ package body MI.Parser is
 
                if not Is_Result_Follower (Token) then
                   --  ??? try to do some error recovery
-                  raise Parser_Error with ("unexpected token, expected result "
+                  raise Parser_Error with ("Unexpected token, expected result "
                                            & "follower");
                end if;
 
@@ -931,7 +931,7 @@ package body MI.Parser is
 
          if Token.Code /= Newline then
             --  ??? try to do some error recovery
-            raise Parser_Error with "unexpected token, expected newline";
+            raise Parser_Error with "Unexpected token, expected newline";
          end if;
 
          Eat (Tokens);
@@ -965,7 +965,7 @@ package body MI.Parser is
 
          if Token.Code /= C_String then
             --  ??? try to do some error recovery
-            raise Parser_Error with "syntax error, expected c-string";
+            raise Parser_Error with "Syntax error, expected c-string";
          end if;
 
          Result.all.Content := Token.Text;
@@ -973,7 +973,7 @@ package body MI.Parser is
 
          if Token.Code /= Newline then
             --  ??? try to do some error recovery
-            raise Parser_Error with "syntax error, expected newline";
+            raise Parser_Error with "Syntax error, expected newline";
          end if;
 
          Eat (Tokens);
@@ -998,7 +998,7 @@ package body MI.Parser is
          Step (Tokens, Token);
 
          if Token.Code /= Equal_Sign then
-            raise Parser_Error with "unexpected token. expected `='";
+            raise Parser_Error with "Unexpected token. expected `='";
          end if;
 
          Step (Tokens, Token);
@@ -1006,7 +1006,7 @@ package body MI.Parser is
          if not Is_Value_First (Token) then
             --  ??? try to do some error recovery
             --  For example, read until find a valid value first
-            raise Parser_Error with "unexpected token, expected value first";
+            raise Parser_Error with "Unexpected token, expected value first";
          end if;
 
          Parse_Value (Tokens, Result.Value);
@@ -1014,7 +1014,7 @@ package body MI.Parser is
 
          if not Is_Value_Follower (Token) then
             --  ??? try to do some error recovery
-            raise Parser_Error with "syntax error, expected value follower";
+            raise Parser_Error with "Syntax error, expected value follower";
          end if;
       end Parse_Result;
 
@@ -1040,7 +1040,7 @@ package body MI.Parser is
 
             if not Is_List_Follower (Look_Ahead (Tokens)) then
                --  ??? try to do some error recovery
-               raise Parser_Error with "syntax error, expected list follower";
+               raise Parser_Error with "Syntax error, expected list follower";
             end if;
          else  -- Token.Code MUST be L_Brace
             pragma Assert (Token.Code = L_Brace);
@@ -1049,7 +1049,7 @@ package body MI.Parser is
 
             if not Is_Tuple_Follower (Look_Ahead (Tokens)) then
                --  ??? try to do some error recovery
-               raise Parser_Error with "syntax error, expected tuple follower";
+               raise Parser_Error with "Syntax error, expected tuple follower";
             end if;
          end if;
       end Parse_Value;
@@ -1081,7 +1081,7 @@ package body MI.Parser is
 
          if not Is_Result_First (Token) then
             --  ??? try to do some error recovery
-            raise Parser_Error with "syntax error, expected result first";
+            raise Parser_Error with "Syntax error, expected result first";
          end if;
 
          V_List := new Result_List_Value;
@@ -1092,7 +1092,7 @@ package body MI.Parser is
 
             if not Is_Result_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("syntax error, expected result "
+               raise Parser_Error with ("Syntax error, expected result "
                                         & "follower");
             end if;
 
@@ -1105,7 +1105,7 @@ package body MI.Parser is
 
          if Token.Code /= R_Brace then
             --  ??? try to do some error recovery
-            raise Parser_Error with "unexpected token, expected '}'";
+            raise Parser_Error with "Unexpected token, expected '}'";
          end if;
 
          Eat (Tokens);
@@ -1148,7 +1148,7 @@ package body MI.Parser is
 
                   if not Is_Result_Follower (Token) then
                      --  ??? try to do some error recovery
-                     raise Parser_Error with ("syntax error, expected result "
+                     raise Parser_Error with ("Syntax error, expected result "
                                               & "follower");
                   end if;
 
@@ -1174,7 +1174,7 @@ package body MI.Parser is
 
                   if not Is_Value_Follower (Token) then
                      --  ??? try to do some error recovery
-                     raise Parser_Error with ("syntax error, expected value "
+                     raise Parser_Error with ("Syntax error, expected value "
                                               & "follower");
                   end if;
 
@@ -1189,7 +1189,7 @@ package body MI.Parser is
             end;
          else
             --  ??? try to do some error recovery
-            raise Parser_Error with ("syntax error, expected result or value "
+            raise Parser_Error with ("Syntax error, expected result or value "
                                      & "first");
          end if;
 
@@ -1197,7 +1197,7 @@ package body MI.Parser is
             --  ??? try to do some error recovery
             --  ??? need to free Value's content
             Value := null;
-            raise Parser_Error with "unexpected token, expected ']'";
+            raise Parser_Error with "Unexpected token, expected ']'";
          end if;
 
          Eat (Tokens);

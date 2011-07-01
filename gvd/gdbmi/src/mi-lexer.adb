@@ -402,7 +402,7 @@ package body MI.Lexer is
                                            Line   => Sh.Line,
                                            Column => Sh.Column));
                else  -- ...anything else is an invalid token.
-                  raise Lexer_Error with ("unexpected token `("
+                  raise Lexer_Error with ("Unexpected token `("
                                           & To_String (Word)
                                           & ")', expected (gdb)");
                end if;
@@ -416,7 +416,7 @@ package body MI.Lexer is
                Sh.Read_Identifier (C_String_Access);
 
                if C_String_Access.all = "" then
-                  raise Lexer_Error with ("invalid token `" & C & "' at "
+                  raise Lexer_Error with ("Invalid token `" & C & "' at "
                                           & "line"
                                           & Positive'Image (Sh.Line)
                                           & " and column"
