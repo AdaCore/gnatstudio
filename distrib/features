@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K628-037 Extend quick fix support for 'Valid (2011-07-01)
+
+  The automatic code fixing capability has been enhanced to handle
+  the replacement of "not in" by 'Valid. For example, the expression
+  "X not in T'Range" is replaced by "not X'Valid".
+
 NF-51-K518-001 GPS: Improve creation of new files (2011-05-20)
 
   GPS now proposes to store new files in a more user friendly way. The
