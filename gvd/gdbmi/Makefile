@@ -16,3 +16,6 @@ distclean: clean
 
 tests: libgdbmi
 	python -B tests/run_tests.py -v
+
+testutils: libgdbmi
+	python -B tests/run_tests.py -v --utils
