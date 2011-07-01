@@ -44,6 +44,9 @@ package body MI.Utils is
    pragma Unreferenced (Check_Is_Value_List_Value_Or_Die);
    --  ??? Remove this once used.
 
+   procedure Die (Message : String := "");
+   --  Raise an Utils_Error exception with Message as inner message.
+
    ----------------------------------
    -- Check_Is_String_Value_Or_Die --
    ----------------------------------
@@ -95,6 +98,15 @@ package body MI.Utils is
       return Result.Class.all = "error";
    end Is_Error;
 
+   ---------
+   -- Die --
+   ---------
+
+   procedure Die (Message : String := "") is
+   begin
+      raise Utils_Error with Message;
+   end Die;
+
    -------------------
    -- Process_Error --
    -------------------
@@ -104,24 +116,36 @@ package body MI.Utils is
       Cursor : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair   : Result_Pair;
    begin
+      --  An error record must start by '^error'. Thus, we check for the '^'
+      --  which means that the record is an synchronous one (Sync_Result) and
+      --  that its class is equal to "error".
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "error" then
-         return null;
+         Die ("Invalid error-record");
       end if;
+
+      --  The record must be compliant to this form:
+      --       '^error,msg="some error message"
 
       if Result.Results.Length /= 1 then
-         raise Utils_Error with ("Ill-formatted error result record: expected "
-                                 & "one and only one attribute 'msg'.");
+         Die ("Ill-formatted error result record: expected one and only one "
+              & "attribute 'msg'.");
       end if;
 
-      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
       if Pair.Variable.all /= "msg" then
-         raise Utils_Error with ("Ill-formatted error result record: expected "
-                                 & "attribute `msg' followed by a c-string.");
+         Die ("Ill-formatted error result record: expected attribute `msg' "
+              & "followed by a c-string.");
       end if;
 
+      --  The content of the 'msg' attribute must be a c-string, i.e. a
+      --  String_Value in this API representation.
+
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
+
+      --  Extracts and returns this value.
+
       return String_Value (Pair.Value.all).Value;
    end Process_Error;
 
@@ -142,21 +166,29 @@ package body MI.Utils is
 
    function Process_Exec_Run (Result : Result_Record) return Boolean is
    begin
+      --  A running record is of the form:
+      --       '^running'
+      --  Thus we check for the Sync_Result type and the 'running' class.
+
       if Result.R_Type /= Sync_Result
          or else Result.Class.all /= "running" then
-         return False;
+         Die ("Invalid result-record for -exec-run");
       end if;
 
+      --  A running record has no attribute.
+
       if Result.Results.Length /= 0 then
-         raise Utils_Error with "Unexpected attribute(s) to result-record";
+         Die ("Unexpected attribute(s) to result-record");
       end if;
+
+      --  Returns True because the running record was well-formatted.
 
       return True;
    end Process_Exec_Run;
 
-   -------------------
-   -- Process_Break --
-   -------------------
+   --------------------------
+   -- Process_Break_Insert --
+   --------------------------
 
    function Process_Break_Insert
      (Result     : Result_Record) return Breakpoint_Type
@@ -166,24 +198,31 @@ package body MI.Utils is
       Breakpoint : Breakpoint_Type;
 
    begin
+      --  The result of a -break-insert command is of the form:
+      --       '^done,bkpt={number="1",type="breakpoint",...'
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         raise Utils_Error with ("Invalid result-record for "
-                                 & "-break-insert");
+         Die ("Invalid result-record for -break-insert");
       end if;
 
+      --  It must have only one attribute, 'bkpt' which holds a list of
+      --  attributes.
+
       if Result.Results.Length /= 1 then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "one attribute: bkpt");
+         Die ("Ill-formatted done-result: expected one attribute: bkpt");
       end if;
 
       Pair := Result_Pair_Lists.Element (Cursor);
 
       if Pair.Variable.all /= "bkpt" then
-         raise Utils_Error with "Expected attribute `bkpt'";
+         Die ("Expected attribute `bkpt'");
       end if;
 
       Check_Is_Result_List_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
       Cursor := Result_List_Value (Pair.Value.all).Value.First;
+
+      --  Iterates through the list and store each possible attribute in its
+      --  associated field in the Breakpoint_Type record.
 
       while Result_Pair_Lists.Has_Element (Cursor) loop
          Pair := Result_Pair_Lists.Element (Cursor);
@@ -245,8 +284,7 @@ package body MI.Utils is
                                               (Pair.Value.all).Value;
 
          else
-            raise Utils_Error with ("Unexpected attribute: "
-                                    & Pair.Variable.all);
+            Die ("Unexpected attribute: " & Pair.Variable.all);
          end if;
       end loop;
 
@@ -274,6 +312,7 @@ package body MI.Utils is
    function Process_Stream_Output
      (Stream : Stream_Output_Record) return String_Access is
    begin
+      --  Simply returns the stream content wihtout any form of checking.
       return Stream.Content;
    end Process_Stream_Output;
 
@@ -284,23 +323,30 @@ package body MI.Utils is
    function Process_Var_Create
      (Result : Result_Record) return Var_Obj_Access
    is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (Var_Obj_Type, Var_Obj_Access);
+
       Cursor  : Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
       Var_Obj : Var_Obj_Access := null;
 
    begin
+      --  The result of a -break-insert command is of the form:
+      --       '^done,name="var1",numchild="3",value="{...}",...'
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         raise Utils_Error with ("Invalid result-record for "
-                                 & "-var-create");
+         Die ("Invalid result-record for -var-create");
       end if;
 
       if Result.Results.Length /= 5 then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "five attributes: name, numchild, value, "
-                                 & "type and has_more.");
+         Die ("Ill-formatted done result record: expected five attributes: "
+              & "name, numchild, value, type and has_more.");
       end if;
 
       Var_Obj := new Var_Obj_Type;
+
+      --  Iterates through the list and build the new Var_Obj with each
+      --  possible attribute associated to his fields.
 
       while Result_Pair_Lists.Has_Element (Cursor) loop
          Pair := Result_Pair_Lists.Element (Cursor);
@@ -329,11 +375,13 @@ package body MI.Utils is
               (String_Value (Pair.Value.all).Value.all);
 
          else
-            raise Utils_Error with ("Ill-formatted done result record: "
-                                    & "expected attribute `name', `numchild', "
-                                    & "`value', `type' or `has_more'.");
+            Unchecked_Free (Var_Obj);  --  ??? Use Var_Obj_Free
+            Die ("Ill-formatted done result record: expected attribute "
+                 & "`name', `numchild', `value', `type' or `has_more'.");
          end if;
       end loop;
+
+      --  Returns the newly created Var_Obj.
 
       return Var_Obj;
    end Process_Var_Create;
@@ -342,31 +390,37 @@ package body MI.Utils is
    -- Process_Var_Delete --
    ------------------------
 
-   function Process_Var_Delete (Result : Result_Record) return Boolean
+   function Process_Var_Delete (Result : Result_Record) return Natural
    is
       Cursor : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair   : Result_Pair;
    begin
+      --  A result from a -var-delete commmand is of the following form:
+      --       '^done,ndeleted="4"'
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         return False;
+         Die ("Invalid result-record for -var-delete");
       end if;
+
+      --  It must contain one and only on attribute named 'ndeleted'.
 
       if Result.Results.Length /= 1 then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "one and only one attribute: ndelete.");
+         Die ("Ill-formatted done result record: expected one and only one "
+              & "attribute: ndelete.");
       end if;
 
-      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
       if Pair.Variable.all /= "ndelete" then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "attribute `ndelete' followed by a "
-                                 & "c-string.");
+         Die ("Ill-formatted done result record: expected attribute `ndelete' "
+              & "followed by a c-string.");
       end if;
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-      return True;  -- ??? Should return the value of ndelete
+
+      --  Returns the content of the ndelete attribute.
+
+      return Natural'Value (String_Value (Pair.Value.all).Value.all);
    end Process_Var_Delete;
 
    ----------------------------
@@ -384,15 +438,22 @@ package body MI.Utils is
       Pair    : Result_Pair;
 
    begin
+      --  A result from a -var-set-format commmand is of the following form:
+      --       '^done,format="decimal",value="{...}"'
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         raise Utils_Error with ("Invalid result-record for "
-                                 & "-var-set-format");
+         Die ("Invalid result-record for -var-set-format");
       end if;
 
+      --  It must contain two attributes: 'format' and 'value'.
+
       if Result.Results.Length /= 2 then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "two attributes: format and value.");
+         Die ("Ill-formatted done result record: expected two attributes: "
+              & "format and value.");
       end if;
+
+      --  Iterate over the attributes to extract their value and store it in
+      --  the given Var_Obj object.
 
       while Result_Pair_Lists.Has_Element (Cursor) loop
          Pair := Result_Pair_Lists.Element (Cursor);
@@ -417,9 +478,8 @@ package body MI.Utils is
             Var_Obj.Value := String_Value (Pair.Value.all).Value;
 
          else
-            raise Utils_Error with ("Ill-formatted done result record: "
-                                    & "expected attribute `format' or "
-                                    & "`value'.");
+            Die ("Ill-formatted done result record: expected attribute "
+                 & "`format' or `value'.");
          end if;
       end loop;
 
@@ -436,23 +496,26 @@ package body MI.Utils is
       Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
    begin
+      --  A result from a -var-info-num-children commmand is of the following
+      --  form:
+      --          '^done,numchild="3"'
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         raise Utils_Error with ("Invalid result-record for "
-                                 & "-var-info-num-children");
+         Die ("Invalid result-record for -var-info-num-children");
       end if;
+
+      --  It must contain one and only one attribute: numchild.
 
       if Result.Results.Length /= 1 then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "one and only one attribute: numchild.");
+         Die ("Ill-formatted done result record: expected one and only one "
+              & "attribute: numchild.");
       end if;
 
-      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
       if Pair.Variable.all /= "numchild" then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "attribute `numchild' followed by a "
-                                 & "c-string.");
+         Die ("Ill-formatted done result record: expected attribute "
+              & "`numchild' followed by a c-string.");
       end if;
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
@@ -472,6 +535,7 @@ package body MI.Utils is
       --  Process a child as described in the result of a -var-list-children
       --  command, i.e.
       --       `child={name="var1.10",exp="10",numchild="0",type="integer"}'
+      --
       --  Returns a new Var_Obj object.
 
       -------------------
@@ -515,8 +579,7 @@ package body MI.Utils is
                --  ??? Replace the following by a Free_Var_Obj procedure that
                --  frees the inner attributes.
                Unchecked_Free (Var_Obj);
-               raise Utils_Error with ("Unexpected attribute: "
-                                       & Pair.Variable.all);
+               Die ("Unexpected attribute: " & Pair.Variable.all);
             end if;
 
             Cursor := Result_Pair_Lists.Next (Cursor);
@@ -531,16 +594,22 @@ package body MI.Utils is
       Child  : Var_Obj_Access;
 
    begin
+      --  A result from a -var-list-children commmand is of the following form:
+      --    '^done,numchild="3",children=[child={...}...],,has_more="0"'
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         raise Utils_Error with ("Invalid result-record for "
-                                 & "-var-list-children");
+         Die ("Invalid result-record for -var-list-children");
       end if;
 
+      --  It contains either 2 or 3 attributes since there is no 'children'
+      --  attribute for a node with no child.
+
       if Result.Results.Length /= 2 and Result.Results.Length /= 3 then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "two or three attributes: numchild, "
-                                 & "children? and has_more");
+         Die ("Ill-formatted done result record: expected two or three "
+              & "attributes: numchild, children? and has_more");
       end if;
+
+      --  Iterates over the attributes.
 
       while Result_Pair_Lists.Has_Element (Cursor) loop
          Pair := Result_Pair_Lists.Element (Cursor);
@@ -556,28 +625,31 @@ package body MI.Utils is
               (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "children" then
+            --  Retrieves the list of children and iterates over it to process
+            --  each children using the Process_Child subprogram.
+
             Check_Is_Result_List_Value_Or_Die (Pair.Variable.all,
                                                Pair.Value.all);
             Cursor := Result_Pair_Lists.First
               (Result_List_Value (Pair.Value.all).Value);
+
             while Result_Pair_Lists.Has_Element (Cursor) loop
                Pair := Result_Pair_Lists.Element (Cursor);
 
                if Pair.Variable.all /= "child" then
-                  raise Utils_Error with ("Unexpected attribute: "
-                                          & Pair.Variable.all);
+                  Die ("Unexpected attribute: " & Pair.Variable.all);
                end if;
 
                Check_Is_Result_List_Value_Or_Die
                  (Pair.Variable.all, Pair.Value.all);
                Child := Process_Child (Result_List_Value (Pair.Value.all));
                Var_Obj.Children.Append (Child);
+
                Cursor := Result_Pair_Lists.Next (Cursor);
             end loop;
 
          else
-            raise Utils_Error with ("Unexpected attribute: "
-                                    & Pair.Variable.all);
+            Die ("Unexpected attribute: " & Pair.Variable.all);
          end if;
 
          Cursor := Result_Pair_Lists.Next (Cursor);
@@ -599,22 +671,25 @@ package body MI.Utils is
       Pair    : Result_Pair;
 
    begin
+      --  A result from a -var-info-type commmand is of the following form:
+      --       '^done,type="records.r"'
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         raise Utils_Error with ("Invalid result-record for "
-                                 & "-var-info-type");
+         Die ("Invalid result-record for -var-info-type");
       end if;
+
+      --  It must contain one and only one attribute: 'type'.
 
       if Result.Results.Length /= 1 then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "one and only one attribute: type.");
+         Die ("Ill-formatted done result record: expected one and only one "
+              & "attribute: type.");
       end if;
 
-      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
       if Pair.Variable.all /= "type" then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "attribute `type' followed by a c-string.");
+         Die ("Ill-formatted done result record: expected attribute `type' "
+              & "followed by a c-string.");
       end if;
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
@@ -647,29 +722,31 @@ package body MI.Utils is
    is
       Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
-      pragma Unreferenced (Var_Obj);
    begin
+      --  A result from a -var-info-path-expression commmand is of the
+      --  following form:
+      --       '^done,path_expr="Rec"'
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         raise Utils_Error with ("Invalid result-record for "
-                                 & "-var-info-path-expression");
+         Die ("Invalid result-record for -var-info-path-expression");
       end if;
+
+      --  It contains one and only one attribute: 'path_expr'.
 
       if Result.Results.Length /= 1 then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "one and only one attribute: path_expr.");
+         Die ("Ill-formatted done result record: expected one and only one "
+              & "attribute: path_expr.");
       end if;
 
-      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
       if Pair.Variable.all /= "path_expr" then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "attribute `path_expr' followed by a "
-                                 & "c-string.");
+         Die ("Ill-formatted done result record: expected attribute "
+              & "`path_expr' followed by a c-string.");
       end if;
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-      --  ??? Convert Pair.Value.all and store it into Var_Obj
+      Var_Obj.Path_Exp := String_Value (Pair.Value.all).Value;
    end Process_Var_Info_Path_Expression;
 
    --------------------------------
@@ -698,23 +775,26 @@ package body MI.Utils is
       Pair    : Result_Pair;
 
    begin
+      --  A result from a -var-evaluate-expression commmand is of the following
+      --  form:
+      --          '^done,value="{...}"'
+
       if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         raise Utils_Error with ("Invalid result-record for "
-                                 & "-var-evaluate-expression");
+         Die ("Invalid result-record for -var-evaluate-expression");
       end if;
+
+      --  It contains one and only one attribute: 'value'.
 
       if Result.Results.Length /= 1 then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "one and only one attribute: value.");
+         Die ("Ill-formatted done result record: expected one and only one "
+              & "attribute: value.");
       end if;
 
-      pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
       if Pair.Variable.all /= "value" then
-         raise Utils_Error with ("Ill-formatted done result record: expected "
-                                 & "attribute `value' followed by a "
-                                 & "c-string.");
+         Die ("Ill-formatted done result record: expected attribute `value' "
+              & "followed by a c-string.");
       end if;
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);

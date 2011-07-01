@@ -48,6 +48,7 @@ package MI.Utils is
    type Var_Obj_Type is record
       Name             : String_Access  := null;
       Expression       : String_Access  := null;
+      Path_Exp         : String_Access  := null;
       Num_Child        : Natural        := 0;
       Value            : String_Access  := null;
       Format           : String_Access  := null;
@@ -166,9 +167,9 @@ package MI.Utils is
    --  Returns a pointer so that it can be used recursively and the result can
    --  be appened to an other varobj children list.
 
-   function Process_Var_Delete (Result : Result_Record) return Boolean;
-   --  Handles the result of the MI command `-var-delete'.  Returns whether the
-   --  deletion was successful or not.
+   function Process_Var_Delete (Result : Result_Record) return Natural;
+   --  Handles the result of the MI command `-var-delete'.  Returns the content
+   --  of the ndelete attribute.
 
    procedure Process_Var_Set_Format
      (Result  : Result_Record;
