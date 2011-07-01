@@ -68,6 +68,11 @@ NF-51-K406-021 GPS: Support for more assembly languages (2011-04-06)
   "Asm2" (.asm) to be in line with the languages recognized by gprbuild.
   The language "Asm" (.s files) was already supported in GPS 5.0.
 
+NF-51-K404-031 Extend quick fix support for 'Valid (2011-07-01)
+
+  The automatic code fixing capability has been enhanced to replace
+  occurrences of T'first .. T'last by T'Valid.
+
 NF-51-K225-033 GPS: New menu Debug->Display <expanded name> (2011-02-27)
 
   As part of the optional debugger.py plug-in, a new menu is provided when
