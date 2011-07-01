@@ -47,6 +47,7 @@ package MI.Utils is
 
    type Var_Obj_Type is record
       Name             : String_Access  := null;
+      Expression       : String_Access  := null;
       Num_Child        : Natural        := 0;
       Value            : String_Access  := null;
       Format           : String_Access  := null;

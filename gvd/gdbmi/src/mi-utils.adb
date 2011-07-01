@@ -19,11 +19,30 @@ with Ada.Unchecked_Deallocation;
 
 package body MI.Utils is
 
+   Type_Error : exception;
+   --  This exception is raised by the following subprogram if th MI_Value is
+   --  not derived from the expected type.
+
    procedure Check_Is_String_Value_Or_Die
      (Name  : String;
       Value : MI_Value'Class);
    --  Checks that the given MI_Value is a String_Value and raise an exception
    --  if the assertion if False.
+
+   procedure Check_Is_Result_List_Value_Or_Die
+     (Name  : String;
+      Value : MI_Value'Class);
+   --  Checks that the given MI_Value is a Result_List_Value and raise an
+   --  exception if the assertion if False.
+
+   procedure Check_Is_Value_List_Value_Or_Die
+     (Name  : String;
+      Value : MI_Value'Class);
+   --  Checks that the given MI_Value is a Value_List_Value and raise an
+   --  exception if the assertion if False.
+
+   pragma Unreferenced (Check_Is_Value_List_Value_Or_Die);
+   --  ??? Remove this once used.
 
    ----------------------------------
    -- Check_Is_String_Value_Or_Die --
@@ -34,10 +53,38 @@ package body MI.Utils is
       Value : MI_Value'Class) is
    begin
       if Value not in String_Value then
-         raise Utils_Error with ("Expected attribute `" & Name & "' to be a "
-                                 & "c-string");
+         raise Type_Error with ("Expected attribute `" & Name & "' to be a "
+                                & "c-string");
       end if;
    end Check_Is_String_Value_Or_Die;
+
+   ---------------------------------------
+   -- Check_Is_Result_List_Value_Or_Die --
+   ---------------------------------------
+
+   procedure Check_Is_Result_List_Value_Or_Die
+     (Name  : String;
+      Value : MI_Value'Class) is
+   begin
+      if Value not in Result_List_Value then
+         raise Type_Error with ("Expected attribute `" & Name & "' to be a "
+                                & "list of result");
+      end if;
+   end Check_Is_Result_List_Value_Or_Die;
+
+   --------------------------------------
+   -- Check_Is_Value_List_Value_Or_Die --
+   --------------------------------------
+
+   procedure Check_Is_Value_List_Value_Or_Die
+     (Name  : String;
+      Value : MI_Value'Class) is
+   begin
+      if Value not in Value_List_Value then
+         raise Type_Error with ("Expected attribute `" & Name & "' to be a "
+                                & "list of mi-value");
+      end if;
+   end Check_Is_Value_List_Value_Or_Die;
 
    --------------
    -- Is_Error --
@@ -69,12 +116,12 @@ package body MI.Utils is
       pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
-      if Pair.Variable.all /= "msg"
-         or else Pair.Value.all not in String_Value then
+      if Pair.Variable.all /= "msg" then
          raise Utils_Error with ("Ill-formatted error result record: expected "
                                  & "attribute `msg' followed by a c-string.");
       end if;
 
+      Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
       return String_Value (Pair.Value.all).Value;
    end Process_Error;
 
@@ -101,7 +148,7 @@ package body MI.Utils is
       end if;
 
       if Result.Results.Length /= 0 then
-         raise Utils_Error with "Unexpected attribute to result-record";
+         raise Utils_Error with "Unexpected attribute(s) to result-record";
       end if;
 
       return True;
@@ -131,11 +178,11 @@ package body MI.Utils is
 
       Pair := Result_Pair_Lists.Element (Cursor);
 
-      if Pair.Variable.all /= "bkpt"
-         or else Pair.Value.all not in Result_List_Value then
-         raise Utils_Error with "Ill-formated `bkpt' attribute";
+      if Pair.Variable.all /= "bkpt" then
+         raise Utils_Error with "Expected attribute `bkpt'";
       end if;
 
+      Check_Is_Result_List_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
       Cursor := Result_List_Value (Pair.Value.all).Value.First;
 
       while Result_Pair_Lists.Has_Element (Cursor) loop
@@ -144,9 +191,8 @@ package body MI.Utils is
 
          if Pair.Variable.all = "number" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Number := Natural'Value (
-               String_Value (Pair.Value.all).Value.all
-            );
+            Breakpoint.Number := Natural'Value
+              (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "type" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
@@ -186,13 +232,12 @@ package body MI.Utils is
          elsif Pair.Variable.all = "line" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.Line := Natural'Value
-                                       (String_Value
-                                          (Pair.Value.all).Value.all);
+              (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "times" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Times := Natural'Value
-                                  (String_Value (Pair.Value.all).Value.all);
+              (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "original-location" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
@@ -267,9 +312,8 @@ package body MI.Utils is
 
          elsif Pair.Variable.all = "numchild" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj.all.Num_Child := Natural'Value (
-               String_Value (Pair.Value.all).Value.all
-            );
+            Var_Obj.all.Num_Child := Natural'Value
+              (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "value" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
@@ -281,9 +325,8 @@ package body MI.Utils is
 
          elsif Pair.Variable.all = "has_more" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj.all.Has_More := Natural'Value (
-               String_Value (Pair.Value.all).Value.all
-            );
+            Var_Obj.all.Has_More := Natural'Value
+              (String_Value (Pair.Value.all).Value.all);
 
          else
             raise Utils_Error with ("Ill-formatted done result record: "
@@ -316,13 +359,13 @@ package body MI.Utils is
       pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
-      if Pair.Variable.all /= "ndelete"
-         or else Pair.Value.all not in String_Value then
+      if Pair.Variable.all /= "ndelete" then
          raise Utils_Error with ("Ill-formatted done result record: expected "
                                  & "attribute `ndelete' followed by a "
                                  & "c-string.");
       end if;
 
+      Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
       return True;  -- ??? Should return the value of ndelete
    end Process_Var_Delete;
 
@@ -406,15 +449,15 @@ package body MI.Utils is
       pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
-      if Pair.Variable.all /= "numchild"
-         or else Pair.Value.all not in String_Value then
+      if Pair.Variable.all /= "numchild" then
          raise Utils_Error with ("Ill-formatted done result record: expected "
                                  & "attribute `numchild' followed by a "
                                  & "c-string.");
       end if;
 
+      Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
       Var_Obj.Num_Child := Natural'Value
-                              (String_Value (Pair.Value.all).Value.all);
+        (String_Value (Pair.Value.all).Value.all);
    end Process_Var_Info_Num_Children;
 
    -------------------------------
@@ -423,9 +466,122 @@ package body MI.Utils is
 
    procedure Process_Var_List_Children
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Type) is
+      Var_Obj : in out Var_Obj_Type)
+   is
+      function Process_Child (Rec : Result_List_Value) return Var_Obj_Access;
+      --  Process a child as described in the result of a -var-list-children
+      --  command, i.e.
+      --       `child={name="var1.10",exp="10",numchild="0",type="integer"}'
+      --  Returns a new Var_Obj object.
+
+      -------------------
+      -- Process_Child --
+      -------------------
+
+      function Process_Child (Rec : Result_List_Value) return Var_Obj_Access
+      is
+         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+            (Var_Obj_Type, Var_Obj_Access);
+
+         Cursor  : Result_Pair_Lists.Cursor := Result_Pair_Lists.First
+                                                 (Rec.Value);
+         Pair    : Result_Pair;
+         Var_Obj : Var_Obj_Access := null;
+
+      begin
+         while Result_Pair_Lists.Has_Element (Cursor) loop
+            Pair := Result_Pair_Lists.Element (Cursor);
+
+            --  Every element of this pair list is supposed to be a
+            --  String_Value so we can procede to a general check.
+
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
+            Var_Obj := new Var_Obj_Type;
+
+            if Pair.Variable.all = "name" then
+               Var_Obj.all.Name := String_Value (Pair.Value.all).Value;
+
+            elsif Pair.Variable.all = "exp" then
+               Var_Obj.all.Expression := String_Value (Pair.Value.all).Value;
+
+            elsif Pair.Variable.all = "numchild" then
+               Var_Obj.all.Num_Child := Natural'Value
+                 (String_Value (Pair.Value.all).Value.all);
+
+            elsif Pair.Variable.all = "type" then
+               Var_Obj.all.Type_Desc := String_Value (Pair.Value.all).Value;
+
+            else
+               --  ??? Replace the following by a Free_Var_Obj procedure that
+               --  frees the inner attributes.
+               Unchecked_Free (Var_Obj);
+               raise Utils_Error with ("Unexpected attribute: "
+                                       & Pair.Variable.all);
+            end if;
+
+            Cursor := Result_Pair_Lists.Next (Cursor);
+         end loop;
+
+         return Var_Obj;
+      end Process_Child;
+
+      --  Variables declaration
+      Cursor : Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair   : Result_Pair;
+      Child  : Var_Obj_Access;
+
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_List_Children";
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         raise Utils_Error with ("Invalid result-record for "
+                                 & "-var-list-children");
+      end if;
+
+      if Result.Results.Length /= 2 and Result.Results.Length /= 3 then
+         raise Utils_Error with ("Ill-formatted done result record: expected "
+                                 & "two or three attributes: numchild, "
+                                 & "children? and has_more");
+      end if;
+
+      while Result_Pair_Lists.Has_Element (Cursor) loop
+         Pair := Result_Pair_Lists.Element (Cursor);
+
+         if Pair.Variable.all = "numchild" then
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
+            Var_Obj.Num_Child := Natural'Value
+              (String_Value (Pair.Value.all).Value.all);
+
+         elsif Pair.Variable.all = "has_more" then
+            Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
+            Var_Obj.Has_More := Natural'Value
+              (String_Value (Pair.Value.all).Value.all);
+
+         elsif Pair.Variable.all = "children" then
+            Check_Is_Result_List_Value_Or_Die (Pair.Variable.all,
+                                               Pair.Value.all);
+            Cursor := Result_Pair_Lists.First
+              (Result_List_Value (Pair.Value.all).Value);
+            while Result_Pair_Lists.Has_Element (Cursor) loop
+               Pair := Result_Pair_Lists.Element (Cursor);
+
+               if Pair.Variable.all /= "child" then
+                  raise Utils_Error with ("Unexpected attribute: "
+                                          & Pair.Variable.all);
+               end if;
+
+               Check_Is_Result_List_Value_Or_Die
+                 (Pair.Variable.all, Pair.Value.all);
+               Child := Process_Child (Result_List_Value (Pair.Value.all));
+               Var_Obj.Children.Append (Child);
+               Cursor := Result_Pair_Lists.Next (Cursor);
+            end loop;
+
+         else
+            raise Utils_Error with ("Unexpected attribute: "
+                                    & Pair.Variable.all);
+         end if;
+
+         Cursor := Result_Pair_Lists.Next (Cursor);
+      end loop;
    end Process_Var_List_Children;
 
    ---------------------------
@@ -456,11 +612,12 @@ package body MI.Utils is
       pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
-      if Pair.Variable.all /= "type"
-         or else Pair.Value.all not in String_Value then
+      if Pair.Variable.all /= "type" then
          raise Utils_Error with ("Ill-formatted done result record: expected "
                                  & "attribute `type' followed by a c-string.");
       end if;
+
+      Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
       if Var_Obj.Type_Desc /= null then
          Unchecked_Free (Var_Obj.Type_Desc);
@@ -505,13 +662,13 @@ package body MI.Utils is
       pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
-      if Pair.Variable.all /= "path_expr"
-         or else Pair.Value.all not in String_Value then
+      if Pair.Variable.all /= "path_expr" then
          raise Utils_Error with ("Ill-formatted done result record: expected "
                                  & "attribute `path_expr' followed by a "
                                  & "c-string.");
       end if;
 
+      Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
       --  ??? Convert Pair.Value.all and store it into Var_Obj
    end Process_Var_Info_Path_Expression;
 
@@ -554,12 +711,13 @@ package body MI.Utils is
       pragma Assert (Result_Pair_Lists.Has_Element (Cursor));
       Pair := Result_Pair_Lists.Element (Cursor);
 
-      if Pair.Variable.all /= "value"
-         or else Pair.Value.all not in String_Value then
+      if Pair.Variable.all /= "value" then
          raise Utils_Error with ("Ill-formatted done result record: expected "
                                  & "attribute `value' followed by a "
                                  & "c-string.");
       end if;
+
+      Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
       if Var_Obj.Value /= null then
          Unchecked_Free (Var_Obj.Value);
