@@ -38,6 +38,11 @@ package body Codefix.Text_Manager.Ada_Commands is
    --  Returns the Closing parenthesis corresponding to the open one given
    --  in parameter
 
+   function Get_End_Of_Preceding_Token
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) return File_Cursor;
+   --  Displace Cursor to the first character after the preceding word
+
    -----------------------
    -- Get_Closing_Paren --
    -----------------------
@@ -95,6 +100,73 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       return Close_Cursor;
    end Get_Closing_Paren;
+
+   --------------------------------
+   -- Get_End_Of_Preceding_Token --
+   --------------------------------
+
+   function Get_End_Of_Preceding_Token
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) return File_Cursor
+   is
+      End_Cursor : File_Cursor := File_Cursor (Cursor);
+
+   begin
+      loop
+         declare
+            Full_Line  : constant String :=
+                           Get_Line (Current_Text, End_Cursor, 1);
+            J          : String_Index_Type :=
+                           To_Char_Index
+                             (Get_Column (End_Cursor), Full_Line) - 1;
+
+         begin
+            --  Skip previous blanks
+
+            while J > 1
+              and then Is_Blank (Full_Line (Natural (J)))
+            loop
+               J := J - 1;
+            end loop;
+
+            --  Found the end of the preceding word. Leave Begin_Cursor located
+            --  in the first blank after the preceding word.
+
+            if not Is_Blank (Full_Line (Natural (J))) then
+               Set_Location
+                 (End_Cursor,
+                  Get_Line (End_Cursor),
+                  To_Column_Index (J, Full_Line) + 1);
+
+               exit;
+
+            --  The beginning of this line is still a blank. Locate us at the
+            --  end of the previous line and continue skiping blanks.
+
+            elsif Get_Line (End_Cursor) /= 1 then
+               Set_Location (End_Cursor, Get_Line (End_Cursor) - 1, 1);
+               Set_Location
+                 (End_Cursor,
+                  Get_Line (End_Cursor),
+                  Visible_Column_Type
+                    (Get_Line (Current_Text, End_Cursor)'Last + 1));
+
+            --  First line of this buffer. Stop searching for the preceding
+            --  token. Set location to line 1, column 1.
+
+            else
+               Set_Location
+                 (End_Cursor,
+                  Get_Line (End_Cursor),
+                  To_Column_Index (J, Full_Line));
+
+               exit;
+            end if;
+         end;
+      end loop;
+
+      return End_Cursor;
+   end Get_End_Of_Preceding_Token;
 
    --  Recase_Word_Cmd
 
@@ -1703,31 +1775,47 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Change_To_Tick_Valid_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Cursor       : constant File_Cursor'Class :=
-                       File_Cursor
-                         (Current_Text.Get_Current_Cursor (This.Location.all));
+      Cursor : constant File_Cursor'Class :=
+                 Current_Text.Get_Current_Cursor (This.Location.all);
 
-      Begin_Cursor : File_Cursor;
-      End_Cursor   : File_Cursor;
-      No_Fix       : Boolean := False;
+      Replace_From      : File_Cursor;
+      Replace_To        : File_Cursor;
+      Begin_Expr_Cursor : File_Cursor := Null_File_Cursor;
 
-      function Entity_Callback
+      Has_Negation : Boolean := False;
+
+      procedure Scan_Backward_Callback
+        (Buffer : String;
+         Token  : Language.Token_Record;
+         Stop   : in out Boolean);
+      --  Scan backward the expression located before the keyword "not".
+      --  Updates Not_Cursor to reference the beginning of the expression.
+
+      function Scan_Forward_Callback
         (Entity         : Language_Entity;
          Sloc_Start     : Source_Location;
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean;
          Line           : String) return Boolean;
-      --  Scan forward the expression located after the keyword "in".
-      --  Updates End_Cursor to reference the end of such expression.
+      --  Scan forward the expression. If the expression starts with "not" then
+      --  Has_Negation is set to True. Updates Replace_To to reference the end
+      --  of the expression.
 
-      ---------------------
-      -- Entity_Callback --
-      ---------------------
+      ---------------------------
+      -- Scan_Forward_Callback --
+      ---------------------------
 
-      Depth    : Integer := 0;     --  Parenthesis nesting level
-      Is_First : Boolean := True;  --  True if processing the first entity
+      Depth      : Natural := 0;
+      --  Parenthesis nesting level
 
-      function Entity_Callback
+      In_Header  : Boolean := True;
+      --  True if processing the header of the expression: "[not] in"
+
+      End_Line   : Natural;
+      End_Column : Visible_Column_Type;
+      --  Line and column of the last character of the scanned expression
+
+      function Scan_Forward_Callback
         (Entity         : Language_Entity;
          Sloc_Start     : Source_Location;
          Sloc_End       : Source_Location;
@@ -1737,64 +1825,169 @@ package body Codefix.Text_Manager.Ada_Commands is
          pragma Unreferenced (Partial_Entity);
 
          Name : constant String := Line (Sloc_Start.Column .. Sloc_End.Column);
+         Stop_Scanning : Boolean := False;
+
       begin
-         --  Check unsupported case: "V not in T". More work needed here???
+         --  Process the header of the expression
 
-         if Is_First and then To_Lower (Name) = "not" then
-            No_Fix := True;
+         if In_Header then
+            pragma Assert (Entity = Keyword_Text);
 
-            --  Seems wrong to continue scanning since we know that we do not
-            --  support this construct???
+            if To_Lower (Name) = "not" then
+               Has_Negation := True;
+               return False;  --  skip "not"
 
-            return True;
-         end if;
+            elsif To_Lower (Name) = "in" then
+               In_Header := False;
+               return False;  --  skip "in"
 
-         Is_First := False;
-
-         --  Handle cases in which we must continue scanning the expression
-
-         if Name = "(" then
-            Depth := Depth + 1;
-
-         elsif Name = ")" then
-            if Depth = 0 then
-               --  We should stop scanning since there is an extra closing
-               --  parenthesis and this is a serious bug in sources. In this
-               --  case the compiler should not have reported the warning
-               --  suggesting 'Valid replacement. Must check if this case
-               --  needs to be handled???
-               return True;
-            end if;
-
-            Depth := Depth - 1;
-
-         elsif Depth = 0 then
-
-            --  Handle attributes, expanded names, etc. It is unclear why they
-            --  are not supported when found in englosing parenthesis (for
-            --  example as part of the index of an array). Must investigate???
-
-            if (Entity = Keyword_Text and then To_Lower (Name) /= "in")
-              or else
-                (Entity = Operator_Text
-                 and then Name /= "'"
-                 and then Name /= "."
-                 and then Name /= "..")
-            then
-               return True;
+            else pragma Assert (False);
+               raise Program_Error;
             end if;
          end if;
 
-         --  Scan finished: Update End_Cursor to reference the end of the
-         --  expression
+         --  When we find a left parenthesis we skip all the enclosing tokens
+         --  until we locate the corresponding right parenthesis; this is safe
+         --  because we know that the expression is well formed (otherwise the
+         --  warning suggesting the replacement would not have been reported by
+         --  the compiler). Depth handles nested parenthesis.
 
-         Set_Location
-           (End_Cursor,
-            Sloc_End.Line,
-            To_Column_Index (String_Index_Type (Sloc_End.Column), Line));
+         --  Process tokens found between parenthesis
+
+         if Depth > 0 then
+            if Entity = Operator_Text then
+               if Name = "(" then
+                  Depth := Depth + 1;
+
+               elsif Name = ")" then
+                  Depth := Depth - 1;
+               end if;
+            end if;
+
+         --  Process tokens found without enclosing parenthesis
+
+         else
+            case Entity is
+
+               --  1. Keywords stop the scanner
+
+               when Keyword_Text =>
+                  Stop_Scanning := True;
+
+               when Operator_Text =>
+
+                  --  2. Left parenthesis. Increase the parenthesis level to
+                  --     start skipping all the tokens until we find its right
+                  --     parenthesis
+
+                  if Name = "(" then
+                     Depth := Depth + 1;
+
+                  --  3. An extra right parenthesis stops scanning since it
+                  --     means that the expression that we are processing is
+                  --     enclosed between parenthesis (and hence we are located
+                  --     at the end of this expression)
+
+                  elsif Name = ")" then
+                     Stop_Scanning := True;
+
+                  --  4. Tokens that cannot be part of the supported expression
+                  --     stop the scanner
+
+                  elsif Name /= "."
+                    and then Name /= "'"
+                    and then Name /= ".."
+                  then
+                     Stop_Scanning := True;
+                  end if;
+
+               --  5. For any other token we continue scanning
+
+               when others =>
+                  null;
+            end case;
+
+            if Stop_Scanning then
+               Set_Location (Replace_To, End_Line, End_Column);
+               return True;
+            end if;
+         end if;
+
+         --  Update the known location of the end of the expression and
+         --  continue scanning
+
+         End_Line   := Sloc_End.Line;
+         End_Column := To_Column_Index
+                         (String_Index_Type (Sloc_End.Column), Line);
 
          return False;
-      end Entity_Callback;
+      end Scan_Forward_Callback;
+
+      -----------------------------
+      --  Scan_Backward_Callback --
+      -----------------------------
+
+      Last_Index  : String_Index_Type := 0;
+      Paren_Depth : Natural := 0;
+      --   Level of nested parenthesis
+
+      procedure Scan_Backward_Callback
+        (Buffer : String;
+         Token  : Language.Token_Record;
+         Stop   : in out Boolean)
+      is
+         pragma Unreferenced (Buffer);
+
+      begin
+         --  Process tokens found between parenthesis. When we find a left
+         --  parenthesis we skip all the enclosing tokens until we locate the
+         --  corresponding right parenthesis; this is safe because we know that
+         --  the expression is well formed (otherwise the warning suggesting
+         --  the replacement would not have been reported by the compiler).
+
+         if Paren_Depth > 0 then
+            if Token.Tok_Type = Tok_Close_Parenthesis then
+               Paren_Depth := Paren_Depth + 1;
+
+            elsif Token.Tok_Type = Tok_Open_Parenthesis then
+               Paren_Depth := Paren_Depth - 1;
+               Last_Index := Token.Token_First;
+            end if;
+
+         --   Process tokens found without enclosing parenthesis
+
+         else
+            case Token.Tok_Type is
+               when Tok_Blank =>
+                  null;
+
+               when Tok_Close_Parenthesis =>
+                  Paren_Depth := Paren_Depth + 1;
+
+               when Tok_Dot | Tok_Identifier | Tok_Tick =>
+                  Last_Index := Token.Token_First;
+
+               when others =>
+                  declare
+                     Line   : Integer;
+                     Column : Visible_Column_Type;
+                  begin
+                     To_Line_Column
+                       (File                 =>
+                          Current_Text.Get_Structured_File (Cursor.File),
+                        Absolute_Byte_Offset => Last_Index,
+                        Line                 => Line,
+                        Column               => Column);
+
+                     Begin_Expr_Cursor.Set_File (Cursor.Get_File);
+                     Begin_Expr_Cursor.Set_Line (Line);
+                     Begin_Expr_Cursor.Set_Column (Column);
+
+                     Stop := True;
+                  end;
+            end case;
+         end if;
+      end Scan_Backward_Callback;
 
       --  Start of processing for Change_To_Tick_Valid_Cmd.Execute
 
@@ -1814,84 +2007,36 @@ package body Codefix.Text_Manager.Ada_Commands is
       --  Unsupported case:
       --    V not in ...
 
-      --  Step 1: Locate Begin_Cursor at the end of the preceding word
+      --  Step 1: Locate the beginning of the expression to be replaced
 
-      Begin_Cursor := File_Cursor (Cursor);
+      Replace_From := Get_End_Of_Preceding_Token (Current_Text, Cursor);
 
-      loop
-         declare
-            Full_Line  : constant String :=
-                           Get_Line (Current_Text, Begin_Cursor, 1);
-            J          : String_Index_Type :=
-                           To_Char_Index
-                             (Get_Column (Begin_Cursor), Full_Line) - 1;
-
-         begin
-            --  Skip blanks located before keyword "in"
-
-            while J > 1
-              and then Is_Blank (Full_Line (Natural (J)))
-            loop
-               J := J - 1;
-            end loop;
-
-            --  Found the end of the preceding word. Leave Begin_Cursor located
-            --  in the first blank after the preceding word.
-
-            if not Is_Blank (Full_Line (Natural (J))) then
-               Set_Location
-                 (Begin_Cursor,
-                  Get_Line (Begin_Cursor),
-                  To_Column_Index (J, Full_Line) + 1);
-
-               exit;
-
-            --  The beginning of this line is still a blank. Locate us at the
-            --  end of the previous line and continue skiping blanks.
-
-            elsif Get_Line (Begin_Cursor) /= 1 then
-               Set_Location (Begin_Cursor, Get_Line (Begin_Cursor) - 1, 1);
-               Set_Location
-                 (Begin_Cursor,
-                  Get_Line (Begin_Cursor),
-                  Visible_Column_Type
-                    (Get_Line (Current_Text, Begin_Cursor)'Last + 1));
-
-            --  First line of this buffer. Stop searching for the preceding
-            --  word. Set location to line 1, column 1.
-
-            --  Note: This case is handled for completeness of the automation
-            --  seaching backward for the end of the previous word since it is
-            --  not possible to write a membership test in the first line of
-            --  an Ada compilation unit (and hence the compiler could not have
-            --  reported the "change to 'valid" warning such line).
-
-            else
-               Set_Location
-                 (Begin_Cursor,
-                  Get_Line (Begin_Cursor),
-                  To_Column_Index (J, Full_Line));
-
-               exit;
-            end if;
-         end;
-      end loop;
-
-      --  Step 2: Locate End_Cursor at the end of the expression
-
-      End_Cursor := File_Cursor (Cursor);
+      --  Step 2: Locate the end of the expression to be replaced. As a side
+      --  effect of scanning we identify if the removed expression starts with
+      --  "not".
 
       Parse_Entities
         (Lang     => Ada_Lang,
          This     => Current_Text,
-         Callback => Entity_Callback'Unrestricted_Access,
-         Start    => Begin_Cursor);
+         Callback => Scan_Forward_Callback'Unrestricted_Access,
+         Start    => Replace_From);
 
-      --  Step 3: If the parsed expression is supported by Codefix then replace
-      --  all the text located between Begin_Cursor and End_Cursor by "'Valid"
+      --  Step 3: Replace the selected text
 
-      if not No_Fix then
-         Current_Text.Replace (Begin_Cursor, End_Cursor, "'Valid");
+      Current_Text.Replace (Replace_From, Replace_To, "'Valid");
+
+      --  Step 4: If the removed expression started with a negation (ie. the
+      --  expression starts with "not in") then scan the expression backward
+      --  and insert "not" at the beginning of the expression. As a result we
+      --  replace an expression like "x not in t'range" by "not x'valid"
+
+      if Has_Negation then
+         Parse_Entities_Backwards
+           (Lang     => Ada_Lang,
+            This     => Current_Text,
+            Callback => Scan_Backward_Callback'Access,
+            Start    => Replace_From);
+         Current_Text.Replace (Begin_Expr_Cursor, 0, "not ");
       end if;
    end Execute;
 

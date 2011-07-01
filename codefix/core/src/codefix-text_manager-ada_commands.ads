@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2010, AdaCore                  --
+--                 Copyright (C) 2002-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -580,7 +580,7 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Comparison_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class);
-   --  Removes the redudnant comparison, namely = True or /= True
+   --  Removes the redundant comparison, namely = True or /= True
 
    overriding procedure Execute
      (This         : Remove_Comparison_Cmd;
