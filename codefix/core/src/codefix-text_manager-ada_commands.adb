@@ -1801,6 +1801,72 @@ package body Codefix.Text_Manager.Ada_Commands is
       --  Has_Negation is set to True. Updates Replace_To to reference the end
       --  of the expression.
 
+      -----------------------------
+      --  Scan_Backward_Callback --
+      -----------------------------
+
+      Last_Index  : String_Index_Type := 0;
+      Paren_Depth : Natural := 0;
+      --   Level of nested parenthesis
+
+      procedure Scan_Backward_Callback
+        (Buffer : String;
+         Token  : Language.Token_Record;
+         Stop   : in out Boolean)
+      is
+         pragma Unreferenced (Buffer);
+
+      begin
+         --  Process tokens found between parenthesis. When we find a left
+         --  parenthesis we skip all the enclosing tokens until we locate the
+         --  corresponding right parenthesis; this is safe because we know that
+         --  the expression is well formed (otherwise the warning suggesting
+         --  the replacement would not have been reported by the compiler).
+
+         if Paren_Depth > 0 then
+            if Token.Tok_Type = Tok_Close_Parenthesis then
+               Paren_Depth := Paren_Depth + 1;
+
+            elsif Token.Tok_Type = Tok_Open_Parenthesis then
+               Paren_Depth := Paren_Depth - 1;
+               Last_Index := Token.Token_First;
+            end if;
+
+         --   Process tokens found without enclosing parenthesis
+
+         else
+            case Token.Tok_Type is
+               when Tok_Blank =>
+                  null;
+
+               when Tok_Close_Parenthesis =>
+                  Paren_Depth := Paren_Depth + 1;
+
+               when Tok_Dot | Tok_Identifier | Tok_Tick =>
+                  Last_Index := Token.Token_First;
+
+               when others =>
+                  declare
+                     Line   : Integer;
+                     Column : Visible_Column_Type;
+                  begin
+                     To_Line_Column
+                       (File                 =>
+                          Current_Text.Get_Structured_File (Cursor.File),
+                        Absolute_Byte_Offset => Last_Index,
+                        Line                 => Line,
+                        Column               => Column);
+
+                     Begin_Expr_Cursor.Set_File (Cursor.Get_File);
+                     Begin_Expr_Cursor.Set_Line (Line);
+                     Begin_Expr_Cursor.Set_Column (Column);
+
+                     Stop := True;
+                  end;
+            end case;
+         end if;
+      end Scan_Backward_Callback;
+
       ---------------------------
       -- Scan_Forward_Callback --
       ---------------------------
@@ -1922,72 +1988,6 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          return False;
       end Scan_Forward_Callback;
-
-      -----------------------------
-      --  Scan_Backward_Callback --
-      -----------------------------
-
-      Last_Index  : String_Index_Type := 0;
-      Paren_Depth : Natural := 0;
-      --   Level of nested parenthesis
-
-      procedure Scan_Backward_Callback
-        (Buffer : String;
-         Token  : Language.Token_Record;
-         Stop   : in out Boolean)
-      is
-         pragma Unreferenced (Buffer);
-
-      begin
-         --  Process tokens found between parenthesis. When we find a left
-         --  parenthesis we skip all the enclosing tokens until we locate the
-         --  corresponding right parenthesis; this is safe because we know that
-         --  the expression is well formed (otherwise the warning suggesting
-         --  the replacement would not have been reported by the compiler).
-
-         if Paren_Depth > 0 then
-            if Token.Tok_Type = Tok_Close_Parenthesis then
-               Paren_Depth := Paren_Depth + 1;
-
-            elsif Token.Tok_Type = Tok_Open_Parenthesis then
-               Paren_Depth := Paren_Depth - 1;
-               Last_Index := Token.Token_First;
-            end if;
-
-         --   Process tokens found without enclosing parenthesis
-
-         else
-            case Token.Tok_Type is
-               when Tok_Blank =>
-                  null;
-
-               when Tok_Close_Parenthesis =>
-                  Paren_Depth := Paren_Depth + 1;
-
-               when Tok_Dot | Tok_Identifier | Tok_Tick =>
-                  Last_Index := Token.Token_First;
-
-               when others =>
-                  declare
-                     Line   : Integer;
-                     Column : Visible_Column_Type;
-                  begin
-                     To_Line_Column
-                       (File                 =>
-                          Current_Text.Get_Structured_File (Cursor.File),
-                        Absolute_Byte_Offset => Last_Index,
-                        Line                 => Line,
-                        Column               => Column);
-
-                     Begin_Expr_Cursor.Set_File (Cursor.Get_File);
-                     Begin_Expr_Cursor.Set_Line (Line);
-                     Begin_Expr_Cursor.Set_Column (Column);
-
-                     Stop := True;
-                  end;
-            end case;
-         end if;
-      end Scan_Backward_Callback;
 
       --  Start of processing for Change_To_Tick_Valid_Cmd.Execute
 
