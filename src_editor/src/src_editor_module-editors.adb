@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008-2010, AdaCore               --
+--                    Copyright (C) 2008-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2776,7 +2776,7 @@ package body Src_Editor_Module.Editors is
    is
       Color : Gdk_Color;
       W     : Weight;
-      S     : Style;
+      S     : Pango.Enums.Style;
    begin
       if This.Tag /= null then
          if Name = "foreground" then

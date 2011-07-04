@@ -145,6 +145,7 @@ package GPS.Kernel.Preferences is
    Error_Src_Highlight            : Color_Preference;
    Warning_Src_Highlight          : Color_Preference;
    Style_Src_Highlight            : Color_Preference;
+   Info_Src_Highlight             : Color_Preference;
    Search_Src_Highlight           : Color_Preference;
    File_Pattern                   : String_Preference;
    File_Pattern_Index             : Integer_Preference;
@@ -157,6 +158,7 @@ package GPS.Kernel.Preferences is
    Message_Pattern_Index          : Integer_Preference;
    Style_Pattern_Index            : Integer_Preference;
    Warning_Pattern_Index          : Integer_Preference;
+   Info_Pattern_Index             : Integer_Preference;
 
    -- Diff_Utils --
    Diff_Mode           : Vdiff_Modes_Prefs.Preference;

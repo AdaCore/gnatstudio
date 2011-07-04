@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2010, AdaCore                 --
+--                  Copyright (C) 2005-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -95,23 +95,29 @@ package body GPS.Kernel.Styles is
             "",
             Bg => Search_Src_Highlight.Get_Pref, Speedbar => True);
 
-      Init (Builder_Errors_Style,
+      Init (Builder_Styles (Errors),
             -"Builder results",
             -"Color used to highlight the build errors",
             "gps-build-error",
             Bg => Error_Src_Highlight.Get_Pref, Speedbar => True);
 
-      Init (Builder_Warnings_Style,
+      Init (Builder_Styles (Warnings),
             -"Builder warnings",
             -"Color used to highlight the build warnings",
             "gps-build-warning",
             Bg => Warning_Src_Highlight.Get_Pref, Speedbar => True);
 
-      Init (Builder_Style_Style,
+      Init (Builder_Styles (Style),
             -"Style errors",
             -"Color used to highlight the style errors",
             "gps-build-style",
             Bg => Style_Src_Highlight.Get_Pref, Speedbar => True);
+
+      Init (Builder_Styles (Info),
+            -"Compiler info",
+            -"Color used to highlight the compiler information",
+            "gps-build-info",
+            Bg => Info_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Background_Style,
             -"Background compilation",
@@ -134,9 +140,18 @@ package body GPS.Kernel.Styles is
       pragma Unreferenced (Kernel);
    begin
       Set_Background (Search_Results_Style,   Search_Results_Color.Get_Pref);
-      Set_Background (Builder_Errors_Style,   Error_Src_Highlight.Get_Pref);
-      Set_Background (Builder_Warnings_Style, Warning_Src_Highlight.Get_Pref);
-      Set_Background (Builder_Style_Style,    Style_Src_Highlight.Get_Pref);
+      Set_Background
+        (Builder_Styles (Errors),
+         Error_Src_Highlight.Get_Pref);
+      Set_Background
+        (Builder_Styles (Warnings),
+         Warning_Src_Highlight.Get_Pref);
+      Set_Background
+        (Builder_Styles (Style),
+         Style_Src_Highlight.Get_Pref);
+      Set_Background
+        (Builder_Styles (Info),
+         Info_Src_Highlight.Get_Pref);
    end Preferences_Changed;
 
    -----------

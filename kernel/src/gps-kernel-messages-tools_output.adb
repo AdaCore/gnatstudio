@@ -276,9 +276,8 @@ package body GPS.Kernel.Messages.Tools_Output is
       Text              : UTF8_String;
       Category          : Glib.UTF8_String;
       Highlight         : Boolean := False;
-      Highlight_Style   : GPS.Styles.UI.Style_Access := null;
-      Style_Style       : GPS.Styles.UI.Style_Access := null;
-      Warning_Style     : GPS.Styles.UI.Style_Access := null;
+      Styles            : Builder_Message_Styles :=
+        (others => null);
       Show_In_Locations : Boolean := True)
    is
    begin
@@ -287,10 +286,9 @@ package body GPS.Kernel.Messages.Tools_Output is
          Text,
          Category,
          Highlight,
-         Highlight_Style,
-         Style_Style,
-         Warning_Style,
+         Styles,
          "",
+         -1,
          -1,
          -1,
          -1,
@@ -309,9 +307,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Text                    : UTF8_String;
       Category                : String;
       Highlight               : Boolean := False;
-      Highlight_Category      : GPS.Styles.UI.Style_Access := null;
-      Style_Category          : GPS.Styles.UI.Style_Access := null;
-      Warning_Category        : GPS.Styles.UI.Style_Access := null;
+      Styles                  : Builder_Message_Styles := (others => null);
       File_Location_Regexp    : String;
       File_Index_In_Regexp    : Integer;
       Line_Index_In_Regexp    : Integer;
@@ -319,6 +315,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Msg_Index_In_Regexp     : Integer;
       Style_Index_In_Regexp   : Integer;
       Warning_Index_In_Regexp : Integer;
+      Info_Index_In_Regexp    : Integer;
       Show_In_Locations       : Boolean)
    is
       function Get_File_Location return GNAT.Regpat.Pattern_Matcher;
@@ -395,6 +392,10 @@ package body GPS.Kernel.Messages.Tools_Output is
                         Get_Index
                           (GPS.Kernel.Preferences.Style_Pattern_Index,
                            Style_Index_In_Regexp);
+      Info_Index   : constant Integer :=
+                        Get_Index
+                          (GPS.Kernel.Preferences.Info_Pattern_Index,
+                           Info_Index_In_Regexp);
       Warning_Index : constant Integer :=
                         Get_Index
                           (GPS.Kernel.Preferences.Warning_Pattern_Index,
@@ -483,13 +484,16 @@ package body GPS.Kernel.Messages.Tools_Output is
             if Highlight then
                if Matched (Warning_Index) /= GNAT.Regpat.No_Match then
                   Weight := 1;
-                  C := Warning_Category;
+                  C := Styles (Warnings);
                elsif  Matched (Style_Index) /= GNAT.Regpat.No_Match then
                   Weight := 0;
-                  C := Style_Category;
+                  C := Styles (Style);
+               elsif  Matched (Info_Index) /= GNAT.Regpat.No_Match then
+                  Weight := 0;
+                  C := Styles (Info);
                else
                   Weight := 2;
-                  C := Highlight_Category;
+                  C := Styles (Errors);
                end if;
             else
                Weight := 0;

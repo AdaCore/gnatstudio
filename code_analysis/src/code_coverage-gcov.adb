@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -190,8 +190,8 @@ package body Code_Coverage.Gcov is
          Message.Set_Highlighting
            (Get_Or_Create_Style_Copy
               (Kernel,
-               Get_Name (Builder_Warnings_Style) & '/' & Uncovered_Category,
-               Builder_Warnings_Style));
+               Get_Name (Builder_Styles (Warnings)) & '/' & Uncovered_Category,
+               Builder_Styles (Warnings)));
       end if;
    end Add_Location_If_Uncovered;
 

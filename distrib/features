@@ -64,6 +64,12 @@ NF-51-K422-015 GPS: General GUI cleanup (2011-05-12)
   - The different Combo boxes used in GPS have been reviewed, and their
     appearance now correctly reflects whether they can be edited or not.
 
+NF-51-K421-021 GPS: Support for highlighting "info" messages (2011-07-04)
+
+  The messages sent by the compiler as "info" messages are now highlighted
+  with a different color, which is customizable through the "Messages" section
+  of the Preferences dialog.
+
 NF-51-K412-030 GPS: Add support to align on renames keyword (2011-04-17)
 
   The align plug-in has been enhanced to align on renames keyword.

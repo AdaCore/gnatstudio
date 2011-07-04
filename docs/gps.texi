@@ -11274,11 +11274,29 @@ Specifying -1 will display the whole file.
 @cindex color
 Color used to highlight text in the messages window.
 
-@item Color highlighting
+@item Errors highlighting
 @cindex errors
-Color used to highlight lines causing compilation errors/warnings in the
-source editors. When this color is set to white, the errors/warnings are
+Color used to highlight lines causing compilation errors, in the
+source editors. When this color is set to white, the errors are
 not highlighted. (@ref{Compilation/Build})
+
+@item Warnings highlighting
+@cindex errors
+Color used to highlight lines causing compilation warnings, in the
+source editors. When this color is set to white, the warnings are
+not highlighted.
+
+@item Style errors highlighting
+@cindex style
+Color used to highlight lines containing style errors, in the
+source editors. When this color is set to white, the errors are
+not highlighted.
+
+@item Compiler info highlighting
+@cindex style
+Color used to highlight lines containing compiler information, in the
+source editors. When this color is set to white, the information is
+not highlighted.
 
 @item File pattern
 @cindex file pattern
@@ -11310,6 +11328,10 @@ Index of the warning identifier in the file pattern.
 @item Style index
 @cindex column index
 Index of the style error identifier in the file pattern.
+
+@item Info index
+@cindex column index
+Index of the compiler info identifier in the file pattern.
 
 @end table
 

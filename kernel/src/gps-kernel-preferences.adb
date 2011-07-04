@@ -979,6 +979,15 @@ package body GPS.Kernel.Preferences is
          Default => "#FFFFAD",
          Page    => -"Messages");
 
+      Info_Src_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Info-Src-Highlight-Color",
+         Label   => -"Compiler info highlighting",
+         Doc     =>
+           -"Color used to highlight compiler info in the source editors",
+         Default => "#ADFFC2",
+         Page    => -"Messages");
+
       Search_Src_Highlight := Create
         (Manager => Kernel.Preferences,
          Name    => "Search-Src-Highlight-Color",
@@ -990,12 +999,12 @@ package body GPS.Kernel.Preferences is
 
       File_Pattern := Create
         (Manager => Kernel.Preferences,
-         Name    => "Messages-File-Regpat",
+         Name    => "Messages-File-Regpat-1",
          Label   => -"File pattern",
          Doc     =>
            -"Pattern used to detect file locations (e.g error messages)",
          Default =>
-           "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(\(style)?.*)",
+           "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(info)?(\(style)?.*)",
          Page => -"Messages");
 
       File_Pattern_Index := Create
@@ -1048,12 +1057,22 @@ package body GPS.Kernel.Preferences is
          Label   => -"Warning index",
          Page    => -"Messages");
 
-      Style_Pattern_Index := Create
+      Info_Pattern_Index := Create
         (Manager => Kernel.Preferences,
-         Name    => "Messages-Style-Regexp-Index",
+         Name    => "Messages-Info-Regexp-Index",
          Minimum => 0,
          Maximum => 99,
          Default => 7,
+         Doc     => -"Index of compiler info in the pattern, 0 if none",
+         Label   => -"Style index",
+         Page    => -"Messages");
+
+      Style_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Style-Regexp-Index-1",
+         Minimum => 0,
+         Maximum => 99,
+         Default => 8,
          Doc     => -"Index of style indication in the pattern, 0 if none",
          Label   => -"Style index",
          Page    => -"Messages");

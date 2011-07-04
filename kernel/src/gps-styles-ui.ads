@@ -42,12 +42,16 @@ package GPS.Styles.UI is
 
    --  These are the styles defined by default in GPS.
 
-   Search_Results_Style   : Style_Access;
-   Builder_Errors_Style   : Style_Access;
-   Builder_Warnings_Style : Style_Access;
-   Builder_Style_Style    : Style_Access;
+   type Builder_Message_Category is (Errors, Warnings, Style, Info);
+
+   type Builder_Message_Styles is
+     array (Builder_Message_Category) of Style_Access;
+
+   Builder_Styles : Builder_Message_Styles;
+
    Builder_Background_Style : Style_Access;
-   Builder_Shadow_Style   : Style_Access;
+   Builder_Shadow_Style     : Style_Access;
+   Search_Results_Style     : Style_Access;
 
    overriding procedure Set_Foreground
      (Style : not null access Style_Record; Color : String);

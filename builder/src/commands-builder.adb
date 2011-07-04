@@ -61,9 +61,7 @@ package body Commands.Builder is
 
    procedure Parse_Compiler_Output
      (Kernel           : Kernel_Handle;
-      Error_Category   : Style_Access;
-      Warning_Category : Style_Access;
-      Style_Category   : Style_Access;
+      Styles           : Builder_Message_Styles;
       Output           : String;
       Data             : Build_Callback_Data);
    --  Parse the output of build engine and insert the result
@@ -291,12 +289,10 @@ package body Commands.Builder is
    ---------------------------
 
    procedure Parse_Compiler_Output
-     (Kernel           : Kernel_Handle;
-      Error_Category   : Style_Access;
-      Warning_Category : Style_Access;
-      Style_Category   : Style_Access;
-      Output           : String;
-      Data             : Build_Callback_Data)
+     (Kernel : Kernel_Handle;
+      Styles : Builder_Message_Styles;
+      Output : String;
+      Data   : Build_Callback_Data)
    is
       Last  : Natural;
       Lines : Slice_Set;
@@ -342,9 +338,7 @@ package body Commands.Builder is
          Output,
          Category          => To_String (Data.Category_Name),
          Highlight         => True,
-         Highlight_Style   => Error_Category,
-         Style_Style       => Style_Category,
-         Warning_Style     => Warning_Category,
+         Styles            => Builder_Styles,
          Show_In_Locations => not Data.Background);
 
    exception
@@ -389,9 +383,7 @@ package body Commands.Builder is
       if Length (Buffer) /= 0 then
          Parse_Compiler_Output
            (Kernel           => Kernel_Handle (Kernel),
-            Error_Category   => Builder_Errors_Style,
-            Warning_Category => Builder_Warnings_Style,
-            Style_Category   => Builder_Style_Style,
+            Styles           => Builder_Styles,
             Output           => To_String (Buffer),
             Data             => Data);
       end if;

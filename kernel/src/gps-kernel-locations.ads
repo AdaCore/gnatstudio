@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2009-2010, AdaCore                 --
+--                  Copyright (C) 2009-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,6 +44,7 @@ package GPS.Kernel.Locations is
       Highlight_Category      : String := "Builder results";
       Style_Category          : String := "Style errors";
       Warning_Category        : String := "Builder warnings";
+      Info_Category           : String := "Compiler info";
       File_Location_Regexp    : String := "";
       File_Index_In_Regexp    : Integer := -1;
       Line_Index_In_Regexp    : Integer := -1;
@@ -51,6 +52,7 @@ package GPS.Kernel.Locations is
       Msg_Index_In_Regexp     : Integer := -1;
       Style_Index_In_Regexp   : Integer := -1;
       Warning_Index_In_Regexp : Integer := -1;
+      Info_Index_In_Regexp    : Integer := -1;
       Quiet                   : Boolean := False);
    --  Same as above, but the encoding for Text is unknown so we first try to
    --  convert it to UTF8

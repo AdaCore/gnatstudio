@@ -29,9 +29,8 @@ package GPS.Kernel.Messages.Tools_Output is
       Text              : UTF8_String;
       Category          : Glib.UTF8_String;
       Highlight         : Boolean := False;
-      Highlight_Style   : GPS.Styles.UI.Style_Access := null;
-      Style_Style       : GPS.Styles.UI.Style_Access := null;
-      Warning_Style     : GPS.Styles.UI.Style_Access := null;
+      Styles            : GPS.Styles.UI.Builder_Message_Styles :=
+        (others => null);
       Show_In_Locations : Boolean := True);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
@@ -44,9 +43,8 @@ package GPS.Kernel.Messages.Tools_Output is
       Text                    : String;
       Category                : String;
       Highlight               : Boolean := False;
-      Highlight_Category      : GPS.Styles.UI.Style_Access := null;
-      Style_Category          : GPS.Styles.UI.Style_Access := null;
-      Warning_Category        : GPS.Styles.UI.Style_Access := null;
+      Styles                  : GPS.Styles.UI.Builder_Message_Styles :=
+        (others => null);
       File_Location_Regexp    : String;
       File_Index_In_Regexp    : Integer;
       Line_Index_In_Regexp    : Integer;
@@ -54,6 +52,7 @@ package GPS.Kernel.Messages.Tools_Output is
       Msg_Index_In_Regexp     : Integer;
       Style_Index_In_Regexp   : Integer;
       Warning_Index_In_Regexp : Integer;
+      Info_Index_In_Regexp    : Integer;
       Show_In_Locations       : Boolean);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.

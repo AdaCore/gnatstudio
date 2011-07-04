@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2009-2010, AdaCore                 --
+--                  Copyright (C) 2009-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GPS.Styles.UI;             use GPS.Styles.UI;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Location_View;         use GPS.Location_View;
 with UTF8_Utils;                use UTF8_Utils;
@@ -60,6 +61,7 @@ package body GPS.Kernel.Locations is
       Highlight_Category      : String := "Builder results";
       Style_Category          : String := "Style errors";
       Warning_Category        : String := "Builder warnings";
+      Info_Category           : String := "Compiler info";
       File_Location_Regexp    : String := "";
       File_Index_In_Regexp    : Integer := -1;
       Line_Index_In_Regexp    : Integer := -1;
@@ -67,13 +69,15 @@ package body GPS.Kernel.Locations is
       Msg_Index_In_Regexp     : Integer := -1;
       Style_Index_In_Regexp   : Integer := -1;
       Warning_Index_In_Regexp : Integer := -1;
+      Info_Index_In_Regexp    : Integer := -1;
       Quiet                   : Boolean := False)
    is
       pragma Unreferenced (Quiet);
 
-      Output             : Unchecked_String_Access;
-      Len                : Natural;
-      Valid              : Boolean;
+      Output : Unchecked_String_Access;
+      Len    : Natural;
+      Valid  : Boolean;
+      Styles : Builder_Message_Styles;
    begin
       Unknown_To_UTF8 (Text, Output, Len, Valid);
       if not Valid then
@@ -83,18 +87,20 @@ package body GPS.Kernel.Locations is
             Mode => Console.Error);
 
       else
+         Styles (Errors) :=
+           Get_Or_Create_Style (Kernel, Highlight_Category, False);
+         Styles (Warnings) :=
+           Get_Or_Create_Style (Kernel, Warning_Category, False);
+         Styles (Style) := Get_Or_Create_Style (Kernel, Style_Category, False);
+         Styles (Info) := Get_Or_Create_Style (Kernel, Info_Category, False);
+
          if Output = null then
             GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
               (Kernel                  => Kernel,
                Text                    => Text,
                Category                => Category,
                Highlight               => Highlight,
-               Highlight_Category      =>
-                 Get_Or_Create_Style (Kernel, Highlight_Category, False),
-               Style_Category          =>
-                 Get_Or_Create_Style (Kernel, Style_Category, False),
-               Warning_Category        =>
-                 Get_Or_Create_Style (Kernel, Warning_Category, False),
+               Styles                  => Styles,
                File_Location_Regexp    => File_Location_Regexp,
                File_Index_In_Regexp    => File_Index_In_Regexp,
                Line_Index_In_Regexp    => Line_Index_In_Regexp,
@@ -102,6 +108,7 @@ package body GPS.Kernel.Locations is
                Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
                Style_Index_In_Regexp   => Style_Index_In_Regexp,
                Warning_Index_In_Regexp => Warning_Index_In_Regexp,
+               Info_Index_In_Regexp    => Info_Index_In_Regexp,
                Show_In_Locations       => True);
          else
             GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
@@ -109,12 +116,7 @@ package body GPS.Kernel.Locations is
                Text                    => Output (1 .. Len),
                Category                => Category,
                Highlight               => Highlight,
-               Highlight_Category      =>
-                 Get_Or_Create_Style (Kernel, Highlight_Category, False),
-               Style_Category          =>
-                 Get_Or_Create_Style (Kernel, Style_Category, False),
-               Warning_Category        =>
-                 Get_Or_Create_Style (Kernel, Warning_Category, False),
+               Styles                  => Styles,
                File_Location_Regexp    => File_Location_Regexp,
                File_Index_In_Regexp    => File_Index_In_Regexp,
                Line_Index_In_Regexp    => Line_Index_In_Regexp,
@@ -122,6 +124,7 @@ package body GPS.Kernel.Locations is
                Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
                Style_Index_In_Regexp   => Style_Index_In_Regexp,
                Warning_Index_In_Regexp => Warning_Index_In_Regexp,
+               Info_Index_In_Regexp    => Info_Index_In_Regexp,
                Show_In_Locations       => True);
             Free (Output);
          end if;
