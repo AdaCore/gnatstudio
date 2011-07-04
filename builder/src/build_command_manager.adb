@@ -597,6 +597,7 @@ package body Build_Command_Manager is
       Result  : Expansion_Result;
       Final   : Expansion_Result;
       Context : constant Selection_Context := Get_Current_Context (Kernel);
+      Failed  : Boolean := False;
 
    begin
       for J in CL'Range loop
@@ -606,9 +607,20 @@ package body Build_Command_Manager is
             return (Empty_Command_Line, No_File);
          end if;
 
-         Result := Expand_Arg
-           (Kernel, Context, Target, CL (J).all, Server,
-            Force_File, Main, Subdir, Background, Simulate, Background_Env);
+         declare
+            Arg : constant String := CL (J).all;
+         begin
+            Result := Expand_Arg
+              (Kernel, Context, Target, CL (J).all, Server,
+               Force_File, Main, Subdir, Background, Simulate, Background_Env);
+         exception
+            when Invalid_Argument =>
+               Insert
+                 (Kernel,
+                  (-"Could not expand argument in command line: ") & Arg,
+                  Mode => Console.Error);
+               Failed := True;
+         end;
 
          if Result.Dir /= No_File then
             Final.Dir := Result.Dir;
@@ -619,14 +631,14 @@ package body Build_Command_Manager is
          end loop;
       end loop;
 
-      return Final;
-
-   exception
-      when Invalid_Argument =>
+      if Failed then
          Insert
-           (Kernel, (-"Invalid context, cannot build"),
+           (Kernel, (-"Build command not launched."),
             Mode => Console.Error);
          return (Empty_Command_Line, No_File);
+      end if;
+
+      return Final;
    end Expand_Command_Line;
 
    -------------------
