@@ -60,14 +60,14 @@ NF-51-K422-015 GPS: General GUI cleanup (2011-05-12)
 
   Many graphical elements of the GPS interface have been refreshed. In
   particular:
-  - The close buttons in the title bars have been changed, and tabs now contain
-    a close button.
-  - The Search view has been also modified to present search options in a
-    clearer and nicer way.
-  - The browsers have been refreshed, with some added capabilities such as the
-    capability to export to PDF, and a more complete export to SVG.
-  - The different Combo boxes used in GPS have been reviewed, and their
-    appearance now correctly reflects whether they can be edited or not.
+    - The close buttons in the title bars have been changed, and tabs now
+      contain a close button.
+    - The Search view has been also modified to present search options in a
+      clearer and nicer way.
+    - The browsers have been refreshed, with some added capabilities such as
+      the capability to export to PDF, and a more complete export to SVG.
+    - The different Combo boxes used in GPS have been reviewed, and their
+      appearance now correctly reflects whether they can be edited or not.
 
 NF-51-K421-021 GPS: Support for highlighting "info" messages (2011-07-04)
 
