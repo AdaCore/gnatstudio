@@ -528,6 +528,8 @@ package body Browsers.Entities is
       Register_Command
         (Kernel, "methods",
          Class   => Get_Entity_Class (Kernel),
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "documentation",

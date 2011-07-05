@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K705-014 GPS: methods.py plugin now shows inherited methods (2011-07-05)
+
+  The methods.py plugin adds a contextual menu References/Methods when you
+  click on a tagged type. This menu will now also show inherited methods.
+
 NF-51-K628-037 Extend quick fix support for 'Valid (2011-07-01)
 
   The automatic code fixing capability has been enhanced to handle

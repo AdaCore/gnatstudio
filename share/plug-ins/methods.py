@@ -33,7 +33,7 @@ class Methods_Contextual (GPS.Contextual):
      ## recompute them if the menu is selected, and so that we can
      ## handle overriden methods as well
      if isinstance (context, GPS.EntityContext) and context.entity():
-        context.methods_list = context.entity().methods()
+        context.methods_list = context.entity().methods(include_inherited=True)
 
         ## if we have an access to a tagged type, behave as if we had the
         ## type itself
