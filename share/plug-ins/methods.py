@@ -5,6 +5,7 @@ type or C++ class (or an instance of these).
 The submenu will list all the primitive operations (aka methods) of
 that object, and clicking on any of these will jump to the body of
 that operation.
+
 Worth noting in this example is the way the list of methods is
 computed only once, and then stored in the context for later
 reuse.
@@ -41,13 +42,20 @@ class Methods_Contextual (GPS.Contextual):
            and context.entity().pointed_type():
            context.methods_list = context.entity().pointed_type().methods()
 
-        context.methods_list.sort()
         return context.methods_list != []
      else:
         return False
 
   def factory (self, context):
-     return [m.name() for m in context.methods_list]
+     own = set(context.entity().methods())  # overridden methods
+     context.methods_list.sort()
+     result = []
+     for m in context.methods_list:
+         if m in own:
+             result.append("%s" % m.name())
+         else:
+             result.append("%s (inherited)" % m.name())
+     return result
 
   def on_activate (self, context, choice, choice_index):
      decl = context.methods_list [choice_index].body()
