@@ -20,6 +20,8 @@ with Ada.Finalization;        use Ada.Finalization;
 with Ada.Streams;             use Ada.Streams;
 
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+
 with System;
 
 package body MI.Lexer is
@@ -44,6 +46,43 @@ package body MI.Lexer is
             return True;
       end case;
    end "=";
+
+   -----------------
+   -- Clear_Token --
+   -----------------
+
+   procedure Clear_Token (Token : in out Token_Type)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (String, String_Access);
+   begin
+      case Token.Code is
+         when Identifier | C_String =>
+            if Token.Text /= null then
+               Unchecked_Free (Token.Text);
+               Token.Text := null;
+            end if;
+
+         when others =>
+            null;  --  Nothing to do here.
+      end case;
+   end Clear_Token;
+
+   ---------------------
+   -- Clear_Token_List --
+   ---------------------
+
+   procedure Clear_Token_List (Tokens : in out Token_List)
+   is
+      Cursor : Token_Lists.Cursor := Token_Lists.First (Tokens);
+      Token  : Token_Type;
+   begin
+      while Token_Lists.Has_Element (Cursor) loop
+         Token := Token_Lists.Element (Cursor);
+         Clear_Token (Token);
+         Cursor := Token_Lists.Next (Cursor);
+      end loop;
+   end Clear_Token_List;
 
    ------------------------------------------
    -- Function Build_Tokens implementation --
@@ -402,6 +441,7 @@ package body MI.Lexer is
                                            Line   => Sh.Line,
                                            Column => Sh.Column));
                else  -- ...anything else is an invalid token.
+                  Clear_Token_List (List);
                   raise Lexer_Error with ("Unexpected token `("
                                           & To_String (Word)
                                           & ")', expected (gdb)");
@@ -416,6 +456,7 @@ package body MI.Lexer is
                Sh.Read_Identifier (C_String_Access);
 
                if C_String_Access.all = "" then
+                  Clear_Token_List (List);
                   raise Lexer_Error with ("Invalid token `" & C & "' at "
                                           & "line"
                                           & Positive'Image (Sh.Line)

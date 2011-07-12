@@ -77,6 +77,13 @@ package MI.Lexer is
 
    subtype Token_List is Token_Lists.List;
 
+   procedure Clear_Token (Token : in out Token_Type);
+   --  Release memory potentially allocated for the given token.
+
+   procedure Clear_Token_List (Tokens : in out Token_List);
+   --  Iterate over the token list, release memory allocated for each token,
+   --  and clear the list.
+
    function Build_Tokens (Input : Stream_Access) return Token_List;
    --  The main function of the lexer, which is fed with a stream, and return a
    --  list of tokens.
