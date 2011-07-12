@@ -1,4 +1,4 @@
-all: libgdbmi tests
+all: libgdbmi
 
 .PHONY: libgdbmi
 .PHONY: tests
