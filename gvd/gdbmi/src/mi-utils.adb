@@ -812,9 +812,43 @@ package body MI.Utils is
 
    procedure Process_Var_Assign
      (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Type) is
+      Var_Obj : in out Var_Obj_Type)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (String, String_Access);
+
+      Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair    : Result_Pair;
+
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_Assign";
+      --  The result of a -var-assign command is of the following simple form:
+      --         '^done,value="5"'
+
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         Die ("Invalid result-record for -var-assign");
+      end if;
+
+      --  It contains one and only one attribute: 'value'.
+
+      if Result.Results.Length /= 1 then
+         Die ("Ill-formatted done result record: expected one and only one "
+              & "attribute: value.");
+      end if;
+
+      Pair := Result_Pair_Lists.Element (Cursor);
+
+      if Pair.Variable.all /= "value" then
+         Die ("Ill-formatted done result record: expected attribute `value' "
+              & "followed by a c-string.");
+      end if;
+
+      Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
+
+      if Var_Obj.Value /= null then
+         Unchecked_Free (Var_Obj.Value);
+      end if;
+
+      Var_Obj.Value := String_Value (Pair.Value.all).Value;
    end Process_Var_Assign;
 
    ------------------------
@@ -832,11 +866,13 @@ package body MI.Utils is
    -- Process_Var_Set_Frozen --
    ----------------------------
 
-   procedure Process_Var_Set_Frozen
-     (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Type) is
+   procedure Process_Var_Set_Frozen (Result  : Result_Record) is
    begin
-      raise Not_Yet_Implemented_Error with "Process_Var_Set_Frozen";
+      --  The result of -var-set-frozen is simply a done result record: ^done.
+
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         Die ("Invalid result-record for -var-set-frozen");
+      end if;
    end Process_Var_Set_Frozen;
 
    ----------------------------------

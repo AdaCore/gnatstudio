@@ -231,11 +231,9 @@ package MI.Utils is
    --  Handles the result of the MI command `-var-update' and updates the
    --  Var_Obj_Type accordingly.
 
-   procedure Process_Var_Set_Frozen
-     (Result  : Result_Record;
-      Var_Obj : in out Var_Obj_Type);
-   --  Handles the result of the MI command `-var-set-frozen' and updates the
-   --  Var_Obj_Type accordingly.
+   procedure Process_Var_Set_Frozen (Result  : Result_Record);
+   --  Handles the result of the MI command `-var-set-frozen' and checks its
+   --  correctness.
 
    procedure Process_Var_Set_Update_Range
      (Result  : Result_Record;
