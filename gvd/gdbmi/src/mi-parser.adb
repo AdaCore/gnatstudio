@@ -650,8 +650,8 @@ package body MI.Parser is
 
             if not Is_Output_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("Syntax error, expected output "
-                                        & "follower");
+               raise Parser_Error with
+                  "Syntax error, expected output follower";
             end if;
          end loop;
 
@@ -690,8 +690,8 @@ package body MI.Parser is
 
             if not Is_Out_Of_Band_Record_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("Syntax error, expected "
-                                        & "out-of-band-record follower");
+               raise Parser_Error with
+                  "Syntax error, expected out-of-band-record follower";
             end if;
          end loop;
 
@@ -706,8 +706,8 @@ package body MI.Parser is
 
             if not Is_Result_Record_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("Syntax error, expected "
-                                        & "result-record follower");
+               raise Parser_Error with
+                  "Syntax error, expected result-record follower";
             end if;
          end if;
 
@@ -745,8 +745,8 @@ package body MI.Parser is
 
             if not Is_Async_Output_Record_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("Syntax error, expected "
-                                        & "async-output-record follower");
+               raise Parser_Error with
+                  "Syntax error, expected async-output-record follower";
             end if;
          else  --  Token MUST be first of Stream_Output_Record
             pragma Assert (Is_Stream_Output_Record_First (Token));
@@ -756,8 +756,8 @@ package body MI.Parser is
 
             if not Is_Stream_Output_Record_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("Syntax error, expected "
-                                        & "stream-output-record follower");
+               raise Parser_Error with
+                  "Syntax error, expected stream-output-record follower";
             end if;
          end if;
       end Parse_Out_Of_Band_Record;
@@ -802,8 +802,8 @@ package body MI.Parser is
          end if;
 
          if not Is_Known_Result_Class (Token.Text.all) then
-            Put_Line ("Warning: unknown result-class `" & Token.Text.all
-                      & "'");
+            Put_Line (Standard_Error, "Warning: unknown result-class `"
+                                      & Token.Text.all & "'");
          end if;
 
          Result.all.Class := Token.Text;
@@ -821,8 +821,8 @@ package body MI.Parser is
             begin
                if not Is_Result_First (Token) then
                   --  ??? try to do some error recovery
-                  raise Parser_Error with ("Unexpected token, expected result "
-                                           & "first");
+                  raise Parser_Error with
+                     "Unexpected token, expected result first";
                end if;
 
                Parse_Result (Tokens, Pair);
@@ -830,8 +830,8 @@ package body MI.Parser is
 
                if not Is_Result_Follower (Token) then
                   --  ??? try to do some error recovery
-                  raise Parser_Error with ("Unexpected token, expected result"
-                                           & "follower");
+                  raise Parser_Error with
+                     "Unexpected token, expected result follower";
                end if;
 
                Result.all.Results.Append (Pair);
@@ -878,8 +878,8 @@ package body MI.Parser is
             Result.all.R_Type := Async_Notify;
          else
             --  ??? try to do some error recovery
-            raise Parser_Error with ("Unexpected token, expected either "
-                                     & "'*', '+' or '='");
+            raise Parser_Error with
+               "Unexpected token, expected either '*', '+' or '='";
          end if;
 
          Step (Tokens, Token);
@@ -892,7 +892,8 @@ package body MI.Parser is
          end if;
 
          if not Is_Known_Async_Class (Token.Text.all) then
-            Put_Line ("Warning: unknown async-class `" & Token.Text.all & "'");
+            Put_Line (Standard_Error, "Warning: unknown async-class `"
+                                      & Token.Text.all & "'");
          end if;
 
          Result.all.Class := Token.Text;
@@ -912,8 +913,8 @@ package body MI.Parser is
             begin
                if not Is_Result_First (Token) then
                   --  ??? try to do some error recovery
-                  raise Parser_Error with ("Unexpected token, expected result "
-                                           & "first");
+                  raise Parser_Error with
+                     "Unexpected token, expected result first";
                end if;
 
                Parse_Result (Tokens, Pair);
@@ -921,8 +922,8 @@ package body MI.Parser is
 
                if not Is_Result_Follower (Token) then
                   --  ??? try to do some error recovery
-                  raise Parser_Error with ("Unexpected token, expected result "
-                                           & "follower");
+                  raise Parser_Error with
+                     "Unexpected token, expected result follower";
                end if;
 
                Result.all.Results.Append (Pair);
@@ -1092,8 +1093,8 @@ package body MI.Parser is
 
             if not Is_Result_Follower (Token) then
                --  ??? try to do some error recovery
-               raise Parser_Error with ("Syntax error, expected result "
-                                        & "follower");
+               raise Parser_Error with
+                  "Syntax error, expected result follower";
             end if;
 
             V_List.all.Value.Append (Result);
@@ -1148,8 +1149,8 @@ package body MI.Parser is
 
                   if not Is_Result_Follower (Token) then
                      --  ??? try to do some error recovery
-                     raise Parser_Error with ("Syntax error, expected result "
-                                              & "follower");
+                     raise Parser_Error with
+                        "Syntax error, expected result follower";
                   end if;
 
                   V_List.all.Value.Append (Result);
@@ -1174,8 +1175,8 @@ package body MI.Parser is
 
                   if not Is_Value_Follower (Token) then
                      --  ??? try to do some error recovery
-                     raise Parser_Error with ("Syntax error, expected value "
-                                              & "follower");
+                     raise Parser_Error with
+                        "Syntax error, expected value follower";
                   end if;
 
                   V_List.all.Value.Append (Val);
@@ -1189,8 +1190,8 @@ package body MI.Parser is
             end;
          else
             --  ??? try to do some error recovery
-            raise Parser_Error with ("Syntax error, expected result or value "
-                                     & "first");
+            raise Parser_Error with
+               "Syntax error, expected result or value first";
          end if;
 
          if Token.Code /= R_Bracket then
