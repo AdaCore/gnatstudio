@@ -251,6 +251,9 @@ package Toolchains is
    function Is_Native (This : Toolchain) return Boolean;
    --  Return true if this toolchain is a native toolchain.
 
+   function Is_Valid (This : Toolchain) return Boolean;
+   --  Tell if the toolchain is valid (is found in the PATH)
+
    procedure Set_Custom (This : Toolchain; Value : Boolean);
    --  Set whether this toolchain is a custom toolchain
 

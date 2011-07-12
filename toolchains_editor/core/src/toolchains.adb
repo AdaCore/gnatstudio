@@ -1246,6 +1246,15 @@ package body Toolchains is
       return This.Is_Native;
    end Is_Native;
 
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (This : Toolchain) return Boolean is
+   begin
+      return This.Is_Valid;
+   end Is_Valid;
+
    ----------------
    -- Set_Custom --
    ----------------
@@ -1946,19 +1955,9 @@ package body Toolchains is
          Add_Compiler (Native_Toolchain, "C++", "g++", From_Default);
       end if;
 
-      if Native_Toolchain.Is_Valid then
-         Manager.Add_Toolchain (Native_Toolchain);
+      Manager.Add_Toolchain (Native_Toolchain);
 
-         return Native_Toolchain;
-
-      else
-         --  set the flag, so that we don't try to analyze the native
-         --  toolchain later on
-         Unref (Native_Toolchain);
-         Manager.No_Native_Toolchain := True;
-
-         return null;
-      end if;
+      return Native_Toolchain;
    end Get_Native_Toolchain;
 
    --------------------------------
