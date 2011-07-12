@@ -97,10 +97,6 @@ class gnatCheckProc:
       if self.gnatCmd == "":
          self.gnatCmd = "gnat"
 
-      if GPS.is_server_local("Tools_Server"):
-         if not os.path.isfile (self.gnatCmd):
-            self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
-
       if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
          GPS.Console ("Messages").write ("Error: Could not initialize the gnatcheck module.\n")
