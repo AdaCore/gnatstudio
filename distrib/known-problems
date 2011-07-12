@@ -8,6 +8,13 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K711-021: Defining an alternate toolchain has no effect on gnatcheck
+  Problem:    When using the dual compilation toolchain feature of GPS, then
+              gnatcheck uses the compiler in 'compiler path' instead of the
+              compiler in 'tools path'.
+  Workaround: Manually update the paths before launching GPS for compilation
+              or for tool use.
+
 - K607-047: Jumping to distant delimitor does not work
   Problem:    When using the menu Navigate->Goto Matching Delimiter, if the
               matching delimiter is too far away (more than 8192 characters),
