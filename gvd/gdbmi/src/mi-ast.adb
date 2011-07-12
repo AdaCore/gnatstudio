@@ -15,6 +15,8 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 package body MI.Ast is
 
    ----------------------------------
@@ -26,6 +28,182 @@ package body MI.Ast is
       return Left.Variable.all = Right.Variable.all
         and then Left.Value.all = Right.Value.all;
    end "=";
+
+   --------------------
+   -- Free_MI_Record --
+   --------------------
+
+   procedure Free_MI_Record (Rec : in out MI_Record_Access)
+   is
+      procedure Unchecked_Free_Result_Record is
+         new Ada.Unchecked_Deallocation (Result_Record,
+                                         Result_Record_Access);
+
+      procedure Unchecked_Free_Stream_Output_Record is
+         new Ada.Unchecked_Deallocation (Stream_Output_Record,
+                                         Stream_Output_Record_Access);
+
+   begin
+      if Rec.all in Result_Record then
+         Unchecked_Free_Result_Record (Result_Record_Access (Rec));
+      else
+         pragma Assert (Rec.all in Stream_Output_Record);
+         Unchecked_Free_Stream_Output_Record
+           (Stream_Output_Record_Access (Rec));
+      end if;
+   end Free_MI_Record;
+
+   -----------------------
+   -- Clear_Record_List --
+   -----------------------
+
+   procedure Clear_Record_List (List : in out Record_List)
+   is
+      Cursor : Record_Lists.Cursor := Record_Lists.First (List);
+      Rec    : MI_Record_Access;
+   begin
+      while Record_Lists.Has_Element (Cursor) loop
+         Rec := Record_Lists.Element (Cursor);
+         Free_MI_Record (Rec);
+         Cursor := Record_Lists.Next (Cursor);
+      end loop;
+
+      List.Clear;
+   end Clear_Record_List;
+
+   -------------------
+   -- Free_MI_Value --
+   -------------------
+
+   procedure Free_MI_Value (Value : in out MI_Value_Access)
+   is
+      procedure Unchecked_Free_String_Value is
+         new Ada.Unchecked_Deallocation (String_Value, String_Value_Access);
+
+      procedure Unchecked_Free_Result_List_Value is
+         new Ada.Unchecked_Deallocation (Result_List_Value,
+                                         Result_List_Value_Access);
+
+      procedure Unchecked_Free_Value_List_Value is
+         new Ada.Unchecked_Deallocation (Value_List_Value,
+                                         Value_List_Value_Access);
+
+   begin
+      if Value.all in String_Value then
+         Unchecked_Free_String_Value (String_Value_Access (Value));
+      elsif Value.all in Result_List_Value then
+         Unchecked_Free_Result_List_Value (Result_List_Value_Access (Value));
+      else
+         pragma Assert (Value.all in Value_List_Value);
+         Unchecked_Free_Value_List_Value (Value_List_Value_Access (Value));
+      end if;
+   end Free_MI_Value;
+
+   ----------------------
+   -- Clear_Value_List --
+   ----------------------
+
+   procedure Clear_Value_List (List : in out Value_List)
+   is
+      Cursor : Value_Lists.Cursor := Value_Lists.First (List);
+      Value  : MI_Value_Access;
+   begin
+      while Value_Lists.Has_Element (Cursor) loop
+         Value := Value_Lists.Element (Cursor);
+         Free_MI_Value (Value);
+         Cursor := Value_Lists.Next (Cursor);
+      end loop;
+
+      List.Clear;
+   end Clear_Value_List;
+
+   -----------------------
+   -- Clear_Result_Pair --
+   -----------------------
+
+   procedure Clear_Result_Pair (Pair : in out Result_Pair)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (String, String_Access);
+   begin
+      if Pair.Variable /= null then
+         Unchecked_Free (Pair.Variable);
+         Pair.Variable := null;
+      end if;
+
+      if Pair.Value /= null then
+         Free_MI_Value (Pair.Value);
+         Pair.Value := null;
+      end if;
+   end Clear_Result_Pair;
+
+   ----------------------------
+   -- Clear_Result_Pair_List --
+   ----------------------------
+
+   procedure Clear_Result_Pair_List (List : in out Result_Pair_List)
+   is
+      Cursor : Result_Pair_Lists.Cursor := Result_Pair_Lists.First (List);
+      Pair   : Result_Pair;
+   begin
+      while Result_Pair_Lists.Has_Element (Cursor) loop
+         Pair := Result_Pair_Lists.Element (Cursor);
+         Clear_Result_Pair (Pair);
+         Cursor := Result_Pair_Lists.Next (Cursor);
+      end loop;
+
+      List.Clear;
+   end Clear_Result_Pair_List;
+
+   ------------------------
+   -- Clear_String_Value --
+   ------------------------
+
+   procedure Clear_String_Value (Value : in out String_Value)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (String, String_Access);
+   begin
+      if Value.Value /= null then
+         Unchecked_Free (Value.Value);
+         Value.Value := null;
+      end if;
+   end Clear_String_Value;
+
+   -----------------------------
+   -- Clear_Result_List_Value --
+   -----------------------------
+
+   procedure Clear_Result_List_Value (List : in out Result_List_Value) is
+   begin
+      Clear_Result_Pair_List (List.Value);
+   end Clear_Result_List_Value;
+
+   ----------------------------
+   -- Clear_Value_List_Value --
+   ----------------------------
+
+   procedure Clear_Value_List_Value (List : in out Value_List_Value) is
+   begin
+      Clear_Value_List (List.Value);
+   end Clear_Value_List_Value;
+
+   -------------------------
+   -- Clear_Result_Record --
+   -------------------------
+
+   procedure Clear_Result_Record (Rec : in out Result_Record)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (String, String_Access);
+   begin
+      if Rec.Class /= null then
+         Unchecked_Free (Rec.Class);
+         Rec.Class := null;
+      end if;
+
+      Clear_Result_Pair_List (Rec.Results);
+   end Clear_Result_Record;
 
    --------------------
    -- Accept_Visitor --

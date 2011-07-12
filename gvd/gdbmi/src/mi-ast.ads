@@ -71,6 +71,14 @@ package MI.Ast is
    --  Definition of a list of MI_Record_Access. Use of access type is
    --  mandatory since MI_Record is an abstract type.
 
+   procedure Free_MI_Record (Rec : in out MI_Record_Access);
+   --  Free the memory allocated for the given MI_Record as well as the memory
+   --  pointed by this very same access type (i.e. free both content and
+   --  container).
+
+   procedure Clear_Record_List (List : in out Record_List);
+   --  Free the each element of the list before clearing the list itself.
+
    -------------------------------------------
    -- Stream_Output_Record type declaration --
    -------------------------------------------
@@ -82,7 +90,7 @@ package MI.Ast is
       Content     : String_Access;
    end record;
 
-   type Stream_Output_Record_Access is access all Stream_Output_Record'Class;
+   type Stream_Output_Record_Access is access all Stream_Output_Record;
    --  Stream_Output_Record holds a GDB/MI stream output type (either console,
    --  target or log) and its associated message.  It derives from MI_Record
    --  interface and implements its abstract methods.
@@ -120,6 +128,14 @@ package MI.Ast is
    --  Definition of a list of MI_Value_Access, using access type because
    --  MI_Value is an abstract type.
 
+   procedure Free_MI_Value (Value : in out MI_Value_Access);
+   --  Free the memory allocated for the given MI_Value as well as the memory
+   --  pointed by this very same access type (i.e. free both content and
+   --  container).
+
+   procedure Clear_Value_List (List : in out Value_List);
+   --  Free the each element of the list before clearing the list itself.
+
    -----------------------------------
    -- Result_Pair type declaration  --
    -----------------------------------
@@ -142,6 +158,14 @@ package MI.Ast is
    --  Result_Pair since a MI record comes generally with a bunch of result
    --  pairs.
 
+   procedure Clear_Result_Pair (Pair : in out Result_Pair);
+   --  Releases memory allocated for the given Result_Pair and reset its access
+   --  types to the value null.
+
+   procedure Clear_Result_Pair_List (List : in out Result_Pair_List);
+   --  Releases memory allocated and stored in the given list, and clears this
+   --  list.
+
    -----------------------------------
    -- String_Value type declaration --
    -----------------------------------
@@ -150,7 +174,7 @@ package MI.Ast is
       Value : String_Access;
    end record;
 
-   type String_Value_Access is access all String_Value'Class;
+   type String_Value_Access is access all String_Value;
    --  Declaration of the String_Value type, derivating from the MI_Value
    --  interface.  This type only holds one string, corresponding to the
    --  'const' rule of the MI output grammar.
@@ -162,6 +186,10 @@ package MI.Ast is
    --  Implementaton of the MI_Value abstract method which basically only call
    --  the Visitor.Visit method on itself.
 
+   procedure Clear_String_Value (Value : in out String_Value);
+   --  Releases the memory allocated for the given String_Value and reset its
+   --  access type to the value null.
+
    ----------------------------------------
    -- Result_List_Value type declaration --
    ----------------------------------------
@@ -170,7 +198,7 @@ package MI.Ast is
       Value : Result_Pair_List;
    end record;
 
-   type Result_List_Value_Access is access all Result_List_Value'Class;
+   type Result_List_Value_Access is access all Result_List_Value;
    --  Declaration of the Result_List_Value type, implementing the MI_Value
    --  interface, and holding a list of Result_Pair(s).
 
@@ -181,6 +209,9 @@ package MI.Ast is
    --  Implementaton of the MI_Value abstract method which basically only call
    --  the Visitor.Visit method on itself.
 
+   procedure Clear_Result_List_Value (List : in out Result_List_Value);
+   --  Releases the memory allocated for the given Result_List_Value.
+
    ---------------------------------------
    -- Value_List_Value type declaration --
    ---------------------------------------
@@ -189,7 +220,7 @@ package MI.Ast is
       Value : Value_List;
    end record;
 
-   type Value_List_Value_Access is access all Value_List_Value'Class;
+   type Value_List_Value_Access is access all Value_List_Value;
    --  Declaration of the Value_List_Value type, which implements the MI_Value
    --  interface, and holds a list of Value(s).
 
@@ -199,6 +230,9 @@ package MI.Ast is
       V    : in out Visitor'Class);
    --  Implementaton of the MI_Value abstract method which basically only call
    --  the Visitor.Visit method on itself.
+
+   procedure Clear_Value_List_Value (List : in out Value_List_Value);
+   --  Releases the memory allocated for the given Value_List_Value.
 
    ------------------------------------
    -- Result_Record type declaration --
@@ -214,7 +248,7 @@ package MI.Ast is
       Results : Result_Pair_List;
    end record;
 
-   type Result_Record_Access is access all Result_Record'Class;
+   type Result_Record_Access is access all Result_Record;
    --  Declaration of a Result_Record type, which implements the MI_Record
    --  interface.  This type is one of the top level type in the MI output
    --  grammar and represent either a synchronous result record or an
@@ -230,6 +264,9 @@ package MI.Ast is
       V    : in out Visitor'Class);
    --  Implementaton of the MI_Value abstract method which basically only call
    --  the Visitor.Visit method on itself.
+
+   procedure Clear_Result_Record (Rec : in out Result_Record);
+   --  Releases the memory allocated for the given Result_Record.
 
    ---------------------------------------------------
    -- Visitor interface abstract method declaration --
