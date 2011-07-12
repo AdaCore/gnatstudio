@@ -1079,6 +1079,10 @@ package body Debugger.Gdb is
       end if;
 
       Close (Debugger_Root (Debugger.all)'Access);
+
+      --  Clear package-local cache.
+      Debugger.Cached_File := No_File;
+      Free (Debugger.Cached_Lines);
    end Close;
 
    -----------------------
@@ -2430,9 +2434,6 @@ package body Debugger.Gdb is
    -- Lines_With_Code --
    ---------------------
 
-   Cached_File  : GNATCOLL.VFS.Virtual_File;
-   Cached_Lines : Line_Array_Access;
-
    overriding procedure Lines_With_Code
      (Debugger : access Gdb_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
@@ -2498,7 +2499,7 @@ package body Debugger.Gdb is
       --  since Lines_With_Code is typically called for a line subset rather
       --  than the whole file.
 
-      if Cached_File = File then
+      if Debugger.Cached_File = File then
          Result := True;
       else
          Test_If_Has_Command
@@ -2526,19 +2527,20 @@ package body Debugger.Gdb is
                return;
             end if;
 
-            Cached_File := File;
+            Debugger.Cached_File := File;
             Result      := True;
             Pos         := S'First + List_Lines'Length;
             Parse_List_Lines (S (Pos .. S'Last), null, Num_Lines);
-            Free (Cached_Lines);
-            Cached_Lines := new Line_Array'(1 .. Num_Lines => False);
-            Parse_List_Lines (S (Pos .. S'Last), Cached_Lines, Num_Lines);
+            Free (Debugger.Cached_Lines);
+            Debugger.Cached_Lines := new Line_Array'(1 .. Num_Lines => False);
+            Parse_List_Lines
+              (S (Pos .. S'Last), Debugger.Cached_Lines, Num_Lines);
          end;
       end if;
 
       for Val in Lines'Range loop
-         if Val in Cached_Lines'Range then
-            Lines (Val) := Cached_Lines (Val);
+         if Val in Debugger.Cached_Lines'Range then
+            Lines (Val) := Debugger.Cached_Lines (Val);
          else
             Lines (Val) := False;
          end if;

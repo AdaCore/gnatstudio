@@ -8,12 +8,22 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- K711-021: Defining an alternate toolchain has no effect on gnatcheck
+- K711-021: GPS: Defining an alternate toolchain has no effect on gnatcheck
   Problem:    When using the dual compilation toolchain feature of GPS, then
               gnatcheck uses the compiler in 'compiler path' instead of the
               compiler in 'tools path'.
   Workaround: Manually update the paths before launching GPS for compilation
               or for tool use.
+
+- K708-027: GPS: Debugger information on lines wrong after recompilation
+  Problem:    When the Debugger preference "Show lines with code" is enabled,
+              if you load one file editor, then end launch a debugging session,
+              edit the file, recompile, and relaunch the debugging session, GPS
+              will show 'dots' on the side of lines that were executable in the
+              previous debugging session.
+  Workaround: Disable the preference "Show lines with code", or switch to
+              an editor for another file before launching the second debugging
+              session.
 
 - K607-047: Jumping to distant delimitor does not work
   Problem:    When using the menu Navigate->Goto Matching Delimiter, if the
