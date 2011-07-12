@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2009-2010, AdaCore                 --
+--                  Copyright (C) 2009-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Ada.Tags;
 
 with GNAT.Strings; use GNAT.Strings;
 
@@ -62,6 +64,7 @@ package body Src_Editor_Buffer.Debug is
    --  Dump text in buffer, replacing graphic characters with "." unless they
    --  are in tag Tag, in which case replace them with "#".
 
+   function To_String (Action : Line_Information_Access) return String;
    function To_String (Info : Line_Info_Width_Array_Access) return String;
    function To_String (Info : Line_Data_Record) return String;
    function To_String (X : GNAT.Strings.String_Access) return String;
@@ -94,6 +97,24 @@ package body Src_Editor_Buffer.Debug is
    begin
       return I (Integer (X));
    end I;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Action : Line_Information_Access) return String is
+   begin
+      if Action = null then
+         return "";
+      else
+         if Action.Associated_Command = null then
+            return To_String (Action.Text) &
+              To_String (Action.Tooltip_Text);
+         else
+            return Ada.Tags.External_Tag (Action.Associated_Command.all'Tag);
+         end if;
+      end if;
+   end To_String;
 
    ---------------
    -- To_String --
@@ -166,6 +187,7 @@ package body Src_Editor_Buffer.Debug is
          if Info (J).Messages.Is_Empty then
             Res := Res & "#"
               & ", "
+              & To_String (Info (J).Action)
               & "#";
          else
             Res := Res & "#"
@@ -434,6 +456,9 @@ package body Src_Editor_Buffer.Debug is
 
       Register_Command
         (Kernel, "debug_dump_editable_lines",
+         0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "debug_dump_side_info",
          0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "debug_dump_side_info_config",
