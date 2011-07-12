@@ -15,8 +15,6 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-
 package body MI.Ast is
 
    ----------------------------------
@@ -28,30 +26,6 @@ package body MI.Ast is
       return Left.Variable.all = Right.Variable.all
         and then Left.Value.all = Right.Value.all;
    end "=";
-
-   --------------------
-   -- Free_MI_Record --
-   --------------------
-
-   procedure Free_MI_Record (Rec : in out MI_Record_Access)
-   is
-      procedure Unchecked_Free_Result_Record is
-         new Ada.Unchecked_Deallocation (Result_Record,
-                                         Result_Record_Access);
-
-      procedure Unchecked_Free_Stream_Output_Record is
-         new Ada.Unchecked_Deallocation (Stream_Output_Record,
-                                         Stream_Output_Record_Access);
-
-   begin
-      if Rec.all in Result_Record then
-         Unchecked_Free_Result_Record (Result_Record_Access (Rec));
-      else
-         pragma Assert (Rec.all in Stream_Output_Record);
-         Unchecked_Free_Stream_Output_Record
-           (Stream_Output_Record_Access (Rec));
-      end if;
-   end Free_MI_Record;
 
    -----------------------
    -- Clear_Record_List --
@@ -70,34 +44,6 @@ package body MI.Ast is
 
       List.Clear;
    end Clear_Record_List;
-
-   -------------------
-   -- Free_MI_Value --
-   -------------------
-
-   procedure Free_MI_Value (Value : in out MI_Value_Access)
-   is
-      procedure Unchecked_Free_String_Value is
-         new Ada.Unchecked_Deallocation (String_Value, String_Value_Access);
-
-      procedure Unchecked_Free_Result_List_Value is
-         new Ada.Unchecked_Deallocation (Result_List_Value,
-                                         Result_List_Value_Access);
-
-      procedure Unchecked_Free_Value_List_Value is
-         new Ada.Unchecked_Deallocation (Value_List_Value,
-                                         Value_List_Value_Access);
-
-   begin
-      if Value.all in String_Value then
-         Unchecked_Free_String_Value (String_Value_Access (Value));
-      elsif Value.all in Result_List_Value then
-         Unchecked_Free_Result_List_Value (Result_List_Value_Access (Value));
-      else
-         pragma Assert (Value.all in Value_List_Value);
-         Unchecked_Free_Value_List_Value (Value_List_Value_Access (Value));
-      end if;
-   end Free_MI_Value;
 
    ----------------------
    -- Clear_Value_List --

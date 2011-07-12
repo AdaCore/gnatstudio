@@ -26,6 +26,8 @@
 with Ada.Containers.Doubly_Linked_Lists; use Ada.Containers;
 with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
 
+with Ada.Unchecked_Deallocation;
+
 package MI.Ast is
 
    --  The AST is composed of the following hierarchy:
@@ -71,7 +73,8 @@ package MI.Ast is
    --  Definition of a list of MI_Record_Access. Use of access type is
    --  mandatory since MI_Record is an abstract type.
 
-   procedure Free_MI_Record (Rec : in out MI_Record_Access);
+   procedure Free_MI_Record is
+      new Ada.Unchecked_Deallocation (MI_Record'Class, MI_Record_Access);
    --  Free the memory allocated for the given MI_Record as well as the memory
    --  pointed by this very same access type (i.e. free both content and
    --  container).
@@ -90,7 +93,7 @@ package MI.Ast is
       Content     : String_Access;
    end record;
 
-   type Stream_Output_Record_Access is access all Stream_Output_Record;
+   type Stream_Output_Record_Access is access all Stream_Output_Record'Class;
    --  Stream_Output_Record holds a GDB/MI stream output type (either console,
    --  target or log) and its associated message.  It derives from MI_Record
    --  interface and implements its abstract methods.
@@ -128,7 +131,8 @@ package MI.Ast is
    --  Definition of a list of MI_Value_Access, using access type because
    --  MI_Value is an abstract type.
 
-   procedure Free_MI_Value (Value : in out MI_Value_Access);
+   procedure Free_MI_Value is
+      new Ada.Unchecked_Deallocation (MI_Value'Class, MI_Value_Access);
    --  Free the memory allocated for the given MI_Value as well as the memory
    --  pointed by this very same access type (i.e. free both content and
    --  container).
@@ -248,7 +252,7 @@ package MI.Ast is
       Results : Result_Pair_List;
    end record;
 
-   type Result_Record_Access is access all Result_Record;
+   type Result_Record_Access is access all Result_Record'Class;
    --  Declaration of a Result_Record type, which implements the MI_Record
    --  interface.  This type is one of the top level type in the MI output
    --  grammar and represent either a synchronous result record or an
