@@ -586,6 +586,11 @@ package body MI.Parser is
       --  out-of-band-record =>
       --   async-output-record | stream-output-record
 
+      procedure Parse_Results_Pair
+        (Tokens : in out Token_List;
+         Result : Result_Record_Access);
+      --  ("," result)* nl
+
       procedure Parse_Result_Record
         (Tokens : in out Token_List;
          Result : out Result_Record_Access);
@@ -895,6 +900,66 @@ package body MI.Parser is
          end if;
       end Parse_Out_Of_Band_Record;
 
+      ------------------------
+      -- Parse_Results_Pair --
+      ------------------------
+
+      procedure Parse_Results_Pair
+        (Tokens : in out Token_List;
+         Result : Result_Record_Access)
+      is
+         Token  : Token_Type;
+      begin
+         --  ("," result)* nl
+
+         loop
+            Token := Look_Ahead (Tokens);
+            exit when Token.Code /= Comma;
+            Step (Tokens, Token);
+
+            Parse_Result_Pair : declare
+               Pair : Result_Pair;
+            begin
+               if not Is_Result_First (Token) then
+                  --  ??? should free Result
+
+                  --  try recover the current state to a known one.
+                  Clear_Token (Token);
+                  Eat (Tokens);
+                  Try_Recover_Or_Die (Tokens, Is_Result_First'Access,
+                     "Unexpected token, expected result first");
+               end if;
+
+               Parse_Result (Tokens, Pair);
+               Token := Look_Ahead (Tokens);
+
+               if not Is_Result_Follower (Token) then
+                  --  ??? should free Result
+
+                  --  try recover the current state to a known one.
+                  Clear_Token (Token);
+                  Eat (Tokens);
+                  Try_Recover_Or_Die (Tokens, Is_Result_Follower'Access,
+                     "Unexpected token, expected result follower");
+               end if;
+
+               Result.all.Results.Append (Pair);
+            end Parse_Result_Pair;
+         end loop;
+
+         if Token.Code /= Newline then
+            --  ??? should free Result
+
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory used for this token
+            Eat (Tokens);         --  ... and skip it
+            Try_Recover_Or_Die (Tokens, Newline,
+                                "Unexpected token, expected newline");
+         end if;
+
+         Eat (Tokens);
+      end Parse_Results_Pair;
+
       -------------------------
       -- Parse_Result_Record --
       -------------------------
@@ -920,6 +985,8 @@ package body MI.Parser is
          --  "^" result-class ("," result)* nl
 
          if Token.Code /= Caret then
+            --  ??? should free Result
+
             --  try recover the current state to a known one.
             Clear_Token (Token);  --  Release the memory used for this token
             Eat (Tokens);         --  ... and skip it
@@ -933,6 +1000,8 @@ package body MI.Parser is
          --  result-class ("," result)* nl
 
          if Token.Code /= Identifier then
+            --  ??? should free Result
+
             --  try recover the current state to a known one.
             Clear_Token (Token);  --  Release the memory used for this token
             Eat (Tokens);         --  ... and skip it
@@ -949,47 +1018,7 @@ package body MI.Parser is
          Eat (Tokens);
 
          --  ("," result)* nl
-
-         loop
-            Token := Look_Ahead (Tokens);
-            exit when Token.Code /= Comma;
-            Step (Tokens, Token);
-
-            Parse_Result_Pair : declare
-               Pair : Result_Pair;
-            begin
-               if not Is_Result_First (Token) then
-                  --  try recover the current state to a known one.
-                  Clear_Token (Token);
-                  Eat (Tokens);
-                  Try_Recover_Or_Die (Tokens, Is_Result_First'Access,
-                     "Unexpected token, expected result first");
-               end if;
-
-               Parse_Result (Tokens, Pair);
-               Token := Look_Ahead (Tokens);
-
-               if not Is_Result_Follower (Token) then
-                  --  try recover the current state to a known one.
-                  Clear_Token (Token);
-                  Eat (Tokens);
-                  Try_Recover_Or_Die (Tokens, Is_Result_Follower'Access,
-                     "Unexpected token, expected result follower");
-               end if;
-
-               Result.all.Results.Append (Pair);
-            end Parse_Result_Pair;
-         end loop;
-
-         if Token.Code /= Newline then
-            --  try recover the current state to a known one.
-            Clear_Token (Token);  --  Release the memory used for this token
-            Eat (Tokens);         --  ... and skip it
-            Try_Recover_Or_Die (Tokens, Newline,
-                                "Unexpected token, expected newline");
-         end if;
-
-         Eat (Tokens);
+         Parse_Results_Pair (Tokens, Result);
       end Parse_Result_Record;
 
       -------------------------------
@@ -1023,6 +1052,7 @@ package body MI.Parser is
          elsif Token.Code = Equal_Sign then
             Result.all.R_Type := Async_Notify;
          else
+            --  ??? should free Result
             --  ??? try to do some error recovery
             raise Parser_Error with
                "Unexpected token, expected either '*', '+' or '='";
@@ -1033,6 +1063,8 @@ package body MI.Parser is
          --  async-class ("," result)* nl
 
          if Token.Code /= Identifier then
+            --  ??? should free Result
+
             --  try recover the current state to a known one.
             Clear_Token (Token);  --  Release the memory used for this token
             Eat (Tokens);         --  ... and skip it
@@ -1048,50 +1080,8 @@ package body MI.Parser is
          Result.all.Class := Token.Text;
          Eat (Tokens);
 
-         --  ??? split the following section to an independent function
-         --  since this is used by both Parse_Result_Record and
-         --  Parse_Async_Output_Record.  Say, Parse_Results_Pair.
-
-         loop
-            Token := Look_Ahead (Tokens);
-            exit when Token.Code /= Comma;
-            Step (Tokens, Token);
-
-            Parse_Result_Pair : declare
-               Pair : Result_Pair;
-            begin
-               if not Is_Result_First (Token) then
-                  --  try recover the current state to a known one.
-                  Clear_Token (Token);  --  Release the memory
-                  Eat (Tokens);         --  ... and skip token
-                  Try_Recover_Or_Die (Tokens, Is_Result_First'Access,
-                     "Unexpected token, expected result first");
-               end if;
-
-               Parse_Result (Tokens, Pair);
-               Token := Look_Ahead (Tokens);
-
-               if not Is_Result_Follower (Token) then
-                  --  try recover the current state to a known one.
-                  Clear_Token (Token);  --  Release the memory
-                  Eat (Tokens);         --  ... and skip token
-                  Try_Recover_Or_Die (Tokens, Is_Result_Follower'Access,
-                     "Unexpected token, expected result follower");
-               end if;
-
-               Result.all.Results.Append (Pair);
-            end Parse_Result_Pair;
-         end loop;
-
-         if Token.Code /= Newline then
-            --  try recover the current state to a known one.
-            Clear_Token (Token);  --  Release the memory
-            Eat (Tokens);         --  ... and skip token
-            Try_Recover_Or_Die (Tokens, Newline,
-                                "Unexpected token, expected newline");
-         end if;
-
-         Eat (Tokens);
+         --  ("," result)* nl
+         Parse_Results_Pair (Tokens, Result);
       end Parse_Async_Output_Record;
 
       --------------------------------
