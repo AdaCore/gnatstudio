@@ -163,6 +163,28 @@ package body MI.Parser is
       --  This function checks whether or not the given token is one of the
       --  known `async-class' possible string, i.e.
 
+      procedure Drop_Tokens_Until
+        (Tokens   : in out Token_List;
+         Callback : access function (Token : Token_Type) return Boolean);
+      --  Drop tokens from the Token_List until Predicate returns true,
+      --  providing any element left in the list.
+      --  This subprogram release the memory associated with each token.
+      --
+      --  ??? This sub-program would have been better implemented as a function
+      --  returning a boolean to notify whether or not the predicate was
+      --  successful or if we had exhausted the list.
+
+      procedure Drop_Tokens_Until
+        (Tokens : in out Token_List;
+         Code   : Token_Code);
+      --  Drop tokens from the Token_List until Predicate returns true,
+      --  providing any element left in the list.
+      --  This subprogram release the memory associated with each token.
+      --
+      --  ??? This sub-program would have been better implemented as a function
+      --  returning a boolean to notify whether or not the predicate was
+      --  successful or if we had exhausted the list.
+
       -------------------
       -- Is_Unit_First --
       -------------------
@@ -475,6 +497,44 @@ package body MI.Parser is
          return Token = "stopped";
       end Is_Known_Async_Class;
 
+      -----------------------
+      -- Drop_Tokens_Until --
+      -----------------------
+
+      procedure Drop_Tokens_Until
+        (Tokens   : in out Token_List;
+         Callback : access function (Token : Token_Type) return Boolean)
+      is
+         Cursor   : Token_Lists.Cursor := Token_Lists.First (Tokens);
+         Token    : Token_Type;
+      begin
+         while Token_Lists.Has_Element (Cursor) loop
+            Token := Token_Lists.Element (Cursor);
+            exit when Callback (Token);
+            Clear_Token (Token);
+            Cursor := Token_Lists.Next (Cursor);
+         end loop;
+      end Drop_Tokens_Until;
+
+      -----------------------
+      -- Drop_Tokens_Until --
+      -----------------------
+
+      procedure Drop_Tokens_Until
+        (Tokens   : in out Token_List;
+         Code     : Token_Code)
+      is
+         Cursor   : Token_Lists.Cursor := Token_Lists.First (Tokens);
+         Token    : Token_Type;
+      begin
+         while Token_Lists.Has_Element (Cursor) loop
+            Token := Token_Lists.Element (Cursor);
+            exit when Token.Code = Code;
+            Clear_Token (Token);
+            Cursor := Token_Lists.Next (Cursor);
+         end loop;
+      end Drop_Tokens_Until;
+
       ---------------------------------
       -- Parse functions declaration --
       ---------------------------------
@@ -493,6 +553,20 @@ package body MI.Parser is
       --  Look two tokens ahead (since the grammar is LL(2)) to determine
       --  whether the current expression is a result-record or an
       --  out-of-band-record.
+
+      procedure Try_Recover_Or_Die
+        (Tokens    : in out Token_List;
+         Callback  : access function (Token : Token_Type) return Boolean;
+         Error_Msg : String);
+      --  Try to recover from an unknown state to an expected one. Raised an
+      --  Parser_Error exception with the given message on a failed attempt.
+
+      procedure Try_Recover_Or_Die
+        (Tokens    : in out Token_List;
+         Code      : Token_Code;
+         Error_Msg : String);
+      --  Try to recover from an unknown state to an expected one. Raised an
+      --  Parser_Error exception with the given message on a failed attempt.
 
       procedure Parse_Unit
         (Tokens : in out Token_List;
@@ -631,6 +705,38 @@ package body MI.Parser is
                 (First.Code = Token_No and then Second.Code = Caret);
       end Is_Result_Record;
 
+      ------------------------
+      -- Try_Recover_Or_Die --
+      ------------------------
+
+      procedure Try_Recover_Or_Die
+        (Tokens    : in out Token_List;
+         Callback  : access function (Token : Token_Type) return Boolean;
+         Error_Msg : String) is
+      begin
+         Drop_Tokens_Until (Tokens, Callback);
+
+         if Tokens.Is_Empty then
+            raise Parser_Error with Error_Msg;
+         end if;
+      end Try_Recover_Or_Die;
+
+      ------------------------
+      -- Try_Recover_Or_Die --
+      ------------------------
+
+      procedure Try_Recover_Or_Die
+        (Tokens    : in out Token_List;
+         Code      : Token_Code;
+         Error_Msg : String) is
+      begin
+         Drop_Tokens_Until (Tokens, Code);
+
+         if Tokens.Is_Empty then
+            raise Parser_Error with Error_Msg;
+         end if;
+      end Try_Recover_Or_Die;
+
       ----------------
       -- Parse_Unit --
       ----------------
@@ -649,15 +755,19 @@ package body MI.Parser is
             Token := Look_Ahead (Tokens);
 
             if not Is_Output_Follower (Token) then
-               --  ??? try to do some error recovery
-               raise Parser_Error with
-                  "Syntax error, expected output follower";
+               --  try recover the current state to a known one.
+               Clear_Token (Token);  --  Release the memory used for this token
+               Eat (Tokens);         --  ... and skip it
+               Try_Recover_Or_Die (Tokens, Is_Output_Follower'Access,
+                                   "Syntax error, expected output follower");
             end if;
          end loop;
 
          if Token.Code /= End_Of_File then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Garbage at the end of expression";
+            --  There're few things we can do. The least constrained of all is
+            --  probably to just display a simple warning message.
+            Clear_Token_List (Tokens);
+            Put_Line (Standard_Error, "Garbage at the end of expression");
          end if;
       end Parse_Unit;
 
@@ -689,9 +799,14 @@ package body MI.Parser is
             Token := Look_Ahead (Tokens);
 
             if not Is_Out_Of_Band_Record_Follower (Token) then
-               --  ??? try to do some error recovery
-               raise Parser_Error with
-                  "Syntax error, expected out-of-band-record follower";
+               --  try recover the current state to a known one.
+               Clear_Token (Token);  --  Release the memory used for this token
+               Eat (Tokens);         --  ... and skip it
+               Try_Recover_Or_Die
+                 (Tokens    => Tokens,
+                  Callback  => Is_Out_Of_Band_Record_Follower'Access,
+                  Error_Msg => ("Syntax error, expected out-of-band-record "
+                                & "follower"));
             end if;
          end loop;
 
@@ -705,22 +820,30 @@ package body MI.Parser is
             Token := Look_Ahead (Tokens);
 
             if not Is_Result_Record_Follower (Token) then
-               --  ??? try to do some error recovery
-               raise Parser_Error with
-                  "Syntax error, expected result-record follower";
+               --  try recover the current state to a known one.
+               Clear_Token (Token);  --  Release the memory used for this token
+               Eat (Tokens);         --  ... and skip it
+               Try_Recover_Or_Die (Tokens, Is_Result_Record_Follower'Access,
+                  "Syntax error, expected result-record follower");
             end if;
          end if;
 
          if Token.Code /= Gdb_Prompt then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Unexpected token, expected '(gdb)'";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory used for this token
+            Eat (Tokens);         --  ... and skip it
+            Try_Recover_Or_Die (Tokens, Gdb_Prompt,
+                                "Unexpected token, expected '(gdb)'");
          end if;
 
          Step (Tokens, Token);
 
          if Token.Code /= Newline then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Unexpected token, expected newline";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory used for this token
+            Eat (Tokens);         --  ... and skip it
+            Try_Recover_Or_Die (Tokens, Gdb_Prompt,
+                                "Unexpected token, expected newline");
          end if;
 
          Eat (Tokens);
@@ -744,9 +867,14 @@ package body MI.Parser is
             Token := Look_Ahead (Tokens);
 
             if not Is_Async_Output_Record_Follower (Token) then
-               --  ??? try to do some error recovery
-               raise Parser_Error with
-                  "Syntax error, expected async-output-record follower";
+               --  try recover the current state to a known one.
+               Clear_Token (Token);  --  Release the memory used for this token
+               Eat (Tokens);         --  ... and skip it
+               Try_Recover_Or_Die (
+                  Tokens    => Tokens,
+                  Callback  => Is_Async_Output_Record_Follower'Access,
+                  Error_Msg => ("Syntax error, expected async-output-record "
+                                & "follower"));
             end if;
          else  --  Token MUST be first of Stream_Output_Record
             pragma Assert (Is_Stream_Output_Record_First (Token));
@@ -755,9 +883,14 @@ package body MI.Parser is
             Token := Look_Ahead (Tokens);
 
             if not Is_Stream_Output_Record_Follower (Token) then
-               --  ??? try to do some error recovery
-               raise Parser_Error with
-                  "Syntax error, expected stream-output-record follower";
+               --  try recover the current state to a known one.
+               Clear_Token (Token);  --  Release the memory used for this token
+               Eat (Tokens);         --  ... and skip it
+               Try_Recover_Or_Die (
+                  Tokens    => Tokens,
+                  Callback  => Is_Stream_Output_Record_Follower'Access,
+                  Error_Msg => ("Syntax error, expected stream-output-record "
+                                & "follower"));
             end if;
          end if;
       end Parse_Out_Of_Band_Record;
@@ -787,8 +920,11 @@ package body MI.Parser is
          --  "^" result-class ("," result)* nl
 
          if Token.Code /= Caret then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Unexpected token, expected '^'";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory used for this token
+            Eat (Tokens);         --  ... and skip it
+            Try_Recover_Or_Die (Tokens, Caret,
+                                "Unexpected token, expected '^'");
          end if;
 
          Result.all.R_Type := Sync_Result;
@@ -797,8 +933,11 @@ package body MI.Parser is
          --  result-class ("," result)* nl
 
          if Token.Code /= Identifier then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Unexpected token, expected result-class";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory used for this token
+            Eat (Tokens);         --  ... and skip it
+            Try_Recover_Or_Die (Tokens, Identifier,
+                                "Unexpected token, expected result-class");
          end if;
 
          if not Is_Known_Result_Class (Token.Text.all) then
@@ -820,18 +959,22 @@ package body MI.Parser is
                Pair : Result_Pair;
             begin
                if not Is_Result_First (Token) then
-                  --  ??? try to do some error recovery
-                  raise Parser_Error with
-                     "Unexpected token, expected result first";
+                  --  try recover the current state to a known one.
+                  Clear_Token (Token);
+                  Eat (Tokens);
+                  Try_Recover_Or_Die (Tokens, Is_Result_First'Access,
+                     "Unexpected token, expected result first");
                end if;
 
                Parse_Result (Tokens, Pair);
                Token := Look_Ahead (Tokens);
 
                if not Is_Result_Follower (Token) then
-                  --  ??? try to do some error recovery
-                  raise Parser_Error with
-                     "Unexpected token, expected result follower";
+                  --  try recover the current state to a known one.
+                  Clear_Token (Token);
+                  Eat (Tokens);
+                  Try_Recover_Or_Die (Tokens, Is_Result_Follower'Access,
+                     "Unexpected token, expected result follower");
                end if;
 
                Result.all.Results.Append (Pair);
@@ -839,8 +982,11 @@ package body MI.Parser is
          end loop;
 
          if Token.Code /= Newline then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Unexpected token, expected newline";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory used for this token
+            Eat (Tokens);         --  ... and skip it
+            Try_Recover_Or_Die (Tokens, Newline,
+                                "Unexpected token, expected newline");
          end if;
 
          Eat (Tokens);
@@ -887,8 +1033,11 @@ package body MI.Parser is
          --  async-class ("," result)* nl
 
          if Token.Code /= Identifier then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Unexpected token, expected async-class";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory used for this token
+            Eat (Tokens);         --  ... and skip it
+            Try_Recover_Or_Die (Tokens, Identifier,
+                                "Unexpected token, expected async-class");
          end if;
 
          if not Is_Known_Async_Class (Token.Text.all) then
@@ -912,18 +1061,22 @@ package body MI.Parser is
                Pair : Result_Pair;
             begin
                if not Is_Result_First (Token) then
-                  --  ??? try to do some error recovery
-                  raise Parser_Error with
-                     "Unexpected token, expected result first";
+                  --  try recover the current state to a known one.
+                  Clear_Token (Token);  --  Release the memory
+                  Eat (Tokens);         --  ... and skip token
+                  Try_Recover_Or_Die (Tokens, Is_Result_First'Access,
+                     "Unexpected token, expected result first");
                end if;
 
                Parse_Result (Tokens, Pair);
                Token := Look_Ahead (Tokens);
 
                if not Is_Result_Follower (Token) then
-                  --  ??? try to do some error recovery
-                  raise Parser_Error with
-                     "Unexpected token, expected result follower";
+                  --  try recover the current state to a known one.
+                  Clear_Token (Token);  --  Release the memory
+                  Eat (Tokens);         --  ... and skip token
+                  Try_Recover_Or_Die (Tokens, Is_Result_Follower'Access,
+                     "Unexpected token, expected result follower");
                end if;
 
                Result.all.Results.Append (Pair);
@@ -931,8 +1084,11 @@ package body MI.Parser is
          end loop;
 
          if Token.Code /= Newline then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Unexpected token, expected newline";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory
+            Eat (Tokens);         --  ... and skip token
+            Try_Recover_Or_Die (Tokens, Newline,
+                                "Unexpected token, expected newline");
          end if;
 
          Eat (Tokens);
@@ -965,16 +1121,22 @@ package body MI.Parser is
          Step (Tokens, Token);
 
          if Token.Code /= C_String then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Syntax error, expected c-string";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory
+            Eat (Tokens);         --  ... and skip token
+            Try_Recover_Or_Die (Tokens, C_String,
+                                "Syntax error, expected c-string");
          end if;
 
          Result.all.Content := Token.Text;
          Step (Tokens, Token);
 
          if Token.Code /= Newline then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Syntax error, expected newline";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory
+            Eat (Tokens);         --  ... and skip token
+            Try_Recover_Or_Die (Tokens, Newline,
+                                "Syntax error, expected newline");
          end if;
 
          Eat (Tokens);
@@ -1005,17 +1167,22 @@ package body MI.Parser is
          Step (Tokens, Token);
 
          if not Is_Value_First (Token) then
-            --  ??? try to do some error recovery
-            --  For example, read until find a valid value first
-            raise Parser_Error with "Unexpected token, expected value first";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory
+            Eat (Tokens);         --  ... and skip token
+            Try_Recover_Or_Die (Tokens, Is_Value_First'Access,
+                                "Unexpected token, expected value first");
          end if;
 
          Parse_Value (Tokens, Result.Value);
          Token := Look_Ahead (Tokens);
 
          if not Is_Value_Follower (Token) then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Syntax error, expected value follower";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory
+            Eat (Tokens);         --  ... and skip token
+            Try_Recover_Or_Die (Tokens, Is_Value_Follower'Access,
+                                "Syntax error, expected value follower");
          end if;
       end Parse_Result;
 
@@ -1040,8 +1207,11 @@ package body MI.Parser is
             Token := Look_Ahead (Tokens);
 
             if not Is_List_Follower (Look_Ahead (Tokens)) then
-               --  ??? try to do some error recovery
-               raise Parser_Error with "Syntax error, expected list follower";
+               --  try recover the current state to a known one.
+               Clear_Token (Token);  --  Release the memory
+               Eat (Tokens);         --  ... and skip token
+               Try_Recover_Or_Die (Tokens, Is_List_Follower'Access,
+                                   "Syntax error, expected list follower");
             end if;
          else  -- Token.Code MUST be L_Brace
             pragma Assert (Token.Code = L_Brace);
@@ -1049,8 +1219,11 @@ package body MI.Parser is
             Token := Look_Ahead (Tokens);
 
             if not Is_Tuple_Follower (Look_Ahead (Tokens)) then
-               --  ??? try to do some error recovery
-               raise Parser_Error with "Syntax error, expected tuple follower";
+               --  try recover the current state to a known one.
+               Clear_Token (Token);  --  Release the memory
+               Eat (Tokens);         --  ... and skip token
+               Try_Recover_Or_Die (Tokens, Is_Tuple_Follower'Access,
+                                   "Syntax error, expected tuple follower");
             end if;
          end if;
       end Parse_Value;
@@ -1081,8 +1254,11 @@ package body MI.Parser is
          end if;
 
          if not Is_Result_First (Token) then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Syntax error, expected result first";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory
+            Eat (Tokens);         --  ... and skip token
+            Try_Recover_Or_Die (Tokens, Is_Result_First'Access,
+                                "Syntax error, expected result first");
          end if;
 
          V_List := new Result_List_Value;
@@ -1092,9 +1268,11 @@ package body MI.Parser is
             Token := Look_Ahead (Tokens);
 
             if not Is_Result_Follower (Token) then
-               --  ??? try to do some error recovery
-               raise Parser_Error with
-                  "Syntax error, expected result follower";
+               --  try recover the current state to a known one.
+               Clear_Token (Token);  --  Release the memory
+               Eat (Tokens);         --  ... and skip token
+               Try_Recover_Or_Die (Tokens, Is_Result_Follower'Access,
+                                   "Syntax error, expected result follower");
             end if;
 
             V_List.all.Value.Append (Result);
@@ -1105,8 +1283,11 @@ package body MI.Parser is
          end loop;
 
          if Token.Code /= R_Brace then
-            --  ??? try to do some error recovery
-            raise Parser_Error with "Unexpected token, expected '}'";
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory
+            Eat (Tokens);         --  ... and skip token
+            Try_Recover_Or_Die (Tokens, R_Brace,
+                                "Unexpected token, expected '}'");
          end if;
 
          Eat (Tokens);
@@ -1148,9 +1329,11 @@ package body MI.Parser is
                   Token := Look_Ahead (Tokens);
 
                   if not Is_Result_Follower (Token) then
-                     --  ??? try to do some error recovery
-                     raise Parser_Error with
-                        "Syntax error, expected result follower";
+                     --  try recover the current state to a known one.
+                     Clear_Token (Token);  --  Release the memory
+                     Eat (Tokens);         --  ... and skip token
+                     Try_Recover_Or_Die (Tokens, Is_Result_Follower'Access,
+                        "Syntax error, expected result follower");
                   end if;
 
                   V_List.all.Value.Append (Result);
@@ -1174,9 +1357,11 @@ package body MI.Parser is
                   Token := Look_Ahead (Tokens);
 
                   if not Is_Value_Follower (Token) then
-                     --  ??? try to do some error recovery
-                     raise Parser_Error with
-                        "Syntax error, expected value follower";
+                     --  try recover the current state to a known one.
+                     Clear_Token (Token);  --  Release the memory
+                     Eat (Tokens);         --  ... and skip token
+                     Try_Recover_Or_Die (Tokens, Is_Value_Follower'Access,
+                        "Syntax error, expected value follower");
                   end if;
 
                   V_List.all.Value.Append (Val);
@@ -1195,10 +1380,14 @@ package body MI.Parser is
          end if;
 
          if Token.Code /= R_Bracket then
-            --  ??? try to do some error recovery
-            --  ??? need to free Value's content
+            Free_MI_Value (Value);
             Value := null;
-            raise Parser_Error with "Unexpected token, expected ']'";
+
+            --  try recover the current state to a known one.
+            Clear_Token (Token);  --  Release the memory
+            Eat (Tokens);         --  ... and skip token
+            Try_Recover_Or_Die (Tokens, R_Bracket,
+                                "Unexpected token, expected ']'");
          end if;
 
          Eat (Tokens);
