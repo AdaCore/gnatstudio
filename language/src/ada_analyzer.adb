@@ -669,8 +669,8 @@ package body Ada_Analyzer is
                       "replaced_by)|no(n(first|last)|t_in)|o(dd|ut)|" &
                       "p(ending|red|roof)|r(ange|e(al|quires|turn|m))|s(ave|" &
                       "e(quence|t)|ome|qr|t(art|rict_subset_of)|" &
-                      "u(bset_of|cc))|then|update|var|where|xor|fld_.*|" &
-                      "upf_.*)$");
+                      "u(bset_of|cc))|t(hen|ype)|update|var|where|xor|" &
+                      "fld_.*|upf_.*)$");
    --  Regular expression for SPARK keywords
 
    procedure Analyze_Ada_Source
