@@ -498,7 +498,7 @@ package body Language.C is
    overriding function Entities_Indexed (Self : C_Language) return Boolean is
       pragma Unreferenced (Self);
    begin
-      return True;
+      return False;
    end Entities_Indexed;
 
 end Language.C;
