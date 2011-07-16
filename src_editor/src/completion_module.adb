@@ -75,11 +75,18 @@ with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;
 with Completion.History;        use Completion.History;
 with Completion.Keywords;       use Completion.Keywords;
+
 with Completion.Ada;            use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
 
+with Completion.C;              use Completion.C;
+with Completion.C.Constructs_Extractor;
+use Completion.C.Constructs_Extractor;
+
 with Language.Ada;              use Language.Ada;
+with Language.C;                use Language.C;
+with Language.Cpp;              use Language.Cpp;
 with Language.Tree.Database;    use Language.Tree.Database;
 
 with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
@@ -970,6 +977,7 @@ package body Completion_Module is
         Get_Current_Focus_Widget (Kernel);
       View          : Source_View;
       Buffer        : Source_Buffer;
+      Lang          : Language_Access;
 
       Movement      : Boolean;
       To_Replace    : Natural := 0;
@@ -988,9 +996,13 @@ package body Completion_Module is
          return Commands.Success;
       end if;
 
+      Lang := Get_Language (Buffer);
+
       if View /= null
         and then not In_Completion (View)
-        and then Get_Language (Buffer) = Ada_Lang
+        and then (Lang = Ada_Lang
+                   or else Lang = C_Lang
+                   or else Lang = Cpp_Lang)
       --  ??? This is a short term solution. In the long term (as soon as
       --  we have more than one language to handle), we want to have a
       --  function returning the proper manager, taking a language in
@@ -998,7 +1010,7 @@ package body Completion_Module is
       then
          declare
             Win  : Completion_Window_Access
-            renames Completion_Module.Smart_Completion;
+                     renames Completion_Module.Smart_Completion;
             Data : Smart_Completion_Data;
             It   : Gtk_Text_Iter;
 
@@ -1015,7 +1027,12 @@ package body Completion_Module is
               (Get_Construct_Database (Kernel),
                Get_Filename (Buffer));
 
-            Data.Manager := new Ada_Completion_Manager;
+            if Lang = Ada_Lang then
+               Data.Manager := new Ada_Completion_Manager;
+            else
+               Data.Manager := new C_Completion_Manager;
+            end if;
+
             Data.The_Text := Get_String (Buffer);
 
             Data.Lock := new Update_Lock'
@@ -1024,10 +1041,18 @@ package body Completion_Module is
                     (Get_Construct_Database (Kernel),
                      Get_Filename (Buffer))));
 
-            Data.Constructs_Resolver := New_Construct_Completion_Resolver
-                 (Get_Construct_Database (Kernel),
-                  Get_Filename (Buffer),
-                  Data.The_Text);
+            if Lang = Ada_Lang then
+               Data.Constructs_Resolver :=
+                 New_Construct_Completion_Resolver
+                   (Construct_Db   => Get_Construct_Database (Kernel),
+                    Current_File   => Get_Filename (Buffer),
+                    Current_Buffer => Data.The_Text);
+            else
+               Data.Constructs_Resolver :=
+                 New_C_Construct_Completion_Resolver
+                   (Kernel         => Kernel,
+                    Current_File   => Get_Filename (Buffer));
+            end if;
 
             Register_Resolver
               (Data.Manager, Completion_Module.Completion_History);
@@ -1055,7 +1080,7 @@ package body Completion_Module is
                    (Data.Manager,
                     Get_Filename (Buffer),
                     Data.The_Text,
-                    Get_Language (Buffer),
+                    Lang,
                     String_Index_Type (Get_Byte_Index (It))));
             Trace (Me_Adv, "Getting completions done");
 
@@ -1105,13 +1130,15 @@ package body Completion_Module is
             Set_History (Win, Completion_Module.Completion_History);
 
             Show
-              (Win, Gtk_Text_View (View),
-               Gtk_Text_Buffer (Buffer), It,
-               Data.End_Mark,
-               Get_Language (Buffer),
-               Complete,
-               Volatile,
-               Smart_Completion_Pref);
+              (Window   => Win,
+               View     => Gtk_Text_View (View),
+               Buffer   => Gtk_Text_Buffer (Buffer),
+               Iter     => It,
+               Mark     => Data.End_Mark,
+               Lang     => Lang,
+               Complete => Complete,
+               Volatile => Volatile,
+               Mode     => Smart_Completion_Pref);
 
             Kernel.Pop_State;
          end;
@@ -1155,17 +1182,24 @@ package body Completion_Module is
          return Commands.Failure;
       end if;
 
-      if Get_Language (Buffer) = Ada_Lang
-        and then Command.Smart_Completion
-      then
-         if Completion_Module.Has_Smart_Completion then
-            Select_Next (Completion_Module.Smart_Completion);
-            return Commands.Success;
-         else
-            return Smart_Complete
-              (Command.Kernel, Complete => True, Volatile => False);
+      declare
+         Lang : constant Language_Access := Get_Language (Buffer);
+
+      begin
+         if (Lang = Ada_Lang
+               or else Lang = C_Lang
+               or else Lang = Cpp_Lang)
+           and then Command.Smart_Completion
+         then
+            if Completion_Module.Has_Smart_Completion then
+               Select_Next (Completion_Module.Smart_Completion);
+               return Commands.Success;
+            else
+               return Smart_Complete
+                 (Command.Kernel, Complete => True, Volatile => False);
+            end if;
          end if;
-      end if;
+      end;
 
       --  If we are not already in the middle of a completion:
 

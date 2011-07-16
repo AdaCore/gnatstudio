@@ -913,6 +913,9 @@ package Entities is
    package Entities_Search_Tries is new Vector_Tries
      (Data_Type => Entity_Information,
       No_Data   => null);
+   --  Stores entities of languages defined with Entities_Indexed(). Currently
+   --  used only by C/C++ languages to provide support to complete the name of
+   --  their entities (see Completion-C packages).
 
    subtype LI_Entities_Iterator is Entities_Search_Tries.Vector_Trie_Iterator;
 
