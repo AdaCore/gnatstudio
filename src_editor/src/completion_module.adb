@@ -75,11 +75,18 @@ with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;
 with Completion.History;        use Completion.History;
 with Completion.Keywords;       use Completion.Keywords;
+
 with Completion.Ada;            use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
 
+with Completion.C;              use Completion.C;
+with Completion.C.Constructs_Extractor;
+use Completion.C.Constructs_Extractor;
+
 with Language.Ada;              use Language.Ada;
+with Language.C;                use Language.C;
+with Language.Cpp;              use Language.Cpp;
 with Language.Tree.Database;    use Language.Tree.Database;
 
 with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
@@ -990,130 +997,149 @@ package body Completion_Module is
 
       if View /= null
         and then not In_Completion (View)
-        and then Get_Language (Buffer) = Ada_Lang
-      --  ??? This is a short term solution. In the long term (as soon as
-      --  we have more than one language to handle), we want to have a
-      --  function returning the proper manager, taking a language in
-      --  parameter.
       then
          declare
+            Smart_Completion_Pref : constant Smart_Completion_Type :=
+                                      Smart_Completion.Get_Pref;
+
+            Lang : constant Language_Access := Get_Language (Buffer);
             Win  : Completion_Window_Access
-            renames Completion_Module.Smart_Completion;
+                     renames Completion_Module.Smart_Completion;
             Data : Smart_Completion_Data;
             It   : Gtk_Text_Iter;
 
-            Smart_Completion_Pref : constant Smart_Completion_Type :=
-              Smart_Completion.Get_Pref;
          begin
-            Kernel.Push_State (Busy);
+            --  ??? This is a short term solution. We want to have a function
+            --  returning the proper manager, taking a language in parameter.
 
-            --  At this point, we want to be as close as possible to the state
-            --  of the file where the completion occures - that's why we force
-            --  an update of its contents.
+            if Lang = Ada_Lang
+              or else Lang = C_Lang
+              or else Lang = Cpp_Lang
+            then
+               Kernel.Push_State (Busy);
 
-            Update_Contents
-              (Get_Construct_Database (Kernel),
-               Get_Filename (Buffer));
+               --  At this point, we want to be as close as possible to the
+               --  state of the file where the completion occures - that's
+               --  why we force an update of its contents.
 
-            Data.Manager := new Ada_Completion_Manager;
-            Data.The_Text := Get_String (Buffer);
-
-            Data.Lock := new Update_Lock'
-              (Lock_Updates
-                 (Get_Or_Create
-                    (Get_Construct_Database (Kernel),
-                     Get_Filename (Buffer))));
-
-            Data.Constructs_Resolver := New_Construct_Completion_Resolver
+               Update_Contents
                  (Get_Construct_Database (Kernel),
-                  Get_Filename (Buffer),
-                  Data.The_Text);
+                  Get_Filename (Buffer));
 
-            Register_Resolver
-              (Data.Manager, Completion_Module.Completion_History);
-            Register_Resolver
-              (Data.Manager, Completion_Module.Completion_Keywords);
-            Register_Resolver (Data.Manager, Data.Constructs_Resolver);
+               Data.The_Text := Get_String (Buffer);
 
-            Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+               Data.Lock :=
+                 new Update_Lock'(Lock_Updates
+                                   (Get_Or_Create
+                                     (Get_Construct_Database (Kernel),
+                                      Get_Filename (Buffer))));
 
-            --  The function Get_Initial_Completion_List requires the
-            --  offset of the cursor *in bytes* from the beginning of
-            --  Data.The_Text.all.
-            --  The Gtk functions can only allow retrieval of the cursor
-            --  position *in characters* from the beginning of the
-            --  buffer. Moreover, the Gtk functions cannot be used, since
-            --  inexact if there is block folding involved.
-            --  Therefore, in order to get the cursor position, we use the
-            --  mechanism below.
+               if Lang = Ada_Lang then
+                  Data.Manager := new Ada_Completion_Manager;
 
-            Trace (Me_Adv, "Getting completions ...");
-            Data.Result := Get_Initial_Completion_List
-              (Manager => Data.Manager,
-               Context =>
-                 Create_Context
-                   (Data.Manager,
-                    Get_Filename (Buffer),
-                    Data.The_Text,
-                    Get_Language (Buffer),
-                    String_Index_Type (Get_Byte_Index (It))));
-            Trace (Me_Adv, "Getting completions done");
+                  Data.Constructs_Resolver :=
+                    New_Construct_Completion_Resolver
+                      (Construct_Db   => Get_Construct_Database (Kernel),
+                       Current_File   => Get_Filename (Buffer),
+                       Current_Buffer => Data.The_Text);
+               else
+                  Data.Manager := new C_Completion_Manager;
 
-            --  If the completion list is empty, return without showing
-            --  the completions window.
-            if At_End (First (Data.Result)) then
-               Trace (Me_Adv, "No completions found");
-               On_Completion_Destroy (View, Data);
+                  Data.Constructs_Resolver :=
+                    New_C_Construct_Completion_Resolver
+                      (Kernel         => Kernel,
+                       Current_File   => Get_Filename (Buffer));
+               end if;
+
+               Register_Resolver
+                 (Data.Manager, Completion_Module.Completion_History);
+               Register_Resolver
+                 (Data.Manager, Completion_Module.Completion_Keywords);
+               Register_Resolver (Data.Manager, Data.Constructs_Resolver);
+
+               Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+
+               --  The function Get_Initial_Completion_List requires the
+               --  offset of the cursor *in bytes* from the beginning of
+               --  Data.The_Text.all.
+
+               --  The Gtk functions can only allow retrieval of the cursor
+               --  position *in characters* from the beginning of the buffer.
+               --  Moreover, the Gtk functions cannot be used, since inexact if
+               --  there is block folding involved. Therefore, in order to get
+               --  the cursor position, we use the mechanism below.
+
+               Trace (Me_Adv, "Getting completions ...");
+               Data.Result := Get_Initial_Completion_List
+                 (Manager => Data.Manager,
+                  Context =>
+                    Create_Context
+                      (Data.Manager,
+                       Get_Filename (Buffer),
+                       Data.The_Text,
+                       Lang,
+                       String_Index_Type (Get_Byte_Index (It))));
+               Trace (Me_Adv, "Getting completions done");
+
+               --  If the completion list is empty, return without showing the
+               --  completions window.
+
+               if At_End (First (Data.Result)) then
+                  Trace (Me_Adv, "No completions found");
+                  On_Completion_Destroy (View, Data);
+                  Kernel.Pop_State;
+                  return Commands.Success;
+               end if;
+
+               Gtk_New (Win, Kernel);
+
+               Data.Buffer := Buffer;
+
+               Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+
+               Data.Start_Mark := Create_Mark
+                 (Buffer       => Buffer,
+                  Mark_Name    => "",
+                  Where        => It);
+               Data.End_Mark := Create_Mark
+                 (Buffer       => Buffer,
+                  Mark_Name    => "",
+                  Where        => It,
+                  Left_Gravity => False);
+
+               To_Replace := Get_Completed_String (Data.Result)'Length;
+
+               if To_Replace /= 0 then
+                  Backward_Chars (It, Gint (To_Replace), Movement);
+               end if;
+
+               Start_Completion (View, Win);
+
+               Completion_Module.Has_Smart_Completion := True;
+
+               Object_Connect
+                 (Win, Signal_Destroy,
+                  To_Marshaller (On_Completion_Destroy'Access),
+                  View, Data, After => True);
+
+               Set_Iterator (Win, new Comp_Iterator'
+                               (Comp_Iterator'(I => First (Data.Result))));
+
+               Set_History (Win, Completion_Module.Completion_History);
+
+               Show
+                 (Window   => Win,
+                  View     => Gtk_Text_View (View),
+                  Buffer   => Gtk_Text_Buffer (Buffer),
+                  Iter     => It,
+                  Mark     => Data.End_Mark,
+                  Lang     => Lang,
+                  Complete => Complete,
+                  Volatile => Volatile,
+                  Mode     => Smart_Completion_Pref);
+
                Kernel.Pop_State;
-               return Commands.Success;
             end if;
-
-            Gtk_New (Win, Kernel);
-
-            Data.Buffer := Buffer;
-
-            Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
-
-            Data.Start_Mark := Create_Mark
-              (Buffer       => Buffer,
-               Mark_Name    => "",
-               Where        => It);
-            Data.End_Mark := Create_Mark
-              (Buffer       => Buffer,
-               Mark_Name    => "",
-               Where        => It,
-               Left_Gravity => False);
-
-            To_Replace := Get_Completed_String (Data.Result)'Length;
-
-            if To_Replace /= 0 then
-               Backward_Chars (It, Gint (To_Replace), Movement);
-            end if;
-
-            Start_Completion (View, Win);
-
-            Completion_Module.Has_Smart_Completion := True;
-
-            Object_Connect
-              (Win, Signal_Destroy,
-               To_Marshaller (On_Completion_Destroy'Access),
-               View, Data, After => True);
-
-            Set_Iterator (Win, new Comp_Iterator'
-                            (Comp_Iterator'(I => First (Data.Result))));
-
-            Set_History (Win, Completion_Module.Completion_History);
-
-            Show
-              (Win, Gtk_Text_View (View),
-               Gtk_Text_Buffer (Buffer), It,
-               Data.End_Mark,
-               Get_Language (Buffer),
-               Complete,
-               Volatile,
-               Smart_Completion_Pref);
-
-            Kernel.Pop_State;
          end;
       end if;
 
@@ -1155,17 +1181,24 @@ package body Completion_Module is
          return Commands.Failure;
       end if;
 
-      if Get_Language (Buffer) = Ada_Lang
-        and then Command.Smart_Completion
-      then
-         if Completion_Module.Has_Smart_Completion then
-            Select_Next (Completion_Module.Smart_Completion);
-            return Commands.Success;
-         else
-            return Smart_Complete
-              (Command.Kernel, Complete => True, Volatile => False);
+      declare
+         Lang : constant Language_Access := Get_Language (Buffer);
+
+      begin
+         if (Lang = Ada_Lang
+               or else Lang = C_Lang
+               or else Lang = Cpp_Lang)
+           and then Command.Smart_Completion
+         then
+            if Completion_Module.Has_Smart_Completion then
+               Select_Next (Completion_Module.Smart_Completion);
+               return Commands.Success;
+            else
+               return Smart_Complete
+                 (Command.Kernel, Complete => True, Volatile => False);
+            end if;
          end if;
-      end if;
+      end;
 
       --  If we are not already in the middle of a completion:
 

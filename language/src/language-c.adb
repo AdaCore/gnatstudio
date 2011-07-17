@@ -491,4 +491,14 @@ package body Language.C is
       return "c";
    end Get_Name;
 
+   ----------------------
+   -- Entities_Indexed --
+   ----------------------
+
+   overriding function Entities_Indexed (Self : C_Language) return Boolean is
+      pragma Unreferenced (Self);
+   begin
+      return True;
+   end Entities_Indexed;
+
 end Language.C;

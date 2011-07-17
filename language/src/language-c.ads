@@ -117,5 +117,10 @@ private
       Comment : Boolean := True;
       Clean   : Boolean := False) return String;
 
+   overriding function Entities_Indexed (Self : C_Language) return Boolean;
+   --  Unconditionally return True. This enables storing all the C/CPP entities
+   --  in the structure Entities_Search_Tries, and it is required to give
+   --  support for entities completion (see Completion-C packages).
+
    C_Lang : constant Language_Access := new C_Language;
 end Language.C;
