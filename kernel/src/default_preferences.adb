@@ -1878,10 +1878,19 @@ package body Default_Preferences is
          Dir := Create (Search_Path);
 
          declare
-            Subdirs : File_Array_Access := Dir.Read_Dir (Dirs_Only);
+            Subdirs : File_Array_Access;
             Rc_File : Virtual_File;
 
          begin
+            if Dir.Is_Directory then
+               Subdirs := Dir.Read_Dir (Dirs_Only);
+            else
+               Subdirs := new File_Array (1 .. 0);
+               if Active (Me) then
+                  Trace (Me, "Theme search path not found on disk.");
+               end if;
+            end if;
+
             --  Count the total number of available themes
             for J in Subdirs'Range loop
                Rc_File := Subdirs (J).Create_From_Dir ("gtk-2.0/gtkrc");
