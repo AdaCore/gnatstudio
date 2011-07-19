@@ -237,8 +237,8 @@ NF-51-J302-028 GPS: Separate filters for CodePeer warnings/checks (2011-05-31)
 
 NF-51-J208-023 GPS: smart completion of C/C++ entities (2011-07-18)
 
-  GPS now provides completion of C/C++ entities. The list of suggestions
-  covers variables, types/classes, macros, and included files.
+  GPS now provides some code completion for C/C++ entities. The list of
+  suggestions covers variables, types/classes, macros, and included files.
 
 NF-51-IB24-029 GB: Independent entries in Problems view (2011-02-28)
 
