@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -349,9 +349,7 @@ package body Refactoring.Rename is
 
          Show_All (Dialog);
 
-         if Run (Dialog) = Gtk_Response_OK
-           and then Get (Get_Name (Entity)).all /= Get_Text (Dialog.New_Name)
-         then
+         if Run (Dialog) = Gtk_Response_OK then
             declare
                New_Name : constant Symbol :=
                  Get_Kernel (Context.Context).Symbols.Find
