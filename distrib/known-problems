@@ -8,6 +8,16 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K719-029: GPS: Refactoring not working if launched on entity with right name
+  Problem:    When launching a Refactoring -> Rename <entity> operation, if the
+              entity under the cursor already has the desired name, executing
+              the refactoring will do nothing. This prevents for instance
+              changing the casing of entities from an entity that has the right
+              casing.
+  Workaround: Find an instance that has the wrong casing and launch the
+              renaming from that instance, or first change the name, then
+              recompile, then re-change the name to the right casing.
+
 - K711-021: GPS: Defining an alternate toolchain has no effect on gnatcheck
   Problem:    When using the dual compilation toolchain feature of GPS, then
               gnatcheck uses the compiler in 'compiler path' instead of the
