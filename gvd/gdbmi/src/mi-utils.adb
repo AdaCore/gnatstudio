@@ -279,40 +279,27 @@ package body MI.Utils is
       return True;
    end Process_Exec_Run;
 
-   --------------------------
-   -- Process_Break_Insert --
-   --------------------------
+   -----------------------------
+   -- Process_Breakpoint_Type --
+   -----------------------------
 
-   function Process_Break_Insert
-     (Result     : Result_Record) return Breakpoint_Type
+   procedure Process_Breakpoint_Type
+     (Result     : Result_Pair;
+      Breakpoint : out Breakpoint_Type)
    is
-      Cursor     : Result_Pair_Lists.Cursor := Result.Results.First;
+      Cursor     : Result_Pair_Lists.Cursor;
       Pair       : Result_Pair;
-      Breakpoint : Breakpoint_Type;
-
    begin
-      --  The result of a -break-insert command is of the form:
-      --       '^done,bkpt={number="1",type="breakpoint",...'
+      --  This subprogram processes a fragment of record of the form:
+      --       bkpt={number="1",type="breakpoint",...
 
-      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
-         Die ("Invalid result-record for -break-insert");
-      end if;
-
-      --  It must have only one attribute, 'bkpt' which holds a list of
-      --  attributes.
-
-      if Result.Results.Length /= 1 then
-         Die ("Ill-formatted done-result: expected one attribute: bkpt");
-      end if;
-
-      Pair := Result_Pair_Lists.Element (Cursor);
-
-      if Pair.Variable.all /= "bkpt" then
+      if Result.Variable.all /= "bkpt" then
          Die ("Expected attribute `bkpt'");
       end if;
 
-      Check_Is_Result_List_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-      Cursor := Result_List_Value (Pair.Value.all).Value.First;
+      Check_Is_Result_List_Value_Or_Die (Result.Variable.all,
+                                         Result.Value.all);
+      Cursor := Result_List_Value (Result.Value.all).Value.First;
 
       --  Iterates through the list and store each possible attribute in its
       --  associated field in the Breakpoint_Type record.
@@ -380,6 +367,36 @@ package body MI.Utils is
             Die ("Unexpected attribute: " & Pair.Variable.all);
          end if;
       end loop;
+   end Process_Breakpoint_Type;
+
+   --------------------------
+   -- Process_Break_Insert --
+   --------------------------
+
+   function Process_Break_Insert
+     (Result     : Result_Record) return Breakpoint_Type
+   is
+      Cursor     : constant Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair       : Result_Pair;
+      Breakpoint : Breakpoint_Type;
+
+   begin
+      --  The result of a -break-insert command is of the form:
+      --       ^done,bkpt={number="1",type="breakpoint",...
+
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         Die ("Invalid result-record for -break-insert");
+      end if;
+
+      --  It must have only one attribute, 'bkpt' which holds a list of
+      --  attributes.
+
+      if Result.Results.Length /= 1 then
+         Die ("Ill-formatted done-result: expected one attribute: bkpt");
+      end if;
+
+      Pair := Result_Pair_Lists.Element (Cursor);
+      Process_Breakpoint_Type (Pair, Breakpoint);
 
       return Breakpoint;
    end Process_Break_Insert;
@@ -391,10 +408,90 @@ package body MI.Utils is
    function Process_Break_List
      (Result : Result_Record) return Breakpoint_List
    is
-      Breakpoints : Breakpoint_List;
-      pragma Unreferenced (Result);
+      Breakpoints : Breakpoint_List := Breakpoint_Lists.Empty_List;
+      Breakpoint  : Breakpoint_Type;
+      Iterator    : Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair        : Result_Pair;
+
    begin
-      raise Not_Yet_Implemented_Error with "Process_Break_List";
+      --  The result of a -break-list command is of the form:
+      --       ^done,BreakpointTable={...},body=[bkpt={number="1",...}]}
+
+      if Result.R_Type /= Sync_Result or else Result.Class.all /= "done" then
+         Die ("Invalid result-record for -break-list");
+      end if;
+
+      if Result.Results.Length /= 1 then
+         Die ("Ill-formatted done result record: expected one attribute: "
+              & "BreakpointTable.");
+      end if;
+
+      Pair := Result_Pair_Lists.Element (Iterator);
+
+      if Pair.Variable.all /= "BreakpointTable" then
+         Die ("Ill-formatted -break-list answer: expected 'BreakpointTable', "
+              & "found '" & Pair.Variable.all & "'");
+      end if;
+
+      Check_Is_Result_List_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
+      Iterator := Result_List_Value (Pair.Value.all).Value.First;
+
+      --  BreakpointTable={nr_rows="1",nr_cols="6",hdr=[{width="7",...
+      --  First, we handle the first attribute: 'nr_rows'.
+
+      Pair := Result_Pair_Lists.Element (Iterator);
+
+      if Pair.Variable.all /= "nr_rows" then
+         --  ??? Release memory allocated by the scanner for this attribute
+         Die ("Ill-formatted -break-list answer: expected 'nr_rows', found '"
+              & Pair.Variable.all & "'");
+      end if;
+
+      --  ... then the second one: nr_cols.
+
+      Iterator := Result_Pair_Lists.Next (Iterator);
+      Pair := Result_Pair_Lists.Element (Iterator);
+
+      if Pair.Variable.all /= "nr_cols" then
+         --  ??? Release memory allocated by the scanner for this attribute
+         Die ("Ill-formatted -break-list answer: expected 'nr_cols', found '"
+              & Pair.Variable.all & "'");
+      end if;
+
+      --  ... and finally the 'hdr' list.
+
+      Iterator := Result_Pair_Lists.Next (Iterator);
+      Pair := Result_Pair_Lists.Element (Iterator);
+
+      if Pair.Variable.all /= "hdr" then
+         --  ??? Release memory allocated by the scanner for this attribute
+         Die ("Ill-formatted -break-list answer: expected 'hdr', found '"
+              & Pair.Variable.all & "'");
+      end if;
+
+      --  We can now concentrate on the last attribute: 'body'.
+
+      Iterator := Result_Pair_Lists.Next (Iterator);
+      Pair := Result_Pair_Lists.Element (Iterator);
+
+      if Pair.Variable.all /= "body" then
+         Die ("Ill-formatted -break-list answer: expected 'body', found '"
+              & Pair.Variable.all & "'");
+      end if;
+
+      --  We hold the 'body' attribute which contains the list of breakpoints.
+      --  We can now iterate over this list to build the result.
+
+      Check_Is_Result_List_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
+      Iterator := Result_List_Value (Pair.Value.all).Value.First;
+
+      while Result_Pair_Lists.Has_Element (Iterator) loop
+         Process_Breakpoint_Type
+           (Result_Pair (Result_Pair_Lists.Element (Iterator)), Breakpoint);
+         Breakpoints.Append (Breakpoint);
+         Iterator := Result_Pair_Lists.Next (Iterator);
+      end loop;
+
       return Breakpoints;
    end Process_Break_List;
 

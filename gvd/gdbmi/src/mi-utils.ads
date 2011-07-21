@@ -93,7 +93,7 @@ package MI.Utils is
    --  Breakpoint_Type should be kept synchronized along the debugging session.
 
    package Breakpoint_Lists is new Doubly_Linked_Lists (Breakpoint_Type);
-   subtype Breakpoint_List is String_Lists.List;
+   subtype Breakpoint_List is Breakpoint_Lists.List;
    --  Declaration of a list of Breakpoint_Type
 
    type Notification_Type is record
@@ -175,6 +175,12 @@ package MI.Utils is
    ----------------------------
    -- Break command handlers --
    ----------------------------
+
+   procedure Process_Breakpoint_Type
+     (Result     : Result_Pair;
+      Breakpoint : out Breakpoint_Type);
+   --  This subprogram processes a fragment of record of the form:
+   --       bkpt={number="1",type="breakpoint",...
 
    function Process_Break_Insert
      (Result : Result_Record) return Breakpoint_Type;
