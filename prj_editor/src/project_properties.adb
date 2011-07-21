@@ -3767,7 +3767,12 @@ package body Project_Properties is
         and then not Ignore_Editor
         and then Attr.Editor /= null
       then
-         return Get_Value_As_String (Attr.Editor, Lower_Attribute_Index);
+         --  In the dialogs, ASCII.LFs may have been introduced through
+         --  copy-pasting: strip them otherwise the resulting project file
+         --  will not be syntactically valid
+         return Strip_Character
+           (Get_Value_As_String (Attr.Editor, Lower_Attribute_Index),
+            ASCII.LF);
       end if;
 
       --  Otherwise, we'll have to look in the project, or use the default
