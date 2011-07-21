@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -119,8 +119,10 @@ package body Refactoring.UI is
          -"Cross-references not up-to-date",
          -("The following files contain references to the entity, but the"
             & ASCII.LF
-            & "cross-reference information is not up-to-date and replace"
-            & " might fail"),
+             & "cross-reference information is not up-to-date." & ASCII.LF
+             & "This might mean that the files have been modified" & ASCII.LF
+             & "since the last compilation." & ASCII.LF
+             & "As a result, replace might fail."),
          Stale_LI_List);
    end Confirm_Files;
 
