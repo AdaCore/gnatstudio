@@ -8,6 +8,14 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K721-006: GPS: invalid project file generated when using the GPS dialog
+  Problem:    When using the Project Properties dialog to create or modify a
+              project, if line feed characters are introduced in text entries
+              (through copy/pasting for instance), the project saved by GPS
+              might not have a valid project syntax where this line feed is
+              written.
+  Workaround: Modify the project file manually to resolve the errors.
+
 - K719-029: GPS: Refactoring not working if launched on entity with right name
   Problem:    When launching a Refactoring -> Rename <entity> operation, if the
               entity under the cursor already has the desired name, executing
