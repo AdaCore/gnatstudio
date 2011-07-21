@@ -47,6 +47,10 @@ package body MI.Utils is
    procedure Die (Message : String := "");
    --  Raise an Utils_Error exception with Message as inner message.
 
+   procedure Free_String is new Ada.Unchecked_Deallocation
+     (String, String_Access);
+   --  Release memory allocated for the given string.
+
    ----------------------------------
    -- Check_Is_String_Value_Or_Die --
    ----------------------------------
@@ -56,8 +60,8 @@ package body MI.Utils is
       Value : MI_Value'Class) is
    begin
       if Value not in String_Value then
-         raise Type_Error with ("Expected attribute `" & Name & "' to be a "
-                                & "c-string");
+         raise Type_Error with
+           ("Expected attribute `" & Name & "' to be a c-string");
       end if;
    end Check_Is_String_Value_Or_Die;
 
@@ -70,8 +74,8 @@ package body MI.Utils is
       Value : MI_Value'Class) is
    begin
       if Value not in Result_List_Value then
-         raise Type_Error with ("Expected attribute `" & Name & "' to be a "
-                                & "list of result");
+         raise Type_Error with
+           ("Expected attribute `" & Name & "' to be a list of result");
       end if;
    end Check_Is_Result_List_Value_Or_Die;
 
@@ -84,8 +88,8 @@ package body MI.Utils is
       Value : MI_Value'Class) is
    begin
       if Value not in Value_List_Value then
-         raise Type_Error with ("Expected attribute `" & Name & "' to be a "
-                                & "list of mi-value");
+         raise Type_Error with
+           ("Expected attribute `" & Name & "' to be a list of mi-value");
       end if;
    end Check_Is_Value_List_Value_Or_Die;
 
@@ -106,6 +110,94 @@ package body MI.Utils is
    begin
       raise Utils_Error with Message;
    end Die;
+
+   ------------------------
+   -- Clear_Var_Obj_List --
+   ------------------------
+
+   procedure Clear_Var_Obj_List (List : in out Var_Obj_List)
+   is
+      Cursor  : Var_Obj_Lists.Cursor := Var_Obj_Lists.First (List);
+      Var_Obj : Var_Obj_Access := null;
+   begin
+      while Var_Obj_Lists.Has_Element (Cursor) loop
+         Var_Obj := Var_Obj_Lists.Element (Cursor);
+         Cursor  := Var_Obj_Lists.Next (Cursor);
+         Free_Var_Obj (Var_Obj);
+      end loop;
+
+      List.Clear;
+   end Clear_Var_Obj_List;
+
+   -----------------------
+   -- Clear_String_List --
+   -----------------------
+
+   procedure Clear_String_List (List : in out String_List)
+   is
+      Cursor  : String_Lists.Cursor := String_Lists.First (List);
+      String  : String_Access := null;
+   begin
+      while String_Lists.Has_Element (Cursor) loop
+         String := String_Lists.Element (Cursor);
+         Cursor  := String_Lists.Next (Cursor);
+         Free_String (String);
+      end loop;
+
+      List.Clear;
+   end Clear_String_List;
+
+   -------------------
+   -- Clear_Var_Obj --
+   -------------------
+
+   procedure Clear_Var_Obj (Var_Obj : in out Var_Obj_Type) is
+   begin
+      Free_String (Var_Obj.Name);
+      Free_String (Var_Obj.Expression);
+      Free_String (Var_Obj.Path_Exp);
+      Free_String (Var_Obj.Value);
+      Free_String (Var_Obj.Type_Desc);
+      Clear_Var_Obj_List (Var_Obj.Children);
+   end Clear_Var_Obj;
+
+   ------------------
+   -- Free_Var_Obj --
+   ------------------
+
+   procedure Free_Var_Obj (Var_Obj : in out Var_Obj_Access)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Var_Obj_Type, Var_Obj_Access);
+   begin
+      Clear_Var_Obj (Var_Obj.all);
+      Unchecked_Free (Var_Obj);
+   end Free_Var_Obj;
+
+   ----------------------
+   -- Clear_Breakpoint --
+   ----------------------
+
+   procedure Clear_Breakpoint (Breakpoint : in out Breakpoint_Type) is
+   begin
+      Free_String (Breakpoint.Type_Desc);
+      Free_String (Breakpoint.Disp);
+      Clear_Frame_Type (Breakpoint.Frame);
+      Free_String (Breakpoint.Original_Location);
+   end Clear_Breakpoint;
+
+   ----------------------
+   -- Clear_Frame_Type --
+   ----------------------
+
+   procedure Clear_Frame_Type (Frame : in out Frame_Type) is
+   begin
+      Free_String (Frame.Address);
+      Free_String (Frame.Function_Name);
+      Clear_String_List (Frame.Args);
+      Free_String (Frame.File_Name);
+      Free_String (Frame.File_Fullname);
+   end Clear_Frame_Type;
 
    -------------------
    -- Process_Error --
@@ -153,7 +245,8 @@ package body MI.Utils is
    -- Process_Async --
    -------------------
 
-   function Process_Async (Result : Result_Record) return Notification_Type is
+   function Process_Async (Result : Result_Record) return Notification_Type
+   is
       Notification : Notification_Type;
    begin
       raise Not_Yet_Implemented_Error with "Process_Async";
@@ -323,9 +416,6 @@ package body MI.Utils is
    function Process_Var_Create
      (Result : Result_Record) return Var_Obj_Access
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-         (Var_Obj_Type, Var_Obj_Access);
-
       Cursor  : Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
       Var_Obj : Var_Obj_Access := null;
@@ -375,7 +465,7 @@ package body MI.Utils is
               (String_Value (Pair.Value.all).Value.all);
 
          else
-            Unchecked_Free (Var_Obj);  --  ??? Use Var_Obj_Free
+            Free_Var_Obj (Var_Obj);
             Die ("Ill-formatted done result record: expected attribute "
                  & "`name', `numchild', `value', `type' or `has_more'.");
          end if;
@@ -431,12 +521,8 @@ package body MI.Utils is
      (Result  : Result_Record;
       Var_Obj : in out Var_Obj_Type)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-         (String, String_Access);
-
       Cursor  : Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
-
    begin
       --  A result from a -var-set-format commmand is of the following form:
       --       '^done,format="decimal",value="{...}"'
@@ -463,7 +549,7 @@ package body MI.Utils is
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
             if Var_Obj.Format /= null then
-               Unchecked_Free (Var_Obj.Format);
+               Free_String (Var_Obj.Format);
             end if;
 
             Var_Obj.Format := String_Value (Pair.Value.all).Value;
@@ -472,7 +558,7 @@ package body MI.Utils is
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
             if Var_Obj.Value /= null then
-               Unchecked_Free (Var_Obj.Value);
+               Free_String (Var_Obj.Value);
             end if;
 
             Var_Obj.Value := String_Value (Pair.Value.all).Value;
@@ -544,9 +630,6 @@ package body MI.Utils is
 
       function Process_Child (Rec : Result_List_Value) return Var_Obj_Access
       is
-         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-            (Var_Obj_Type, Var_Obj_Access);
-
          Cursor  : Result_Pair_Lists.Cursor := Result_Pair_Lists.First
                                                  (Rec.Value);
          Pair    : Result_Pair;
@@ -576,9 +659,7 @@ package body MI.Utils is
                Var_Obj.all.Type_Desc := String_Value (Pair.Value.all).Value;
 
             else
-               --  ??? Replace the following by a Free_Var_Obj procedure that
-               --  frees the inner attributes.
-               Unchecked_Free (Var_Obj);
+               Free_Var_Obj (Var_Obj);
                Die ("Unexpected attribute: " & Pair.Variable.all);
             end if;
 
@@ -664,12 +745,8 @@ package body MI.Utils is
      (Result  : Result_Record;
       Var_Obj : in out Var_Obj_Type)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-         (String, String_Access);
-
       Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
-
    begin
       --  A result from a -var-info-type commmand is of the following form:
       --       '^done,type="records.r"'
@@ -695,7 +772,7 @@ package body MI.Utils is
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
       if Var_Obj.Type_Desc /= null then
-         Unchecked_Free (Var_Obj.Type_Desc);
+         Free_String (Var_Obj.Type_Desc);
       end if;
 
       Var_Obj.Type_Desc := String_Value (Pair.Value.all).Value;
@@ -768,12 +845,8 @@ package body MI.Utils is
      (Result  : Result_Record;
       Var_Obj : in out Var_Obj_Type)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-         (String, String_Access);
-
       Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
-
    begin
       --  A result from a -var-evaluate-expression commmand is of the following
       --  form:
@@ -800,7 +873,7 @@ package body MI.Utils is
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
       if Var_Obj.Value /= null then
-         Unchecked_Free (Var_Obj.Value);
+         Free_String (Var_Obj.Value);
       end if;
 
       Var_Obj.Value := String_Value (Pair.Value.all).Value;
@@ -814,12 +887,8 @@ package body MI.Utils is
      (Result  : Result_Record;
       Var_Obj : in out Var_Obj_Type)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-         (String, String_Access);
-
       Cursor  : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
-
    begin
       --  The result of a -var-assign command is of the following simple form:
       --         '^done,value="5"'
@@ -845,7 +914,7 @@ package body MI.Utils is
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
       if Var_Obj.Value /= null then
-         Unchecked_Free (Var_Obj.Value);
+         Free_String (Var_Obj.Value);
       end if;
 
       Var_Obj.Value := String_Value (Pair.Value.all).Value;

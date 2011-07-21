@@ -100,6 +100,34 @@ package MI.Utils is
       null;  -- ???
    end record;
 
+   ------------------------------
+   -- Memory managment helpers --
+   ------------------------------
+
+   procedure Clear_Var_Obj (Var_Obj : in out Var_Obj_Type);
+   --  Releases the memory allocated by a given Var_Obj_Type object, i.e.
+   --  frees inner structures.
+
+   procedure Free_Var_Obj (Var_Obj : in out Var_Obj_Access);
+   --  Releases the memory allocated by and for a given Var_Obj_Type object,
+   --  i.e. frees both inner and main structures.
+
+   procedure Clear_Var_Obj_List (List : in out Var_Obj_List);
+   --  Clear the list by freeing every element before calling the List.Clear
+   --  method.
+
+   procedure Clear_String_List (List : in out String_List);
+   --  Clear the list by freeing every element before calling the List.Clear
+   --  method.
+
+   procedure Clear_Breakpoint (Breakpoint : in out Breakpoint_Type);
+   --  Releases the memory allocated by a given Breakpoint_Type object, i.e.
+   --  frees inner structures.
+
+   procedure Clear_Frame_Type (Frame : in out Frame_Type);
+   --  Releases the memory allocated by a given Frame_Type object, i.e.  frees
+   --  inner structures.
+
    --------------------
    -- Error handlers --
    --------------------
