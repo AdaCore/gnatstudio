@@ -757,7 +757,7 @@ package body Project_Properties is
    --  Handle shell commands
 
    function Get_Safe_Text (Ent : Gtk_Entry) return String;
-   --  Return text contained in Ent, stripped of any LF.
+   --  Return text contained in Ent, stripped of any LF
 
    -------------------
    -- Get_Safe_Text --
@@ -4003,7 +4003,8 @@ package body Project_Properties is
 
       if Row_Found
         and then Get_Button (Event) = 1
-        and then (Get_Event_Type (Event) = Gdk_2button_Press or else
+        and then (Get_Event_Type (Event) = Gdk_2button_Press
+                  or else
                     (Get_Event_Type (Event) = Button_Press
                      and then Path_Is_Selected
                        (Get_Selection (Ed.View), Path)))
