@@ -756,6 +756,21 @@ package body Project_Properties is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle shell commands
 
+   function Get_Safe_Text (Ent : Gtk_Entry) return String;
+   --  Return text contained in Ent, stripped of any LF.
+
+   -------------------
+   -- Get_Safe_Text --
+   -------------------
+
+   function Get_Safe_Text (Ent : Gtk_Entry) return String is
+   begin
+      --  In the dialogs, ASCII.LFs may have been introduced through
+      --  copy-pasting: strip them otherwise the resulting project file
+      --  will not be syntactically valid
+      return Strip_Character (Gtk.GEntry.Get_Text (Ent), ASCII.LF);
+   end Get_Safe_Text;
+
    --------------------
    -- Attribute_Name --
    --------------------
@@ -1139,7 +1154,7 @@ package body Project_Properties is
    is
    begin
       if not Editor.Attribute.Non_Index_Type.Allow_Empty
-        and then Get_Text (Editor.Ent) = ""
+        and then Get_Safe_Text (Editor.Ent) = ""
       then
          return -"Empty value not allowed for "
            & Attribute_Name (Editor.Attribute.all);
@@ -1181,7 +1196,7 @@ package body Project_Properties is
               (Attr               => Editor.Attribute,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Value              => Base_Name (Get_Text (Editor.Ent)),
+               Value              => Base_Name (Get_Safe_Text (Editor.Ent)),
                Project_Changed    => Project_Changed);
 
          elsif Relative
@@ -1189,23 +1204,23 @@ package body Project_Properties is
              Attribute_As_String
          then
             --  ??? We really should handle paths on the Build server directly
-            F1 := Create_From_UTF8 (Get_Text (Editor.Ent));
-            F2 := Create_From_UTF8 (Get_Text (Editor.Path_Widget));
+            F1 := Create_From_UTF8 (Get_Safe_Text (Editor.Ent));
+            F2 := Create_From_UTF8 (Get_Safe_Text (Editor.Path_Widget));
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
                Value              => +Relative_Path (F1, F2),
-               Entry_Value        => Get_Text (Editor.Ent),
+               Entry_Value        => Get_Safe_Text (Editor.Ent),
                Project_Changed    => Project_Changed);
 
          else
-            F1 := Create_From_UTF8 (Get_Text (Editor.Ent));
+            F1 := Create_From_UTF8 (Get_Safe_Text (Editor.Ent));
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Value              => Get_Text (Editor.Ent),
+               Value              => Get_Safe_Text (Editor.Ent),
                Project_Changed    => Project_Changed);
          end if;
 
@@ -1234,7 +1249,8 @@ package body Project_Properties is
                     Create_From_UTF8 (Get_String (Editor.Model, Iter, 0));
 
                   if Relative then
-                     Path := Create_From_UTF8 (Get_Text (Editor.Path_Widget));
+                     Path := Create_From_UTF8
+                       (Get_Safe_Text (Editor.Path_Widget));
 
                      Ensure_Directory (File);
                      --  ??? What if the Build server needs unix paths, and
@@ -1254,7 +1270,8 @@ package body Project_Properties is
                elsif Relative then
                   File :=
                     Create_From_UTF8 (Get_String (Editor.Model, Iter, 0));
-                  Path := Create_From_UTF8 (Get_Text (Editor.Path_Widget));
+                  Path := Create_From_UTF8
+                    (Get_Safe_Text (Editor.Path_Widget));
 
                   Values (N) := new String'(+Relative_Path (File, Path));
 
@@ -2938,8 +2955,8 @@ package body Project_Properties is
                 Select_Files_Or_Directories
                   (Toplevel       => Gtk_Window (Get_Toplevel (Editor)),
                    Project        => Ed.Project,
-                   Default        => +Get_Text (Ed.Ent),
-                   Project_Path   => +Get_Text (Ed.Path_Widget),
+                   Default        => +Get_Safe_Text (Ed.Ent),
+                   Project_Path   => +Get_Safe_Text (Ed.Path_Widget),
                    --  ??? What if the filesystem path is non-UTF8?
                    As_Directory   => Ed.As_Directory,
                    Filter         => Ed.Filter,
@@ -2964,7 +2981,7 @@ package body Project_Properties is
                    Ed.Project,
                    Ed.Attribute,
                    Attribute_Index => "",
-                   Project_Path    => +Get_Text (Ed.Path_Widget));
+                   Project_Path    => +Get_Safe_Text (Ed.Path_Widget));
       --  ??? What if the filesystem path is non-UTF8?
       Iter  : Gtk_Tree_Iter;
    begin
@@ -2973,7 +2990,7 @@ package body Project_Properties is
          if Ed.As_Directory then
             Set (Ed.Model, Iter, 0, Normalize_Pathname
               (Value (V).all,
-                 Directory     => Get_Text (Ed.Path_Widget),
+                 Directory     => Get_Safe_Text (Ed.Path_Widget),
                  Resolve_Links => False));
 
          elsif Ed.Attribute.Base_Name_Only then
@@ -3137,7 +3154,7 @@ package body Project_Properties is
       Ed        : constant File_Attribute_Editor :=
                     File_Attribute_Editor (Editor);
       Iter      : Gtk_Tree_Iter;
-      Directory : constant String := Get_Text (Ed.Path_Widget);
+      Directory : constant String := Get_Safe_Text (Ed.Path_Widget);
    begin
       Iter := Get_Iter_First (Ed.Model);
       while Iter /= Null_Iter loop
@@ -3289,7 +3306,7 @@ package body Project_Properties is
                         Set (Editor.Model, Iter, 0,
                           Normalize_Pathname
                             (Val (Val'First .. Val'Last - 3),
-                             Directory     => Get_Text (Path_Widget),
+                             Directory     => Get_Safe_Text (Path_Widget),
                              Resolve_Links => False));
                         Set (Editor.Model, Iter, 1, True);
 
@@ -3306,7 +3323,7 @@ package body Project_Properties is
                           (Editor.Model, Iter, 0,
                            Normalize_Pathname
                              (Val,
-                              Directory     => Get_Text (Path_Widget),
+                              Directory     => Get_Safe_Text (Path_Widget),
                               Resolve_Links => False));
                         Set (Editor.Model, Iter, 1, False);
                      end if;
@@ -3408,7 +3425,7 @@ package body Project_Properties is
             case Run (Dialog) is
                when Gtk_Response_OK =>
                   declare
-                     S : constant String := Get_Text (Ent);
+                     S : constant String := Get_Safe_Text (Ent);
                   begin
                      Destroy (Dialog);
                      return (1 => new String'(S));
@@ -3611,7 +3628,7 @@ package body Project_Properties is
       Iter : Gtk_Tree_Iter;
    begin
       if Editor.Ent /= null then
-         return Get_Text (Editor.Ent);
+         return Get_Safe_Text (Editor.Ent);
       else
          Get_Selected (Get_Selection (Editor.View), M, Iter);
          if Iter = Null_Iter then
@@ -3767,12 +3784,7 @@ package body Project_Properties is
         and then not Ignore_Editor
         and then Attr.Editor /= null
       then
-         --  In the dialogs, ASCII.LFs may have been introduced through
-         --  copy-pasting: strip them otherwise the resulting project file
-         --  will not be syntactically valid
-         return Strip_Character
-           (Get_Value_As_String (Attr.Editor, Lower_Attribute_Index),
-            ASCII.LF);
+         return Get_Value_As_String (Attr.Editor, Lower_Attribute_Index);
       end if;
 
       --  Otherwise, we'll have to look in the project, or use the default
@@ -4062,7 +4074,7 @@ package body Project_Properties is
                              Description     => Ed.Attribute,
                              Attribute_Index => Attribute_Index,
                              Project_Path    =>
-                             +Get_Text (Ed.Path_Widget));
+                             +Get_Safe_Text (Ed.Path_Widget));
                         --  ??? What if the filesystem path is non-UTF8?
                      begin
                         if Value'Length /= 0 then
@@ -5179,7 +5191,7 @@ package body Project_Properties is
 
          exit when Response /= Gtk_Response_OK;
 
-         if not Is_Valid_Project_Name (Get_Text (Editor.Name)) then
+         if not Is_Valid_Project_Name (Get_Safe_Text (Editor.Name)) then
             Response2 := Message_Dialog
               (Msg         => (-"Invalid name for the project ") &
                (-"(only letters, digits and underscores)"),
@@ -5189,10 +5201,10 @@ package body Project_Properties is
                Parent      => Get_Current_Window (Kernel));
 
          elsif not
-           Is_Directory (Create_From_UTF8 (Get_Text (Editor.Path)))
+           Is_Directory (Create_From_UTF8 (Get_Safe_Text (Editor.Path)))
          then
             Response2 := Message_Dialog
-              (Msg         => Get_Text (Editor.Path)
+              (Msg         => Get_Safe_Text (Editor.Path)
                & (-" is not a valid directory"),
                Buttons     => Button_OK,
                Dialog_Type => Error,
@@ -5205,11 +5217,11 @@ package body Project_Properties is
          else
             declare
                New_Name : constant String :=
-                 Get_Text (Editor.Name);
+                 Get_Safe_Text (Editor.Name);
                New_Base : constant Filesystem_String :=
                  To_File_Name (+New_Name);
                New_Path : constant Virtual_File :=
-                 Create_From_UTF8 (Get_Text (Editor.Path));
+                 Create_From_UTF8 (Get_Safe_Text (Editor.Path));
                New_File : constant Virtual_File :=
                  Create_From_Dir
                    (New_Path,
@@ -5321,9 +5333,9 @@ package body Project_Properties is
 
          declare
             New_Name : constant String :=
-                         Get_Text (Editor.Name);
+                         Get_Safe_Text (Editor.Name);
             New_Path : constant Virtual_File :=
-                         Create_From_UTF8 (Get_Text (Editor.Path));
+                         Create_From_UTF8 (Get_Safe_Text (Editor.Path));
             --  ??? Should we specify the build server's name as host ?
          begin
             if New_Name /= Project.Name
