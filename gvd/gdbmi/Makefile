@@ -14,8 +14,20 @@ clean: libgdbmi.gpr tests/mi_tests.gpr
 distclean: clean
 	rm -rf obj/ lib/ tests/obj/
 
-tests: libgdbmi
+fast-tests: libgdbmi
 	python -B tests/run_tests.py -v
 
-testutils: libgdbmi
+full-tests: libgdbmi
+	python -B tests/run_tests.py -v --with-valgrind
+
+parser-fast-tests: libgdbmi
+	python -B tests/run_tests.py -v --parser
+
+parser-full-tests: libgdbmi
+	python -B tests/run_tests.py -v --parser --with-valgrind
+
+utils-fast-tests: libgdbmi
 	python -B tests/run_tests.py -v --utils
+
+utils-full-tests: libgdbmi
+	python -B tests/run_tests.py -v --utils --with-valgrind
