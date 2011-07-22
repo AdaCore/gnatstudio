@@ -44,10 +44,10 @@ If no tag is specified, the entry is relevant to all IDEs.
               session.
 
 - K708-026: GPS: some key shortcuts not working in modal dialogs
-  Problem:    Key shortcuts involving "ctrl" or "alt", for instance "ctrl-c"
-              to copy, do not work in modal dialogs. 
+  Problem:    Key shortcuts involving "ctrl" or "alt", for instance "ctrl-v"
+              to paste, do not work in modal dialogs. 
   Workaround: Use equivalent key shortcuts (for instance "shift-insert" to
-              copy) when they exist.
+              paste) when they exist.
 
 - K607-047: Jumping to distant delimitor does not work
   Problem:    When using the menu Navigate->Goto Matching Delimiter, if the
