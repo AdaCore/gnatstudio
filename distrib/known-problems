@@ -8,6 +8,12 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K721-007: GPS: ClearCase Native "Describe" actions not working
+  Problem:    When using the ClearCase Native plugin, some basic actions such
+              as "Describe" might not work.
+  Workaround: In clearcase.xml, at line 16, in the definition of action
+              "clearcase_describe", replace all occurrences of '\\' with '\'.
+
 - K721-006: GPS: invalid project file generated when using the GPS dialog
   Problem:    When using the Project Properties dialog to create or modify a
               project, if line feed characters are introduced in text entries
