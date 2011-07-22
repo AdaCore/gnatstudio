@@ -1,0 +1,9 @@
+@@INLINE@@
+A
+@@IF@@ @_COND_@
+   big
+@@ELSE@@
+   small
+@@END_IF@@
+car.
+@@END_INLINE@@

@@ -1,0 +1,59 @@
+------------------------------------------------------------------------------
+--                             Templates Parser                             --
+--                                                                          --
+--                         Copyright (C) 1999-2008                          --
+--                                 AdaCore                                  --
+--                                                                          --
+--  This library is free software; you can redistribute it and/or modify    --
+--  it under the terms of the GNU General Public License as published by    --
+--  the Free Software Foundation; either version 2 of the License, or (at   --
+--  your option) any later version.                                         --
+--                                                                          --
+--  This library is distributed in the hope that it will be useful, but     --
+--  WITHOUT ANY WARRANTY; without even the implied warranty of              --
+--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       --
+--  General Public License for more details.                                --
+--                                                                          --
+--  You should have received a copy of the GNU General Public License       --
+--  along with this library; if not, write to the Free Software Foundation, --
+--  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.          --
+--                                                                          --
+--  As a special exception, if other files instantiate generics from this   --
+--  unit, or you link this unit with other files to produce an executable,  --
+--  this  unit  does not  by itself cause  the resulting executable to be   --
+--  covered by the GNU General Public License. This exception does not      --
+--  however invalidate any other reasons why the executable file  might be  --
+--  covered by the  GNU Public License.                                     --
+------------------------------------------------------------------------------
+
+with "tp_xmlada";
+with "tp_shared";
+
+project Templates_Parser is
+
+   for Source_Dirs use ("src");
+
+   for Object_Dir use TP_Shared'Exec_Dir & "/obj";
+   for Library_Dir use TP_Shared'Exec_Dir & "/lib";
+
+   for Library_Name use "templates_parser";
+   for Library_Kind use TP_Shared.Library_Type;
+
+   case TP_Shared.XMLAda is
+      when "Installed" =>
+         for Source_Dirs use project'Source_Dirs & ("xsrc");
+      when "Disabled" =>
+         null;
+   end case;
+
+   package Naming renames TP_Shared.Naming;
+
+   package Compiler renames TP_Shared.Compiler;
+
+   package Binder renames TP_Shared.Binder;
+
+   package Builder renames TP_Shared.Builder;
+
+   package Ide renames TP_Shared.Ide;
+
+end Templates_Parser;

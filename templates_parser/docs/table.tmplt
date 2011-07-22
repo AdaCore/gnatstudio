@@ -1,0 +1,9 @@
+<P>Here is the ages of some peoples:
+
+<TABLE>
+@@TABLE@@
+   <TR>
+   <TD>@_NAME_@
+   <TD>@_AGE_@
+@@END_TABLE@@
+</TABLE>

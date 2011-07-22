@@ -1,0 +1,141 @@
+------------------------------------------------------------------------------
+--                             Templates Parser                             --
+--                                                                          --
+--                      Copyright (C) 2008-2010, AdaCore                    --
+--                                                                          --
+--  This library is free software; you can redistribute it and/or modify    --
+--  it under the terms of the GNU General Public License as published by    --
+--  the Free Software Foundation; either version 2 of the License, or (at   --
+--  your option) any later version.                                         --
+--                                                                          --
+--  This library is distributed in the hope that it will be useful, but     --
+--  WITHOUT ANY WARRANTY; without even the implied warranty of              --
+--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       --
+--  General Public License for more details.                                --
+--                                                                          --
+--  You should have received a copy of the GNU General Public License       --
+--  along with this library; if not, write to the Free Software Foundation, --
+--  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.          --
+--                                                                          --
+--  As a special exception, if other files instantiate generics from this   --
+--  unit, or you link this unit with other files to produce an executable,  --
+--  this  unit  does not  by itself cause  the resulting executable to be   --
+--  covered by the GNU General Public License. This exception does not      --
+--  however invalidate any other reasons why the executable file  might be  --
+--  covered by the  GNU Public License.                                     --
+------------------------------------------------------------------------------
+
+project TP_Shared is
+
+   for Source_Dirs use ();
+
+   type Build_Type is ("Debug", "Release");
+   Build : Build_Type := external ("PRJ_BUILD", "Debug");
+
+   type Tasking_Type is ("No_Tasking", "Standard_Tasking");
+   Tasking : Tasking_Type := external ("TP_TASKING", "Standard_Tasking");
+
+   type XMLAda_Type is ("Installed", "Disabled");
+   XMLAda : XMLAda_Type := external ("TP_XMLADA", "Disabled");
+
+   type Library_Kind is ("relocatable", "static");
+   Library_Type : Library_Kind := external ("LIBRARY_TYPE", "static");
+
+   type Target_Type is ("native", "vxworks");
+   Target : Target_Type := external ("PLATFORM", "native");
+
+   Processors := External ("PROCESSORS", "2");
+
+   -----------------------
+   -- Build directories --
+   -----------------------
+
+   for Exec_Dir use ".build/" & Target;
+
+   case Build is
+      when "Debug" =>
+         for Exec_Dir use Project'Exec_Dir & "/debug";
+      when "Release" =>
+         for Exec_Dir use Project'Exec_Dir & "/release";
+   end case;
+
+   case Library_Type is
+      when "static" =>
+         for Exec_Dir use Project'Exec_Dir & "/static";
+      when "relocatable" =>
+         for Exec_Dir use Project'Exec_Dir & "/relocatable";
+   end case;
+
+   ------------
+   -- Naming --
+   ------------
+
+   package Naming is
+
+      for Specification ("Templates_Parser.Configuration")
+        use "templates_parser-configuration__standalone.ads";
+      for Implementation ("Templates_Parser.Input")
+        use "templates_parser-input__standalone.adb";
+
+      case Tasking is
+         when "No_Tasking" =>
+            for Implementation ("Templates_Parser_Tasking")
+              use "templates_parser_tasking__no_tasking.adb";
+         when "Standard_Tasking" =>
+            for Implementation ("Templates_Parser_Tasking")
+              use "templates_parser_tasking__standard_tasking.adb";
+      end case;
+
+   end Naming;
+
+   --------------
+   -- Compiler --
+   --------------
+
+   Common_Options :=
+     ("-gnat05", "-gnatwcfijkmruv", "-gnaty3abcefhiIklmnoprstx", "-Wall");
+   --  Common options used for the Debug and Release modes
+
+   Debug_Options :=
+     ("-g", "-gnata", "-gnatVa", "-gnatQ", "-gnato", "-gnatwe", "-gnatyO");
+
+   Release_Options :=
+     ("-O2", "-gnatn");
+
+   package Compiler is
+      case Build is
+         when "Release" =>
+            for Default_Switches ("Ada") use Common_Options & Release_Options;
+         when "Debug" =>
+            for Default_Switches ("Ada") use Common_Options & Debug_Options;
+      end case;
+   end Compiler;
+
+   ------------
+   -- Binder --
+   ------------
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
+
+   -------------
+   -- Builder --
+   -------------
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-m", "-j" & Processors);
+   end Builder;
+
+   ---------
+   -- Ide --
+   ---------
+
+   type VCS_Type is ("Subversion", "Git");
+   VCS_Kind : VCS_Type := external ("PRJ_VCS", "Subversion");
+
+   package Ide is
+      for VCS_Kind use VCS_Kind;
+   end Ide;
+
+end TP_Shared;

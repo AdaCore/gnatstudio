@@ -1,0 +1,34 @@
+@@--  See extensive documentation for the templates2ada tool in templates.tads
+@@--  This file is another example of a possible output from templates2ada.
+@@--  It generates a template that can be included in your own templates to ensure
+@@--  that links in the HTML code are valid.
+@@--
+@@--  For instance, your templates
+@@--  would look like:
+@@--      @@INCLUDE@@ all_urls.html
+@@--      <a href="@_URI_MY_TEMPLATE_@?@_HTTP_MY_TEMPLATE__Nb_@=12" />
+@@--  which, although less readable, ensures that your links are valid.
+@@--
+@@--  Since this template cannot contain special templates parser commands for the
+@@--  generated template, you need to post-process the generated file. One example
+@@--  for this is:
+@@--     templates2ada -d templates_dir/ -o generated -r -t all_urls.thtml
+@@--     sed -e 's/^@@ /@@/' generated > all_urls.html
+@@--
+@@--
+@@TABLE@@
+@@ ----------------------------------------------------------------------------------
+@@ -- ------- @_BASENAME_@
+@@ ----------------------------------------------------------------------------------
+  @@TABLE@@
+    @@IF@@ not @_IS_EMPTY:URL_@ 
+@@ SET@@ URI_@_CAPITALIZE:REPLACE_ALL(\./_):BASENAME'UP_LEVEL_@ = "@_URL_@"
+    @@END_IF@@
+  @@END_TABLE@@
+  @@TABLE@@
+    @@IF@@ not @_IS_EMPTY:HTTP_@ and @_FROM_GET_@
+@@ SET@@ HTTP_@_CAPITALIZE:REPLACE_ALL(\./_):BASENAME'UP_LEVEL_@__@_HTTP_@ = "@_HTTP_@"
+    @@END_IF@@
+  @@END_TABLE@@
+
+@@END_TABLE@@

@@ -1,0 +1,2124 @@
+\input texinfo   @c -*-texinfo-*-
+
+@c %**start of header
+@setfilename templates_parser.info
+@settitle Templates Parser User's Guide
+@setchapternewpage off
+@syncodeindex fn cp
+
+@iftex
+@afourpaper
+@end iftex
+
+@c ----------------------------------------- MACRO
+
+@c Macro used for all Templates_Parser examples
+@c No cartouche on HTML as this is part of the css
+@macro TPEXP{TXT}
+@ifhtml
+@smallexample
+@group
+\TXT\
+@end group
+@end smallexample
+@end ifhtml
+@ifnothtml
+@cartouche
+@smallexample
+@group
+\TXT\
+@end group
+@end smallexample
+@end cartouche
+@end ifnothtml
+@end macro
+
+@c ----------------------------------------- END MACRO
+
+@titlepage
+
+@title Templates Parser User's Guide
+@subtitle Date: @today{}
+@author AdaCore
+
+@sp 1
+@url{http://libre.act-europe.fr/aws}
+
+@vskip 0pt plus 1filll
+
+@page
+
+Copyright @copyright{} 1999-2004, Pascal Obry
+
+Copyright @copyright{} 2005-2010, AdaCore
+
+@*
+
+This document may be copied, in whole or in part, in any form or by any
+means, as is or with alterations, provided that (1) alterations are clearly
+marked as alterations and (2) this copyright notice is included
+unmodified in any copy.
+
+@end titlepage
+
+@ifhtml
+@c title page for the HTML documentation
+@html
+<font size="+2">
+<p>Document revision level $Revision$
+<p>Date: @today{}
+<p>AdaCore
+</font>
+
+<font size="+1">
+<p>@url{http://libre.act-europe.fr/aws}
+</font>
+
+@page
+@end html
+@end ifhtml
+@finalout
+
+@contents
+
+@ifinfo
+@node Top
+@top Templates Parser
+
+@menu
+* Introduction::
+* Tags::
+* Template statements::
+* Macros::
+* Other services::
+* Templates_Parser API Reference::
+* Index::
+@end menu
+@end ifinfo
+
+@c ----------------------------------------------------------------------
+@node Introduction
+@chapter Introduction
+@c ----------------------------------------------------------------------
+
+@noindent
+The templates parser package has been designed to parse files and to
+replace some specific tags into these files by some specified values.
+
+@noindent
+The main goal was to ease the development of Web servers. In CGI
+(@i{Common Gateway Interface}) mode you have to write the HTML page in
+the program (in Ada or whatever other languages) by using some specific
+libraries or by using only basic output functions like Ada @code{Put_Line} for
+example. This is of course not mandatory but by lack of a good library
+every Web development end up doing just that.
+
+@noindent
+The main problems with this approach are:
+
+@itemize @bullet
+
+@item It is painful to have to recompile the program each time you have
+a slight change to do in the design (center an image, change the border
+width of a table...)
+
+@item You have the design and the program merged together. It means that
+to change the design you must know the Ada language. And to change the
+Ada program you need to understand what is going on with all these
+inline HTML command.
+
+@item You can't use the nice tools to generate your HTML.
+
+@end itemize
+
+@noindent
+With the templates parser package these problems are gone. The code and
+the design is @b{completely} separated. This is a very important
+point. PHP or JSP have tried this but most of the time you have the
+script embedded into the Web template. And worst you need to use another
+language just for your Web development.
+
+@itemize @bullet
+
+@item The HTML page is separated from the program code. Then you can
+change the design without changing the code. Moreover when you fix the
+code you don't have to handle all the specific HTML output. And you do
+not risk to break the design.
+
+@item It is easier to work on the design and the program at the same time
+using the right people for the job.
+
+@item It reduces the number of @i{edit/build/test} cycles. Writing HTML
+code from a program is error prone.
+
+@item It is possible to use standard tools to produce the HTML.
+
+@item You don't have to learn a new language.
+
+@item The script is Ada, so here you have the benefit of all the Ada power.
+
+@end itemize
+
+@noindent
+In fact, the Ada program now simply computes some values, gets some data
+from a database or whatever and then calls the templates parser to output
+a page with the data displayed. To the templates parser you just pass
+the template file name and an associative table.
+
+@noindent
+It is even more convenient to have different displays with the same set
+of data. You just have to provide as many templates as you like.
+
+@c ----------------------------------------------------------------------
+@node Tags
+@chapter Tags
+@c ----------------------------------------------------------------------
+
+@menu
+* Tags in template files::
+* Translations::
+* Discrete Boolean Composite values::
+* Filters::
+* Attributes::
+* Predefined tags::
+* Dynamic tags::
+@end menu
+
+@c -----------------------------------------------------------------------
+@node Tags in template files
+@section Tags in template files
+@c -----------------------------------------------------------------------
+
+@noindent
+A tag is a string found in the template page and surrounded by a specific set
+of characters. The default is @b{@@_} at the start and @b{_@@} at the
+end of the tag. This default can be changed using @code{Set_Tag_Separators}
+routine, @pxref{Templates_Parser API Reference}. Note that it must be changed
+as the first API call and should not be changed after that.
+
+The tag will be replaced by a value specified in the Ada code.
+In this context, the role of the Ada code is therefore to prepare what is
+known as a translation, and then pass it to the templates parser, along with
+the name of the template file to parse. This results in an expanded version
+of the templates file, where all tags have been replaced by the value given
+in the Ada code.
+
+Let's start with a simple example. Here is the contents of the file
+@file{demo.tmplt}, which is a very basic template file:
+
+@include demo.tmplt.texi
+
+@noindent
+On its own, this template has little interest. However, it is used from some
+Ada code similar to the following @file{demo.adb} file:
+
+@include demo.adb.texi
+
+@noindent
+Compile this program, link with the templates parser, and when you run it,
+the output will be:
+
+@include demo.adb.res
+
+@noindent
+As you can imagine, this is a bare bone example. More complex structures are
+of course possible. One thing to note, though, is that the template file
+requires no Ada knowledge for editing, and is strongly related to your
+application domain. One of the main usage for such templates is to generate
+web pages. This can be done by a designer that knows nothing of how your
+Ada code works. But you can use templates in other domains, including to
+generate Ada code.
+
+@c ----------------------------------------------------------------------
+@node Translations
+@section Translations
+@c ----------------------------------------------------------------------
+
+@noindent
+In your Ada code, you can associate one or more values with a name, and
+then reference that name in the template file as we just saw above.
+
+Associating the value(s) with the name is done through one of the @code{Assoc}
+constructors, @pxref{Templates_Parser API Reference}. Ada's overloading
+resolution mechanism will take care of calling the appropriate constructor
+automatically.
+
+These associations are then grouped into a dictionary. This dictionary
+is passed along with the name of the template file to the @code{Parse}
+routine itself, which generates the final expanded representation of the
+template. In fact, you will almost never have to manipulate an association
+directly, since as soon as it is created you store it in the dictionary.
+
+There are two types of dictionaries in the templates parser:
+
+@table @code
+
+@item Translate_Table
+@cindex Translate_Table
+
+This is an array of associations. If you know the exact number of
+associations when you write your code, this will generally provide
+a very readable code. The array can be initialized as soon as it is
+declared.
+
+@TPEXP{
+  @b{declare}
+     T : @b{constant} Translate_Table :=
+       (1 => Assoc ("NAME1", Value1),
+        2 => Assoc ("NAME2", Value2));
+  @b{begin}
+     Put_Line (Parse ("demo.tmplt", T));
+  @b{end};}
+
+@item Translate_Set
+@cindex Translate_Set
+
+If, on the other hand, you do not know statically the number of
+associations, it is generally a lot more flexible to use another type
+of dictionary, which isn't limited in size. It is also better to use
+this type of dictionary if you need extra code to compute the values.
+
+@TPEXP{
+  @b{declare}
+     T : Translate_Set
+  @b{begin}
+     Insert (T, Assoc ("NAME1", Value1));
+     Insert (T, Assoc ("NAME2", Value2));
+  @b{end};}
+
+@end table
+
+@noindent
+Internally, the templates parser will always convert all dictionaries
+to a @code{Translate_Set}, which is much more efficient when we need to
+look values up.
+
+@c ----------------------------------------------------------------------
+@node Discrete Boolean Composite values
+@section Discrete, Boolean and Composite values
+@c ----------------------------------------------------------------------
+
+@noindent
+As we just saw, the values by which a tag is replaced must be provided
+by the Ada code. Such values can be provided in different formats,
+depending on the intended use.
+
+The three kinds of tags are @b{discrete}, @b{Boolean} and @b{composite}
+tags. These are all ways to associate one or more value to a name, which
+is the name used in the template file.
+
+@table @b
+
+@item discrete values
+@cindex Tag, discrete
+This represents a single value associated with a name. The types of value
+currently supported are String, Unbounded_String and Integer.
+
+@TPEXP{
+    Insert (T, Assoc ("NAME", 2));
+ Insert (T, Assoc ("NAME", "VALUE"));}
+
+@item Boolean values
+@cindex Tag, Boolean
+These are similar to discrete values. However, they are more convenient
+to manipulate within @code{@@@@IF@@@@} statements in the template. When
+outside an @code{IF} statement, such values are represented as TRUE or
+FALSE.
+
+@TPEXP{Insert (T, Assoc ("NAME", True));}
+
+@item composite values
+@cindex Tag, composite
+A composite tag is a variable which contains a set of values. In terms of
+programming languages, these would generally be called vectors. Since each
+value within that can itself be a composite tag, you can therefore build
+multi-dimensional arrays.
+
+These kind of variables will be used with the @code{TABLE} tag statement
+@pxref{TABLE statement}. Outside a table statement, the tag is
+replaced by all values concatenated with a specified separator. See
+@code{Set_Separator} routine. Such tag are variables declared in the
+Ada program a @code{Templates_Parser.Tag} type.
+
+There are many overloaded constructors to build a composite tags (see "+"
+operators).  The "+" operators are used to build a Tag item from
+standard types like String, Unbounded_String, Character, Integer and
+Boolean.
+
+To add items to a Tag many overloaded operators are provided (see
+"&" operators). The "&" operators add one item at the start or the end
+of the tag. It is possible to directly add String, Unbounded_String,
+Character, Integer and Boolean items using one of the overloaded operator.
+
+A tag composed of only Boolean values TRUE or FALSE is called a
+Boolean composite tag. This tag is to be used with a @code{IF} tag statement
+inside a @code{TABLE} tag statement.
+
+It is possible to build a composite tag having any number of nested
+level. A vector is a composite tag with only one level, a matrix is a
+composite tag with two level (a Tag with a set of vector tag).
+
+Two aliases exists for composite tags with one or two nested level,
+they are named @code{Vector_Tag} and @code{Matrix_Tag}. In the suite
+of the document, we call @i{vector tag} a tag with a single nested
+level and @i{matrix tag} a tag with two nested level.
+
+@TPEXP{
+   @i{--  Building a composite tag}
+   @i{--  Then add it into a translate set}
+   @b{declare}
+     V : Tag;
+     T : Translate_Set;
+   @b{begin}
+     @b{for} Index @b{in} 1 .. 10 @b{loop}
+        V := V & I;
+     @b{end loop};
+     Insert (T, Assoc ("VECTOR", V));
+   @b{end};}
+
+@end table
+
+@c --------------------------------------------------------------------------
+@node Filters
+@section Filters
+@cindex Filters
+@c --------------------------------------------------------------------------
+
+@menu
+* Predefined filters::
+* User defined filters::
+@end menu
+
+@noindent
+Within the template file, functions can be applied to tags. Such functions
+are called @code{filters}. These filters might require one or more
+parameters, see the documentation for each filter.
+
+The syntax is:
+
+@TPEXP{
+@code{@@_[[FILTER1_NAME[(parameter)]:]FILTER2_NAME[(parameter)]:]SOME_VAR_@@}.
+}
+
+When multiple filters are associated to a tag, they are evaluated from right
+to left. In the example above, @code{FILTER1_NAME} is applied to the result
+of applying @code{FILTER2_NAME} to @code{SOME_VAR}.
+
+Remember that one of the goals in using templates is to remove as much
+hard-coded information from the actual Ada source, and move it into easily
+editable external files. Using filters is a convenient way to give the template
+designer the power to specify the exact output he wants, even without changing
+the Ada code. For instance, imagine that one suddenly decides that some
+names should be capitalized in a template. There are two solutions to such
+a change in design:
+
+@itemize @bullet
+@item Modify the Ada code to capitalize strings before storing them in
+a tag variable. What if, in the template, we need the name once capitalized,
+and once with its original casing ? This means the Ada code would have to
+create two tags.
+
+@item Modify the template itself, and use a filter. A single tag is required
+on the Ada side, which doesn't even have to be changed in fact. The template
+would for instance become:
+
+@TPEXP{@@_CAPITALIZE:VAR_@@ : constant String := "@@_VAR_@@";}
+@end itemize
+
+The templates parser comes with a number of predefined filters, that can be
+used in various situations. Some of these are highly specialized, but most of
+them are fairly general. You can also define your own filters, adapted to
+specific needs you might have.
+
+Here are some more examples using the predefined filters:
+@TPEXP{If VAR is set to "@i{vector_tag}", ONE to "1" and TWO to "2" then:
+
+@@_VAR_@@                                   ->  vector_tag
+@@_UPPER:VAR_@@                             ->  VECTOR_TAG
+@@_CAPITALIZE:VAR_@@                        ->  Vector_Tag
+@@_EXIST:VAR_@@                             ->  TRUE
+@@_UPPER:REVERSE:VAR_@@                     ->  GAT_ROTCEV
+@@_MATCH(VEC.*):UPPER:VAR_@@                ->  TRUE
+@@_SLICE(1..6):VAR_@@                       ->  vector
+@@_REPLACE(([^_]+)):VAR_@@                  ->  vector
+@@_REPLACE(([a-z]+)_([a-z]+)/\\2_\\1):VAR_@@  ->  tag_vector
+@@_"+"(TWO):ONE_@@                          ->  3
+@@_"-"(TWO):ONE_@@                          ->  -1}
+
+@c ----------------------------------------------------------------------------
+@c -- Predefined filters
+@c ----------------------------------------------------------------------------
+
+@node Predefined filters
+@subsection Predefined filters
+
+Here is the complete list of predefined filters that come with the templates
+parser.
+
+@table @code
+
+@item "+"(@i{N}) or ADD(@i{N})
+@cindex Filter, "+"
+
+Add N to variable and return the result. If the current variable value
+is not a number it returns the empty string. N must be a number or a
+discrete tag variable whose value is a number.
+
+@item "-"(@i{N}) or SUB(@i{N})
+@cindex Filter, "-"
+
+Subtract N to variable and return the result. If the current variable value
+is not a number it returns the empty string. N must be a number or a
+discrete tag variable whose value is a number.
+
+@item "*"(@i{N}) or MULT(@i{N})
+@cindex Filter, "*"
+
+Multiply N with variable and return the result. If the current variable value
+is not a number it returns the empty string. N must be a number or a
+discrete tag variable whose value is a number.
+
+@item "/"(@i{N}) or DIV(@i{N})
+@cindex Filter, "/"
+
+Divide variable by N and return the result. If the current variable value
+is not a number it returns the empty string. N must be a number or a
+discrete tag variable whose value is a number.
+
+@item ABS
+@cindex Filter, ABS
+
+Returns the absolute value.
+
+@item ADD_PARAM(@i{NAME[=VALUE]})
+@cindex Filter, ADD_PARAM
+
+Add a parameter into an URL. This routine adds the '?' and '&'
+character if needed. @i{VALUE} can be a tag variable name.
+
+@item BR_2_EOL(@i{EOL})
+@cindex Filter, BR_2_EOL
+
+Replaces all occurrences of the @code{<br>} HTML tag by a line terminator
+determined by EOL. EOL must be either CR (Carriage-Return), LF (Line-Feed),
+LFCR (Line-Feed followed by Carriage-Return) or CRLF (Carriage-Return
+followed by Line-Feed).
+
+@item BR_2_LF
+@cindex Filter, BR_2_LF
+
+Shortcut for BR_2_EOL(LF).
+
+@item CAPITALIZE
+@cindex Filter, CAPITALIZE
+
+Put all characters in the variable in lower case except characters after
+a space or an underscore which are set in upper-case.
+
+@item CLEAN_TEXT
+@cindex Filter, CLEAN_TEXT
+
+Keep only letters and digits all others characters are changed to
+spaces.
+
+@item COMA_2_POINT
+@cindex Filter, COMA_2_POINT
+
+Replaces all comas by points.
+
+@item CONTRACT
+@cindex Filter, CONTRACT
+
+Converts any suite of spaces by a single space character.
+
+@item DEL_PARAM(@i{NAME})
+@cindex Filter, DEL_PARAM
+
+Delete parameter NAME from the URL. This routine removes the '?' and '&'
+character if needed. Returns the input string as-is if the parameter
+is not found.
+
+@item EXIST
+@cindex Filter, EXIST
+
+Returns @b{True} if variable is set and has a value different that the null
+string and @b{False} otherwise.
+
+@item FILE_EXISTS
+@cindex Filter, FILE_EXISTS
+
+Returns @b{True} if variable is set and has a value that corresponds
+to a file name present on the file system and @b{False} otherwise.
+
+@item FORMAT_DATE(@b{FORMAT})
+@cindex Filter, FORMAT_DATE
+
+Returns the date with the given format. The date must be in the ISO
+format (YYYY-MM-DD) eventually followed by a space and the time with
+the format HH:MM:SS. If the date is not given in the right format it
+returns the date as-is. The format is using the GNU/date description
+patterns as also implemented in @code{GNAT.Calendar.Time_IO}.
+
+@itemize @bullet
+@item @i{Characters}:
+
+@itemize
+@item @b{%}: a literal %
+@item @b{n}: a newline
+@item @b{t}: a horizontal tab
+@end itemize
+
+@item @i{Time fields}:
+
+@itemize
+@item @b{%H}: hour (00..23)
+@item @b{%I}: hour (01..12)
+@item @b{%k}: hour ( 0..23)
+@item @b{%l}: hour ( 1..12)
+@item @b{%M}: minute (00..59)
+@item @b{%p}: locale's AM or PM
+@item @b{%r}: time, 12-hour (hh:mm:ss [AP]M)
+@item @b{%s}: seconds  since 1970-01-01  00:00:00 UTC (a nonstandard extension)
+@item @b{%S}: second (00..59)
+@item @b{%T}: time, 24-hour (hh:mm:ss)
+@end itemize
+
+@item @i{Date fields}:
+
+@itemize
+@item @b{%a}: locale's abbreviated weekday name (Sun..Sat)
+@item @b{%A}: locale's full weekday name, variable length (Sunday..Saturday)
+@item @b{%b}: locale's abbreviated month name (Jan..Dec)
+@item @b{%B}: locale's full month name, variable length (January..December)
+@item @b{%c}: locale's date and time (Sat Nov 04 12:02:33 EST 1989)
+@item @b{%d}: day of month (01..31)
+@item @b{%D}: date (mm/dd/yy)
+@item @b{%h}: same as %b
+@item @b{%j}: day of year (001..366)
+@item @b{%m}: month (01..12)
+@item @b{%U}: week number of year with  Sunday as first day of week (00..53)
+@item @b{%w}: day of week (0..6) with 0 corresponding to Sunday
+@item @b{%W}: week number of year with  Monday as first day of week (00..53)
+@item @b{%x}: locale's date representation (mm/dd/yy)
+@item @b{%y}: last two digits of year (00..99)
+@item @b{%Y}: year with four digits (1970...)
+@end itemize
+
+@item @i{Padding}:
+
+By default,  date pads numeric fields with zeroes. GNU date recognizes the following nonstandard numeric modifiers:
+@itemize
+@item @b{-} (hyphen): do not pad the field
+@item @b{_} (underscore): pad the field with spaces
+@end itemize
+@end itemize
+
+@item FORMAT_NUMBER([@i{DIGITSEP}])
+@cindex Filter, FORMAT_NUMBER
+
+Returns the number with a separator added between each 3 digits
+blocks. The decimal part is not transformed. If the data is not a
+number nothing is done. The default separator is a space, although you can
+specify any separator (a single character) you wish. DIGITSEP can also be
+the name of another tag, whose value (or the first character of it) will be
+used as a separator.
+
+@item IS_EMPTY
+@cindex Filter, IS_EMPTY
+
+Returns @b{True} if variable is the empty string and @b{False} otherwise.
+
+@item LF_2_BR
+@cindex Filter, LF_2_BR
+
+Replaces all occurrences of the character LF (Line-Feed) by a
+@code{<br>} HTML tag.
+
+@item LOWER
+@cindex Filter, LOWER
+
+Put all characters in the variable in lower-case.
+
+@item MATCH(@i{REGEXP})
+@cindex Filter, MATCH
+
+Returns @b{True} if variable match the regular expression passed as
+filter's parameter. The regular expression is using a format as
+found in @file{gawk}, @file{sed} or @file{grep} tools.
+
+@item MAX(@i{N})
+@cindex Filter, MAX
+
+Returns the maximum value between the variable and the parameter.
+
+@item MIN(@i{N})
+@cindex Filter, MIN
+
+Returns the minimum value between the variable and the parameter.
+
+@item MOD(@i{N})
+@cindex Filter, MOD
+
+Returns variable modulo N. If the current variable value is not a
+number it returns the empty string. N must be a number or a
+discrete tag variable whose value is a number.
+
+@item NEG
+@cindex Filter, NEG
+
+Change the sign of the value.
+
+@item NO_DYNAMIC
+@cindex Filter, NO_DYNAMIC
+
+This is a special command filter which indicates that the tag must not
+be searched in the dynamic tags. See @pxref{Lazy_Tag}. @code{NO_DYNAMIC} must
+be the first filter. This filter returns the value as-is.
+
+@item NO_DIGIT
+@cindex Filter, NO_DIGIT
+
+Replaces all digits by spaces.
+
+@item NO_LETTER
+@cindex Filter, NO_LETTER
+
+Replaces all letters by spaces.
+
+@item NO_SPACE
+@cindex Filter, NO_SPACE
+
+Removes all spaces in the variable.
+
+@item OUI_NON
+@cindex Filter, OUI_NON
+
+If variable value is @b{True} it returns @b{Oui}, if @b{False} it
+returns @b{Non}, otherwise does nothing. It keeps the way @b{True/False} is
+capitalized (all upper, all lower or first letter capital).
+
+@item POINT_2_COMA
+@cindex Filter, POINT_2_COMA
+
+Replaces all comas by points.
+
+@item REPEAT(@i{N})
+@cindex Filter, REPEAT
+
+Returns @i{N} times the variable, @i{N} being passed as filter's parameter.
+@i{N} must be a number or a discrete tag variable whose value is a number.
+
+@item REPEAT(@i{STR})
+@cindex Filter, REPEAT
+
+This is the second @code{REPEAT} form. In this case @i{STR} is repeated
+a number of time corresponding to the variable value which must be a number.
+
+@item REPLACE(@i{REGEXP}[/@i{STR}])
+@cindex Filter, REPLACE
+
+This filter replaces @b{\n} (where @i{n} is a number) @i{STR}'s
+occurrences by the corresponding match from @i{REGEXP}. The first match
+in @i{REGEXP} will replace @b{\1}, the second match @b{\2} and so
+on. Each match in @i{REGEXP} must be parenthesized. It replaces only
+the first match. @i{STR} is an optional parameter, its default value
+is @b{\1}. It is possible to space characters in @i{STR} to avoid
+parsing confusions. This is required if you need to have @b{@@_} or
+@b{_@@} or a parenthesis in @i{STR} for example. @i{STR} can be a tag
+variable name. @i{STR} can contain the following escaped characters :
+@b{\n} Carriage Return, @b{\r} Line Feed and @b{\t} for Horizontal
+Tabulation.
+
+@item REPLACE_ALL(@i{REGEXP}[/@i{STR}])
+@cindex Filter, REPLACE_ALL
+
+Idem as above but replaces all occurrences.
+
+@item REPLACE_PARAM(@i{NAME[=VALUE]})
+@cindex Filter, REPLACE_PARAM
+
+This is filter is equivalent to
+ADD_PARAM(@i{NAME[=VALUE]}):DEL_PARAM(@i{NAME}). @i{VALUE} can be a
+tag variable name.
+
+@item REVERSE
+@cindex Filter, REVERSE
+
+Reverse the string.
+
+@item SIZE
+@cindex Filter, SIZE
+
+Returns the size (number of characters) of the string value.
+
+@item SLICE(@i{x .. y})
+@cindex Filter, SLICE
+
+Returns the sub-string starting from position x and ending to position
+y. Note that the string to slice always start from position 1.
+If x or y are negative, they are counted from the end of the string, so
+that 0 matches the last character of the string, -1 matches the character
+just before,...
+
+@item TRIM
+@cindex Filter, TRIM
+
+Removes leading and trailing spaces.
+
+@item UPPER
+@cindex Filter, UPPER
+
+Put all characters in the variable in upper-case.
+
+@item WEB_ENCODE
+@cindex Filter, WEB_ENCODE
+
+As WEB_ESCAPE and also encodes all non 7-bit characters and non
+printable characters using @b{&#xxx;} HTML encoding.
+
+@item WEB_ESCAPE
+@cindex Filter, WEB_ESCAPE
+
+Replaces characters '<', '>', '"' and '&' by corresponding HTML
+sequences: &lt; &gt; &quot; and &amp;
+
+@item WEB_NBSP
+@cindex Filter, WEB_NBSP
+
+Replaces all spaces by an HTML non breaking space.
+
+@item WRAP(@i{N})
+@cindex Filter, WRAP
+
+Wraps lines having more N characters.
+
+@item YES_NO
+@cindex Filter, YES_NO
+
+If variable value is @b{True} it returns @b{Yes}, if @b{False} it
+returns @b{No}, otherwise does nothing. It keeps the way @b{True/False} is
+capitalized (all upper, all lower or first letter capital).
+
+@end table
+
+@c ---------------------------------------------------------------------------
+@node User defined filters
+@subsection User defined filters
+@c ---------------------------------------------------------------------------
+
+@noindent
+It is also possible to define a new filter by registering a callback
+routine associated with the filter name.
+
+You can define three kinds of filters: filters that take no argument, and are
+therefore simply used as in @@_FILTER:TAG_@@, filters that take one
+or more arguments, used as in @@_FILTER(param1,param2):TAG_@@, and filters
+that are implemented as tagged objects, and take the same form as the filters
+with arguments described above.
+
+The latter form of filters (using tagged types) provides slightly more
+flexibility, as you can store your own user data in the filter when it is
+registered. Among other things, this makes it possible to share filters
+between various applications, when the filter needs to access some
+application-specific variable as well.
+
+The templates parser will not try to interpret the parameters for you, and
+will simply return the string representation of the list of parameters,
+for instance @code{"param1,param2"} in the example above. This provides
+enhanced flexibility, since you are free to use any parameter-separator
+you want, and to interpret parameters as integer, strings, references to
+other tags,@dots{}
+
+The templates parser doesn't support tag substitution within the parameter
+list, but this is trivial to implement in your own code. For instance,
+if the user has used @@_FILTER(REFTAG):TAG_@@, you are free to either
+take @code{REFTAG} as a constant string, or as a reference to another tag,
+to be looked up in a translation table. You should of course properly
+document the behavior of your filter.
+
+Here is the templates parser API for defining your own custom filters:
+
+@TPEXP{      @b{type} Filter_Context @b{is record}
+      Translations : Translate_Set;
+      Lazy_Tag     : Dynamic.Lazy_Tag_Access;
+   @b{end record};
+
+   @b{type} Callback @b{is access function}
+     (Value      : @b{in} String;
+      Parameters : @b{in} String;
+      Context    : @b{in} Filter_Context) @b{return} String;
+   @i{--  User's filter callback}
+
+   @b{type} Callback_No_Param @b{is access function}
+     (Value   : @b{in} String;
+      Context : @b{in} Filter_Context) @b{return} String;
+   @i{--  User's filter callback}
+
+   @b{procedure} Register_Filter
+     (Name    : @b{in} String;
+      Handler : @b{in} Callback);
+   @i{--  Register user's filter Name using the specified Handler}
+
+   @b{procedure} Register_Filter
+     (Name    : @b{in} String;
+      Handler : @b{in} Callback_No_Param);
+   @i{--  Register user's filter Name using the specified Handler}}
+
+In the above calls, Value is the value of the tag on which the filter
+applies. In the examples above, that would be the value of @code{TAG}
+as looked up in the translation table. Context contains the the translation
+table and the current lazy tag object you can use if you need to look
+up other tags.
+
+Here is a simple example of a custom filter, which can be used to
+generate HTML forms. In such a form, it is common to have some @code{<input>}
+tags that need a @code{selected='selected'} attribute if the toggle
+button should be selected. This can be done without the use of a filter,
+of course, using a simple @code{@@@@IF@@@@} statement, but that makes the
+template less readable. The custom filter below behaves as such: it takes
+one argument, and compares the value of the tag on which the filter is
+applied to that argument. If they are equal, the string
+@code{selected='selected'} will be substituted. As a special case, if the
+argument to the filter starts with a @code{'@@'} character, the argument
+is interpreted as the name of a tag to look up first.
+
+@TPEXP{
+   @b{function} Custom_Select_Filter
+     (Value      : @b{in} String;
+      Parameters : @b{in} String;
+      Context    : @b{in} Filter_Context) @b{return} String @b{is}
+   begin
+      @b{if} Parameters /= "" @b{and then} Parameters (Parameters'First) = '@@' @b{then}
+         @b{if} Get (Get (Context.Translations,
+                      Parameters (Parameters'First + 1 .. Parameters'Last))) =
+           Value
+         @b{then}
+            return "selected='selected'";
+         @b{end if};
+
+      @b{elsif} Value = Parameters @b{then}
+         return "selected='selected'";
+      @b{end if};
+
+      @b{return} "";
+   @b{end} Custom_Select_Filter;
+
+   Register_Filter ("SELECTED", Custom_Select_Filter'Access);
+}
+
+and a template would look like:
+
+@TPEXP{
+   <option value="foo" @@_SELECTED(@@SELECTED_STATUS):STATUS_@@ />}
+
+@c --------------------------------------------------------------------------
+@node Attributes
+@section Attributes
+@c --------------------------------------------------------------------------
+
+@noindent
+In addition to filters, you can also apply attributes to composite tags.
+Attributes are placed after the tag name and preceded with a simple quote.
+@code{@@_SOME_VAR['ATTRIBUTE_NAME]_@@}. It is possible to use filters
+and attributes together. In that case the attribute is first evaluated and
+the result is passed-through the filters.
+
+You cannot define your own attributes.
+
+Current supported attributes are:
+
+@table @code
+
+@item V'length
+@cindex Attribute, 'Length
+
+Returns the number of item in the composite tag (can be applied only
+to a composite tag having a single nested level - a vector).
+
+@item V'Up_Level(n)
+@cindex Attribute, 'Up_Level
+
+Use index from the table command @b{n} level(s) upper so this attribute must
+be used in a nested table command tag. @code{'Up_Level} is equivalent
+to @code{'Up_Level(1)} (can be applied only to a composite tag having
+a single nested level - a vector).
+
+@item M'Line
+@cindex Attribute, 'Line
+
+Returns the number of line in the composite tag. This is identical to
+'Length but can be applied only to a composite tag having two nested
+level - a matrix).
+
+@item M'Min_Column
+@cindex Attribute, 'Min_Column
+
+Returns the size of smallest composite tag in M composite tag. This attribute
+can be applied only to a composite tag having two nested level - a matrix.
+
+@item M'Max_Column
+@cindex Attribute, 'Max_Column
+
+Returns the size of largest composite tag in M composite tag. This attribute
+can be applied only to a composite tag having two nested level - a matrix.
+
+@end table
+
+@noindent
+For example:
+
+@TPEXP{If VEC is set to "@i{<1 , 2>}" and MAT to "@i{<a, b, c> ; <2, 3, 5, 7>}" then:
+
+@@_VEC'Length_@@              ->  2
+@@_ADD(3):VEC'Length_@@       ->  5
+@@_MAT'Line_@@                ->  2
+@@_MAT'Min_Column_@@          ->  3
+@@_MAT'Max_Column_@@          ->  4}
+
+@c --------------------------------------------------------------------------
+@node Predefined tags
+@section Predefined tags
+@c --------------------------------------------------------------------------
+
+@noindent
+There are some specific tags that can be used in any
+templates. Here is an exhaustive list:
+
+@table @code
+
+@item NOW
+@cindex @@_NOW_@@
+
+Current date and time with format "YYYY-MM-DD HH:MM:SS".
+
+@item YEAR
+@cindex @@_YEAR_@@
+
+Current year number using 4 digits.
+
+@item MONTH
+@cindex @@_MONTH_@@
+
+Current month number using 2 digits.
+
+@item DAY
+@cindex @@_DAY_@@
+
+Current day number using 2 digits.
+
+@item HOUR
+@cindex @@_HOUR_@@
+
+Current hour using range 0 to 23 using 2 digits.
+
+@item MINUTE
+@cindex @@_MINUTE_@@
+
+Current minute using 2 digits.
+
+@item SECOND
+@cindex @@_SECOND_@@
+
+Current seconds using 2 digits.
+
+@item MONTH_NAME
+@cindex @@_MONTH_NAME_@@
+
+Current full month name (January .. December).
+
+@item DAY_NAME
+@cindex @@_DAY_NAME_@@
+
+Current full day name (Monday .. Sunday).
+
+@end table
+
+@c ----------------------------------------------------------------------------
+@node Dynamic tags
+@section Dynamic tags
+@cindex Dynamic tags
+@c ----------------------------------------------------------------------------
+
+@noindent
+Dynamic tags are associations that are not created when @code{Parse} is called,
+but only later on when they are actually needed.
+
+Dynamic tags are handled through abstract interfaces and give the
+opportunity to create tags dynamically while the template is being parsed.
+
+@menu
+* Lazy_Tag::
+* Cursor_Tag::
+@end menu
+
+@c ---------------------------------------------------------------------------
+@node Lazy_Tag
+@subsection Lazy_Tag
+@cindex Lazy_Tag
+@c ---------------------------------------------------------------------------
+
+@noindent
+The @code{Lazy_Tag} object can be used to dynamically handle tags. Such
+object can be passed to the @code{Parse} routines. If a template's tag
+is not found in the translation dictionary, the @code{Lazy_Tag}'s Value
+callback method is called by the parser. The default callback method
+does nothing, it is up to the user to define it. The callback
+procedure is defined as follow:
+
+@TPEXP{@b{procedure} Value
+  (Lazy_Tag     : @b{access} Dynamic.Lazy_Tag;
+   Var_Name     : @b{in}     String;
+   Translations : @b{in out} Translate_Set) @b{is abstract};
+@i{--  Value is called by the Parse routines below if a tag variable was not}
+@i{--  found in the set of translations. This routine must then add the}
+@i{--  association for variable Name. It is possible to add other}
+@i{--  associations in the translation table but a check is done to see if}
+@i{--  the variable Name as been set or not. The default implementation does}
+@i{--  nothing.}}
+
+@noindent
+One common usage is to handle tag variables that can be shared by
+many templates and are not always used (because a conditional is False for
+example). If computing the corresponding value (or values for a ...)
+is somewhat expensive it is better to delay building such tag at the
+point it is needed. Using a @code{Lazy_Tag} object, it is possible to do
+so. The @code{Value} procedure will be called if the tag value is
+needed. At this point, one can just add the corresponding association
+into the @code{Translate_Set}. Note that it is possible to add more
+than one association. If the association for @code{Var_Name} is not
+given, this tag has no value.
+
+@code{Value} will be called only once per template and per tag. This is so
+that if the value for the tag is expensive to compute, you only pay the
+price once, and the value is then cached for the remaining of the template.
+If the value should be recomputed every time, you should consider using
+a @code{Cursor_Tag} instead (@pxref{Cursor_Tag}).
+
+@c ---------------------------------------------------------------------------
+@node Cursor_Tag
+@subsection Cursor_Tag
+@cindex Cursor_Tag
+@c ---------------------------------------------------------------------------
+
+@noindent
+In some cases, data structure on the Ada side can be so complex that it is
+difficult to map it into a variable tag. The @code{Cursor_Tag} object has
+been designed to work around such problem. Using a @code{Cursor_Tag}
+it is possible to create an iterator through a data structure without
+mapping it into a variable tag. The data stays on the Ada side.
+To create a @code{Cursor_Tag} it is necessary to implement the following
+abstract routines:
+
+@TPEXP{@b{function} Dimension
+  (Cursor_Tag : @b{access} Dynamic.Cursor_Tag;
+   Var_Name   : @b{in}     String) @b{return} Natural @b{is abstract};
+@i{--  Must return the number of dimensions for the given variable name. For}
+@i{--  a matrix this routine should return 2 for example.}
+
+@b{type} Path @b{is array} (Positive @b{range} <>) @b{of} Natural;
+@i{--  A Path gives the full position of a given element in the cursor tag}
+
+@b{function} Length
+  (Cursor_Tag : @b{access} Dynamic.Cursor_Tag;
+   Var_Name   : @b{in}     String;
+   Path       : @b{in}     Dynamic.Path) @b{return} Natural @b{is abstract};
+@i{--  Must return the number of item for the given path. The first}
+@i{--  dimension is given by the Path (1), for the second column the Path is}
+@i{--  (1, 2). Note that each dimension can have a different length. For}
+@i{--  example a Matrix is not necessary square.}
+
+@b{function} Value
+  (Cursor_Tag : @b{access} Dynamic.Cursor_Tag;
+   Var_Name   : @b{in}     String;
+   Path       : @b{in}     Dynamic.Path) @b{return} String @b{is abstract};
+@i{--  Must return the value for the variable at the given Path. Note that}
+@i{--  this routine will be called only for valid items as given by the}
+@i{--  dimension and Length above.}}
+
+@c ----------------------------------------------------------------------
+@node Template statements
+@chapter Template statements
+@c ----------------------------------------------------------------------
+
+@noindent
+There are five different type statements. A tag statement is surrounded
+by @code{@@@@}. The tag statements are:
+
+@menu
+* Comments::
+* INCLUDE statement::
+* IF statement::
+* TABLE statement::
+* SET statement::
+* INLINE statement::
+* MACRO statement::
+@end menu
+
+@c -----------------------------------------------------------------------
+@node Comments
+@section Comments
+@cindex Command, comments
+@cindex Command, @@@@--
+@c -----------------------------------------------------------------------
+
+@noindent
+Every line starting with @b{@@@@--} are comments and are completely
+ignored by the parser. The resulting page will have the exact same
+format and number of lines with or without the comments.
+
+@TPEXP{@@@@-- This template is used to display the client's data
+@@@@-- It uses the following tags:
+@@@@--
+@@@@--    @@_CID_@@       Client ID
+@@@@--    @@_ITEMS_V_@@   List of items (vector tag)
+
+<P>Client @@_CID_@@
+
+...}
+
+@c -----------------------------------------------------------------------
+@node INCLUDE statement
+@section INCLUDE statement
+@cindex Command, INCLUDE
+@c -----------------------------------------------------------------------
+
+@noindent
+This statement is used to include another template file. This is useful if you
+have the same header and/or footer in all your HTML pages. For example:
+
+@TPEXP{@@@@INCLUDE@@@@ header.tmplt
+
+<P>This is by Web page
+
+@@@@INCLUDE@@@@ footer.tmplt}
+
+@noindent
+It is also possible to pass arguments to the include file. These parameters
+are given after the include file name. It is possible to reference these
+parameters into the included file with the special variable names
+@code{@@_$<n>_@@}, where @i{n} is the include's parameter index (0 is
+the include file name, 1 the first parameter and so on).
+
+@TPEXP{@@@@INCLUDE@@@@ another.tmplt @@_VAR_@@ azerty}
+
+@noindent
+In file @file{another.tmplt}
+
+@table @code
+@item @@_$0_@@
+is another.tmplt
+@item @@_$1_@@
+is the variable @@_VAR_@@
+@item @@_$2_@@
+is the string "azerty"
+@end table
+
+If an include variable references a non existing include parameter the
+tag is kept as-is.
+
+Note that it is possible to pass the include parameters using names,
+a set of positional parameters can be pass first, so all following
+include commands are identical:
+
+@TPEXP{@@@@INCLUDE@@@@ another.tmplt one two three four "a text"
+@@@@INCLUDE@@@@ another.tmplt (one, two, 3 => three, 4 => four, 5 => "a text")
+@@@@INCLUDE@@@@ another.tmplt (one, 5 => "a text", 3 => three, 2 => two, 4 => four)}
+
+@noindent
+The file name can also be a tag. In this case the file loading is deferred at
+the parsing time.
+
+@noindent
+For security reasons the filename can't be a full pathname. If a full
+pathname is passed then the leading directory separator is removed.
+
+@c -----------------------------------------------------------------------
+@node IF statement
+@section IF statement
+@cindex Command, IF
+@c -----------------------------------------------------------------------
+
+@noindent
+This is the conditional statement. The complete form is:
+
+@TPEXP{@@@@IF@@@@ <expression1>
+   part1
+@@@@ELSIF@@@@ <expression2>
+   part2
+@@@@ELSE@@@@
+   part3
+@@@@END_IF@@@@}
+
+@noindent
+<expression> is TRUE if it evaluates to one of "TRUE", "T" or
+"1" and FALSE otherwise. Note that the test is not case sensitive.
+
+@noindent
+The part1 one will be parsed if expression1 evaluate to TRUE, part2
+will be parsed if expression2 evaluate to TRUE and the part3 will
+be parse in any other case. The @code{ELSIF} and @code{ELSE} parts are
+optional.
+
+The expression here is composed of Boolean variables
+and/or Boolean expression. Recognized operators are:
+
+@cindex Command, IF expression
+@table @code
+@item A = B
+Returns TRUE if A equal B
+
+@item A /= B
+Returns TRUE if A is not equal B
+
+@item A > B
+Returns TRUE if A greater than B. If A and B are numbers it returns the
+the number comparison (5 > 003 = TRUE) otherwise it returns the string
+comparison (``5'' > ``003'' = FALSE).
+
+@item A >= B
+Returns TRUE if A greater than or equal to B. See above for rule about numbers.
+
+@item A < B
+Returns TRUE if A lesser than B. See above for rule about numbers.
+
+@item A <= B
+Returns TRUE if A lesser than or equal to B. See above for rule about numbers.
+
+@item A and B
+Returns TRUE if A and B is TRUE and FALSE otherwise.
+
+@item A or B
+Returns TRUE if A or B is TRUE and FALSE otherwise.
+
+@item A xor B
+Returns TRUE if either A or B (but not both) is TRUE and FALSE otherwise.
+
+@item A in B
+Returns TRUE if A is found into the composite tag B and FALSE
+otherwise. B must be a tag. If B contains a single value then this
+expression is equivalent to (A = B).
+
+@item not A
+Returns TRUE if either A is FALSE and FALSE otherwise.
+@end table
+
+The default evaluation order is done from left to right, all operators
+having the same precedence. To build an expression it is possible to
+use parenthesis to change the evaluation order. A value with
+spaces must be quoted as a string. So valid expressions could be:
+
+@TPEXP{@@@@IF@@@@ (@@_VAR1_@@ > 3) or (@@_COND1_@@ and @@_COND2_@@)
+
+@@@@IF@@@@ not (@@_VAR1_@@ > 3) or (@@_COND1_@@ and @@_COND2_@@)
+
+@@@@IF@@@@ (@@_VAR1_@@ > 3) and not @@_COND1_@@
+
+@@@@IF@@@@ @@_VAR1_@@ = "a value"}
+
+@noindent
+Note also that variables and values can be surrounded by quotes if needed.
+Quotes are needed if a value contain spaces.
+
+Let's see an example using an @code{IF} tag statement. With the following
+template:
+
+@include user.tmplt.texi
+
+@noindent
+The following program:
+
+@include user1.adb.texi
+
+@noindent
+Will display:
+
+@include user1.adb.res
+
+@noindent
+But the following program:
+
+@include user2.adb.texi
+
+@noindent
+Will display:
+
+@include user2.adb.res
+
+@c -----------------------------------------------------------------------
+@node TABLE statement
+@section TABLE statement
+@cindex Command, TABLE
+@c -----------------------------------------------------------------------
+
+@noindent
+Table tags are useful to generate @code{HTML} tables for example.
+Basically the code between the @code{@@@@TABLE@@@@} and
+@code{@@@@END_TABLE@@@@} will be repeated as many times as the vector
+tag has values. If many vector tags are specified in a table
+statement, the code between the table will be repeated a number of
+times equal to the maximum length of all vector tags in the
+@code{TABLE} tag statement.
+
+A @code{TABLE} tag statement is a kind of implicit iterator. This is a very
+important concept to build HTML tables. Using a composite tag variable in
+a @code{@@@@TABLE@@@@} tag statement it is possible to build very
+complex Web pages.
+
+Syntax:
+
+@cindex Command, TERMINATE_SECTIONS
+@cindex Command, REVERSE
+@cindex Command, TERSE
+@TPEXP{@@@@TABLE['REVERSE]['TERMINATE_SECTIONS]['TERSE]@@@@
+      ...
+   [@@@@BEGIN@@@@]
+      ...
+   [@@@@SECTION@@@@]
+      ...
+   [@@@@END@@@@]
+      ...
+@@@@END_TABLE@@@@}
+
+@noindent
+Let's have an example. With the following template:
+
+@include table.tmplt.texi
+
+@noindent
+And the following program:
+
+@include table.adb.texi
+
+@noindent
+The following output will be generated:
+
+@include table.adb.res
+
+@noindent
+Note that we use vector tag variables here. A discrete variable tag in a table
+will be replaced by the same (the only one) value for each row. A vector
+tag outside a table will be displayed as a list of values, each value
+being separated by a specified separator. The default is a comma and a
+space ", ".
+
+The complete prototype for the @code{Tag} Assoc function is:
+
+@TPEXP{@b{function} Assoc (Variable  : @b{in} String;
+                Value     : @b{in} Tag;
+                Separator : @b{in} String    := Default_Separator)
+                @b{return} Association;
+@i{--  Build an Association (Variable = Value) to be added to Translate_Table.}
+@i{--  This is a tag association. Separator will be used when outputting the}
+@i{--  a flat representation of the Tag (outside a table statement).}}
+
+@noindent
+A table can contain many sections. The section to use will be selected
+depending on the current line. For example, a table with two sections
+will use different data on even and odd lines. This is useful when you
+want to alternate the line background color for a better readability
+when working on HTML pages.
+
+@noindent
+A table with sections can have attributes:
+
+@table @code
+
+@item REVERSE
+
+The items will be displayed in the reverse order.
+
+@item TERMINATE_SECTIONS
+
+This ensure that the table output will end
+with the last section. If the number of data in the vector variable tag
+is not a multiple of the number of sections then the remaining section
+will be complete with empty tag value.
+
+@item TERSE
+
+Empty lines won't be output. If the composite tag used into the table has
+an empty value then the corresponding line won't be output. This is
+especially important to avoid empty ending lines for table containing
+vector of different size.
+
+@end table
+
+@include table_section.tmplt.texi
+
+@noindent
+And the following program:
+
+@include table_section.adb.texi
+
+@noindent
+The following output will be generated:
+
+@include table_section.adb.res
+
+@noindent
+It is important to note that it is possible to avoid code
+duplication by using the @code{@@@@BEGIN@@@@} and @code{@@@@END@@@@}
+block statements. In this case only the code inside the block is part
+of the section, the code outside is common to all sections. Here is
+an example to generate an HTML table with different colors for each line:
+
+@noindent
+The template file above can be written this way:
+@include table_block.tmplt.texi
+
+@noindent
+Into a table construct there are some additional variable tags available:
+
+@table @code
+@item @@_UP_TABLE_LINE_@@
+@cindex @@_UP_TABLE_LINE_@@
+
+This tag will be replaced by the table line number of the upper table
+statement. It will be set to 0 outside a table statement or inside a
+single table statement.
+
+@item @@_TABLE_LINE_@@
+@cindex @@_TABLE_LINE_@@
+
+This tag will be replaced by the current table line number. It will be
+replaced by 0 outside a table statement.
+
+@item @@_NUMBER_LINE_@@
+@cindex @@_NUMBER_LINE_@@
+
+This is the number of line displayed in the table. It will be replaced
+by 0 outside a table statement.
+
+@item @@_TABLE_LEVEL_@@
+@cindex @@_TABLE_LEVEL_@@
+
+This is the table level number. A table construct declared in a table
+has a level value of 2.  It will be replaced by 0 outside a table statement.
+
+@end table
+
+@noindent
+Let's have a look at a more complex example with mixed IF and TABLE
+statements.
+
+@noindent
+Here is the template:
+
+@include table_if.tmplt.texi
+
+@noindent
+And the following program:
+
+@include table_if.adb.texi
+
+@noindent
+The following output will be generated:
+
+@include table_if.adb.res
+
+@noindent
+Table tag statements can also be used with matrix tag or more nested
+tag variables. In this case, for a tag variable with N nested levels,
+the Nth closest enclosing @code{TABLE} tag statement will be used for
+the corresponding index. If there are not enough indexes, the last
+axis are just streamed as a single text value.
+
+@noindent
+Let's see what happens for a matrix tag:
+
+@enumerate
+
+@item Inside a table of level 2 (a TABLE statement inside a TABLE
+statement).
+
+@noindent
+In this case the first @code{TABLE} iterates through the matrix lines.
+First iteration will use the first matrix's vector, second
+iteration will use the second matrix's vector and so on. And the second
+@code{TABLE} will be used to iterate through the vector's values.
+
+@item Inside a table of level 1.
+
+@noindent
+In this case the @code{TABLE} iterates through the matrix lines. First
+iteration will use the first matrix's vector, second iteration will
+use the second matrix's vector and so on. Each vector is then converted to
+a string by concatenating all values using the specified separator
+(see Assoc constructor for Tag or @code{Set_Separator} routine).
+
+@item Outside a table statement.
+
+@noindent
+In this case the matrix is converted to a string. Each line represents
+a vector converted to a string using the supplied separator (see point
+2 above), and each vector is separated by an ASCII.LF character. The
+separators to use for each level can be specified using @code{Set_Separator}.
+
+@end enumerate
+
+@noindent
+Let's look at an example, with the following template:
+
+@include matrix.tmplt.texi
+
+@noindent
+Using the program:
+
+@include matrix.adb.texi
+
+@noindent
+We get the following result:
+
+@include matrix.adb.res
+
+@c ---------------------------------------------------------------------------
+@node SET statement
+@section SET statement
+@cindex Command, SET
+@c ---------------------------------------------------------------------------
+
+@noindent
+The @code{SET} command tag can be used to define a constant or an
+alias for an include file parameter. This is especially important in
+the context of reusable template files. For example, instead of having
+many references to the @b{red} color in an HTML document, it is better to
+define a constant @var{COLOR} with the value @b{red} and use @var{COLOR}
+everywhere. It is then easier to change the color afterward.
+
+@noindent
+The first form, to define a simple constant that can be used as any
+other variable in a template file, is:
+
+@TPEXP{@@@@SET@@@@ <name> = <value>}
+
+@noindent
+The second form, to define an alias for a template file parameter, is:
+
+@TPEXP{@@@@SET@@@@ <name> = $n [| <default_value>]}
+
+@noindent
+In this case <name> is an alias for the Nth include parameter. In this
+form it is also possible to define a default value that would be used
+if the Nth include parameter is not specified.
+
+Some examples:
+
+@TPEXP{@@@@SET@@@@ COLOR = red
+
+@@@@SET@@@@ SIZE = $1
+
+@@@@SET@@@@ COLOR = $4 | green}
+
+@noindent
+It is important to note that a variable is set global to a template
+file. It means that constants set into an include file are visible
+into the parent template. This is an important feature to be able to
+have a "theme" like include template file for example.
+
+@c ---------------------------------------------------------------------------
+@node INLINE statement
+@section INLINE statement
+@cindex Command, INLINE
+@c ---------------------------------------------------------------------------
+
+@noindent
+The @code{INLINE} statement can be used to better control the
+result's layout. For example it is not possible to have the results of
+a vector tag on the same line, also it is not possible to have a
+conditional output in the middle of a line. The @code{INLINE} block
+tag statement can be used to achieve that.
+
+Elements in an inlined block are separated by a single space by
+default. It is possible to specify any string as the separator. The
+text layout on an @code{INLINE} block has no meaning (the lines are
+trimmed on both side). As part of the inline command it is possible to
+specify texts to output before and after the block.
+
+@noindent
+Syntax:
+
+@TPEXP{@@@@INLINE[(<before>)(<separator>)(<after>)]@@@@
+      ...
+@@@@END_INLINE@@@@}
+
+@noindent
+There are three supported uses:
+
+@table @code
+@item @@@@INLINE@@@@
+
+In this case there is no text before and after the block and the
+separator is a single space.
+
+@item @@@@INLINE(<separator>)@@@@
+
+In this case there is no text before and after the block and the
+separator is the string given as parameter @i{<separator>}.
+
+@item @@@@INLINE(<before>)(<separator>)(<after>)@@@@
+
+In this case all three values are explicitly given.
+@end table
+
+@noindent
+@i{<before>}, @i{<separator>} and @i{<after>} may contain control characters:
+
+@table @code
+@item \n
+To insert a new-line (CR+LF or LF depending on the Operation System)
+
+@item \r
+To insert a line-feed
+
+@item \\
+To insert a single backslash
+@end table
+
+@noindent
+Let's look at an example, with the following template:
+
+@include table_inline.tmplt.texi
+
+@noindent
+Using the program:
+
+@include table_inline.adb.texi
+
+@noindent
+We get the following result:
+
+@include table_inline.adb.res
+
+@noindent
+Another example with an @code{IF} tag statement:
+
+@include if_inline.tmplt.texi
+
+@noindent
+Using the program:
+
+@include if_inline.adb.texi
+
+@noindent
+We get the following result:
+
+@include if_inline.adb.res
+
+@c ---------------------------------------------------------------------------
+@node MACRO statement
+@section MACRO statement
+@cindex Command, MACRO
+@c ---------------------------------------------------------------------------
+
+@noindent
+The @code{MACRO} statement is used to defined macros that can be used
+in other places in the template. The macro statement takes a single
+parameter which is the name of the macro.
+
+@noindent
+Syntax:
+
+@TPEXP{@@@@MACRO(NAME)@@@@
+      ...
+@@@@END_MACRO@@@@}
+
+@noindent
+The code inside the macro can be anything supported by the templates
+engine. There is no restriction. The parameters inside the macro are
+referenced as @@_$N_@@ (where N is a number and corresponds to the Nth
+parameter passed to the macro). There is no maximum number of
+parameters. A reference to a parameter that has no corresponding formal
+parameter at the call point is ignored (the value will be the empty
+string).
+
+@noindent
+For example:
+
+@include macro.tmplt.texi
+
+For using macros @pxref{Macros}.
+
+@c ----------------------------------------------------------------------
+@node Macros
+@chapter Macros
+@c ----------------------------------------------------------------------
+
+@noindent
+A macro usage is like a tag but with a set of parameters passed inside
+parenthesis. Macros support all filters but attributes can't be
+used. It is important to note that macros are expanded at the point of
+their calls. This implementation maximizes speed but uses more memory
+as the definition is not shared. If the code is large it may be better
+to use an @@@@INCLUDE@@@@ as the code is not expanded.
+
+@noindent
+Syntax:
+
+@TPEXP{
+@code{@@_[[FILTER[(parameter)]:]MACRO_NAME([PARAM1][,N=>PARAMN])_@@}.
+}
+
+@noindent
+A macro call can have positional parameters (like @code{PARAM1} above)
+or named (where the name is a number corresponding to the actual
+parameter position) parameters (like @code{PARAMN} above).
+
+@noindent
+With the following definition:
+
+@include macro.tmplt.texi
+
+@noindent
+Using the program:
+
+@include macro.adb.texi
+
+@noindent
+We get the following result:
+
+@include macro.adb.res
+
+@c ----------------------------------------------------------------------
+
+@node Other services
+@chapter Other services
+
+@menu
+* Tag utils::
+* XML representation::
+* Templates2Ada::
+* Templatespp::
+* Debug::
+@end menu
+
+@node Tag utils
+@section Tag utils
+@cindex Tag utils
+
+@noindent
+The child package @code{Utils}, @pxref{Templates_Parser.Utils}
+contains a routine to encode a Tag variable into a string and the
+inverse routine that build a Tag given it's string
+representation. This is useful for example, in the context of AWS to
+store a Tag into a session variable. See the AWS project.
+
+@node XML representation
+@section XML representation
+@cindex XML
+
+@noindent
+The child package @code{XML}, @pxref{Templates_Parser.XML} contains
+routines to save a @code{Translation_Set} into an XML document or to
+create a @code{Translation_Set} by loading an XML document. The XML
+document must conform to a specific @code{DTD} (see the Ada spec file).
+
+@c --------------------------------------------------------------------------
+@c --  Templates2Ada
+@c --------------------------------------------------------------------------
+
+@node Templates2Ada
+@section Templates2Ada
+@cindex templates2ada
+
+@noindent
+@code{templates2ada} is a tool that will generate a set of Ada
+packages from a templates file. These Ada packages can then be used in
+your application to avoid hard-coded strings, and help maintain the
+templates and the code synchronized.
+
+One of its goal is to ensure that you are only setting tags that actually
+exist in the template (and thus prevent, as much as possibly, typos in the
+name of tags); also, when combined with other tools, to help ensure that all
+tags needed by the template are properly set.
+
+Templates2ada also has special knowledge about HTTP constructs
+and will generate Ada constants for the HTTP parameters you might receive in
+return. Once more the goal is to help avoid typos in the Ada code.
+
+For instance, we will consider a simple template file, found in a local
+file @file{resources/block1.thtml}. This template contains the following simple
+html code:
+
+@TPEXP{
+<form>
+  <input name="PARAM1" value="@@_TAG1_@@" />
+  <input name="PARAM2" value="@@_TAG2_@@" />
+</form>}
+
+When you run @file{templates2ada} (as described in the following subsection),
+the following Ada package will be generated. Note that this is only the
+default output of @file{templates2ada}, which can be fully tailored to your
+needs.
+
+@TPEXP
+{@b{package} Templates.Block1 @b{is}
+  pragma Style_Checks (Off);
+  Template : constant string := "resources/block1.thtml";
+  Tag1 : constant String := "TAG1";
+  Tag2 : constant String := "TAG2";
+  @b{package} Http @b{is}
+    Param1 : constant String := "PARAM1";
+    Param2 : constant String := "PARAM2";
+  @b{end} Http;
+@b{end} Templates.Block1;}
+
+@code{templates2ada} knows about special constructs in the template file.
+Such templates are generally associated with html pages. It is possible to
+specify within the template itself what the url associated with the template
+is, so that it provides a convenient link between the two. Likewise, you
+can also define explicitly what the possible HTTP parameters are when loading
+that page. This is mostly useful when those parameters do not correspond to
+some form fields within the page itself. The syntax for these two is the
+following:
+
+@TPEXP{
+@@--  HTTP_URL(the_url): any comment you want
+@@--  HTTP_GET(param1_name): description of the parameter
+@@--  HTTP_GET(param2_name): description of the parameter
+}
+
+and that results in the following constants in the generated Ada package:
+
+@TPEXP{
+@b{package} Templates.Block1 @b{is}
+  URL : constant String := "the_url";
+  @b{package} Http @b{is}
+     Param1_Name : constant String := "param1_name";
+     Param2_Name : constant String := "param2_name";
+  @b{end} Http;
+@b{end} Templates.Block1;}
+
+The templates parser API lets you define your own custom filters. It is
+often useful for those filters to take parameters, just like the predefined
+filters do. However, it is also useful for these parameters to be able to
+check the value of other tags. One convention for doing this is to start the
+name of the parameter with "@". See for example the example in
+@pxref{User defined filters}. As a reminder, the template would look like
+
+@TPEXP{
+   <option value="foo" @@_SELECTED(@@SELECTED_STATUS):STATUS_@@ />}
+
+The @code{templates2ada} tool knows about this special convention, and would
+generate the following Ada package from this example:
+
+@TPEXP{
+@b{package} Templates.Block1 @b{is}
+   Selected_Status : @b{constant} String := "SELECTED_STATUS";
+   Status : @b{constant} String := "STATUS";
+@b{end} Templates.Block1;}
+
+@c --------------------------------------------------------------------------
+@c -- Templates2Ada -- Running templates2ada
+@c --------------------------------------------------------------------------
+
+@subsection Running templates2ada
+@noindent
+This tool parses all the template files found in a directory, and then
+generate an output file from these, based on a template file
+(a default example of which is provided as @file{templates.tads}). The
+latter contains in fact two examples, depending on whether one Ada
+package should be generated per template, or whether a single package
+should be build. In the former case, if you are using the GNAT compiler,
+you should run @code{gnatchop} on the resulting file. Here is an example
+to run this tool for the example we described above.
+
+@TPEXP
+{$ rm -f src/templates/*.ads
+$ templates2ada -d resources/ -o src/templates/generated -r
+$ cd src/templates; gnatchop -w -q generated
+$ rm -f src/templates/generated}
+
+If, in you Ada code, you no longer use hard-coded strings but only the
+constants found in the output packages, this will ensure that you are
+not trying to set tags that are never used in the template.
+
+The other check that impacts the quality of your code is to ensure that
+all tags that are used by the templates are properly set. This cannot be
+ensured by the compiler only, but using an external tool it is relatively
+to do.
+
+For instance, if you are using GNAT, we recommend the following additional
+targets in your @file{Makefile}:
+
+@TPEXP
+{  unset_tags:
+        gnat xref -u main.adb | fgrep templates-}
+
+This checks for all unused entities in files called @file{templates-*},
+which are the files generated by @file{templates2ada}.
+
+@file{templates2ada} can be used in other situations as well. For instance,
+one possible use is to generate, as output, a new template file that itself
+contains a series of @code{@@@@SET@@@@} commands. This generated file can
+then be @code{@@@@INCLUDE@@@@}d in your own templates. We have used it with
+some success when implementation a web server: it is often the case that hyper
+links refer to other pages in the same server. We have avoided hard-coding the
+URLs and the names of their HTTP GET parameters, by fetching these names from
+the generated file we were talking above.
+
+The templates parser comes with an example file, called @file{all_urls.thtml},
+which can be used with the @code{-t} switch to @code{templates2ada}, and will
+generated a template file as output. You would use it as:
+
+@TPEXP
+{@@@@INCLUDE@@@@ all_urls.html
+<a href="@@_URI_BLOCK1_@@?@@_HTTP_BLOCK1__PARAM1_@@=12" />}
+
+@noindent
+and this ensures the link is valid.
+
+@file{templates2ada} supports a number of command line switches:
+
+@itemize @bullet
+@item -d <dir>
+
+This switch specifies the directory in which the templates file are
+searched for.
+
+@item -o <file>
+
+This switch specifies the output file name
+
+@item -e <ext>
+
+This file specifies the file name extension for template files. All
+files in the directory that have this extension will be processed by
+templates2ada.
+
+@item -t <tmplt>
+
+This file specifies the template file to be used for the output file.
+The templates parser comes with an example for such a file, called
+@file{templates.tads}, that you can adapt to your own needs.
+
+@item -r
+
+Sub directories of the one specified by @code{-d} will also be searched.
+
+@item -v
+
+Activate the verbose mode. This will output a warning when an http
+parameter has a name made only of template parser tags, since no matching
+entry can then be created for it in the output file.
+
+@end itemize
+
+@c ---------------------------------------------------------------------------
+@c --  Templates2ada -- customizing
+@c ---------------------------------------------------------------------------
+
+@subsection Customizing templates2ada
+@noindent
+
+As was mentioned before, the output of templates2ada is a single file that
+results from parsing a template file. An example of such a file is provided
+in the templates2ada distribution, as @file{templates.tads}.
+
+You are strongly encouraged to modify this file to adapt it to your needs,
+and then use the @code{-t} switch to @file{templates2ada} to make use of your
+modified file.
+
+This file contains extensive comments on how to make use, and customize, it.
+This documentation is not duplicated here
+
+@c --------------------------------------------------------------------------
+@c --  Templatespp
+@c --------------------------------------------------------------------------
+
+@node Templatespp
+@section Templatespp
+@cindex templatespp
+
+@noindent
+@code{templatespp} is a pre-processor based on the template parser. It is
+generally used from scripts to process files and generate other files. One
+of the possible uses, for instance, is to write the CSS (style-sheet) of a
+web site as a template file (for instance @file{mycss.tcss}), and use
+template parser structures in there. This is a good way to share colors for
+instance, or to name constants, as is often done in Ada code.
+
+Here is a small example of such a CSS:
+
+@TPEXP{
+@@@@SET@@@@ COLOR1=blue
+@@@@SET@@@@ COLOR2=red
+@@@@SET@@@@ LENGTH1=10
+
+body @{background:@@_COLOR1_@@@}
+div  @{background:@@_COLOR2_@@@}
+ul.class @{background:@@_COLOR1_@@@}  /* same color as body */
+
+ul   @{width:@@_ADD(3):LENGTH1_@@px@} /* ul 3 pixels wider than li */
+li   @{width:@@_LENGTH1_@@px@}
+}
+
+Such a file would be processed with the following command line:
+
+@TPEXP{
+   templatespp -o mycss.css mycss.tcss
+}
+
+@c ---------------------------------------------------------------------------
+@c --  Debug
+@c ---------------------------------------------------------------------------
+
+@node Debug
+@section Debug
+@cindex Debug
+
+@noindent
+A set of routines to help to debug the @code{Templates_Parser} engine,
+@pxref{Templates_Parser.Debug}. For example, @code{Debug.Print_Tree}
+will display, to the standard output, a representation of the internal
+semantic tree for a template file.
+
+@c ----------------------------------------------------------------------
+@node Templates_Parser API Reference
+@appendix Templates_Parser API Reference
+@c ----------------------------------------------------------------------
+
+@menu
+Templates_Parser User's API
+
+* Templates_Parser::
+* Templates_Parser.Debug::
+* Templates_Parser.Utils::
+* Templates_Parser.XML::
+@end menu
+
+@page
+@node Templates_Parser
+@appendixsec Templates_Parser
+@cindex Templates_Parser
+
+@include templates_parser.ads.texi
+
+@page
+@node Templates_Parser.Debug
+@appendixsec Templates_Parser.Debug
+@cindex Templates_Parser.Debug
+
+@include templates_parser-debug.ads.texi
+
+@page
+@node Templates_Parser.Utils
+@appendixsec Templates_Parser.Utils
+@cindex Templates_Parser.Utils
+
+@include templates_parser-utils.ads.texi
+
+@page
+@node Templates_Parser.XML
+@appendixsec Templates_Parser.XML
+@cindex Templates_Parser.XML
+
+@include templates_parser-xml.ads.texi
+
+@c ----------------------------------------------------------------------
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@bye

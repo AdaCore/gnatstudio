@@ -1,0 +1,6 @@
+project Test_Shared is
+   for Source_Dirs use (".");
+   for Library_Dir use "lib";
+   for Library_Name use "lib";
+   for Library_Kind use "relocatable";
+end Test_Shared;

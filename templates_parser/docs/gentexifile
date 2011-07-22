@@ -1,0 +1,57 @@
+#!/bin/sh
+
+if [ $# = 0 ]; then
+  echo "Usage: $0 <file to translate>"
+  exit 0
+fi
+
+# Check if ada.sed file is present, if not generate it
+
+ADA_KW="use package is in out exception function with type constant \
+                private of return range procedure begin end array record \
+                subtype generic limited access all tagged abstract renames \
+                pragma new case when null"
+
+if [ ! -f ada.sed ]; then
+    printf 's/\([^@_]\)@\([^@_]\)/\\1@@\\2/\n' > ada.sed
+    printf 's/-- \(.*\)$/-- @i{\\1}/\n' >> ada.sed
+    printf '/--/!s/\([^-][^-][^"]*\)"\([^"]*\)"/\\1"@i{\\2}"/g\n' >> ada.sed
+    printf 's/@@/@@@@/g\n' >> ada.sed
+    printf 's/@_/@@_/g\n' >> ada.sed
+    printf 's/_@/_@@/g\n' >> ada.sed
+
+    for kw in $ADA_KW; do
+        printf 's/^\([^-]* \)%s/\\1@b{%s}/g\n' $kw $kw >> ada.sed
+        printf 's/^\([^-]* \)%s/\\1@b{%s}/g\n' $kw $kw >> ada.sed
+        printf 's/^\( *\)%s /\\1@b{%s} /g\n' $kw $kw >> ada.sed
+        printf 's/^%s$/@b{%s}/g\n' $kw $kw >> ada.sed
+    done
+fi
+
+SOURCE=$1
+TARGET=`basename ${SOURCE}`.texi
+TMPTAR=${TARGET}.tmp
+
+awk=`type gawk 2>/dev/null`
+if [ x"$awk" = x ]; then
+   awk="awk"
+else
+   awk="gawk"
+fi
+
+$awk 'BEGIN{out=1}$1=="end"&&substr($0,1,1)=="e"{out=1}out==1{print}$1=="private"&&$2!="with"&&out==1{out=0; print "   --  implementation removed"}' ${SOURCE} > genout
+
+rm -f ${TMPTAR}
+
+if [ $# = 1 ]; then
+echo "@TPEXP{"           >>${TMPTAR}
+sed -f ada.sed genout    >>${TMPTAR}
+echo "}"                 >>${TMPTAR}
+else
+echo "@smallexample"     >>${TMPTAR}
+sed -f ada.sed genout    >>${TMPTAR}
+echo "@end smallexample" >>${TMPTAR}
+fi
+
+cat ${TMPTAR} | tr -d '\r' > ${TARGET}
+rm ${TMPTAR}

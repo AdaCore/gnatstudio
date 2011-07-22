@@ -1,0 +1,20 @@
+   pre.smallexample {background-color:rgb(240,240,240);
+                     font-family: courier new,courier,fixed;
+                     font-size: 14px;
+                     margin: 0px 40px 0px 40px;
+                     border-width: 1px 2px 2px 1px;
+                     border-top-style: dotted;
+                     border-left-style: dotted;
+                     border-right-style: solid;
+                     border-bottom-style: solid;
+                     border-color: black;}
+   code             {color:black;
+                     font-family: courier new,courier,fixed;
+                     font-size: 14px;}
+   body             {font-family: arial,helvetica,sans-serif;
+                     font-size: 16px;
+                     width: 800px;
+                     text-align: justify}
+   samp             {font-family: courier new,courier,fixed;
+                     font-size: 14px}
+

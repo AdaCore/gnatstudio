@@ -1,0 +1,21 @@
+Hello here is a list of devices:
+
+<table>
+<tr>
+<th>Device Name
+<th>Price
+<th>Order
+
+@@TABLE@@
+<tr>
+<td>@_DEVICES_@
+<td>@_PRICES_@
+
+<td>
+@@IF@@ @_AVAILABLE_@
+<a href="/order?DEVICE=@_DEVICES_@">Order
+@@ELSE@@
+Sorry, not available
+@@END_IF@@
+
+@@END_TABLE@@

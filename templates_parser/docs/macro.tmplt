@@ -1,0 +1,6 @@
+@@MACRO(SOMETEXT)@@
+Some text, first parameter is @_$1_@ and the second is @_$2_@.
+@@END_MACRO@@
+@@--
+@_SOMETEXT(12,@_VAR_@)_@
+@_UPPER:SOMETEXT(Ada,GNAT)_@

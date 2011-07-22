@@ -1,0 +1,5 @@
+@@IF@@ @_USER_@
+   <P>As a user you have a restricted access to this server.
+@@ELSE@@
+   <P>As an administrator you have full access to this server.
+@@END_IF@@

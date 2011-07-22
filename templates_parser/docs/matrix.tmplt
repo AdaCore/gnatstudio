@@ -1,0 +1,26 @@
+A matrix inside a table of level 2:
+
+@@TABLE@@
+<tr>
+@@TABLE@@
+<td>
+@_MAT_@
+</td>
+@@END_TABLE@@
+</tr>
+
+@@END_TABLE@@
+
+The same matrix inside a single table:
+
+@@TABLE@@
+<tr>
+<td>
+@_MAT_@
+</tr>
+
+@@END_TABLE@@
+
+The same matrix outside a table:
+
+@_MAT_@
