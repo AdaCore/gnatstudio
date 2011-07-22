@@ -45,11 +45,14 @@ package body MI.Utils is
    --  ??? Remove this once used.
 
    procedure Die (Message : String := "");
-   --  Raise an Utils_Error exception with Message as inner message.
+   --  Raises an Utils_Error exception with Message as inner message.
 
    procedure Free_String is new Ada.Unchecked_Deallocation
      (String, String_Access);
-   --  Release memory allocated for the given string.
+   --  Releases memory allocated for the given string.
+
+   procedure Safe_Free_String (Str : in out String_Access);
+   --  Calls Free_String (Str) if Str /= null.
 
    ----------------------------------
    -- Check_Is_String_Value_Or_Die --
@@ -111,6 +114,18 @@ package body MI.Utils is
       raise Utils_Error with Message;
    end Die;
 
+   ----------------------
+   -- Safe_Free_String --
+   ----------------------
+
+   procedure Safe_Free_String (Str : in out String_Access) is
+   begin
+      if Str /= null then
+         Free_String (Str);
+         Str := null;
+      end if;
+   end Safe_Free_String;
+
    ------------------------
    -- Clear_Var_Obj_List --
    ------------------------
@@ -123,6 +138,7 @@ package body MI.Utils is
       while Var_Obj_Lists.Has_Element (Cursor) loop
          Var_Obj := Var_Obj_Lists.Element (Cursor);
          Cursor  := Var_Obj_Lists.Next (Cursor);
+         pragma Assert (Var_Obj /= null);
          Free_Var_Obj (Var_Obj);
       end loop;
 
@@ -141,6 +157,7 @@ package body MI.Utils is
       while String_Lists.Has_Element (Cursor) loop
          String := String_Lists.Element (Cursor);
          Cursor  := String_Lists.Next (Cursor);
+         pragma Assert (String /= null);
          Free_String (String);
       end loop;
 
@@ -153,11 +170,11 @@ package body MI.Utils is
 
    procedure Clear_Var_Obj (Var_Obj : in out Var_Obj_Type) is
    begin
-      Free_String (Var_Obj.Name);
-      Free_String (Var_Obj.Expression);
-      Free_String (Var_Obj.Path_Exp);
-      Free_String (Var_Obj.Value);
-      Free_String (Var_Obj.Type_Desc);
+      Safe_Free_String (Var_Obj.Name);
+      Safe_Free_String (Var_Obj.Expression);
+      Safe_Free_String (Var_Obj.Path_Exp);
+      Safe_Free_String (Var_Obj.Value);
+      Safe_Free_String (Var_Obj.Type_Desc);
       Clear_Var_Obj_List (Var_Obj.Children);
    end Clear_Var_Obj;
 
@@ -180,10 +197,10 @@ package body MI.Utils is
 
    procedure Clear_Breakpoint (Breakpoint : in out Breakpoint_Type) is
    begin
-      Free_String (Breakpoint.Type_Desc);
-      Free_String (Breakpoint.Disp);
+      Safe_Free_String (Breakpoint.Type_Desc);
+      Safe_Free_String (Breakpoint.Disp);
       Clear_Frame_Type (Breakpoint.Frame);
-      Free_String (Breakpoint.Original_Location);
+      Safe_Free_String (Breakpoint.Original_Location);
    end Clear_Breakpoint;
 
    ----------------------
@@ -192,11 +209,11 @@ package body MI.Utils is
 
    procedure Clear_Frame_Type (Frame : in out Frame_Type) is
    begin
-      Free_String (Frame.Address);
-      Free_String (Frame.Function_Name);
+      Safe_Free_String (Frame.Address);
+      Safe_Free_String (Frame.Function_Name);
       Clear_String_List (Frame.Args);
-      Free_String (Frame.File_Name);
-      Free_String (Frame.File_Fullname);
+      Safe_Free_String (Frame.File_Name);
+      Safe_Free_String (Frame.File_Fullname);
    end Clear_Frame_Type;
 
    -------------------
@@ -236,9 +253,9 @@ package body MI.Utils is
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
-      --  Extracts and returns this value.
+      --  Extracts and returns a copy of this value.
 
-      return String_Value (Pair.Value.all).Value;
+      return new String'(String_Value (Pair.Value.all).Value.all);
    end Process_Error;
 
    -------------------
@@ -252,6 +269,17 @@ package body MI.Utils is
       raise Not_Yet_Implemented_Error with "Process_Async";
       return Notification;
    end Process_Async;
+
+   ---------------------------
+   -- Process_Stream_Output --
+   ---------------------------
+
+   function Process_Stream_Output
+     (Stream : Stream_Output_Record) return String_Access is
+   begin
+      --  Simply returns the stream content wihtout any form of checking.
+      return new String'(Stream.Content.all);
+   end Process_Stream_Output;
 
    ----------------------
    -- Process_Exec_run --
@@ -310,16 +338,18 @@ package body MI.Utils is
 
          if Pair.Variable.all = "number" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Number := Natural'Value
-              (String_Value (Pair.Value.all).Value.all);
+            Breakpoint.Number :=
+               Natural'Value (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "type" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Type_Desc := String_Value (Pair.Value.all).Value;
+            Breakpoint.Type_Desc :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "disp" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Disp := String_Value (Pair.Value.all).Value;
+            Breakpoint.Disp :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "enabled" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
@@ -332,38 +362,41 @@ package body MI.Utils is
 
          elsif Pair.Variable.all = "addr" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Frame.Address := String_Value (Pair.Value.all).Value;
+            Breakpoint.Frame.Address :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "func" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Frame.Function_Name := String_Value
-                                                (Pair.Value.all).Value;
+            Breakpoint.Frame.Function_Name :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "file" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Frame.File_Name := String_Value (Pair.Value.all).Value;
+            Breakpoint.Frame.File_Name :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "fullname" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Frame.File_Fullname := String_Value
-                                                (Pair.Value.all).Value;
+            Breakpoint.Frame.File_Fullname :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "line" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Frame.Line := Natural'Value
-              (String_Value (Pair.Value.all).Value.all);
+            Breakpoint.Frame.Line :=
+               Natural'Value (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "times" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Times := Natural'Value
-              (String_Value (Pair.Value.all).Value.all);
+            Breakpoint.Times :=
+               Natural'Value (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "original-location" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Breakpoint.Original_Location := String_Value
-                                              (Pair.Value.all).Value;
+            Breakpoint.Original_Location :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          else
+            Clear_Breakpoint (Breakpoint);
             Die ("Unexpected attribute: " & Pair.Variable.all);
          end if;
       end loop;
@@ -442,7 +475,6 @@ package body MI.Utils is
       Pair := Result_Pair_Lists.Element (Iterator);
 
       if Pair.Variable.all /= "nr_rows" then
-         --  ??? Release memory allocated by the scanner for this attribute
          Die ("Ill-formatted -break-list answer: expected 'nr_rows', found '"
               & Pair.Variable.all & "'");
       end if;
@@ -453,7 +485,6 @@ package body MI.Utils is
       Pair := Result_Pair_Lists.Element (Iterator);
 
       if Pair.Variable.all /= "nr_cols" then
-         --  ??? Release memory allocated by the scanner for this attribute
          Die ("Ill-formatted -break-list answer: expected 'nr_cols', found '"
               & Pair.Variable.all & "'");
       end if;
@@ -464,7 +495,6 @@ package body MI.Utils is
       Pair := Result_Pair_Lists.Element (Iterator);
 
       if Pair.Variable.all /= "hdr" then
-         --  ??? Release memory allocated by the scanner for this attribute
          Die ("Ill-formatted -break-list answer: expected 'hdr', found '"
               & Pair.Variable.all & "'");
       end if;
@@ -494,17 +524,6 @@ package body MI.Utils is
 
       return Breakpoints;
    end Process_Break_List;
-
-   ---------------------------
-   -- Process_Stream_Output --
-   ---------------------------
-
-   function Process_Stream_Output
-     (Stream : Stream_Output_Record) return String_Access is
-   begin
-      --  Simply returns the stream content wihtout any form of checking.
-      return Stream.Content;
-   end Process_Stream_Output;
 
    ------------------------
    -- Process_Var_Create --
@@ -541,25 +560,28 @@ package body MI.Utils is
 
          if Pair.Variable.all = "name" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj.all.Name := String_Value (Pair.Value.all).Value;
+            Var_Obj.all.Name :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "numchild" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj.all.Num_Child := Natural'Value
-              (String_Value (Pair.Value.all).Value.all);
+            Var_Obj.all.Num_Child :=
+               Natural'Value (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "value" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj.all.Value := String_Value (Pair.Value.all).Value;
+            Var_Obj.all.Value :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "type" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj.all.Type_Desc := String_Value (Pair.Value.all).Value;
+            Var_Obj.all.Type_Desc :=
+               new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "has_more" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj.all.Has_More := Natural'Value
-              (String_Value (Pair.Value.all).Value.all);
+            Var_Obj.all.Has_More :=
+               Natural'Value (String_Value (Pair.Value.all).Value.all);
 
          else
             Free_Var_Obj (Var_Obj);
@@ -620,6 +642,9 @@ package body MI.Utils is
    is
       Cursor  : Result_Pair_Lists.Cursor := Result.Results.First;
       Pair    : Result_Pair;
+      Format  : String_Access := null;
+      Value   : String_Access := null;
+
    begin
       --  A result from a -var-set-format commmand is of the following form:
       --       '^done,format="decimal",value="{...}"'
@@ -644,28 +669,30 @@ package body MI.Utils is
 
          if Pair.Variable.all = "format" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-
-            if Var_Obj.Format /= null then
-               Free_String (Var_Obj.Format);
-            end if;
-
-            Var_Obj.Format := String_Value (Pair.Value.all).Value;
+            Format := new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "value" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-
-            if Var_Obj.Value /= null then
-               Free_String (Var_Obj.Value);
-            end if;
-
-            Var_Obj.Value := String_Value (Pair.Value.all).Value;
+            Value := new String'(String_Value (Pair.Value.all).Value.all);
 
          else
+            --  Free the temporary format and/or value on error.
+            Safe_Free_String (Format);
+            Safe_Free_String (Value);
             Die ("Ill-formatted done result record: expected attribute "
                  & "`format' or `value'.");
          end if;
       end loop;
 
+      --  Update de Var_Obj.Format field.
+
+      Safe_Free_String (Var_Obj.Format);  --  Free the previous value
+      Var_Obj.Format := Format;
+
+      --  Update de Var_Obj.Value field.
+
+      Safe_Free_String (Var_Obj.Value);  --  Free the previous value
+      Var_Obj.Value := Value;
    end Process_Var_Set_Format;
 
    -----------------------------------
@@ -743,17 +770,20 @@ package body MI.Utils is
             Var_Obj := new Var_Obj_Type;
 
             if Pair.Variable.all = "name" then
-               Var_Obj.all.Name := String_Value (Pair.Value.all).Value;
+               Var_Obj.all.Name :=
+                  new String'(String_Value (Pair.Value.all).Value.all);
 
             elsif Pair.Variable.all = "exp" then
-               Var_Obj.all.Expression := String_Value (Pair.Value.all).Value;
+               Var_Obj.all.Expression :=
+                  new String'(String_Value (Pair.Value.all).Value.all);
 
             elsif Pair.Variable.all = "numchild" then
                Var_Obj.all.Num_Child := Natural'Value
                  (String_Value (Pair.Value.all).Value.all);
 
             elsif Pair.Variable.all = "type" then
-               Var_Obj.all.Type_Desc := String_Value (Pair.Value.all).Value;
+               Var_Obj.all.Type_Desc :=
+                  new String'(String_Value (Pair.Value.all).Value.all);
 
             else
                Free_Var_Obj (Var_Obj);
@@ -767,9 +797,12 @@ package body MI.Utils is
       end Process_Child;
 
       --  Variables declaration
-      Cursor : Result_Pair_Lists.Cursor := Result.Results.First;
-      Pair   : Result_Pair;
-      Child  : Var_Obj_Access;
+      Cursor    : Result_Pair_Lists.Cursor := Result.Results.First;
+      Pair      : Result_Pair;
+      Child     : Var_Obj_Access;
+      Has_More  : Natural := 0;
+      Num_Child : Natural := 0;
+      Children  : Var_Obj_List := Var_Obj_Lists.Empty_List;
 
    begin
       --  A result from a -var-list-children commmand is of the following form:
@@ -794,12 +827,12 @@ package body MI.Utils is
 
          if Pair.Variable.all = "numchild" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj.Num_Child := Natural'Value
+            Num_Child := Natural'Value
               (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "has_more" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj.Has_More := Natural'Value
+            Has_More := Natural'Value
               (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "children" then
@@ -821,17 +854,25 @@ package body MI.Utils is
                Check_Is_Result_List_Value_Or_Die
                  (Pair.Variable.all, Pair.Value.all);
                Child := Process_Child (Result_List_Value (Pair.Value.all));
-               Var_Obj.Children.Append (Child);
+               Children.Append (Child);
 
                Cursor := Result_Pair_Lists.Next (Cursor);
             end loop;
 
          else
+            Clear_Var_Obj_List (Children);  -- Clear the temporary list
             Die ("Unexpected attribute: " & Pair.Variable.all);
          end if;
 
          Cursor := Result_Pair_Lists.Next (Cursor);
       end loop;
+
+      --  Update the variable object structure.
+
+      Var_Obj.Num_Child := Num_Child;
+      Var_Obj.Has_More  := Has_More;
+      Clear_Var_Obj_List (Var_Obj.Children);
+      Var_Obj.Children  := Children;
    end Process_Var_List_Children;
 
    ---------------------------
@@ -868,11 +909,9 @@ package body MI.Utils is
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 
-      if Var_Obj.Type_Desc /= null then
-         Free_String (Var_Obj.Type_Desc);
-      end if;
-
-      Var_Obj.Type_Desc := String_Value (Pair.Value.all).Value;
+      Safe_Free_String (Var_Obj.Type_Desc);
+      Var_Obj.Type_Desc := new String'(String_Value
+                                         (Pair.Value.all).Value.all);
    end Process_Var_Info_Type;
 
    ---------------------------------
@@ -920,7 +959,7 @@ package body MI.Utils is
       end if;
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-      Var_Obj.Path_Exp := String_Value (Pair.Value.all).Value;
+      Var_Obj.Path_Exp := new String'(String_Value (Pair.Value.all).Value.all);
    end Process_Var_Info_Path_Expression;
 
    --------------------------------
@@ -968,12 +1007,8 @@ package body MI.Utils is
       end if;
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-
-      if Var_Obj.Value /= null then
-         Free_String (Var_Obj.Value);
-      end if;
-
-      Var_Obj.Value := String_Value (Pair.Value.all).Value;
+      Safe_Free_String (Var_Obj.Value);
+      Var_Obj.Value := new String'(String_Value (Pair.Value.all).Value.all);
    end Process_Var_Evaluate_Expression;
 
    ------------------------
@@ -1009,12 +1044,8 @@ package body MI.Utils is
       end if;
 
       Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-
-      if Var_Obj.Value /= null then
-         Free_String (Var_Obj.Value);
-      end if;
-
-      Var_Obj.Value := String_Value (Pair.Value.all).Value;
+      Safe_Free_String (Var_Obj.Value);
+      Var_Obj.Value := new String'(String_Value (Pair.Value.all).Value.all);
    end Process_Var_Assign;
 
    ------------------------

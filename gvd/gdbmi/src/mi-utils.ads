@@ -128,6 +128,25 @@ package MI.Utils is
    --  Releases the memory allocated by a given Frame_Type object, i.e.  frees
    --  inner structures.
 
+   --  Note about this package's memory managment policy: The following
+   --  subprograms work on the result of the MI scanner/parser.  For commodity
+   --  reasons, they always return new elements which means that both the
+   --  scanner/parser structures and these results need to be freed by the
+   --  user.  This is easier to handle, especially in error cases.  To be
+   --  perfectly clear: None of the below subprograms modifies/frees the
+   --  scanner/parser structure, and they return newly allocated structures
+   --  that can be freed with the corresponding procedures defined above
+   --  (Clear_*, Free_*, ...).  The only frees this package implicitly do is
+   --  when updating a given structure, e.g. Process_Var_Info_Type which frees
+   --  the previous corresponding Var_Obj.Type_Desc field if it differs from
+   --  null.
+   --
+   --  As a result, this allows the user to purge the scanner/parser structures
+   --  once it has finished working with them, and safely keep the top-level
+   --  structures defined in this package.  Structures defined here are fully
+   --  decoupled from the ones resulting from the scanner/parser. They can be
+   --  manipulated freely and can have different life time.
+
    --------------------
    -- Error handlers --
    --------------------
@@ -139,7 +158,9 @@ package MI.Utils is
    --    ^error,attr=...
 
    function Process_Error (Result : Result_Record) return String_Access;
-   --  ??? This function handles an error record.
+   --  This function processes a result record corresponding to an error,
+   --  extracts its associated message, and returns a copy of it.  The user is
+   --  responsible for freeing the returned access type.
 
    ---------------------------------
    -- Async notification handlers --
@@ -162,6 +183,9 @@ package MI.Utils is
    --    ~"the message"
    --    &"the message"
    --    @"the message"
+   --
+   --  This subprogram returns a newly allocated String which contains the
+   --  stream message.  It is the user concern to free this result.
 
    --------------------------------
    -- Sync notification handlers --
@@ -181,17 +205,29 @@ package MI.Utils is
       Breakpoint : out Breakpoint_Type);
    --  This subprogram processes a fragment of record of the form:
    --       bkpt={number="1",type="breakpoint",...
+   --
+   --  This procedure allocates the necessary memory for the Breakpoint_Type
+   --  field, and it is therefore the user responsibility to use the
+   --  Clear_Breakpoint routine to avoid leaks.  On error, Breakpoint is
+   --  returned empty.
 
    function Process_Break_Insert
      (Result : Result_Record) return Breakpoint_Type;
    --  This function processes a synchronous result-record received after a
    --  break instruction.  It returns a Breakpoint_Type, which is the internal
    --  representation of a breakpoint.
+   --
+   --  This procedure allocates the necessary memory for the Breakpoint_Type
+   --  field, and it is therefore the user responsibility to use the
+   --  Clear_Breakpoint routine to avoid leaks.  On error, Breakpoint is
+   --  returned empty.
 
    function Process_Break_List (Result : Result_Record) return Breakpoint_List;
    --  This function handles the result-record received after a call to the
    --  GDB/MI command `-break-list'.  It returns the list of breakpoints that
    --  returned GDB.
+   --  On error, the returned list may contains one or more breakpoints.  The
+   --  list is not cleared and it is the user concern to free it after use.
 
    --------------------------------------
    -- Variable object command handlers --
