@@ -4382,6 +4382,7 @@ package body Ada_Analyzer is
                         or else Prev_Token = Tok_For
                         or else (Prev_Token = Tok_Is and then not In_Generic))
               and then Prev_Token /= Tok_Dot
+              and then Prev_Token /= Tok_Apostrophe
             then
                --  This is a variable, a field declaration or a enumeration
                --  literal
