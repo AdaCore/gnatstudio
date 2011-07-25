@@ -252,6 +252,13 @@ If no tag is specified, the entry is relevant to all IDEs.
   Problem:    Navigation without compilation may not be available when there is
               UTF8 characters on the line.
   Workaround: Compile the file and then navigate.
+  
+- J429-026 GB: Project names cannot contain dashes
+  Problem:    In Workbench, project names do not have to conform to the 
+              syntax of Ada identifiers, but the resulting project files
+              are illegally named.  For example, dashes are allowed as
+              project names but will cause project conversion to fail.
+  Workaround: When creating projects in Workbench, use legal Ada ideintifiers.
 
 - J329-016 GPS: ranking of some CodePeer messages cannot be changed
   Problem:    Ranking of 'check always fails' and 'subp never returns'
