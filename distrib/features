@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K722-014 GPS: project editor saves past attribute values (2011-07-25)
+
+  The project properties editor will now save previous values of some of
+  the attributes (for instance the Source List File). That way, if you disable
+  an attribute and later on decide that it should be re-enabled, the previous
+  value is easily reset without browsing for the file again.
+
 NF-51-K705-014 GPS: methods.py plugin now shows inherited methods (2011-07-05)
 
   The methods.py plugin adds a contextual menu References/Methods when you

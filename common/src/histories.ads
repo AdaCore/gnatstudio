@@ -29,6 +29,7 @@ with GNATCOLL.VFS;
 with Glib;
 with Gtk.Check_Menu_Item;
 with Gtk.Combo_Box;
+with Gtk.GEntry;
 with Gtk.Toggle_Button;
 with Gtk.Menu_Item;
 with String_Hash;
@@ -146,6 +147,21 @@ package Histories is
    --  Entries in this submenu are shorten if required (see
    --  GUI_Utils.Full_Path_Menu_Item).
    --  Callback is automatically freed when the menu is destroyed.
+
+   function Most_Recent
+     (Hist : access History_Record;
+      Key  : History_Key;
+      Default : String := "") return String;
+   --  Return the most recent history for this key, or Default if the key did
+   --  not exist yet.
+
+   procedure Save_Text
+     (Self : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Hist : access History_Record;
+      Key  : History_Key);
+   --  Saves the text of the widget as the most recent entry in the
+   --  corresponding history. A history key is created as needed, which
+   --  stores only one entry.
 
    --------------
    -- Booleans --

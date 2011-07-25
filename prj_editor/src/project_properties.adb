@@ -85,6 +85,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;                 use GUI_Utils;
+with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
 with Project_Viewers;           use Project_Viewers;
 with Projects;                  use Projects;
@@ -369,8 +370,11 @@ package body Project_Properties is
       Model        : Gtk_Tree_Store;
       View         : Gtk_Tree_View;
       Path_Widget  : Gtk_Entry;
+      Use_History  : Boolean;
    end record;
    type File_Attribute_Editor is access all File_Attribute_Editor_Record'Class;
+   --  Use_History is true if the value should be saved in the history, for
+   --  easy retrieval later on.
 
    function Create_File_Attribute_Editor
      (Kernel          : access Kernel_Handle_Record'Class;
@@ -758,6 +762,10 @@ package body Project_Properties is
 
    function Get_Safe_Text (Ent : Gtk_Entry) return String;
    --  Return text contained in Ent, stripped of any LF
+
+   function History_Name
+     (Description : Attribute_Description_Access) return History_Key;
+   --  Return the name of the history key associated with Description
 
    -------------------
    -- Get_Safe_Text --
@@ -2916,7 +2924,7 @@ package body Project_Properties is
             return (1 .. 0 => GNATCOLL.VFS.No_File);
 
          else
-            if Default'Length > 0 then
+            if Default = "" then
                --  Not set yet, the directory should default to the project
                --  directory (E617-011)
                File := Select_File
@@ -2926,12 +2934,20 @@ package body Project_Properties is
                   Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                   Kind              => Open_File);
             else
-               File := Select_File
-                 (Parent            => Gtk_Window (Toplevel),
-                  Base_Directory    => Create (Dir_Name (Default)),
-                  Default_Name      => Base_Name (Default),
-                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                  Kind              => Open_File);
+               declare
+                  Def : constant Filesystem_String :=
+                    Normalize_Pathname
+                      (Default,
+                       Directory => Project_Path,
+                       Resolve_Links => False);
+               begin
+                  File := Select_File
+                    (Parent            => Gtk_Window (Toplevel),
+                     Base_Directory    => Create (Dir_Name (Def)),
+                     Default_Name      => Base_Name (Def),
+                     Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                     Kind              => Open_File);
+               end;
             end if;
 
             if File = GNATCOLL.VFS.No_File then
@@ -2955,17 +2971,26 @@ package body Project_Properties is
                 Select_Files_Or_Directories
                   (Toplevel       => Gtk_Window (Get_Toplevel (Editor)),
                    Project        => Ed.Project,
-                   Default        => +Get_Safe_Text (Ed.Ent),
+                   Default        =>
+                     +Histories.Most_Recent
+                       (Hist => Ed.Kernel.Get_History,
+                        Key  => History_Name (Ed.Attribute),
+                        Default => Get_Safe_Text (Ed.Ent)),
                    Project_Path   => +Get_Safe_Text (Ed.Path_Widget),
                    --  ??? What if the filesystem path is non-UTF8?
                    As_Directory   => Ed.As_Directory,
                    Filter         => Ed.Filter,
                    Allow_Multiple => False);
    begin
-      for F in Files'Range loop
-         Set_Text (Ed.Ent, Display_Full_Name (Files (F)));
+      if Files'Length /= 0 then
+         Set_Text (Ed.Ent, Display_Full_Name (Files (Files'First)));
          --  ??? What if the filesystem path is non-UTF8?
-      end loop;
+
+         Histories.Save_Text
+           (Self => Ed.Ent,
+            Hist => Ed.Kernel.Get_History,
+            Key  => History_Name (Ed.Attribute));
+      end if;
    end Select_File;
 
    ------------------------
@@ -3167,6 +3192,18 @@ package body Project_Properties is
       end loop;
    end Project_Path_Changed;
 
+   ------------------
+   -- History_Name --
+   ------------------
+
+   function History_Name
+     (Description : Attribute_Description_Access) return History_Key
+   is
+   begin
+      return "pp_"
+        & History_Key (Description.Pkg.all & '_' & Description.Name.all);
+   end History_Name;
+
    ----------------------------------
    -- Create_File_Attribute_Editor --
    ----------------------------------
@@ -3203,6 +3240,9 @@ package body Project_Properties is
       Editor.Attribute    := Description;
       Editor.Path_Widget  := Path_Widget;
       Editor.Project      := Project;
+      Editor.Use_History  :=
+        not Is_List
+        and then Attr.Typ = Attribute_As_Filename;
 
       Assert (Me, Editor.Path_Widget /= null, "No path widget given");
 

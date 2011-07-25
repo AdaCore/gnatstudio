@@ -264,6 +264,7 @@ package body Histories is
                      else
                         Value.List := null;
                      end if;
+
                      N := Key.Child;
                      Num := 1;
 
@@ -721,5 +722,39 @@ package body Histories is
          Show_All (Menu);
       end if;
    end On_Changed;
+
+   -----------------
+   -- Most_Recent --
+   -----------------
+
+   function Most_Recent
+     (Hist : access History_Record;
+      Key  : History_Key;
+      Default : String := "") return String
+   is
+      Past : String_List_Access;
+   begin
+      Create_New_Key_If_Necessary (Hist.all, Key, Strings);
+
+      Past := Get_History (Hist.all, Key);
+      if Past /= null then
+         return Past (Past'First).all;
+      end if;
+
+      return Default;
+   end Most_Recent;
+
+   ---------------
+   -- Save_Text --
+   ---------------
+
+   procedure Save_Text
+     (Self : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Hist : access History_Record;
+      Key  : History_Key)
+   is
+   begin
+      Add_To_History (Hist.all, Key, Self.Get_Text);
+   end Save_Text;
 
 end Histories;
