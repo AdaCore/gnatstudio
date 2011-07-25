@@ -47,8 +47,8 @@ package body MI.Utils is
    procedure Die (Message : String := "");
    --  Raises an Utils_Error exception with Message as inner message.
 
-   procedure Free_String is new Ada.Unchecked_Deallocation
-     (String, String_Access);
+   procedure Free_String is
+      new Ada.Unchecked_Deallocation (String, String_Access);
    --  Releases memory allocated for the given string.
 
    procedure Safe_Free_String (Str : in out String_Access);
@@ -137,9 +137,9 @@ package body MI.Utils is
    begin
       while Var_Obj_Lists.Has_Element (Cursor) loop
          Var_Obj := Var_Obj_Lists.Element (Cursor);
-         Cursor  := Var_Obj_Lists.Next (Cursor);
          pragma Assert (Var_Obj /= null);
          Free_Var_Obj (Var_Obj);
+         Cursor  := Var_Obj_Lists.Next (Cursor);
       end loop;
 
       List.Clear;
@@ -156,9 +156,9 @@ package body MI.Utils is
    begin
       while String_Lists.Has_Element (Cursor) loop
          String := String_Lists.Element (Cursor);
-         Cursor  := String_Lists.Next (Cursor);
          pragma Assert (String /= null);
          Free_String (String);
+         Cursor  := String_Lists.Next (Cursor);
       end loop;
 
       List.Clear;
@@ -174,6 +174,7 @@ package body MI.Utils is
       Safe_Free_String (Var_Obj.Expression);
       Safe_Free_String (Var_Obj.Path_Exp);
       Safe_Free_String (Var_Obj.Value);
+      Safe_Free_String (Var_Obj.Format);
       Safe_Free_String (Var_Obj.Type_Desc);
       Clear_Var_Obj_List (Var_Obj.Children);
    end Clear_Var_Obj;
@@ -184,11 +185,11 @@ package body MI.Utils is
 
    procedure Free_Var_Obj (Var_Obj : in out Var_Obj_Access)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+      procedure Free_Var_Obj_Type is new Ada.Unchecked_Deallocation
         (Var_Obj_Type, Var_Obj_Access);
    begin
       Clear_Var_Obj (Var_Obj.all);
-      Unchecked_Free (Var_Obj);
+      Free_Var_Obj_Type (Var_Obj);
    end Free_Var_Obj;
 
    ----------------------
@@ -202,6 +203,24 @@ package body MI.Utils is
       Clear_Frame_Type (Breakpoint.Frame);
       Safe_Free_String (Breakpoint.Original_Location);
    end Clear_Breakpoint;
+
+   ---------------------------
+   -- Clear_Breakpoint_List --
+   ---------------------------
+
+   procedure Clear_Breakpoint_List (Bkpts : in out Breakpoint_List)
+   is
+      Iterator : Breakpoint_Lists.Cursor := Breakpoint_Lists.First (Bkpts);
+      Bkpt     : Breakpoint_Type;
+   begin
+      while Breakpoint_Lists.Has_Element (Iterator) loop
+         Bkpt := Breakpoint_Lists.Element (Iterator);
+         Clear_Breakpoint (Bkpt);
+         Iterator := Breakpoint_Lists.Next (Iterator);
+      end loop;
+
+      Bkpts.Clear;
+   end Clear_Breakpoint_List;
 
    ----------------------
    -- Clear_Frame_Type --
@@ -760,6 +779,8 @@ package body MI.Utils is
          Var_Obj : Var_Obj_Access := null;
 
       begin
+         Var_Obj := new Var_Obj_Type;
+
          while Result_Pair_Lists.Has_Element (Cursor) loop
             Pair := Result_Pair_Lists.Element (Cursor);
 
@@ -767,7 +788,6 @@ package body MI.Utils is
             --  String_Value so we can procede to a general check.
 
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
-            Var_Obj := new Var_Obj_Type;
 
             if Pair.Variable.all = "name" then
                Var_Obj.all.Name :=

@@ -135,4 +135,117 @@ package body MI.Ast.Visitors is
       end loop;
    end Visit;
 
+   ------------------
+   -- Declarations --
+   ------------------
+
+   procedure Free_String is
+      new Ada.Unchecked_Deallocation (String, String_Access);
+   --  Releases memory allocated for the given string.
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Dealloc_Visitor;
+      Object : in out Record_List)
+   is
+      --  Cursor : Record_Lists.Cursor := Object.First;
+      pragma Unreferenced (This);
+   begin
+      Clear_Record_List (Object);
+      --  while Record_Lists.Has_Element (Cursor) loop
+         --  pragma Assert (Record_Lists.Element (Cursor) /= null);
+         --  Record_Lists.Element (Cursor).all.Accept_Visitor (This);
+         --  Free_MI_Record (Record_Lists.Element (Cursor));
+         --  Cursor := Record_Lists.Next (Cursor);
+      --  end loop;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Dealloc_Visitor;
+      Object : in out Result_List_Value'Class)
+   is
+      pragma Unreferenced (This);
+   begin
+      Clear_Result_List_Value (Object);
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Dealloc_Visitor;
+      Object : in out Result_Pair)
+   is
+      pragma Unreferenced (This);
+   begin
+      Clear_Result_Pair (Object);
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Dealloc_Visitor;
+      Object : in out Result_Record'Class)
+   is
+      pragma Unreferenced (This);
+   begin
+      Clear_Result_Record (Object);
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Dealloc_Visitor;
+      Object : in out Stream_Output_Record'Class)
+   is
+      pragma Unreferenced (This);
+   begin
+      Free_String (Object.Content);
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Dealloc_Visitor;
+      Object : in out String_Value'Class)
+   is
+      pragma Unreferenced (This);
+   begin
+      Clear_String_Value (Object);
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding
+   procedure Visit
+     (This   : in out Dealloc_Visitor;
+      Object : in out Value_List_Value'Class)
+   is
+      pragma Unreferenced (This);
+   begin
+      Clear_Value_List_Value (Object);
+   end Visit;
+
 end MI.Ast.Visitors;

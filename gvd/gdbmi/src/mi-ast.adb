@@ -15,6 +15,8 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+with MI.Ast.Visitors; use MI.Ast.Visitors;
+
 package body MI.Ast is
 
    ----------------------------------
@@ -27,6 +29,17 @@ package body MI.Ast is
         and then Left.Value.all = Right.Value.all;
    end "=";
 
+   ---------------------
+   -- Clear_MI_Record --
+   ---------------------
+
+   procedure Clear_MI_Record (Rec : MI_Record_Access)
+   is
+      V : Dealloc_Visitor;
+   begin
+      Rec.all.Accept_Visitor (V);
+   end Clear_MI_Record;
+
    -----------------------
    -- Clear_Record_List --
    -----------------------
@@ -38,12 +51,24 @@ package body MI.Ast is
    begin
       while Record_Lists.Has_Element (Cursor) loop
          Rec := Record_Lists.Element (Cursor);
+         Clear_MI_Record (Rec);
          Free_MI_Record (Rec);
          Cursor := Record_Lists.Next (Cursor);
       end loop;
 
       List.Clear;
    end Clear_Record_List;
+
+   --------------------
+   -- Clear_MI_Value --
+   --------------------
+
+   procedure Clear_MI_Value (Value : MI_Value_Access)
+   is
+      V : Dealloc_Visitor;
+   begin
+      Value.all.Accept_Visitor (V);
+   end Clear_MI_Value;
 
    ----------------------
    -- Clear_Value_List --
@@ -56,6 +81,7 @@ package body MI.Ast is
    begin
       while Value_Lists.Has_Element (Cursor) loop
          Value := Value_Lists.Element (Cursor);
+         Clear_MI_Value (Value);
          Free_MI_Value (Value);
          Cursor := Value_Lists.Next (Cursor);
       end loop;
@@ -78,6 +104,7 @@ package body MI.Ast is
       end if;
 
       if Pair.Value /= null then
+         Clear_MI_Value (Pair.Value);
          Free_MI_Value (Pair.Value);
          Pair.Value := null;
       end if;
@@ -151,6 +178,18 @@ package body MI.Ast is
       Clear_Result_Pair_List (Rec.Results);
    end Clear_Result_Record;
 
+   --------------------------------
+   -- Clear_Stream_Output_Record --
+   --------------------------------
+
+   procedure Clear_Stream_Output_Record (Rec : in out Stream_Output_Record)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (String, String_Access);
+   begin
+      Unchecked_Free (Rec.Content);
+   end Clear_Stream_Output_Record;
+
    --------------------
    -- Accept_Visitor --
    --------------------
@@ -202,6 +241,61 @@ package body MI.Ast is
    procedure Accept_Visitor
      (This : in out Result_Record;
       V    : in out Visitor'Class) is
+   begin
+      V.Visit (This);
+   end Accept_Visitor;
+
+   --------------------
+   -- Accept_Visitor --
+   --------------------
+
+   procedure Accept_Visitor
+     (This : in out Stream_Output_Record;
+      V    : in out Mutable_Visitor'Class) is
+   begin
+      V.Visit (This);
+   end Accept_Visitor;
+
+   --------------------
+   -- Accept_Visitor --
+   --------------------
+
+   procedure Accept_Visitor
+     (This : in out String_Value;
+      V    : in out Mutable_Visitor'Class) is
+   begin
+      V.Visit (This);
+   end Accept_Visitor;
+
+   --------------------
+   -- Accept_Visitor --
+   --------------------
+
+   procedure Accept_Visitor
+     (This : in out Result_List_Value;
+      V    : in out Mutable_Visitor'Class) is
+   begin
+      V.Visit (This);
+   end Accept_Visitor;
+
+   --------------------
+   -- Accept_Visitor --
+   --------------------
+
+   procedure Accept_Visitor
+     (This : in out Value_List_Value;
+      V    : in out Mutable_Visitor'Class) is
+   begin
+      V.Visit (This);
+   end Accept_Visitor;
+
+   --------------------
+   -- Accept_Visitor --
+   --------------------
+
+   procedure Accept_Visitor
+     (This : in out Result_Record;
+      V    : in out Mutable_Visitor'Class) is
    begin
       V.Visit (This);
    end Accept_Visitor;

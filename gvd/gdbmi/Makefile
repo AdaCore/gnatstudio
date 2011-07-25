@@ -14,6 +14,8 @@ clean: libgdbmi.gpr tests/mi_tests.gpr
 distclean: clean
 	rm -rf obj/ lib/ tests/obj/
 
+tests: full-tests
+
 fast-tests: libgdbmi
 	python -B tests/run_tests.py -v
 

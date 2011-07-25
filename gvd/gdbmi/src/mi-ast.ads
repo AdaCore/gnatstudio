@@ -51,6 +51,14 @@ package MI.Ast is
    --  Declaration of the Visitor abstract class.  Visitors must implement this
    --  interface to walk through the resulting AST after a MI output parsing.
 
+   -----------------------------------
+   -- Visitor interface declaration --
+   -----------------------------------
+
+   type Mutable_Visitor is interface;
+   --  Declaration of the Visitor abstract class.  Visitors must implement this
+   --  interface to walk through the resulting AST after a MI output parsing.
+
    -------------------------------------
    -- MI_Record interface declaration --
    -------------------------------------
@@ -68,19 +76,28 @@ package MI.Ast is
    --  MI_Record abstract method to force implementation in all derived
    --  classes.
 
+   procedure Accept_Visitor
+     (This : in out MI_Record;
+      V    : in out Mutable_Visitor'Class) is abstract;
+   --  MI_Record abstract method to force implementation in all derived
+   --  classes.
+
    package Record_Lists is new Doubly_Linked_Lists (MI_Record_Access);
    subtype Record_List is Record_Lists.List;
    --  Definition of a list of MI_Record_Access. Use of access type is
    --  mandatory since MI_Record is an abstract type.
 
+   procedure Clear_MI_Record (Rec : MI_Record_Access);
+   --  Frees the memory allocated for the record fields.
+
    procedure Free_MI_Record is
       new Ada.Unchecked_Deallocation (MI_Record'Class, MI_Record_Access);
-   --  Free the memory allocated for the given MI_Record as well as the memory
-   --  pointed by this very same access type (i.e. free both content and
-   --  container).
+   --  Frees the memory allocated for the given MI_Record but not the memory
+   --  pointed by this very same access type. For this one needs to call
+   --  Clear_MI_Record.
 
    procedure Clear_Record_List (List : in out Record_List);
-   --  Free the each element of the list before clearing the list itself.
+   --  Frees the each element of the list before clearing the list itself.
 
    -------------------------------------------
    -- Stream_Output_Record type declaration --
@@ -106,6 +123,18 @@ package MI.Ast is
    --  automatically calls the appropriate overloaded Visit method from the
    --  visitor using type dispatching.
 
+   overriding
+   procedure Accept_Visitor
+     (This : in out Stream_Output_Record;
+      V    : in out Mutable_Visitor'Class);
+   --  MI_Record abstract method overriding implementation.  It simply
+   --  automatically calls the appropriate overloaded Visit method from the
+   --  visitor using type dispatching.
+
+   procedure Clear_Stream_Output_Record (Rec : in out Stream_Output_Record);
+   --  Frees the memory allocated for the content of the given
+   --  Stream_Output_Record.
+
    ------------------------------------
    -- MI_Value interface declaration --
    ------------------------------------
@@ -126,19 +155,29 @@ package MI.Ast is
    --  exactly the same goal, and is named identically for consistency
    --  purposes in visitors.
 
+   procedure Accept_Visitor
+     (This : in out MI_Value;
+      V    : in out Mutable_Visitor'Class) is abstract;
+   --  The same abstract method as defined in the MI_Record interface.  It has
+   --  exactly the same goal, and is named identically for consistency
+   --  purposes in visitors.
+
    package Value_Lists is new Doubly_Linked_Lists (MI_Value_Access);
    subtype Value_List is Value_Lists.List;
    --  Definition of a list of MI_Value_Access, using access type because
    --  MI_Value is an abstract type.
 
+   procedure Clear_MI_Value (Value : MI_Value_Access);
+   --  Frees the memory allocated for the value fields.
+
    procedure Free_MI_Value is
       new Ada.Unchecked_Deallocation (MI_Value'Class, MI_Value_Access);
-   --  Free the memory allocated for the given MI_Value as well as the memory
-   --  pointed by this very same access type (i.e. free both content and
-   --  container).
+   --  Frees the memory allocated for the given MI_Value but not the memory
+   --  pointed by this very same access type. For this one needs to call
+   --  Clear_MI_Value.
 
    procedure Clear_Value_List (List : in out Value_List);
-   --  Free the each element of the list before clearing the list itself.
+   --  Frees the each element of the list before clearing the list itself.
 
    -----------------------------------
    -- Result_Pair type declaration  --
@@ -190,6 +229,13 @@ package MI.Ast is
    --  Implementaton of the MI_Value abstract method which basically only call
    --  the Visitor.Visit method on itself.
 
+   overriding
+   procedure Accept_Visitor
+     (This : in out String_Value;
+      V    : in out Mutable_Visitor'Class);
+   --  Implementaton of the MI_Value abstract method which basically only call
+   --  the Visitor.Visit method on itself.
+
    procedure Clear_String_Value (Value : in out String_Value);
    --  Releases the memory allocated for the given String_Value and reset its
    --  access type to the value null.
@@ -213,6 +259,13 @@ package MI.Ast is
    --  Implementaton of the MI_Value abstract method which basically only call
    --  the Visitor.Visit method on itself.
 
+   overriding
+   procedure Accept_Visitor
+     (This : in out Result_List_Value;
+      V    : in out Mutable_Visitor'Class);
+   --  Implementaton of the MI_Value abstract method which basically only call
+   --  the Visitor.Visit method on itself.
+
    procedure Clear_Result_List_Value (List : in out Result_List_Value);
    --  Releases the memory allocated for the given Result_List_Value.
 
@@ -232,6 +285,13 @@ package MI.Ast is
    procedure Accept_Visitor
      (This : in out Value_List_Value;
       V    : in out Visitor'Class);
+   --  Implementaton of the MI_Value abstract method which basically only call
+   --  the Visitor.Visit method on itself.
+
+   overriding
+   procedure Accept_Visitor
+     (This : in out Value_List_Value;
+      V    : in out Mutable_Visitor'Class);
    --  Implementaton of the MI_Value abstract method which basically only call
    --  the Visitor.Visit method on itself.
 
@@ -269,6 +329,13 @@ package MI.Ast is
    --  Implementaton of the MI_Value abstract method which basically only call
    --  the Visitor.Visit method on itself.
 
+   overriding
+   procedure Accept_Visitor
+     (This : in out Result_Record;
+      V    : in out Mutable_Visitor'Class);
+   --  Implementaton of the MI_Value abstract method which basically only call
+   --  the Visitor.Visit method on itself.
+
    procedure Clear_Result_Record (Rec : in out Result_Record);
    --  Releases the memory allocated for the given Result_Record.
 
@@ -303,5 +370,37 @@ package MI.Ast is
    procedure Visit
      (This   : in out Visitor;
       Object : Value_List_Value'Class) is abstract;
+
+   -----------------------------------------------------------
+   -- Mutable_Visitor interface abstract method declaration --
+   -----------------------------------------------------------
+
+   procedure Visit
+     (This   : in out Mutable_Visitor;
+      Object : in out Record_List) is abstract;
+
+   procedure Visit
+     (This   : in out Mutable_Visitor;
+      Object : in out Result_List_Value'Class) is abstract;
+
+   procedure Visit
+     (This   : in out Mutable_Visitor;
+      Object : in out Result_Pair) is abstract;
+
+   procedure Visit
+     (This   : in out Mutable_Visitor;
+      Object : in out Result_Record'Class) is abstract;
+
+   procedure Visit
+     (This   : in out Mutable_Visitor;
+      Object : in out Stream_Output_Record'Class) is abstract;
+
+   procedure Visit
+     (This   : in out Mutable_Visitor;
+      Object : in out String_Value'Class) is abstract;
+
+   procedure Visit
+     (This   : in out Mutable_Visitor;
+      Object : in out Value_List_Value'Class) is abstract;
 
 end MI.Ast;

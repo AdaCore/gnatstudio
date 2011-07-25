@@ -124,6 +124,9 @@ package MI.Utils is
    --  Releases the memory allocated by a given Breakpoint_Type object, i.e.
    --  frees inner structures.
 
+   procedure Clear_Breakpoint_List (Bkpts : in out Breakpoint_List);
+   --  Clear each element of the list, then the list itself.
+
    procedure Clear_Frame_Type (Frame : in out Frame_Type);
    --  Releases the memory allocated by a given Frame_Type object, i.e.  frees
    --  inner structures.
