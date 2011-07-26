@@ -55,6 +55,7 @@ private
    use Entities;
 
    type Construct_Completion_Resolver is new Completion_Resolver with record
+      Kernel      : Kernel_Handle;
       GLI_Handler : LI_Handler;
    end record;
 

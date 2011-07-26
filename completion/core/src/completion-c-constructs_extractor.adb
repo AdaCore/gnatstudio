@@ -19,7 +19,7 @@
 
 with Entities;         use Entities;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
-with GPS.Intl;         use GPS.Intl;
+with Doc_Utils;        use Doc_Utils;
 
 package body Completion.C.Constructs_Extractor is
    use Completion_List_Pckg;
@@ -43,6 +43,7 @@ package body Completion.C.Constructs_Extractor is
       return
         new Construct_Completion_Resolver'
               (Manager     => null,
+               Kernel      => Kernel,
                GLI_Handler => Get_LI_Handler
                                 (Get_Database (Kernel), Current_File));
    end New_C_Construct_Completion_Resolver;
@@ -57,6 +58,24 @@ package body Completion.C.Constructs_Extractor is
       Context  : Completion_Context;
       Result   : in out Completion_List)
    is
+      function Doc_Header (E_Info : Entity_Information) return String;
+      --  Generate the header of the documentation of each entity
+
+      function Doc_Header (E_Info : Entity_Information) return String is
+         K : constant E_Kinds := Get_Kind (E_Info).Kind;
+      begin
+         if K = Include_File then
+            return "";
+         else
+            return
+              Attributes_To_String (Get_Attributes (E_Info))
+                & " " & Kind_To_String (Get_Kind (E_Info))
+                & ASCII.LF;
+         end if;
+      end Doc_Header;
+
+      --  Local variables
+
       Prefix   : constant UTF8_String
         (Natural (Offset) + 1 .. Natural (Context.Offset)) :=
            Context.Buffer (Natural (Offset) + 1 .. Natural (Context.Offset));
@@ -84,8 +103,9 @@ package body Completion.C.Constructs_Extractor is
          declare
             Name : aliased constant String := Get (Get_Name (E_Info)).all;
             Doc  : constant String :=
-                    -(Get_Name (Context.Lang))
-                    & " " & Kind_To_String (Get_Kind (E_Info));
+                    Doc_Header (E_Info)
+                    & Doc_Utils.Get_Documentation
+                       (Get_Language_Handler (Resolver.Kernel), E_Info);
 
          begin
             Proposal :=
