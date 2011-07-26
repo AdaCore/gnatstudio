@@ -247,10 +247,10 @@ NF-51-J208-023 GPS: smart completion of C/C++ entities (2011-07-18)
   GPS now provides some code completion for C/C++ entities. The list of
   suggestions covers variables, types/classes, macros, and included files.
 
-NF-51-IC15-022 GPS: click in CodePeer report sync Locations View (2011-07-26)
+NF-51-IC15-022 GPS: click in CodePeer report sync locations view (2011-07-26)
 
-  Click on file/subprogram node in CodePeer Report expands and scroll to be
-  visible corresponding file node in Locations View.
+  Clicking on a file/subprogram node in the CodePeer report view now
+  expands and scroll to the corresponding file node in the locations view.
 
 NF-51-IB24-029 GB: Independent entries in Problems view (2011-02-28)
 
