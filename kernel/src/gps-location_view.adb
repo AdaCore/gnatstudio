@@ -89,9 +89,9 @@ package body GPS.Location_View is
    --  Called whenever the location in the current editor has changed, so that
    --  we can highlight the corresponding line in the locations window
 
-   function Idle_Expand_Category (Self : Location_View) return Boolean;
-   --  Idle callback used to expand category, its first file and select
-   --  first message and the open first location if requested.
+   function Idle_Expand (Self : Location_View) return Boolean;
+   --  Idle callback used to expand nodes of category and its first or defined
+   --  file; select first message and the open first location if requested.
 
    procedure Set_Filter_Visibility
      (Self    : access Location_View_Record'Class;
@@ -303,23 +303,41 @@ package body GPS.Location_View is
    procedure Expand_Category
      (Self       : not null access Location_View_Record'Class;
       Category   : Ada.Strings.Unbounded.Unbounded_String;
-      Goto_First : Boolean)
-   is
+      Goto_First : Boolean) is
    begin
-      Self.Requests.Append ((Category, Goto_First));
+      Self.Requests.Prepend ((Category, GNATCOLL.VFS.No_File, Goto_First));
 
       if Self.Idle_Expand_Handler = No_Source_Id then
          Self.Idle_Expand_Handler :=
            View_Idle.Idle_Add
-             (Idle_Expand_Category'Access, Location_View (Self));
+             (Idle_Expand'Access, Location_View (Self));
       end if;
    end Expand_Category;
+
+   -----------------
+   -- Expand_File --
+   -----------------
+
+   procedure Expand_File
+     (Self       : not null access Location_View_Record'Class;
+      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Goto_First : Boolean) is
+   begin
+      Self.Requests.Prepend ((Category, File, Goto_First));
+
+      if Self.Idle_Expand_Handler = No_Source_Id then
+         Self.Idle_Expand_Handler :=
+           View_Idle.Idle_Add
+             (Idle_Expand'Access, Location_View (Self));
+      end if;
+   end Expand_File;
 
    --------------------------
    -- Idle_Expand_Category --
    --------------------------
 
-   function Idle_Expand_Category (Self : Location_View) return Boolean is
+   function Idle_Expand (Self : Location_View) return Boolean is
       Model : constant Gtk_Tree_Model := Self.View.Get_Model;
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
@@ -355,19 +373,39 @@ package body GPS.Location_View is
             end if;
          end;
 
+         --  Expand category node
+
          Path := Model.Get_Path (Iter);
-
-         --  Expand category and first file items
-
          Dummy := Self.View.Expand_Row (Path, False);
 
-         Down (Path);
-         Dummy := Self.View.Expand_Row (Path, False);
+         --  Expand file node
 
-         --  Select first message
+         Iter := Model.Children (Iter);
+
+         while Iter /= Null_Iter loop
+            exit when
+              GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column)
+                = Self.Requests.First_Element.File;
+
+            Model.Next (Iter);
+         end loop;
+
+         if Iter /= Null_Iter then
+            Gtk.Tree_Model.Path_Free (Path);
+            Path := Model.Get_Path (Iter);
+
+         else
+            Down (Path);
+         end if;
+
+         Dummy := Self.View.Expand_Row (Path, False);
+         Self.View.Scroll_To_Cell (Path, null, False, 0.0, 0.0);
+
+         --  Select first message and make it visible
 
          Down (Path);
          Self.View.Get_Selection.Select_Path (Path);
+         Self.View.Scroll_To_Cell (Path, null, False, 0.0, 0.0);
 
          Path_Free (Path);
 
@@ -383,7 +421,7 @@ package body GPS.Location_View is
       Self.Requests.Clear;
 
       return False;
-   end Idle_Expand_Category;
+   end Idle_Expand;
 
    -------------------
    -- Goto_Location --

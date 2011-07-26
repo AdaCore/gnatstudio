@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,6 +35,13 @@ package GPS.Kernel.Messages.View is
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Temporary disable "goto first location" feature. It will be reenabled
    --  automatically once event processing loop reach idle state.
+
+   procedure Expand_File
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Category : String;
+      File     : GNATCOLL.VFS.Virtual_File);
+   --  Send request to expand specified category and file. First file's message
+   --  will be selected.
 
 private
 

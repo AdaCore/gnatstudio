@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,6 +32,7 @@ with Gtk.Tree_Model_Filter;          use Gtk.Tree_Model_Filter;
 with Glib;
 with Glib.Main;
 
+with GNATCOLL.VFS;
 with GPS.Kernel.Messages;
 with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
@@ -78,16 +79,25 @@ package GPS.Location_View is
    --  to the first item in the category.
 
    procedure Expand_Category
-     (Self         : not null access Location_View_Record'Class;
-      Category     : Ada.Strings.Unbounded.Unbounded_String;
-      Goto_First   : Boolean);
+     (Self       : not null access Location_View_Record'Class;
+      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      Goto_First : Boolean);
    --  Requests to expand specified category and goto first visible location
+
+   procedure Expand_File
+     (Self       : not null access Location_View_Record'Class;
+      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Goto_First : Boolean);
+   --  Requests to expand specified category and file and goto first visible
+   --  location.
 
 private
 
    type Expansion_Request is record
-      Category     : Ada.Strings.Unbounded.Unbounded_String;
-      Goto_First   : Boolean;
+      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Goto_First : Boolean;
    end record;
 
    package Expansion_Request_Vectors is

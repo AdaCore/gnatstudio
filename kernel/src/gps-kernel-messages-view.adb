@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -71,6 +71,19 @@ package body GPS.Kernel.Messages.View is
          Manager.Idle_Handler := Idles.Idle_Add (On_Idle'Access, Manager);
       end if;
    end Do_Not_Goto_First_Location;
+
+   -----------------
+   -- Expand_File --
+   -----------------
+
+   procedure Expand_File
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Category : String;
+      File     : GNATCOLL.VFS.Virtual_File) is
+   begin
+      Get_Or_Create_Location_View (Kernel).Expand_File
+        (Ada.Strings.Unbounded.To_Unbounded_String (Category), File, False);
+   end Expand_File;
 
    -------------------
    -- Message_Added --

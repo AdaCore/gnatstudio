@@ -47,6 +47,7 @@ with Histories;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
+with GPS.Kernel.Messages.View;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Code_Analysis_GUI;
 
@@ -1105,6 +1106,13 @@ package body Code_Peer.Summary_Reports is
 
                elsif Iter /= Null_Iter then
                   Self.Messages_Model.Set (Self.Tree);
+               end if;
+
+               --  Request Locations View to expand corresponding category/file
+
+               if File_Node /= null then
+                  GPS.Kernel.Messages.View.Expand_File
+                    (Self.Kernel, "CodePeer messages", File_Node.Name);
                end if;
             end;
          end if;
