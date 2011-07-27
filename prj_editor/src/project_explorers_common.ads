@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2001-2010, AdaCore                   --
+--                Copyright (C) 2001-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -82,14 +82,15 @@ package Project_Explorers_Common is
    type Node_Types is
      (Project_Node,
       Extends_Project_Node,
+      Modified_Project_Node,
       Directory_Node,
       Obj_Directory_Node,
       Exec_Directory_Node,
       File_Node,
       Category_Node,
-      Entity_Node,
-      Modified_Project_Node);
-
+      Entity_Node);
+   subtype Project_Node_Types
+     is Node_Types range Project_Node .. Modified_Project_Node;
    subtype Directory_Node_Types
      is Node_Types range Directory_Node .. Exec_Directory_Node;
    --  The kind of nodes one might find in the tree

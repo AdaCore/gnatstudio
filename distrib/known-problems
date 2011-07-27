@@ -8,6 +8,14 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K726-019: GPS: project view incorrectly refreshes extended projects
+  Problem:    When using extending projects and changing scenario variables
+              such that the extended project is modified (for instance its
+              list of source directories), then the changes are not displayed
+              properly in the project view, although they are properly taken
+              into account by GPS.
+  Workaround: close and reopen the project view.
+
 - K721-007: GPS: ClearCase Native "Describe" actions not working
   Problem:    When using the ClearCase Native plugin, some basic actions such
               as "Describe" might not work.

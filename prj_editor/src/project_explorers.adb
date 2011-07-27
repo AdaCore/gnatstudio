@@ -856,9 +856,9 @@ package body Project_Explorers is
       --  Subprojects first
 
       case A_Type is
-         when Project_Node | Extends_Project_Node =>
+         when Project_Node_Types =>
             case B_Type is
-               when Project_Node | Extends_Project_Node =>
+               when Project_Node_Types =>
                   return Alphabetical;
 
                when others =>
@@ -871,7 +871,7 @@ package body Project_Explorers is
 
          when Directory_Node =>
             case B_Type is
-               when Project_Node | Extends_Project_Node =>
+               when Project_Node_Types =>
                   if Projects_Before_Directories then
                      return B_Before_A;
                   else
@@ -887,7 +887,7 @@ package body Project_Explorers is
 
          when Obj_Directory_Node =>
             case B_Type is
-               when Project_Node | Extends_Project_Node =>
+               when Project_Node_Types =>
                   if Projects_Before_Directories then
                      return B_Before_A;
                   else
@@ -906,7 +906,7 @@ package body Project_Explorers is
 
          when Exec_Directory_Node =>
             case B_Type is
-               when Project_Node | Extends_Project_Node =>
+               when Project_Node_Types =>
                   if Projects_Before_Directories then
                      return B_Before_A;
                   else
@@ -1117,7 +1117,7 @@ package body Project_Explorers is
          Append (Menu, Sep);
       end if;
 
-      if (Node_Type = Project_Node or else Node_Type = Extends_Project_Node)
+      if Node_Type in Project_Node_Types
         and then Menu /= null
       then
          Gtk_New (Item, -"Parse all xref information");
@@ -1283,25 +1283,21 @@ package body Project_Explorers is
          Prj  : Project_Type := Project;
       begin
          case Get_Node_Type (Exp.Tree.Model, Iter) is
-            when Project_Node | Modified_Project_Node | Extends_Project_Node =>
+            when Project_Node_Types =>
                Prj := Get_Project_From_Node
                  (Exp.Tree.Model, Exp.Kernel, Iter, False);
 
-            when Directory_Node | Obj_Directory_Node | Exec_Directory_Node
-                 | File_Node | Category_Node | Entity_Node =>
+            when Directory_Node_Types
+               | File_Node | Category_Node | Entity_Node =>
                null;
          end case;
 
          while It /= Null_Iter loop
             case Get_Node_Type (Exp.Tree.Model, It) is
-               when Project_Node
-                  | Modified_Project_Node
-                  | Extends_Project_Node =>
+               when Project_Node_Types =>
                   Process_Node (It, No_Project);
 
-               when Directory_Node
-                  | Obj_Directory_Node
-                  | Exec_Directory_Node =>
+               when Directory_Node_Types =>
                   Update_Directory_Node_Text (Exp, Prj, It);
 
                when others =>
@@ -1437,12 +1433,12 @@ package body Project_Explorers is
       Node_Type := Get_Node_Type (Tooltip.Explorer.Tree.Model, Iter);
 
       case Node_Type is
-         when Project_Node | Extends_Project_Node =>
+         when Project_Node_Types =>
             --  Project or extended project full pathname
             File := Get_File (Tooltip.Explorer.Tree.Model, Iter, File_Column);
             Text := new String'(File.Display_Full_Name);
 
-         when Directory_Node | Obj_Directory_Node | Exec_Directory_Node =>
+         when Directory_Node_Types =>
             --  Directroy full pathname and project name
             --  Get parent node which is the project name
             Par := Parent (Tooltip.Explorer.Tree.Model, Iter);
@@ -1628,10 +1624,10 @@ package body Project_Explorers is
          Set (Explorer.Tree.Model, Node, Up_To_Date_Column, True);
 
          case Get_Node_Type (Explorer.Tree.Model, Node) is
-            when Project_Node | Modified_Project_Node | Extends_Project_Node =>
+            when Project_Node_Types =>
                Expand_Project_Node (Explorer, Node);
 
-            when Directory_Node | Obj_Directory_Node | Exec_Directory_Node =>
+            when Directory_Node_Types =>
                null;
 
             when File_Node =>
@@ -1962,10 +1958,7 @@ package body Project_Explorers is
                --  Remove it, we'll put it back anyway
                Remove (Explorer.Tree.Model, N);
 
-            when Project_Node
-               | Modified_Project_Node
-               | Extends_Project_Node =>
-
+            when Project_Node_Types =>
                --  The list of imported projects could change if another
                --  dependency was added, so we need to check for this case
                --  as well.
@@ -2193,7 +2186,7 @@ package body Project_Explorers is
            or else Node_Type = Directory_Node
          then
             case Node_Type is
-               when Project_Node | Modified_Project_Node =>
+               when Project_Node_Types =>
                   declare
                      Files : File_Array_Access := Files_In_Project;
 
@@ -2232,9 +2225,7 @@ package body Project_Explorers is
       --  Has to be done whether the node is expanded or not, and whether it is
       --  up-to-date or not, as long as its icon is visible.
       --  Change the icons to reflect the modified state of the project.
-      if Node_Type = Project_Node
-        or else Node_Type = Modified_Project_Node
-      then
+      if Node_Type in Project_Node_Types then
          if Prj /= No_Project and then Prj.Modified then
             N_Type := Modified_Project_Node;
          else
@@ -2279,6 +2270,7 @@ package body Project_Explorers is
                then
                   Imported (Im) := No_Project;
                   Found := True;
+                  exit;
                end if;
             end loop;
          end;
@@ -2294,7 +2286,10 @@ package body Project_Explorers is
       end loop;
 
       for Im in Imported'Range loop
-         if Imported (Im) = Get_Project (Explorer.Kernel) then
+         if Imported (Im) = No_Project then
+            --  Already updated
+            null;
+         elsif Imported (Im) = Get_Project (Explorer.Kernel) then
             Iter2 := Add_Project_Node (Explorer, Imported (Im), Null_Iter,
                                        Name_Suffix => " (root project)");
          elsif Imported (Im) /= No_Project then
@@ -2743,9 +2738,7 @@ package body Project_Explorers is
          while Start_Node /= Null_Iter loop
             begin
                case Get_Node_Type (Explorer.Tree.Model, Start_Node) is
-                  when Project_Node
-                       | Extends_Project_Node
-                       | Modified_Project_Node =>
+                  when Project_Node_Types =>
                      Next_Or_Child
                        (Get_Project_From_Node
                           (Explorer.Tree.Model,

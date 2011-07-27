@@ -58,6 +58,7 @@ ENTITIES.ASSERT                   = no
 
 --  Projects. Unfortunately the traces from PROJECTS.GNAT go to stdout
 
+PROJECTS = no
 PROJECTS.GNAT = no
 
 --  Debug handles related to the cross-references database
@@ -98,8 +99,6 @@ REMOTE_FULL=no
 PYTHON_REF_COUNT=no
 
 COMPLETION_ADVANCED=no
-
-PROJECTS.GNAT=no
 
 --  Debug handles related to the editor
 buffer_debug=no
