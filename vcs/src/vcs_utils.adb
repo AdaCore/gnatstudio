@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -240,6 +240,11 @@ package body VCS_Utils is
          J, K : Natural := Source'First;
          D    : Natural := Dest'First;
       begin
+         if Source = "" then
+            Dest := "";
+            return;
+         end if;
+
          loop
             J := Index (Source (K .. Source'Last), ".");
             if J = 0 then
