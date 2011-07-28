@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2009-2010, AdaCore                  --
+--                 Copyright (C) 2009-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -411,19 +411,42 @@ package body GPS.Tree_View.Locations is
          declare
             Message : constant String :=
                         Model.Get_String (Aux, Column);
-            Items   : constant Natural :=
+            Total   : constant Natural :=
                         Natural
                           (Model.Get_Int (Aux, Number_Of_Children_Column));
-            Img     : constant String := Image (Items);
+            Img     : constant String := Image (Total);
+            Visible : Natural := Total;
 
          begin
-            if Items = 1 then
-               Init (Value, GType_String);
+            if Get_Depth (Path) = 1 then
+               Visible := 0;
+               Aux := Self.Children (Iter);
+
+               while Aux /= Null_Iter loop
+                  Visible := Visible + Integer (Self.N_Children (Aux));
+                  Self.Next (Aux);
+               end loop;
+
+            elsif Get_Depth (Path) = 2 then
+               Visible := Integer (Self.N_Children (Iter));
+            end if;
+
+            Init (Value, GType_String);
+
+            if Total = 1 then
                Set_String (Value, Message & " (" & Img & (-" item") & ")");
 
             else
-               Init (Value, GType_String);
-               Set_String (Value, Message & " (" & Img & (-" items") & ")");
+               if Visible = Total then
+                  Set_String (Value, Message & " (" & Img & (-" items") & ")");
+
+               else
+                  Set_String
+                    (Value,
+                     Message
+                     & " (" & Image (Visible)
+                     & (-" of ") & Img & (-" items") & ")");
+               end if;
             end if;
          end;
 
