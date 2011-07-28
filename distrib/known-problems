@@ -63,6 +63,12 @@ If no tag is specified, the entry is relevant to all IDEs.
   Workaround: Use equivalent key shortcuts (for instance "shift-insert" to
               paste) when they exist.
 
+- K623-016  GB: GNAbench crash using ada editor
+  Problem:    Using ada editor's code assist feature, sometimes lead to
+              a crash.
+  WOrkaround: Disable code assist tool using GNATbench Ada Tools preferences
+              page. (see Window => Preferences => Ada => Tools)
+
 - K607-047: Jumping to distant delimitor does not work
   Problem:    When using the menu Navigate->Goto Matching Delimiter, if the
               matching delimiter is too far away (more than 8192 characters),
