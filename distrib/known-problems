@@ -66,7 +66,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 - K623-016  GB: GNAbench crash using ada editor
   Problem:    Using ada editor's code assist feature, sometimes lead to
               a crash.
-  WOrkaround: Disable code assist tool using GNATbench Ada Tools preferences
+  Workaround: Disable code assist tool using GNATbench Ada Tools preferences
               page. (see Window => Preferences => Ada => Tools)
 
 - K607-047: Jumping to distant delimitor does not work
