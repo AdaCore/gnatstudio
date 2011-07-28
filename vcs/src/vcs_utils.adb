@@ -227,7 +227,7 @@ package body VCS_Utils is
    function Revision_Lower (Rev1, Rev2 : String) return Boolean is
 
       N_Size : constant := 6;
-      --  Number of didgits used for normalized numbers
+      --  Number of digits used for normalized numbers
 
       procedure Normalize (Source : String; Dest : out String);
       --  Normalize revision number in Source and store it in Dest
@@ -241,7 +241,6 @@ package body VCS_Utils is
          D    : Natural := Dest'First;
       begin
          if Source = "" then
-            Dest := "";
             return;
          end if;
 
