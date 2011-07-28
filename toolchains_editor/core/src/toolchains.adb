@@ -1605,7 +1605,6 @@ package body Toolchains is
       --  store them in 'New_Toolchain'.
 
       Set_Compilers_From_Attribute (Compiler_Command_Attribute);
-      Set_Compilers_From_Attribute (Compiler_Driver_Attribute);
 
       --  1 step: look through the current toolchains list to verify if this
       --  toolchain already exists.
