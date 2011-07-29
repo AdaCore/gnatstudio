@@ -16,6 +16,13 @@ If no tag is specified, the entry is relevant to all IDEs.
               into account by GPS.
   Workaround: close and reopen the project view.
 
+- K726-004: GPS: cannot use dead key for apostrophe with some keyboard layouts
+  Problems:   Under Windows, with some keyboard layouts such as international
+              US, it is not possible to write the apostrophe character and the
+              double quote character by pressing the corresponding dead key
+              followed by space.
+  Workaround: Use another keyboard layout.
+
 - K721-007: GPS: ClearCase Native "Describe" actions not working
   Problem:    When using the ClearCase Native plugin, some basic actions such
               as "Describe" might not work.
