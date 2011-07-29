@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2010, AdaCore                  --
+--                 Copyright (C) 2005-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,7 @@ with System;                         use System;
 with Traces;                         use Traces;
 
 package body Entities.Commands is
+   Me : constant Debug_Handle := Create ("Entities.Cmd");
 
    type Examine_Callback is record
       Iter              : Entity_Reference_Iterator_Access;
@@ -138,30 +139,47 @@ package body Entities.Commands is
             if Parent /= null
               and then Show_In_Call_Graph
                 (Ref.Entity.LI_Declaration.File.Db, Get_Kind (Ref))
-              and then Is_Container (Get_Kind (Parent).Kind)
             then
-               --  If we are seeing a dispatching call to an overridden
-               --  subprogram, this could also result in a call to the entity
-               --  and we report it
+               while Parent /= null
+                 and then not Is_Container (Get_Kind (Parent).Kind)
+               loop
+                  case Get_Kind (Parent).Kind is
+                     when Label_On_Block
+                        | Label_On_Loop
+                        | Label_On_Statement =>
+                        Parent := Parent.Caller_At_Declaration;
 
-               if Get_Entity (Data.Iter.all) /= Data.Entity then
-                  if Get_Kind (Ref) = Dispatching_Call then
+                     when others =>
+                        Trace (Me, "Got a reference, but parent is not a"
+                               & " container: " & Get_Kind (Parent).Kind'Img);
+                        Parent := null;
+                  end case;
+               end loop;
+
+               if Parent /= null then
+                  --  If we are seeing a dispatching call to an overridden
+                  --  subprogram, this could also result in a call to the
+                  --  entity and we report it
+
+                  if Get_Entity (Data.Iter.all) /= Data.Entity then
+                     if Get_Kind (Ref) = Dispatching_Call then
+                        if not On_Entity_Found
+                          (Data.Data, Get_Entity (Data.Iter.all), Parent, Ref,
+                           Through_Dispatching => True,
+                           Is_Renaming         => False)
+                        then
+                           Result := Failure;
+                        end if;
+                     end if;
+
+                  else
                      if not On_Entity_Found
-                       (Data.Data, Get_Entity (Data.Iter.all), Parent, Ref,
-                        Through_Dispatching => True,
+                       (Data.Data, Data.Entity, Parent, Ref,
+                        Through_Dispatching => False,
                         Is_Renaming         => False)
                      then
                         Result := Failure;
                      end if;
-                  end if;
-
-               else
-                  if not On_Entity_Found
-                    (Data.Data, Data.Entity, Parent, Ref,
-                     Through_Dispatching => False,
-                     Is_Renaming         => False)
-                  then
-                     Result := Failure;
                   end if;
                end if;
             end if;

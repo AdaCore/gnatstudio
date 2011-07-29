@@ -192,13 +192,19 @@ If no tag is specified, the entry is relevant to all IDEs.
   Workaround: Edit the rule files manually.
 
 - K222-028 GB: Invoking metrics analysis does not show Problems view
-  Problem:     When the metrics analysis cannot complete (e.g., due to syntax
-               errors) the Metrics view is nonetheless given the focus, hiding
-               the Problems view. This can leave the user under the impression
-               that no problem has arisen because the Metrics view might still
-               display (potentially obsolete) content.
-  Workaround : Check the Problems view or Console view manually after invoking
-               the metrics analysis.
+  Problem:    When the metrics analysis cannot complete (e.g., due to syntax
+              errors) the Metrics view is nonetheless given the focus, hiding
+              the Problems view. This can leave the user under the impression
+              that no problem has arisen because the Metrics view might still
+              display (potentially obsolete) content.
+  Workaround: Check the Problems view or Console view manually after invoking
+              the metrics analysis.
+
+- K131-009 GPS: Missing callers in Callgraph View
+  Problem:    When a subprogram is called within a block or a loop with a
+              label, the Call Graph in GPS will not show those calls.
+  Workaround: Use "Find All References" in the contextual menu to find all
+              locations of the calls, and click on them to find the caller.
 
 - K108-001 GPS: Adding Makefile as a language results in errors
   Problem:    Edit the project properties to add Makefile as a language.
