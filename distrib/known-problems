@@ -99,6 +99,13 @@ If no tag is specified, the entry is relevant to all IDEs.
   Workaround: Edit share/gps/plug-ins/toolchains.xml and add the toolchain
               there.
 
+- K419-015 GB: GNATbench crash near startup
+  Problem:    GNATbench 2.5.1 crashes depending on PATH environment variable.
+              The crash occurs at GNATbench startup, or later when the first
+              GNATbench function is accessed.
+  Workaround: Remove all network locations from the PATH used when launching
+              GNATbench. Simplify the PATH used when launching GNATbench. 
+              
 - K418-017 GB: errors with comments ending with **
   Problem:    GNATbench may crash if source file contain comment ending with
               **.
