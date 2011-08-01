@@ -707,9 +707,6 @@ package body Toolchains_Editor is
                   Comp := Get_Compiler (Tc, Lang);
 
                   if Get_Origin (Comp) /= From_Project_Driver then
-                     Clear_Attribute
-                       (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
-
                      if Is_Defined (Tc, Lang)
                        and then (not Is_Default (Tc, Lang)
                                  or else not Is_Base_Name (Tc, Lang))
