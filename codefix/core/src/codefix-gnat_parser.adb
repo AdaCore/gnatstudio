@@ -17,16 +17,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
+with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
+with Codefix.Error_Lists;            use Codefix.Error_Lists;
+with Codefix.Text_Manager;           use Codefix.Text_Manager;
+with Codefix.Formal_Errors;          use Codefix.Formal_Errors;
 with GNAT.Regpat;                    use GNAT.Regpat;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 with Language;                       use Language;
 with Language.Tree;                  use Language.Tree;
 with Language.Tree.Database;         use Language.Tree.Database;
-with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
 package body Codefix.GNAT_Parser is
    use Cursor_Lists;
@@ -577,7 +580,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'kw not allowed' etc.
 
-   type Sep_Not_Allowed is new Error_Parser (4) with null record;
+   type Sep_Not_Allowed is new Error_Parser (5) with null record;
 
    overriding
    procedure Initialize (This : in out Sep_Not_Allowed);
@@ -2312,7 +2315,9 @@ package body Codefix.GNAT_Parser is
          new Pattern_Matcher'
            (Compile ("(trailing spaces) not permitted")),
          new Pattern_Matcher'
-           (Compile ("(space) not allowed")));
+           (Compile ("(space) not allowed")),
+         new Pattern_Matcher'
+           (Compile ("\(style\) (horizontal tab) not allowed")));
    end Initialize;
 
    overriding procedure Fix
@@ -2347,6 +2352,10 @@ package body Codefix.GNAT_Parser is
       elsif Word_Read.all = "space" then
          Assign (Unallowed_Characters, " ");
          Format_Str := Text_Ascii;
+      elsif Word_Read.all = "horizontal tab" then
+         Solutions := Expand_Tabs (Current_Text, Message);
+         Free (Word_Read);
+         return;
       end if;
 
       Solutions := Unexpected
@@ -2361,6 +2370,7 @@ package body Codefix.GNAT_Parser is
 
    --------------------------
    -- In_Should_Be_Omitted --
+   --------------------------
 
    overriding procedure Initialize (This : in out In_Should_Be_Omitted) is
    begin

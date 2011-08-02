@@ -58,9 +58,9 @@
 
 --  procedure Fix
 --    (This         : Error_Parser;
---     Errors_List  : in out Errors_Interface'Class;
 --     Current_Text : Text_Navigator_Abstr'Class;
---     Message      : Error_Message;
+--     Message_It   : Error_Message_Iterator;
+--     Options      : Fix_Options;
 --     Solutions    : out Solution_List;
 --     Matches      : Match_Array)
 
@@ -70,23 +70,12 @@
 --  'Uncorrectable_Message'. Then, Codefix will consider that the message does
 --  not match and the search will continue.
 
---  A possible fix is represented in an object derived from Text_Command.
---  Most of times, you won't have to care about the internal representation
---  of this object. You just have to get the solution list given from the
---  formal error function, and then return it with the parameter 'Solution'
---  of Fix function.
-
---  The object Message is the message that matches a parser. The cols that it
+--  Current_Text is the message that matches a parser. The columns that it
 --  contains are a little modified (a tabulation is equal to a character, not a
 --  position mod 8).
 
---  The object Matches is the Match_Array resulting from the execution of the
---  pattern matcher. It is constrained between 0 .. n, where n is the number of
---  couple of parenthesis in the regular expression.
-
---  The object Error_List is the main Error_Interface, the object with whom you
---  can extract new errors captions. It is necessary to use this object when a
---  message is on more than one line. The problem is that if you use the
+--  Message_It is an iterator which allows you to extract new error captions
+--  when a message has more than one line. The problem is that if you use the
 --  function 'Get_Message' and discover that the message is not matching with
 --  ones you need, this message will never be parsed by other parsers. So, you
 --  have to call first the function 'Preview', check if you really want to
@@ -95,9 +84,15 @@
 --  message for the same treatment. If you need such of thing, add a complain
 --  at the beginning of the document.
 
---  In the body of Fix, you have to call one or more function from
---  Formal_Errors to generate at least one Text_Command and add it in
---  'Solutions'.
+--  A possible fix is represented in an object derived from Text_Command.
+--  Most of times, you won't have to care about the internal representation
+--  of this object. In the body of Fix, you have to call one or more functions
+--  from Formal_Errors to generate at least one Text_Command and add it to the
+--  out-mode parameter Solutions.
+
+--  Matches is the Match_Array resulting from the execution of the pattern
+--  matcher. It is constrained between 0 .. n, where n is the number of
+--  couple of parenthesis in the regular expression.
 
 --  After having created your own 'Error_Parser', you have to add it in the
 --  parsers list. Nothing easier, just call the function Add_Parser with an
@@ -120,9 +115,7 @@ with GNAT.Regpat;            use GNAT.Regpat;
 
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix.Error_Lists;    use Codefix.Error_Lists;
-use Codefix.Formal_Errors.Cursor_Lists;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
-with Generic_List;
 
 package Codefix.Errors_Parser is
 
@@ -137,7 +130,7 @@ package Codefix.Errors_Parser is
    with record
        Matcher    : Arr_Matcher (1 .. Nb_Parsers);
    end record;
-   --  The Error_Parser is used to parse a message and call the rigth
+   --  The Error_Parser is used to parse a message and call the right
    --  funtions in the formal_errors package
 
    procedure Fix

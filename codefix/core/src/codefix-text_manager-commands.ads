@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2010, AdaCore                  --
+--                 Copyright (C) 2002-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -249,8 +249,32 @@ package Codefix.Text_Manager.Commands is
    function Is_Writable (This : Remove_Blank_Lines_Cmd) return Boolean;
    --  See inherited documentation
 
-private
+   -----------------------
+   -- Tab_Expansion_Cmd --
+   -----------------------
 
+   type Tab_Expansion_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This   : in out Tab_Expansion_Cmd;
+      Cursor : File_Cursor);
+   --  Store the cursor (needed later to execute the command)
+
+   overriding
+   procedure Free (This : in out Tab_Expansion_Cmd);
+   --  Free the memory associated to a Tab_Expanion_Cmd
+
+   overriding
+   procedure Execute
+     (This         : Tab_Expansion_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+   --  Replace all the horizontal tabs by spaces
+
+   overriding
+   function Is_Writable (This : Tab_Expansion_Cmd) return Boolean;
+   --  See inherited documentation
+
+private
    type Remove_Word_Cmd is new Text_Command with record
       Word : Word_Mark;
    end record;
@@ -297,6 +321,10 @@ private
 
    type Remove_Blank_Lines_Cmd is new Text_Command (Simple) with record
       Start_Mark : Ptr_Mark;
+   end record;
+
+   type Tab_Expansion_Cmd is new Text_Command with record
+      Cursor : File_Cursor;
    end record;
 
 end Codefix.Text_Manager.Commands;

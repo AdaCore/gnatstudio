@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2010, AdaCore                 --
+--                  Copyright (C) 2003-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,8 +18,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-
-with GNAT.Regpat;       use GNAT.Regpat;
+with GNAT.Regpat;             use GNAT.Regpat;
+with String_Utils;            use String_Utils;
 
 package body Codefix.Text_Manager.Commands is
 
@@ -527,6 +527,43 @@ package body Codefix.Text_Manager.Commands is
    function Is_Writable (This : Remove_Blank_Lines_Cmd) return Boolean is
    begin
       return This.Start_Mark.Get_File.Is_Writable;
+   end Is_Writable;
+
+   -----------------------
+   -- Tab_Expansion_Cmd --
+   -----------------------
+
+   procedure Initialize
+     (This   : in out Tab_Expansion_Cmd;
+      Cursor : File_Cursor) is
+   begin
+      This.Cursor := Cursor;
+   end Initialize;
+
+   overriding procedure Free (This : in out Tab_Expansion_Cmd) is
+   begin
+      Free (Text_Command (This));
+   end Free;
+
+   overriding procedure Execute
+     (This         : Tab_Expansion_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor : File_Cursor renames This.Cursor;
+   begin
+      Current_Text.Add_Line
+        (Cursor   => Cursor,
+         New_Line => Do_Tab_Expansion
+                       (Current_Text.Get_Line (Cursor, 1), Tab_Width),
+         Indent   => False);
+
+      Current_Text.Delete_Line (Cursor);
+   end Execute;
+
+   overriding
+   function Is_Writable (This : Tab_Expansion_Cmd) return Boolean is
+   begin
+      return This.Cursor.Get_File.Is_Writable;
    end Is_Writable;
 
 end Codefix.Text_Manager.Commands;

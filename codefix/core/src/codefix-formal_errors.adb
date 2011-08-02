@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2010, AdaCore               --
+--                    Copyright (C) 2002-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,10 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+--  Warning: No information concerning the text of the error message should
+--  appear in this package, in order to minimize problems following changes
+--  in GNAT error system.
 
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.Exceptions;                    use Ada.Exceptions;
@@ -385,6 +389,27 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Wrong_Order;
+
+   -----------------
+   -- Expand_Tabs --
+   -----------------
+
+   function Expand_Tabs
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Message      : File_Cursor'Class) return Solution_List
+   is
+      pragma Unreferenced (Current_Text);
+      New_Command_Ptr : constant Ptr_Command := new Tab_Expansion_Cmd (Simple);
+      New_Command     : Tab_Expansion_Cmd renames
+                          Tab_Expansion_Cmd (New_Command_Ptr.all);
+      Result          : Solution_List;
+   begin
+      Initialize (New_Command, File_Cursor (Message));
+      Set_Caption (New_Command, "Expand horizontal tabulations");
+      Append (Result, New_Command_Ptr);
+
+      return Result;
+   end Expand_Tabs;
 
    --------------
    -- Expected --

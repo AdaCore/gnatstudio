@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2009-2010, AdaCore                 --
+--                  Copyright (C) 2009-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,14 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language; use Language;
-with Language.Tree; use Language.Tree;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with GNAT.Regpat; use GNAT.Regpat;
+with Codefix.Error_Lists;    use Codefix.Error_Lists;
+with Codefix.Text_Manager;   use Codefix.Text_Manager;
+with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
+with GNAT.Regpat;            use GNAT.Regpat;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with Language;               use Language;
+with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 
 package body Codefix.SPARK_Parser is
-   use Cursor_Lists;
 
    type Unexpected_Tilde_Or_Percent is new Error_Parser (4) with null record;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2010, AdaCore               --
+--                    Copyright (C) 2002-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,11 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+--  An error message treatment in Codefix is divided into two parts: the
+--  structure of the message and its semantic meaning. Those two parts
+--  are separated into two different packages: Codefix.Errors_Parsers and
+--  Codefix.Formal_Errors.
 
 with GNAT.Strings;
 with GNAT.Regpat;
@@ -133,7 +138,7 @@ package Codefix.Formal_Errors is
       Str_Read     : String := "";
       Format_Read  : String_Mode := Text_Ascii;
       Caption      : String := "") return Solution_List;
-   --  This fonction replace Str_Read by Str_Expected in the current text by
+   --  This function replace Str_Read by Str_Expected in the current text by
    --  the position specified in the Message. If there is no Str_Read, it
    --  looks for the first word in the position.
 
@@ -162,6 +167,11 @@ package Codefix.Formal_Errors is
       Mode              : String_Mode := Text_Ascii) return Solution_List;
    --  Delete the unexpected string. The Mode parameter discriminates between
    --  plain strings (the default) and strings given as regular expressions.
+
+   function Expand_Tabs
+     (Current_Text      : Text_Navigator_Abstr'Class;
+      Message           : File_Cursor'Class) return Solution_List;
+   --  Expand all the horizontal tabs into spaces.
 
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;

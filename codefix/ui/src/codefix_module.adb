@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -108,7 +108,7 @@ package body Codefix_Module is
       Sessions            : Codefix_Sessions;
       Codefix_Class       : Class_Type;
       Codefix_Error_Class : Class_Type;
-      Codefix_Processor : Fix_Processor;
+      Codefix_Processor   : Fix_Processor;
    end record;
    type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
 
