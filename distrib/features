@@ -86,6 +86,12 @@ NF-51-K412-030 GPS: Add support to align on renames keyword (2011-04-17)
 
   The align plug-in has been enhanced to align on renames keyword.
 
+NF-51-K412-013 Extend quick fix support for horizontal tabs (2011-08-02)
+
+  The automatic code fixing capability has been enhanced to handle the
+  replacement of horizontal tabs by spaces. Each tab is replaced by the
+  spaces required to preserve the columns of the sources.
+
 NF-51-K406-021 GPS: Support for more assembly languages (2011-04-06)
 
   GPS now supports languages "Asm_Cpp" (file extension .S by default) and
