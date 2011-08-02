@@ -16,6 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 with System;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
@@ -79,6 +80,7 @@ with GUI_Utils;                 use GUI_Utils;
 with GNATCOLL.VFS;
 with Histories;                 use Histories;
 with Traces;                    use Traces;
+with String_Utils;              use String_Utils;
 with XML_Utils;                 use XML_Utils;
 
 package body Vsearch is
@@ -2477,7 +2479,7 @@ package body Vsearch is
          Priority    => Default_Priority);
       Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
-      Vsearch_Module_Id.Tab_Width := Tab_Width.Get_Pref;
+      Vsearch_Module_Id.Tab_Width := Tab_Width;
 
       Close_Options_Pixbuf := Gdk.Pixbuf.Gdk_New_From_Xpm_Data
         (close_options_xpm);
@@ -2596,7 +2598,7 @@ package body Vsearch is
    is
       pragma Unreferenced (Kernel);
    begin
-      Vsearch_Module_Id.Tab_Width := Tab_Width.Get_Pref;
+      Vsearch_Module_Id.Tab_Width := Tab_Width;
    end Preferences_Changed;
 
    ------------------

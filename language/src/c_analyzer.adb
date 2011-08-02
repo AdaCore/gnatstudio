@@ -516,7 +516,6 @@ package body C_Analyzer is
       Indent_Comments   : Boolean renames Indent_Params.Indent_Comments;
       Indent_Extra      : Boolean renames Indent_Params.Align_On_Colons;
       Use_Tabs          : Boolean renames Indent_Params.Use_Tabs;
-      Tab_Width         : Natural renames Indent_Params.Tab_Width;
 
       First             : Natural;
       Index             : Natural := Buffer'First;

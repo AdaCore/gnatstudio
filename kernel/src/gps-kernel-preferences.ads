@@ -193,7 +193,6 @@ package GPS.Kernel.Preferences is
    Tooltip_Timeout           : Integer_Preference;
    Highlight_Delimiters      : Boolean_Preference;
    Periodic_Save             : Integer_Preference;
-   Tab_Width                 : Integer_Preference;
    Highlight_Column          : Integer_Preference;
    Speed_Column_Policy       : Speed_Column_Policy_Prefs.Preference;
    Use_ACL                   : Boolean_Preference;

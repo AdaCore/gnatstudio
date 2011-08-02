@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2010, AdaCore                --
+--                   Copyright (C) 2002-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -169,7 +169,6 @@ package body Cpp_Module is
                   Indent_Decl         => 0,
                   Indent_Conditional  => 0,
                   Indent_Record       => 0,
-                  Tab_Width           => Tab_Width.Get_Pref,
                   Indent_Case_Extra   => Automatic,
                   Casing_Policy       => Case_Handling.Disabled,
                   Reserved_Casing     => Case_Handling.Unchanged,

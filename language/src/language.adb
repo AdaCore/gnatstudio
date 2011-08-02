@@ -708,7 +708,6 @@ package body Language is
       pragma Unreferenced
         (Lang, Indent_Offset, Case_Exceptions, Is_Optional_Keyword);
 
-      Tab_Width       : Natural renames Indent_Params.Tab_Width;
       Use_Tabs        : Boolean renames Indent_Params.Use_Tabs;
       Index           : Natural;
       Indent          : Natural := 0;

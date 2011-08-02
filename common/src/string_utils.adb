@@ -263,6 +263,15 @@ package body String_Utils is
       end loop;
    end Skip_To_Index;
 
+   ---------------
+   -- Tab_Width --
+   ---------------
+
+   function Tab_Width return Natural is
+   begin
+      return 8;
+   end Tab_Width;
+
    ----------------
    -- Line_Start --
    ----------------

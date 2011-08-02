@@ -713,7 +713,6 @@ package body Ada_Analyzer is
       Reserved_Casing     : Casing_Type renames Indent_Params.Reserved_Casing;
       Ident_Casing        : Casing_Type renames Indent_Params.Ident_Casing;
       Use_Tabs            : Boolean renames Indent_Params.Use_Tabs;
-      Tab_Width           : Natural renames Indent_Params.Tab_Width;
       Format_Operators    : constant Boolean :=
                               Format and then Indent_Params.Format_Operators;
       Align_On_Colons     : constant Boolean :=

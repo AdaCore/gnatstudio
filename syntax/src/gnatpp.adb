@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2010, AdaCore              --
+--                     Copyright (C) 2001-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -70,7 +70,7 @@ begin
       Analyze_C_Source
         (Buffer.all, Symbols,
          Indent_Params =>
-           (2, 2, 2, 0, 2, 8, Automatic, End_Of_Line, Unchanged, Unchanged,
+           (2, 2, 2, 0, 2, Automatic, End_Of_Line, Unchanged, Unchanged,
             False, True, True, True, False, True, False),
          Replace => Replace_Cb'Unrestricted_Access);
 
@@ -78,7 +78,7 @@ begin
       Analyze_Ada_Source
         (Buffer.all, Symbols,
          Indent_Params =>
-           (3, 2, 2, 1, 3, 8, Automatic, End_Of_Line,
+           (3, 2, 2, 1, 3, Automatic, End_Of_Line,
             Lower, Smart_Mixed, True, False, True, True,
             True, True, False),
          Replace => Replace_Cb'Unrestricted_Access);

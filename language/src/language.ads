@@ -344,7 +344,6 @@ package Language is
       Indent_Decl         : Natural;
       Indent_Conditional  : Natural;
       Indent_Record       : Natural;
-      Tab_Width           : Natural;
       Indent_Case_Extra   : Indent_Style;
       Casing_Policy       : Case_Handling.Casing_Policy;
       Reserved_Casing     : Case_Handling.Casing_Type;
@@ -397,7 +396,6 @@ package Language is
       Indent_Decl         => 0,
       Indent_Conditional  => 0,
       Indent_Record       => 8,
-      Tab_Width           => 8,
       Indent_Case_Extra   => Automatic,
       Casing_Policy       => Case_Handling.Disabled,
       Reserved_Casing     => Case_Handling.Unchanged,

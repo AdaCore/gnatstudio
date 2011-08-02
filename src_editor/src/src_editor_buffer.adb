@@ -3004,7 +3004,7 @@ package body Src_Editor_Buffer is
 
       B.Auto_Syntax_Check    := Automatic_Syntax_Check.Get_Pref;
       B.Highlight_Delimiters := Highlight_Delimiters.Get_Pref;
-      B.Tab_Width            := Gint (Tab_Width.Get_Pref);
+      B.Tab_Width            := Gint (String_Utils.Tab_Width);
    end Execute;
 
    ---------------

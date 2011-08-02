@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2010, AdaCore              --
+--                     Copyright (C) 2002-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -108,7 +108,6 @@ package body Ada_Module is
             Indent_Decl         => Ada_Declaration_Level.Get_Pref,
             Indent_Conditional  => Ada_Conditional_Level.Get_Pref,
             Indent_Record       => Ada_Record_Level.Get_Pref,
-            Tab_Width           => Tab_Width.Get_Pref,
             Indent_Case_Extra   => Ada_Indent_Case_Extra.Get_Pref,
             Casing_Policy       => Ada_Casing_Policy.Get_Pref,
             Reserved_Casing     => Ada_Reserved_Casing.Get_Pref,

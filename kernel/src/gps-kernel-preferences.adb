@@ -546,16 +546,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Right margin",
          Page    => -"Editor");
 
-      Tab_Width := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Tab-Width",
-         Minimum => 1,
-         Maximum => 16,
-         Default => 8,
-         Doc     => -"The width of a tabulation character, in characters",
-         Label   => -"Tabulation width",
-         Page    => "");
-
       Block_Highlighting := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Block-Highlighting",
