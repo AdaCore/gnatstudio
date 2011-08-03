@@ -25,7 +25,7 @@ include ../Makefile.gnat
 # gnat.adc (No_Tasking restriction) on all gnatcoll sources.
 all:
 	$(MAKE) -s Gnatcoll_Build=${Build} -C ../gnatlib do_links
-	$(MAKE) -C ../gnatlib static
+	$(MAKE) -C ../gnatlib
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
 	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps
 

@@ -45,6 +45,10 @@ Note: if you want to use a C compiler other than the one provided with
 gnat, you can replace the configure line above by:
 CC=/path/to/c/compiler ./configure --prefix=<prefix>
 
+By default, if your machine supports shared libraries, GPS will build both
+the static and dynamic versions of gnatcoll. To speed up the compilation,
+you can pass --disable-shared to configure.
+
 If you need to modify configure.in and then regenerate the configure script,
 you will need autoconf version 2.57 installed on your machine. Later versions
 may not be compatible.
