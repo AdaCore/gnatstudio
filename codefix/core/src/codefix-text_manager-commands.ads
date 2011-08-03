@@ -26,9 +26,10 @@ package Codefix.Text_Manager.Commands is
    type Remove_Word_Cmd is new Text_Command with private;
 
    procedure Initialize
-     (This         : in out Remove_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class);
+     (This            : in out Remove_Word_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Word            : Word_Cursor'Class;
+      All_Occurrences : Boolean := False);
    --  Set all the marks that will be necessary later to remove the word
 
    overriding
@@ -276,7 +277,8 @@ package Codefix.Text_Manager.Commands is
 
 private
    type Remove_Word_Cmd is new Text_Command with record
-      Word : Word_Mark;
+      Word            : Word_Mark;
+      All_Occurrences : Boolean;
    end record;
 
    type Insert_Word_Cmd (Complexity : Fix_Complexity)

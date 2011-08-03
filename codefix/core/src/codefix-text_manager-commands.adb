@@ -28,11 +28,13 @@ package body Codefix.Text_Manager.Commands is
    ---------------------
 
    procedure Initialize
-     (This         : in out Remove_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class) is
+     (This            : in out Remove_Word_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Word            : Word_Cursor'Class;
+      All_Occurrences : Boolean := False) is
    begin
       Make_Word_Mark (Word, Current_Text, This.Word);
+      This.All_Occurrences := All_Occurrences;
    end Initialize;
 
    overriding procedure Free (This : in out Remove_Word_Cmd) is
@@ -45,17 +47,79 @@ package body Codefix.Text_Manager.Commands is
      (This         : Remove_Word_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Word : Word_Cursor;
+      Word           : Word_Cursor;
+
    begin
       Make_Word_Cursor (This.Word, Current_Text, Word);
 
-      Current_Text.Replace
-        (Word,
-         Word.Get_Matching_Word (Current_Text, Check => True)'Length, "");
+      declare
+         Undesired_Text : String renames Word.String_Match.all;
 
-      if Current_Text.Get_Line (Word, 1) = "" then
-         Current_Text.Delete_Line (Word);
-      end if;
+      begin
+         --  Displace the cursor back to the first occurrence of the undesired
+         --  text
+
+         if This.All_Occurrences then
+            declare
+               Column      : Visible_Column_Type := Get_Column (Word);
+               Prev_Column : Visible_Column_Type;
+
+            begin
+               loop
+                  Prev_Column := Column - Undesired_Text'Length;
+                  exit when Prev_Column <= 0;
+
+                  Word.Set_Column (Prev_Column);
+
+                  declare
+                     Str_Parsed : constant String :=
+                       Current_Text.Get_Line (Word);
+
+                  begin
+                     exit when
+                       Str_Parsed
+                         (Str_Parsed'First ..
+                              Str_Parsed'First + Undesired_Text'Length - 1)
+                           /= Undesired_Text;
+                  end;
+
+                  Column := Prev_Column;
+               end loop;
+
+               Word.Set_Column (Column);
+            end;
+         end if;
+
+         loop
+            --  Remove one occurrence of the undesired text
+
+            Current_Text.Replace
+              (Word,
+               Word.Get_Matching_Word
+                 (Current_Text, Check => True)'Length, "");
+
+            if Current_Text.Get_Line (Word, 1) = "" then
+               Current_Text.Delete_Line (Word);
+               exit;
+            end if;
+
+            --  Check if we must remove another occurrence
+
+            exit when not This.All_Occurrences;
+
+            declare
+               Str_Parsed : constant String := Current_Text.Get_Line (Word);
+
+            begin
+               exit when Str_Parsed'Length < Undesired_Text'Length
+                 or else
+                   Str_Parsed
+                     (Str_Parsed'First ..
+                            Str_Parsed'First + Undesired_Text'Length - 1)
+                       /= Undesired_Text;
+            end;
+         end loop;
+      end;
 
       Free (Word);
    end Execute;

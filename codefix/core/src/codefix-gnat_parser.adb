@@ -2101,9 +2101,12 @@ package body Codefix.GNAT_Parser is
    begin
       Solutions := Remove_Parenthesis_Couple (Current_Text, Message);
    end Fix;
+
    ----------------------
    -- No_Space_Allowed --
    ----------------------
+
+   --  Warning: Spaces are also handled by Sep_Not_Allowed
 
    overriding
    procedure Initialize (This : in out No_Space_Allowed) is
@@ -2125,7 +2128,11 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Unexpected (Current_Text, Message, " ");
+      Solutions :=
+        Unexpected (Current_Text      => Current_Text,
+                    Message           => Message,
+                    String_Unexpected => " ",
+                    All_Occurrences   => True);
    end Fix;
 
    -----------------------
@@ -2305,6 +2312,8 @@ package body Codefix.GNAT_Parser is
    -- Sep_Not_Allowed --
    ---------------------
 
+   --  Warning: Spaces are also handled by Space_Not_Allowed
+
    overriding procedure Initialize (This : in out Sep_Not_Allowed) is
    begin
       This.Matcher :=
@@ -2332,6 +2341,7 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
 
+      All_Occurrences      : Boolean := False;
       Word_Read            : String_Access;
       Unallowed_Characters : String_Access;
       Format_Str           : String_Mode;
@@ -2350,6 +2360,7 @@ package body Codefix.GNAT_Parser is
          Assign (Unallowed_Characters, "([\s]+)");
          Format_Str := Regular_Expression;
       elsif Word_Read.all = "space" then
+         All_Occurrences := True;
          Assign (Unallowed_Characters, " ");
          Format_Str := Text_Ascii;
       elsif Word_Read.all = "horizontal tab" then
@@ -2362,7 +2373,8 @@ package body Codefix.GNAT_Parser is
         (Current_Text,
          Message,
          Unallowed_Characters.all,
-         Format_Str);
+         Format_Str,
+         All_Occurrences);
 
       Free (Unallowed_Characters);
       Free (Word_Read);

@@ -453,19 +453,21 @@ package body Codefix.Formal_Errors is
      (Current_Text      : Text_Navigator_Abstr'Class;
       Message           : File_Cursor'Class;
       String_Unexpected : String;
-      Mode              : String_Mode := Text_Ascii) return Solution_List
+      Mode              : String_Mode := Text_Ascii;
+      All_Occurrences   : Boolean     := False) return Solution_List
    is
       New_Command_Ptr : constant Ptr_Command := new Remove_Word_Cmd (Simple);
-      New_Command     : Remove_Word_Cmd renames Remove_Word_Cmd
-        (New_Command_Ptr.all);
+      New_Command     : Remove_Word_Cmd renames
+                          Remove_Word_Cmd (New_Command_Ptr.all);
       Word            : Word_Cursor;
       Result          : Solution_List;
+
    begin
       Set_File     (Word, Get_File (Message));
       Set_Location (Word, Get_Line (Message), Get_Column (Message));
       Set_Word     (Word, String_Unexpected, Mode);
 
-      Initialize (New_Command, Current_Text, Word);
+      Initialize (New_Command, Current_Text, Word, All_Occurrences);
       Set_Caption
         (New_Command,
          "Remove unexpected word """ & String_Unexpected & """");
