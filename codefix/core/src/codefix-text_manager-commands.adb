@@ -47,7 +47,7 @@ package body Codefix.Text_Manager.Commands is
      (This         : Remove_Word_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Word           : Word_Cursor;
+      Word : Word_Cursor;
 
    begin
       Make_Word_Cursor (This.Word, Current_Text, Word);
