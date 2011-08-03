@@ -125,6 +125,11 @@ NF-51-K215-022 GPS: New menu Tools->Views->Messages (2011-02-16)
 
   This menu brings up the Messages window.
 
+NF-51-K215-012 Extend quick fix support for spaces removal (2011-08-03)
+
+  The automatic code fixing capability has been enhanced to handle the
+  removal of consecutive spaces.
+
 NF-51-K209-048 GPS: New plugin to prevent project edition (2011-02-15)
 
   A new plugin "prevent_project_edition.py", inactive by default,
