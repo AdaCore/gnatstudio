@@ -1382,6 +1382,9 @@ Remove the selected category, file or message from the Locations View.
 Selected message can be removed using @code{Locations view->Remove message}
 key binding also.
 
+@item Export messages into text file
+Export all messages of the selected category/file into text file.
+
 @item Jump to location
 Open the location contained in the message, if any.
 
