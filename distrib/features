@@ -291,6 +291,11 @@ NF-51-I128-011 GPS: save CodePeer filter settings between sessions (2011-02-17)
 
   GPS saves CodePeer Summary Report's filter settings between sessions.
 
+NF-51-H613-004 GPS: menu to export content of Locations View (2011-08-05)
+
+  New menu item in Locations View's contextual menu allows to export all
+  messages of selected category or file into text file.
+
 NF-51-GA03-018 GPS: Project View uses a case-insensitive sort (2010-10-17)
 
   Entries (project, package, subprogram, types names) in the Project
