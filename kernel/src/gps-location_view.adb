@@ -18,7 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
+with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
+
 with GNAT.Expect;                use GNAT.Expect;
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
@@ -44,6 +46,7 @@ with Gtk.Separator_Menu_Item;          use Gtk.Separator_Menu_Item;
 with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
 with Gtk.Widget;                       use Gtk.Widget;
 
+with Gtkada.File_Selector;
 with Gtkada.Handlers;                  use Gtkada.Handlers;
 with Gtkada.MDI;                       use Gtkada.MDI;
 
@@ -72,6 +75,8 @@ with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
 
 package body GPS.Location_View is
 
+   use Ada.Strings;
+   use Ada.Strings.Fixed;
    use Ada.Strings.Unbounded;
 
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
@@ -204,6 +209,14 @@ package body GPS.Location_View is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
 
+   procedure On_Export_Category
+     (Self : access Location_View_Record'Class);
+   --  Exports all messages of the selected category into text file
+
+   procedure On_Export_File
+     (Self : access Location_View_Record'Class);
+   --  Exports all messages of the selected file into text file
+
    procedure Context_Func
      (Context      : in out Selection_Context;
       Kernel       : access Kernel_Handle_Record'Class;
@@ -271,6 +284,13 @@ package body GPS.Location_View is
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
 
+   procedure Export_Messages
+     (Out_File  : Ada.Text_IO.File_Type;
+      Container : GPS.Kernel.Messages.Messages_Container_Access;
+      Category  : Ada.Strings.Unbounded.Unbounded_String;
+      File      : GNATCOLL.VFS.Virtual_File);
+   --  Exports messages of the specified category and file into text file.
+
    -------------
    -- Execute --
    -------------
@@ -333,6 +353,35 @@ package body GPS.Location_View is
       end if;
    end Expand_File;
 
+   ---------------------
+   -- Export_Messages --
+   ---------------------
+
+   procedure Export_Messages
+     (Out_File  : Ada.Text_IO.File_Type;
+      Container : GPS.Kernel.Messages.Messages_Container_Access;
+      Category  : Ada.Strings.Unbounded.Unbounded_String;
+      File      : GNATCOLL.VFS.Virtual_File)
+   is
+      Messages : constant GPS.Kernel.Messages.Message_Array :=
+        Container.Get_Messages (Category, File);
+
+   begin
+      for K in Messages'Range loop
+         Ada.Text_IO.Put_Line
+           (Out_File,
+            String (Messages (K).Get_File.Base_Name)
+            & ':'
+            & Trim (Integer'Image (Messages (K).Get_Line), Both)
+            & ':'
+            & Trim
+              (Basic_Types.Visible_Column_Type'Image
+                 (Messages (K).Get_Column),
+               Both)
+            & ": "
+            & To_String (Messages (K).Get_Text));
+      end loop;
+   end Export_Messages;
    --------------------------
    -- Idle_Expand_Category --
    --------------------------
@@ -520,6 +569,82 @@ package body GPS.Location_View is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Expand_Category;
+
+   ------------------------
+   -- On_Export_Category --
+   ------------------------
+
+   procedure On_Export_Category
+     (Self : access Location_View_Record'Class)
+   is
+      Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
+        Get_Messages_Container (Self.Kernel);
+      Model       : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Export_File : GNATCOLL.VFS.Virtual_File;
+
+   begin
+      Self.View.Get_Selection.Get_Selected (Model, Iter);
+
+      Export_File := Gtkada.File_Selector.Select_File;
+
+      if Export_File /= No_File then
+         declare
+            Category : constant Unbounded_String :=
+              To_Unbounded_String (Model.Get_String (Iter, Category_Column));
+            Files    : constant Virtual_File_Array :=
+              Container.Get_Files (Category);
+            File     : Ada.Text_IO.File_Type;
+
+         begin
+            Ada.Text_IO.Create
+              (File, Ada.Text_IO.Out_File, String (Export_File.Full_Name.all));
+
+            for J in Files'Range loop
+               Export_Messages (File, Container, Category, Files (J));
+            end loop;
+
+            Ada.Text_IO.Close (File);
+         end;
+      end if;
+   end On_Export_Category;
+
+   --------------------
+   -- On_Export_File --
+   --------------------
+
+   procedure On_Export_File
+     (Self : access Location_View_Record'Class)
+   is
+      Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
+        Get_Messages_Container (Self.Kernel);
+      Model       : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Export_File : GNATCOLL.VFS.Virtual_File;
+
+   begin
+      Self.View.Get_Selection.Get_Selected (Model, Iter);
+
+      Export_File := Gtkada.File_Selector.Select_File;
+
+      if Export_File /= No_File then
+         declare
+            Category : constant Unbounded_String :=
+              To_Unbounded_String (Model.Get_String (Iter, Category_Column));
+            File     : constant Virtual_File :=
+              GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column);
+            Out_File : Ada.Text_IO.File_Type;
+
+         begin
+            Ada.Text_IO.Create
+              (Out_File,
+               Ada.Text_IO.Out_File,
+               String (Export_File.Full_Name.all));
+            Export_Messages (Out_File, Container, Category, File);
+            Ada.Text_IO.Close (Out_File);
+         end;
+      end if;
+   end On_Export_File;
 
    ------------------------
    -- On_Clear_Locations --
@@ -801,6 +926,13 @@ package body GPS.Location_View is
             On_Remove_Category'Access,
             Explorer);
          Append (Menu, Mitem);
+         Gtk_New (Mitem, -"Export messages into text file...");
+         Location_View_Callbacks.Object_Connect
+           (Mitem,
+            Signal_Activate,
+            On_Export_Category'Access,
+            Explorer);
+         Append (Menu, Mitem);
 
       elsif Get_Depth (Path) = 2 then
          Gtk_New (Mitem, -"Remove File");
@@ -808,6 +940,13 @@ package body GPS.Location_View is
            (Mitem,
             Signal_Activate,
             On_Remove_File'Access,
+            Explorer);
+         Append (Menu, Mitem);
+         Gtk_New (Mitem, -"Export messages into text file...");
+         Location_View_Callbacks.Object_Connect
+           (Mitem,
+            Signal_Activate,
+            On_Export_File'Access,
             Explorer);
          Append (Menu, Mitem);
 
