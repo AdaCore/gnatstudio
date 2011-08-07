@@ -927,12 +927,7 @@ package body Code_Peer.Summary_Reports is
          Self.Kernel,
          -"Message categories",
          "codepeer-summary_report-categories-general",
-         Code_Peer.Project_Data'Class
-           (Code_Analysis.Get_Or_Create
-              (Tree,
-               GPS.Kernel.Project.Get_Project
-                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
-                    General_Categories);
+         Project_Data.General_Categories);
       Filter_Box.Pack_Start (Self.General_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
@@ -949,12 +944,7 @@ package body Code_Peer.Summary_Reports is
          Self.Kernel,
          -"Warning categories",
          "codepeer-summary_report-categories-warning",
-         Code_Peer.Project_Data'Class
-           (Code_Analysis.Get_Or_Create
-              (Tree,
-               GPS.Kernel.Project.Get_Project
-                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
-                    Warning_Categories);
+         Project_Data.Warning_Categories);
       Filter_Box.Pack_Start (Self.Warning_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
@@ -971,12 +961,7 @@ package body Code_Peer.Summary_Reports is
          Self.Kernel,
          -"Checks categories",
          "codepeer-summary_report-categories-check",
-         Code_Peer.Project_Data'Class
-           (Code_Analysis.Get_Or_Create
-              (Tree,
-               GPS.Kernel.Project.Get_Project
-                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
-                    Check_Categories);
+         Project_Data.Check_Categories);
       Filter_Box.Pack_Start (Self.Check_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
