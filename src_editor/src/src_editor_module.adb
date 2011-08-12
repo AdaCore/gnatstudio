@@ -1558,7 +1558,7 @@ package body Src_Editor_Module is
                Title  => -"Open file from project",
                Parent => Get_Current_Window (Kernel),
                Flags  => Modal or Destroy_With_Parent);
-      Set_Default_Size (Open_File_Dialog, 300, 200);
+      Set_Default_Size (Open_File_Dialog, 600, 400);
       Set_Position (Open_File_Dialog, Win_Pos_Mouse);
 
       Gtk_New (Label, -"Enter file name (use <tab> for completion):");
