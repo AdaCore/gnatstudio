@@ -26,7 +26,7 @@ New features in GPS 5.1.0 / GNATbench 2.6.0
 NF-51-K809-019 GPS: save files automatically on run of SPARK tools (2011-08-12)
 
   GPS saves modified files automatically when SPARK tools are run and
-  General->Auto Save property is enabled.
+  the "Auto Save" preference is enabled.
 
 NF-51-K722-014 GPS: project editor saves past attribute values (2011-07-25)
 
