@@ -59,7 +59,7 @@ def on_exit (process, status, remaining_output):
 def examine_file (file):
   """Examine current file through the SPARK Examiner. file is an instance
      of GPS.File"""
-  GPS.MDI.save_all (False)
+  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
   GPS.Locations.remove_category (spark_category)
   sw = file.project().get_tool_switches_as_string ("Examiner")
   cmd = "spark "+sw + " "+spark_separator+'brief "' + file.name() + '"'
@@ -108,7 +108,7 @@ def _spawn_spark_tool (cmd_name, prj_attr, input=None,
      input = ctx.file ()
 
   if not isinstance (input, str):
-     GPS.MDI.save_all (False)
+     GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
      cmd = cmd + " " + input.name()
 
   if show_cmd:
@@ -273,7 +273,7 @@ def simplify_file (file):
      of GPS.File"""
   global focus_file
 
-  GPS.MDI.save_all (False)
+  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
   GPS.Locations.remove_category (spark_category)
   sw = file.project().get_tool_switches_as_string ("Simplifier")
   relative_filename = file.name().replace(file.project().file().directory(), "")
@@ -291,7 +291,7 @@ def victor_file (file):
   """Apply victor to the current file. file is an instance of GPS.File"""
   global focus_file
 
-  GPS.MDI.save_all (False)
+  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
   GPS.Locations.remove_category (spark_category)
   sw = file.project().get_tool_switches_as_string ("ViCToR")
   relative_filename = file.name().replace(file.project().file().directory(), "")
@@ -309,7 +309,7 @@ def zombiescope_file (file):
   """Run ZombieScope on file, where file is an instance of GPS.File"""
   global focus_file
 
-  GPS.MDI.save_all (False)
+  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
   GPS.Locations.remove_category (spark_category)
   sw = file.project().get_tool_switches_as_string ("ZombieScope")
   relative_filename = file.name().replace(file.project().file().directory(), "")
@@ -325,7 +325,7 @@ def zombiescope_file (file):
 
 def sparksimp_project ():
   """Simplify all files in the project"""
-  GPS.MDI.save_all (False)
+  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
   sparksimp_sw = GPS.Project.root().get_tool_switches_as_string ("SPARKSimp")
   simplifier_sw = GPS.Project.root().get_tool_switches_as_string ("Simplifier")
   zombiescope_sw = GPS.Project.root().get_tool_switches_as_string ("ZombieScope")
