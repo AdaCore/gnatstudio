@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2009-2010, AdaCore                 --
+--                  Copyright (C) 2009-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,7 +41,7 @@ package Code_Peer.Bridge.Commands is
    procedure Add_Audit_Record
      (Command_File_Name   : Virtual_File;
       Output_Directory    : Virtual_File;
-      Message_Id          : Positive;
+      Ids                 : Natural_Sets.Set;
       Probability_Changed : Boolean;
       New_Ranking         : Code_Peer.Message_Ranking_Level;
       Comment             : String);

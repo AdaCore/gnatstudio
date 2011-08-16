@@ -96,6 +96,10 @@ package body Code_Peer.Bridge.Inspection_Readers is
 
       function Lifeage return Lifeage_Kinds;
 
+      function Merged return Natural_Sets.Set;
+      --  Returns set of merged messages as specified in 'merged_messages'
+      --  attribute. Returns empty set when attribute is not specified.
+
       function Computed_Ranking return Message_Ranking_Level;
       --  Returns value of "computed_probability" attribute if any, otherwise
       --  returns value of "probability" attribute.
@@ -192,6 +196,53 @@ package body Code_Peer.Bridge.Inspection_Readers is
          end if;
       end Lifeage;
 
+      ------------
+      -- Merged --
+      ------------
+
+      function Merged return Natural_Sets.Set is
+         Index  : constant Integer := Attrs.Get_Index ("merged_messages");
+         Result : Natural_Sets.Set;
+
+      begin
+         if Index /= -1 then
+            declare
+               Value : constant String := Attrs.Get_Value (Index);
+               First : Positive := Value'First;
+               Last  : Positive := Value'First;
+
+            begin
+               loop
+                  --  Skip spaces
+
+                  while Last <= Value'Last loop
+                     First := Last;
+
+                     exit when Value (Last) /= ' ';
+
+                     Last := Last + 1;
+                  end loop;
+
+                  --  Looking for identifier
+
+                  while Last <= Value'Last loop
+                     exit when Value (Last) = ' ';
+
+                     Last := Last + 1;
+                  end loop;
+
+                  if First <= Value'Last and First < Last then
+                     Result.Insert (Natural'Value (Value (First .. Last - 1)));
+                  end if;
+
+                  exit when Last > Value'Last;
+               end loop;
+            end;
+         end if;
+
+         return Result;
+      end Merged;
+
    begin
       if Qname = Inspection_Tag then
          Code_Peer.Project_Data'Class
@@ -283,6 +334,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
             Message :=
               new Code_Peer.Message'
                 (Positive'Value (Attrs.Get_Value ("identifier")),
+                 Merged,
                  Lifeage,
                  Positive'Value (Attrs.Get_Value ("line")),
                  Positive'Value (Attrs.Get_Value ("column")),

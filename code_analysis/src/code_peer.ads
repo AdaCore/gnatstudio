@@ -65,8 +65,12 @@ package Code_Peer is
    package Audit_Vectors is
      new Ada.Containers.Vectors (Positive, Audit_Record_Access);
 
+   package Natural_Sets is
+     new Ada.Containers.Ordered_Sets (Natural);
+
    type Message is record
       Id               : Natural;
+      Merged           : Natural_Sets.Set;
       Lifeage          : Lifeage_Kinds;
       Line             : Positive;
       Column           : Positive;

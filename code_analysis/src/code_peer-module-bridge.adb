@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009-2010, AdaCore              --
+--                     Copyright (C) 2009-2011, AdaCore              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -90,6 +90,7 @@ package body Code_Peer.Module.Bridge is
                               (Kernel_Handle (Module.Kernel));
       Success           : Boolean;
       CL                : Arg_List;
+      Ids               : Natural_Sets.Set;
       pragma Warnings (Off, Success);
 
    begin
@@ -103,11 +104,14 @@ package body Code_Peer.Module.Bridge is
 
       --  Generate command file
 
+      Ids.Insert (Message.Id);
+      Ids.Union (Message.Merged);
+
       if Message.Audit.First_Element.Probability_Changed then
          Code_Peer.Bridge.Commands.Add_Audit_Record
            (Command_File_Name,
             Codepeer_Output_Directory (Project),
-            Message.Id,
+            Ids,
             True,
             Message.Audit.First_Element.Ranking,
             Message.Audit.First_Element.Comment.all);
@@ -116,7 +120,7 @@ package body Code_Peer.Module.Bridge is
          Code_Peer.Bridge.Commands.Add_Audit_Record
            (Command_File_Name,
             Codepeer_Output_Directory (Project),
-            Message.Id,
+            Ids,
             False,
             Code_Peer.High,
             Message.Audit.First_Element.Comment.all);

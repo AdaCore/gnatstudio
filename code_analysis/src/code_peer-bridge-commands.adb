@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2009-2010, AdaCore                 --
+--                  Copyright (C) 2009-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,7 +28,7 @@ package body Code_Peer.Bridge.Commands is
    procedure Add_Audit_Record
      (Command_File_Name   : Virtual_File;
       Output_Directory    : Virtual_File;
-      Message_Id          : Positive;
+      Ids                 : Natural_Sets.Set;
       Probability_Changed : Boolean;
       New_Ranking         : Code_Peer.Message_Ranking_Level;
       Comment             : String)
@@ -37,28 +37,38 @@ package body Code_Peer.Bridge.Commands is
                          new XML_Utils.Node'
                                (Tag    => new String'("database"),
                                 others => <>);
-      Add_Audit_Node : constant XML_Utils.Node_Ptr :=
-                         new XML_Utils.Node'
-                               (Tag    => new String'("add_audit_record"),
-                                Value  => new String'(Comment),
-                                others => <>);
+      Add_Audit_Node : XML_Utils.Node_Ptr;
+      Position       : Natural_Sets.Cursor := Ids.First;
 
    begin
       XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      XML_Utils.Set_Attribute
-        (Add_Audit_Node, "message", Positive'Image (Message_Id));
 
-      if Probability_Changed then
+      while Natural_Sets.Has_Element (Position) loop
+         Add_Audit_Node :=
+           new XML_Utils.Node'
+             (Tag    => new String'("add_audit_record"),
+              Value  => new String'(Comment),
+              others => <>);
          XML_Utils.Set_Attribute
            (Add_Audit_Node,
-            "probability",
-            Code_Peer.Message_Ranking_Level'Image (New_Ranking));
-      end if;
+            "message",
+            Positive'Image (Natural_Sets.Element (Position)));
 
-      XML_Utils.Add_Child (Database_Node, Add_Audit_Node);
+         if Probability_Changed then
+            XML_Utils.Set_Attribute
+              (Add_Audit_Node,
+               "probability",
+               Code_Peer.Message_Ranking_Level'Image (New_Ranking));
+         end if;
+
+         XML_Utils.Add_Child (Database_Node, Add_Audit_Node);
+
+         Natural_Sets.Next (Position);
+      end loop;
+
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
    end Add_Audit_Record;
