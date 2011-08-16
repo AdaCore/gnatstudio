@@ -138,6 +138,61 @@ package body Src_Editor_Buffer.Line_Information is
       End_Iter   : Gtk_Text_Iter;
       Remove     : Boolean := False);
 
+   function Message_Is_On_Line
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : Message_Access;
+      Line    : Editable_Line_Type) return Boolean;
+   --  Return True if Message is present on the side information for Line
+
+   function Find_Line_With_Message
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : Message_Access) return Editable_Line_Type;
+   --  Return the Line which contains Message, 0 if it wasn't found.
+
+   ------------------------
+   -- Message_Is_On_Line --
+   ------------------------
+
+   function Message_Is_On_Line
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : Message_Access;
+      Line    : Editable_Line_Type) return Boolean
+   is
+      Data : constant Line_Info_Width_Array_Access :=
+        Get_Side_Information (Buffer, Line);
+
+      C : Message_List.Cursor;
+      use Message_List;
+   begin
+      for K in Data'Range loop
+         C := Data (K).Messages.First;
+
+         while Has_Element (C) loop
+            if Element (C) = Message then
+               return True;
+            end if;
+            Next (C);
+         end loop;
+      end loop;
+      return False;
+   end Message_Is_On_Line;
+
+   ----------------------------
+   -- Find_Line_With_Message --
+   ----------------------------
+
+   function Find_Line_With_Message
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : Message_Access) return Editable_Line_Type is
+   begin
+      for Line in 1 .. Buffer.Last_Editable_Line loop
+         if Message_Is_On_Line (Buffer, Message, Line) then
+            return Line;
+         end if;
+      end loop;
+      return 0;
+   end Find_Line_With_Message;
+
    -------------------------
    -- Foreach_Hidden_Line --
    -------------------------
@@ -675,14 +730,17 @@ package body Src_Editor_Buffer.Line_Information is
 
             Pos := Note.Data (Column).Messages.Find (Messages (K));
 
+            Remove_Message_Highlighting
+              (Buffer, Messages (K), Messages (K).Get_Highlighting_Style);
+
             if Message_List.Has_Element (Pos) then
                Note.Data (Column).Messages.Delete (Pos);
             end if;
 
+            Messages (K).Remove_Note (Line_Info_Note_Record'Tag);
+         else
             Remove_Message_Highlighting
               (Buffer, Messages (K), Messages (K).Get_Highlighting_Style);
-
-            Messages (K).Remove_Note (Line_Info_Note_Record'Tag);
          end if;
       end loop;
 
@@ -1267,7 +1325,7 @@ package body Src_Editor_Buffer.Line_Information is
    is
 
       From_Column, To_Column : Visible_Column_Type := 0;
-      Line                   : Editable_Line_Type;
+      Line, New_Line         : Editable_Line_Type;
       End_Iter               : Gtk_Text_Iter;
       Start_Iter             : Gtk_Text_Iter;
       Note                   : Line_Info_Note;
@@ -1278,6 +1336,23 @@ package body Src_Editor_Buffer.Line_Information is
       Mark : constant Editor_Mark'Class := Message.Get_Editor_Mark;
    begin
       Line := Editable_Line_Type (Mark.Line);
+
+      --  Sanity check: verify that Line does contain Message
+
+      if not Message_Is_On_Line (Buffer, Message, Line) then
+         --  This call is slow, only here for extra safety - we should never
+         --  go through this
+         New_Line := Find_Line_With_Message (Buffer, Message);
+
+         if New_Line = 0 then
+            --  This should not happen
+            Trace (Me, "Could not find editor line associated with a message");
+            return;
+         else
+            Line := New_Line;
+         end if;
+      end if;
+
       From_Column := Mark.Column;
 
       --  Determine the To_Column:
@@ -1468,15 +1543,24 @@ package body Src_Editor_Buffer.Line_Information is
       The_Data : Line_Info_Width_Array_Access;
       BL       : Buffer_Line_Type;
 
+      EL       : Editable_Line_Type := Editable_Line;
+      Mark     : constant Editor_Mark'Class := Message.Get_Editor_Mark;
+
    begin
+      --  If the message has a mark, we get the line information from this
+      --  mark.
+      if Mark /= Nil_Editor_Mark then
+         EL := Editable_Line_Type (Mark.Line);
+      end if;
+
       if Buffer_Line = 0 then
-         if Editable_Line not in Buffer.Editable_Lines'Range then
+         if EL not in Buffer.Editable_Lines'Range then
             return;
          end if;
 
-         case Buffer.Editable_Lines (Editable_Line).Where is
+         case Buffer.Editable_Lines (EL).Where is
             when In_Buffer =>
-               BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
+               BL := Buffer.Editable_Lines (EL).Buffer_Line;
                if BL in Buffer.Line_Data'Range
                  and then Buffer.Line_Data (BL).Side_Info_Data /= null
                then
@@ -1484,11 +1568,11 @@ package body Src_Editor_Buffer.Line_Information is
                end if;
 
             when In_Mark =>
-               if Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
+               if Buffer.Editable_Lines (EL).UL.Data.Side_Info_Data
                  /= null
                then
                   The_Data := Buffer.Editable_Lines
-                    (Editable_Line).UL.Data.Side_Info_Data;
+                    (EL).UL.Data.Side_Info_Data;
                   BL := 0;
                end if;
          end case;
@@ -1508,7 +1592,7 @@ package body Src_Editor_Buffer.Line_Information is
             The_Data (Column).Set := True;
 
             Highlight_Message (Buffer        => Buffer,
-                               Editable_Line => Editable_Line,
+                               Editable_Line => EL,
                                Buffer_Line   => BL,
                                Message       => Message);
 
