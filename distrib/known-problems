@@ -8,6 +8,12 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K804-028: GPS: Line highlighting not removed
+  Problem:    Sometimes the line highlighting such as those showing build
+              error messages are not removed from the editor, even if the
+              corresponding message has been removed from the Locations view.
+  Workaround: close and reopen the file editor.
+
 - K726-019: GPS: project view incorrectly refreshes extended projects
   Problem:    When using extending projects and changing scenario variables
               such that the extended project is modified (for instance its
