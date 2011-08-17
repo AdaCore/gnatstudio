@@ -11142,23 +11142,6 @@ for instance), but does not apply to the entities browsers.
 
 @end table
 
-@item File Dependencies
-
-@table @b
-@item Show system files
-@cindex Ada
-@cindex C
-Whether the system files (Ada runtime or standard C include files) should be
-visible in the browser.
-
-@item Show implicit dependencies
-@cindex implicit dependency
-@cindex dependency
-If False, then only the explicit dependencies are shown in the browser.
-Otherwise, all dependencies, even implicit, are displayed.
-
-@end table
-
 @end table
 
 @item @b{VCS}
