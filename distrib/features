@@ -119,6 +119,11 @@ NF-51-K224-003 Add support for Ada 2012 in the project editor (2011-02-28)
 
   Add support for the -gnat12 switch in the project editor.
 
+NF-51-K218-029 GB: outline view should expand initially (2011-08-17)
+
+  The outline view now reveals all elements by default when a new
+  editor window is opened.
+
 NF-51-K216-038 GB: New Insert Unit Comment Box action (2011-02-16)
 
   A new command for inserting a comment box containing the unit
