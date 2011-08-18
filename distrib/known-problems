@@ -14,6 +14,13 @@ If no tag is specified, the entry is relevant to all IDEs.
               corresponding message has been removed from the Locations view.
   Workaround: close and reopen the file editor.
 
+- K727-003: GPS: CodePeer ranking and comments not updated
+  Problem:    When the same message comes from several generic instantiations
+              it looks like it reappear after change of its ranking and
+              reloading of report. Actually, reappear message is another copy
+              of the same message.
+  Workaround: Change ranking of the message several times.
+
 - K726-019: GPS: project view incorrectly refreshes extended projects
   Problem:    When using extending projects and changing scenario variables
               such that the extended project is modified (for instance its
