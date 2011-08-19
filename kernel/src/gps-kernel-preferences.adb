@@ -994,7 +994,8 @@ package body GPS.Kernel.Preferences is
          Doc     =>
            -"Pattern used to detect file locations (e.g error messages)",
          Default =>
-           "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(info)?(\(style)?.*)",
+           "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(info|Note)?" &
+           "(\(style)?.*)",
          Page => -"Messages");
 
       File_Pattern_Index := Create
