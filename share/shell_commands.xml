@@ -6048,7 +6048,7 @@ The package gps_utils.py provides a somewhat more convenient python interface to
       - if force is True, this means that the target should be launched directly, even if its parameters indicate that it should be launched through an intermediary dialog.
       - extra_args contains any extra parameters to pass to the command line.
       - build_mode indicates build mode to be used for build.
-      - if synchronous is False, build target is launched asynchronously. execution_finished hook will be called when build target execution is completed. </description>
+      - if synchronous is False, build target is launched asynchronously. compilation_finished hook will be called when build target execution is completed. </description>
       - if directory is not "", the target will be executed under directory.
   </shell_doc>
 
