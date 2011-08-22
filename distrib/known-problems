@@ -102,6 +102,14 @@ If no tag is specified, the entry is relevant to all IDEs.
               to be created.
   Workaround: Create the directory manually on the filesystem.
 
+- K513-018 GB: GNATbench non-responsive after a build
+  Problem:    When building Ada projects having a huge number of errors or
+              warnings, the "Building Projects" task takes minutes to 
+              complete. Sometimes GNATbench becomes also non-responsive for
+              minutes.
+  Workaround: Disable quick fixes tool using GNATbench Ada Tools preferences
+              page. (see Window => Preferences => Ada => Tools).
+
 - K513-009 GPS: improved support for listing classes in Python outline
   Problem:    Classes were not always listed in the Outline for Python sources.
   Workaround: In plugin python_support.py, line 187, set the pattern to
