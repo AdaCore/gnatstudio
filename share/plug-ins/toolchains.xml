@@ -50,6 +50,7 @@
   <toolchain name="powerpc-eabispe"/>
 
   <toolchain name="i586-wrs-vxworks">
+    <debugger>i586-wrs-vxworks6-gdb</debugger>
     <cpp_filt>c++filtpentium</cpp_filt>
     <compiler lang="c">ccpentium</compiler>
     <compiler lang="c++">c++pentium</compiler>
