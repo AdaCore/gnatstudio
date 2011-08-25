@@ -46,6 +46,12 @@ NF-51-K628-037 Extend quick fix support for 'Valid (2011-07-01)
   the replacement of "not in" by 'Valid. For example, the expression
   "X not in T'Range" is replaced by "not X'Valid".
 
+NF-51-K519-038 GB: Add GNATbench debug trace feature (2011-08-25)
+
+  For GNATbench debug purpose, a user configurable debug trace is added. when
+  enabled the log can be printed to a console and/or a file. The feature is
+  configurable through Ada preferences pages.
+
 NF-51-K518-001 GPS: Improve creation of new files (2011-05-20)
 
   GPS now proposes to store new files in a more user friendly way. The
