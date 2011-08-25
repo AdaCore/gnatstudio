@@ -297,6 +297,11 @@ NF-51-I617-011 GPS: Add total/passed checks counters for CodePeer (2011-04-28)
   CodePeer Summary Report has been extended to display total/passed checks
   counters for each file and project.
 
+NF-51-I218-034 ECL: Sub-menu for "Invoke Makefile Target" (2011-08-24)
+
+  The make targets are now listed in a sub-menu under "Invoke Makefile Target"
+  rather than bringing up a dialog.
+
 NF-51-I128-011 GPS: save CodePeer filter settings between sessions (2011-02-17)
 
   GPS saves CodePeer Summary Report's filter settings between sessions.
