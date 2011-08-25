@@ -26,6 +26,7 @@ with "../refactoring/ui/refactoring_ui";
 with "../remote/remote";
 with "../shell/shell";
 with "../socket/socket";
+with "../spark/spark";
 with "../src_editor/src_editor";
 with "../theme_manager/theme_manager";
 with "../toolchains/toolchains";

@@ -1,14 +1,10 @@
 """This file provides SPARK support in GPS.
 
 Copyright (c) 2004-2010 Altran Praxis Limited
-Copyright (c) 2005-2010 AdaCore
+Copyright (c) 2005-2011 AdaCore
 """
 
 
-###########################################################################
-## No user customization below this line
-###########################################################################
-
 import os, os.path, re, string, tempfile
 import os_utils, text_utils
 import re
@@ -19,67 +15,23 @@ spark_module="import spark; spark"
 spark_console="SPARK Output"
 spark_category="Examiner"
 
-spark_separator='-'
-
-# Global variable to pass filename to on_exit which will then raise a
-# window containing the file.
-
+recompute_project = True
 focus_file = ""
 
-def on_match (process, match, since_last):
-  try:
-     process.output += since_last + match
-  except:
-     process.output = since_last + match
-  GPS.Console (spark_console).write (since_last + match)
+def on_execution_finished (hook, category, target_name, mode_name, status):
+  global recompute_project, focus_file
 
-def on_exit (process, status, remaining_output):
-  global focus_file
+  if category == "SPARK":
+    # Take into account new files and directories created by the Examiner,
+    # in particular in the project view.
+    if recompute_project:
+      recompute_project = False
+      GPS.Project.recompute ()
 
-  # Protect e.g. "Flow Error:123:" from being detected as a file reference
-  try:
-    output = process.output.replace (" Error:"," Error,").replace \
-               (" Warning:"," Warning,")
-    GPS.Locations.parse (output, category=spark_category)
-    GPS.Console (spark_console).write (focus_file + "\n")
-  except:
-    pass
-
-  # Take into account new files and directories created by the Examiner,
-  # in particular in the project view.
-
-  if focus_file != "":
-    buf = GPS.EditorBuffer.get (GPS.File (focus_file))
-    GPS.MDI.get_by_child (buf.current_view()).raise_window()
-    focus_file = ""
-
-  GPS.Project.recompute ()
-
-@with_save_excursion
-def examine_file (file):
-  """Examine current file through the SPARK Examiner. file is an instance
-     of GPS.File"""
-  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
-  GPS.Locations.remove_category (spark_category)
-  sw = file.project().get_tool_switches_as_string ("Examiner")
-  cmd = "spark "+sw + " "+spark_separator+'brief "' + file.name() + '"'
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
-  GPS.MDI.get (spark_console).raise_window ()
-
-def _spawn_cmd (cmd_name, prj_attr, input=None):
-  """
-  Prepare the SPARK console and spawn a command that sends its output to it.
-  See _spawn_spark_tool for a description of the arguments
-  """
-
-  # ??? In this case, the process should be run asynchronously so as not to
-  # block GPS
-
-  result = _spawn_spark_tool (cmd_name, prj_attr, show_cmd=True, input=input)
-  GPS.Console (spark_console).write (result)
-  GPS.MDI.get (spark_console).raise_window ()
+    if focus_file != "":
+      buf = GPS.EditorBuffer.get (GPS.File (focus_file))
+      GPS.MDI.get_by_child (buf.current_view()).raise_window()
+      focus_file = ""
 
 def _spawn_spark_tool (cmd_name, prj_attr, input=None,
                        show_cmd=False, ctx=None):
@@ -90,6 +42,7 @@ def _spawn_spark_tool (cmd_name, prj_attr, input=None,
   should be an instance of GPS.File, and is added to the command line. If it
   is none, the current file is used
   Returns the output of the process. This is run synchronously.
+  ??? This procedure is only used by format_selection. Consider simplifying it.
   """
 
   result = ""
@@ -122,36 +75,110 @@ def _spawn_spark_tool (cmd_name, prj_attr, input=None,
 
   return proc.get_result ()
 
-@save_dir
-def show_pogs_file():
-  """Show the POGS file of the current project"""
+def examine_file (file):
+  """Examine current file through the SPARK Examiner. file is an instance
+     of GPS.File"""
+  global recompute_project
+
+  # decide whether project source files need to be recomputed after Examiner
+  # has run:
+  if '-vcg' in file.project().get_tool_switches_as_string ("Examiner"):
+    recompute_project = True
+  GPS.BuildTarget ("Examine SPARK File").execute(synchronous=False)
+
+def examine_metafile (file):
+  """Examine metafile through the SPARK Examiner. file is an instance
+     of GPS.File"""
+  global recompute_project
+
+  # decide whether project source files need to be recomputed after Examiner
+  # has run:
+  if '-vcg' in file.project().get_tool_switches_as_string ("Examiner"):
+    recompute_project = True
+  GPS.BuildTarget ("Examine SPARK Meta File").execute(synchronous=False)
+
+def sparkmake ():
+  GPS.BuildTarget ("SPARKMake").execute(synchronous=False)
+
+def format_file ():
+  buffer = GPS.EditorBuffer.get ()
+  GPS.BuildTarget ("SPARKFormat").execute(synchronous=True)
+  GPS.EditorBuffer.get (file=buffer.file(), force=True)
+
+def format_selection ():
+  """sparkformat the selection or the current line"""
+  ctx = GPS.current_context()
+  buffer = GPS.EditorBuffer.get ()
+  start = buffer.selection_start ().beginning_of_line ()
+  end   = buffer.selection_end ().end_of_line () - 1
+  buffer.start_undo_group ()
+  selection = buffer.get_chars (start, end)
+
+  # Go through a temporary file, instead of sending the contents on stdin,
+  # because in the latter case we are sometimes getting duplicate output
+  # (both the input and the output)
+
+  fd, name = tempfile.mkstemp (suffix=".ada")
+  os.write (fd, selection)
+  os.close (fd)
+
+  _spawn_spark_tool (cmd_name="sparkformat", prj_attr="SPARKFormat",
+                     show_cmd=False, ctx=ctx, input=GPS.File (name))
+
+  f = file (name)
+  text_utils.replace (start, end, f.read())
+  f.close ()
+
+  buffer.finish_undo_group ()
+  os.unlink (name)
+
+def simplify_file (file):
+  """Simplify current file through the SPARK simplifier. file is an instance
+     of GPS.File"""
+  global recompute_project, focus_file
+
+  recompute_project = True
+  focus_file = file.name().replace(".vcg", ".siv")
+  GPS.BuildTarget ("Simplify").execute(synchronous=False)
+
+def victor_file (file):
+  """Apply victor to the current file. file is an instance of GPS.File"""
   global focus_file
 
+  focus_file = file.name().replace(".vcg", ".vct").replace(".siv", ".vct")
+  GPS.BuildTarget ("Victor").execute(synchronous=False)
+
+def zombiescope_file (file):
+  """Run ZombieScope on file, where file is an instance of GPS.File"""
+  global focus_file
+
+  focus_file = file.name().replace(".dpc", ".sdp")
+  GPS.BuildTarget ("ZombieScope").execute(synchronous=False)
+
+def sparksimp_project ():
+  """Simplify all files in the project"""
+  global recompute_project
+
+  recompute_project = True
+  GPS.BuildTarget ("SPARKSimp").execute(synchronous=False)
+
+def show_pogs_file():
+  """Show the POGS file of the current project"""
+  global recompute_project, focus_file
+  recompute_project = True
+
   sw = GPS.Project.root().get_tool_switches_as_string ("pogs")
+  summary_file_option = re.search("-o=[^ ]+", sw)
 
-  cmd = "pogs "+ sw
-
-  if not re.search("-d=", cmd):
-    # The default directory from where POGS will be run is the directory
-    # of the project file.
-    cmd = cmd + " -d=" + os.path.dirname (GPS.Project.root().file().name())
-
-  summary_file_option = re.search("-o=[^ ]+", cmd)
   if not summary_file_option:
     # If the user has not specified an output file then the summary file
-    # is set to <project_name>.sum
-    summary_file = re.sub("gpr$", "sum", GPS.Project.root().file().name())
-    cmd = cmd + " -o=" + summary_file
+    # is set to <objdir>/<project_name>.sum
+    focus_file = GPS.Project.root().object_dirs(False)[0] + re.sub("\.gpr$", ".sum", os.path.basename (GPS.Project.root().file().name()))
   else:
-    summary_file = \
-        summary_file_option.string[summary_file_option.start():summary_file_option.end()].lstrip("-o=")
+    focus_file = \
+      summary_file_option.string[summary_file_option.start():summary_file_option.end()].lstrip("-o=")
 
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  # Pass the summary_file to on_exit which raise a window with the file open.
-  focus_file = summary_file
-  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
-  GPS.MDI.get (spark_console).raise_window ()
+  GPS.BuildTarget ("POGS").execute (synchronous=False)
 
 def do_pogs_xref (context, siv, dpc, zlg):
   """Jump to the path number referenced in the current line of the POGS output"""
@@ -229,120 +256,6 @@ def has_dpc (context):
      line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
      context.has_dpc = re.search ("\|   .(S|U|D|L)   \|", line) != None
      return context.has_dpc
-
-@save_dir
-def sparkmake ():
-  dir = os.path.dirname (GPS.current_context().file().name())
-  GPS.cd (dir)
-  _spawn_cmd (cmd_name="sparkmake", prj_attr="SPARKMake")
-
-def format_file ():
-  buffer = GPS.EditorBuffer.get ()
-  _spawn_cmd (cmd_name="sparkformat", prj_attr="SPARKFormat")
-  GPS.EditorBuffer.get (file=buffer.file(), force=True)
-
-def format_selection ():
-  """sparkformat the selection or the current line"""
-  ctx = GPS.current_context()
-  buffer = GPS.EditorBuffer.get ()
-  start = buffer.selection_start ().beginning_of_line ()
-  end   = buffer.selection_end ().end_of_line () - 1
-  buffer.start_undo_group ()
-  selection = buffer.get_chars (start, end)
-
-  # Go through a temporary file, instead of sending the contents on stdin,
-  # because in the latter case we are sometimes getting duplicate output
-  # (both the input and the output)
-
-  fd, name = tempfile.mkstemp (suffix=".ada")
-  os.write (fd, selection)
-  os.close (fd)
-
-  _spawn_spark_tool (cmd_name="sparkformat", prj_attr="SPARKFormat",
-                     show_cmd=False, ctx=ctx, input=GPS.File (name))
-
-  f = file (name)
-  text_utils.replace (start, end, f.read())
-  f.close ()
-
-  buffer.finish_undo_group ()
-  os.unlink (name)
-
-def simplify_file (file):
-  """Simplify current file through the SPARK simplifier. file is an instance
-     of GPS.File"""
-  global focus_file
-
-  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
-  GPS.Locations.remove_category (spark_category)
-  sw = file.project().get_tool_switches_as_string ("Simplifier")
-  relative_filename = file.name().replace(file.project().file().directory(), "")
-  siv_filename = relative_filename.replace(".vcg", ".siv")
-
-  cmd = "spadesimp "+sw + " " + relative_filename
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  # Pass the siv_file to on_exit which raise a window with the file open.
-  focus_file = siv_filename
-  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
-  GPS.MDI.get (spark_console).raise_window ()
-
-def victor_file (file):
-  """Apply victor to the current file. file is an instance of GPS.File"""
-  global focus_file
-
-  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
-  GPS.Locations.remove_category (spark_category)
-  sw = file.project().get_tool_switches_as_string ("ViCToR")
-  relative_filename = file.name().replace(file.project().file().directory(), "")
-  vct_filename = relative_filename.replace(".vcg", ".vct").replace(".siv", ".vct")
-
-  cmd = "victor " + sw + " " + relative_filename.replace(".vcg", "").replace(".siv", "")
-  GPS.Console (spark_console, accept_input=False).clear()
-  GPS.Console (spark_console).write (cmd + "\n")
-  # Pass the vct_file to on_exit which raise a window with the file open.
-  focus_file = vct_filename
-  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
-  GPS.MDI.get (spark_console).raise_window ()
-
-def zombiescope_file (file):
-  """Run ZombieScope on file, where file is an instance of GPS.File"""
-  global focus_file
-
-  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
-  GPS.Locations.remove_category (spark_category)
-  sw = file.project().get_tool_switches_as_string ("ZombieScope")
-  relative_filename = file.name().replace(file.project().file().directory(), "")
-  sdp_filename = relative_filename.replace(".dpc", ".sdp")
-
-  cmd = "zombiescope "+sw + " " + relative_filename
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  # Pass the sdp_file to on_exit which raise a window with the file open.
-  focus_file = sdp_filename
-  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
-  GPS.MDI.get (spark_console).raise_window ()
-
-def sparksimp_project ():
-  """Simplify all files in the project"""
-  GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
-  sparksimp_sw = GPS.Project.root().get_tool_switches_as_string ("SPARKSimp")
-  simplifier_sw = GPS.Project.root().get_tool_switches_as_string ("Simplifier")
-  zombiescope_sw = GPS.Project.root().get_tool_switches_as_string ("ZombieScope")
-  victor_sw = GPS.Project.root().get_tool_switches_as_string ("ViCToR")
-
-  cmd = ("sparksimp " + sparksimp_sw)
-  if len(simplifier_sw.strip()) > 0:
-    cmd = (cmd + " -sargs " + simplifier_sw)
-  if len(zombiescope_sw.strip()) > 0:
-    cmd = (cmd + " -zargs " + zombiescope_sw)
-  if len(victor_sw.strip()) > 0:
-    cmd = (cmd + " -vargs " + victor_sw)
-
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
-  GPS.MDI.get (spark_console).raise_window ()
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
@@ -457,46 +370,45 @@ a = """<?xml version="1.0"?>
 
   <tool name="Examiner">
     <language>Ada</language>
-    <switches columns ="2" lines="5" switch_char="~">
+    <switches columns ="2" lines="5" switch_char="-">
       <title line="1" column-span="2">Examiner Files</title>
-      <field line="1" label="Index File " as-file="true" switch="~index_file" separator="="/>
-      <field line="1" label="Warning File " as-file="true" switch="~warning_file" separator="="/>
-      <field line="1" label="Configuration File " as-file="true" switch="~config" separator="="/>
-      <field line="1" label="Output directory" as-directory="true" switch="~output_directory" separator="="/>
-      <check column="1" line="1" label="Ignore spark.sw" switch="~noswitch" />
+      <field line="1" label="Index File " as-file="true" switch="-index_file" separator="="/>
+      <field line="1" label="Warning File " as-file="true" switch="-warning_file" separator="="/>
+      <field line="1" label="Configuration File " as-file="true" switch="-config" separator="="/>
+      <check column="1" line="1" label="Ignore spark.sw" switch="-noswitch" />
       <title line="1" column="2" column-span="0" />
       <title column="1" line="2">Language</title>
-      <combo label="Language" switch="~language" separator="="
+      <combo label="Language" switch="-language" separator="="
              noswitch="95" column="1" line="2" >
         <combo-entry label="SPARK83" value="83" />
         <combo-entry label="SPARK95" value="95" />
         <combo-entry label="SPARK2005" value="2005" />
       </combo>
-      <combo label="Profile" switch="~profile" separator="="
+      <combo label="Profile" switch="-profile" separator="="
              noswitch="sequential" column="1" line="2" >
         <combo-entry label="Sequential" value="sequential" />
         <combo-entry label="Ravenscar" value="ravenscar" />
       </combo>
-      <check column="1" line="2" label="Use SPARK Library" switch="~sparklib" />
+      <check column="1" line="2" label="Use SPARK Library" switch="-sparklib" />
 
       <title column="2" line="2">Analysis</title>
       <radio column="2" line="2">
-        <radio-entry label="Information and Data Flow" switch="~flow_analysis=information" />
-        <radio-entry label="Automatic Selection" switch="~flow_analysis=auto" />
-        <radio-entry label="Data Flow only" switch="~flow_analysis=data" />
+        <radio-entry label="Information and Data Flow" switch="-flow_analysis=information" />
+        <radio-entry label="Automatic Selection" switch="-flow_analysis=auto" />
+        <radio-entry label="Data Flow only" switch="-flow_analysis=data" />
       </radio>
-      <check column="2" line="2" label="Generate VCs" switch="~vcg" />
-      <check column="2" line="2" label="Generate DPCs" switch="~dpc" />
-      <check column="2" line="2" label="Casing checks" switch="~casing" />
-      <check column="2" line="2" label="Syntax check only" switch="~syntax_check" />
-      <combo label="Policy" switch="~policy" separator="="
+      <check column="2" line="2" label="Generate VCs" switch="-vcg" />
+      <check column="2" line="2" label="Generate DPCs" switch="-dpc" />
+      <check column="2" line="2" label="Casing checks" switch="-casing" />
+      <check column="2" line="2" label="Syntax check only" switch="-syntax_check" />
+      <combo label="Policy" switch="-policy" separator="="
              noswitch=" " column="2" line="2" >
         <combo-entry label="Safety" value="safety" />
         <combo-entry label="Security" value="security" />
         <combo-entry label="Off" value=" " />
       </combo>
       <title line="3" column-span="2">General</title>
-      <combo label="Replacement Rules" switch="~rules" separator="="
+      <combo label="Replacement Rules" switch="-rules" separator="="
              noswitch="none" column="1" line="3"
              tip="Replacement rules for composite constants">
         <combo-entry label="None" value="none" />
@@ -504,195 +416,195 @@ a = """<?xml version="1.0"?>
 	<combo-entry label="Keen" value="keen" />
         <combo-entry label="All" value="all" />
       </combo>
-      <combo label="Error Explanations" switch="~error_explanations"
+      <combo label="Error Explanations" switch="-error_explanations"
              separator="=" noswitch="off" column="1" line="3">
         <combo-entry label="Off" value="off" />
         <combo-entry label="First Occurrence" value="first" />
 	<combo-entry label="Every Occurrence" value="every" />
       </combo>
-      <field column="2" line="3" label="Annotation Character" switch="~annotation_character" separator="=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
+      <field column="2" line="3" label="Annotation Character" switch="-annotation_character" separator="=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
       <title line="5" column-span="2">Output</title>
-      <check line="5" column="1" label="Plain Output" switch="~plain" />
-      <check line="5" column="2" label="HTML Output" switch="~html" />
-      <field line="5" column="1" label="Listing File Extension" as-file="true" switch="~listing" separator="="/>
-      <field line="5" column="1" label="Report File Name" as-file="true" switch="~report" separator="="/>
+      <check line="5" column="1" label="Plain Output" switch="-plain" />
+      <check line="5" column="2" label="HTML Output" switch="-html" />
+      <field line="5" column="1" label="Listing File Extension" as-file="true" switch="-listing" separator="="/>
+      <field line="5" column="1" label="Report File Name" as-file="true" switch="-report" separator="="/>
     </switches>
   </tool>
 
   <tool name="SPARKSimp">
     <language>Ada</language>
-    <switches columns="2" lines="6" switch_char="~">
+    <switches columns="2" lines="6" switch_char="-">
       <title line="1">Analysis order</title>
-      <check line="1" label="Process all files" switch="~a" />
-      <check line="1" label="Sort files, largest first" switch="~t" />
-      <check line="1" label="Reverse sort order" switch="~r" />
+      <check line="1" label="Process all files" switch="-a" />
+      <check line="1" label="Sort files, largest first" switch="-t" />
+      <check line="1" label="Reverse sort order" switch="-r" />
       <title line="2">Output</title>
-      <check line="2" label="Log output" switch="~l" />
-      <check line="2" label="Verbose output" switch="~v" />
-      <check line="2" label="Echo Simplifier output" switch="~e" />
+      <check line="2" label="Log output" switch="-l" />
+      <check line="2" label="Verbose output" switch="-v" />
+      <check line="2" label="Echo Simplifier output" switch="-e" />
       <title line="3">Simplification</title>
-      <check line="3" label="No Simplification" switch="~ns" />
+      <check line="3" label="No Simplification" switch="-ns" />
       <title line="4">ViCToR (Currently available on GNU/Linux and Windows)</title>
-      <check line="4" label="Prove with ViCToR" switch="~victor" />
+      <check line="4" label="Prove with ViCToR" switch="-victor" />
       <title line="5">ZombieScope</title>
-      <check line="5" label="No ZombieScope" switch="~nz" />
+      <check line="5" label="No ZombieScope" switch="-nz" />
       <title line="6">Process control</title>
-      <check line="6" label="Dry run" switch="~n" />
-      <spin line="6" label="Multiprocessing" switch="~p=" min="1" max="100" default="1"
+      <check line="6" label="Dry run" switch="-n" />
+      <spin line="6" label="Multiprocessing" switch="-p=" min="1" max="100" default="1"
             tip="Use N processes to run the Simplifier/ZombieScope/ViCToR. On a multiprocessor machine analysis will occur in parallel" />
     </switches>
   </tool>
 
   <tool name="Simplifier">
     <language>Ada</language>
-    <switches lines="3" switch_char="~">
+    <switches lines="3" switch_char="-">
       <title line="1">Output</title>
-      <check line="1" label="No Echo" switch="~noecho" />
-      <check line="1" label="Plain Output" switch="~plain" />
-      <check line="1" label="Don't renumber hypotheses" switch="~norenum" />
+      <check line="1" label="No Echo" switch="-noecho" />
+      <check line="1" label="Plain Output" switch="-plain" />
+      <check line="1" label="Don't renumber hypotheses" switch="-norenum" />
       <title line="2">Tactics</title>
-      <check line="2" label="No Simplification" switch="~nosimplification" />
-      <check line="2" label="No Standardisation" switch="~nostand" />
-      <check line="2" label="No Contradiction Hunt" switch="~nocontra" />
-      <check line="2" label="No Substitution Elimination" switch="~nosubstitution" />
-      <check line="2" label="No Rule Substitution" switch="~norule_substitution" />
-      <check line="2" label="No Expression Reduction" switch="~noexp" />
+      <check line="2" label="No Simplification" switch="-nosimplification" />
+      <check line="2" label="No Standardisation" switch="-nostand" />
+      <check line="2" label="No Contradiction Hunt" switch="-nocontra" />
+      <check line="2" label="No Substitution Elimination" switch="-nosubstitution" />
+      <check line="2" label="No Rule Substitution" switch="-norule_substitution" />
+      <check line="2" label="No Expression Reduction" switch="-noexp" />
       <title line="3">Limits</title>
-      <spin line="3" label="Memory Limit" switch="~memory_limit=" min="250000" max="30000000" default="9000000"
+      <spin line="3" label="Memory Limit" switch="-memory_limit=" min="250000" max="30000000" default="9000000"
             tip="Max PROLOG Heap.  Default 9000000." />
     </switches>
   </tool>
 
   <tool name="ViCToR">
     <language>Ada</language>
-    <switches lines="2" switch_char="~">
+    <switches lines="2" switch_char="-">
       <title line="1">General behaviour</title>
-      <check line="1" label="Plain output" switch="~plain" />
-      <check line="1" label="Ignore SIV files" switch="~v" />
-      <combo line="1" label="SMT solver used" switch="~solver" separator="=" noswitch="alt-ergo">
+      <check line="1" label="Plain output" switch="-plain" />
+      <check line="1" label="Ignore SIV files" switch="-v" />
+      <combo line="1" label="SMT solver used" switch="-solver" separator="=" noswitch="alt-ergo">
         <combo-entry label="Alt-Ergo" value="alt-ergo" />
       </combo>
       <title line="2">Limits</title>
-      <spin line="2" label="Proof step limit for Alt-Ergo" switch="~steps=" min="0" max="10000" default="5000"
+      <spin line="2" label="Proof step limit for Alt-Ergo" switch="-steps=" min="0" max="10000" default="5000"
             tip="A deterministic (unlike timeouts) proof step limit. Zero means no limit." />
-      <spin line="2" label="Timeout (in s) (GNU/Linux only)" switch="~t=" min="0" max="1000" default="0"
+      <spin line="2" label="Timeout (in s) (GNU/Linux only)" switch="-t=" min="0" max="1000" default="0"
             tip="Timeout for each invocation of the prover. No timeout by default." />
-      <spin line="2" label="Memory Limit (in megabytes) (GNU/Linux only)" switch="~m=" min="0" max="10000" default="0"
+      <spin line="2" label="Memory Limit (in megabytes) (GNU/Linux only)" switch="-m=" min="0" max="10000" default="0"
             tip="Memory limit for each invocation of the prover. No limit by default." />
     </switches>
   </tool>
 
   <tool name="ZombieScope">
     <language>Ada</language>
-    <switches lines="1" switch_char="~">
+    <switches lines="1" switch_char="-">
       <title line="1">Output</title>
-      <check line="1" label="Plain Output" switch="~plain" />
-      <check line="1" label="Don't renumber hypotheses" switch="~norenum" />
+      <check line="1" label="Plain Output" switch="-plain" />
+      <check line="1" label="Don't renumber hypotheses" switch="-norenum" />
     </switches>
   </tool>
 
   <tool name="SPARKFormat">
     <language>Ada</language>
-    <switches lines="4" columns="4" switch_char="~">
+    <switches lines="4" columns="4" switch_char="-">
       <title line="1" column="1">Global variables modes</title>
       <radio line="1" column="1">
-        <radio-entry label="Unchanged" switch="~noadd_modes" />
-        <radio-entry label="Add modes to procedures" switch="~add_modes" />
+        <radio-entry label="Unchanged" switch="-noadd_modes" />
+        <radio-entry label="Add modes to procedures" switch="-add_modes" />
       </radio>
       <title line="1" column="2">Function globals</title>
       <radio line="1" column="2">
             <radio-entry label="Unchanged" switch="" />
-            <radio-entry label="Force 'in'" switch="~d=i" />
-            <radio-entry label="Force unmoded" switch="~d=u" />
+            <radio-entry label="Force 'in'" switch="-d=i" />
+            <radio-entry label="Force unmoded" switch="-d=u" />
       </radio>
 
       <title line="2" column="1">Annotation compression</title>
       <radio line="2" column="1">
-        <radio-entry label="Compress" switch="~compress" />
-        <radio-entry label="Expand" switch="~expand" />
+        <radio-entry label="Compress" switch="-compress" />
+        <radio-entry label="Expand" switch="-expand" />
       </radio>
       <title line="2" column="2">Annotations</title>
-      <field line="2" column="2" label="Annotation Character" switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
+      <field line="2" column="2" label="Annotation Character" switch="-annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
 
       <title line="3" column="1">Default Switch File</title>
-      <check line="3" column="1" label="Ignore spark.sw" switch="~noswitch" />
+      <check line="3" column="1" label="Ignore spark.sw" switch="-noswitch" />
 
       <title line="4" column="1" column-span="3">Indentation</title>
       <spin line="4" column="1" label="Globals"
-         switch="~global_indent" separator="=" min="0" max="256" default="0"
+         switch="-global_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for the global variables (or 0 for default)" />
       <spin line="4" column="2" label="Exports"
-         switch="~export_indent" separator="=" min="0" max="256" default="0"
+         switch="-export_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for the export variables (or 0 for default)" />
       <spin line="4" column="3" label="Imports"
-         switch="~import_indent" separator="=" min="0" max="256" default="0"
+         switch="-import_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for the import variables (or 0 for default)" />
       <spin line="4" column="1" label="Separators"
-         switch="~separator_indent" separator="=" min="0" max="256" default="0"
+         switch="-separator_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for the separators ('from' and ampersand) (or 0 for default)" />
       <spin line="4" column="2" label="Inherits"
-         switch="~inherit_indent" separator="=" min="0" max="256" default="0"
+         switch="-inherit_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for the package names (or 0 for default)" />
       <spin line="4" column="3" label="Own"
-         switch="~own_indent" separator="=" min="0" max="256" default="0"
+         switch="-own_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for own variables (or 0 for default)" />
       <spin line="4" column="1" label="Refinement"
-         switch="~refinement_indent" separator="=" min="0" max="256" default="0"
+         switch="-refinement_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for own variables (or 0 for default)" />
       <spin line="4" column="2" label="Constituent"
-         switch="~constituent_indent" separator="=" min="0" max="256" default="0"
+         switch="-constituent_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for constituents (or 0 for default)" />
       <spin line="4" column="3" label="Initialization"
-         switch="~initialization_indent" separator="=" min="0" max="256" default="0"
+         switch="-initialization_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for own variables (or 0 for default)" />
       <spin line="4" column="1" label="Properties"
-         switch="~properties_indent" separator="=" min="0" max="256" default="0"
+         switch="-properties_indent" separator="=" min="0" max="256" default="0"
          tip="Amount of indentation from '--#' for own variables (or 0 for default)" />
     </switches>
   </tool>
 
   <tool name="POGS">
     <language>Ada</language>
-    <switches lines="3" switch_char="~">
+    <switches lines="3" switch_char="-">
       <title line="1">POGS Configuration </title>
-      <field line="1" label="Input Directory " as-directory="true" switch="~d" separator="="/>
-      <field line="1" label="Output File" as-file="true" switch="~o" separator="="/>
+      <field line="1" label="Input Directory " as-directory="true" switch="-d" separator="="/>
+      <field line="1" label="Output File" as-file="true" switch="-o" separator="="/>
 
       <title line="2">Options</title>
       <check line="2" label="Plain Output"
        tip="Prevent release information and file paths being output to .sum file"
-       switch="~p" />
+       switch="-p" />
       <check line="2" label="Ignore Dates"
        tip="Prevent checking of date and time stamps of VCs and Proof Log files"
-       switch="~i" />
+       switch="-i" />
 
       <title line="3">Output</title>
       <radio line="3">
         <radio-entry label="Default" tip="Default output" switch="" />
         <radio-entry label="Short summary"
          tip="Prevent per-subprogram analysis section being output to .sum file"
-         switch="~s" />
+         switch="-s" />
         <radio-entry label="XML" tip="Output summary information in XML format"
-         switch="~x" />
+         switch="-x" />
       </radio>
     </switches>
   </tool>
 
   <tool name="SPARKMake">
     <language>Ada</language>
-    <switches lines="2" switch_char="~">
+    <switches lines="2" switch_char="-">
       <title line="1">Input File Options</title>
-      <field line="1" label="Directory" as-directory="true" switch="~dir=" />
-      <field line="1" label="Include" switch="~inc=" />
-      <field line="1" label="Exclude" switch="~e=" />
+      <field line="1" label="Directory" as-directory="true" switch="-dir=" />
+      <field line="1" label="Include" switch="-inc=" />
+      <field line="1" label="Exclude" switch="-e=" />
 
       <title line="2">Output File Options</title>
-      <field line="2" label="Index" as-file="true" switch="~ind=" />
-      <field line="2" label="Meta" as-file="true" switch="~m=" />
+      <field line="2" label="Index" as-file="true" switch="-ind=" />
+      <field line="2" label="Meta" as-file="true" switch="-m=" />
       <check line="2" label="No index file"
-             tip="Suppress generation of index file" switch="~noindexfile" />
+             tip="Suppress generation of index file" switch="-noindexfile" />
       <check line="2" label="No meta file"
-             tip="Suppress generation of meta file" switch="~nometafile" />
+             tip="Suppress generation of meta file" switch="-nometafile" />
     </switches>
   </tool>
 
@@ -704,6 +616,11 @@ a = """<?xml version="1.0"?>
   <action name="Examine file" category="Spark" output="none">
      <filter language="Ada"/>
      <shell lang="python">"""+spark_module+""".examine_file (GPS.File ("%F"))</shell>
+  </action>
+
+  <action name="Examine metafile" category="Spark" output="none">
+     <filter language="Metafile" />
+     <shell lang="python">"""+spark_module+""".examine_metafile (GPS.File ("%F"))</shell>
   </action>
 
   <action name="Simplify file" category="Spark" output="none">
@@ -733,29 +650,15 @@ a = """<?xml version="1.0"?>
      <shell lang="python">"""+spark_module+""".format_selection ()</shell>
   </action>
 
-  <action name="Examine metafile" category="Spark" output="none">
-     <filter language="Metafile" />
-     <shell>MDI.save_all false</shell>
-     <shell>Locations.remove_category Examiner</shell>
-     <shell>Project %p</shell>
-     <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
-     <external output="SPARK Output" server="build_server">spark %1 ~brief @%F</external>
-     <on-failure>
-          <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
-     </on-failure>
-     <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
-     <shell lang="python">GPS.Project.recompute()</shell>
-  </action>
-
-  <action name="SPARKSimp" category="Spark" output="none">
+  <action name="Launch SPARKSimp" category="Spark" output="none">
     <shell lang="python">"""+spark_module+""".sparksimp_project ()</shell>
   </action>
 
-  <action name="POGS" category="Spark" output="none">
+  <action name="Launch POGS" category="Spark" output="none">
     <shell lang="python">"""+spark_module+""".show_pogs_file()</shell>
   </action>
 
-  <action name="SPARKMake" category="Spark" output="none">
+  <action name="Launch SPARKMake" category="Spark" output="none">
     <filter language="Ada" />
     <shell lang="python">"""+spark_module+""".sparkmake ()</shell>
   </action>
@@ -785,13 +688,13 @@ a = """<?xml version="1.0"?>
       <menu action="ZombieScope file">
         <Title>_ZombieScope File</Title>
       </menu>
-      <menu action="SPARKSimp">
+      <menu action="Launch SPARKSimp">
         <Title>SP_ARKSimp</Title>
       </menu>
-      <menu action="POGS">
+      <menu action="Launch POGS">
         <Title>P_OGS</Title>
       </menu>
-      <menu action="SPARKMake">
+      <menu action="Launch SPARKMake">
         <Title>SPARKMa_ke</Title>
       </menu>
  </submenu>
@@ -824,15 +727,15 @@ a = """<?xml version="1.0"?>
     <Title>SPARK/ZombieScope File</Title>
   </contextual>
 
-  <contextual action="SPARKSimp" >
+  <contextual action="Launch SPARKSimp" >
     <Title>SPARK/SPARKSimp</Title>
   </contextual>
 
-  <contextual action="POGS" >
+  <contextual action="Launch POGS" >
     <Title>SPARK/POGS</Title>
   </contextual>
 
-  <contextual action="SPARKMake" >
+  <contextual action="Launch SPARKMake" >
     <Title>SPARK/SPARKMake</Title>
   </contextual>
 
@@ -1186,17 +1089,163 @@ b = """<?xml version="1.0"?>
      <category>Spark</category>
      <menu before="About">/Help/SPARK/Example Programs/Mine Pump</menu>
   </documentation_file>
+
+  <!-- This is an XML model for launching examiner -->
+  <target-model name="examiner" category="">
+     <description>Run Examiner</description>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>examiner</arg>
+        <arg>-P%PP</arg>
+        <arg>%F</arg>
+     </command-line>
+     <server>Tools_Server</server>
+     <icon>gps-syntax-check</icon>
+     <switches command="">
+     </switches>
+  </target-model>
+
+  <!-- This is an XML model for launching various SPARK commands -->
+  <target-model name="spark" category="">
+     <description>Run SPARK Command</description>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>/tool/</arg>
+        <arg>-P%PP</arg>
+     </command-line>
+     <server>Tools_Server</server>
+     <icon>gps-custom-build</icon>
+     <switches command="">
+     </switches>
+  </target-model>
+
+  <target model="examiner" category="SPARK" messages_category="SPARK"
+          name="Examine SPARK File">
+     <icon>gps-syntax-check</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>examiner</arg>
+        <arg>-P%PP</arg>
+        <arg>%F</arg>
+     </command-line>
+  </target>
+
+  <target model="examiner" category="SPARK" messages_category="SPARK"
+          name="Examine SPARK Meta File">
+     <icon>gps-build-all</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>metaexaminer</arg>
+        <arg>-P%PP</arg>
+        <arg>%F</arg>
+     </command-line>
+  </target>
+
+  <target model="spark" category="SPARK" messages_category="SPARK"
+          name="SPARKMake">
+     <icon>gps-compute-xref</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>sparkmake</arg>
+        <arg>-P%PP</arg>
+     </command-line>
+  </target>
+
+  <target model="spark" category="SPARK" messages_category="SPARK"
+          name="SPARKFormat">
+     <icon>gps-semantic-check</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>sparkformat</arg>
+        <arg>-P%PP</arg>
+        <arg>%F</arg>
+     </command-line>
+  </target>
+
+  <target model="spark" category="SPARK" messages_category="SPARK"
+          name="Simplifier">
+     <icon>gps-build-main</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>simplifier</arg>
+        <arg>-P%PP</arg>
+        <arg>%F</arg>
+     </command-line>
+  </target>
+
+  <target model="spark" category="SPARK" messages_category="SPARK"
+          name="SPARKSimp">
+     <icon>gps-build-main</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>sparksimp</arg>
+        <arg>-P%PP</arg>
+     </command-line>
+  </target>
+
+  <target model="spark" category="SPARK" messages_category="SPARK" name="POGS">
+     <icon>gps-build-main</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>pogs</arg>
+        <arg>-P%PP</arg>
+     </command-line>
+  </target>
+
+  <target model="spark" category="SPARK" messages_category="SPARK"
+          name="ZombieScope">
+     <icon>gps-build-main</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>zombiescope</arg>
+        <arg>-P%PP</arg>
+        <arg>%F</arg>
+     </command-line>
+  </target>
+
 </GPS>
 
 """
 
 spark = os_utils.locate_exec_on_path ("spark")
 if spark != "":
-  a = a.replace('~', spark_separator)
   GPS.parse_xml(a)
   sparkdocdir = os.path.dirname(spark)+os.sep+os.pardir+os.sep+"docs"+os.sep+"HTML"
   b = b.replace('~', sparkdocdir)
   GPS.parse_xml(b)
+  GPS.Hook ("compilation_finished").add (on_execution_finished)
 
   GPS.Contextual ("SPARK/Show VC").create (
      on_activate=pogs_xref,
