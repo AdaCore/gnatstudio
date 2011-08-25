@@ -265,7 +265,7 @@ If no tag is specified, the entry is relevant to all IDEs.
               many spaces before the "out" mode.
   Workaround: Manually reformat the code.
 
-- JB30-010  GB: Opening a file with extension ".rules" throws exception
+- JB30-010 GB: Opening a file with extension ".rules" throws exception
   Problem:    When clicking on a file with the ".rules" extension, GNATbench
               attempts to open the file with the GNATCheck rules editor. This
               will raise an exception when the project containing the file is
