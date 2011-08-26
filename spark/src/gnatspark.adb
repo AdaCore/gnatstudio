@@ -53,6 +53,11 @@ procedure GNATSpark is
    --  Append S to List
    --  List and S should never be null
 
+   function Contains
+     (Switches : GNAT.Strings.String_List;
+      Str      : String) return Boolean;
+   --  Return True if some Switches (x) starts with Str
+
    procedure Parse_Command_Line;
    --  Parse command line arguments
 
@@ -216,6 +221,27 @@ procedure GNATSpark is
       return Spawn (Exec.all, Switches.all);
    end Run;
 
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains
+     (Switches : GNAT.Strings.String_List;
+      Str      : String) return Boolean is
+   begin
+      for J in Switches'Range loop
+         declare
+            S : String renames Switches (J).all;
+         begin
+            if S (S'First .. S'First + Str'Length - 1) = Str then
+               return True;
+            end if;
+         end;
+      end loop;
+
+      return False;
+   end Contains;
+
    Tree     : Project_Tree;
    Switches : GNAT.Strings.String_List_Access;
    IDE_Switches : constant Attribute_Pkg_List :=
@@ -261,9 +287,9 @@ begin
          Append (Switches, "@" & File.Display_Full_Name);
 
       when Pogs =>
-         if False then  --  Contains (Switches, "-o=") then
-            null;
-         else
+         --  Do not append -o if already specified
+
+         if not Contains (Switches.all, "-o=") then
             Append
               (Switches,
                "-o=" &
