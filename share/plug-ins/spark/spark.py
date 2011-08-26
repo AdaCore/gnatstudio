@@ -15,7 +15,7 @@ spark_module="import spark; spark"
 spark_console="SPARK Output"
 spark_category="Examiner"
 
-recompute_project = True
+recompute_project = False
 focus_file = ""
 
 def on_execution_finished (hook, category, target_name, mode_name, status):
