@@ -233,7 +233,9 @@ procedure GNATSpark is
          declare
             S : String renames Switches (J).all;
          begin
-            if S (S'First .. S'First + Str'Length - 1) = Str then
+            if S'Length >= Str'Length
+              and then S (S'First .. S'First + Str'Length - 1) = Str
+            then
                return True;
             end if;
          end;
