@@ -720,7 +720,8 @@ package Entities is
      (Entity                : Entity_Information;
       Location              : File_Location;
       Kind                  : Reference_Kind;
-      From_Instantiation_At : Entity_Instantiation := No_Instantiation);
+      From_Instantiation_At : Entity_Instantiation := No_Instantiation;
+      Is_Imported           : Boolean := False);
    --  Add a new reference to the entity. No Check is done whether this
    --  reference already exists.
    --  From_Instantiation_At indicates which instantiation of the entity is
@@ -915,7 +916,8 @@ package Entities is
       No_Data   => null);
    --  Stores entities of languages defined with Entities_Indexed(). Currently
    --  used only by C/C++ languages to provide support to complete the name of
-   --  their entities (see Completion-C packages).
+   --  their entities (see Completion-C packages) and navigation from Ada to
+   --  entities imported from C.
 
    subtype LI_Entities_Iterator is Entities_Search_Tries.Vector_Trie_Iterator;
 
@@ -1019,6 +1021,7 @@ private
       From_Instantiation_At : Entity_Instantiation;
       Kind                  : Reference_Kind;
       Is_Declaration        : Boolean;
+      Is_Imported           : Boolean;
    end record;
    --  To spare some memory in the entity table, pack E_Reference,
    --  but keep a reasonable alignment to avoid inefficiencies.
@@ -1026,7 +1029,12 @@ private
    for E_Reference'Alignment use 4;
 
    No_E_Reference : constant E_Reference :=
-     (No_File_Location, null, null, Reference, False);
+     (Location              => No_File_Location,
+      Caller                => null,
+      From_Instantiation_At => null,
+      Kind                  => Reference,
+      Is_Declaration        => False,
+      Is_Imported           => False);
    --  Caller is the enclosing entity at that location
 
    function Lt_No_File (Left, Right : E_Reference) return Boolean;

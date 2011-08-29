@@ -129,8 +129,11 @@ package body Ada_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
-      LI      : constant Entities.LI_Handler := Create_ALI_Handler
-        (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel).all));
+      LI      : constant Entities.LI_Handler :=
+                  Create_ALI_Handler
+                    (Db => Get_Database (Kernel),
+                     Registry => Project_Registry (Get_Registry (Kernel).all),
+                     Lang_Handler => Handler);
    begin
       Register_Language (Handler, Ada_Lang, Ada_Tree_Lang, LI => LI);
       Register_Default_Language_Extension

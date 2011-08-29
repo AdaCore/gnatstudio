@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2010, AdaCore              --
+--                     Copyright (C) 2002-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 with GPS.Kernel;
 with Entities;
 with Projects;
+with Language_Handlers;
 
 package Cpp_Module is
 
@@ -31,8 +32,10 @@ package Cpp_Module is
    --  available.
 
    function Create_CPP_Handler
-     (Db       : Entities.Entities_Database;
-      Registry : Projects.Project_Registry'Class) return Entities.LI_Handler;
+     (Db           : Entities.Entities_Database;
+      Registry     : Projects.Project_Registry'Class;
+      Lang_Handler : Language_Handlers.Language_Handler)
+      return Entities.LI_Handler;
    --  Create a new C++ handler
 
 end Cpp_Module;

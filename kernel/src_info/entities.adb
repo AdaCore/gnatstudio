@@ -1804,7 +1804,7 @@ package body Entities is
                Location => Entity.End_Of_Scope.Location,
                Kind     => Entity.End_Of_Scope.Kind);
             Unref (Entity.End_Of_Scope.Caller);
-            Entity.End_Of_Scope := (Location, null, null, Kind, False);
+            Entity.End_Of_Scope := (Location, null, null, Kind, False, False);
          else
             Add_Reference
               (Entity,
@@ -1813,7 +1813,7 @@ package body Entities is
          end if;
       else
          Unref (Entity.End_Of_Scope.Caller);
-         Entity.End_Of_Scope := (Location, null, null, Kind, False);
+         Entity.End_Of_Scope := (Location, null, null, Kind, False, False);
       end if;
    end Set_End_Of_Scope;
 
@@ -1902,7 +1902,8 @@ package body Entities is
      (Entity                : Entity_Information;
       Location              : File_Location;
       Kind                  : Reference_Kind;
-      From_Instantiation_At : Entity_Instantiation := No_Instantiation)
+      From_Instantiation_At : Entity_Instantiation := No_Instantiation;
+      Is_Imported           : Boolean := False)
    is
       Refs : File_With_Refs_Access;
    begin
@@ -1929,7 +1930,12 @@ package body Entities is
       end if;
 
       Refs.Refs.Insert
-        ((Location, null, From_Instantiation_At, Kind, others => <>));
+        ((Location              => Location,
+          Caller                => null,
+          From_Instantiation_At => From_Instantiation_At,
+          Kind                  => Kind,
+          Is_Declaration        => False,
+          Is_Imported           => Is_Imported));
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
 

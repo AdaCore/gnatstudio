@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -1320,9 +1320,14 @@ package body GPS.Kernel is
    is
    begin
       Find_Declaration
-        (Kernel.Database, File, Entity_Name,
-         Line, Column, Entity, Closest_Ref,
-         Status,
+        (Db             => Kernel.Database,
+         Source         => File,
+         Entity_Name    => Entity_Name,
+         Line           => Line,
+         Column         => Column,
+         Entity         => Entity,
+         Closest_Ref    => Closest_Ref,
+         Status         => Status,
          Fuzzy_Expected => Fuzzy_Expected);
 
       --  ??? Should have the preference for the handling of fuzzy matches:

@@ -479,7 +479,7 @@ begin
    begin
       Language_Handlers.Create_Handler (Handler, Symbols);
       Register_Language_Handler (Entities_Db, Handler);
-      CPP_LI := Create_CPP_Handler (Entities_Db, New_Registry.all);
+      CPP_LI := Create_CPP_Handler (Entities_Db, New_Registry.all, Handler);
       Register_Language (Handler, C_Lang, null, CPP_LI);
       New_Registry.Environment.Register_Default_Language_Extension
          ("c", ".h", ".c");
@@ -511,7 +511,7 @@ begin
       Lang      => Ada_Lang,
       Tree_Lang => Ada_Tree_Lang,
       LI        => ALI_Parser.Create_ALI_Handler
-        (Entities_Db, New_Registry.all));
+        (Entities_Db, New_Registry.all, Handler));
 
    if GNAT.Strings."/=" (Unique_File, null) then
       File_To_Analyze := New_Registry.Tree.Create (+Unique_File.all);

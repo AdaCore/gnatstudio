@@ -129,13 +129,16 @@ package body Cpp_Module is
    ------------------------
 
    function Create_CPP_Handler
-     (Db       : Entities.Entities_Database;
-      Registry : Projects.Project_Registry'Class) return Entities.LI_Handler
+     (Db           : Entities.Entities_Database;
+      Registry     : Projects.Project_Registry'Class;
+      Lang_Handler : Language_Handlers.Language_Handler)
+      return Entities.LI_Handler
    is
       CPP : constant GLI_Handler := new GLI_Handler_Record;
    begin
       CPP.Db            := Db;
       CPP.Registry      := Project_Registry (Registry);
+      CPP.Lang_Handler  := Lang_Handler;
       return LI_Handler (CPP);
    end Create_CPP_Handler;
 
@@ -196,8 +199,9 @@ package body Cpp_Module is
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
       LI      : constant LI_Handler :=
                  Create_CPP_Handler
-                   (Get_Database (Kernel),
-                    Project_Registry (Get_Registry (Kernel).all));
+                   (Db => Get_Database (Kernel),
+                    Registry => Project_Registry (Get_Registry (Kernel).all),
+                    Lang_Handler => Handler);
 
    begin
       Register_Language (Handler, C_Lang, null, LI => LI);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2010, AdaCore              --
+--                     Copyright (C) 2003-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,19 +22,25 @@ with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with Projects;
 with Language.Tree.Database;
+with Language_Handlers;
 
 package ALI_Parser is
 
    function Create_ALI_Handler
-     (Db       : Entities.Entities_Database;
-      Registry : Projects.Project_Registry'Class)
+     (Db           : Entities.Entities_Database;
+      Registry     : Projects.Project_Registry'Class;
+      Lang_Handler : Language_Handlers.Language_Handler)
       return Entities.LI_Handler;
    --  Create a new ALI handler
 
    type ALI_Handler_Record is new Entities.LI_Handler_Record with record
-      Db       : Entities.Entities_Database;
-      Registry : Projects.Project_Registry;
+      Db           : Entities.Entities_Database;
+      Registry     : Projects.Project_Registry;
+      Lang_Handler : Language_Handlers.Language_Handler;
+      --  Field used to store the languages handler of the kernel; used to
+      --  obtain the LI handler of entities imported from other languages
    end record;
+
    type ALI_Handler is access all ALI_Handler_Record'Class;
    --  Generic ALI handler. Can be overriden for e.g. GCC .gli files.
 

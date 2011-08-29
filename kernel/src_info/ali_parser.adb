@@ -267,7 +267,8 @@ package body ALI_Parser is
    --  Save the Xref information in the New_LI_File structure
 
    function Update_ALI
-     (Handler   : access ALI_Handler_Record'Class; LI : LI_File;
+     (Handler   : access ALI_Handler_Record'Class;
+      LI        : LI_File;
       Reset_ALI : Boolean;
       Force_Update : Boolean := False) return Boolean;
    --  Re-parse the contents of the ALI file, and return True in case of
@@ -863,13 +864,16 @@ package body ALI_Parser is
       Current_Sfile         : in out Sdep_Id;
       First_Sect, Last_Sect : Nat)
    is
-      Kind      : constant Reference_Kind := Char_To_R_Kind
-        (Xref.Table (Current_Ref).Rtype);
-      Location  : File_Location;
-      Primitive : Entity_Information;
+      Kind : constant Reference_Kind :=
+               Char_To_R_Kind (Xref.Table (Current_Ref).Rtype);
+
+      Location      : File_Location;
+      Primitive     : Entity_Information;
       Instantiation : Entity_Information := null;
-      Ref       : Nat;
-      Inst      : Entity_Instantiation;
+      Ref           : Nat;
+      Inst          : Entity_Instantiation;
+      Is_Imported   : Boolean := False;
+      Current_Xref  : Xref_Record renames Xref.Table (Current_Ref);
 
    begin
       if Xref.Table (Current_Ref).Rtype = Array_Index_Reference then
@@ -948,10 +952,52 @@ package body ALI_Parser is
             return;
          end if;
 
-         Location := (File   => Sfiles (Current_Sfile).File,
-                      Line   => Integer (Xref.Table (Current_Ref).Line),
-                      Column => Visible_Column_Type
-                        (Xref.Table (Current_Ref).Col));
+         if Current_Xref.Imported_Lang = No_Name
+           or else Get_Name_String (Current_Xref.Imported_Lang) /= "c"
+         then
+            Location := (File   => Sfiles (Current_Sfile).File,
+                         Line   => Integer (Xref.Table (Current_Ref).Line),
+                         Column => Visible_Column_Type
+                                     (Xref.Table (Current_Ref).Col));
+
+         --  Handle references of entities imported from C
+
+         else
+            Is_Imported := True;
+
+            --  Search for the name of the imported entity in the trie
+            --  database. There is no need to iterate on the found entities
+            --  because we must have an unique candidate (otherwise the linker
+            --  would not have located it!)
+
+            declare
+               use Entities_Search_Tries;
+               use Language_Handlers;
+
+               LI_Handler : constant Entities.LI_Handler :=
+                              Get_LI_Handler_By_Name
+                                (Handler.Lang_Handler, "GNU C/C++");
+               Iter       : Vector_Trie_Iterator;
+
+            begin
+               Iter :=
+                 Start (Trie   => Get_Name_Index (LI_Handler),
+                        Prefix => Get_Name_String (Current_Xref.Imported_Name),
+                        Is_Partial => False);
+
+               if not At_End (Iter) then
+                  Location := Get_Declaration_Of (Get (Iter));
+
+               --  not found
+
+               else
+                  Location :=
+                    (File   => Sfiles (Current_Sfile).File,
+                     Line   => Integer (Current_Xref.Line),
+                     Column => Visible_Column_Type (Current_Xref.Col));
+               end if;
+            end;
+         end if;
 
          if Is_End_Reference (Kind) then
             --  Only insert the end-of-scope is we are parsing the ALI file
@@ -1016,7 +1062,7 @@ package body ALI_Parser is
                Ref := Ref + 1;
             end loop;
 
-            Add_Reference (Entity, Location, Kind, Inst);
+            Add_Reference (Entity, Location, Kind, Inst, Is_Imported);
          end if;
       end if;
    exception
@@ -2302,13 +2348,16 @@ package body ALI_Parser is
    ------------------------
 
    function Create_ALI_Handler
-     (Db       : Entities.Entities_Database;
-      Registry : Project_Registry'Class) return Entities.LI_Handler
+     (Db           : Entities.Entities_Database;
+      Registry     : Project_Registry'Class;
+      Lang_Handler : Language_Handlers.Language_Handler)
+      return Entities.LI_Handler
    is
       ALI : constant ALI_Handler := new ALI_Handler_Record;
    begin
       ALI.Db       := Db;
       ALI.Registry := Project_Registry (Registry);
+      ALI.Lang_Handler := Lang_Handler;
       return LI_Handler (ALI);
    end Create_ALI_Handler;
 

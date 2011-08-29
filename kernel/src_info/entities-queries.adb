@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -871,7 +871,12 @@ package body Entities.Queries is
            or else Ref.Kind = Completion_Of_Private_Or_Incomplete_Type
          then
             Bodies_Found := Bodies_Found + 1;
-            if Return_Next then
+
+            if Ref.Is_Imported then
+               Location := Ref.Location;
+               return;
+
+            elsif Return_Next then
                Location := Ref.Location;
 
                if not Is_Expected_Construct (Location) then
