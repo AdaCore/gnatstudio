@@ -500,13 +500,15 @@ package body Build_Configurations.Gtkada is
    begin
       Set_Tooltip (Button, UI.Tooltips, Get_Selected_Item (Button));
 
+      if UI.Icon_Entry /= null then
+         Remove (Hbox, UI.Icon_Entry);
+         UI.Icon_Entry := null;
+      end if;
+
       if Get_Selected_Item (Button) = "custom" then
          Gtk_New (UI.Icon_Entry);
          Pack_Start (Hbox, UI.Icon_Entry, False, False, 0);
          Show_All (UI.Icon_Entry);
-      elsif UI.Icon_Entry /= null then
-         Remove (Hbox, UI.Icon_Entry);
-         UI.Icon_Entry := null;
       end if;
 
    exception
