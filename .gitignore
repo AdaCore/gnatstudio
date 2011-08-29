@@ -223,7 +223,6 @@ gnatlib/src/gnatcoll_python.gpr
 gnatlib/src/lib
 gnatlib/src/obj
 gnatlib/testsuite/obj
-gnatlib/testsuite/test_email.gpr
 gps/gmon.out*
 kernel/src_info/sn/include/config.h
 kernel/src_info/sn/snsrc/Makefile
