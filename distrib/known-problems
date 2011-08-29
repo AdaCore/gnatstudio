@@ -20,6 +20,11 @@ If no tag is specified, the entry is relevant to all IDEs.
   Problem:    GPS does not list all of the system fonts on RedHat 6.
   Workaround: Set the environment variable FONTCONFIG_PATH to /etc/fonts
 
+- K822-001: GPS: Extraneous entry box in the Target Configuration dialog
+  Problem:    When selecting "custom" multiple times in the Icon field of the
+              Target Configuration dialog, an extraneous text entry appears.
+  Workaround: Do not select "custom" multiple times in a row.
+
 - K808-005: GPS: support for using '{' in macro expansion and ClearCase plugin
   Problem:    In the GPS shell language, the support for using {} to delimit
               a parameter in a string (for instance in 'echo "${1}.txt"') is
@@ -98,7 +103,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 - K708-026: GPS: some key shortcuts not working in modal dialogs
   Problem:    Key shortcuts involving "ctrl" or "alt", for instance "ctrl-v"
-              to paste, do not work in modal dialogs. 
+              to paste, do not work in modal dialogs.
   Workaround: Use equivalent key shortcuts (for instance "shift-insert" to
               paste) when they exist.
 
@@ -123,7 +128,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 - K513-018 GB: GNATbench non-responsive after a build
   Problem:    When building Ada projects having a huge number of errors or
-              warnings, the "Building Projects" task takes minutes to 
+              warnings, the "Building Projects" task takes minutes to
               complete. Sometimes GNATbench becomes also non-responsive for
               minutes.
   Workaround: Disable quick fixes tool using GNATbench Ada Tools preferences
@@ -151,8 +156,8 @@ If no tag is specified, the entry is relevant to all IDEs.
               The crash occurs at GNATbench startup, or later when the first
               GNATbench function is accessed.
   Workaround: Remove all network locations from the PATH used when launching
-              GNATbench. Simplify the PATH used when launching GNATbench. 
-              
+              GNATbench. Simplify the PATH used when launching GNATbench.
+
 - K418-017 GB: errors with comments ending with **
   Problem:    GNATbench may crash if source file contain comment ending with
               **.
@@ -326,9 +331,9 @@ If no tag is specified, the entry is relevant to all IDEs.
   Problem:    Navigation without compilation may not be available when there is
               UTF8 characters on the line.
   Workaround: Compile the file and then navigate.
-  
+
 - J429-026 GB: Project names cannot contain dashes
-  Problem:    In Workbench, project names do not have to conform to the 
+  Problem:    In Workbench, project names do not have to conform to the
               syntax of Ada identifiers, but the resulting project files
               are illegally named.  For example, dashes are allowed as
               project names but will cause project conversion to fail.
