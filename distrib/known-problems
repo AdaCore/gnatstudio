@@ -8,6 +8,14 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K828-001: GPS: Wrong line when searching in non-UTF8 files on disk
+  Problem:    When GPS searches in files for which an editor is not open
+              (for instance when searching in Files from project), if the
+              files contain international characters but are not encoded
+              in UTF-8, GPS might report wrong lines for the search results.
+  Workaround: Open the files in an editor before searching, or convert files
+              to UTF-8.
+
 - K825-001: GPS: System fonts not found by default on RedHat 6
   Problem:    GPS does not list all of the system fonts on RedHat 6.
   Workaround: Set the environment variable FONTCONFIG_PATH to /etc/fonts
