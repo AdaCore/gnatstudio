@@ -303,6 +303,13 @@ NF-51-I617-011 GPS: Add total/passed checks counters for CodePeer (2011-04-28)
   CodePeer Summary Report has been extended to display total/passed checks
   counters for each file and project.
 
+NF-51-I402-029 GB: Add Ada exception breakpoint support (2011-08-29)
+
+  GNATbench Integration with CDT using Eclipse Helios (3.6) or later, supports
+  breakpoint on Ada assertion failed and Ada exception raised. This feature
+  requires debug configurations using Ada GDB (DSF) Process Launcher. (see
+  GNATbench documentation)
+
 NF-51-I218-034 ECL: Sub-menu for "Invoke Makefile Target" (2011-08-24)
 
   The make targets are now listed in a sub-menu under "Invoke Makefile Target"
