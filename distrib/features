@@ -60,6 +60,14 @@ NF-51-K518-001 GPS: Improve creation of new files (2011-05-20)
   the File->New action will record this location. This specific location
   will then be proposed by default when doing File->Save.
 
+NF-51-K517-014 GB: Add debug tooltip displaying current value (2011-08-29)
+
+  Under Eclipse Helios (3.6) or later, GNATbench Integration with CDT Ada
+  Editor tooltip feature displays current value instead of documentation when
+  hovering over an expression in the Ada Editor during a debug session.
+  Note: The debug session must be launched using an Ada GDB (DSF) Process
+  Launcher. (see GNATbench debugging documentation)
+
 NF-51-K430-002 GPS: Improve support on refilling comments (2011-05-08)
 
   Edit->Selection->Refill has been improved to search for comments in the
