@@ -6262,6 +6262,11 @@ Targets.
 
   @end itemize
 
+@item Icon: the icon to use for representing this target in the menus and
+  in the toolbar. To use one of your icons, you must register a icons using the
+  @code{<stock>} XML customization node. (@pxref{Adding stock icons}). Then,
+  use "custom" choice and enter in the text field the ID of the icon.
+
 @item Target type: type of target described. If empty, or set to
   @code{Normal}, represents a simple target. If set to another value,
   represents multiple subtargets.
