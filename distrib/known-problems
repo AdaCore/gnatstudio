@@ -20,6 +20,13 @@ If no tag is specified, the entry is relevant to all IDEs.
   Problem:    GPS does not list all of the system fonts on RedHat 6.
   Workaround: Set the environment variable FONTCONFIG_PATH to /etc/fonts
 
+- K808-005: GPS: support for using '{' in macro expansion and ClearCase plugin
+  Problem:    In the GPS shell language, the support for using {} to delimit
+              a parameter in a string (for instance in 'echo "${1}.txt"') is
+              broken, and this breaks some ClearCase Native interactions, such
+              as comparison against the latest revision.
+  Workaround: None known.
+
 - K804-028: GPS: Line highlighting not removed
   Problem:    Sometimes the line highlighting such as those showing build
               error messages are not removed from the editor, even if the
