@@ -68,6 +68,7 @@ with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
 with Traces;                     use Traces;
 with Vsearch;                    use Vsearch;
+with UTF8_Utils;
 
 package body Src_Contexts is
 
@@ -109,6 +110,7 @@ package body Src_Contexts is
    --  Lexical_State is the scope at the first character in Buffer.
    --  On exit, Was_Partial is set to True if the search was interrupted
    --  because the callback returned False at some point
+   --  Buffer should be in UTF-8.
 
    procedure Scan_File
      (Context       : access Search_Context'Class;
@@ -618,6 +620,29 @@ package body Src_Contexts is
 
          Start := Start + Natural (Start_Column) - 1;
 
+         declare
+            UTF8  : Unchecked_String_Access;
+            Len   : Natural;
+            Valid : Boolean;
+         begin
+            UTF8_Utils.Unknown_To_UTF8 (Buffer.all, UTF8, Len, Valid);
+            if Valid then
+               if UTF8 = null then
+                  --  This means that Buffer is already UTF8: use it
+                  Scan_Buffer
+                    (Buffer.all, Start, Context, Callback, Scope,
+                     Lexical_State, Lang, Start_Line, Start_Column,
+                     Was_Partial);
+               else
+                  --  Use UTF8
+                  Scan_Buffer
+                    (UTF8 (1 .. Len), Start, Context, Callback, Scope,
+                     Lexical_State, Lang, Start_Line, Start_Column,
+                     Was_Partial);
+                  Free (UTF8);
+               end if;
+            end if;
+         end;
       else
          Box := Get_Source_Box_From_MDI (Child);
 
@@ -631,12 +656,12 @@ package body Src_Contexts is
            (Get_Text (Get_Buffer (Box), Start_Line, 1));
 
          Start := Natural (Start_Column);
-      end if;
 
-      if Start <= Buffer'Last then
-         Scan_Buffer
-           (Buffer.all, Start, Context, Callback, Scope,
-            Lexical_State, Lang, Start_Line, Start_Column, Was_Partial);
+         if Start <= Buffer'Last then
+            Scan_Buffer
+              (Buffer.all, Start, Context, Callback, Scope,
+               Lexical_State, Lang, Start_Line, Start_Column, Was_Partial);
+         end if;
       end if;
 
       Free (Buffer);

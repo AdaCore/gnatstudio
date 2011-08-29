@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2010, AdaCore              --
+--                     Copyright (C) 2001-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -239,6 +239,7 @@ package Find_Utils is
       Line_Start     : in out Natural);
    --  Set Line and Column to the appropriate for the Pos-th character in
    --  Buffer.
+   --  Buffer is expected to be UTF-8.
 
    Invalid_Context : exception;
    --  Raised when trying to access the components in Search_Context
