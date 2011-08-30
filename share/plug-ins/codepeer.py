@@ -340,7 +340,6 @@ if codepeer != "":
           <arg>codepeer</arg>
           <arg>-all</arg>
           <arg>-background</arg>
-          <arg>-repartition</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-lib</arg>
@@ -359,7 +358,6 @@ if codepeer != "":
           <arg>codepeer</arg>
           <arg>-all</arg>
           <arg>-background</arg>
-          <arg>-repartition</arg>
           <arg>-no-race-conditions</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
@@ -369,7 +367,7 @@ if codepeer != "":
           <arg>30</arg>
           <arg>-no-html-output</arg>
           <arg>-lib</arg>
-          <arg>%Pb.library</arg>
+          <arg>%Pb.quick.library</arg>
        </command-line>
     </target>
 
