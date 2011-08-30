@@ -139,8 +139,10 @@ private
    --  files.
 
    function Codepeer_Library_File_Name
-     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
+     (Project : Project_Type;
+      Suffix  : String := "") return GNATCOLL.VFS.Virtual_File;
    --  Returns name of the library description file for CodePeer invocation.
+   --  Append Suffix to name of file.
 
    function Use_CodePeer_Subdir (Kernel : Kernel_Handle) return Boolean;
    --  Returns True if 'codepeer' directory is present in the current object

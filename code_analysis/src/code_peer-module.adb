@@ -248,10 +248,12 @@ package body Code_Peer.Module is
      (Kernel    : Kernel_Handle;
       Project   : Project_Type;
       Recursive : Boolean;
-      File      : Virtual_File := No_File);
+      File      : Virtual_File := No_File;
+      Suffix    : String := "");
    --  Create CodePeer library file. Recursive is True if all project files
    --  should be included. File if set represents the (only) file to analyze;
    --  value of Recursive is not taken into account in this case.
+   --  Suffix is appended to the name of the library file.
 
    Output_Directory_Attribute   :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
@@ -279,7 +281,8 @@ package body Code_Peer.Module is
      (Kernel    : Kernel_Handle;
       Project   : Project_Type;
       Recursive : Boolean;
-      File      : Virtual_File := No_File)
+      File      : Virtual_File := No_File;
+      Suffix    : String := "")
    is
       procedure Generate_Source_Directive
         (File      : Ada.Text_IO.File_Type;
@@ -340,7 +343,7 @@ package body Code_Peer.Module is
       Ada.Text_IO.Create
         (F,
          Ada.Text_IO.Out_File,
-         String (Codepeer_Library_File_Name (Project).Full_Name.all));
+         String (Codepeer_Library_File_Name (Project, Suffix).Full_Name.all));
 
       Ada.Text_IO.Put_Line
         (F,
@@ -447,8 +450,15 @@ package body Code_Peer.Module is
       end if;
 
       Module.Action := Load_UI;
-      Create_Library_File
-        (Kernel_Handle (Module.Kernel), Project, Recursive, File);
+
+      if Quick then
+         Create_Library_File
+           (Kernel_Handle (Module.Kernel), Project, Recursive,
+            File, ".quick");
+      else
+         Create_Library_File
+           (Kernel_Handle (Module.Kernel), Project, Recursive, File);
+      end if;
 
       if Output_Only then
          Code_Peer.Shell_Commands.Build_Target_Execute
@@ -635,7 +645,8 @@ package body Code_Peer.Module is
    --------------------------------
 
    function Codepeer_Library_File_Name
-     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
+     (Project : Project_Type;
+      Suffix  : String := "") return GNATCOLL.VFS.Virtual_File
    is
       Name      : constant GNATCOLL.VFS.Filesystem_String :=
         GNATCOLL.VFS.Filesystem_String
@@ -651,7 +662,9 @@ package body Code_Peer.Module is
       return
         Create_From_Dir
           (Project.Object_Dir,
-           Name (Name'First .. Name'Last - Extension'Length) & ".library");
+           Name (Name'First .. Name'Last - Extension'Length)
+           & Filesystem_String (Suffix)
+           & ".library");
    end Codepeer_Library_File_Name;
 
    -------------------------------
