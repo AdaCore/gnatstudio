@@ -26,7 +26,7 @@ include ../Makefile.gnat
 all:
 	$(MAKE) -s Gnatcoll_Build=${Build} -C ../gnatlib do_links
 	$(MAKE) -C ../gnatlib
-	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -XLIBRARY_TYPE=static -ws -P../spark/spark
+	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -ws -P../spark/spark
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
 	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps
 
