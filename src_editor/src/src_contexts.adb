@@ -2778,6 +2778,11 @@ package body Src_Contexts is
       Lower_S : constant String := UTF8_Strdown (S);
 
    begin
+      --  If S is empty, return empty
+      if S = "" then
+         return "";
+      end if;
+
       --  If S is not all lower case: return S
       if Lower_S /= S then
          return S;
