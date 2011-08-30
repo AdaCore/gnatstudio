@@ -617,13 +617,9 @@ package body Code_Peer.Module is
                 (Project.Attribute_Value (Database_Directory_Attribute));
 
          begin
-            if GNATCOLL.VFS.Create (Dir).Is_Absolute_Path then
-               return GNATCOLL.VFS.Create (Dir);
-
-            else
-               return
-                 GNATCOLL.VFS.Create_From_Dir (Project.Project_Path.Dir, Dir);
-            end if;
+            return
+              GNATCOLL.VFS.Create_From_Base
+                (Dir, Project.Project_Path.Dir.Full_Name.all);
          end;
 
       else
@@ -680,13 +676,9 @@ package body Code_Peer.Module is
                 (Project.Attribute_Value (Output_Directory_Attribute));
 
          begin
-            if GNATCOLL.VFS.Create (Dir).Is_Absolute_Path then
-               return GNATCOLL.VFS.Create (Dir);
-
-            else
-               return
-                 GNATCOLL.VFS.Create_From_Dir (Project.Project_Path.Dir, Dir);
-            end if;
+            return
+              GNATCOLL.VFS.Create_From_Base
+                (Dir, Project.Project_Path.Dir.Full_Name.all);
          end;
 
       else
