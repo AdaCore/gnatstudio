@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2010, AdaCore              --
+--                     Copyright (C) 2004-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -571,6 +571,7 @@ package body GPR_Creation is
       Current_Project : Integer;
       All_Source_Dirs : Boolean := False)
    is
+      pragma Unreferenced (Root_Project);
       Current_Dir : Natural;
       Tmp         : Import_Project_Error;
    begin

@@ -294,6 +294,7 @@ package body Commands.Builder is
       Output : String;
       Data   : Build_Callback_Data)
    is
+      pragma Unreferenced (Styles);
       Last  : Natural;
       Lines : Slice_Set;
 

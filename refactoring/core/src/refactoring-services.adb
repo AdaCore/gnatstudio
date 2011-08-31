@@ -1318,6 +1318,7 @@ package body Refactoring.Services is
       Direction : Integer := 1) return Editor_Location'Class
    is
       Loc : Editor_Location'Class := From;
+      pragma Unreferenced (Direction);
       Seen_Comment : Boolean := False;
    begin
       loop
