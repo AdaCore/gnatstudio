@@ -122,6 +122,11 @@ NF-51-K404-031 Quick fix support for 'First .. 'Last (2011-07-01)
   The automatic code fixing capability has been enhanced to replace
   occurrences of T'first .. T'last by T'Valid.
 
+NF-51-K227-005 GB: Put AdaCore icon on About Eclipse SDK panel (2011-08-30)
+
+  The AdaCore icon is now displayed on the about box and links to the
+  installed GNATbench features.
+
 NF-51-K225-033 GPS: New menu Debug->Display <expanded name> (2011-02-27)
 
   As part of the optional debugger.py plug-in, a new menu is provided when
