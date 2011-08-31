@@ -262,10 +262,10 @@ package body GPR_Creation is
       Body_Name : constant String := Base & Body_Extension;
 
       Base_Extension : constant String := File_Extension (Base);
-      Base_Base : constant String := Base
+      Base_Base      : constant String := Base
         (Base'First .. Base'Last - Base_Extension'Length);
-      Base_Spec : constant String := Base_Base & Spec_Extension;
-      Base_Body : constant String := Base_Base & Body_Extension;
+      Base_Spec      : constant String := Base_Base & Spec_Extension;
+      Base_Body      : constant String := Base_Base & Body_Extension;
 
       File      : File_Info;
    begin
@@ -651,7 +651,7 @@ package body GPR_Creation is
       Single_Obj_Dir  : Boolean;
       Tmp             : Boolean;
       Related_To      : Is_Related_To (Source_Dirs'Range, Object_Dirs'Range) :=
-                               (others => (others => False));
+                          (others => (others => False));
       pragma Unreferenced (Tmp);
    begin
       Parse_Source_Dirs (Source_Dirs, Src_Files);

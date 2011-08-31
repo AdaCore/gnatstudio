@@ -85,8 +85,8 @@ package body Refactoring.Services is
 
       Start_Index : Integer := Integer (Get_Index_In_File (Loc'Access));
       End_Index   : Integer := Start_Index;
-      Buffer : constant GNAT.Strings.String_Access :=
-        Get_Buffer (Get_File (Loc'Access));
+      Buffer      : constant GNAT.Strings.String_Access :=
+                      Get_Buffer (Get_File (Loc'Access));
       Paren_Depth : Integer := 0;
 
       procedure Backwards_Callback
@@ -166,6 +166,10 @@ package body Refactoring.Services is
            To_Lower (Buffer (Sloc_Start.Index .. Sloc_End.Index));
 
          procedure Add_To_List;
+
+         -----------------
+         -- Add_To_List --
+         -----------------
 
          procedure Add_To_List is
          begin
@@ -291,7 +295,7 @@ package body Refactoring.Services is
 
    procedure Remove (Self : in out Ada_Statement) is
       Start_To_Remove : aliased Universal_Location;
-      Stop_To_Remove : aliased Universal_Location;
+      Stop_To_Remove  : aliased Universal_Location;
    begin
       if Self.Kind = When_Kind then
          Start_To_Remove := Self.Sloc_First_Id;
@@ -302,8 +306,8 @@ package body Refactoring.Services is
       end if;
 
       declare
-         Line : constant String :=
-           Get_Line (Self.Context, Stop_To_Remove'Access, 1);
+         Line           : constant String :=
+                            Get_Line (Self.Context, Stop_To_Remove'Access, 1);
          Last_To_Remove : String_Index_Type;
       begin
          Last_To_Remove := Get_Index_In_Line (Stop_To_Remove'Access);
@@ -367,10 +371,9 @@ package body Refactoring.Services is
       use Tokens_List;
 
       Loc_Copy : aliased Universal_Location := Self.Sloc_Start;
-
-      Buffer : constant GNAT.Strings.String_Access :=
-        Get_Buffer (Get_File (Loc_Copy'Access));
-      Cur : Tokens_List.Cursor;
+      Buffer   : constant GNAT.Strings.String_Access :=
+                   Get_Buffer (Get_File (Loc_Copy'Access));
+      Cur      : Tokens_List.Cursor;
    begin
       Cur := First (Self.Tokens);
 
@@ -424,9 +427,9 @@ package body Refactoring.Services is
    is
       use Tokens_List;
 
-      Cur : Tokens_List.Cursor;
+      Cur    : Tokens_List.Cursor;
       Buffer : constant GNAT.Strings.String_Access :=
-        Get_Buffer (Get_File (Self.Sloc_Start'Access));
+                 Get_Buffer (Get_File (Self.Sloc_Start'Access));
 
       First_To_Delete, Last_To_Delete : String_Index_Type := 0;
       Token_Deleted : Token_Record;
@@ -575,8 +578,8 @@ package body Refactoring.Services is
      (Context : not null access Factory_Context_Record'Class;
       Entity  : Entities.Entity_Information) return Entity_Declaration
    is
-      Equal  : Integer;
-      EA     : Entity_Access;
+      Equal : Integer;
+      EA    : Entity_Access;
 
    begin
       if Get_Kind (Entity).Is_Type then
@@ -1066,19 +1069,19 @@ package body Refactoring.Services is
       Success            : out Boolean;
       Omit_Library_Level : Boolean := False)
    is
-      Ref_Iter : Entity_Reference_Iterator;
-      Iter     : Entity_Iterator;
-      Caller   : Entity_Information;
-      Parent   : Entity_Information;
-      Ref : Entity_Reference;
+      Ref_Iter                 : Entity_Reference_Iterator;
+      Iter                     : Entity_Iterator;
+      Caller                   : Entity_Information;
+      Parent                   : Entity_Information;
+      Ref                      : Entity_Reference;
       Decl, Location, Body_Loc : File_Location;
-      Entity    : Entity_Information;
-      Flags     : Entity_References_Flags;
-      Is_Global : Boolean;
-      Is_Param  : Boolean;
-      PType     : Parameter_Type;
-      Struct    : Structured_File_Access;
-      ERef      : Entity_Reference_Details;
+      Entity                   : Entity_Information;
+      Flags                    : Entity_References_Flags;
+      Is_Global                : Boolean;
+      Is_Param                 : Boolean;
+      PType                    : Parameter_Type;
+      Struct                   : Structured_File_Access;
+      ERef                     : Entity_Reference_Details;
 
    begin
       Success := True;
@@ -1314,20 +1317,20 @@ package body Refactoring.Services is
    -------------------
 
    function Skip_Comments
-     (From : Editor_Location'Class;
+     (From      : Editor_Location'Class;
       Direction : Integer := 1) return Editor_Location'Class
    is
-      Loc : Editor_Location'Class := From;
       pragma Unreferenced (Direction);
+      Loc          : Editor_Location'Class := From;
       Seen_Comment : Boolean := False;
    begin
       loop
          --  Skip backward until we find a non blank line that is not a comment
 
          declare
-            Loc2 : constant Editor_Location'Class := Loc.Forward_Line (-1);
-            C    : constant String :=
-              Loc.Buffer.Get_Chars (Loc2, Loc2.End_Of_Line);
+            Loc2  : constant Editor_Location'Class := Loc.Forward_Line (-1);
+            C     : constant String :=
+                      Loc.Buffer.Get_Chars (Loc2, Loc2.End_Of_Line);
             Index : Natural := C'First;
          begin
             exit when Loc2 = Loc;  --  Beginning of buffer
@@ -1373,18 +1376,18 @@ package body Refactoring.Services is
       Replaced_Length           : Integer := 0;
       Only_If_Replacing         : String := "") return Boolean
    is
-      Editor : constant Editor_Buffer'Class :=
-        Context.Buffer_Factory.Get (In_File);
-      Loc_Start : Editor_Location'Class := Editor.New_Location
-        (Line, Column);
+      Editor    : constant Editor_Buffer'Class :=
+                    Context.Buffer_Factory.Get (In_File);
+      Loc_Start : Editor_Location'Class :=
+                    Editor.New_Location (Line, Column);
       Loc_End   : constant Editor_Location'Class :=
-        Loc_Start.Forward_Char (Replaced_Length - 1);
+                    Loc_Start.Forward_Char (Replaced_Length - 1);
    begin
       if Replaced_Length /= 0 and then Only_If_Replacing /= "" then
          declare
             Replacing_Str : constant String := To_Lower (Only_If_Replacing);
-            Str : constant String :=
-              To_Lower (Editor.Get_Chars (Loc_Start, Loc_End));
+            Str           : constant String :=
+                              To_Lower (Editor.Get_Chars (Loc_Start, Loc_End));
          begin
             if Str /= Replacing_Str then
                return False;
@@ -1477,11 +1480,11 @@ package body Refactoring.Services is
       Decl     : String;
       Category : String := "")
    is
-      Struct : Structured_File_Access;
-      Tree   : Construct_Tree;
-      Iter   : Construct_Tree_Iterator;
-      Constr : Simple_Construct_Information;
-      Line   : Integer := Integer'Last;
+      Struct   : Structured_File_Access;
+      Tree     : Construct_Tree;
+      Iter     : Construct_Tree_Iterator;
+      Constr   : Simple_Construct_Information;
+      Line     : Integer := Integer'Last;
       Inserted : Boolean;
    begin
       if not Context.Create_Subprogram_Decl then
@@ -1540,11 +1543,11 @@ package body Refactoring.Services is
       Before_Line : Integer := Integer'Last;
       Category    : String := "")
    is
-      Struct : Structured_File_Access;
-      Tree   : Construct_Tree;
-      Iter   : Construct_Tree_Iterator;
-      Constr : Simple_Construct_Information;
-      Line   : Integer := Before_Line;
+      Struct   : Structured_File_Access;
+      Tree     : Construct_Tree;
+      Iter     : Construct_Tree_Iterator;
+      Constr   : Simple_Construct_Information;
+      Line     : Integer := Before_Line;
       Inserted : Boolean;
       Result   : Unbounded_String;
    begin
