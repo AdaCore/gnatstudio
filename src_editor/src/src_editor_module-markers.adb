@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005-2010, AdaCore                --
+--                   Copyright (C) 2005-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -74,6 +74,7 @@ package body Src_Editor_Module.Markers is
       Marker : access File_Marker_Record'Class);
    --  Create a text mark that will keep the location of the marker even when
    --  the text is changed
+   --  If the mark already exists, update its location.
 
    procedure Dump_Persistent_Markers;
    pragma Unreferenced (Dump_Persistent_Markers);
@@ -313,41 +314,60 @@ package body Src_Editor_Module.Markers is
       Child  : constant MDI_Child := Find_Editor (Kernel, Marker.File);
       Source : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
-      if Marker.Mark = null and then Source /= null then
-         Marker.Buffer :=
-           Gtk_Text_Buffer (Source_Buffer'(Get_Buffer (Source)));
+      if Source /= null then
+         if Marker.Mark = null then
+            Marker.Buffer :=
+              Gtk_Text_Buffer (Source_Buffer'(Get_Buffer (Source)));
 
-         --  Creates the mark. Its reference is owned by the buffer, and we do
-         --  not need to have our own, since there would be no point in having
-         --  the mark live longer than the buffer (we are monitoring life
-         --  cycles anyway
+            --  Creates the mark. Its reference is owned by the buffer, and we
+            --  do not need to have our own, since there would be no point in
+            --  having the mark live longer than the buffer (we are monitoring
+            --  life cycles anyway
 
-         Marker.Mark := Create_Mark
-           (Get_Buffer (Source), Marker.Line,
-            Visible_Column_Type'Max (1, Marker.Column));
+            Marker.Mark := Create_Mark
+              (Get_Buffer (Source), Marker.Line,
+               Visible_Column_Type'Max (1, Marker.Column));
 
-         --  This mark can be destroyed in three different contexts:
-         --    1 - explicitly (call to Destroy for File_Marker)
-         --    2 - explicitly (call to Delete_Mark on the gtk+ side)
-         --    3 - implicitly (when the buffer itself is destroyed)
-         --  The last two cases need to be protected, since the File_Marker
-         --  itself isn't destroyed then, and we need to update its location).
+            --  This mark can be destroyed in three different contexts:
+            --    1 - explicitly (call to Destroy for File_Marker)
+            --    2 - explicitly (call to Delete_Mark on the gtk+ side)
+            --    3 - implicitly (when the buffer itself is destroyed)
+            --  The last two cases need to be protected, since the File_Marker
+            --  itself isn't destroyed then, and we need to update its
+            --  location).
 
-         --  Protect against case 3: this results in the destruction of the
-         --  text_mark anyway, so nothing to do.
+            --  Protect against case 3: this results in the destruction of the
+            --  text_mark anyway, so nothing to do.
 
-         --  Protect against case 2.
-         --  Connect on the mark itself. If it is removed from the buffer
-         --  directly, it will be destroyed anyway, so we need to be aware of
-         --  that.
+            --  Protect against case 2.
+            --  Connect on the mark itself. If it is removed from the buffer
+            --  directly, it will be destroyed anyway, so we need to be aware
+            --  of that.
 
-         Weak_Ref (Marker.Buffer,
-                   On_Destroy_Buffer'Access, Convert (File_Marker (Marker)));
+            Weak_Ref
+              (Marker.Buffer,
+               On_Destroy_Buffer'Access, Convert (File_Marker (Marker)));
 
-         Marker.Cid := Markers_Callback.Connect
-           (Source_Buffer (Marker.Buffer), Signal_Closed,
-            Markers_Callback.To_Marshaller (On_Closed'Access),
-            File_Marker (Marker));
+            Marker.Cid := Markers_Callback.Connect
+              (Source_Buffer (Marker.Buffer), Signal_Closed,
+               Markers_Callback.To_Marshaller (On_Closed'Access),
+               File_Marker (Marker));
+         else
+            --  The mark already exists: simply move it to its intended
+            --  location. This can happen for instance when reloading a file
+            --  editor.
+            declare
+               Buffer : constant Source_Buffer := Get_Buffer (Source);
+               Iter   : Gtk_Text_Iter;
+            begin
+               Buffer.Get_Iter_At_Screen_Position
+                 (Iter   => Iter,
+                  Line   => Marker.Line,
+                  Column => Visible_Column_Type'Max (1, Marker.Column));
+               Buffer.Move_Mark (Mark  => Marker.Mark,
+                                 Where => Iter);
+            end;
+         end if;
       end if;
    end Create_Text_Mark;
 
