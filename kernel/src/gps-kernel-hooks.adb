@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -695,7 +695,8 @@ package body GPS.Kernel.Hooks is
       Hook   : Hook_Name;
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
       Name   : String;
-      Watch  : Glib.Object.GObject := null)
+      Watch  : Glib.Object.GObject := null;
+      Last   : Boolean := False)
    is
       Info : constant Hook_Description_Access :=
                Get_Or_Create_Hook (Kernel, Hook);
@@ -703,7 +704,7 @@ package body GPS.Kernel.Hooks is
       --  is not know yet, it will be set later when calling Register_Hook_*
    begin
       if Info /= null then
-         Add_Hook (Kernel, Info, Func, Hook_Name (Name), Watch);
+         Add_Hook (Kernel, Info, Func, Hook_Name (Name), Watch, Last);
       end if;
    end Add_Hook;
 

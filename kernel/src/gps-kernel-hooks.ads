@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -136,11 +136,13 @@ package GPS.Kernel.Hooks is
       Hook   : Hook_Name;
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
       Name   : String;
-      Watch  : Glib.Object.GObject := null);
+      Watch  : Glib.Object.GObject := null;
+      Last   : Boolean := False);
    --  Add a new function callback to the hook. The callback is automatically
    --  cancelled when Watch is destroyed.
    --  Name is used to describe the function when the user lists all functions
    --  attached to a hook from a scripting language
+   --  If Last is True, add after all previously registered hooks.
 
    procedure Remove_Hook
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                  Copyright (C) 2010-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -293,7 +293,11 @@ package body Src_Editor_Module.Messages is
         (Kernel,
          GPS.Kernel.File_Edited_Hook,
          Hook,
-         "location_view.file_edited");
+         "location_view.file_edited",
+         Last => True);
+      --  Register this hook with Last => True, so that it is called after the
+      --  one (registered in Src_Editor_Module.Register_Module that reacts to
+      --  file_edited and updates marks.
    end Register;
 
    ----------------

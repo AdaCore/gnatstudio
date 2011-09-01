@@ -3140,6 +3140,8 @@ package body Src_Editor_Buffer is
       end if;
 
       if not File_Is_New then
+         Emit_By_Name (Get_Object (Buffer), Signal_Closed & ASCII.NUL);
+         File_Closed (Buffer.Kernel, Filename);
          Reset_Buffer (Buffer);
       end if;
 
@@ -3240,7 +3242,6 @@ package body Src_Editor_Buffer is
       --  properly the information relative to this file.
 
       if not File_Is_New then
-         File_Closed (Buffer.Kernel, Filename);
          File_Edited (Buffer.Kernel, Filename);
       end if;
 
