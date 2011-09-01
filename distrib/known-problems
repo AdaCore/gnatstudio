@@ -8,6 +8,12 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K901-001: GPS: Message locations lost when reloading a file
+  Problem:    When reloading an editor for a file that has been modified
+              outside of GPS, the locations for messages (such as search
+              results for instance) are lost.
+  Workaround: Instead of reloading the editor, close it and re-open it.
+
 - K829-030: GPS: Cannot replace with an empty string
   Problem:    When using the Search dialog to replace a pattern with the empty
               string, GPS does not replace the pattern.
