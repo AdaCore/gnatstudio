@@ -340,18 +340,41 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
       Get_Iter_Position (Buffer, Entity_Start, Line, Column);
 
-      Find_Declaration_Or_Overloaded
-        (Kernel            => Buffer.Kernel,
-         File              => Get_Or_Create
-           (Db        => Get_Database (Buffer.Kernel),
-            File      => Buffer.Filename),
-         Entity_Name       => Get_Slice (Buffer, Entity_Start, Entity_End),
-         Line              => Integer (Line),
-         Column            => Column,
-         Ask_If_Overloaded => False,
-         Entity            => Entity,
-         Closest_Ref       => Closest,
-         Status            => Status);
+      --  Before searching for its entity we check if the LI handler has
+      --  unresolved imported references to force reloading and parsing its
+      --  corresponding LI file to update those references.
+
+      declare
+         File : Entities.Source_File;
+         H    : LI_Handler;
+
+      begin
+         File :=
+           Get_Or_Create
+             (Db   => Get_Database (Buffer.Kernel),
+              File => Buffer.Filename);
+
+         H :=
+           Get_LI_Handler
+             (Get_Database (Buffer.Kernel),
+              Get_Filename (File));
+
+         if Has_Unresolved_Imported_Refs (H) then
+            Set_Update_Forced (H);
+            Update_Xref (File);
+         end if;
+
+         Find_Declaration_Or_Overloaded
+           (Kernel            => Buffer.Kernel,
+            File              => File,
+            Entity_Name       => Get_Slice (Buffer, Entity_Start, Entity_End),
+            Line              => Integer (Line),
+            Column            => Column,
+            Ask_If_Overloaded => False,
+            Entity            => Entity,
+            Closest_Ref       => Closest,
+            Status            => Status);
+      end;
 
       case Status is
          when Entity_Not_Found | Internal_Error =>

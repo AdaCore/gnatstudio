@@ -3061,4 +3061,46 @@ package body Entities is
       return Self.Symbols;
    end Get_Symbols;
 
+   ----------------------------------
+   -- Has_Unresolved_Imported_Refs --
+   ----------------------------------
+
+   function Has_Unresolved_Imported_Refs
+     (Handler : access LI_Handler_Record'Class) return Boolean is
+   begin
+      if Handler /= null then
+         return Handler.Has_Unresolved_Imported_Refs;
+      else
+         return False;
+      end if;
+   end Has_Unresolved_Imported_Refs;
+
+   procedure Set_Has_Unresolved_Imported_Refs
+     (Handler : access LI_Handler_Record'Class;
+      Value   : Boolean := True) is
+   begin
+      Handler.Has_Unresolved_Imported_Refs := Value;
+   end Set_Has_Unresolved_Imported_Refs;
+
+   ------------------------
+   -- Is_Update_Required --
+   ------------------------
+
+   function Update_Forced
+     (Handler : access LI_Handler_Record'Class) return Boolean is
+   begin
+      if Handler /= null then
+         return Handler.Update_Forced;
+      else
+         return False;
+      end if;
+   end Update_Forced;
+
+   procedure Set_Update_Forced
+     (Handler : access LI_Handler_Record'Class;
+      Value   : Boolean := True) is
+   begin
+      Handler.Update_Forced := Value;
+   end Set_Update_Forced;
+
 end Entities;

@@ -160,7 +160,9 @@ package body ALI_Parser is
       LI                    : LI_File;
       New_ALI               : ALIs_Record;
       First_Sect, Last_Sect : Nat);
-   --  Parse an ALI file and adds its information into the structure
+   --  Parse an ALI file and adds its information into the structure. If
+   --  Handler has flag Update_Forced then flags Has_Unresolved_Imported_Refs
+   --  and Update_Forced are set to false before re-parsing the ALI file.
 
    function Get_SLI_From_ALI (LI : LI_File) return LI_File;
    --  Return the SLI file corresponding to LI
@@ -267,15 +269,18 @@ package body ALI_Parser is
    --  Save the Xref information in the New_LI_File structure
 
    function Update_ALI
-     (Handler   : access ALI_Handler_Record'Class;
-      LI        : LI_File;
-      Reset_ALI : Boolean;
-      Force_Update : Boolean := False) return Boolean;
+     (Handler     : access ALI_Handler_Record'Class;
+      LI          : LI_File;
+      Reset_ALI   : Boolean;
+      Force_Check : Boolean := False) return Boolean;
    --  Re-parse the contents of the ALI file, and return True in case of
-   --  success.
-   --  By default, nothing is updated if the database is frozen (see Freeze for
-   --  the various freeze modes). However, you can force the check on whether
-   --  the file is up-to-date by passing Force_Update to True
+   --  success. If Handler has flag Update_Forced then the internal tables
+   --  associated with Handler are cleared, and the file is reloaded and
+   --  parsed; otherwise nothing is updated if the database is frozen (see
+   --  Freeze for the various freeze modes) and using Reset_ALI we can indicate
+   --  that the internal GNAT's ALI tables must be cleared before reloading an
+   --  ALI file, and using Force_Check we can force the check on whether the
+   --  file is up-to-date even when the database is frozen.
 
    function Char_To_E_Kind (C : Character) return E_Kind;
    pragma Inline (Char_To_E_Kind);
@@ -988,13 +993,20 @@ package body ALI_Parser is
                if not At_End (Iter) then
                   Location := Get_Declaration_Of (Get (Iter));
 
-               --  not found
+               --  Not found. It happens when the LI file containing the
+               --  reference has not been loaded yet!
 
                else
                   Location :=
                     (File   => Sfiles (Current_Sfile).File,
                      Line   => Integer (Current_Xref.Line),
                      Column => Visible_Column_Type (Current_Xref.Col));
+
+                  --  Indicate that this ALI has unresolved entities imported
+                  --  from C. Done to force reloading the LI file if such
+                  --  entity is eventually needed for sources navigation.
+
+                  Set_Has_Unresolved_Imported_Refs (Handler);
                end if;
             end;
          end if;
@@ -1394,6 +1406,14 @@ package body ALI_Parser is
       Is_ALI_For_Separate : Boolean := False;
 
    begin
+      --  In case of forced update reset the flags associated with update of
+      --  unresolved imported references.
+
+      if Update_Forced (Handler) then
+         Set_Has_Unresolved_Imported_Refs (Handler, False);
+         Set_Update_Forced (Handler, False);
+      end if;
+
       Get_Imported_Projects (Project, Imported_Projects);
 
       Process_Units (Handler, LI, New_ALI, Sunits);
@@ -1489,35 +1509,49 @@ package body ALI_Parser is
    ----------------
 
    function Update_ALI
-     (Handler   : access ALI_Handler_Record'Class;
-      LI        : LI_File;
-      Reset_ALI : Boolean;
-      Force_Update : Boolean := False) return Boolean
+     (Handler     : access ALI_Handler_Record'Class;
+      LI          : LI_File;
+      Reset_ALI   : Boolean;
+      Force_Check : Boolean := False) return Boolean
    is
       New_ALI_Id            : ALI_Id := No_ALI_Id;
       New_Timestamp         : Time := No_Time;
       First_Sect, Last_Sect : Nat;
       Do_Update             : Boolean;
       Dummy                 : Boolean;
+      Reset_ALI_First       : Boolean := Reset_ALI;
       pragma Unreferenced (Dummy);
 
    begin
       Assert (Assert_Me, LI /= null, "No LI to update");
 
-      case Frozen (Handler.Db) is
-         when No_Create_Or_Update =>
-            Do_Update := Force_Update;
+      --  Check if we must unconditionally load and scan the LI file. Currently
+      --  this is done only when the LI file has unresolved imported entities
+      --  and we need to navigate through its sources. This forced update is
+      --  then required because entities imported from other languages may have
+      --  been loaded after this LI file was previously processed.
 
-         when Create_Only =>
-            Do_Update := Force_Update or Get_Timestamp (LI) = No_Time;
+      if Entities.Update_Forced (Entities.LI_Handler (Handler)) then
+         New_Timestamp   := File_Time_Stamp (Get_LI_Filename (LI));
+         Reset_ALI_First := True;
+         Do_Update       := True;
 
-         when Create_And_Update =>
-            Do_Update := True;
-      end case;
+      else
+         case Frozen (Handler.Db) is
+            when No_Create_Or_Update =>
+               Do_Update := Force_Check;
 
-      if Do_Update then
-         New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
-         Do_Update := Get_Timestamp (LI) /= New_Timestamp;
+            when Create_Only =>
+               Do_Update := Force_Check or Get_Timestamp (LI) = No_Time;
+
+            when Create_And_Update =>
+               Do_Update := True;
+         end case;
+
+         if Do_Update then
+            New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
+            Do_Update := Get_Timestamp (LI) /= New_Timestamp;
+         end if;
       end if;
 
       if Do_Update then
@@ -1538,7 +1572,7 @@ package body ALI_Parser is
 
          Load_And_Scan_ALI
            (ALI_Filename   => Get_LI_Filename (LI),
-            Reset_First    => Reset_ALI,
+            Reset_First    => Reset_ALI_First,
             Result         => New_ALI_Id,
             First_Sect     => First_Sect,
             Last_Sect      => Last_Sect);
@@ -2303,7 +2337,7 @@ package body ALI_Parser is
          if not Update_ALI
            (Iter.Handler, LI,
             Reset_ALI => True,
-            Force_Update => Frozen (Iter.Handler.Db) = Create_Only)
+            Force_Check => Frozen (Iter.Handler.Db) = Create_Only)
          then
             if Active (Me) then
                Trace

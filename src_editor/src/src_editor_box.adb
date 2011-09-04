@@ -319,6 +319,33 @@ package body Src_Editor_Box is
 
       Push_State (Kernel_Handle (Kernel), Busy);
 
+      --  Before getting its entity we check if the LI handler has unresolved
+      --  imported references to force updating its references
+
+      if Has_Entity_Name_Information (Context)
+        and then Has_Line_Information (Context)
+        and then Has_File_Information (Context)
+      then
+         declare
+            Handler : LI_Handler;
+            File    : Source_File;
+
+         begin
+            File :=
+              Get_Or_Create
+                (Db   => Get_Database (Get_Kernel (Context)),
+                 File => File_Information (Context));
+
+            Handler :=
+              Get_LI_Handler (Get_Database (Kernel), Get_Filename (File));
+
+            if Has_Unresolved_Imported_Refs (Handler) then
+               Set_Update_Forced (Handler);
+               Update_Xref (File);
+            end if;
+         end;
+      end if;
+
       Entity := Get_Entity (Context, Ask_If_Overloaded => True);
 
       if Entity = null then
