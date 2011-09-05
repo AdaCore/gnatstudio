@@ -1965,8 +1965,9 @@ package body GPS.Kernel.Messages is
    begin
       if Has_Element (Position) then
          return Element (Position);
+
       else
-         return Alphabetical;
+         return Chronological;
       end if;
    end Get_Sort_Order_Hint;
 
