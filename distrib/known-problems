@@ -14,6 +14,11 @@ If no tag is specified, the entry is relevant to all IDEs.
               results for instance) are lost.
   Workaround: Instead of reloading the editor, close it and re-open it.
 
+- K831-018: GPS: Sort order of builder messages in Locations view
+  Problem:    File items of builder result in Locations view are not sorted in
+              alphabetical order now.
+  Workaround: None known.
+
 - K829-030: GPS: Cannot replace with an empty string
   Problem:    When using the Search dialog to replace a pattern with the empty
               string, GPS does not replace the pattern.
