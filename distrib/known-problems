@@ -15,9 +15,12 @@ If no tag is specified, the entry is relevant to all IDEs.
   Workaround: Instead of reloading the editor, close it and re-open it.
 
 - K831-018: GPS: Sort order of builder messages in Locations view
-  Problem:    File items of builder result in Locations view are not sorted in
-              alphabetical order now.
-  Workaround: None known.
+  Problem:    File items of builder result in Locations view are sorted in
+              alphabetical order by default instead of being displayed in order
+              of arrival.
+  Workaround: Use the Messages window to find the proper order and search
+              the corresponding items in the locations view using e.g. the
+              filter pane.
 
 - K829-030: GPS: Cannot replace with an empty string
   Problem:    When using the Search dialog to replace a pattern with the empty
@@ -46,7 +49,7 @@ If no tag is specified, the entry is relevant to all IDEs.
               a parameter in a string (for instance in 'echo "${1}.txt"') is
               broken, and this breaks some ClearCase Native interactions, such
               as comparison against the latest revision.
-  Workaround: None known.
+  Workaround: Use an external tool to perform the comparison.
 
 - K804-028: GPS: Line highlighting not removed
   Problem:    Sometimes the line highlighting such as those showing build
