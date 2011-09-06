@@ -1,4 +1,3 @@
-with "../kernel/kernel";
 with "../shared";
 with "../prj_editor/prj_editor";
 
