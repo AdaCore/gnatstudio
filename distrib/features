@@ -334,6 +334,12 @@ NF-51-I402-029 GB: Add Ada exception breakpoint support (2011-08-29)
   requires debug configurations using Ada GDB (DSF) Process Launcher. (see
   GNATbench documentation)
 
+NF-51-I401-027 GPS: Navigate across language boundary (2011-09-05)
+
+  GPS incorporates support for navigating through entities imported from C.
+  This new feature requires compiling the C sources with the -fdump-xref
+  switch.
+
 NF-51-I218-034 ECL: Sub-menu for "Invoke Makefile Target" (2011-08-24)
 
   The make targets are now listed in a sub-menu under "Invoke Makefile Target"
