@@ -4041,7 +4041,9 @@ This capability requires the availability of cross-reference information.
 
 @item Goto Body
 @cindex goto body
-Go to the body/implementation of the current entity.
+Go to the body/implementation of the current entity. If the current entity
+is the declaration of an Ada subprogram imported from C it goes to the
+location where the C function is defined.
 This item is also accessible through the editor's contextual menu directly.
 This capability requires the availability of cross-reference information.
 @xref{Support for Cross-References}.
@@ -4163,7 +4165,9 @@ This capability requires support for cross-references.
 
 @item Goto body of @i{entity}
 @cindex goto body
-Go to the body/implementation of @i{entity}.
+Go to the body/implementation of @i{entity}. If @i{entity} is the
+declaration of an Ada subprogram imported from C it goes to the
+the location where the C function is defined.
 This capability requires support for cross-references.
 
 @item Goto declarations of @i{entity}
@@ -4340,6 +4344,10 @@ aspect changes.
 Left-clicking on a reference to an entity will open a source editor on the
 declaration of this entity, and left-clicking on an entity declaration will
 open an editor on the implementation of this entity.
+
+Left-clicking on the Ada declaration of a subprogram imported from C will
+open a source editor on the definition of the corresponding C entity. This
+capability requires support for cross-references.
 
 Clicking with the middle button on either a reference to an entity or the
 declaration of an entity will jump directly to the implementation or type
