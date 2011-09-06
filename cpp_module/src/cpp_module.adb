@@ -40,89 +40,102 @@ with Traces;                     use Traces;
 
 package body Cpp_Module is
 
-   C_Automatic_Indentation   : Indentation_Kind_Preferences.Preference;
-   C_Use_Tabs                : Boolean_Preference;
-   C_Indentation_Level       : Integer_Preference;
-   C_Indent_Extra            : Boolean_Preference;
-   C_Indent_Comments         : Boolean_Preference;
+   C_Automatic_Indentation : Indentation_Kind_Preferences.Preference;
+   C_Use_Tabs              : Boolean_Preference;
+   C_Indentation_Level     : Integer_Preference;
+   C_Indent_Extra          : Boolean_Preference;
+   C_Indent_Comments       : Boolean_Preference;
 
-   type GLI_Handler_Record is new ALI_Handler_Record with null record;
-   type GLI_Handler is access all GLI_Handler_Record'Class;
-   --  GCC LI Handler
+   ---------------------
+   --  GCC LI Handler --
+   ---------------------
 
-   overriding function Get_Name (LI : access GLI_Handler_Record) return String;
-   overriding function Case_Insensitive_Identifiers
-     (Handler : access GLI_Handler_Record) return Boolean;
-   overriding function Get_ALI_Ext
-     (LI : access GLI_Handler_Record) return Filesystem_String;
-   overriding function Get_ALI_Filename
-     (Handler   : access GLI_Handler_Record;
-      Base_Name : Filesystem_String) return Filesystem_String;
-   --  See doc for inherited subprograms
+   package GLI_Handler_Record_Pkg is
+      type GLI_Handler_Record is new ALI_Handler_Record with null record;
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed
+      overriding function Get_Name
+        (LI : access GLI_Handler_Record) return String;
+
+      overriding function Case_Insensitive_Identifiers
+        (Handler : access GLI_Handler_Record) return Boolean;
+
+      overriding function Get_ALI_Ext
+        (LI : access GLI_Handler_Record) return Filesystem_String;
+
+      overriding function Get_ALI_Filename
+        (Handler   : access GLI_Handler_Record;
+         Base_Name : Filesystem_String) return Filesystem_String;
+      --  See doc for inherited subprograms
+
+   end GLI_Handler_Record_Pkg;
+
+   package body GLI_Handler_Record_Pkg is
+
+      --------------
+      -- Get_Name --
+      --------------
+
+      overriding function Get_Name
+        (LI : access GLI_Handler_Record) return String
+      is
+         pragma Unreferenced (LI);
+      begin
+         return "GNU C/C++";
+      end Get_Name;
+
+      ----------------------------------
+      -- Case_Insensitive_Identifiers --
+      ----------------------------------
+
+      overriding function Case_Insensitive_Identifiers
+        (Handler : access GLI_Handler_Record) return Boolean
+      is
+         pragma Unreferenced (Handler);
+      begin
+         return False;
+      end Case_Insensitive_Identifiers;
+
+      -----------------
+      -- Get_ALI_Ext --
+      -----------------
+
+      overriding function Get_ALI_Ext
+        (LI : access GLI_Handler_Record) return Filesystem_String
+      is
+         pragma Unreferenced (LI);
+      begin
+         return ".gli";
+      end Get_ALI_Ext;
+
+      ----------------------
+      -- Get_ALI_Filename --
+      ----------------------
+
+      overriding function Get_ALI_Filename
+        (Handler   : access GLI_Handler_Record;
+         Base_Name : Filesystem_String) return Filesystem_String is
+      begin
+         return Base_Name & Get_ALI_Ext (Handler);
+      end Get_ALI_Filename;
+
+   end GLI_Handler_Record_Pkg;
+
+   -----------------------
+   -- Local Subprograms --
+   -----------------------
 
    function C_Naming_Scheme_Editor
      (Kernel : access Kernel_Handle_Record'Class; Lang : String)
       return Language_Naming_Editor;
-   --  Create the naming scheme editor page
+   --  Create the naming scheme editor page. Subsidiary of Register_Module
+   --  but must be defined at library level because it is invoked from the
+   --  gps kernel.
 
-   ----------------------------
-   -- GLI_Handler primitives --
-   ----------------------------
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   overriding function Get_Name
-     (LI : access GLI_Handler_Record) return String
-   is
-      pragma Unreferenced (LI);
-   begin
-      return "GNU C/C++";
-   end Get_Name;
-
-   ----------------------------------
-   -- Case_Insensitive_Identifiers --
-   ----------------------------------
-
-   overriding function Case_Insensitive_Identifiers
-     (Handler : access GLI_Handler_Record) return Boolean
-   is
-      pragma Unreferenced (Handler);
-   begin
-      return False;
-   end Case_Insensitive_Identifiers;
-
-   -----------------
-   -- Get_ALI_Ext --
-   -----------------
-
-   overriding function Get_ALI_Ext
-     (LI : access GLI_Handler_Record) return Filesystem_String
-   is
-      pragma Unreferenced (LI);
-   begin
-      return ".gli";
-   end Get_ALI_Ext;
-
-   ----------------------
-   -- Get_ALI_Filename --
-   ----------------------
-
-   overriding function Get_ALI_Filename
-     (Handler   : access GLI_Handler_Record;
-      Base_Name : Filesystem_String) return Filesystem_String is
-   begin
-      return Base_Name & Get_ALI_Ext (Handler);
-   end Get_ALI_Filename;
-
-   -------------------------------
-   -- Non primitive subprograms --
-   -------------------------------
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed. Subsidiary of Register_Module
+   --  but must be defined at library level because it is invoked from the
+   --  gps kernel.
 
    ------------------------
    -- Create_CPP_Handler --
@@ -134,12 +147,14 @@ package body Cpp_Module is
       Lang_Handler : Language_Handlers.Language_Handler)
       return Entities.LI_Handler
    is
-      CPP : constant GLI_Handler := new GLI_Handler_Record;
+      use GLI_Handler_Record_Pkg;
+
    begin
-      CPP.Db            := Db;
-      CPP.Registry      := Project_Registry (Registry);
-      CPP.Lang_Handler  := Lang_Handler;
-      return LI_Handler (CPP);
+      return new GLI_Handler_Record'
+                   (LI_Handler_Record with
+                      Db => Db,
+                      Registry => Project_Registry (Registry),
+                      Lang_Handler => Lang_Handler);
    end Create_CPP_Handler;
 
    ----------------------------
