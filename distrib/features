@@ -122,6 +122,12 @@ NF-51-K404-031 Quick fix support for 'First .. 'Last (2011-07-01)
   The automatic code fixing capability has been enhanced to replace
   occurrences of T'first .. T'last by T'Valid.
 
+NF-51-K228-002 GB: Associate SPARK control files with text editor (2011-09-05)
+
+  Files with the following extensions are now associated with the text
+  editor: .cfg, .idx, .smf, .sw, .wrn.  Additionally, .ada and .prep files
+  are now associated with the Ada editor.
+
 NF-51-K227-005 GB: Put AdaCore icon on About Eclipse SDK panel (2011-08-30)
 
   The AdaCore icon is now displayed on the about box and links to the
