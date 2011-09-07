@@ -19,7 +19,142 @@ xml_base = """
       <title column="1" line="2">Line metrics</title>
       <title column="2" line="1">Syntax element metrics</title>
       <title column="2" line="2">Coupling metrics</title>
-      @@SWITCHES@@
+<check label="all complexity metrics"
+                   line="1"  column="1"
+                   switch="--complexity-all"
+                   tip="all complexity metrics" />
+<check label="McCabe Cyclomatic Complexity"
+                   line="1"  column="1"
+                   switch="--complexity-cyclomatic"
+                   tip="McCabe Cyclomatic Complexity" />
+<check label="Essential Complexity"
+                   line="1"  column="1"
+                   switch="--complexity-essential"
+                   tip="Essential Complexity" />
+<check label="average McCabe Cyclomatic Complexity of a body"
+                   line="1"  column="1"
+                   switch="--complexity-average"
+                   tip="average McCabe Cyclomatic Complexity of a body" />
+<check label="maximal loop nesting level"
+                   line="1"  column="1"
+                   switch="--loop-nesting"
+                   tip="maximal loop nesting level" />
+<check label="do not count static loops for cyclomatic complexity"
+                   line="1"  column="1"
+                   switch="--no-static-loop"
+                   tip="do not count static loops for cyclomatic complexity" />
+<check label="do not consider exit statements as gotos"
+                   line="1"  column="1"
+                   switch="-ne"
+                   tip="do not consider exit statements as gotos when computing Essential Complexity" />
+<check label="extra exit points in subprograms"
+                   line="1"  column="1"
+                   switch="--extra-exit-points"
+                   tip="extra exit points in subprograms" />
+<check label="all line metrics"
+                   line="1"  column="2"
+                   switch="--lines-all"
+                   tip="all line metrics" />
+<check label="number of all lines"
+                   line="1"  column="2"
+                   switch="--lines"
+                   tip="number of all lines" />
+<check label="number of code lines"
+                   line="1"  column="2"
+                   switch="--lines-code"
+                   tip="number of code lines" />
+<check label="number of comment lines"
+                   line="1"  column="2"
+                   switch="--lines-comment"
+                   tip="number of comment lines" />
+<check label="number of code lines also containing comments"
+                   line="1"  column="2"
+                   switch="--lines-eol-comment"
+                   tip="number of code lines also containing comments" />
+<check label="comment/code lines percentage"
+                   line="1"  column="2"
+                   switch="--lines-ratio"
+                   tip="comment/code lines percentage" />
+<check label="number of blank lines"
+                   line="1"  column="2"
+                   switch="--lines-blank"
+                   tip="number of blank lines" />
+<check label="average number of code lines in a body"
+                   line="1"  column="2"
+                   switch="--lines-average"
+                   tip="average number of code lines in a body" />
+<check label="all syntax element metrics"
+                   line="2"  column="1"
+                   switch="--syntax-all"
+                   tip="all syntax element metrics" />
+<check label="total number of declarations"
+                   line="2"  column="1"
+                   switch="--declarations"
+                   tip="total number of declarations" />
+<check label="total number of statements"
+                   line="2"  column="1"
+                   switch="--statements"
+                   tip="total number of statements" />
+<check label="number of public subprograms in a compilation unit"
+                   line="2"  column="1"
+                   switch="--public-subprograms"
+                   tip="number of public subprograms in a compilation unit" />
+<check label="number of subprograms in a compilation unit"
+                   line="2"  column="1"
+                   switch="--all-subprograms"
+                   tip="number of subprograms in a compilation unit" />
+<check label="number of public types in a compilation unit"
+                   line="2"  column="1"
+                   switch="--public-types"
+                   tip="number of public types in a compilation unit" />
+<check label="number of types in a compilation unit"
+                   line="2"  column="1"
+                   switch="--all-types"
+                   tip="number of types in a compilation unit" />
+<check label="maximal unit nesting level"
+                   line="2"  column="1"
+                   switch="--unit-nesting"
+                   tip="maximal unit nesting level" />
+<check label="maximal construct nesting level"
+                   line="2"  column="1"
+                   switch="--construct-nesting"
+                   tip="maximal construct nesting level" />
+<check label="all coupling metrics"
+                   line="2"  column="2"
+                   switch="--coupling-all"
+                   tip="all coupling metrics" />
+<check label="tagged (class) fan-out coupling"
+                   line="2"  column="2"
+                   switch="--tagged-coupling-out"
+                   tip="tagged (class) fan-out coupling" />
+<check label="tagged (class) fan-in coupling"
+                   line="2"  column="2"
+                   switch="--tagged-coupling-in"
+                   tip="tagged (class) fan-in coupling" />
+<check label="hierarchy (category) fan-out coupling"
+                   line="2"  column="2"
+                   switch="--hierarchy-coupling-out"
+                   tip="hierarchy (category) fan-out coupling" />
+<check label="hierarchy (category) fan-in coupling"
+                   line="2"  column="2"
+                   switch="--hierarchy-coupling-in"
+                   tip="hierarchy (category) fan-in coupling" />
+<check label="unit fan-out coupling"
+                   line="2"  column="2"
+                   switch="--unit-coupling-out"
+                   tip="unit fan-out coupling" />
+<check label="unit fan-in coupling"
+                   line="2"  column="2"
+                   switch="--unit-coupling-in"
+                   tip="unit fan-in coupling" />
+<check label="control fan-out coupling"
+                   line="2"  column="2"
+                   switch="--control-coupling-out"
+                   tip="control fan-out coupling" />
+<check label="control fan-in coupling"
+                   line="2"  column="2"
+                   switch="--control-coupling-in"
+                   tip="control fan-in coupling" />
    </switches>
 </target-model>
 
@@ -119,87 +254,6 @@ xml_base = """
 
 """
 
-headers = {
-  "Complexity metrics": (1, 1),
-  "Line metrics": (1, 2),
-  "Syntax element metrics": (2, 1),
-  "Coupling metrics": (2, 2)
-}
-
-class Switch(object):
-    def __init__(self, label, switch, tip, line_column):
-        """ Initialize a switch """
-
-        self.label = label
-        self.switch = switch
-        self.tip = tip
-        self.line, self.column = line_column
-
-    def __str__(self):
-        return """<check label="%s"
-                   line="%s"  column="%s"
-                   switch="%s"
-                   tip="%s" />""" % (
-                       self.label, self.line, self.column,
-                       self.switch,
-                       self.tip)
-
-class Parse_Output(object):
-    """ Parses the output of "gnat metric" and extract the switches. """
-
-    def __init__(self, output):
-        self.header_regexp = re.compile("^ *(%s)([\\.:]).*" % (
-           "|".join(headers.keys())))
-        self.data_regexp = re.compile("^ +(-[^ ]+) +- (.+)$")
-        self.current_header = None
-        self.current_line_col = (1, 1)
-        self.results = []
-
-        for line in output.split("\n"):
-            self.parse_one_line(line)
-
-    def parse_one_line(self, line):
-        if not line:
-            self.current_header = None
-        m = self.header_regexp.match(line)
-        if m:
-            # Header
-            self.current_header = m.group(1)
-            self.current_line_col = headers[self.current_header]
-        else:
-            if self.current_header:
-                 m = self.data_regexp.match(line)
-                 if m:
-                     self.emit_result(label=m.group(2),
-                         switch=m.group(1), tip=m.group(2))
-                 else:
-                     if self.current_result:
-                         self.current_result.tip += line.strip()
-
-    def emit_result(self, label, switch, tip):
-        result = Switch(label, switch, tip, self.current_line_col)
-        self.current_result = result
-        self.results.append(result)
-
-    def __str__(self):
-        return "\n".join([r.__str__() for r in self.results])
-
-
-def initialize():
-    # parse the output of "gnat metric" to get a list of switches
-
-    try:
-        p = GPS.Process("gnat metric")
-        output = p.get_result()
-    except:
-        GPS.Console().write(
-            "gnatmetric.py: could not launch 'gnat metric', plugin disabled.")
-        output = None
-
-    if output:
-        switches = Parse_Output(output).__str__()
-        GPS.parse_xml(xml_base.replace("@@SWITCHES@@", switches))
-
 def on_compilation_finished(hook, category,
     target_name="", mode_name="", status=""):
 
@@ -212,6 +266,5 @@ def on_compilation_finished(hook, category,
     v = GPS.XMLViewer.create_metric("Metrics")
     v.parse("metrix.xml")
 
-
-initialize()
+GPS.parse_xml(xml_base)
 GPS.Hook("compilation_finished").add(on_compilation_finished)
