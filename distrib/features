@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K905-010 GPS: new gnatmetric.py plugin (2011-09-07)
+
+  The gnatmetrics plugin has been rewritten. The new versions allows to compute
+  metrics for a project and its subprojects, and it is possible to choose the
+  options to pass to gnatmetric before launching it.
+
 NF-51-K809-019 GPS: save files automatically on run of SPARK tools (2011-08-12)
 
   GPS saves modified files automatically when SPARK tools are run and
