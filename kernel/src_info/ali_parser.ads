@@ -66,16 +66,6 @@ package ALI_Parser is
       return Entities.LI_Handler_Iterator'Class;
    --  See doc for inherited subprograms
 
-   type ALI_Information_Iterator
-     is new Entities.LI_Information_Iterator with private;
-   overriding procedure Free (Iter : in out ALI_Information_Iterator);
-   overriding procedure Next
-     (Iter  : in out ALI_Information_Iterator;
-      Steps : Natural := Natural'Last;
-      Count : out Natural;
-      Total : out Natural);
-   --  See doc for inherited subprograms
-
    function Get_ALI_Ext
      (LI : access ALI_Handler_Record)
       return GNATCOLL.VFS.Filesystem_String;
@@ -86,6 +76,16 @@ package ALI_Parser is
       Base_Name : GNATCOLL.VFS.Filesystem_String)
       return GNATCOLL.VFS.Filesystem_String;
    --  Return the most likely candidate for an ALI file, given a source name
+
+   type ALI_Information_Iterator
+     is new Entities.LI_Information_Iterator with private;
+   overriding procedure Free (Iter : in out ALI_Information_Iterator);
+   overriding procedure Next
+     (Iter  : in out ALI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural);
+   --  See doc for inherited subprograms
 
 private
    type ALI_Information_Iterator

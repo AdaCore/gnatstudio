@@ -153,10 +153,12 @@ package body ALI_Parser is
 
    package ALI_Handler_Iterator_Pkg is
       type ALI_Handler_Iterator is new LI_Handler_Iterator with null record;
+
       overriding procedure Continue
         (Iterator : in out ALI_Handler_Iterator;
          Errors   : Error_Report;
          Finished : out Boolean);
+
       overriding procedure Destroy (Iterator : in out ALI_Handler_Iterator);
       --  See doc for inherited subprograms
    end ALI_Handler_Iterator_Pkg;
@@ -252,7 +254,7 @@ package body ALI_Parser is
       File_Has_No_LI_Report : File_Error_Reporter := null;
       Reset_ALI             : Boolean) return Source_File;
    --  Same as Get_Source_Info, but it is possible not to reset the internal
-   --  GNAT tables first. This must be used when calling this recursively
+   --  GNAT tables first. This must be used when calling this recursively.
 
    ----------------------------------
    -- Case_Insensitive_Identifiers --
@@ -306,15 +308,13 @@ package body ALI_Parser is
      (Db           : Entities.Entities_Database;
       Registry     : Project_Registry'Class;
       Lang_Handler : Language_Handlers.Language_Handler)
-      return Entities.LI_Handler
-   is
-      ALI : constant ALI_Handler := new ALI_Handler_Record;
+      return Entities.LI_Handler is
    begin
-      ALI.Db           := Db;
-      ALI.Registry     := Project_Registry (Registry);
-      ALI.Lang_Handler := Lang_Handler;
-
-      return LI_Handler (ALI);
+      return new ALI_Handler_Record'
+                   (LI_Handler_Record with
+                      Db => Db,
+                      Registry => Project_Registry (Registry),
+                      Lang_Handler => Lang_Handler);
    end Create_ALI_Handler;
 
    --------------------
@@ -510,19 +510,15 @@ package body ALI_Parser is
          is
             Base_Name : constant String :=
                           Get_Name_String (Units.Table (Id).Sfile);
-            File      : Source_File;
 
          begin
             Assert (Assert_Me, LI /= null, "Null LI file parsed");
 
-            File :=
-              Get_Or_Create
-                (Db        => Get_Database (LI),
-                 Base_Name => +Base_Name,
-                 Handler   => Handler,
-                 LI        => LI);
-
-            return File;
+            return Get_Or_Create
+                     (Db        => Get_Database (LI),
+                      Base_Name => +Base_Name,
+                      Handler   => Handler,
+                      LI        => LI);
          end Process_Unit;
 
       begin
@@ -798,8 +794,8 @@ package body ALI_Parser is
                Current_Xref  : Xref_Record renames Xref.Table (Current_Ref);
 
             begin
-               if Xref.Table (Current_Ref).Rtype = Array_Index_Reference then
-                  if Xref.Table (Current_Ref).Name /= No_Name then
+               if Current_Xref.Rtype = Array_Index_Reference then
+                  if Current_Xref.Name /= No_Name then
 
                      --  In the ALI file, the predefined entities are always
                      --  lower-cased when in fact the entity name in GPS is
@@ -810,7 +806,7 @@ package body ALI_Parser is
 
                      declare
                         Name : constant String :=
-                          Get_Name_String (Xref.Table (Current_Ref).Name);
+                                 Get_Name_String (Current_Xref.Name);
 
                      begin
                         if Case_Insensitive_Identifiers (Handler) then
@@ -836,33 +832,37 @@ package body ALI_Parser is
                   else
                      Primitive :=
                        Find_Entity_In_ALI
-                         (Handler,
-                          LI, Sfiles,
-                          Xref.Table (Current_Ref).File_Num,
-                          Xref.Table (Current_Ref).Line,
-                          Xref.Table (Current_Ref).Col, First_Sect, Last_Sect);
+                         (Handler    => Handler,
+                          LI         => LI,
+                          Sfiles     => Sfiles,
+                          File_Num   => Current_Xref.File_Num,
+                          Line       => Current_Xref.Line,
+                          Column     => Current_Xref.Col,
+                          First_Sect => First_Sect,
+                          Last_Sect  => Last_Sect);
                   end if;
 
                   if Primitive /= null then
                      Add_Index_Type (Entity, Primitive);
                   end if;
 
-               elsif Xref.Table (Current_Ref).Rtype = Interface_Reference then
+               elsif Current_Xref.Rtype = Interface_Reference then
                   Primitive :=
                     Find_Entity_In_ALI
                       (Handler,
                        LI, Sfiles,
-                       Xref.Table (Current_Ref).File_Num,
-                       Xref.Table (Current_Ref).Line,
-                       Xref.Table (Current_Ref).Col, First_Sect, Last_Sect,
+                       Current_Xref.File_Num,
+                       Current_Xref.Line,
+                       Current_Xref.Col,
+                       First_Sect, Last_Sect,
                        Find_In_Xref => False);  --  Only search declarations
 
                   if Primitive = null then
                      Trace (Assert_Me, "Couldn't find interface in ALI file: "
                             & Display_Full_Name (Get_LI_Filename (LI))
-                            & Xref.Table (Current_Ref).File_Num'Img & " "
-                            & Xref.Table (Current_Ref).Line'Img
-                            & Xref.Table (Current_Ref).Col'Img);
+                            & Current_Xref.File_Num'Img & " "
+                            & Current_Xref.Line'Img
+                            & Current_Xref.Col'Img);
 
                   else
                      Set_Type_Of (Entity, Primitive);
@@ -872,7 +872,7 @@ package body ALI_Parser is
                --  already
 
                elsif Kind /= Instantiation_Reference then
-                  Current_Sfile := Xref.Table (Current_Ref).File_Num;
+                  Current_Sfile := Current_Xref.File_Num;
 
                   --  Check to avoid the constraint error (index check failed)
                   --  reported under E829-005 that is triggered when GPS
@@ -888,9 +888,8 @@ package body ALI_Parser is
                   then
                      Location :=
                        (File   => Sfiles (Current_Sfile).File,
-                        Line   => Integer (Xref.Table (Current_Ref).Line),
-                        Column => Visible_Column_Type
-                          (Xref.Table (Current_Ref).Col));
+                        Line   => Integer (Current_Xref.Line),
+                        Column => Visible_Column_Type (Current_Xref.Col));
 
                      --  Handle references of entities imported from C
 
@@ -958,16 +957,17 @@ package body ALI_Parser is
                        Find_Entity_In_ALI
                          (Handler, LI,
                           Sfiles, Current_Sfile,
-                          Xref.Table (Current_Ref).Line,
-                          Xref.Table (Current_Ref).Col, First_Sect, Last_Sect);
+                          Current_Xref.Line,
+                          Current_Xref.Col,
+                          First_Sect, Last_Sect);
 
                      if Primitive = null then
                         Trace
                           (Assert_Me, "Couldn't find primitive in ALI file: "
                            & Display_Full_Name (Get_LI_Filename (LI))
                            & Current_Sfile'Img
-                           & Xref.Table (Current_Ref).Line'Img
-                           & Xref.Table (Current_Ref).Col'Img);
+                           & Current_Xref.Line'Img
+                           & Current_Xref.Col'Img);
                      else
                         --  Only add the primitive if it is a new one. That
                         --  keeps the database shorter without redundant
@@ -1359,9 +1359,11 @@ package body ALI_Parser is
 
       --  Local variables
 
+      Project : constant Project_Type := Get_Project (LI);
+
       Sunits : Unit_To_Sfile_Table (New_ALI.First_Unit .. New_ALI.Last_Unit);
       Sfiles : Sdep_To_Sfile_Table (New_ALI.First_Sdep .. New_ALI.Last_Sdep);
-      Project : constant Project_Type := Get_Project (LI);
+
       Imported_Projects   : Project_Type_Array
                               (1 .. Imported_Projects_Count (Project));
       Is_ALI_For_Separate : Boolean := False;
@@ -1426,6 +1428,7 @@ package body ALI_Parser is
    begin
       for Sect in First_Sect .. Last_Sect loop
          --  Check declarations only in the current file
+
          if Xref_Section.Table (Sect).File_Num = File_Num then
             for Entity in Xref_Section.Table (Sect).First_Entity ..
                             Xref_Section.Table (Sect).Last_Entity
@@ -1457,6 +1460,7 @@ package body ALI_Parser is
             --  Check all references in the ALI file, since we can have:
             --     32i4 X{integer} 33m24 50m4
             --     33i4 Y=33:24{integer} 51r4
+
             for Entity in Xref_Section.Table (Sect).First_Entity ..
               Xref_Section.Table (Sect).Last_Entity
             loop
@@ -2162,12 +2166,13 @@ package body ALI_Parser is
       --  If we already know about the file, we get the name of the LI file
       --  from it.
 
-      Source := Get_Or_Create
-        (Db           => Handler.Db,
-         File         => Source_Filename,
-         LI           => null,
-         Handler      => LI_Handler (Handler),
-         Allow_Create => False);
+      Source :=
+        Get_Or_Create
+          (Db           => Handler.Db,
+           File         => Source_Filename,
+           LI           => null,
+           Handler      => LI_Handler (Handler),
+           Allow_Create => False);
 
       case Frozen (Handler.Db) is
          when No_Create_Or_Update =>
@@ -2274,6 +2279,7 @@ package body ALI_Parser is
 
       --  Do another lookup, to update the LI file, since apparently we
       --  didn't know it before
+
       return Get_Or_Create
                (Db           => Handler.Db,
                 File         => Source_Filename,
@@ -2292,7 +2298,7 @@ package body ALI_Parser is
       Count : out Natural;
       Total : out Natural)
    is
-      LI      : LI_File;
+      LI         : LI_File;
       Steps_Done : Natural := 0;
 
    begin
@@ -2306,18 +2312,18 @@ package body ALI_Parser is
         and then Steps_Done <= Steps
       loop
          LI := Get_Or_Create
-           (Db      => Iter.Handler.Db,
-            File    => Iter.Files (Iter.Current),
-            Project => Iter.Project);
+                 (Db      => Iter.Handler.Db,
+                  File    => Iter.Files (Iter.Current),
+                  Project => Iter.Project);
 
          --  We force the update of this ALI if the database is in
          --  'Create_Only' mode. In this mode, this will not force the
          --  update of dependent ALIs (which will be parsed later anyway).
 
          if not Update_ALI
-           (Iter.Handler, LI,
-            Reset_ALI => True,
-            Force_Check => Frozen (Iter.Handler.Db) = Create_Only)
+                  (Iter.Handler, LI,
+                   Reset_ALI => True,
+                   Force_Check => Frozen (Iter.Handler.Db) = Create_Only)
          then
             if Active (Me) then
                Trace
