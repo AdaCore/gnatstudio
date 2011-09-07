@@ -9337,9 +9337,8 @@ types.
 GPS provides an interface with the GNAT software metrics generation tool
 @code{gnatmetric}.
 
-The metrics can be computed for the entire project, one source file belonging to
-the project, or (when applicable) a specific entity in the source file, e.g. a
-subprogram.
+The metrics can be computed for the one source file, for the current project,
+or for the current project and its imported subprojects
 
 The metrics generator can be invoked either from the @code{Tools->Metrics}
 menu or from the contextual menu.
@@ -9349,11 +9348,14 @@ The @code{Metrics} submenu is available from the @code{Tools} global menu and
 contains:
 
 @table @command
-@item Compute metrics for root project
-Generate metrics for all files from the root project.
-
 @item Compute metrics for current file
 Generate metrics for the current source file.
+
+@item Compute metrics for current project
+Generate metrics for all files from the current project.
+
+@item Compute metrics for current project and subprojects
+Generate metrics for all files from the current project and subprojects.
 
 @end table
 
