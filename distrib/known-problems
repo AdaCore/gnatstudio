@@ -8,6 +8,13 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K902-006: GPS: Scenario variables not passed to gnat metric
+  Problem:    When computing metrics from GPS, the scenario variables are not
+              passed to the "gnat metric" tool, which results in errors when
+              the project relies on scenario variables being defined.
+  Workaround: Modify the project to use default values for the scenario
+              variables, or launch "gnat metric" from the command line.
+
 - K901-001: GPS: Message locations lost when reloading a file
   Problem:    When reloading an editor for a file that has been modified
               outside of GPS, the locations for messages (such as search
