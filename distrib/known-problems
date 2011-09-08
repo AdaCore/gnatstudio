@@ -44,6 +44,13 @@ If no tag is specified, the entry is relevant to all IDEs.
               Target Configuration dialog, an extraneous text entry appears.
   Workaround: Do not select "custom" multiple times in a row.
 
+- K811-017: GB: Empty target list in makefile dialog
+  Problem:    For makefile driven projects, the list of available makefile
+              targets was empty if the makefile was named anything other
+              than "Makefile".
+  Workaround: Rename the makefile to "Makefile" in the file system and the
+              gpr file.
+
 - K808-005: GPS: support for using '{' in macro expansion and ClearCase plugin
   Problem:    In the GPS shell language, the support for using {} to delimit
               a parameter in a string (for instance in 'echo "${1}.txt"') is
