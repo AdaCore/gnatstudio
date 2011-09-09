@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,6 +29,7 @@ with GNATCOLL.Projects;
 with GNAT.Regpat;
 with GNATCOLL.Scripts;
 with GNATCOLL.Symbols;
+with GNATCOLL.Tribooleans;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Glib.Object;  use Glib;
@@ -323,6 +324,13 @@ package GPS.Kernel is
    function Get_Creator
      (Context : Selection_Context) return Abstract_Module_ID;
    --  Return the module ID for the module that created the context
+
+   procedure Set_Is_Dispatching_Call
+     (Context : Selection_Context; Is_Dispatching : Boolean);
+   function Is_Dispatching_Call
+     (Context : Selection_Context) return GNATCOLL.Tribooleans.Triboolean;
+   --  Whether the user clicked on a dispatching call. This information is
+   --  cached in the context the first time it is computed.
 
    -------------
    -- Markers --
@@ -868,6 +876,10 @@ private
       Creator_Provided_Project : Boolean := False;
       --  Set to True if the project_view was given by the creator, instead of
       --  being computed automatically
+
+      Is_Dispatching_Call : GNATCOLL.Tribooleans.Triboolean :=
+        GNATCOLL.Tribooleans.Indeterminate;
+      --  Whether we clicked on a dispatching call.
    end record;
 
    type Selection_Context_Data is access all Selection_Context_Data_Record;

@@ -25,6 +25,7 @@ with GNAT.Strings;
 
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
+with GNATCOLL.Tribooleans;       use GNATCOLL.Tribooleans;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -1960,17 +1961,22 @@ package body Src_Editor_Box is
       --  up when the xref DB is loaded, if the 'Load Xref info' pref is set.
       --  pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
 
-      Push_State (Kernel, Busy);
-      For_Each_Dispatching_Call
-        (Entity    => Get_Entity (Context),
-         Ref       => Get_Closest_Ref (Context),
-         On_Callee => On_Callee'Access,
-         Policy    => Submenu_For_Dispatching_Calls.Get_Pref);
-      Pop_State (Get_Kernel (Context));
+      if Is_Dispatching_Call (Context) = Indeterminate then
+         Push_State (Kernel, Busy);
+         For_Each_Dispatching_Call
+           (Entity    => Get_Entity (Context),
+            Ref       => Get_Closest_Ref (Context),
+            On_Callee => On_Callee'Access,
+            Policy    => Submenu_For_Dispatching_Calls.Get_Pref);
+         Pop_State (Get_Kernel (Context));
 
-      --  See comment above to see why this code is commented out
-      --  pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
-      return Count > 1;
+         --  See comment above to see why this code is commented out pragma
+         --  Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
+
+         Set_Is_Dispatching_Call (Context, Count > 1);
+      end if;
+
+      return Is_Dispatching_Call (Context) = To_Boolean (True);
    end Filter_Matches_Primitive;
 
    -------------

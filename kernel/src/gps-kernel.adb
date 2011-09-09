@@ -31,6 +31,7 @@ with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;
+with GNATCOLL.Tribooleans;      use GNATCOLL.Tribooleans;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with System;                    use System;
@@ -2226,5 +2227,32 @@ package body GPS.Kernel is
    begin
       return Kernel.Symbols;
    end Symbols;
+
+   -----------------------------
+   -- Set_Is_Dispatching_Call --
+   -----------------------------
+
+   procedure Set_Is_Dispatching_Call
+     (Context : Selection_Context; Is_Dispatching : Boolean) is
+   begin
+      if Context.Data.Data /= null then
+         Context.Data.Data.Is_Dispatching_Call :=
+           To_TriBoolean (Is_Dispatching);
+      end if;
+   end Set_Is_Dispatching_Call;
+
+   -------------------------
+   -- Is_Dispatching_Call --
+   -------------------------
+
+   function Is_Dispatching_Call
+     (Context : Selection_Context) return GNATCOLL.Tribooleans.Triboolean is
+   begin
+      if Context.Data.Data /= null then
+         return Context.Data.Data.Is_Dispatching_Call;
+      else
+         return Indeterminate;
+      end if;
+   end Is_Dispatching_Call;
 
 end GPS.Kernel;
