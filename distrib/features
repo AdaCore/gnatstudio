@@ -150,7 +150,12 @@ NF-51-K224-003 Add support for Ada 2012 in the project editor (2011-02-28)
 
   Add support for the -gnat12 switch in the project editor.
 
-NF-51-K218-029 GB: outline view should expand initially (2011-08-17)
+NF-51-K222-026 GB: Consolidate output to one console per project (2011-09-08)
+
+  All command output now goes to the same project-specific console
+  named "Messages [project_name]".
+
+NF-51-K218-029 GB: Outline view should expand initially (2011-08-17)
 
   The outline view now reveals all elements by default when a new
   editor window is opened.
