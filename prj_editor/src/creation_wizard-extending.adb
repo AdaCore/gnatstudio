@@ -24,9 +24,11 @@ with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
+with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Radio_Button;         use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -37,6 +39,7 @@ with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
@@ -55,6 +58,7 @@ package body Creation_Wizard.Extending is
       Copy_Files     : Gtk.Check_Button.Gtk_Check_Button;
       Files          : Gtk.Tree_View.Gtk_Tree_View;
       Projects_Count : Natural;
+      Obj_Dir        : Gtk_Entry;
    end record;
    type Extending_Sources_Page_Access is access all Extending_Sources_Page;
    overriding procedure Generate_Project
@@ -105,9 +109,12 @@ package body Creation_Wizard.Extending is
       File_Project : Project_Type;
       In_Dir       : Virtual_File;
       Copy_Files   : Boolean;
-      Recompute    : Boolean);
+      Recompute    : Boolean;
+      Obj_Dir      : Filesystem_String := "");
    --  A Files in an extending project. These files must all belong to
-   --  File_Project initially
+   --  File_Project initially.
+   --  Obj_Dir is used when a new extending project needs to be created, and
+   --  is a directory relative to that new project's location.
 
    --------------------------------
    -- Add_Extending_Wizard_Pages --
@@ -133,7 +140,7 @@ package body Creation_Wizard.Extending is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Wiz);
-      Box      : Gtk_Box;
+      Box, hbox : Gtk_Box;
       Frame    : Gtk_Frame;
       Label    : Gtk_Label;
       Scrolled : Gtk_Scrolled_Window;
@@ -205,6 +212,18 @@ package body Creation_Wizard.Extending is
          Next (PIter);
       end loop;
 
+      Gtk_New_Hbox (hbox);
+      Box.Pack_Start (hbox, Expand => False);
+      Gtk_New (Label, -"Object directory");
+      hbox.Pack_Start (Label, Expand => False);
+      Gtk_New (Page.Obj_Dir);
+      Page.Obj_Dir.Set_Text ("obj");
+      hbox.Pack_Start (Page.Obj_Dir);
+      Set_Tip (Get_Tooltips (Kernel), Page.Obj_Dir,
+        -("The directory in which the compiler puts its output."
+          & " This directory is relative to the location of each of the"
+          & " project files that will be created."));
+
       return Gtk_Widget (Box);
    end Create_Content;
 
@@ -259,6 +278,8 @@ package body Creation_Wizard.Extending is
          Files (P)(Count (P)) := File;
       end Add_File;
 
+      Obj_Dir : constant Filesystem_String := +Page.Obj_Dir.Get_Text;
+
    begin
       --  The new project will expand the root project. However, if the latter
       --  is itself an expanding project, we prefer to expand the original
@@ -277,6 +298,11 @@ package body Creation_Wizard.Extending is
         (Scenario  => Scenario_Variables,
          Attribute => Source_Files_Attribute,
          Values    => (1 .. 0 => null));
+
+      Project.Set_Attribute
+        (Obj_Dir_Attribute,
+         Create_From_Dir
+           (Project_Directory (Project), Obj_Dir).Display_Full_Name);
 
       --  Find the list of source files that are modified
 
@@ -317,19 +343,16 @@ package body Creation_Wizard.Extending is
       for P in Projects'Range loop
          exit when Projects (P) = No_Project;
 
-         declare
-            Dirs : constant File_Array := Projects (P).Source_Dirs;
-         begin
-            Add_Source_Files
-              (Kernel => Kernel,
-               Root_Project => Project,
-               Files        => Files (P) (1 .. Count (P)),
-               File_Project => Projects (P),
-               Copy_Files   => Get_Active (Page.Copy_Files),
-               In_Dir       => Dirs (Dirs'First),
-               Recompute    => False);
-            Changed := True;
-         end;
+         Add_Source_Files
+           (Kernel => Kernel,
+            Root_Project => Project,
+            Files        => Files (P) (1 .. Count (P)),
+            File_Project => Projects (P),
+            Copy_Files   => Get_Active (Page.Copy_Files),
+            In_Dir       => Project_Directory (Projects (P)),
+            Obj_Dir      => Obj_Dir,
+            Recompute    => False);
+         Changed := True;
 
          Unchecked_Free (Files (P));
       end loop;
@@ -346,7 +369,8 @@ package body Creation_Wizard.Extending is
       File_Project : Project_Type;
       In_Dir       : Virtual_File;
       Copy_Files   : Boolean;
-      Recompute    : Boolean)
+      Recompute    : Boolean;
+      Obj_Dir      : Filesystem_String := "")
    is
       Extended   : Project_Type;
       Iter       : Project_Iterator := Start (Root_Project);
@@ -375,6 +399,11 @@ package body Creation_Wizard.Extending is
            (Extended           => File_Project,
             Extend_All         => False,
             Use_Relative_Paths => True);
+
+         Extended.Set_Attribute
+           (Obj_Dir_Attribute,
+            Create_From_Dir
+              (Project_Directory (Extended), Obj_Dir).Display_Full_Name);
 
          Error := Root_Project.Add_Imported_Project
            (Imported_Project  => Extended,

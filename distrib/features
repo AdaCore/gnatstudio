@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K909-038 GPS: select object dir when creating extended prj (2011-09-09)
+
+  The wizard used to create extending projects now allows you to chose the
+  location of the object directory, where the compiler will put the result
+  of the compilation.
+
 NF-51-K905-010 GPS: new gnatmetric.py plugin (2011-09-07)
 
   The gnatmetrics plugin has been rewritten. This new version allows to compute
