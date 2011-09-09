@@ -21,9 +21,11 @@ with Commands.Interactive;     use Commands, Commands.Interactive;
 with Glib;                     use Glib;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Label;                use Gtk.Label;
+with Gtk.Radio_Button;         use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -101,6 +103,7 @@ package body Creation_Wizard.Extending is
       Root_Project : Project_Type;
       Files        : GNATCOLL.VFS.File_Array;
       File_Project : Project_Type;
+      In_Dir       : Virtual_File;
       Copy_Files   : Boolean;
       Recompute    : Boolean);
    --  A Files in an extending project. These files must all belong to
@@ -314,14 +317,19 @@ package body Creation_Wizard.Extending is
       for P in Projects'Range loop
          exit when Projects (P) = No_Project;
 
-         Add_Source_Files
-           (Kernel => Kernel,
-            Root_Project => Project,
-            Files        => Files (P) (1 .. Count (P)),
-            File_Project => Projects (P),
-            Copy_Files   => Get_Active (Page.Copy_Files),
-            Recompute    => False);
-         Changed := True;
+         declare
+            Dirs : constant File_Array := Projects (P).Source_Dirs;
+         begin
+            Add_Source_Files
+              (Kernel => Kernel,
+               Root_Project => Project,
+               Files        => Files (P) (1 .. Count (P)),
+               File_Project => Projects (P),
+               Copy_Files   => Get_Active (Page.Copy_Files),
+               In_Dir       => Dirs (Dirs'First),
+               Recompute    => False);
+            Changed := True;
+         end;
 
          Unchecked_Free (Files (P));
       end loop;
@@ -336,6 +344,7 @@ package body Creation_Wizard.Extending is
       Root_Project : Project_Type;
       Files        : GNATCOLL.VFS.File_Array;
       File_Project : Project_Type;
+      In_Dir       : Virtual_File;
       Copy_Files   : Boolean;
       Recompute    : Boolean)
    is
@@ -387,9 +396,7 @@ package body Creation_Wizard.Extending is
 
       if Copy_Files then
          for S in Files'Range loop
-            Files (S).Copy
-              (Project_Directory (Extended).Full_Name,
-               Success  => Success);
+            Files (S).Copy (In_Dir.Full_Name, Success  => Success);
          end loop;
       end if;
 
@@ -409,30 +416,68 @@ package body Creation_Wizard.Extending is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       File     : constant GNATCOLL.VFS.Virtual_File :=
         File_Information (Context.Context);
       Project  : constant Project_Type :=
         Get_Registry (Kernel).Tree.Info (File).Project;
-      Button : Message_Dialog_Buttons;
+      Dialog : Gtk_Dialog;
+      Label  : Gtk_Label;
+      Button : Gtk_Widget;
+      Response : Gtk_Response_Type;
+      Dirs   : constant GNATCOLL.VFS.File_Array :=
+        Get_Project (Kernel).Source_Dirs (Recursive => False);
+      Radio  : array (Dirs'Range) of Gtk_Radio_Button;
+      pragma Unreferenced (Command, Button);
    begin
-      Button := Message_Dialog
-        (-"Should GPS copy the file in the extending project's directory ?"
-         & ASCII.LF
-         & Display_Full_Name (Project_Directory (Get_Project (Kernel))),
-         Dialog_Type => Confirmation,
-         Buttons     => Button_Yes or Button_No,
-         Title       => -"Copy files ?",
-         Parent      => Get_Main_Window (Kernel));
+      Gtk_New
+        (Dialog,
+         Title  => "Copy file from extended project",
+         Parent => Get_Main_Window (Kernel),
+         Flags  => Modal or Destroy_With_Parent);
 
-      Add_Source_Files
-        (Kernel       => Kernel,
-         Root_Project => Get_Project (Kernel),
-         Files        => (1 => File),
-         File_Project => Project,
-         Copy_Files   => Button = Button_Yes,
-         Recompute    => True);
+      Gtk_New
+        (Label,
+         -"Should GPS copy the file into the extending projects directory ?"
+         & ASCII.LF
+         & Display_Full_Name (Project_Directory (Get_Project (Kernel))));
+      Label.Set_Selectable (True);
+      Label.Set_Justify (Justify_Center);
+      Dialog.Get_Vbox.Pack_Start (Label, Expand => False);
+
+      for D in Dirs'Range loop
+         Gtk_New
+           (Radio_Button => Radio (D),
+            Group        => Radio (Radio'First),
+            Label        => Dirs (D).Display_Full_Name);
+         Radio (D).Set_Active (D = Dirs'First);
+         Dialog.Get_Vbox.Pack_Start (Radio (D), Expand => False);
+      end loop;
+
+      Button := Dialog.Add_Button (-"Copy", Gtk_Response_Yes);
+      Button := Dialog.Add_Button (-"Do not copy", Gtk_Response_No);
+      Button := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
+
+      Dialog.Show_All;
+      Response := Dialog.Run;
+
+      if Response /= Gtk_Response_Cancel then
+         for R in Radio'Range loop
+            if Radio (R).Get_Active then
+               Add_Source_Files
+                 (Kernel       => Kernel,
+                  Root_Project => Get_Project (Kernel),
+                  Files        => (1 => File),
+                  File_Project => Project,
+                  In_Dir       => Dirs (R),
+                  Copy_Files   => Response = Gtk_Response_Yes,
+                  Recompute    => True);
+            end if;
+         end loop;
+      end if;
+
+      Dialog.Destroy;
+
       return Success;
    end Execute;
 
