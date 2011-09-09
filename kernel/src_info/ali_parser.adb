@@ -2356,17 +2356,24 @@ package body ALI_Parser is
    is
       Iter      : ALI_Information_Iterator;
    begin
-      Freeze (Handler.Db, Mode => Create_Only);
+      if Frozen (Handler.Db) = No_Create_Or_Update then
+         --  Nothing to do
+         Iter.Files := null;
 
-      Trace (Me, "Parse_All_LI_Information in project "
-             & Project.Name);
+         --  To match the call to Thaw in Free
+         Freeze (Handler.Db, Mode => No_Create_Or_Update);
 
-      Iter.Files :=
-        Project.Library_Files
-          (Recursive           => False,
-           Including_Libraries => True,
-           Xrefs_Dirs          => True,
-           ALI_Ext             => Get_ALI_Ext (ALI_Handler (Handler)));
+      else
+         Freeze (Handler.Db, Mode => Create_Only);  --  Thaw in Free()
+         Trace (Me, "Parse_All_LI_Information in project "
+                & Project.Name);
+         Iter.Files :=
+           Project.Library_Files
+             (Recursive           => False,
+              Including_Libraries => True,
+              Xrefs_Dirs          => True,
+              ALI_Ext             => Get_ALI_Ext (ALI_Handler (Handler)));
+      end if;
 
       if Iter.Files /= null then
          Iter.Current := Iter.Files'First;
@@ -2376,7 +2383,6 @@ package body ALI_Parser is
 
       Iter.Handler := ALI_Handler (Handler);
       Iter.Project := Project;
-
       return Iter;
    end Parse_All_LI_Information;
 
