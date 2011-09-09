@@ -29,6 +29,12 @@ NF-51-K905-010 GPS: new gnatmetric.py plugin (2011-09-07)
   metrics for a project and its subprojects, and it is possible to choose the
   options to pass to gnatmetric before launching it.
 
+NF-51-K830-011 GPS: remove files from extending projects (2011-09-09)
+
+  A new contextual menu is now available when a file belongs to an extending
+  project. The file can be deleted and removed from that project (and thus the
+  project will see the version of the file from its extended project).
+
 NF-51-K809-019 GPS: save files automatically on run of SPARK tools (2011-08-12)
 
   GPS saves modified files automatically when SPARK tools are run and

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2010, AdaCore             --
+--                      Copyright (C) 2005-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,6 +33,7 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
@@ -40,8 +41,10 @@ with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with Projects;                 use Projects;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
+with Traces;
 with Wizards;                  use Wizards;
 
 package body Creation_Wizard.Extending is
@@ -72,11 +75,26 @@ package body Creation_Wizard.Extending is
    --  Add the current file to the current extending all project (make a copy
    --  of the file if necessary first)
 
+   type Remove_From_Extending_Project is
+     new Commands.Interactive.Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Remove_From_Extending_Project;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Remove the current file from the extending project, after asking
+   --  confirmation to the user.
+
    type Can_Add_To_Extended is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Can_Add_To_Extended;
       Context : Selection_Context) return Boolean;
    --  True if the selected file can be added to an extending project
+
+   type In_Extending_Project is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access In_Extending_Project;
+      Context : Selection_Context) return Boolean;
+   --  True if the selected file is in an extending project
 
    procedure Add_Source_Files
      (Kernel       : access Kernel_Handle_Record'Class;
@@ -418,6 +436,77 @@ package body Creation_Wizard.Extending is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Remove_From_Extending_Project;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File    : constant Virtual_File := File_Information (Context.Context);
+      Button  : Message_Dialog_Buttons;
+      Removed : Boolean;
+      Project : Project_Type;
+      List    : String_List_Access;
+
+   begin
+      if Active (Traces.Testsuite_Handle) then
+         --  No confirmation dialog in the testsuite
+         Button := Button_Yes;
+      else
+         Button := Message_Dialog
+           (Msg => -"This will delete the file" & ASCII.LF
+            & File.Display_Full_Name & ASCII.LF
+            & "Are you sure ?",
+            Buttons => Button_Yes or Button_No,
+            Dialog_Type => Confirmation,
+            Title => -"Remove file from extending project",
+            Parent => Get_Main_Window (Kernel));
+      end if;
+
+      if Button = Button_Yes then
+         Delete (File, Removed);
+         if not Removed then
+            GPS.Kernel.Console.Insert
+              (Kernel,
+               Text => -"Failed to remove " & File.Display_Full_Name,
+               Mode => GPS.Kernel.Console.Error);
+            return Failure;
+         else
+            Project := Get_Registry (Kernel).Tree.Info (File).Project;
+            if Project.Has_Attribute (Source_Files_Attribute) then
+               List := Project.Attribute_Value (Source_Files_Attribute);
+               for L in List'Range loop
+                  if List (L).all = +File.Base_Name then
+                     Free (List (L));
+                     exit;
+                  end if;
+               end loop;
+
+               Project.Set_Attribute (Source_Files_Attribute, List.all);
+               Free (List);
+
+            elsif Project.Has_Attribute (Source_List_File_Attribute) then
+               GPS.Kernel.Console.Insert
+                 (Kernel,
+                  Text => -"Project '"
+                  & Project.Name
+                  & (-("' specifies its sources via a"
+                    & " Source_List_File attribute, which wasn't edited"
+                    & " automatically")));
+            end if;
+
+            Recompute_View (Kernel);
+         end if;
+      end if;
+
+      return Success;
+   end Execute;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -436,15 +525,33 @@ package body Creation_Wizard.Extending is
       if Extended_Project (Get_Project (Kernel)) /= No_Project then
          File := File_Information (Context);
          if File /= GNATCOLL.VFS.No_File then
-            Project := Get_Registry (Kernel).Tree.Info (File).Project;
-
             --  If the file doesn't already belong to an extending project
-            if Project /= No_Project
-              and then Extended_Project (Project) = No_Project
-            then
-               return True;
-            end if;
+
+            Project := Get_Registry (Kernel).Tree.Info (File).Project;
+            return Project /= No_Project
+              and then Extended_Project (Project) = No_Project;
          end if;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access In_Extending_Project;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
+      File    : constant Virtual_File := File_Information (Context);
+      Project : Project_Type;
+   begin
+      if File /= GNATCOLL.VFS.No_File then
+         Project := Get_Registry (Kernel).Tree.Info (File).Project;
+         return Project /= No_Project
+           and then Extended_Project (Project) /= No_Project;
       end if;
       return False;
    end Filter_Matches_Primitive;
@@ -457,14 +564,23 @@ package body Creation_Wizard.Extending is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
-      Filter  : constant Action_Filter := new Can_Add_To_Extended;
+      Filter  : Action_Filter;
    begin
       Command := new Edit_In_Extended_Project;
+      Filter  := new Can_Add_To_Extended;
       Register_Contextual_Menu
         (Kernel, "Add to extending project",
          Action => Command,
          Filter => Filter,
          Label  => "Add to extending project");
+
+      Command := new Remove_From_Extending_Project;
+      Filter  := new In_Extending_Project;
+      Register_Contextual_Menu
+        (Kernel, "Remove from extending project",
+         Action => Command,
+         Filter => Filter,
+         Label  => "Remove from extending project");
    end Register_Contextual_Menus;
 
 end Creation_Wizard.Extending;

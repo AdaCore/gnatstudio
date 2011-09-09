@@ -2644,7 +2644,12 @@ package body Src_Editor_Box is
          --  The above part is to detect a writable file that has been saved at
          --  some point (so was existing on disk) but removed somehow.
          then
-            if Always_Reload or else not Interactive then
+            if Always_Reload
+              or else not Interactive
+
+              --  No dialog in the testsuite
+              or else Active (Traces.Testsuite_Handle)
+            then
                Response := Gtk_Response_No;
 
             else
