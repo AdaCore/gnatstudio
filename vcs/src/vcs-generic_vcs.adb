@@ -1425,6 +1425,12 @@ package body VCS.Generic_VCS is
            (Get_Attribute (M, "atomic_commands", "FALSE"));
          Ref.Commit_Directory := Boolean'Value
            (Get_Attribute (M, "commit_directory", "FALSE"));
+
+         for R in Revision_Type loop
+            Ref.Default_Revisions (R) := To_Unbounded_String
+              (Get_Attribute (M, To_Lower (R'Img) & "_revision", "n/a"));
+         end loop;
+
          Ref.Administrative_Dir := new Filesystem_String'
            (+Get_Attribute (M, "administrative_directory", ""));
          --  ??? Potentially non-utf8 string should not be
@@ -2318,5 +2324,16 @@ package body VCS.Generic_VCS is
    begin
       Basic_Types.Unchecked_Free (X.Regexp);
    end Free;
+
+   --------------------------
+   -- Get_Default_Revision --
+   --------------------------
+
+   overriding function Get_Default_Revision
+     (Ref      : access Generic_VCS_Record;
+      Revision : Revision_Type) return String is
+   begin
+      return To_String (Ref.Default_Revisions (Revision));
+   end Get_Default_Revision;
 
 end VCS.Generic_VCS;

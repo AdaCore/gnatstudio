@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -186,6 +186,10 @@ package VCS.Generic_VCS is
    overriding function Create_From_VCS
      (Ref  : access Generic_VCS_Record;
       Name : String) return GNATCOLL.VFS.Virtual_File;
+
+   overriding function Get_Default_Revision
+     (Ref      : access Generic_VCS_Record;
+      Revision : Revision_Type) return String;
 
 private
 

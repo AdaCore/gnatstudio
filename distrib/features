@@ -35,6 +35,12 @@ NF-51-K905-010 GPS: new gnatmetric.py plugin (2011-09-07)
   metrics for a project and its subprojects, and it is possible to choose the
   options to pass to gnatmetric before launching it.
 
+NF-51-K902-022 GPS: new attributes in custom VCS (2011-09-12)
+
+  New attributes "prev_revision" and "head_revision" can be specified when
+  defining custom VCS. These attributes are used as defaults when comparing
+  between two revisions.
+
 NF-51-K830-011 GPS: remove files from extending projects (2011-09-09)
 
   A new contextual menu is now available when a file belongs to an extending

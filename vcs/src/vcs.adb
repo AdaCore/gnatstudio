@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -385,5 +385,18 @@ package body VCS is
    begin
       return Ref.Require_Log;
    end Require_Log;
+
+   --------------------------
+   -- Get_Default_Revision --
+   --------------------------
+
+   function Get_Default_Revision
+     (Ref      : access VCS_Record;
+      Revision : Revision_Type) return String
+   is
+      pragma Unreferenced (Ref, Revision);
+   begin
+      return "n/a";
+   end Get_Default_Revision;
 
 end VCS;

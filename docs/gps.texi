@@ -17823,6 +17823,14 @@ information. For example for Subversion this is @file{.svn}. This
 information is used when the project is setup to select automatically
 the external VCS. @xref{Version Control System}.
 
+@item prev_revision
+A string which can be used when querying revisions to indicate the
+previous revision of a file, for instance "PREV" for subversion.
+
+@item head_revision
+A string which can be used when querying revisions to indicate the
+latest revision of a file, for instance "HEAD" for subversion.
+
 @item require_log
 The attribute @code{require_log} specifies if the VCS require a log
 for the commit/add/delete actions. It can take the values @code{TRUE}

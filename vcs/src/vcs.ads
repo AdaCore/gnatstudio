@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Strings;
 
@@ -392,6 +393,12 @@ package VCS is
    --  Rev is the requested revision. If Rev is empty, return the log for all
    --  revisions on the current branch.
 
+   type Revision_Type is (Head, Prev);
+   function Get_Default_Revision
+     (Ref      : access VCS_Record;
+      Revision : Revision_Type) return String;
+   --  Return the string representing the given revision.
+
    Annotation_Id : constant String := "Annotate";
    procedure Annotate
      (Rep  : access VCS_Record;
@@ -533,12 +540,15 @@ private
      (Not_Registered_Label'Access, Not_Registered_Stock'Access);
    --  The file is unknown of the VCS repository
 
+   type Default_Revs is array (Revision_Type) of Unbounded_String;
+
    type VCS_Record is abstract tagged limited record
       Kernel              : GPS.Kernel.Kernel_Handle;
       Absolute_Names      : Boolean    := False;
       Query_Status_By_Dir : Boolean    := False;
       Atomic_Commands     : Boolean    := False;
       Commit_Directory    : Boolean    := False;
+      Default_Revisions   : Default_Revs;
       Require_Log         : Boolean    := True;
       Path_Style          : OS_Utils.Path_Style := System_Default;
       Ignore_Filename     : GNATCOLL.VFS.Filesystem_String_Access;

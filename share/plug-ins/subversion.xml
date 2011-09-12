@@ -468,6 +468,8 @@
         group_queries_by_directory="TRUE"
         absolute_names="TRUE" atomic_commands="TRUE"
         commit_directory="TRUE"
+        prev_revision="PREV"
+	head_revision="HEAD"
 	administrative_directory=".svn">
       <status_files       action="generic_svn_status"           label="Query status"/>
       <status_dir         action="generic_svn_status_dir"       label="Query status for directory"/>

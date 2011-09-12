@@ -3002,8 +3002,10 @@ package body VCS_View_API is
       Status := Get_Cache (Get_Status_Cache, Files (Files'First)).Status;
 
       if not One_Rev then
-         if Status.Repository_Revision = null then
-            Revision_2 := new String'("");
+         if Status.Repository_Revision = null
+           or else Status.Repository_Revision.all = "n/a"
+         then
+            Revision_2 := new String'(Ref.Get_Default_Revision (Prev));
          else
             Revision_2 := new String'
               (Protect (Status.Repository_Revision.all));
@@ -3038,7 +3040,7 @@ package body VCS_View_API is
          elsif Status.Working_Revision /= null then
             Revision_1 := new String'(Protect (Status.Working_Revision.all));
          else
-            Revision_1 := new String'("");
+            Revision_1 := new String'(Ref.Get_Default_Revision (Head));
          end if;
       end if;
 
