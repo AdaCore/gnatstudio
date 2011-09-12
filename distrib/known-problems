@@ -71,6 +71,16 @@ If no tag is specified, the entry is relevant to all IDEs.
               corresponding message has been removed from the Locations view.
   Workaround: close and reopen the file editor.
 
+- K728-017: GPS: Load desktop fails with editors outside of central area
+  Problem:    If you move some editors in the project-independent part
+              of a desktop (so that they are "hidden" when switching
+              perspectives), they are incorrectly restored when the desktop
+              is loaded the next time you launch GPS (and blank areas are
+              seen instead).
+  Workaround: Keep editors so that they are "preserved" when switching
+              perspectives. This is the intent behind perspectives in any
+              case.
+
 - K727-003: GPS: CodePeer ranking and comments not updated
   Problem:    When the same message comes from several generic instantiations
               it looks like it reappear after change of its ranking and

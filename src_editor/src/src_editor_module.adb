@@ -729,9 +729,8 @@ package body Src_Editor_Module is
       Dummy  : Boolean;
       pragma Unreferenced (Dummy);
    begin
-      Create_Files_Pixbufs_If_Needed (User);
-
       if Node.Tag.all = "Source_Editor" then
+         Create_Files_Pixbufs_If_Needed (User);
          F := Get_File_Child (Node, "File");
 
          if F /= No_File then
