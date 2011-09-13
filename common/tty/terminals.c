@@ -1354,7 +1354,7 @@ gvd_interrupt_pid (int pid)
     cache_system_info ();
 
   /* Try to locate console window for process. */
-  EnumWindows ((ENUMWINDOWSPROC) find_child_console, (LPARAM) &cp);
+  EnumWindows ((WNDENUMPROC) find_child_console, (LPARAM) &cp);
 
   if (cp.hwnd)
     {
