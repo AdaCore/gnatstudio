@@ -1804,7 +1804,7 @@ package body Entities is
                Location => Entity.End_Of_Scope.Location,
                Kind     => Entity.End_Of_Scope.Kind);
             Unref (Entity.End_Of_Scope.Caller);
-            Entity.End_Of_Scope := (Location, null, null, Kind, False, False);
+            Entity.End_Of_Scope := (Location, null, null, Kind, False);
          else
             Add_Reference
               (Entity,
@@ -1813,7 +1813,7 @@ package body Entities is
          end if;
       else
          Unref (Entity.End_Of_Scope.Caller);
-         Entity.End_Of_Scope := (Location, null, null, Kind, False, False);
+         Entity.End_Of_Scope := (Location, null, null, Kind, False);
       end if;
    end Set_End_Of_Scope;
 
@@ -1902,8 +1902,7 @@ package body Entities is
      (Entity                : Entity_Information;
       Location              : File_Location;
       Kind                  : Reference_Kind;
-      From_Instantiation_At : Entity_Instantiation := No_Instantiation;
-      Is_Imported           : Boolean := False)
+      From_Instantiation_At : Entity_Instantiation := No_Instantiation)
    is
       Refs : File_With_Refs_Access;
    begin
@@ -1934,10 +1933,19 @@ package body Entities is
           Caller                => null,
           From_Instantiation_At => From_Instantiation_At,
           Kind                  => Kind,
-          Is_Declaration        => False,
-          Is_Imported           => Is_Imported));
+          Is_Declaration        => False));
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
+
+   ---------------------
+   -- Set_Is_Imported --
+   ---------------------
+
+   procedure Set_Is_Imported
+     (Entity : Entity_Information; Value : Boolean := True) is
+   begin
+      Entity.Is_Imported := Value;
+   end Set_Is_Imported;
 
    --------------------------
    -- Set_Is_Instantiation --
@@ -2120,7 +2128,8 @@ package body Entities is
             Ref_Count                    => 1,
             Trie_Tree_Index              =>
               Entities_Search_Tries.Null_Vector_Trie_Index,
-            Is_Dummy                     => False);
+            Is_Dummy                     => False,
+            Is_Imported                  => False);
 
          Ref (File);  --  Used in declaration
          Append (UEI.List.all, E);
@@ -2213,6 +2222,16 @@ package body Entities is
    begin
       return Entity /= null and then Entity.Kind.Kind = Array_Kind;
    end Is_Array;
+
+   -----------------
+   -- Is_Imported --
+   -----------------
+
+   function Is_Imported
+     (Entity : Entity_Information) return Boolean is
+   begin
+      return Entity.Is_Imported;
+   end Is_Imported;
 
    -------------------------------
    -- Is_Primitive_Operation_Of --

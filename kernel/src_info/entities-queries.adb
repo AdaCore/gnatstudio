@@ -872,7 +872,7 @@ package body Entities.Queries is
          then
             Bodies_Found := Bodies_Found + 1;
 
-            if Ref.Is_Imported then
+            if Entity.Is_Imported then
                Location := Ref.Location;
                return;
 

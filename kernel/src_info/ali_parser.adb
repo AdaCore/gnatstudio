@@ -790,7 +790,6 @@ package body ALI_Parser is
                Instantiation : Entity_Information := null;
                Ref           : Nat;
                Inst          : Entity_Instantiation;
-               Is_Imported   : Boolean := False;
                Current_Xref  : Xref_Record renames Xref.Table (Current_Ref);
 
             begin
@@ -891,10 +890,10 @@ package body ALI_Parser is
                         Line   => Integer (Current_Xref.Line),
                         Column => Visible_Column_Type (Current_Xref.Col));
 
-                     --  Handle references of entities imported from C
+                  --  Handle references of entities imported from C
 
                   else
-                     Is_Imported := True;
+                     Set_Is_Imported (Entity);
 
                      --  Search for the name of the imported entity in the trie
                      --  database. There is no need to iterate on the found
@@ -1016,7 +1015,7 @@ package body ALI_Parser is
                         Ref := Ref + 1;
                      end loop;
 
-                     Add_Reference (Entity, Location, Kind, Inst, Is_Imported);
+                     Add_Reference (Entity, Location, Kind, Inst);
                   end if;
                end if;
             exception

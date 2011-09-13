@@ -123,7 +123,8 @@ package body Entities.Construct_Assistant is
               Ref_Count                    => 1,
               Trie_Tree_Index              =>
                 Entities_Search_Tries.Null_Vector_Trie_Index,
-              Is_Dummy                     => True);
+              Is_Dummy                     => True,
+              Is_Imported                  => False);
 
          --  Make a simple association between construct categories and entity
          --  categories. This association is known to be inaccurate, but is

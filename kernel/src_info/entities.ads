@@ -687,6 +687,8 @@ package Entities is
    function "<" (Entity1, Entity2 : Entity_Information) return Boolean;
    --  sort two entities alphabetically
 
+   function Is_Imported
+     (Entity : Entity_Information) return Boolean;
    function Is_Primitive_Operation_Of
      (Entity : Entity_Information) return Entity_Information;
    --  Return the entity for which Entity is a primitive operation, or null
@@ -710,6 +712,8 @@ package Entities is
      (Entity : Entity_Information; Renaming_Of : Entity_Information);
    procedure Set_Overriden_Entity
      (Entity : Entity_Information; Overriden : Entity_Information);
+   procedure Set_Is_Imported
+     (Entity : Entity_Information; Value : Boolean := True);
    procedure Set_Is_Instantiation
      (Entity : Entity_Information; Of_Generic : Entity_Information);
    --  Override some information for the entity.
@@ -720,8 +724,7 @@ package Entities is
      (Entity                : Entity_Information;
       Location              : File_Location;
       Kind                  : Reference_Kind;
-      From_Instantiation_At : Entity_Instantiation := No_Instantiation;
-      Is_Imported           : Boolean := False);
+      From_Instantiation_At : Entity_Instantiation := No_Instantiation);
    --  Add a new reference to the entity. No Check is done whether this
    --  reference already exists.
    --  From_Instantiation_At indicates which instantiation of the entity is
@@ -1035,7 +1038,6 @@ private
       From_Instantiation_At : Entity_Instantiation;
       Kind                  : Reference_Kind;
       Is_Declaration        : Boolean;
-      Is_Imported           : Boolean;
    end record;
    --  To spare some memory in the entity table, pack E_Reference,
    --  but keep a reasonable alignment to avoid inefficiencies.
@@ -1047,8 +1049,7 @@ private
       Caller                => null,
       From_Instantiation_At => null,
       Kind                  => Reference,
-      Is_Declaration        => False,
-      Is_Imported           => False);
+      Is_Declaration        => False);
    --  Caller is the enclosing entity at that location
 
    function Lt_No_File (Left, Right : E_Reference) return Boolean;
@@ -1253,6 +1254,9 @@ private
       --  When true, this entity is not coming from a regular ALI file, and
       --  not referenced in the source file. Typically, it's coming from a
       --  construct and stored in a different location.
+
+      Is_Imported : Boolean := False;
+      --  When true, this entity is imported from other language
    end record;
 
    --------------------
