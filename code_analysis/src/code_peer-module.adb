@@ -762,7 +762,7 @@ package body Code_Peer.Module is
      (Self : access Module_Id_Record'Class;
       File : Virtual_File)
    is
-      use type Code_Peer.Summary_Reports.Summary_Report;
+      use type Code_Peer.Messages_Reports.Messages_Report;
       use type Code_Analysis.Code_Analysis_Tree;
 
       Input   : Input_Sources.File.File_Input;
@@ -824,14 +824,14 @@ package body Code_Peer.Module is
 
          --  Create codepeer report window
 
-         Code_Peer.Summary_Reports.Gtk_New
+         Code_Peer.Messages_Reports.Gtk_New
            (Self.Report,
             GPS.Kernel.Kernel_Handle (Self.Kernel),
             GPS.Kernel.Modules.Module_ID (Self),
             Self.Tree);
          Context_CB.Connect
            (Self.Report,
-            Code_Peer.Summary_Reports.Signal_Activated,
+            Code_Peer.Messages_Reports.Signal_Activated,
             Context_CB.To_Marshaller (On_Activate'Access),
             Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
          Context_CB.Connect
@@ -841,7 +841,7 @@ package body Code_Peer.Module is
             Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
          Context_CB.Connect
            (Self.Report,
-            Code_Peer.Summary_Reports.Signal_Criteria_Changed,
+            Code_Peer.Messages_Reports.Signal_Criteria_Changed,
             Context_CB.To_Marshaller (On_Criteria_Changed'Access),
             Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
 

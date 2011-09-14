@@ -25,7 +25,7 @@ with GPS.Intl;          use GPS.Intl;
 
 with Code_Peer.Module;
 
-package body Code_Peer.Summary_Models is
+package body Code_Peer.Messages_Summary_Models is
 
    use type Code_Analysis.Project_Access;
    use type Code_Analysis.Subprogram_Access;
@@ -35,7 +35,7 @@ package body Code_Peer.Summary_Models is
    -- Clear --
    -----------
 
-   procedure Clear (Self : access Summary_Model_Record) is
+   procedure Clear (Self : access Messages_Summary_Model_Record) is
    begin
       Self.Message_Categories.Clear;
    end Clear;
@@ -45,7 +45,7 @@ package body Code_Peer.Summary_Models is
    ------------
 
    overriding function Create
-     (Self : access Summary_Model_Record;
+     (Self : access Messages_Summary_Model_Record;
       File : Code_Analysis.File_Access)
       return Code_Analysis.Tree_Models.File_Item_Access
    is
@@ -60,7 +60,7 @@ package body Code_Peer.Summary_Models is
    ------------
 
    overriding function Create
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Project_Access)
       return Code_Analysis.Tree_Models.Project_Item_Access
    is
@@ -75,7 +75,7 @@ package body Code_Peer.Summary_Models is
    ------------
 
    overriding function Create
-     (Self       : access Summary_Model_Record;
+     (Self       : access Messages_Summary_Model_Record;
       Subprogram : Code_Analysis.Subprogram_Access)
       return Code_Analysis.Tree_Models.Subprogram_Item_Access
    is
@@ -90,7 +90,7 @@ package body Code_Peer.Summary_Models is
    ---------------------
 
    overriding function Get_Column_Type
-     (Self  : access Summary_Model_Record;
+     (Self  : access Messages_Summary_Model_Record;
       Index : Glib.Gint) return Glib.GType
    is
       pragma Unreferenced (Self);
@@ -148,7 +148,7 @@ package body Code_Peer.Summary_Models is
    -------------------
 
    overriding function Get_N_Columns
-     (Self : access Summary_Model_Record) return Glib.Gint
+     (Self : access Messages_Summary_Model_Record) return Glib.Gint
    is
       pragma Unreferenced (Self);
 
@@ -161,7 +161,7 @@ package body Code_Peer.Summary_Models is
    ---------------
 
    overriding procedure Get_Value
-     (Self   : access Summary_Model_Record;
+     (Self   : access Messages_Summary_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
@@ -628,14 +628,14 @@ package body Code_Peer.Summary_Models is
    -------------
 
    procedure Gtk_New
-     (Model           : out Summary_Model;
+     (Model           : out Messages_Summary_Model;
       Tree            : Code_Analysis.Code_Analysis_Tree;
       Categories      : Code_Peer.Message_Category_Sets.Set;
       Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
       Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf) is
    begin
-      Model := new Summary_Model_Record;
+      Model := new Messages_Summary_Model_Record;
       Initialize
         (Model, Tree, Categories, Project_Icon, File_Icon, Subprogram_Icon);
    end Gtk_New;
@@ -645,7 +645,7 @@ package body Code_Peer.Summary_Models is
    ----------------
 
    procedure Initialize
-     (Model           : access Summary_Model_Record'Class;
+     (Model           : access Messages_Summary_Model_Record'Class;
       Tree            : Code_Analysis.Code_Analysis_Tree;
       Categories      : Code_Peer.Message_Category_Sets.Set;
       Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
@@ -669,7 +669,7 @@ package body Code_Peer.Summary_Models is
    ----------------
 
    overriding function Is_Changed
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean
    is
       pragma Unreferenced (Self, Project);
@@ -683,7 +683,7 @@ package body Code_Peer.Summary_Models is
    ----------------
 
    overriding function Is_Changed
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
    is
@@ -698,7 +698,7 @@ package body Code_Peer.Summary_Models is
    ----------------
 
    overriding function Is_Changed
-     (Self       : access Summary_Model_Record;
+     (Self       : access Messages_Summary_Model_Record;
       Project    : Code_Analysis.Tree_Models.Project_Item_Access;
       File       : Code_Analysis.Tree_Models.File_Item_Access;
       Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
@@ -715,7 +715,7 @@ package body Code_Peer.Summary_Models is
    ----------------
 
    overriding function Is_Visible
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean
    is
       Project_Node : constant Project_Item_Access :=
@@ -742,7 +742,7 @@ package body Code_Peer.Summary_Models is
    ----------------
 
    overriding function Is_Visible
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
    is
@@ -773,7 +773,7 @@ package body Code_Peer.Summary_Models is
    ----------------
 
    overriding function Is_Visible
-     (Self       : access Summary_Model_Record;
+     (Self       : access Messages_Summary_Model_Record;
       Project    : Code_Analysis.Tree_Models.Project_Item_Access;
       File       : Code_Analysis.Tree_Models.File_Item_Access;
       Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
@@ -804,7 +804,7 @@ package body Code_Peer.Summary_Models is
    ------------------------------
 
    procedure Set_Show_All_Subprograms
-     (Self : access Summary_Model_Record'Class;
+     (Self : access Messages_Summary_Model_Record'Class;
       Show : Boolean) is
    begin
       Self.Show_All_Subprograms := Show;
@@ -816,7 +816,7 @@ package body Code_Peer.Summary_Models is
    ------------------------------------
 
    procedure Set_Visible_Message_Categories
-     (Self : access Summary_Model_Record'Class;
+     (Self : access Messages_Summary_Model_Record'Class;
       To   : Code_Peer.Message_Category_Sets.Set)
    is
    begin
@@ -824,4 +824,4 @@ package body Code_Peer.Summary_Models is
       Self.Reconstruct;
    end Set_Visible_Message_Categories;
 
-end Code_Peer.Summary_Models;
+end Code_Peer.Messages_Summary_Models;

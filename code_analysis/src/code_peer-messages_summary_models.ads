@@ -24,7 +24,7 @@ with Gtk.Tree_Model;
 with Code_Analysis.Tree_Models;
 with Code_Peer.Utilities;
 
-package Code_Peer.Summary_Models is
+package Code_Peer.Messages_Summary_Models is
 
    Entity_Icon_Column                 : constant :=  0;
    Entity_Name_Column                 : constant :=  1;
@@ -63,13 +63,14 @@ package Code_Peer.Summary_Models is
    --  *_Added_* and *_Removed_* are used for sorting by the intermediate
    --  GtkTreeModelSort model.
 
-   type Summary_Model_Record is
+   type Messages_Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;
 
-   type Summary_Model is access all Summary_Model_Record'Class;
+   type Messages_Summary_Model is
+     access all Messages_Summary_Model_Record'Class;
 
    procedure Gtk_New
-     (Model           : out Summary_Model;
+     (Model           : out Messages_Summary_Model;
       Tree            : Code_Analysis.Code_Analysis_Tree;
       Categories      : Code_Peer.Message_Category_Sets.Set;
       Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
@@ -77,7 +78,7 @@ package Code_Peer.Summary_Models is
       Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf);
 
    procedure Initialize
-     (Model           : access Summary_Model_Record'Class;
+     (Model           : access Messages_Summary_Model_Record'Class;
       Tree            : Code_Analysis.Code_Analysis_Tree;
       Categories      : Code_Peer.Message_Category_Sets.Set;
       Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
@@ -85,20 +86,20 @@ package Code_Peer.Summary_Models is
       Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf);
 
    procedure Set_Show_All_Subprograms
-     (Self : access Summary_Model_Record'Class;
+     (Self : access Messages_Summary_Model_Record'Class;
       Show : Boolean);
    --  Toggle filering of the subprograms which don't have messages. Filtering
    --  is enabled by default.
 
    procedure Set_Visible_Message_Categories
-     (Self : access Summary_Model_Record'Class;
+     (Self : access Messages_Summary_Model_Record'Class;
       To   : Code_Peer.Message_Category_Sets.Set);
 
-   procedure Clear (Self : access Summary_Model_Record);
+   procedure Clear (Self : access Messages_Summary_Model_Record);
 
 private
 
-   type Summary_Model_Record is
+   type Messages_Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with record
       Tree                 : Code_Analysis.Code_Analysis_Tree;
       Show_All_Subprograms : Boolean := False;
@@ -142,33 +143,33 @@ private
    --  Override FilterableTreeModel subprograms
 
    overriding function Create
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Project_Access)
       return Code_Analysis.Tree_Models.Project_Item_Access;
 
    overriding function Create
-     (Self : access Summary_Model_Record;
+     (Self : access Messages_Summary_Model_Record;
       File : Code_Analysis.File_Access)
       return Code_Analysis.Tree_Models.File_Item_Access;
 
    overriding function Create
-     (Self       : access Summary_Model_Record;
+     (Self       : access Messages_Summary_Model_Record;
       Subprogram : Code_Analysis.Subprogram_Access)
       return Code_Analysis.Tree_Models.Subprogram_Item_Access;
 
    overriding function Is_Visible
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean;
    --  Returns True if specified project must be visible in the tree
 
    overriding function Is_Visible
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean;
    --  Returns True if specified file must be visible in the tree
 
    overriding function Is_Visible
-     (Self       : access Summary_Model_Record;
+     (Self       : access Messages_Summary_Model_Record;
       Project    : Code_Analysis.Tree_Models.Project_Item_Access;
       File       : Code_Analysis.Tree_Models.File_Item_Access;
       Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
@@ -176,18 +177,18 @@ private
    --  Returns True if specified subprogram must be visible in the tree
 
    overriding function Is_Changed
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean;
    --  Returns True if specified project data has been changed
 
    overriding function Is_Changed
-     (Self    : access Summary_Model_Record;
+     (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean;
    --  Returns True if specified file data has been changed
 
    overriding function Is_Changed
-     (Self       : access Summary_Model_Record;
+     (Self       : access Messages_Summary_Model_Record;
       Project    : Code_Analysis.Tree_Models.Project_Item_Access;
       File       : Code_Analysis.Tree_Models.File_Item_Access;
       Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
@@ -197,16 +198,16 @@ private
    --  Override standard GtkTreeModel subprograms
 
    overriding function Get_N_Columns
-     (Self : access Summary_Model_Record) return Glib.Gint;
+     (Self : access Messages_Summary_Model_Record) return Glib.Gint;
 
    overriding function Get_Column_Type
-     (Self : access Summary_Model_Record;
+     (Self : access Messages_Summary_Model_Record;
       Index : Glib.Gint) return Glib.GType;
 
    overriding procedure Get_Value
-     (Self   : access Summary_Model_Record;
+     (Self   : access Messages_Summary_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue);
 
-end Code_Peer.Summary_Models;
+end Code_Peer.Messages_Summary_Models;

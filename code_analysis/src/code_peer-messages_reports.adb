@@ -51,7 +51,7 @@ with GPS.Kernel.Messages.View;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Code_Analysis_GUI;
 
-package body Code_Peer.Summary_Reports is
+package body Code_Peer.Messages_Reports is
 
    use Ada.Strings;
    use Ada.Strings.Fixed;
@@ -65,66 +65,66 @@ package body Code_Peer.Summary_Reports is
 
    package Tree_View_Report_Return_Boolean_Callbacks is
      new Gtk.Handlers.User_Return_Callback
-           (Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Summary_Report);
+           (Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Messages_Report);
 
    package Summary_Report_Callbacks is new Gtk.Handlers.Callback
-     (Summary_Report_Record);
+     (Messages_Report_Record);
 
    package Check_Button_Report_Callbacks is new Gtk.Handlers.User_Callback
-     (Gtk.Check_Button.Gtk_Check_Button_Record, Summary_Report);
+     (Gtk.Check_Button.Gtk_Check_Button_Record, Messages_Report);
 
    package Message_Categories_Criteria_Callbacks is
      new Gtk.Handlers.User_Callback
           (Code_Peer.Categories_Criteria_Editors.
              Categories_Criteria_Editor_Record,
-           Summary_Report);
+           Messages_Report);
 
    package Compare_Functions is
-     new Gtk.Tree_Sortable.Compare_Funcs (Summary_Report);
+     new Gtk.Tree_Sortable.Compare_Funcs (Messages_Report);
 
-   procedure On_Destroy (Self : access Summary_Report_Record'Class);
+   procedure On_Destroy (Self : access Messages_Report_Record'Class);
 
    procedure On_Show_All_Subprograms_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
 
    procedure On_Show_Added_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
 
    procedure On_Show_Unchanged_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
 
    procedure On_Show_Removed_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
 
    procedure On_Show_Informational_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
 
    procedure On_Show_Low_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
 
    procedure On_Show_Medium_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
 
    procedure On_Show_High_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
 
    procedure On_Show_Suppressed_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
 
    procedure On_Categories_Criteria_Changed
      (Object : access
         Code_Peer.Categories_Criteria_Editors.
           Categories_Criteria_Editor_Record'Class;
-      Self   : Summary_Report);
+      Self   : Messages_Report);
    --  Handles change of set of visible message's categories.
 
    procedure Context_Func
@@ -138,25 +138,25 @@ package body Code_Peer.Summary_Reports is
    function On_Analysis_Click
      (View  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
       Event : Gdk.Event.Gdk_Event;
-      Self  : Summary_Report) return Boolean;
+      Self  : Messages_Report) return Boolean;
 
    function Compare
      (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       A         : Gtk.Tree_Model.Gtk_Tree_Iter;
       B         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self      : Summary_Report) return Glib.Gint;
+      Self      : Messages_Report) return Glib.Gint;
    --  Compare two rows in the model.
 
    function Is_Messages_Category_Visible
      (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self  : Summary_Report) return Boolean;
+      Self  : Messages_Report) return Boolean;
    --  Returns True when specified item in the Entity's Messages Summary
    --  view must be visible. Model must have the same column's layout as
    --  Entity_Messages_Model has.
 
    package Summary_Report_Visible_Funcs is
-     new Gtk.Tree_Model_Filter.Visible_Funcs (Summary_Report);
+     new Gtk.Tree_Model_Filter.Visible_Funcs (Messages_Report);
 
    package Message_Category_Conversions is
      new System.Address_To_Access_Conversions (Message_Category);
@@ -201,7 +201,7 @@ package body Code_Peer.Summary_Reports is
      (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       A         : Gtk.Tree_Model.Gtk_Tree_Iter;
       B         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self      : Summary_Report) return Glib.Gint
+      Self      : Messages_Report) return Glib.Gint
    is
       pragma Unreferenced (Self);
 
@@ -265,17 +265,30 @@ package body Code_Peer.Summary_Reports is
       begin
          return
            (High_Added =>
-              Get (Iter, Code_Peer.Summary_Models.High_Added_Count_Column),
+              Get
+                (Iter,
+                 Code_Peer.Messages_Summary_Models.High_Added_Count_Column),
             Medium_Added =>
-              Get (Iter, Code_Peer.Summary_Models.Medium_Added_Count_Column),
+              Get
+                (Iter,
+                 Code_Peer.Messages_Summary_Models.Medium_Added_Count_Column),
             Low_Added =>
-              Get (Iter, Code_Peer.Summary_Models.Low_Added_Count_Column),
+              Get
+                (Iter,
+                 Code_Peer.Messages_Summary_Models.Low_Added_Count_Column),
             High_Current =>
-              Get (Iter, Code_Peer.Summary_Models.High_Current_Count_Column),
+              Get
+                (Iter,
+                 Code_Peer.Messages_Summary_Models.High_Current_Count_Column),
             Medium_Current =>
-              Get (Iter, Code_Peer.Summary_Models.Medium_Current_Count_Column),
+              Get
+                (Iter,
+                 Code_Peer.Messages_Summary_Models.
+                   Medium_Current_Count_Column),
             Low_Current =>
-              Get (Iter, Code_Peer.Summary_Models.Low_Current_Count_Column));
+              Get
+                (Iter,
+                 Code_Peer.Messages_Summary_Models.Low_Current_Count_Column));
       end Get;
 
    begin
@@ -312,7 +325,7 @@ package body Code_Peer.Summary_Reports is
    is
       pragma Unreferenced (Menu, Event_Widget);
 
-      Self       : constant Summary_Report := Summary_Report (Object);
+      Self       : constant Messages_Report := Messages_Report (Object);
       X          : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
       Y          : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
       Path       : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -369,7 +382,7 @@ package body Code_Peer.Summary_Reports is
    -----------------------
 
    function Get_Selected_File
-     (Self : access Summary_Report_Record'Class)
+     (Self : access Messages_Report_Record'Class)
       return Code_Analysis.File_Access
    is
       Model      : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -389,7 +402,7 @@ package body Code_Peer.Summary_Reports is
    --------------------------
 
    function Get_Selected_Project
-     (Self : access Summary_Report_Record'Class)
+     (Self : access Messages_Report_Record'Class)
       return Code_Analysis.Project_Access
    is
       Model      : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -409,7 +422,7 @@ package body Code_Peer.Summary_Reports is
    -----------------------------
 
    function Get_Selected_Subprogram
-     (Self : access Summary_Report_Record'Class)
+     (Self : access Messages_Report_Record'Class)
       return Code_Analysis.Subprogram_Access
    is
       Model      : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -429,12 +442,12 @@ package body Code_Peer.Summary_Reports is
    -------------
 
    procedure Gtk_New
-     (Report : out Summary_Report;
+     (Report : out Messages_Report;
       Kernel : GPS.Kernel.Kernel_Handle;
       Module : GPS.Kernel.Modules.Module_ID;
       Tree   : Code_Analysis.Code_Analysis_Tree) is
    begin
-      Report := new Summary_Report_Record;
+      Report := new Messages_Report_Record;
       Initialize (Report, Kernel, Module, Tree);
    end Gtk_New;
 
@@ -443,7 +456,7 @@ package body Code_Peer.Summary_Reports is
    ----------------
 
    procedure Initialize
-     (Self   : access Summary_Report_Record'Class;
+     (Self   : access Messages_Report_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle;
       Module : GPS.Kernel.Modules.Module_ID;
       Tree   : Code_Analysis.Code_Analysis_Tree)
@@ -574,7 +587,7 @@ package body Code_Peer.Summary_Reports is
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Report_Pane.Pack1 (Scrolled, Resize => True);
 
-      Code_Peer.Summary_Models.Gtk_New
+      Code_Peer.Messages_Summary_Models.Gtk_New
         (Self.Analysis_Model,
          Tree,
          Project_Data.Message_Categories,
@@ -584,7 +597,7 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_Model_Sort.Gtk_New_With_Model
         (Self.Analysis_Sort_Model, Self.Analysis_Model);
       Compare_Functions.Set_Default_Sort_Func
-        (+Self.Analysis_Sort_Model, Compare'Access, Summary_Report (Self));
+        (+Self.Analysis_Sort_Model, Compare'Access, Messages_Report (Self));
       Gtk.Tree_View.Gtk_New
         (Self.Analysis_View,
          Gtk.Tree_Model.Gtk_Tree_Model (Self.Analysis_Sort_Model));
@@ -598,11 +611,13 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Pixbuf_Renderer,
          "pixbuf",
-         Code_Peer.Summary_Models.Entity_Icon_Column);
+         Code_Peer.Messages_Summary_Models.Entity_Icon_Column);
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, True);
       Column.Add_Attribute
-        (Text_Renderer, "text", Code_Peer.Summary_Models.Entity_Name_Column);
+        (Text_Renderer,
+         "text",
+         Code_Peer.Messages_Summary_Models.Entity_Name_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -613,7 +628,7 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.Entity_Lifeage_Column);
+         Code_Peer.Messages_Summary_Models.Entity_Lifeage_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -623,7 +638,7 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.High_Base_Count_Column);
+         Code_Peer.Messages_Summary_Models.High_Base_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -633,7 +648,7 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.High_Deltas_Count_Column);
+         Code_Peer.Messages_Summary_Models.High_Deltas_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -643,11 +658,11 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.High_Current_Count_Column);
+         Code_Peer.Messages_Summary_Models.High_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
          "cell_background_gdk",
-         Code_Peer.Summary_Models.High_Current_Color_Column);
+         Code_Peer.Messages_Summary_Models.High_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -657,7 +672,7 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.Medium_Base_Count_Column);
+         Code_Peer.Messages_Summary_Models.Medium_Base_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -667,7 +682,7 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.Medium_Deltas_Count_Column);
+         Code_Peer.Messages_Summary_Models.Medium_Deltas_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -677,11 +692,11 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.Medium_Current_Count_Column);
+         Code_Peer.Messages_Summary_Models.Medium_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
          "cell_background_gdk",
-         Code_Peer.Summary_Models.Medium_Current_Color_Column);
+         Code_Peer.Messages_Summary_Models.Medium_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -691,7 +706,7 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.Low_Base_Count_Column);
+         Code_Peer.Messages_Summary_Models.Low_Base_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -701,7 +716,7 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.Low_Deltas_Count_Column);
+         Code_Peer.Messages_Summary_Models.Low_Deltas_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -711,11 +726,11 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.Low_Current_Count_Column);
+         Code_Peer.Messages_Summary_Models.Low_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
          "cell_background_gdk",
-         Code_Peer.Summary_Models.Low_Current_Color_Column);
+         Code_Peer.Messages_Summary_Models.Low_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -725,7 +740,7 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.Total_Checks_Count_Column);
+         Code_Peer.Messages_Summary_Models.Total_Checks_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -735,7 +750,7 @@ package body Code_Peer.Summary_Reports is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Summary_Models.Passed_Checks_Count_Column);
+         Code_Peer.Messages_Summary_Models.Passed_Checks_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -756,7 +771,7 @@ package body Code_Peer.Summary_Reports is
       Summary_Report_Visible_Funcs.Set_Visible_Func
         (Self.Messages_Filter,
          Is_Messages_Category_Visible'Access,
-         Summary_Report (Self));
+         Messages_Report (Self));
       Gtk.Tree_View.Gtk_New (Self.Messages_View, Self.Messages_Filter);
       Scrolled.Add (Self.Messages_View);
 
@@ -805,7 +820,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Widget.Signal_Button_Press_Event,
          Tree_View_Report_Return_Boolean_Callbacks.To_Marshaller
            (On_Analysis_Click'Access),
-         Summary_Report (Self),
+         Messages_Report (Self),
          False);
 
       --  Filter view
@@ -822,7 +837,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_All_Subprograms_Toggled'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       --  Messages lifeage
 
@@ -837,7 +852,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_Added_Messages_Toggled'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"unchanged");
       Check.Set_Active (Self.Show_Lifeage (Unchanged));
@@ -847,7 +862,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_Unchanged_Messages_Toggled'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"removed");
       Check.Set_Active (Self.Show_Lifeage (Removed));
@@ -857,7 +872,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_Removed_Messages_Toggled'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       --  Messages probabilities
 
@@ -875,7 +890,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_Suppressed_Messages_Toggled'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"informational");
       Check.Set_Active (Self.Show_Ranking (Code_Peer.Informational));
@@ -885,7 +900,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_Informational_Messages_Toggled'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"low");
       Check.Set_Active (Self.Show_Ranking (Code_Peer.Low));
@@ -895,7 +910,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_Low_Messages_Toggled'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"medium");
       Check.Set_Active (Self.Show_Ranking (Code_Peer.Medium));
@@ -905,7 +920,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_Medium_Messages_Toggled'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"high");
       Check.Set_Active (Self.Show_Ranking (Code_Peer.High));
@@ -915,7 +930,7 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_High_Messages_Toggled'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       --  General messages categories
 
@@ -935,7 +950,7 @@ package body Code_Peer.Summary_Reports is
          Code_Peer.Categories_Criteria_Editors.Signal_Criteria_Changed,
          Message_Categories_Criteria_Callbacks.To_Marshaller
            (On_Categories_Criteria_Changed'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       --  Warning messages categories
 
@@ -952,7 +967,7 @@ package body Code_Peer.Summary_Reports is
          Code_Peer.Categories_Criteria_Editors.Signal_Criteria_Changed,
          Message_Categories_Criteria_Callbacks.To_Marshaller
            (On_Categories_Criteria_Changed'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       --  Checks messages categories
 
@@ -969,7 +984,7 @@ package body Code_Peer.Summary_Reports is
          Code_Peer.Categories_Criteria_Editors.Signal_Criteria_Changed,
          Message_Categories_Criteria_Callbacks.To_Marshaller
            (On_Categories_Criteria_Changed'Access),
-         Summary_Report (Self));
+         Messages_Report (Self));
 
       --
 
@@ -988,7 +1003,7 @@ package body Code_Peer.Summary_Reports is
    function Is_Messages_Category_Visible
      (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self  : Summary_Report) return Boolean
+      Self  : Messages_Report) return Boolean
    is
       use Code_Peer.Categories_Criteria_Editors;
 
@@ -1038,7 +1053,7 @@ package body Code_Peer.Summary_Reports is
    function On_Analysis_Click
      (View  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
       Event : Gdk.Event.Gdk_Event;
-      Self  : Summary_Report) return Boolean
+      Self  : Messages_Report) return Boolean
    is
       pragma Unreferenced (View);
 
@@ -1119,7 +1134,7 @@ package body Code_Peer.Summary_Reports is
      (Object : access
         Code_Peer.Categories_Criteria_Editors.
           Categories_Criteria_Editor_Record'Class;
-      Self   : Summary_Report)
+      Self   : Messages_Report)
    is
       pragma Unreferenced (Object);
 
@@ -1137,7 +1152,7 @@ package body Code_Peer.Summary_Reports is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy (Self : access Summary_Report_Record'Class) is
+   procedure On_Destroy (Self : access Messages_Report_Record'Class) is
    begin
       --  Models' internal data must be cleaned before the code analysis data
       --  is cleaned, because models catch direct references to the code
@@ -1153,7 +1168,7 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_All_Subprograms_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report) is
+      Self   : Messages_Report) is
    begin
       Self.Analysis_Model.Set_Show_All_Subprograms (Object.Get_Active);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
@@ -1165,7 +1180,7 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_Added_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report) is
+      Self   : Messages_Report) is
    begin
       Self.Show_Lifeage (Added) := Object.Get_Active;
       Histories.Set_History
@@ -1181,7 +1196,7 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_High_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report) is
+      Self   : Messages_Report) is
    begin
       Self.Show_Ranking (High) := Object.Get_Active;
       Histories.Set_History
@@ -1197,7 +1212,7 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_Informational_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report) is
+      Self   : Messages_Report) is
    begin
       Self.Show_Ranking (Informational) := Object.Get_Active;
       Histories.Set_History
@@ -1213,7 +1228,7 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_Low_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report) is
+      Self   : Messages_Report) is
    begin
       Self.Show_Ranking (Low) := Object.Get_Active;
       Histories.Set_History
@@ -1229,7 +1244,7 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_Medium_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report) is
+      Self   : Messages_Report) is
    begin
       Self.Show_Ranking (Medium) := Object.Get_Active;
       Histories.Set_History
@@ -1245,7 +1260,7 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_Removed_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report) is
+      Self   : Messages_Report) is
    begin
       Self.Show_Lifeage (Removed) := Object.Get_Active;
       Histories.Set_History
@@ -1261,7 +1276,7 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_Suppressed_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report) is
+      Self   : Messages_Report) is
    begin
       Self.Show_Ranking (Suppressed) := Object.Get_Active;
       Histories.Set_History
@@ -1277,7 +1292,7 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_Unchanged_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report) is
+      Self   : Messages_Report) is
    begin
       Self.Show_Lifeage (Unchanged) := Object.Get_Active;
       Histories.Set_History
@@ -1291,7 +1306,7 @@ package body Code_Peer.Summary_Reports is
    -- Update --
    ------------
 
-   procedure Update (Self : access Summary_Report_Record'Class) is
+   procedure Update (Self : access Messages_Report_Record'Class) is
    begin
       Self.Analysis_Model.Reconstruct;
       Self.Messages_Model.Update;
@@ -1302,7 +1317,7 @@ package body Code_Peer.Summary_Reports is
    ---------------------
 
    procedure Update_Criteria
-     (Self     : access Summary_Report_Record'Class;
+     (Self     : access Messages_Report_Record'Class;
       Criteria : in out Code_Peer.Message_Filter_Criteria)
    is
    begin
@@ -1314,4 +1329,4 @@ package body Code_Peer.Summary_Reports is
       Criteria.Lineages   := Self.Show_Lifeage;
    end Update_Criteria;
 
-end Code_Peer.Summary_Reports;
+end Code_Peer.Messages_Reports;

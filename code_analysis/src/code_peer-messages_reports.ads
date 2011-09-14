@@ -28,56 +28,57 @@ with GPS.Kernel.Modules;
 
 with Code_Analysis;
 private with Code_Peer.Entity_Messages_Models;
-private with Code_Peer.Summary_Models;
+private with Code_Peer.Messages_Summary_Models;
 private with Code_Peer.Categories_Criteria_Editors;
 
-package Code_Peer.Summary_Reports is
+package Code_Peer.Messages_Reports is
 
-   type Summary_Report_Record is new Gtk.Box.Gtk_Vbox_Record with private;
+   type Messages_Report_Record is new Gtk.Box.Gtk_Vbox_Record with private;
 
-   type Summary_Report is access all Summary_Report_Record'Class;
+   type Messages_Report is access all Messages_Report_Record'Class;
 
    procedure Gtk_New
-     (Report : out Summary_Report;
+     (Report : out Messages_Report;
       Kernel : GPS.Kernel.Kernel_Handle;
       Module : GPS.Kernel.Modules.Module_ID;
       Tree   : Code_Analysis.Code_Analysis_Tree);
 
    procedure Initialize
-     (Self   : access Summary_Report_Record'Class;
+     (Self   : access Messages_Report_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle;
       Module : GPS.Kernel.Modules.Module_ID;
       Tree   : Code_Analysis.Code_Analysis_Tree);
 
    function Get_Selected_Project
-     (Self : access Summary_Report_Record'Class)
+     (Self : access Messages_Report_Record'Class)
       return Code_Analysis.Project_Access;
 
    function Get_Selected_File
-     (Self : access Summary_Report_Record'Class)
+     (Self : access Messages_Report_Record'Class)
       return Code_Analysis.File_Access;
 
    function Get_Selected_Subprogram
-     (Self : access Summary_Report_Record'Class)
+     (Self : access Messages_Report_Record'Class)
       return Code_Analysis.Subprogram_Access;
 
    procedure Update_Criteria
-     (Self     : access Summary_Report_Record'Class;
+     (Self     : access Messages_Report_Record'Class;
       Criteria : in out Code_Peer.Message_Filter_Criteria);
 
-   procedure Update (Self : access Summary_Report_Record'Class);
+   procedure Update (Self : access Messages_Report_Record'Class);
 
    Signal_Activated        : constant Glib.Signal_Name;
    Signal_Criteria_Changed : constant Glib.Signal_Name;
 
 private
 
-   type Summary_Report_Record is new Gtk.Box.Gtk_Vbox_Record with record
+   type Messages_Report_Record is new Gtk.Box.Gtk_Vbox_Record with record
       Kernel              : GPS.Kernel.Kernel_Handle;
       Baseline_Inspection : Gtk.Label.Gtk_Label;
       Current_Inspection  : Gtk.Label.Gtk_Label;
       Tree                : Code_Analysis.Code_Analysis_Tree;
-      Analysis_Model      : Code_Peer.Summary_Models.Summary_Model;
+      Analysis_Model      :
+        Code_Peer.Messages_Summary_Models.Messages_Summary_Model;
       Analysis_Sort_Model : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
       Analysis_View       : Gtk.Tree_View.Gtk_Tree_View;
       Messages_Model      :
@@ -98,4 +99,4 @@ private
    Signal_Activated        : constant Glib.Signal_Name := "activated";
    Signal_Criteria_Changed : constant Glib.Signal_Name := "criteria_changed";
 
-end Code_Peer.Summary_Reports;
+end Code_Peer.Messages_Reports;
