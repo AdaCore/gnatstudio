@@ -37,6 +37,26 @@ package body Code_Peer.Bridge.Inspection_Readers is
    Is_Warning_Attribute    : constant String := "is_warning";
    Previous_Attribute      : constant String := "previous";
 
+   -----------------
+   -- End_Element --
+   -----------------
+
+   overriding procedure End_Element
+     (Self          : in out Reader;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Qname         : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unreferenced (Namespace_URI, Local_Name, Qname);
+
+   begin
+      if Self.Ignore_Depth /= 0 then
+         --  Decrase depth of ignored XML element.
+
+         Self.Ignore_Depth := Self.Ignore_Depth - 1;
+      end if;
+   end End_Element;
+
    ----------
    -- Hash --
    ----------
@@ -61,6 +81,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
    begin
       Self.Kernel          := Kernel;
       Self.Version         := 1;
+      Self.Ignore_Depth    := 0;
       Self.Projects        := new Code_Analysis.Project_Maps.Map;
       Self.Root_Inspection := new Code_Peer.Project_Data;
       Self.Message_Categories.Clear;
@@ -81,9 +102,9 @@ package body Code_Peer.Bridge.Inspection_Readers is
 
    overriding procedure Start_Element
      (Self          : in out Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Qname         : Unicode.CES.Byte_Sequence;
       Attrs         : Sax.Attributes.Attributes'Class)
    is
       pragma Unreferenced (Namespace_URI, Local_Name);
@@ -244,7 +265,10 @@ package body Code_Peer.Bridge.Inspection_Readers is
       end Merged;
 
    begin
-      if Qname = Inspection_Tag then
+      if Self.Ignore_Depth /= 0 then
+         Self.Ignore_Depth := Self.Ignore_Depth + 1;
+
+      elsif Qname = Inspection_Tag then
          Code_Peer.Project_Data'Class
            (Self.Root_Inspection.all).Current_Inspection :=
            Natural'Value (Attrs.Get_Value (Identifier_Attribute));
@@ -446,7 +470,10 @@ package body Code_Peer.Bridge.Inspection_Readers is
                new String'(Attrs.Get_Value ("text"))));
 
       else
-         raise Program_Error with "Unexpected tag '" & Qname & "'";
+         --  Activate ignore of nested XML elements to be able to load data
+         --  files of newer version then supported by GPS.
+
+         Self.Ignore_Depth := 1;
       end if;
    end Start_Element;
 

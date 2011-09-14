@@ -56,6 +56,10 @@ private
       --   1 - default value
       --   2 - is_warning attribute is reported by CodePeer
 
+      Ignore_Depth          : Natural := 0;
+      --  Depth of ignore of nested XML elements to be able to load data files
+      --  of newer version when GPS module supports.
+
       Projects              : Code_Analysis.Code_Analysis_Tree;
       Root_Inspection       : Code_Analysis.Code_Peer_Data_Access;
       Message_Categories    : Message_Category_Maps.Map;
@@ -67,9 +71,15 @@ private
 
    overriding procedure Start_Element
      (Self          : in out Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence := "";
-      Local_Name    : Unicode.CES.Byte_Sequence := "";
-      Qname         : Unicode.CES.Byte_Sequence := "";
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Qname         : Unicode.CES.Byte_Sequence;
       Attrs         : Sax.Attributes.Attributes'Class);
+
+   overriding procedure End_Element
+     (Self          : in out Reader;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Qname         : Unicode.CES.Byte_Sequence);
 
 end Code_Peer.Bridge.Inspection_Readers;
