@@ -139,7 +139,7 @@ def simplify_file (file):
 
   recompute_project = True
   focus_file = file.name().replace(".vcg", ".siv")
-  GPS.BuildTarget ("Simplify").execute(synchronous=False)
+  GPS.BuildTarget ("Simplifier").execute(synchronous=False)
 
 def victor_file (file):
   """Apply victor to the current file. file is an instance of GPS.File"""
@@ -1217,6 +1217,21 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>pogs</arg>
         <arg>-P%PP</arg>
+     </command-line>
+  </target>
+
+  <target model="spark" category="SPARK" messages_category="SPARK"
+          name="Victor">
+     <icon>gps-build-main</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>victor</arg>
+        <arg>-P%PP</arg>
+        <arg>%F</arg>
      </command-line>
   </target>
 
