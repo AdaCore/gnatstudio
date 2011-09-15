@@ -301,7 +301,7 @@ begin
 
       when Simplifier =>
          Append (Switches, File.Display_Full_Name);
-         Change_Dir (Tree.Root_Project.Object_Dir);
+         Change_Dir (File.Dir_Name);
 
       when SPARKMake | SPARKFormat =>
          Append (Switches, File.Display_Full_Name);
