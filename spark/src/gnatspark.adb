@@ -349,14 +349,15 @@ begin
          declare
             S : constant Filesystem_String := File.Base_Name (".vcg");
          begin
-            if S'Length > 4 and then S (S'Last - 3 .. S'Last) = ".siv" then
-               File :=
-                 Create (File.Dir_Name & S (S'First .. S'Last - 4));
-            else
-               File := Create (File.Dir_Name & S);
-            end if;
+            --  Victor only supports analyzing file in the current directory,
+            --  with a basename.
+            Change_Dir (File.Dir_Name);
 
-            Append (Switches, File.Display_Full_Name);
+            if S'Length > 4 and then S (S'Last - 3 .. S'Last) = ".siv" then
+               Append (Switches, String (S (S'First .. S'Last - 4)));
+            else
+               Append (Switches, String (S));
+            end if;
          end;
    end case;
 
