@@ -300,7 +300,9 @@ begin
          end if;
 
       when Simplifier =>
-         Append (Switches, File.Display_Full_Name);
+         --  Spadesimp only supports analyzing file in the current directory,
+         --  with a basename.
+         Append (Switches, File.Display_Base_Name);
          Change_Dir (File.Dir_Name);
 
       when SPARKMake | SPARKFormat =>
