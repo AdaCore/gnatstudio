@@ -29,12 +29,22 @@ package body Code_Peer.Bridge.Inspection_Readers is
    Subprogram_Tag          : constant String := "subprogram";
    Message_Tag             : constant String := "message";
    Annotation_Tag          : constant String := "annotation";
+   Entry_Point_Tag         : constant String := "entry_point";
+   Object_Race_Tag         : constant String := "object_race";
+   Entry_Point_Access_Tag  : constant String := "entry_point_access";
+   Object_Access_Tag       : constant String := "object_access";
 
    Checks_Attribute        : constant String := "checks";
+   Column_Attribute        : constant String := "column";
+   Entry_Point_Attribute   : constant String := "entry_point";
+   File_Attribute          : constant String := "file";
    Format_Attribute        : constant String := "format";
    Identifier_Attribute    : constant String := "identifier";
    Is_Check_Attribute      : constant String := "is_check";
    Is_Warning_Attribute    : constant String := "is_warning";
+   Kind_Attribute          : constant String := "kind";
+   Line_Attribute          : constant String := "line";
+   Name_Attribute          : constant String := "name";
    Previous_Attribute      : constant String := "previous";
 
    -----------------
@@ -47,13 +57,25 @@ package body Code_Peer.Bridge.Inspection_Readers is
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence)
    is
-      pragma Unreferenced (Namespace_URI, Local_Name, Qname);
+      pragma Unreferenced (Namespace_URI, Local_Name);
 
    begin
       if Self.Ignore_Depth /= 0 then
          --  Decrase depth of ignored XML element.
 
          Self.Ignore_Depth := Self.Ignore_Depth - 1;
+
+      elsif Qname = Object_Race_Tag then
+         Code_Peer.Project_Data'Class
+           (Self.Root_Inspection.all).Object_Races.Append (Self.Object_Race);
+         Self.Object_Race :=
+           (Name         => null,
+            Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector);
+
+      elsif Qname = Entry_Point_Access_Tag then
+         Self.Object_Race.Entry_Points.Append (Self.Object_Accesses);
+         Self.Object_Accesses :=
+           (null, Code_Peer.Object_Access_Vectors.Empty_Vector);
       end if;
    end End_Element;
 
@@ -114,6 +136,8 @@ package body Code_Peer.Bridge.Inspection_Readers is
       File_Name           : GNATCOLL.VFS.Virtual_File;
       Relocated_Name      : GNATCOLL.VFS.Virtual_File;
       Project_Node        : Code_Analysis.Project_Access;
+      Entry_Point         : Code_Peer.Entry_Point_Information_Access;
+      Object_Access       : Code_Peer.Object_Access_Information;
 
       function Lifeage return Lifeage_Kinds;
 
@@ -135,6 +159,9 @@ package body Code_Peer.Bridge.Inspection_Readers is
       function Is_Warning return Boolean;
       --  Returns value of "is_warning" attribute is any, otherwise returns
       --  False.
+
+      function Get_Optional_Column return Positive;
+      --  Returns value of "column" attribute is specified and 1 instead.
 
       ------------
       -- Checks --
@@ -168,6 +195,20 @@ package body Code_Peer.Bridge.Inspection_Readers is
             return Message_Ranking_Level'Value (Attrs.Get_Value (Index));
          end if;
       end Computed_Ranking;
+
+      -------------------------
+      -- Get_Optional_Column --
+      -------------------------
+
+      function Get_Optional_Column return Positive is
+      begin
+         if Attrs.Get_Index (Column_Attribute) /= -1 then
+            return Integer'Value (Attrs.Get_Value (Column_Attribute));
+
+         else
+            return 1;
+         end if;
+      end Get_Optional_Column;
 
       --------------
       -- Is_Check --
@@ -468,6 +509,46 @@ package body Code_Peer.Bridge.Inspection_Readers is
            (new Code_Peer.Annotation'
               (Lifeage,
                new String'(Attrs.Get_Value ("text"))));
+
+      elsif Qname = Entry_Point_Tag then
+         Entry_Point :=
+           new Entry_Point_Information'
+             (Name   => new String'(Attrs.Get_Value (Name_Attribute)),
+              File   =>
+                GPS.Kernel.Create
+                  (+Attrs.Get_Value (File_Attribute), Self.Kernel),
+              Line   => Integer'Value (Attrs.Get_Value (Line_Attribute)),
+              Column => Get_Optional_Column);
+         Code_Peer.Project_Data'Class
+           (Self.Root_Inspection.all).Entry_Points.Insert (Entry_Point);
+         Self.Entry_Point_Map.Insert
+           (Integer'Value (Attrs.Get_Value ("identifier")), Entry_Point);
+
+      elsif Qname = Object_Race_Tag then
+         Self.Object_Race.Name :=
+           new String'(Attrs.Get_Value (Name_Attribute));
+         --  Object race information is added to data in the End_Element
+         --  callback.
+
+      elsif Qname = Entry_Point_Access_Tag then
+         Entry_Point :=
+           Self.Entry_Point_Map.Element
+             (Integer'Value (Attrs.Get_Value (Entry_Point_Attribute)));
+         Self.Object_Accesses :=
+           (Entry_Point, Code_Peer.Object_Access_Vectors.Empty_Vector);
+         --  Entry point's object access information is added in the
+         --  End_Element callback.
+
+      elsif Qname = Object_Access_Tag then
+         Object_Access :=
+           (Kind   =>
+              Object_Access_Kinds'Value (Attrs.Get_Value (Kind_Attribute)),
+            File   =>
+              GPS.Kernel.Create
+                (+Attrs.Get_Value (File_Attribute), Self.Kernel),
+            Line   => Natural'Value (Attrs.Get_Value (Line_Attribute)),
+            Column => Get_Optional_Column);
+         Self.Object_Accesses.Object_Accesses.Append (Object_Access);
 
       else
          --  Activate ignore of nested XML elements to be able to load data

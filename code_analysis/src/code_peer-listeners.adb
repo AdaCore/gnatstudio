@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,9 +28,16 @@ package body Code_Peer.Listeners is
    overriding function Message_Can_Be_Destroyed
      (Self    : not null access Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
-      return Boolean is
+      return Boolean
+   is
+      Category : constant String := Message.Get_Category;
+
    begin
-      if Message.Get_Category = Code_Peer.Module.Code_Peer_Category_Name then
+      if Category'Length >= Code_Peer.Module.Code_Peer_Category_Prefix'Length
+        and then Category
+          (1 .. Code_Peer.Module.Code_Peer_Category_Prefix'Length)
+          = Code_Peer.Module.Code_Peer_Category_Prefix
+      then
          return Self.Cleanup;
 
       else

@@ -19,6 +19,9 @@
 
 --  ??? missing description of this package
 
+private with Ada.Containers.Indefinite_Hashed_Sets;
+private with Ada.Strings.Hash;
+
 with Glib.Object;
 with Gtk.Menu;
 
@@ -79,7 +82,11 @@ package Code_Peer.Module is
    function Get_Color
      (Ranking : Code_Peer.Message_Ranking_Level) return Gdk.Color.Gdk_Color;
 
-   Code_Peer_Category_Name : constant String := "CodePeer messages";
+   Code_Peer_Category_Prefix : constant String := "CodePeer: ";
+   --  Names of all CodePeer's categories should start from this prefix to
+   --  suppress destruction of messages by the messages container.
+   Code_Peer_Category_Name   : constant String :=
+     Code_Peer_Category_Prefix & "messages";
 
 private
 
@@ -104,17 +111,21 @@ private
    subtype CodePeer_Action_Run is CodePeer_Action range Run_All .. Quick_Run;
    --  Used to identify 'Run xxx' actions
 
+   package String_Sets is
+     new Ada.Containers.Indefinite_Hashed_Sets (String, Ada.Strings.Hash, "=");
+
    type Module_Id_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
      new GPS.Kernel.Modules.Module_ID_Record with record
-      Tree             : Code_Analysis.Code_Analysis_Tree;
-      Report_Subwindow : GPS.Kernel.MDI.GPS_MDI_Child;
-      Report           : Code_Peer.Messages_Reports.Messages_Report;
-      Annotation_Style : GPS.Styles.UI.Style_Access;
-      Annotation_Color : Default_Preferences.Color_Preference;
-      Message_Colors   : Message_Ranking_Color_Preference_Array;
-      Message_Styles   : Message_Ranking_Style_Array;
-      Listener         : Code_Peer.Listeners.Listener_Access;
+      Tree                   : Code_Analysis.Code_Analysis_Tree;
+      Report_Subwindow       : GPS.Kernel.MDI.GPS_MDI_Child;
+      Report                 : Code_Peer.Messages_Reports.Messages_Report;
+      Annotation_Style       : GPS.Styles.UI.Style_Access;
+      Annotation_Color       : Default_Preferences.Color_Preference;
+      Message_Colors         : Message_Ranking_Color_Preference_Array;
+      Message_Styles         : Message_Ranking_Style_Array;
+      Listener               : Code_Peer.Listeners.Listener_Access;
+      Object_Race_Categories : String_Sets.Set;
 
       --  Global messages filter
 

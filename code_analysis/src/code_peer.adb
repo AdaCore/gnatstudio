@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,6 +34,13 @@ package body Code_Peer is
       procedure Process_Annotation_Category
         (Position : Annotation_Category_Sets.Cursor);
 
+      procedure Process_Entry_Point
+        (Position : Entry_Point_Information_Sets.Cursor);
+      --  Deallocates entry point information
+
+      procedure Process_Object_Race (Position : Object_Race_Vectors.Cursor);
+      --  Deallocates object race information
+
       ---------------------------------
       -- Process_Annotation_Category --
       ---------------------------------
@@ -51,6 +58,24 @@ package body Code_Peer is
          GNAT.Strings.Free (Element.Text);
          Free (Element);
       end Process_Annotation_Category;
+
+      -------------------------
+      -- Process_Entry_Point --
+      -------------------------
+
+      procedure Process_Entry_Point
+        (Position : Entry_Point_Information_Sets.Cursor)
+      is
+         procedure Free is new Ada.Unchecked_Deallocation
+           (Entry_Point_Information, Entry_Point_Information_Access);
+
+         Element : Entry_Point_Information_Access
+           := Entry_Point_Information_Sets.Element (Position);
+
+      begin
+         GNAT.Strings.Free (Element.Name);
+         Free (Element);
+      end Process_Entry_Point;
 
       ------------------------------
       -- Process_Message_Category --
@@ -70,9 +95,23 @@ package body Code_Peer is
          Free (Element);
       end Process_Message_Category;
 
+      -------------------------
+      -- Process_Object_Race --
+      -------------------------
+
+      procedure Process_Object_Race (Position : Object_Race_Vectors.Cursor) is
+         Element : Object_Race_Information :=
+           Object_Race_Vectors.Element (Position);
+
+      begin
+         GNAT.Strings.Free (Element.Name);
+      end Process_Object_Race;
+
    begin
       Self.Message_Categories.Iterate (Process_Message_Category'Access);
       Self.Annotation_Categories.Iterate (Process_Annotation_Category'Access);
+      Self.Entry_Points.Iterate (Process_Entry_Point'Access);
+      Self.Object_Races.Iterate (Process_Object_Race'Access);
    end Finalize;
 
    --------------
@@ -177,6 +216,16 @@ package body Code_Peer is
      (Item : Code_Analysis.File_Access) return Ada.Containers.Hash_Type is
    begin
       return Item.Name.Full_Name_Hash;
+   end Hash;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash
+     (Item : Entry_Point_Information_Access) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (Item.Name.all);
    end Hash;
 
    ----------

@@ -47,6 +47,9 @@ private
    package Annotation_Category_Maps is new Ada.Containers.Hashed_Maps
      (Natural, Annotation_Category_Access, Hash, "=");
 
+   package Entry_Point_Maps is new Ada.Containers.Hashed_Maps
+     (Natural, Entry_Point_Information_Access, Hash, "=");
+
    type Reader is new Sax.Readers.Reader with record
       Kernel                : GPS.Kernel.Kernel_Handle;
 
@@ -64,9 +67,12 @@ private
       Root_Inspection       : Code_Analysis.Code_Peer_Data_Access;
       Message_Categories    : Message_Category_Maps.Map;
       Annotation_Categories : Annotation_Category_Maps.Map;
+      Entry_Point_Map       : Entry_Point_Maps.Map;
       File_Node             : Code_Analysis.File_Access;
       Subprogram_Node       : Code_Analysis.Subprogram_Access;
       Subprogram_Data       : Code_Peer.Subprogram_Data_Access;
+      Object_Race           : Code_Peer.Object_Race_Information;
+      Object_Accesses       : Code_Peer.Entry_Point_Object_Access_Information;
    end record;
 
    overriding procedure Start_Element

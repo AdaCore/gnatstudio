@@ -30,6 +30,10 @@ with Code_Analysis;
 
 package Code_Peer is
 
+   ----------------
+   --  Messages  --
+   ----------------
+
    type Lifeage_Kinds is (Added, Unchanged, Removed);
 
    type Message_Ranking_Level is
@@ -95,6 +99,10 @@ package Code_Peer is
    package Message_Vectors is
      new Ada.Containers.Vectors (Positive, Message_Access);
 
+   -------------------
+   --  Annotations  --
+   -------------------
+
    type Annotation_Category is record
       Order : Positive;
       Text  : GNAT.Strings.String_Access;
@@ -124,6 +132,55 @@ package Code_Peer is
    package Annotation_Category_Sets is new Ada.Containers.Ordered_Sets
      (Annotation_Category_Access, Less);
 
+   -----------------------
+   --  Race conditions  --
+   -----------------------
+
+   type Object_Access_Kinds is (Read, Update);
+
+   type Object_Access_Information is record
+      Kind   : Object_Access_Kinds;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Positive;
+      Column : Positive;
+   end record;
+
+   package Object_Access_Vectors is
+     new Ada.Containers.Vectors (Positive, Object_Access_Information);
+
+   type Entry_Point_Information is record
+      Name   : GNAT.Strings.String_Access;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Positive;
+      Column : Positive;
+   end record;
+
+   type Entry_Point_Information_Access is access all Entry_Point_Information;
+
+   function Hash
+     (Item : Entry_Point_Information_Access) return Ada.Containers.Hash_Type;
+
+   package Entry_Point_Information_Sets is
+     new Ada.Containers.Hashed_Sets
+       (Entry_Point_Information_Access, Hash, "=");
+
+   type Entry_Point_Object_Access_Information is record
+      Entry_Point     : Entry_Point_Information_Access;
+      Object_Accesses : Object_Access_Vectors.Vector;
+   end record;
+
+   package Entry_Point_Object_Access_Vectors is
+     new Ada.Containers.Vectors
+       (Positive, Entry_Point_Object_Access_Information);
+
+   type Object_Race_Information is record
+      Name         : GNAT.Strings.String_Access;
+      Entry_Points : Entry_Point_Object_Access_Vectors.Vector;
+   end record;
+
+   package Object_Race_Vectors is
+     new Ada.Containers.Vectors (Positive, Object_Race_Information);
+
    type Project_Data is new Code_Analysis.Code_Peer_Data_Root with record
       Current_Inspection    : Natural;
       Baseline_Inspection   : Natural;
@@ -135,6 +192,9 @@ package Code_Peer is
       General_Categories    : Message_Category_Sets.Set;
       --  These sets of categories are subsets of Message_Categories and
       --  are used by messages filter.
+
+      Entry_Points          : Entry_Point_Information_Sets.Set;
+      Object_Races          : Object_Race_Vectors.Vector;
    end record;
    --  This record has only one instance and associated with the node
    --  of the root project. It is an owner of the message categories and

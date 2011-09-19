@@ -19,7 +19,6 @@
 
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
-with Ada.Strings.Hash;
 with Ada.Text_IO;
 
 with Input_Sources.File;
@@ -215,6 +214,9 @@ package body Code_Peer.Module is
    --  instead of direct manipulation with filter's criteria and call to
    --  this subprogram.
 
+   procedure Fill_Object_Races (Self : access Module_Id_Record'Class);
+   --  Fill object races information into Locations view.
+
    procedure Hide_Messages
      (Self : not null access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
@@ -261,6 +263,9 @@ package body Code_Peer.Module is
    Database_Directory_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
      GNATCOLL.Projects.Build ("CodePeer", "Database_Directory");
+
+   Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
+     (Editor_Side => True, Locations => True);
 
    -------------------------
    -- Use_CodePeer_Subdir --
@@ -412,6 +417,107 @@ package body Code_Peer.Module is
 
       Ada.Text_IO.Close (F);
    end Create_Library_File;
+
+   -----------------------
+   -- Fill_Object_Races --
+   -----------------------
+
+   procedure Fill_Object_Races (Self : access Module_Id_Record'Class) is
+
+      procedure Process_Object_Race
+        (Position : Code_Peer.Object_Race_Vectors.Cursor);
+
+      Data : Code_Peer.Project_Data'Class
+      renames Code_Peer.Project_Data'Class
+        (Self.Tree.Element
+           (GPS.Kernel.Project.Get_Project
+              (Self.Kernel)).Analysis_Data.Code_Peer_Data.all);
+
+      -------------------------
+      -- Process_Object_Race --
+      -------------------------
+
+      procedure Process_Object_Race
+        (Position : Code_Peer.Object_Race_Vectors.Cursor)
+      is
+         Element  : constant Object_Race_Information :=
+           Object_Race_Vectors.Element (Position);
+         Category : constant String :=
+           Code_Peer_Category_Prefix & Element.Name.all & " race condition";
+
+         procedure Process_Entry_Point
+           (Position : Entry_Point_Object_Access_Vectors.Cursor);
+
+         -------------------------
+         -- Process_Entry_Point --
+         -------------------------
+
+         procedure Process_Entry_Point
+           (Position : Entry_Point_Object_Access_Vectors.Cursor)
+         is
+            Element     : constant Entry_Point_Object_Access_Information :=
+              Entry_Point_Object_Access_Vectors.Element (Position);
+            Entry_Point : constant String := Element.Entry_Point.Name.all;
+
+            procedure Process_Object_Access
+              (Position : Object_Access_Vectors.Cursor);
+
+            ---------------------------
+            -- Process_Object_Access --
+            ---------------------------
+
+            procedure Process_Object_Access
+              (Position : Object_Access_Vectors.Cursor)
+            is
+               function Image (Item : Object_Access_Information) return String;
+               --  Returns text of message for the specified object access
+
+               -----------
+               -- Image --
+               -----------
+
+               function Image
+                 (Item : Object_Access_Information) return String is
+               begin
+                  case Item.Kind is
+                     when Read =>
+                        return "read by " & Entry_Point;
+
+                     when Update =>
+                        return "update by " & Entry_Point;
+                  end case;
+               end Image;
+
+               Element : constant Object_Access_Information :=
+                 Object_Access_Vectors.Element (Position);
+               Message : Simple_Message_Access :=
+                 Create_Simple_Message
+                   (Get_Messages_Container (Self.Kernel),
+                    Category,
+                    Element.File,
+                    Element.Line,
+                    Basic_Types.Visible_Column_Type (Element.Column),
+                    Image (Element),
+                    0,
+                    Race_Message_Flags);
+               pragma Unreferenced (Message);
+
+            begin
+               null;
+            end Process_Object_Access;
+
+         begin
+            Element.Object_Accesses.Iterate (Process_Object_Access'Access);
+         end Process_Entry_Point;
+
+      begin
+         Self.Object_Race_Categories.Include (Category);
+         Element.Entry_Points.Iterate (Process_Entry_Point'Access);
+      end Process_Object_Race;
+
+   begin
+      Data.Object_Races.Iterate (Process_Object_Race'Access);
+   end Fill_Object_Races;
 
    ---------------
    -- Get_Color --
@@ -860,6 +966,7 @@ package body Code_Peer.Module is
 
          Editors.Show_Annotations_In_Opened_Editors (Self);
          Self.Update_Location_View;
+         Self.Fill_Object_Races;
 
          --  Raise report window
 
@@ -1604,6 +1711,21 @@ package body Code_Peer.Module is
 
       procedure Process_File (Position : Code_Analysis.File_Maps.Cursor);
 
+      procedure Process_Category (Position : String_Sets.Cursor);
+      --  Removes all messages of the category from messages container
+
+      ----------------------
+      -- Process_Category --
+      ----------------------
+
+      procedure Process_Category (Position : String_Sets.Cursor) is
+         Category : constant String := String_Sets.Element (Position);
+
+      begin
+         Get_Messages_Container (Context.Module.Kernel).Remove_Category
+           (Category, Race_Message_Flags);
+      end Process_Category;
+
       ------------------
       -- Process_File --
       ------------------
@@ -1643,6 +1765,7 @@ package body Code_Peer.Module is
 
       Get_Messages_Container (Context.Module.Kernel).Remove_Category
         (Code_Peer_Category_Name, Empty_Message_Flags);
+      Context.Module.Object_Race_Categories.Iterate (Process_Category'Access);
 
       --  Cleanup filter criteria
 
