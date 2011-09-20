@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Glib;
-private with Gtk.Label;
 with Gtk.Box;
 private with Gtk.Tree_Model_Filter;
 private with Gtk.Tree_Model_Sort;
@@ -74,8 +73,6 @@ private
 
    type Messages_Report_Record is new Gtk.Box.Gtk_Vbox_Record with record
       Kernel              : GPS.Kernel.Kernel_Handle;
-      Baseline_Inspection : Gtk.Label.Gtk_Label;
-      Current_Inspection  : Gtk.Label.Gtk_Label;
       Tree                : Code_Analysis.Code_Analysis_Tree;
       Analysis_Model      :
         Code_Peer.Messages_Summary_Models.Messages_Summary_Model;

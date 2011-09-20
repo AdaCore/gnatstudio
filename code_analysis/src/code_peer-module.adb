@@ -54,6 +54,7 @@ with Traces;                     use Traces;
 with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
 with Code_Peer.Message_Review_Dialogs;
+with Code_Peer.Messages_Reports;
 with Code_Peer.Module.Bridge;
 with Code_Peer.Module.Editors;
 with Code_Peer.Shell_Commands;   use Code_Peer.Shell_Commands;
@@ -930,23 +931,23 @@ package body Code_Peer.Module is
 
          --  Create codepeer report window
 
-         Code_Peer.Messages_Reports.Gtk_New
+         Code_Peer.Reports.Gtk_New
            (Self.Report,
             GPS.Kernel.Kernel_Handle (Self.Kernel),
             GPS.Kernel.Modules.Module_ID (Self),
             Self.Tree);
          Context_CB.Connect
            (Self.Report,
-            Code_Peer.Messages_Reports.Signal_Activated,
-            Context_CB.To_Marshaller (On_Activate'Access),
-            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
-         Context_CB.Connect
-           (Self.Report,
             Gtk.Object.Signal_Destroy,
             Context_CB.To_Marshaller (On_Destroy'Access),
             Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
          Context_CB.Connect
-           (Self.Report,
+           (Self.Report.Messages_Report,
+            Code_Peer.Messages_Reports.Signal_Activated,
+            Context_CB.To_Marshaller (On_Activate'Access),
+            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
+         Context_CB.Connect
+           (Self.Report.Messages_Report,
             Code_Peer.Messages_Reports.Signal_Criteria_Changed,
             Context_CB.To_Marshaller (On_Criteria_Changed'Access),
             Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
@@ -960,7 +961,7 @@ package body Code_Peer.Module is
 
          Self.Filter_Criteria.Files.Clear;
          Self.Tree.Iterate (Process_Project'Access);
-         Self.Report.Update_Criteria (Self.Filter_Criteria);
+         Self.Report.Messages_Report.Update_Criteria (Self.Filter_Criteria);
 
          --  Update location view
 
@@ -996,9 +997,9 @@ package body Code_Peer.Module is
       use type Code_Analysis.Subprogram_Access;
 
       File       : constant Code_Analysis.File_Access :=
-                     Context.Module.Report.Get_Selected_File;
+        Context.Module.Report.Messages_Report.Get_Selected_File;
       Subprogram : constant Code_Analysis.Subprogram_Access :=
-                     Context.Module.Report.Get_Selected_Subprogram;
+        Context.Module.Report.Messages_Report.Get_Selected_Subprogram;
 
    begin
       if Subprogram /= null then
@@ -1689,7 +1690,8 @@ package body Code_Peer.Module is
       pragma Unreferenced (Item);
 
    begin
-      Context.Module.Report.Update_Criteria (Context.Module.Filter_Criteria);
+      Context.Module.Report.Messages_Report.Update_Criteria
+        (Context.Module.Filter_Criteria);
       Context.Module.Update_Location_View;
 
    exception
@@ -1839,7 +1841,7 @@ package body Code_Peer.Module is
    begin
       Code_Peer.Module.Bridge.Add_Audit_Record
         (Context.Module, Context.Message);
-      Context.Module.Report.Update;
+      Context.Module.Report.Messages_Report.Update;
       Context.Module.Update_Location_View;
 
    exception

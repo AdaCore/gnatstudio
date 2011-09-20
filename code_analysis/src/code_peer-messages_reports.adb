@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Latin_1;
-with Ada.Strings.Fixed;
 with Interfaces.C.Strings;
 with System.Address_To_Access_Conversions;
 
@@ -31,6 +30,7 @@ with Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;
 with Gtk.Enums;
 with Gtk.Handlers;
+with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Object;
 with Gtk.Paned;
@@ -52,9 +52,6 @@ with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Code_Analysis_GUI;
 
 package body Code_Peer.Messages_Reports is
-
-   use Ada.Strings;
-   use Ada.Strings.Fixed;
 
    use type Glib.Signal_Name;
 
@@ -463,7 +460,6 @@ package body Code_Peer.Messages_Reports is
    is
       use Gtk.Tree_Model_Sort;
 
-      Inspections_Box : Gtk.Box.Gtk_Hbox;
       Panel           : Gtk.Paned.Gtk_Hpaned;
       Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -558,23 +554,7 @@ package body Code_Peer.Messages_Reports is
       Self.Show_Ranking (Code_Peer.High) :=
         Histories.Get_History (Kernel.Get_History.all, Ranking_High_History);
 
-      --  Baseline and current inspections' ids
-
-      Gtk.Box.Gtk_New_Hbox (Inspections_Box, True);
-      Self.Pack_Start (Inspections_Box, False);
-
-      Gtk.Label.Gtk_New (Self.Baseline_Inspection, "baseline");
-      Self.Baseline_Inspection.Set_Alignment (0.1, 0.0);
-      Self.Baseline_Inspection.Set_Label
-        ("Baseline inspection #"
-         & Trim (Natural'Image (Project_Data.Baseline_Inspection), Both));
-      Inspections_Box.Pack_Start (Self.Baseline_Inspection);
-      Gtk.Label.Gtk_New (Self.Current_Inspection, "current");
-      Self.Current_Inspection.Set_Alignment (0.9, 0.0);
-      Self.Current_Inspection.Set_Label
-        ("Current inspection #"
-         & Trim (Natural'Image (Project_Data.Current_Inspection), Both));
-      Inspections_Box.Pack_End (Self.Current_Inspection);
+      --  Create report's widgets
 
       Gtk.Paned.Gtk_New_Hpaned (Panel);
       Self.Pack_Start (Panel);

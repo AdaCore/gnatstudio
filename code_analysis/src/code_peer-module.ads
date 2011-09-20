@@ -39,7 +39,7 @@ with GPS.Kernel.MDI;
 with Code_Analysis;
 
 private with Code_Peer.Listeners;
-private with Code_Peer.Messages_Reports;
+private with Code_Peer.Reports;
 
 package Code_Peer.Module is
 
@@ -119,7 +119,7 @@ private
      new GPS.Kernel.Modules.Module_ID_Record with record
       Tree                   : Code_Analysis.Code_Analysis_Tree;
       Report_Subwindow       : GPS.Kernel.MDI.GPS_MDI_Child;
-      Report                 : Code_Peer.Messages_Reports.Messages_Report;
+      Report                 : Code_Peer.Reports.Report;
       Annotation_Style       : GPS.Styles.UI.Style_Access;
       Annotation_Color       : Default_Preferences.Color_Preference;
       Message_Colors         : Message_Ranking_Color_Preference_Array;
