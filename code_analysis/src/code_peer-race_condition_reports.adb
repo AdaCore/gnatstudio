@@ -20,7 +20,9 @@
 with Glib;
 with Gdk.Event;
 with Gtk.Cell_Renderer_Text;
+with Gtk.Enums;
 with Gtk.Handlers;
+with Gtk.Scrolled_Window;
 with Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
@@ -59,6 +61,7 @@ package body Code_Peer.Race_Condition_Reports is
       Kernel : GPS.Kernel.Kernel_Handle;
       Tree   : Code_Analysis.Code_Analysis_Tree)
    is
+      Scrolled      : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Details_View  : Gtk.Tree_View.Gtk_Tree_View;
       Column        : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Renderer      : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
@@ -72,8 +75,13 @@ package body Code_Peer.Race_Condition_Reports is
 
       Code_Peer.Race_Summary_Models.Gtk_New (Self.Summary_Model, Kernel, Tree);
 
+      Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      Self.Pack_Start (Scrolled);
+
       Gtk.Tree_View.Gtk_New (Self.Summary_View, Self.Summary_Model);
-      Self.Pack_Start (Self.Summary_View);
+      Scrolled.Add (Self.Summary_View);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title ("Object");
@@ -87,8 +95,13 @@ package body Code_Peer.Race_Condition_Reports is
 
       Code_Peer.Race_Details_Models.Gtk_New (Self.Details_Model);
 
+      Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      Self.Pack_Start (Scrolled);
+
       Gtk.Tree_View.Gtk_New (Details_View, Self.Details_Model);
-      Self.Pack_Start (Details_View);
+      Scrolled.Add (Details_View);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title ("Entry point");
