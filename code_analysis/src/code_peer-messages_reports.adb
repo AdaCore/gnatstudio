@@ -50,6 +50,7 @@ with GPS.Kernel.Project;
 with GPS.Kernel.Messages.View;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Code_Analysis_GUI;
+with Code_Peer.Module;
 
 package body Code_Peer.Messages_Reports is
 
@@ -1092,7 +1093,9 @@ package body Code_Peer.Messages_Reports is
 
                if File_Node /= null then
                   GPS.Kernel.Messages.View.Expand_File
-                    (Self.Kernel, "CodePeer messages", File_Node.Name);
+                    (Self.Kernel,
+                     Code_Peer.Module.Code_Peer_Category_Name,
+                     File_Node.Name);
                end if;
             end;
          end if;
