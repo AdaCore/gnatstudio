@@ -72,6 +72,18 @@ package body GPS.Kernel.Messages.View is
       end if;
    end Do_Not_Goto_First_Location;
 
+   ---------------------
+   -- Expand_Category --
+   ---------------------
+
+   procedure Expand_Category
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Category : String) is
+   begin
+      Get_Or_Create_Location_View (Kernel).Expand_Category
+        (Ada.Strings.Unbounded.To_Unbounded_String (Category), False);
+   end Expand_Category;
+
    -----------------
    -- Expand_File --
    -----------------

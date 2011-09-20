@@ -444,7 +444,7 @@ package body Code_Peer.Module is
          Element  : constant Object_Race_Information :=
            Object_Race_Vectors.Element (Position);
          Category : constant String :=
-           Code_Peer_Category_Prefix & Element.Name.all & " race condition";
+           Race_Condition_Category (Element.Name.all);
 
          procedure Process_Entry_Point
            (Position : Entry_Point_Object_Access_Vectors.Cursor);
@@ -2264,6 +2264,15 @@ package body Code_Peer.Module is
 
       Self.Filter_Criteria.Files.Iterate (Process_File'Access);
    end Update_Location_View;
+
+   -----------------------------
+   -- Race_Condition_Category --
+   -----------------------------
+
+   function Race_Condition_Category (Name : String) return String is
+   begin
+      return Code_Peer_Category_Prefix & Name & " race condition";
+   end Race_Condition_Category;
 
    ---------------------
    -- Register_Module --

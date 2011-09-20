@@ -43,6 +43,12 @@ package GPS.Kernel.Messages.View is
    --  Send request to expand specified category and file. First file's message
    --  will be selected.
 
+   procedure Expand_Category
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Category : String);
+   --  Send request to expand specified category. First category's and first
+   --  file's message will be selected.
+
 private
 
    type View_Manager

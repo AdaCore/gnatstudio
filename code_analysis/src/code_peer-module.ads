@@ -82,6 +82,9 @@ package Code_Peer.Module is
    function Get_Color
      (Ranking : Code_Peer.Message_Ranking_Level) return Gdk.Color.Gdk_Color;
 
+   function Race_Condition_Category (Name : String) return String;
+   --  Constructs name of the object race condition category for messages.
+
    Code_Peer_Category_Prefix : constant String := "CodePeer: ";
    --  Names of all CodePeer's categories should start from this prefix to
    --  suppress destruction of messages by the messages container.

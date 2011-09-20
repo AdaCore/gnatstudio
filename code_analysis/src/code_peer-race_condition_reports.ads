@@ -46,6 +46,7 @@ private
 
    type Race_Condition_Report_Record is
      new Gtk.Box.Gtk_Vbox_Record with record
+      Kernel        : GPS.Kernel.Kernel_Handle;
       Summary_Model : Code_Peer.Race_Summary_Models.Race_Summary_Model;
       Summary_View  : Gtk.Tree_View.Gtk_Tree_View;
       Details_Model : Code_Peer.Race_Details_Models.Race_Details_Model;

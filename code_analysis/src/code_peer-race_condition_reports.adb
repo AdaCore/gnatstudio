@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;
+with Glib.Values;
 with Gdk.Event;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Enums;
@@ -26,6 +26,10 @@ with Gtk.Scrolled_Window;
 with Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
+
+with GPS.Kernel.Messages.View;
+
+with Code_Peer.Module;
 
 package body Code_Peer.Race_Condition_Reports is
 
@@ -70,6 +74,7 @@ package body Code_Peer.Race_Condition_Reports is
 
    begin
       Gtk.Box.Initialize_Vbox (Self);
+      Self.Kernel := Kernel;
 
       --  Summary view
 
@@ -155,6 +160,7 @@ package body Code_Peer.Race_Condition_Reports is
       Cell_Y : Glib.Gint;
       Found  : Boolean;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Value  : Glib.Values.GValue;
 
    begin
       if Gdk.Event.Get_Button (Event) = 1
@@ -168,6 +174,13 @@ package body Code_Peer.Race_Condition_Reports is
             Iter := Self.Summary_Model.Get_Iter (Path);
             Self.Details_Model.Set
               (Self.Summary_Model.Get_Entry_Points (Iter));
+
+            Self.Summary_Model.Get_Value
+              (Iter, Code_Peer.Race_Summary_Models.Object_Name_Column, Value);
+            GPS.Kernel.Messages.View.Expand_Category
+              (Self.Kernel,
+               Code_Peer.Module.Race_Condition_Category
+                 (Glib.Values.Get_String (Value)));
          end if;
       end if;
 
