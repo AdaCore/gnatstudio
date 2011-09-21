@@ -52,7 +52,6 @@ with Traces;
 with Wizards;                  use Wizards;
 
 package body Creation_Wizard.Extending is
-   Me : constant Trace_Handle := Create ("EXT");
 
    type Extending_Sources_Page is new Project_Wizard_Page_Record with record
       Copy_Files     : Gtk.Check_Button.Gtk_Check_Button;
@@ -343,9 +342,6 @@ package body Creation_Wizard.Extending is
       for P in Projects'Range loop
          exit when Projects (P) = No_Project;
 
-         Trace (Me, "MANU Generate Project, copy="
-                & Get_Active (Page.Copy_Files)'Img
-                & Files (P)(1).Display_Full_Name);
          Add_Source_Files
            (Kernel => Kernel,
             Root_Project => Project,
@@ -435,9 +431,6 @@ package body Creation_Wizard.Extending is
 
       if Copy_Files then
          for S in Files'Range loop
-            Trace (Me, "MANU Copying "
-                   & Files (S).Display_Full_Name
-                   & " into " & Into_Dir.Display_Full_Name);
             Files (S).Copy (Into_Dir.Full_Name, Success  => Success);
          end loop;
       end if;
