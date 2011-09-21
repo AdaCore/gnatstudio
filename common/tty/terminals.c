@@ -137,33 +137,6 @@ typedef struct pty_desc_struct {
                          of the terminal */
 } pty_desc;
 
-/* relocate_fd - ensure that a file descriptor is greater than a given value
- *
- * PARAMETERS
- *   fd      file descriptor we want to relocate
- *   min_fd  min expected value after relocation
- * RETURN VALUE
- *   the new fd
- */
-static int
-relocate_fd (int fd, int min_fd)
-{
-  int new_fd;
-
-  if (fd >= min_fd) return fd;
-
-  new_fd = dup (fd);
-  if (new_fd == -1) exit (1);
-
-  /* we need to hold the older fds in order to be sure that new_fd value
-     is increasing. So only close the fd(s) once we have a candidate. */
-  new_fd = relocate_fd (new_fd, min_fd);
-
-  close (fd);
-
-  return new_fd;
-}
-
 /* allocate_pty_desc - allocate a pseudo terminal
  *
  * PARAMETERS
@@ -546,7 +519,7 @@ gvd_waitpid (pty_desc *desc)
  *   always 1 on Unix systems
  */
 int
-gvd_tty_supported ()
+gvd_tty_supported (void)
 {
   return 1;
 }
@@ -587,7 +560,8 @@ gvd_reset_tty (pty_desc* desc)
  *   a pty_desc structure
  */
 pty_desc *
-gvd_new_tty () {
+gvd_new_tty (void)
+{
    int status;
    pty_desc* desc;
    status = allocate_pty_desc (&desc);
@@ -1494,7 +1468,7 @@ typedef struct {
 } TTY_Handle;
 
 int
-gvd_tty_supported ()
+gvd_tty_supported (void)
 {
   return 0;
 }
@@ -1514,7 +1488,7 @@ gvd_tty_fd (TTY_Handle* t)
 }
 
 TTY_Handle*
-gvd_new_tty ()
+gvd_new_tty (void)
 {
   return (TTY_Handle*)0;
 }
