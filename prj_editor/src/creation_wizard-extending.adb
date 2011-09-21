@@ -52,6 +52,7 @@ with Traces;
 with Wizards;                  use Wizards;
 
 package body Creation_Wizard.Extending is
+   Me : constant Trace_Handle := Create ("EXT");
 
    type Extending_Sources_Page is new Project_Wizard_Page_Record with record
       Copy_Files     : Gtk.Check_Button.Gtk_Check_Button;
@@ -342,13 +343,16 @@ package body Creation_Wizard.Extending is
       for P in Projects'Range loop
          exit when Projects (P) = No_Project;
 
+         Trace (Me, "MANU Generate Project, copy="
+                & Get_Active (Page.Copy_Files)'Img
+                & Files (P)(1).Display_Full_Name);
          Add_Source_Files
            (Kernel => Kernel,
             Root_Project => Project,
             Files        => Files (P) (1 .. Count (P)),
             File_Project => Projects (P),
             Copy_Files   => Get_Active (Page.Copy_Files),
-            In_Dir       => Project_Directory (Projects (P)),
+            In_Dir       => GNATCOLL.VFS.No_File,
             Obj_Dir      => Obj_Dir,
             Recompute    => False);
          Changed := True;
@@ -371,6 +375,7 @@ package body Creation_Wizard.Extending is
       Recompute    : Boolean;
       Obj_Dir      : Filesystem_String := "")
    is
+      Into_Dir   : Virtual_File := In_Dir;
       Extended   : Project_Type;
       Iter       : Project_Iterator := Start (Root_Project);
       File_Names : Argument_List (Files'Range);
@@ -408,7 +413,13 @@ package body Creation_Wizard.Extending is
            (Imported_Project  => Extended,
             Use_Relative_Path => True);
 
+         Into_Dir := Project_Directory (Extended);
+
          Created := True;
+      end if;
+
+      if Into_Dir = GNATCOLL.VFS.No_File then
+         Into_Dir := Project_Directory (Extended);
       end if;
 
       for F in Files'Range loop
@@ -424,7 +435,10 @@ package body Creation_Wizard.Extending is
 
       if Copy_Files then
          for S in Files'Range loop
-            Files (S).Copy (In_Dir.Full_Name, Success  => Success);
+            Trace (Me, "MANU Copying "
+                   & Files (S).Display_Full_Name
+                   & " into " & Into_Dir.Display_Full_Name);
+            Files (S).Copy (Into_Dir.Full_Name, Success  => Success);
          end loop;
       end if;
 
