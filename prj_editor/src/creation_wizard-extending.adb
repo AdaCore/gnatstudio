@@ -457,6 +457,7 @@ package body Creation_Wizard.Extending is
       Dirs   : constant GNATCOLL.VFS.File_Array :=
         Get_Project (Kernel).Source_Dirs (Recursive => False);
       Radio  : array (Dirs'Range) of Gtk_Radio_Button;
+      Prj_Dir_Radio : Gtk_Radio_Button;
       pragma Unreferenced (Command, Button);
    begin
       Gtk_New
@@ -467,9 +468,7 @@ package body Creation_Wizard.Extending is
 
       Gtk_New
         (Label,
-         -"Should GPS copy the file into the extending projects directory ?"
-         & ASCII.LF
-         & Display_Full_Name (Project_Directory (Get_Project (Kernel))));
+         -"Should GPS copy the file into the extending projects source dir ?");
       Label.Set_Selectable (True);
       Label.Set_Justify (Justify_Center);
       Dialog.Get_Vbox.Pack_Start (Label, Expand => False);
@@ -483,6 +482,15 @@ package body Creation_Wizard.Extending is
          Dialog.Get_Vbox.Pack_Start (Radio (D), Expand => False);
       end loop;
 
+      if Dirs'Length = 0 then
+         Gtk_New
+           (Radio_Button => Prj_Dir_Radio,
+            Label        =>
+              Project_Directory (Get_Project (Kernel)).Display_Full_Name);
+         Prj_Dir_Radio.Set_Active (True);
+         Dialog.Get_Vbox.Pack_Start (Prj_Dir_Radio, Expand => False);
+      end if;
+
       Button := Dialog.Add_Button (-"Copy", Gtk_Response_Yes);
       Button := Dialog.Add_Button (-"Do not copy", Gtk_Response_No);
       Button := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
@@ -491,18 +499,29 @@ package body Creation_Wizard.Extending is
       Response := Dialog.Run;
 
       if Response /= Gtk_Response_Cancel then
-         for R in Radio'Range loop
-            if Radio (R).Get_Active then
-               Add_Source_Files
-                 (Kernel       => Kernel,
-                  Root_Project => Get_Project (Kernel),
-                  Files        => (1 => File),
-                  File_Project => Project,
-                  In_Dir       => Dirs (R),
-                  Copy_Files   => Response = Gtk_Response_Yes,
-                  Recompute    => True);
-            end if;
-         end loop;
+         if Dirs'Length = 0 then
+            Add_Source_Files
+              (Kernel       => Kernel,
+               Root_Project => Get_Project (Kernel),
+               Files        => (1 => File),
+               File_Project => Project,
+               In_Dir       => Project_Directory (Get_Project (Kernel)),
+               Copy_Files   => Response = Gtk_Response_Yes,
+               Recompute    => True);
+         else
+            for R in Radio'Range loop
+               if Radio (R).Get_Active then
+                  Add_Source_Files
+                    (Kernel       => Kernel,
+                     Root_Project => Get_Project (Kernel),
+                     Files        => (1 => File),
+                     File_Project => Project,
+                     In_Dir       => Dirs (R),
+                     Copy_Files   => Response = Gtk_Response_Yes,
+                     Recompute    => True);
+               end if;
+            end loop;
+         end if;
       end if;
 
       Dialog.Destroy;
