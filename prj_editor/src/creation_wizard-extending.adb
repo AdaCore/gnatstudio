@@ -579,9 +579,8 @@ package body Creation_Wizard.Extending is
 
          Dialog.Show_All;
          Response := Dialog.Run;
+         Dialog.Destroy;
       end if;
-
-      Dialog.Destroy;
 
       if Response = Gtk_Response_Cancel then
          return Success;
