@@ -33,7 +33,6 @@ with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Widget;               use Gtk.Widget;
-with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GPS.Kernel;               use GPS.Kernel;
@@ -462,7 +461,7 @@ package body Creation_Wizard.Extending is
    begin
       Gtk_New
         (Dialog,
-         Title  => "Copy file from extended project",
+         Title  => -"Copy file from extended project",
          Parent => Get_Main_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
 
@@ -538,30 +537,50 @@ package body Creation_Wizard.Extending is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       File    : constant Virtual_File := File_Information (Context.Context);
-      Button  : Message_Dialog_Buttons;
       Removed : Boolean;
       Project : Project_Type;
       List    : String_List_Access;
+      Dialog  : Gtk_Dialog;
+      Button  : Gtk_Widget;
+      Response : Gtk_Response_Type;
+      Label    : Gtk_Label;
+      pragma Unreferenced (Command, Button);
 
    begin
       if Active (Traces.Testsuite_Handle) then
          --  No confirmation dialog in the testsuite
-         Button := Button_Yes;
+         Response := Gtk_Response_Yes;
       else
-         Button := Message_Dialog
-           (Msg => -"This will delete the file" & ASCII.LF
-            & File.Display_Full_Name & ASCII.LF
-            & "Are you sure ?",
-            Buttons => Button_Yes or Button_No,
-            Dialog_Type => Confirmation,
-            Title => -"Remove file from extending project",
-            Parent => Get_Main_Window (Kernel));
+         Gtk_New
+           (Dialog,
+            Title  => -"Remove file from extended project",
+            Parent => Get_Main_Window (Kernel),
+            Flags  => Modal or Destroy_With_Parent);
+
+         Gtk_New
+           (Label,
+            -"Should GPS remove the file from the disk as well ?");
+         Label.Set_Selectable (True);
+         Label.Set_Justify (Justify_Center);
+         Dialog.Get_Vbox.Pack_Start (Label, Expand => False);
+
+         Button := Dialog.Add_Button (-"Delete", Gtk_Response_Yes);
+         Button := Dialog.Add_Button (-"Do not delete", Gtk_Response_No);
+         Button := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
+
+         Dialog.Show_All;
+         Response := Dialog.Run;
       end if;
 
-      if Button = Button_Yes then
+      Dialog.Destroy;
+
+      if Response = Gtk_Response_Cancel then
+         return Success;
+      end if;
+
+      if Response = Gtk_Response_Yes then
          Delete (File, Removed);
          if not Removed then
             GPS.Kernel.Console.Insert
@@ -569,33 +588,33 @@ package body Creation_Wizard.Extending is
                Text => -"Failed to remove " & File.Display_Full_Name,
                Mode => GPS.Kernel.Console.Error);
             return Failure;
-         else
-            Project := Get_Registry (Kernel).Tree.Info (File).Project;
-            if Project.Has_Attribute (Source_Files_Attribute) then
-               List := Project.Attribute_Value (Source_Files_Attribute);
-               for L in List'Range loop
-                  if List (L).all = +File.Base_Name then
-                     Free (List (L));
-                     exit;
-                  end if;
-               end loop;
-
-               Project.Set_Attribute (Source_Files_Attribute, List.all);
-               Free (List);
-
-            elsif Project.Has_Attribute (Source_List_File_Attribute) then
-               GPS.Kernel.Console.Insert
-                 (Kernel,
-                  Text => -"Project '"
-                  & Project.Name
-                  & (-("' specifies its sources via a"
-                    & " Source_List_File attribute, which wasn't edited"
-                    & " automatically")));
-            end if;
-
-            Recompute_View (Kernel);
          end if;
       end if;
+
+      Project := Get_Registry (Kernel).Tree.Info (File).Project;
+      if Project.Has_Attribute (Source_Files_Attribute) then
+         List := Project.Attribute_Value (Source_Files_Attribute);
+         for L in List'Range loop
+            if List (L).all = +File.Base_Name then
+               Free (List (L));
+               exit;
+            end if;
+         end loop;
+
+         Project.Set_Attribute (Source_Files_Attribute, List.all);
+         Free (List);
+
+      elsif Project.Has_Attribute (Source_List_File_Attribute) then
+         GPS.Kernel.Console.Insert
+           (Kernel,
+            Text => -"Project '"
+            & Project.Name
+            & (-("' specifies its sources via a"
+              & " Source_List_File attribute, which wasn't edited"
+              & " automatically")));
+      end if;
+
+      Recompute_View (Kernel);
 
       return Success;
    end Execute;
