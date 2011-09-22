@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2009-2010, AdaCore                  --
+--                 Copyright (C) 2009-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -100,6 +100,9 @@ package body GPS.Tree_View is
 
    procedure Free is
      new Ada.Unchecked_Deallocation (Node_Record, Node_Access);
+
+   function On_Idle (Self : GPS_Tree_View) return Boolean;
+   --  Idle callback.
 
    --------------
    -- Finalize --
@@ -234,6 +237,42 @@ package body GPS.Tree_View is
       Path_Free (Path);
    end Initialize;
 
+   -------------
+   -- On_Idle --
+   -------------
+
+   function On_Idle (Self : GPS_Tree_View) return Boolean is
+      C     : Path_List.Cursor;
+      Path  : Gtk_Tree_Path;
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
+   begin
+      if not Self.Paths_To_Be_Expanded.Is_Empty then
+         C := Self.Paths_To_Be_Expanded.First;
+
+         while Path_List.Has_Element (C) loop
+            Path := Path_List.Element (C);
+            Dummy := Self.Expand_Row (Path, False);
+            Path_Free (Path);
+            Path_List.Next (C);
+         end loop;
+
+         Self.Paths_To_Be_Expanded.Clear;
+      end if;
+
+      if Self.On_Idle /= 0 then
+         Remove (Self.On_Idle);
+         Self.On_Idle := 0;
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end On_Idle;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -244,9 +283,28 @@ package body GPS.Tree_View is
    is
       pragma Unreferenced (Object);
 
+      C : Path_List.Cursor;
+      Path : Gtk_Tree_Path;
    begin
+      if not Self.Paths_To_Be_Expanded.Is_Empty then
+         C := Self.Paths_To_Be_Expanded.First;
+         while Path_List.Has_Element (C) loop
+            Path := Path_List.Element (C);
+            Path_Free (Path);
+            Path_List.Next (C);
+         end loop;
+      end if;
+
+      if Self.On_Idle /= 0 then
+         Remove (Self.On_Idle);
+         Self.On_Idle := 0;
+      end if;
+
       Finalize (Self.Root.all);
       Free (Self.Root);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end On_Destroy;
 
    ----------------------------------
@@ -471,6 +529,12 @@ package body GPS.Tree_View is
       pragma Unreferenced (Object);
 
    begin
+      --  Careful: it is not possible to modify the tree view (for instance
+      --  by expanding rows or by scrolling) in reaction to
+      --  Row_Has_Child_Toggled, since this confuses the validation of the
+      --  rbtree nodes in Gtk+.
+      --  Instead, we schedule these operations to occur in an idle callback.
+
       if Self.Get_Model.Has_Child (Iter)
         and then not Self.Row_Expanded (Path)
       then
@@ -489,11 +553,17 @@ package body GPS.Tree_View is
             end loop;
 
             if Node.Expanded then
-               Dummy := Self.Expand_Row (Path, False);
+               Self.Paths_To_Be_Expanded.Prepend (Copy (Path));
             end if;
 
             Path_Free (Lowerst_Path);
          end;
+      end if;
+
+      if not Self.Paths_To_Be_Expanded.Is_Empty then
+         Self.On_Idle := Tree_View_Sources.Idle_Add
+           (Func => On_Idle'Access,
+            Data => Self);
       end if;
 
    exception
