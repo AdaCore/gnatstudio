@@ -1,6 +1,8 @@
 with Ada.Calendar;      use Ada.Calendar;
 with Ada.Containers.Hashed_Maps;
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
+with Ada.Strings.Hash;
 with Ada.Text_IO;       use Ada.Text_IO;
 with Database;          use Database;
 with Database_Enums;    use Database_Enums;
@@ -15,6 +17,9 @@ package body Entities_Db is
    Me : constant Trace_Handle := Create ("ENTITIES", Off);
    Me_Error : constant Trace_Handle := Create ("ENTITIES.ERROR");
    Me_Debug : constant Trace_Handle := Create ("ENTITIES.DEBUG", Off);
+
+   Debug_Count : Natural := 0;
+   Debug_Select : Natural := 0;
 
    Query_Get_File : constant Files_Stmt :=
      Orm.All_Files
@@ -96,6 +101,13 @@ package body Entities_Db is
       Equivalent_Keys => "=");
    use VFS_To_Ids;
 
+   package String_To_Ids is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,    --  entity declaration
+      Element_Type    => Integer,   --  Id in the files table
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => "=");
+   use String_To_Ids;
+
    package Depid_To_Ids is new Ada.Containers.Vectors
      (Index_Type      => Positive,  --  index in the ALI file ("D" lines)
       Element_Type    => Integer);  --  Id in the files table
@@ -106,7 +118,9 @@ package body Entities_Db is
       Tree                      : Project_Tree;
       Library_File, Source_File : Virtual_File;
       VFS_To_Id                 : in out VFS_To_Ids.Map;
-      Ignore_Ref_In_Other_Files : Boolean);
+      Entity_Decl_To_Id         : in out String_To_Ids.Map;
+      Ignore_Ref_In_Other_Files : Boolean;
+      Search_Existing_Entities  : Boolean);
    --  Parse the contents of a single LI file.
    --  VFS_To_Id is a local cache for the entries in the files table.
    --
@@ -116,6 +130,11 @@ package body Entities_Db is
    --  is declared, we do not need to insert it. For instance, this applies to
    --  the parent types of entities, or the list of parameters for subprograms.
    --  This also avoids duplication in the database.
+   --
+   --  If Search_Existing_Entities is False, this procedure assumes that all
+   --  known entities in the database are in Entity_Decl_To_Id. If an entity
+   --  does not exist there, it is created in the database without checking if
+   --  it already exists there.
 
    --------------
    -- Parse_LI --
@@ -126,7 +145,9 @@ package body Entities_Db is
       Tree                      : Project_Tree;
       Library_File, Source_File : Virtual_File;
       VFS_To_Id                 : in out VFS_To_Ids.Map;
-      Ignore_Ref_In_Other_Files : Boolean)
+      Entity_Decl_To_Id         : in out String_To_Ids.Map;
+      Ignore_Ref_In_Other_Files : Boolean;
+      Search_Existing_Entities  : Boolean)
    is
       pragma Unreferenced (Source_File, Ignore_Ref_In_Other_Files);
       M      : Mapped_File;
@@ -448,6 +469,7 @@ package body Entities_Db is
       --------------------
 
       procedure Process_Entity (Current_X_File : Integer) is
+         Line_Start : constant Integer := Index;
          Is_Library_Level : Boolean;
          Name_Start, Name_End : Integer;
          pragma Unreferenced (Is_Library_Level);
@@ -494,40 +516,59 @@ package body Entities_Db is
             declare
                Name : aliased String :=
                  String (Str (Name_Start .. Name_End - 1));
+               Decl : constant String :=
+                 Current_X_File'Img & "|"
+                 & String (Str (Line_Start .. Name_End - 1));
+
+               S : String_To_Ids.Cursor;
+
                R : Forward_Cursor;
             begin
                --  Check if we already know that entity.
 
-               R.Fetch
-                 (Session.DB,
-                  Query_Find_Entity_From_Decl,
-                  Params =>
-                    (1 => +Name'Unrestricted_Access,
-                     2 => +Current_X_File,
-                     3 => +Xref_Line,
-                     4 => +Xref_Col));
-
-               if R.Has_Row then
-                  Current_Entity := R.Integer_Value (0);
-
-               elsif Perform_Entity_Insert then
-                  --  Save the current entity
-
-                  R.Fetch
-                    (Session.DB,
-                     Query_Insert_Entity,
-                     Params =>
-                       (1 => +Name'Unrestricted_Access,
-                        2 => +Xref_Kind,       --  kind
-                        3 => +Current_X_File,  --  decl_file
-                        4 => +Xref_Line,       --  decl_line
-                        5 => +Xref_Col));      --  decl_column
-
-                  Current_Entity :=
-                    R.Last_Id (Session.DB, Database.Entities.Id);
+               S := Entity_Decl_To_Id.Find (Decl);
+               if Has_Element (S) then
+                  Current_Entity := Element (S);
+                  Debug_Count := Debug_Count + 1;
 
                else
-                  Current_Entity := 1;
+                  --  We could avoid this step if we start from an empty
+                  --  database, since all entities will end up in the
+                  --  Entity_Decl_To_Id table
+
+                  if Search_Existing_Entities then
+                     R.Fetch
+                       (Session.DB,
+                        Query_Find_Entity_From_Decl,
+                        Params =>
+                          (1 => +Name'Unrestricted_Access,
+                           2 => +Current_X_File,
+                           3 => +Xref_Line,
+                           4 => +Xref_Col));
+                     Debug_Select := Debug_Select + 1;
+                  end if;
+
+                  if Search_Existing_Entities and then R.Has_Row then
+                     Current_Entity := R.Integer_Value (0);
+
+                  else
+                     --  Save the current entity
+
+                     R.Fetch
+                       (Session.DB,
+                        Query_Insert_Entity,
+                        Params =>
+                          (1 => +Name'Unrestricted_Access,
+                           2 => +Xref_Kind,       --  kind
+                           3 => +Current_X_File,  --  decl_file
+                           4 => +Xref_Line,       --  decl_line
+                           5 => +Xref_Col));      --  decl_column
+
+                     Current_Entity :=
+                       R.Last_Id (Session.DB, Database.Entities.Id);
+                  end if;
+
+                  Entity_Decl_To_Id.Insert (Decl, Current_Entity);
                end if;
             end;
 
@@ -630,16 +671,13 @@ package body Entities_Db is
                Skip_Spaces;
                Get_Ref;
                Skip_Instance_Info;
-
-               if Perform_Entity_Insert then
-                  Session.DB.Execute
-                    (Query_Insert_Ref,
-                     Params => (1 => +Current_Entity,
-                                2 => +Xref_File,
-                                3 => +Xref_Line,
-                                4 => +Xref_Col,
-                                5 => +Xref_Kind));
-               end if;
+               Session.DB.Execute
+                 (Query_Insert_Ref,
+                  Params => (1 => +Current_Entity,
+                             2 => +Xref_File,
+                             3 => +Xref_Line,
+                             4 => +Xref_Col,
+                             5 => +Xref_Kind));
             end loop;
          end if;
 
@@ -782,12 +820,14 @@ package body Entities_Db is
    procedure Parse_All_LI_Files
      (Session : Session_Type;
       Tree    : Project_Tree;
-      Project : Project_Type)
+      Project : Project_Type;
+      Database_Is_Empty : Boolean := False)
    is
       use Library_Info_Lists;
       LI_Files  : Library_Info_Lists.List;
       Start     : Time := Clock;
       VFS_To_Id : VFS_To_Ids.Map;
+      Entity_Decl_To_Id : String_To_Ids.Map;
       Has_Pragma : Boolean := True;
 
    begin
@@ -830,7 +870,9 @@ package body Entities_Db is
                    Library_File              => Lib_Info.Library_File,
                    Source_File               => Lib_Info.Source_File,
                    VFS_To_Id                 => VFS_To_Id,
-                   Ignore_Ref_In_Other_Files => True);
+                   Entity_Decl_To_Id         => Entity_Decl_To_Id,
+                   Ignore_Ref_In_Other_Files => True,
+                   Search_Existing_Entities  => not Database_Is_Empty);
       end loop;
 
       --  It might be safer to commit after each LI file, but this is much
@@ -857,6 +899,8 @@ package body Entities_Db is
          Session.Commit;
       end if;
 
+      Put_Line ("MANU Saved SELECT through local hash:" & Debug_Count'Img);
+      Put_Line ("MANU SELECT for entities:" & Debug_Select'Img);
       Put_Line
         ("Done parsing files:" & Duration'Image (Clock - Start) & " seconds");
    end Parse_All_LI_Files;

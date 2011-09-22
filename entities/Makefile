@@ -13,7 +13,7 @@ all:
 	@# Create a dummy database, just to be able to extract the initial
 	@# data from it. ??? Should be doable directly from initialdata.txt
 	@rm -f entities.db
-	@${DB2ADA} -dbtype=sqlite -dbname=entities.db \
+	@${DB2ADA} -dbtype=sqlite -dbname=:memory: \
 		-createdb \
 		-load=${INITIAL} \
 		-api-enums Database_Enums -enum "f2f_kind,id,name,F2F_,Integer"
@@ -25,15 +25,20 @@ test: createdb
 
 profile:
 	-@mv -f .gnatdebug .gnatdebug.bkp 2>/dev/null
-	@echo "=================="
-	@echo "Flushing disk caches"
 	@sync ; echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
+	@echo "===== Flushing disk caches ====="
 	@rm -f entities.db
 	@./obj/test_entities
-	@echo "=================="
-	@echo "With files in the cache"
+
+	@echo "===== Files in disk cache ======"
 	@rm -f entities.db
 	@./obj/test_entities
+
+	@echo "===== Start with an existing empty db ===="
+	@rm -f entities.db
+	@${DB2ADA} -dbtype=sqlite -dbname=entities.db -createdb -load=${INITIAL}
+	@./obj/test_entities
+
 
 doc:
 	@gnatcoll_db2ada -dbmodel=${MODEL} -dot

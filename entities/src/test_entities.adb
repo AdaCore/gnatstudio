@@ -30,7 +30,6 @@ procedure Test_Entities is
 begin
    GNATCOLL.Traces.Parse_Config_File;
    GNATCOLL.SQL.Exec.Perform_Queries := True;
-   Entities_Db.Perform_Entity_Insert := True;
 
    Start := Clock;
 
@@ -93,7 +92,9 @@ begin
 
    --  Parse ALI files
 
-   Parse_All_LI_Files (Get_New_Session, Tree, Tree.Root_Project);
+   Parse_All_LI_Files
+     (Get_New_Session, Tree, Tree.Root_Project,
+      Database_Is_Empty => Need_To_Create_DB);
 
 --     Put_Line ("Number of traces on SQL.SELECT: "
 --               & GNATCOLL.Traces.Count
