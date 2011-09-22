@@ -560,7 +560,11 @@ package body GPS.Tree_View is
          end;
       end if;
 
-      if not Self.Paths_To_Be_Expanded.Is_Empty then
+      --  If no idle callback is currently registered, and there are paths
+      --  to expand, register an idle callback.
+      if Self.On_Idle /= 0
+        and then not Self.Paths_To_Be_Expanded.Is_Empty
+      then
          Self.On_Idle := Tree_View_Sources.Idle_Add
            (Func => On_Idle'Access,
             Data => Self);
