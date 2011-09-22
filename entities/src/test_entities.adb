@@ -13,7 +13,9 @@ with Entities_Db;           use Entities_Db;
 
 procedure Test_Entities is
    DB_Name      : constant String := "entities.db";
-   GPR_File     : constant Virtual_File := Create ("../gps/gps.gpr");
+   GPR_File     : constant Virtual_File :=
+     --  Create ("entities.gpr");
+     Create ("../gps/gps.gpr");
    DB_Schema_Descr : constant Virtual_File := Create ("../share/dbschema.txt");
    Initial_Data : constant Virtual_File := Create ("../share/initialdata.txt");
 

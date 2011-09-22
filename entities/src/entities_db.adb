@@ -16,9 +16,6 @@ package body Entities_Db is
    Me_Error : constant Trace_Handle := Create ("ENTITIES.ERROR");
    Me_Debug : constant Trace_Handle := Create ("ENTITIES.DEBUG", Off);
 
-   Declaration_Ref_Kind : constant Character := '@';
-   --  Reference kind to use for declarations.
-
    Query_Get_File : constant Files_Stmt :=
      Orm.All_Files
      .Filter (Database.Files.Path = Text_Param (1))
@@ -61,7 +58,10 @@ package body Entities_Db is
      Prepare
        (SQL_Insert
             ((Database.Entities.Name = Text_Param (1))
-             & (Database.Entities.Kind = Text_Param (2))),
+             & (Database.Entities.Kind = Text_Param (2))
+             & (Database.Entities.Decl_File = Integer_Param (3))
+             & (Database.Entities.Decl_Line = Integer_Param (4))
+             & (Database.Entities.Decl_Column = Integer_Param (5))),
         On_Server => True, Name => "insert_entity");
 
    Query_Insert_Ref : constant Prepared_Statement :=
@@ -73,6 +73,21 @@ package body Entities_Db is
              & (Database.Entity_Refs.Column = Integer_Param (4))
              & (Database.Entity_Refs.Kind   = Text_Param (5))),
         On_Server => True, Name => "insert_ref");
+
+   Query_Find_Entity_From_Decl : constant Prepared_Statement :=
+     Prepare
+       (SQL_Select
+            (Database.Entities.Id,
+             From => Database.Entities,
+             Where => Database.Entities.Name = Text_Param (1)
+             and Database.Entities.Decl_File = Integer_Param (2)
+             and Database.Entities.Decl_Line = Integer_Param (3)
+             and Database.Entities.Decl_Column = Integer_Param (4),
+             Limit => 1),
+        On_Server => True, Name => "entity_from_decl");
+   --  Get an entity's id given the location of its declaration. In sqlite3,
+   --  this is implemented as a single table lookup thanks to the multi-column
+   --  covering index we created.
 
    package VFS_To_Ids is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,
@@ -479,36 +494,41 @@ package body Entities_Db is
             declare
                Name : aliased String :=
                  String (Str (Name_Start .. Name_End - 1));
-               K : aliased String (1 .. 1) := (1 => Xref_Kind);
                R : Forward_Cursor;
             begin
-               --  Save the current entity
+               --  Check if we already know that entity.
 
-               if Perform_Entity_Insert then
+               R.Fetch
+                 (Session.DB,
+                  Query_Find_Entity_From_Decl,
+                  Params =>
+                    (1 => +Name'Unrestricted_Access,
+                     2 => +Current_X_File,
+                     3 => +Xref_Line,
+                     4 => +Xref_Col));
+
+               if R.Has_Row then
+                  Current_Entity := R.Integer_Value (0);
+
+               elsif Perform_Entity_Insert then
+                  --  Save the current entity
+
                   R.Fetch
                     (Session.DB,
                      Query_Insert_Entity,
                      Params =>
                        (1 => +Name'Unrestricted_Access,
-                        2 => +K'Unrestricted_Access));
+                        2 => +Xref_Kind,       --  kind
+                        3 => +Current_X_File,  --  decl_file
+                        4 => +Xref_Line,       --  decl_line
+                        5 => +Xref_Col));      --  decl_column
                   Current_Entity :=
                     R.Last_Id (Session.DB, Database.Entities.Id);
+
                else
                   Current_Entity := 1;
                end if;
             end;
-
-            --  Save the location of its declaration
-
-            if Perform_Entity_Insert then
-               Session.DB.Execute
-                 (Query_Insert_Ref,
-                  Params => (1 => +Current_Entity,
-                             2 => +Current_X_File,
-                             3 => +Xref_Line,
-                             4 => +Xref_Col,
-                             5 => +Declaration_Ref_Kind));
-            end if;
 
             --  Process the extra information we had (pointed type,...)
 
@@ -830,6 +850,10 @@ package body Entities_Db is
 
          --  We can store temporary tables in memory
          Session.DB.Execute ("PRAGMA temp_store=MEMORY");
+
+         --  Gather statistic to speed up the query optimizer
+         Session.DB.Execute ("ANALYZE");
+         Session.Commit;
       end if;
 
       Put_Line

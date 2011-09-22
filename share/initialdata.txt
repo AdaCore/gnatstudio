@@ -82,7 +82,6 @@
 | w     | with line                      | true    | true    | false    | false  | false             |
 | X     | type extension                 | true    | true    | false    | false  | false             |
 | z     | formal generic parameter       | false   | false   | false    | false  | false             |
-| @     | declaration                    | true    | true    | false    | false  | false             |
 
 | TABLE | f2f_kind   |                                           |
 |    id | name       |                                           |
