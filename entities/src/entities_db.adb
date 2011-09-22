@@ -1,8 +1,7 @@
 with Ada.Calendar;      use Ada.Calendar;
+with Ada.Containers;    use Ada.Containers;
 with Ada.Containers.Hashed_Maps;
-with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings.Hash;
 with Ada.Text_IO;       use Ada.Text_IO;
 with Database;          use Database;
 with Database_Enums;    use Database_Enums;
@@ -14,12 +13,8 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with Orm;               use Orm;
 
 package body Entities_Db is
-   Me : constant Trace_Handle := Create ("ENTITIES", Off);
    Me_Error : constant Trace_Handle := Create ("ENTITIES.ERROR");
    Me_Debug : constant Trace_Handle := Create ("ENTITIES.DEBUG", Off);
-
-   Debug_Count : Natural := 0;
-   Debug_Select : Natural := 0;
 
    Query_Get_File : constant Files_Stmt :=
      Orm.All_Files
@@ -79,6 +74,15 @@ package body Entities_Db is
              & (Database.Entity_Refs.Kind   = Text_Param (5))),
         On_Server => True, Name => "insert_ref");
 
+   Query_Insert_E2E : constant Prepared_Statement :=
+     Prepare
+       (SQL_Insert
+            ((Database.E2e.Fromentity = Integer_Param (1))
+             & (Database.E2e.Toentity = Integer_Param (2))
+             & (Database.E2e.Kind = Integer_Param (3))
+             & (Database.E2e.Order_By = Integer_Param (4))),
+        On_Server => True, Name => "insert_e2e");
+
    Query_Find_Entity_From_Decl : constant Prepared_Statement :=
      Prepare
        (SQL_Select
@@ -101,12 +105,43 @@ package body Entities_Db is
       Equivalent_Keys => "=");
    use VFS_To_Ids;
 
-   package String_To_Ids is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,    --  entity declaration
+   type Loc is record
+      File_Id : Integer;
+      Line    : Integer;
+      Kind    : Character;
+      Column  : Integer;
+   end record;
+   --  A location within a file.
+   --  We have to include the entity metatype ("Kind") because in some cases
+   --  GNAT outputs the same entity twice in the ALI file. For instance,
+   --  in gnatcoll-sql_impl.ali we have:
+   --     167C9*SQL_Single_Table<167R9>
+   --     167H9*SQL_Single_Table<155R9> 33|129r50 35|609e57
+   --  They refer to the same type, so perhaps could be merged.
+
+   function Hash (L : Loc) return Ada.Containers.Hash_Type;
+   function Hash (L : Loc) return Ada.Containers.Hash_Type is
+      function Shift_Left
+        (Value  : Hash_Type;
+         Amount : Natural) return Hash_Type;
+      pragma Import (Intrinsic, Shift_Left);
+
+      H : Hash_Type := Hash_Type (L.File_Id);
+   begin
+      --  Inspired by Ada.Strings.Hash
+      H := Hash_Type (L.Line) + Shift_Left (H, 6) + Shift_Left (H, 16) - H;
+      H := Hash_Type (Character'Pos (L.Kind))
+        + Shift_Left (H, 6) + Shift_Left (H, 16) - H;
+      H := Hash_Type (L.Column) + Shift_Left (H, 6) + Shift_Left (H, 16) - H;
+      return H;
+   end Hash;
+
+   package Loc_To_Ids is new Ada.Containers.Hashed_Maps
+     (Key_Type        => Loc,    --  entity declaration
       Element_Type    => Integer,   --  Id in the files table
-      Hash            => Ada.Strings.Hash,
+      Hash            => Hash,
       Equivalent_Keys => "=");
-   use String_To_Ids;
+   use Loc_To_Ids;
 
    package Depid_To_Ids is new Ada.Containers.Vectors
      (Index_Type      => Positive,  --  index in the ALI file ("D" lines)
@@ -118,9 +153,8 @@ package body Entities_Db is
       Tree                      : Project_Tree;
       Library_File, Source_File : Virtual_File;
       VFS_To_Id                 : in out VFS_To_Ids.Map;
-      Entity_Decl_To_Id         : in out String_To_Ids.Map;
-      Ignore_Ref_In_Other_Files : Boolean;
-      Search_Existing_Entities  : Boolean);
+      Entity_Decl_To_Id         : in out Loc_To_Ids.Map;
+      Ignore_Ref_In_Other_Files : Boolean);
    --  Parse the contents of a single LI file.
    --  VFS_To_Id is a local cache for the entries in the files table.
    --
@@ -131,10 +165,13 @@ package body Entities_Db is
    --  the parent types of entities, or the list of parameters for subprograms.
    --  This also avoids duplication in the database.
    --
-   --  If Search_Existing_Entities is False, this procedure assumes that all
-   --  known entities in the database are in Entity_Decl_To_Id. If an entity
-   --  does not exist there, it is created in the database without checking if
-   --  it already exists there.
+   --  Entity_Decl_To_Id maps a "file|line.col" to an entity id. This is filled
+   --  during a first pass, and is needed to resolve references to parent
+   --  types, index types,... during the second pass. This table does not
+   --  include the name of the entity, since this is unknown when seeing the
+   --  xref. But while parsing a given ALI file, the location is always unique
+   --  (which would be potentially false if sharing this table for multiple
+   --  ALIs)
 
    --------------
    -- Parse_LI --
@@ -145,9 +182,8 @@ package body Entities_Db is
       Tree                      : Project_Tree;
       Library_File, Source_File : Virtual_File;
       VFS_To_Id                 : in out VFS_To_Ids.Map;
-      Entity_Decl_To_Id         : in out String_To_Ids.Map;
-      Ignore_Ref_In_Other_Files : Boolean;
-      Search_Existing_Entities  : Boolean)
+      Entity_Decl_To_Id         : in out Loc_To_Ids.Map;
+      Ignore_Ref_In_Other_Files : Boolean)
    is
       pragma Unreferenced (Source_File, Ignore_Ref_In_Other_Files);
       M      : Mapped_File;
@@ -164,6 +200,9 @@ package body Entities_Db is
       --  Current "D" line index
 
       Depid_To_Id     : Depid_To_Ids.Vector;
+
+      Current_X_File : Integer;
+      --  Id (in the database) of the file for the current X section
 
       Xref_File, Xref_Line, Xref_Col : Integer;
       Xref_Kind : Character;
@@ -182,6 +221,14 @@ package body Entities_Db is
       pragma Inline (Skip_Word);
       --  Moves Index to the first whitespace character following the current
       --  word
+
+      procedure Skip_To_Name_End;
+      pragma Inline (Skip_To_Name_End);
+      --  From the start of the name of the entity in an entity line in a X
+      --  section, move Index to the first character after the name of the
+      --  entity (this could be a space, or the beginning of a renaming
+      --  declaration, or the '<' for the parent type,...).
+      --  So Index should initially point to the first character of the name.
 
       procedure Skip_Instance_Info;
       --  Skip any instantiation info "[file|line[fil2|line[...]]]"
@@ -209,11 +256,17 @@ package body Entities_Db is
       --  If With_Col is False, no "kind col" is expected
 
       function Get_Ref_Or_Predefined
-        (Endchar  : Character;
-         With_Col : Boolean := True) return Boolean;
+        (Endchar   : Character;
+         Eid       : E2e_Id := -1;
+         E2e_Order : Integer := 1;
+         With_Col  : Boolean := True) return Boolean;
       --  Parse a "file|line kind col" reference, or the name of a predefined
       --  entity. After this ref or name, we expect to see Endchar.
       --  Returns False if there is an error.
+      --  This inserts appropriate entries in the "e2e" table to document
+      --  the relationship between the newly parsed entity and the current
+      --  entity. This kind of this relationship is given by Eid. Its "order"
+      --  is given by E2e_Order.
 
       function Insert_File
         (Basename : String;
@@ -225,9 +278,15 @@ package body Entities_Db is
       --  If Clear is true, this clears all known relationships from this
       --  file to any other (Known file dependencies, ALI files,...)
 
-      procedure Process_Entity (Current_X_File : Integer);
+      procedure Process_Entity_Line;
       --  Process the current line when it is an entity declaration and its
       --  references in the current file.
+
+      procedure First_Pass;
+      --  Find all entities referenced in the current LI file and store partial
+      --  information in Entity_Decl_To_Id.
+      --  Index should point to the beginning of the first 'X' section, and
+      --  will be put back at the same place.
 
       -----------------
       -- Get_Natural --
@@ -289,8 +348,10 @@ package body Entities_Db is
       ---------------------------
 
       function Get_Ref_Or_Predefined
-        (Endchar  : Character;
-         With_Col : Boolean := True) return Boolean is
+        (Endchar   : Character;
+         Eid       : E2e_Id := -1;
+         E2e_Order : Integer := 1;
+         With_Col  : Boolean := True) return Boolean is
       begin
          if Str (Index) not in '0' .. '9' then
             --  a predefined entity
@@ -301,8 +362,6 @@ package body Entities_Db is
          else
             Get_Ref (With_Col => With_Col);
          end if;
-
-         --  ??? TBD: insert in db
 
          --  There could be extra information regarding instantiations. Ignore
          --  these for now.
@@ -318,6 +377,15 @@ package body Entities_Db is
                       & "' at index" & Index'Img);
             end if;
             return False;
+         end if;
+
+         if False and then Eid /= -1 then
+            Session.DB.Execute
+              (Query_Insert_E2E,
+               Params => (1 => +Current_Entity,
+                          2 => +Current_Entity,  --  Wrong
+                          3 => +Eid,
+                          4 => +E2e_Order));
          end if;
 
          return True;
@@ -398,6 +466,40 @@ package body Entities_Db is
          end loop;
       end Skip_Word;
 
+      ----------------------
+      -- Skip_To_Name_End --
+      ----------------------
+
+      procedure Skip_To_Name_End is
+      begin
+         Index := Index + 1;
+
+         if Str (Index - 1) = '"' then
+            --  Operators are quoted
+
+            while Str (Index) /= '"' loop
+               Index := Index + 1;
+            end loop;
+            Index := Index + 1;   --  skip closing quote
+
+         else
+            --  Entity names can contain extra information, like
+            --  pointed type,... So we need to extract the name
+            --  itself and will store the extra information in a
+            --  second step
+
+            while Str (Index) /= ' '
+              and then Str (Index) /= ASCII.LF
+              and then Str (Index) /= '{'
+              and then Str (Index) /= '['
+              and then Str (Index) /= '<'
+              and then Str (Index) /= '('
+            loop
+               Index := Index + 1;
+            end loop;
+         end if;
+      end Skip_To_Name_End;
+
       -----------------
       -- Insert_File --
       -----------------
@@ -422,8 +524,8 @@ package body Entities_Db is
          Id    : Integer;
       begin
          if File = GNATCOLL.VFS.No_File then
-            if Active (Me) then
-               Trace (Me, "File not found in project: " & Basename);
+            if Active (Me_Debug) then
+               Trace (Me_Debug, "File not found in project: " & Basename);
             end if;
             return -1;
          end if;
@@ -464,14 +566,118 @@ package body Entities_Db is
          return Id;
       end Insert_File;
 
-      --------------------
-      -- Process_Entity --
-      --------------------
+      ----------------
+      -- First_Pass --
+      ----------------
 
-      procedure Process_Entity (Current_X_File : Integer) is
-         Line_Start : constant Integer := Index;
-         Is_Library_Level : Boolean;
+      procedure First_Pass is
+         Start_Of_X_Sections  : constant Integer := Index;
          Name_Start, Name_End : Integer;
+         Entity_Kind          : Character;
+      begin
+         while Index <= Last loop
+            if Str (Index) = 'X' then
+               Index := Index + 2;
+
+               Current_X_File := Depid_To_Id.Element (Get_Natural);
+               --  Could be set to -1 if the file is not found in the project's
+               --  sources (for instance sdefault.adb)
+
+            elsif Str (Index) = '.' then
+               --  Same entity as before, nothing to do
+               null;
+
+            elsif Str (Index) in '0' .. '9' then
+               if Current_X_File /= -1 then
+                  --  A new entity for this LI file, check whether we need to
+                  --  insert something in the database.
+
+                  Get_Ref;
+                  Xref_File        := Current_X_File;
+                  Entity_Kind      := Xref_Kind;
+                  Index := Index + 1;   --  Skip Library_Level flag
+
+                  Name_Start       := Index;
+                  Skip_To_Name_End;
+                  Name_End         := Index - 1;
+
+                  declare
+                     Name : aliased String :=
+                       String (Str (Name_Start .. Name_End));
+                     R : Forward_Cursor;
+                     Decl : constant Loc :=
+                       (File_Id => Current_X_File,
+                        Line    => Xref_Line,
+                        Kind    => Entity_Kind,
+                        Column  => Xref_Col);
+                     C : constant Loc_To_Ids.Cursor :=
+                       Entity_Decl_To_Id.Find (Decl);
+                  begin
+                     --  It is possible that we have already seen the same
+                     --  entity earlier in the file. Unfortunately, duplicates
+                     --  happen, for instance in .gli files
+
+                     if Has_Element (C) then
+                        Current_Entity := Element (C);
+
+                     else
+                        --  Check if we already know that entity in the db
+
+                        R.Fetch
+                          (Session.DB,
+                           Query_Find_Entity_From_Decl,
+                           Params =>
+                             (1 => +Name'Unrestricted_Access,
+                              2 => +Current_X_File,
+                              3 => +Xref_Line,
+                              4 => +Xref_Col));
+
+                        if R.Has_Row then
+                           Current_Entity := R.Integer_Value (0);
+
+                        else
+                           --  Save the current entity
+
+                           R.Fetch
+                             (Session.DB,
+                              Query_Insert_Entity,
+                              Params =>
+                                (1 => +Name'Unrestricted_Access,
+                                 2 => +Entity_Kind,     --  kind
+                                 3 => +Current_X_File,  --  decl_file
+                                 4 => +Xref_Line,       --  decl_line
+                                 5 => +Xref_Col));      --  decl_column
+
+                           Current_Entity :=
+                             R.Last_Id (Session.DB, Database.Entities.Id);
+                        end if;
+
+                        Entity_Decl_To_Id.Insert (Decl, Current_Entity);
+                     end if;
+                  end;
+               end if;
+
+            else
+               --  The start of another section in the ALI file
+               exit;
+            end if;
+
+            Next_Line;
+         end loop;
+
+         Index := Start_Of_X_Sections;
+      end First_Pass;
+
+      -------------------------
+      -- Process_Entity_Line --
+      -------------------------
+
+      procedure Process_Entity_Line is
+         Is_Library_Level : Boolean;
+         Name_End : Integer;
+         Entity_Kind : Character;
+         Eid : E2e_Id;
+         Order : Natural := 0;
          pragma Unreferenced (Is_Library_Level);
       begin
          if Str (Index) = '.' then
@@ -481,96 +687,16 @@ package body Entities_Db is
 
          else
             Get_Ref;
-            Xref_File        := Current_X_File;
+            Entity_Kind      := Xref_Kind;
             Is_Library_Level := Get_Char = '*';
+            Skip_To_Name_End;
+            Name_End         := Index;
 
-            Name_Start := Index;
-            Skip_Word;
-
-            Name_End := Name_Start + 1;
-
-            --  Operators are quoted
-
-            if Str (Name_Start) = '"' then
-               while Str (Name_End) /= '"' loop
-                  Name_End := Name_End + 1;
-               end loop;
-               Name_End := Name_End + 1;
-
-            else
-               --  Entity names can contain extra information, like
-               --  pointed type,... So we need to extract the name
-               --  itself and will store the extra information in a
-               --  second step
-
-               while Name_End < Index
-                 and then Str (Name_End) /= '{'
-                 and then Str (Name_End) /= '['
-                 and then Str (Name_End) /= '<'
-                 and then Str (Name_End) /= '('
-               loop
-                  Name_End := Name_End + 1;
-               end loop;
-            end if;
-
-            declare
-               Name : aliased String :=
-                 String (Str (Name_Start .. Name_End - 1));
-               Decl : constant String :=
-                 Current_X_File'Img & "|"
-                 & String (Str (Line_Start .. Name_End - 1));
-
-               S : String_To_Ids.Cursor;
-
-               R : Forward_Cursor;
-            begin
-               --  Check if we already know that entity.
-
-               S := Entity_Decl_To_Id.Find (Decl);
-               if Has_Element (S) then
-                  Current_Entity := Element (S);
-                  Debug_Count := Debug_Count + 1;
-
-               else
-                  --  We could avoid this step if we start from an empty
-                  --  database, since all entities will end up in the
-                  --  Entity_Decl_To_Id table
-
-                  if Search_Existing_Entities then
-                     R.Fetch
-                       (Session.DB,
-                        Query_Find_Entity_From_Decl,
-                        Params =>
-                          (1 => +Name'Unrestricted_Access,
-                           2 => +Current_X_File,
-                           3 => +Xref_Line,
-                           4 => +Xref_Col));
-                     Debug_Select := Debug_Select + 1;
-                  end if;
-
-                  if Search_Existing_Entities and then R.Has_Row then
-                     Current_Entity := R.Integer_Value (0);
-
-                  else
-                     --  Save the current entity
-
-                     R.Fetch
-                       (Session.DB,
-                        Query_Insert_Entity,
-                        Params =>
-                          (1 => +Name'Unrestricted_Access,
-                           2 => +Xref_Kind,       --  kind
-                           3 => +Current_X_File,  --  decl_file
-                           4 => +Xref_Line,       --  decl_line
-                           5 => +Xref_Col));      --  decl_column
-
-                     Current_Entity :=
-                       R.Last_Id (Session.DB, Database.Entities.Id);
-                  end if;
-
-                  Entity_Decl_To_Id.Insert (Decl, Current_Entity);
-               end if;
-            end;
+            Current_Entity := Entity_Decl_To_Id.Element
+              ((File_Id => Current_X_File,
+                Line    => Xref_Line,
+                Kind    => Entity_Kind,
+                Column  => Xref_Col));
 
             --  Process the extra information we had (pointed type,...)
 
@@ -590,6 +716,7 @@ package body Entities_Db is
 
             loop
                Index := Name_End + 1;
+               Order := Order + 1;
                Xref_File := Current_X_File;
 
                case Str (Name_End) is
@@ -613,7 +740,18 @@ package body Entities_Db is
                      --  For an overriding operation, this points to the
                      --     overridden operation.
 
-                     if not Get_Ref_Or_Predefined (Endchar => '>') then
+                     case Entity_Kind is
+                        when 'A' | 'a' =>
+                           Eid := E2e_Has_Index;
+                        when 'P' =>
+                           Eid := E2e_Overrides;
+                        when others =>
+                           Eid := E2e_Parent_Type;
+                     end case;
+
+                     if not Get_Ref_Or_Predefined
+                       (Endchar => '>', Eid => Eid, E2e_Order => Order)
+                     then
                         return;
                      end if;
 
@@ -680,9 +818,7 @@ package body Entities_Db is
                              5 => +Xref_Kind));
             end loop;
          end if;
-
-         --  Index now points to the first ref on the current line.
-      end Process_Entity;
+      end Process_Entity_Line;
 
    begin
       if Active (Me_Debug) then
@@ -707,7 +843,10 @@ package body Entities_Db is
 
       loop
          Next_Line;
-         exit when Index > Last;
+
+         if Index > Last then
+            return;
+         end if;
 
          case Str (Index) is
             when 'U' =>
@@ -769,46 +908,47 @@ package body Entities_Db is
                D_Line_Id := D_Line_Id + 1;
 
             when 'X' =>
-               --  From now on till first empty line, only xref info
-
-               Index := Index + 2;
-
-               declare
-                  Current_X_File : constant Integer :=
-                      Depid_To_Id.Element (Get_Natural);
-                  --  "files" id for the current X section
-
-               begin
-                  --  Now parse all entities for this file
-                  loop
-                     Next_Line;
-
-                     --  Do we still have a reference within that X section ?
-                     --  If not, move back to previous line, because the outer
-                     --  loop already moves to the next line.
-
-                     if Index > Last
-                       or else (Str (Index) not in '0' .. '9'
-                                and then Str (Index) /= '.')
-                     then
-                        Index := Index - 2;
-                        exit;
-                     end if;
-
-                     --  If we know the source file in which the entity is
-                     --  declared, we can insert it and all its refs. Otherwise
-                     --  we just ignore it.
-
-                     if Current_X_File /= -1 then
-                        Process_Entity (Current_X_File);
-                     end if;
-                  end loop;
-               end;
+               exit;
 
             when others =>
                null;
          end case;
       end loop;
+
+      --  Now process all 'X' sections, that contain the actual xref. This is
+      --  done in two passes: first create entries in the db for all the
+      --  entities, since we need to map from the location of a declaration to
+      --  an id to resolve pointers to parent types, index types,...
+      --  Then process the xref for each entity.
+
+      if Str (Index) = 'X' then
+         First_Pass;
+
+         while Index <= Last loop
+            if Str (Index) = 'X' then
+               Index := Index + 2;
+               Current_X_File := Depid_To_Id.Element (Get_Natural);
+
+            elsif Str (Index) = '.'
+              or else Str (Index) in '0' .. '9'
+            then
+               --  If we know the source file in which the entity is
+               --  declared, we can insert it and all its refs. Otherwise
+               --  we just ignore it. (for instance, sdefault.adb is often not
+               --  found)
+
+               if Current_X_File /= -1 then
+                  Process_Entity_Line;
+               end if;
+
+            else
+               --  The start of another section in the ALI file
+               exit;
+            end if;
+
+            Next_Line;
+         end loop;
+      end if;
 
       Close (M);
    end Parse_LI;
@@ -823,12 +963,14 @@ package body Entities_Db is
       Project : Project_Type;
       Database_Is_Empty : Boolean := False)
    is
+      pragma Unreferenced (Database_Is_Empty);
+
       use Library_Info_Lists;
       LI_Files  : Library_Info_Lists.List;
       Start     : Time := Clock;
       VFS_To_Id : VFS_To_Ids.Map;
-      Entity_Decl_To_Id : String_To_Ids.Map;
       Has_Pragma : Boolean := True;
+      Entity_Decl_To_Id : Loc_To_Ids.Map;
 
    begin
       --  Disable checks for foreign keys. This saves a bit of time when
@@ -871,8 +1013,7 @@ package body Entities_Db is
                    Source_File               => Lib_Info.Source_File,
                    VFS_To_Id                 => VFS_To_Id,
                    Entity_Decl_To_Id         => Entity_Decl_To_Id,
-                   Ignore_Ref_In_Other_Files => True,
-                   Search_Existing_Entities  => not Database_Is_Empty);
+                   Ignore_Ref_In_Other_Files => True);
       end loop;
 
       --  It might be safer to commit after each LI file, but this is much
@@ -899,8 +1040,6 @@ package body Entities_Db is
          Session.Commit;
       end if;
 
-      Put_Line ("MANU Saved SELECT through local hash:" & Debug_Count'Img);
-      Put_Line ("MANU SELECT for entities:" & Debug_Select'Img);
       Put_Line
         ("Done parsing files:" & Duration'Image (Clock - Start) & " seconds");
    end Parse_All_LI_Files;

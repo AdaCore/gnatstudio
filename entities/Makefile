@@ -12,11 +12,11 @@ all:
 
 	@# Create a dummy database, just to be able to extract the initial
 	@# data from it. ??? Should be doable directly from initialdata.txt
-	@rm -f entities.db
 	@${DB2ADA} -dbtype=sqlite -dbname=:memory: \
 		-createdb \
 		-load=${INITIAL} \
-		-api-enums Database_Enums -enum "f2f_kind,id,name,F2F_,Integer"
+		-api-enums Database_Enums -enum "f2f_kind,id,name,F2F_,Integer"  \
+		-api-enums Database_Enums -enum "e2e_kind,id,name,E2E_,Integer" 
 
 	gprbuild -m -j0 -Pentities.gpr
 
