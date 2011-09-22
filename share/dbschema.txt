@@ -142,16 +142,23 @@
 #     GPS current data structures, we store the declaration in this table
 #     rather than as a field in Entities. This also provides a place to
 #     store the caller_at_declaration
+#
+# We store instantiations as a string for now: currently, they are only used to
+# display tooltips in GPS as to where an entity comes from. This can easily be
+# parsed from the string. But the string also makes it easy to find all
+# references from the same instance as the one the user clicked on, which would
+# be harder (and slower) to do if we stored the instances in a separate table,
+# where each instance potentially points to its parent.
 
-| TABLE              | entity_refs                    | entity_ref                |   |                                                               |
-| entity             | FK entities(references)        | NOT NULL                  |   | The entity to which we have a reference                       |
-| file               | FK files(references)           | NOT NULL, NOINDEX         |   |                                                               |
-| line               | INTEGER                        | NOT NULL                  |   |                                                               |
-| column             | INTEGER                        | NOT NULL                  |   |                                                               |
-| kind               | FK reference_kinds()           | NOT NULL, NOINDEX         |   | Type of reference (same letter as in ALI files)               |
-| caller             | FK entities(calling)           | NULL, NOINDEX             |   | Enclosing entity at that location                             |
-| from_instantiation | FK entities(refs_in_instances) | NULL, NOINDEX             |   | The instantiation in which the reference occurs               |
-| INDEX:             | file,line,column               | entity_refs_file_line_col |   | # Do not include 'entity' to speed up Query_Set_Entity_Rename |
+| TABLE              | entity_refs             | entity_ref                |   |                                                               |             |                        |                                       |       |
+| entity             | FK entities(references) | NOT NULL                  |   | The entity to which we have a reference                       |             |                        |                                       |       |
+| file               | FK files(references)    | NOT NULL, NOINDEX         |   |                                                               |             |                        |                                       |       |
+| line               | INTEGER                 | NOT NULL                  |   |                                                               |             |                        |                                       |       |
+| column             | INTEGER                 | NOT NULL                  |   |                                                               |             |                        |                                       |       |
+| kind               | FK reference_kinds()    | NOT NULL, NOINDEX         |   | Type of reference (same letter as in ALI files)               |             |                        |                                       |       |
+| caller             | FK entities(calling)    | NULL, NOINDEX             |   | Enclosing entity at that location                             |             |                        |                                       |       |
+| from_instantiation | TEXT                    |                           |   | The instances in which the ref occurs, in the form "file1     | line1,file2 | line2,..." where file1 | line1 is itself instantiated by file2 | line2 |
+| INDEX:             | file,line,column        | entity_refs_file_line_col |   | # Do not include 'entity' to speed up Query_Set_Entity_Rename |             |                        |                                       |       |
 
 # ??? CREATE INDEX entity_refs__loc on entity_refs (file,kind,line,column);
 # See http://www.sqlite.org/queryplanner.html

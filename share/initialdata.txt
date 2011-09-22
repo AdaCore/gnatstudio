@@ -125,12 +125,14 @@
 | long long unsigned int | I        |        -1 |        -1 |          -1 |
 | long unsigned int      | I        |        -1 |        -1 |          -1 |
 | long_float             | F        |        -1 |        -1 |          -1 |
+| long_long_float        | F        |        -1 |        -1 |          -1 |
 | long_integer           | I        |        -1 |        -1 |          -1 |
 | long_long_integer      | I        |        -1 |        -1 |          -1 |
 | natural                | I        |        -1 |        -1 |          -1 |
 | positive               | I        |        -1 |        -1 |          -1 |
 | short int              | I        |        -1 |        -1 |          -1 |
 | short unsigned int     | I        |        -1 |        -1 |          -1 |
+| short_float            | F        |        -1 |        -1 |          -1 |
 | short_integer          | I        |        -1 |        -1 |          -1 |
 | short_short_integer    | I        |        -1 |        -1 |          -1 |
 | signed char            | I        |        -1 |        -1 |          -1 |
@@ -139,6 +141,7 @@
 | unsigned int           | I        |        -1 |        -1 |          -1 |
 | void                   | p        |        -1 |        -1 |          -1 |
 | wide_character         | E        |        -1 |        -1 |          -1 |
+| wide_wide_character    | E        |        -1 |        -1 |          -1 |
 | wide_string            | A        |        -1 |        -1 |          -1 |
 | wide_wide_string       | A        |        -1 |        -1 |          -1 |
 

@@ -4,6 +4,7 @@ with Ada.Containers;    use Ada.Containers;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO;       use Ada.Text_IO;
 with Database;          use Database;
 with Database_Enums;    use Database_Enums;
@@ -11,6 +12,7 @@ with GNATCOLL.Mmap;     use GNATCOLL.Mmap;
 with GNATCOLL.SQL;      use GNATCOLL.SQL;
 with GNATCOLL.SQL.Exec; use GNATCOLL.SQL.Exec;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with Orm;               use Orm;
 
@@ -78,7 +80,8 @@ package body Entities_Db is
              & (Database.Entity_Refs.File   = Integer_Param (2))
              & (Database.Entity_Refs.Line   = Integer_Param (3))
              & (Database.Entity_Refs.Column = Integer_Param (4))
-             & (Database.Entity_Refs.Kind   = Text_Param (5))),
+             & (Database.Entity_Refs.Kind   = Text_Param (5))
+             & (Database.Entity_Refs.From_Instantiation = Text_Param (6))),
         On_Server => True, Name => "insert_ref");
 
    Query_Insert_E2E : constant Prepared_Statement :=
@@ -300,8 +303,10 @@ package body Entities_Db is
       --  declaration, or the '<' for the parent type,...).
       --  So Index should initially point to the first character of the name.
 
-      procedure Skip_Instance_Info;
-      --  Skip any instantiation info "[file|line[fil2|line[...]]]"
+      procedure Skip_Instance_Info (Instance : out Unbounded_String);
+      --  Skip any instantiation info "[file|line[fil2|line[...]]]".
+      --  Returns the normalized description of the instance suitable for the
+      --  entity_refs table.
 
       procedure Skip_Import_Info;
       --  Skip any information about imports, in references:
@@ -445,7 +450,9 @@ package body Entities_Db is
          end if;
 
          if With_Col
-           or else Str (Index + 1) in '0' .. '9'
+           or else (Str (Index) /= '['
+                    and then Str (Index) /= ']'
+                    and then Str (Index + 1) in '0' .. '9')
          then
             Xref_Kind := Get_Char;
             Skip_Import_Info;
@@ -469,6 +476,8 @@ package body Entities_Db is
          Name_Last : Integer;
          Is_Predefined : constant Boolean := Str (Index) not in '0' .. '9';
          Ref_Entity : Integer := -1;
+         Ignored : Unbounded_String;
+         pragma Unreferenced (Ignored);
       begin
          if Is_Predefined then
             --  a predefined entity
@@ -481,10 +490,21 @@ package body Entities_Db is
             Get_Ref (With_Col => With_Col);
          end if;
 
-         --  There could be extra information regarding instantiations. Ignore
-         --  these for now.
+         --  Within the extra entity information (parent type, index type,...)
+         --  there can be information as to where an entity is instanciated.
+         --  For instance, gtk-containers.ads contains:
+         --     function Children return Gtk.Widget.Widget_List.GList;
+         --  and the ALI file contains:
+         --     310V13 Children{30|70R12[47|125]}
+         --         where 47|125 is the declaration of Widget_List
+         --     70R12 GList 312r37[47|125]
+         --
+         --  We simply discard the instance info in the extra entity info,
+         --  since it is complex to store efficiently and for now we do not use
+         --  it. But for the ref itself we will store in which instantiation
+         --  312r37 is found, to display in tooltips.
 
-         Skip_Instance_Info;
+         Skip_Instance_Info (Ignored);
 
          if Get_Char /= Endchar then
             if Active (Me_Error) then
@@ -580,20 +600,35 @@ package body Entities_Db is
       -- Skip_Instance_Info --
       ------------------------
 
-      procedure Skip_Instance_Info is
-         Nesting : Natural := 1;
+      procedure Skip_Instance_Info
+        (Instance : out Unbounded_String)
+      is
+         Nesting : Natural := 0;
+         Start_File  : constant Integer := Xref_File;
+         Start_Line  : constant Integer := Xref_Line;
+         Start_Col   : constant Integer := Xref_Col;
       begin
-         --  ??? Should store the location for ref in instances
+         Instance := Null_Unbounded_String;
+
          if Str (Index) = '[' then
-            while Nesting > 0 loop
+            while Str (Index) = '[' loop
                Index := Index + 1;
-               if Str (Index) = '[' then
-                  Nesting := Nesting + 1;
-               elsif Str (Index) = ']' then
-                  Nesting := Nesting - 1;
+               Nesting := Nesting + 1;
+
+               Get_Ref (With_Col => False);
+
+               if Instance /= Null_Unbounded_String then
+                  Append (Instance, ",");
                end if;
+               Append (Instance, Image (Xref_File, Min_Width => 0));
+               Append (Instance, '|');
+               Append (Instance, Image (Xref_Line, Min_Width => 0));
             end loop;
-            Index := Index + 1;
+
+            Index := Index + Nesting;   --  skip closing brackets
+            Xref_File := Start_File;
+            Xref_Line := Start_Line;
+            Xref_Col  := Start_Col;
          end if;
       end Skip_Instance_Info;
 
@@ -1030,6 +1065,7 @@ package body Entities_Db is
          Entity_Kind : Character;
          Eid : E2e_Id;
          Order : Natural := 0;
+         Instance : Unbounded_String;
          pragma Unreferenced (Is_Library_Level);
       begin
          if Str (Index) = '.' then
@@ -1203,7 +1239,44 @@ package body Entities_Db is
             loop
                Skip_Spaces;
                Get_Ref;
-               Skip_Instance_Info;
+
+               --  We want to store in which instantiation the ref is found,
+               --  so that we can display useful info in tooltips. There can be
+               --  nested instantiation information. For instance,
+               --  gtk-handler.ali contains the following:
+               --    X 42 gtk-marshallers.ads
+               --    290P15 Handler(40|446E12) 40|778r33[545[673]]
+               --    X 40 gtk-handlers.ads
+               --    778p10 Cb{42|290P15[545[673]]}
+               --
+               --  in gtk-marshallers.ads
+               --   generic
+               --   package User_Return_Marshallers is        --  line 235
+               --      generic
+               --      package Generic_Widget_Marshaller is   --  line 289
+               --         type Handler is access function     --  line 290
+               --
+               --  in gtk-handlers.ads
+               --  generic
+               --  package User_Return_Callback is
+               --    package Widget_Marshaller is   --  545
+               --       new Marshallers.Generic_Widget_Marshaller(..)  --  545
+               --  end User_Return_Callback;
+               --  package User_Return_Callback_With_Setup is  ---  671
+               --    package Internal_Cb is new User_Return_Callback   --  673
+               --       ...
+               --    package Marshallers renames Internal_Cb.Marshallers;  678
+               --    package Widget_Marshaller   --  761
+               --         renames Internal_Cb.Widget_Marshaller;  --  761
+               --    function To_Marshaller   --  777
+               --       (Cb : Widget_Marshaller.Handler)   -- 778
+               --
+               --  If the user gets info for "Handler" on line 778, we want to
+               --  show a tooltip that contains
+               --      from instance at gtk-handlers.ads:545
+               --      from instance at gtk-handlers.ads:673
+
+               Skip_Instance_Info (Instance);
 
                case Xref_Kind is
                   when '>' =>
@@ -1219,13 +1292,18 @@ package body Entities_Db is
                end case;
 
                if Eid = -1 then
-                  Session.DB.Execute
-                    (Query_Insert_Ref,
-                     Params => (1 => +Current_Entity,
-                                2 => +Xref_File,
-                                3 => +Xref_Line,
-                                4 => +Xref_Col,
-                                5 => +Xref_Kind));
+                  declare
+                     Inst : aliased String := To_String (Instance);
+                  begin
+                     Session.DB.Execute
+                       (Query_Insert_Ref,
+                        Params => (1 => +Current_Entity,
+                                   2 => +Xref_File,
+                                   3 => +Xref_Line,
+                                   4 => +Xref_Col,
+                                   5 => +Xref_Kind,
+                                   6 => +Inst'Unrestricted_Access));
+                  end;
                else
                   --  The reference necessarily points to the declaration of
                   --  the parameter, which exists in the same ALI file (but not
