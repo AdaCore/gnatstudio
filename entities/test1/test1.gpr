@@ -1,0 +1,7 @@
+project Test1 is
+   for Object_Dir use "obj";
+
+   package Compiler is
+      for Switches("ada") use ("-gnat05");
+   end Compiler;
+end Test1;
