@@ -1141,7 +1141,7 @@ package body Entities_Db is
                      case Entity_Kind is
                         when 'A' | 'a' =>
                            Eid := E2e_Has_Index;
-                        when 'P' =>
+                        when 'P' | 'p' =>
                            Eid := E2e_Overrides;
                         when others =>
                            Eid := E2e_Parent_Type;
