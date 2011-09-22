@@ -11,7 +11,7 @@
 | d     | decimal fixed point      | false         | false        | false                    |
 | D     | decimal fixed point type | false         | false        | false                    |
 | e     | enumeration              | false         | true         | true                     |
-| E     | eration type         | false         | true         | true                     |
+| E     | enumeration type         | false         | true         | true                     |
 | f     | floating point           | false         | false        | false                    |
 | F     | floating point type      | false         | false        | false                    |
 | g     | macro                    | true          | false        | false                    |
@@ -104,3 +104,41 @@
 |    13 | out parameter    | # B is an "out" parameter for A     |
 |    14 | in out parameter | # B is an "in out" parameter for A  |
 |    15 | access parameter | # B is an "access" parameter for A  |
+
+# The predefined entities for each languages. New ones will be inserted as
+# needed, but having a pre-made list helps documentation.
+
+| TABLE                  | entities |           |           |             |
+| name                   | kind     | decl_file | decl_line | decl_column |
+| __va_list_tag          | p        |        -1 |        -1 |          -1 |
+| boolean                | B        |        -1 |        -1 |          -1 |
+| char                   | I        |        -1 |        -1 |          -1 |
+| character              | E        |        -1 |        -1 |          -1 |
+| double                 | F        |        -1 |        -1 |          -1 |
+| duration               | O        |        -1 |        -1 |          -1 |
+| float                  | F        |        -1 |        -1 |          -1 |
+| int                    | I        |        -1 |        -1 |          -1 |
+| integer                | I        |        -1 |        -1 |          -1 |
+| long double            | F        |        -1 |        -1 |          -1 |
+| long int               | I        |        -1 |        -1 |          -1 |
+| long long int          | I        |        -1 |        -1 |          -1 |
+| long long unsigned int | I        |        -1 |        -1 |          -1 |
+| long unsigned int      | I        |        -1 |        -1 |          -1 |
+| long_float             | F        |        -1 |        -1 |          -1 |
+| long_integer           | I        |        -1 |        -1 |          -1 |
+| long_long_integer      | I        |        -1 |        -1 |          -1 |
+| natural                | I        |        -1 |        -1 |          -1 |
+| positive               | I        |        -1 |        -1 |          -1 |
+| short int              | I        |        -1 |        -1 |          -1 |
+| short unsigned int     | I        |        -1 |        -1 |          -1 |
+| short_integer          | I        |        -1 |        -1 |          -1 |
+| short_short_integer    | I        |        -1 |        -1 |          -1 |
+| signed char            | I        |        -1 |        -1 |          -1 |
+| string                 | A        |        -1 |        -1 |          -1 |
+| unsigned char          | I        |        -1 |        -1 |          -1 |
+| unsigned int           | I        |        -1 |        -1 |          -1 |
+| void                   | p        |        -1 |        -1 |          -1 |
+| wide_character         | E        |        -1 |        -1 |          -1 |
+| wide_string            | A        |        -1 |        -1 |          -1 |
+| wide_wide_string       | A        |        -1 |        -1 |          -1 |
+

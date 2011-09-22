@@ -12,7 +12,7 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with Entities_Db;           use Entities_Db;
 
 procedure Test_Entities is
-   DB_Name      : constant String := "entities.db";
+   DB_Name      : constant String := ":memory:";  --  "entities.db";
    GPR_File     : constant Virtual_File :=
      --  Create ("entities.gpr");
      Create ("../gps/gps.gpr");

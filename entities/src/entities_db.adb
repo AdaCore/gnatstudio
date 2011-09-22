@@ -418,14 +418,17 @@ package body Entities_Db is
          E2e_Order : Integer := 1;
          With_Col  : Boolean := True) return Boolean
       is
+         Start : constant Integer := Index;
+         Name_Last : Integer;
          Is_Predefined : constant Boolean := Str (Index) not in '0' .. '9';
-         Ref_Entity : Integer;
+         Ref_Entity : Integer := -1;
       begin
          if Is_Predefined then
             --  a predefined entity
             while Str (Index) /= Endchar loop
                Index := Index + 1;
             end loop;
+            Name_Last := Index - 1;
 
          else
             Get_Ref (With_Col => With_Col);
@@ -447,16 +450,48 @@ package body Entities_Db is
             return False;
          end if;
 
-         if Eid /= -1
-           and then not Is_Predefined   --  ??? Should set for these too
-         then
+         if Is_Predefined then
+            declare
+               R : Forward_Cursor;
+               Name : aliased String := String (Str (Start .. Name_Last));
+            begin
+               --  ??? Should we have local cache here ?
+               R.Fetch
+                 (Session.DB,
+                  Query_Find_Entity_From_Decl,
+                  Params =>
+                    (1 => +Name'Unrestricted_Access,
+                     2 => +(-1),
+                     3 => +(-1),
+                     4 => +(-1)));
+
+               if not R.Has_Row then
+                  Trace (Me_Error,
+                         "Missing predefined entity in the database: '"
+                         & Name & "' in "
+                         & Library_File.Display_Full_Name);
+                  R.Fetch
+                    (Session.DB,
+                     Query_Insert_Entity,
+                     Params =>
+                       (1 => +Name'Unrestricted_Access,
+                        2 => +'I',
+                        3 => +(-1),
+                        4 => +(-1),
+                        5 => +(-1)));
+                  Ref_Entity := R.Last_Id (Session.DB, Database.Entities.Id);
+               else
+                  Ref_Entity := R.Integer_Value (0);
+               end if;
+            end;
+
+         else
             --  Only insert in this extra information relates to an info from
             --  one of the units associated with the current LI. Otherwise,
             --  we'll end up with duplicates.
 
             if Current_X_File_Is_Internal
               and then Xref_File /= -1
-
               and then Xref_Col /= -1   --  ??? Should handle these
             then
                Ref_Entity := Get_Or_Create_Entity
@@ -465,13 +500,16 @@ package body Entities_Db is
                   Decl_Column => Xref_Col,
                   Name        => "",
                   Kind        => Xref_Kind);
-               Session.DB.Execute
-                 (Query_Insert_E2E,
-                  Params => (1 => +Current_Entity,
-                             2 => +Ref_Entity,
-                             3 => +Eid,
-                             4 => +E2e_Order));
             end if;
+         end if;
+
+         if Ref_Entity /= -1 then
+            Session.DB.Execute
+              (Query_Insert_E2E,
+               Params => (1 => +Current_Entity,
+                          2 => +Ref_Entity,
+                          3 => +Eid,
+                          4 => +E2e_Order));
          end if;
 
          return True;
@@ -499,6 +537,7 @@ package body Entities_Db is
       procedure Skip_Instance_Info is
          Nesting : Natural := 1;
       begin
+         --  ??? Should store the location for ref in instances
          if Str (Index) = '[' then
             while Nesting > 0 loop
                Index := Index + 1;
@@ -518,6 +557,7 @@ package body Entities_Db is
 
       procedure Skip_Import_Info is
       begin
+         --  ??? Should store import information
          if Str (Index) = '<' then
             while Str (Index) /= '>' loop
                Index := Index + 1;
@@ -686,17 +726,15 @@ package body Entities_Db is
          --  entity earlier in the file. Unfortunately, duplicates
          --  happen, for instance in .gli files
 
-         if Decl_Column /= -1 then
-            C := Entity_Decl_To_Id.Find (Decl);
+         C := Entity_Decl_To_Id.Find (Decl);
 
-            if Has_Element (C) then
-               Info := Element (C);
+         if Has_Element (C) then
+            Info := Element (C);
 
-               if Info.Known_Name         --  Do we know the entity ?
-                 or else Name'Length = 0  --  Or do we still have forward decl
-               then
-                  return Info.Id;
-               end if;
+            if Info.Known_Name         --  Do we know the entity ?
+              or else Name'Length = 0  --  Or do we still have forward decl
+            then
+               return Info.Id;
             end if;
          end if;
 
