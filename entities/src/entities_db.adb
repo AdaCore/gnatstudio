@@ -17,6 +17,15 @@ package body Entities_Db is
    Me_Error : constant Trace_Handle := Create ("ENTITIES.ERROR");
    Me_Debug : constant Trace_Handle := Create ("ENTITIES.DEBUG", Off);
 
+   Need_Forward_Decl : constant Boolean := True;
+   --  Whether this package requires forward declarations when parsing ALI
+   --  files: these are needed with some version of the ALI files (in fact
+   --  all so far) since an entity might have a parent that is only known by
+   --  its declaration, but we do not have the corresponding declaration in the
+   --  current ALI file. As a result, we insert dummy entries in the database
+   --  with an empty name, and clean those up when parsing their ALI.
+   --  Support for this requires additional SELECT queries and is thus slower.
+
    Query_Get_File : constant Files_Stmt :=
      Orm.All_Files
      .Filter (Database.Files.Path = Text_Param (1))
@@ -700,6 +709,15 @@ package body Entities_Db is
             end if;
          end if;
 
+         if not Need_Forward_Decl
+           and then Name'Length = 0
+         then
+            raise Program_Error
+              with "Support for forward declarations not compiled in"
+              & " when parsing " & Library_File.Display_Full_Name
+              & " decl=" & Decl_Line'Img & ' ' & Kind'Img & Decl_Column'Img;
+         end if;
+
          --  Either we have never seen that entity before, or we had a forward
          --  declaration (because the entity is for instance the parent of
          --  another entity, but the ALI file did not contain its name).
@@ -724,7 +742,9 @@ package body Entities_Db is
 
          --  Check if we had a forward declaration in the database
 
-         if not Searched or else not R.Has_Row then
+         if Need_Forward_Decl
+           and then (not Searched or else not R.Has_Row)
+         then
             R.Fetch
               (Session.DB,
                Query_Find_Entity_No_Name,
@@ -738,7 +758,7 @@ package body Entities_Db is
             Entity := R.Integer_Value (0);
 
             if Name'Length /= 0 then
-               if R.Value (1) = "" then
+               if Need_Forward_Decl and then R.Value (1) = "" then
                   --  We had a forward declaration in the database, we can now
                   --  update its name.
                   Session.DB.Execute
@@ -756,7 +776,8 @@ package body Entities_Db is
                Entity_Decl_To_Id.Insert
                  (Decl,
                   Entity_Info'(Id         => Entity,
-                               Known_Name => R.Value (1) /= ""));
+                               Known_Name => not Need_Forward_Decl
+                                 or else R.Value (1) /= ""));
             end if;
 
             return Entity;
