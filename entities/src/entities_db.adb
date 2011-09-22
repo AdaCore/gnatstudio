@@ -116,6 +116,14 @@ package body Entities_Db is
              Where => Database.Entities.Id = Integer_Param (1)),
         On_Server => True, Name => "set_entity_name");
 
+   Query_Set_Entity_Import : constant Prepared_Statement :=
+     Prepare
+       (SQL_Update
+            (Table => Database.Entities,
+             Set   => Database.Entities.Imports = Text_Param (2),
+             Where => Database.Entities.Id = Integer_Param (1)),
+        On_Server => True, Name => "set_entity_import");
+
    package VFS_To_Ids is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,
       Element_Type    => Integer,   --  Id in the files table
@@ -552,13 +560,24 @@ package body Entities_Db is
       ----------------------
 
       procedure Skip_Import_Info is
+         Start : Integer;
       begin
-         --  ??? Should store import information
          if Str (Index) = '<' then
+            Start := Index + 1;
             while Str (Index) /= '>' loop
                Index := Index + 1;
             end loop;
             Index := Index + 1;
+
+            declare
+               Name : aliased String :=
+                 String (Str (Start .. Index - 2));
+            begin
+               Session.DB.Execute
+                 (Query_Set_Entity_Import,
+                  Params => (1 => +Current_Entity,
+                             2 => +Name'Unrestricted_Access));
+            end;
          end if;
       end Skip_Import_Info;
 
