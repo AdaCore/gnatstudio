@@ -201,6 +201,7 @@ package body Entities_Db is
       Library_File, Source_File : Virtual_File;
       VFS_To_Id                 : in out VFS_To_Ids.Map;
       Entity_Decl_To_Id         : in out Loc_To_Ids.Map;
+      Entity_Renamings          : in out Entity_Renaming_Lists.List;
       Ignore_Ref_In_Other_Files : Boolean);
    --  Parse the contents of a single LI file.
    --  VFS_To_Id is a local cache for the entries in the files table.
@@ -230,6 +231,7 @@ package body Entities_Db is
       Library_File, Source_File : Virtual_File;
       VFS_To_Id                 : in out VFS_To_Ids.Map;
       Entity_Decl_To_Id         : in out Loc_To_Ids.Map;
+      Entity_Renamings          : in out Entity_Renaming_Lists.List;
       Ignore_Ref_In_Other_Files : Boolean)
    is
       pragma Unreferenced (Source_File, Ignore_Ref_In_Other_Files);
@@ -247,8 +249,6 @@ package body Entities_Db is
       --  Current "D" line index
 
       Depid_To_Id     : Depid_To_Ids.Vector;
-
-      Entity_Renamings : Entity_Renaming_Lists.List;
 
       Internal_Files : Depid_To_Ids.Vector;
       --  Contains the list of units associated with the current ALI (these
@@ -365,10 +365,6 @@ package body Entities_Db is
       function Is_ALI_Unit (Id : Integer) return Boolean;
       --  Whether the file with the given id is one of the units associated
       --  with the current ALI.
-
-      procedure Resolve_Renamings;
-      --  The last pass in parsing a ALI file is to resolve all renamings, now
-      --  that we can convert a reference to an entity
 
       -----------------
       -- Is_ALI_Unit --
@@ -1159,27 +1155,6 @@ package body Entities_Db is
          end if;
       end Process_Entity_Line;
 
-      -----------------------
-      -- Resolve_Renamings --
-      -----------------------
-
-      procedure Resolve_Renamings is
-         C : Entity_Renaming_Lists.Cursor := Entity_Renamings.First;
-         Ren : Entity_Renaming;
-      begin
-         while Has_Element (C) loop
-            Ren := Element (C);
-
-            Session.DB.Execute
-              (Query_Set_Entity_Renames,
-               Params => (1 => +Ren.Entity,
-                          2 => +Ren.File,
-                          3 => +Ren.Line,
-                          4 => +Ren.Column));
-            Next (C);
-         end loop;
-      end Resolve_Renamings;
-
    begin
       if Active (Me_Debug) then
          Trace (Me_Debug, "Parse LI "
@@ -1312,8 +1287,6 @@ package body Entities_Db is
          end loop;
       end if;
 
-      Resolve_Renamings;
-
       Close (M);
    end Parse_LI;
 
@@ -1335,6 +1308,32 @@ package body Entities_Db is
       VFS_To_Id : VFS_To_Ids.Map;
       Has_Pragma : Boolean := True;
       Entity_Decl_To_Id : Loc_To_Ids.Map;
+      Entity_Renamings : Entity_Renaming_Lists.List;
+
+      procedure Resolve_Renamings;
+      --  The last pass in parsing a ALI file is to resolve all renamings, now
+      --  that we can convert a reference to an entity
+
+      -----------------------
+      -- Resolve_Renamings --
+      -----------------------
+
+      procedure Resolve_Renamings is
+         C   : Entity_Renaming_Lists.Cursor := Entity_Renamings.First;
+         Ren : Entity_Renaming;
+      begin
+         while Has_Element (C) loop
+            Ren := Element (C);
+
+            Session.DB.Execute
+              (Query_Set_Entity_Renames,
+               Params => (1 => +Ren.Entity,
+                          2 => +Ren.File,
+                          3 => +Ren.Line,
+                          4 => +Ren.Column));
+            Next (C);
+         end loop;
+      end Resolve_Renamings;
 
    begin
       --  Disable checks for foreign keys. This saves a bit of time when
@@ -1359,6 +1358,11 @@ package body Entities_Db is
          Session.DB.Execute ("PRAGMA temp_store=MEMORY");
       end if;
 
+      --  It is faster to recreate the index once at the end than maintain it
+      --  for every insert.
+
+      Session.DB.Execute ("DROP INDEX entity_refs_file_line_col");
+
       Project.Library_Files
         (Recursive => True, Xrefs_Dirs => True, Including_Libraries => True,
          ALI_Ext => ".ali", List => LI_Files);
@@ -1377,8 +1381,14 @@ package body Entities_Db is
                    Source_File               => Lib_Info.Source_File,
                    VFS_To_Id                 => VFS_To_Id,
                    Entity_Decl_To_Id         => Entity_Decl_To_Id,
+                   Entity_Renamings          => Entity_Renamings,
                    Ignore_Ref_In_Other_Files => True);
       end loop;
+
+      Session.DB.Execute
+        ("CREATE INDEX entity_refs_file_line_col"
+         & " on entity_refs(file,line,column)");
+      Resolve_Renamings;
 
       --  It might be safer to commit after each LI file, but this is much
       --  slower. At worse, if there is an error parsing one file, we are not
