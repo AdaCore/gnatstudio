@@ -8,11 +8,14 @@ package Entities_Db is
      (Session : Session_Type;
       Tree    : Project_Tree;
       Project : Project_Type;
+      Env     : Project_Environment_Access := null;
       Database_Is_Empty : Boolean := False);
    --  Parse all the LI files for the project, and stores them in the
    --  database.
    --  If the caller knows that the database is empty, it should pass True for
    --  Database_Is_Empty. In this case, this package will avoid a number of
    --  calls to SELECT and significantly speed up the initial insertion.
+   --  If Env is specified, the ALI files from the predefined object path will
+   --  also be parsed.
 
 end Entities_Db;

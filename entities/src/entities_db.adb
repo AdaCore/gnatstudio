@@ -1390,6 +1390,7 @@ package body Entities_Db is
      (Session : Session_Type;
       Tree    : Project_Tree;
       Project : Project_Type;
+      Env     : Project_Environment_Access := null;
       Database_Is_Empty : Boolean := False)
    is
       pragma Unreferenced (Database_Is_Empty);
@@ -1461,6 +1462,26 @@ package body Entities_Db is
       Project.Library_Files
         (Recursive => True, Xrefs_Dirs => True, Including_Libraries => True,
          ALI_Ext => ".gli", List => LI_Files);
+
+      declare
+         Predef : constant File_Array := Env.Predefined_Object_Path;
+         Tmp : File_Array_Access;
+      begin
+         for P in Predef'Range loop
+            Tmp := Read_Dir (Predef (P));
+
+            for F in Tmp'Range loop
+               if Tmp (F).Has_Suffix (".ali") then
+                  LI_Files.Append
+                    (Library_Info'
+                       (Library_File => Tmp (F),
+                        Source_File  => GNATCOLL.VFS.No_File));
+               end if;
+            end loop;
+
+            Unchecked_Free (Tmp);
+         end loop;
+      end;
 
       Put_Line ("Number of .ali + .gli files:" & Length (LI_Files)'Img
                 & " (" & Duration'Image (Clock - Start) & " seconds)");

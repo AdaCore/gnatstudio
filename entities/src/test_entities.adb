@@ -12,7 +12,7 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with Entities_Db;           use Entities_Db;
 
 procedure Test_Entities is
-   DB_Name      : constant String := ":memory:";  --  "entities.db";
+   DB_Name      : constant String := "entities.db";
    GPR_File     : constant Virtual_File :=
      --  Create ("entities.gpr");
      Create ("../gps/gps.gpr");
@@ -93,7 +93,10 @@ begin
    --  Parse ALI files
 
    Parse_All_LI_Files
-     (Get_New_Session, Tree, Tree.Root_Project,
+     (Get_New_Session,
+      Tree              => Tree,
+      Env               => Env,
+      Project           => Tree.Root_Project,
       Database_Is_Empty => Need_To_Create_DB);
 
 --     Put_Line ("Number of traces on SQL.SELECT: "
