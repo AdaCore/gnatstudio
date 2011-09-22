@@ -11,7 +11,7 @@
 | d     | decimal fixed point      | false         | false        | false                    |
 | D     | decimal fixed point type | false         | false        | false                    |
 | e     | enumeration              | false         | true         | true                     |
-| E     | enumeration type         | false         | true         | true                     |
+| E     | eration type         | false         | true         | true                     |
 | f     | floating point           | false         | false        | false                    |
 | F     | floating point type      | false         | false        | false                    |
 | g     | macro                    | true          | false        | false                    |
@@ -88,14 +88,17 @@
 |     0 | withs      | # A depends on B (a "with" or "#include") |
 |     1 | has ALI    | # B is a lI file for A                    |
 
-| TABLE | e2e_kind      |                                  |
-|    id | name          |                                  |
-|     0 | pointed type  | # A points to B                  |
-|     1 | parent type   | # B is parent of A               |
-|     2 | returns       | # A returns B                    |
-|     3 | renames       | # A renames B                    |
-|     4 | has primitive | # B is primitive of A            |
-|     5 | instance of   | # A is instance of B             |
-|     6 | is param of   | # B is parameter of B            |
-|     7 | has index     | # B is an index type for array A |
-|     8 | overrides     | # A overrides B                  |
+| TABLE | e2e_kind         |                                     |
+|    id | name             |                                     |
+|     0 | pointed type     | # A points to B                     |
+|     1 | parent type      | # B is parent of A                  |
+|     2 | returns          | # A returns B                       |
+|     3 | renames          | # A renames B                       |
+|     4 | has primitive    | # B is primitive of A               |
+|     5 | instance of      | # A is instance of B                |
+|     6 | is param of      | # B is parameter of B               |
+|     7 | has index        | # B is an index type for array A    |
+|     8 | overrides        | # A overrides B                     |
+|     9 | component type   | # A is an array of B                |
+|    10 | from enumeration | # A is an enumeration literal for B |
+|    11 | of type          | # B is the type of object A         |

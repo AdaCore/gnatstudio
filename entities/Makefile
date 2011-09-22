@@ -24,7 +24,6 @@ test: createdb
 	@gnatmake -u -p -Ptest1/test1.gpr
 
 profile:
-	-@mv -f .gnatdebug .gnatdebug.bkp 2>/dev/null
 	@sync ; echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
 	@echo "===== Flushing disk caches ====="
 	@rm -f entities.db

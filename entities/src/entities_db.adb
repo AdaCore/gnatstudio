@@ -1,4 +1,5 @@
 with Ada.Calendar;      use Ada.Calendar;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers;    use Ada.Containers;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
@@ -108,16 +109,11 @@ package body Entities_Db is
    type Loc is record
       File_Id : Integer;
       Line    : Integer;
-      Kind    : Character;
       Column  : Integer;
    end record;
-   --  A location within a file.
-   --  We have to include the entity metatype ("Kind") because in some cases
-   --  GNAT outputs the same entity twice in the ALI file. For instance,
-   --  in gnatcoll-sql_impl.ali we have:
-   --     167C9*SQL_Single_Table<167R9>
-   --     167H9*SQL_Single_Table<155R9> 33|129r50 35|609e57
-   --  They refer to the same type, so perhaps could be merged.
+   --  A location within a file. Within a given ALI, a location matches a
+   --  single entity, even though there might potentially be multiple lines
+   --  for it. We simply merge them.
 
    function Hash (L : Loc) return Ada.Containers.Hash_Type;
    function Hash (L : Loc) return Ada.Containers.Hash_Type is
@@ -130,8 +126,6 @@ package body Entities_Db is
    begin
       --  Inspired by Ada.Strings.Hash
       H := Hash_Type (L.Line) + Shift_Left (H, 6) + Shift_Left (H, 16) - H;
-      H := Hash_Type (Character'Pos (L.Kind))
-        + Shift_Left (H, 6) + Shift_Left (H, 16) - H;
       H := Hash_Type (L.Column) + Shift_Left (H, 6) + Shift_Left (H, 16) - H;
       return H;
    end Hash;
@@ -201,7 +195,15 @@ package body Entities_Db is
 
       Depid_To_Id     : Depid_To_Ids.Vector;
 
+      Internal_Files : Depid_To_Ids.Vector;
+      --  Contains the list of units associated with the current ALI (these
+      --  are the ids in the "files" table)
+      --  ??? Not efficient: we could have special case for spec and body, and
+      --  only store separated in this list. Or store everything in the
+      --  Depid_To_Id file, in which we lookup anyway.
+
       Current_X_File : Integer;
+      Current_X_File_Is_Internal : Boolean;
       --  Id (in the database) of the file for the current X section
 
       Xref_File, Xref_Line, Xref_Col : Integer;
@@ -271,6 +273,7 @@ package body Entities_Db is
       function Insert_File
         (Basename : String;
          Language : String;
+         Is_Internal : Boolean := False;
          Clear    : Boolean := False) return Integer;
       --  Retrieves the id for the file in the database, or create a new entry
       --  for it.
@@ -287,6 +290,26 @@ package body Entities_Db is
       --  information in Entity_Decl_To_Id.
       --  Index should point to the beginning of the first 'X' section, and
       --  will be put back at the same place.
+
+      function Is_ALI_Unit (Id : Integer) return Boolean;
+      --  Whether the file with the given id is one of the units associated
+      --  with the current ALI.
+
+      -----------------
+      -- Is_ALI_Unit --
+      -----------------
+
+      function Is_ALI_Unit (Id : Integer) return Boolean is
+         C : Depid_To_Ids.Cursor := Internal_Files.First;
+      begin
+         while Has_Element (C) loop
+            if Element (C) = Id then
+               return True;
+            end if;
+            Next (C);
+         end loop;
+         return False;
+      end Is_ALI_Unit;
 
       -----------------
       -- Get_Natural --
@@ -351,9 +374,12 @@ package body Entities_Db is
         (Endchar   : Character;
          Eid       : E2e_Id := -1;
          E2e_Order : Integer := 1;
-         With_Col  : Boolean := True) return Boolean is
+         With_Col  : Boolean := True) return Boolean
+      is
+         Is_Predefined : constant Boolean := Str (Index) not in '0' .. '9';
+         C : Loc_To_Ids.Cursor;
       begin
-         if Str (Index) not in '0' .. '9' then
+         if Is_Predefined then
             --  a predefined entity
             while Str (Index) /= Endchar loop
                Index := Index + 1;
@@ -379,13 +405,41 @@ package body Entities_Db is
             return False;
          end if;
 
-         if False and then Eid /= -1 then
-            Session.DB.Execute
-              (Query_Insert_E2E,
-               Params => (1 => +Current_Entity,
-                          2 => +Current_Entity,  --  Wrong
-                          3 => +Eid,
-                          4 => +E2e_Order));
+         if Eid /= -1
+           and then not Is_Predefined   --  ??? Should set for these too
+         then
+            --  Only insert in this extra information relates to an info from
+            --  one of the units associated with the current LI. Otherwise,
+            --  we'll end up with duplicates.
+
+            if Current_X_File_Is_Internal
+              and then Xref_File /= -1
+            then
+               C := Entity_Decl_To_Id.Find
+                 ((File_Id => Xref_File,
+                   Line    => Xref_Line,
+                   Column  => Xref_Col));
+
+               if not Has_Element (C) then
+                  if Active (Me_Error) then
+                     Trace (Me_Error,
+                            "Entity not found, while parsing "
+                            & Library_File.Display_Full_Name
+                            & " "
+                            & Xref_File'Img
+                            & Xref_Line'Img
+                            & Xref_Kind'Img
+                            & Xref_Col'Img);
+                  end if;
+               else
+                  Session.DB.Execute
+                    (Query_Insert_E2E,
+                     Params => (1 => +Current_Entity,
+                                2 => +Element (C),
+                                3 => +Eid,
+                                4 => +E2e_Order));
+               end if;
+            end if;
          end if;
 
          return True;
@@ -507,6 +561,7 @@ package body Entities_Db is
       function Insert_File
         (Basename : String;
          Language : String;
+         Is_Internal : Boolean := False;
          Clear    : Boolean := False) return Integer
       is
          --  Unfortunately we have to copy the name of the string, there is
@@ -537,6 +592,11 @@ package body Entities_Db is
                Session.DB.Execute
                  (Query_Delete_File_Dep, Params => (1 => +Id));
             end if;
+
+            if Is_Internal then
+               Internal_Files.Append (Id);
+            end if;
+
             return Id;
          end if;
 
@@ -544,25 +604,29 @@ package body Entities_Db is
            (Session, Params => (1 => +Name'Access));
          if Files.Has_Row then
             Id := Files.Element.Id;
-            VFS_To_Id.Insert (File, Id);
 
             if Clear then
                Session.DB.Execute
                  (Query_Delete_File_Dep, Params => (1 => +Id));
             end if;
 
-            return Id;
+         else
+            R.Fetch
+              (Session.DB,
+               Query_Insert_File,
+               Params => (1  => +Name'Access,
+                          2  => +File.File_Time_Stamp,
+                          3  => +Language'Unrestricted_Access));
+
+            Id := R.Last_Id (Session.DB, Database.Files.Id);
          end if;
 
-         R.Fetch
-           (Session.DB,
-            Query_Insert_File,
-            Params => (1  => +Name'Access,
-                       2  => +File.File_Time_Stamp,
-                       3  => +Language'Unrestricted_Access));
-
-         Id := R.Last_Id (Session.DB, Database.Files.Id);
          VFS_To_Id.Insert (File, Id);
+
+         if Is_Internal then
+            Internal_Files.Append (Id);
+         end if;
+
          return Id;
       end Insert_File;
 
@@ -608,7 +672,6 @@ package body Entities_Db is
                      Decl : constant Loc :=
                        (File_Id => Current_X_File,
                         Line    => Xref_Line,
-                        Kind    => Entity_Kind,
                         Column  => Xref_Col);
                      C : constant Loc_To_Ids.Cursor :=
                        Entity_Decl_To_Id.Find (Decl);
@@ -695,7 +758,6 @@ package body Entities_Db is
             Current_Entity := Entity_Decl_To_Id.Element
               ((File_Id => Current_X_File,
                 Line    => Xref_Line,
-                Kind    => Entity_Kind,
                 Column  => Xref_Col));
 
             --  Process the extra information we had (pointed type,...)
@@ -726,7 +788,10 @@ package body Entities_Db is
                      --  No column information
 
                      if not Get_Ref_Or_Predefined
-                       (Endchar => ']', With_Col => False)
+                       (Endchar => ']',
+                        Eid => E2e_Instance_Of,
+                        E2e_Order => Order,
+                        With_Col => False)
                      then
                         return;
                      end if;
@@ -760,7 +825,25 @@ package body Entities_Db is
                      --     6A9*My_Array(4I9)<3I9>
                      --  where 4I9 is component type, and 3I9 is index type
 
-                     if not Get_Ref_Or_Predefined (Endchar => ')') then
+                     case Entity_Kind is
+                        when 'A' | 'a' =>
+                           Eid := E2e_Component_Type;
+                        when 'P' | 'p' =>
+                           Eid := E2e_Pointed_Type;
+                        when 'G' | 'v' | 'V' | 'y' =>
+                           Eid := E2e_Returns;
+                        when others =>
+                           if Active (Me_Error) then
+                              Trace (Me_Error,
+                                     "(...) for an entity of kind "
+                                     & Entity_Kind'Img);
+                           end if;
+                           Eid := -1;
+                     end case;
+
+                     if not Get_Ref_Or_Predefined
+                       (Endchar => ')', Eid => Eid, E2e_Order => Order)
+                     then
                         return;
                      end if;
 
@@ -770,7 +853,22 @@ package body Entities_Db is
                      --  Points to enum type for enumeration literal
                      --  Points to type for objects and components
 
-                     if not Get_Ref_Or_Predefined (Endchar => '}') then
+                     case Entity_Kind is
+                        when 'G' | 'v' | 'V' | 'y' =>
+                           Eid := E2e_Returns;
+                        when 'n' =>
+                           Eid := E2e_From_Enumeration;
+                        when others =>
+                           if Is_Upper (Str (Name_End)) then
+                              Eid := E2e_Parent_Type;
+                           else
+                              Eid := E2e_Of_Type;
+                           end if;
+                     end case;
+
+                     if not Get_Ref_Or_Predefined
+                       (Endchar => '}', Eid => Eid, E2e_Order => Order)
+                     then
                         return;
                      end if;
 
@@ -809,6 +907,9 @@ package body Entities_Db is
                Skip_Spaces;
                Get_Ref;
                Skip_Instance_Info;
+
+               --  ??? Special case for parameters => in e2e
+
                Session.DB.Execute
                  (Query_Insert_Ref,
                   Params => (1 => +Current_Entity,
@@ -861,6 +962,7 @@ package body Entities_Db is
                Current_Unit_Id := Insert_File
                  (Basename => String (Str (Start .. Index - 1)),
                   Language => "ada",
+                  Is_Internal => True,
                   Clear    => True);
 
                if Current_Unit_Id /= -1 then
@@ -928,6 +1030,7 @@ package body Entities_Db is
             if Str (Index) = 'X' then
                Index := Index + 2;
                Current_X_File := Depid_To_Id.Element (Get_Natural);
+               Current_X_File_Is_Internal := Is_ALI_Unit (Current_X_File);
 
             elsif Str (Index) = '.'
               or else Str (Index) in '0' .. '9'
