@@ -1,7 +1,9 @@
 with Ada.Calendar;          use Ada.Calendar;
 with Ada.Text_IO;           use Ada.Text_IO;
 with GNAT.Strings;          use GNAT.Strings;
+with GNAT.OS_Lib;
 with GNATCOLL.SQL.Exec;     use GNATCOLL.SQL.Exec;
+with GNATCOLL.SQL.Inspect;  use GNATCOLL.SQL.Inspect;
 with GNATCOLL.SQL.Sessions; use GNATCOLL.SQL.Sessions;
 with GNATCOLL.SQL.Sqlite;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
@@ -10,10 +12,19 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with Entities_Db;           use Entities_Db;
 
 procedure Test_Entities is
+   DB_Name      : constant String := "entities.db";
+   GPR_File     : constant Virtual_File := Create ("../gps/gps.gpr");
+   DB_Schema_Descr : constant Virtual_File := Create ("../share/dbschema.txt");
+   Initial_Data : constant Virtual_File := Create ("../share/initialdata.txt");
+
    Env     : Project_Environment_Access;
    Tree    : Project_Tree;
    Start   : Time;
    GNAT_Version : String_Access;
+
+   Need_To_Create_DB : constant Boolean :=
+     not GNAT.OS_Lib.Is_Regular_File (DB_Name);
+
 begin
    GNATCOLL.Traces.Parse_Config_File;
    GNATCOLL.SQL.Exec.Perform_Queries := True;
@@ -34,8 +45,7 @@ begin
       Default_Body_Suffix => ".c");
    Free (GNAT_Version);
    Tree.Load
-     (Root_Project_Path => Create ("../gps/gps.gpr"),
-      --  Create ("../gps/gps.gpr"),
+     (Root_Project_Path => GPR_File,
       Env               => Env,
       Errors            => Put_Line'Access);
    Put_Line ("Done loading project:"
@@ -44,9 +54,40 @@ begin
    --  Prepare database
 
    GNATCOLL.SQL.Sessions.Setup
-     (Descr        => GNATCOLL.SQL.Sqlite.Setup
-        (Database => "entities.db"),
+     (Descr        => GNATCOLL.SQL.Sqlite.Setup (Database => DB_Name),
       Max_Sessions => 1);
+
+   --  Create the database if needed
+
+   declare
+      Session : constant Session_Type := Get_New_Session;
+      Schema  : DB_Schema;
+   begin
+      --  Is this an empty database ?
+
+      if Need_To_Create_DB then
+         Start := Clock;
+
+         --  Create it
+
+         Schema := New_Schema_IO (DB_Schema_Descr).Read_Schema;
+         New_Schema_IO (Session.DB).Write_Schema (Schema);
+
+         --  Load initial data
+
+         Load_Data
+           (Session.DB,
+            File   => Initial_Data,
+            Schema => Schema);
+
+         Session.Commit;
+
+         Put_Line
+           ("Created database:" & Duration'Image (Clock - Start) & " seconds");
+      else
+         Put_Line ("Database already exists, reusing");
+      end if;
+   end;
 
    --  Parse ALI files
 
