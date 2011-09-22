@@ -99,11 +99,21 @@
 | id    | AUTOINCREMENT | PK       |   |   |
 | name  | TEXT          | NOT NULL |   |   |
 
-| TABLE      | e2e                      |                     |   |                                                                            |
-| fromEntity | FK entities(links)       | PK, NOT NULL, INDEX |   |                                                                            |
-| toEntity   | FK entities(linked_from) | PK, NOT NULL, INDEX |   |                                                                            |
-| kind       | FK e2e_kind()            | PK                  |   | The type of link. Defined through an enumeration type in Ada               |
-| order_by   | INTEGER                  | NOT NULL            | 1 | Ordering among the references. Used for instance for subprogram parameters |
+# entity-to-entity relationships.
+# We cannot have a (fromEntity, toEntity, kind) primary key, because in some
+# cases the relationships will be duplicated (for instance, the .gli format for
+# C files sometimes improperly record columns for entities. Thus a C subprogram
+# might appear to have the same parameter multiple times, although in reality
+# each parameter is different but just appears to be on the same column):
+#    37V31*gnu_dev_makedev{long long unsigned int} 55>1 55>1 55b1 60t1
+#    55m1 __major{unsigned int}
+#    55m1 __minor{unsigned int} 57r12
+
+| TABLE      | e2e                      |                 |   |                                                                            |
+| fromEntity | FK entities(links)       | NOT NULL, INDEX |   |                                                                            |
+| toEntity   | FK entities(linked_from) | NOT NULL, INDEX |   |                                                                            |
+| kind       | FK e2e_kind()            | NOT NULL        |   | The type of link. Defined through an enumeration type in Ada               |
+| order_by   | INTEGER                  | NOT NULL        | 1 | Ordering among the references. Used for instance for subprogram parameters |
 
 # The various kinds of references.
 
@@ -124,7 +134,6 @@
 #     store the caller_at_declaration
 
 | TABLE              | entity_refs                    | entity_ref |   |                                                 |
-| id                 | AUTOINCREMENT                  | PK         |   |                                                 |
 | entity             | FK entities(references)        | NOT NULL   |   | The entity to which we have a reference         |
 | file               | FK files(references)           | NOT NULL   |   |                                                 |
 | line               | INTEGER                        | NOT NULL   |   |                                                 |

@@ -57,13 +57,11 @@
 | +     | generic formal           | false         | false        | false                    |
 | *     | private object           | false         | false        | false                    |
 
+# Parameters (>, = and <) are not in this table, as opposed to what is done in
+# ALI files, but in the e2e table
+
 | TABLE | reference_kinds                |         |         |          |        |                   |
 | id    | display                        | is_real | is_read | is_write | is_end | show_in_callgraph |
-|       | instantiation                  | true    | true    | false    | false  | false             |
-| <     | out parameter                  | false   | false   | false    | false  | false             |
-| \=    | in out parameter               | false   | false   | false    | false  | false             |
-| >     | in parameter                   | false   | false   | false    | false  | false             |
-| ^     | access parameter               | false   | false   | false    | false  | false             |
 | b     | body                           | true    | true    | false    | false  | false             |
 | c     | full declaration               | true    | true    | false    | false  | false             |
 | d     | discriminant                   | false   | false   | false    | false  | false             |
@@ -102,3 +100,7 @@
 |     9 | component type   | # A is an array of B                |
 |    10 | from enumeration | # A is an enumeration literal for B |
 |    11 | of type          | # B is the type of object A         |
+|    12 | in parameter     | # B is an "in" parameter for A      |
+|    13 | out parameter    | # B is an "out" parameter for A     |
+|    14 | in out parameter | # B is an "in out" parameter for A  |
+|    15 | access parameter | # B is an "access" parameter for A  |
