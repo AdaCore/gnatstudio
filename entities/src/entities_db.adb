@@ -522,6 +522,7 @@ package body Entities_Db is
                         3 => +Current_X_File,  --  decl_file
                         4 => +Xref_Line,       --  decl_line
                         5 => +Xref_Col));      --  decl_column
+
                   Current_Entity :=
                     R.Last_Id (Session.DB, Database.Entities.Id);
 

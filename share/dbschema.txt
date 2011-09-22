@@ -73,21 +73,21 @@
 # whether an entity already exists in the table, and removes one INSERT when
 # we need to create the entity.
 
-| TABLE           | entities                             | entity          |       |                                       |
-| id              | AUTOINCREMENT                        | PK              |       |                                       |
-| name            | TEXT                                 | NOT NULL, INDEX |       |                                       |
-| kind            | FK entity_kinds()                    | NOT NULL        |       | The E_Kind for this entity            |
-| class_static    | BOOLEAN                              |                 | false | The various attributes for the entity |
-| static_local    | BOOLEAN                              |                 | false |                                       |
-| protected_field | BOOLEAN                              |                 | false |                                       |
-| public_field    | BOOLEAN                              |                 | false |                                       |
-| private_field   | BOOLEAN                              |                 | false |                                       |
-| virtual         | BOOLEAN                              |                 | false |                                       |
-| is_abstract     | BOOLEAN                              |                 | false |                                       |
-| decl_file       | FK files(references)                 | NOT NULL        |       |                                       |
-| decl_line       | INTEGER                              | NOT NULL        |       |                                       |
-| decl_column     | INTEGER                              | NOT NULL        |       |                                       |
-| INDEX:          | name,decl_file,decl_line,decl_column |                 |       |                                       |
+| TABLE           | entities                             | entity   |       |                                       |
+| id              | AUTOINCREMENT                        | PK       |       |                                       |
+| name            | TEXT                                 | NOT NULL |       |                                       |
+| kind            | FK entity_kinds()                    | NOT NULL |       | The E_Kind for this entity            |
+| class_static    | BOOLEAN                              |          | false | The various attributes for the entity |
+| static_local    | BOOLEAN                              |          | false |                                       |
+| protected_field | BOOLEAN                              |          | false |                                       |
+| public_field    | BOOLEAN                              |          | false |                                       |
+| private_field   | BOOLEAN                              |          | false |                                       |
+| virtual         | BOOLEAN                              |          | false |                                       |
+| is_abstract     | BOOLEAN                              |          | false |                                       |
+| decl_file       | FK files(references)                 | NOT NULL |       |                                       |
+| decl_line       | INTEGER                              | NOT NULL |       |                                       |
+| decl_column     | INTEGER                              | NOT NULL |       |                                       |
+| INDEX:          | name,decl_file,decl_line,decl_column |          |       |                                       |
 
 # Store links between entities.
 # For instance, pointer to the parent types, pointed type, returned type,
@@ -95,13 +95,13 @@
 #   - Called_Entities: not stored here, it is enough to search the
 #     References table using the caller information
 
-| TABLE | e2e_kind |          |   |   |
-| id    | AUTOINCREMENT         | PK       |   |   |
-| name  | TEXT                  | NOT NULL |   |   |
+| TABLE | e2e_kind      |          |   |   |
+| id    | AUTOINCREMENT | PK       |   |   |
+| name  | TEXT          | NOT NULL |   |   |
 
 | TABLE      | e2e                      |                     |   |                                                                            |
 | fromEntity | FK entities(links)       | PK, NOT NULL, INDEX |   |                                                                            |
-| toEntity   | FK entities(linked_from) | PK, NOT NULL,INDEX  |   |                                                                            |
+| toEntity   | FK entities(linked_from) | PK, NOT NULL, INDEX |   |                                                                            |
 | kind       | FK e2e_kind()            | PK                  |   | The type of link. Defined through an enumeration type in Ada               |
 | order_by   | INTEGER                  | NOT NULL            | 1 | Ordering among the references. Used for instance for subprogram parameters |
 
@@ -123,15 +123,15 @@
 #     rather than as a field in Entities. This also provides a place to
 #     store the caller_at_declaration
 
-| TABLE              | entity_refs                    | entity_ref      |   |                                                 |
-| id                 | AUTOINCREMENT                  | PK              |   |                                                 |
-| entity             | FK entities(references)        | NOT NULL, INDEX |   | The entity to which we have a reference         |
-| file               | FK files(references)           | NOT NULL        |   |                                                 |
-| line               | INTEGER                        | NOT NULL        |   |                                                 |
-| column             | INTEGER                        | NOT NULL        |   |                                                 |
-| kind               | FK reference_kinds()           | NOT NULL        |   | Type of reference (same letter as in ALI files) |
-| caller             | FK entities(calling)           | NULL            |   | Enclosing entity at that location               |
-| from_instantiation | FK entities(refs_in_instances) | NULL            |   | The instantiation in which the reference occurs |
+| TABLE              | entity_refs                    | entity_ref |   |                                                 |
+| id                 | AUTOINCREMENT                  | PK         |   |                                                 |
+| entity             | FK entities(references)        | NOT NULL   |   | The entity to which we have a reference         |
+| file               | FK files(references)           | NOT NULL   |   |                                                 |
+| line               | INTEGER                        | NOT NULL   |   |                                                 |
+| column             | INTEGER                        | NOT NULL   |   |                                                 |
+| kind               | FK reference_kinds()           | NOT NULL   |   | Type of reference (same letter as in ALI files) |
+| caller             | FK entities(calling)           | NULL       |   | Enclosing entity at that location               |
+| from_instantiation | FK entities(refs_in_instances) | NULL       |   | The instantiation in which the reference occurs |
 
 
 # ??? CREATE INDEX entity_refs__loc on entity_refs (file,kind,line,column);
