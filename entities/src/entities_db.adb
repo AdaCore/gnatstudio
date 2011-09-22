@@ -18,6 +18,11 @@ package body Entities_Db is
    Me_Error : constant Trace_Handle := Create ("ENTITIES.ERROR");
    Me_Debug : constant Trace_Handle := Create ("ENTITIES.DEBUG", Off);
 
+   Instances_Provide_Column : constant Boolean := False;
+   --  Whether instance info in the ALI files provide the column information.
+   --  This is not the case currently, but this requires additional queries
+   --  that could be avoided otherwise.
+
    Query_Get_File : constant Files_Stmt :=
      Orm.All_Files
      .Filter (Database.Files.Path = Text_Param (1))
@@ -94,6 +99,14 @@ package body Entities_Db is
              and Database.Entities.Decl_Line = Integer_Param (2)
              and Database.Entities.Decl_Column = Integer_Param (3)),
         On_Server => True, Name => "entity_from_decl");
+   Query_Find_Entity_From_Decl_No_Column : constant Prepared_Statement :=
+     Prepare
+       (SQL_Select
+            (Database.Entities.Id & Database.Entities.Name,
+             From => Database.Entities,
+             Where => Database.Entities.Decl_File = Integer_Param (1)
+             and Database.Entities.Decl_Line = Integer_Param (2)),
+        On_Server => True, Name => "entity_from_decl_no_column");
    Query_Find_Predefined_Entity : constant Prepared_Statement :=
      Prepare
        (SQL_Select
@@ -120,13 +133,14 @@ package body Entities_Db is
                and Database.Entity_Refs.Column = Integer_Param (4)),
         On_Server => True, Name => "set_entity_renames");
 
-   Query_Set_Entity_Name : constant Prepared_Statement :=
+   Query_Set_Entity_Name_And_Kind : constant Prepared_Statement :=
      Prepare
        (SQL_Update
             (Table => Database.Entities,
-             Set   => Database.Entities.Name = Text_Param (2),
+             Set   => (Database.Entities.Name = Text_Param (2))
+                & (Database.Entities.Kind = Text_Param (3)),
              Where => Database.Entities.Id = Integer_Param (1)),
-        On_Server => True, Name => "set_entity_name");
+        On_Server => True, Name => "set_entity_name_and_kind");
 
    Query_Set_Entity_Import : constant Prepared_Statement :=
      Prepare
@@ -252,10 +266,9 @@ package body Entities_Db is
 
       Internal_Files : Depid_To_Ids.Vector;
       --  Contains the list of units associated with the current ALI (these
-      --  are the ids in the "files" table)
-      --  ??? Not efficient: we could have special case for spec and body, and
-      --  only store separated in this list. Or store everything in the
-      --  Depid_To_Id file, in which we lookup anyway.
+      --  are the ids in the "files" table). This list is only traversed once
+      --  for each X line, and will generally only contain a few elements, so
+      --  it is reasonably fast.
 
       Current_X_File : Integer;
       Current_X_File_Is_Internal : Boolean;
@@ -325,8 +338,9 @@ package body Entities_Db is
       --  Parse a "file|line kind col" reference (the file is optional,
       --  and left untouched if unspecified). Sets the Xref_* variables
       --  accordingly.
-      --  If With_Col is False, no "kind col" is expected (and Xref_Col is set
-      --  to -1 on exit).
+      --  If With_Col is False, no "kind col" is expected, although one can be
+      --  given for compatibility with further changes in ALI
+      --  (and Xref_Col is set to -1 on exit).
 
       function Get_Ref_Or_Predefined
         (Endchar   : Character;
@@ -430,7 +444,9 @@ package body Entities_Db is
             Xref_Line := Get_Natural;
          end if;
 
-         if With_Col then
+         if With_Col
+           or else Str (Index + 1) in '0' .. '9'
+         then
             Xref_Kind := Get_Char;
             Skip_Import_Info;
             Xref_Col := Get_Natural;
@@ -515,13 +531,14 @@ package body Entities_Db is
             end;
 
          else
-            --  Only insert in this extra information relates to an info from
-            --  one of the units associated with the current LI. Otherwise,
-            --  we'll end up with duplicates.
+            --  Only insert if we have the detailed info for an entity in one
+            --  of the units associated with the current LI (for instance
+            --  parent type info is only taken into account for these entites,
+            --  for entities in other units we'll have to parse the
+            --  corresponding LI). This avoids duplicates.
 
             if Current_X_File_Is_Internal
               and then Xref_File /= -1
-              and then Xref_Col /= -1   --  ??? Should handle these
             then
                Ref_Entity := Get_Or_Create_Entity
                  (Decl_File   => Xref_File,
@@ -763,6 +780,59 @@ package body Entities_Db is
          Candidate : Integer := -1;
          Candidate_Is_Forward : Boolean := True;
       begin
+         if Decl_Column = -1 then
+            if Instances_Provide_Column then
+               Trace
+                 (Me_Error,
+                  "The ALI parser expects instance info to contain column");
+               return -1;
+            end if;
+
+            --  We don't know the column (case of instantiation information in
+            --  ALI files). We do not use the local cache, since sqlite will be
+            --  much more efficient to handle it.
+
+            if Name'Length /= 0 then
+               if Active (Me_Error) then
+                  Trace (Me_Error,
+                         "Instantiations should not document the name");
+               end if;
+               return -1;
+            end if;
+
+            R.Fetch
+              (Session.DB,
+               Query_Find_Entity_From_Decl_No_Column,
+               Params =>
+                 (1 => +Decl_File,
+                  2 => +Decl_Line));
+
+            while R.Has_Row loop
+               Candidate := R.Integer_Value (0);
+               exit when R.Value (1) /= "";
+               R.Next;
+            end loop;
+
+            if Candidate = -1 then
+               --  We need to insert a forward declaration for an entity whose
+               --  name and column of the declaration we do not know. We'll
+               --  try to complete later.
+
+               R.Fetch
+                 (Session.DB,
+                  Query_Insert_Entity,
+                  Params =>
+                    (1 => +Name'Unrestricted_Access,   --  empty string
+                     2 => +'P',  --  unknown
+                     3 => +Decl_File,
+                     4 => +Decl_Line,
+                     5 => +(-1)));
+               Candidate := R.Last_Id (Session.DB, Database.Entities.Id);
+            end if;
+
+            return Candidate;
+         end if;
+
          --  It is possible that we have already seen the same
          --  entity earlier in the file. Unfortunately, duplicates
          --  happen, for instance in .gli files
@@ -818,6 +888,27 @@ package body Entities_Db is
                R.Next;
             end loop;
 
+            if Candidate = -1
+              and then not Instances_Provide_Column
+            then
+               --  No candidate found, perhaps there is a forward declaration
+               --  coming from a generic instantiation, ie without column
+               --  information.
+
+               R.Fetch
+                 (Session.DB,
+                  Query_Find_Entity_From_Decl,
+                  Params =>
+                    (1 => +Decl_File,
+                     2 => +Decl_Line,
+                     3 => +(-1)));
+
+               if R.Has_Row then
+                  Candidate := R.Integer_Value (0);
+                  Candidate_Is_Forward := True;
+               end if;
+            end if;
+
             if Candidate /= -1 then
                if not Candidate_Is_Forward then
                   --  We have found an entity with a known name and decl,
@@ -832,9 +923,10 @@ package body Entities_Db is
                   --  We had a forward declaration in the database, we can
                   --  now update its name.
                   Session.DB.Execute
-                    (Query_Set_Entity_Name,
+                    (Query_Set_Entity_Name_And_Kind,
                      Params => (1 => +Candidate,
-                                2 => +Name'Unrestricted_Access));
+                                2 => +Name'Unrestricted_Access,
+                                3 => +Kind));
                   Entity_Decl_To_Id.Include
                     (Decl,
                      Entity_Info'(Id         => Candidate,

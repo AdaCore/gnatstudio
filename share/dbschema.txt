@@ -72,6 +72,14 @@
 # directly in this table, rather than as a reference. This speeds up the check
 # whether an entity already exists in the table, and removes one INSERT when
 # we need to create the entity.
+#
+# ALI files do not provide the closure of the needed entities: for instance,
+# an entity A might be an instantiation of a generic entity B. But all the
+# ALI file provides is the file and line where B is declared, not its column.
+# In addition, B does not necessarily appear in a.ali. So we need a forward
+# declaration for B (since we don't know its name, we insert a new unnamed entity
+# at the given line and column -1). We'll try to complete it when b.ali is
+# parsed eventually.
 
 | TABLE           | entities                             | entity            |       |                                                                                                                                                                               |
 | id              | AUTOINCREMENT                        | PK                |       |                                                                                                                                                                               |

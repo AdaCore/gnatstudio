@@ -64,7 +64,7 @@ PROJECTS.GNAT = no
 --  Debug handles related to the cross-references database
 
 ALI=no
-ALI.Assert=no
+ALI.Assert=yes
 CPP=no
 ENTITIES.DEBUG=no
 ENTITIES.DUMP = no
