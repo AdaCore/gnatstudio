@@ -16,7 +16,7 @@ package body Entities_Db is
    Me_Error : constant Trace_Handle := Create ("ENTITIES.ERROR");
    Me_Debug : constant Trace_Handle := Create ("ENTITIES.DEBUG", Off);
 
-   Declaration_Ref_Kind : aliased String := "@";
+   Declaration_Ref_Kind : constant Character := '@';
    --  Reference kind to use for declarations.
 
    Query_Get_File : constant Files_Stmt :=
@@ -507,7 +507,7 @@ package body Entities_Db is
                              2 => +Current_X_File,
                              3 => +Xref_Line,
                              4 => +Xref_Col,
-                             5 => +Declaration_Ref_Kind'Access));
+                             5 => +Declaration_Ref_Kind));
             end if;
 
             --  Process the extra information we had (pointed type,...)
@@ -611,17 +611,13 @@ package body Entities_Db is
                Skip_Instance_Info;
 
                if Perform_Entity_Insert then
-                  declare
-                     K : aliased String (1 .. 1) := (1 => Xref_Kind);
-                  begin
-                     Session.DB.Execute
-                       (Query_Insert_Ref,
-                        Params => (1 => +Current_Entity,
-                                   2 => +Xref_File,
-                                   3 => +Xref_Line,
-                                   4 => +Xref_Col,
-                                   5 => +K'Unrestricted_Access));
-                  end;
+                  Session.DB.Execute
+                    (Query_Insert_Ref,
+                     Params => (1 => +Current_Entity,
+                                2 => +Xref_File,
+                                3 => +Xref_Line,
+                                4 => +Xref_Col,
+                                5 => +Xref_Kind));
                end if;
             end loop;
          end if;
