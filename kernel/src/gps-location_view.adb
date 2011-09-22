@@ -382,9 +382,10 @@ package body GPS.Location_View is
             & To_String (Messages (K).Get_Text));
       end loop;
    end Export_Messages;
-   --------------------------
-   -- Idle_Expand_Category --
-   --------------------------
+
+   -----------------
+   -- Idle_Expand --
+   -----------------
 
    function Idle_Expand (Self : Location_View) return Boolean is
       Model : constant Gtk_Tree_Model := Self.View.Get_Model;
