@@ -34,10 +34,10 @@
 | id    | AUTOINCREMENT | PK       |   |   |
 | name  | TEXT          | NOT NULL |   |   |
 
-| TABLE    | f2f                   |                     |   |                    |
-| fromFile | FK files(links)       | PK, NOT NULL, INDEX |   |                    |
-| toFile   | FK files(linked_from) | PK, NOT NULL, INDEX |   |                    |
-| kind     | FK f2f_kind()         | PK                  |   | Kind of dependency |
+| TABLE    | f2f                   |                       |   |                    |
+| fromFile | FK files(links)       | PK, NOT NULL, NOINDEX |   |                    |
+| toFile   | FK files(linked_from) | PK, NOT NULL, NOINDEX |   |                    |
+| kind     | FK f2f_kind()         | PK, NOINDEX           |   | Kind of dependency |
 
 # This table contains the "metaclasses" for the entities. These are not the
 # types of the entities, but rather their general kind.
@@ -73,21 +73,22 @@
 # whether an entity already exists in the table, and removes one INSERT when
 # we need to create the entity.
 
-| TABLE           | entities                             | entity   |       |                                                                                                                                                                               |
-| id              | AUTOINCREMENT                        | PK       |       |                                                                                                                                                                               |
-| name            | TEXT                                 | NOT NULL |       | The name can be empty for a forward declaration: the ALI file does not always contain the name of all entities it references (for instance the parent type for a tagged type) |
-| kind            | FK entity_kinds()                    | NOT NULL |       | The E_Kind for this entity                                                                                                                                                    |
-| class_static    | BOOLEAN                              |          | false | The various attributes for the entity                                                                                                                                         |
-| static_local    | BOOLEAN                              |          | false |                                                                                                                                                                               |
-| protected_field | BOOLEAN                              |          | false |                                                                                                                                                                               |
-| public_field    | BOOLEAN                              |          | false |                                                                                                                                                                               |
-| private_field   | BOOLEAN                              |          | false |                                                                                                                                                                               |
-| virtual         | BOOLEAN                              |          | false |                                                                                                                                                                               |
-| is_abstract     | BOOLEAN                              |          | false |                                                                                                                                                                               |
-| decl_file       | FK files(references)                 | NOT NULL |       | Set to -1 for a predefined entity                                                                                                                                             |
-| decl_line       | INTEGER                              | NOT NULL |       | Set to -1 for a predefined entity                                                                                                                                             |
-| decl_column     | INTEGER                              | NOT NULL |       | Set to -1 for a predefined entity                                                                                                                                             |
-| INDEX:          | name,decl_file,decl_line,decl_column |          |       |                                                                                                                                                                               |
+| TABLE           | entities                             | entity            |       |                                                                                                                                                                               |
+| id              | AUTOINCREMENT                        | PK                |       |                                                                                                                                                                               |
+| name            | TEXT                                 | NOT NULL          |       | The name can be empty for a forward declaration: the ALI file does not always contain the name of all entities it references (for instance the parent type for a tagged type) |
+| kind            | FK entity_kinds()                    | NOT NULL, NOINDEX |       | The E_Kind for this entity                                                                                                                                                    |
+| class_static    | BOOLEAN                              |                   | false | The various attributes for the entity                                                                                                                                         |
+| static_local    | BOOLEAN                              |                   | false |                                                                                                                                                                               |
+| protected_field | BOOLEAN                              |                   | false |                                                                                                                                                                               |
+| public_field    | BOOLEAN                              |                   | false |                                                                                                                                                                               |
+| private_field   | BOOLEAN                              |                   | false |                                                                                                                                                                               |
+| virtual         | BOOLEAN                              |                   | false |                                                                                                                                                                               |
+| is_abstract     | BOOLEAN                              |                   | false |                                                                                                                                                                               |
+| decl_file       | FK files(references)                 | NOT NULL, NOINDEX |       | Set to -1 for a predefined entity                                                                                                                                             |
+| decl_line       | INTEGER                              | NOT NULL          |       | Set to -1 for a predefined entity                                                                                                                                             |
+| decl_column     | INTEGER                              | NOT NULL          |       | Set to -1 for a predefined entity                                                                                                                                             |
+| INDEX:          | name,decl_file,decl_line,decl_column |                   |       | For Query_Find_Predefined_Entity                                                                                                                                              |
+| INDEX:          | decl_file,decl_line,decl_column      |                   |       | For Query_Find_Entity_From_Decl                                                                                                                                               |
 
 # Store links between entities.
 # For instance, pointer to the parent types, pointed type, returned type,
@@ -109,11 +110,11 @@
 #    55m1 __major{unsigned int}
 #    55m1 __minor{unsigned int} 57r12
 
-| TABLE      | e2e                      |                 |   |                                                                            |
-| fromEntity | FK entities(links)       | NOT NULL, INDEX |   |                                                                            |
-| toEntity   | FK entities(linked_from) | NOT NULL, INDEX |   |                                                                            |
-| kind       | FK e2e_kind()            | NOT NULL        |   | The type of link. Defined through an enumeration type in Ada               |
-| order_by   | INTEGER                  | NOT NULL        | 1 | Ordering among the references. Used for instance for subprogram parameters |
+| TABLE      | e2e                      |                   |   |                                                                            |
+| fromEntity | FK entities(links)       | NOT NULL          |   |                                                                            |
+| toEntity   | FK entities(linked_from) | NOT NULL          |   |                                                                            |
+| kind       | FK e2e_kind()            | NOT NULL, NOINDEX |   | The type of link. Defined through an enumeration type in Ada               |
+| order_by   | INTEGER                  | NOT NULL          | 1 | Ordering among the references. Used for instance for subprogram parameters |
 
 # The various kinds of references.
 
@@ -133,14 +134,14 @@
 #     rather than as a field in Entities. This also provides a place to
 #     store the caller_at_declaration
 
-| TABLE              | entity_refs                    | entity_ref |   |                                                 |
-| entity             | FK entities(references)        | NOT NULL   |   | The entity to which we have a reference         |
-| file               | FK files(references)           | NOT NULL   |   |                                                 |
-| line               | INTEGER                        | NOT NULL   |   |                                                 |
-| column             | INTEGER                        | NOT NULL   |   |                                                 |
-| kind               | FK reference_kinds()           | NOT NULL   |   | Type of reference (same letter as in ALI files) |
-| caller             | FK entities(calling)           | NULL       |   | Enclosing entity at that location               |
-| from_instantiation | FK entities(refs_in_instances) | NULL       |   | The instantiation in which the reference occurs |
+| TABLE              | entity_refs                    | entity_ref        |   |                                                 |
+| entity             | FK entities(references)        | NOT NULL          |   | The entity to which we have a reference         |
+| file               | FK files(references)           | NOT NULL, NOINDEX |   |                                                 |
+| line               | INTEGER                        | NOT NULL          |   |                                                 |
+| column             | INTEGER                        | NOT NULL          |   |                                                 |
+| kind               | FK reference_kinds()           | NOT NULL, NOINDEX |   | Type of reference (same letter as in ALI files) |
+| caller             | FK entities(calling)           | NULL, NOINDEX     |   | Enclosing entity at that location               |
+| from_instantiation | FK entities(refs_in_instances) | NULL, NOINDEX     |   | The instantiation in which the reference occurs |
 
 
 # ??? CREATE INDEX entity_refs__loc on entity_refs (file,kind,line,column);

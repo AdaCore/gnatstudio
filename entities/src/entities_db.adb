@@ -89,14 +89,21 @@ package body Entities_Db is
        (SQL_Select
             (Database.Entities.Id & Database.Entities.Name,
              From => Database.Entities,
-             Where => (Database.Entities.Name = Text_Param (1)
-                       or Database.Entities.Name = "")
-             and Database.Entities.Decl_File = Integer_Param (2)
-             and Database.Entities.Decl_Line = Integer_Param (3)
-             and Database.Entities.Decl_Column = Integer_Param (4),
-             Order_By => Desc (Database.Entities.Name),  --  empty names last
-             Limit => 1),
+             Where => Database.Entities.Decl_File = Integer_Param (1)
+             and Database.Entities.Decl_Line = Integer_Param (2)
+             and Database.Entities.Decl_Column = Integer_Param (3)),
         On_Server => True, Name => "entity_from_decl");
+   Query_Find_Predefined_Entity : constant Prepared_Statement :=
+     Prepare
+       (SQL_Select
+            (Database.Entities.Id & Database.Entities.Name,
+             From => Database.Entities,
+             Where => Database.Entities.Decl_File = -1
+             and Database.Entities.Decl_Line = -1
+             and Database.Entities.Decl_Column = -1
+             and Database.Entities.Name = Text_Param (1),
+             Limit => 1),
+        On_Server => True, Name => "predefined_entity");
    --  Get an entity's id given the location of its declaration. In sqlite3,
    --  this is implemented as a single table lookup thanks to the multi-column
    --  covering index we created.
@@ -446,15 +453,10 @@ package body Entities_Db is
                R : Forward_Cursor;
                Name : aliased String := String (Str (Start .. Name_Last));
             begin
-               --  ??? Should we have local cache here ?
                R.Fetch
                  (Session.DB,
-                  Query_Find_Entity_From_Decl,
-                  Params =>
-                    (1 => +Name'Unrestricted_Access,
-                     2 => +(-1),
-                     3 => +(-1),
-                     4 => +(-1)));
+                  Query_Find_Predefined_Entity,
+                  Params => (1 => +Name'Unrestricted_Access));
 
                if not R.Has_Row then
                   if Active (Me_Error) then
@@ -713,8 +715,9 @@ package body Entities_Db is
             Line    => Decl_Line,
             Column  => Decl_Column);
          C        : Loc_To_Ids.Cursor;
-         Entity   : Integer;
          Info     : Entity_Info;
+         Candidate : Integer := -1;
+         Candidate_Is_Forward : Boolean := True;
       begin
          --  It is possible that we have already seen the same
          --  entity earlier in the file. Unfortunately, duplicates
@@ -749,49 +752,59 @@ package body Entities_Db is
               (Session.DB,
                Query_Find_Entity_From_Decl,
                Params =>
-                 (1 => +Name'Unrestricted_Access,
-                  2 => +Decl_File,
-                  3 => +Decl_Line,
-                  4 => +Decl_Column));
+                 (1 => +Decl_File,
+                  2 => +Decl_Line,
+                  3 => +Decl_Column));
 
-            if R.Has_Row then
-               Entity := R.Integer_Value (0);
+            while R.Has_Row loop
+               if Name'Length /= 0 and then R.Value (1) = Name then
+                  Candidate := R.Integer_Value (0);
+                  Candidate_Is_Forward := False;
+                  exit;
+               elsif Name'Length = 0 and then R.Value (1) /= "" then
+                  Candidate := R.Integer_Value (0);
+                  Candidate_Is_Forward := False;
+                  exit;
+               elsif R.Value (1) = "" then
+                  Candidate := R.Integer_Value (0);
+                  Candidate_Is_Forward := True;
+                  --  keep looking, we only found a forward declaration
+               end if;
 
-               if R.Value (1) /= "" then
-                  --  We have found an entity with a matching name and decl,
+               R.Next;
+            end loop;
+
+            if Candidate /= -1 then
+               if not Candidate_Is_Forward then
+                  --  We have found an entity with a known name and decl,
                   --  that's the good one.
 
                   Entity_Decl_To_Id.Include
                     (Decl,
-                     Entity_Info'(Id         => Entity,
+                     Entity_Info'(Id         => Candidate,
+                                  Known_Name => True));
+
+               elsif Name'Length /= 0 then
+                  --  We had a forward declaration in the database, we can
+                  --  now update its name.
+                  Session.DB.Execute
+                    (Query_Set_Entity_Name,
+                     Params => (1 => +Candidate,
+                                2 => +Name'Unrestricted_Access));
+                  Entity_Decl_To_Id.Include
+                    (Decl,
+                     Entity_Info'(Id         => Candidate,
                                   Known_Name => True));
 
                else
-                  --  We have found a forward declaration (ie an entity with
-                  --  no name).
-
-                  if Name'Length /= 0 then
-                     --  We had a forward declaration in the database, we can
-                     --  now update its name.
-                     Session.DB.Execute
-                       (Query_Set_Entity_Name,
-                        Params => (1 => +Entity,
-                                   2 => +Name'Unrestricted_Access));
-                     Entity_Decl_To_Id.Include
-                       (Decl,
-                        Entity_Info'(Id         => Entity,
-                                     Known_Name => True));
-
-                  else
-                     --  Record partial information in the local cache
-                     Entity_Decl_To_Id.Insert
-                       (Decl,
-                        Entity_Info'(Id         => Entity,
-                                     Known_Name => False));
-                  end if;
+                  --  Record partial information in the local cache
+                  Entity_Decl_To_Id.Insert
+                    (Decl,
+                     Entity_Info'(Id         => Candidate,
+                                  Known_Name => False));
                end if;
 
-               return Entity;
+               return Candidate;
             end if;
          end if;
 
@@ -808,12 +821,12 @@ package body Entities_Db is
                   3 => +Decl_File,
                   4 => +Decl_Line,
                   5 => +Decl_Column));
-            Entity := R.Last_Id (Session.DB, Database.Entities.Id);
+            Candidate := R.Last_Id (Session.DB, Database.Entities.Id);
             Entity_Decl_To_Id.Insert
               (Decl,
-               Entity_Info'(Id         => Entity,
+               Entity_Info'(Id         => Candidate,
                             Known_Name => Name'Length /= 0));
-            return Entity;
+            return Candidate;
 
          else
             return Element (C).Id;
