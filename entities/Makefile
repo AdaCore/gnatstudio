@@ -16,7 +16,7 @@ runtest: createdb
 	@./obj/test_entities
 
 profile:
-	-@mv -f .gnatdebug .gnatdebug 2>/dev/null
+	-@mv -f .gnatdebug .gnatdebug.bkp 2>/dev/null
 	@echo "=================="
 	@echo "Flushing disk caches"
 	@sync ; echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null

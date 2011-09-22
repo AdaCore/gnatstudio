@@ -87,24 +87,33 @@ package body Entities_Db is
    use Depid_To_Ids;
 
    procedure Parse_LI
-     (Session : Session_Type;
-      Tree    : Project_Tree;
+     (Session                   : Session_Type;
+      Tree                      : Project_Tree;
       Library_File, Source_File : Virtual_File;
-      VFS_To_Id : in out VFS_To_Ids.Map);
+      VFS_To_Id                 : in out VFS_To_Ids.Map;
+      Ignore_Ref_In_Other_Files : Boolean);
    --  Parse the contents of a single LI file.
-   --  VFS_To_Id is a local cache for the entries in the files table
+   --  VFS_To_Id is a local cache for the entries in the files table.
+   --
+   --  Ignore_Ref_In_Other_Files should be set to True when we are parsing or
+   --  updating *all* the LI files of the projects. Since we know we will see
+   --  the same xref when parsing the LI file of the unit in which the entity
+   --  is declared, we do not need to insert it. For instance, this applies to
+   --  the parent types of entities, or the list of parameters for subprograms.
+   --  This also avoids duplication in the database.
 
    --------------
    -- Parse_LI --
    --------------
 
    procedure Parse_LI
-     (Session : Session_Type;
-      Tree    : Project_Tree;
+     (Session                   : Session_Type;
+      Tree                      : Project_Tree;
       Library_File, Source_File : Virtual_File;
-      VFS_To_Id : in out VFS_To_Ids.Map)
+      VFS_To_Id                 : in out VFS_To_Ids.Map;
+      Ignore_Ref_In_Other_Files : Boolean)
    is
-      pragma Unreferenced (Source_File);
+      pragma Unreferenced (Source_File, Ignore_Ref_In_Other_Files);
       M      : Mapped_File;
       Str    : Str_Access;
       Last   : Integer;
@@ -475,25 +484,31 @@ package body Entities_Db is
             begin
                --  Save the current entity
 
-               R.Fetch
-                 (Session.DB,
-                  Query_Insert_Entity,
-                  Params =>
-                    (1 => +Name'Unrestricted_Access,
-                     2 => +K'Unrestricted_Access));
-               Current_Entity :=
-                 R.Last_Id (Session.DB, Database.Entities.Id);
+               if Perform_Entity_Insert then
+                  R.Fetch
+                    (Session.DB,
+                     Query_Insert_Entity,
+                     Params =>
+                       (1 => +Name'Unrestricted_Access,
+                        2 => +K'Unrestricted_Access));
+                  Current_Entity :=
+                    R.Last_Id (Session.DB, Database.Entities.Id);
+               else
+                  Current_Entity := 1;
+               end if;
             end;
 
             --  Save the location of its declaration
 
-            Session.DB.Execute
-              (Query_Insert_Ref,
-               Params => (1 => +Current_Entity,
-                          2 => +Current_X_File,
-                          3 => +Xref_Line,
-                          4 => +Xref_Col,
-                          5 => +Declaration_Ref_Kind'Access));
+            if Perform_Entity_Insert then
+               Session.DB.Execute
+                 (Query_Insert_Ref,
+                  Params => (1 => +Current_Entity,
+                             2 => +Current_X_File,
+                             3 => +Xref_Line,
+                             4 => +Xref_Col,
+                             5 => +Declaration_Ref_Kind'Access));
+            end if;
 
             --  Process the extra information we had (pointed type,...)
 
@@ -595,17 +610,19 @@ package body Entities_Db is
                Get_Ref;
                Skip_Instance_Info;
 
-               declare
-                  K : aliased String (1 .. 1) := (1 => Xref_Kind);
-               begin
-                  Session.DB.Execute
-                    (Query_Insert_Ref,
-                     Params => (1 => +Current_Entity,
-                                2 => +Xref_File,
-                                3 => +Xref_Line,
-                                4 => +Xref_Col,
-                                5 => +K'Unrestricted_Access));
-               end;
+               if Perform_Entity_Insert then
+                  declare
+                     K : aliased String (1 .. 1) := (1 => Xref_Kind);
+                  begin
+                     Session.DB.Execute
+                       (Query_Insert_Ref,
+                        Params => (1 => +Current_Entity,
+                                   2 => +Xref_File,
+                                   3 => +Xref_Line,
+                                   4 => +Xref_Col,
+                                   5 => +K'Unrestricted_Access));
+                  end;
+               end if;
             end loop;
          end if;
 
@@ -772,6 +789,13 @@ package body Entities_Db is
          Session.Rollback;
       end if;
 
+      if Has_Pragma then
+         Session.DB.Execute ("PRAGMA synchronous=OFF");
+         --  Session.DB.Execute ("PRAGMA count_changes=OFF");  --  Deprecated
+         Session.DB.Execute ("PRAGMA journal_mode=MEMORY");
+         Session.DB.Execute ("PRAGMA temp_store=MEMORY");
+      end if;
+
       Project.Library_Files
         (Recursive => True, Xrefs_Dirs => True, Including_Libraries => True,
          ALI_Ext => ".ali", List => LI_Files);
@@ -784,11 +808,12 @@ package body Entities_Db is
 
       Start := Clock;
       for Lib_Info of LI_Files loop
-         Parse_LI (Session      => Session,
-                   Tree         => Tree,
-                   Library_File => Lib_Info.Library_File,
-                   Source_File  => Lib_Info.Source_File,
-                   VFS_To_Id    => VFS_To_Id);
+         Parse_LI (Session                   => Session,
+                   Tree                      => Tree,
+                   Library_File              => Lib_Info.Library_File,
+                   Source_File               => Lib_Info.Source_File,
+                   VFS_To_Id                 => VFS_To_Id,
+                   Ignore_Ref_In_Other_Files => True);
       end loop;
 
       --  It might be safer to commit after each LI file, but this is much
@@ -798,6 +823,17 @@ package body Entities_Db is
 
       if Has_Pragma then
          Session.DB.Execute ("PRAGMA foreign_keys=ON");
+
+         --  The default would be FULL, but we do not need to prevent against
+         --  system crashes in this application.
+         Session.DB.Execute ("PRAGMA synchronous=NORMAL");
+
+         --  The default would be DELETE, but we do not care enough about
+         --  data integrity
+         Session.DB.Execute ("PRAGMA journal_mode=MEMORY");
+
+         --  We can store temporary tables in memory
+         Session.DB.Execute ("PRAGMA temp_store=MEMORY");
       end if;
 
       Put_Line

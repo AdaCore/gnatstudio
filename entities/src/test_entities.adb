@@ -16,6 +16,8 @@ procedure Test_Entities is
    GNAT_Version : String_Access;
 begin
    GNATCOLL.Traces.Parse_Config_File;
+   GNATCOLL.SQL.Exec.Perform_Queries := True;
+   Entities_Db.Perform_Entity_Insert := True;
 
    Start := Clock;
 
@@ -49,6 +51,12 @@ begin
    --  Parse ALI files
 
    Parse_All_LI_Files (Get_New_Session, Tree, Tree.Root_Project);
+
+--     Put_Line ("Number of traces on SQL.SELECT: "
+--               & GNATCOLL.Traces.Count
+--                 (GNATCOLL.Traces.Create ("SQL.SELECT"))'Img);
+--     Put_Line ("Number of traces on SQL: "
+--               & GNATCOLL.Traces.Count (GNATCOLL.Traces.Create ("SQL"))'Img);
 
    --  Free memory
 
