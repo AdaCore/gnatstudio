@@ -22,7 +22,7 @@
 | I     | integer type             | false         | false        | false                    |
 | j     | class instance           | false         | false        | false                    |
 | J     | class                    | false         | false        | false                    |
-| k     | package                  | false         | true         | false                    |
+| k     | generic package          | false         | true         | false                    |
 | K     | package                  | false         | true         | false                    |
 | l     | loop label               | false         | false        | false                    |
 | L     | statement label          | false         | false        | false                    |

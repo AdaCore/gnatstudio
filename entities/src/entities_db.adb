@@ -87,7 +87,7 @@ package body Entities_Db is
    Query_Find_Entity_From_Decl : constant Prepared_Statement :=
      Prepare
        (SQL_Select
-            (Database.Entities.Id,
+            (Database.Entities.Id & Database.Entities.Name,
              From => Database.Entities,
              Where => Database.Entities.Name = Text_Param (1)
              and Database.Entities.Decl_File = Integer_Param (2)
@@ -98,6 +98,26 @@ package body Entities_Db is
    --  Get an entity's id given the location of its declaration. In sqlite3,
    --  this is implemented as a single table lookup thanks to the multi-column
    --  covering index we created.
+
+   Query_Find_Entity_No_Name : constant Prepared_Statement :=
+     Prepare
+       (SQL_Select
+            (Database.Entities.Id & Database.Entities.Name,
+             From => Database.Entities,
+             Where => Database.Entities.Decl_File = Integer_Param (1)
+             and Database.Entities.Decl_Line = Integer_Param (2)
+             and Database.Entities.Decl_Column = Integer_Param (3),
+             Limit => 1),
+        On_Server => True, Name => "entity_no_name");
+   --  Search an entity when we know its declaration but not its name
+
+   Query_Set_Entity_Name : constant Prepared_Statement :=
+     Prepare
+       (SQL_Update
+            (Table => Database.Entities,
+             Set   => Database.Entities.Name = Text_Param (2),
+             Where => Database.Entities.Id = Integer_Param (1)),
+        On_Server => True, Name => "set_entity_name");
 
    package VFS_To_Ids is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,
@@ -130,9 +150,14 @@ package body Entities_Db is
       return H;
    end Hash;
 
+   type Entity_Info is record
+      Id         : Integer;   --  Id in the files table
+      Known_Name : Boolean;   --  Whether the name is known
+   end record;
+
    package Loc_To_Ids is new Ada.Containers.Hashed_Maps
      (Key_Type        => Loc,    --  entity declaration
-      Element_Type    => Integer,   --  Id in the files table
+      Element_Type    => Entity_Info,
       Hash            => Hash,
       Equivalent_Keys => "=");
    use Loc_To_Ids;
@@ -251,11 +276,27 @@ package body Entities_Db is
       pragma Inline (Get_Char);
       --  Return the current character, and move forward
 
+      function Get_Or_Create_Entity
+        (Decl_File   : Integer;
+         Decl_Line   : Integer;
+         Decl_Column : Integer;
+         Name        : String;
+         Kind        : Character) return Integer;
+      --  Lookup an entity at the given location. If the entity is already
+      --  known in the local hash table, it is reused, otherwise it is searched
+      --  in the database. If it doesn't exist there, a new entry is created
+      --  using the Name and the Kind (the name is not used when searching in
+      --  the local htable, since we assume there is a single entity at that
+      --  location).
+      --  Decl_Column can be set to -1 if the column is unknown (case of a
+      --  generic instantiation in the ALI file).
+
       procedure Get_Ref (With_Col : Boolean := True);
       --  Parse a "file|line kind col" reference (the file is optional,
       --  and left untouched if unspecified). Sets the Xref_* variables
       --  accordingly.
-      --  If With_Col is False, no "kind col" is expected
+      --  If With_Col is False, no "kind col" is expected (and Xref_Col is set
+      --  to -1 on exit).
 
       function Get_Ref_Or_Predefined
         (Endchar   : Character;
@@ -363,6 +404,8 @@ package body Entities_Db is
             Xref_Kind := Get_Char;
             Skip_Import_Info;
             Xref_Col := Get_Natural;
+         else
+            Xref_Col := -1;
          end if;
       end Get_Ref;
 
@@ -377,7 +420,7 @@ package body Entities_Db is
          With_Col  : Boolean := True) return Boolean
       is
          Is_Predefined : constant Boolean := Str (Index) not in '0' .. '9';
-         C : Loc_To_Ids.Cursor;
+         Ref_Entity : Integer;
       begin
          if Is_Predefined then
             --  a predefined entity
@@ -415,30 +458,18 @@ package body Entities_Db is
             if Current_X_File_Is_Internal
               and then Xref_File /= -1
             then
-               C := Entity_Decl_To_Id.Find
-                 ((File_Id => Xref_File,
-                   Line    => Xref_Line,
-                   Column  => Xref_Col));
-
-               if not Has_Element (C) then
-                  if Active (Me_Error) then
-                     Trace (Me_Error,
-                            "Entity not found, while parsing "
-                            & Library_File.Display_Full_Name
-                            & " "
-                            & Xref_File'Img
-                            & Xref_Line'Img
-                            & Xref_Kind'Img
-                            & Xref_Col'Img);
-                  end if;
-               else
-                  Session.DB.Execute
-                    (Query_Insert_E2E,
-                     Params => (1 => +Current_Entity,
-                                2 => +Element (C),
-                                3 => +Eid,
-                                4 => +E2e_Order));
-               end if;
+               Ref_Entity := Get_Or_Create_Entity
+                 (Decl_File   => Xref_File,
+                  Decl_Line   => Xref_Line,
+                  Decl_Column => Xref_Col,
+                  Name        => "",
+                  Kind        => Xref_Kind);
+               Session.DB.Execute
+                 (Query_Insert_E2E,
+                  Params => (1 => +Current_Entity,
+                             2 => +Ref_Entity,
+                             3 => +Eid,
+                             4 => +E2e_Order));
             end if;
          end if;
 
@@ -630,6 +661,127 @@ package body Entities_Db is
          return Id;
       end Insert_File;
 
+      --------------------------
+      -- Get_Or_Create_Entity --
+      --------------------------
+
+      function Get_Or_Create_Entity
+        (Decl_File   : Integer;
+         Decl_Line   : Integer;
+         Decl_Column : Integer;
+         Name        : String;
+         Kind        : Character) return Integer
+      is
+         R : Forward_Cursor;
+         Decl : constant Loc :=
+           (File_Id => Decl_File,
+            Line    => Decl_Line,
+            Column  => Decl_Column);
+         C        : Loc_To_Ids.Cursor;
+         Entity   : Integer;
+         Info     : Entity_Info;
+         Searched : Boolean := False;
+      begin
+         --  It is possible that we have already seen the same
+         --  entity earlier in the file. Unfortunately, duplicates
+         --  happen, for instance in .gli files
+
+         if Decl_Column = -1 then
+            C := Entity_Decl_To_Id.Find (Decl);
+
+            if Has_Element (C) then
+               Info := Element (C);
+
+               if Info.Known_Name         --  Do we know the entity ?
+                 or else Name'Length = 0  --  Or do we still have forward decl
+               then
+                  return Info.Id;
+               end if;
+            end if;
+         end if;
+
+         --  Either we have never seen that entity before, or we had a forward
+         --  declaration (because the entity is for instance the parent of
+         --  another entity, but the ALI file did not contain its name).
+         --  We'll need to update the database.
+
+         if Name'Length /= 0
+
+           --  If we had a forward decl in the local hash, no need to search
+           --  in the database with the full name, we know it doesn't exist
+           and then not Has_Element (C)
+         then
+            R.Fetch
+              (Session.DB,
+               Query_Find_Entity_From_Decl,
+               Params =>
+                 (1 => +Name'Unrestricted_Access,
+                  2 => +Decl_File,
+                  3 => +Decl_Line,
+                  4 => +Decl_Column));
+            Searched := True;
+         end if;
+
+         --  Check if we had a forward declaration in the database
+
+         if not Searched or else not R.Has_Row then
+            R.Fetch
+              (Session.DB,
+               Query_Find_Entity_No_Name,
+               Params =>
+                 (1 => +Decl_File,
+                  2 => +Decl_Line,
+                  3 => +Decl_Column));
+         end if;
+
+         if R.Has_Row then
+            Entity := R.Integer_Value (0);
+
+            if Name'Length /= 0 then
+               if R.Value (1) = "" then
+                  --  We had a forward declaration in the database, we can now
+                  --  update its name.
+                  Session.DB.Execute
+                    (Query_Set_Entity_Name,
+                     Params => (1 => +Entity,
+                                2 => +Name'Unrestricted_Access));
+               end if;
+
+               Entity_Decl_To_Id.Include
+                 (Decl,
+                  Entity_Info'(Id         => Entity,
+                               Known_Name => True));
+
+            else
+               Entity_Decl_To_Id.Insert
+                 (Decl,
+                  Entity_Info'(Id         => Entity,
+                               Known_Name => R.Value (1) /= ""));
+            end if;
+
+            return Entity;
+         end if;
+
+         --  The entity was not in the database, save it. If the name is empty
+         --  we are creating a forward declaration.
+
+         R.Fetch
+           (Session.DB,
+            Query_Insert_Entity,
+            Params =>
+              (1 => +Name'Unrestricted_Access,
+               2 => +Kind,
+               3 => +Decl_File,
+               4 => +Decl_Line,
+               5 => +Decl_Column));
+         Entity := R.Last_Id (Session.DB, Database.Entities.Id);
+         Entity_Decl_To_Id.Insert
+           (Decl,
+            Entity_Info'(Id         => Entity,
+                         Known_Name => Name'Length /= 0));
+         return Entity;
+      end Get_Or_Create_Entity;
+
       ----------------
       -- First_Pass --
       ----------------
@@ -637,7 +789,6 @@ package body Entities_Db is
       procedure First_Pass is
          Start_Of_X_Sections  : constant Integer := Index;
          Name_Start, Name_End : Integer;
-         Entity_Kind          : Character;
       begin
          while Index <= Last loop
             if Str (Index) = 'X' then
@@ -657,67 +808,17 @@ package body Entities_Db is
                   --  insert something in the database.
 
                   Get_Ref;
-                  Xref_File        := Current_X_File;
-                  Entity_Kind      := Xref_Kind;
                   Index := Index + 1;   --  Skip Library_Level flag
-
                   Name_Start       := Index;
                   Skip_To_Name_End;
                   Name_End         := Index - 1;
 
-                  declare
-                     Name : aliased String :=
-                       String (Str (Name_Start .. Name_End));
-                     R : Forward_Cursor;
-                     Decl : constant Loc :=
-                       (File_Id => Current_X_File,
-                        Line    => Xref_Line,
-                        Column  => Xref_Col);
-                     C : constant Loc_To_Ids.Cursor :=
-                       Entity_Decl_To_Id.Find (Decl);
-                  begin
-                     --  It is possible that we have already seen the same
-                     --  entity earlier in the file. Unfortunately, duplicates
-                     --  happen, for instance in .gli files
-
-                     if Has_Element (C) then
-                        Current_Entity := Element (C);
-
-                     else
-                        --  Check if we already know that entity in the db
-
-                        R.Fetch
-                          (Session.DB,
-                           Query_Find_Entity_From_Decl,
-                           Params =>
-                             (1 => +Name'Unrestricted_Access,
-                              2 => +Current_X_File,
-                              3 => +Xref_Line,
-                              4 => +Xref_Col));
-
-                        if R.Has_Row then
-                           Current_Entity := R.Integer_Value (0);
-
-                        else
-                           --  Save the current entity
-
-                           R.Fetch
-                             (Session.DB,
-                              Query_Insert_Entity,
-                              Params =>
-                                (1 => +Name'Unrestricted_Access,
-                                 2 => +Entity_Kind,     --  kind
-                                 3 => +Current_X_File,  --  decl_file
-                                 4 => +Xref_Line,       --  decl_line
-                                 5 => +Xref_Col));      --  decl_column
-
-                           Current_Entity :=
-                             R.Last_Id (Session.DB, Database.Entities.Id);
-                        end if;
-
-                        Entity_Decl_To_Id.Insert (Decl, Current_Entity);
-                     end if;
-                  end;
+                  Current_Entity := Get_Or_Create_Entity
+                    (Name        => String (Str (Name_Start .. Name_End)),
+                     Decl_File   => Current_X_File,
+                     Decl_Line   => Xref_Line,
+                     Decl_Column => Xref_Col,
+                     Kind        => Xref_Kind);
                end if;
 
             else
@@ -755,10 +856,13 @@ package body Entities_Db is
             Skip_To_Name_End;
             Name_End         := Index;
 
+            --  After First_Pass, we know the entity exists, so it is safe to
+            --  call Element directly.
+
             Current_Entity := Entity_Decl_To_Id.Element
               ((File_Id => Current_X_File,
                 Line    => Xref_Line,
-                Column  => Xref_Col));
+                Column  => Xref_Col)).Id;
 
             --  Process the extra information we had (pointed type,...)
 

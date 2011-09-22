@@ -33,10 +33,10 @@ profile:
 	@rm -f entities.db
 	@./obj/test_entities
 
-	@echo "===== Start with an existing empty db ===="
-	@rm -f entities.db
-	@${DB2ADA} -dbtype=sqlite -dbname=entities.db -createdb -load=${INITIAL}
-	@./obj/test_entities
+	#@echo "===== Start with an existing empty db ===="
+	#@rm -f entities.db
+	#@${DB2ADA} -dbtype=sqlite -dbname=entities.db -createdb -load=${INITIAL}
+	#@./obj/test_entities
 
 
 doc:
