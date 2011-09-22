@@ -1,6 +1,7 @@
 with Ada.Calendar;      use Ada.Calendar;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers;    use Ada.Containers;
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Text_IO;       use Ada.Text_IO;
@@ -108,6 +109,17 @@ package body Entities_Db is
    --  this is implemented as a single table lookup thanks to the multi-column
    --  covering index we created.
 
+   Query_Set_Entity_Renames : constant Prepared_Statement :=
+     Prepare
+       (SQL_Insert
+            (Values => (Database.E2e.Fromentity = Integer_Param (1))
+             & (Database.E2e.Toentity = Database.Entity_Refs.Entity)
+             & (Database.E2e.Kind = E2e_Renames),
+             Where => Database.Entity_Refs.File = Integer_Param (2)
+               and Database.Entity_Refs.Line = Integer_Param (3)
+               and Database.Entity_Refs.Column = Integer_Param (4)),
+        On_Server => True, Name => "set_entity_renames");
+
    Query_Set_Entity_Name : constant Prepared_Statement :=
      Prepare
        (SQL_Update
@@ -172,6 +184,17 @@ package body Entities_Db is
       Element_Type    => Integer);  --  Id in the files table
    use Depid_To_Ids;
 
+   type Entity_Renaming is record
+      Entity : Integer;              --  Id in the entities table
+      File, Line, Column : Integer;  --  A reference to the renamed entity
+   end record;
+   package Entity_Renaming_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Entity_Renaming);
+   use Entity_Renaming_Lists;
+   --  Renamings need to be handled in a separate pass, since the ALI file
+   --  points to a reference of the renamed entity, which we can only resolve
+   --  once we have parsed the whole ALI file.
+
    procedure Parse_LI
      (Session                   : Session_Type;
       Tree                      : Project_Tree;
@@ -224,6 +247,8 @@ package body Entities_Db is
       --  Current "D" line index
 
       Depid_To_Id     : Depid_To_Ids.Vector;
+
+      Entity_Renamings : Entity_Renaming_Lists.List;
 
       Internal_Files : Depid_To_Ids.Vector;
       --  Contains the list of units associated with the current ALI (these
@@ -340,6 +365,10 @@ package body Entities_Db is
       function Is_ALI_Unit (Id : Integer) return Boolean;
       --  Whether the file with the given id is one of the units associated
       --  with the current ALI.
+
+      procedure Resolve_Renamings;
+      --  The last pass in parsing a ALI file is to resolve all renamings, now
+      --  that we can convert a reference to an entity
 
       -----------------
       -- Is_ALI_Unit --
@@ -944,11 +973,16 @@ package body Entities_Db is
                --  a reference, so we need to find the corresponding entity
                --  before we can insert in the database. We'll do that once we
                --  have inserted all other refs.
-               --  ??? TBD: handle renaming
 
                Index := Name_End + 1;
                Get_Ref;
                Name_End := Index;
+
+               Entity_Renamings.Append
+                 ((Entity => Current_Entity,
+                   File   => Xref_File,
+                   Line   => Xref_Line,
+                   Column => Xref_Col));
             end if;
 
             loop
@@ -1125,6 +1159,27 @@ package body Entities_Db is
          end if;
       end Process_Entity_Line;
 
+      -----------------------
+      -- Resolve_Renamings --
+      -----------------------
+
+      procedure Resolve_Renamings is
+         C : Entity_Renaming_Lists.Cursor := Entity_Renamings.First;
+         Ren : Entity_Renaming;
+      begin
+         while Has_Element (C) loop
+            Ren := Element (C);
+
+            Session.DB.Execute
+              (Query_Set_Entity_Renames,
+               Params => (1 => +Ren.Entity,
+                          2 => +Ren.File,
+                          3 => +Ren.Line,
+                          4 => +Ren.Column));
+            Next (C);
+         end loop;
+      end Resolve_Renamings;
+
    begin
       if Active (Me_Debug) then
          Trace (Me_Debug, "Parse LI "
@@ -1256,6 +1311,8 @@ package body Entities_Db is
             Next_Line;
          end loop;
       end if;
+
+      Resolve_Renamings;
 
       Close (M);
    end Parse_LI;
