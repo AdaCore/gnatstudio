@@ -1,6 +1,7 @@
 with Ada.Calendar;          use Ada.Calendar;
 with Ada.Text_IO;           use Ada.Text_IO;
 with GNAT.Strings;          use GNAT.Strings;
+with GNATCOLL.SQL.Exec;     use GNATCOLL.SQL.Exec;
 with GNATCOLL.SQL.Sessions; use GNATCOLL.SQL.Sessions;
 with GNATCOLL.SQL.Sqlite;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;

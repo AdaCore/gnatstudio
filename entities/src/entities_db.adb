@@ -71,8 +71,7 @@ package body Entities_Db is
              & (Database.Entity_Refs.File   = Integer_Param (2))
              & (Database.Entity_Refs.Line   = Integer_Param (3))
              & (Database.Entity_Refs.Column = Integer_Param (4))
-             & (Database.Entity_Refs.Kind   = Database.Reference_Kinds.Id),
-             Where => Database.Reference_Kinds.Id = Text_Param (5)),
+             & (Database.Entity_Refs.Kind   = Text_Param (5))),
         On_Server => True, Name => "insert_ref");
 
    package VFS_To_Ids is new Ada.Containers.Hashed_Maps
@@ -755,8 +754,24 @@ package body Entities_Db is
       LI_Files  : Library_Info_Lists.List;
       Start     : Time := Clock;
       VFS_To_Id : VFS_To_Ids.Map;
+      Has_Pragma : Boolean := True;
 
    begin
+      --  Disable checks for foreign keys. This saves a bit of time when
+      --  inserting the new references. At worse we could end up with an
+      --  entity or a reference whose kind does not match an entry in the
+      --  *_kind tables, and the xref will not show later on in query, but
+      --  that's easily fixed by adding the new entry in the *_kind table (that
+      --  is when the ALI file has changed format)
+      --  Since this is sqlite specific, we test whether the backend supports
+      --  this.
+
+      Session.DB.Execute ("PRAGMA foreign_keys=OFF");
+      if not Session.DB.Success then
+         Has_Pragma := False;
+         Session.Rollback;
+      end if;
+
       Project.Library_Files
         (Recursive => True, Xrefs_Dirs => True, Including_Libraries => True,
          ALI_Ext => ".ali", List => LI_Files);
@@ -780,6 +795,10 @@ package body Entities_Db is
       --  slower. At worse, if there is an error parsing one file, we are not
       --  going to load anything, and the files will be loaded on demand later.
       Session.Commit;
+
+      if Has_Pragma then
+         Session.DB.Execute ("PRAGMA foreign_keys=ON");
+      end if;
 
       Put_Line
         ("Done parsing files:" & Duration'Image (Clock - Start) & " seconds");

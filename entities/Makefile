@@ -12,17 +12,18 @@ all: createdb
 test: createdb
 	@gnatmake -u -p -Ptest1/test1.gpr
 
+runtest: createdb
+	@./obj/test_entities
+
 profile:
 	-@mv -f .gnatdebug .gnatdebug 2>/dev/null
 	@echo "=================="
 	@echo "Flushing disk caches"
 	@sync ; echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
-	@time ${MAKE} createdb
-	@./obj/test_entities
+	@${MAKE} runtest
 	@echo "=================="
 	@echo "With files in the cache"
-	@time ${MAKE} createdb
-	@./obj/test_entities
+	@${MAKE} runtest
 
 createdb:
 	@rm -f entities.db
