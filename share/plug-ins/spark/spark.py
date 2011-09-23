@@ -587,8 +587,6 @@ a = """<?xml version="1.0"?>
         <radio-entry label="Short summary"
          tip="Prevent per-subprogram analysis section being output to .sum file"
          switch="-s" />
-        <radio-entry label="XML" tip="Output summary information in XML format"
-         switch="-x" />
       </radio>
     </switches>
   </tool>
