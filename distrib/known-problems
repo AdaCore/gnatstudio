@@ -29,6 +29,12 @@ If no tag is specified, the entry is relevant to all IDEs.
               the corresponding items in the locations view using e.g. the
               filter pane.
 
+- K831-011: GPS: Potential crash when generating lots of messages for one file
+  Problem:    When GPS generates a lot of messages for one file (for instance
+              as the result of a build containing many errors, or the use of
+              the Coding Standard rule checker), GPS may crash.
+  Workaround: None known.
+
 - K829-030: GPS: Cannot replace with an empty string
   Problem:    When using the Search dialog to replace a pattern with the empty
               string, GPS does not replace the pattern.
