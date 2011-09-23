@@ -36,7 +36,7 @@ package body Entities_Db is
      Prepare
        (SQL_Insert
             ((Database.Files.Path = Text_Param (1))
-             & (Database.Files.Timestamp = Time_Param (2))
+             & (Database.Files.Stamp = Time_Param (2))
              & (Database.Files.Language = Text_Param (3))),
         On_Server => True, Name => "insert_file");
 

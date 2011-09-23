@@ -22,7 +22,7 @@
 | TABLE     | files              | file            |   |                                                                                                             |
 | id        | AUTOINCREMENT      | PK              |   |                                                                                                             |
 | path      | TEXT               | NOT NULL, INDEX |   | Full absolute path for the file                                                                             |
-| timestamp | timestamp          | NOT NULL        |   | The timestamp the last time the file was read                                                               |
+| stamp     | timestamp          | NOT NULL        |   | The timestamp the last time the file was read                                                               |
 | language  | TEXT               | NOT NULL        |   | The language for this file (so that we can limit queries to specific languages). "ali" is a valid language. |
 #| project   | FK projects(files) |                 |   | For LI files, checks whether the path has changed when the scenario changes                                 |
 
