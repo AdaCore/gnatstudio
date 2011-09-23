@@ -2620,24 +2620,22 @@ package body Project_Explorers is
 
                   else
                      Projects.Insert (Project_Name);
-
                      Compute_Children (Explorer, Start);
                      Result := Children (Explorer.Tree.Model, Start);
-                     Finish := False;
                   end if;
                end;
 
             else
                Compute_Children (Explorer, Start);
                Result := Children (Explorer.Tree.Model, Start);
-               Finish := False;
             end if;
 
          else
             Result := Start;
             Next (Explorer.Tree.Model, Result);
-            Finish := False;
          end if;
+
+         Finish := False;
       end Next_Or_Child;
 
       --------------------
