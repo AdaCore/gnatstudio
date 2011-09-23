@@ -1054,6 +1054,17 @@ package body Entities_Db is
                   Skip_To_Name_End;
                   Name_End         := Index - 1;
 
+                  --  For operators, omit the quotes when inserting into the
+                  --  database (since that's not what references to that
+                  --  entity will be using anyway.
+
+                  if Str (Name_Start) = '"'
+                    and then Str (Name_End) = '"'
+                  then
+                     Name_Start := Name_Start + 1;
+                     Name_End   := Name_End - 1;
+                  end if;
+
                   Current_Entity := Get_Or_Create_Entity
                     (Name        => String (Str (Name_Start .. Name_End)),
                      Decl_File   => Current_X_File,
