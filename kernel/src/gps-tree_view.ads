@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2009-2010, AdaCore                  --
+--                 Copyright (C) 2009-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,8 +34,12 @@
 
 private with Ada.Containers.Vectors;
 
-private with Glib;
-with Gtk.Tree_Model;
+with Glib;
+with Glib.Main; use Glib.Main;
+
+with Ada.Containers.Doubly_Linked_Lists;
+
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_View;
 
 package GPS.Tree_View is
@@ -70,6 +74,11 @@ private
    package Node_Vectors is
      new Ada.Containers.Vectors (Node_Index, Node_Access);
 
+   package Path_List is
+      new Ada.Containers.Doubly_Linked_Lists (Gtk.Tree_Model.Gtk_Tree_Path);
+
+   package Tree_View_Sources is new Generic_Sources (GPS_Tree_View);
+
    type Node_Record is record
       Parent   : Node_Access;
       Expanded : Boolean;
@@ -84,6 +93,12 @@ private
       Root          : Node_Access;
       --  Root node. The tree reflects underling model, not the model directly
       --  connected to the view.
+
+      Paths_To_Be_Expanded : Path_List.List;
+      --  A list of nodes that need to be expanded
+
+      On_Idle : G_Source_Id := 0;
+      --  The currently registered idle callback.
    end record;
 
    procedure On_Lowerst_Model_Row_Inserted
