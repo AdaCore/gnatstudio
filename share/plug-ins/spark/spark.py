@@ -483,6 +483,9 @@ a = """<?xml version="1.0"?>
       <check line="1" label="Ignore SIV files" switch="-v" />
       <combo line="1" label="SMT solver used" switch="-solver" separator="=" noswitch="alt-ergo">
         <combo-entry label="Alt-Ergo" value="alt-ergo" />
+        <combo-entry label="CVC3" value="cvc3" />
+        <combo-entry label="Yices" value="yices" />
+        <combo-entry label="Z3" value="z3" />
       </combo>
       <title line="2">Limits</title>
       <spin line="2" label="Proof step limit for Alt-Ergo" switch="-steps=" min="0" max="10000" default="5000"
