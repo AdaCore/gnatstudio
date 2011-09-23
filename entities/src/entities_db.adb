@@ -1,3 +1,22 @@
+-----------------------------------------------------------------------
+--                              G P S                                --
+--                                                                   --
+--                  Copyright (C) 2011, AdaCore                      --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Calendar;      use Ada.Calendar;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers;    use Ada.Containers;
@@ -1475,6 +1494,7 @@ package body Entities_Db is
 
       use Library_Info_Lists;
       LI_Files  : Library_Info_Lists.List;
+      Lib_Info  : Library_Info_Lists.Cursor;
       Start     : Time := Clock;
       VFS_To_Id : VFS_To_Ids.Map;
       Has_Pragma : Boolean := True;
@@ -1565,15 +1585,17 @@ package body Entities_Db is
                 & " (" & Duration'Image (Clock - Start) & " seconds)");
 
       Start := Clock;
-      for Lib_Info of LI_Files loop
-         Parse_LI (Session                   => Session,
-                   Tree                      => Tree,
-                   Library_File              => Lib_Info.Library_File,
-                   Source_File               => Lib_Info.Source_File,
-                   VFS_To_Id                 => VFS_To_Id,
-                   Entity_Decl_To_Id         => Entity_Decl_To_Id,
-                   Entity_Renamings          => Entity_Renamings,
+      Lib_Info := LI_Files.First;
+      while Has_Element (Lib_Info) loop
+         Parse_LI (Session              => Session,
+                   Tree                 => Tree,
+                   Library_File         => Element (Lib_Info).Library_File,
+                   Source_File          => Element (Lib_Info).Source_File,
+                   VFS_To_Id            => VFS_To_Id,
+                   Entity_Decl_To_Id    => Entity_Decl_To_Id,
+                   Entity_Renamings     => Entity_Renamings,
                    Ignore_Ref_In_Other_Files => True);
+         Next (Lib_Info);
       end loop;
 
       Session.DB.Execute
