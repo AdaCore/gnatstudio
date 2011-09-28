@@ -178,7 +178,7 @@ def move_block (chars=1):
       the current line."""
 
    buffer = GPS.EditorBuffer.get ()
-   tab_width = int (GPS.Preference ("Src-Editor-Tab-Width").get ())
+   tab_width = 8
 
    # Determine extents of the selection
    start_line = buffer.selection_start().line()
@@ -246,7 +246,7 @@ def untabify ():
       with the correct amount of spaces. The tab stops are every n columns
       where n is specified by a preference in the Preferences dialog"""
 
-   tab_width = int (GPS.Preference ("Src-Editor-Tab-Width").get ())
+   tab_width = 8
    buffer, start, end = get_selection_or_buffer ()
    while start < end:
       start = start.search ("\t", dialog_on_failure=False)
