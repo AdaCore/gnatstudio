@@ -202,7 +202,12 @@ package body Convert.Gpr is
       Prj.Tree.Initialize (Tree);
 
       Change_Dir (Dir_Name (Gpr_Filename));
-      Prj.Pars.Parse (View_Tree, Project_View, Gpr_Filename, Env => Env);
+      Prj.Pars.Parse
+        (In_Tree           => View_Tree,
+         Project           => Project_View,
+         Project_File_Name => Gpr_Filename,
+         Packages_To_Check => All_Packages,
+         Env               => Env);
 
       if Project_View /= No_Project then
          declare
