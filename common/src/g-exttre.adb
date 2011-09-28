@@ -1435,6 +1435,8 @@ package body GNAT.Expect.TTY.Remote is
                State := OFF;
                Close (Desc, Status);
                Descriptor.Session_Died := True;
+               --  Report an abnormal status here (non-zero)
+               Status := 99;
 
             elsif not Descriptor.Session_Died then
                Status := Descriptor.Status;
