@@ -2041,11 +2041,6 @@ package body Gtkada.File_Selector is
          Gtk.Combo_Box.Signal_Changed,
          Directory_Selected'Access, File_Selector_Window.Location_Combo);
 
-      if History /= null then
-         Get_History (History.all, Directories_Hist_Key,
-                      File_Selector_Window.Location_Combo);
-      end if;
-
       Widget_Callback.Connect
         (File_Selector_Window.Location_Combo.Get_Child,
          Gtk.GEntry.Signal_Activate,
@@ -2154,6 +2149,15 @@ package body Gtkada.File_Selector is
         (File_Selector_Window.Selection_Entry,
          Gtk.Tree_Selection.Signal_Changed,
          On_Selection_Entry_Changed'Access);
+
+      --  Get_History may trigger a call to Directory_Selected which in turn
+      --  may need to access the Selection_Entry field, so need to move this
+      --  call after Selection_Entry is created
+
+      if History /= null then
+         Get_History (History.all, Directories_Hist_Key,
+                      File_Selector_Window.Location_Combo);
+      end if;
 
       Gtk_New_Hbox (Hbox6, False, 0);
       Pack_Start
