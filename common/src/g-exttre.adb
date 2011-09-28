@@ -1430,9 +1430,11 @@ package body GNAT.Expect.TTY.Remote is
                State := OFF;
                Close (Desc, Status);
                Descriptor.Session_Died := True;
+               --  Return a non-zero number as status when forcing the session
+               --  to close.
+               Status := 99;
 
             elsif not Descriptor.Session_Died then
-               Get_Status (Descriptor);
                Status := Descriptor.Status;
             end if;
 
