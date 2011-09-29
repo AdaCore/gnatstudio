@@ -234,17 +234,13 @@ package body Gtkada.Macro is
    function Get_Id
      (Widget : access Gtk_Widget_Record'Class) return Identifier
    is
-      function Get_Real_Name (Widget : System.Address) return System.Address;
-      pragma Import (C, Get_Real_Name, "ada_gtk_get_real_name");
-      --  Return the real widget name (as opposed to gtk_widget_get_name,
-      --  this one returns NULL instead of the class name if no name was
-      --  set.
-
-      use type System.Address;
-
+      Widget_Name : constant UTF8_String := Get_Name (Widget);
+      Class_Name  : constant UTF8_String := Type_Name (Get_Type (Widget));
    begin
-      if Get_Real_Name (Get_Object (Widget)) /= System.Null_Address then
-         return (Name, new String'(Get_Name (Widget)));
+      if Class_Name /= Widget_Name then
+         --  Widget_Name is set equal to Class_Name when the widget does not
+         --  have a name.
+         return (Name, new String'(Widget_Name));
 
       elsif Widget.all in Gtk_Window_Record'Class then
          if Get_Title (Gtk_Window (Widget)) /= "" then
