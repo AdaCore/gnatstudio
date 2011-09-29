@@ -214,7 +214,7 @@ procedure GNATSpark is
       Exec := Locate_Exec_On_Path (Command);
 
       if Exec = null then
-         Put_Line (Command & "executable not found, exiting.");
+         Put_Line (Command & " executable not found, exiting.");
          OS_Exit (3);
       end if;
 
