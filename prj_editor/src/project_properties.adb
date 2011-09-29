@@ -52,7 +52,6 @@ with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Notebook;              use Gtk.Notebook;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Size_Group;            use Gtk.Size_Group;
@@ -5014,7 +5013,7 @@ package body Project_Properties is
       Flags                : Selector_Flags;
    begin
       if Page >= Pages_From_XML_Count
-        and then not Gtk.Object.In_Destruction_Is_Set (Ed)
+        and then not In_Destruction_Is_Set (Ed)
       then
          --  Some pages might not be visible though...
          P := Get_Nth_Project_Editor_Page

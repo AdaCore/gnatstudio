@@ -31,7 +31,6 @@ with Glib.Values;
 with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Style;                 use Gtk.Style;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;

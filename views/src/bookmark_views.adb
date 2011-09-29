@@ -40,7 +40,6 @@ with Gdk.Window;                use Gdk.Window;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;

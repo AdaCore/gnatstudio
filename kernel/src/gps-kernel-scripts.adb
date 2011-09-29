@@ -41,7 +41,6 @@ with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Object;              use Gtk.Object;
 with Gtk.Text_View;           use Gtk.Text_View;
 with Gtk.Widget;              use Gtk.Widget;
 with Pango.Font;              use Pango.Font;

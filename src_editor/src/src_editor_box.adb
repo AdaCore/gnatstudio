@@ -52,7 +52,6 @@ with Gtk.Label;                  use Gtk.Label;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Object;                 use Gtk.Object;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Status_Bar;             use Gtk.Status_Bar;

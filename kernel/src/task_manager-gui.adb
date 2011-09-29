@@ -31,7 +31,6 @@ with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Icon_Factory;
-with Gtk.Object;                 use Gtk.Object;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Settings;
 with Gtk.Stock;                  use Gtk.Stock;

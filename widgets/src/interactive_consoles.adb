@@ -44,7 +44,6 @@ with Gdk.Event;           use Gdk.Event;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Main;            use Gtk.Main;
-with Gtk.Object;          use Gtk.Object;
 with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
 with Gtk.Text_View;       use Gtk.Text_View;
 with Gtk.Text_Iter;       use Gtk.Text_Iter;
@@ -1406,7 +1405,7 @@ package body Interactive_Consoles is
    begin
       --  Prevent recursion
 
-      if Gtk.Object.In_Destruction_Is_Set (Console) then
+      if In_Destruction_Is_Set (Console) then
          return;
       end if;
 

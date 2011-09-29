@@ -29,7 +29,6 @@ with Glib.Object;            use Glib.Object;
 with XML_Utils;              use XML_Utils;
 
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Object;             use Gtk.Object;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.File_Selector;   use Gtkada.File_Selector;

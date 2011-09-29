@@ -35,7 +35,6 @@ with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Frame;               use Gtk.Frame;
 with Gtk.Label;               use Gtk.Label;
-with Gtk.Object;              use Gtk.Object;
 with Gtk.Style;               use Gtk.Style;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
@@ -407,7 +406,7 @@ package body Command_Window is
          Return_Callback.To_Marshaller (On_Key_Press_After'Access), Window,
          After => True);
       Widget_Callback.Connect
-        (Window, Gtk.Object.Signal_Destroy, On_Destroy'Access);
+        (Window, Gtk.Widget.Signal_Destroy, On_Destroy'Access);
       Widget_Callback.Object_Connect
         (Get_Buffer (Window.Line), Signal_Changed,
          On_Changed'Access, Window, After => True);

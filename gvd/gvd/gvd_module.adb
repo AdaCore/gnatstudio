@@ -38,7 +38,6 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -1742,8 +1741,7 @@ package body GVD_Module is
 
    begin
       if Get_Main_Window (Kernel) /= null
-        and then not Gtk.Object.In_Destruction_Is_Set
-          (Get_Main_Window (Kernel))
+        and then not In_Destruction_Is_Set (Get_Main_Window (Kernel))
       then
          if State = Debug_Available then
             Add_Debug_Buttons (Kernel);

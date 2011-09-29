@@ -45,7 +45,6 @@ with Gtk.Label;                         use Gtk.Label;
 with Gtk.Main;                          use Gtk.Main;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
-with Gtk.Object;                        use Gtk.Object;
 with Gtk.Rc;                            use Gtk.Rc;
 with Gtk.Size_Group;                    use Gtk.Size_Group;
 with Gtk.Stock;                         use Gtk.Stock;

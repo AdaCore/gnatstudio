@@ -54,7 +54,6 @@ with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Ctree;                 use Gtk.Ctree;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.List_Store;            use Gtk.List_Store;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;

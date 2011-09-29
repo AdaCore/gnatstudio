@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2010, AdaCore             --
+--                      Copyright (C) 2000-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,6 @@ with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
 with GPS.Intl;            use GPS.Intl;
-with Gtk.Object;          use Gtk.Object;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
@@ -140,7 +139,7 @@ package body GVD.Generic_View is
             --  gtk_notebook_destroy's loop would then point to an invalid
             --  location.
             if Get_Main_Window (Get_Kernel (P)) /= null
-              and then not Gtk.Object.In_Destruction_Is_Set
+              and then not Gtk.Widget.In_Destruction_Is_Set
                 (Get_Main_Window (Get_Kernel (P)))
               and then Get_Process (V) /= null
             then

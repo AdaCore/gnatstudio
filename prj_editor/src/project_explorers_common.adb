@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -644,7 +644,7 @@ package body Project_Explorers_Common is
                   elsif Get_Event_Type (Event) = Button_Press then
                      --  Drag-and-drop does not work on floating MDI children
 
-                     if Get_State (Child) /= Floating then
+                     if Get_State (Child) /= Gtkada.MDI.Floating then
                         Child.Kernel        := Kernel;
                         Child.Dnd_From_File :=
                           Get_File (Model, Iter, File_Column);

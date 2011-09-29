@@ -30,7 +30,6 @@ with Gtk.Button;                use Gtk.Button;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;

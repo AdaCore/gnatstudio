@@ -32,7 +32,6 @@ with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.List_Store;      use Gtk.List_Store;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
-with Gtk.Object;          use Gtk.Object;
 with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
 with Gtk.Tree_Model;      use Gtk.Tree_Model;
 with Gtk.Widget;          use Gtk.Widget;

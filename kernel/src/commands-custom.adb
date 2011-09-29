@@ -44,7 +44,6 @@ with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Size_Group;            use Gtk.Size_Group;

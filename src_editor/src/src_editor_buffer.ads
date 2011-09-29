@@ -937,7 +937,7 @@ package Src_Editor_Buffer is
 
    function In_Destruction_Is_Set
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
-   --  Similar to Gtk.Object.In_Destruction_Is_Set
+   --  Similar to Gtk.Widget.In_Destruction_Is_Set
 
    function Get_Command_Queue
      (Buffer : access Source_Buffer_Record'Class) return Command_Queue;

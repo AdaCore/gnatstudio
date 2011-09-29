@@ -41,7 +41,6 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
 with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Settings;
@@ -79,7 +78,7 @@ package body GPS.Main_Window is
 
    Signals : constant Gtkada.Types.Chars_Ptr_Array :=
      (1 => New_String ("preferences_changed"));
-   Class_Record : GObject_Class := Uninitialized_Class;
+   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
 
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";
@@ -502,7 +501,7 @@ package body GPS.Main_Window is
       --  Initialize the window first, so that it can be used while creating
       --  the kernel, in particular calls to Push_State
       Gtk.Window.Initialize (Main_Window, Window_Toplevel);
-      Initialize_Class_Record
+      Glib.Object.Initialize_Class_Record
         (Main_Window, Signals, Class_Record, Type_Name => "GpsMainWindow");
 
       Gtk_New
@@ -548,7 +547,7 @@ package body GPS.Main_Window is
 
       Gtk_New (Main_Window.Tooltips);
       Ref (Main_Window.Tooltips);
-      Sink (Main_Window.Tooltips);
+      Ref_Sink (Main_Window.Tooltips);
 
       GPS.Kernel.MDI.Gtk_New
         (Main_Window.MDI, Main_Window.Main_Accel_Group);

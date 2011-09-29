@@ -26,7 +26,6 @@ with Input_Sources.File;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
-with Gtk.Object;
 with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Widget;
 
@@ -938,7 +937,7 @@ package body Code_Peer.Module is
             Self.Tree);
          Context_CB.Connect
            (Self.Report,
-            Gtk.Object.Signal_Destroy,
+            Gtk.Widget.Signal_Destroy,
             Context_CB.To_Marshaller (On_Destroy'Access),
             Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
          Context_CB.Connect

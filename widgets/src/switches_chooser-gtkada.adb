@@ -42,7 +42,6 @@ with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Table;              use Gtk.Table;
 with Gtk.Toggle_Button;      use Gtk.Toggle_Button;
 with Gtk.Tooltips;           use Gtk.Tooltips;
-with Gtk.Object;             use Gtk.Object;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
@@ -251,7 +250,7 @@ package body Switches_Chooser.Gtkada is
         (Tmp, Gtk.Button.Signal_Clicked,
          Destroy_Dialog'Access, Dialog);
       Widget_Callback.Object_Connect
-        (Dialog, Gtk.Object.Signal_Destroy,
+        (Dialog, Gtk.Widget.Signal_Destroy,
          On_Dialog_Destroy'Access, Pop);
    end On_Popup_Button_Clicked;
 
@@ -424,7 +423,7 @@ package body Switches_Chooser.Gtkada is
    begin
       Set_Widget (Editor.all, To_Index (Switch), Gtk_Widget (W));
       User_Widget_Callback.Connect
-        (W, Gtk.Object.Signal_Destroy, On_Destroy'Access,
+        (W, Gtk.Widget.Signal_Destroy, On_Destroy'Access,
          (Switches_Editor (Editor), Switch));
       if S.Tip /= "" then
          Set_Tip

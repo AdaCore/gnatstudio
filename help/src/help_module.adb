@@ -37,7 +37,6 @@ with Glib.Object;                use Glib.Object;
 with XML_Utils;                  use XML_Utils;
 
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Object;                 use Gtk.Object;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;

@@ -35,7 +35,6 @@ with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;

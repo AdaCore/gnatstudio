@@ -32,7 +32,6 @@ with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Label;
 with Gtk.Menu;
-with Gtk.Object;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Separator;
@@ -494,7 +493,7 @@ package body Code_Peer.Messages_Reports is
          Signal_Parameters);
       Summary_Report_Callbacks.Connect
         (Self,
-         Gtk.Object.Signal_Destroy,
+         Gtk.Widget.Signal_Destroy,
          Summary_Report_Callbacks.To_Marshaller (On_Destroy'Access));
 
       Self.Kernel := Kernel;

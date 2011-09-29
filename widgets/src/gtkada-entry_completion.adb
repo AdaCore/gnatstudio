@@ -30,7 +30,6 @@ with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Frame;                  use Gtk.Frame;
-with Gtk.Object;                 use Gtk.Object;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;

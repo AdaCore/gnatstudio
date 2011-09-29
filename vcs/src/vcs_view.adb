@@ -26,7 +26,6 @@ with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;

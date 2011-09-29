@@ -489,7 +489,7 @@ package body Vsearch is
          --  We do not want floating search to appear automatically next time
          --  gps is started
          if Get_State (Find_MDI_Child (Get_MDI (User), Extended)) /=
-           Floating
+           Gtkada.MDI.Floating
          then
             N := new Node;
             N.Tag := new String'("Vsearch");
@@ -2180,7 +2180,7 @@ package body Vsearch is
 
       if Data.Extra_Information /= null then
          Ref (Data.Extra_Information);
-         Sink (Data.Extra_Information);
+         Ref_Sink (Data.Extra_Information);
       end if;
 
       Command := new Search_Specific_Context'

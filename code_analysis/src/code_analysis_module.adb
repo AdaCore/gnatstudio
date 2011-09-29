@@ -41,7 +41,6 @@ with Gtk.Tree_Store;                         use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
 with Gtk.Widget;                             use Gtk.Widget;
 with Gtk.Box;                                use Gtk.Box;
-with Gtk.Object;                             use Gtk.Object;
 with Gtk.Label;                              use Gtk.Label;
 with Gtkada.MDI;                             use Gtkada.MDI;
 with GPS.Intl;                               use GPS.Intl;

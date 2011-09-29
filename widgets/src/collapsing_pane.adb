@@ -30,7 +30,6 @@ with Gtk.Box;       use Gtk.Box;
 with Gtk.Event_Box; use Gtk.Event_Box;
 with Gtk.Frame;     use Gtk.Frame;
 with Gtk.Label;     use Gtk.Label;
-with Gtk.Object;    use Gtk.Object;
 with Gtk.Widget;    use Gtk.Widget;
 
 with Gtkada.Handlers; use Gtkada.Handlers;

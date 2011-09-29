@@ -42,7 +42,6 @@ with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Main;                   use Gtk.Main;
-with Gtk.Object;                 use Gtk.Object;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;

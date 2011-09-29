@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2010, AdaCore                  --
+--                 Copyright (C) 2002-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,6 @@ with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with Glib; use Glib;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Notebook;            use Gtk.Notebook;
-with Gtk.Object;              use Gtk.Object;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with GPS.Kernel;              use GPS.Kernel;

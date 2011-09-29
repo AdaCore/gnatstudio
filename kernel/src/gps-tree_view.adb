@@ -22,7 +22,7 @@ with System;
 
 with Glib.Values;
 with Gtk.Handlers;
-with Gtk.Object;
+with Gtk.Widget;
 
 with Traces;
 
@@ -31,7 +31,6 @@ package body GPS.Tree_View is
    use Glib;
    use Glib.Values;
    use Gtk.Handlers;
-   use Gtk.Object;
    use Gtk.Tree_Model;
    use Gtk.Tree_View;
    use Traces;
@@ -188,7 +187,8 @@ package body GPS.Tree_View is
          GPS_Tree_View (Self),
          True);
       Gtk_Tree_View_Callbacks.Connect
-        (Self, Signal_Destroy, On_Destroy'Access, GPS_Tree_View (Self), True);
+        (Self, Gtk.Widget.Signal_Destroy,
+         On_Destroy'Access, GPS_Tree_View (Self), True);
 
       --  Connect to lowerst model
 

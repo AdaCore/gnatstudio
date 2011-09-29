@@ -28,7 +28,6 @@ with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Object;              use Gtk.Object;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
 with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Widget;              use Gtk.Widget;

@@ -29,8 +29,8 @@ with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Item;
-with Gtk.Object;
 with Gtk.Separator_Menu_Item;       use Gtk.Separator_Menu_Item;
+with Gtk.Widget;
 with Gtkada.MDI;
 with GPS.Editors.Line_Information;
 with GPS.Intl;
@@ -744,7 +744,7 @@ package body GNATStack.Module is
          Self.Call_Tree_View_MDI.Set_Title (-"GNATStack: Call Tree");
          Object_Module_Callbacks.Connect
            (Self.Call_Tree_View_MDI,
-            Gtk.Object.Signal_Destroy,
+            Gtk.Widget.Signal_Destroy,
             Object_Module_Callbacks.To_Marshaller
               (On_Call_Tree_View_Close'Access),
             GNATStack_Module_Id (Self));
@@ -781,7 +781,7 @@ package body GNATStack.Module is
          Self.CI_Editor_MDI.Set_Title (-"GNATStack: External subprograms");
          Object_Module_Callbacks.Connect
            (Self.CI_Editor_MDI,
-            Gtk.Object.Signal_Destroy,
+            Gtk.Widget.Signal_Destroy,
             Object_Module_Callbacks.To_Marshaller (On_CIs_Editor_Close'Access),
             GNATStack_Module_Id (Self));
          GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.CI_Editor_MDI);

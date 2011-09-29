@@ -38,7 +38,6 @@ with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Handlers;         use Gtk.Handlers;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Image;            use Gtk.Image;
-with Gtk.Object;           use Gtk.Object;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;

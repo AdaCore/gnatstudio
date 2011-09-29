@@ -48,7 +48,6 @@ with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
-with Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -1018,7 +1017,7 @@ package body GPS.Kernel is
       Window := GPS_Window (Handle.Main_Window);
 
       if Window = null
-        or else Gtk.Object.In_Destruction_Is_Set (Window)
+        or else Gtk.Widget.In_Destruction_Is_Set (Window)
       then
          return;
       end if;
@@ -1055,7 +1054,7 @@ package body GPS.Kernel is
       Window := GPS_Window (Handle.Main_Window);
 
       if Window = null
-        or else Gtk.Object.In_Destruction_Is_Set (Window)
+        or else Gtk.Widget.In_Destruction_Is_Set (Window)
       then
          return;
       end if;
@@ -1072,7 +1071,7 @@ package body GPS.Kernel is
          end if;
 
          if Window.State_Level = 0
-           and then not Gtk.Object.Destroyed_Is_Set (Get_Main_Window (Handle))
+           and then not Gtk.Widget.Destroyed_Is_Set (Get_Main_Window (Handle))
            and then Window.Animation_Timeout /= 0
          then
             Timeout_Remove (Window.Animation_Timeout);

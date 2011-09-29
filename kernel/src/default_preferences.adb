@@ -46,7 +46,6 @@ with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.Object;               use Gtk.Object;
 with Gtk.Rc;                   use Gtk.Rc;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
@@ -105,8 +104,8 @@ package body Default_Preferences is
 
    type Preferences_Editor_Record is new Gtk_Dialog_Record with null record;
    type Preferences_Editor is access all Preferences_Editor_Record'Class;
-   Preferences_Editor_Class_Record : Gtk.Object.GObject_Class :=
-     Gtk.Object.Uninitialized_Class;
+   Preferences_Editor_Class_Record : Glib.Object.GObject_Class :=
+     Glib.Object.Uninitialized_Class;
    Preferences_Editor_Signals : constant chars_ptr_array :=
                        (1 => New_String (String (Signal_Preferences_Changed)));
 
@@ -2128,7 +2127,7 @@ package body Default_Preferences is
       Num        : Gint;
       Scrolled   : Gtk_Scrolled_Window;
 
-      Signal_Parameters : constant Gtk.Object.Signal_Parameter_Types :=
+      Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
         (1 => (1 => GType_None));
 
       Custom_Widgets : array (Custom_Pages'Range) of Gtk_Widget;
@@ -2161,7 +2160,7 @@ package body Default_Preferences is
       Set_Default_Size (Dialog, 620, 400);
       Gtk_New (Tips);
 
-      Gtk.Object.Initialize_Class_Record
+      Glib.Object.Initialize_Class_Record
         (Dialog,
          Signals      => Preferences_Editor_Signals,
          Class_Record => Preferences_Editor_Class_Record,
@@ -2304,7 +2303,7 @@ package body Default_Preferences is
          end case;
       end loop;
 
-      Destroy (Tips);
+      Unref (Tips);
 
    exception
       when E : others =>

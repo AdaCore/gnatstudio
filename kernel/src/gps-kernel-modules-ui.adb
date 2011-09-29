@@ -52,7 +52,6 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Selection;             use Gtk.Selection;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
@@ -341,7 +340,7 @@ package body GPS.Kernel.Modules.UI is
       W := Get_Focus_Widget;
 
       if W = null
-        or else Gtk.Object.In_Destruction_Is_Set (W)
+        or else In_Destruction_Is_Set (W)
       then
          --  No valid window has the focus ? It is probably because we had a
          --  dialog like the Open From Project dialog, which is being closed.

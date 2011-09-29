@@ -57,7 +57,6 @@ with Gtk.Hbutton_Box;                   use Gtk.Hbutton_Box;
 with Gtk.Image;                         use Gtk.Image;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
-with Gtk.Object;                        use Gtk.Object;
 with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
 with Gtk.Stock;                         use Gtk.Stock;

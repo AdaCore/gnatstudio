@@ -36,7 +36,6 @@ with Gtk.Dialog;                    use Gtk.Dialog;
 with Gtk.Enums;                     use Gtk.Enums;
 with Gtk.Frame;                     use Gtk.Frame;
 with Gtk.Menu;                      use Gtk.Menu;
-with Gtk.Object;                    use Gtk.Object;
 with Gtk.Radio_Button;              use Gtk.Radio_Button;
 with Gtk.Stock;                     use Gtk.Stock;
 with Gtk.Vbutton_Box;               use Gtk.Vbutton_Box;
@@ -594,7 +593,7 @@ package body Browsers.Call_Graph is
       Cb       : Show_Location_Callback_Access;
       Removed  : Boolean;
    begin
-      if not Gtk.Object.In_Destruction_Is_Set (Get_Browser (Item2)) then
+      if not In_Destruction_Is_Set (Get_Browser (Item2)) then
          --  Remove all references to the current item in other items, to keep
          --  the browser's contents as simple as possible.
 

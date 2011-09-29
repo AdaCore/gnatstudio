@@ -31,7 +31,6 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with XML_Utils;                 use XML_Utils;
 with Glib.Object;               use Glib.Object;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 

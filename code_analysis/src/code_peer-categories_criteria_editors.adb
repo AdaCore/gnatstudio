@@ -25,7 +25,6 @@ with Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Object;
 with Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 
@@ -147,7 +146,7 @@ package body Code_Peer.Categories_Criteria_Editors is
 
       Message_Categories_Criteria_Editor_Callbacks.Connect
         (Self,
-         Gtk.Object.Signal_Destroy,
+         Gtk.Widget.Signal_Destroy,
          Message_Categories_Criteria_Editor_Callbacks.To_Marshaller
            (On_Destroy'Access));
 
