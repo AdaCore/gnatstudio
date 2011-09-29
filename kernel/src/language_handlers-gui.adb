@@ -59,15 +59,27 @@ package body Language_Handlers.GUI is
       Free (Languages);
 
       if File = GNATCOLL.VFS.No_File and then Default /= "" then
-         Set_Active_Text (Combo, Default);
+         Set_Active_Text
+           (Combo          => Combo,
+            Text           => Default,
+            Case_Sensitive => False);
+
       elsif File /= GNATCOLL.VFS.No_File
         and then Language_Is_Overriden (Handler, File)
       then
-         Set_Active_Text (Combo, Get_Language_From_File (Handler, File));
+         Set_Active_Text
+           (Combo          => Combo,
+            Text           => Get_Language_From_File (Handler, File),
+            Case_Sensitive => False);
+
       elsif Project_Lang = "" then
          Set_Active_Text (Combo, -"(From project) unknown");
+
       else
-         Set_Active_Text (Combo, -"(From project) " & Project_Lang);
+         Set_Active_Text
+           (Combo          => Combo,
+            Text           => -"(From project) " & Project_Lang,
+            Case_Sensitive => False);
       end if;
 
       return Combo;
