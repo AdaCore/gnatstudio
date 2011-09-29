@@ -2809,7 +2809,8 @@ package body Entities.Queries is
          --  and as a result it will not reset Scope_Tree_Computed. Thus it
          --  will not compute the actual call tree.
 
-         Trace (Me, "Compute_Callers_And_Called: nothing to do, no LI");
+         Trace (Me, "Compute_Callers_And_Called: nothing to do, no LI for "
+                & File.Name.Display_Full_Name);
          return;
       end if;
 
@@ -2928,6 +2929,7 @@ package body Entities.Queries is
          exit when E = null;
 
          Append (Result, Get (E.Name).all);
+         Update_Xref (E.LI_Declaration.File);
          Compute_Callers_And_Called (E.LI_Declaration.File);
          Last_Not_Null := E;
          E := E.Caller_At_Declaration;
