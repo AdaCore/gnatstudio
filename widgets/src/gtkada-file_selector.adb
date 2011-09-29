@@ -1124,8 +1124,8 @@ package body Gtkada.File_Selector is
       Push (Win.Future_History,
             Get_Location (Win.Location_Combo));
 
-      Set_Location (Win.Location_Combo, S);
       Win.Moving_Through_History := True;
+      Set_Location (Win.Location_Combo, S);
       Show_Directory (Win.Explorer_Tree, S);
 
    exception
