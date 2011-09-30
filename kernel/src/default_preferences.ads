@@ -36,7 +36,6 @@ with Gdk.Types;
 with Glib;            use Glib;
 with Glib.Object;
 with Gtk.Handlers;
-with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
 with Pango.Font;
@@ -79,8 +78,7 @@ package Default_Preferences is
 
    function Edit
      (Pref               : access Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget is abstract;
    --  Return the widget that should be used to edit the preference described
    --  in Pref.
@@ -466,8 +464,7 @@ private
       Value   : String);
    overriding function Edit
      (Pref               : access Integer_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
 
    type Boolean_Preference_Record is new Preference_Record with record
@@ -481,8 +478,7 @@ private
       Value   : String);
    overriding function Edit
      (Pref               : access Boolean_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
 
    type String_Preference_Record is new Preference_Record with record
@@ -495,8 +491,7 @@ private
       Value   : String);
    overriding function Edit
      (Pref               : access String_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out String_Preference_Record);
 
@@ -510,8 +505,7 @@ private
       Value   : String);
    overriding function Edit
      (Pref               : access Color_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out Color_Preference_Record);
 
@@ -525,8 +519,7 @@ private
       Value   : String);
    overriding function Edit
      (Pref               : access Font_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out Font_Preference_Record);
 
@@ -542,8 +535,7 @@ private
       Value   : String);
    overriding function Edit
      (Pref               : access Key_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
 
    type Style_Preference_Record is new Preference_Record with record
@@ -560,8 +552,7 @@ private
       Value   : String);
    overriding function Edit
      (Pref               : access Style_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out Style_Preference_Record);
 
@@ -575,8 +566,7 @@ private
       Value   : String);
    overriding function Edit
      (Pref               : access Variant_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
 
    type Enum_Preference_Record is abstract new Preference_Record with record
@@ -601,8 +591,7 @@ private
       Value   : String);
    overriding function Edit
      (Pref    : access Theme_Preference_Record;
-      Manager : access Preferences_Manager_Record'Class;
-      Tips    : Gtk.Tooltips.Gtk_Tooltips)
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out Theme_Preference_Record);
 

@@ -23,7 +23,6 @@ with Glib.Object;                use Glib.Object;
 
 with Gtk.Combo_Box;              use Gtk.Combo_Box;
 with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -158,11 +157,9 @@ package body GPS.Kernel.Charsets is
 
    overriding function Edit
      (Pref               : access Charset_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tips);
       Value    : constant String := Pref.Get_Pref;
       Combo    : Gtk_Combo_Box;
       Selected : Integer := -1;

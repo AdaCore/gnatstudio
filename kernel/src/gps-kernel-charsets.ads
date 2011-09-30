@@ -21,7 +21,6 @@
 
 with Default_Preferences;  use Default_Preferences;
 with Gtk.Combo_Box;
-with Gtk.Tooltips;
 with Gtk.Widget;
 
 package GPS.Kernel.Charsets is
@@ -43,8 +42,7 @@ package GPS.Kernel.Charsets is
 
    overriding function Edit
      (Pref               : access Charset_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
 
    procedure Register_Preferences

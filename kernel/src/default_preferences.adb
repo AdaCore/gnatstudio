@@ -57,7 +57,6 @@ with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
-with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -112,8 +111,7 @@ package body Default_Preferences is
    procedure Create_Color_Buttons
      (Box     : Gtk_Box;
       Pref    : access Style_Preference_Record'Class;
-      Manager : access Preferences_Manager_Record'Class;
-      Tips    : Gtk.Tooltips.Gtk_Tooltips);
+      Manager : access Preferences_Manager_Record'Class);
    --  Factorize code that creates the color buttons
 
    procedure Free (Pref : in out Preference);
@@ -1459,11 +1457,9 @@ package body Default_Preferences is
 
    overriding function Edit
      (Pref               : access Integer_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tips);
       Spin : Gtk_Spin_Button;
       Adj  : Gtk_Adjustment;
    begin
@@ -1493,11 +1489,9 @@ package body Default_Preferences is
 
    overriding function Edit
      (Pref               : access Boolean_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tips);
       Toggle : Gtk_Check_Button;
    begin
       Gtk_New (Toggle, -"Enabled");
@@ -1522,11 +1516,9 @@ package body Default_Preferences is
 
    overriding function Edit
      (Pref               : access String_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tips);
       Ent  : Gtk_Entry;
       Text : Gtk_Text_View;
       Scrolled : Gtk_Scrolled_Window;
@@ -1586,11 +1578,9 @@ package body Default_Preferences is
 
    overriding function Edit
      (Pref               : access Color_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tips);
       Button : Gtk_Color_Button;
    begin
       Gtk_New_With_Color (Button, Get_Pref (Color_Preference (Pref)));
@@ -1623,11 +1613,9 @@ package body Default_Preferences is
 
    overriding function Edit
      (Pref               : access Font_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tips);
    begin
       return Gtk_Widget
         (Create_Box_For_Font
@@ -1652,11 +1640,9 @@ package body Default_Preferences is
 
    overriding function Edit
      (Pref               : access Key_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tips);
       Ent    : Gtk_Entry;
       Modif  : Gdk_Modifier_Type;
       Key    : Gdk_Key_Type;
@@ -1697,13 +1683,12 @@ package body Default_Preferences is
    procedure Create_Color_Buttons
      (Box     : Gtk_Box;
       Pref    : access Style_Preference_Record'Class;
-      Manager : access Preferences_Manager_Record'Class;
-      Tips    : Gtk.Tooltips.Gtk_Tooltips)
+      Manager : access Preferences_Manager_Record'Class)
    is
       Button : Gtk_Color_Button;
    begin
       Gtk_New_With_Color (Button, Get_Pref_Fg (Style_Preference (Pref)));
-      Set_Tip (Tips, Button, -"Foreground color");
+      Set_Tooltip_Text (Button, -"Foreground color");
       Pack_Start (Box, Button, Expand => False);
       Preference_Handlers.Connect
         (Button, Signal_Color_Set,
@@ -1715,7 +1700,7 @@ package body Default_Preferences is
          User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
       Gtk_New_With_Color (Button, Get_Pref_Bg (Style_Preference (Pref)));
-      Set_Tip (Tips, Button, -"Background color");
+      Set_Tooltip_Text (Button, -"Background color");
       Pack_Start (Box, Button, Expand => False);
       Preference_Handlers.Connect
         (Button, Signal_Color_Set,
@@ -1733,8 +1718,7 @@ package body Default_Preferences is
 
    overriding function Edit
      (Pref               : access Style_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
       Event : Gtk_Event_Box;
@@ -1747,12 +1731,11 @@ package body Default_Preferences is
    begin
       Gtk_New (Event);
       Add (Event, F);
-      Set_Tip
-        (Tips, Event, -"Click on ... to display the font selector");
+      Set_Tooltip_Text (Event, -"Click on ... to display the font selector");
       Gtk_New_Hbox (Box, Homogeneous => False);
       Pack_Start (Box, Event, Expand => True, Fill => True);
 
-      Create_Color_Buttons (Box, Pref, Manager, Tips);
+      Create_Color_Buttons (Box, Pref, Manager);
 
       return Gtk_Widget (Box);
    end Edit;
@@ -1763,8 +1746,7 @@ package body Default_Preferences is
 
    overriding function Edit
      (Pref               : access Variant_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
       Box   : Gtk_Box;
@@ -1781,7 +1763,7 @@ package body Default_Preferences is
          Count := Count + 1;
       end loop;
 
-      Set_Tip (Tips, Variant_Combo, -"Font variant");
+      Set_Tooltip_Text (Variant_Combo, -"Font variant");
       Gtk_New_Hbox (Box, Homogeneous => False);
       Pack_Start (Box, Variant_Combo, Expand => True, Fill => True);
       Preference_Handlers.Connect
@@ -1789,7 +1771,7 @@ package body Default_Preferences is
          Variant_Changed'Access,
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
 
-      Create_Color_Buttons (Box, Pref, Manager, Tips);
+      Create_Color_Buttons (Box, Pref, Manager);
 
       return Gtk_Widget (Box);
    end Edit;
@@ -1965,15 +1947,14 @@ package body Default_Preferences is
 
    overriding function Edit
      (Pref    : access Theme_Preference_Record;
-      Manager : access Preferences_Manager_Record'Class;
-      Tips    : Gtk.Tooltips.Gtk_Tooltips)
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
       Theme_Combo : Gtk_Combo_Box;
 
    begin
       Gtk_New_Text (Theme_Combo);
-      Set_Tip (Tips, Theme_Combo, -"Theme list");
+      Set_Tooltip_Text (Theme_Combo, -"Theme list");
 
       for J in Pref.Themes'Range loop
          Append_Text (Theme_Combo, Pref.Themes (J).all);
@@ -2141,7 +2122,6 @@ package body Default_Preferences is
       Had_Apply  : Boolean := False;
       Row        : Guint;
       Widget     : Gtk_Widget;
-      Tips       : Gtk_Tooltips;
       Event      : Gtk_Event_Box;
       Label      : Gtk_Label;
       Separator  : Gtk_Separator;
@@ -2158,7 +2138,6 @@ package body Default_Preferences is
       Set_Name (Dialog, "Preferences");  --  for the testsuite
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, 620, 400);
-      Gtk_New (Tips);
 
       Glib.Object.Initialize_Class_Record
         (Dialog,
@@ -2226,15 +2205,14 @@ package body Default_Preferences is
             Gtk_New (Event);
             Gtk_New (Label, Pref.Label.all);
             Add (Event, Label);
-            Set_Tip (Tips, Event, Pref.Doc.all);
+            Set_Tooltip_Text (Event, Pref.Doc.all);
             Set_Alignment (Label, 0.0, 0.5);
             Attach (Table, Event, 0, 1, Row, Row + 1,
                     Xoptions => Fill, Yoptions => 0);
 
             Widget := Edit
-              (Pref               => Pref,
-               Manager            => Manager,
-               Tips               => Tips);
+              (Pref    => Pref,
+               Manager => Manager);
 
             if Widget /= null then
                Attach (Table, Widget, 1, 2, Row, Row + 1, Yoptions => 0);
@@ -2247,8 +2225,6 @@ package body Default_Preferences is
       Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Tmp := Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply);
       Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Enable (Tips);
 
       Show_All (Dialog);
 
@@ -2302,8 +2278,6 @@ package body Default_Preferences is
                exit;
          end case;
       end loop;
-
-      Unref (Tips);
 
    exception
       when E : others =>

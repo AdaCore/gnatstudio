@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -53,8 +53,7 @@ package Default_Preferences.Enums is
    private
       overriding function Edit
         (Pref               : access Preference_Record;
-         Manager            : access Preferences_Manager_Record'Class;
-         Tips               : Gtk.Tooltips.Gtk_Tooltips)
+         Manager            : access Preferences_Manager_Record'Class)
          return Gtk.Widget.Gtk_Widget;
       overriding function Get_Pref
         (Pref : access Preference_Record) return String;
@@ -71,8 +70,7 @@ private
 
    overriding function Edit
      (Pref               : access Choice_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding function Get_Pref
      (Pref : access Choice_Preference_Record) return String;

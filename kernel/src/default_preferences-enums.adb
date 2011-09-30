@@ -95,11 +95,9 @@ package body Default_Preferences.Enums is
 
    overriding function Edit
      (Pref               : access Choice_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tips);
       Combo : Gtk_Combo_Box;
       Idx   : Gint := 0;
 
@@ -194,11 +192,9 @@ package body Default_Preferences.Enums is
 
       overriding function Edit
         (Pref               : access Preference_Record;
-         Manager            : access Preferences_Manager_Record'Class;
-         Tips               : Gtk.Tooltips.Gtk_Tooltips)
+         Manager            : access Preferences_Manager_Record'Class)
          return Gtk.Widget.Gtk_Widget
       is
-         pragma Unreferenced (Tips);
          V       : constant Integer := Enum_Preference (Pref).Enum_Value;
          Combo   : Gtk_Combo_Box;
          Idx     : Gint := 0;
