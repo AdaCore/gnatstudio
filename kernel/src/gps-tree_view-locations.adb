@@ -26,7 +26,7 @@ with Gdk.Event;
 with Gdk.Rectangle;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Handlers;
-with Gtk.Tooltips;
+with Gtk.Tooltip;
 with Gtk.Widget;
 
 with GPS.Intl;
@@ -46,7 +46,7 @@ package body GPS.Tree_View.Locations is
    use Glib.Values;
    use Gtk.Cell_Renderer_Pixbuf;
    use Gtk.Cell_Renderer_Text;
-   use Gtk.Tooltips;
+   use Gtk.Tooltip;
    use Gtk.Tree_Model;
    use Gtk.Tree_Model_Filter;
    use Gtk.Tree_View_Column;
@@ -469,9 +469,9 @@ package body GPS.Tree_View.Locations is
       X             : Glib.Gint := Get_Int (Nth (Params, 1));
       Y             : Glib.Gint := Get_Int (Nth (Params, 2));
       Keyboard_Mode : constant Boolean := Get_Boolean (Nth (Params, 3));
-      Stub          : Gtk_Tooltips_Record;
-      Tooltip       : constant Gtk_Tooltips :=
-        Gtk_Tooltips (Get_User_Data (Get_Address (Nth (Params, 4)), Stub));
+      Stub          : Gtk_Tooltip_Record;
+      Tooltip       : constant Gtk_Tooltip :=
+        Gtk_Tooltip (Get_User_Data (Get_Address (Nth (Params, 4)), Stub));
       Success       : Boolean;
       Model         : Gtk_Tree_Model;
       Path          : Gtk_Tree_Path;
