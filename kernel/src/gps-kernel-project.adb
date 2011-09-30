@@ -37,6 +37,8 @@ with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with Prj;
 with Types;                            use Types;
 
+with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
+
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Properties;                   use GPS.Properties;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
@@ -125,13 +127,6 @@ package body GPS.Kernel.Project is
    begin
       GPS_Project_Tree (Tree.all).Handle := Kernel_Handle (Handle);
       Handle.Registry := Projects.Create (Tree => Tree);
-
-      --  We are in a special mode here, with no tooltips (ie we are in the
-      --  process of creating the kernel).
-      --  This is used to disable some aspects of Recompute_View, in particular
-      --  the hooks, since it is too early to call them
-      Assert (Me, Get_Tooltips (Handle) = null,
-              "Tooltips should not exist when loading project");
       Tree.Load_Empty_Project (Env => Handle.Registry.Environment);
    end Create_Registry;
 
@@ -181,7 +176,8 @@ package body GPS.Kernel.Project is
 
       --  If we are in the process of creating the kernel, no need to do
       --  anything else here
-      if Get_Tooltips (Self.Handle) = null then
+      --  ??? It would be nice to rely on a better indicator than this
+      if Get_Icon_Factory (Self.Handle) = null then
          Pop_State (Self.Handle);
          return;
       end if;

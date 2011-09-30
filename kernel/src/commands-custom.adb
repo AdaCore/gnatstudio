@@ -2171,7 +2171,7 @@ package body Commands.Custom is
             if Component.Progress_Regexp /= null then
                Set_Text (Editor.Regexp, Component.Progress_Regexp.all);
             end if;
-            Set_Tip (Get_Tooltips (Kernel), Editor.Regexp,
+            Set_Tooltip_Text (Editor.Regexp,
               -("Regular expression, matched against each line of the output."
                 & " If it matches, its contents is analyzed to find the"
                 & " current progress of the action, and display a progress"
@@ -2185,7 +2185,7 @@ package body Commands.Custom is
             Gtk_New (Editor.Current, 0.0, 20.0, 1.0);
             Pack_Start (HBox, Editor.Current, Expand => False);
             Set_Value (Editor.Current, Gdouble (Component.Progress_Current));
-            Set_Tip (Get_Tooltips (Kernel), Editor.Current,
+            Set_Tooltip_Text (Editor.Current,
               -("Index of the open parenthesis the group that matches the"
                 & " current progress of the command. 0 is for the whole"
                 & " string matched by the regexp, 1 for the first open"
@@ -2198,7 +2198,7 @@ package body Commands.Custom is
             Gtk_New (Editor.Final, 0.0, 20.0, 1.0);
             Pack_Start (HBox, Editor.Final, Expand => False);
             Set_Value (Editor.Final, Gdouble (Component.Progress_Final));
-            Set_Tip (Get_Tooltips (Kernel), Editor.Final,
+            Set_Tooltip_Text (Editor.Final,
               -("Index of the open parenthesis the group that matches the"
                 & " final progress of the command. This group should match"
                 & " a number which indicates the total to reach to complete"
@@ -2209,7 +2209,7 @@ package body Commands.Custom is
             Gtk_New (Editor.Hide, -"Hide matches");
             Pack_Start (HBox, Editor.Hide, Expand => False);
             Set_Active (Editor.Hide, Component.Progress_Hide);
-            Set_Tip (Get_Tooltips (Kernel), Editor.Hide,
+            Set_Tooltip_Text (Editor.Hide,
               -("Whether the lines matching the regexp should be hidden"
                 & " when the output is displayed in the GPS window. This"
                 & " allows tools to output special lines just for GPS, but"

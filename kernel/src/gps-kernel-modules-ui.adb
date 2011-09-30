@@ -1452,7 +1452,7 @@ package body GPS.Kernel.Modules.UI is
       Insert (Toolbar, Button);
 
       if Tooltip /= "" then
-         Set_Tooltip (Button, Get_Tooltips (Kernel), Tooltip);
+         Set_Tooltip_Text (Button, Tooltip);
       end if;
 
       Show_All (Button);
@@ -1481,7 +1481,7 @@ package body GPS.Kernel.Modules.UI is
    begin
       Gtk_New_From_Stock (Button, Stock_Id);
       if Tooltip /= "" then
-         Set_Tooltip (Button, Get_Tooltips (Kernel), Tooltip);
+         Set_Tooltip_Text (Button, Tooltip);
       end if;
       Insert (Get_Toolbar (Kernel), Button, -1);
 

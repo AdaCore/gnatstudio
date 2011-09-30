@@ -26,6 +26,7 @@ with Gdk.Event;
 with Gdk.Rectangle;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Handlers;
+with Gtk.Tooltips;
 with Gtk.Widget;
 
 with GPS.Intl;
@@ -45,6 +46,7 @@ package body GPS.Tree_View.Locations is
    use Glib.Values;
    use Gtk.Cell_Renderer_Pixbuf;
    use Gtk.Cell_Renderer_Text;
+   use Gtk.Tooltips;
    use Gtk.Tree_Model;
    use Gtk.Tree_Model_Filter;
    use Gtk.Tree_View_Column;

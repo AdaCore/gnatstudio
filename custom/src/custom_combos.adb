@@ -406,7 +406,7 @@ package body Custom_Combos is
          Show_All (Item);
 
          if Tooltip /= "" then
-            Set_Tooltip (Item, Get_Tooltips (Kernel), Tooltip);
+            Set_Tooltip_Text (Item, Tooltip);
          end if;
       end Insert;
 

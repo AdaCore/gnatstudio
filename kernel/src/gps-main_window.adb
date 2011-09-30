@@ -545,10 +545,6 @@ package body GPS.Main_Window is
       Gtk_New (Main_Window.Icon_Factory);
       Add_Default (Main_Window.Icon_Factory);
 
-      Gtk_New (Main_Window.Tooltips);
-      Ref (Main_Window.Tooltips);
-      Ref_Sink (Main_Window.Tooltips);
-
       GPS.Kernel.MDI.Gtk_New
         (Main_Window.MDI, Main_Window.Main_Accel_Group);
 
@@ -1371,10 +1367,6 @@ package body GPS.Main_Window is
 
       if Win.Static_Image /= null then
          Unref (Win.Static_Image);
-      end if;
-
-      if Win.Tooltips /= null then
-         Unref (Win.Tooltips);
       end if;
 
       if Main_Level > 0 then
