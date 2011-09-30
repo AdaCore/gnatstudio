@@ -1,6 +1,14 @@
 \input texinfo   @c -*-texinfo-*-
 @input texiplus
 
+@c oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+@c                                                                            o
+@c                             GPS DOCUMENTATION                              o
+@c                                                                            o
+@c                     Copyright (C) 2001-2011, AdaCore                       o
+@c                                                                            o
+@c oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+
 @c %**start of header
 @setfilename gps_pg.info
 @settitle GPS Programmer's Guide
@@ -470,12 +478,7 @@ possible be documented through tooltips. This is the only help that
 most users will read.
 
 Tooltips are easily added directly with gtk+: Just call
-@code{Gtk.Tooltips.Set_Tooltip} with the appropriate parameters. The
-kernel itself contains a tooltip group, which should be used when
-setting new tooltips. This is so that a common timeout is used for all
-tooltips in the application: when a user has waited long enough for
-the first tooltip to be displayed, he won't have to wait again for the
-other tooltips.
+@code{Gtk.Widget.Set_Tooltip_Text} or @code{Gtk.Widget.Set_Tooltip_Markup}
 
 @item extended documentation
 Extended documentation should be written in HTML.

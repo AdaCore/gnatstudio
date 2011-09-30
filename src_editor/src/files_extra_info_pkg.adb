@@ -22,14 +22,12 @@ with Gtk;             use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Image;       use Gtk.Image;
 with Gtk.Stock;       use Gtk.Stock;
-with Gtk.Tooltips;    use Gtk.Tooltips;
 with Gtkada.Handlers; use Gtkada.Handlers;
 
 with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
 
 with GPS.Intl;        use GPS.Intl;
 with GPS.Kernel;      use GPS.Kernel;
-with GPS.Kernel.MDI;  use GPS.Kernel.MDI;
 
 package body Files_Extra_Info_Pkg is
 
@@ -54,7 +52,8 @@ package body Files_Extra_Info_Pkg is
       Handle           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Start_Row_Number : Glib.Guint)
    is
-      Tooltips : Gtk_Tooltips;
+      pragma Unreferenced (Handle);
+
       Icon     : Gtk_Image;
       Hbox     : Gtk_Hbox;
       Start    : Guint renames Start_Row_Number;
@@ -83,8 +82,7 @@ package body Files_Extra_Info_Pkg is
       Set_Text (Files_Extra_Info.Files_Entry, "*");
       Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Files_Entry,
               1, 2, Start, Start + 1, Fill, 0, 0, 0);
-      Tooltips := Get_Tooltips (Handle);
-      Set_Tip (Tooltips, Files_Extra_Info.Files_Entry, -"File(s) to scan");
+      Set_Tooltip_Text (Files_Extra_Info.Files_Entry, -"File(s) to scan");
 
       Gtk_New (Files_Extra_Info.Directory_Label, -("Directory:"));
       Set_Alignment (Files_Extra_Info.Directory_Label, 0.0, 0.5);
@@ -102,16 +100,16 @@ package body Files_Extra_Info_Pkg is
       Set_Editable (Files_Extra_Info.Directory_Entry, True);
       Set_Max_Length (Files_Extra_Info.Directory_Entry, 0);
       Set_Text (Files_Extra_Info.Directory_Entry, -"");
-      Set_Tip
-        (Tooltips, Files_Extra_Info.Directory_Entry, -"Directory to scan");
+      Set_Tooltip_Text
+        (Files_Extra_Info.Directory_Entry, -"Directory to scan");
       Pack_Start (Hbox, Files_Extra_Info.Directory_Entry, True, True);
 
       Gtk_New (Icon, Stock_Directory, Icon_Size_Button);
       Gtk.Button.Gtk_New (Files_Extra_Info.Browse_Button);
       Files_Extra_Info.Browse_Button.Add (Icon);
       Pack_Start (Hbox, Files_Extra_Info.Browse_Button, False, False);
-      Set_Tip
-        (Tooltips, Files_Extra_Info.Browse_Button, -"Select a directory");
+      Set_Tooltip_Text
+        (Files_Extra_Info.Browse_Button, -"Select a directory");
       Widget_Callback.Object_Connect
         (Files_Extra_Info.Browse_Button, Signal_Clicked,
          On_Browse_Button_Clicked'Access, Files_Extra_Info);

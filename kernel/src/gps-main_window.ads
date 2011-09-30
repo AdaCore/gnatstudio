@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2010, AdaCore              --
+--                     Copyright (C) 2001-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +29,6 @@ with Gdk.Pixbuf;       use Gdk.Pixbuf;
 with Gtk.Frame;        use Gtk.Frame;
 with Gtk.Image;        use Gtk.Image;
 with Gtk.Toolbar;      use Gtk.Toolbar;
-with Gtk.Tooltips;     use Gtk.Tooltips;
 with Gtk.Main;
 
 with Gtkada.MDI;       use Gtkada.MDI;
@@ -45,9 +44,6 @@ package GPS.Main_Window is
 
       Icon_Factory      : Gtk_Icon_Factory;
       --  The icon factory specific to GPS
-
-      Tooltips          : Gtk_Tooltips;
-      --  The widget used to register all tooltips
 
       Menu_Box          : Gtk.Box.Gtk_Hbox;
       Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;

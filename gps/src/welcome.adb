@@ -29,7 +29,6 @@ with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Separator;             use Gtk.Separator;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -127,8 +126,8 @@ package body Welcome is
         (Screen.Project_Templates,
          Label => -"Create new project from template");
       Pack_Start (Box, Screen.Project_Templates, Expand => False);
-      Set_Tip
-        (Get_Tooltips (Kernel), Screen.Project_Templates,
+      Set_Tooltip_Text
+        (Screen.Project_Templates,
          -"Create a new project using the Project Templates assistant.");
 
       --  Default project
@@ -141,8 +140,8 @@ package body Welcome is
          Group => Screen.Project_Templates,
          Label => -"Start with default project in directory:");
       Pack_Start (Box, Screen.Default_Project, Expand => False);
-      Set_Tip
-        (Get_Tooltips (Kernel), Screen.Default_Project,
+      Set_Tooltip_Text
+        (Screen.Default_Project,
          (-"Create a default project in memory, and use the following ") &
          (-"directory as the source and object directory. ") &
          (-"Click on the browse button to modify the directory. ") &
@@ -176,8 +175,8 @@ package body Welcome is
          Screen.Project_Templates,
          -"Create new project with wizard");
       Pack_Start (Box, Screen.Create_Project, Expand => False);
-      Set_Tip
-        (Get_Tooltips (Kernel), Screen.Create_Project,
+      Set_Tooltip_Text
+        (Screen.Create_Project,
          (-"Launch a wizard to create a new project on disk which will ") &
          (-"be loaded automatically. ") &
          (-"After the wizard, you can still modify any project's property."));
@@ -195,8 +194,8 @@ package body Welcome is
          Screen.Project_Templates,
          -"Open existing project:");
       Pack_Start (Box, Screen.Open_Project_Button, Expand => False);
-      Set_Tip
-        (Get_Tooltips (Kernel), Screen.Open_Project_Button,
+      Set_Tooltip_Text
+        (Screen.Open_Project_Button,
          (-"Open a project from disk, either from a list of recent ") &
          (-"projects or by browsing the file system."));
       Widget_Callback.Object_Connect

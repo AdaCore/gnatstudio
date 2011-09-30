@@ -243,7 +243,6 @@ class rulesEditor(gtk.Dialog):
       label.show()
       self.switchvbox.pack_start (label, False, False, 0)
 
-      self.tips = gtk.Tooltips()
       xml = self.main_cat.Xml ("")
       xml = str ("""<?xml version="1.0"?><tool name="Coding_Standard" lines="1" columns="1">%s</tool>""" % (xml))
       self.SwitchesChooser = GPS.SwitchesChooser ("Gnatcheck", xml);
@@ -270,11 +269,9 @@ class rulesEditor(gtk.Dialog):
       """Callback when the file entry changed"""
       name = self.fileEntry.get_text()
       if name == "":
-        self.tips.disable()
         self.switchvbox.foreach (deactivate)
         self.saveButton.set_sensitive(False)
       else:
-        self.tips.enable()
         self.switchvbox.foreach (activate)
         self.saveButton.set_sensitive(True)
         if os.path.isfile (name):

@@ -50,7 +50,6 @@ with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
-with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Window;                use Gtk.Window;
 
@@ -1534,7 +1533,6 @@ package body Vsearch is
      (Vsearch : access Vsearch_Record'Class;
       Handle  : GPS.Kernel.Kernel_Handle)
    is
-      Tooltips    : Gtk_Tooltips;
       Model       : Gtk_List_Store;
       Layout      : Gtk_Cell_Layout;
       Renderer    : Gtk_Cell_Renderer_Text;
@@ -1580,8 +1578,7 @@ package body Vsearch is
         (Vsearch.Table, Vsearch.Replace_Combo, 1, 2, 1, 2,
          Xpadding => 0,
          Ypadding => 2);
-      Tooltips := Get_Tooltips (Handle);
-      Set_Tip (Tooltips, Vsearch.Replace_Combo,
+      Set_Tooltip_Text (Vsearch.Replace_Combo,
                -"The text that will replace each match");
 
       Gtk.List_Store.Gtk_New
@@ -1602,8 +1599,8 @@ package body Vsearch is
       Gtk.Cell_Layout.Clear (Layout);
       Gtk.Cell_Layout.Pack_Start (Layout, Renderer, True);
       Gtk.Cell_Layout.Add_Attribute (Layout, Renderer, "text", Column_Text);
-      Set_Tip (Tooltips, Vsearch.Pattern_Combo,
-               -"The searched word or pattern");
+      Set_Tooltip_Text (Vsearch.Pattern_Combo,
+                        -"The searched word or pattern");
 
       --  The buttons
 
@@ -1619,8 +1616,8 @@ package body Vsearch is
       Set_First_Next_Mode (Vsearch, Find_Next => False);
       Attach
         (Vsearch.Buttons_Table, Vsearch.Search_Next_Button, 0, 1, 0, 1, Fill);
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Search_Next_Button,
+      Set_Tooltip_Text
+        (Vsearch.Search_Next_Button,
          -"Search next occurrence");
       Widget_Callback.Object_Connect
         (Vsearch.Search_Next_Button, Signal_Clicked,
@@ -1630,8 +1627,8 @@ package body Vsearch is
       Attach
         (Vsearch.Buttons_Table,
          Vsearch.Search_Previous_Button, 1, 2, 0, 1, Fill);
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Search_Previous_Button,
+      Set_Tooltip_Text
+        (Vsearch.Search_Previous_Button,
          -"Search previous occurrence");
       Widget_Callback.Object_Connect
         (Vsearch.Search_Previous_Button, Signal_Clicked,
@@ -1640,9 +1637,8 @@ package body Vsearch is
       Gtk_New_With_Mnemonic (Vsearch.Search_All_Button, -"Find All");
       Attach
         (Vsearch.Buttons_Table, Vsearch.Search_All_Button, 2, 3, 0, 1, Fill);
-      Set_Tip
-        (Get_Tooltips (Handle),
-         Vsearch.Search_All_Button, -"Find all occurences");
+      Set_Tooltip_Text
+        (Vsearch.Search_All_Button, -"Find all occurences");
       Widget_Callback.Object_Connect
         (Vsearch.Search_All_Button, Signal_Clicked,
          On_Search_All'Access, Vsearch);
@@ -1651,8 +1647,8 @@ package body Vsearch is
       Attach
         (Vsearch.Buttons_Table,
          Vsearch.Replace_Button, 0, 1, 1, 2, Fill);
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Replace_Button,
+      Set_Tooltip_Text
+        (Vsearch.Replace_Button,
          -"Replace next occurrence");
       Widget_Callback.Object_Connect
         (Vsearch.Replace_Button, Signal_Clicked,
@@ -1663,9 +1659,8 @@ package body Vsearch is
       Attach
         (Vsearch.Buttons_Table,
          Vsearch.Replace_Search_Button, 1, 2, 1, 2, Fill);
-      Set_Tip
-        (Get_Tooltips (Handle),
-         Vsearch.Replace_Search_Button, -"Replace, then find next occurrence");
+      Set_Tooltip_Text
+        (Vsearch.Replace_Search_Button, -"Replace, then find next occurrence");
       Widget_Callback.Object_Connect
         (Vsearch.Replace_Search_Button, Signal_Clicked,
          On_Replace_Search'Access, Vsearch);
@@ -1673,9 +1668,8 @@ package body Vsearch is
       Gtk_New_With_Mnemonic (Vsearch.Replace_All_Button, -"Repl All");
       Attach
         (Vsearch.Buttons_Table, Vsearch.Replace_All_Button, 2, 3, 1, 2, Fill);
-      Set_Tip
-        (Get_Tooltips (Handle),
-         Vsearch.Replace_All_Button, -"Replace all occurences");
+      Set_Tooltip_Text
+        (Vsearch.Replace_All_Button, -"Replace all occurences");
       Widget_Callback.Object_Connect
         (Vsearch.Replace_All_Button, Signal_Clicked,
          On_Replace_All'Access, Vsearch);
@@ -1693,8 +1687,8 @@ package body Vsearch is
       Pack_Start (Vsearch.Options_Frame, Vsearch.Options_Vbox);
 
       Gtk_New (Vsearch.Regexp_Check, -"Regexp");
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Regexp_Check,
+      Set_Tooltip_Text
+        (Vsearch.Regexp_Check,
          -"The pattern is a regular expression");
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Handle).all, "regexp_search", False);
@@ -1703,8 +1697,8 @@ package body Vsearch is
       Attach (Vsearch.Options_Vbox, Vsearch.Regexp_Check, 0, 1, 0, 1);
 
       Gtk_New (Vsearch.Whole_Word_Check, -"Whole Word");
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Whole_Word_Check,
+      Set_Tooltip_Text
+        (Vsearch.Whole_Word_Check,
          -("Select this if the pattern should only match a whole word, never"
            & " part of a word"));
       Create_New_Boolean_Key_If_Necessary
@@ -1715,8 +1709,8 @@ package body Vsearch is
       Attach (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, 0, 1, 1, 2);
 
       Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Case_Check,
+      Set_Tooltip_Text
+        (Vsearch.Case_Check,
          -("Select this to differenciate upper from lower casing in search"
            & " results"));
       Create_New_Boolean_Key_If_Necessary
@@ -1727,8 +1721,8 @@ package body Vsearch is
       Attach (Vsearch.Options_Vbox, Vsearch.Case_Check, 0, 1, 2, 3);
 
       Gtk_New (Vsearch.Select_Editor_Check, -"Select on Match");
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Select_Editor_Check,
+      Set_Tooltip_Text
+        (Vsearch.Select_Editor_Check,
          Select_On_Match_Description);
       Associate
         (Hist   => Get_History (Handle).all,
@@ -1737,8 +1731,8 @@ package body Vsearch is
       Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 1, 2, 0, 1);
 
       Gtk_New (Vsearch.Case_Preserving_Replace, -"Preserve Casing");
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Case_Preserving_Replace,
+      Set_Tooltip_Text
+        (Vsearch.Case_Preserving_Replace,
          -"Select this to preserve original word casing when replacing");
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Handle).all, "case_preserving_replace", True);
@@ -1750,8 +1744,8 @@ package body Vsearch is
       Set_Sensitive (Vsearch.Case_Preserving_Replace, False);
 
       Gtk_New (Vsearch.Auto_Hide_Check, -"Close on Match");
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Auto_Hide_Check,
+      Set_Tooltip_Text
+        (Vsearch.Auto_Hide_Check,
          -Close_On_Match_Description);
       Associate
         (Hist   => Get_History (Handle).all,
@@ -1769,7 +1763,7 @@ package body Vsearch is
       Add (Scope_Box, Vsearch.Scope_Frame);
 
       Gtk_New_Text (Vsearch.Context_Combo);
-      Set_Tip (Tooltips, Vsearch.Context_Combo, -"The context of the search");
+      Set_Tooltip_Text (Vsearch.Context_Combo, -"The context of the search");
       Pack_Start (Vsearch.Scope_Frame, Vsearch.Context_Combo);
       Widget_Callback.Object_Connect
         (Vsearch.Context_Combo, Gtk.Combo_Box.Signal_Changed,

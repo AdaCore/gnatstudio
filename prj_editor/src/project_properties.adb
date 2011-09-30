@@ -56,7 +56,6 @@ with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -2425,9 +2424,10 @@ package body Project_Properties is
       Set_Alignment (Label, 0.0, 0.5);
       Add (Event, Label);
       Add_Widget (Group, Label);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               (-"Name of the project. ") &
-               (-"Only applies to the project you selected initially"));
+      Set_Tooltip_Text
+        (Event,
+         (-"Name of the project. ") &
+         (-"Only applies to the project you selected initially"));
 
       Gtk_New (Editor.Name);
       Set_Width_Chars (Editor.Name, 0);
@@ -2445,10 +2445,11 @@ package body Project_Properties is
       Set_Alignment (Label, 0.0, 0.5);
       Add (Event, Label);
       Add_Widget (Group, Label);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-        -("Directory containing the project file. Changing this field"
-          & " will move the project file. This field only applies to"
-          & " the project you selected initially"));
+      Set_Tooltip_Text
+        (Event,
+         -("Directory containing the project file. Changing this field"
+           & " will move the project file. This field only applies to"
+           & " the project you selected initially"));
 
       Gtk_New (Editor.Path);
       Set_Width_Chars (Editor.Path, 0);
@@ -2465,12 +2466,13 @@ package body Project_Properties is
       Set_Active
         (Editor.Use_Relative_Paths, Paths_Are_Relative (Project));
       Pack_Start (Box, Editor.Use_Relative_Paths);
-      Set_Tip (Get_Tooltips (Kernel), Editor.Use_Relative_Paths,
-        -("If this field is activated, then all the path information in"
-          & " the project (source and build directories, dependencies"
-          & " between projects,...) will be stored as paths relative"
-          & " to the location of the project file. It will thus be"
-          & " easier to move the project file to another directory"));
+      Set_Tooltip_Text
+        (Editor.Use_Relative_Paths,
+         -("If this field is activated, then all the path information in"
+           & " the project (source and build directories, dependencies"
+           & " between projects,...) will be stored as paths relative"
+           & " to the location of the project file. It will thus be"
+           & " easier to move the project file to another directory"));
 
       return Gtk_Widget (Vbox);
    end Create_General_Page;
@@ -4458,7 +4460,7 @@ package body Project_Properties is
          if Attr.Description /= null
            and then Attr.Description.all /= ""
          then
-            Set_Tip (Get_Tooltips (Kernel), Event, Attr.Description.all);
+            Set_Tooltip_Text (Event, Attr.Description.all);
          end if;
       end if;
 
@@ -4487,7 +4489,7 @@ package body Project_Properties is
          if Attr.Description /= null
            and then Attr.Description.all /= ""
          then
-            Set_Tip (Get_Tooltips (Kernel), Attr.Editor, Attr.Description.all);
+            Set_Tooltip_Text (Attr.Editor, Attr.Description.all);
          end if;
 
          Attr.Editor.Active_Check := Check;

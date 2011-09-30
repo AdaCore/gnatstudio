@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,6 @@
 
 with Gtk.GEntry;
 with Gtk.Table;
-with Gtk.Tooltips;
 with Gtk.Widget;
 
 with Histories; use Histories;
@@ -36,14 +35,12 @@ package Switches_Chooser.Gtkada is
    procedure Gtk_New
      (Editor             : out Switches_Editor;
       Config             : Switches_Editor_Config;
-      Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean;
       History            : Histories.History;
       Key                : History_Key);
    procedure Initialize
      (Editor             : access Switches_Editor_Record'Class;
       Config             : Switches_Editor_Config;
-      Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean;
       History            : Histories.History;
       Key                : History_Key);
@@ -72,7 +69,6 @@ private
    type Switches_Editor_Record is new Gtk_Switches_Editors.Root_Switches_Editor
    with record
       Native_Dialogs : Boolean;
-      Tooltips       : Gtk.Tooltips.Gtk_Tooltips;
       Ent            : Gtk.GEntry.Gtk_Entry;
    end record;
 

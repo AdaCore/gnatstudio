@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +29,6 @@ with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Notebook;             use Gtk.Notebook;
 with Gtk.Text_View;            use Gtk.Text_View;
-with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.Combo_Tool_Button; use Gtkada.Combo_Tool_Button;
 
@@ -46,7 +45,6 @@ package Build_Configurations.Gtkada is
    procedure Configuration_Dialog
      (Registry     : Build_Config_Registry_Access;
       Parent       : Gtk_Window   := null;
-      Tooltips     : Gtk_Tooltips := null;
       Changes_Made : out Boolean);
    --  Launch the full configuration dialog
    --  Changes_Made is set to True if the user caused some changes that
@@ -55,7 +53,6 @@ package Build_Configurations.Gtkada is
    procedure Modes_Dialog
      (Registry     : Build_Config_Registry_Access;
       Parent       : Gtk_Window   := null;
-      Tooltips     : Gtk_Tooltips := null;
       Changes_Made : out Boolean);
    --  Launch the modes configuration dialog
    --  Changes_Made is set to True if the user caused some changes that
@@ -66,7 +63,6 @@ package Build_Configurations.Gtkada is
    procedure Single_Target_Dialog
      (Registry        : Build_Config_Registry_Access;
       Parent          : Gtk_Window   := null;
-      Tooltips        : Gtk_Tooltips := null;
       Target          : String;
       History         : Histories.History;
       Expand_Cmd_Line : Cmd_Line_Expander;
@@ -85,8 +81,6 @@ private
    type Target_UI_Record is new Gtk_Hbox_Record with record
       Registry       : Build_Config_Registry_Access;
       Target         : Target_Access;
-
-      Tooltips       : Gtk_Tooltips;
 
       Frame          : Gtk_Frame;
       --  The frame that contains the elements to describe the switches
@@ -125,9 +119,6 @@ private
 
       Notebook  : Gtk_Notebook;
       --  The main notebook
-
-      Tooltips  : Gtk_Tooltips;
-      --  The tooltips used in the dialog
 
       View      : Tree_View;
       --  The tree

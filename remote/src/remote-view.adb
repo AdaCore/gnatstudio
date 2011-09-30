@@ -46,7 +46,6 @@ with Gtk.List_Store;         use Gtk.List_Store;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Style;              use Gtk.Style;
 with Gtk.Table;              use Gtk.Table;
-with Gtk.Tooltips;           use Gtk.Tooltips;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Dialogs;         use Gtkada.Dialogs;
@@ -225,7 +224,6 @@ package body Remote.View is
       Use_Simple_View : Boolean := True)
    is
       Server_Label   : Gtk_Label;
-      Tooltips       : Gtk_Tooltips;
       Simple_Table   : Gtk_Table;
       Full_Table     : Gtk_Table;
       Color          : Gdk_Color;
@@ -246,7 +244,6 @@ package body Remote.View is
       Add_With_Viewport (View, View.Main_Table);
 
       View.Kernel := Kernel;
-      Tooltips := Get_Tooltips (View.Kernel);
 
       --  Server selection pane
 
@@ -317,8 +314,8 @@ package body Remote.View is
          Set_Relief (View.To_Local_Buttons (S), Relief_None);
          Set_Border_Width (View.To_Local_Buttons (S), 0);
          Unset_Flags (View.To_Local_Buttons (S), Can_Focus or Can_Default);
-         Set_Tip
-           (Tooltips, View.To_Local_Buttons (S),
+         Set_Tooltip_Text
+           (View.To_Local_Buttons (S),
             -("Synchronize all directories from the remote" &
               " server to the local machine"));
 
@@ -332,8 +329,8 @@ package body Remote.View is
          Set_Relief (View.To_Remote_Buttons (S), Relief_None);
          Set_Border_Width (View.To_Remote_Buttons (S), 0);
          Unset_Flags (View.To_Remote_Buttons (S), Can_Focus or Can_Default);
-         Set_Tip
-           (Tooltips, View.To_Remote_Buttons (S),
+         Set_Tooltip_Text
+           (View.To_Remote_Buttons (S),
             -("Synchronize all directories from the local" &
               " machine to the remote server"));
 
@@ -395,18 +392,18 @@ package body Remote.View is
          end case;
       end loop;
 
-      Set_Tip
-        (Tooltips, View.Servers_Combo (GPS_Server),
+      Set_Tooltip_Text
+        (View.Servers_Combo (GPS_Server),
          -("The remote server used to compile, debug and execute your " &
            "project."));
-      Set_Tip
-        (Tooltips, View.Servers_Combo (Build_Server),
+      Set_Tooltip_Text
+        (View.Servers_Combo (Build_Server),
          -"The server used to perform builds and execute gnat tools");
-      Set_Tip
-        (Tooltips, View.Servers_Combo (Debug_Server),
+      Set_Tooltip_Text
+        (View.Servers_Combo (Debug_Server),
          -"The server used to launch the debugger");
-      Set_Tip
-        (Tooltips, View.Servers_Combo (Execution_Server),
+      Set_Tooltip_Text
+        (View.Servers_Combo (Execution_Server),
          -"The server used to execute the built executables");
 
       --  Styles
@@ -428,8 +425,8 @@ package body Remote.View is
               Ypadding => 0);
 
       Gtk_New (View.Check_Button, Label => -"Check");
-      Set_Tip
-        (Tooltips, View.Check_Button,
+      Set_Tooltip_Text
+        (View.Check_Button,
          -"Check your configuration against current project");
       Set_Sensitive (View.Check_Button, False);
       Pack_Start (Buttons_Box, View.Check_Button, False, False);
@@ -438,8 +435,8 @@ package body Remote.View is
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New (View.Apply_Button, Label => -"Apply");
-      Set_Tip
-        (Tooltips, View.Apply_Button,
+      Set_Tooltip_Text
+        (View.Apply_Button,
          -"Apply remote servers configuration");
       Set_Sensitive (View.Apply_Button, False);
       Pack_Start (Buttons_Box, View.Apply_Button, False, False);
@@ -448,8 +445,8 @@ package body Remote.View is
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New (View.Set_Default_Button, -"Set default");
-      Set_Tip
-        (Tooltips, View.Set_Default_Button,
+      Set_Tooltip_Text
+        (View.Set_Default_Button,
          -"Set the servers assignment as default for the current project");
       Attach (View.Main_Table, View.Set_Default_Button,
               1, 2, 1, 2, 0, 0, 5, 0);
@@ -466,8 +463,8 @@ package body Remote.View is
 
       Gtk_New (View.Settings_Button, -"Servers settings");
       Set_Name (View.Settings_Button, -"remote_view_servers_settings");
-      Set_Tip
-        (Tooltips, View.Settings_Button,
+      Set_Tooltip_Text
+        (View.Settings_Button,
          -"Configure the list of available servers");
       Pack_Start (Buttons_Box, View.Settings_Button, False, False);
       View_Callback.Connect

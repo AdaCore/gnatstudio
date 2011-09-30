@@ -27,7 +27,6 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
-with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -35,7 +34,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
 with Toolchains_Old;            use Toolchains_Old;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with Traces;                    use Traces;
@@ -211,7 +209,6 @@ package body Toolchains_Dialog is
       Label  : Gtk_Label;
       Browse : Gtk_Button;
       Pix    : Gtk_Image;
-      Tips   : constant Gtk_Tooltips := Get_Tooltips (Kernel);
       pragma Unreferenced (Dead);
 
    begin
@@ -256,8 +253,8 @@ package body Toolchains_Dialog is
       Set_Text (Widget.Compiler_Entry, Compiler_Path.Display_Full_Name);
       Show_All (Widget.Compiler_Entry);
       Attach (Table, Widget.Compiler_Entry, 1, 2, 0, 1);
-      Set_Tip
-        (Tips, Widget.Compiler_Entry,
+      Set_Tooltip_Text
+        (Widget.Compiler_Entry,
          -("This path will be used to spawn all code generation actions." &
            ASCII.LF &
            "In particular gnatmake, gprbuild, gcc, gdb, gcov" &
@@ -283,8 +280,8 @@ package body Toolchains_Dialog is
       Set_Text (Widget.Tools_Entry, Tools_Path.Display_Full_Name);
       Show_All (Widget.Tools_Entry);
       Attach (Table, Widget.Tools_Entry, 1, 2, 1, 2);
-      Set_Tip
-        (Tips, Widget.Tools_Entry,
+      Set_Tooltip_Text
+        (Widget.Tools_Entry,
          -("This path will be used to spawn all actions not related to code" &
            " generation. These actions are (the list is not exclusive)" &
            " gnatcheck, gnatmetrics, cross-reference generation." &
@@ -311,8 +308,8 @@ package body Toolchains_Dialog is
          Unset_Flags (Browse, Can_Focus or Can_Default);
          Show_All (Browse);
          Attach (Table, Browse, 2, 3, Guint (J - 1), Guint (J));
-         Set_Tip
-           (Tips, Browse,
+         Set_Tooltip_Text
+           (Browse,
             -"Use this button to select the folder with a file explorer");
 
          if J = 1 then
@@ -336,8 +333,8 @@ package body Toolchains_Dialog is
       Show_All (Check);
       Set_Active (Check, Widget.Xrefs_Subdir);
       Attach (Table, Check, 0, 2, 2, 3);
-      Set_Tip
-        (Tips, Check,
+      Set_Tooltip_Text
+        (Check,
          -("If checked, then GPS will automatically generate cross reference" &
            " files (.ali files) upon compilations. It will use the compiler" &
            " found in the tools path to generate those cross reference files" &

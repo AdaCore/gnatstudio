@@ -55,7 +55,6 @@ with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Table;                  use Gtk.Table;
 with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
@@ -73,7 +72,6 @@ with Gexpect;                    use Gexpect;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
@@ -397,10 +395,8 @@ package body Remote.Config_Dialog is
       Pix  : Gtk_Image;
       Row  : Path_Row;
       Data : Path_Cb_Data_Access;
-      Tips : Gtk_Tooltips;
    begin
       Row := new Path_Row_Record;
-      Tips := Get_Tooltips (Server_List_Editor (Widget.Dialog).Kernel);
 
       Gtk_New (Row.Local_Frame);
       Attach (Widget.Table, Row.Local_Frame, 0, 1, Row_Number, Row_Number + 1,
@@ -414,9 +410,7 @@ package body Remote.Config_Dialog is
                 "local path entry" & Guint'Image (Row_Number));
       Set_Width_Chars (Row.Local_Entry, 16);
       Pack_Start (Row.Local_Hbox, Row.Local_Entry, True, True);
-      Set_Tip
-        (Tips, Row.Local_Entry,
-         -("Enter here the local path"));
+      Set_Tooltip_Text (Row.Local_Entry, -("Enter here the local path"));
 
       Gtk_New (Row.Local_Browse_Button);
       Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
@@ -425,8 +419,8 @@ package body Remote.Config_Dialog is
       Set_Border_Width (Row.Local_Browse_Button, 0);
       Unset_Flags (Row.Local_Browse_Button, Can_Focus or Can_Default);
       Pack_Start (Row.Local_Hbox, Row.Local_Browse_Button, False, False);
-      Set_Tip
-        (Tips, Row.Local_Browse_Button,
+      Set_Tooltip_Text
+        (Row.Local_Browse_Button,
          -"Use this button to select a local path with a file explorer");
 
       Gtk_New (Row.Remote_Frame);
@@ -441,9 +435,7 @@ package body Remote.Config_Dialog is
                 "remote path entry" & Guint'Image (Row_Number));
       Set_Width_Chars (Row.Remote_Entry, 16);
       Pack_Start (Row.Remote_Hbox, Row.Remote_Entry, True, True);
-      Set_Tip
-        (Tips, Row.Remote_Entry,
-         -("Enter here the remote path"));
+      Set_Tooltip_Text (Row.Remote_Entry, -("Enter here the remote path"));
 
       Gtk_New (Row.Remote_Browse_Button);
       Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
@@ -452,8 +444,8 @@ package body Remote.Config_Dialog is
       Set_Border_Width (Row.Remote_Browse_Button, 0);
       Unset_Flags (Row.Remote_Browse_Button, Can_Focus or Can_Default);
       Pack_Start (Row.Remote_Hbox, Row.Remote_Browse_Button, False, False);
-      Set_Tip
-        (Tips, Row.Remote_Browse_Button,
+      Set_Tooltip_Text
+        (Row.Remote_Browse_Button,
          -("Use this button to select a remote path with a file explorer. " &
            "Note that the machine configuration shall be properly set and " &
            "applied"));
@@ -488,8 +480,8 @@ package body Remote.Config_Dialog is
 
       Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
               0, 0, 0, 2);
-      Set_Tip
-        (Tips, Row.Sync_Combo,
+      Set_Tooltip_Text
+        (Row.Sync_Combo,
          -("Five kinds of path synchronization can be set for each defined " &
            "path:" & ASCII.LF &
            "* Never: no synchronization is required from GPS, the paths " &
@@ -825,7 +817,6 @@ package body Remote.Config_Dialog is
       Kernel         : Kernel_Handle;
       Default_Server : String)
    is
-      Tips         : Gtk_Tooltips;
       Main_Table   : Gtk_Paned;
       Frame        : Gtk_Frame;
       Scrolled     : Gtk_Scrolled_Window;
@@ -851,7 +842,6 @@ package body Remote.Config_Dialog is
          Modal + Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Center_On_Parent);
       Set_Default_Size (Dialog, -1, 400);
-      Tips := Get_Tooltips (Kernel);
 
       Dialog.Kernel := Kernel;
 
@@ -881,17 +871,20 @@ package body Remote.Config_Dialog is
 
       --  Add/Restore/Remove buttons
       Gtk_New (Dialog.Add_Machine_Button, -"Add server");
-      Set_Tip (Tips, Dialog.Add_Machine_Button,
-               -"Add a new server in the servers list");
+      Set_Tooltip_Text
+        (Dialog.Add_Machine_Button,
+         -"Add a new server in the servers list");
       Pack_Start (VBox, Dialog.Add_Machine_Button, False, False);
       Gtk_New (Dialog.Restore_Button, -"Remove local changes");
-      Set_Tip (Tips, Dialog.Restore_Button,
-               -("Reinitialize the selected server's parameters to their " &
-                 "default values"));
+      Set_Tooltip_Text
+        (Dialog.Restore_Button,
+         -("Reinitialize the selected server's parameters to their " &
+             "default values"));
       Pack_Start (VBox, Dialog.Restore_Button, False, False);
       Gtk_New (Dialog.Remove_Button, -"Remove server");
-      Set_Tip (Tips, Dialog.Remove_Button,
-               -"Remove the selected server from the servers list");
+      Set_Tooltip_Text
+        (Dialog.Remove_Button,
+         -"Remove the selected server from the servers list");
       Pack_Start (VBox, Dialog.Remove_Button, False, False);
       Set_Sensitive (Dialog.Restore_Button, False);
       Set_Sensitive (Dialog.Remove_Button, False);
@@ -929,8 +922,8 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Dialog.Network_Name_Entry,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
-      Set_Tip
-        (Tips, Dialog.Network_Name_Entry,
+      Set_Tooltip_Text
+        (Dialog.Network_Name_Entry,
          -("The network name is the name used to connect to this server via " &
            "your network. It can be either an IP address, a host name of " &
            "your local network, or a fully qualified network name."));
@@ -949,8 +942,8 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
-      Set_Tip
-        (Tips, Dialog.Remote_Access_Combo,
+      Set_Tooltip_Text
+        (Dialog.Remote_Access_Combo,
          -("The remote access tool is the tool used to connect to this " &
            "server."));
 
@@ -991,8 +984,8 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
-      Set_Tip
-        (Tips, Dialog.Remote_Shell_Combo,
+      Set_Tooltip_Text
+        (Dialog.Remote_Shell_Combo,
          -"The shell tells GPS what shell runs on the remote server.");
 
       for J in Shells'Range loop
@@ -1010,8 +1003,8 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Dialog.Remote_Sync_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
-      Set_Tip
-        (Tips, Dialog.Remote_Sync_Combo,
+      Set_Tooltip_Text
+        (Dialog.Remote_Sync_Combo,
          -("The sync tool is used to synchronize remote and local " &
            "filesystems, if these are not shared filesystems."));
 
@@ -1038,8 +1031,8 @@ package body Remote.Config_Dialog is
       Add (Event, Dialog.Init_Cmds_View);
       Attach (Dialog.Right_Table, Event, 1, 2,
               Line_Nb, Line_Nb + 1, Fill or Expand, 0);
-      Set_Tip
-        (Tips, Event,
+      Set_Tooltip_Text
+        (Event,
          -("The Extra Init Commands field represents initialization commands" &
            " sent to the server upon connection: when GPS connects to your " &
            "remote machine, the chosen shell is launched, and your default " &
@@ -1065,8 +1058,8 @@ package body Remote.Config_Dialog is
       Gtk_New (Dialog.User_Name_Entry);
       Attach (Dialog.Advanced_Table, Dialog.User_Name_Entry, 1, 2, 0, 1,
               Fill or Expand, 0);
-      Set_Tip
-        (Tips, Dialog.User_Name_Entry,
+      Set_Tooltip_Text
+        (Dialog.User_Name_Entry,
          -("The user name specifies the name used to connect to the server. " &
            "If unspecified, the remote access tool will most of the time " &
            "use your current login name. If not, and a user name is " &
@@ -1080,8 +1073,8 @@ package body Remote.Config_Dialog is
       Set_Digits (Dialog.Timeout_Spin, 0);
       Attach (Dialog.Advanced_Table, Dialog.Timeout_Spin, 1, 2, 1, 2,
               Fill or Expand, 0);
-      Set_Tip
-        (Tips, Dialog.Timeout_Spin,
+      Set_Tooltip_Text
+        (Dialog.Timeout_Spin,
          -("The timeout value is used to determine if a connection to a " &
            "remote host is dead. All elementary operations performed on the " &
            "remote host (i.e. operations that are normally almost immediate " &
@@ -1097,8 +1090,8 @@ package body Remote.Config_Dialog is
       Set_Digits (Dialog.Max_Nb_Connected_Spin, 0);
       Attach (Dialog.Advanced_Table, Dialog.Max_Nb_Connected_Spin, 1, 2, 2, 3,
               Fill or Expand, 0);
-      Set_Tip
-        (Tips, Dialog.Max_Nb_Connected_Spin,
+      Set_Tooltip_Text
+        (Dialog.Max_Nb_Connected_Spin,
          -("The maximum number of connections determines the maximum number " &
            "of simultaneous connections GPS is allowed to perform to this " &
            "server. In fact, if you want to compile, debug and execute at " &
@@ -1114,8 +1107,8 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Advanced_Table, Dialog.Cr_Lf_Combo,
               1, 2, 3, 4,
               Fill or Expand, 0);
-      Set_Tip
-        (Tips, Dialog.Cr_Lf_Combo,
+      Set_Tooltip_Text
+        (Dialog.Cr_Lf_Combo,
          -("Indicates what characters the remote host understands as line" &
            " ending: LF, CR/LF, or automatically determine it."));
 
@@ -1130,8 +1123,8 @@ package body Remote.Config_Dialog is
               Fill or Expand, 0, 10);
       Gtk_New (Dialog.Debug_Button);
       Attach (Dialog.Advanced_Table, Dialog.Debug_Button, 1, 2, 4, 5, 0, 0);
-      Set_Tip
-        (Tips, Dialog.Debug_Button,
+      Set_Tooltip_Text
+        (Dialog.Debug_Button,
          -("The Debug console allow you to easily debug a remote connection." &
            " If checked, it will open a console reporting all exchanges " &
            "between GPS and the selected server."));

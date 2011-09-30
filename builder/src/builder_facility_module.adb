@@ -33,7 +33,6 @@ with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -113,9 +112,6 @@ package body Builder_Facility_Module is
 
    package Combo_Callback is new Gtk.Handlers.Callback
      (Gtkada_Combo_Tool_Button_Record);
-
-   package Combo_Tips_Callback is new Gtk.Handlers.User_Callback
-     (Gtkada_Combo_Tool_Button_Record, Gtk.Tooltips.Gtk_Tooltips);
 
    package Combo_Box_Callback is new Gtk.Handlers.Callback
      (Gtk_Combo_Box_Record);
@@ -312,8 +308,7 @@ package body Builder_Facility_Module is
    --  Called when a user selects a mode from the Mode combo box
 
    procedure On_Combo_Selection
-     (Widget : access Gtkada_Combo_Tool_Button_Record'Class;
-      Tip    : Gtk_Tooltips);
+     (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
    --  Called when a user selects a new item from the combo
 
    procedure On_File_Saved
@@ -1314,14 +1309,13 @@ package body Builder_Facility_Module is
    ------------------------
 
    procedure On_Combo_Selection
-     (Widget : access Gtkada_Combo_Tool_Button_Record'Class;
-      Tip    : Gtk_Tooltips)
+     (Widget : access Gtkada_Combo_Tool_Button_Record'Class)
    is
       Data : constant Gtkada.Combo_Tool_Button.User_Data :=
                Get_Selected_Item_Data (Widget);
    begin
-      Set_Tooltip
-        (Widget, Tip,
+      Set_Tooltip_Text
+        (Widget,
          To_String (Target_And_Main (Data.all).Target) &
          ": " & Get_Selected_Item (Widget));
    end On_Combo_Selection;
@@ -1399,11 +1393,12 @@ package body Builder_Facility_Module is
 
                if Mains.Length = 0 then
                   Main := No_File;
-                  Set_Tooltip (Widget, Get_Tooltips (Get_Kernel), Name);
+                  Set_Tooltip_Text (Widget, Name);
                else
                   Main := Create (+Mains.List (1).Tuple (2).Str);
-                  Set_Tooltip (Widget, Get_Tooltips (Get_Kernel),
-                               Name & ": " & Mains.List (1).Tuple (1).Str);
+                  Set_Tooltip_Text
+                    (Widget,
+                     Name & ": " & Mains.List (1).Tuple (1).Str);
                end if;
 
                Set_Name (Widget, "toolbar_button_" & Name);
@@ -1421,9 +1416,9 @@ package body Builder_Facility_Module is
                Gtk_New (Widget, Get_Icon (Target));
                --  Connect to this signal to automatically update the tooltips
                --  when a new main file is selected
-               Combo_Tips_Callback.Connect
+               Combo_Callback.Connect
                  (Widget, Signal_Selection_Changed,
-                  On_Combo_Selection'Access, Get_Tooltips (Get_Kernel));
+                  On_Combo_Selection'Access);
 
                for J in Mains.List'Range loop
                   Widget.Add_Item
@@ -1690,7 +1685,6 @@ package body Builder_Facility_Module is
       Configuration_Dialog
         (Builder_Module_ID.Registry,
          Get_Main_Window (Kernel),
-         Get_Tooltips (Kernel),
          Changes_Made);
 
       if Changes_Made then
@@ -1721,7 +1715,6 @@ package body Builder_Facility_Module is
       Modes_Dialog
         (Builder_Module_ID.Registry,
          Get_Main_Window (Kernel),
-         Get_Tooltips (Kernel),
          Changes_Made);
 
       if Changes_Made then
@@ -2034,10 +2027,9 @@ package body Builder_Facility_Module is
                Next (C);
             end loop;
 
-            Set_Tooltip
+            Set_Tooltip_Text
               (Builder_Module_ID.Modes_Toolbar_Item,
-              Get_Tooltips (Get_Kernel),
-              To_String (Tooltip));
+               To_String (Tooltip));
          end;
       end if;
    end Parse_Mode_Node;

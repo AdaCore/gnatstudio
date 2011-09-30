@@ -31,7 +31,6 @@ with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -139,13 +138,14 @@ package body Switches_Editors is
      (Page             : out Switches_Editor_Page;
       In_Editor        : Switches_Edit;
       Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Tool             : GPS.Kernel.Tool_Properties_Record) is
+      Tool             : GPS.Kernel.Tool_Properties_Record)
+   is
+      pragma Unreferenced (Kernel);
    begin
       Page := new Switches_Editor_Page_Record;
       Initialize
         (Editor             => Page,
          Config             => Tool.Config,
-         Tooltips           => Get_Tooltips (Kernel),
          Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref,
          History            => null,
          Key                => No_Key);

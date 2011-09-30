@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2010, AdaCore              --
+--                     Copyright (C) 2005-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,6 @@ with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Icon_Factory;
 with Gtk.Main;
 with Gtk.Menu;
-with Gtk.Tooltips;
 with Gtk.Toolbar;
 with Gtk.Widget;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
@@ -240,10 +239,6 @@ package GPS.Kernel.MDI is
      (Handle : access Kernel_Handle_Record'Class)
       return Gtk.Icon_Factory.Gtk_Icon_Factory;
    --  Return the default icon factory
-
-   function Get_Tooltips
-     (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Tooltips.Gtk_Tooltips;
 
    function Get_Toolbar
      (Handle : access Kernel_Handle_Record'Class)

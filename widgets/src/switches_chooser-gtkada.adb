@@ -41,7 +41,6 @@ with Gtk.Spin_Button;        use Gtk.Spin_Button;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Table;              use Gtk.Table;
 with Gtk.Toggle_Button;      use Gtk.Toggle_Button;
-with Gtk.Tooltips;           use Gtk.Tooltips;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
@@ -426,12 +425,12 @@ package body Switches_Chooser.Gtkada is
         (W, Gtk.Widget.Signal_Destroy, On_Destroy'Access,
          (Switches_Editor (Editor), Switch));
       if S.Tip /= "" then
-         Set_Tip
-           (Editor.Tooltips, W,
+         Set_Tooltip_Text
+           (W,
             '(' & To_String (S.Switch) & ") " & ASCII.LF
             & To_String (S.Tip));
       else
-         Set_Tip (Editor.Tooltips, W, '(' & To_String (S.Switch) & ") ");
+         Set_Tooltip_Text (W, '(' & To_String (S.Switch) & ") ");
       end if;
    end Set_Tooltip;
 
@@ -769,13 +768,12 @@ package body Switches_Chooser.Gtkada is
    procedure Gtk_New
      (Editor             : out Switches_Editor;
       Config             : Switches_Editor_Config;
-      Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean;
       History            : Histories.History;
       Key                : History_Key) is
    begin
       Editor := new Switches_Editor_Record;
-      Initialize (Editor, Config, Tooltips, Use_Native_Dialogs, History, Key);
+      Initialize (Editor, Config, Use_Native_Dialogs, History, Key);
    end Gtk_New;
 
    ----------------
@@ -785,7 +783,6 @@ package body Switches_Chooser.Gtkada is
    procedure Initialize
      (Editor             : access Switches_Editor_Record'Class;
       Config             : Switches_Editor_Config;
-      Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean;
       History            : Histories.History;
       Key                : History_Key)
@@ -794,7 +791,6 @@ package body Switches_Chooser.Gtkada is
       Widget_For_Command_Line : Gtk_Widget;
    begin
       Editor.Native_Dialogs := Use_Native_Dialogs;
-      Editor.Tooltips       := Tooltips;
 
       Initialize (Editor.all, Config);
       Gtk.Table.Initialize
@@ -830,9 +826,8 @@ package body Switches_Chooser.Gtkada is
                     Guint (Config.Lines), Guint (Config.Lines) + 1,
                     Yoptions => 0);
          end;
-         Set_Tip
-           (Tooltips,
-            Editor.Ent,
+         Set_Tooltip_Text
+           (Editor.Ent,
             -"The following macros are available from this command line:" &
             ASCII.LF &
             "   %builder: multi-language builder (e.g. gnatmake, gprbuild)" &

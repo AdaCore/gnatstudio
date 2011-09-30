@@ -49,7 +49,6 @@ with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Text_View;           use Gtk.Text_View;
 with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
-with Gtk.Tooltips;            use Gtk.Tooltips;
 with Gtk.Tree_Model;          use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;   use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Model_Sort;     use Gtk.Tree_Model_Sort;
@@ -927,8 +926,8 @@ package body KeyManager_Module.GUI is
       Pack_Start (Vbox, Filter_Box, Expand => False);
 
       Gtk_New (Editor.With_Shortcut_Only, -"Shortcuts only");
-      Set_Tip
-        (Get_Tooltips (Editor.Kernel), Editor.With_Shortcut_Only,
+      Set_Tooltip_Text
+        (Editor.With_Shortcut_Only,
          -("Show only actions that are associated with a key shortcut"));
       Set_Active (Editor.With_Shortcut_Only, False);
       Pack_Start (Filter_Box, Editor.With_Shortcut_Only, Expand => False);
@@ -938,8 +937,8 @@ package body KeyManager_Module.GUI is
          Editor);
 
       Gtk_New (Editor.Flat_List, -"Flat list");
-      Set_Tip
-        (Get_Tooltips (Editor.Kernel), Editor.Flat_List,
+      Set_Tooltip_Text
+        (Editor.Flat_List,
          -("If selected, actions are not grouped into categories, but"
            & " displayed as a single long list. This might help to find some"
            & " specific actions"));

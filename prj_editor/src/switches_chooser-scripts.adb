@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2009, AdaCore                  --
+--                   Copyright (C) 2009-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,6 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;    use GNATCOLL.Scripts.Gtkada;
 
 with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Histories;
@@ -91,7 +90,6 @@ package body Switches_Chooser.Scripts is
             Node                => Xml);
          Switches_Chooser.Gtkada.Gtk_New
            (Editor, Config,
-            Get_Tooltips (Get_Kernel (Data)),
             Use_Native_Dialogs.Get_Pref,
             null,
             Histories.No_Key);

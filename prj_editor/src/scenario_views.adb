@@ -30,7 +30,6 @@ with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Table;           use Gtk.Table;
-with Gtk.Tooltips;        use Gtk.Tooltips;
 with Gtk.Tree_Model;      use Gtk.Tree_Model;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Viewport;        use Gtk.Viewport;
@@ -417,7 +416,7 @@ package body Scenario_Views is
 --                    View_Callback.Connect
 --                      (Button, Signal_Clicked, Edit_Variable'Access,
 --                       (View => V, Var => Scenar_Var (J)));
---                    Set_Tip (Get_Tooltips (V.Kernel), Button,
+--                    Set_Tooltip_Text (Button,
 --                             -"Edit variable properties");
 
 --                    Gtk_New (Button);
@@ -426,8 +425,8 @@ package body Scenario_Views is
 --                    Attach
 --                      (V.Table, Button, 3, 4,
 --                       Row, Row + 1, Xoptions => 0, Yoptions => 0);
---                    Set_Tip
---                      (Get_Tooltips (V.Kernel), Button, -"Delete variable");
+--                    Set_Tooltip_Text
+--                      (Button, -"Delete variable");
 --                    View_Callback.Connect
 --                      (Button, Signal_Clicked, Delete_Variable'Access,
 --                       (View => V, Var => Scenar_Var (J)));
@@ -512,8 +511,8 @@ package body Scenario_Views is
                      Attach (V.Table, Event, 0, 1, Row, Row + 1,
                              Xoptions => Fill, Xpadding => 2);
 
-                     Set_Tip
-                       (Get_Tooltips (V.Kernel), Event,
+                     Set_Tooltip_Text
+                       (Event,
                         -"Right-Click to edit properties or delete variable");
                   end;
 

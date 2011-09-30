@@ -48,7 +48,6 @@ with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
-with Gtk.Tooltips;                     use Gtk.Tooltips;
 
 package body GPS.Kernel.Project is
 

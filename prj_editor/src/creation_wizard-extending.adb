@@ -28,7 +28,6 @@ with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Radio_Button;         use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -218,7 +217,7 @@ package body Creation_Wizard.Extending is
       Gtk_New (Page.Obj_Dir);
       Page.Obj_Dir.Set_Text ("obj");
       hbox.Pack_Start (Page.Obj_Dir);
-      Set_Tip (Get_Tooltips (Kernel), Page.Obj_Dir,
+      Set_Tooltip_Text (Page.Obj_Dir,
         -("The directory in which the compiler puts its output."
           & " This directory is relative to the location of each of the"
           & " project files that will be created."));

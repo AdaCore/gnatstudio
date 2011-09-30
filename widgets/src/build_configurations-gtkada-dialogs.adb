@@ -329,9 +329,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       --  Add the models combo
 
       Gtk_New (Label, -"Target model");
-      Set_Tip
-        (UI.Tooltips,
-         Label,
+      Set_Tooltip_Text
+        (Label,
          -"Select the target model");
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Label, False, False, 0);
@@ -340,9 +339,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       Combo := Models_Combo (UI);
       Model_E := Gtk_Entry (Get_Child (Combo));
       Set_Editable (Model_E, False);
-      Set_Tip
-        (UI.Tooltips,
-         Combo,
+      Set_Tooltip_Text
+        (Combo,
          -"Select the target type/model");
 
       C := UI.Registry.Models.First;
@@ -369,9 +367,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       --  Add the category entry
 
       Gtk_New (Label, -"Target category");
-      Set_Tip
-        (UI.Tooltips,
-         Label,
+      Set_Tooltip_Text
+        (Label,
          -"Type a new category name, or select an existing one");
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Label, False, False, 0);
@@ -381,9 +378,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       Gtk_New_With_Model_And_Entry (Combo, M);
       Combo.Set_Entry_Text_Column (0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
-      Set_Tip
-        (UI.Tooltips,
-         Combo,
+      Set_Tooltip_Text
+        (Combo,
          -"Type a new category name, or select an existing one");
 
       Fill_Combo (UI, Combo, Cat_E);
@@ -485,9 +481,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       --  Add the category entry
 
       Gtk_New (Label, -"Target category");
-      Set_Tip
-        (UI.Tooltips,
-         Label,
+      Set_Tooltip_Text
+        (Label,
          -"Type a new category name, or select an existing one");
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Label, False, False, 0);
@@ -497,9 +492,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       Gtk_New_With_Model_And_Entry (Combo, M);
       Combo.Set_Entry_Text_Column (0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
-      Set_Tip
-        (UI.Tooltips,
-         Combo,
+      Set_Tooltip_Text
+        (Combo,
          -"Type a new category name, or select an existing one");
 
       Fill_Combo (UI, Combo, Cat_E);

@@ -39,7 +39,6 @@ with Gtk.Table;                  use Gtk.Table;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
-with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
@@ -2615,8 +2614,7 @@ package body Src_Contexts is
       Add_Unique_Combo_Entry (Combo, -"Strings Only");
       Add_Unique_Combo_Entry (Combo, -"All but Comments");
 
-      Set_Tip (Get_Tooltips (Kernel),
-               Combo, -"Restrict the scope of the search");
+      Set_Tooltip_Text (Combo, -"Restrict the scope of the search");
 
       Kernel_Callback.Connect
         (Combo, Gtk.Combo_Box.Signal_Changed, Vsearch.Reset_Search'Access,

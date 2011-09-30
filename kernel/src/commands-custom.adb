@@ -52,7 +52,6 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -2106,8 +2105,8 @@ package body Commands.Custom is
 
       Gtk_New (Editor.Output);
       Pack_Start (HBox, Editor.Output, Expand => True);
-      Set_Tip
-        (Get_Tooltips (Kernel), Editor.Output,
+      Set_Tooltip_Text
+        (Editor.Output,
          -("Name of the window in which the output of the command should"
            & " be displayed. A new window will be created if necessary."));
       if Component.Output = null then
@@ -2123,10 +2122,11 @@ package body Commands.Custom is
       Gtk_New (Editor.Show_Command, -"Display command");
       Pack_Start (HBox, Editor.Show_Command, Expand => False);
       Set_Active (Editor.Show_Command, Component.Show_Command);
-      Set_Tip (Get_Tooltips (Kernel), Editor.Show_Command,
-               -("Whether the text of the command should be displayed in the"
-                 & " output window. This overrides the default setup for the"
-                 & " action"));
+      Set_Tooltip_Text
+        (Editor.Show_Command,
+         -("Whether the text of the command should be displayed in the"
+           & " output window. This overrides the default setup for the"
+           & " action"));
 
       Gtk_New_Hbox (HBox, Homogeneous => False);
       Pack_Start (Box, HBox, Expand => False);

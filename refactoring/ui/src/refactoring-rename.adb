@@ -29,7 +29,6 @@ with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Stock;                  use Gtk.Stock;
-with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
@@ -165,9 +164,8 @@ package body Refactoring.Rename is
 
       Gtk_New (Dialog.Rename_Primitives,
                -"Rename overriding and overridden entities");
-      Set_Tip
-        (Get_Tooltips (Kernel),
-         Dialog.Rename_Primitives,
+      Set_Tooltip_Text
+        (Dialog.Rename_Primitives,
          -("If the entity is a subprogram, also rename subprograms that"
            & " override or are overridden by it." & ASCII.LF
            & "If the entity is a subprogram parameter, also rename parameters"
@@ -182,9 +180,8 @@ package body Refactoring.Rename is
       Pack_Start (Get_Vbox (Dialog), Dialog.Rename_Primitives);
 
       Gtk_New (Dialog.Make_Writable, -"Make files writable");
-      Set_Tip
-        (Get_Tooltips (Kernel),
-         Dialog.Make_Writable,
+      Set_Tooltip_Text
+        (Dialog.Make_Writable,
          -("If a read-only file contains references to the entity, this"
            & " switch will make the file writable so that changes can be made."
            & " If the switch is off, then the file will not be edited, but the"

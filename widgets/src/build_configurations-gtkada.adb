@@ -89,9 +89,6 @@ package body Build_Configurations.Gtkada is
       Notebook : Gtk_Notebook;
       --  The main notebook
 
-      Tooltips : Gtk_Tooltips;
-      --  The tooltips used in the dialog
-
       View     : Tree_View;
       --  The tree
    end record;
@@ -469,7 +466,6 @@ package body Build_Configurations.Gtkada is
       Gtk_New
         (UI.Editor,
          UI.Target.Model.Switches,
-         UI.Tooltips,
          False,
          UI.History,
          Target_To_Key (UI.Target));
@@ -498,7 +494,7 @@ package body Build_Configurations.Gtkada is
    is
       Hbox : constant Gtk_Hbox := Gtk_Hbox (Button.Get_Parent);
    begin
-      Set_Tooltip (Button, UI.Tooltips, Get_Selected_Item (Button));
+      Set_Tooltip_Text (Button, Get_Selected_Item (Button));
 
       if UI.Icon_Entry /= null then
          Remove (Hbox, UI.Icon_Entry);
@@ -545,7 +541,6 @@ package body Build_Configurations.Gtkada is
 
       Box.Target := Target;
       Box.History := History;
-      Box.Tooltips := UI.Tooltips;
 
       if not Single then
          Gtk_New_Hbox (Top_Box);
@@ -620,9 +615,8 @@ package body Build_Configurations.Gtkada is
             Append_Text (Box.Launch_Combo, Beautify (J'Img));
          end loop;
 
-         Set_Tip
-           (Box.Tooltips,
-            Box.Launch_Combo,
+         Set_Tooltip_Text
+           (Box.Launch_Combo,
             -("Specify the launch mode for this target:" & ASCII.LF &
               "    Manually: target launched explicitly by the user, with" &
               ASCII.LF &
@@ -663,7 +657,7 @@ package body Build_Configurations.Gtkada is
             Gtk_New_Hbox (Hbox);
             Set_Spacing (Hbox, 3);
             Gtk_New (Label, "Target type");
-            Set_Tip (Box.Tooltips, Label, Descr);
+            Set_Tooltip_Text (Label, Descr);
             Pack_Start (Hbox, Label, False, False, 0);
             Attach (Table,
                     Child         => Hbox,
@@ -674,7 +668,7 @@ package body Build_Configurations.Gtkada is
                     Xoptions      => Expand or Fill);
 
             Gtk_New (Box.Multiple_Targets);
-            Set_Tip (Box.Tooltips, Box.Multiple_Targets, Descr);
+            Set_Tooltip_Text (Box.Multiple_Targets, Descr);
 
             Gtk_New_Hbox (Hbox);
             Pack_Start (Hbox, Box.Multiple_Targets, False, False, 0);
@@ -883,7 +877,6 @@ package body Build_Configurations.Gtkada is
    procedure Configuration_Dialog
      (Registry     : Build_Config_Registry_Access;
       Parent       : Gtk_Window   := null;
-      Tooltips     : Gtk_Tooltips := null;
       Changes_Made : out Boolean)
    is
       UI     : Build_UI_Access;
@@ -921,12 +914,6 @@ package body Build_Configurations.Gtkada is
 
       UI.Registry := Registry;
 
-      if Tooltips = null then
-         Gtk_New (UI.Tooltips);
-      else
-         UI.Tooltips := Tooltips;
-      end if;
-
       --  Create the tree view
       Gtk_New (UI.View, Columns_Types);
       Set_Headers_Visible (UI.View, False);
@@ -957,9 +944,8 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Image, Stock_Add, Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
-      Set_Tip (Tooltips    => UI.Tooltips,
-               Widget      => Button,
-               Tip_Text    => -"Add new target");
+      Set_Tooltip_Text (Widget  => Button,
+                        Text    => -"Add new target");
       Pack_Start (Buttons, Button, False, False, 0);
       Object_Connect
         (Widget      => Button,
@@ -972,9 +958,8 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Image, Stock_Remove, Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
-      Set_Tip (Tooltips    => UI.Tooltips,
-               Widget      => Button,
-               Tip_Text    => -"Remove selected target");
+      Set_Tooltip_Text (Widget  => Button,
+                        Text    => -"Remove selected target");
       Pack_Start (Buttons, Button, False, False, 0);
       Object_Connect
         (Widget      => Button,
@@ -987,9 +972,8 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Image, Stock_New, Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
-      Set_Tip (Tooltips    => UI.Tooltips,
-               Widget      => Button,
-               Tip_Text    => -"Clone selected target");
+      Set_Tooltip_Text (Widget  => Button,
+                        Text    => -"Clone selected target");
       Pack_Start (Buttons, Button, False, False, 0);
       Object_Connect
         (Widget      => Button,
@@ -1088,7 +1072,6 @@ package body Build_Configurations.Gtkada is
    procedure Modes_Dialog
      (Registry     : Build_Config_Registry_Access;
       Parent       : Gtk_Window   := null;
-      Tooltips     : Gtk_Tooltips := null;
       Changes_Made : out Boolean)
    is
       UI     : Mode_UI_Access;
@@ -1126,12 +1109,6 @@ package body Build_Configurations.Gtkada is
 
       UI.Registry := Registry;
 
-      if Tooltips = null then
-         Gtk_New (UI.Tooltips);
-      else
-         UI.Tooltips := Tooltips;
-      end if;
-
       --  Create the tree view
       Gtk_New (UI.View, Columns_Types);
       Set_Headers_Visible (UI.View, False);
@@ -1162,9 +1139,8 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Image, Stock_Add, Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
-      Set_Tip (Tooltips    => UI.Tooltips,
-               Widget      => Button,
-               Tip_Text    => -"Add new mode");
+      Set_Tooltip_Text (Widget => Button,
+                        Text   => -"Add new mode");
       Pack_Start (Buttons, Button, False, False, 0);
       Object_Connect
         (Widget      => Button,
@@ -1177,9 +1153,8 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Image, Stock_Remove, Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
-      Set_Tip (Tooltips    => UI.Tooltips,
-               Widget      => Button,
-               Tip_Text    => -"Remove selected mode");
+      Set_Tooltip_Text (Widget => Button,
+                        Text   => -"Remove selected mode");
       Pack_Start (Buttons, Button, False, False, 0);
 --        Object_Connect
 --          (Widget      => Button,
@@ -1407,7 +1382,6 @@ package body Build_Configurations.Gtkada is
    procedure Single_Target_Dialog
      (Registry        : Build_Config_Registry_Access;
       Parent          : Gtk_Window   := null;
-      Tooltips        : Gtk_Tooltips := null;
       Target          : String;
       History         : Histories.History;
       Expand_Cmd_Line : Cmd_Line_Expander;
@@ -1469,12 +1443,6 @@ package body Build_Configurations.Gtkada is
       UI.Expand_Cmd_Line := Expand_Cmd_Line;
       UI.Registry := Registry;
       UI.History  := History;
-
-      if Tooltips = null then
-         Gtk_New (UI.Tooltips);
-      else
-         UI.Tooltips := Tooltips;
-      end if;
 
       --  Add everything to the dialog/window
 

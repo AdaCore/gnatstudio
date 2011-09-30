@@ -747,7 +747,6 @@ package body Build_Command_Manager is
             Single_Target_Dialog
               (Registry        => Registry,
                Parent          => Get_Main_Window (Kernel),
-               Tooltips        => Get_Tooltips (Kernel),
                Target          => Target_Name,
                History         => Get_History (Kernel),
                Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,

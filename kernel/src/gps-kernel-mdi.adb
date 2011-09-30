@@ -1336,21 +1336,6 @@ package body GPS.Kernel.MDI is
       return GPS_Window (Handle.Main_Window).Icon_Factory;
    end Get_Icon_Factory;
 
-   ------------------
-   -- Get_Tooltips --
-   ------------------
-
-   function Get_Tooltips
-     (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Tooltips.Gtk_Tooltips is
-   begin
-      if Handle.Main_Window /= null then
-         return GPS_Window (Handle.Main_Window).Tooltips;
-      else
-         return null;
-      end if;
-   end Get_Tooltips;
-
    -----------------
    -- Get_Toolbar --
    -----------------

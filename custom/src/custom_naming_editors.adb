@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,11 +26,9 @@ with Gtk.Frame;               use Gtk.Frame;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Size_Group;          use Gtk.Size_Group;
-with Gtk.Tooltips;            use Gtk.Tooltips;
 with Gtk.Widget;              use Gtk.Widget;
 
 with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
 with Naming_Exceptions;       use Naming_Exceptions;
 
@@ -74,8 +72,8 @@ package body Custom_Naming_Editors is
       Pack_Start (Box, Label, Expand => False);
       Add_Widget (Group, Label);
       Gtk_New (Editor.Spec_Extension);
-      Set_Tip
-        (Get_Tooltips (Kernel), Editor.Spec_Extension,
+      Set_Tooltip_Text
+        (Editor.Spec_Extension,
          -("File extension for specification files. These files are generally"
            & " not to be compiled. Leave this field empty if there are no"
            & " spec files for this language."));
@@ -88,8 +86,8 @@ package body Custom_Naming_Editors is
       Pack_Start (Box, Label, Expand => False);
       Add_Widget (Group, Label);
       Gtk_New (Editor.Impl_Extension);
-      Set_Tip
-        (Get_Tooltips (Kernel), Editor.Impl_Extension,
+      Set_Tooltip_Text
+        (Editor.Impl_Extension,
          -("File extension for implementation files. These files must"
             & " generally be compiled. Leave this field empty if there are no"
             & " implementation files for this language."));
@@ -112,8 +110,8 @@ package body Custom_Naming_Editors is
 
             Gtk_New (Ent);
             Set_Text (Ent, Extensions (E).all & (-"  (cannot be changed)"));
-            Set_Tip
-              (Get_Tooltips (Kernel), Ent,
+            Set_Tooltip_Text
+              (Ent,
                -("Extension defined in the GPS configuration files for this"
                  & " language. This extension is shown here for reference"
                  & " purposes, and is used as the default value for the"
