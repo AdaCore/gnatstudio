@@ -2981,14 +2981,12 @@ package body Src_Editor_Module is
          Insert (Toolbar, Space);
 
          Gtk_New_From_Stock (UR.Undo_Button, Stock_Undo);
-         Set_Tooltip (UR.Undo_Button, Get_Tooltips (Kernel),
-                      -"Undo Previous Action");
+         Set_Tooltip_Text (UR.Undo_Button, -"Undo Previous Action");
          Set_Sensitive (UR.Undo_Button, False);
          Insert (Toolbar, UR.Undo_Button);
 
          Gtk_New_From_Stock (UR.Redo_Button, Stock_Redo);
-         Set_Tooltip (UR.Redo_Button, Get_Tooltips (Kernel),
-                      -"Redo Previous Action");
+         Set_Tooltip_Text (UR.Redo_Button, -"Redo Previous Action");
          Set_Sensitive (UR.Redo_Button, False);
          Insert (Toolbar, UR.Redo_Button);
       end;
@@ -3039,7 +3037,7 @@ package body Src_Editor_Module is
 
       Gtk_New (Sep);
       Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Selection",
-                    Add_Before => False);
+                     Add_Before => False);
 
       Command := new Indentation_Command;
       Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3118,21 +3116,21 @@ package body Src_Editor_Module is
          Button : Gtk_Tool_Button;
       begin
          Gtk_New_From_Stock (Button, Stock_New);
-         Set_Tooltip (Button, Get_Tooltips (Kernel), -"Create a New File");
+         Set_Tooltip_Text (Button, -"Create a New File");
          Insert (Toolbar, Button, 0);
          Kernel_Callback.Connect
            (Button, Signal_Clicked,
             On_New_File'Access, Kernel_Handle (Kernel));
 
          Gtk_New_From_Stock (Button, Stock_Open);
-         Set_Tooltip (Button, Get_Tooltips (Kernel), -"Open a File");
+         Set_Tooltip_Text (Button, -"Open a File");
          Insert (Toolbar, Button, 1);
          Kernel_Callback.Connect
            (Button, Signal_Clicked,
             On_Open_File'Access, Kernel_Handle (Kernel));
 
          Gtk_New_From_Stock (Button, Stock_Save);
-         Set_Tooltip (Button, Get_Tooltips (Kernel), -"Save Current File");
+         Set_Tooltip_Text (Button, -"Save Current File");
          Insert (Toolbar, Button, 2);
          Kernel_Callback.Connect
            (Button, Signal_Clicked, On_Save'Access, Kernel_Handle (Kernel));

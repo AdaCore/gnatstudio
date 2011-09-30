@@ -2390,6 +2390,7 @@ package body Project_Properties is
       Project : Project_Type;
       Kernel  : access Kernel_Handle_Record'Class) return Gtk.Widget.Gtk_Widget
    is
+      pragma Unreferenced (Kernel);
       Button2         : Gtk_Button;
       Label           : Gtk_Label;
       Frame           : Gtk_Frame;
