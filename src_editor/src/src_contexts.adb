@@ -27,6 +27,8 @@ with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
+with Glib.Convert;               use Glib.Convert;
+with Glib.Error;                 use Glib.Error;
 with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Check_Button;           use Gtk.Check_Button;
@@ -49,6 +51,8 @@ with Basic_Types;                use Basic_Types;
 with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
 with GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
@@ -89,6 +93,8 @@ package body Src_Contexts is
      (Match_Result, Match_Result_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Match_Result_Array, Match_Result_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GError, GError_Access);
 
    procedure Scan_Buffer
      (Buffer        : String;
@@ -1968,19 +1974,39 @@ package body Src_Contexts is
          if Matches /= null then
             declare
                Buffer   : GNAT.Strings.String_Access;
-               FD       : File_Descriptor;
                Len      : Natural;
+               Previously_Was_UTF8 : Boolean := True;
+               Output_Buffer : Unbounded_String;
+               Writable : Writable_File;
 
             begin
-               Buffer := Read_File (File);
+               declare
+                  UTF8  : Unchecked_String_Access;
+                  U_Len : Natural;
+                  Valid : Boolean;
+               begin
+                  Buffer := Read_File (File);
+                  UTF8_Utils.Unknown_To_UTF8 (Buffer.all, UTF8, U_Len, Valid);
+                  if Valid then
+                     if UTF8 /= null then
+                        --  This means that Buffer is not already UTF8, and
+                        --  we need to replace its contents with UTF8 before
+                        --  proceeding.
+                        Previously_Was_UTF8 := False;
+
+                        Free (Buffer);
+                        Buffer := new String'(UTF8 (1 .. U_Len));
+                        Free (UTF8);
+                     end if;
+                  end if;
+               end;
 
                if Buffer /= null then
-                  --  ???  Should use VFS.Write_File
-                  FD := Create_File (+Full_Name (File), Binary);
-                  Len := Write (FD, Buffer (1)'Address,
-                                Matches (Matches'First).Index - 1);
-                  Len := Write (FD, Replace_String'Address,
-                                Replace_String'Length);
+                  Append
+                    (Output_Buffer,
+                     Buffer (1 .. Matches (Matches'First).Index - 1));
+
+                  Append (Output_Buffer, Replace_String);
 
                   for M in Matches'First + 1 .. Matches'Last loop
                      if Case_Preserving then
@@ -1993,17 +2019,48 @@ package body Src_Contexts is
 
                      Len := Matches (M - 1).Index
                        + Matches (M - 1).Pattern_Length;
-                     Len := Write
-                       (FD, Buffer (Len)'Address, Matches (M).Index - Len);
-                     Len := Write (FD, Casings (Current_Casing)'Address,
-                                   Casings (Current_Casing)'Length);
+
+                     Append
+                       (Output_Buffer, Buffer (Len .. Matches (M).Index - 1));
+                     Append
+                       (Output_Buffer,
+                        Casings (Current_Casing));
                   end loop;
 
                   Len := Matches (Matches'Last).Index
                     + Matches (Matches'Last).Pattern_Length;
-                  Len := Write
-                    (FD, Buffer (Len)'Address, Buffer'Last - Len + 1);
-                  Close (FD);
+
+                  Append (Output_Buffer, Buffer (Len .. Buffer'Last));
+
+                  if Previously_Was_UTF8 then
+                     Writable := Write_File (File);
+                     Write (Writable, To_String (Output_Buffer));
+                     Close (Writable);
+                  else
+                     declare
+                        Error    : GError_Access := new GError'(null);
+                        Contents : constant String := Glib.Convert.Convert
+                          (To_String (Output_Buffer),
+                           Get_File_Charset (File), "UTF-8", Error);
+                     begin
+                        if Error.all = null then
+                           Writable := Write_File (File);
+                           Write (Writable, Contents);
+                           Close (Writable);
+                        else
+                           Insert
+                             (Kernel,
+                              "Could not save " & (+File.Full_Name.all)
+                              & " with encoding " & Get_File_Charset (File)
+                              & ", replace operation aborted for this file.",
+                              Mode => GPS.Kernel.Console.Error);
+                           Error_Free (Error.all);
+                           Error.all := null;
+                        end if;
+
+                        Unchecked_Free (Error);
+                     end;
+                  end if;
                   Free (Buffer);
                end if;
             end;
