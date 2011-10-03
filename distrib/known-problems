@@ -8,6 +8,15 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K920-014: GPS: Search and Replace in files with international characters
+  Problem:    When launching a Search & Replace operation on files that are
+              not viewed in an editor (for instance when replacing all
+              occurrencesin "Files from Project"), the files on disk might
+              be corrupt if they contain international characters but are
+              not encoded in UTF-8.
+  Workaround: Replace interactively, or convert files to UTF-8 before using
+              GPS to replace patterns in them.
+
 - K902-006: GPS: Scenario variables not passed to gnat metric
   Problem:    When computing metrics from GPS, the scenario variables are not
               passed to the "gnat metric" tool, which results in errors when
