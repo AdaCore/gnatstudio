@@ -797,14 +797,16 @@ package body Display_Items is
       --  Note that we should not change the visibility status of item
       --  and its children.
 
-      Size_Request
-        (Item.Entity.all,
-         Context,
-         Lang           => Get_Language (Item.Debugger.Debugger),
-         Mode           => Item.Mode,
-         Hide_Big_Items => not Was_Visible and then Hide_Big);
+      if Item.Entity /= null then
+         Size_Request
+           (Item.Entity.all,
+            Context,
+            Lang           => Get_Language (Item.Debugger.Debugger),
+            Mode           => Item.Mode,
+            Hide_Big_Items => not Was_Visible and then Hide_Big);
 
-      Constraint_Size (Item.Entity.all);
+         Constraint_Size (Item.Entity.all);
+      end if;
 
       Update_Display (Item);
 

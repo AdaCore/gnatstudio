@@ -623,7 +623,7 @@ package body Items.Arrays is
          Current_Y := Current_Y + H;
       end if;
 
-      if Show_Value (Mode) then
+      if Show_Value (Mode) and then Item.Values /= null then
          for V in Item.Values'Range loop
             Set_Text
               (Context.Text_Layout, Index_String
