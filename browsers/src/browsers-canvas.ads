@@ -174,7 +174,7 @@ package Browsers.Canvas is
    --  Associate the item with a browser.
 
    procedure Set_Title
-     (Item : access Browser_Item_Record'Class;  Title : String := "");
+     (Item : access Browser_Item_Record'Class; Title : String := "");
    --  Set a title for the item. This is displayed in a special title bar, with
    --  a different background color.
    --  If Title is the empty string, no title bar is shown.
