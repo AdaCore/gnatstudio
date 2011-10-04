@@ -429,6 +429,7 @@ package body Browsers.Canvas is
       Iter            : Item_Iterator;
       Annotation_Font : Pango_Font_Description;
       Style           : Gtk_Style;
+      Need_Refresh    : Boolean := False;
 
       use type Gdk.Gdk_GC;
    begin
@@ -499,15 +500,24 @@ package body Browsers.Canvas is
 
       Iter := Start (Hook.Browser.Canvas);
       while Get (Iter) /= null loop
-         Set_Font_Description
-           (Browser_Item (Get (Iter)).Title_Layout,
-            Default_Font.Get_Pref_Font);
+         declare
+            Item   : constant Browser_Item := Browser_Item (Get (Iter));
+            Layout : constant Pango.Layout.Pango_Layout :=
+                      Item.Title_Layout;
+         begin
+            if Layout /= null then
+               Need_Refresh := True;
+               Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
+               Refresh (Item);
+            end if;
+         end;
 
-         Refresh (Browser_Item (Get (Iter)));
          Next (Iter);
       end loop;
 
-      Refresh_Canvas (Hook.Browser.Canvas);
+      if Need_Refresh then
+         Refresh_Canvas (Hook.Browser.Canvas);
+      end if;
    end Execute;
 
    --------------------------------
@@ -1225,7 +1235,7 @@ package body Browsers.Canvas is
    ---------------
 
    procedure Set_Title
-     (Item : access Browser_Item_Record'Class;  Title : String := "") is
+     (Item : access Browser_Item_Record'Class; Title : String := "") is
    begin
       if Title = "" then
          if Item.Title_Layout /= null then
