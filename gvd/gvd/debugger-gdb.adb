@@ -3101,6 +3101,8 @@ package body Debugger.Gdb is
 
             for J in 1 .. Num_Fields (R.all) loop
 
+               exit when Index >= Type_Str'Last;
+
                --  If we are expecting a field
 
                if Get_Variant_Parts (R.all, J) = 0 then
