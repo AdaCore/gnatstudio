@@ -336,7 +336,7 @@ code assist capabilities.
 Type @key{enter} to create a new line, and then @code{Scr}, and hit
 @key{Ctrl+Space}.
 A completion popup will be displayed, showing all the entities of the project
-begining with @code{Scr}. Select @code{Screen_Output}. The code will be
+begining with @code{Scr}. Double click on @code{Screen_Output}: the code is
 automatically completed in the editor. Then add a dot in your code. The
 completion popup will be automatically triggered, and will offer you to
 complete your code with the entities contained in the @code{Screen_Output}
@@ -415,11 +415,11 @@ displayed showing the value of @code{T}. You have probably noticed that
 tool tips, like menus, are contextual: depending on the current session and
 on the entity selected, different information is displayed.
 
-Select the contextual menu @code{Debug->Display T}: this will open a new
-window: the data window, with a box displaying graphically the contents
+Select the contextual menu @code{Debug->Display T}: this will highlight
+the data window, with a new box displaying graphically the contents
 of the different fields of @code{T}, each clearly separated.
 
-On @code{T} data display, select the contextual menu
+Move your mouse over the @code{1:T} box, select the contextual menu
 @code{Display->Show Value + Type}: this displays for all fields both their
 type and value.
 
