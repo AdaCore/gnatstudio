@@ -1,4 +1,13 @@
 \input texiplus   @c -*-texinfo-*-
+
+@c oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+@c                                                                            o
+@c                               GPS TUTORIAL                                 o
+@c                                                                            o
+@c                     Copyright (C) 2002-2011, AdaCore                       o
+@c                                                                            o
+@c oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+
 @c %**start of header
 @setfilename tutorial.info
 @settitle GNAT Programming Studio Tutorial
@@ -17,7 +26,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2002-2010, AdaCore.
+Copyright @copyright{} 2002-2011, AdaCore.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1
@@ -45,7 +54,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2002-2010, AdaCore.
+Copyright @copyright{} 2002-2011, AdaCore.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1
@@ -253,8 +262,8 @@ then click on @code{Goto declaration of Next}: we're now in the package
 
 Select the menu @code{Navigate->Find or Replace...}: this will open a search
 dialog.
-In the @code{Search for:} text entry type @file{tokens.ads}. Then
-select @code{Project view} in the @code{Look in:} area. The search
+In the @code{Find:} text entry type @file{tokens.ads}. Then
+select @code{Project view} in the @code{Scope} area. The search
 area provides an easy way to search for text or regular expressions in
 several contexts including the current file, the project view, @dots{}
 
@@ -460,32 +469,32 @@ Note that there is also a top level contextual menu (@code{Sdc calls})
 which provides a tree view of the callers/callees.
 
 In the call graph, click on the right arrow of @code{Process} (one of the
-first items on the top). Also click on the right arrow of @code{error_msg}.
+first items on the top). Also click on the right arrow of @code{Error_Msg}.
 
 Select @code{Orthogonal links} in the contextual menu of the graph to change the
 way links are displayed in the graph.
 You may then play with the zoom (@key{=} and @key{-} keys).
 
-If you select @code{Hide links} from @code{error_msg} contextual menu, this
+If you select @code{Hide links} from @code{Error_Msg} contextual menu, this
 will hide all the links that are related to this item: the link between the
-callers and callees of @code{error_msg} are no longer displayed. This can
+callers and callees of @code{Error_Msg} are no longer displayed. This can
 be useful when the graph becomes complex, to hide some parts. If you go back to
 the contextual menu, you can now select @code{Show links} to show the links
 again.
 
-Click on right arrow of @code{process} (@code{(Decl) instructions.ads:12}).
+Click on right arrow of @code{Process} (@code{(Decl) instructions.ads:12}).
 
-The items can also be moved: move e.g @code{msg} item around.
+The items can also be moved: move e.g @code{Msg} item around.
 
 You can also recompute the layout of all the current items by using
 the browser's contextual menu @code{Refresh layout} (move the mouse on the
 browser's background, with no box underneath, and right click).
 
-Click on left arrow of @code{msg}
-to display who is calling @code{msg}. Notice that @code{view} calls @code{msg}.
+Click on left arrow of @code{Msg}
+to display who is calling @code{Msg}. Notice that @code{View} calls @code{Msg}.
 
-Click on left arrow of @code{view}: the arrow disappears, and no
-new items are created, which means that @code{view} isn't called by anyone,
+Click on left arrow of @code{View}: the arrow disappears, and no
+new items are created, which means that @code{View} isn't called by anyone,
 so we're now going to remove this procedure.
 
 @c --------------------------------------------------------------------
@@ -494,11 +503,11 @@ so we're now going to remove this procedure.
 @c --------------------------------------------------------------------
 
 @noindent
-From @i{view}, click on the blue link: @code{stack.ads:32}, this will open
+From @code{View}, click on the blue link: @code{stack.ads:32}, this will open
 the file @file{stack.ads} at line 32.
 Then from the source editor (file @file{stack.ads}), select the contextual
 menu @code{References->Find all references to View}: this highlights the
-@code{Locations} tree which now contains all the references for @code{view},
+@code{Locations} tree which now contains all the references for @code{View},
 grouped by files (@file{stack.ads} and @file{stack.adb}).
 
 The first location is highlighted automatically: this is the spec of the
