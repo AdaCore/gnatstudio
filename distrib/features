@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K920-036 GPS: Remove File From Extending Project enhancement (2011-09-21)
+
+  The contextual menu "Remove file from extending project" can now optionally
+  also remove the file from the disk.
+
 NF-51-K909-038 GPS: select object dir when creating extended prj (2011-09-09)
 
   The wizard used to create extending projects now allows you to chose the
