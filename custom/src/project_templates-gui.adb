@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2010, AdaCore                  --
+--                      Copyright (C) 2010-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -313,7 +313,8 @@ package body Project_Templates.GUI is
       use Project_Templates_List;
       C : Cursor;
 
-      package Forwarder is new Generic_Assistant_Functions (Boolean);
+      package Forwarder is new
+         Set_Forward_Page_Func_User_Data (Boolean);
 
       function Next_Page
         (Current_Page : Gint; User_Data : Boolean) return Gint;
