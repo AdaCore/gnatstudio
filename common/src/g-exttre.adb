@@ -215,9 +215,15 @@ package body GNAT.Expect.TTY.Remote is
    procedure Internal_Handle_Exceptions
      (Desc : in out Remote_Process_Descriptor)
    is
-      Data : constant TTY_Data_Access :=
-               TTY_Data_Access (Get_Data (Desc.Machine.all));
+      Data : TTY_Data_Access;
    begin
+      if Desc.Machine = null then
+         --  Pd already closed. Do nothing
+         return;
+      end if;
+
+      Data := TTY_Data_Access (Get_Data (Desc.Machine.all));
+
       --  Exception comming from the shell, not from the remote process
       --  If Session_Died is set, the session exception has already been
       --  treated.
@@ -402,42 +408,40 @@ package body GNAT.Expect.TTY.Remote is
          --  do the same to answer. The second pass will take place as soon
          --  as we get a prompt, by sending a single LF and see if the remote
          --  shell understands it as a line return.
-         if Descriptor.Use_Cr_Lf = Auto then
-            declare
-               Out_Str : constant String :=
-                           Expect_Out
-                             (TTY_Data.Sessions (Session_Nb).Pd);
-            begin
+         declare
+            Out_Str : constant String :=
+                       Expect_Out
+                         (TTY_Data.Sessions (Session_Nb).Pd);
+
+         begin
+            if Active (Me) then
+               Log ("RCV", Out_Str);
+            end if;
+
+            if Descriptor.Machine.Use_Dbg then
+               Descriptor.Machine.Dbg (Out_Str, Output);
+            end if;
+
+            if Descriptor.Use_Cr_Lf = Auto then
                if Out_Str'Length > 0
-                 and then Index (Out_Str, "" & ASCII.LF) >= Out_Str'First
                  and then Index (Out_Str, "" & ASCII.CR) < Out_Str'First
                then
-                  Trace (Me, "Remote uses LF");
+                  Trace (Me, "(Assuming remote uses LF. To be verified.)");
                   Descriptor.Use_Cr_Lf := LF;
+                  Verify_Cr_Lf := True;
                else
-                  Trace (Me, "Remote uses CR/LF");
+                  Trace (Me, "(Assuming remote uses CR/LF. To be verified.)");
                   Descriptor.Use_Cr_Lf := CRLF;
                   --  Indicate that we need to verify the accuracy of this
                   --  assumption
                   Verify_Cr_Lf := True;
                end if;
-            end;
-         end if;
-
-         if Active (Me) then
-            Log
-              ("RCV",
-               Expect_Out (TTY_Data.Sessions (Session_Nb).Pd));
-         end if;
-
-         if Descriptor.Machine.Use_Dbg then
-            Descriptor.Machine.Dbg
-              (Expect_Out (TTY_Data.Sessions (Session_Nb).Pd), Output);
-         end if;
+            end if;
+         end;
 
          case Res is
             when Expect_Timeout =>
-               Trace (Me, "got timeout in Wait_For_Prompt (intermediate=" &
+               Trace (Me, "RCV timeout in Wait_For_Prompt (intermediate=" &
                       Boolean'Image (Intermediate) & ")");
 
                --  We just tested if LF alone was working as line terminator.
@@ -446,7 +450,7 @@ package body GNAT.Expect.TTY.Remote is
                if Verify_Cr_Lf and then First_Call then
                   Verify_Cr_Lf := False;
                   Descriptor.Use_Cr_Lf := CRLF;
-                  Trace (Me, "Using CR/LF");
+                  Trace (Me, "Re-try using CR/LF");
 
                   return;
                end if;
@@ -631,14 +635,16 @@ package body GNAT.Expect.TTY.Remote is
          if Server.Use_Dbg then
             if Password_Mode then
                Server.Dbg ("******", Input);
-               if Active (Me) then
-                  Log ("SND", "<Sending password>");
-               end if;
             else
                Server.Dbg (Str, Input);
-               if Active (Me) then
-                  Log ("SND", Str);
-               end if;
+            end if;
+         end if;
+
+         if Active (Me) then
+            if Password_Mode then
+               Log ("SND", "<Sending password>");
+            else
+               Log ("SND", Str);
             end if;
          end if;
 
@@ -845,6 +851,11 @@ package body GNAT.Expect.TTY.Remote is
             if Descriptor.Machine.Use_Dbg then
                Descriptor.Machine.Dbg
                  (Expect_Out (TTY_Data.Sessions (Session_Nb).Pd), Output);
+            end if;
+
+            if Active (Me) then
+               Log
+                 ("RCV", Expect_Out (TTY_Data.Sessions (Session_Nb).Pd));
             end if;
 
             if Res = 1 then
@@ -1430,12 +1441,16 @@ package body GNAT.Expect.TTY.Remote is
                State := OFF;
                Close (Desc, Status);
                Descriptor.Session_Died := True;
-               --  Return a non-zero number as status when forcing the session
-               --  to close.
+               Descriptor.Terminated := True;
+               --  Report an abnormal status here (non-zero)
                Status := 99;
 
             elsif not Descriptor.Session_Died then
                Status := Descriptor.Status;
+
+            else
+               --  The whole session died. Let's report an error.
+               Status := 99;
             end if;
 
             Descriptor.Input_Fd   := GNAT.OS_Lib.Invalid_FD;
@@ -1497,6 +1512,9 @@ package body GNAT.Expect.TTY.Remote is
                   ' ' & ASCII.LF
                   & Descriptor.Machine.Access_Tool_Send_Interrupt,
                   Add_LF => False);
+            --  Empty the buffer from output of the interrupt command
+            Expect (Descriptor, Res, ".+", Matched, 500);
+
          else
             --  Interrupt the session.
             Interrupt (TTY_Data.Sessions (Descriptor.Session_Nb).Pd);
