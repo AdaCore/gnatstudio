@@ -1435,12 +1435,16 @@ package body GNAT.Expect.TTY.Remote is
                State := OFF;
                Close (Desc, Status);
                Descriptor.Session_Died := True;
+               Descriptor.Terminated := True;
                --  Report an abnormal status here (non-zero)
                Status := 99;
 
             elsif not Descriptor.Session_Died then
                Status := Descriptor.Status;
 
+            else
+               --  The whole session died. Let's report an error.
+               Status := 99;
             end if;
 
             Descriptor.Input_Fd   := GNAT.OS_Lib.Invalid_FD;
@@ -1502,6 +1506,8 @@ package body GNAT.Expect.TTY.Remote is
                   ' ' & ASCII.LF
                   & Descriptor.Machine.Access_Tool_Send_Interrupt,
                   Add_LF => False);
+            Expect (Descriptor, Res, ".+", Matched, 500);
+
          else
             --  Interrupt the session.
             Interrupt (TTY_Data.Sessions (Descriptor.Session_Nb).Pd);
