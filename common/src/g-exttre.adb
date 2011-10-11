@@ -215,9 +215,15 @@ package body GNAT.Expect.TTY.Remote is
    procedure Internal_Handle_Exceptions
      (Desc : in out Remote_Process_Descriptor)
    is
-      Data : constant TTY_Data_Access :=
-               TTY_Data_Access (Get_Data (Desc.Machine.all));
+      Data : TTY_Data_Access;
    begin
+      if Desc.Machine = null then
+         --  Pd already closed. Do nothing
+         return;
+      end if;
+
+      Data := TTY_Data_Access (Get_Data (Desc.Machine.all));
+
       --  Exception comming from the shell, not from the remote process
       --  If Session_Died is set, the session exception has already been
       --  treated.
