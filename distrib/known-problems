@@ -1,5 +1,3 @@
-Known Problems fixed in GPS 5.1.0 / GNATbench 2.6.0
-
 The following leading tags are used on the following entries to indicate:
 GPS: this entry is specific to GPS
 GB:  this entry is specific to GNATbench
@@ -8,10 +6,14 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- KA10-001: GPS: Interrupting a remotely executed program may crash GPS.
+Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
+
+- KA10-001: GPS: Interrupting a remotely executed program may crash GPS
   Problem:    When executing a program in remote mode, and then interrupting
               it, then GPS may crash.
   Workaround: Kill the remote program manually.
+
+Known Problems fixed in GPS 5.1.0 / GNATbench 2.6.0
 
 - K920-014: GPS: Search and Replace in files with international characters
   Problem:    When launching a Search & Replace operation on files that are
