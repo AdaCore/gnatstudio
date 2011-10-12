@@ -1215,7 +1215,6 @@ package body Src_Editor_View is
       if not View.Button_Pressed
         and then not Selection_Exists (Get_Buffer (View))
       then
-         Set_Disable_Scroll_On_Focus (View, True);
          Restore_Cursor_Position (View);
       end if;
 
