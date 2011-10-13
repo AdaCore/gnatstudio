@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2000-2008, AdaCore                 --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +28,8 @@ with GPS.Intl;              use GPS.Intl;
 with GVD.Process;           use GVD.Process;
 with GVD.Types;             use GVD.Types;
 with Traces;                use Traces;
+with Gtk.Tree_Model;        use Gtk.Tree_Model;
+with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
 
 package body GVD.Dialogs.Callbacks is
 
@@ -120,19 +122,30 @@ package body GVD.Dialogs.Callbacks is
          Dialog    : constant Question_Dialog_Access :=
            Question_Dialog_Access (Get_Toplevel (Object));
 
-         Selection : constant Gint_List.Glist := Get_Selection (Dialog.List);
+         Selection : Gtk.Tree_Model.Gtk_Tree_Path_List.Glist;
          S         : Unbounded_String;
-         Tmp       : Gint_List.Glist := Gint_List.First (Selection);
+         Tmp       : Gtk.Tree_Model.Gtk_Tree_Path_List.Glist;
          Button    : Message_Dialog_Buttons;
          pragma Unreferenced (Button);
 
          Debugger  : constant Debugger_Access := Dialog.Debugger;
          Process   : constant Visual_Debugger := Convert (Debugger);
+         M : Gtk_Tree_Model;
 
+         use type Gtk_Tree_Path_List.Glist;
       begin
-         while Tmp /= Gint_List.Null_List loop
-            Append (S, Get_Text (Dialog.List, Gint_List.Get_Data (Tmp), 0));
-            Tmp := Gint_List.Next (Tmp);
+         Get_Selected_Rows (Get_Selection (Dialog.Tree_View), M, Selection);
+         Tmp := Gtk_Tree_Path_List.First (Selection);
+         while Tmp /= Gtk_Tree_Path_List.Null_List loop
+            declare
+               Path : constant Gtk_Tree_Path :=
+                 Gtk_Tree_Path_List.Get_Data (Tmp);
+               Iter : Gtk_Tree_Iter;
+            begin
+               Iter := M.Get_Iter (Path);
+               Append (S, Get_String (M, Iter, 0));
+            end;
+            Tmp := Gtk_Tree_Path_List.Next (Tmp);
          end loop;
 
          if Length (S) = 0 then

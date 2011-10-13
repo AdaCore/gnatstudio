@@ -23,11 +23,13 @@ with Glib;                use Glib;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Clist;           use Gtk.Clist;
+with Gtk.Tree_View;       use Gtk.Tree_View;
+with Gtk.Tree_Store;      use Gtk.Tree_Store;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Button;          use Gtk.Button;
+with Gtk.Enums; use Gtk.Enums;
 
 package List_Select_Pkg is
 
@@ -83,7 +85,8 @@ private
       Vbox           : Gtk_Vbox;
       Hbox           : Gtk_Hbox;
       Scrolledwindow : Gtk_Scrolled_Window;
-      List           : Gtk_Clist;
+      Tree_Model     : Gtk_Tree_Store;
+      Tree_View      : Gtk_Tree_View;
       Label1         : Gtk_Label;
       Label2         : Gtk_Label;
       Hbox2          : Gtk_Hbox;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2000-2010, AdaCore                 --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,18 +36,17 @@ with GVD;                   use GVD;
 with Glib;                  use Glib;
 with Glib.Object;           use Glib.Object;
 with Gdk.Event;             use Gdk.Event;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Stock;             use Gtk.Stock;
+with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
-with Gtk.Tree_Store;        use Gtk.Tree_Store;
-with Gtk.Tree_View;         use Gtk.Tree_View;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk;                   use Gtk;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtkada.MDI;            use Gtkada.MDI;
-with Gtkada.Types;          use Gtkada.Types;
 with GUI_Utils;             use GUI_Utils;
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
 with Interfaces.C;          use Interfaces.C;
@@ -56,9 +55,6 @@ with Traces;                use Traces;
 
 package body GVD.Dialogs is
    Me : constant Debug_Handle := Create ("GVD.Dialogs");
-
-   Question_Titles : constant Gtkada.Types.Chars_Ptr_Array :=
-     "" + (-"Choice");
 
    generic
       with procedure Attach
@@ -653,11 +649,12 @@ package body GVD.Dialogs is
       Questions                  : Question_Array;
       Question_Description       : String := "")
    is
-      Temp      : Gtkada.Types.Chars_Ptr_Array (0 .. 1);
       Row       : Gint;
       pragma Unreferenced (Row);
 
       Width     : Gint;
+      pragma Unreferenced (Width);
+
       OK_Button : Gtk_Button;
       Label     : Gtk_Label;
 
@@ -694,7 +691,7 @@ package body GVD.Dialogs is
       Dialog.Debugger := Debugger;
 
       Widget_Callback.Connect
-        (Dialog.Close_Button, Signal_Clicked,
+        (Dialog.Close_Button, Gtk.Button.Signal_Clicked,
          Widget_Callback.To_Marshaller (On_Question_Close_Clicked'Access));
 
       if Question_Description /= "" then
@@ -719,7 +716,7 @@ package body GVD.Dialogs is
          Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
-            Signal_Clicked,
+            Gtk.Button.Signal_Clicked,
             On_Question_Yes_Clicked'Access);
          Grab_Focus (OK_Button);
 
@@ -727,7 +724,7 @@ package body GVD.Dialogs is
          Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
-            Signal_Clicked,
+            Gtk.Button.Signal_Clicked,
             On_Question_No_Clicked'Access);
 
          Ref (Dialog.Close_Button);
@@ -747,39 +744,56 @@ package body GVD.Dialogs is
          Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
-            Signal_Clicked,
+            Gtk.Button.Signal_Clicked,
             On_Question_OK_Clicked'Access);
          Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
          Unref (Dialog.Close_Button);
 
-         Gtk_New (Dialog.List, 2, Question_Titles);
-         Add (Dialog.Scrolledwindow1, Dialog.List);
+         Gtk_New (Dialog.Tree_Model, (0 => GType_String, 1 => GType_String));
+         Gtk_New (Dialog.Tree_View, Dialog.Tree_Model);
+
+         declare
+            T : Gtk_Cell_Renderer_Text;
+            C : Gtk_Tree_View_Column;
+            Dummy : Gint;
+            pragma Unreferenced (Dummy);
+         begin
+            Gtk_New (C);
+            Set_Title (C, "");
+            Dummy := Dialog.Tree_View.Append_Column (C);
+
+            Gtk_New (T);
+            Pack_Start (C, T, False);
+            Add_Attribute (C, T, "text", 0);
+
+            Gtk_New (C);
+            Set_Title (C, -"Choice");
+            Dummy := Dialog.Tree_View.Append_Column (C);
+
+            Gtk_New (T);
+            Pack_Start (C, T, True);
+            Add_Attribute (C, T, "text", 1);
+         end;
+
+         Add (Dialog.Scrolledwindow1, Dialog.Tree_View);
 
          if Multiple_Selection_Allowed then
-            Set_Selection_Mode (Dialog.List, Selection_Multiple);
+            Set_Mode (Get_Selection (Dialog.Tree_View), Selection_Multiple);
          else
-            Set_Selection_Mode (Dialog.List, Selection_Single);
+            Set_Mode (Get_Selection (Dialog.Tree_View), Selection_Single);
          end if;
 
-         for J in Questions'Range loop
-            Temp (0) := C.Strings.New_String (Questions (J).Choice.all);
-            Temp (1) := C.Strings.New_String (Questions (J).Description.all);
-            Row := Append (Dialog.List, Temp);
-            Free (Temp);
-         end loop;
-
-         Set_Column_Width
-           (Dialog.List, 0, Optimal_Column_Width (Dialog.List, 0));
-         Set_Column_Width
-           (Dialog.List, 1,
-            Gint'Min (Optimal_Column_Width (Dialog.List, 1),
-                      Max_Column_Width));
-         Set_Column_Auto_Resize (Dialog.List, 0, True);
-         Set_Column_Auto_Resize (Dialog.List, 1, True);
-
-         Width := Optimal_Column_Width (Dialog.List, 0)
-           + Optimal_Column_Width (Dialog.List, 1) + 20;
-         Set_Default_Size (Dialog, Gint'Min (Width, 500), 200);
+         declare
+            Iter : Gtk_Tree_Iter;
+         begin
+            for J in Questions'Range loop
+               Append (Dialog.Tree_Model, Iter, Null_Iter);
+               Set (Dialog.Tree_Model, Iter, 0, Questions (J).Choice.all);
+               Set (Dialog.Tree_Model, Iter, 1, Questions (J).Description.all);
+            end loop;
+         end;
+         Columns_Autosize (Dialog.Tree_View);
+         Set_Default_Size (Dialog, 500, 200);
       end if;
 
       Register_Dialog (Convert (Debugger), Dialog);

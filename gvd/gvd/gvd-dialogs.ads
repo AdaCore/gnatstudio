@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2000-2008, AdaCore                 --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,10 +21,11 @@ with GPS.Kernel;
 with Gtk.Dialog; use Gtk.Dialog;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Clist; use Gtk.Clist;
 with Gtk.Handlers;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
+with Gtk.Tree_View; use Gtk.Tree_View;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
 with Gtk.Window; use Gtk.Window;
 with GVD.Process;
 with Debugger; use Debugger;
@@ -99,7 +100,8 @@ private
       Main_Window     : Gtk_Window;
       Vbox1           : Gtk_Vbox;
       Scrolledwindow1 : Gtk_Scrolled_Window;
-      List            : Gtk_Clist;
+      Tree_Model      : Gtk_Tree_Store;
+      Tree_View       : Gtk_Tree_View;
       Hbox1           : Gtk_Hbox;
       Hbuttonbox1     : Gtk_Hbutton_Box;
       Close_Button    : Gtk_Button;

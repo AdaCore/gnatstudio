@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +18,12 @@
 -----------------------------------------------------------------------
 
 with Gtk.Button;           use Gtk.Button;
-with Gtk.Clist;            use Gtk.Clist;
 with Gtk.Dialog;           use Gtk.Dialog;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Label;            use Gtk.Label;
+
+with Gtk.Tree_View;        use Gtk.Tree_View;
+with Gtk.Tree_Store;       use Gtk.Tree_Store;
 
 with GPS.Kernel;
 
@@ -31,7 +33,8 @@ package Make_Suite_Window_Pkg is
       Kernel           : GPS.Kernel.Kernel_Handle;
       Directory_Entry  : Gtk_Entry;
       Name_Entry       : Gtk_Entry;
-      Test_List        : Gtk_Clist;
+      Test_View        : Gtk_Tree_View;
+      Test_Model       : Gtk_Tree_Store;
       Browse_Directory : Gtk_Button;
       Add              : Gtk_Button;
       Remove           : Gtk_Button;

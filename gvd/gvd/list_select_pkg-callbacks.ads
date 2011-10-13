@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Object;
 with Gdk.Event;     use Gdk.Event;
 with Gtk.Arguments;
 with Gtk.Widget;
@@ -24,7 +25,7 @@ with Gtk.Widget;
 package List_Select_Pkg.Callbacks is
 
    procedure On_Clist_Select_Row
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
+     (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
    function On_Clist_Button_Press
@@ -45,9 +46,5 @@ package List_Select_Pkg.Callbacks is
 
    function On_Delete_Event
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
-
-   procedure On_Column_Clicked
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
 
 end List_Select_Pkg.Callbacks;

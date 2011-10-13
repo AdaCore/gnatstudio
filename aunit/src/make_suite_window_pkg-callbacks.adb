@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2010, AdaCore                 --
+--                  Copyright (C) 2001-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,19 +19,19 @@
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
-with Glib;                    use Glib;
 with Gdk.Pixbuf;              use Gdk.Pixbuf;
 
 with Gtk.Enums;               use Gtk.Enums;
 
+with Gtk.Tree_Model;          use Gtk.Tree_Model;
+with Gtk.Tree_Selection;      use Gtk.Tree_Selection;
+
 with Gtkada.File_Selector;    use Gtkada.File_Selector;
-with Gtkada.Types;            use Gtkada.Types;
 
 with Aunit_Filters;           use Aunit_Filters;
 with Case_Handling;           use Case_Handling;
 with GPS.Intl;                use GPS.Intl;
 with Pixmaps_IDE;             use Pixmaps_IDE;
-with Row_Data;                use Row_Data;
 
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -66,7 +66,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
          Set_Text (Win.Label, -"Missing test suite name");
       end if;
 
-      if Valid and then Get_Rows (Win.Test_List) = 0 then
+      if Valid and then Win.Test_Model.Get_Iter_First = Null_Iter then
          Valid := False;
          Set_Text (Win.Label, -"Missing test");
       end if;
@@ -99,9 +99,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Suite_Name   : Symbol;
       Package_Name : Symbol;
       F_Type       : Test_Type;
-      Row_Num      : Gint;
       Explorer     : File_Selector_Window_Access;
 
+      Iter : Gtk_Tree_Iter;
    begin
       Filter_A := new Filter_Show_All;
       Filter_B := new Filter_Show_Ada;
@@ -150,22 +150,18 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
       if Suite_Name /= No_Symbol and then Package_Name /= No_Symbol then
          if F_Type = Test_Case then
-            Row_Num := Append
-              (Suite_Window.Test_List,
-               Null_Array
-               + (Response.Display_Full_Name) + ("(test) "
-                 & Get (Suite_Name).all));
-            Set (Suite_Window.Test_List, Row_Num, Get (Package_Name).all);
+            Append (Suite_Window.Test_Model, Iter, Null_Iter);
+            Set (Suite_Window.Test_Model, Iter, 0, "");
+            Set (Suite_Window.Test_Model, Iter, 1, Response.Display_Full_Name);
+            Set (Suite_Window.Test_Model, Iter, 2, "(test)");
+            Set (Suite_Window.Test_Model, Iter, 3, Get (Package_Name).all);
 
          elsif F_Type = Test_Suite then
-            Row_Num := Append
-              (Suite_Window.Test_List,
-               Null_Array
-               + (Response.Display_Full_Name) + ("(suite) "
-                 & Get (Suite_Name).all));
-            Set (Suite_Window.Test_List,
-                 Row_Num,
-                 Get (Package_Name).all);
+            Append (Suite_Window.Test_Model, Iter, Null_Iter);
+            Set (Suite_Window.Test_Model, Iter, 0, "");
+            Set (Suite_Window.Test_Model, Iter, 1, Response.Display_Full_Name);
+            Set (Suite_Window.Test_Model, Iter, 2, "(suite)");
+            Set (Suite_Window.Test_Model, Iter, 3, Get (Package_Name).all);
          end if;
       end if;
 
@@ -181,22 +177,11 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
       Suite_Window : constant Make_Suite_Window_Access :=
         Make_Suite_Window_Access (Get_Toplevel (Object));
-
-      use Gtk.Enums.Gint_List;
-
-      List : constant Gtk_Clist := Suite_Window.Test_List;
-      I    : Gint;
-
+      Selected : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
    begin
-      Freeze (List);
-
-      loop
-         exit when Length (Get_Selection (List)) = 0;
-         I := Get_Data (First (Get_Selection (List)));
-         Remove (List, I);
-      end loop;
-
-      Thaw (List);
+      Get_Selected (Get_Selection (Suite_Window.Test_View), Model, Selected);
+      Suite_Window.Test_Model.Remove (Selected);
 
       Check_Validity (Suite_Window);
    end On_Remove_Clicked;
@@ -227,13 +212,13 @@ package body Make_Suite_Window_Pkg.Callbacks is
                          Create_From_UTF8 (Get_Text (Window.Directory_Entry));
       --  ??? What if the filesystem path is non-UTF8?
       Name           : String := Get_Text (Window.Name_Entry);
-      use Row_List;
-      List : Row_List.Glist := Get_Row_List (Window.Test_List);
       Translation    : Translate_Set;
       Packages_Tag   : Tag;
       Test_Tag       : Tag;
       Test_Kind_Tag  : Tag;
       Success        : Boolean;
+
+      Iter : Gtk_Tree_Iter;
 
    begin
       --  Correct the case for Name, if needed.
@@ -244,12 +229,12 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Insert
         (Translation, Assoc ("TEST_SUITE_NAME", "Suite"));
 
-      while List /= Null_List loop
+      Iter := Get_Iter_First (Window.Test_Model);
+
+      while Iter /= Null_Iter loop
          declare
-            Package_Name : String :=
-                             Get (Window.Test_List, Get_Data (List));
-            S            : String :=
-                             Get_Text (Window.Test_List, Get_Data (List), 1);
+            Package_Name : String := Window.Test_Model.Get_String (Iter, 3);
+            S            : String := Window.Test_Model.Get_String (Iter, 1);
          begin
             if Package_Name /= "" then
                Mixed_Case (S);
@@ -271,7 +256,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
             end if;
          end;
 
-         List := Next (List);
+         Window.Test_Model.Next (Iter);
       end loop;
       Insert (Translation, Assoc ("TEST_SUITE_PACKAGES", Packages_Tag));
       Insert (Translation, Assoc ("TEST_SUITE_TESTS", Test_Tag));

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2010, AdaCore                 --
+--                  Copyright (C) 2001-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib; use Glib;
+
 with Gtk;                 use Gtk;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Editable;        use Gtk.Editable;
@@ -25,7 +27,8 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Vbutton_Box;     use Gtk.Vbutton_Box;
 with Gtk.Widget;          use Gtk.Widget;
-
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
 with GPS.Intl;            use GPS.Intl;
 
@@ -121,7 +124,7 @@ package body Make_Suite_Window_Pkg is
       Pack_Start
         (Hbox4, Make_Suite_Window.Browse_Directory, False, False, 3);
       Button_Callback.Connect
-        (Make_Suite_Window.Browse_Directory, Signal_Clicked,
+        (Make_Suite_Window.Browse_Directory, Gtk.Button.Signal_Clicked,
          On_Browse_Directory_Clicked'Access);
 
       Gtk_New (Make_Suite_Window.Name_Entry);
@@ -150,24 +153,35 @@ package body Make_Suite_Window_Pkg is
       Set_Policy (Scrolledwindow2, Policy_Automatic, Policy_Automatic);
       Pack_Start (Hbox2, Scrolledwindow2, True, True, 3);
 
-      Gtk_New (Make_Suite_Window.Test_List, 2);
-      Set_Selection_Mode (Make_Suite_Window.Test_List, Selection_Single);
-      Set_Shadow_Type (Make_Suite_Window.Test_List, Shadow_In);
-      Set_Show_Titles (Make_Suite_Window.Test_List, False);
-      Set_Column_Width (Make_Suite_Window.Test_List, 0, 80);
-      Set_Column_Width (Make_Suite_Window.Test_List, 1, 80);
-      Set_Row_Height (Make_Suite_Window.Test_List, 15);
-      Set_Column_Auto_Resize (Make_Suite_Window.Test_List, 0, True);
-      Add (Scrolledwindow2, Make_Suite_Window.Test_List);
+      Gtk_New (Make_Suite_Window.Test_Model,
+        (0 => GType_String,
+         1 => GType_String,
+         2 => GType_String,
+         3 => GType_String));
+      Gtk_New (Make_Suite_Window.Test_View, Make_Suite_Window.Test_Model);
 
-      Gtk_New (Label);
-      Set_Column_Widget (Make_Suite_Window.Test_List, 0, Label);
+      declare
+         T : Gtk_Cell_Renderer_Text;
+         C : Gtk_Tree_View_Column;
+         Dummy : Gint;
+         pragma Unreferenced (Dummy);
+      begin
+         Gtk_New (C);
+         Set_Title (C, "");
+         Dummy := Make_Suite_Window.Test_View.Append_Column (C);
 
-      Gtk_New (Label);
-      Set_Column_Widget (Make_Suite_Window.Test_List, 1, Label);
+         Gtk_New (T);
+         Pack_Start (C, T, True);
+         Add_Attribute (C, T, "text", 1);
 
-      Gtk_New (Label);
-      Set_Column_Widget (Make_Suite_Window.Test_List, 2, Label);
+         Gtk_New (T);
+         Pack_Start (C, T, True);
+         Add_Attribute (C, T, "text", 2);
+      end;
+
+      Set_Headers_Visible (Make_Suite_Window.Test_View, False);
+
+      Add (Scrolledwindow2, Make_Suite_Window.Test_View);
 
       Gtk_New (Vbuttonbox1);
       Set_Spacing (Vbuttonbox1, 10);
@@ -182,7 +196,7 @@ package body Make_Suite_Window_Pkg is
       Set_Relief (Make_Suite_Window.Add, Relief_Normal);
       Set_Flags (Make_Suite_Window.Add, Can_Default);
       Button_Callback.Connect
-        (Make_Suite_Window.Add, Signal_Clicked,
+        (Make_Suite_Window.Add, Gtk.Button.Signal_Clicked,
          On_Add_Clicked'Access);
       Add (Vbuttonbox1, Make_Suite_Window.Add);
 
@@ -190,7 +204,7 @@ package body Make_Suite_Window_Pkg is
       Set_Relief (Make_Suite_Window.Remove, Relief_Normal);
       Set_Flags (Make_Suite_Window.Remove, Can_Default);
       Button_Callback.Connect
-        (Make_Suite_Window.Remove, Signal_Clicked,
+        (Make_Suite_Window.Remove, Gtk.Button.Signal_Clicked,
          On_Remove_Clicked'Access);
       Add (Vbuttonbox1, Make_Suite_Window.Remove);
 

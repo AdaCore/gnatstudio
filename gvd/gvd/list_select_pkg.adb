@@ -18,16 +18,19 @@
 -----------------------------------------------------------------------
 
 with Gtk;                       use Gtk;
-with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
 
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.Types;              use Gtkada.Types;
 
 with GVD.Callbacks;             use GVD.Callbacks;
 with List_Select_Pkg.Callbacks; use List_Select_Pkg.Callbacks;
+with Gtk.Tree_Selection;
 
 package body List_Select_Pkg is
 
@@ -43,10 +46,12 @@ package body List_Select_Pkg is
       Index : Gint;
       pragma Unreferenced (Index);
 
-      Text  : Chars_Ptr_Array := Label + Comment;
+      Iter : Gtk_Tree_Iter;
    begin
-      Index := Append (List_Select.List, Text);
-      Free (Text);
+      Append (List_Select.Tree_Model, Iter, Null_Iter);
+
+      Set (List_Select.Tree_Model, Iter, 0, Label);
+      Set (List_Select.Tree_Model, Iter, 1, Comment);
    end Add_Item;
 
    ----------------------
@@ -55,7 +60,7 @@ package body List_Select_Pkg is
 
    procedure Remove_All_Items (List_Select : List_Select_Access) is
    begin
-      Clear (List_Select.List);
+      Clear (List_Select.Tree_Model);
    end Remove_All_Items;
 
    ----------
@@ -63,10 +68,8 @@ package body List_Select_Pkg is
    ----------
 
    function Show (List_Select : List_Select_Access) return String is
-      Dummy : Gint;
-      pragma Unreferenced (Dummy);
    begin
-      Dummy := Columns_Autosize (List_Select.List);
+      Columns_Autosize (List_Select.Tree_View);
       Show_All (List_Select);
       Gtk.Main.Main;
 
@@ -127,20 +130,39 @@ package body List_Select_Pkg is
         (List_Select.Hbox, List_Select.Scrolledwindow, True, True, 15);
       Set_Size_Request (List_Select.Scrolledwindow, 500, 250);
 
-      Gtk_New (List_Select.List, 2);
-      Set_Selection_Mode (List_Select.List, Selection_Single);
-      Set_Show_Titles (List_Select.List, True);
-      Set_Column_Width (List_Select.List, 0, 80);
-      Set_Column_Width (List_Select.List, 1, 80);
-      Widget_Callback.Connect
-        (List_Select.List, Signal_Select_Row, On_Clist_Select_Row'Access);
-      Add_With_Viewport (List_Select.Scrolledwindow, List_Select.List);
+      Gtk_New (List_Select.Tree_Model, (0 => GType_String, 1 => GType_String));
+      Gtk_New (List_Select.Tree_View, List_Select.Tree_Model);
 
-      Gtk_New (List_Select.Label1);
-      Set_Column_Widget (List_Select.List, 0, List_Select.Label1);
+      declare
+         T : Gtk_Cell_Renderer_Text;
+         C : Gtk_Tree_View_Column;
+         Dummy : Gint;
+         pragma Unreferenced (Dummy);
+      begin
+         Gtk_New (C);
+         Set_Title (C, Item_Label);
+         Dummy := List_Select.Tree_View.Append_Column (C);
+         C.Set_Sort_Column_Id (0);
 
-      Gtk_New (List_Select.Label2);
-      Set_Column_Widget (List_Select.List, 1, List_Select.Label2);
+         Gtk_New (T);
+         Pack_Start (C, T, False);
+         Add_Attribute (C, T, "text", 0);
+
+         Gtk_New (C);
+         Set_Title (C, Comment_Label);
+         Dummy := List_Select.Tree_View.Append_Column (C);
+         C.Set_Sort_Column_Id (1);
+
+         Gtk_New (T);
+         Pack_Start (C, T, True);
+         Add_Attribute (C, T, "text", 1);
+      end;
+
+      Object_Callback.Object_Connect
+        (Get_Selection (List_Select.Tree_View),
+         Gtk.Tree_Selection.Signal_Changed, On_Clist_Select_Row'Access,
+         Slot_Object => List_Select.Tree_View);
+      Add_With_Viewport (List_Select.Scrolledwindow, List_Select.Tree_View);
 
       Gtk_New_Hbox (List_Select.Hbox2, False, 0);
       Pack_Start (List_Select.Vbox, List_Select.Hbox2, False, False, 0);
@@ -164,14 +186,14 @@ package body List_Select_Pkg is
       Gtk_New_From_Stock (List_Select.Ok, Stock_Ok);
       Set_Flags (List_Select.Ok, Can_Default);
       Button_Callback.Connect
-        (List_Select.Ok, Signal_Clicked,
+        (List_Select.Ok, Button.Signal_Clicked,
          Button_Callback.To_Marshaller (On_Ok_Clicked'Access));
       Add (List_Select.Hbuttonbox, List_Select.Ok);
 
       Gtk_New_From_Stock (List_Select.Cancel, Stock_Cancel);
       Set_Flags (List_Select.Cancel, Can_Default);
       Button_Callback.Connect
-        (List_Select.Cancel, Signal_Clicked,
+        (List_Select.Cancel, Button.Signal_Clicked,
          Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
       Add (List_Select.Hbuttonbox, List_Select.Cancel);
 
@@ -179,30 +201,17 @@ package body List_Select_Pkg is
          Gtk_New_From_Stock (List_Select.Help, Stock_Help);
          Set_Flags (List_Select.Help, Can_Default);
          Button_Callback.Connect
-           (List_Select.Help, Signal_Clicked,
+           (List_Select.Help, Button.Signal_Clicked,
             Button_Callback.To_Marshaller (On_Help_Clicked'Access));
          Add (List_Select.Hbuttonbox, List_Select.Help);
       end if;
 
       if Item_Label = "" and then Comment_Label = "" then
-         Column_Titles_Hide (List_Select.List);
-
-      else
-         Set_Column_Title (List_Select.List, 0, Item_Label);
-         Set_Column_Title (List_Select.List, 1, Comment_Label);
-
-         --  Set default sorting, done only if columns are visible
-
-         List_Select.Sort_Column := 0;
-         List_Select.Sort_Type := Ascending;
-
-         Widget_Callback.Connect
-           (List_Select.List, Signal_Click_Column,
-            Callbacks.On_Column_Clicked'Access);
+         List_Select.Tree_View.Set_Headers_Visible (False);
       end if;
 
       Return_Callback.Connect
-        (List_Select.List, Signal_Button_Press_Event,
+        (List_Select.Tree_View, Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (On_Clist_Button_Press'Access));
 
       Set_Title (List_Select, Title);
