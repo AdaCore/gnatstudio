@@ -8,12 +8,29 @@
 
 import GPS, os.path, os_utils;
 
+def on_preferences_changed (name):
+   global xcov_menu_separator
+
+   xcov_menu = GPS.Menu.get ("/Tools/Coverage/Xcov")
+   toolchain = GPS.Preference("Coverage-Toolchain").get()
+
+   if toolchain == "Xcov":
+      xcov_menu.show()
+      xcov_menu_separator.show()
+
+   else:
+      xcov_menu.hide()
+      xcov_menu_separator.hide()
+
 #  Check for Xcov
 
 def on_gps_started (hook_name):
+  global xcov_menu_separator
+
   pref = GPS.Preference ("Coverage-Toolchain")
 
   if os_utils.locate_exec_on_path ("xcov") != "":
+    xcov_menu_separator = GPS.Menu.create ("/Tools/Covera_ge/-")
     GPS.parse_xml ("""
   <!--  Program execution under instrumented execution environment  -->
 
@@ -39,7 +56,7 @@ def on_gps_started (hook_name):
   </target-model>
 
   <target model="xcov-run" category="Run with Xcov" name="Run under Xcov"
-          menu="/Tools/Coverage/">
+          menu="/Tools/Coverage/Xcov/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -92,7 +109,7 @@ def on_gps_started (hook_name):
   </target-model>
 
   <target model="xcov-coverage" category="Coverage with Xcov"
-          name="Generate Xcov Main Report" menu="/Tools/Coverage/">
+          name="Generate Xcov Main Report" menu="/Tools/Coverage/Xcov/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -111,7 +128,7 @@ def on_gps_started (hook_name):
   </target>
 
   <target model="xcov-coverage" category="Coverage with Xcov"
-          name="Custom Xcov Report..." menu="/Tools/Coverage/">
+          name="Custom Xcov Report..." menu="/Tools/Coverage/Xcov/">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
     <read-only>TRUE</read-only>
@@ -127,5 +144,8 @@ def on_gps_started (hook_name):
       <arg>&lt;unknown&gt;</arg>
     </command-line>
   </target>""")
+
+    GPS.Hook ("preferences_changed").add (on_preferences_changed)
+    on_preferences_changed("preferences_changed")
 
 GPS.Hook ("gps_started").add (on_gps_started)
