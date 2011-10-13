@@ -147,7 +147,6 @@ with VCS.ClearCase;
 with VCS_Module;
 with VFS_Module;
 with Vdiff2_Module;
-with Vdiff_Module;
 with Vsearch;
 
 procedure GPS.Main is
@@ -1421,11 +1420,7 @@ procedure GPS.Main is
          GVD_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Old_Vdiff.Get_Pref then
-         Vdiff_Module.Register_Module (GPS_Main.Kernel);
-      else
-         Vdiff2_Module.Register_Module (GPS_Main.Kernel);
-      end if;
+      Vdiff2_Module.Register_Module (GPS_Main.Kernel);
 
       if Active (Scenario_View_Trace) then
          Scenario_Views.Register_Module (GPS_Main.Kernel);
