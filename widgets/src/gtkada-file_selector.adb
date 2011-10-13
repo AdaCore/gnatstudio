@@ -51,7 +51,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Ctree;                 use Gtk.Ctree;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Paned;                 use Gtk.Paned;
@@ -1165,8 +1164,6 @@ package body Gtkada.File_Selector is
    procedure On_Up_Button_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      use type Node_List.Glist;
-
       Win : constant File_Selector_Window_Access :=
               File_Selector_Window_Access (Get_Toplevel (Object));
 
@@ -1185,8 +1182,6 @@ package body Gtkada.File_Selector is
    procedure On_Refresh_Button_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      use type Node_List.Glist;
-
       Win : constant File_Selector_Window_Access :=
               File_Selector_Window_Access (Get_Toplevel (Object));
 
