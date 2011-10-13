@@ -39,7 +39,6 @@ with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Clist;
 with Gtk.Combo_Box;
 with Gtk.Container;
 with Gtk.Enums;
@@ -159,14 +158,6 @@ package GUI_Utils is
    --  Enable or disable the "busy" cursor for a specific top-level window.
    --  If Force_Refresh is True, then all X11 events are processed so that the
    --  new cursor is immediately visible for the user.
-
-   function Find_First_Row_Matching
-     (Clist  : access Gtk.Clist.Gtk_Clist_Record'Class;
-      Column : Glib.Gint;
-      Text   : String) return Glib.Gint;
-   --  Return the index of the first row that contains Text in the column
-   --  Column.
-   --  -1 is returned if no such row was found.
 
    type Filter_Function is access
      function (W : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;

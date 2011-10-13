@@ -54,7 +54,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Clist;                 use Gtk.Clist;
 with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -307,27 +306,6 @@ package body GUI_Utils is
          Gtk_Entry (Combo.Get_Child).Set_Text (Text);
       end if;
    end Set_Active_Text;
-
-   -----------------------------
-   -- Find_First_Row_Matching --
-   -----------------------------
-
-   function Find_First_Row_Matching
-     (Clist  : access Gtk.Clist.Gtk_Clist_Record'Class;
-      Column : Gint;
-      Text   : String) return Gint
-   is
-      Row : Gint := 0;
-      Max : constant Gint := Get_Rows (Clist);
-   begin
-      while Row < Max loop
-         if Get_Text (Clist, Row, Column) = Text then
-            return Row;
-         end if;
-         Row := Row + 1;
-      end loop;
-      return -1;
-   end Find_First_Row_Matching;
 
    ---------------------
    -- Set_Busy_Cursor --
