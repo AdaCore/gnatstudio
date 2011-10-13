@@ -23,3 +23,8 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-FB01-013 ECL: Missing right-click debug options in editor (2011-10-12)
+
+  The Ada editor now supports debug context menu items for run to line, move
+  to line, resume at line, add watch expression, and ruler context menu items
+  toggle breakpoint, enabled/disable breakpoint, and breakpoint properties.
