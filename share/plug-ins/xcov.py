@@ -43,8 +43,10 @@ def on_gps_started (hook_name):
     <icon>gps-build-all</icon>
     <switches command="%(tool_name)s" columns="2" lines="2">
       <combo label="Target" switch="--target" separator="=" column="1">
-        <combo-entry label="powerpc-elf" value="powerpc-elf"/>
+        <combo-entry label="qemu-prep" value="qemu-prep"/>
+        <combo-entry label="qemu-sbc834x" value="qemu-sbc834x"/>
         <combo-entry label="leon-elf" value="leon-elf"/>
+        <combo-entry label="erc32-elf" value="erc32-elf"/>
         <combo-entry label="i386-pok" value="i386-pok"/>
         <combo-entry label="i386-linux" value="i386-linux"/>
         <combo-entry label="prepare" value="prepare"/>
