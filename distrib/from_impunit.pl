@@ -10,7 +10,7 @@ $output ="../share/plug-ins/runtime.xml";
 $impunit="../gnatlib/gnat_src/impunit.adb";
 
 open (OUT, '>' . $output);
-open (IMPUNIT, $impunit);
+open (IMPUNIT, $impunit) || die "File $impunit not found";
 
 print OUT "<?xml version=\"1.0\" ?>\n<GPS>\n";
 print OUT <<EOF
@@ -28,23 +28,24 @@ EOF
 
 $units{"System"} = "system";
 $units{"Interfaces"} = "interfac";
-$mode="";
 
 foreach $line (<IMPUNIT>) {
    chomp ($line);
-   if ($line =~ /Non_Imp_File_Names_05/) {
-       $mode = "Ada 2005/";
-   } elsif ($line =~ /"([^"]+)",\s*-- (.*)/) {
+   if ($line =~ /"([^"]+)",\s*[TF].*\s*-- (.*)/) {
        $filename=$1;
        $unit=$2;
        $units{$unit} = $filename;
-       $mode{$unit} = $mode;
    }
 }
 
 print OUT "<submenu before=\"About\">
    <title>/Help/GNAT Runtime</title>
 </submenu>\n";
+
+# Basic sanity checking
+
+keys %units > 30 || die "Couldn't parse ${impunit}, not enough elements";
+$units{"Ada.Containers"} eq "a-contai"  || die "Couldn't parse ${impunit}";
 
 foreach $unit (sort keys %units) {
   $filename = $units{$unit};
@@ -55,7 +56,7 @@ foreach $unit (sort keys %units) {
     $double_unit =~ s/_/__/g;
     ($hierarchy) = ($double_unit =~ /^([^.]+)\./);
     $hierarchy = $double_unit if ($hierarchy eq "");
-    $menu = "/Help/GNAT Runtime/$mode{$unit}$hierarchy/$double_unit";
+    $menu = "/Help/GNAT Runtime/$hierarchy/$double_unit";
   } else {
     ## Hierarchy parents must have two menu entries, or every time a
     ## submenu is open, the file is also open
@@ -66,13 +67,13 @@ foreach $unit (sort keys %units) {
     ($base_unit) = ($hierarchy =~ /\/([^\/]+)$/);
 
     foreach $child (keys %units) {
-       if ($child =~ /^$unit\./ && ($mode{$unit} eq $mode{$child})) {
+       if ($child =~ /^$unit\./) {
          $hierarchy .= "/&lt;$base_unit&gt;";
          last;
        }
     }
 
-    $menu = "/Help/GNAT Runtime/$mode{$unit}$hierarchy";
+    $menu = "/Help/GNAT Runtime/$hierarchy";
   }
        
   print OUT "<documentation_file>
