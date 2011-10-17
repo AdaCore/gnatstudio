@@ -1364,7 +1364,7 @@ package body Src_Editor_Module is
                Set_File_Identifier (Get_Buffer (Editor), Ident);
                Set_Filename
                  (Get_Buffer (Editor), Get_Filename (MDI_Child (Child)));
-               File_Edited (Kernel, Ident);
+               File_Edited (Kernel, Ident, Force_Hook => True);
             end;
          end if;
 
