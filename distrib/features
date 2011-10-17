@@ -20,6 +20,15 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+New features in GPS 5.1.1
+-------------------------
+
+NF-51-KA14-050 GPS: Merge /Tools/GNAT Runtime/Ada05 with Ada menu (2011-10-17)
+
+  GPS had two menus to show the contents of the runtime, where the Ada05
+  specific units were shows in a separate menu. This is no longer useful,
+  and these units are now displayed along with the rest of the runtime.
+
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
