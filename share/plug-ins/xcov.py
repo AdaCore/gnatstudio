@@ -51,6 +51,7 @@ def on_gps_started (hook_name):
         <combo-entry label="i386-linux" value="i386-linux"/>
         <combo-entry label="prepare" value="prepare"/>
       </combo>
+      <check label="Enable MCDC" switch="--level=stmt+mcdc"/>
       <field label="Tag" switch="--tag" separator="=" column="2"/>
       <field label="Trace file" switch="-o" separator=" " as-file="true" column="1"/>
       <check label="Verbose" switch="--verbose" column="2"/>
