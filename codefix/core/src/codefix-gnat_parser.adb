@@ -610,6 +610,21 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix "in" should be omitted.
 
+   type Out_Should_Be_Omitted is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Out_Should_Be_Omitted);
+
+   overriding
+   procedure Fix
+     (This         : Out_Should_Be_Omitted;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix "out" should be omitted.
+
    type Already_Use_Visible is new Error_Parser (1) with null record;
 
    overriding
@@ -2369,12 +2384,13 @@ package body Codefix.GNAT_Parser is
          return;
       end if;
 
-      Solutions := Unexpected
-        (Current_Text,
-         Message,
-         Unallowed_Characters.all,
-         Format_Str,
-         All_Occurrences);
+      Solutions :=
+        Unexpected
+          (Current_Text      => Current_Text,
+           Message           => Message,
+           String_Unexpected => Unallowed_Characters.all,
+           Mode              => Format_Str,
+           All_Occurrences   => All_Occurrences);
 
       Free (Unallowed_Characters);
       Free (Word_Read);
@@ -2405,6 +2421,36 @@ package body Codefix.GNAT_Parser is
          Message           => Get_Message (Message_It),
          String_Unexpected => "(in[\s]*)",
          Mode              => Regular_Expression);
+   end Fix;
+
+   --------------------------
+   -- Out_Should_Be_Omitted --
+   --------------------------
+
+   overriding procedure Initialize (This : in out Out_Should_Be_Omitted) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+                   (Compile ("mode could be ""in"" instead of ""in out""")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Out_Should_Be_Omitted;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions :=
+        Unexpected
+          (Current_Text      => Current_Text,
+           Message           => Get_Message (Message_It),
+           String_Unexpected => "([\s]+out)",
+           Mode              => Regular_Expression,
+           Search_Forward    => True);
    end Fix;
 
    -------------------------
@@ -3932,6 +3978,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Kw_Not_Allowed);
       Add_Parser (Processor, new Sep_Not_Allowed);
       Add_Parser (Processor, new In_Should_Be_Omitted);
+      Add_Parser (Processor, new Out_Should_Be_Omitted);
       Add_Parser (Processor, new Already_Use_Visible);
       Add_Parser (Processor, new Use_Valid_Instead);
       Add_Parser (Processor, new Should_Be_In);

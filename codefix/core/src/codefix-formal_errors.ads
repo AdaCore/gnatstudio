@@ -165,12 +165,21 @@ package Codefix.Formal_Errors is
       Message           : File_Cursor'Class;
       String_Unexpected : String;
       Mode              : String_Mode := Text_Ascii;
+      Search_Forward    : Boolean     := False;
       All_Occurrences   : Boolean     := False) return Solution_List;
-   --  Delete the unexpected string. The Mode parameter discriminates between
-   --  plain strings (the default) and strings given as regular expressions.
-   --  All_Occurrences is set to True to remove all the consecutive occurrences
-   --  of the unexpected string found before and after the cursor; otherwise
-   --  only the occurrence available at the cursor location is deleted.
+   --  Delete one occurrence of String_Unexpected from location Message. The
+   --  Mode parameter discriminates if the unexpected string is specified in
+   --  plain Ascii (default) or as a regular expression.
+   --
+   --  Two optional parameters extend the functionality of this routine:
+   --  * Search_Forward is set to true if we cannot rely on Message as the
+   --    exact location of an occurrence of Unexpected_String. It enables
+   --    searching for the first occurrence of the unexpected string from
+   --    the column referenced by Message to the end of the line.
+   --
+   --  * All_Occurrences is set to True to remove all the consecutive
+   --    occurrences of the unexpected string found before and after the
+   --    cursor.
 
    function Expand_Tabs
      (Current_Text      : Text_Navigator_Abstr'Class;

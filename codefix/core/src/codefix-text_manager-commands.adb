@@ -31,9 +31,11 @@ package body Codefix.Text_Manager.Commands is
      (This            : in out Remove_Word_Cmd;
       Current_Text    : Text_Navigator_Abstr'Class;
       Word            : Word_Cursor'Class;
+      Search_Forward  : Boolean := False;
       All_Occurrences : Boolean := False) is
    begin
       Make_Word_Mark (Word, Current_Text, This.Word);
+      This.Search_Forward  := Search_Forward;
       This.All_Occurrences := All_Occurrences;
    end Initialize;
 
@@ -53,42 +55,55 @@ package body Codefix.Text_Manager.Commands is
       Make_Word_Cursor (This.Word, Current_Text, Word);
 
       declare
-         Undesired_Text : String renames Word.String_Match.all;
+         Match      : constant String := Word.Get_Matching_Word (Current_Text);
+         Str_Parsed : constant String :=
+                        Do_Tab_Expansion
+                          (Current_Text.Get_Line (Word, Start_Col => 1),
+                           Tab_Width);
+         Column     : Natural := Natural (Get_Column (Word));
 
       begin
-         --  Displace the cursor back to the first occurrence of the undesired
+         pragma Assert (Match /= "");
+
+         --  Displace the cursor forward to the first occurrence of the
+         --  undesired text
+
+         if This.Search_Forward then
+            for J in Column .. Str_Parsed'Last - Match'Length + 1 loop
+               if Str_Parsed (J .. J + Match'Length - 1) = Match then
+                  Column := J;
+                  exit;
+               end if;
+            end loop;
+         end if;
+
+         pragma Assert
+           (Column + Match'Length - 1 <= Str_Parsed'Last
+              and then
+            Str_Parsed (Column .. Column + Match'Length - 1) = Match);
+
+         --  Move the cursor back to preceding (consecutive) occurrences of the
          --  text
 
          if This.All_Occurrences then
             declare
-               Column      : Visible_Column_Type := Get_Column (Word);
-               Prev_Column : Visible_Column_Type;
+               Prev_Column : Natural;
 
             begin
                loop
-                  Prev_Column := Column - Undesired_Text'Length;
-                  exit when Prev_Column <= 0;
-
-                  Word.Set_Column (Prev_Column);
-
-                  declare
-                     Str_Parsed : constant String :=
-                       Current_Text.Get_Line (Word);
-
-                  begin
-                     exit when
-                       Str_Parsed
-                         (Str_Parsed'First ..
-                              Str_Parsed'First + Undesired_Text'Length - 1)
-                           /= Undesired_Text;
-                  end;
+                  Prev_Column := Column - Match'Length;
+                  exit when Prev_Column <= 0
+                              or else
+                            Str_Parsed
+                              (Prev_Column .. Prev_Column + Match'Length - 1)
+                                /= Match;
 
                   Column := Prev_Column;
                end loop;
-
-               Word.Set_Column (Column);
             end;
          end if;
+
+         Word.Set_Column (Visible_Column_Type (Column));
 
          loop
             --  Remove one occurrence of the undesired text
@@ -103,7 +118,8 @@ package body Codefix.Text_Manager.Commands is
                exit;
             end if;
 
-            --  Check if we must remove another occurrence
+            --  Check if we must remove another occurrence found immediately
+            --  after the removed text
 
             exit when not This.All_Occurrences;
 
@@ -111,12 +127,12 @@ package body Codefix.Text_Manager.Commands is
                Str_Parsed : constant String := Current_Text.Get_Line (Word);
 
             begin
-               exit when Str_Parsed'Length < Undesired_Text'Length
+               exit when Str_Parsed'Length < Match'Length
                  or else
                    Str_Parsed
                      (Str_Parsed'First ..
-                            Str_Parsed'First + Undesired_Text'Length - 1)
-                       /= Undesired_Text;
+                            Str_Parsed'First + Match'Length - 1)
+                       /= Match;
             end;
          end loop;
       end;
