@@ -8,12 +8,29 @@
 
 import GPS, os.path, os_utils;
 
+def on_preferences_changed (name):
+   global xcov_menu_separator
+
+   xcov_menu = GPS.Menu.get ("/Tools/Coverage/Xcov")
+   toolchain = GPS.Preference("Coverage-Toolchain").get()
+
+   if toolchain == "Xcov":
+      xcov_menu.show()
+      xcov_menu_separator.show()
+
+   else:
+      xcov_menu.hide()
+      xcov_menu_separator.hide()
+
 #  Check for Xcov
 
 def on_gps_started (hook_name):
+  global xcov_menu_separator
+
   pref = GPS.Preference ("Coverage-Toolchain")
 
   if os_utils.locate_exec_on_path ("xcov") != "":
+    xcov_menu_separator = GPS.Menu.create ("/Tools/Covera_ge/-")
     GPS.parse_xml ("""
   <!--  Program execution under instrumented execution environment  -->
 
@@ -26,12 +43,15 @@ def on_gps_started (hook_name):
     <icon>gps-build-all</icon>
     <switches command="%(tool_name)s" columns="2" lines="2">
       <combo label="Target" switch="--target" separator="=" column="1">
-        <combo-entry label="powerpc-elf" value="powerpc-elf"/>
+        <combo-entry label="qemu-prep" value="qemu-prep"/>
+        <combo-entry label="qemu-sbc834x" value="qemu-sbc834x"/>
         <combo-entry label="leon-elf" value="leon-elf"/>
+        <combo-entry label="erc32-elf" value="erc32-elf"/>
         <combo-entry label="i386-pok" value="i386-pok"/>
         <combo-entry label="i386-linux" value="i386-linux"/>
         <combo-entry label="prepare" value="prepare"/>
       </combo>
+      <check label="Enable MCDC" switch="--level=stmt+mcdc"/>
       <field label="Tag" switch="--tag" separator="=" column="2"/>
       <field label="Trace file" switch="-o" separator=" " as-file="true" column="1"/>
       <check label="Verbose" switch="--verbose" column="2"/>
@@ -39,7 +59,7 @@ def on_gps_started (hook_name):
   </target-model>
 
   <target model="xcov-run" category="Run with Xcov" name="Run under Xcov"
-          menu="/Tools/Coverage/">
+          menu="/Tools/Coverage/Xcov/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -92,7 +112,7 @@ def on_gps_started (hook_name):
   </target-model>
 
   <target model="xcov-coverage" category="Coverage with Xcov"
-          name="Generate Xcov Main Report" menu="/Tools/Coverage/">
+          name="Generate Xcov Main Report" menu="/Tools/Coverage/Xcov/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -111,7 +131,7 @@ def on_gps_started (hook_name):
   </target>
 
   <target model="xcov-coverage" category="Coverage with Xcov"
-          name="Custom Xcov Report..." menu="/Tools/Coverage/">
+          name="Custom Xcov Report..." menu="/Tools/Coverage/Xcov/">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
     <read-only>TRUE</read-only>
@@ -127,5 +147,8 @@ def on_gps_started (hook_name):
       <arg>&lt;unknown&gt;</arg>
     </command-line>
   </target>""")
+
+    GPS.Hook ("preferences_changed").add (on_preferences_changed)
+    on_preferences_changed("preferences_changed")
 
 GPS.Hook ("gps_started").add (on_gps_started)
