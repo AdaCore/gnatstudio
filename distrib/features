@@ -31,8 +31,8 @@ NF-51-KA14-050 GPS: Merge /Tools/GNAT Runtime/Ada05 with Ada menu (2011-10-17)
 
 NF-51-KA12-012 GPS: Update of GNATCoverage integration (2011-10-20)
 
-  GPS integration with GNATColverage was improved to support new targets and
-  MCDC analysis in 'run' mode.
+  GPS integration with GNATCoverage has been improved to support new targets
+  and MCDC analysis in 'run' mode.
 
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
