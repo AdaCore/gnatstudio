@@ -62,6 +62,12 @@
     <compiler lang="c++">c++ppc</compiler>
   </toolchain>
 
+  <toolchain name="e500v2-wrs-vxworksae">
+    <cpp_filt>c++filtppc</cpp_filt>
+    <compiler lang="c">ccppc</compiler>
+    <compiler lang="c++">c++ppc</compiler>
+  </toolchain>
+
   <toolchain name="e500v2-wrs-vxworksmils">
     <cpp_filt>c++filtppc</cpp_filt>
     <compiler lang="c">ccppc</compiler>
