@@ -19,6 +19,13 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
               it, then GPS may crash.
   Workaround: Kill the remote program manually.
 
+- K125-013: GPS: problem examining files outside the project
+  Problem:    GPS accepted to examine files outside the project but then was
+              unable to locate the file when displaying error messages. GPS
+              now refuses to examine such files by generating an error message.
+  Workaround: Do not try to examine files outside the project, or modify the
+              project source directories so that the file can be found.
+
 - J432-002: GPS: Empty menu /Help/GNAT Runtime
   Problem:    The menu that provides a convenient access to all the files in
               the GNAT runtime is empty.
