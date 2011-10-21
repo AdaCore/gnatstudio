@@ -277,6 +277,17 @@ begin
 
    case Action is
       when Examiner =>
+         --  Generate an error if the file specified is not part of the
+         --  project source tree
+
+         if Create (Tree, File.Base_Name, Use_Object_Path => False)
+           /= File
+         then
+            Put_Line ("error: " & File.Display_Full_Name & " is not part of "
+                      & Project_Path.Display_Base_Name);
+            OS_Exit (4);
+         end if;
+
          Append (Switches, "-brief");
          Append
            (Switches, "-ou=" & Tree.Root_Project.Object_Dir.Display_Full_Name);
