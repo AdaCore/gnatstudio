@@ -95,7 +95,7 @@ package body Completion.C.Constructs_Extractor is
          --  since Gen_Completion_Root is invoked when the first letter is
          --  pressed (to generate the whole list of proposals) and subsequent
          --  letters are used to filter this list; that is, the list is not
-         --  re-generated each type a letter is pressed. As a consequence, if
+         --  re-generated each time a letter is pressed. As a consequence, if
          --  the treshold is initially passed, this minimum documentation is
          --  the only documentation available when the list is filtered.
 
