@@ -94,7 +94,7 @@ def highlight_file_idle ():
         current_entity   = current_entities.__iter__()
      except GPS.Exception:
         ## The buffer might have been destroyed. Give up
-        return True
+        return False
 
   try:
      e = current_entity.next()
@@ -103,12 +103,12 @@ def highlight_file_idle ():
   except StopIteration:
      to_highlight.pop (0)
      current_entities=[]
-     return True
+     return False
   except GPS.Exception:
      ## The buffer might have been destroyed. Give up
      to_highlight.pop (0)
      current_entities=[]
-     return True
+     return False
 
 
 def highlight_dispatching_calls (buffer):
