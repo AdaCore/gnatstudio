@@ -89,8 +89,18 @@ package body Completion.C.Constructs_Extractor is
          end Doc_Header;
 
       begin
+         --  Generate a minimum documentation indicating the type of the entity
+         --  and its location when the number of proposals passes the treshold.
+         --  This improves the behavior of GPS under Dynamic Smart Completion
+         --  since Gen_Completion_Root is invoked when the first letter is
+         --  pressed (to generate the whole list of proposals) and subsequent
+         --  letters are used to filter this list; that is, the list is not
+         --  re-generated each type a letter is pressed. As a consequence, if
+         --  the treshold is initially passed, this minimum documentation is
+         --  the only documentation available when the list is filtered.
+
          if not Under_Doc_Treshold then
-            return null;
+            return new String'(Doc_Header (E_Info));
          else
             return new String'(Doc_Header (E_Info)
                                  & Doc_Utils.Get_Documentation
