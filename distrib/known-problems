@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
 
+- KA21-026: GPS: Plugin dispatching.py causes GPS to use 100% CPU
+  Problem:    When the dispatching.py plugin is active, certain conditions
+              may cause GPS to start using 100% of the CPU, while the UI
+              remains responsive.
+  Workaround: Disable the plugin dispatching.py.
+
 - KA14-011: Loading projects that use a Project_Path variable
   Problem:    GPS introduced support for aggregate projects and their new
               Project_Path list attribute. Unfortunately, if your own
