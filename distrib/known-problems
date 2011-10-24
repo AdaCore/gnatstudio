@@ -8,11 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
 
-- KA21-026: GPS: Plugin dispatching.py causes GPS to use 100% CPU
-  Problem:    When the dispatching.py plugin is active, certain conditions
+- KA21-026: GPS: dispatching.py plug-in causes GPS to use 100% CPU
+  Problem:    When the dispatching.py plug-in is active, certain conditions
               may cause GPS to start using 100% of the CPU, while the UI
               remains responsive.
-  Workaround: Disable the plugin dispatching.py.
+  Workaround: Disable the dispatching.py plug-in via the Tools>Plug-ins menu.
 
 - KA14-011: Loading projects that use a Project_Path variable
   Problem:    GPS introduced support for aggregate projects and their new
@@ -32,10 +32,10 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
   Workaround: Do not try to examine files outside the project, or modify the
               project source directories so that the file can be found.
 
-- J432-002: GPS: Empty menu /Help/GNAT Runtime
+- J432-002: GPS: Empty menu Help>GNAT Runtime
   Problem:    The menu that provides a convenient access to all the files in
               the GNAT runtime is empty.
-  Workaround: Reuse the file share/gms/plug-ins/runtime.xml from a previous
+  Workaround: Reuse the file share/gps/plug-ins/runtime.xml from a previous
               version of GPS.
 
 Known Problems fixed in GPS 5.1.0 / GNATbench 2.6.0
