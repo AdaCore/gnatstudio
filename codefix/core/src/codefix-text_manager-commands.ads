@@ -26,12 +26,15 @@ package Codefix.Text_Manager.Commands is
    type Remove_Word_Cmd is new Text_Command with private;
 
    procedure Initialize
-     (This            : in out Remove_Word_Cmd;
-      Current_Text    : Text_Navigator_Abstr'Class;
-      Word            : Word_Cursor'Class;
-      Search_Forward  : Boolean := False;
-      All_Occurrences : Boolean := False);
-   --  Set all the marks that will be necessary later to remove the word
+     (This              : in out Remove_Word_Cmd;
+      Current_Text      : Text_Navigator_Abstr'Class;
+      Word              : Word_Cursor'Class;
+      Search_Forward    : Boolean := False;
+      All_Occurrences   : Boolean := False;
+      Remove_Empty_Line : Boolean := False);
+   --  Set all the marks that will be necessary later to remove the word.
+   --  Remove_Empty_Line is True if we want to remove the line if its contents
+   --  is empty after the execution of the command.
 
    overriding
    procedure Free (This : in out Remove_Word_Cmd);
@@ -278,9 +281,10 @@ package Codefix.Text_Manager.Commands is
 
 private
    type Remove_Word_Cmd is new Text_Command with record
-      Word            : Word_Mark;
-      Search_Forward  : Boolean;
-      All_Occurrences : Boolean;
+      Word              : Word_Mark;
+      Search_Forward    : Boolean;
+      All_Occurrences   : Boolean;
+      Remove_Empty_Line : Boolean;
    end record;
 
    type Insert_Word_Cmd (Complexity : Fix_Complexity)

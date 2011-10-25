@@ -28,15 +28,17 @@ package body Codefix.Text_Manager.Commands is
    ---------------------
 
    procedure Initialize
-     (This            : in out Remove_Word_Cmd;
-      Current_Text    : Text_Navigator_Abstr'Class;
-      Word            : Word_Cursor'Class;
-      Search_Forward  : Boolean := False;
-      All_Occurrences : Boolean := False) is
+     (This              : in out Remove_Word_Cmd;
+      Current_Text      : Text_Navigator_Abstr'Class;
+      Word              : Word_Cursor'Class;
+      Search_Forward    : Boolean := False;
+      All_Occurrences   : Boolean := False;
+      Remove_Empty_Line : Boolean := False) is
    begin
       Make_Word_Mark (Word, Current_Text, This.Word);
-      This.Search_Forward  := Search_Forward;
-      This.All_Occurrences := All_Occurrences;
+      This.Search_Forward    := Search_Forward;
+      This.All_Occurrences   := All_Occurrences;
+      This.Remove_Empty_Line := Remove_Empty_Line;
    end Initialize;
 
    overriding procedure Free (This : in out Remove_Word_Cmd) is
@@ -114,7 +116,10 @@ package body Codefix.Text_Manager.Commands is
                  (Current_Text, Check => True)'Length, "");
 
             if Current_Text.Get_Line (Word, 1) = "" then
-               Current_Text.Delete_Line (Word);
+               if This.Remove_Empty_Line then
+                  Current_Text.Delete_Line (Word);
+               end if;
+
                exit;
             end if;
 
@@ -295,7 +300,9 @@ package body Codefix.Text_Manager.Commands is
          Word            => Word,
          New_Position    => New_Position,
          Insert_New_Line => Insert_New_Line);
-      Initialize (This.Step_Remove, Current_Text, Word);
+
+      Initialize (This.Step_Remove, Current_Text, Word,
+                  Remove_Empty_Line => True);
    end Initialize;
 
    overriding procedure Free (This : in out Move_Word_Cmd) is
