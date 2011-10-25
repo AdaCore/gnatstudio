@@ -29,3 +29,9 @@ If no tag is specified, the entry is relevant to all IDEs.
                 2- Enable Code Assist.
                 3- Enable Code Assist auto activation.
 
+- K325-019: GPS: autofix for lines containing only spaces
+  Problem:    The autofix for blanks at end of line removes the whole line if
+              the line is composed only by spaces.
+  Workaround: Do not use autofix on such lines or replace manually the removed
+              line by an empty line.
+
