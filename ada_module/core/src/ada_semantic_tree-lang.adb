@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2010, AdaCore                  --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -47,11 +47,12 @@ package body Ada_Semantic_Tree.Lang is
    type Doc_Kind is (All_Doc, Profile);
 
    function Format_Documentation
-     (Lang       : access Ada_Tree_Language;
-      Entity     : Entity_Access;
-      Max_Size   : Integer;
-      Kind       : Doc_Kind;
-      Raw_Format : Boolean := False) return String;
+     (Lang          : access Ada_Tree_Language;
+      Entity        : Entity_Access;
+      Max_Size      : Integer;
+      Kind          : Doc_Kind;
+      Comment_Found : access Boolean := null;
+      Raw_Format    : Boolean := False) return String;
    --  Factorization of the documentation information. If Max_Size is -1, then
    --  all the documentation is returned, otherwise only the Max_Size first.
 
@@ -122,11 +123,12 @@ package body Ada_Semantic_Tree.Lang is
    -----------------------
 
    overriding function Get_Documentation
-     (Lang    : access Ada_Tree_Language;
-      Entity  : Entity_Access) return String
+     (Lang          : access Ada_Tree_Language;
+      Entity        : Entity_Access;
+      Comment_Found : access Boolean := null) return String
    is
    begin
-      return Format_Documentation (Lang, Entity, -1, All_Doc);
+      return Format_Documentation (Lang, Entity, -1, All_Doc, Comment_Found);
    end Get_Documentation;
 
    -----------------
@@ -140,7 +142,7 @@ package body Ada_Semantic_Tree.Lang is
       Raw_Format : Boolean := False) return String is
    begin
       return Format_Documentation
-        (Lang, Entity, Max_Size, Profile, Raw_Format);
+        (Lang, Entity, Max_Size, Profile, null, Raw_Format);
    end Get_Profile;
 
    --------------------------
@@ -148,11 +150,12 @@ package body Ada_Semantic_Tree.Lang is
    --------------------------
 
    function Format_Documentation
-     (Lang       : access Ada_Tree_Language;
-      Entity     : Entity_Access;
-      Max_Size   : Integer;
-      Kind       : Doc_Kind;
-      Raw_Format : Boolean := False) return String
+     (Lang          : access Ada_Tree_Language;
+      Entity        : Entity_Access;
+      Max_Size      : Integer;
+      Kind          : Doc_Kind;
+      Comment_Found : access Boolean := null;
+      Raw_Format    : Boolean := False) return String
    is
       Tree                 : constant Construct_Tree :=
                                Get_Tree (Get_File (Entity));
@@ -395,8 +398,8 @@ package body Ada_Semantic_Tree.Lang is
          return Result (Str'First .. Index);
       end Remove_Blanks;
 
-      Add_New_Line  : Boolean := False;
       Has_Parameter : Boolean := False;
+      Add_New_Line  : Boolean := False;
 
    begin
       if Kind = All_Doc then
@@ -424,9 +427,12 @@ package body Ada_Semantic_Tree.Lang is
                      Buffer (Beginning .. Current),
                      Comment => False,
                      Clean   => True)));
-
             Add_New_Line := True;
          end if;
+      end if;
+
+      if Comment_Found /= null then
+         Comment_Found.all := Add_New_Line;
       end if;
 
       if Get_Construct (Node).Category in Subprogram_Category then

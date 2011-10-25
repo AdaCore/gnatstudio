@@ -111,8 +111,9 @@ package body Language.Tree.Database is
    -----------------------
 
    function Get_Documentation
-     (Lang    : access Tree_Language;
-      Entity  : Entity_Access) return String
+     (Lang          : access Tree_Language;
+      Entity        : Entity_Access;
+      Comment_Found : access Boolean := null) return String
    is
       Tree                 : constant Construct_Tree :=
         Get_Tree (Get_File (Entity));
@@ -157,6 +158,10 @@ package body Language.Tree.Database is
                   Clean   => True)));
 
          Add_New_Line := True;
+      end if;
+
+      if Comment_Found /= null then
+         Comment_Found.all := Add_New_Line;
       end if;
 
       if Get_Construct (Node).Category in Subprogram_Category then

@@ -63,7 +63,8 @@ package body Entities.Tooltips_Assistant is
    function Get_Tooltip_Documentation
      (Handler  : Language_Handler;
       Database : Construct_Database_Access;
-      Entity   : Entity_Information) return String
+      Entity   : Entity_Information;
+      Comment_Found : access Boolean) return String
    is
       Loc       : constant File_Location := Get_Declaration_Of (Entity);
       Decl_File : constant Virtual_File := Get_Filename (Loc.File);
@@ -107,7 +108,8 @@ package body Entities.Tooltips_Assistant is
 
       return Language.Tree.Database.Get_Documentation
         (Lang     => Tree_Lang,
-         Entity   => To_Entity_Access (Data_File, Node));
+         Entity   => To_Entity_Access (Data_File, Node),
+         Comment_Found => Comment_Found);
    end Get_Tooltip_Documentation;
 
    -----------------------------

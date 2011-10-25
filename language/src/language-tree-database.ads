@@ -65,8 +65,9 @@ package Language.Tree.Database is
    --  Return the language associated to this tree.
 
    function Get_Documentation
-     (Lang    : access Tree_Language;
-      Entity  : Entity_Access) return String;
+     (Lang          : access Tree_Language;
+      Entity        : Entity_Access;
+      Comment_Found : access Boolean := null) return String;
    --  This function returns the documentation for the entity given in
    --  parameter, for the given language. By default, it computes a
    --  documentation from generic knowledge on the constructs.
