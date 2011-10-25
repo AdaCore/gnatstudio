@@ -13,6 +13,11 @@ If no tag is specified, the entry is relevant to all IDEs.
               inserted for the first new file you create.
   Workaround: Save the first new file before opening a new one.
 
+- KA18-030: GPS: hang using smart completion on multi-language project
+  Problem:    GPS starts consuming too much CPU on large projects containing C
+              and/or C++ files.
+  Workaround: Disable Smart Completion in Preferences => Editor.
+
 - K926-014: GB: GNATbench freezes when viewing/editing Ada files
   Problem:    Randomly when using the GNATbench Ada editor for code edition
               or program debug, GNATbench freezes. The only solution to get
