@@ -41,11 +41,14 @@ package Entities.Tooltips_Assistant is
    function Get_Tooltip_Documentation
      (Handler  : Language_Handler;
       Database : Construct_Database_Access;
-      Entity   : Entity_Information) return String;
+      Entity   : Entity_Information;
+      Comment_Found : access Boolean) return String;
    --  Return the documentation for the entity (prefixed by a LF char if not
    --  null)
    --  Return empty string if documentation cannot be found in the construct
-   --  database.
+   --  database, and leave Comment_Found unset.
+   --  If comments associated with the entity are found, Comment_Found is set
+   --  to True.
 
    function Get_Tooltip_Header
       (Entity : Entity_Information) return String;

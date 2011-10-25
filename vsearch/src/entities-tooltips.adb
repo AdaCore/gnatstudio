@@ -75,17 +75,31 @@ package body Entities.Tooltips is
       Handler    : constant Language_Handler := Get_Language_Handler (Kernel);
       Database   : constant Construct_Database_Access :=
                      Get_Construct_Database (Kernel);
+      Comment_Found : aliased Boolean := False;
       Documentation : constant String := Get_Tooltip_Documentation
-         (Handler  => Handler,
-          Database => Database,
-          Entity => Entity);
+         (Handler       => Handler,
+          Database      => Database,
+          Entity        => Entity,
+          Comment_Found => Comment_Found'Access);
    begin
       if Documentation = "" then
          --  Try to get the documentation from somewhere else than the
          --  construct database.
          return Escape_Text (Get_Documentation (Handler, Entity));
-      else
+      elsif Comment_Found then
          return Documentation;
+      else
+         --  No comment found, try to get them from entities
+         declare
+            Comments : constant String :=
+              Escape_Text (Get_Documentation (Handler, Entity));
+         begin
+            if Comments = "" then
+               return Documentation;
+            else
+               return Comments & ASCII.LF & ASCII.LF & Documentation;
+            end if;
+         end;
       end if;
    end Get_Documentation;
 
@@ -185,8 +199,7 @@ package body Entities.Tooltips is
          Header => "<b>" & Get (Get_Construct (Entity).Name).all & "</b>",
          Draw_Border => Draw_Border,
          Doc    => Get_Documentation
-           (Get_Tree_Language (Get_File (Entity)),
-            Entity),
+           (Get_Tree_Language (Get_File (Entity)), Entity, null),
          Pixbuf => Entity_Icons
            (Construct.Is_Declaration, Construct.Visibility)
            (Construct.Category));

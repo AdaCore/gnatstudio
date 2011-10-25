@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2010, AdaCore                  --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,8 +41,9 @@ package Ada_Semantic_Tree.Lang is
       File    : Structured_File_Access;
       Index   : String_Index_Type) return Entity_Reference_Details;
    overriding function Get_Documentation
-     (Lang     : access Ada_Tree_Language;
-      Entity : Entity_Access) return String;
+     (Lang          : access Ada_Tree_Language;
+      Entity        : Entity_Access;
+      Comment_Found : access Boolean := null) return String;
    overriding function Get_Profile
      (Lang       : access Ada_Tree_Language;
       Entity     : Entity_Access;
