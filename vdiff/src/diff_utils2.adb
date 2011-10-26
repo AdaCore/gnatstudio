@@ -314,7 +314,7 @@ package body Diff_Utils2 is
       Pattern_Any   : constant Pattern_Matcher := Compile (".+");
       Pattern       : constant Pattern_Matcher := Compile
         ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?");
-      Args          : Argument_List (1 .. 6);
+      Args          : Argument_List (1 .. 7);
       Descriptor    : TTY_Process_Descriptor;
       Ret           : Diff_List;
       Occurrence    : Diff_Chunk_Access;
@@ -341,18 +341,19 @@ package body Diff_Utils2 is
          return Ret;
       end if;
 
-      Args (1) := new String'("-s");
-      Args (2) := new String'("-o");
+      Args (1) := new String'("-f");
+      Args (2) := new String'("-s");
+      Args (3) := new String'("-o");
 
       if Revert then
-         Args (3) := new String'(+Full_Name (Orig_File));
-         Args (4) := new String'("-R");
-         Args (5) := new String'(+Full_Name (New_File));
-         Num_Args := 6;
-      else
-         Args (3) := new String'(+Full_Name (New_File));
          Args (4) := new String'(+Full_Name (Orig_File));
-         Num_Args := 5;
+         Args (5) := new String'("-R");
+         Args (6) := new String'(+Full_Name (New_File));
+         Num_Args := 7;
+      else
+         Args (4) := new String'(+Full_Name (New_File));
+         Args (5) := new String'(+Full_Name (Orig_File));
+         Num_Args := 6;
       end if;
 
       Args (Num_Args) := new String'(+Full_Name (Diff_File));
