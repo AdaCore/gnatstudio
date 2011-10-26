@@ -24,6 +24,10 @@ with Projects;
 with Language.Tree.Database;
 with Language_Handlers;
 
+pragma Warnings (Off);
+with GNAT.Expect.TTY;
+pragma Warnings (On);
+
 package ALI_Parser is
 
    function Create_ALI_Handler
@@ -39,6 +43,8 @@ package ALI_Parser is
       Lang_Handler : Language_Handlers.Language_Handler;
       --  Field used to store the languages handler of the kernel; used to
       --  obtain the LI handler of entities imported from other languages
+      Unmangle_Pd  : access GNAT.Expect.TTY.TTY_Process_Descriptor;
+      --  Descriptor of process used to unmangle names; null if not required.
    end record;
 
    type ALI_Handler is access all ALI_Handler_Record'Class;

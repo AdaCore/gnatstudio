@@ -314,7 +314,8 @@ package body ALI_Parser is
                    (LI_Handler_Record with
                       Db => Db,
                       Registry => Project_Registry (Registry),
-                      Lang_Handler => Lang_Handler);
+                      Lang_Handler => Lang_Handler,
+                      Unmangle_Pd => null);
    end Create_ALI_Handler;
 
    --------------------
@@ -782,6 +783,82 @@ package body ALI_Parser is
                Current_Sfile         : in out Sdep_Id;
                First_Sect, Last_Sect : Nat)
             is
+               function CPP_Unmangled_Name
+                 (LI_Handler   : Entities.LI_Handler;
+                  Mangled_Name : String) return String;
+               --  Invoke the process executing c++filt and return the C++
+               --  unmangled name associated with Mangled_Name; if the process
+               --  is not available or its invocation fails then return "".
+
+               function CPP_Unmangled_Name
+                 (LI_Handler   : Entities.LI_Handler;
+                  Mangled_Name : String) return String
+               is
+                  use GNAT.Expect.TTY;
+                  use GNAT.Expect;
+                  Unmangle_Pd : constant access TTY_Process_Descriptor :=
+                                  ALI_Handler (LI_Handler).Unmangle_Pd;
+                  Cmd_Result  : Expect_Match;
+               begin
+                  if Unmangle_Pd = null then
+                     return "";
+                  end if;
+
+                  Send (Unmangle_Pd.all, Mangled_Name);
+
+                  Expect
+                    (Descriptor => Unmangle_Pd.all,
+                     Result     => Cmd_Result,
+                     Regexp     => ".*",
+                     Timeout    => 1_000);
+
+                  if Cmd_Result /= 1 then
+                     return "";
+                  end if;
+
+                  declare
+                     Result : constant String := Expect_Out (Unmangle_Pd.all);
+                     J : Natural;
+                     K : Natural;
+
+                  begin
+                     Flush (Unmangle_Pd.all);
+
+                     --  This is the format of the c++filt output (this code
+                     --  returns the name of the function)
+
+                     --    Class_Name::Function_Name(Args)
+
+                     J := Result'First;
+                     while J < Result'Last
+                       and then Result (J) /= ':'
+                     loop
+                        J := J + 1;
+                     end loop;
+
+                     if J > Result'Last - 2
+                       or else Result (J + 1) /= ':'
+                     then
+                        return "";
+                     end if;
+
+                     K := J + 2;
+                     while K < Result'Last
+                       and then Result (K) /= '('
+                     loop
+                        K := K + 1;
+                     end loop;
+
+                     if K = Result'Last then
+                        return "";
+                     else
+                        return Result (J + 2 .. K - 1);
+                     end if;
+                  end;
+               end CPP_Unmangled_Name;
+
+               --  Local variables
+
                Kind : constant Reference_Kind :=
                         Char_To_R_Kind (Xref.Table (Current_Ref).Rtype);
 
@@ -791,6 +868,8 @@ package body ALI_Parser is
                Ref           : Nat;
                Inst          : Entity_Instantiation;
                Current_Xref  : Xref_Record renames Xref.Table (Current_Ref);
+
+            --  Start of processing for Process_Entity_Ref
 
             begin
                if Current_Xref.Rtype = Array_Index_Reference then
@@ -883,14 +962,17 @@ package body ALI_Parser is
                   end if;
 
                   if Current_Xref.Imported_Lang = No_Name
-                    or else Get_Name_String (Current_Xref.Imported_Lang) /= "c"
+                    or else
+                      (Get_Name_String (Current_Xref.Imported_Lang) /= "c"
+                         and then
+                       Get_Name_String (Current_Xref.Imported_Lang) /= "cpp")
                   then
                      Location :=
                        (File   => Sfiles (Current_Sfile).File,
                         Line   => Integer (Current_Xref.Line),
                         Column => Visible_Column_Type (Current_Xref.Col));
 
-                  --  Handle references of entities imported from C
+                  --  Handle references of entities imported from C/C++
 
                   else
                      Set_Is_Imported (Entity);
@@ -907,13 +989,15 @@ package body ALI_Parser is
                         LI_Handler : constant Entities.LI_Handler :=
                                        Get_LI_Handler_By_Name
                                          (Handler.Lang_Handler, "GNU C/C++");
+                        Xref_Imported_Name : constant String :=
+                                       Get_Name_String
+                                         (Current_Xref.Imported_Name);
                         Iter       : Vector_Trie_Iterator;
 
                      begin
                         Iter :=
                           Start (Trie   => Get_Name_Index (LI_Handler),
-                                 Prefix => Get_Name_String
-                                             (Current_Xref.Imported_Name),
+                                 Prefix => Xref_Imported_Name,
                                  Is_Partial => False);
 
                         if not At_End (Iter) then
@@ -923,18 +1007,34 @@ package body ALI_Parser is
                         --  the reference has not been loaded yet!
 
                         else
-                           Location :=
-                             (File   => Sfiles (Current_Sfile).File,
-                              Line   => Integer (Current_Xref.Line),
-                              Column => Visible_Column_Type
-                                          (Current_Xref.Col));
+                           if Get_Name_String (Current_Xref.Imported_Lang)
+                             = "cpp"
+                           then
+                              Iter :=
+                                Start
+                                  (Trie   => Get_Name_Index (LI_Handler),
+                                   Prefix => CPP_Unmangled_Name
+                                              (LI_Handler, Xref_Imported_Name),
+                                   Is_Partial => False);
+                           end if;
 
-                           --  Indicate that this ALI has unresolved entities
-                           --  imported from C. Done to force reloading the
-                           --  LI file if such entity is eventually needed
-                           --  for sources navigation.
+                           if not At_End (Iter) then
+                              Location := Get_Declaration_Of (Get (Iter));
 
-                           Set_Has_Unresolved_Imported_Refs (Handler);
+                           else
+                              Location :=
+                                (File   => Sfiles (Current_Sfile).File,
+                                 Line   => Integer (Current_Xref.Line),
+                                 Column => Visible_Column_Type
+                                             (Current_Xref.Col));
+
+                              --  Indicate that this ALI has unresolved
+                              --  entities imported from C. Done to force
+                              --  reloading the LI file if such entity is
+                              --  eventually needed for sources navigation.
+
+                              Set_Has_Unresolved_Imported_Refs (Handler);
+                           end if;
                         end if;
                      end;
                   end if;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2000-2010, AdaCore                 --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,6 +60,12 @@ private
    type Cpp_Language is new Language.C.C_Language with null record;
 
    overriding function Get_Name (Lang : access Cpp_Language) return String;
+
+   overriding function Entities_Indexed (Self : Cpp_Language) return Boolean;
+   --  Unconditionally return True. This enables storing all the C++ entities
+   --  in the structure Entities_Search_Tries, and it is required to give
+   --  support for entities completion (see Completion-C packages) and
+   --  navigation in Ada sources through entities imported from C++.
 
    Cpp_Lang : constant Language_Access := new Cpp_Language;
 end Language.Cpp;

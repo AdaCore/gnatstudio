@@ -17,6 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+pragma Warnings (Off);
+with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
+pragma Warnings (On);
+
+with GNAT.Expect;                use GNAT.Expect;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with ALI_Parser;                 use ALI_Parser;
@@ -148,13 +153,33 @@ package body Cpp_Module is
       return Entities.LI_Handler
    is
       use GLI_Handler_Record_Pkg;
+      Arg : aliased String := "-n";
+      Pd  : TTY_Process_Descriptor;
 
    begin
-      return new GLI_Handler_Record'
-                   (LI_Handler_Record with
-                      Db => Db,
-                      Registry => Project_Registry (Registry),
-                      Lang_Handler => Lang_Handler);
+      begin
+         Non_Blocking_Spawn
+           (Descriptor  => Pd,
+            Command     => "c++filt",
+            Args        => (1 => Arg'Unrestricted_Access),
+            Buffer_Size => 0);
+
+         return new GLI_Handler_Record'
+                      (LI_Handler_Record with
+                       Db => Db,
+                       Registry => Project_Registry (Registry),
+                       Lang_Handler => Lang_Handler,
+                       Unmangle_Pd  => new TTY_Process_Descriptor'(Pd));
+
+      exception
+         when Invalid_Process =>
+            return new GLI_Handler_Record'
+                         (LI_Handler_Record with
+                          Db => Db,
+                          Registry => Project_Registry (Registry),
+                          Lang_Handler => Lang_Handler,
+                          Unmangle_Pd  => null);
+      end;
    end Create_CPP_Handler;
 
    ----------------------------

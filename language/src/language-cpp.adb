@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2000-2010, AdaCore                --
+--                   Copyright (C) 2000-2011, AdaCore                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -162,5 +162,15 @@ package body Language.Cpp is
    begin
       return "c++";
    end Get_Name;
+
+   ----------------------
+   -- Entities_Indexed --
+   ----------------------
+
+   overriding function Entities_Indexed (Self : Cpp_Language) return Boolean is
+      pragma Unreferenced (Self);
+   begin
+      return True;
+   end Entities_Indexed;
 
 end Language.Cpp;

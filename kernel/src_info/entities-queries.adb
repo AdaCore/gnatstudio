@@ -3800,7 +3800,14 @@ package body Entities.Queries is
                --  Nothing to do if the language is not used for the project
                --  or we don't want to include this language.
 
-               if Has_Language (P, Language => Lang)
+               if (Has_Language (P, Lang)
+                     --  Given that C and C++ share the LI handler (see
+                     --  CPP_Module.Register_Module), we must take care
+                     --  of C++ specifically.
+
+                     or else
+                       (Lang = "c"
+                          and then Has_Language (P, "C++")))
                  and then (Iter.Filter = null or else Iter.Filter (Lang))
                then
                   LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
