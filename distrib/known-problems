@@ -21,6 +21,11 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
               endings.
   Workaround: Use LF as line ending, or use standard diff options.
 
+- KA18-030: GPS: hang using smart completion on multi-language project
+  Problem:    GPS starts consuming too much CPU on large projects containing C
+              and/or C++ files.
+  Workaround: Disable Smart Completion in Preferences => Editor.
+
 - KA14-011: Loading projects that use a Project_Path variable
   Problem:    GPS introduced support for aggregate projects and their new
               Project_Path list attribute. Unfortunately, if your own
