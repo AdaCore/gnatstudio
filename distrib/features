@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-K907-014 GPS: Navigation across language boundary (2011-10-26)
+
+  GPS incorporates support for navigating through entities imported from C++.
+  This new feature requires compiling the C++ sources with the -fdump-xref
+  switch.
+
 NF-52-K121-030 GPS: Codefix support for unrequired out-mode (2011-10-21)
 
   Added support to automatically fix the warning reported by the GNAT
