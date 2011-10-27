@@ -157,6 +157,17 @@ package body Cpp_Module is
       Pd  : TTY_Process_Descriptor;
 
    begin
+      --  Disable temporarily launching the c++2filt subprocess???
+
+      if True then
+         return new GLI_Handler_Record'
+                      (LI_Handler_Record with
+                       Db => Db,
+                       Registry => Project_Registry (Registry),
+                       Lang_Handler => Lang_Handler,
+                       Unmangle_Pd  => null);
+      end if;
+
       begin
          Non_Blocking_Spawn
            (Descriptor  => Pd,
