@@ -28,6 +28,11 @@ NF-52-K907-014 GPS: Navigation from Ada to C++ (2011-10-26)
   GPS now incorporates support for navigating through Ada entities imported
   from C++.
 
+NF-52-K223-021 GPS: Automatic removal of Subversion errors (2011-10-28)
+
+  Errors emitted by Subversion are removed from the Locations view when the
+  file containing errors is committed successfully or reverted.
+
 NF-52-K121-030 GPS: Codefix support for unrequired out-mode (2011-10-21)
 
   Added support to automatically fix the warning reported by the GNAT

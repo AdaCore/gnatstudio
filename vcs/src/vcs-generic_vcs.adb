@@ -38,6 +38,7 @@ with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Console;           use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
@@ -1559,6 +1560,10 @@ package body VCS.Generic_VCS is
       Matches       : Match_Array (0 .. Command.Parser.Matches_Num);
       Num_Matches   : Natural := 0;
       Status_Update : Boolean := False;
+
+      use File_Status_List;
+      N : File_Status_List.List_Node;
+      R : File_Status_Record;
    begin
       if S'Last = 0 then
          --  Empty text, nothing to do, this happen when doing a diff on a
@@ -1594,6 +1599,31 @@ package body VCS.Generic_VCS is
                Force_Display  => True,
                Clear_Logs     => Command.Clear_Logs,
                Display        => True);
+
+            --  Remove any error messages in the Locations view for all the
+            --  files that have an 'Up to date' status.
+
+            N := First (Command.Status);
+            while N /= File_Status_List.Null_Node loop
+               R := Data (N);
+               if R.Status = Up_To_Date then
+                  declare
+                     Msgs : constant Message_Array :=
+                       GPS.Kernel.Messages.Get_Messages
+                         (Self     => Get_Messages_Container
+                              (Command.Rep.Kernel),
+                          Category => To_Unbounded_String
+                            (Command.Rep.Name & " errors"),
+                          File     => R.File);
+                  begin
+                     for J in Msgs'Range loop
+                        Msgs (J).Remove;
+                     end loop;
+                  end;
+               end if;
+
+               N := Next (N);
+            end loop;
 
             Run_Hook (Command.Rep.Kernel, Status_Parsed_Hook);
 
