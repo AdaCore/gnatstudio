@@ -50,6 +50,13 @@ package Entities.Tooltips_Assistant is
    --  If comments associated with the entity are found, Comment_Found is set
    --  to True.
 
+   function Get_Tooltip_Documentation
+     (Handler  : Language_Handler;
+      Database : Construct_Database_Access;
+      Entity   : Entity_Information) return String;
+   --  Return the documentation for the entity (prefixed by a LF char if not
+   --  null)
+
    function Get_Tooltip_Header
       (Entity : Entity_Information) return String;
    --  Return a string in pango markup format to represent the header of a
