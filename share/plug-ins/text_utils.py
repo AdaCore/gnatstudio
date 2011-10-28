@@ -20,6 +20,7 @@ See also emacs.xml
 import GPS
 import string, traceback
 import navigation_utils
+import gtk
 from gps_utils import *
 
 GPS.Preference ("Plugins/emacs/transient_mark").create (
@@ -103,6 +104,20 @@ class Zap_To_Char(CommandWindow):
     def on_changed(self, input, cursor_pos):
         delete_until_char(char=input)
         self.destroy()
+
+@interactive ("Editor",  name="toggle wrapping")
+def toggle_editor_wrapping():
+    """Toggle word wrapping in the current editor"""
+
+    buffer  = GPS.EditorBuffer.get ()
+    v = buffer.current_view()
+    from pygps import get_widgets_by_type
+    text_view = get_widgets_by_type(gtk.TextView, v.pywidget())[0]
+    if text_view.get_wrap_mode() == gtk.WRAP_NONE:
+        text_view.set_wrap_mode(gtk.WRAP_WORD)
+    else:
+        text_view.set_wrap_mode(gtk.WRAP_NONE)
+
 
 @interactive ("Editor", in_ada_file, name="subprogram box")
 @with_save_excursion

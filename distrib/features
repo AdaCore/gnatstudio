@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-KA28-027 GPS: new Editor action "toggle wrapping" (2011-10-28)
+
+  A new action "toggle wrapping" is defined in the plugin text_utils.py,
+  and can be associated to a key binding in the Key Shortcuts editor to
+  conveniently switch between no wrapping and word wrapping in the current
+  editor.
+
 NF-52-K907-014 GPS: Navigation from Ada to C++ (2011-10-26)
 
   GPS now incorporates support for navigating through Ada entities imported
