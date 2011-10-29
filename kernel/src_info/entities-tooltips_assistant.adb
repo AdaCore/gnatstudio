@@ -112,6 +112,24 @@ package body Entities.Tooltips_Assistant is
          Comment_Found => Comment_Found);
    end Get_Tooltip_Documentation;
 
+   -------------------------------
+   -- Get_Tooltip_Documentation --
+   -------------------------------
+
+   function Get_Tooltip_Documentation
+     (Handler  : Language_Handler;
+      Database : Construct_Database_Access;
+      Entity   : Entity_Information) return String
+   is
+      Comment_Found : aliased Boolean := False;
+   begin
+      return Get_Tooltip_Documentation
+        (Handler,
+         Database,
+         Entity,
+         Comment_Found'Access);
+   end Get_Tooltip_Documentation;
+
    -----------------------------
    -- Get_Tooltip_Information --
    -----------------------------
