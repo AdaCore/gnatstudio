@@ -315,7 +315,8 @@ package body ALI_Parser is
                       Db => Db,
                       Registry => Project_Registry (Registry),
                       Lang_Handler => Lang_Handler,
-                      Unmangle_Pd => null);
+                      Unmangle_Pd => null,
+                      Launch_Unmangle_Subprocess => False);
    end Create_ALI_Handler;
 
    --------------------
@@ -796,12 +797,45 @@ package body ALI_Parser is
                is
                   use GNAT.Expect.TTY;
                   use GNAT.Expect;
-                  Unmangle_Pd : constant access TTY_Process_Descriptor :=
-                                  ALI_Handler (LI_Handler).Unmangle_Pd;
-                  Cmd_Result  : Expect_Match;
+
+                  Cmd_Result     : Expect_Match;
+                  Launch_Process : Boolean renames
+                                     ALI_Handler
+                                       (LI_Handler).Launch_Unmangle_Subprocess;
+                  Unmangle_Pd    : access TTY_Process_Descriptor renames
+                                     ALI_Handler (LI_Handler).Unmangle_Pd;
+                  Pd             : TTY_Process_Descriptor;
+                  Pd_Arg         : aliased String := "-n";
+
                begin
+                  --  Handle lazy creation of the subprocess
+
                   if Unmangle_Pd = null then
-                     return "";
+                     if not Launch_Process then
+                        return "";
+
+                     else
+                        Launch_Process := False;
+
+                        begin
+                           Non_Blocking_Spawn
+                             (Descriptor  => Pd,
+                              Command     => "c++filt",
+                              Args        => (1 => Pd_Arg'Unrestricted_Access),
+                              Buffer_Size => 0);
+
+                           --  Delay required to ensure that the first request
+                           --  to the c++filt program is properly processed.
+
+                           delay 0.1;
+
+                           Unmangle_Pd := new TTY_Process_Descriptor'(Pd);
+
+                        exception
+                           when Invalid_Process =>
+                              return "";
+                        end;
+                     end if;
                   end if;
 
                   Send (Unmangle_Pd.all, Mangled_Name);
@@ -1634,6 +1668,21 @@ package body ALI_Parser is
       Unchecked_Free (Iter.Files);
       Thaw (Iter.Handler.Db);
    end Free;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Handler : in out ALI_Handler_Record) is
+      Status : Integer;
+      pragma Unreferenced (Status);
+   begin
+      Destroy (Entities.LI_Handler_Record (Handler));
+
+      if Handler.Unmangle_Pd /= null then
+         Handler.Unmangle_Pd.Close (Status);
+      end if;
+   end Destroy;
 
    -----------------------------
    -- Generate_LI_For_Project --

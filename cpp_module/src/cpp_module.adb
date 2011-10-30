@@ -153,44 +153,14 @@ package body Cpp_Module is
       return Entities.LI_Handler
    is
       use GLI_Handler_Record_Pkg;
-      Arg : aliased String := "-n";
-      Pd  : TTY_Process_Descriptor;
-
    begin
-      --  Disable temporarily launching the c++2filt subprocess???
-
-      if True then
-         return new GLI_Handler_Record'
-                      (LI_Handler_Record with
-                       Db => Db,
-                       Registry => Project_Registry (Registry),
-                       Lang_Handler => Lang_Handler,
-                       Unmangle_Pd  => null);
-      end if;
-
-      begin
-         Non_Blocking_Spawn
-           (Descriptor  => Pd,
-            Command     => "c++filt",
-            Args        => (1 => Arg'Unrestricted_Access),
-            Buffer_Size => 0);
-
-         return new GLI_Handler_Record'
-                      (LI_Handler_Record with
-                       Db => Db,
-                       Registry => Project_Registry (Registry),
-                       Lang_Handler => Lang_Handler,
-                       Unmangle_Pd  => new TTY_Process_Descriptor'(Pd));
-
-      exception
-         when Invalid_Process =>
-            return new GLI_Handler_Record'
-                         (LI_Handler_Record with
-                          Db => Db,
-                          Registry => Project_Registry (Registry),
-                          Lang_Handler => Lang_Handler,
-                          Unmangle_Pd  => null);
-      end;
+      return new GLI_Handler_Record'
+                   (LI_Handler_Record with
+                    Db => Db,
+                    Registry => Project_Registry (Registry),
+                    Lang_Handler => Lang_Handler,
+                    Unmangle_Pd  => null,
+                    Launch_Unmangle_Subprocess => True);
    end Create_CPP_Handler;
 
    ----------------------------

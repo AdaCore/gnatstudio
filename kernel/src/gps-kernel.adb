@@ -1425,13 +1425,13 @@ package body GPS.Kernel is
          --  owning references to entities
 
          Destroy (Handle.Database);
-
-         --  Remove the language handlers (used for xref). This needs to be
-         --  done after finalizing the xref database, source_files contain a
-         --  pointer to their language handler.
-
-         Destroy (Language_Handler (Handle.Lang_Handler));
       end if;
+
+      --  Remove the language handlers (used for xref). This needs to be done
+      --  after finalizing the xref database, source_files contain a pointer
+      --  to their language handler.
+
+      Destroy (Language_Handler (Handle.Lang_Handler));
 
       Unchecked_Free (Handle.Refactoring);
 

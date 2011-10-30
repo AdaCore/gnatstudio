@@ -40,16 +40,24 @@ package ALI_Parser is
    type ALI_Handler_Record is new Entities.LI_Handler_Record with record
       Db           : Entities.Entities_Database;
       Registry     : Projects.Project_Registry;
+
       Lang_Handler : Language_Handlers.Language_Handler;
       --  Field used to store the languages handler of the kernel; used to
       --  obtain the LI handler of entities imported from other languages
-      Unmangle_Pd  : access GNAT.Expect.TTY.TTY_Process_Descriptor;
-      --  Descriptor of process used to unmangle names; null if not required.
+
+      Unmangle_Pd     : access GNAT.Expect.TTY.TTY_Process_Descriptor;
+      --  Descriptor of process used to unmangle names; null if not required
+      --  or not available.
+
+      Launch_Unmangle_Subprocess : Boolean;
+      --  Flag used to avoid retrying launching the process used to unmangle
+      --  names when its associated program is not available in the system
    end record;
 
    type ALI_Handler is access all ALI_Handler_Record'Class;
    --  Generic ALI handler. Can be overriden for e.g. GCC .gli files.
 
+   overriding procedure Destroy (Handler : in out ALI_Handler_Record);
    overriding function Get_Name (LI : access ALI_Handler_Record) return String;
    overriding function Get_Source_Info
      (Handler               : access ALI_Handler_Record;
