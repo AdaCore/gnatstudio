@@ -2789,9 +2789,10 @@ package body Codefix.GNAT_Parser is
       elsif First_Word = "variable" then
          Category := Cat_Variable;
          Operation_Mask := Options.Remove_Policy;
-      elsif First_Word = "constant"
-        or else First_Word = "named number"
-      then
+      elsif First_Word = "constant" then
+         Category := Cat_Variable;
+         Operation_Mask := Options.Remove_Policy or Add_Pragma_Unreferenced;
+      elsif First_Word = "named number" then
          Category := Cat_Variable;
          Operation_Mask := Options.Remove_Policy;
       elsif First_Word = "parameter" then
