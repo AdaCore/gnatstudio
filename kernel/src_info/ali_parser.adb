@@ -789,7 +789,8 @@ package body ALI_Parser is
                   Mangled_Name : String) return String;
                --  Invoke the process executing c++filt and return the C++
                --  unmangled name associated with Mangled_Name; if the process
-               --  is not available or its invocation fails then return "".
+               --  is not available or its invocation fails then return
+               --  Mangled_Name.
 
                function CPP_Unmangled_Name
                  (LI_Handler   : Entities.LI_Handler;
@@ -812,12 +813,13 @@ package body ALI_Parser is
 
                   if Unmangle_Pd = null then
                      if not Launch_Process then
-                        return "";
-
+                        return Mangled_Name;
                      else
                         Launch_Process := False;
 
                         begin
+                           --  ??? hard coded c++filt here, should use the
+                           --  corresponding project property instead
                            Non_Blocking_Spawn
                              (Descriptor  => Pd,
                               Command     => "c++filt",
@@ -826,14 +828,14 @@ package body ALI_Parser is
 
                            --  Delay required to ensure that the first request
                            --  to the c++filt program is properly processed.
+                           --  This is kludgy, why is this really needed???
 
                            delay 0.1;
-
                            Unmangle_Pd := new TTY_Process_Descriptor'(Pd);
 
                         exception
                            when Invalid_Process =>
-                              return "";
+                              return Mangled_Name;
                         end;
                      end if;
                   end if;
@@ -847,7 +849,7 @@ package body ALI_Parser is
                      Timeout    => 1_000);
 
                   if Cmd_Result /= 1 then
-                     return "";
+                     return Mangled_Name;
                   end if;
 
                   declare
@@ -873,7 +875,7 @@ package body ALI_Parser is
                      if J > Result'Last - 2
                        or else Result (J + 1) /= ':'
                      then
-                        return "";
+                        return Mangled_Name;
                      end if;
 
                      K := J + 2;
@@ -884,7 +886,7 @@ package body ALI_Parser is
                      end loop;
 
                      if K = Result'Last then
-                        return "";
+                        return Mangled_Name;
                      else
                         return Result (J + 2 .. K - 1);
                      end if;
