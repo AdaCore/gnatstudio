@@ -35,10 +35,10 @@ NF-52-K907-014 GPS: Navigation from Ada to C++ (2011-10-26)
   GPS now incorporates support for navigating through Ada entities imported
   from C++.
 
-NF-52-K401-026 GPS: Quick fix alternative for unreferenced objects (2011-10-31)
+NF-52-K401-026 Quick fix alternative for unreferenced objects (2011-10-31)
 
-  Codefix now proposes two alternatives to quick fix an unreferenced object:
-  either to remove the object declaration or to add pragma unreferenced.
+  Two alternatives are now suggested to quick fix an unreferenced object:
+  either remove the object declaration or add a pragma unreferenced.
 
 NF-52-K223-021 GPS: Automatic removal of Subversion errors (2011-10-28)
 
