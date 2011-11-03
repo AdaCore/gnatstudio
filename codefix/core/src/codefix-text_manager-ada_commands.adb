@@ -2694,7 +2694,7 @@ package body Codefix.Text_Manager.Ada_Commands is
            Current_Text.Search_Token (Comp_Cursor, True_Tok);
       begin
          Current_Text.Replace
-           (Comp_Cursor, True_Cursor, "", One, One);
+           (Comp_Cursor, True_Cursor, "", One, Keep);
 
          if Not_Cursor /= Null_File_Cursor then
             Current_Text.Replace
