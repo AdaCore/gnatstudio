@@ -1377,11 +1377,13 @@ package body Language.Tree.Database is
       Db    : access Construct_Database)
    is
    begin
-      for J in This'Range loop
-         Delete (Db.Entities_Db, This (J));
-      end loop;
+      if This /= null then
+         for J in This'Range loop
+            Delete (Db.Entities_Db, This (J));
+         end loop;
 
-      Unchecked_Free (This);
+         Unchecked_Free (This);
+      end if;
    end Free;
 
    -----------
