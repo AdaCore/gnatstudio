@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2010, AdaCore                 --
+--                  Copyright (C) 2006-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1372,11 +1372,13 @@ package body Language.Tree.Database is
       Db    : access Construct_Database)
    is
    begin
-      for J in This'Range loop
-         Delete (Db.Entities_Db'Access, This (J));
-      end loop;
+      if This /= null then
+         for J in This'Range loop
+            Delete (Db.Entities_Db'Access, This (J));
+         end loop;
 
-      Unchecked_Free (This);
+         Unchecked_Free (This);
+      end if;
    end Free;
 
    -----------
