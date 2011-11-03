@@ -3538,8 +3538,10 @@ package body Ada_Analyzer is
 
                   if (P = Buffer'First
                       or else not Is_Alphanumeric (Buffer (P - 1)))
-                    and then (Is_Letter (Buffer (P + 1))
-                              or else Buffer (P + 1) = ' ')
+                    and then (P < Buffer'Last
+                       and then
+                          (Is_Letter (Buffer (P + 1))
+                              or else Buffer (P + 1) = ' '))
                   then
                      Preprocessor_Directive;
                   end if;
