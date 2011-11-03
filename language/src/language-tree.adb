@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2010, AdaCore                  --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -74,9 +74,10 @@ package body Language.Tree is
          for J in Tree.Contents'Range loop
             Construct_Annotations_Pckg.Free (Tree.Contents (J).Annotations);
          end loop;
+
+         Tree_Annotations_Pckg.Free (Tree.Annotations);
       end if;
 
-      Tree_Annotations_Pckg.Free (Tree.Annotations);
    end Free_Annotations;
 
    -----------------------
