@@ -52,6 +52,15 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
 
 Known Problems fixed in GPS 5.1.0 / GNATbench 2.6.0
 
+- KA20-035: GB: Internal error occurring during "loading construct database"
+  Problem:    When opening GNATbench, an Ada project or saving a gpr file,
+              a "Problem Occurred" window is displayed. It reports that an
+              internal error occurred loading construct database.
+              When asking for details, they can be:
+              - index check failed near ada_analyzer.adb:3541
+              - access check failed near language-tree.adb:79
+  Workaround: None known.
+
 - K920-014: GPS: Search and Replace in files with international characters
   Problem:    When launching a Search & Replace operation on files that are
               not viewed in an editor (for instance when replacing all
