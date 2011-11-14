@@ -702,6 +702,11 @@ package body VCS_View is
               (Result,
                File_Information (Context),
                Project_Information (Context));
+         elsif Has_Project_Information (Context) then
+            Set_File_Information
+              (Result,
+               Empty_File_Array,
+               Project_Information (Context));
          end if;
 
          Set_Context_Information
