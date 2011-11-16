@@ -2764,16 +2764,9 @@ Remove the comment delimiters from the current selection or line.
 
 @item Refill
 @cindex refill
-Refill text on the selection or current line according to the right
-margin as defined by the right margin preference
-(@pxref{The Preferences Dialog}).
-
-@item Refill with fmt
-@cindex refill
-@cindex fmt
-Refill text on the selection or current line using the external utility
-@code{fmt}. If @code{fmt} is not found on your system, this menu will not be
-displayed.
+Refill text on the selection or current line: rearrange line breaks in the
+paragraph so that line lengths do not exceed the maximum length, as
+set in the "Right margin" preference (@pxref{The Preferences Dialog}).
 
 @item Sort
 Sort the selected lines alphabetically. This is particularly useful when

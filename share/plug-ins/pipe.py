@@ -98,11 +98,6 @@ and replace it with the output of that command."""
    ShellProcess ()
 
 def on_gps_started (hook):
-   if os_utils.locate_exec_on_path ("fmt") != "":
-      Menu.create ("/Edit/Selection/Refill with fmt",
-                   ref = "Refill", add_before=False,
-                   on_activate=lambda menu: fmt_selection())
-
    parse_xml ("""
      <menu action="Pipe" after="Insert File...">
        <title>/Edit/Insert Shell Output...</title>
