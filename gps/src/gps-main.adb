@@ -118,6 +118,7 @@ with Project_Templates.GPS;
 with Docgen2_Module;
 with External_Editor_Module;
 with GNATStack.Module;
+with GNATTest_Module;
 with GPS.Location_View;
 with GVD_Module;
 with Help_Module;
@@ -202,6 +203,8 @@ procedure GPS.Main is
                               Create ("MODULE.GVD", GNATCOLL.Traces.On);
    Aunit_Trace            : constant Debug_Handle :=
                               Create ("MODULE.Aunit", GNATCOLL.Traces.On);
+   GNATTest_Trace         : constant Debug_Handle :=
+                              Create ("MODULE.GNATTest", GNATCOLL.Traces.On);
    Startup_Trace          : constant Debug_Handle :=
                               Create ("MODULE.Startup", GNATCOLL.Traces.On);
    VFS_Trace              : constant Debug_Handle :=
@@ -1395,6 +1398,10 @@ procedure GPS.Main is
 
       if Active (Aunit_Trace) then
          Aunit_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (GNATTest_Trace) then
+         GNATTest_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       KeyManager_Module.Register_Key_Menu (GPS_Main.Kernel);
