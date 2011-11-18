@@ -39,6 +39,11 @@ NF-51-KA12-012 GPS: Update of GNATCoverage integration (2011-10-20)
   GPS integration with GNATCoverage has been improved to support new targets
   and MCDC analysis in 'run' mode.
 
+NF-51-JA06-023 GPS: Support for SPARKClean (2011-11-18)
+
+  Support for the new SPARK tool SPARKClean has been added in GPS, to provide
+  menus to clean a project of SPARK artifacts.
+
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
