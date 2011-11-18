@@ -30,7 +30,7 @@ procedure GNATSpark is
 
    type Action_Kind is
      (Examiner, MetaExaminer, Pogs, Simplifier, SPARKMake, SPARKFormat,
-      SPARKSimp, ZombieScope, ViCToR);
+      SPARKSimp, SPARKClean, ZombieScope, ViCToR);
 
    Tool  : Unbounded_String;
    --  Action requested (i.e. spark tool to run), verbatim (case sensitive).
@@ -318,6 +318,10 @@ begin
 
       when SPARKMake | SPARKFormat =>
          Append (Switches, File.Display_Full_Name);
+
+      when SPARKClean =>
+         --  Nothing more to do for sparkclean
+         null;
 
       when SPARKSimp =>
          declare
