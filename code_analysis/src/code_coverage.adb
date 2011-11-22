@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2010, AdaCore                 --
+--                  Copyright (C) 2006-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,21 +17,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;        use Ada.Text_IO;
-with Ada.Strings;        use Ada.Strings;
-with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
-with GNAT.Regpat;        use GNAT.Regpat;
+with Ada.Text_IO;           use Ada.Text_IO;
+with Ada.Strings;           use Ada.Strings;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
+with GNAT.Regpat;           use GNAT.Regpat;
 with Glib;
-with GPS.Intl;           use GPS.Intl;
-with String_Utils;       use String_Utils;
-with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
-with GNATCOLL.Utils;     use GNATCOLL.Utils;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GPS.Intl;              use GPS.Intl;
+with String_Utils;          use String_Utils;
+with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNATCOLL.Traces;
-with Language;           use Language;
-with Code_Analysis_GUI;  use Code_Analysis_GUI;
-with Code_Coverage.Gcov; use Code_Coverage.Gcov;
-with Code_Coverage.Xcov; use Code_Coverage.Xcov;
+with Language;              use Language;
+with Code_Analysis_GUI;     use Code_Analysis_GUI;
+with Code_Coverage.Gcov;    use Code_Coverage.Gcov;
+with Code_Coverage.GNATcov; use Code_Coverage.GNATcov;
 with Coverage_GUI;
 
 with Traces; use Traces;
@@ -296,12 +296,12 @@ package body Code_Coverage is
             Set_Attribute (Loc, "coverage", Natural'Image (Coverage.Coverage));
          end if;
 
-         if Coverage.all in Xcov_Line_Coverage'Class then
+         if Coverage.all in GNATcov_Line_Coverage'Class then
             Set_Attribute
               (Loc,
                "status",
-               Xcov_Line_Coverage_Status'Image
-                 (Xcov_Line_Coverage (Coverage.all).Status));
+               GNATcov_Line_Coverage_Status'Image
+                 (GNATcov_Line_Coverage (Coverage.all).Status));
 
          elsif Coverage.all in Gcov_Line_Coverage'Class then
             Set_Attribute
@@ -370,7 +370,7 @@ package body Code_Coverage is
       --  Return the coverage status associated with an error message
 
       function Status_Value
-        (Status : String) return Xcov_Line_Coverage_Status;
+        (Status : String) return GNATcov_Line_Coverage_Status;
       --  Return the coverage status associated with an error message
 
       function Status_Value
@@ -402,9 +402,9 @@ package body Code_Coverage is
       end Status_Value;
 
       function Status_Value
-        (Status : String) return Xcov_Line_Coverage_Status is
+        (Status : String) return GNATcov_Line_Coverage_Status is
       begin
-         return Xcov_Line_Coverage_Status'Value (Status);
+         return GNATcov_Line_Coverage_Status'Value (Status);
 
       exception
          when Constraint_Error =>
@@ -432,9 +432,9 @@ package body Code_Coverage is
                   Gcov_Line_Coverage (Coverage.all).Status :=
                     Status_Value (Txt_Status);
 
-               when Coverage_GUI.Xcov =>
-                  Coverage := new Xcov_Line_Coverage;
-                  Xcov_Line_Coverage (Coverage.all).Status :=
+               when Coverage_GUI.GNATcov =>
+                  Coverage := new GNATcov_Line_Coverage;
+                  GNATcov_Line_Coverage (Coverage.all).Status :=
                     Status_Value (Txt_Status);
             end case;
 

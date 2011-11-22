@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2008-2010, AdaCore                  --
+--                 Copyright (C) 2008-2011, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,9 +21,9 @@ with GNATCOLL.VFS;
 with GPS.Editors.Line_Information;
 with GPS.Kernel;
 
-package Code_Coverage.Xcov is
+package Code_Coverage.GNATcov is
 
-   type Xcov_Line_Coverage_Status is
+   type GNATcov_Line_Coverage_Status is
      (Undetermined,
       No_Code,
       Not_Covered,
@@ -34,27 +34,28 @@ package Code_Coverage.Xcov is
       Branch_Covered,
       Covered_No_Branch);
 
-   subtype Xcov_Partially_Covered is
-     Xcov_Line_Coverage_Status range Partially_Covered .. Branch_Fallthrough;
+   subtype GNATcov_Partially_Covered is
+     GNATcov_Line_Coverage_Status
+       range Partially_Covered .. Branch_Fallthrough;
 
-   subtype Xcov_Fully_Covered is
-     Xcov_Line_Coverage_Status range Branch_Covered .. Covered_No_Branch;
+   subtype GNATcov_Fully_Covered is
+     GNATcov_Line_Coverage_Status range Branch_Covered .. Covered_No_Branch;
 
-   type Xcov_Line_Coverage is new Code_Analysis.Line_Coverage with record
-      Status : Xcov_Line_Coverage_Status := Undetermined;
+   type GNATcov_Line_Coverage is new Code_Analysis.Line_Coverage with record
+      Status : GNATcov_Line_Coverage_Status := Undetermined;
    end record;
 
-   type Xcov_Line_Coverage_Access is access all Xcov_Line_Coverage'Class;
+   type GNATcov_Line_Coverage_Access is access all GNATcov_Line_Coverage'Class;
 
-   overriding function Is_Valid (Self : Xcov_Line_Coverage) return Boolean;
+   overriding function Is_Valid (Self : GNATcov_Line_Coverage) return Boolean;
 
    overriding function Line_Coverage_Info
-     (Coverage : Xcov_Line_Coverage;
+     (Coverage : GNATcov_Line_Coverage;
       Bin_Mode : Boolean := False)
       return GPS.Editors.Line_Information.Line_Information_Record;
 
    overriding procedure Add_Location_If_Uncovered
-     (Coverage    : Xcov_Line_Coverage;
+     (Coverage    : GNATcov_Line_Coverage;
       Kernel      : GPS.Kernel.Kernel_Handle;
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
@@ -69,4 +70,4 @@ package Code_Coverage.Xcov is
    --  Parse the File_Contents and fill the File_Node with gcov info
    --  And set Line_Count and Covered_Lines
 
-end Code_Coverage.Xcov;
+end Code_Coverage.GNATcov;

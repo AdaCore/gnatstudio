@@ -1,4 +1,4 @@
-""" Provides Xcov related menus under Tools->Coverage.
+""" Provides GNATcov related menus under Tools->Coverage.
 """
 
 
@@ -9,35 +9,35 @@
 import GPS, os.path, os_utils;
 
 def on_preferences_changed (name):
-   global xcov_menu_separator
+   global gnatcov_menu_separator
 
-   xcov_menu = GPS.Menu.get ("/Tools/Coverage/Xcov")
+   gnatcov_menu = GPS.Menu.get ("/Tools/Coverage/GNATcov")
    toolchain = GPS.Preference("Coverage-Toolchain").get()
 
-   if toolchain == "Xcov":
-      xcov_menu.show()
-      xcov_menu_separator.show()
+   if toolchain == "GNATcov":
+      gnatcov_menu.show()
+      gnatcov_menu_separator.show()
 
    else:
-      xcov_menu.hide()
-      xcov_menu_separator.hide()
+      gnatcov_menu.hide()
+      gnatcov_menu_separator.hide()
 
-#  Check for Xcov
+#  Check for GNATcov
 
 def on_gps_started (hook_name):
-  global xcov_menu_separator
+  global gnatcov_menu_separator
 
   pref = GPS.Preference ("Coverage-Toolchain")
 
-  if os_utils.locate_exec_on_path ("xcov") != "":
-    xcov_menu_separator = GPS.Menu.create ("/Tools/Covera_ge/-")
+  if os_utils.locate_exec_on_path ("gnatcov") != "":
+    gnatcov_menu_separator = GPS.Menu.create ("/Tools/Covera_ge/-")
     GPS.parse_xml ("""
   <!--  Program execution under instrumented execution environment  -->
 
-  <target-model name="xcov-run" category="">
-    <description>Run under Xcov for code coverage</description>
+  <target-model name="gnatcov-run" category="">
+    <description>Run under GNATcov for code coverage</description>
     <command-line>
-      <arg>xcov</arg>
+      <arg>gnatcov</arg>
       <arg>run</arg>
     </command-line>
     <icon>gps-build-all</icon>
@@ -58,8 +58,8 @@ def on_gps_started (hook_name):
     </switches>
   </target-model>
 
-  <target model="xcov-run" category="Run with Xcov" name="Run under Xcov"
-          menu="/Tools/Coverage/Xcov/">
+  <target model="gnatcov-run" category="Run with GNATcov" name="Run under GNATcov"
+          menu="/Tools/Coverage/GNATcov/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -67,7 +67,7 @@ def on_gps_started (hook_name):
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <command-line>
-      <arg>xcov</arg>
+      <arg>gnatcov</arg>
       <arg>run</arg>
       <arg>--target=powerpc-elf</arg>
       <arg>%TT</arg>
@@ -78,10 +78,10 @@ def on_gps_started (hook_name):
 
   <!--  Coverage report generation  -->
 
-  <target-model name="xcov-coverage" category="">
-    <description>Code coverage with Xcov</description>
+  <target-model name="gnatcov-coverage" category="">
+    <description>Code coverage with GNATcov</description>
     <command-line>
-      <arg>xcov</arg>
+      <arg>gnatcov</arg>
       <arg>coverage</arg>
       <arg>--level=insn</arg>
       <arg>--annotate=xcov</arg>
@@ -101,8 +101,8 @@ def on_gps_started (hook_name):
                      title="Source MCDC Coverage"/>
       </combo>
       <combo label="Annotate" switch="--annotate" separator="=" column="1">
-        <combo-entry label="Xcov" value="xcov"/>
-        <combo-entry label="Xcov + Annotations" value="xcov+"/>
+        <combo-entry label="GNATcov" value="xcov"/>
+        <combo-entry label="GNATcov + Annotations" value="xcov+"/>
       </combo>
       <field label="SCO list" switch="--scos=" separator="@" as-file="true"/>
       <field label="Routine list" switch="--routines=" separator="@"
@@ -111,8 +111,8 @@ def on_gps_started (hook_name):
     </switches>
   </target-model>
 
-  <target model="xcov-coverage" category="Coverage with Xcov"
-          name="Generate Xcov Main Report" menu="/Tools/Coverage/Xcov/">
+  <target model="gnatcov-coverage" category="Coverage with GNATcov"
+          name="Generate GNATcov Main Report" menu="/Tools/Coverage/GNATcov/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -120,7 +120,7 @@ def on_gps_started (hook_name):
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <command-line>
-      <arg>xcov</arg>
+      <arg>gnatcov</arg>
       <arg>coverage</arg>
       <arg>--level=insn</arg>
       <arg>--annotate=xcov</arg>
@@ -130,15 +130,15 @@ def on_gps_started (hook_name):
     </command-line>
   </target>
 
-  <target model="xcov-coverage" category="Coverage with Xcov"
-          name="Custom Xcov Report..." menu="/Tools/Coverage/Xcov/">
+  <target model="gnatcov-coverage" category="Coverage with GNATcov"
+          name="Custom GNATcov Report..." menu="/Tools/Coverage/GNATcov/">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
     <read-only>TRUE</read-only>
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <command-line>
-      <arg>xcov</arg>
+      <arg>gnatcov</arg>
       <arg>coverage</arg>
       <arg>--level=insn</arg>
       <arg>--annotate=xcov</arg>
