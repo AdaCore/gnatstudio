@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2010, AdaCore                 --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +33,7 @@ package body Breakpoints_Pkg.Callbacks is
       Breakpoints : constant Breakpoints_Access :=
                       Breakpoints_Access (Object);
    begin
-      Set_Sensitive (Breakpoints.File_Combo, True);
+      Set_Sensitive (Breakpoints.File_Name, True);
       Set_Sensitive (Breakpoints.Line_Spin, True);
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
@@ -53,7 +53,7 @@ package body Breakpoints_Pkg.Callbacks is
       Breakpoints : constant Breakpoints_Access :=
                       Breakpoints_Access (Object);
    begin
-      Set_Sensitive (Breakpoints.File_Combo, False);
+      Set_Sensitive (Breakpoints.File_Name, False);
       Set_Sensitive (Breakpoints.Line_Spin, False);
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Set_Sensitive (Breakpoints.Subprogram_Combo, True);
@@ -72,7 +72,7 @@ package body Breakpoints_Pkg.Callbacks is
    is
       Breakpoints : constant Breakpoints_Access := Breakpoints_Access (Object);
    begin
-      Set_Sensitive (Breakpoints.File_Combo, False);
+      Set_Sensitive (Breakpoints.File_Name, False);
       Set_Sensitive (Breakpoints.Line_Spin, False);
       Set_Sensitive (Breakpoints.Address_Combo, True);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
@@ -91,7 +91,7 @@ package body Breakpoints_Pkg.Callbacks is
    is
       Breakpoints : constant Breakpoints_Access := Breakpoints_Access (Object);
    begin
-      Set_Sensitive (Breakpoints.File_Combo, False);
+      Set_Sensitive (Breakpoints.File_Name, False);
       Set_Sensitive (Breakpoints.Line_Spin, False);
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);

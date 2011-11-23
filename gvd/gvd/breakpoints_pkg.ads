@@ -54,7 +54,7 @@ package Breakpoints_Pkg is
       Vbox2                      : Gtk_Vbox;
       Frame12                    : Gtk_Frame;
       Location_Selected          : Gtk_Radio_Button;
-      File_Combo                 : Gtk_Combo_Box;
+      File_Name                  : Gtk_Entry;
       Line_Spin                  : Gtk_Spin_Button;
       Subprogram_Selected        : Gtk_Radio_Button;
       Subprogram_Combo           : Gtk_Combo_Box;

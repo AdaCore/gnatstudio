@@ -339,9 +339,9 @@ package body Breakpoints_Editor is
 
       Update_Breakpoint_List (View);
 
-      --  Reinitialize the contents of the file combo boxes
+      --  Reinitialize the contents of the file name entry
       Set_Text
-        (Gtk_Entry (View.Editor.File_Combo.Get_Child),
+        (View.Editor.File_Name,
          +Base_Name (Get_Current_File (Get_Process (View).Editor_Text)));
       --  ??? What if the filesystem path is non-UTF8?
 
@@ -409,7 +409,7 @@ package body Breakpoints_Editor is
       --  Return in the combo boxes should activate them
 
       Widget_Callback.Object_Connect
-        (Gtk_Entry (Widget.Editor.File_Combo.Get_Child),
+        (Widget.Editor.File_Name,
          Gtk.GEntry.Signal_Activate,
          Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
          Widget);
@@ -573,8 +573,7 @@ package body Breakpoints_Editor is
 
          if Br.File /= GNATCOLL.VFS.No_File then
             Set_Active (View.Editor.Location_Selected, True);
-            Add_Unique_Combo_Entry
-              (View.Editor.File_Combo, +Base_Name (Br.File), True);
+            Set_Text (View.Editor.File_Name, +Base_Name (Br.File));
             --  ??? What if the filesystem path is non-UTF8?
             Set_Value (View.Editor.Line_Spin, Grange_Float (Br.Line));
 
@@ -870,7 +869,7 @@ package body Breakpoints_Editor is
       if Get_Active (View.Editor.Location_Selected) then
          declare
             File : constant Filesystem_String :=
-                     +Get_Active_Text (View.Editor.File_Combo);
+                     +Get_Text (View.Editor.File_Name);
             --  ??? What if the filesystem path is non-UTF8?
 
             Line : constant Integer :=

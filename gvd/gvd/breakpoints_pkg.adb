@@ -109,9 +109,12 @@ package body Breakpoints_Pkg is
       Set_Line_Wrap (Label, False);
       Pack_Start (HBox, Label, False, False, 0);
 
-      Gtk_New_Combo_Text_With_Entry (Breakpoints.File_Combo);
-      Breakpoints.File_Combo.Append_Text ("");
-      Pack_Start (HBox, Breakpoints.File_Combo, True, True, 0);
+      Gtk_New (Breakpoints.File_Name);
+      Set_Editable (Breakpoints.File_Name, True);
+      Set_Max_Length (Breakpoints.File_Name, 0);
+      Set_Text (Breakpoints.File_Name, "");
+      Set_Visibility (Breakpoints.File_Name, True);
+      Pack_Start (HBox, Breakpoints.File_Name, True, True, 0);
 
       Gtk_New (Label, -("Line:"));
       Set_Alignment (Label, 1.0, 0.5);
