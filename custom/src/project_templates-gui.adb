@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2010, AdaCore                  --
+--                    Copyright (C) 2010-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -192,6 +192,9 @@ package body Project_Templates.GUI is
       Filter  : Gtk_File_Filter;
       Label   : Gtk_Label;
       Box     : Gtk_Box;
+
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
    begin
       Initialize_Vbox (Widget);
       Widget.Template := Template;
@@ -211,6 +214,7 @@ package body Project_Templates.GUI is
       Add_Mime_Type (Filter, "x-directory/normal");
       Set_Name (Filter, "Directories only");
       Add_Filter (+Widget.Chooser, Filter);
+      Dummy := Set_Filename (+Widget.Chooser, +Get_Current_Dir.Full_Name.all);
 
       Gtk_New_Hbox (Box);
       Pack_End (Widget, Box, False, False, 3);
