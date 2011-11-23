@@ -31,7 +31,7 @@ project Shared is
       case Build is
          when "Debug" =>
             for Default_Switches ("Ada") use
-              ("-g", "-O0", "-gnatan", "-gnatVa", "-gnatQ", "-gnatygO",
+              ("-g", "-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
                "-gnatwaCJe", "-gnat05", "-gnateE");
 
             for Default_Switches ("C") use
