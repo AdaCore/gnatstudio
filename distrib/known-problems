@@ -8,11 +8,6 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- KA13-020: GPS: skeleton.py doesn't always insert header
-  Problem:    If you activate the skeleton.py plugin, the extra text is only
-              inserted for the first new file you create.
-  Workaround: Save the first new file before opening a new one.
-
 - K926-014: GB: GNATbench freezes when viewing/editing Ada files
   Problem:    Randomly when using the GNATbench Ada editor for code edition
               or program debug, GNATbench freezes. The only solution to get
