@@ -630,8 +630,14 @@ package body GPS.Kernel.Project is
       Reloaded : Boolean;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
-      Kernel.Registry.Tree.Reload_If_Needed
-        (Reloaded, Report_Error'Unrestricted_Access);
+
+      begin
+         Kernel.Registry.Tree.Reload_If_Needed
+           (Reloaded, Report_Error'Unrestricted_Access);
+      exception
+         when Invalid_Project =>
+            Pop_State (Kernel_Handle (Kernel));
+      end;
 
       if Reloaded then
          Run_Hook (Kernel, Project_Changed_Hook);
