@@ -38,6 +38,11 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
               project defines a variable Project_Path, GPS fails to load it.
   Workaround: Rename the variable in all your projects.
 
+- KA13-020: GPS: skeleton.py doesn't always insert header
+  Problem:    If you activate the skeleton.py plugin, the extra text is only
+              inserted for the first new file you create.
+  Workaround: Save the first new file before opening a new one.
+
 - KA10-001: GPS: Interrupting a remotely executed program may crash GPS
   Problem:    When executing a program in remote mode, and then interrupting
               it, then GPS may crash.

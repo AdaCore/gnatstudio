@@ -645,8 +645,11 @@ package GPS.Kernel is
 
    procedure File_Edited
      (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File);
-   --  Runs the "file_edited" hook
+      File   : GNATCOLL.VFS.Virtual_File;
+      Force_Hook : Boolean := False);
+   --  Runs the "file_edited" hook.
+   --  If Force_Hook is True, the hook will always be emitted, otherwise it is
+   --  only emitted if the file wasn't opened yet.
 
    procedure Before_File_Saved
      (Handle : access Kernel_Handle_Record;

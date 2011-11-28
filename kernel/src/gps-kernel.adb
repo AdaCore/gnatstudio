@@ -533,12 +533,13 @@ package body GPS.Kernel is
 
    procedure File_Edited
      (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File;
+      Force_Hook : Boolean := False)
    is
       Files : File_Array_Access := Handle.Open_Files;
       Data  : aliased File_Hooks_Args;
    begin
-      if not Is_Open (Handle, File) then
+      if Force_Hook or else not Is_Open (Handle, File) then
          if Files = null then
             Handle.Open_Files := new File_Array (1 .. 1);
          else

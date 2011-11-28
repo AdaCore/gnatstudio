@@ -22,7 +22,10 @@ advanced contents containing for instance the current date.
 
 import GPS, os.path
 
-GPS.Preference ("Plugins/skeleton/skeleton").create (
+
+template_pref = "Plugins/skeleton/skeleton"
+
+GPS.Preference(template_pref).create(
   "Template", "multiline",
   """Text to insert in newly created files""",
   """------------------------------------------------------------------
@@ -30,9 +33,12 @@ GPS.Preference ("Plugins/skeleton/skeleton").create (
 ------------------------------------------------------------------
 """)
 
-def add_skeleton (hook_name, file):
-   # Only for new files:
-   if not os.path.exists (file.name()):
-      GPS.Editor.replace_text (file.name(), 1, 1, GPS.Preference ("Plugins/skeleton/skeleton").get())
+
+def add_skeleton(hook_name, file):
+    if not os.path.exists(file.name()):
+        # Only for new files
+        ed = GPS.EditorBuffer.get(file)
+        loc = GPS.EditorLocation(ed, 1, 1)
+        ed.insert(loc, GPS.Preference(template_pref).get())
 
 GPS.Hook ("file_edited").add (add_skeleton)
