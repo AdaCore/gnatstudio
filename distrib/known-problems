@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
 
+- KB28-040: GPS: crash when reloading a project that contains errors
+  Problem:    When using the menu /Project/Reload Project and the project
+              was modified manually and now contains errors, GPS reports
+              an unexpected exception and terminates.
+  Workaround: If you have doubt on your manual changes, try spawning a new
+              GPS to test it first. If the project is correct, you can then
+              reload it in your initial GPS.
+
 - KB11-003: GPS: Contextual menu broken on Project nodes in the VCS Explorer
   Problem:    When using the contextual menu on the "Project" nodes in the
               VCS Explorer, the corresponding action is not executed.
