@@ -604,15 +604,23 @@ package body GPS.Kernel.Scripts is
 
          declare
             Synchronous : constant Boolean := Command = "execute_action";
+            Action_Name : constant String := Nth_Arg (Data, 1);
             Action      : constant Action_Record_Access := Lookup_Action
-              (Kernel, Nth_Arg (Data, 1));
+              (Kernel, Action_Name);
             Context     : constant Selection_Context :=
                             Get_Current_Context (Kernel);
             Custom      : Command_Access;
             Args        : String_List_Access;
          begin
             if Action = null then
-               Set_Error_Msg (Data, -"No such registered action");
+               --  If the action was not found, this may be a dynamic menu:
+               --  attempt to execute it.
+
+               if Action_Name (Action_Name'First) = '/' then
+                  GPS.Kernel.Modules.UI.Execute_Menu (Kernel, Action_Name);
+               else
+                  Set_Error_Msg (Data, -"No such registered action");
+               end if;
 
             elsif Context = No_Context then
                Set_Error_Msg

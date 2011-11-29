@@ -140,6 +140,17 @@ package body GPS.Kernel.Modules.UI is
       end record;
    --  A contextual menu entry declared by a user or GPS itself internally
 
+   type Menu_Command_Record is new Interactive_Command with record
+      Kernel    : Kernel_Handle;
+      Menu_Name : GNAT.Strings.String_Access;
+   end record;
+   type Menu_Command is access all Menu_Command_Record'Class;
+   overriding function Execute
+     (Command : access Menu_Command_Record;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding procedure Free (X : in out Menu_Command_Record);
+   --  See doc for interactive commands
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Contextual_Menu_Record, Contextual_Menu_Access);
 
@@ -252,6 +263,65 @@ package body GPS.Kernel.Modules.UI is
    function Dir_Menu_Name (Path : String) return String;
    --  Return the directory name of a menu path. '/' is the menu separator.
    --  This subprogram handles pango markup correctly.
+
+   function Cleanup (Path : String) return String;
+   --  Remove duplicate // in Path
+
+   function Create_Command_For_Menu
+     (Kernel    : Kernel_Handle;
+      Full_Path : String) return Menu_Command;
+   --  Utility function: create a command for a given menu.
+
+   -----------------------------
+   -- Create_Command_For_Menu --
+   -----------------------------
+
+   function Create_Command_For_Menu
+     (Kernel    : Kernel_Handle;
+      Full_Path : String) return Menu_Command
+   is
+      Command   : Menu_Command;
+   begin
+      Command := new Menu_Command_Record;
+      Command.Kernel := Kernel;
+      Command.Menu_Name := new String'(Full_Path);
+      Register_Perma_Command (Kernel, Command);
+      return Command;
+   end Create_Command_For_Menu;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (X : in out Menu_Command_Record) is
+   begin
+      GNAT.Strings.Free (X.Menu_Name);
+   end Free;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Menu_Command_Record;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+      Menu : constant Gtk_Menu_Item := Find_Menu_Item
+        (Command.Kernel, Command.Menu_Name.all);
+   begin
+      if Menu /= null then
+         Trace (Me, "Executing " & Command.Menu_Name.all);
+         Activate (Menu);
+         return Success;
+      else
+         Console.Insert
+           (Command.Kernel,
+            (-"Can't execute ") & Command.Menu_Name.all,
+            Mode => Error);
+         return Failure;
+      end if;
+   end Execute;
 
    --------------------
    -- Base_Menu_Name --
@@ -1073,6 +1143,22 @@ package body GPS.Kernel.Modules.UI is
                Slot_Object => Item,
                User_Data   => (Kernel_Handle (Kernel), null, Filter));
          end if;
+
+         if Item.Get_Child /= null then
+            declare
+               Full : constant String :=
+                 Cleanup ("/" & Parent_Path & "/" & Item.Get_Label);
+            begin
+               Register_Action
+                 (Kernel      => Kernel,
+                  Name        => Full,
+                  Command     => Create_Command_For_Menu
+                    (Kernel_Handle (Kernel), Full),
+                  Description => "Menu " & Full,
+                  Filter      => Filter,
+                  Category    => "Menus");
+            end;
+         end if;
       end if;
    end Register_Menu;
 
@@ -1140,6 +1226,27 @@ package body GPS.Kernel.Modules.UI is
       when E : others => Trace (Exception_Handle, E);
    end Execute_Command;
 
+   -------------
+   -- Cleanup --
+   -------------
+
+   function Cleanup (Path : String) return String is
+      Output : String (Path'Range);
+      Index  : Natural := Output'First;
+   begin
+      for P in Path'Range loop
+         if Path (P) /= '_'
+           and then (Path (P) /= '/'
+                     or else P + 1 > Path'Last
+                     or else Path (P + 1) /= '/')
+         then
+            Output (Index) := Path (P);
+            Index := Index + 1;
+         end if;
+      end loop;
+      return Output (Output'First .. Index - 1);
+   end Cleanup;
+
    -------------------
    -- Register_Menu --
    -------------------
@@ -1162,36 +1269,14 @@ package body GPS.Kernel.Modules.UI is
    is
       use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
 
-      function Cleanup (Path : String) return String;
-      --  Remove duplicate // in Path
+      Full_Path  : constant String := Cleanup ('/' & Parent_Path & '/' & Text);
 
-      -------------
-      -- Cleanup --
-      -------------
-
-      function Cleanup (Path : String) return String is
-         Output : String (Path'Range);
-         Index  : Natural := Output'First;
-      begin
-         for P in Path'Range loop
-            if Path (P) /= '_'
-              and then (Path (P) /= '/'
-                        or else P + 1 > Path'Last
-                        or else Path (P + 1) /= '/')
-            then
-               Output (Index) := Path (P);
-               Index := Index + 1;
-            end if;
-         end loop;
-         return Output (Output'First .. Index - 1);
-      end Cleanup;
-
-      Accel_Path  : constant String :=
-                      Cleanup ("<gps>/" & Parent_Path & '/' & Text);
+      Accel_Path  : constant String := "<gps>" & Full_Path;
       Item        : Gtk_Menu_Item;
       Image       : Gtk_Image_Menu_Item;
       Pix         : Gtk_Image;
       Menu_Filter : Action_Filter := Filter;
+      The_Command : Interactive_Command_Access;
 
    begin
       if Stock_Image = "" then
@@ -1262,8 +1347,74 @@ package body GPS.Kernel.Modules.UI is
             User_Data   => (Kernel_Handle (Kernel), null, Menu_Filter));
       end if;
 
+      --  For every menu that we create, register an action.
+
+      --  If we already have an action or an interactive command, simply
+      --  reuse it.
+
+      if Action /= null then
+         The_Command := Action.Command;
+
+      elsif Command /= null then
+         The_Command := Command;
+
+      else
+
+         --  Otherwise, create the wrapper command which will launch the menu.
+
+         The_Command := Interactive_Command_Access
+           (Create_Command_For_Menu (Kernel_Handle (Kernel), Full_Path));
+      end if;
+
+      Register_Action
+        (Kernel      => Kernel,
+         Name        => Full_Path,
+         Command     => The_Command,
+         Description => "Menu " & Full_Path,
+         Filter      => Menu_Filter,
+         Category    => "Menus");
+
       return Item;
    end Register_Menu;
+
+   -----------------------
+   -- Register_MDI_Menu --
+   -----------------------
+
+   procedure Register_MDI_Menu
+     (Kernel     : Kernel_Handle;
+      Item_Name  : String;
+      Accel_Path : String)
+   is
+      pragma Unreferenced (Accel_Path);
+      Command   : Menu_Command;
+      Full_Path : constant String := "/Window/" & Item_Name;
+   begin
+      Command := Create_Command_For_Menu (Kernel, Full_Path);
+
+      Register_Action
+        (Kernel      => Kernel,
+         Name        => Full_Path,
+         Command     => Command,
+         Description => "Menu " & Full_Path,
+         Filter      => null,
+         Category    => "Menus");
+   end Register_MDI_Menu;
+
+   ------------------
+   -- Execute_Menu --
+   ------------------
+
+   procedure Execute_Menu
+     (Kernel    : Kernel_Handle;
+      Menu_Name : String)
+   is
+      Command : Menu_Command;
+   begin
+      Command := Create_Command_For_Menu (Kernel, Menu_Name);
+      Launch_Foreground_Command
+        (Kernel, Command, Destroy_On_Exit => False);
+   end Execute_Menu;
 
    ----------------
    -- Unmap_Menu --

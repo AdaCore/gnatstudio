@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2010, AdaCore                 --
+--                  Copyright (C) 2001-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,64 +22,14 @@ with Commands;                  use Commands;
 with GNAT.Strings;              use GNAT.Strings;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Intl;                  use GPS.Intl;
 with Ada.Unchecked_Deallocation;
 with Commands.Interactive;      use Commands.Interactive;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body GPS.Kernel.Actions is
 
-   Me : constant Debug_Handle := Create ("Actions");
-
    use Actions_Htable.String_Hash_Table;
-
-   type Menu_Command_Record is new Interactive_Command with record
-      Kernel    : Kernel_Handle;
-      Menu_Name : GNAT.Strings.String_Access;
-   end record;
-   type Menu_Command is access all Menu_Command_Record'Class;
-   overriding function Execute
-     (Command : access Menu_Command_Record;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   overriding procedure Free (X : in out Menu_Command_Record);
-   --  See doc for interactive commands
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (X : in out Menu_Command_Record) is
-   begin
-      Free (X.Menu_Name);
-   end Free;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Menu_Command_Record;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Context);
-      Menu : constant Gtk_Menu_Item := Find_Menu_Item
-        (Command.Kernel, Command.Menu_Name.all);
-   begin
-      if Menu /= null then
-         Trace (Me, "Executing " & Command.Menu_Name.all);
-         Activate (Menu);
-         return Success;
-      else
-         Console.Insert
-           (Command.Kernel,
-            (-"Can't execute ") & Command.Menu_Name.all,
-            Mode => Error);
-         return Failure;
-      end if;
-   end Execute;
 
    ----------
    -- Free --
@@ -99,6 +49,7 @@ package body GPS.Kernel.Actions is
 
       Free (Action.Category);
       Free (Action.Description);
+      Free (Action.Name);
       Unchecked_Free (Action);
    end Free;
 
@@ -156,7 +107,14 @@ package body GPS.Kernel.Actions is
       end if;
 
       if Old /= null then
-         if Old.Defined_In /= GNATCOLL.VFS.No_File then
+         if Name (Name'First) = '/' then
+            --  This is a menu: do not display a message about the overriding,
+            --  since it is legitimate to want to recreate or redefine a menu,
+            --  for instance in the Build module.
+
+            null;
+
+         elsif Old.Defined_In /= GNATCOLL.VFS.No_File then
             if Defined_In /= GNATCOLL.VFS.No_File then
                Insert
                  (Kernel,
@@ -205,6 +163,7 @@ package body GPS.Kernel.Actions is
         (Commands.Interactive.Interactive_Command_Access (Command),
          Filter,
          new String'(Description),
+         Name       => new String'(Name),
          Modified   => False,
          Category   => Cat,
          Defined_In => Defined_In,
@@ -286,31 +245,11 @@ package body GPS.Kernel.Actions is
       Name   : String) return Action_Record_Access
    is
       Action  : Action_Record_Access;
-      Command : Menu_Command;
    begin
       if Kernel.Actions = null then
          return null;
       else
          Action := Get (Actions_Htable_Access (Kernel.Actions).Table, Name);
-
-         if Action = null
-           and then Name (Name'First) = '/'
-         then
-            Command := new Menu_Command_Record;
-            Command.Kernel    := Kernel_Handle (Kernel);
-            Command.Menu_Name := new String'(Name);
-            Register_Perma_Command (Kernel, Command);
-
-            Action := new Action_Record'
-              (Command     => Interactive_Command_Access (Command),
-               Filter      => null,
-               Description => null,
-               Category    => null,
-               Defined_In  => GNATCOLL.VFS.No_File,
-               Modified    => False,
-               Overriden   => False);
-            Set (Actions_Htable_Access (Kernel.Actions).Table, Name, Action);
-         end if;
 
          return Action;
       end if;

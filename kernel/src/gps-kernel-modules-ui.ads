@@ -421,6 +421,17 @@ package GPS.Kernel.Modules.UI is
    --  the underlying gtk menu item. Useful in particular to check or change
    --  the state of a menu item. Path is case insensitive
 
+   procedure Register_MDI_Menu
+     (Kernel     : Kernel_Handle;
+      Item_Name  : String;
+      Accel_Path : String);
+   --  Register in the GPS menu machinery the menus created by the GtkAda MDI
+
+   procedure Execute_Menu
+     (Kernel    : Kernel_Handle;
+      Menu_Name : String);
+   --  Execute immediately a menu. Menu_Name is the full path to the menu.
+
    ---------------------
    -- Toolbar buttons --
    ---------------------

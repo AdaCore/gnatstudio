@@ -19,6 +19,15 @@ If no tag is specified, the entry is relevant to all IDEs.
                 2- Enable Code Assist.
                 3- Enable Code Assist auto activation.
 
+- K804-029: GPS: cannot bind Tab key to menus and use it to navigate
+  Problem:    When assigning the Tab key to a menu, for instance
+              /Edit/Format Selection, it is not possible to use the Tab key
+              to navigate in the non-modal dialogs such as the Search dialog.
+  Workaround: Use another key shortcut, or bind the Tab key to the
+              corresponding action if it exists (for instance the action
+              "Format Selection" in the "Editor" section in the Key Shortcuts
+              view).
+
 - K325-019: GPS: autofix for lines containing only spaces
   Problem:    The autofix for blanks at end of line removes the whole line if
               the line is composed only by spaces.

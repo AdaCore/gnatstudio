@@ -193,14 +193,6 @@ private
    --  the editor is saved. If Update_Menus is True, then
    --  Remove_Existing_Actions_For_Shortcut also applies to menus.
 
-   procedure Block_Accel_Map_Refresh
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Block  : Boolean);
-   --  Block the update of the internal key shortcuts table when the global
-   --  gtk+ accel map is changed (in particular through the dynamic key
-   --  binding feature, but also when key shortcuts are changed
-   --  programmatically)
-
    function Get_Shortcuts
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return HTable_Access;

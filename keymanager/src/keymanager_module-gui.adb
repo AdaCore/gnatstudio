@@ -61,7 +61,6 @@ with Gtk.Window;              use Gtk.Window;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Pango.Enums;             use Pango.Enums;
 
-with Case_Handling;           use Case_Handling;
 with Commands.Interactive;    use Commands.Interactive;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
@@ -74,9 +73,6 @@ with Traces;                  use Traces;
 
 package body KeyManager_Module.GUI is
    use Key_Htable;
-
-   Menu_Context_Name : constant String := "Menus";
-   --  -"Menus" will need to be translated
 
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;
@@ -217,58 +213,7 @@ package body KeyManager_Module.GUI is
    -----------------
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class) is
-
-      Menu_Iter : Gtk_Tree_Iter := Null_Iter;
       Flat_List : constant Boolean := Get_Active (Editor.Flat_List);
-
-      procedure Process_Menu_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean);
-      --  Called for each known accel path
-
-      --------------------------
-      -- Process_Menu_Binding --
-      --------------------------
-
-      procedure Process_Menu_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean)
-      is
-         Iter         : Gtk_Tree_Iter;
-         pragma Unreferenced (Data, Changed, Iter, Accel_Key, Accel_Mods);
-         First        : Natural := Accel_Path'First + 1;
-         User_Changed : aliased Boolean;
-      begin
-         while First <= Accel_Path'Last
-           and then Accel_Path (First - 1) /= '>'
-         loop
-            First := First + 1;
-         end loop;
-
-         if Accel_Path (First) = '/'
-         --  Only add menu accelerators through this mechanism.
-         --  Actions are handled by a separate loop, after the call to
-         --  Foreach_Unfiltered.
-           and then Accel_Path (First .. Accel_Path'Last) /= ""
-         then
-            Iter := Set
-              (Model      => Editor.Model,
-               Parent     => Menu_Iter,
-               Descr      => Accel_Path (First .. Accel_Path'Last),
-               Key        => Lookup_Key_From_Action
-                 (Editor.Bindings,
-                  Action            => Accel_Path (First .. Accel_Path'Last),
-                  Is_User_Changed   => User_Changed'Unchecked_Access,
-                  Default           => "",
-                  Default_On_Gtk    => True));
-         end if;
-      end Process_Menu_Binding;
 
       Parent       : Gtk_Tree_Iter;
       Action       : Action_Record_Access;
@@ -281,13 +226,6 @@ package body KeyManager_Module.GUI is
 
       Clear (Editor.Model);
 
-      if not Flat_List then
-         Menu_Iter := Set (Editor.Model, Null_Iter, -Menu_Context_Name);
-      end if;
-
-      Gtk.Accel_Map.Foreach_Unfiltered
-        (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
-
       --  Add all known actions in the table. This doesn't include menus
       --  in general
       loop
@@ -295,15 +233,7 @@ package body KeyManager_Module.GUI is
          exit when Action = null;
 
          if not Flat_List then
-            declare
-               Title : constant String := Get (Action_Iter);
-            begin
-               if Title (Title'First) = '/' then
-                  Parent := Menu_Iter;
-               else
-                  Parent := Find_Parent (Editor.Model, Action);
-               end if;
-            end;
+            Parent := Find_Parent (Editor.Model, Action);
          else
             Parent := Null_Iter;
          end if;
@@ -312,9 +242,8 @@ package body KeyManager_Module.GUI is
            and then (Flat_List or else Parent /= Null_Iter)
          then
             declare
-               Name : String := Get (Action_Iter);
+               Name : constant String := Get (Action_Iter).Name.all;
             begin
-               Mixed_Case (Name);
                Parent := Set
                  (Model   => Editor.Model,
                   Parent  => Parent,
@@ -432,10 +361,8 @@ package body KeyManager_Module.GUI is
              To   => Get_Shortcuts (Editor.Kernel).all);
 
       --  Update the gtk+ accelerators for the menus to reflect the keybindings
-      Block_Accel_Map_Refresh (Editor.Kernel, Block => True);
       Gtk.Accel_Map.Foreach_Unfiltered
         (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
-      Block_Accel_Map_Refresh (Editor.Kernel, Block => False);
 
       Save_Custom_Keys (Editor.Kernel);
    end Save_Editor;
@@ -828,7 +755,7 @@ package body KeyManager_Module.GUI is
                      Save_In_Keys_XML => True,
                      Remove_Existing_Actions_For_Shortcut => True,
                      Remove_Existing_Shortcuts_For_Action => True,
-                     Update_Menus     => False);
+                     Update_Menus     => True);
                   Refresh_Editor (Ed);
                end if;
             end;

@@ -622,8 +622,8 @@ package body GPS.Main_Window is
       Set_Submenu
         (Menu_Item, Kernel_Desktop.Create_Menu
            (Main_Window.MDI,
-            Accel_Path_Prefix => "<gps>",
-            User              => Main_Window.Kernel));
+            User         => Main_Window.Kernel,
+            Registration => GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 

@@ -35,13 +35,10 @@ with Gdk.Types;               use Gdk.Types;
 with Gdk.Window;              use Gdk.Window;
 
 with Glib.Object;             use Glib.Object;
-with Glib.Values;             use Glib.Values;
 with Glib;                    use Glib;
 
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
-with Gtk.Arguments;           use Gtk.Arguments;
-with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Window;              use Gtk.Window;
 with Gtk.Widget;              use Gtk.Widget;
@@ -151,7 +148,6 @@ package body KeyManager_Module is
       --  Whether the key manager should process the key events. This is only
       --  deactivated while editing the key bindings through the GUI.
 
-      Accel_Map_Id  : Handler_Id;
       Menus_Created : Boolean := False;
       --  Indicates whether the initial set of menus has been created
 
@@ -202,15 +198,6 @@ package body KeyManager_Module is
      (Kernel  : access Kernel_Handle_Record'Class;
       Event   : Gdk_Event) return Boolean;
    --  Process the event and call the appropriate actions if needed
-
-   procedure On_Accel_Map_Changed
-     (Map    : access GObject_Record'Class;
-      Args   : Glib.Values.GValues;
-      Kernel : Kernel_Handle);
-   --  Monitor changes in the global gtk+ accelerator map. Any change in there,
-   --  most notably through the dynamic key bindings feature, has impacts on
-   --  the GPS shortcuts (since assigning a new accelerator to a menu should
-   --  disable all actions currently associated with the same shortcut)
 
    procedure Get_Secondary_Keymap
      (Table  : in out Key_Htable.Instance;
@@ -1143,21 +1130,6 @@ package body KeyManager_Module is
               (Keymanager_Module.Secondary_Keymap.Table, (Key, Modif));
          end if;
 
-         --  Ignore shift modifiers as well. Don't do it systematically to
-         --  preserve backward compatibility. This way, using
-         --  alt-shift-greater or alt-greater results in the same.
-
-         if Binding = No_Key then
-            Trace (Me, "No binding found, retrying with shift-");
-            Modif := Modif and not Shift_Mask;
-            if Keymanager_Module.Secondary_Keymap = null then
-               Binding := Get (Keymanager_Module.Table.all, (Key, Modif));
-            else
-               Binding :=
-                 Get (Keymanager_Module.Secondary_Keymap.Table, (Key, Modif));
-            end if;
-         end if;
-
          Keymanager_Module.Secondary_Keymap := null;
 
          --  First try to activate the key shortcut using the standard
@@ -1344,8 +1316,6 @@ package body KeyManager_Module is
             Prev := Keymanager_Module.Menus_Created;
             Keymanager_Module.Menus_Created := True;
 
-            Block_Accel_Map_Refresh (Kernel, Block => True);
-
             while Child /= null loop
                --  Remove all other bindings previously defined, so that only
                --  the last definition is taken into account
@@ -1361,7 +1331,6 @@ package body KeyManager_Module is
                Child := Child.Next;
             end loop;
 
-            Block_Accel_Map_Refresh (Kernel, Block => False);
             Keymanager_Module.Menus_Created := Prev;
 
             Free (File);
@@ -1556,7 +1525,6 @@ package body KeyManager_Module is
             --  We want to allow several XML file to set different key bindings
             --  for the same action, so we do not remove existing shortcuts
             --  here.
-            Block_Accel_Map_Refresh (Get_Kernel (Module.all), Block => True);
             Bind_Default_Key_Internal
               (Table             => Keymanager_Module.Table.all,
                Kernel            => Get_Kernel (Module.all),
@@ -1566,7 +1534,6 @@ package body KeyManager_Module is
                Save_In_Keys_XML  => False,
                Key               => Node.Value.all,
                Update_Menus      => True);
-            Block_Accel_Map_Refresh (Get_Kernel (Module.all), Block => False);
          end;
       end if;
    end Customize;
@@ -1756,23 +1723,6 @@ package body KeyManager_Module is
       return Commands.Success;
    end Execute;
 
-   -----------------------------
-   -- Block_Accel_Map_Refresh --
-   -----------------------------
-
-   procedure Block_Accel_Map_Refresh
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Block  : Boolean)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      if Block then
-         Handler_Block (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
-      else
-         Handler_Unblock (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
-      end if;
-   end Block_Accel_Map_Refresh;
-
    -------------------
    -- Get_Shortcuts --
    -------------------
@@ -1785,86 +1735,6 @@ package body KeyManager_Module is
    begin
       return Keymanager_Module.Table;
    end Get_Shortcuts;
-
-   --------------------------
-   -- On_Accel_Map_Changed --
-   --------------------------
-
-   procedure On_Accel_Map_Changed
-     (Map    : access GObject_Record'Class;
-      Args   : Glib.Values.GValues;
-      Kernel : Kernel_Handle)
-   is
-      Accel_Path : constant String := To_String (Args, 1);
-      Accel_Key  : constant Gdk_Key_Type := Gdk_Key_Type (To_Guint (Args, 2));
-      Accel_Mods : constant Gdk_Modifier_Type :=
-                     Gdk_Modifier_Type (Get_Flags (Nth (Args, 3)));
-      pragma Unreferenced (Map);
-      First      : Natural := Accel_Path'First + 1;
-   begin
-      while First <= Accel_Path'Last
-        and then Accel_Path (First - 1) /= '>'
-      loop
-         First := First + 1;
-      end loop;
-
-      --  Special handling when Key is 0 => either the accel_path has just
-      --  been created, in which case we should preserve any key binding that
-      --  was there before, or the user has cancelled dynamically the key
-      --  binding through gtk+, in which case we need to obey the order.
-      --
-      --  Unfortunately, there is no way currently in gtk+ to distinguish
-      --  between the two apparently, so the least inconvenient is to do
-      --  nothing, and thus ignore cases where the user has pressed Backspace
-      --  in a menu item to delete the shortcut. In fact, we even reset the
-      --  old binding so that the menu still shows the old binding, for
-      --  consistency.
-
-      if Accel_Key = 0 then
-         declare
-            User_Changed : aliased Boolean;
-            Old          : constant String := Lookup_Key_From_Action
-              (Table           => Keymanager_Module.Table,
-               Action          => Accel_Path (First .. Accel_Path'Last),
-               Default         => "",
-               Use_Markup      => False,
-               Is_User_Changed => User_Changed'Unchecked_Access,
-               Return_Multiple => False,
-               Default_On_Gtk  => False);
-         begin
-            if Old /= "" then
-               --  Prevent recursive call to On_Accel_Map_Changed, since we
-               --  are asking to modify the menus here.
-               Block_Accel_Map_Refresh (Kernel, Block => True);
-               Bind_Default_Key_Internal
-                 (Table  => Keymanager_Module.Table.all,
-                  Kernel => Kernel,
-                  Action => Accel_Path (First .. Accel_Path'Last),
-                  Key    => Old,
-                  Save_In_Keys_XML  => User_Changed,
-                  Remove_Existing_Shortcuts_For_Action => True,
-                  Remove_Existing_Actions_For_Shortcut => True,
-                  Update_Menus                         => True);
-               Block_Accel_Map_Refresh (Kernel, Block => False);
-            end if;
-         end;
-
-      else
-         --  Remove any other keybinding associated with that action, as well
-         --  as any action associated with that key.
-         Bind_Default_Key_Internal
-           (Table             => Keymanager_Module.Table.all,
-            Kernel            => Kernel,
-            Action            => Accel_Path (First .. Accel_Path'Last),
-            Key               => Image (Accel_Key, Accel_Mods),
-            Save_In_Keys_XML  =>
-              (Keymanager_Module.Custom_Keys_Loaded
-               and then Keymanager_Module.Menus_Created),
-            Remove_Existing_Shortcuts_For_Action => True,
-            Remove_Existing_Actions_For_Shortcut => True,
-            Update_Menus                         => False);
-      end if;
-   end On_Accel_Map_Changed;
 
    ---------------------
    -- Register_Module --
@@ -1893,10 +1763,6 @@ package body KeyManager_Module is
            (General_Event_Handler'Access,
             Convert (Kernel_Handle (Kernel)));
       end if;
-
-      Keymanager_Module.Accel_Map_Id := Kernel_Callback.Connect
-        (Gtk.Accel_Map.Get, Gtk.Accel_Map.Signal_Changed,
-         On_Accel_Map_Changed'Access, Kernel_Handle (Kernel));
 
       --  For backward compatibility with GPS 3.1.3, we load the accel map
       --  custom keys as well. These will be overloaded when we load keys.xml

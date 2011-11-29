@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,6 +32,7 @@ package GPS.Kernel.Actions is
       Command     : Commands.Interactive.Interactive_Command_Access;
       Filter      : Action_Filter;
       Description : GNAT.Strings.String_Access;
+      Name        : GNAT.Strings.String_Access;
       Modified    : Boolean;
       Overriden   : Boolean;
       Category    : GNAT.Strings.String_Access;
@@ -123,7 +124,7 @@ private
    end record;
    type Actions_Htable_Access is access all Actions_Htable_Record'Class;
 
-   procedure Reset (X : access Actions_Htable_Record);
+   overriding procedure Reset (X : access Actions_Htable_Record);
    --  Reset the table.
 
    type Action_Iterator is record
