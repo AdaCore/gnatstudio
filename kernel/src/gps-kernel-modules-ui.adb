@@ -270,7 +270,7 @@ package body GPS.Kernel.Modules.UI is
    function Create_Command_For_Menu
      (Kernel    : Kernel_Handle;
       Full_Path : String) return Menu_Command;
-   --  Utility function: create a command for a given menu.
+   --  Utility function: create a command for a given menu
 
    -----------------------------
    -- Create_Command_For_Menu --
@@ -280,7 +280,7 @@ package body GPS.Kernel.Modules.UI is
      (Kernel    : Kernel_Handle;
       Full_Path : String) return Menu_Command
    is
-      Command   : Menu_Command;
+      Command : Menu_Command;
    begin
       Command := new Menu_Command_Record;
       Command.Kernel := Kernel;
@@ -349,8 +349,7 @@ package body GPS.Kernel.Modules.UI is
    begin
       for J in reverse Path'Range loop
          if Path (J) = '/'
-           and then ((J > Path'First
-                      and then Path (J - 1) /= '<')
+           and then ((J > Path'First and then Path (J - 1) /= '<')
                      or else J = Path'First)
          then
             return Path (Path'First .. J);
@@ -1347,7 +1346,7 @@ package body GPS.Kernel.Modules.UI is
             User_Data   => (Kernel_Handle (Kernel), null, Menu_Filter));
       end if;
 
-      --  For every menu that we create, register an action.
+      --  For every menu that we create, register an action
 
       --  If we already have an action or an interactive command, simply
       --  reuse it.
@@ -1359,8 +1358,7 @@ package body GPS.Kernel.Modules.UI is
          The_Command := Command;
 
       else
-
-         --  Otherwise, create the wrapper command which will launch the menu.
+         --  Otherwise, create the wrapper command which will launch the menu
 
          The_Command := Interactive_Command_Access
            (Create_Command_For_Menu (Kernel_Handle (Kernel), Full_Path));
