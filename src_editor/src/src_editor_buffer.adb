@@ -1706,7 +1706,9 @@ package body Src_Editor_Buffer is
       --  there is no longer a reason that there should be folded data
       --  below this line.
 
-      if not Lines_Are_Real (Buffer) then
+      if not Lines_Are_Real (Buffer)
+        and not Buffer.Inserting
+      then
          declare
             Result : Boolean;
          begin
