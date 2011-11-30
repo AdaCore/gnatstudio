@@ -125,7 +125,6 @@ private
       Default           : String := "none";
       Use_Markup        : Boolean := True;
       Return_Multiple   : Boolean := True;
-      Default_On_Gtk    : Boolean := True;
       Is_User_Changed   : access Boolean) return String;
    --  Return the list of key bindings set for a specific action. The returned
    --  string can be displayed as is to the user, but is not suitable for
@@ -134,9 +133,6 @@ private
    --  needs to be defined)
    --  If Use_Markup is true, then the "or" that separates several shortcuts
    --  is displayed with a different font.
-   --  If Default_On_Gtk is true and the action is not found in the table but
-   --  corresponds to a menu, look it up using standard gtk+ mechanisms and
-   --  insert the corresponding entry in Table to speed up further lookups.
    --  If Return_Multiple is True and there are multiple shortcuts for this
    --  action, all are concatenated in the resulting string, otherwise only the
    --  first one found is returned.

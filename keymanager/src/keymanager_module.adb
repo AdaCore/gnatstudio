@@ -241,6 +241,14 @@ package body KeyManager_Module is
    --  Emit a message in the context of the key manager shortcut, sending
    --  it to the key manager GUI if present, and to the Messages window if not.
 
+   procedure Set_Default_Key
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Accel_Key  : Natural;
+      Accel_Mods : Natural);
+   --  If the Action doesn't already have a key binding, then bind it to
+   --  Accel_Key/Accel_Mods.
+
    ----------------------
    -- Save_Custom_Keys --
    ----------------------
@@ -351,12 +359,7 @@ package body KeyManager_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Keymanager_Module_Record) is
-      Key : constant Virtual_File :=
-              Create_From_Dir
-                (Get_Home_Dir (Get_Kernel (Module)), "custom_key");
    begin
-      Gtk.Accel_Map.Save (+Key.Full_Name);
-
       Reset (Module.Table.all);
       Unchecked_Free (Module.Table);
       Keymanager_Module := null;
@@ -783,18 +786,23 @@ package body KeyManager_Module is
         or else Key = "" or else Key = -Disabled_String
       then
          Remove_In_Keymap (Table);
+      end if;
 
-         if Update_Menus
-           and then Action /= ""
-           and then Action (Action'First) = '/'
-         then
-            --  Guess the accel path from the menu
-            Success := Change_Entry
-              ("<gps>" & Action,
-               Accel_Key  => 0,
-               Accel_Mods => 0,
-               Replace    => True);
-         end if;
+      --  Systematically remove the accel binding when updating menus: the
+      --  binding will be set again in the call to Change_Entry further below.
+      --  Not doing that may cause the call to Change_Entry to return False if
+      --  the keys were already set, in which case we will fall back on
+      --  removing the shortcut altogether.
+      if Update_Menus
+        and then Action /= ""
+        and then Action (Action'First) = '/'
+      then
+         --  Guess the accel path from the menu
+         Success := Change_Entry
+           ("<gps>" & Action,
+            Accel_Key  => 0,
+            Accel_Mods => 0,
+            Replace    => True);
       end if;
 
       --  On Windows binding contol-c to non default copy action can result in
@@ -828,19 +836,6 @@ package body KeyManager_Module is
          Value (Key (First .. Last - 1), Partial_Key, Modif);
 
          if Last > Key'Last then
-            if Action /= "" and then Action (Action'First) = '/' then
-               --  For a menu, ensure the accel map entry exists. If we don't
-               --  do that, the following scenario will fail:
-               --     - The emacs mode registers a binding for a menu that
-               --       is defined in a not yet loaded python package
-               --     - The other python package is loaded. It creates the menu
-               --       which create the accel_path for it. As a result, a
-               --       "changed" signal is propagated for the accel_map, and
-               --       the callback On_Accel_Map_Changed will delete any
-               --       binding associated with it (F720-010)
-               Add_Entry ("<gps>" & Action, 0, 0);
-            end if;
-
             if Keymap = null then
                Bind_Internal (Table, Partial_Key, Modif);
 
@@ -869,7 +864,7 @@ package body KeyManager_Module is
                      Accel_Mods => Modif,
                      Replace    => True)
                   then
-                     --  If we still couldn't change it, at very least disable
+                     --  If we couldn't change the entry, at very least disable
                      --  it from the menu so as not to confuse users
                      Success := Change_Entry
                        ("<gps>" & Action,
@@ -1132,112 +1127,85 @@ package body KeyManager_Module is
 
          Keymanager_Module.Secondary_Keymap := null;
 
-         --  First try to activate the key shortcut using the standard
-         --  Gtk+ mechanism.
-         --  Do this lookup only if we are not currently processing a
-         --  secondary key.
+         --  Execute all commands bound to this key. The order is somewhat
+         --  random, since it depends in what order the key shortcuts were
+         --  defined.
+         while Binding /= No_Key loop
+            if Binding.Action = null then
+               Trace (Me, "Checking secondary keymap");
+               Keymanager_Module.Secondary_Keymap := Binding.Keymap;
+               Found_Action := True;
 
-         if not Has_Secondary
-           and then Accel_Groups_Activate
-             (Get_Main_Window (Kernel), Key, Modif)
-         then
-            Undo_Group (Start => True);
-            for R in 2 .. Keymanager_Module.Repeat_Count loop
-               Found_Action := Accel_Groups_Activate
-                 (Get_Main_Window (Kernel), Key, Modif);
-            end loop;
-            Undo_Group (Start => False);
+            else
+               Trace (Me, "Checking action: " & Binding.Action.all);
+               --  If we have not found the accelerator using the Gtk+
+               --  mechanism, fallback on the standard mechanism to lookup
+               --  the action.
+               Command := Lookup_Action (Kernel, Binding.Action.all);
 
-            Found_Action := True;
+               if Command = null then
+                  Insert
+                    (Kernel, -"Action not defined: " & Binding.Action.all);
 
-            --  The command will be executed by gtk, we don't know exactly how
-            if Keymanager_Module.Last_Command /= null then
-               Free (Keymanager_Module.Last_User_Command);
-            end if;
-            Keymanager_Module.Last_Command := null;
-            Keymanager_Module.Repeat_Count := 1;
+               elsif Command.Command /= null then
+                  Compute_Context;
 
-         else
-            --  Execute all commands bound to this key. The order is somewhat
-            --  random, since it depends in what order the key shortcuts were
-            --  defined.
-            while Binding /= No_Key loop
-               if Binding.Action = null then
-                  Trace (Me, "Checking secondary keymap");
-                  Keymanager_Module.Secondary_Keymap := Binding.Keymap;
-                  Found_Action := True;
-
-               else
-                  Trace (Me, "Checking action: " & Binding.Action.all);
-                  --  If we have not found the accelerator using the Gtk+
-                  --  mechanism, fallback on the standard mechanism to lookup
-                  --  the action.
-                  Command := Lookup_Action (Kernel, Binding.Action.all);
-
-                  if Command = null then
-                     Insert
-                       (Kernel, -"Action not defined: " & Binding.Action.all);
-
-                  elsif Command.Command /= null then
-                     Compute_Context;
-
-                     if Command.Filter = null
-                       or else
-                         (Context /= No_Context
-                          and then Filter_Matches (Command.Filter, Context))
-                     then
-                        if Active (Me) then
-                           if Keymanager_Module.Repeat_Count > 1 then
-                              Trace (Me, "Executing action "
-                                     & Binding.Action.all
-                                     & Keymanager_Module.Repeat_Count'Img
-                                     & " times");
-                           else
-                              Trace (Me, "Executing action "
-                                     & Binding.Action.all);
-                           end if;
+                  if Command.Filter = null
+                    or else
+                      (Context /= No_Context
+                       and then Filter_Matches (Command.Filter, Context))
+                  then
+                     if Active (Me) then
+                        if Keymanager_Module.Repeat_Count > 1 then
+                           Trace (Me, "Executing action "
+                                  & Binding.Action.all
+                                  & Keymanager_Module.Repeat_Count'Img
+                                  & " times");
+                        else
+                           Trace (Me, "Executing action "
+                                  & Binding.Action.all);
                         end if;
-
-                        if Keymanager_Module.Last_Command /=
-                          Cst_String_Access (Binding.Action)
-                        then
-                           Free (Keymanager_Module.Last_User_Command);
-                        end if;
-                        Keymanager_Module.Last_Command :=
-                          Cst_String_Access (Binding.Action);
-
-                        Undo_Group (Start => True);
-                        for R in 1 .. Keymanager_Module.Repeat_Count loop
-                           Launch_Background_Command
-                             (Kernel,
-                              Create_Proxy
-                                (Command.Command,
-                                 (Event            => Event,
-                                  Context          => Context,
-                                  Synchronous      => False,
-                                  Dir              => No_File,
-                                  Args             => null,
-                                  Label            => new String'
-                                                        (Binding.Action.all),
-                                  Repeat_Count     => R,
-                                  Remaining_Repeat =>
-                                    Keymanager_Module.Repeat_Count - R)),
-                              Destroy_On_Exit => True,
-                              Active          => True,
-                              Show_Bar        => False,
-                              Queue_Id        => "");
-                        end loop;
-                        Undo_Group (Start => False);
-
-                        Found_Action := True;
-                        Keymanager_Module.Repeat_Count := 1;
                      end if;
+
+                     if Keymanager_Module.Last_Command /=
+                       Cst_String_Access (Binding.Action)
+                     then
+                        Free (Keymanager_Module.Last_User_Command);
+                     end if;
+                     Keymanager_Module.Last_Command :=
+                       Cst_String_Access (Binding.Action);
+
+                     Undo_Group (Start => True);
+                     for R in 1 .. Keymanager_Module.Repeat_Count loop
+                        Launch_Background_Command
+                          (Kernel,
+                           Create_Proxy
+                             (Command.Command,
+                              (Event            => Event,
+                               Context          => Context,
+                               Synchronous      => False,
+                               Dir              => No_File,
+                               Args             => null,
+                               Label            => new String'
+                                 (Binding.Action.all),
+                               Repeat_Count     => R,
+                               Remaining_Repeat =>
+                                 Keymanager_Module.Repeat_Count - R)),
+                           Destroy_On_Exit => True,
+                           Active          => True,
+                           Show_Bar        => False,
+                           Queue_Id        => "");
+                     end loop;
+                     Undo_Group (Start => False);
+
+                     Found_Action := True;
+                     Keymanager_Module.Repeat_Count := 1;
                   end if;
                end if;
+            end if;
 
-               Binding := Binding.Next;
-            end loop;
-         end if;
+            Binding := Binding.Next;
+         end loop;
 
          if not Found_Action then
             Trace (Me, "No action was executed, falling though gtk+");
@@ -1354,7 +1322,6 @@ package body KeyManager_Module is
       Default           : String := "none";
       Use_Markup        : Boolean := True;
       Return_Multiple   : Boolean := True;
-      Default_On_Gtk    : Boolean := True;
       Is_User_Changed   : access Boolean) return String
    is
       use Ada.Strings.Unbounded;
@@ -1432,44 +1399,9 @@ package body KeyManager_Module is
             Get_Next (Table, Iter);
          end loop;
       end Process_Table;
-
-      Key   : Gtk_Accel_Key;
-      Found : Boolean;
    begin
       Is_User_Changed.all := False;
-
-      --  The table also includes the menu accelerators set by gtk+, so by
-      --  traversing the table we get access to everything.
-      --  ??? This is not true for stock accelerators.
       Process_Table (Table.all, "");
-
-      --  If we haven't found an action, fallback on the default gtk+
-      --  mechanism.
-
-      if Default_On_Gtk
-        and then Action (Action'First) = '/'
-        and then Result = Null_Unbounded_String
-      then
-         Lookup_Entry ("<gps>" & Action, Key, Found);
-
-         if Found then
-            declare
-               Bind : Key_Description_List;
-            begin
-               Bind := new Key_Description'
-                 (Action  => new String'(Action),
-                  Changed => False,
-                  Keymap  => null,
-                  Next    => null);
-
-               Set
-                 (Table.all,
-                  Key_Binding'(Key.Accel_Key, Key.Accel_Mods), Bind);
-            end;
-
-            Result := Result & Image (Key.Accel_Key, Key.Accel_Mods);
-         end if;
-      end if;
 
       if Result = Null_Unbounded_String then
          return Default;
@@ -1743,8 +1675,6 @@ package body KeyManager_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Key     : constant Virtual_File :=
-                  Create_From_Dir (Get_Home_Dir (Kernel), "custom_key");
       Command : Interactive_Command_Access;
 
    begin
@@ -1762,16 +1692,6 @@ package body KeyManager_Module is
          Event_Handler_Set
            (General_Event_Handler'Access,
             Convert (Kernel_Handle (Kernel)));
-      end if;
-
-      --  For backward compatibility with GPS 3.1.3, we load the accel map
-      --  custom keys as well. These will be overloaded when we load keys.xml
-      --  anyway. The file custom_key will never be overwritten by GPS from now
-      --  on.
-
-      if Is_Regular_File (Key) then
-         Trace (Me, "Loading key bindings from " & Key.Display_Full_Name);
-         Gtk.Accel_Map.Load (+Key.Full_Name);
       end if;
 
       Register_Command
@@ -1800,6 +1720,8 @@ package body KeyManager_Module is
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "key_manager.preferences_changed");
+
+      Set_Key_Setter (Kernel, Set_Default_Key'Access);
    end Register_Module;
 
    -------------------------
@@ -2003,5 +1925,42 @@ package body KeyManager_Module is
 
       return To_String (Result);
    end Actions_With_Key_Prefix;
+
+   ---------------------
+   -- Set_Default_Key --
+   ---------------------
+
+   procedure Set_Default_Key
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Accel_Key  : Natural;
+      Accel_Mods : Natural)
+   is
+      pragma Unreferenced (Kernel);
+      Keys  : Key_Description_List;
+      Dummy : aliased Boolean;
+   begin
+      if Lookup_Key_From_Action
+        (Table           => Keymanager_Module.Table,
+         Action          => Action,
+         Default         => "",
+         Use_Markup      => False,
+         Return_Multiple => True,
+         Is_User_Changed => Dummy'Access) = ""
+      then
+         --  No key is already defined for this action: set it now.
+         Keys := new Key_Description'
+           (Action  => new String'(Action),
+            Changed => False,
+            Keymap  => null,
+            Next    => null);
+         Set
+           (Keymanager_Module.Table.all,
+            Key_Binding'
+              (Gdk.Types.Gdk_Key_Type (Accel_Key),
+               Gdk.Types.Gdk_Modifier_Type (Accel_Mods)),
+            Keys);
+      end if;
+   end Set_Default_Key;
 
 end KeyManager_Module;

@@ -439,6 +439,20 @@ package body GPS.Menu is
                      GDK_Insert, Control_Mask + Shift_Mask,
                      Ref_Item => -"Preferences");
 
+      --  The menus created above are created before the keymanager_module
+      --  is registered, so the default key assignations is not done through
+      --  the menu registration itself.
+      --  Also, we cannot register these menus afterwards, since these are
+      --  used by other modules as reference for placement of other menus.
+      --  So we register key bindings manually here.
+      --  ??? This can be removed when we have a global mechanism for menu
+      --  registering and ordering.
+      Bind_Default_Key (Kernel, "/Edit/Cut", "shift-Delete");
+      Bind_Default_Key (Kernel, "/Edit/Copy", "control-Insert");
+      Bind_Default_Key (Kernel, "/Edit/Paste", "shift-Insert");
+      Bind_Default_Key
+        (Kernel, "/Edit/Paste Previous", "control-shift-Insert");
+
       --  Gtk+ provides hard-coded bindings for Cut (ctrl-x), Copy (ctrl-c)
       --  and Paste (ctrl-v). Making use of these mechanisms in GPS is not a
       --  good idea, because copying/cutting and pasting within the same buffer

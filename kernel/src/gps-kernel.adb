@@ -2255,4 +2255,31 @@ package body GPS.Kernel is
       end if;
    end Is_Dispatching_Call;
 
+   --------------------
+   -- Set_Key_Setter --
+   --------------------
+
+   procedure Set_Key_Setter
+     (Kernel : access Kernel_Handle_Record;
+      Setter : Key_Setter)
+   is
+   begin
+      Kernel.Key_Setter_Function := Setter;
+   end Set_Key_Setter;
+
+   ---------------------
+   -- Set_Default_Key --
+   ---------------------
+
+   procedure Set_Default_Key
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Accel_Key  : Natural;
+      Accel_Mods : Natural) is
+   begin
+      if Kernel.Key_Setter_Function /= null then
+         Kernel.Key_Setter_Function (Kernel, Action, Accel_Key, Accel_Mods);
+      end if;
+   end Set_Default_Key;
+
 end GPS.Kernel;

@@ -200,6 +200,29 @@ package GPS.Kernel is
    --  Print out an error message in messages window, or display a dialog
    --  if GPS is exiting.
 
+   ------------------
+   -- Key managing --
+   ------------------
+
+   type Key_Setter is access procedure
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Accel_Key  : Natural;
+      Accel_Mods : Natural);
+
+   procedure Set_Key_Setter
+     (Kernel : access Kernel_Handle_Record;
+      Setter : Key_Setter);
+   --  Register a key setter. This function should be called by key manager
+   --  modules.
+
+   procedure Set_Default_Key
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Accel_Key  : Natural;
+      Accel_Mods : Natural);
+   --  Set a default key for the registered action.
+
    -------------
    -- Modules --
    -------------
@@ -1109,6 +1132,9 @@ private
 
       Locations_View_Manager : System.Address := System.Null_Address;
       --  The locations view manager
+
+      Key_Setter_Function : Key_Setter;
+      --  The function to set default keys
 
       Refactoring : Standard.Refactoring.Factory_Context;
    end record;

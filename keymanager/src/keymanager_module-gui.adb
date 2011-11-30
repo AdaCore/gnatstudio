@@ -226,8 +226,7 @@ package body KeyManager_Module.GUI is
 
       Clear (Editor.Model);
 
-      --  Add all known actions in the table. This doesn't include menus
-      --  in general
+      --  Add all known actions in the table.
       loop
          Action := Get (Action_Iter);
          exit when Action = null;
@@ -451,7 +450,6 @@ package body KeyManager_Module.GUI is
                   Action            => Get_String (Model, Iter, Action_Column),
                   Default           => -"none",
                   Is_User_Changed => User_Changed'Unchecked_Access,
-                  Default_On_Gtk    => False,
                   Use_Markup        => False));
 
             Insert_With_Tags
@@ -554,7 +552,6 @@ package body KeyManager_Module.GUI is
                     (Editor.Bindings,
                      Action => Get_String (Editor.Model, It, Action_Column),
                      Default => "",
-                     Default_On_Gtk => False,
                      Is_User_Changed => User_Changed'Unchecked_Access));
             end if;
 

@@ -1372,6 +1372,15 @@ package body GPS.Kernel.Modules.UI is
          Filter      => Menu_Filter,
          Category    => "Menus");
 
+      if Accel_Key /= 0
+        or else Accel_Mods /= 0
+      then
+         Set_Default_Key (Kernel     => Kernel,
+                          Action     => Full_Path,
+                          Accel_Key  => Natural (Accel_Key),
+                          Accel_Mods => Natural (Accel_Mods));
+      end if;
+
       return Item;
    end Register_Menu;
 
