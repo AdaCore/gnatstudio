@@ -1673,7 +1673,6 @@ package body GVD_Module is
       Context : Selection_Context) return Cairo_Surface
    is
       pragma Unreferenced (Module);
-      Pixmap   : Cairo_Surface;
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Debugger : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Kernel));
@@ -1693,6 +1692,8 @@ package body GVD_Module is
       declare
          Variable_Name : constant String := Get_Variable_Name
            (Context, Dereference => False);
+         Pixmap        : Cairo_Surface;
+
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
@@ -1713,12 +1714,17 @@ package body GVD_Module is
                Widget     => Get_Main_Window (Kernel),
                Pixmap     => Pixmap,
                Wrap_Width => Max_Tooltip_Width);
-         end if;
-      end;
+         else
+            --  Note: if Value.all is "", we will return Pixmap below, hence
+            --  the assignment.
 
-      GNAT.Strings.Free (Value);
-      Pop_State (Kernel);
-      return Pixmap;
+            Pixmap := Null_Surface;
+         end if;
+
+         GNAT.Strings.Free (Value);
+         Pop_State (Kernel);
+         return Pixmap;
+      end;
 
    exception
       when Language.Unexpected_Type | Constraint_Error =>
