@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
 
+- KB18-019: GPS: fold/unfold change text
+  Problem:    Unfolding of block change text when two folding blocks are not
+              separated by blank line.
+  Workaround: Insert blank line between folding blocks.
+
 - KB28-040: GPS: crash when reloading a project that contains errors
   Problem:    When using the menu /Project/Reload Project and the project
               was modified manually and now contains errors, GPS reports
