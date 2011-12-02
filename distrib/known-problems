@@ -8,10 +8,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
 
-- KB18-019: GPS: fold/unfold change text
-  Problem:    Unfolding of block change text when two folding blocks are not
-              separated by blank line.
-  Workaround: Insert blank line between folding blocks.
+- KB18-019: GPS: fold/unfold may change text
+  Problem:    Unfolding a block may change the contents when two folding
+              blocks are not separated by any blank line.
+  Workaround: Insert a blank line between folding blocks.
 
 - KB28-040: GPS: crash when reloading a project that contains errors
   Problem:    When using the menu /Project/Reload Project and the project
@@ -68,7 +68,7 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
   Workaround: Do not try to examine files outside the project, or modify the
               project source directories so that the file can be found.
 
-- J432-002: GPS: Empty menu Help>GNAT Runtime
+- J423-002: GPS: Empty menu Help>GNAT Runtime
   Problem:    The menu that provides a convenient access to all the files in
               the GNAT runtime is empty.
   Workaround: Reuse the file share/gps/plug-ins/runtime.xml from a previous
