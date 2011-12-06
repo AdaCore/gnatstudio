@@ -99,9 +99,10 @@ package GPS.Kernel.MDI is
    Group_Graphs         : constant Child_Group := 101;
    Group_VCS_Explorer   : constant Child_Group := 102;
    Group_Debugger_Stack : constant Child_Group := 103;
-   Group_VCS_Activities : constant Child_Group := 104;
-   Group_View           : constant Child_Group := 105;
-   Group_Consoles       : constant Child_Group := 106;
+   Group_Debugger_Data  : constant Child_Group := 104;
+   Group_VCS_Activities : constant Child_Group := 105;
+   Group_View           : constant Child_Group := 106;
+   Group_Consoles       : constant Child_Group := 107;
 
    function Get_Current_Window
      (Handle : access Kernel_Handle_Record'Class) return Gtk.Window.Gtk_Window;
