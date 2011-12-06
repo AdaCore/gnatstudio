@@ -34,7 +34,8 @@ NF-52-KA03-005 GPS: force use of gprbuild (2011-12-06)
 
   It is now possible to always use gprbuild as a builder for projects,
   whether these projects are multi-language or not. This is done via the
-  new 'Gprbuild_Always' setting for the multi-language builder preference.
+  new preference 'Default builder', using the 'Gprbuild_Always' setting.
+  This preference replaces the previous 'Multi language builder' preference.
 
 NF-52-K907-014 GPS: Navigation from Ada to C++ (2011-10-26)
 
