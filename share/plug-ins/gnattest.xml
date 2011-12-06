@@ -115,4 +115,12 @@
     <title>GNATTest/Open harness project for %p</title>
   </contextual>
 
+  <contextual action="go to test procedure">
+    <title>Goto test for %e</title>
+  </contextual>
+
+  <contextual action="go to tested procedure">
+    <title>Goto tested for %e</title>
+  </contextual>
+
 </gnattest>

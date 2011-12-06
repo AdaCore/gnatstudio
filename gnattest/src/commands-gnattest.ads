@@ -1,9 +1,9 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2011, AdaCore                    --
+--                   Copyright (C) 2011, AdaCore                     --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -12,30 +12,31 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package defines the module for GNATTest integration.
-with Basic_Types;
-with Entities;
-with GPS.Kernel;
+with Commands.Interactive;
 
-with Ada.Strings.Unbounded;
+package Commands.GNATTest is
 
-package GNATTest_Module is
+   --  Go to test from tested subprogram and backward
 
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the module into the list
+   type Go_To_Test_Command_Type is new Commands.Interactive.Interactive_Command
+   with record
+      To_Test : Boolean;
+   end record;
 
-   procedure Find
-     (Entity          : Entities.Entity_Information;
-      To_Test         : Boolean;
-      Unit_Name       : out Ada.Strings.Unbounded.Unbounded_String;
-      Subprogram_Name : out Ada.Strings.Unbounded.Unbounded_String;
-      Line            : out Natural;
-      Column          : out Basic_Types.Visible_Column_Type);
+   type Go_To_Test_Command_Access is access all Go_To_Test_Command_Type;
 
-end GNATTest_Module;
+   overriding function Execute
+     (Command : access Go_To_Test_Command_Type;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+
+   overriding function Name (X : access Go_To_Test_Command_Type) return String;
+
+   overriding procedure Free (X : in out Go_To_Test_Command_Type);
+
+end Commands.GNATTest;
