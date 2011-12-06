@@ -351,8 +351,11 @@ package body Build_Command_Manager is
                          and then Langs (Langs'First).all = "ada")
                         or else Multi_Language_Builder.Get_Pref
                                  = GPS.Kernel.Preferences.Gnatmake)
+              and then Multi_Language_Builder.Get_Pref
+                        /= GPS.Kernel.Preferences.Gprbuild_Always
             then
-               --  Determine if the project has only Ada set, if so, set
+               --  Determine if the project has only Ada set and user didn't
+               --  specify Gprbuild_Always as builder. If so, set
                --  Multi_Language_Build to False.
 
                Multi_Language_Build := False;
@@ -360,8 +363,9 @@ package body Build_Command_Manager is
 
             Free (Langs);
 
-            if Multi_Language_Build
-              and then Multi_Language_Builder.Get_Pref = Gprbuild
+            if Multi_Language_Builder.Get_Pref = Gprbuild_Always
+              or else (Multi_Language_Build
+                       and then Multi_Language_Builder.Get_Pref = Gprbuild)
             then
                if not Is_Native (Tc) then
                   if Builder then

@@ -10269,9 +10269,18 @@ Determines when source editors should be saved in the desktop: @code{Never},
 @code{Always}, or when a source file is associated with the current project
 (@code{From_Project}).
 
-@item Multi language builder
-The multi-language builder to be used in case a multi-language or non Ada
-project has been loaded.
+@item Default builder
+The default builder to be used by GPS.
+@code{Gprbuild} to use @command{gprbuild} for multi-language projects and
+@command{gnatmake} for Ada-only projects.
+@code{Gprmake} to use @command{gprmake} (old, deprecated builder) for
+multi-language projects.
+@code{Gnatmake} to always use @command{gnatmake} for builds.
+@code{Gprbuild_Always} to alwaus use @command{gprbuild} for builds.
+
+@code{Always_Remove} means that the code will be removed by GPS.
+@code{Always_Comment} means that the code will always be commented out.
+@code{Propose_Both_Choices} will propose a menu with both choices.
 
 By default, @code{gprbuild} will be used. Alternatively, its prototype
 @code{gprmake} can be selected to help the transition, although we do not
