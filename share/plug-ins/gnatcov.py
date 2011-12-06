@@ -14,7 +14,7 @@ def on_preferences_changed (name):
    gnatcov_menu = GPS.Menu.get ("/Tools/Coverage/GNATcov")
    toolchain = GPS.Preference("Coverage-Toolchain").get()
 
-   if toolchain == "GNATcov":
+   if toolchain == "Gnatcov":
       gnatcov_menu.show()
       gnatcov_menu_separator.show()
 
@@ -26,8 +26,6 @@ def on_preferences_changed (name):
 
 def on_gps_started (hook_name):
   global gnatcov_menu_separator
-
-  pref = GPS.Preference ("Coverage-Toolchain")
 
   if os_utils.locate_exec_on_path ("gnatcov") != "":
     gnatcov_menu_separator = GPS.Menu.create ("/Tools/Covera_ge/-")
