@@ -15,7 +15,6 @@
 ./Makefile
 .gpsrcs
 .gpssnprj
-Makefile
 Makefile.common
 b~*
 *.d
@@ -193,7 +192,7 @@ design/tests/wizard.1/foo.gpr
 design/tests/wizard.1/foo.gpr.new
 design/tests/wizard.2/foo.gpr
 design/tests/wizard.2/foo.gpr.new
-docs/Makefile
+./docs/Makefile
 docs/gps
 docs/gps.aux
 docs/gps.cp
@@ -215,8 +214,6 @@ gnatlib/distrib/gnatcoll_gmp.gpr
 gnatlib/distrib/gnatcoll_python.gpr
 gnatlib/distrib/relocatable/gnatcoll.gpr
 gnatlib/distrib/static/gnatcoll.gpr
-gnatlib/docs/Makefile
-gnatlib/docs/gnatcoll_include.texi
 gnatlib/gnatcoll_shared.gpr
 gnatlib/src/gnatcoll_gmp.gpr
 gnatlib/src/gnatcoll_python.gpr
