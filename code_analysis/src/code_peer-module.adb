@@ -2283,7 +2283,8 @@ package body Code_Peer.Module is
       procedure Initialize_Style
         (Style      : out GPS.Styles.UI.Style_Access;
          Name       : String;
-         Preference : Default_Preferences.Color_Preference);
+         Preference : Default_Preferences.Color_Preference;
+         Speedbar   : Boolean);
       --  Initializes style and sets background color from preference.
 
       ----------------------
@@ -2293,12 +2294,14 @@ package body Code_Peer.Module is
       procedure Initialize_Style
         (Style      : out GPS.Styles.UI.Style_Access;
          Name       : String;
-         Preference : Default_Preferences.Color_Preference) is
+         Preference : Default_Preferences.Color_Preference;
+         Speedbar   : Boolean) is
       begin
          Style :=
            GPS.Kernel.Styles.Get_Or_Create_Style
              (GPS.Kernel.Kernel_Handle (Kernel), Name);
          Style.Set_Background (Preference.Get_Pref);
+         Style.Set_In_Speedbar (Speedbar);
       end Initialize_Style;
 
       Submenu_Factory : GPS.Kernel.Modules.UI.Submenu_Factory;
@@ -2493,27 +2496,33 @@ package body Code_Peer.Module is
       Initialize_Style
         (Module.Annotation_Style,
          Annotation_Style_Name,
-         Module.Annotation_Color);
+         Module.Annotation_Color,
+         False);
       Initialize_Style
         (Module.Message_Styles (Code_Peer.High),
          High_Probability_Style_Name,
-         Module.Message_Colors (Code_Peer.High));
+         Module.Message_Colors (Code_Peer.High),
+         True);
       Initialize_Style
         (Module.Message_Styles (Code_Peer.Medium),
          Medium_Probability_Style_Name,
-         Module.Message_Colors (Code_Peer.Medium));
+         Module.Message_Colors (Code_Peer.Medium),
+         True);
       Initialize_Style
         (Module.Message_Styles (Code_Peer.Low),
          Low_Probability_Style_Name,
-         Module.Message_Colors (Code_Peer.Low));
+         Module.Message_Colors (Code_Peer.Low),
+         True);
       Initialize_Style
         (Module.Message_Styles (Code_Peer.Informational),
          Informational_Probability_Style_Name,
-         Module.Message_Colors (Code_Peer.Informational));
+         Module.Message_Colors (Code_Peer.Informational),
+         True);
       Initialize_Style
         (Module.Message_Styles (Code_Peer.Suppressed),
          Suppressed_Probability_Style_Name,
-         Module.Message_Colors (Code_Peer.Suppressed));
+         Module.Message_Colors (Code_Peer.Suppressed),
+         True);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,
