@@ -2,15 +2,16 @@ with "../shared";
 
 project Docs is
 
-   for Languages use ("Texinfo");
+   for Languages use ("rest");
    for Object_Dir use ".";
+   for Source_Dirs use ("programers_guide", "tutorial", "users_guide");
 
    package Naming is
-      for Implementation_Suffix ("texinfo") use ".texi";
+      for Implementation_Suffix ("rest") use ".rst";
    end Naming;
 
    package Compiler is
-      for Driver ("Texinfo") use "";
+      for Driver ("rest") use "";
    end Compiler;
 
    package IDE renames Shared.IDE;
