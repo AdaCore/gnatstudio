@@ -23,7 +23,6 @@
 @setchapternewpage odd
 @syncodeindex fn cp
 
-@set GPS
 @include version.texi
 
 @titlepage
@@ -9791,7 +9790,7 @@ activities performed transparently on one or more remote servers.
 In order to compile, run or debug on a host remote from GPS, three conditions
 must be met:
 
-@itemize
+@itemize @bullet
 @item
 @cindex password
 Have a remote connection to the host using 'rsh', 'ssh' or 'telnet'. Note that
@@ -12238,6 +12237,7 @@ Manager and the Build Launcher dialogs.
 @item %c
 This is the column number on which the user clicked.
 Python equivalent:
+
 @smallexample
 GPS.current_context().column()
 @end smallexample
@@ -12245,6 +12245,7 @@ GPS.current_context().column()
 @item %d
 The current directory.
 Python equivalent:
+
 @smallexample
 GPS.current_context().directory()
 @end smallexample
@@ -12255,6 +12256,7 @@ The krunched name of the current directory.
 @item %e
 Name of the entity the user clicked on.
 Python equivalent:
+
 @smallexample
 GPS.current_context().entity().name()
 @end smallexample
@@ -12281,6 +12283,7 @@ Replaced by the command line specified in the preference
 @item %f
 Base name of the currently selected file.
 Python equivalent:
+
 @smallexample
 import os.path
 os.path.basename (GPS.current_context().file().name())
@@ -12289,6 +12292,7 @@ os.path.basename (GPS.current_context().file().name())
 @item %F
 Absolute name of the currently opened file.
 Python equivalent:
+
 @smallexample
 GPS.current_context().file().name()
 @end smallexample
@@ -14955,8 +14959,9 @@ values:
 use pipes to launch the tool.
 @item false (default)
 use a tty emulation, which is a bit slower but allow
- password prompts retrieval with some tools.
+password prompts retrieval with some tools.
 @end table
+
 Note that this argument has effects only on Windows platforms.
 
 @item start_command_common_args (optional)
