@@ -1,119 +1,41 @@
 prefix = @prefix@
 docdir = $(prefix)/share/doc/gps
-sharedir = $(prefix)/share/gps
 
-MAKEINFO= @MAKEINFO@
-TEXI2DVI= @TEXI2DVI@
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 CONVERT = convert
 CP = cp -p
-IMAGES = gps_title.gif *.jpg *.png ../share/icons/16px/entities/*_x.png
 
-TEXI=gps.texi
-
-all: stamp-pdf doc tutorial gps_pg clean-temp-files
-distrib: stamp-pdf doc tutorial clean-temp-files
-non-ps: common clean-temp-files
+all: ug tutorial gps_pg
 static:
 
-stamp-pdf: $(IMAGES)
-	@echo "Converting jpg images to PDF"
-	@-for img in [^g]*.jpg gps-vcs-*.jpg; do \
-	  $(CONVERT) $${img} `basename $${img} .jpg`.pdf; \
-	done
-	@echo "Copying png files from shared directory"
-	@-for pngfile in ../share/icons/16px/entities/*_x.png; do \
-	  $(CP) $${pngfile} . ; \
-	done
-	@echo "Converting png images to PDF"
-	@-for img in *_x.png; do \
-	  $(CONVERT) $${img} `basename $${img} .png`.pdf; \
-	done
-	touch stamp-pdf
+gps_pg:
+	make -C programers_guide html
 
-tutorial: gps-tutorial.html
-doc:      gps.txt gps.html gps.pdf
-gps_pg:   gps_pg.pdf gps_pg.html
+ug:
+	make -C users_guide html latexpdf
 
-.PHONY: gps.html
-
-gps-tutorial.html: tutorial.texi gfdl.texi
-	${MAKEINFO} --html --no-validate --no-split --number-sections $< -o $@
-
-gps_pg.html:  gps_pg.texi gfdl.texi
-	${MAKEINFO} --html --no-split --number-sections --no-headers $< -o $@
-
-gps_pg.pdf: gps_pg.texi gfdl.texi
-
-## We generate the documentation twice, in case the version of makeinfo is
-## recent enough to support --css-include
-gps.html: ${TEXI} gfdl.texi
-	makeinfo --html --number-sections ${TEXI}
-	@-makeinfo --html --css-include=gps.css --number-sections ${TEXI}  >/dev/null 2>/dev/null
-	@sed -e 's,</head>,<base target="page"/></head>,' -e 's,text-align: justify,,' gps/index.html > gps/index.html.tmp
-	@mv gps/index.html.tmp gps/index.html
-
-gps.pdf gps.txt: ${TEXI} stamp-pdf gfdl.texi
-
-%.pdf::
-ifneq (${TEXI2DVI},)
-	echo x | ${TEXI2DVI} -p $<
-else
-	@echo "--------------------------------------------------"
-	@echo "texi2dvi not found, cannot build PDF documentation"
-	@echo "--------------------------------------------------"
-endif
-
-%.txt: ${TEXI}
-ifneq (${MAKEINFO},)
-	${MAKEINFO} --force --no-headers --no-split -o $@ $<
-else
-	@echo "----------------------------------------------------"
-	@echo "makeinfo not found, cannot build TXT documentation"
-	@echo "----------------------------------------------------"
-endif
-
+.PHONY: tutorial
+tutorial:
+	make -C tutorial html
 
 install:
 	$(MKDIR) $(docdir)
-	$(MKDIR) $(sharedir)
 	$(MKDIR) $(docdir)/html
 	$(MKDIR) $(docdir)/pdf
-	$(MKDIR) $(docdir)/txt
 	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
-	-$(INSTALL_DATA) gps-tutorial.html $(docdir)/html
-	-$(CP) gps/* $(docdir)/html/
-	-$(INSTALL_DATA) gps.html  $(docdir)/html/
-	-$(INSTALL_DATA) gps.pdf  $(docdir)/pdf
-	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
-	-for img in $(IMAGES); do \
-	  $(INSTALL_DATA) $$img $(docdir)/html/; \
-	done
+
+	${MKDIR} $(docdir)/html/users_guide/
+	-${CP} -r users_guide/_build/html/* $(docdir)/html/users_guide/
+	-${CP} users_guide/_build/latex/GPS.pdf $(docdir)/pdf/gps.pdf
+
+	${MKDIR} $(docdir)/html/tutorial/
+	-${CP} -r tutorial/_build/html/* $(docdir)/html/tutorial/
+
 	-$(INSTALL_DATA) gps-splash.png $(sharedir)
 	-${INSTALL_DATA} gps_index.xml ${docdir}/html
 	-${INSTALL_DATA} help_index.html ${docdir}/html
 
-clean-temp-files:
-	-$(RM) *.aux
-	-$(RM) *.cp
-	-$(RM) *.cps
-	-$(RM) *.fn
-	-$(RM) *.ky
-	-$(RM) *.log
-	-$(RM) *.pg
-	-$(RM) *.toc
-	-$(RM) *.tp
-	-$(RM) *.vr
-
-clean: clean-temp-files
-	-$(RM) gps-tutorial*.html gps_*.html gps.pdf gps.dvi gps.txt stamp-*
-	-${RM} -rf gps/
-
-mostlyclean: clean
-
-distclean: mostlyclean
-	-$(RM) Makefile
-
-maintainer-clean: distclean
+clean:
+	-${RM} -rf */_build/

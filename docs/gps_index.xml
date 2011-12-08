@@ -3,6 +3,7 @@
    <doc_path>share/doc/gnat/html</doc_path>
    <doc_path>share/doc/gprbuild/html</doc_path>
    <doc_path>share/doc/gnat-cross/html</doc_path>
+   <doc_path>share/doc/gps</doc_path>
 
    <!--  Backward compatibility with earlier versions of GNAT -->
    <doc_path>doc/gnat/html</doc_path>
@@ -16,14 +17,14 @@
    </documentation_file>
 
    <documentation_file>
-      <name>gps.html</name>
+      <name>html/users_guide/index.html</name>
       <descr>Using the GNAT Programming Studio</descr>
       <category>GPS</category>
       <menu>/Help/GPS/Using the GNAT Programming Studio</menu>
    </documentation_file>
 
    <documentation_file>
-      <name>gps-tutorial.html</name>
+      <name>html/tutorial/index.html</name>
       <descr>GNAT Programming Studio Tutorial</descr>
       <category>GPS</category>
       <menu>/Help/GPS/GNAT Programming Studio Tutorial</menu>
