@@ -38,6 +38,13 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
   Workaround: Use the toplevel menu, or the contextual menu on projects in the
               Project view.
 
+- KB10-052: GB: GNAT project file using relative path must be in the workspace.
+  Problem:    Relative path for GNAT project file in the GNATbench properties
+              pointing to a file located outside the workspace generates file
+              not found problem errors.
+  Workaround: If possible import the file in the workspace, otherwise make the
+              path absolute.
+              
 - KA21-026: GPS: dispatching.py plug-in causes GPS to use 100% CPU
   Problem:    When the dispatching.py plug-in is active, certain conditions
               may cause GPS to start using 100% of the CPU, while the UI
