@@ -14,10 +14,10 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
   Workaround: Open a console through /Tools/Consoles/OS Shell and execute
               gnatls -v
 
-- KB29-013: GPS: marks in speedbar for CodePeer messages is not displayed
-  Problem:    Marks for CodePeer messages is not displayed in editor's
-              speedbar.
-  Workaround: No workaround.
+- KB29-013: GPS: speedbar marks for CodePeer messages not displayed
+  Problem:    The color marks on the side of source editors are not displayed
+              for CodePeer messages.
+  Workaround: Use the location view instead to navigate between messages.
 
 - KB28-040: GPS: crash when reloading a project that contains errors
   Problem:    When using the menu /Project/Reload Project and the project
