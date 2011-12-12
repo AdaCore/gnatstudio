@@ -11,7 +11,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import sys, os, time
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -39,9 +39,12 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'index'
 
+def get_copyright():
+    return u'2001-%s, AdaCore' % time.strftime("%Y")
+
 # General information about the project.
 project = u'GPS Programer\'s Guide'
-copyright = u'2011, AdaCore'
+copyright = get_copyright()
 
 def get_version():
     """Extract the version from configure.in"""
