@@ -8,6 +8,12 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- KC12-009: Find All References missing refs with extending projects
+  Problem:    When searching for all references from a file in an extending
+              project, GPS fails to report the references that are in files
+              that are in other non-extending projects.
+  Workaround: Manually load all Xref information via the /Build menu.
+
 - K926-014: GB: GNATbench freezes when viewing/editing Ada files
   Problem:    Randomly when using the GNATbench Ada editor for code edition
               or program debug, GNATbench freezes. The only solution to get

@@ -1027,11 +1027,12 @@ package body Entities.Queries is
       Deps : Dependency_Iterator;
    begin
       if Active (Me) then
-         Trace (Me, "Setup_For_Entity " & Debug_Name (Entity)
-                & " declared at "
-           & (+Base_Name
-             (Get_Filename (Get_Declaration_Of (Entity).File))
-                & Get_Declaration_Of (Entity).Line'Img));
+         Increase_Indent
+           (Me, "Setup_For_Entity " & Debug_Name (Entity)
+            & " declared at "
+            & (+Base_Name
+              (Get_Filename (Get_Declaration_Of (Entity).File))
+              & Get_Declaration_Of (Entity).Line'Img));
       end if;
 
       if Iter.In_File = null then
@@ -1117,6 +1118,10 @@ package body Entities.Queries is
 
       Iter.Deps := Deps;
 
+      if Active (Me) then
+         Decrease_Indent (Me, "Done Setup_For_Entity");
+      end if;
+
       --  If the first reference in the list is not correct, move to next one
 
       if Iter.Decl_Returned
@@ -1150,13 +1155,14 @@ package body Entities.Queries is
       Loc         : File_Location := No_File_Location;
       Start, Last : Integer;
    begin
-      Assert (Me, Entity /= null,
-              "No Entity specified to Find_All_References");
-
       if Active (Me) then
-         Trace (Me, "Find_All_References to " & Debug_Name (Entity)
-                & ' ' & To_String (Entity.Live_Declaration)
-                & " in_file=" & Boolean'Image (In_File /= null));
+         Assert (Me, Entity /= null,
+                 "No Entity specified to Find_All_References");
+
+         Increase_Indent
+           (Me, "Find_All_References to " & Debug_Name (Entity)
+            & ' ' & To_String (Entity.Live_Declaration)
+            & " in_file=" & Boolean'Image (In_File /= null));
       end if;
 
       if In_Scope /= null then
@@ -1223,8 +1229,9 @@ package body Entities.Queries is
    ------------
 
    function At_End (Iter : Entity_Reference_Iterator) return Boolean is
+      Result : Boolean;
    begin
-      return Iter.Decl_Returned
+      Result := Iter.Decl_Returned
         and then not Iter.Include_Overriding
         and then not Iter.Include_Overridden
         and then
@@ -1233,6 +1240,12 @@ package body Entities.Queries is
         and then At_End (Iter.Deps)
         and then Iter.Files_It = Entity_File_Maps.No_Element
         and then Iter.Entity_It = Entities_In_File_Sets.No_Element;
+
+      if Result and then Active (Me) then
+         Decrease_Indent (Me, "Done searching for all references");
+      end if;
+
+      return Result;
    end At_End;
 
    --------------
@@ -1706,6 +1719,7 @@ package body Entities.Queries is
    is
       Importing : Project_Iterator;
       Project   : Project_Type;
+      Extended  : Project_Type;
       Count     : Natural;
       pragma Unreferenced (Count);
    begin
@@ -1754,6 +1768,18 @@ package body Entities.Queries is
             Project := File.Db.Registry.Tree.Root_Project;
             Importing := Start (Project, Recursive => True);
          else
+            --  We need to look at the projects that might be using the
+            --  extended project (if any). Otherwise, we will not search for
+            --  ancestors dependencies for a source from an extending project
+            --  elsewhere than in the extending project itself, since none of
+            --  the other projects can be importing it).
+
+            loop
+               Extended := Project.Extended_Project;
+               exit when Extended = No_Project;
+               Project := Extended;
+            end loop;
+
             Importing := Find_All_Projects_Importing
               (Project, Include_Self => True);
          end if;

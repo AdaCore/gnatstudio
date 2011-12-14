@@ -1122,8 +1122,9 @@ package body Entities is
      (Db : Entities_Database; Mode : Freeze_Type := No_Create_Or_Update) is
    begin
       if Active (Assert_Me) then
-         Trace (Assert_Me, "Freeze database " & Mode'Img
-                & " count =" & Db.Count'Img);
+         Increase_Indent
+           (Assert_Me, "Freeze database " & Mode'Img
+            & " count =" & Db.Count'Img);
       end if;
 
       Db.Count := Db.Count + 1;
@@ -1147,8 +1148,8 @@ package body Entities is
       Db.Count := Db.Count - 1;
 
       if Active (Assert_Me) then
-         Trace (Assert_Me, "Thaw database " & Db.Frozen'Img
-                & " count =" & Db.Count'Img);
+         Decrease_Indent (Assert_Me, "Thaw database " & Db.Frozen'Img
+                          & " count =" & Db.Count'Img);
       end if;
    end Thaw;
 
@@ -1378,6 +1379,8 @@ package body Entities is
 
    begin
       if S = null and then not Allow_Create then
+         Trace
+           (Assert_Me, "MANU Internal_Get_Or_Create, not creation allowed");
          null;
 
       elsif S = null then
