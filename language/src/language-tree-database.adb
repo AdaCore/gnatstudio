@@ -27,7 +27,8 @@ with Language.Documentation; use Language.Documentation;
 with Language.Unknown;       use Language.Unknown;
 
 with System;            use System;
-with String_Utils; use String_Utils;
+with String_Utils;      use String_Utils;
+with UTF8_Utils;        use UTF8_Utils;
 
 package body Language.Tree.Database is
 
@@ -533,9 +534,24 @@ package body Language.Tree.Database is
      (Provider : access File_Buffer_Provider;
       File     : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access
    is
-      pragma Unreferenced (Provider);
+      Tmp     : GNAT.Strings.String_Access;
+      Tmp2    : Unchecked_String_Access;
+      Len     : Natural;
+      Success : Boolean;
+      pragma Unreferenced (Provider, Success);
    begin
-      return Read_File (File);
+      --  Ensure result is UTF8 encoded
+
+      Tmp := Read_File (File);
+      Unknown_To_UTF8 (Tmp.all, Tmp2, Len, Success);
+
+      if Tmp2 /= null then
+         Free (Tmp);
+         Tmp := new String'(Tmp2 (1 .. Len));
+         Free (Tmp2);
+      end if;
+
+      return Tmp;
    end Get_Buffer;
 
    ----------
@@ -975,9 +991,6 @@ package body Language.Tree.Database is
          --  Phase 1 : analyze the new tree
 
          Buffer := Get_Buffer (File.Db.Provider, File.File);
-
-         --  ??? We are assuming that Buffer is encoded in UTF8, is this the
-         --  case?
          Parse_Constructs (File.Lang, Buffer.all, Constructs);
          New_Tree := To_Construct_Tree (Constructs'Access, True);
 

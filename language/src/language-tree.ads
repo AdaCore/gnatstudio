@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2010, AdaCore                 --
+--                  Copyright (C) 2006-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -115,7 +115,7 @@ package Language.Tree is
    pragma Inline (Get_Construct);
    --  Return the construct pointed by the iterator given in parameter.
    --  The user should not free the fields of the returned
-   --  Simple_Construct_Information.The lifetime of the returned
+   --  Simple_Construct_Information. The lifetime of the returned
    --  object is the one of the corresponding tree. For longer storage, the
    --  construct and its fields should be copied.
 

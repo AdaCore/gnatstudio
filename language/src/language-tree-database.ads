@@ -214,7 +214,7 @@ package Language.Tree.Database is
    --  Return the buffer corresponding to this buffer provider. The returned
    --  access type is supposed to be a copy of the actual buffer - it will be
    --  freed by the completion engine when needed.
-   --  ??? What is the encoding of the returned data?
+   --  The returned buffer must be in UTF-8 format.
 
    procedure Free (This : in out Buffer_Provider_Access);
    --  Free the access type

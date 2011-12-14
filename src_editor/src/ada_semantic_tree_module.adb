@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2010, AdaCore                 --
+--                  Copyright (C) 2007-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,12 +21,14 @@ with GNAT.Strings;                 use GNAT.Strings;
 
 with Language.Tree.Database;       use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
+with Basic_Types;                  use Basic_Types;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada;                       use Gtkada;
 with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Box;               use Src_Editor_Box;
 with Traces;                       use Traces;
+with UTF8_Utils;                   use UTF8_Utils;
 with Entities.Construct_Assistant;
 
 package body Ada_Semantic_Tree_Module is
@@ -81,12 +83,14 @@ package body Ada_Semantic_Tree_Module is
      (Provider : access GPS_Buffer_Provider;
       File     : Virtual_File) return String_Access
    is
-      Editor : Gtkada.MDI.MDI_Child;
-   begin
-      --  ??? We have a potential inconsistency here.
-      --  In the "then" branch, we return a string encoded in UTF-8, and in
-      --  the "else" branch, we return a string encoded in the locale.
+      Editor  : Gtkada.MDI.MDI_Child;
+      Tmp     : String_Access;
+      Tmp2    : Unchecked_String_Access;
+      Len     : Natural;
+      Success : Boolean;
+      pragma Unreferenced (Success);
 
+   begin
       if Is_Open (Provider.Kernel, File) then
          Editor := Find_Editor (Provider.Kernel, File);
 
@@ -97,7 +101,18 @@ package body Ada_Semantic_Tree_Module is
          end if;
       end if;
 
-      return Read_File (File);
+      --  Ensure result is UTF8 encoded
+
+      Tmp := Read_File (File);
+      Unknown_To_UTF8 (Tmp.all, Tmp2, Len, Success);
+
+      if Tmp2 /= null then
+         Free (Tmp);
+         Tmp := new String'(Tmp2 (1 .. Len));
+         Free (Tmp2);
+      end if;
+
+      return Tmp;
    end Get_Buffer;
 
    ---------------------
