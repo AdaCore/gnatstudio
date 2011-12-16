@@ -645,7 +645,7 @@ package body Breakpoints_Editor is
       elsif Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
-         On_View_Clicked (View.Editor);
+         On_View_Clicked (Widget);
       end if;
 
       return False;
