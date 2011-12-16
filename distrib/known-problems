@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
 
+- KC01-003: GPS: Changing the gtk theme may make GPS crash
+  Problem:    Seen in particular on Windows, changing the gtk theme from
+              "MS-Windows" to "Raleigh" makes GPS crash.
+  Workaround: Edit manually your preferences ~/.gps/preferences to modify the
+              theme name and restart GPS.
+
 - KB30-016: GPS: GNAT version not available in /Help/About
   Problem:    The menu /Help/About does not show the version of the GNAT
               compiler.
@@ -44,7 +50,7 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
               not found problem errors.
   Workaround: If possible import the file in the workspace, otherwise make the
               path absolute.
-              
+
 - KA21-026: GPS: dispatching.py plug-in causes GPS to use 100% CPU
   Problem:    When the dispatching.py plug-in is active, certain conditions
               may cause GPS to start using 100% of the CPU, while the UI
