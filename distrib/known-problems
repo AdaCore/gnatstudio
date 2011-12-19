@@ -538,3 +538,8 @@ Known Problems fixed in GPS 5.1.0 / GNATbench 2.6.0
               large, the common prefix used to complete the current identifier
               may be wrong.
   Workaround: Manually complete the code.
+
+- KB10-049 GPS: breakpoint editor list not opening source file
+  Problem:    In GPS, double-click on any breakpoint in the list doesn't open
+              the corresponding source editor at the right location.
+  Workaround: Click on the 'View' button to navigate.
