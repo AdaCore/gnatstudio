@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2010, AdaCore                  --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,7 +36,7 @@ with String_Utils;              use String_Utils;
 with Code_Coverage;             use Code_Coverage;
 with Code_Analysis_GUI;
 with Code_Coverage.Gcov;
-with Code_Coverage.Xcov;
+with Code_Coverage.GNATcov;
 with GPS.Editors; use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
@@ -136,8 +136,8 @@ package body Coverage_GUI is
             when Gcov =>
                Code_Coverage.Gcov.Add_File_Info (File_Node, File_Contents);
 
-            when Xcov =>
-               Code_Coverage.Xcov.Add_File_Info (File_Node, File_Contents);
+            when GNATcov =>
+               Code_Coverage.GNATcov.Add_File_Info (File_Node, File_Contents);
          end case;
 
          --  Check for project runs info
@@ -515,10 +515,10 @@ package body Coverage_GUI is
               (Gcov_Root,
                Base_Name (Source) & Gcov_Extension_Cst);
 
-         when Xcov =>
+         when GNATcov =>
             return Create_From_Dir
               (Object_Dir (Get_Registry (Kernel).Tree.Root_Project),
-               Base_Name (Source) & Xcov_Extension_Cst);
+               Base_Name (Source) & GNATcov_Extension_Cst);
       end case;
    end Find_Gcov_File;
 

@@ -30,11 +30,11 @@ with GPS.Styles.UI;              use GPS.Styles.UI;
 with Traces;
 with Coverage_GUI;               use Coverage_GUI;
 
-package body Code_Coverage.Xcov is
+package body Code_Coverage.GNATcov is
 
-   Xcov_Code_Coverage_Module_Trace : constant Traces.Debug_Handle
+   GNATcov_Code_Coverage_Module_Trace : constant Traces.Debug_Handle
      := GNATCOLL.Traces.Create
-       ("XCOV_CODE_COVERAGE_MODULE", GNATCOLL.Traces.On);
+       ("GNATCOV_CODE_COVERAGE_MODULE", GNATCOLL.Traces.On);
 
    -------------------
    -- Add_File_Info --
@@ -54,7 +54,7 @@ package body Code_Coverage.Xcov is
       Line_Num          : Natural;
       Lines_Count       : Natural := 0;
       Not_Cov_Count     : Natural := 0;
-      Line_Coverage     : Xcov_Line_Coverage_Access;
+      Line_Coverage     : GNATcov_Line_Coverage_Access;
    begin
       if File_Node.Analysis_Data.Coverage_Data = null then
          File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
@@ -131,7 +131,7 @@ package body Code_Coverage.Xcov is
          Line_Num := Natural'Value
            (File_Contents (Line_Matches (1).First .. Line_Matches (1).Last));
          File_Node.Lines (Line_Num).Number := Line_Num;
-         Line_Coverage := new Xcov_Line_Coverage;
+         Line_Coverage := new GNATcov_Line_Coverage;
          File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data :=
            Coverage_Access (Line_Coverage);
          Line_Coverage.Status := No_Code;
@@ -162,7 +162,7 @@ package body Code_Coverage.Xcov is
 
             when others =>
                GNATCOLL.Traces.Trace
-                 (Xcov_Code_Coverage_Module_Trace,
+                 (GNATcov_Code_Coverage_Module_Trace,
                   "unexpected character: "
                   & File_Contents (Line_Matches (2).First));
                pragma Assert (False);
@@ -170,8 +170,8 @@ package body Code_Coverage.Xcov is
 
          --  Set Coverage to 1 for partially and fully covered lines
 
-         if Line_Coverage.Status in Xcov_Partially_Covered
-           or else Line_Coverage.Status in Xcov_Fully_Covered
+         if Line_Coverage.Status in GNATcov_Partially_Covered
+           or else Line_Coverage.Status in GNATcov_Fully_Covered
          then
             Line_Coverage.Coverage := 1;
          end if;
@@ -180,7 +180,7 @@ package body Code_Coverage.Xcov is
          --  of the corresponding line.
 
          if Line_Coverage.Status = Not_Covered
-           or else Line_Coverage.Status in Xcov_Partially_Covered
+           or else Line_Coverage.Status in GNATcov_Partially_Covered
          then
             File_Node.Lines (Line_Num).Contents := new String'
               (File_Contents
@@ -202,7 +202,7 @@ package body Code_Coverage.Xcov is
    -------------------------------
 
    overriding procedure Add_Location_If_Uncovered
-     (Coverage    : Xcov_Line_Coverage;
+     (Coverage    : GNATcov_Line_Coverage;
       Kernel      : GPS.Kernel.Kernel_Handle;
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
@@ -229,7 +229,7 @@ package body Code_Coverage.Xcov is
                Get_Name (Builder_Styles (Warnings)) & '/' & Uncovered_Category,
                Builder_Styles (Warnings)));
 
-      elsif Coverage.Status in Xcov_Partially_Covered then
+      elsif Coverage.Status in GNATcov_Partially_Covered then
          Added := True;
          Message :=
            Create_Simple_Message
@@ -255,7 +255,7 @@ package body Code_Coverage.Xcov is
    ------------------------
 
    overriding function Line_Coverage_Info
-     (Coverage : Xcov_Line_Coverage;
+     (Coverage : GNATcov_Line_Coverage;
       Bin_Mode : Boolean := False)
       return GPS.Editors.Line_Information.Line_Information_Record
    is
@@ -340,9 +340,10 @@ package body Code_Coverage.Xcov is
    -- Is_Valid --
    --------------
 
-   overriding function Is_Valid (Self : Xcov_Line_Coverage) return Boolean is
+   overriding function Is_Valid
+     (Self : GNATcov_Line_Coverage) return Boolean is
    begin
       return Self.Status /= Undetermined;
    end Is_Valid;
 
-end Code_Coverage.Xcov;
+end Code_Coverage.GNATcov;
