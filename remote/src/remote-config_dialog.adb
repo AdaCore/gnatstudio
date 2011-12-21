@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2012, AdaCore                     --
+--                     Copyright (C) 2009-2011, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -217,7 +217,6 @@ package body Remote.Config_Dialog is
       Modified              : Boolean := False;
       Applied               : Boolean := False;
       Select_Back           : Boolean := False;
-      DB_Changed            : Boolean := False;
    end record;
    type Server_List_Editor is access all Server_List_Editor_Record'Class;
 
@@ -1413,6 +1412,8 @@ package body Remote.Config_Dialog is
          Remote.Db.Remove (Get_Database, Nickname);
       end if;
 
+      Remote_Module.Save_Remote_Config (Dialog.Kernel);
+
       --  set removed machine as unmodified to prevent save upon
       --  tree model content change (selection change)
       Dialog.Modified := False;
@@ -1645,8 +1646,6 @@ package body Remote.Config_Dialog is
 
       Trace (Me, "Put machine into database.");
       Remote.Db.Add_Or_Replace (Get_Database, Machine);
-
-      Dialog.DB_Changed := True;
 
       --  Now save the paths
 

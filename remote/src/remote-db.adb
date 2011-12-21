@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2012, AdaCore                     --
+--                     Copyright (C) 2009-2011, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1368,6 +1368,12 @@ package body Remote.Db is
       Old := Config.Machines.Element (Nickname);
       GNAT.Expect.TTY.Remote.Close_All (Nickname);
       Config.Machines.Delete (Nickname);
+
+      if Config.Mount_Points.Contains (Nickname) then
+         Config.Mount_Points.Delete (Nickname);
+      end if;
+
+      Run_Hook (Old.Kernel, Server_List_Changed_Hook);
       Unref (Old);
    end Remove;
 
@@ -1439,9 +1445,7 @@ package body Remote.Db is
          Free (Machine.Nickname);
          Free (Machine.Network_Name);
          Free (Machine.Access_Tool_Name);
-         Free (Machine.Access_Tool);
          Free (Machine.Shell_Name);
-         Free (Machine.Shell);
          Free (Machine.Extra_Init_Commands);
          Free (Machine.User_Name);
          Free (Machine.Rsync_Func);
