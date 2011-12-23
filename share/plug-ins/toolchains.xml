@@ -43,6 +43,8 @@
     <compiler lang="c++">c++ppc</compiler>
   </toolchain>
 
+  <toolchain name="powerpc-wrs-linux"/>
+
   <toolchain name="powerpc-sysgo-pikeos"/>
 
   <toolchain name="powerpc-elf"/>
@@ -55,6 +57,8 @@
     <compiler lang="c">ccpentium</compiler>
     <compiler lang="c++">c++pentium</compiler>
   </toolchain>
+
+  <toolchain name="i586-wrs-linux"/>
 
   <toolchain name="e500v2-wrs-vxworks">
     <cpp_filt>c++filtppc</cpp_filt>
