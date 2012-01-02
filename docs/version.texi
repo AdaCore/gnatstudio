@@ -2,8 +2,8 @@
 @c                                                                            o
 @c                             GPS DOCUMENTATION                              o
 @c                                                                            o
-@c                     Copyright (C) 2001-2011, AdaCore                       o
+@c                     Copyright (C) 2001-2012, AdaCore                       o
 @c                                                                            o
 @c oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
 
-@set GPSVersion 5.1.1
+@set GPSVersion 5.1.2
