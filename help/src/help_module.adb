@@ -967,7 +967,7 @@ package body Help_Module is
       Button := Message_Dialog
         (To_String (About_Text) & LF &
          (-"the GNAT Programming Studio") & LF & Contents.all & LF &
-         "(c) 2001-2011 AdaCore",
+         "(c) 2001-2012 AdaCore",
          Buttons => Button_OK,
          Title   => -"About...",
          Parent  => Get_Current_Window (Kernel));
