@@ -19,22 +19,21 @@ with Commands.Interactive;
 
 package Commands.GNATTest is
 
-   --  Go to test from tested subprogram and backward
+   --  Go to tested from test subprogram
 
-   type Go_To_Test_Command_Type is new Commands.Interactive.Interactive_Command
-   with record
-      To_Test : Boolean;
-   end record;
+   type Go_To_Tested_Command_Type is
+     new Commands.Interactive.Interactive_Command with null record;
 
-   type Go_To_Test_Command_Access is access all Go_To_Test_Command_Type;
+   type Go_To_Tested_Command_Access is access all Go_To_Tested_Command_Type;
 
    overriding function Execute
-     (Command : access Go_To_Test_Command_Type;
+     (Command : access Go_To_Tested_Command_Type;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
 
-   overriding function Name (X : access Go_To_Test_Command_Type) return String;
+   overriding
+   function Name (X : access Go_To_Tested_Command_Type) return String;
 
-   overriding procedure Free (X : in out Go_To_Test_Command_Type);
+   overriding procedure Free (X : in out Go_To_Tested_Command_Type);
 
 end Commands.GNATTest;

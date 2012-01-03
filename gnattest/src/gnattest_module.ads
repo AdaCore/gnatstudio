@@ -16,8 +16,9 @@
 ------------------------------------------------------------------------------
 
 --  This package defines the module for GNATTest integration.
+
 with Basic_Types;
-with Entities;
+with GNATCOLL.VFS;
 with GPS.Kernel;
 
 with Ada.Strings.Unbounded;
@@ -28,12 +29,20 @@ package GNATTest_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
-   procedure Find
-     (Entity          : Entities.Entity_Information;
-      To_Test         : Boolean;
+   procedure Find_Tested
+     (File_Name       : GNATCOLL.VFS.Virtual_File;
       Unit_Name       : out Ada.Strings.Unbounded.Unbounded_String;
       Subprogram_Name : out Ada.Strings.Unbounded.Unbounded_String;
       Line            : out Natural;
       Column          : out Basic_Types.Visible_Column_Type);
+   --  Find tested subprogram for given test unit
+
+   procedure Open_File
+     (Kernel          : GPS.Kernel.Kernel_Handle;
+      Unit_Name       : String;
+      Line            : Natural;
+      Column          : Basic_Types.Visible_Column_Type;
+      Subprogram_Name : String := "");
+   --  Open unit in editor and place cursor to given Line and Column
 
 end GNATTest_Module;

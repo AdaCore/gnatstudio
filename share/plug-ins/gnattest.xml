@@ -79,9 +79,17 @@
     />
 
   <action  name="run gnattest">
-    <filter id="Non harness project"/>
+    <filter id="Create harness project"/>
     <description>Run gnattest on current project file</description>
-    <external>gnattest -P%pp</external>
+    <shell lang="python" output="none"
+    >GPS.BuildTarget("GNATTest for project").execute(synchronous=False)</shell>
+  </action>
+
+  <action  name="re-generate harness project">
+    <filter id="Harness project exists"/>
+    <description>Run gnattest on current project file</description>
+    <shell lang="python" output="none"
+    >GPS.BuildTarget("GNATTest for project").execute(synchronous=False)</shell>
   </action>
 
   <action name="open harness" output="none">
@@ -100,7 +108,10 @@
   <submenu>
     <title>Tools/GNATTest</title>
     <menu action="run gnattest">
-      <title>Run gnattest</title>
+      <title>Generate harness</title>
+    </menu>
+    <menu action="re-generate harness project">
+      <title>Re-generate harness</title>
     </menu>
     <menu action="open harness">
       <title>Open harness project</title>
@@ -108,19 +119,95 @@
   </submenu>
 
   <contextual action="run gnattest">
-    <title>GNATTest/Run gnattest for %p</title>
+    <title>GNATTest/Generate harness for %p</title>
+  </contextual>
+
+  <contextual action="re-generate harness project">
+    <title>GNATTest/Re-generate harness for %p</title>
   </contextual>
 
   <contextual action="open harness">
     <title>GNATTest/Open harness project for %p</title>
   </contextual>
 
-  <contextual action="go to test procedure">
-    <title>Goto test for %e</title>
-  </contextual>
+  <target-model name="gnattest" category="">
+    <description>Generic launch of gnattest</description>
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%pp</arg>
+      <arg>%X</arg>
+    </command-line>
+    <icon>gps-build-all</icon>
+    <switches command="gnattest" columns="2" lines="1">
+      <title column="1" line="1">Files and directories</title>
+      <title column="2" line="1">Other switches</title>
+      <field label="harness directory"
+             line="1"  column="1"
+             switch="--harness-dir"
+             separator="="
+             as-directory="true"
+             tip="is used to specify the directory in which to place harness packages and project file for the test driver." />
+      <field label="separate stub root"
+             line="1"  column="1"
+             switch="--separate-root"
+             separator="="
+             as-directory="true"
+             tip="The directory hierarchy of tested sources is recreated in this directory, and test packages are placed in corresponding directories." />
+      <field label="stub subdir"
+             line="1"  column="1"
+             switch="--subdir"
+             separator="="
+             as-directory="true"
+             tip="Test packages are placed in subdirectories" />
+      <field label="additional tests"
+             line="1"  column="1"
+             switch="--additional-tests"
+             separator="="
+             as-file="true"
+             tip="Sources described in given project are considered potential additional manual tests to be added to the test suite." />
+      <combo label="stubs default"
+             line="2"  column="1"
+             switch="--stub-default"
+             separator="="
+             noswitch="fail"
+             tip="Default behavior of generated stubs.">
+        <combo-entry label="Fail" value="fail"/>
+        <combo-entry label="Pass" value="pass"/>
+      </combo>
+      <check label="generate harness only"
+             line="1"  column="2"
+             switch="--harness-only"
+             tip="Create a harness for all sources, treating them as test packages." />
+      <check label="Recursive"
+             line="1"  column="2"
+             switch="-r"
+             tip="Recursively consider all sources from all projects." />
+      <check label="Silent"
+             line="1"  column="2"
+             switch="-q"
+             tip="Suppresses noncritical output messages." />
+      <check label="Verbose"
+             line="1"  column="2"
+             switch="-v"
+             tip="Verbose mode: generates version information." />
+      <check label="Liskov verification"
+             line="1"  column="2"
+             switch="--liskov"
+             tip="Enables Liskov verification: run all tests from all parents in order to check substitutability." />
+    </switches>
+  </target-model>
+  
+  <target model="gnattest" category="_Project_" name="GNATTest for project">
+    <in-toolbar>FALSE</in-toolbar>
+    <in-menu>FALSE</in-menu>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
 
-  <contextual action="go to tested procedure">
-    <title>Goto tested for %e</title>
-  </contextual>
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%pp</arg>
+      <arg>%X</arg>
+    </command-line>
+  </target>
 
 </gnattest>

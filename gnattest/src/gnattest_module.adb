@@ -17,25 +17,30 @@
 with Ada.Containers.Ordered_Maps;
 
 with Commands.GNATTest;
-
+with Commands.Interactive;
+with Entities;
 with Glib.Object;                       use Glib.Object;
 
 with GNATCOLL.Projects;
 with GNATCOLL.Symbols;
-with GNATCOLL.VFS;
 
+with GPS.Editors;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;
+
+with Gtk.Handlers;
+with Gtk.Menu;
+with Gtk.Menu_Item;
 
 with Input_Sources.File;
 with Sax.Readers;
 with Sax.Attributes;
 with Unicode.CES;
-with Commands.Interactive;
 
 package body GNATTest_Module is
 
@@ -52,11 +57,11 @@ package body GNATTest_Module is
      (Filter  : access Harness_Project_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
-   type Non_Harness_Project_Filter is new Harness_Project_Filter
+   type Create_Harness_Project_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Non_Harness_Project_Filter;
+     (Filter  : access Create_Harness_Project_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
    type Harness_Project_Exists_Filter is new GPS.Kernel.Action_Filter_Record
@@ -66,13 +71,21 @@ package body GNATTest_Module is
      (Filter  : access Harness_Project_Exists_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
-   type Go_To_Test_Filter is new GPS.Kernel.Action_Filter_Record with record
-      To_Test : Boolean;
-   end record;
+   type Go_To_Tested_Filter is
+     new GPS.Kernel.Action_Filter_Record with null record;
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Go_To_Test_Filter;
+     (Filter  : access Go_To_Tested_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
+
+   type Submenu_Factory_Record is
+     new GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
+
+   overriding procedure Append_To_Menu
+     (Factory : access Submenu_Factory_Record;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : GPS.Kernel.Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Get_Mapping_File
      (Project : GNATCOLL.Projects.Project_Type)
@@ -81,29 +94,37 @@ package body GNATTest_Module is
    procedure On_Project_Changed
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
-   type Entity_Name is record
-      Unit_Name       : Unbounded_String;
-      Subprogram_Name : Unbounded_String;
-      Line            : Natural;
-      Column          : Natural;
+   type Source_Entity is record
+      Source_File      : Unbounded_String;
+      Test_Unit        : Unbounded_String;
+      Subprogram_Name  : Unbounded_String;
+      Line             : Natural := 0;
+      Column           : Natural := 0;
+      Test_Case_Name   : Unbounded_String;
+      Test_Case_Line   : Natural := 0;
+      Test_Case_Column : Natural := 0;
    end record;
 
-   function "<" (Left, Right : Entity_Name) return Boolean;
+   function "<" (Left, Right : Source_Entity) return Boolean;
 
-   package Entity_Name_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Entity_Name,
-      Element_Type => Entity_Name);
+   type Test_Entity is record
+      File_Name        : Unbounded_String;
+      Line             : Natural;
+      Column           : Natural;
+   end record;
 
-   function Find_In_Map
-     (Entity  : Entities.Entity_Information;
-      To_Test : Boolean)
-     return Entity_Name_Maps.Cursor;
+   package Source_Entity_Maps is new Ada.Containers.Ordered_Maps
+     (Key_Type     => Source_Entity,
+      Element_Type => Test_Entity);
+
+   package Test_Entity_Maps is new Ada.Containers.Ordered_Maps
+     (Key_Type     => Unbounded_String,
+      Element_Type => Source_Entity);
 
    type Mapping_File is new Sax.Readers.Reader with record
-      Source_File : Unbounded_String;
-      Target_File : Unbounded_String;
-      Test_Map    : Entity_Name_Maps.Map;
-      Tested_Map  : Entity_Name_Maps.Map;
+      Last_Source : Source_Entity;
+      Source_Map  : Source_Entity_Maps.Map;
+      Test_Map    : Test_Entity_Maps.Map;
    end record;
 
    overriding procedure Start_Element
@@ -115,16 +136,115 @@ package body GNATTest_Module is
 
    Map : Mapping_File;
 
+   function Find_In_Map
+     (File_Name : GNATCOLL.VFS.Virtual_File)
+     return Test_Entity_Maps.Cursor;
+
+   function Tested_Subprogram_Name
+     (Context : GPS.Kernel.Selection_Context)
+     return String;
+
+   type Menu_Data is record
+      Entity : Test_Entity;
+      Kernel : GPS.Kernel.Kernel_Handle;
+   end record;
+
+   package Test_Entity_CB is new Gtk.Handlers.User_Callback
+     (Gtk.Menu_Item.Gtk_Menu_Item_Record, Menu_Data);
+
+   procedure Test_Entity_Callback
+     (Widget    : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
+      User_Data : Menu_Data);
+
+   function Harness_Project_Exists
+     (Project : GNATCOLL.Projects.Project_Type)
+      return Boolean;
+
    ---------
    -- "<" --
    ---------
 
-   function "<" (Left, Right : Entity_Name) return Boolean is
+   function "<" (Left, Right : Source_Entity) return Boolean is
    begin
-      return Left.Unit_Name < Right.Unit_Name or else
-        (Left.Unit_Name = Right.Unit_Name and
-           Left.Subprogram_Name < Right.Subprogram_Name);
+      if Left.Source_File = Right.Source_File then
+         --  if Left.Test_Unit = Right.Test_Unit then
+         if Left.Subprogram_Name = Right.Subprogram_Name then
+            if Left.Line = Right.Line then
+               return Left.Test_Case_Line < Right.Test_Case_Line;
+            else
+               return Left.Line < Right.Line;
+            end if;
+         else
+            return Left.Subprogram_Name < Right.Subprogram_Name;
+         end if;
+         --  else
+         --     return Left.Test_Unit < Right.Test_Unit;
+         --  end if;
+      else
+         return Left.Source_File < Right.Source_File;
+      end if;
    end "<";
+
+   --------------------
+   -- Append_To_Menu --
+   --------------------
+
+   overriding procedure Append_To_Menu
+     (Factory : access Submenu_Factory_Record;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : GPS.Kernel.Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Factory);
+      pragma Unreferenced (Object);
+
+      Item : Gtk.Menu_Item.Gtk_Menu_Item;
+
+      Entity : constant Entities.Entity_Information :=
+        GPS.Kernel.Contexts.Get_Entity (Context);
+
+      Lookup : Source_Entity;
+      Cursor : Source_Entity_Maps.Cursor;
+   begin
+      Lookup.Source_File := To_Unbounded_String
+        (String (Entities.Get_Filename
+                   (Entities.Get_Declaration_Of (Entity).File).Base_Name));
+
+      Lookup.Subprogram_Name := To_Unbounded_String
+        (GNATCOLL.Symbols.Get (Entities.Get_Name (Entity)).all);
+
+      Cursor := Map.Source_Map.Floor (Lookup);
+
+      if not Source_Entity_Maps.Has_Element (Cursor) then
+         Cursor := Map.Source_Map.First;
+      end if;
+
+      while Source_Entity_Maps.Has_Element (Cursor) loop
+         declare
+            Found : constant Source_Entity := Source_Entity_Maps.Key (Cursor);
+         begin
+
+            exit when Found.Source_File /= Lookup.Source_File or
+              Found.Subprogram_Name /= Lookup.Subprogram_Name;
+
+            Gtk.Menu_Item.Gtk_New
+              (Item,
+               "Go to " & To_String (Found.Test_Case_Name) & " testcase");
+
+            Menu.Append (Item);
+
+            Test_Entity_CB.Connect
+              (Item,
+               Gtk.Menu_Item.Signal_Activate,
+               Test_Entity_Callback'Access,
+               (Entity => Source_Entity_Maps.Element (Cursor),
+                Kernel => GPS.Kernel.Get_Kernel (Context)));
+
+            Cursor := Source_Entity_Maps.Next (Cursor);
+         end;
+      end loop;
+
+   end Append_To_Menu;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -155,15 +275,24 @@ package body GNATTest_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Non_Harness_Project_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean is
+     (Filter  : access Create_Harness_Project_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
    begin
-      if GPS.Kernel.Contexts.Has_Project_Information (Context) then
-         return not Harness_Project_Filter (Filter.all)'Access
-           .Filter_Matches_Primitive (Context);
-      else
+      if not GPS.Kernel.Contexts.Has_Project_Information (Context) then
          return False;
       end if;
+
+      declare
+         Project : constant GNATCOLL.Projects.Project_Type
+            := GPS.Kernel.Contexts.Project_Information (Context);
+
+         Value : constant String := Get_Mapping_File (Project);
+      begin
+         return Value = "" and then
+           not Harness_Project_Exists (Project);
+      end;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -181,104 +310,97 @@ package body GNATTest_Module is
       end if;
 
       declare
-         use type GNATCOLL.VFS.Filesystem_String;
-
          Project : constant GNATCOLL.Projects.Project_Type
            := GPS.Kernel.Contexts.Project_Information (Context);
-
-         Name  : constant GNATCOLL.Projects.Attribute_Pkg_String
-           := GNATCOLL.Projects.Build ("GNATtest", "Harness_Dir");
-
-         Value : constant String := Project.Attribute_Value (Name);
-
-         Project_Path : constant GNATCOLL.VFS.Virtual_File
-           := Project.Project_Path;
-
-         Harness_Dir : constant GNATCOLL.VFS.Virtual_File
-           := GNATCOLL.VFS.Create_From_Base (+Value, Project_Path.Dir_Name);
-
-         Harness_Project : constant GNATCOLL.VFS.Virtual_File
-           := Harness_Dir.Create_From_Dir ("test_driver.gpr");
       begin
-         return Value /= "" and then Harness_Project.Is_Regular_File;
+         return Harness_Project_Exists (Project);
       end;
    end Filter_Matches_Primitive;
+
+   ----------------------------
+   -- Harness_Project_Exists --
+   ----------------------------
+
+   function Harness_Project_Exists
+     (Project : GNATCOLL.Projects.Project_Type)
+      return Boolean
+   is
+      use type GNATCOLL.VFS.Filesystem_String;
+
+      Name  : constant GNATCOLL.Projects.Attribute_Pkg_String
+        := GNATCOLL.Projects.Build ("GNATtest", "Harness_Dir");
+
+      Value : constant String := Project.Attribute_Value (Name);
+
+      Project_Path : constant GNATCOLL.VFS.Virtual_File
+        := Project.Project_Path;
+
+      Harness_Dir : constant GNATCOLL.VFS.Virtual_File
+        := GNATCOLL.VFS.Create_From_Base (+Value, Project_Path.Dir_Name);
+
+      Harness_Project : constant GNATCOLL.VFS.Virtual_File
+        := Harness_Dir.Create_From_Dir ("test_driver.gpr");
+   begin
+      return Value /= "" and then Harness_Project.Is_Regular_File;
+   end Harness_Project_Exists;
 
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Go_To_Test_Filter;
+     (Filter  : access Go_To_Tested_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
-      use type Entities.Entity_Information;
-      Entity : Entities.Entity_Information;
+      pragma Unreferenced (Filter);
    begin
-      if GPS.Kernel.Contexts.Has_Entity_Name_Information (Context) then
-         Entity := GPS.Kernel.Contexts.Get_Entity (Context);
-         return Entity /= null
-           and then Entities.Is_Subprogram (Entity)
-           and then Entity_Name_Maps.Has_Element
-             (Find_In_Map (Entity, Filter.To_Test));
+      if GPS.Kernel.Contexts.Has_File_Information (Context) then
+         return Test_Entity_Maps.Has_Element
+             (Find_In_Map (GPS.Kernel.Contexts.File_Information (Context)));
       else
          return False;
       end if;
    end Filter_Matches_Primitive;
 
-   ----------
-   -- Find --
-   ----------
+   -----------------
+   -- Find_Tested --
+   -----------------
 
-   procedure Find
-     (Entity          : Entities.Entity_Information;
-      To_Test         : Boolean;
+   procedure Find_Tested
+     (File_Name       : GNATCOLL.VFS.Virtual_File;
       Unit_Name       : out Ada.Strings.Unbounded.Unbounded_String;
       Subprogram_Name : out Ada.Strings.Unbounded.Unbounded_String;
       Line            : out Natural;
       Column          : out Basic_Types.Visible_Column_Type)
    is
-      Cursor : constant Entity_Name_Maps.Cursor :=
-        Find_In_Map (Entity, To_Test);
+      Cursor : constant Test_Entity_Maps.Cursor := Find_In_Map (File_Name);
    begin
-      if Entity_Name_Maps.Has_Element (Cursor) then
-         Unit_Name := Entity_Name_Maps.Element (Cursor).Unit_Name;
-         Subprogram_Name := Entity_Name_Maps.Element (Cursor).Subprogram_Name;
-         Line := Entity_Name_Maps.Element (Cursor).Line;
+      if Test_Entity_Maps.Has_Element (Cursor) then
+         Unit_Name := Test_Entity_Maps.Element (Cursor).Source_File;
+         Subprogram_Name := Test_Entity_Maps.Element (Cursor).Subprogram_Name;
+         Line := Test_Entity_Maps.Element (Cursor).Line;
          Column := Basic_Types.Visible_Column_Type
-           (Entity_Name_Maps.Element (Cursor).Column);
+           (Test_Entity_Maps.Element (Cursor).Column);
       else
          Unit_Name := Ada.Strings.Unbounded.Null_Unbounded_String;
          Subprogram_Name := Ada.Strings.Unbounded.Null_Unbounded_String;
          Line := 0;
          Column := 0;
       end if;
-   end Find;
+   end Find_Tested;
 
    ---------------
    -- Find_Test --
    ---------------
 
    function Find_In_Map
-     (Entity  : Entities.Entity_Information;
-      To_Test : Boolean)
-     return Entity_Name_Maps.Cursor
+     (File_Name : GNATCOLL.VFS.Virtual_File)
+     return Test_Entity_Maps.Cursor
    is
-      use Entities;
-      Item : Entity_Name;
+      Item : constant Unbounded_String :=
+        To_Unbounded_String (String (File_Name.Base_Name));
    begin
-      Item.Unit_Name := To_Unbounded_String
-        (String (Get_Filename (Get_Declaration_Of (Entity).File).Base_Name));
-
-      --  Entity.Get_Declaration_Of.File.Get_Filename.Base_Name));
-      Item.Subprogram_Name := To_Unbounded_String
-        (GNATCOLL.Symbols.Get (Get_Name (Entity)).all);
-
-      if To_Test then
-         return Map.Test_Map.Find (Item);
-      else
-         return Map.Tested_Map.Find (Item);
-      end if;
+      return Map.Test_Map.Find (Item);
    end Find_In_Map;
 
    ----------------------
@@ -307,12 +429,44 @@ package body GNATTest_Module is
       Map_File_Name : constant String := Get_Mapping_File (Project);
       File        : Input_Sources.File.File_Input;
    begin
+      Map.Source_Map.Clear;
+      Map.Test_Map.Clear;
+
       if Map_File_Name /= "" then
          Input_Sources.File.Open (Map_File_Name, File);
          Map.Parse (File);
          Input_Sources.File.Close (File);
       end if;
    end On_Project_Changed;
+
+   ---------------
+   -- Open_File --
+   ---------------
+
+   procedure Open_File
+     (Kernel          : GPS.Kernel.Kernel_Handle;
+      Unit_Name       : String;
+      Line            : Natural;
+      Column          : Basic_Types.Visible_Column_Type;
+      Subprogram_Name : String := "")
+   is
+      pragma Unreferenced (Subprogram_Name);
+      use type Entities.Source_File;
+
+      File  : constant GNATCOLL.VFS.Virtual_File := GPS.Kernel.Create
+        (GNATCOLL.VFS.Filesystem_String (Unit_Name), Kernel);
+
+      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get (File);
+
+      Editor : constant GPS.Editors.Editor_View'Class :=
+        Buffer.Open;
+
+      Location : constant GPS.Editors.Editor_Location'Class :=
+        Buffer.New_Location (Line, Column);
+   begin
+      Editor.Cursor_Goto (Location, Raise_View => True);
+   end Open_File;
 
    ---------------------
    -- Register_Module --
@@ -324,55 +478,57 @@ package body GNATTest_Module is
       use Commands.GNATTest;
       Filter : Action_Filter;
 
-      Go_To_Test_Command : constant Go_To_Test_Command_Access :=
-        new Go_To_Test_Command_Type'(Commands.Interactive.Interactive_Command
-                                     with To_Test => True);
-      Go_To_Tested_Command : constant Go_To_Test_Command_Access :=
-        new Go_To_Test_Command_Type'(Commands.Interactive.Interactive_Command
-                                     with To_Test => False);
+      Go_Command : constant Commands.Interactive.Interactive_Command_Access :=
+        new Go_To_Tested_Command_Type;
+
+      Submenu_Factory : constant GPS.Kernel.Modules.UI.Submenu_Factory :=
+        new Submenu_Factory_Record;
    begin
       GNATTest_Module_ID := new GNATTest_Module_Record;
 
       Register_Module
-        (Module                  => GNATTest_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => GNATTest_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => GNATTest_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => GNATTest_Module_Name,
+         Priority    => Default_Priority);
 
       Filter := new Harness_Project_Filter;
       Register_Filter (Kernel, Filter, "Harness project");
 
-      Filter := new Non_Harness_Project_Filter;
-      Register_Filter (Kernel, Filter, "Non harness project");
+      Filter := new Create_Harness_Project_Filter;
+      Register_Filter (Kernel, Filter, "Create harness project");
 
       Filter := new Harness_Project_Exists_Filter;
       Register_Filter (Kernel, Filter, "Harness project exists");
 
-      Filter := new Go_To_Test_Filter'
-        (GPS.Kernel.Action_Filter_Record with To_Test => True);
-      Register_Filter (Kernel, Filter, "Test exists");
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel      => Kernel,
-         Name        => "go to test procedure",
-         Command     => Go_To_Test_Command,
-         Filter      => Filter);
-
-      Filter := new Go_To_Test_Filter'
-        (GPS.Kernel.Action_Filter_Record with To_Test => False);
+      Filter := new Go_To_Tested_Filter;
       Register_Filter (Kernel, Filter, "Tested exists");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel      => Kernel,
          Name        => "go to tested procedure",
-         Command     => Go_To_Tested_Command,
+         Command     => Go_Command,
          Filter      => Filter);
+
+      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+        (Kernel      => Kernel,
+         Name        => "Goto tested subprogram",
+         Action      => Go_Command,
+         Label       => "GNATTest/Go to %C",
+         Custom      => Tested_Subprogram_Name'Access);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel,
          GPS.Kernel.Project_View_Changed_Hook,  --  Project_Changed_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Project_Changed'Access),
          "gnattest.project_view_changed");
+
+      GPS.Kernel.Modules.UI.Register_Contextual_Submenu
+        (Kernel  => Kernel,
+         Name    => "GNATTest",
+         Label   => "GNATTest",
+         Filter  => GPS.Kernel.Lookup_Filter (Kernel, "Entity is subprogram"),
+         Submenu => Submenu_Factory);
 
    end Register_Module;
 
@@ -398,29 +554,77 @@ package body GNATTest_Module is
       end To_Integer;
    begin
       if Local_Name = "unit" then
-         Self.Source_File :=
+         Self.Last_Source.Source_File :=
            To_Unbounded_String (Atts.Get_Value ("source_file"));
-         Self.Target_File :=
+
+      elsif Local_Name = "test_unit" then
+         Self.Last_Source.Test_Unit :=
            To_Unbounded_String (Atts.Get_Value ("target_file"));
-      elsif Local_Name = "pair" then
+
+      elsif Local_Name = "tested" then
+         Self.Last_Source.Subprogram_Name :=
+           To_Unbounded_String (Atts.Get_Value ("name"));
+         Self.Last_Source.Line := To_Integer ("line");
+         Self.Last_Source.Column := To_Integer ("column");
+         Self.Last_Source.Test_Case_Name := Null_Unbounded_String;
+         Self.Last_Source.Test_Case_Line := 0;
+         Self.Last_Source.Test_Case_Column := 0;
+
+      elsif Local_Name = "test_case" then
+         Self.Last_Source.Test_Case_Name :=
+           To_Unbounded_String (Atts.Get_Value ("name"));
+         Self.Last_Source.Test_Case_Line := To_Integer ("line");
+         Self.Last_Source.Test_Case_Column := To_Integer ("column");
+
+      elsif Local_Name = "test" then
          declare
-            Source : Entity_Name;
-            Target : Entity_Name;
+            Target : Test_Entity;
          begin
-            Source.Unit_Name := Self.Source_File;
-            Target.Unit_Name := Self.Target_File;
-            Source.Subprogram_Name :=
-              To_Unbounded_String (Atts.Get_Value ("tested"));
-            Target.Subprogram_Name :=
-              To_Unbounded_String (Atts.Get_Value ("test"));
-            Source.Line := To_Integer ("tested_line");
-            Source.Column := To_Integer ("tested_column");
-            Target.Line := To_Integer ("test_line");
-            Target.Column := To_Integer ("test_column");
-            Self.Test_Map.Include (Source, Target);
-            Self.Tested_Map.Include (Target, Source);
+            Target.File_Name :=
+              To_Unbounded_String (Atts.Get_Value ("file"));
+            Target.Line := To_Integer ("line");
+            Target.Column := To_Integer ("column");
+
+            Self.Source_Map.Include (Self.Last_Source, Target);
+            Self.Test_Map.Include (Target.File_Name, Self.Last_Source);
          end;
       end if;
    end Start_Element;
+
+   --------------------------
+   -- Test_Entity_Callback --
+   --------------------------
+
+   procedure Test_Entity_Callback
+     (Widget    : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
+      User_Data : Menu_Data)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Open_File
+        (User_Data.Kernel,
+         To_String (User_Data.Entity.File_Name),
+         User_Data.Entity.Line,
+         Basic_Types.Visible_Column_Type (User_Data.Entity.Column));
+   end Test_Entity_Callback;
+
+   ----------------------------
+   -- Tested_Subprogram_Name --
+   ----------------------------
+
+   function Tested_Subprogram_Name
+     (Context : GPS.Kernel.Selection_Context)
+     return String is
+
+      Cursor : constant Test_Entity_Maps.Cursor :=
+        Find_In_Map (GPS.Kernel.Contexts.File_Information (Context));
+   begin
+      if Test_Entity_Maps.Has_Element (Cursor) then
+         return GPS.Kernel.Modules.UI.Emphasize
+           (To_String (Test_Entity_Maps.Element (Cursor).Subprogram_Name));
+      else
+         return "";
+      end if;
+   end Tested_Subprogram_Name;
 
 end GNATTest_Module;

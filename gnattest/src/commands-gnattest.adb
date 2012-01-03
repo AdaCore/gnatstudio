@@ -16,12 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Basic_Types;
-with Entities;
-with GNATCOLL.VFS;
 with GNATTest_Module;
 with GPS.Kernel.Contexts;
 with Ada.Strings.Unbounded;
-with GPS.Editors;
 
 package body Commands.GNATTest is
 
@@ -30,47 +27,31 @@ package body Commands.GNATTest is
    -------------
 
    overriding function Execute
-     (Command : access Go_To_Test_Command_Type;
+     (Command : access Go_To_Tested_Command_Type;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
       Kernel : constant GPS.Kernel.Kernel_Handle :=
         GPS.Kernel.Get_Kernel (Context.Context);
-      Entity : constant Entities.Entity_Information :=
-        GPS.Kernel.Contexts.Get_Entity (Context.Context);
+
       Unit_Name       : Ada.Strings.Unbounded.Unbounded_String;
       Subprogram_Name : Ada.Strings.Unbounded.Unbounded_String;
-      File            : GNATCOLL.VFS.Virtual_File;
       Line            : Integer;
       Column          : Basic_Types.Visible_Column_Type;
    begin
-      GNATTest_Module.Find
-        (Entity,
-         Command.To_Test,
+      GNATTest_Module.Find_Tested
+        (GPS.Kernel.Contexts.File_Information (Context.Context),
          Unit_Name,
          Subprogram_Name,
          Line,
          Column);
 
-      File := GPS.Kernel.Create
-        (GNATCOLL.VFS.Filesystem_String
-           (Ada.Strings.Unbounded.To_String (Unit_Name)),
-         Kernel);
-
-      declare
-         use type Entities.Source_File;
-
-         Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-           Kernel.Get_Buffer_Factory.Get (File);
-
-         Editor : constant GPS.Editors.Editor_View'Class :=
-           Buffer.Open;
-
-         Location : constant GPS.Editors.Editor_Location'Class :=
-           Buffer.New_Location (Line, Column);
-      begin
-         Editor.Cursor_Goto (Location, Raise_View => True);
-      end;
+      GNATTest_Module.Open_File
+        (Kernel,
+         Ada.Strings.Unbounded.To_String (Unit_Name),
+         Line,
+         Column,
+         Ada.Strings.Unbounded.To_String (Subprogram_Name));
 
       Command.Command_Finished (True);
 
@@ -82,7 +63,7 @@ package body Commands.GNATTest is
    ----------
 
    overriding
-   function Name (X : access Go_To_Test_Command_Type) return String is
+   function Name (X : access Go_To_Tested_Command_Type) return String is
    begin
       pragma Unreferenced (X);
       return "go to test";
@@ -92,7 +73,7 @@ package body Commands.GNATTest is
    -- Free --
    ----------
 
-   overriding procedure Free (X : in out Go_To_Test_Command_Type) is
+   overriding procedure Free (X : in out Go_To_Tested_Command_Type) is
    begin
       null;
    end Free;
