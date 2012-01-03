@@ -1257,14 +1257,23 @@ package body Project_Properties is
                        (Get_Safe_Text (Editor.Path_Widget));
 
                      Ensure_Directory (File);
-                     --  ??? What if the Build server needs unix paths, and
-                     --  we are on Windows ?
+
+                     --  The build server might be unix and the local machine
+                     --  Windows. As a result, it is better to always use
+                     --  Unix paths in the project files so that the file is
+                     --  correctly interpreted on all machines (K930-020)
+
                      Values (N) := new String'
-                       (+Name_As_Directory (Relative_Path (File, Path))
+                       (Format_Pathname
+                          (+Name_As_Directory (Relative_Path (File, Path)),
+                           UNIX)
                         & "**");
                   else
                      Values (N) := new String'
-                       (+Name_As_Directory (Full_Name (File)) & "**");
+                       (Format_Pathname
+                          (+Name_As_Directory (Full_Name (File)),
+                           UNIX)
+                        & "**");
                   end if;
 
                elsif Editor.Attribute.Base_Name_Only then

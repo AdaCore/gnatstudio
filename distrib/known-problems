@@ -19,6 +19,13 @@ If no tag is specified, the entry is relevant to all IDEs.
               that are in other non-extending projects.
   Workaround: Manually load all Xref information via the /Build menu.
 
+- K930-020: Recursive project source dirs and Windows host
+  Problem:    When GPS is running on a Windows host, but driving a Unix
+              build server, and the user edits the project to use recursive
+              subdirectories, the syntax generated in the project file is
+              Windows specific and rejected by the build server.
+  Workaround: Edit the project manually to replace "\**" with "/**".
+
 - K926-014: GB: GNATbench freezes when viewing/editing Ada files
   Problem:    Randomly when using the GNATbench Ada editor for code edition
               or program debug, GNATbench freezes. The only solution to get
