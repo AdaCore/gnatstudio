@@ -2,7 +2,7 @@
 GPS 5.2 and GNATbench 2.7 NEW FEATURES LIST
 ===========================================
 
-Copyright (C) 2011, AdaCore
+Copyright (C) 2011-2012, AdaCore
 
 This file contains a list of new features introduced in GPS and GNATbench IDEs.
 A full description of all features can be found in the GPS or GNATbench
@@ -22,6 +22,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
+
+NF-52-KC20-002 GPS: License updated to GPL3 (2011-12-20)
+
+  GPS is now licensed under the terms of the GPL version 3.
 
 NF-52-KC07-036 GPS: doc converted to sphinx (2011-12-08)
 
