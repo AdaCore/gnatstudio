@@ -2,7 +2,7 @@
 GPS 5.1 and GNATbench 2.6 NEW FEATURES LIST
 ===========================================
 
-Copyright (C) 2010-2011, AdaCore
+Copyright (C) 2010-2012, AdaCore
 
 This file contains a list of new features introduced in GPS and GNATbench IDEs.
 A full description of all features can be found in the GPS or GNATbench
@@ -20,8 +20,8 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-New features in GPS 5.1.1
--------------------------
+New features in GPS 5.1.1 / GNATbench 2.6.1
+-------------------------------------------
 
 NF-51-KA19-011 GPS: Comments associated with bodies in tooltip (2011-10-25)
 
@@ -38,6 +38,11 @@ NF-51-KA12-012 GPS: Update of GNATCoverage integration (2011-10-20)
 
   GPS integration with GNATCoverage has been improved to support new targets
   and MCDC analysis in 'run' mode.
+
+NF-51-K227-005 GB: Put AdaCore icon on About Eclipse SDK panel (2012-01-05)
+
+  The AdaCore icon is now displayed on the about box and links to the
+  installed GNATbench features.
 
 NF-51-JA06-023 GPS: Support for SPARKClean (2011-11-18)
 
@@ -186,11 +191,6 @@ NF-51-K228-002 GB: Associate SPARK control files with text editor (2011-09-05)
   Files with the following extensions are now associated with the text
   editor: .cfg, .idx, .smf, .sw, .wrn.  Additionally, .ada and .prep files
   are now associated with the Ada editor.
-
-NF-51-K227-005 GB: Put AdaCore icon on About Eclipse SDK panel (2011-08-30)
-
-  The AdaCore icon is now displayed on the about box and links to the
-  installed GNATbench features.
 
 NF-51-K225-033 GPS: New menu Debug->Display <expanded name> (2011-02-27)
 
