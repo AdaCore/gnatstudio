@@ -71,7 +71,7 @@ package Toolchains.Parsers is
    type Parsed_Project_Record is private;
    type Parsed_Project is access all Parsed_Project_Record;
 
-   type Project_Parser_Record is private;
+   type Project_Parser_Record is limited private;
    type Project_Parser is access all Project_Parser_Record;
 
    --------------------
@@ -182,7 +182,7 @@ private
    package Parsed_Projects_Maps is new Ada.Containers.Ordered_Maps
      (Project_Node_Id, Parsed_Project);
 
-   type Project_Parser_Record is record
+   type Project_Parser_Record is limited record
       Manager                : Toolchain_Manager;
 
       Tree_Data              : Project_Tree_Ref;
