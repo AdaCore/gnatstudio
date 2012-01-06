@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2009-2010, AdaCore                   --
+--                Copyright (C) 2009-2012, AdaCore                   --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -269,7 +269,19 @@ package body GPS.Kernel.Hyper_Mode is
          After     => False);
 
       Connect
+        (Widget, Signal_Focus_In_Event,
+         Marsh     => To_Marshaller (Enter_Notify_Event_Cb'Access),
+         User_Data => Data,
+         After     => False);
+
+      Connect
         (Widget, Signal_Leave_Notify_Event,
+         Marsh     => To_Marshaller (Leave_Notify_Event_Cb'Access),
+         User_Data => Data,
+         After     => False);
+
+      Connect
+        (Widget, Signal_Focus_Out_Event,
          Marsh     => To_Marshaller (Leave_Notify_Event_Cb'Access),
          User_Data => Data,
          After     => False);
