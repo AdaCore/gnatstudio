@@ -1,5 +1,3 @@
-Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
-
 The following leading tags are used on the following entries to indicate:
 GPS: this entry is specific to GPS
 GB:  this entry is specific to GNATbench
@@ -8,12 +6,7 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- L106-022: GPS: Editor jumps when clicking after "Continue search" dialog
-  Problem:    When using the keyboard shortcuts to search (ctrl-n and ctrl-p),
-              if the "Continue search" dialog appears, clicking on an entity
-              will cause the the editor to jump to the declaration of this
-              entity.
-  Workaround: Press and release the ctrl key, or click outside of an entity.
+Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
 - KC20-025: GPS: Removing a server makes some other servers unuseable
   Problem:    After removing a server from your server list, the other servers
