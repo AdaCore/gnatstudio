@@ -266,7 +266,19 @@ package body GPS.Kernel.Hyper_Mode is
          After     => False);
 
       Connect
+        (Widget, Signal_Focus_In_Event,
+         Marsh     => To_Marshaller (Enter_Notify_Event_Cb'Access),
+         User_Data => Data,
+         After     => False);
+
+      Connect
         (Widget, Signal_Leave_Notify_Event,
+         Marsh     => To_Marshaller (Leave_Notify_Event_Cb'Access),
+         User_Data => Data,
+         After     => False);
+
+      Connect
+        (Widget, Signal_Focus_Out_Event,
          Marsh     => To_Marshaller (Leave_Notify_Event_Cb'Access),
          User_Data => Data,
          After     => False);
