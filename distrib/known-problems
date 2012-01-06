@@ -6,6 +6,15 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
+
+- L106-022: GPS: Editor jumps when clicking after "Continue search" dialog
+  Problem:    When using the keyboard shortcuts to search (ctrl-n and ctrl-p),
+              if the "Continue search" dialog appears, clicking on an entity
+              will cause the the editor to jump to the declaration of this
+              entity.
+  Workaround: Press and release the ctrl key, or click outside of an entity.
+
 Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
 
 - KC01-003: GPS: Changing the gtk theme may make GPS crash
