@@ -1057,7 +1057,7 @@ package body GPS.Kernel.Preferences is
          Maximum => 99,
          Default => 7,
          Doc     => -"Index of compiler info in the pattern, 0 if none",
-         Label   => -"Style index",
+         Label   => -"Info index",
          Page    => -"Messages");
 
       Style_Pattern_Index := Create
