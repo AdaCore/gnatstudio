@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2011, AdaCore                  --
+--                 Copyright (C) 2001-2012, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1055,7 +1055,7 @@ package body GPS.Kernel.Preferences is
          Maximum => 99,
          Default => 7,
          Doc     => -"Index of compiler info in the pattern, 0 if none",
-         Label   => -"Style index",
+         Label   => -"Info index",
          Page    => -"Messages");
 
       Style_Pattern_Index := Create
