@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L101-003 GB: display task info in debug view (2012-01-10)
+
+  Ada task information is now displayed in the debug view.  This feature can
+  be enabled/disabled from the debug view menu.
+
 NF-52-KC20-002 GPS: License updated to GPL3 (2011-12-20)
 
   GPS is now licensed under the terms of the GPL version 3.
