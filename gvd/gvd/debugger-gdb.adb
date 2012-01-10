@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2011, AdaCore                  --
+--                 Copyright (C) 2000-2012, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -189,6 +189,11 @@ package body Debugger.Gdb is
 
    List_Lines                : constant String := "^done,lines=[";
    --  Used to parse output of -symbol-list-lines command
+
+   Info_Tasks_Pattern : constant Pattern_Matcher := Compile
+     ("^(.+ID|\* +[0-9]+| +[0-9]+) +(TID|[^ ]+)"
+      & " +(P-ID|.....) +(Pri| *[0-9]+) +(State|.*)  (Name|[^ ]*)$");
+   --  Used to parse the output of "info tasks"
 
    procedure Language_Filter
      (Process : access Visual_Debugger_Record'Class;
@@ -2233,11 +2238,11 @@ package body Debugger.Gdb is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      Output : constant String :=
-                 Send (Debugger, "info tasks", Mode => Internal);
-      EOL    : Positive;
-      Index  : Positive := Output'First;
-
+      Output  : constant String :=
+        Send (Debugger, "info tasks", Mode => Internal);
+      EOL     : Positive;
+      Index   : Positive := Output'First;
+      Matched : Match_Array (0 .. 6);
    begin
       Len := 0;
 
@@ -2248,23 +2253,27 @@ package body Debugger.Gdb is
       end if;
 
       while Index < Output'Last loop
-         Len := Len + 1;
          EOL := Index;
 
          while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
             EOL := EOL + 1;
          end loop;
 
-         Info (Len) :=
-           (Num_Fields => 6,
-            Information =>
-              (New_String       (Output (Index      .. Index + 3)),
-               New_String (Trim (Output (Index + 4  .. Index + 13), Left)),
-               New_String (Trim (Output (Index + 14 .. Index + 18), Left)),
-               New_String (Trim (Output (Index + 19 .. Index + 22), Left)),
-               New_String (Trim (Output (Index + 23 .. Index + 45), Left)),
-               New_String (Trim (Output (Index + 46 .. EOL - 1), Left))
-              ));
+         Match (Info_Tasks_Pattern, Output (Index .. EOL - 1), Matched);
+
+         if Matched (0) /= No_Match  then
+            Len := Len + 1;
+            Info (Len) :=
+              (Num_Fields => 6,
+               Information =>
+                 (New_String (Output (Matched (1).First .. Matched (1).Last)),
+                  New_String (Output (Matched (2).First .. Matched (2).Last)),
+                  New_String (Output (Matched (3).First .. Matched (3).Last)),
+                  New_String (Output (Matched (4).First .. Matched (4).Last)),
+                  New_String (Output (Matched (5).First .. Matched (5).Last)),
+                  New_String (Output (Matched (6).First .. Matched (6).Last))
+                 ));
+         end if;
          Index := EOL + 1;
       end loop;
 
