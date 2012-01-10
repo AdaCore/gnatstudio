@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
 
+- L110-032: GPS: cannot switch tasks with recent versions of GDB
+  Problem:    When using GDB 7.3, it is not possible to switch between tasks
+              in the Tasks view, and the task information in this view
+              can  be displayed in the wrong column.
+  Workaround: Use the Debugger Console: "info tasks" to list tasks, and
+              "task N" to switch to task number N.
+
 - L106-022: GPS: Editor jumps when clicking after "Continue search" dialog
   Problem:    When using the keyboard shortcuts to search (ctrl-n and ctrl-p),
               if the "Continue search" dialog appears, clicking on an entity
