@@ -400,6 +400,22 @@ def delete_forward():
    cursor = buffer.current_view().cursor()
    buffer.delete (cursor, cursor)
 
+@interactive ("Editor", "Source editor", name="Delete Line")
+def delete_line ():
+    """Delete the current line and place the cursor on the beginning of the
+       next line.
+    """
+    buffer = GPS.EditorBuffer.get()   # get the current buffer
+    view = buffer.current_view()      # get the current view of this buffer
+    location = view.cursor()          # get the location of the cursor
+
+    # Get the bounds to delete
+    start = location.beginning_of_line()
+    end   = location.end_of_line()
+
+    # Do the deletion
+    buffer.delete (start, end)
+
 def kill_line (location = None, count=1):
    """ Kills the end of the line on which LOCATION is.
        If LOCATION is unspecified, the current cursor location in the current
