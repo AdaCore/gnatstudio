@@ -306,6 +306,12 @@ Known Problems fixed in GPS 5.1.0 / GNATbench 2.6.0
               to be created.
   Workaround: Create the directory manually on the filesystem.
 
+- K615-025: GB: Open Ada Declaration navigation selects wrong text
+  Problem:    In some cases when opening the ada declaration (F3) the right ads
+              file is opened at the right location but the selected text is not
+              exactly the expected identifier.
+  Workaround: Move the cursor manually or using the mouse to the exact column.
+  
 - K513-018 GB: GNATbench non-responsive after a build
   Problem:    When building Ada projects having a huge number of errors or
               warnings, the "Building Projects" task takes minutes to
