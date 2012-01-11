@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L109-016 GPS: New action "Delete Line" (2012-01-11)
+
+  This action deletes the current line and places the cursor on the beginning
+  of the following line.
+  It can be bound to a key in the "Editor" section of the Key Shortcuts dialog.
+
 NF-52-L101-003 GB: display task info in debug view (2012-01-10)
 
   Ada task information is now displayed in the debug view.  This feature can
