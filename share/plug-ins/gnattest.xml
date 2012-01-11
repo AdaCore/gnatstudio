@@ -93,16 +93,18 @@
   </action>
 
   <action name="open harness" output="none">
-    <filter id="Harness project exists"/>
+    <filter_and>
+      <filter id="Harness project exists"/>
+      <filter id="Non harness project"/>
+    </filter_and>
     <description>Open harness project for current project</description>
-    <shell>Project %p</shell>
-    <shell>Project.file %1</shell>
-    <shell>File.directory %1</shell>
-    <shell>cd %1</shell>
-    <shell>Project %p</shell>
-    <shell>Project.get_attribute_as_string %1 Harness_Dir GNATtest</shell>
-    <shell>cd %1</shell>
-    <shell>Project.load test_driver.gpr</shell>
+    <shell lang="python">gnattest.open_harness_project()</shell>
+  </action>
+
+  <action name="exit harness" output="none">
+    <filter id="Harness project"/>
+    <description>Return to user project from current harness project</description>
+    <shell lang="python">gnattest.exit_harness_project()</shell>
   </action>
 
   <submenu>
@@ -116,6 +118,9 @@
     <menu action="open harness">
       <title>Open harness project</title>
     </menu>
+    <menu action="exit harness">
+      <title>Exit from harness project</title>
+    </menu>
   </submenu>
 
   <contextual action="run gnattest">
@@ -128,6 +133,10 @@
 
   <contextual action="open harness">
     <title>GNATTest/Open harness project for %p</title>
+  </contextual>
+
+  <contextual action="exit harness">
+    <title>GNATTest/Exit harness project</title>
   </contextual>
 
   <target-model name="gnattest" category="">

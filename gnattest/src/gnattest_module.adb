@@ -57,6 +57,13 @@ package body GNATTest_Module is
      (Filter  : access Harness_Project_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
+   type Non_Harness_Project_Filter is new GPS.Kernel.Action_Filter_Record
+     with null record;
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Non_Harness_Project_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+
    type Create_Harness_Project_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
 
@@ -215,7 +222,9 @@ package body GNATTest_Module is
 
       Cursor := Map.Source_Map.Floor (Lookup);
 
-      if not Source_Entity_Maps.Has_Element (Cursor) then
+      if Source_Entity_Maps.Has_Element (Cursor) then
+         Cursor := Source_Entity_Maps.Next (Cursor);
+      else
          Cursor := Map.Source_Map.First;
       end if;
 
@@ -256,17 +265,33 @@ package body GNATTest_Module is
    is
       pragma Unreferenced (Filter);
    begin
-      if not GPS.Kernel.Contexts.Has_Project_Information (Context) then
-         return False;
-      end if;
-
       declare
          Project : constant GNATCOLL.Projects.Project_Type
-            := GPS.Kernel.Contexts.Project_Information (Context);
+           := GPS.Kernel.Project.Get_Project (GPS.Kernel.Get_Kernel (Context));
 
          Value : constant String := Get_Mapping_File (Project);
       begin
          return Value /= "";
+      end;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Non_Harness_Project_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      declare
+         Project : constant GNATCOLL.Projects.Project_Type
+           := GPS.Kernel.Project.Get_Project (GPS.Kernel.Get_Kernel (Context));
+
+         Value : constant String := Get_Mapping_File (Project);
+      begin
+         return Value = "";
       end;
    end Filter_Matches_Primitive;
 
@@ -494,6 +519,9 @@ package body GNATTest_Module is
 
       Filter := new Harness_Project_Filter;
       Register_Filter (Kernel, Filter, "Harness project");
+
+      Filter := new Non_Harness_Project_Filter;
+      Register_Filter (Kernel, Filter, "Non harness project");
 
       Filter := new Create_Harness_Project_Filter;
       Register_Filter (Kernel, Filter, "Create harness project");
