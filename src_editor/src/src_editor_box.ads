@@ -438,6 +438,15 @@ package Src_Editor_Box is
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity close by.
 
+   procedure Go_To_Closest_Match
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Filename    : GNATCOLL.VFS.Virtual_File;
+      Line        : Editable_Line_Type;
+      Column      : Visible_Column_Type;
+      Entity_Name : String);
+   --  Open an editor for Filename. Go to Line, Column, or the nearest
+   --  occurrence of Entity_Name close by.
+
 private
 
    function To_Box_Line

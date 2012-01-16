@@ -24,7 +24,7 @@ with Glib.Object;                       use Glib.Object;
 with GNATCOLL.Projects;
 with GNATCOLL.Symbols;
 
-with GPS.Editors;
+--  with GPS.Editors;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;
@@ -41,6 +41,9 @@ with Input_Sources.File;
 with Sax.Readers;
 with Sax.Attributes;
 with Unicode.CES;
+--  with Find_Utils;
+with Src_Editor_Box;
+with Src_Editor_Buffer;
 
 package body GNATTest_Module is
 
@@ -475,22 +478,16 @@ package body GNATTest_Module is
       Column          : Basic_Types.Visible_Column_Type;
       Subprogram_Name : String := "")
    is
-      pragma Unreferenced (Subprogram_Name);
-      use type Entities.Source_File;
-
       File  : constant GNATCOLL.VFS.Virtual_File := GPS.Kernel.Create
         (GNATCOLL.VFS.Filesystem_String (Unit_Name), Kernel);
 
-      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get (File);
-
-      Editor : constant GPS.Editors.Editor_View'Class :=
-        Buffer.Open;
-
-      Location : constant GPS.Editors.Editor_Location'Class :=
-        Buffer.New_Location (Line, Column);
    begin
-      Editor.Cursor_Goto (Location, Raise_View => True);
+      Src_Editor_Box.Go_To_Closest_Match
+        (Kernel      =>  Kernel,
+         Filename    => File,
+         Line        => Src_Editor_Buffer.Editable_Line_Type (Line),
+         Column      => Column,
+         Entity_Name => Subprogram_Name);
    end Open_File;
 
    ---------------------

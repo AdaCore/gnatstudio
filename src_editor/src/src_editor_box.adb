@@ -416,9 +416,24 @@ package body Src_Editor_Box is
       Filename : Virtual_File;
       Line     : Editable_Line_Type;
       Column   : Visible_Column_Type;
-      Entity   : Entity_Information)
+      Entity   : Entity_Information) is
+   begin
+      Go_To_Closest_Match
+        (Kernel, Filename, Line, Column, Get (Get_Name (Entity)).all);
+   end Go_To_Closest_Match;
+
+   -------------------------
+   -- Go_To_Closest_Match --
+   -------------------------
+
+   procedure Go_To_Closest_Match
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Filename    : GNATCOLL.VFS.Virtual_File;
+      Line        : Editable_Line_Type;
+      Column      : Visible_Column_Type;
+      Entity_Name : String)
    is
-      Length            : constant Natural := Get (Get_Name (Entity))'Length;
+      Length            : constant Natural := Entity_Name'Length;
       Source            : Source_Editor_Box;
       File_Up_To_Date   : Boolean;
       L                 : Natural;
@@ -471,7 +486,7 @@ package body Src_Editor_Box is
                    Line, Char_Column,
                    Line,
                    Char_Column + Character_Offset_Type (Length)),
-              Get (Get_Name (Entity)).all,
+              Entity_Name,
               Case_Sensitive => Is_Case_Sensitive);
 
          --  Search for the closest reference to the entity if
@@ -490,7 +505,7 @@ package body Src_Editor_Box is
                Console.Insert
                  (Kernel,
                   -("xref info mismatch, cursor was set at closest ref to ")
-                    & Get (Get_Name (Entity)).all);
+                    & Entity_Name);
             end if;
 
             --  Search for the closest reference to entity, and highlight the
@@ -505,7 +520,7 @@ package body Src_Editor_Box is
                Buffer := Get_String (Source.Source_Buffer);
                Find_Closest_Match
                  (Buffer.all, L, Char_Column, Found,
-                  Get (Get_Name (Entity)).all,
+                  Entity_Name,
                   Case_Sensitive => Get_Language_Context
                     (Get_Language (Source.Source_Buffer)).Case_Sensitive);
                Free (Buffer);

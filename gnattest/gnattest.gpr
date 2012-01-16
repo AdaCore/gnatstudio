@@ -1,5 +1,6 @@
 with "../kernel/kernel";
 with "../shared";
+with "../src_editor/src_editor";
 
 project GNATTest is
 
