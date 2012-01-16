@@ -24,7 +24,6 @@ with Glib.Object;                       use Glib.Object;
 with GNATCOLL.Projects;
 with GNATCOLL.Symbols;
 
---  with GPS.Editors;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;
@@ -40,10 +39,9 @@ with Gtk.Menu_Item;
 with Input_Sources.File;
 with Sax.Readers;
 with Sax.Attributes;
-with Unicode.CES;
---  with Find_Utils;
 with Src_Editor_Box;
 with Src_Editor_Buffer;
+with Unicode.CES;
 
 package body GNATTest_Module is
 
