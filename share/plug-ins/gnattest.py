@@ -5,7 +5,17 @@
 
 import os.path, GPS
 
+def is_harness_project ():
+   # Determine the root project
+   root_project = GPS.Project.root()
+   mapping = root_project.get_attribute_as_string ("GNATTest_Mapping_File",
+                                                   package="GNATtest")
+   return mapping.strip() != ""
+
 def open_harness_project ():
+   if is_harness_project():
+      return
+
    cur = GPS.current_context().project()
    harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
    prj = os.path.join (cur.file().directory(), harness_dir, "test_driver.gpr")

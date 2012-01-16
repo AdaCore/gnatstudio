@@ -83,6 +83,7 @@
     <description>Run gnattest on current project file</description>
     <shell lang="python" output="none"
     >GPS.BuildTarget("GNATTest for project").execute(synchronous=False)</shell>
+    <shell lang="python">gnattest.open_harness_project()</shell>
   </action>
 
   <action  name="re-generate harness project">
@@ -90,6 +91,7 @@
     <description>Run gnattest on current project file</description>
     <shell lang="python" output="none"
     >GPS.BuildTarget("GNATTest for project").execute(synchronous=False)</shell>
+    <shell lang="python">gnattest.open_harness_project()</shell>
   </action>
 
   <action name="open harness" output="none">
