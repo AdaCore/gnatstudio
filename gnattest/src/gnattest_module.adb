@@ -22,7 +22,6 @@ with Entities;
 with Glib.Object;                       use Glib.Object;
 
 with GNATCOLL.Projects;
-with GNATCOLL.Symbols;
 
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;
@@ -130,9 +129,13 @@ package body GNATTest_Module is
       Element_Type => Source_Entity);
 
    type Mapping_File is new Sax.Readers.Reader with record
-      Last_Source : Source_Entity;
-      Source_Map  : Source_Entity_Maps.Map;
-      Test_Map    : Test_Entity_Maps.Map;
+      Last_Source  : Source_Entity;
+      Source_Map   : Source_Entity_Maps.Map;
+      Test_Map     : Test_Entity_Maps.Map;
+      First_Test   : Boolean;
+      First_Tested : Boolean;
+      Setup        : Test_Entity;
+      Teardown     : Test_Entity;
    end record;
 
    overriding procedure Start_Element
@@ -175,19 +178,11 @@ package body GNATTest_Module is
    function "<" (Left, Right : Source_Entity) return Boolean is
    begin
       if Left.Source_File = Right.Source_File then
-         --  if Left.Test_Unit = Right.Test_Unit then
-         if Left.Subprogram_Name = Right.Subprogram_Name then
-            if Left.Line = Right.Line then
-               return Left.Test_Case_Line < Right.Test_Case_Line;
-            else
-               return Left.Line < Right.Line;
-            end if;
+         if Left.Line = Right.Line then
+            return Left.Test_Case_Name < Right.Test_Case_Name;
          else
-            return Left.Subprogram_Name < Right.Subprogram_Name;
+            return Left.Line < Right.Line;
          end if;
-         --  else
-         --     return Left.Test_Unit < Right.Test_Unit;
-         --  end if;
       else
          return Left.Source_File < Right.Source_File;
       end if;
@@ -211,15 +206,16 @@ package body GNATTest_Module is
       Entity : constant Entities.Entity_Information :=
         GPS.Kernel.Contexts.Get_Entity (Context);
 
+      Declaration : constant Entities.File_Location :=
+           Entities.Get_Declaration_Of (Entity);
+
       Lookup : Source_Entity;
       Cursor : Source_Entity_Maps.Cursor;
    begin
       Lookup.Source_File := To_Unbounded_String
-        (String (Entities.Get_Filename
-                   (Entities.Get_Declaration_Of (Entity).File).Base_Name));
+        (String (Entities.Get_Filename (Declaration.File).Base_Name));
 
-      Lookup.Subprogram_Name := To_Unbounded_String
-        (GNATCOLL.Symbols.Get (Entities.Get_Name (Entity)).all);
+      Lookup.Line := Declaration.Line;
 
       Cursor := Map.Source_Map.Floor (Lookup);
 
@@ -235,11 +231,10 @@ package body GNATTest_Module is
          begin
 
             exit when Found.Source_File /= Lookup.Source_File or
-              Found.Subprogram_Name /= Lookup.Subprogram_Name;
+              Found.Line /= Lookup.Line;
 
             Gtk.Menu_Item.Gtk_New
-              (Item,
-               "Go to " & To_String (Found.Test_Case_Name) & " testcase");
+              (Item, "Go to " & To_String (Found.Test_Case_Name));
 
             Menu.Append (Item);
 
@@ -542,7 +537,7 @@ package body GNATTest_Module is
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel,
-         GPS.Kernel.Project_View_Changed_Hook,  --  Project_Changed_Hook,
+         GPS.Kernel.Project_View_Changed_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Project_Changed'Access),
          "gnattest.project_view_changed");
 
@@ -570,6 +565,22 @@ package body GNATTest_Module is
       pragma Unreferenced (Qname);
 
       function To_Integer (Name : String) return Integer;
+      procedure Add_Setup_Teardown;
+
+      procedure Add_Setup_Teardown is
+      begin
+         Self.Last_Source.Test_Case_Name := To_Unbounded_String ("test setup");
+         Self.Source_Map.Include (Self.Last_Source, Self.Setup);
+
+         Self.Last_Source.Test_Case_Name :=
+           To_Unbounded_String ("test teardown");
+         Self.Source_Map.Include (Self.Last_Source, Self.Teardown);
+
+         if Self.First_Tested then
+            Self.Test_Map.Include (Self.Teardown.File_Name, Self.Last_Source);
+            Self.First_Tested := False;
+         end if;
+      end Add_Setup_Teardown;
 
       function To_Integer (Name : String) return Integer is
       begin
@@ -583,21 +594,35 @@ package body GNATTest_Module is
       elsif Local_Name = "test_unit" then
          Self.Last_Source.Test_Unit :=
            To_Unbounded_String (Atts.Get_Value ("target_file"));
+         Self.First_Tested := True;
 
       elsif Local_Name = "tested" then
          Self.Last_Source.Subprogram_Name :=
            To_Unbounded_String (Atts.Get_Value ("name"));
          Self.Last_Source.Line := To_Integer ("line");
          Self.Last_Source.Column := To_Integer ("column");
-         Self.Last_Source.Test_Case_Name := Null_Unbounded_String;
+         Self.Last_Source.Test_Case_Name := To_Unbounded_String ("test case");
          Self.Last_Source.Test_Case_Line := 0;
          Self.Last_Source.Test_Case_Column := 0;
+         Self.First_Test := True;
 
       elsif Local_Name = "test_case" then
          Self.Last_Source.Test_Case_Name :=
            To_Unbounded_String (Atts.Get_Value ("name"));
          Self.Last_Source.Test_Case_Line := To_Integer ("line");
          Self.Last_Source.Test_Case_Column := To_Integer ("column");
+
+      elsif Local_Name = "setup" then
+         Self.Setup.File_Name :=
+              To_Unbounded_String (Atts.Get_Value ("file"));
+         Self.Setup.Line := To_Integer ("line");
+         Self.Setup.Column := To_Integer ("column");
+
+      elsif Local_Name = "teardown" then
+         Self.Teardown.File_Name :=
+              To_Unbounded_String (Atts.Get_Value ("file"));
+         Self.Teardown.Line := To_Integer ("line");
+         Self.Teardown.Column := To_Integer ("column");
 
       elsif Local_Name = "test" then
          declare
@@ -610,6 +635,11 @@ package body GNATTest_Module is
 
             Self.Source_Map.Include (Self.Last_Source, Target);
             Self.Test_Map.Include (Target.File_Name, Self.Last_Source);
+
+            if Self.First_Test then
+               Add_Setup_Teardown;
+               Self.First_Test := False;
+            end if;
          end;
       end if;
    end Start_Element;
