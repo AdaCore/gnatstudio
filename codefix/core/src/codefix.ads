@@ -92,6 +92,14 @@ package Codefix is
       Flag : Useless_Entity_Operations) return Boolean;
    --  Returns true if the Flag is contained in the Mask.
 
+   type Codefix_Remove_Policy is
+     (Always_Remove, Always_Comment, Propose_Both_Choices);
+   --  The list of possible remove policy when fixing code preference.
+
+   function Policy_To_Operations
+     (Policy : Codefix_Remove_Policy) return Useless_Entity_Operations;
+   --  Return the Remove and/or Comment flag associated with this Policy
+
    type Fix_Options is record
       Remove_Policy : Useless_Entity_Operations := Remove_Entity;
    end record;

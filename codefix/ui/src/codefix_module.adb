@@ -1247,21 +1247,4 @@ package body Codefix_Module is
          Default => Always_Remove);
    end Register_Preferences;
 
-   --------------------------
-   -- Policy_To_Operations --
-   --------------------------
-
-   function Policy_To_Operations
-     (Policy : Codefix_Remove_Policy) return Useless_Entity_Operations is
-   begin
-      case Policy is
-         when Always_Remove =>
-            return Remove_Entity;
-         when Always_Comment =>
-            return Comment_Entity;
-         when Propose_Both_Choices =>
-            return Comment_Entity or Remove_Entity;
-      end case;
-   end Policy_To_Operations;
-
 end Codefix_Module;

@@ -63,14 +63,9 @@ package Codefix_Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Register the codefix-related preferences
 
-   type Codefix_Remove_Policy is
-     (Always_Remove, Always_Comment, Propose_Both_Choices);
    package Codefix_Remove_Policy_Preferences is new
      Default_Preferences.Enums.Generics (Codefix_Remove_Policy);
 
    Remove_Policy : Codefix_Remove_Policy_Preferences.Preference;
-
-   function Policy_To_Operations
-     (Policy : Codefix_Remove_Policy) return Useless_Entity_Operations;
 
 end Codefix_Module;
