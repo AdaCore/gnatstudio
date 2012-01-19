@@ -1641,6 +1641,7 @@ package body Src_Editor_Buffer is
       Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
       Line        : Editable_Line_Type;
       User_Action : Action_Type;
+      Cursor_Previously_Held : Boolean;
    begin
       Get_Text_Iter (Nth (Params, 1), Pos);
       Line := Get_Editable_Line
@@ -1745,6 +1746,16 @@ package body Src_Editor_Buffer is
          User_Action := Insert_Text;
       end if;
 
+      Cursor_Previously_Held := Buffer.No_Cursor_Move_On_Changes;
+
+      --  If there is a selection and we are inserting, this might be a drag
+      --  and drop action - in this case, prevent cursor changes in reaction to
+      --  insertion, as they would result in losing the selection, and Gtk+
+      --  needs the selection to know which text to delete after the drop.
+      if Buffer.Selection_Exists then
+         Buffer.No_Cursor_Move_On_Changes := True;
+      end if;
+
       if Is_Null_Command (Command) then
          Create
            (Command,
@@ -1792,6 +1803,7 @@ package body Src_Editor_Buffer is
          Buffer.Current_Command := Command_Access (Command);
       end if;
 
+      Buffer.No_Cursor_Move_On_Changes := Cursor_Previously_Held;
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
