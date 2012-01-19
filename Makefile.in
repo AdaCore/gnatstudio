@@ -16,6 +16,11 @@ examplesdir     = $(prefix)/share/examples/gps
 default:
 	$(MAKE) -C gps $@
 
+codepeer:
+	$(MAKE) -C gps scil
+	codepeer -all -lib gps.library -quiet -background -baseline \
+	  -no-race-conditions -method-timeout 20
+
 clean:
 	$(MAKE) -C gps $@
 	$(RM) gnat/*.ad*

@@ -30,6 +30,11 @@ all:
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
 	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps
 
+scil:
+	$(MAKE) -s Gnatcoll_Build=${Build} -C ../gnatlib do_links
+	gnatmake -j0 --subdirs=codepeer -gnatcC -m -p -ws \
+	  -XTP_TASKING=No_Tasking $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps
+
 resources:
 ifeq ($(OS),Windows_NT)
 	@cd src; windres gps.rc -O coff -o ../obj/gps.res
