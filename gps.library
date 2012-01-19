@@ -1,7 +1,7 @@
 -- CodePeer library file for GPS sources
 
-Output_Dir := "codepeer.output";
-Database_Dir := "codepeer.db";
+Output_Dir := "gps.output";
+Database_Dir := "gps.db";
 
 Source (Directory => "kernel/obj/SCIL",
         Files     => ("*.scil"),
