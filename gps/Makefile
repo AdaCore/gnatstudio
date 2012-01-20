@@ -32,7 +32,7 @@ all:
 
 scil: do_links
 	$(MAKE) -s Gnatcoll_Build=${Build} -C ../gnatlib do_links
-	-gnatmake -k -j0 --subdirs=codepeer -gnatcC -m -p -ws \
+	-gnatmake -q -k -j0 --subdirs=codepeer -gnatcC -m -p -ws \
 	  -XTP_TASKING=No_Tasking $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps
 
 resources:
