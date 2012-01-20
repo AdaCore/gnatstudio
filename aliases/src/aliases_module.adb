@@ -974,7 +974,8 @@ package body Aliases_Module is
                      Cursor'Unchecked_Access, Must_Reindent'Unchecked_Access,
                      0);
                   F       : Gint := Gint (First - Text'First);
-
+                  Back    : constant Glong := Glib.Unicode.UTF8_Strlen
+                    (Replace (Cursor + 1 .. Replace'Last));
                begin
                   if Replace /= "" then
                      Delete_Text
@@ -982,9 +983,7 @@ package body Aliases_Module is
                         F,
                         Gint (Last - Text'First));
                      Insert_Text (Gtk_Editable (W), Replace, F);
-                     Set_Position
-                       (Gtk_Editable (W),
-                        F + Gint (Cursor - Replace'Length));
+                     Set_Position (Gtk_Editable (W), F - Gint (Back));
                   end if;
                end;
 
@@ -1031,6 +1030,9 @@ package body Aliases_Module is
                                        Cursor'Unchecked_Access,
                                        Must_Reindent'Unchecked_Access,
                                        Column);
+                  Back          : constant Glong := Glib.Unicode.UTF8_Strlen
+                                    (Replace (Cursor + 1 .. Replace'Last));
+
                   Mark          : Gtk_Text_Mark;
                   Result        : Boolean;
                   Event         : Gdk_Event;
@@ -1057,7 +1059,7 @@ package body Aliases_Module is
                      Delete (Buffer, First_Iter, Last_Iter);
                      Insert (Buffer, First_Iter, Replace);
                      Backward_Chars (First_Iter,
-                                     Gint (Replace'Length - Cursor),
+                                     Gint (Back),
                                      Result);
                      Place_Cursor (Buffer, First_Iter);
 
