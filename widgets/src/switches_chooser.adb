@@ -82,7 +82,7 @@ package body Switches_Chooser is
 
    procedure Free (Config : in out Switches_Editor_Config) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Switches_Editor_Config_Record, Switches_Editor_Config);
+        (Switches_Editor_Config_Record'Class, Switches_Editor_Config);
       C : Switch_Description_Vectors.Cursor;
       Dep : Default_Value_Dependency;
    begin
@@ -1454,5 +1454,415 @@ package body Switches_Chooser is
       end Get_Command_Line;
 
    end Switches_Editors;
+
+   ----------------
+   -- Get_Switch --
+   ----------------
+
+   function Get_Switch (Switch : Switch_Description) return String is
+   begin
+      return To_String (Switch.Switch);
+   end Get_Switch;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label (Switch : Switch_Description) return String is
+   begin
+      return To_String (Switch.Label);
+   end Get_Label;
+
+   -------------
+   -- Get_Tip --
+   -------------
+
+   function Get_Tip (Switch : Switch_Description) return String is
+   begin
+      return To_String (Switch.Tip);
+   end Get_Tip;
+
+   -----------------
+   -- Get_Section --
+   -----------------
+
+   function Get_Section (Switch : Switch_Description) return String is
+   begin
+      return To_String (Switch.Section);
+   end Get_Section;
+
+   ------------------
+   -- Is_Add_First --
+   ------------------
+
+   function Is_Add_First (Switch : Switch_Description) return Boolean is
+   begin
+      return Switch.Add_First;
+   end Is_Add_First;
+
+   ------------------
+   -- Get_Spin_Min --
+   ------------------
+
+   function Get_Spin_Min (Switch : Switch_Description) return Integer is
+   begin
+      return Switch.Min;
+   end Get_Spin_Min;
+
+   ------------------
+   -- Get_Spin_Max --
+   ------------------
+
+   function Get_Spin_Max (Switch : Switch_Description) return Integer is
+   begin
+      return Switch.Max;
+   end Get_Spin_Max;
+
+   ----------------------
+   -- Get_Spin_Default --
+   ----------------------
+
+   function Get_Spin_Default (Switch : Switch_Description) return Integer is
+   begin
+      return Switch.Default;
+   end Get_Spin_Default;
+
+   -------------------------
+   -- Get_Combo_No_Switch --
+   -------------------------
+
+   function Get_Combo_No_Switch
+     (Switch : Switch_Description) return String is
+   begin
+      return To_String (Switch.No_Switch);
+   end Get_Combo_No_Switch;
+
+   ------------------------
+   -- Get_Combo_No_Digit --
+   ------------------------
+
+   function Get_Combo_No_Digit
+     (Switch : Switch_Description) return String is
+   begin
+      return To_String (Switch.No_Digit);
+   end Get_Combo_No_Digit;
+
+   -----------------------
+   -- Get_Combo_Entries --
+   -----------------------
+
+   function Get_Combo_Entries
+     (Switch : Switch_Description) return Combo_Switch_Vectors.Vector is
+   begin
+      return Switch.Entries;
+   end Get_Combo_Entries;
+
+   ----------------------
+   -- Get_Switch_Unset --
+   ----------------------
+
+   function Get_Switch_Unset
+     (Switch : Switch_Description) return String is
+   begin
+      return To_String (Switch.Switch_Unset);
+   end Get_Switch_Unset;
+
+   -----------------------
+   -- Get_Default_State --
+   -----------------------
+
+   function Get_Default_State
+     (Switch : Switch_Description) return Boolean is
+   begin
+      return Switch.Default_State;
+   end Get_Default_State;
+
+   -----------------------
+   -- Get_Initial_State --
+   -----------------------
+
+   function Get_Initial_State
+     (Switch : Switch_Description) return Boolean is
+   begin
+      return Switch.Initial_State;
+   end Get_Initial_State;
+
+   ---------------------------
+   -- Is_Field_As_Directory --
+   ---------------------------
+
+   function Is_Field_As_Directory
+     (Switch : Switch_Description) return Boolean is
+   begin
+      return Switch.As_Directory;
+   end Is_Field_As_Directory;
+
+   ----------------------
+   -- Is_Field_As_File --
+   ----------------------
+
+   function Is_Field_As_File
+     (Switch : Switch_Description) return Boolean is
+   begin
+      return Switch.As_File;
+   end Is_Field_As_File;
+
+   ---------------
+   -- Get_Lines --
+   ---------------
+
+   function Get_Lines
+     (Switches : Switches_Editor_Config)
+      return Positive is
+   begin
+      return Switches.Lines;
+   end Get_Lines;
+
+   -----------------
+   -- Get_Columns --
+   -----------------
+
+   function Get_Columns
+     (Switches : Switches_Editor_Config)
+      return Positive is
+   begin
+      return Switches.Columns;
+   end Get_Columns;
+
+   ----------------
+   -- Get_Config --
+   ----------------
+
+   function Get_Config
+     (Switches : Switches_Editor_Config)
+      return Command_Line_Configuration is
+   begin
+      return Switches.Config;
+   end Get_Config;
+
+   --------------------------
+   -- Is_Show_Command_Line --
+   --------------------------
+
+   function Is_Show_Command_Line
+     (Switches : Switches_Editor_Config)
+      return Boolean is
+   begin
+      return Switches.Show_Command_Line;
+   end Is_Show_Command_Line;
+
+   ---------------------------
+   -- Get_Default_Separator --
+   ---------------------------
+
+   function Get_Default_Separator
+     (Switches : Switches_Editor_Config)
+      return String is
+   begin
+      return To_String (Switches.Default_Separator);
+   end Get_Default_Separator;
+
+   ------------------
+   -- Get_Sections --
+   ------------------
+
+   function Get_Sections
+     (Switches : Switches_Editor_Config)
+      return String is
+   begin
+      return To_String (Switches.Sections);
+   end Get_Sections;
+
+   ------------------------
+   -- Is_Scrolled_Window --
+   ------------------------
+
+   function Is_Scrolled_Window
+     (Switches : Switches_Editor_Config)
+      return Boolean is
+   begin
+      return Switches.Scrolled_Window;
+   end Is_Scrolled_Window;
+
+   ---------------------
+   -- Get_Switch_Char --
+   ---------------------
+
+   function Get_Switch_Char
+     (Switches : Switches_Editor_Config)
+      return Character is
+   begin
+      return Switches.Switch_Char;
+   end Get_Switch_Char;
+
+   -----------------------
+   -- Get_Frames_Length --
+   -----------------------
+
+   function Get_Frames_Length
+     (Switches : Switches_Editor_Config)
+      return Ada.Containers.Count_Type is
+   begin
+      return Length (Switches.Frames);
+   end Get_Frames_Length;
+
+   ------------------------
+   -- Get_Frames_Element --
+   ------------------------
+
+   function Get_Frames_Element
+     (Switches : Switches_Editor_Config;
+      Index : Natural)
+      return Frame_Description is
+   begin
+      return Element (Switches.Frames, Index + First_Index (Switches.Frames));
+   end Get_Frames_Element;
+
+   ---------------
+   -- Get_Title --
+   ---------------
+
+   function Get_Title (Frame : Frame_Description) return String is
+   begin
+      return To_String (Frame.Title);
+   end Get_Title;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line (Frame : Frame_Description) return Positive is
+   begin
+      return Frame.Line;
+   end Get_Line;
+
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column (Frame : Frame_Description) return Positive is
+   begin
+      return Frame.Column;
+   end Get_Column;
+
+   -------------------------
+   -- Get_Switches_Length --
+   -------------------------
+
+   function Get_Switches_Length
+     (Switches : Switches_Editor_Config)
+      return Ada.Containers.Count_Type is
+   begin
+      return Length (Switches.Switches);
+   end Get_Switches_Length;
+
+   --------------------------
+   -- Get_Switches_Element --
+   --------------------------
+
+   function Get_Switches_Element
+     (Switches : Switches_Editor_Config;
+      Index : Natural)
+      return Switch_Description is
+   begin
+      return Element (Switches.Switches,
+                      Index + First_Index (Switches.Switches));
+   end Get_Switches_Element;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line (Switch : Switch_Description) return Positive is
+   begin
+      return Switch.Line;
+   end Get_Line;
+
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column (Switch : Switch_Description) return Positive is
+   begin
+      return Switch.Column;
+   end Get_Column;
+
+   -------------------
+   -- Get_Separator --
+   -------------------
+
+   function Get_Separator (Switch : Switch_Description) return Character is
+   begin
+      return Switch.Separator;
+   end Get_Separator;
+
+   --------------
+   -- Get_Type --
+   --------------
+
+   function Get_Type (Switch : Switch_Description) return Switch_Type is
+   begin
+      return Switch.Typ;
+   end Get_Type;
+
+   ------_--------
+   -- Get_Label --
+   -------_-------
+
+   function Get_Label (Value : Combo_Switch) return String is
+   begin
+      return To_String (Value.Label);
+   end Get_Label;
+
+   ---------------
+   -- Get_Value --
+   ---------------
+
+   function Get_Value (Value : Combo_Switch) return String is
+   begin
+      return To_String (Value.Value);
+   end Get_Value;
+
+   --------------------------------------
+   -- Command_Line_Editor_Tooltip_Text --
+   --------------------------------------
+
+   function Command_Line_Editor_Tooltip_Text return String is
+   begin
+      return "The following macros are available from this command line:" &
+            ASCII.LF &
+            "   %builder: multi-language builder (e.g. gnatmake, gprbuild)" &
+            ASCII.LF &
+            "   %gnatmake: gnatmake command configured in your project" &
+            ASCII.LF &
+            "   %gprclean: clean tool (e.g. gnat clean, gprclean)" &
+            ASCII.LF &
+            "   %attr(Pkg'Name[,def]): replaced by given project attribute" &
+            ASCII.LF &
+            "   %baseattr(Pkg'Name[,def]): base name of an attribute" &
+            ASCII.LF &
+            "   %dirattr(Pkg'Name[,def]): dirname of an attribute" &
+            ASCII.LF &
+            "   %switches(tool): replaced by IDE'Default_Switches(tool)" &
+            ASCII.LF &
+            "   %eL: replaced by -eL if Fast Project Loading pref is set" &
+            ASCII.LF &
+            "   %fp: base name of the selected source file" &
+            ASCII.LF &
+            "   %F: full name of the selected source file" &
+            ASCII.LF &
+            "   %T: base name of main source being considered" &
+            ASCII.LF &
+            "   %TT: full name of main source being considered" &
+            ASCII.LF &
+            "   %O: pathname of the root project's object dir" &
+            ASCII.LF &
+            "   %PP: pathname of the root project" &
+            ASCII.LF &
+            "   %vars: list of var=value switches from project variables" &
+            ASCII.LF &
+            "   %X: list of -Xvar=value switches from project variables";
+
+   end Command_Line_Editor_Tooltip_Text;
 
 end Switches_Chooser;

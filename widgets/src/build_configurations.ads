@@ -36,21 +36,23 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
 
+with GNATCOLL.VFS;
+
 with Remote;           use Remote;
 with Switches_Chooser; use Switches_Chooser;
 with XML_Utils;        use XML_Utils;
 
 package Build_Configurations is
 
-   type Build_Config_Registry is private;
-   type Build_Config_Registry_Access is access Build_Config_Registry;
+   type Build_Config_Registry is tagged private;
+   type Build_Config_Registry_Access is access all Build_Config_Registry'class;
    --  A target registry contains a list of targets and current values for
    --  those targets. Each target in a target registry is identified by an
    --  unique name.
    --  Contains also a list of build modes.
 
-   type Target_Type is private;
-   type Target_Access is access Target_Type;
+   type Target_Type is tagged private;
+   type Target_Access is access all Target_Type'class;
 
    -------------------
    -- Target models --
@@ -67,8 +69,8 @@ package Build_Configurations is
    --  The command line can be modified by the user, and is stored in an
    --  history.
 
-   type Target_Model_Type is private;
-   type Target_Model_Access is access Target_Model_Type;
+   type Target_Model_Type is tagged private;
+   type Target_Model_Access is access all Target_Model_Type'class;
 
    procedure Create_Model_From_XML
      (Registry : Build_Config_Registry_Access;
@@ -152,19 +154,24 @@ package Build_Configurations is
    --  New_Name must be a name which does not correspond to an already defined
    --  target.
 
+   function Get_Builder_Mode_Chooser_Tooltip
+     (Registry : Build_Config_Registry_Access) return String;
+   --  return the builder mode toolbar chooser tooltip
+
    -----------------
    -- Build Modes --
    -----------------
 
-   type Model_Record is record
+   type Model_Record is tagged record
       Model  : Unbounded_String;
       Filter : Unbounded_String;
    end record;
+   type Model_Record_Access is access all Model_Record'class;
 
    package Model_List is new Ada.Containers.Doubly_Linked_Lists
      (Model_Record);
 
-   type Mode_Record is record
+   type Mode_Record is tagged record
       Name        : Unbounded_String;
       Description : Unbounded_String;
       Models      : Model_List.List;
@@ -178,14 +185,39 @@ package Build_Configurations is
       --  Relevant only for Shadow modes. Indicates whether the mode is active
       Subdir      : Unbounded_String;
    end record;
+   type Mode_Record_Access is access all Mode_Record'class;
 
-   package Mode_Map is new Ada.Containers.Ordered_Maps
-     (Unbounded_String, Mode_Record);
+   function Get_Name (Mode : Mode_Record_Access) return String;
+   --  Return the mode name
+
+   function Get_Description (Mode : Mode_Record_Access) return String;
+   --  Return the mode description
+
+   function Load_Mode_From_XML
+      (Registry  : Build_Config_Registry_Access;
+       XML : Node_Ptr) return Mode_Record;
+   --  Insert in registry the "builder-mode" XML node in Registry
+   --  if problem returns Mode.Name = "" otherwise the inserted Mode
 
    function Element_Mode
      (Registry : Build_Config_Registry_Access;
       Name     : Unbounded_String) return Mode_Record;
    --  Return the mode element from Registry corresponding to Name
+
+   procedure Insert_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String;
+      Mode     : Mode_Record);
+   --  Insert the given mode
+
+   procedure Replace_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String;
+      Mode     : Mode_Record);
+   --  Replace the given mode (given by its name) by contents of Mode
+
+   package Mode_Map is new Ada.Containers.Ordered_Maps
+     (Unbounded_String, Mode_Record);
 
    function Contains_Mode
      (Registry : Build_Config_Registry_Access;
@@ -199,18 +231,6 @@ package Build_Configurations is
    function Number_Of_Modes
      (Registry : Build_Config_Registry_Access) return Natural;
    --  Return the number of mode from Registry
-
-   procedure Insert_Mode
-     (Registry : Build_Config_Registry_Access;
-      Name     : Unbounded_String;
-      Mode     : Mode_Record);
-   --  Insert the given mode
-
-   procedure Replace_Mode
-     (Registry : Build_Config_Registry_Access;
-      Name     : Unbounded_String;
-      Mode     : Mode_Record);
-   --  Replace the given mode (given by its name) by contents of Mode
 
    -----------------------
    -- Target properties --
@@ -288,6 +308,14 @@ package Build_Configurations is
    function Get_Properties (Target : Target_Access) return Target_Properties;
    --  Return the properties for Target
 
+   function Get_Target_Type (Target : Target_Access) return String;
+   --  Return the Target_Type property.
+
+   procedure Set_Target_Type
+     (Target : Target_Access;
+      New_Target_Type : String);
+   --  Set the Target_Type property.
+
    ------------------------------------
    -- Accessing target-specific data --
    ------------------------------------
@@ -339,6 +367,9 @@ package Build_Configurations is
    function Get_Icon (Target : Target_Access) return String;
    --  Return the stock-id corresponding to the icon for target
 
+   procedure Set_Icon (Target : Target_Access; Icon : String);
+   --  Change target icon
+
    function Get_Server (Target : Target_Access) return Server_Type;
    --  Return the server_type that will run the target
 
@@ -350,6 +381,30 @@ package Build_Configurations is
 
    function Get_Model (Target : Target_Access) return String;
    --  Return the name of the model for Target
+
+   procedure Set_Model
+     (Registry : Build_Config_Registry_Access;
+      Target : Target_Access;
+      Model : Target_Model_Access);
+   --  Change the name of the model for Target
+
+   procedure In_Toolbar (Target : Target_Access; Value : Boolean);
+   --  Change In_Toolbar value
+
+   procedure In_Menu (Target : Target_Access; Value : Boolean);
+   --  Change In_Toolbar value
+
+   procedure In_Contextual_Menu_For_Projects
+     (Target : Target_Access; Value : Boolean);
+   --  Change In_Contextual_Menu_For_Projects value
+
+   procedure In_Contextual_Menu_For_Files
+     (Target : Target_Access; Value : Boolean);
+   --  Change In_Contextual_Menu_For_Files value
+
+   procedure Set_Launch_Mode
+   (Target : Target_Access; Launch_Mode : Launch_Mode_Type);
+   --  Change Launch_Mode value
 
    -----------------------
    -- XML import/export --
@@ -416,7 +471,8 @@ package Build_Configurations is
    --  Return the new Target, or null if the target could not be created.
 
    function Save_All_Targets_To_XML
-     (Registry : Build_Config_Registry_Access) return Node_Ptr;
+     (Registry : Build_Config_Registry_Access;
+      Save_Even_If_Equals_To_Original : Boolean := False) return Node_Ptr;
    --  Save all targets to a node of the format
    --    <targets>
    --       <target ... (format described above)
@@ -428,6 +484,22 @@ package Build_Configurations is
       XML      : Node_Ptr);
    --  Load multiple targets from XML
    --  See Save_All_Targets_To_XML for the format XML should be in.
+
+   procedure Load_All_Targets_From_File (
+      Registry : Build_Config_Registry_Access;
+      Targets_File : GNATCOLL.VFS.Virtual_File);
+   --  fill registry with all "target" found in file.
+
+   procedure Load_All_Modes_From_File (
+      Registry : Build_Config_Registry_Access;
+      Modes_File : GNATCOLL.VFS.Virtual_File);
+   --  fill registry with all "builder-mode" found in file.
+
+   procedure Load_Build_Config_Registry_From_File (
+      Registry : Build_Config_Registry_Access;
+      File : GNATCOLL.VFS.Virtual_File);
+   --  fill regitry with all "builder-mode", "target-model", "target" found in
+   --  the file
 
    -------------------------
    -- Creating a registry --
@@ -441,6 +513,9 @@ package Build_Configurations is
 
    function Create (Logger : Logger_Type) return Build_Config_Registry_Access;
    --  Create a new registry
+
+   function Create return Build_Config_Registry_Access;
+   --  Create a new registry using a default logger
 
    procedure Free (Registry : in out Build_Config_Registry_Access);
    --  Free the memory used by the registry
@@ -466,6 +541,48 @@ package Build_Configurations is
       Target   : String);
    --  Revert Target to its original
 
+   function Get_Name (Target_Model : Target_Model_Access) return String;
+   --  return target model Name field
+
+   function Get_Category (Target_Model : Target_Model_Access) return String;
+   --  return target model Category field
+
+   function Get_Description (Target_Model : Target_Model_Access) return String;
+   --  return target model Description field
+
+   function Is_Run (Target_Model : Target_Model_Access) return Boolean;
+   --  return target model Is-Run field
+
+   function Get_Icon (Target_Model : Target_Model_Access) return String;
+   --  return target model Icon field
+
+   function Get_Switches (Target_Model : Target_Model_Access)
+      return Switches_Editor_Config;
+   --  return target model Swtiches field
+
+   function Get_Default_Command_Line (Target_Model : Target_Model_Access)
+      return GNAT.OS_Lib.Argument_List_Access;
+   --  return target model Default_Command_Line field
+
+   function Get_Server (Target_Model : Target_Model_Access) return Server_Type;
+   --  return target model Server field
+
+   function Uses_Shell (Target_Model : Target_Model_Access) return Boolean;
+   --  return target model Uses_Shell field
+
+   package Model_Map is new Ada.Containers.Ordered_Maps
+     (Key_Type     => Unbounded_String,
+      Element_Type => Target_Model_Access);
+
+   function First_Model
+     (Registry : Build_Config_Registry_Access) return Model_Map.Cursor;
+   --  Return the first model element from Registry
+
+   function Get_Model_By_Name
+     (Registry : Build_Config_Registry_Access;
+      Model_Name : String) return Target_Model_Access;
+   --  Return the target model (given by its name)
+
 private
 
    -- Packages --
@@ -479,17 +596,13 @@ private
 
    type Target_Cursor is new Target_List.Cursor;
 
-   package Model_Map is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,
-      Element_Type => Target_Model_Access);
-
    package Switches_Map is new Ada.Containers.Ordered_Maps
      (Key_Type     => Unbounded_String,
       Element_Type => Switches_Editor_Config);
 
    -- Types --
 
-   type Target_Model_Type is record
+   type Target_Model_Type is tagged record
       Name                 : Unbounded_String;
       --  The name of a target model
 
@@ -520,7 +633,7 @@ private
       --  throuhg $SHELL -c "command line".
    end record;
 
-   type Build_Config_Registry is record
+   type Build_Config_Registry is tagged record
       Models  : Model_Map.Map;
       --  Contains all registered models
 
@@ -537,7 +650,7 @@ private
       --  A procedure to log messages
    end record;
 
-   type Target_Type is record
+   type Target_Type is tagged record
       Name         : Unbounded_String;
       --  The name of the Target. This is the unique name that identifies
       --  the Target: there is only one target for each Name in the Registry.
@@ -564,7 +677,7 @@ private
    --  Free memory associated with Target
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Build_Config_Registry, Build_Config_Registry_Access);
+     (Build_Config_Registry'Class, Build_Config_Registry_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.OS_Lib.Argument_List, GNAT.OS_Lib.Argument_List_Access);
 

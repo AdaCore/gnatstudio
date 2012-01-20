@@ -16,13 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;
 
-with GNAT.Directory_Operations;
-
-with GNATCOLL.Templates;          use GNATCOLL.Templates;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
+with Build_Command_Utils;           use Build_Command_Utils;
 with Builder_Facility_Module;     use Builder_Facility_Module;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Commands.Builder;            use Commands.Builder;
@@ -37,42 +34,26 @@ with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                    use GPS.Intl;
-with Projects;                    use Projects;
 with Remote;                      use Remote;
 with Extending_Environments;      use Extending_Environments;
-with Toolchains;                  use Toolchains;
 with Traces;                      use Traces;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
-with GNAT.Strings;
 
 package body Build_Command_Manager is
 
    Me : constant Debug_Handle := Create ("Build_Command_Manager");
 
-   function Get_Last_Main_For_Background_Target
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      Target : Target_Access) return Virtual_File;
-   --  Return the Main to use for building Target as a background build.
-   --  This is either the last main that was used, if it exists, or the first
-   --  main defined for this target, if it exists.
-   --  The full path to the target is returned.
-   --  If the target is not found, "" is returned.
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
 
-   Invalid_Argument : exception;
-   --  Raised by Expand_Arg below
-
-   type Expansion_Result is record
-      Args : Arg_List;
-      --  The list of arguments
-
-      Dir  : Virtual_File := No_File;
-      --  The directory in which to launch the compilation
+   type Build_Command_Adapter is new Abstract_Build_Command_Adapter with record
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      Context        : Selection_Context;
+      Background_Env : Extending_Environment;
    end record;
+   type Build_Command_Adapter_Access is access all Build_Command_Adapter;
 
    function Expand_Command_Line
      (Kernel     : GPS.Kernel.Kernel_Handle;
@@ -90,47 +71,63 @@ package body Build_Command_Manager is
    --  CL must contain at least one element.
    --  If Simulate is true, never fail on unknown parameters.
 
-   function Expand_Arg
-     (Kernel     : GPS.Kernel.Kernel_Handle;
-      Context    : GPS.Kernel.Selection_Context;
-      Target     : Target_Access;
-      Arg        : String;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean;
-      Background_Env : Extending_Environment) return Expansion_Result;
-   --  Expand macros contained in Arg.
-   --  Caller must free the result.
-   --  Will raise Invalid_Argument if an invalid/non existent argument is
-   --  found.
-   --  If Simulate is true, Invalid_Argument will never be raised, and no
-   --  expansion will be done.
+   overriding
+   function Get_Last_Main_For_Background_Target
+     (Adapter : Build_Command_Adapter;
+      Target : Target_Access) return Virtual_File;
+   --  Return the Main to use for building Target as a background build.
+   --  This is either the last main that was used, if it exists, or the first
+   --  main defined for this target, if it exists.
+   --  The full path to the target is returned.
+   --  If the target is not found, "" is returned.
 
-   procedure Free (Ar : in out Argument_List);
-   --  Free memory associated to Ar
+   overriding
+   function Get_Background_Project_Full_Name
+     (Adapter : Build_Command_Adapter) return Filesystem_String;
 
-   ----------
-   -- Free --
-   ----------
+   overriding
+   function Substitute
+     (Adapter : Build_Command_Adapter;
+      Param     : String;
+      Quoted    : Boolean;
+      Done      : access Boolean;
+      Server    : Server_Type := GPS_Server;
+      For_Shell : Boolean := False) return String;
+   --  Wrapper around GPS.Kernel.Macros.Substitute
 
-   procedure Free (Ar : in out Argument_List) is
-   begin
-      for A in Ar'Range loop
-         Free (Ar (A));
-      end loop;
-   end Free;
+   overriding
+   procedure Console_Insert
+     (Adapter : in out Build_Command_Adapter;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Console_Message_Type := Info);
+   --  Wrapper around GPS.Kernel.Console.Insert
+
+   overriding
+   procedure Remove_Error_Builder_Message_From_File
+     (Adapter : Build_Command_Adapter;
+      File     : Virtual_File);
+   --  Removes all messages for specified file in the error category.
+   --  Do nothing when there is no such category or file.
+
+   overriding
+   function Get_Background_Environment_File
+     (Adapter : Build_Command_Adapter) return Virtual_File;
+
+   overriding
+   function Get_Scenario_Variables
+     (Adapter : Build_Command_Adapter) return Scenario_Variable_Array;
 
    -----------------------------------------
    -- Get_Last_Main_For_Background_Target --
    -----------------------------------------
 
+   overriding
    function Get_Last_Main_For_Background_Target
-     (Kernel : GPS.Kernel.Kernel_Handle;
+     (Adapter : Build_Command_Adapter;
       Target : Target_Access) return Virtual_File
    is
+      Kernel : constant GPS.Kernel.Kernel_Handle := Adapter.Kernel;
       Last : constant Virtual_File := Get_Last_Main (Get_Name (Target));
    begin
       if Last = No_File then
@@ -170,415 +167,96 @@ package body Build_Command_Manager is
       end if;
    end Get_Last_Main_For_Background_Target;
 
-   ----------------
-   -- Expand_Arg --
-   ----------------
+   --------------------------------------
+   -- Get_Background_Project_Full_Name --
+   --------------------------------------
 
-   function Expand_Arg
-     (Kernel     : GPS.Kernel.Kernel_Handle;
-      Context    : GPS.Kernel.Selection_Context;
-      Target     : Target_Access;
-      Arg        : String;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean;
-      Background_Env : Extending_Environment) return Expansion_Result
-   is
-      Result : Expansion_Result;
-
-      function Substitution
-        (Param  : String; Quoted : Boolean) return String;
-      --  Wrapper around GPS.Kernel.Macros.Substitute
-
-      function Get_Attr_Value (Arg : String; Skip : Natural) return String;
-      --  return the name of the attribute contained in Arg
-
-      function Get_Index (A, B : Natural) return Natural;
-      --  Return A if A /= 0, B otherwise
-
-      ---------------
-      -- Get_Index --
-      ---------------
-
-      function Get_Index (A, B : Natural) return Natural is
-      begin
-         if A = 0 then
-            return B;
-         else
-            return A;
-         end if;
-      end Get_Index;
-
-      ------------------
-      -- Substitution --
-      ------------------
-
-      function Substitution
-        (Param : String; Quoted : Boolean) return String
-      is
-         Done : aliased Boolean := False;
-      begin
-         if Param = "subdir" then
-            return +Subdir;
-
-         elsif Background
-           and then not Simulate
-           and then (Param = "pp" or else Param = "PP")
-         then
-            return +Get_Project (Background_Env).Full_Name.all;
-
-         else
-            declare
-               Result : constant String := GPS.Kernel.Macros.Substitute
-                 (Param, Context, Quoted, Done'Access, Server => Server);
-            begin
-               if Result = "" then
-                  if Simulate then
-                     return '%' & Param;
-                  else
-                     raise Invalid_Argument;
-                  end if;
-
-               else
-                  return Result;
-               end if;
-            end;
-         end if;
-      end Substitution;
-
-      --------------------
-      -- Get_Attr_Value --
-      --------------------
-
-      function Get_Attr_Value (Arg : String; Skip : Natural) return String is
-         J    : constant Natural := Get_Index
-           (Ada.Strings.Fixed.Index (Arg, "'"), Arg'First + Skip);
-         K    : constant Natural := Get_Index
-           (Ada.Strings.Fixed.Index (Arg (J .. Arg'Last), ","), Arg'Last);
-         Pkg  : constant String := Arg (Arg'First + Skip + 1 .. J - 1);
-         Attr : constant String := Arg (J + 1 .. K - 1);
-      begin
-         return Get_Project (Get_Kernel (Context)).Attribute_Value
-           (Build (Pkg, Attr), Default => Arg (K + 1 .. Arg'Last - 1));
-      end Get_Attr_Value;
-
+   overriding
+   function Get_Background_Project_Full_Name
+     (Adapter : Build_Command_Adapter) return Filesystem_String is
    begin
-      --  ??? Special case for "%X"
-      --  We are implementing a special case here since GPS.Kernel.Macros
-      --  does not support returning an Argument_List.
-      --  See H926-007.
+      return Get_Project (Adapter.Background_Env).Full_Name.all;
+   end Get_Background_Project_Full_Name;
 
-      if Arg = "%X" then
-         Result.Args := Parse_String
-           (Scenario_Variables_Cmd_Line (Kernel, "-X"), Separate_Args);
+   ----------------------------
+   -- Get_Scenario_Variables --
+   ----------------------------
 
-      --  ??? Ditto for %vars
-      elsif Arg = "%vars" then
-         Result.Args := Parse_String
-           (Scenario_Variables_Cmd_Line (Kernel, ""), Separate_Args);
+   overriding
+   function Get_Scenario_Variables
+     (Adapter : Build_Command_Adapter) return Scenario_Variable_Array is
+   begin
+      return Scenario_Variables (Adapter.Kernel);
+   end Get_Scenario_Variables;
 
-      --  ??? Would be nice to support a generic %vars(xxx)
-      elsif Arg = "%vars(-D)" then
-         Result.Args := Parse_String
-           (Scenario_Variables_Cmd_Line (Kernel, "-D"), Separate_Args);
+   ----------------
+   -- Substitute --
+   ----------------
 
-      --  ??? Ditto for %eL
-      elsif Arg = "%eL" then
-         if GPS.Kernel.Preferences.Trusted_Mode.Get_Pref then
-            return Result;
-         else
-            Result.Args := Create ("-eL");
-         end if;
+   overriding
+   function Substitute
+     (Adapter : Build_Command_Adapter;
+      Param     : String;
+      Quoted    : Boolean;
+      Done      : access Boolean;
+      Server    : Server_Type := GPS_Server;
+      For_Shell : Boolean := False) return String
+   is
+      pragma Unreferenced (For_Shell);
+   begin
+      return GPS.Kernel.Macros.Substitute
+                 (Param, Adapter.Context, Quoted, Done, Server);
+   end Substitute;
 
-      --  ??? Ditto for %attr
-      elsif Starts_With (Arg, "%attr(") and then Arg (Arg'Last) = ')' then
-         Result.Args := Parse_String (Get_Attr_Value (Arg, 5), Separate_Args);
+   --------------------
+   -- Console_Insert --
+   --------------------
 
-      elsif Starts_With (Arg, "%dirattr(") and then Arg (Arg'Last) = ')' then
-         Result.Args := Parse_String (Get_Attr_Value (Arg, 8), Separate_Args);
-         Set_Nth_Arg
-           (Result.Args, 0,
-            GNAT.Directory_Operations.Dir_Name (Nth_Arg (Result.Args, 0)));
+   overriding
+   procedure Console_Insert
+     (Adapter : in out Build_Command_Adapter;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Console_Message_Type := Info) is
+      M : Message_Type;
+   begin
+      case Mode is
+         when Info =>
+            M := Info;
+         when Error =>
+            M := Error;
+         when Verbose =>
+            M := Verbose;
+      end case;
+      Console.Insert (Adapter.Kernel, Text, Add_LF, M);
+   end Console_Insert;
 
-      elsif Starts_With (Arg, "%baseattr(") and then Arg (Arg'Last) = ')' then
-         Result.Args := Parse_String (Get_Attr_Value (Arg, 9), Separate_Args);
-         Set_Nth_Arg
-           (Result.Args, 0,
-            GNAT.Directory_Operations.Base_Name (Nth_Arg (Result.Args, 0)));
+   --------------------------------------------
+   -- Remove_Error_Builder_Message_From_File --
+   --------------------------------------------
 
-      --  ??? Ditto for %switches
-      elsif Starts_With (Arg, "%switches(") and then Arg (Arg'Last) = ')' then
-         declare
-            List : GNAT.Strings.String_List_Access :=
-                    Get_Project (Get_Kernel (Context)).Attribute_Value
-                      (Build ("IDE", "Default_Switches"),
-                       Index => Arg (Arg'First + 10 .. Arg'Last - 1));
-         begin
-            if List /= null and then List'Length /= 0 then
-               Result.Args := Create (List (List'First).all);
-               for J in List'First + 1 .. List'Last loop
-                  Append_Argument (Result.Args, List (J).all, One_Arg);
-               end loop;
-            end if;
-
-            Free (List);
-         end;
-
-      --  ??? Ditto for %builder, %gprbuild and %gprclean
-      elsif Arg = "%builder"
-        or else Arg = "%gprbuild"
-        or else Arg = "%gprclean"
-      then
-         declare
-            Builder  : constant Boolean := Arg /= "%gprclean";
-            Prj      : constant Project_Type :=
-                         Get_Project (Get_Kernel (Context));
-            Tc       : constant Toolchains.Toolchain :=
-                         Get_Toolchain
-                           (Get_Kernel (Context).Get_Toolchains_Manager, Prj);
-            Langs    : Argument_List := Prj.Languages (Recursive => True);
-
-            Multi_Language_Build : Boolean := True;
-            Res      : Expansion_Result;
-         begin
-            if Arg /= "%gprbuild"
-              and then ((Langs'Length = 1
-                         and then Langs (Langs'First).all = "ada")
-                        or else Multi_Language_Builder.Get_Pref
-                                 = GPS.Kernel.Preferences.Gnatmake)
-              and then Multi_Language_Builder.Get_Pref
-                        /= GPS.Kernel.Preferences.Gprbuild_Always
-            then
-               --  Determine if the project has only Ada set and user didn't
-               --  specify Gprbuild_Always as builder. If so, set
-               --  Multi_Language_Build to False.
-
-               Multi_Language_Build := False;
-            end if;
-
-            Free (Langs);
-
-            if Multi_Language_Builder.Get_Pref = Gprbuild_Always
-              or else (Multi_Language_Build
-                       and then Multi_Language_Builder.Get_Pref = Gprbuild)
-            then
-               if not Is_Native (Tc) then
-                  if Builder then
-                     Res.Args := Create ("gprbuild");
-                     Append_Argument
-                       (Res.Args,
-                        "--target=" & Get_Name (Tc),
-                        One_Arg);
-                     return Res;
-                  else
-                     Res.Args := Create ("gprclean");
-                     Append_Argument
-                       (Res.Args,
-                        "--target=" & Get_Name (Tc),
-                        One_Arg);
-                     return Res;
-                  end if;
-
-               elsif Builder then
-                  Res.Args := Create ("gprbuild");
-                  return Res;
-               else
-                  Res.Args := Create ("gprclean");
-                  return Res;
-               end if;
-
-            elsif Builder then
-               if Multi_Language_Build then
-                  Res.Args := Create ("gprmake");
-                  return Res;
-               else
-                  Res.Args := Create (Get_Exe (Get_Compiler (Tc, "Ada")));
-                  return Res;
-               end if;
-            else
-               Res.Args := Create
-                 (Prj.Attribute_Value
-                    (GNAT_Attribute, Default => "gnat"));
-               Append_Argument (Res.Args, "clean", One_Arg);
-               return Res;
-            end if;
-         end;
-
-      elsif Arg = "%external" then
-         Result.Args := Parse_String
-           (GPS.Kernel.Preferences.Execute_Command.Get_Pref, Separate_Args);
-
-      elsif Arg = "[exec_dir]" then
-         declare
-            Prj : constant Project_Type :=
-              Get_Project (Get_Kernel (Context));
-         begin
-            Result.Dir := Executables_Directory (Prj);
-         end;
-
-      elsif Arg = "%fp" then
-         if not Simulate
-           and then Force_File /= No_File
-         then
-            --  We are launching a compile command involving Force_File:
-            --  remove reference to File from the Locations View.
-            --  See F830-003.
-            Get_Messages_Container (Kernel).Remove_File
-              (Error_Category, Force_File, Builder_Message_Flags);
-            Result.Args := Create (+Base_Name (Force_File));
-            return Result;
-         end if;
-
-         declare
-            File : constant Virtual_File := File_Information (Context);
-         begin
-            if File = No_File then
-               if Simulate then
-                  Result.Args := Create ("<current-file>");
-                  return Result;
-
-               else
-                  Console.Insert
-                    (Kernel, -"No file selected", Mode => Console.Error);
-                  raise Invalid_Argument;
-               end if;
-
-            elsif Get_Registry
-              (Kernel).Tree.Info (File).Project = No_Project
-            then
-               if Simulate then
-                  Result.Args := Create ("<current-file>");
-                  return Result;
-
-               else
-                  Console.Insert
-                    (Kernel, -"Could not determine the project for file: "
-                     & Display_Full_Name (File),
-                     Mode => Console.Error);
-
-                  --  Do not normalize through VFS so as to preserve the state
-                  --  of the file (since otherwise we would cache the
-                  --  normalized value)
-                  if File.Display_Full_Name /=
-                    Normalize_Pathname
-                      (File.Display_Full_Name, Resolve_Links => True)
-                    and then GPS.Kernel.Preferences.Trusted_Mode.Get_Pref
-                  then
-                     Console.Insert
-                       (Kernel, -("You should"
-                        & " disable the preference Fast Project Loading for"
-                        & " full support of symbolic links"));
-                  end if;
-
-                  raise Invalid_Argument;
-               end if;
-
-            else
-               if Background then
-                  Result.Args := Create
-                    (+Base_Name (Get_File (Background_Env)));
-               else
-                  --  We are launching a compile command involving File:
-                  --  remove reference to File from the Locations View.
-                  --  See F830-003.
-                  if not Simulate then
-                     Get_Messages_Container (Kernel).Remove_File
+   overriding
+   procedure Remove_Error_Builder_Message_From_File
+     (Adapter : Build_Command_Adapter;
+      File     : Virtual_File) is
+   begin
+      Get_Messages_Container (Adapter.Kernel).Remove_File
                        (Error_Category, File, Builder_Message_Flags);
-                  end if;
+   end Remove_Error_Builder_Message_From_File;
 
-                  Result.Args := Create (+Base_Name (File));
-               end if;
-            end if;
-         end;
+   -------------------------------------
+   -- Get_Background_Environment_File --
+   -------------------------------------
 
-      elsif Starts_With (Arg, "%TT") then
-         if Main /= No_File then
-            Result.Args :=
-              Create (+Main.To_Remote (Get_Nickname (Server)).Full_Name &
-                      Arg (Arg'First + 3 .. Arg'Last));
-         else
-            if Background then
-               declare
-                  M : constant Virtual_File :=
-                        Get_Last_Main_For_Background_Target (Kernel, Target);
-               begin
-                  if M = No_File then
-                     Console.Insert
-                       (Kernel,
-                        (-"Could not launch background build: no main(s)"
-                         & " found for target ") & Get_Name (Target),
-                        Mode => Console.Error);
-                     raise Invalid_Argument;
-                  else
-                     Result.Args := Create
-                       (+M.To_Remote (Get_Nickname (Server)).Full_Name &
-                        Arg (Arg'First + 3 .. Arg'Last));
-                  end if;
-               end;
-            else
-               Console.Insert
-                 (Kernel, -"Could not determine the target to build.",
-                  Mode => Console.Error);
-               raise Invalid_Argument;
-            end if;
-         end if;
+   overriding
+   function Get_Background_Environment_File
+     (Adapter : Build_Command_Adapter) return Virtual_File is
+   begin
+      return Get_File (Adapter.Background_Env);
+   end Get_Background_Environment_File;
 
-      elsif Starts_With (Arg, "%T") then
-         if Main /= No_File then
-            Result.Args := Create
-              (+Main.Base_Name
-               & Arg (Arg'First + 2 .. Arg'Last));
-         else
-            if Background then
-               declare
-                  M : constant Virtual_File :=
-                        Get_Last_Main_For_Background_Target (Kernel, Target);
-               begin
-                  if M = No_File then
-                     Console.Insert
-                       (Kernel,
-                        (-"Could not launch background build: no main(s)"
-                         & " found for target ") & Get_Name (Target),
-                        Mode => Console.Error);
-                     raise Invalid_Argument;
-                  else
-                     Result.Args := Create
-                       (+M.Base_Name &
-                        Arg (Arg'First + 3 .. Arg'Last));
-                  end if;
-               end;
-            else
-               Console.Insert
-                 (Kernel, -"Could not determine the target to build.",
-                  Mode => Console.Error);
-               raise Invalid_Argument;
-            end if;
-         end if;
-
-      elsif Starts_With (Arg, "%E") then
-         if Main /= No_File then
-            Result.Args := Create
-              (+To_Remote (Main, Get_Nickname (Server)).Full_Name);
-         else
-            Console.Insert
-              (Kernel, -"Could not determine the executable name for main.",
-               Mode => Console.Error);
-            raise Invalid_Argument;
-         end if;
-
-      else
-         Result.Args :=
-           Create (GNATCOLL.Templates.Substitute
-                   (Str       => Arg,
-                    Delimiter => GPS.Kernel.Macros.Special_Character,
-                    Callback  => Substitution'Unrestricted_Access));
-      end if;
-
-      return Result;
-   end Expand_Arg;
+   procedure Free_Adapter is new Ada.Unchecked_Deallocation
+     (Build_Command_Adapter, Build_Command_Adapter_Access);
 
    -------------------------
    -- Expand_Command_Line --
@@ -596,51 +274,30 @@ package body Build_Command_Manager is
       Simulate   : Boolean;
       Background_Env : Extending_Environment) return Expansion_Result
    is
-      Result  : Expansion_Result;
-      Final   : Expansion_Result;
       Context : constant Selection_Context := Get_Current_Context (Kernel);
-      Failed  : Boolean := False;
-
+      Adapter : Build_Command_Adapter_Access := new Build_Command_Adapter;
+      Res     : Expansion_Result;
    begin
-      for J in CL'Range loop
-         if CL (J) = null then
-            --  This should not happen
-            Insert (Kernel, (-"Invalid command line"), Mode => Error);
-            return (Empty_Command_Line, No_File);
-         end if;
+      Adapter.Kernel := Kernel;
+      Adapter.Background_Env := Background_Env;
+      Adapter.Context := Context;
 
-         declare
-            Arg : constant String := CL (J).all;
-         begin
-            Result := Expand_Arg
-              (Kernel, Context, Target, CL (J).all, Server,
-               Force_File, Main, Subdir, Background, Simulate, Background_Env);
-         exception
-            when Invalid_Argument =>
-               Insert
-                 (Kernel,
-                  (-"Could not expand argument in command line: ") & Arg,
-                  Mode => Console.Error);
-               Failed := True;
-         end;
+      Initialize
+        (Adapter.all,
+         Get_Registry (Kernel),
+         Get_Project (Get_Kernel (Context)),
+         Get_Kernel (Context).Get_Toolchains_Manager,
+         File_Information (Context),
+         GPS.Kernel.Macros.Special_Character,
+         GPS.Kernel.Preferences.Trusted_Mode.Get_Pref,
+         GPS.Kernel.Preferences.Execute_Command.Get_Pref,
+         Multi_Language_Builder.Get_Pref);
 
-         if Result.Dir /= No_File then
-            Final.Dir := Result.Dir;
-         end if;
-
-         for J in 0 .. Args_Length (Result.Args) loop
-            Append_Argument (Final.Args, Nth_Arg (Result.Args, J), One_Arg);
-         end loop;
-      end loop;
-
-      if Failed then
-         Insert
-           (Kernel, (-"Build command not launched."),
-            Mode => Console.Error);
-         return (Empty_Command_Line, No_File);
-      end if;
-
-      return Final;
+      Res := Expand_Command_Line
+        (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
+         Force_File, Main, Subdir, Background, Simulate);
+      Free_Adapter (Adapter);
+      return Res;
    end Expand_Command_Line;
 
    -------------------
@@ -686,7 +343,8 @@ package body Build_Command_Manager is
          Background : Boolean)
       is
 
-         Subdir : constant Filesystem_String := Get_Mode_Subdir (Mode);
+         Subdir : constant Filesystem_String :=
+            Get_Mode_Subdir (Registry, Mode);
          Server : Server_Type;
          Data   : Build_Callback_Data_Access;
          Background_Env : Extending_Environment;
@@ -701,7 +359,8 @@ package body Build_Command_Manager is
          function Expand_Cmd_Line (CL : String) return String is
             CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
             Mode_Args : Argument_List_Access :=
-                          Apply_Mode_Args (Get_Model (T), Mode, CL_Args.all);
+                          Apply_Mode_Args (Registry, Get_Model (T), Mode,
+                                           CL_Args.all);
             Res       : constant Expansion_Result :=
                           Expand_Command_Line
                             (Kernel,
@@ -728,11 +387,7 @@ package body Build_Command_Manager is
             All_Extra_Args := new Argument_List (1 .. 0);
          end if;
 
-         if Is_Server_In_Mode (Mode) then
-            Server := Get_Mode_Server (Mode);
-         else
-            Server := Get_Server (T);
-         end if;
+         Server := Get_Server (Registry, Mode, T);
 
          if (not Shadow)
            and then (not Background)
@@ -763,7 +418,7 @@ package body Build_Command_Manager is
             declare
                CL_Mode : Argument_List_Access :=
                            Apply_Mode_Args
-                             (Get_Model (T), Mode, Command_Line.all);
+                             (Registry, Get_Model (T), Mode, Command_Line.all);
             begin
                Full := Expand_Command_Line
                  (Kernel, CL_Mode.all & All_Extra_Args.all, T,
@@ -784,7 +439,7 @@ package body Build_Command_Manager is
                CL      : constant Argument_List :=
                            Get_Command_Line_Unexpanded (Registry, T);
                CL_Mode : Argument_List_Access :=
-                           Apply_Mode_Args (Get_Model (T), Mode, CL);
+                           Apply_Mode_Args (Registry, Get_Model (T), Mode, CL);
             begin
                --  Sanity check that the command line contains at least one
                --  item (the command itself). It can happen that this is not
@@ -818,7 +473,7 @@ package body Build_Command_Manager is
          end if;
 
          --  Trace the command line, for debug purposes
-         if Full = (Empty_Command_Line, No_File) then
+         if Full = (Empty_Command_Line, No_File, To_Unbounded_String ("")) then
             Trace (Me, "Macro expansion resulted in empty command line");
             Unchecked_Free (All_Extra_Args);
             return;

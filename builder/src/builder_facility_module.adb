@@ -18,10 +18,7 @@
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 
-with Generic_Stack;
-
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib;
 with Glib.Object;               use Glib.Object;
@@ -47,6 +44,8 @@ with Commands.Interactive;        use Commands.Interactive;
 
 with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
+
+with Build_Command_Utils;           use Build_Command_Utils;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Properties;            use GPS.Properties;
@@ -76,16 +75,11 @@ with Build_Command_Manager;     use Build_Command_Manager;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Commands.Builder;          use Commands.Builder;
 with XML_Utils;                 use XML_Utils;
-with GNAT.Directory_Operations;
 
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded.Hash;
 
 package body Builder_Facility_Module is
-
-   Max_Number_Of_Mains : constant := 128;
-   --  The maximum number of Mains that we accept to display in the Menus
-   --  and toolbar.
 
    Me          : constant Debug_Handle := Create ("Builder_Facility_Module");
    Modes_Trace : constant Debug_Handle :=
@@ -96,8 +90,6 @@ package body Builder_Facility_Module is
 
    Mode_Property : constant String := "Build-Mode";
    --  History to store which mode is selected
-
-   package Projects_Stack is new Generic_Stack (Project_Type);
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
@@ -526,112 +518,6 @@ package body Builder_Facility_Module is
       Free (Module.Registry);
    end Destroy;
 
-   ---------------
-   -- Get_Mains --
-   ---------------
-
-   function Get_Mains (Kernel : Kernel_Handle) return GNATCOLL.VFS.File_Array
-   is
-      Registry     : constant Project_Registry_Access := Get_Registry (Kernel);
-      Root_Project : constant Project_Type := Registry.Tree.Root_Project;
-
-      Result       : File_Array (1 .. Max_Number_Of_Mains);
-      Index        : Natural := Result'First;
-      Projects     : Projects_Stack.Simple_Stack;
-      The_Project  : Project_Type;
-      Iterator     : Project_Iterator :=
-                       Root_Project.Start (Include_Extended => True);
-      Mains        : String_List_Access;
-
-      function To_Full_Path (Basename : String) return Virtual_File;
-      --  Return the full path of file Basename in project Project
-
-      function Is_Already_In_Mains (F : Virtual_File) return Boolean;
-      --  Return True if S is in Result (for instance a project could use its
-      --  extended project's Main attribute, in which case we would end up
-      --  with duplicates).
-
-      -------------------------
-      -- Is_Already_In_Mains --
-      -------------------------
-
-      function Is_Already_In_Mains (F : Virtual_File) return Boolean is
-      begin
-         for J in Result'First .. Index - 1 loop
-            if Result (J) = F then
-               return True;
-            end if;
-         end loop;
-         return False;
-      end Is_Already_In_Mains;
-
-      ------------------
-      -- To_Full_Path --
-      ------------------
-
-      function To_Full_Path (Basename : String) return Virtual_File is
-         File : Virtual_File;
-      begin
-         if GNAT.Directory_Operations.File_Extension (Basename) = "" then
-            --  The project files used to support the form
-            --     for Main use ("basename");
-            --  If this is the case here, add ".adb" to get the real name of
-            --  the source unit.
-            File := Registry.Tree.Create
-              (Filesystem_String (Basename & ".adb"),
-               Use_Object_Path => False);
-         else
-            File := Registry.Tree.Create
-              (Filesystem_String (Basename),
-               Use_Object_Path => False);
-         end if;
-
-         if File = No_File then
-            return Create_From_Base (+Basename);
-         end if;
-
-         return File;
-      end To_Full_Path;
-
-   begin
-      --  The project Iterator starts with the leaf projects and ends with
-      --  the root project. Reverse the order to be more user-friendly: in
-      --  the majority of cases, users will want to see the mains defined
-      --  in the root project first.
-
-      while Current (Iterator) /= No_Project loop
-         Projects_Stack.Push (Projects, Current (Iterator));
-         Next (Iterator);
-      end loop;
-
-      while not Projects_Stack.Is_Empty (Projects)
-        and Index <= Result'Last
-      loop
-         Projects_Stack.Pop (Projects, The_Project);
-         Mains := The_Project.Attribute_Value (Main_Attribute);
-         if Mains /= null then
-            for J in Mains'Range loop
-               if Mains (J)'Length > 0 then
-                  Result (Index) := To_Full_Path (Mains (J).all);
-
-                  if not Is_Already_In_Mains (Result (Index)) then
-                     Index := Index + 1;
-                     exit when Index > Result'Last;
-                  else
-                     Result (Index) := No_File;
-                  end if;
-               end if;
-            end loop;
-
-            Free (Mains);
-         end if;
-      end loop;
-
-      Projects_Stack.Clear (Projects);
-
-      return Result (1 .. Index - 1);
-   end Get_Mains;
-
    -----------------
    -- Action_Name --
    -----------------
@@ -919,7 +805,8 @@ package body Builder_Facility_Module is
    begin
       if Kind = "main" then
          declare
-            Mains  : constant File_Array := Get_Mains (Kernel_Handle (Kernel));
+            Mains  : constant File_Array :=
+               Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
 
             Result : Any_Type (List_Type, Mains'Length);
          begin
@@ -948,7 +835,8 @@ package body Builder_Facility_Module is
 
       elsif Kind = "executable" then
          declare
-            Mains  : constant File_Array := Get_Mains (Kernel_Handle (Kernel));
+            Mains  : constant File_Array :=
+               Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
             Result : Any_Type (List_Type, Mains'Length);
             P      : Project_Type;
          begin
@@ -1339,8 +1227,8 @@ package body Builder_Facility_Module is
          return;
       end if;
 
-      if Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Mode) then
-         Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Mode));
+      if Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Registry, Mode) then
+         Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Registry, Mode));
          Recompute_View (Get_Kernel);
       end if;
 
@@ -1839,111 +1727,19 @@ package body Builder_Facility_Module is
 
    procedure Parse_Mode_Node (XML : Node_Ptr) is
       Mode       : Mode_Record;
-      C          : Node_Ptr;
       First_Mode : Boolean := False;
       Align      : Gtk_Alignment;
-
-      procedure Parse_Node (N : Node_Ptr);
-      --  Parse children of <builder-mode> nodes
-
-      ----------------
-      -- Parse_Node --
-      ----------------
-
-      procedure Parse_Node (N : Node_Ptr) is
-         C     : Node_Ptr;
-         Count : Natural := 0;
-      begin
-         if N.Tag.all = "description" then
-            Mode.Description := To_Unbounded_String (N.Value.all);
-         elsif N.Tag.all = "supported-model" then
-            Mode.Models.Append
-              ((To_Unbounded_String (N.Value.all),
-                To_Unbounded_String (Get_Attribute (N, "filter"))));
-         elsif N.Tag.all = "shadow" then
-            Mode.Shadow := Boolean'Value (N.Value.all);
-         elsif N.Tag.all = "server" then
-            Mode.Is_Server := True;
-            Mode.Server := Remote.Server_Type'Value (N.Value.all);
-         elsif N.Tag.all = "subdir" then
-            Mode.Subdir := To_Unbounded_String (N.Value.all);
-         elsif N.Tag.all = "substitutions" then
-            --  Count the nodes
-            C := N.Child;
-            while C /= null loop
-               Count := Count + 1;
-               C := C.Next;
-            end loop;
-
-            --  Create the substitutions lists
-            declare
-               Srcs  : Argument_List (1 .. Count);
-               Dests : Argument_List (1 .. Count);
-            begin
-               C := N.Child;
-               Count := 0;
-               while C /= null loop
-                  Count := Count + 1;
-                  Srcs  (Count) := new String'(Get_Attribute (C, "src"));
-                  Dests (Count) := new String'(Get_Attribute (C, "dest"));
-                  C := C.Next;
-               end loop;
-
-               Mode.Subst_Src  := new Argument_List'(Srcs);
-               Mode.Subst_Dest := new Argument_List'(Dests);
-            end;
-
-         elsif N.Tag.all = "extra-args" then
-            --  Count the nodes
-            C := N.Child;
-            while C /= null loop
-               Count := Count + 1;
-               C := C.Next;
-            end loop;
-
-            --  Create the argument list
-            declare
-               Args : Argument_List (1 .. Count);
-            begin
-               C := N.Child;
-               Count := 0;
-               while C /= null loop
-                  Count := Count + 1;
-                  Args (Count) := new String'(C.Value.all);
-                  C := C.Next;
-               end loop;
-
-               Mode.Args := new Argument_List'(Args);
-            end;
-         end if;
-      end Parse_Node;
 
       use type Glib.Gint;
 
    begin
-      --  Create the mode
+      --  Create the mode and add it to the list of supported modes
 
-      --  Safety check
-      if XML.Tag.all /= "builder-mode" then
-         return;
-      end if;
-
-      Mode.Name := To_Unbounded_String (Get_Attribute (XML, "name", ""));
+      Mode := Load_Mode_From_XML (Builder_Module_ID.Registry, XML);
 
       if Mode.Name = "" then
          return;
       end if;
-
-      C := XML.Child;
-
-      while C /= null loop
-         Parse_Node (C);
-         C := C.Next;
-      end loop;
-
-      --  We now have a complete mode. Add it to the list of supported modes
-
-      Insert_Mode (Builder_Module_ID.Registry, Mode.Name, Mode);
 
       --  Add the mode to the combo if it is not a shadow mode
 
@@ -1981,54 +1777,9 @@ package body Builder_Facility_Module is
 
          --  Regenerate the tooltips for the combo box
 
-         declare
-            Tooltip : Unbounded_String;
-            C       : Mode_Map.Cursor;
-            use Mode_Map;
-            Mode    : Mode_Record;
-            Len     : Natural;
-
-         begin
-            Set_Unbounded_String (Tooltip, -"Select the build mode:");
-
-            C := Build_Configurations.First_Mode (Builder_Module_ID.Registry);
-
-            while Has_Element (C) loop
-               Mode := Element (C);
-
-               if not Mode.Shadow then
-                  Append (Tooltip, ASCII.LF
-                          & "    " & Mode.Name  & ": "
-                          & Mode.Description & "  ");
-
-                  if Mode.Args /= null
-                    and then Mode.Args'Length /= 0
-                  then
-                     Append (Tooltip, ASCII.LF & "        ("
-                             & Mode.Args (Mode.Args'First).all);
-                     Len := Mode.Args (Mode.Args'First)'Length;
-
-                     for J in Mode.Args'First + 1 .. Mode.Args'Last loop
-                        if Len > 40 then
-                           Append (Tooltip, ASCII.LF & "         ");
-                           Len := 0;
-                        end if;
-
-                        Append (Tooltip, " " & Mode.Args (J).all);
-                        Len := Len + Mode.Args (J)'Length;
-                     end loop;
-
-                     Append (Tooltip, ")");
-                  end if;
-               end if;
-
-               Next (C);
-            end loop;
-
-            Set_Tooltip_Text
-              (Builder_Module_ID.Modes_Toolbar_Item,
-               To_String (Tooltip));
-         end;
+         Set_Tooltip_Text
+           (Builder_Module_ID.Modes_Toolbar_Item,
+           Get_Builder_Mode_Chooser_Tooltip (Builder_Module_ID.Registry));
       end if;
    end Parse_Mode_Node;
 
@@ -2311,172 +2062,6 @@ package body Builder_Facility_Module is
       end if;
    end Get_Build_Output;
 
-   ---------------------
-   -- Apply_Mode_Args --
-   ---------------------
-
-   function Apply_Mode_Args
-     (Model : String; Mode : String; Cmd_Line : GNAT.OS_Lib.Argument_List)
-      return GNAT.OS_Lib.Argument_List_Access
-   is
-      use Model_List;
-      M         : Mode_Record;
-      Model_Rec : Model_Record;
-      C         : Model_List.Cursor;
-      Res       : Argument_List_Access;
-      Supported : Boolean;
-
-      function Compute_Num_Args
-        (Args : Argument_List; Filter : String) return Natural;
-      --  Compute number of relevant arguments in Args that match Filter
-
-      function Compute_Num_Args
-        (Args : Argument_List; Filter : String) return Natural
-      is
-         Result  : Natural := 0;
-      begin
-         if Filter = "" then
-            return Args'Length;
-         else
-            for J in Args'Range loop
-               if Match (Filter, Args (J).all) then
-                  Result := Result + 1;
-               end if;
-            end loop;
-
-            return Result;
-         end if;
-      end Compute_Num_Args;
-
-   begin
-      Supported := True;
-
-      if Model = "" then
-         Supported := False;
-      end if;
-
-      if Mode = "" then
-         Supported := False;
-      end if;
-
-      if Supported then
-         M := Element_Mode
-           (Builder_Module_ID.Registry, To_Unbounded_String (Mode));
-
-         if (M.Args = null
-             or else M.Args'Length = 0)
-           and then
-             (M.Subst_Src = null
-              or else M.Subst_Src'Length = 0)
-         then
-            Supported := False;
-         end if;
-      end if;
-
-      if Supported and then not M.Models.Is_Empty then
-         C := M.Models.First;
-
-         Supported := False;
-         while Has_Element (C) loop
-            Model_Rec := Element (C);
-
-            if Model_Rec.Model = Model then
-               Supported := True;
-               exit;
-            end if;
-
-            Next (C);
-         end loop;
-      end if;
-
-      --  We finished the check to see if the Mode should be active
-      --  If unsupported, return a copy of the initial command line.
-      if not Supported then
-         Res := new Argument_List (Cmd_Line'Range);
-
-         for J in Cmd_Line'Range loop
-            Res (J) := new String'(Cmd_Line (J).all);
-         end loop;
-
-         return Res;
-      end if;
-
-      --  Now let's apply the Mode. First we create the result with enough
-      --  room.
-      if M.Args /= null then
-         Res := new Argument_List
-           (1 .. Cmd_Line'Length
-                  + Compute_Num_Args
-                      (M.Args.all, To_String (Model_Rec.Filter)));
-      else
-         Res := new Argument_List (1 .. Cmd_Line'Length);
-      end if;
-
-      --  Let's apply substitutions if needed
-      if M.Subst_Src /= null then
-         for J in 1 .. Cmd_Line'Length loop
-            declare
-               Found : Boolean := False;
-            begin
-               for K in M.Subst_Src'Range loop
-                  if Cmd_Line (Cmd_Line'First + J - 1).all =
-                    M.Subst_Src (K).all
-                  then
-                     Res (J) := new String'(M.Subst_Dest (K).all);
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
-
-               if not Found then
-                  Res (J) :=
-                    new String'(Cmd_Line (Cmd_Line'First + J - 1).all);
-               end if;
-            end;
-         end loop;
-
-      else
-         --  Simple copy of the initial command line
-         for J in 1 .. Cmd_Line'Length loop
-            Res (J) :=
-              new String'(Cmd_Line (Cmd_Line'First + J - 1).all);
-         end loop;
-      end if;
-
-      if Length (Model_Rec.Filter) = 0 then
-         --  Append the extra args
-         for J in 1 .. Res'Last - Cmd_Line'Length loop
-            Res (J + Cmd_Line'Length) :=
-              new String'(M.Args (M.Args'First + J - 1).all);
-         end loop;
-      else
-         declare
-            Filter : constant String := To_String (Model_Rec.Filter);
-            Index  : Natural := Cmd_Line'Length + 1;
-         begin
-            for J in M.Args'Range loop
-               if Match (Filter, M.Args (J).all) then
-                  Res (Index) := new String'(M.Args (J).all);
-                  Index := Index + 1;
-               end if;
-            end loop;
-         end;
-      end if;
-
-      return Res;
-   end Apply_Mode_Args;
-
-   ---------------------
-   -- Get_Mode_Subdir --
-   ---------------------
-
-   function Get_Mode_Subdir (Mode : String) return Filesystem_String is
-   begin
-      return +To_String
-        (Element_Mode
-           (Builder_Module_ID.Registry, To_Unbounded_String (Mode)).Subdir);
-   end Get_Mode_Subdir;
-
    -----------------------
    -- Get_List_Of_Modes --
    -----------------------
@@ -2569,26 +2154,6 @@ package body Builder_Facility_Module is
          Replace_Mode (Builder_Module_ID.Registry, U, M);
       end if;
    end Set_Subdir;
-
-   -----------------------
-   -- Is_Server_In_Mode --
-   -----------------------
-
-   function Is_Server_In_Mode (Mode : String) return Boolean  is
-      U : constant Unbounded_String := To_Unbounded_String (Mode);
-   begin
-      return Element_Mode (Builder_Module_ID.Registry, U).Is_Server;
-   end Is_Server_In_Mode;
-
-   ---------------------
-   -- Get_Mode_Server --
-   ---------------------
-
-   function Get_Mode_Server (Mode : String) return Remote.Server_Type is
-      U : constant Unbounded_String := To_Unbounded_String (Mode);
-   begin
-      return Element_Mode (Builder_Module_ID.Registry, U).Server;
-   end Get_Mode_Server;
 
    --------------
    -- Get_Mode --

@@ -19,6 +19,7 @@ with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums;
 with Entities.Queries;
 with Language;
+with GPS_Preferences_Types; use GPS_Preferences_Types;
 
 package GPS.Kernel.Preferences is
 
@@ -99,8 +100,6 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Editor_Desktop_Policy);
    --  The list of possible behaviours when saving editors in the desktop
 
-   type Multi_Language_Builder_Policy is
-     (Gprbuild, Gprmake, Gnatmake, Gprbuild_Always);
    package Multi_Language_Builder_Policy_Prefs is new
      Default_Preferences.Enums.Generics (Multi_Language_Builder_Policy);
    --  The List of possible multi-language builders

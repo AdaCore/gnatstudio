@@ -19,6 +19,7 @@
 --  perform any actual gtk+ operation, so that it can be shared among multiple
 --  GUI backends as much as possible.
 
+with Ada.Containers;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
@@ -27,8 +28,9 @@ with GNAT.Strings;      use GNAT.Strings;
 
 package Switches_Chooser is
 
-   type Switches_Editor_Config_Record (<>) is private;
-   type Switches_Editor_Config is access all Switches_Editor_Config_Record;
+   type Switches_Editor_Config_Record (<>) is tagged private;
+   type Switches_Editor_Config is
+      access all Switches_Editor_Config_Record'class;
 
    type Popup_Index is private;
    Main_Window : constant Popup_Index;
@@ -158,6 +160,15 @@ package Switches_Chooser is
       Value : Ada.Strings.Unbounded.Unbounded_String;
    end record;
    type Combo_Switch_Array is array (Positive range <>) of Combo_Switch;
+
+   package Combo_Switch_Vectors is new
+     Ada.Containers.Vectors (Natural, Combo_Switch);
+
+   function Get_Label (Value : Combo_Switch) return String;
+   --  return the combo value text to display to the user
+
+   function Get_Value (Value : Combo_Switch) return String;
+   --  return the combo value text to use in the commandline
 
    procedure Add_Combo
      (Config     : Switches_Editor_Config;
@@ -367,18 +378,176 @@ package Switches_Chooser is
       end record;
    end Switches_Editors;
 
+   type Switch_Description (<>) is tagged private;
+
+   function Get_Switches_Element
+     (Switches : Switches_Editor_Config;
+      Index : Natural)
+      return Switch_Description;
+   --  Switches_Editor_Config object Switches field Element at Index getter
+
+   function Get_Switch
+     (Switch : Switch_Description) return String;
+   --  Switch_Description object Switch field getter
+
+   function Get_Label
+     (Switch : Switch_Description) return String;
+   --  Switch_Description object Label field getter
+
+   function Get_Tip
+     (Switch : Switch_Description) return String;
+   --  Switch_Description object Tip field getter
+
+   function Get_Section
+     (Switch : Switch_Description) return String;
+   --  Switch_Description object Section field getter
+
+   function Is_Add_First
+     (Switch : Switch_Description) return Boolean;
+   --  Switch_Description object Add_First field getter
+
+   function Get_Line
+     (Switch : Switch_Description) return Positive;
+   --  Switch_Description object Line field getter
+
+   function Get_Column
+     (Switch : Switch_Description) return Positive;
+   --  Switch_Description object Column field getter
+
+   function Get_Separator
+     (Switch : Switch_Description) return Character;
+   --  Switch_Description object Separator field getter
+
+   function Get_Type
+     (Switch : Switch_Description) return Switch_Type;
+   --  Switch_Description object Switches_Element field getter
+
+   function Get_Switch_Unset
+     (Switch : Switch_Description) return String;
+   --  Switch_Description object Switch_Unset field getter (Type=Switch_Check)
+
+   function Get_Default_State
+     (Switch : Switch_Description) return Boolean;
+   --  Switch_Description object Default_State field getter (Type=Switch_Check)
+
+   function Get_Initial_State
+     (Switch : Switch_Description) return Boolean;
+   --  Switch_Description object Initial_State field getter (Type=Switch_Check)
+
+   function Is_Field_As_Directory
+     (Switch : Switch_Description) return Boolean;
+   --  Switch_Description object Field_As_Directory field getter (Switch_Field)
+
+   function Is_Field_As_File
+     (Switch : Switch_Description) return Boolean;
+   --  Switch_Description object Field_As_File field getter (Switch_Field)
+
+   function Get_Spin_Min
+     (Switch : Switch_Description) return Integer;
+   --  Switch_Description object Spin_Min field getter
+
+   function Get_Spin_Max
+     (Switch : Switch_Description) return Integer;
+   --  Switch_Description object Spin_Max field getter
+
+   function Get_Spin_Default
+     (Switch : Switch_Description) return Integer;
+   --  Switch_Description object Spin_Default field getter
+
+   function Get_Combo_No_Switch
+     (Switch : Switch_Description) return String;
+   --  Switch_Description object Combo_No_Switch field getter
+
+   function Get_Combo_No_Digit
+     (Switch : Switch_Description) return String;
+   --  Switch_Description object Combo_No_Digit field getter
+
+   function Get_Combo_Entries
+     (Switch : Switch_Description) return Combo_Switch_Vectors.Vector;
+   --  Switch_Description object Combo_Entries field getter
+
+   type Frame_Description is tagged private;
+
+   function Get_Frames_Element
+     (Switches : Switches_Editor_Config;
+      Index : Natural)
+      return Frame_Description;
+   --  Switches_Editor_Config object Frames field Element at index getter
+
+   function Get_Title
+     (Frame : Frame_Description) return String;
+   --  Frame_Desription object Title field getter
+
+   function Get_Line
+     (Frame : Frame_Description) return Positive;
+   --  Frame_Desription object Line field getter
+
+   function Get_Column
+     (Frame : Frame_Description) return Positive;
+   --  Frame_Desription object Column field getter
+
+   function Get_Lines
+     (Switches : Switches_Editor_Config)
+      return Positive;
+   --  Switches_Editor_Config object Lines field getter
+
+   function Get_Columns
+     (Switches : Switches_Editor_Config)
+      return Positive;
+   --  Switches_Editor_Config object Columns field getter
+
+   function Get_Config
+     (Switches : Switches_Editor_Config)
+      return Command_Line_Configuration;
+   --  Switches_Editor_Config object Config field getter
+
+   function Is_Show_Command_Line
+     (Switches : Switches_Editor_Config)
+      return Boolean;
+   --  Switches_Editor_Config object Show_Command_Line field getter
+
+   function Get_Default_Separator
+     (Switches : Switches_Editor_Config)
+      return String;
+   --  Switches_Editor_Config object Default_Separator field getter
+
+   function Get_Sections
+     (Switches : Switches_Editor_Config)
+      return String;
+   --  Switches_Editor_Config object Sections field getter
+
+   function Is_Scrolled_Window
+     (Switches : Switches_Editor_Config)
+      return Boolean;
+   --  Switches_Editor_Config object Scrolled_Window field getter
+
+   function Get_Switch_Char
+     (Switches : Switches_Editor_Config)
+      return Character;
+   --  Switches_Editor_Config object Switch_Char field getter
+
+   function Get_Frames_Length
+     (Switches : Switches_Editor_Config)
+      return Ada.Containers.Count_Type;
+   --  Switches_Editor_Config object Frames vector length getter
+
+   function Get_Switches_Length
+     (Switches : Switches_Editor_Config)
+     return Ada.Containers.Count_Type;
+   --  Switches_Editor_Config object Switches vector length getter
+
+   function Command_Line_Editor_Tooltip_Text return String;
+   --  builder target command line field editor tool tip text
+
 private
    type Radio_Switch is new Integer;
    type Popup_Index is new Integer;
    Main_Window : constant Popup_Index := 0;
 
-   package Combo_Switch_Vectors is new
-     Ada.Containers.Vectors (Natural, Combo_Switch);
-
    type Default_Value_Dependency_Record;
    type Default_Value_Dependency is access all Default_Value_Dependency_Record;
 
-   type Switch_Description (Typ : Switch_Type) is record
+   type Switch_Description (Typ : Switch_Type) is tagged record
       Switch    : Ada.Strings.Unbounded.Unbounded_String;
       Label     : Ada.Strings.Unbounded.Unbounded_String;
       Tip       : Ada.Strings.Unbounded.Unbounded_String;
@@ -423,7 +592,7 @@ private
       Next          : Default_Value_Dependency;
    end record;
 
-   type Frame_Description is record
+   type Frame_Description is tagged record
       Title     : Ada.Strings.Unbounded.Unbounded_String;
       Line      : Positive;
       Column    : Positive;
@@ -447,7 +616,7 @@ private
    --  the dependencies can only be fully setup once all pages have been
    --  created.
 
-   type Switches_Editor_Config_Record is record
+   type Switches_Editor_Config_Record is tagged record
       Lines             : Positive;
       Columns           : Positive;
       Config            : Command_Line_Configuration;

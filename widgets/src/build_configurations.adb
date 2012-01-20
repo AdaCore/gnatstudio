@@ -18,11 +18,14 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Switches_Parser;
 with String_Utils;    use String_Utils;
+with Traces;          use Traces;
 
 package body Build_Configurations is
 
    use GNAT.OS_Lib;
    use Target_List;
+
+   Me          : constant Debug_Handle := Create ("Build_Configurations");
 
    ------------------------
    -- Local declarations --
@@ -48,6 +51,13 @@ package body Build_Configurations is
    --                 ...
    --             <arg>ARGN</arg>
    --          </command-line>
+
+   function Create_Build_Config_Registry
+     (Logger : Logger_Type) return Build_Config_Registry_Access;
+   --  Build config registry creator
+
+   procedure Log (M : String; Mode : Message_Mode);
+   --  Default logger for build config registry
 
    function Copy (T : Target_Access) return Target_Access;
    --  Allocate and return a deep copy of T
@@ -163,6 +173,101 @@ package body Build_Configurations is
       --  ??? Provide implementation
       return Msg;
    end "-";
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Target_Model : Target_Model_Access) return String is
+   begin
+      return To_String (Target_Model.Name);
+   end Get_Name;
+
+   ------------------
+   -- Get_Category --
+   ------------------
+
+   function Get_Category (Target_Model : Target_Model_Access) return String is
+   begin
+      return To_String (Target_Model.Category);
+   end Get_Category;
+
+   ---------------------
+   -- Get_Description --
+   ---------------------
+
+   function Get_Description (Target_Model : Target_Model_Access)
+      return String is
+   begin
+      return To_String (Target_Model.Description);
+   end Get_Description;
+
+   ------------
+   -- Is_Run --
+   ------------
+
+   function Is_Run (Target_Model : Target_Model_Access) return Boolean is
+   begin
+      return Target_Model.Is_Run;
+   end Is_Run;
+
+   --------------
+   -- Get_Icon --
+   --------------
+
+   function Get_Icon (Target_Model : Target_Model_Access) return String is
+   begin
+      return To_String (Target_Model.Icon);
+   end Get_Icon;
+
+   ------------------
+   -- Get_Switches --
+   ------------------
+
+   function Get_Switches (Target_Model : Target_Model_Access)
+      return Switches_Editor_Config is
+   begin
+      return Target_Model.Switches;
+   end Get_Switches;
+
+   ------------------------------
+   -- Get_Default_Command_Line --
+   ------------------------------
+
+   function Get_Default_Command_Line (Target_Model : Target_Model_Access)
+     return GNAT.OS_Lib.Argument_List_Access is
+   begin
+      return Target_Model.Default_Command_Line;
+   end Get_Default_Command_Line;
+
+   -----------------
+   -- First_Model --
+   -----------------
+
+   function First_Model
+     (Registry : Build_Config_Registry_Access) return Model_Map.Cursor is
+   begin
+      return Registry.Models.First;
+   end First_Model;
+
+   ----------------
+   -- Get_Server --
+   ----------------
+
+   function Get_Server
+     (Target_Model : Target_Model_Access) return Server_Type is
+   begin
+      return Target_Model.Server;
+   end Get_Server;
+
+   ----------------
+   -- Uses_Shell --
+   ----------------
+
+   function Uses_Shell (Target_Model : Target_Model_Access) return Boolean is
+   begin
+      return Target_Model.Uses_Shell;
+   end Uses_Shell;
 
    ---------
    -- Log --
@@ -475,6 +580,58 @@ package body Build_Configurations is
       Dest.Properties.Read_Only := False;
    end Duplicate_Target;
 
+   --------------------------------------
+   -- Get_Builder_Mode_Chooser_Tooltip --
+   --------------------------------------
+
+   function Get_Builder_Mode_Chooser_Tooltip
+     (Registry : Build_Config_Registry_Access) return String is
+      Tooltip : Unbounded_String;
+      C       : Mode_Map.Cursor;
+      use Mode_Map;
+      Mode    : Mode_Record;
+      Len     : Natural;
+   begin
+      Set_Unbounded_String (Tooltip, -"Select the build mode:");
+
+      C := Build_Configurations.First_Mode (Registry);
+
+      while Has_Element (C) loop
+         Mode := Element (C);
+
+         if not Mode.Shadow then
+            Append (Tooltip, ASCII.LF
+                    & "    " & Mode.Name  & ": "
+                    & Mode.Description & "  ");
+
+            if Mode.Args /= null
+              and then Mode.Args'Length /= 0
+            then
+               Append (Tooltip, ASCII.LF & "        ("
+                       & Mode.Args (Mode.Args'First).all);
+               Len := Mode.Args (Mode.Args'First)'Length;
+
+               for J in Mode.Args'First + 1 .. Mode.Args'Last loop
+                  if Len > 40 then
+                     Append (Tooltip, ASCII.LF & "         ");
+                     Len := 0;
+                  end if;
+
+                  Append (Tooltip, " " & Mode.Args (J).all);
+                  Len := Len + Mode.Args (J)'Length;
+               end loop;
+
+               Append (Tooltip, ")");
+            end if;
+         end if;
+
+         Next (C);
+      end loop;
+
+      return To_String (Tooltip);
+
+   end Get_Builder_Mode_Chooser_Tooltip;
+
    ------------------
    -- Element_Mode --
    ------------------
@@ -545,6 +702,24 @@ package body Build_Configurations is
    begin
       Registry.Modes.Replace (Name, Mode);
    end Replace_Mode;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Mode : Mode_Record_Access) return String is
+   begin
+      return To_String (Mode.Name);
+   end Get_Name;
+
+   ---------------------
+   -- Get_Description --
+   ---------------------
+
+   function Get_Description (Mode : Mode_Record_Access) return String is
+   begin
+      return To_String (Mode.Description);
+   end Get_Description;
 
    ----------------------
    -- Set_Command_Line --
@@ -708,11 +883,11 @@ package body Build_Configurations is
       GNAT.OS_Lib.Free (Target.Command_Line);
    end Free;
 
-   ------------
-   -- Create --
-   ------------
+   ----------------------------------
+   -- Create_Build_Config_Registry --
+   ----------------------------------
 
-   function Create
+   function Create_Build_Config_Registry
      (Logger : Logger_Type) return Build_Config_Registry_Access
    is
       Result : Build_Config_Registry_Access;
@@ -721,7 +896,66 @@ package body Build_Configurations is
       Result.Logger := Logger;
 
       return Result;
+   end Create_Build_Config_Registry;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Logger : Logger_Type) return Build_Config_Registry_Access
+   is
+   begin
+      return Create_Build_Config_Registry (Logger);
    end Create;
+
+   ---------
+   -- Log --
+   ---------
+
+   procedure Log (M : String; Mode : Message_Mode) is
+   begin
+      case Mode is
+         when Info =>
+            Trace (Me, "Info-" & M);
+         when Error =>
+            Trace (Me, "Error-" & M);
+         when Trace =>
+            Trace (Me, "Trace-" & M);
+      end case;
+   end Log;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create return Build_Config_Registry_Access
+   is
+   begin
+      return Create_Build_Config_Registry (Log'Access);
+   end Create;
+
+   -----------------------
+   -- Get_Model_By_Name --
+   -----------------------
+
+   function Get_Model_By_Name
+     (Registry : Build_Config_Registry_Access;
+      Model_Name : String) return Target_Model_Access is
+   begin
+      --  Lookup the model
+
+      if not Registry.Models.Contains (To_Unbounded_String (Model_Name)) then
+         Log
+           (Registry,
+            ": cannot get target: no model registered with name "
+            & Model_Name);
+         return null;
+      end if;
+
+      return Registry.Models.Element (To_Unbounded_String (Model_Name));
+
+   end Get_Model_By_Name;
 
    -------------------------
    -- Command_Line_To_XML --
@@ -1063,7 +1297,8 @@ package body Build_Configurations is
    -----------------------------
 
    function Save_All_Targets_To_XML
-     (Registry : Build_Config_Registry_Access) return Node_Ptr
+     (Registry : Build_Config_Registry_Access;
+      Save_Even_If_Equals_To_Original : Boolean := False) return Node_Ptr
    is
       N                  : Node_Ptr;
       Child              : Node_Ptr;
@@ -1095,7 +1330,7 @@ package body Build_Configurations is
             Next (C2);
          end loop;
 
-         if not Equals_To_Original then
+         if not Equals_To_Original or Save_Even_If_Equals_To_Original then
             if Child = null then
                N.Child := Save_Target_To_XML (Registry, Element (C));
                Child := N.Child;
@@ -1140,6 +1375,237 @@ package body Build_Configurations is
       end loop;
    end Load_All_Targets_From_XML;
 
+   --------------------------------
+   -- Load_All_Targets_From_File --
+   --------------------------------
+
+   procedure Load_All_Targets_From_File (
+      Registry : Build_Config_Registry_Access;
+      Targets_File : GNATCOLL.VFS.Virtual_File)
+   is
+      N : Node_Ptr;
+      C : Node_Ptr;
+      T : Target_Access;
+      pragma Unreferenced (T);
+
+   begin
+      N := Parse (Targets_File);
+
+      if N = null then
+         Trace (Me, "Error when loading targets file");
+      else
+         C := N.Child;
+
+         while C /= null loop
+            if C.Tag.all /= "target" then
+               Trace (Me, "Error in targets file");
+            else
+               T := Load_Target_From_XML (Registry, C, True);
+            end if;
+            C := C.Next;
+         end loop;
+      end if;
+
+      Free (N);
+
+   end Load_All_Targets_From_File;
+
+   -----------------------
+   -- Load_Mode_From_XML --
+   -----------------------
+
+   function Load_Mode_From_XML
+      (Registry  : Build_Config_Registry_Access;
+       XML : Node_Ptr) return Mode_Record is
+      C                    : Node_Ptr;
+      Mode                 : Mode_Record;
+
+      procedure Parse_Node (N : Node_Ptr);
+      --  Parse children of <builder-mode> nodes
+
+      ----------------
+      -- Parse_Node --
+      ----------------
+
+      procedure Parse_Node (N : Node_Ptr) is
+         C     : Node_Ptr;
+         Count : Natural := 0;
+      begin
+         if N.Tag.all = "description" then
+            Mode.Description := To_Unbounded_String (N.Value.all);
+         elsif N.Tag.all = "supported-model" then
+            Mode.Models.Append
+              ((To_Unbounded_String (N.Value.all),
+                To_Unbounded_String (Get_Attribute (N, "filter"))));
+         elsif N.Tag.all = "shadow" then
+            Mode.Shadow := Boolean'Value (N.Value.all);
+         elsif N.Tag.all = "server" then
+            Mode.Is_Server := True;
+            Mode.Server := Remote.Server_Type'Value (N.Value.all);
+         elsif N.Tag.all = "subdir" then
+            Mode.Subdir := To_Unbounded_String (N.Value.all);
+         elsif N.Tag.all = "substitutions" then
+            --  Count the nodes
+            C := N.Child;
+            while C /= null loop
+               Count := Count + 1;
+               C := C.Next;
+            end loop;
+
+            --  Create the substitutions lists
+            declare
+               Srcs  : Argument_List (1 .. Count);
+               Dests : Argument_List (1 .. Count);
+            begin
+               C := N.Child;
+               Count := 0;
+               while C /= null loop
+                  Count := Count + 1;
+                  Srcs  (Count) := new String'(Get_Attribute (C, "src"));
+                  Dests (Count) := new String'(Get_Attribute (C, "dest"));
+                  C := C.Next;
+               end loop;
+
+               Mode.Subst_Src  := new Argument_List'(Srcs);
+               Mode.Subst_Dest := new Argument_List'(Dests);
+            end;
+
+         elsif N.Tag.all = "extra-args" then
+            --  Count the nodes
+            C := N.Child;
+            while C /= null loop
+               Count := Count + 1;
+               C := C.Next;
+            end loop;
+
+            --  Create the argument list
+            declare
+               Args : Argument_List (1 .. Count);
+            begin
+               C := N.Child;
+               Count := 0;
+               while C /= null loop
+                  Count := Count + 1;
+                  Args (Count) := new String'(C.Value.all);
+                  C := C.Next;
+               end loop;
+
+               Mode.Args := new Argument_List'(Args);
+            end;
+         end if;
+      end Parse_Node;
+
+   begin
+
+      Mode.Name := To_Unbounded_String ("");
+
+      --  Safety check
+      if XML.Tag.all /= "builder-mode" then
+         return Mode;
+      end if;
+
+      Mode.Name := To_Unbounded_String (Get_Attribute (XML, "name", ""));
+
+      if Mode.Name = "" then
+         return Mode;
+      end if;
+
+      C := XML.Child;
+
+      while C /= null loop
+         Parse_Node (C);
+         C := C.Next;
+      end loop;
+
+      Insert_Mode (Registry, Mode.Name, Mode);
+
+      return Mode;
+
+   end Load_Mode_From_XML;
+
+   ------------------------------
+   -- Load_All_Modes_From_File --
+   ------------------------------
+
+   procedure Load_All_Modes_From_File (
+      Registry : Build_Config_Registry_Access;
+      Modes_File : GNATCOLL.VFS.Virtual_File)
+   is
+      N : Node_Ptr;
+      C : Node_Ptr;
+      M : Mode_Record;
+      pragma Unreferenced (M);
+
+   begin
+      N := Parse (Modes_File);
+
+      if N = null then
+         Trace (Me, "Error when loading modes file");
+      else
+         C := N.Child;
+
+         while C /= null loop
+            M := Load_Mode_From_XML (Registry, C);
+            C := C.Next;
+         end loop;
+      end if;
+
+      Free (N);
+
+   end Load_All_Modes_From_File;
+
+   ------------------------------------------
+   -- Load_Build_Config_Registry_From_File --
+   ------------------------------------------
+
+   procedure Load_Build_Config_Registry_From_File (
+      Registry : Build_Config_Registry_Access;
+      File : GNATCOLL.VFS.Virtual_File)
+   is
+      N : Node_Ptr;
+      C : Node_Ptr;
+      M : Mode_Record;
+      pragma Unreferenced (M);
+      T : Target_Access;
+      pragma Unreferenced (T);
+
+   begin
+      N := Parse (File);
+
+      if N = null then
+         Trace (Me, "Error when loading modes-models-targets file");
+      else
+         C := N.Child;
+
+         --  add modes & models
+         --  creating target before model is not handled by
+         --  Load_Target_From_XML, so create target-model objects in the first
+         --  loop and then target objects.
+         while C /= null loop
+            if C.Tag.all = "builder-mode" then
+               M := Load_Mode_From_XML (Registry, C);
+            elsif C.Tag.all = "target-model" then
+               Create_Model_From_XML (Registry, C);
+            end if;
+            C := C.Next;
+         end loop;
+
+         C := N.Child;
+
+         --  add targets
+         while C /= null loop
+            if C.Tag.all = "target" then
+               T := Load_Target_From_XML (Registry, C, True);
+            end if;
+            C := C.Next;
+         end loop;
+
+      end if;
+
+      Free (N);
+
+   end Load_Build_Config_Registry_From_File;
+
    --------------------
    -- Get_Properties --
    --------------------
@@ -1148,6 +1614,27 @@ package body Build_Configurations is
    begin
       return Target.Properties;
    end Get_Properties;
+
+   ---------------------
+   -- Get_Target_Type --
+   ---------------------
+
+   function Get_Target_Type (Target : Target_Access) return String is
+   begin
+      return To_String (Get_Properties (Target).Target_Type);
+   end Get_Target_Type;
+
+   ---------------------
+   -- Set_Target_Type --
+   ---------------------
+
+   procedure Set_Target_Type
+     (Target : Target_Access;
+      New_Target_Type : String) is
+   begin
+      Target.Properties.Target_Type :=
+         To_Unbounded_String (New_Target_Type);
+   end Set_Target_Type;
 
    ----------------------
    -- Get_First_Target --
@@ -1253,6 +1740,15 @@ package body Build_Configurations is
       end if;
    end Get_Icon;
 
+   --------------
+   -- Set_Icon --
+   --------------
+
+   procedure Set_Icon (Target : Target_Access; Icon : String) is
+   begin
+      Target.Properties.Icon := To_Unbounded_String (Icon);
+   end Set_Icon;
+
    -------------------------
    -- Is_Registered_Model --
    -------------------------
@@ -1313,6 +1809,24 @@ package body Build_Configurations is
       return To_String (Target.Model.Name);
    end Get_Model;
 
+   ---------------
+   -- Set_Model --
+   ---------------
+
+   procedure Set_Model
+     (Registry : Build_Config_Registry_Access;
+      Target : Target_Access;
+      Model : Target_Model_Access) is
+   begin
+      Target.Model := Model;
+      if Model.Default_Command_Line = null then
+         Set_Command_Line (Registry, Target, (1 .. 0 => null));
+      else
+         Set_Command_Line
+              (Registry, Target, Model.Default_Command_Line.all);
+      end if;
+   end Set_Model;
+
    ----------------
    -- Uses_Shell --
    ----------------
@@ -1331,13 +1845,61 @@ package body Build_Configurations is
       return Target.Model.Is_Run;
    end Is_Run;
 
+   ----------------
+   -- In_Toolbar --
+   ----------------
+
+   procedure In_Toolbar (Target : Target_Access; Value : Boolean) is
+   begin
+      Target.Properties.In_Toolbar := Value;
+   end In_Toolbar;
+
+   ----------------
+   -- In_Menubar --
+   ----------------
+
+   procedure In_Menu (Target : Target_Access; Value : Boolean) is
+   begin
+      Target.Properties.In_Menu := Value;
+   end In_Menu;
+
+   -------------------------------------
+   -- In_Contextual_Menu_For_Projects --
+   -------------------------------------
+
+   procedure In_Contextual_Menu_For_Projects
+     (Target : Target_Access; Value : Boolean) is
+   begin
+      Target.Properties.In_Contextual_Menu_For_Projects := Value;
+   end In_Contextual_Menu_For_Projects;
+
+   ----------------------------------
+   -- In_Contextual_Menu_For_Files --
+   ----------------------------------
+
+   procedure In_Contextual_Menu_For_Files
+     (Target : Target_Access; Value : Boolean) is
+   begin
+      Target.Properties.In_Contextual_Menu_For_Files := Value;
+   end In_Contextual_Menu_For_Files;
+
+   ---------------------
+   -- Set_Launch_Mode --
+   ---------------------
+
+   procedure Set_Launch_Mode
+   (Target : Target_Access; Launch_Mode : Launch_Mode_Type) is
+   begin
+      Target.Properties.Launch_Mode := Launch_Mode;
+   end Set_Launch_Mode;
+
    ----------
    -- Free --
    ----------
 
    procedure Free (Target : in out Target_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Target_Type, Target_Access);
+        (Target_Type'Class, Target_Access);
    begin
       if Target /= null then
          --  Target.Model;   --  No need to free, references in the Registry
@@ -1371,7 +1933,7 @@ package body Build_Configurations is
 
    procedure Free (Models : in out Model_Map.Map) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Target_Model_Type, Target_Model_Access);
+        (Target_Model_Type'Class, Target_Model_Access);
       use Model_Map;
 
       C : Model_Map.Cursor := First (Models);
@@ -1416,7 +1978,7 @@ package body Build_Configurations is
 
    procedure Free (Registry : in out Build_Config_Registry_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Build_Config_Registry, Build_Config_Registry_Access);
+        (Build_Config_Registry'Class, Build_Config_Registry_Access);
    begin
       if Registry /= null then
          Free (Registry.Models);

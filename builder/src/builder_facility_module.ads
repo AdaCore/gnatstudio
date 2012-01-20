@@ -104,7 +104,6 @@
 with GNAT.OS_Lib;
 with GPS.Kernel;
 with Build_Configurations;
-with Remote;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
@@ -133,20 +132,6 @@ package Builder_Facility_Module is
    --  Shadow indicates whether to get the normal or the shadow output
    --  If Target is null, get all output in the category.
 
-   function Get_Mains
-     (Kernel : GPS.Kernel.Kernel_Handle) return File_Array;
-   --  Return the list of mains corresponding to the currently loaded project
-   --  tree.
-
-   function Get_Mode_Subdir (Mode : String) return Filesystem_String;
-   --  Return the special directory ("subdir") for Mode
-
-   function Apply_Mode_Args
-     (Model : String; Mode : String; Cmd_Line : GNAT.OS_Lib.Argument_List)
-      return GNAT.OS_Lib.Argument_List_Access;
-   --  Applies the mode arguments to the command_line passed as argument.
-   --  The returned argument_list should be freed by the caller
-
    function Get_List_Of_Modes
      (Model : String) return GNAT.OS_Lib.Argument_List;
    --  Return the list of modes in which to build a target. This means
@@ -159,12 +144,6 @@ package Builder_Facility_Module is
 
    procedure Set_Subdir (Mode : String; Subdir : String);
    --  Modifies the Mode's subdir value.
-
-   function Is_Server_In_Mode (Mode : String) return Boolean;
-   --  Return if a server is defined for the mode.
-
-   function Get_Mode_Server (Mode : String) return Remote.Server_Type;
-   --  Return the server defined for the mode.
 
    function Registry return Build_Configurations.Build_Config_Registry_Access;
    --  Return the registry stored in the module
