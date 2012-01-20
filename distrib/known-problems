@@ -52,3 +52,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Do not use autofix on such lines or replace manually the removed
               line by an empty line.
 
+- L113-025: GPS: cursor at wrong position after alias expansion
+  Problem:    When alias text contains multibyte UTF-8 characters cursor is
+              placed at wrong position after expansion.
+  Workaround: Do not use multibyte UTF-8 characters in text of an alias.
