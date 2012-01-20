@@ -19,7 +19,8 @@ default:
 codepeer:
 	$(MAKE) -C gps scil
 	codepeer -all -lib gps.library -quiet -background -baseline \
-	  -no-race-conditions -method-timeout 20
+	  -no-race-conditions -method-timeout 20 -dbg-partition-limit 200 \
+	  -jobs 8
 
 clean:
 	$(MAKE) -C gps $@
