@@ -13,6 +13,8 @@ bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
 examplesdir     = $(prefix)/share/examples/gps
 
+PROCS=8
+
 default:
 	$(MAKE) -C gps $@
 
@@ -20,7 +22,7 @@ codepeer:
 	$(MAKE) -C gps scil
 	codepeer -all -lib gps.library -quiet -background -baseline \
 	  -no-race-conditions -method-timeout 20 -dbg-partition-limit 200 \
-	  -jobs 8
+	  -jobs $(PROCS)
 
 clean:
 	$(MAKE) -C gps $@
