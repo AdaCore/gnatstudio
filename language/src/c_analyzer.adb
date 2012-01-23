@@ -891,6 +891,10 @@ package body C_Analyzer is
          --  Increment Value by a TAB character (up to 8 chars).
          pragma Inline (Add_Tab);
 
+         procedure Next;
+         --  Move Index and Char_In_line to the next character
+         pragma Inline (Next);
+
          -------------
          -- Add_Tab --
          -------------
@@ -899,6 +903,17 @@ package body C_Analyzer is
          begin
             Value := 8 * (Value / 8 + 1);
          end Add_Tab;
+
+         ----------
+         -- Next --
+         ----------
+
+         procedure Next is
+            P : constant Natural := Index;
+         begin
+            Index := UTF8_Next_Char (Buffer, Index);
+            Char_In_Line := Char_In_Line + Index - P;
+         end Next;
 
       begin
          First := Index;
@@ -913,8 +928,7 @@ package body C_Analyzer is
             while Index <= Buffer'Last
               and then Buffer (Index + 1) /= ASCII.LF
             loop
-               Index := UTF8_Next_Char (Buffer, Index);
-               Char_In_Line := Char_In_Line + 1;
+               Next;
             end loop;
 
             if Indent_Comments then
@@ -993,8 +1007,7 @@ package body C_Analyzer is
                         exit;
                   end case;
 
-                  Char_In_Line := Char_In_Line + 1;
-                  Index := Index + 1;
+                  Next;
                end loop;
 
                Ref_Column := Column;
@@ -1006,8 +1019,7 @@ package body C_Analyzer is
                   --  a '*' doesn't see the one after the opening of the
                   --  comment
 
-                  Index := Index + 1;
-                  Char_In_Line := Char_In_Line + 1;
+                  Next;
                   Column := Column + 1;
                end if;
             end if;
@@ -1053,8 +1065,7 @@ package body C_Analyzer is
                end if;
 
                Column := Column + 1;
-               Index := UTF8_Next_Char (Buffer, Index);
-               Char_In_Line := Char_In_Line + 1;
+               Next;
             end loop;
 
             if Callback = null then
