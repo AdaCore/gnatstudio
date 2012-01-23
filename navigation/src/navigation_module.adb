@@ -109,6 +109,9 @@ package body Navigation_Module is
    overriding function Similar
      (Left  : access Shell_Marker_Record;
       Right : access Location_Marker_Record'Class) return Boolean;
+   overriding function Distance
+     (Left  : access Shell_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Integer;
    --  See inherited documentation
 
    -----------------------
@@ -734,6 +737,19 @@ package body Navigation_Module is
    begin
       return False;
    end Similar;
+
+   --------------
+   -- Distance --
+   --------------
+
+   overriding function Distance
+     (Left  : access Shell_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Integer
+   is
+      pragma Unreferenced (Left, Right);
+   begin
+      return Integer'Last;
+   end Distance;
 
    -------------------------
    -- Create_Shell_Marker --

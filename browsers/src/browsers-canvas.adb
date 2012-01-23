@@ -257,6 +257,9 @@ package body Browsers.Canvas is
    overriding function Similar
      (Left  : access Browser_Marker_Record;
       Right : access Location_Marker_Record'Class) return Boolean;
+   overriding function Distance
+     (Left  : access Browser_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Integer;
    --  See inherited documentation
 
    function Create_Browser_Marker
@@ -2676,6 +2679,19 @@ package body Browsers.Canvas is
    begin
       return False;
    end Similar;
+
+   --------------
+   -- Distance --
+   --------------
+
+   overriding function Distance
+     (Left  : access Browser_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Integer
+   is
+      pragma Unreferenced (Left, Right);
+   begin
+      return Integer'Last;
+   end Distance;
 
    ---------------------------
    -- Create_Browser_Marker --

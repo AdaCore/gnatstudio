@@ -707,6 +707,29 @@ package body Src_Editor_Module.Markers is
       end if;
    end Similar;
 
+   --------------
+   -- Distance --
+   --------------
+
+   overriding function Distance
+     (Left  : access File_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Integer
+   is
+   begin
+      if Right.all in File_Marker_Record'Class then
+         declare
+            Right_Record : File_Marker_Record'Class renames
+              File_Marker_Record'Class (Right.all);
+         begin
+            if Left.File = Right_Record.File then
+               return Integer (Right_Record.Line - Left.Line);
+            end if;
+         end;
+      end if;
+
+      return Integer'Last;
+   end Distance;
+
    ----------------
    -- Get_Kernel --
    ----------------

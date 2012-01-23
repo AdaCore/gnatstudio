@@ -216,6 +216,14 @@ package body Bookmark_Views is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Rename the selected bookmark
 
+   type Next_Bookmark_Command (Backward : Boolean) is
+     new Interactive_Command with null record;
+
+   overriding function Execute
+     (Command : access Next_Bookmark_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Go to next bookmark in current file
+
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Called when the bookmark view is destroyed
 
@@ -442,6 +450,50 @@ package body Bookmark_Views is
          end if;
       end if;
       return Failure;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Next_Bookmark_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Direction : constant array (Boolean) of Integer :=
+        (False => 1, True => -1);
+
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Marker  : Location_Marker := Create_Marker (Kernel);
+      List    : Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
+      Nearest : Location_Marker;
+      Min     : Integer := Integer'Last;
+      Sign    : constant Integer := Direction (Command.Backward);
+   begin
+      while List /= Null_Node loop
+         declare
+            Next     : constant Location_Marker := Data (List).Marker;
+            Distance : constant Integer := Sign * Marker.Distance (Next);
+         begin
+            if Distance > 0 and abs Distance /= Integer'Last then
+               if Min > Distance then
+                  Min := Distance;
+                  Nearest := Next;
+               end if;
+            end if;
+         end;
+
+         List := Next (List);
+      end loop;
+
+      Destroy (Marker.all);
+      Unchecked_Free (Marker);
+
+      if Min /= Integer'Last and then Nearest.Go_To (Kernel) then
+         return Success;
+      else
+         return Failure;
+      end if;
    end Execute;
 
    ----------
@@ -1052,6 +1104,22 @@ package body Bookmark_Views is
       Register_Action
         (Kernel, "Bookmark Create", Command,
          -("Create a bookmark at the current location"));
+
+      Command := new Next_Bookmark_Command (Backward => False);
+      Register_Action
+        (Kernel      => Kernel,
+         Name        => "Goto Next Bookmark",
+         Command     => Command,
+         Description => -("Go to next bookmark in current file"),
+         Filter      => Src_Action_Context);
+
+      Command := new Next_Bookmark_Command (Backward => True);
+      Register_Action
+        (Kernel      => Kernel,
+         Name        => "Goto Previous Bookmark",
+         Command     => Command,
+         Description => -("Go to previous bookmark in current file"),
+         Filter      => Src_Action_Context);
 
       Register_Command
         (Kernel, Constructor_Method, 0, 0, Command_Handler'Access,

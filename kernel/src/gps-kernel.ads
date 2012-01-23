@@ -407,6 +407,13 @@ package GPS.Kernel is
    --  that GPS should not add a new marker in history for two locations that
    --  are the same.
 
+   function Distance
+     (Left  : access Location_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Integer is abstract;
+   --  Return a value represented distance between two locations.
+   --  Return Integer'Last if locations are not comparable, for example marks
+   --  are in different files.
+
    --------------
    -- Commands --
    --------------

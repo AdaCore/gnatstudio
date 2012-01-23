@@ -119,6 +119,9 @@ private
    overriding function Similar
      (Left  : access File_Marker_Record;
       Right : access Location_Marker_Record'Class) return Boolean;
+   overriding function Distance
+     (Left  : access File_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Integer;
    --  See inherited documentation
 
 end Src_Editor_Module.Markers;
