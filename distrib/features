@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L109-019 GPS: goto next/previous bookmark (2012-01-23)
+
+  Two new actions ("Goto Next Bookmark" and "Goto Previous Bookmark") added
+  to jump to nearest bookmarks in current file.
+  They can be bound to keys in the "General" section of the Key Shortcuts
+  dialog.
+
 NF-52-L109-016 GPS: New action "Delete Line" (2012-01-11)
 
   This action deletes the current line and places the cursor on the beginning
