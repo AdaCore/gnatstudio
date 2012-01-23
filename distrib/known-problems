@@ -56,3 +56,8 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Problem:    When alias text contains multibyte UTF-8 characters cursor is
               placed at wrong position after expansion.
   Workaround: Do not use multibyte UTF-8 characters in text of an alias.
+
+- F816-013: GPS: Highlighting for comments in C with international characters
+  Problem:    GPS does not properly compute the syntax coloring for comments
+              which contain international characters in C sources.
+  Workaround: No workaround.
