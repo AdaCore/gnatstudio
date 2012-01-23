@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
 
+- L113-030: GPS: Drag and drop in the editor leaves text in original position
+  Problem:    When using drag-and-drop to move text in an editor, the text
+              is inserted at the drop location, but the original text remains
+              in place.
+  Workaround: Cut and paste the text manually.
+
 - L110-032: GPS: cannot switch tasks with recent versions of GDB
   Problem:    When using GDB 7.3, it is not possible to switch between tasks
               in the Tasks view, and the task information in this view
