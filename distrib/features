@@ -25,8 +25,8 @@ New features in GPS 5.2.0 / GNATbench 2.7.0
 
 NF-52-L109-019 GPS: goto next/previous bookmark (2012-01-23)
 
-  Two new actions ("Goto Next Bookmark" and "Goto Previous Bookmark") added
-  to jump to nearest bookmarks in current file.
+  Two new actions ("Goto Next Bookmark" and "Goto Previous Bookmark") are
+  available to jump to nearest bookmarks in current file.
   They can be bound to keys in the "General" section of the Key Shortcuts
   dialog.
 
