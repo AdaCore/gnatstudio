@@ -110,6 +110,7 @@ package body Project_Properties is
 
    type Attribute_As is (Attribute_As_String,
                          Attribute_As_Filename,
+                         Attribute_As_Unit,
                          Attribute_As_Directory,
                          Attribute_As_Static_List,
                          Attribute_As_Dynamic_List);
@@ -122,6 +123,7 @@ package body Project_Properties is
       case Typ is
          when Attribute_As_String
             | Attribute_As_Filename
+            | Attribute_As_Unit
             | Attribute_As_Directory   =>
             Default           : GNAT.Strings.String_Access;
             Filter            : File_Filter := Filter_None;
@@ -881,6 +883,7 @@ package body Project_Properties is
       case Typ.Typ is
          when Attribute_As_String
             | Attribute_As_Filename
+            | Attribute_As_Unit
             | Attribute_As_Directory =>
             Free (Typ.Default);
          when Attribute_As_Static_List =>
@@ -2053,6 +2056,11 @@ package body Project_Properties is
                      Filter       => Filter,
                      Allow_Empty  => Allow_Empty,
                      Default      => new String'(Default));
+            elsif Typ = "unit" then
+               A := (Typ          => Attribute_As_Unit,
+                     Filter       => Filter,
+                     Allow_Empty  => Allow_Empty,
+                     Default      => new String'(Default));
             else
                if Typ /= "" then
                   Insert (Kernel,
@@ -2736,17 +2744,13 @@ package body Project_Properties is
       end if;
 
       if Is_List then
-         declare
-            Current : String_List_Access := Get_Current_Value
-              (Kernel  => Kernel,
-               Project => Project,
-               Attr    => Description,
-               Index   => Attribute_Index);
-         begin
-            Current_Value := Current;
-            For_Each_Item_In_List (Kernel, Attr, Value_Cb'Unrestricted_Access);
-            Free (Current);
-         end;
+         Current_Value := Get_Current_Value
+           (Kernel  => Kernel,
+            Project => Project,
+            Attr    => Description,
+            Index   => Attribute_Index);
+         For_Each_Item_In_List (Kernel, Attr, Value_Cb'Unrestricted_Access);
+         Free (Current_Value);
 
          Gtk_New (Scrolled);
          Pack_Start (Editor, Scrolled, Expand => True, Fill => True);
@@ -3359,7 +3363,9 @@ package body Project_Properties is
                              Resolve_Links => False));
                         Set (Editor.Model, Iter, 1, True);
 
-                     elsif Attr.Typ = Attribute_As_String then
+                     elsif Attr.Typ = Attribute_As_String
+                       or else Attr.Typ = Attribute_As_Unit
+                     then
                         Set (Editor.Model, Iter, 0, Val);
                         Set (Editor.Model, Iter, 1, False);
 
@@ -3403,7 +3409,10 @@ package body Project_Properties is
                Attr    => Description,
                Index   => Attribute_Index);
          begin
-            if Attr.Typ = Attribute_As_String or else Current = "" then
+            if Attr.Typ = Attribute_As_String
+              or else Attr.Typ = Attribute_As_Unit
+              or else Current = ""
+            then
                Set_Text (Editor.Ent, Current);
 
             elsif Description.Base_Name_Only then
@@ -3445,13 +3454,21 @@ package body Project_Properties is
       Attribute_Index : String;
       Project_Path    : Filesystem_String) return GNAT.Strings.String_List
    is
+      Unit_Name : aliased String := -"Unit name";
+
       Attr   : constant Attribute_Type :=
                  Get_Attribute_Type_From_Description
                    (Description, Attribute_Index);
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       Ent    : Gtk_Entry;
+      Model  : Gtk_Tree_Store;
+      View   : Gtk_Tree_View;
+      Scrolled : Gtk_Scrolled_Window;
+      Selection : Gtk_Tree_Selection;
       W      : List_Attribute_Editor;
+      Iter   : Gtk_Tree_Iter;
+
    begin
       case Attr.Typ is
          when Attribute_As_String =>
@@ -3479,6 +3496,97 @@ package body Project_Properties is
                      Destroy (Dialog);
                      return (1 => new String'(S));
                   end;
+               when others =>
+                  Destroy (Dialog);
+                  return (1 .. 0 => null);
+            end case;
+
+         when Attribute_As_Unit =>
+            Gtk_New (Dialog,
+                     Title  => -"Select units to add",
+                     Parent => Gtk_Window (Toplevel),
+                     Flags  => Modal or Destroy_With_Parent);
+            Dialog.Set_Size_Request (600, 400);
+
+            Gtk_New (Scrolled);
+            Dialog.Get_Vbox.Pack_Start (Scrolled, True, True);
+
+            View := Create_Tree_View
+              (Column_Types    => (1 => GType_String),
+               Column_Names    => (1 => Unit_Name'Unchecked_Access),
+               Selection_Mode  => Gtk.Enums.Selection_Multiple,
+               Initial_Sort_On => 1);
+            Scrolled.Add (View);
+            Model := Gtk_Tree_Store (View.Get_Model);
+            Selection := View.Get_Selection;
+
+            declare
+               Sort  : constant Gint := Model.Freeze_Sort;
+               Tree  : constant Project_Tree_Access :=
+                 Get_Registry (Kernel).Tree;
+               Current : GNAT.Strings.String_List_Access :=
+                 Get_Current_Value
+                   (Kernel, Project, Description, Index => Attribute_Index);
+               Files : File_Array_Access :=
+                 Project.Source_Files (Recursive => False);
+               Info  : File_Info;
+               Found : Boolean;
+            begin
+               for F in Files'Range loop
+                  Info := Tree.Info (Files (F));
+                  if Info.Unit_Part = Unit_Spec then
+                     --  This is the <<add>> dialog, so we only want to show
+                     --  those units that are not already in the list.
+                     --  ??? Not very efficient
+
+                     Found := False;
+
+                     for C in Current'Range loop
+                        if Current (C).all = Info.Unit_Name then
+                           Found := True;
+                           exit;
+                        end if;
+                     end loop;
+
+                     if not Found then
+                        Model.Append (Iter, Null_Iter);
+                        Model.Set (Iter, 0, Info.Unit_Name);
+                     end if;
+                  end if;
+               end loop;
+
+               Unchecked_Free (Files);
+               Free (Current);
+               Model.Thaw_Sort (Sort);
+            end;
+
+            Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
+            Grab_Default (Button);
+            Button := Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+            Show_All (Dialog);
+
+            case Run (Dialog) is
+               when Gtk_Response_OK =>
+                  declare
+                     Result : GNAT.Strings.String_List
+                       (1 .. Integer (Selection.Count_Selected_Rows));
+                     Index : Integer := Result'First;
+                  begin
+                     Iter := Model.Get_Iter_First;
+                     while Iter /= Null_Iter loop
+                        if Selection.Iter_Is_Selected (Iter) then
+                           Result (Index) := new String'
+                             (Model.Get_String (Iter, 0));
+                           Index := Index + 1;
+                        end if;
+
+                        Model.Next (Iter);
+                     end loop;
+
+                     Destroy (Dialog);
+                     return Result;
+                  end;
+
                when others =>
                   Destroy (Dialog);
                   return (1 .. 0 => null);
@@ -3561,6 +3669,7 @@ package body Project_Properties is
       case Attr.Typ is
          when Attribute_As_String
             | Attribute_As_Filename
+            | Attribute_As_Unit
             | Attribute_As_Directory =>
             return Attribute_Editor
               (Create_File_Attribute_Editor
@@ -3655,6 +3764,7 @@ package body Project_Properties is
       case Typ.Typ is
          when Attribute_As_String    => return True;
          when Attribute_As_Filename
+            | Attribute_As_Unit
             | Attribute_As_Directory => return False;
          when Attribute_As_Static_List =>
             return Typ.Static_List = null
@@ -3841,6 +3951,7 @@ package body Project_Properties is
       case Typ.Typ is
          when Attribute_As_String
             | Attribute_As_Filename
+            | Attribute_As_Unit
             | Attribute_As_Directory =>
             Default_Value := Typ.Default;
 
@@ -3981,6 +4092,7 @@ package body Project_Properties is
       case Attr_Type.Typ is
          when Attribute_As_String
             | Attribute_As_Filename
+            | Attribute_As_Unit
             | Attribute_As_Directory =>
 
             if Attr_Type.Default.all = "" then

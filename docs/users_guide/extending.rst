@@ -3777,14 +3777,15 @@ recognized.
     the project. This doesn't work from the project wizard, since the list of
     source files hasn't been computed at that stage.
 
-  * `type` (one of "", "file", "directory", default "")
+  * `type` (one of "" (default), "file", "directory" or "unit")
 
     This indicates what the string represents. In the first case, any
     value can be used. In the second case, it should represent a file
     name, although no check is done to make sure the file actually exists
     on the disk. But GPS will be able to do some special marshalling with
     the file name. The third case indicates that GPS should expect a
-    directory.
+    directory. The fourth case indicates the GPS should expect the name of
+    one of the project's units.
 
   * `filter` (one of "none", "project", "extending_project")
 
