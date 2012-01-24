@@ -29,9 +29,12 @@ package Code_Analysis_XML is
 
    procedure Dump_XML
      (Projects : Code_Analysis_Tree;
-      Parent   : Node_Ptr);
+      Parent   : Node_Ptr;
+      Full     : Boolean);
    --  Starts a dominos calling to the xml dumping subprograms
    --  following the Code_Analysis tree structure.
+   --  If full is False, then the minimal xml structure is dumped so that it
+   --  can be restored by the next GPS session.
 
    generic
       with procedure On_New_File

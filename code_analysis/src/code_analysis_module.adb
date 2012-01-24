@@ -1913,7 +1913,7 @@ package body Code_Analysis_Module is
          Root     := new XML_Utils.Node;
          Root.Tag := new String'("Code_Analysis_Tree");
          Set_Attribute (Root, "name", Analysis.Name.all);
-         Dump_XML (Analysis.Projects, Root);
+         Dump_XML (Analysis.Projects, Root, False);
 
          return Root;
       else
@@ -1960,7 +1960,10 @@ package body Code_Analysis_Module is
       Root     := new XML_Utils.Node;
       Root.Tag := new String'("Code_Analysis_Tree");
       Set_Attribute (Root, "name", Analysis.Name.all);
-      Dump_XML (Analysis.Projects, Root);
+      Dump_XML
+        (Analysis.Projects,
+         Root,
+         True);
       Print (Root, File);
       Free (Root);
    end Dump_To_File;
