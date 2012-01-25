@@ -52,8 +52,7 @@ package body Code_Analysis_XML is
 
    procedure Dump_Desktop_XML
      (Projects : Code_Analysis_Tree;
-      Parent   : Node_Ptr;
-      Full     : Boolean)
+      Parent   : Node_Ptr)
    is
       use Project_Maps, File_Maps;
       Prj_Cur   : Project_Maps.Cursor := Projects.First;
@@ -61,42 +60,27 @@ package body Code_Analysis_XML is
       File_Cur  : File_Maps.Cursor;
       File_Node : Node_Ptr;
    begin
-      if not Full then
-         while Has_Element (Prj_Cur) loop
-            --  Create the project node
-            Prj_Node := new XML_Utils.Node;
-            Prj_Node.Tag := new String'("Project");
-            Add_Child (Parent, Prj_Node, True);
-            Add_File_Child
-              (Prj_Node, "name", Project_Path (Element (Prj_Cur).Name));
+      while Has_Element (Prj_Cur) loop
+         --  Create the project node
+         Prj_Node := new XML_Utils.Node;
+         Prj_Node.Tag := new String'("Project");
+         Add_Child (Parent, Prj_Node, True);
+         Add_File_Child
+           (Prj_Node, "name", Project_Path (Element (Prj_Cur).Name));
 
-            --  And add files as children
-            File_Cur := Element (Prj_Cur).Files.First;
-            while Has_Element (File_Cur) loop
-               File_Node := new XML_Utils.Node;
-               File_Node.Tag := new String'("File");
-               Add_Child (Prj_Node, File_Node, True);
-               Add_File_Child (File_Node, "name", Element (File_Cur).Name);
+         --  And add files as children
+         File_Cur := Element (Prj_Cur).Files.First;
+         while Has_Element (File_Cur) loop
+            File_Node := new XML_Utils.Node;
+            File_Node.Tag := new String'("File");
+            Add_Child (Prj_Node, File_Node, True);
+            Add_File_Child (File_Node, "name", Element (File_Cur).Name);
 
-               Next (File_Cur);
-            end loop;
-
-            Next (Prj_Cur);
+            Next (File_Cur);
          end loop;
 
-      else
-         --  Full XML output
-         for J in Sort_Arr'Range loop
-            Sort_Arr (J) := Element (Prj_Cur);
-            Next (Prj_Cur);
-         end loop;
-
-         Sort_Projects (Sort_Arr);
-
-         for J in Sort_Arr'Range loop
-            Dump_Project (Sort_Arr (J), Parent);
-         end loop;
-      end if;
+         Next (Prj_Cur);
+      end loop;
    end Dump_Desktop_XML;
 
    -------------------

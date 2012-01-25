@@ -30,8 +30,7 @@ package Code_Analysis_XML is
 
    procedure Dump_Desktop_XML
      (Projects : Code_Analysis_Tree;
-      Parent   : Node_Ptr;
-      Full     : Boolean);
+      Parent   : Node_Ptr);
    --  Dumps the XML file required to re-load the desktop
 
    procedure Dump_Full_XML
