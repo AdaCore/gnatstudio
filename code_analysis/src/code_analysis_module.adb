@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2011, AdaCore                  --
+--                 Copyright (C) 2006-2012, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1284,7 +1284,8 @@ package body Code_Analysis_Module is
            (Kernel_Handle (Kernel), Analysis, Project, File, True);
       end On_New_File;
 
-      procedure Parse_XML is new Code_Analysis_XML.Parse_XML (On_New_File);
+      procedure Parse_XML is new Code_Analysis_XML.Parse_Desktop_XML
+        (On_New_File);
 
    begin
       Node := Get_XML_Content
@@ -1916,7 +1917,7 @@ package body Code_Analysis_Module is
          Root     := new XML_Utils.Node;
          Root.Tag := new String'("Code_Analysis_Tree");
          Set_Attribute (Root, "name", Analysis.Name.all);
-         Dump_XML (Analysis.Projects, Root);
+         Dump_Desktop_XML (Analysis.Projects, Root);
 
          return Root;
       else
@@ -1963,7 +1964,7 @@ package body Code_Analysis_Module is
       Root     := new XML_Utils.Node;
       Root.Tag := new String'("Code_Analysis_Tree");
       Set_Attribute (Root, "name", Analysis.Name.all);
-      Dump_XML (Analysis.Projects, Root);
+      Dump_Full_XML (Analysis.Projects, Root);
       Print (Root, File);
       Free (Root);
    end Dump_To_File;
@@ -2027,21 +2028,6 @@ package body Code_Analysis_Module is
       Loaded_File : GNATCOLL.VFS.Virtual_File;
       Root_Node   : Node_Ptr;
 
-      procedure On_New_File (Project : Project_Type; File : Virtual_File);
-      --  Called when a File node is found while parsing XML.
-
-      -----------------
-      -- On_New_File --
-      -----------------
-
-      procedure On_New_File (Project : Project_Type; File : Virtual_File) is
-      begin
-         Add_Gcov_File_Info_In_Callback
-           (Get_Kernel (Data), Analysis, Project, File, True);
-      end On_New_File;
-
-      procedure Parse_XML is new Code_Analysis_XML.Parse_XML (On_New_File);
-
    begin
       --  Check if the attached Analysis is still there
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
@@ -2073,8 +2059,10 @@ package body Code_Analysis_Module is
       end if;
 
       Root_Node := Parse (Loaded_File);
-      Parse_XML
-        (Get_Project (Get_Kernel (Data)), Root_Node);
+      Parse_Full_XML
+        (GPS.Kernel.Project.Get_Registry (Get_Kernel (Data)),
+         Analysis.Projects,
+         Root_Node.Child);
 
    exception
       when E : others => Trace (Exception_Handle, E);

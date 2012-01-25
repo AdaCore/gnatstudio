@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
 
+- L123-030: GPS.CodeAnalysis.dump_to_file not exporting the full information
+  Problem:    The function GPS.CodeAnalysis.dump_to_file no longer exports
+              the full report, only the project/file level.
+  Workaround: Use a previous GPS version to export the full analysis.
+
 - L113-026: GPS: Drag and drop in the editor leaves text in original position
   Problem:    When using drag-and-drop to move text in an editor, the text
               is inserted at the drop location, but the original text remains
