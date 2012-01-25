@@ -24,13 +24,19 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with XML_Utils;         use XML_Utils;
 with Code_Analysis;     use Code_Analysis;
+with Projects;
 
 package Code_Analysis_XML is
 
-   procedure Dump_XML
+   procedure Dump_Desktop_XML
      (Projects : Code_Analysis_Tree;
       Parent   : Node_Ptr;
       Full     : Boolean);
+   --  Dumps the XML file required to re-load the desktop
+
+   procedure Dump_Full_XML
+     (Projects : Code_Analysis_Tree;
+      Parent   : Node_Ptr);
    --  Starts a dominos calling to the xml dumping subprograms
    --  following the Code_Analysis tree structure.
    --  If full is False, then the minimal xml structure is dumped so that it
@@ -40,9 +46,15 @@ package Code_Analysis_XML is
       with procedure On_New_File
         (Project : GNATCOLL.Projects.Project_Type;
          File    : GNATCOLL.VFS.Virtual_File);
-   procedure Parse_XML
+   procedure Parse_Desktop_XML
      (Project  : GNATCOLL.Projects.Project_Type;
       Node     : Node_Ptr);
+   --  Loads the XML file containing the data for reloading the desktop
+
+   procedure Parse_Full_XML
+     (Registry : Projects.Project_Registry_Access;
+      Tree     : Code_Analysis_Tree;
+      Child    : in out Node_Ptr);
    --  Starts a dominos calling to the xml parsing subprograms
    --  to fill the Code_Analysis tree structure.
 

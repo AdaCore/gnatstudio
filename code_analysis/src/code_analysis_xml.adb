@@ -19,6 +19,7 @@ with GNAT.Strings;            use GNAT.Strings;
 with Code_Coverage;           use Code_Coverage;
 
 with Language.Tree.Database;  use Language.Tree.Database;
+with Projects;                use Projects;
 with Traces;                  use Traces;
 
 with UTF8_Utils;              use UTF8_Utils;
@@ -37,11 +38,19 @@ package body Code_Analysis_XML is
 
    procedure Dump_Line (Line_Node : Code_Analysis.Line; Parent : Node_Ptr);
 
-   --------------
-   -- Dump_XML --
-   --------------
+   procedure Parse_Project
+     (Prj_Node : Project_Access;
+      Parent   : Node_Ptr);
 
-   procedure Dump_XML
+   procedure Parse_File
+     (File_Node : Code_Analysis.File_Access;
+      Parent    : Node_Ptr);
+
+   ----------------------
+   -- Dump_Desktop_XML --
+   ----------------------
+
+   procedure Dump_Desktop_XML
      (Projects : Code_Analysis_Tree;
       Parent   : Node_Ptr;
       Full     : Boolean)
@@ -51,8 +60,6 @@ package body Code_Analysis_XML is
       Prj_Node  : Node_Ptr;
       File_Cur  : File_Maps.Cursor;
       File_Node : Node_Ptr;
-      Sort_Arr  : Project_Array (1 .. Integer (Projects.Length));
-
    begin
       if not Full then
          while Has_Element (Prj_Cur) loop
@@ -90,13 +97,38 @@ package body Code_Analysis_XML is
             Dump_Project (Sort_Arr (J), Parent);
          end loop;
       end if;
-   end Dump_XML;
+   end Dump_Desktop_XML;
 
-   ---------------
-   -- Parse_XML --
-   ---------------
+   -------------------
+   -- Dump_Full_XML --
+   -------------------
 
-   procedure Parse_XML
+   procedure Dump_Full_XML
+     (Projects : Code_Analysis_Tree;
+      Parent   : Node_Ptr)
+   is
+      use Project_Maps, File_Maps;
+      Prj_Cur   : Project_Maps.Cursor := Projects.First;
+      Sort_Arr  : Project_Array (1 .. Integer (Projects.Length));
+
+   begin
+      for J in Sort_Arr'Range loop
+         Sort_Arr (J) := Element (Prj_Cur);
+         Next (Prj_Cur);
+      end loop;
+
+      Sort_Projects (Sort_Arr);
+
+      for J in Sort_Arr'Range loop
+         Dump_Project (Sort_Arr (J), Parent);
+      end loop;
+   end Dump_Full_XML;
+
+   -----------------------
+   -- Parse_Desktop_XML --
+   -----------------------
+
+   procedure Parse_Desktop_XML
      (Project  : Project_Type;
       Node     : Node_Ptr)
    is
@@ -145,7 +177,33 @@ package body Code_Analysis_XML is
    exception
       when E : others =>
          Traces.Trace (Traces.Exception_Handle, E);
-   end Parse_XML;
+   end Parse_Desktop_XML;
+
+   --------------------
+   -- Parse_Full_XML --
+   --------------------
+
+   procedure Parse_Full_XML
+     (Registry : Project_Registry_Access;
+      Tree     : Code_Analysis_Tree;
+      Child    : in out Node_Ptr)
+   is
+      Prj_Node  : Project_Access;
+
+   begin
+      while Child /= null loop
+         if Child.Tag.all = "Project" then
+            Prj_Node := Get_Or_Create
+              (Tree,
+               Project_From_Name
+                 (Projects.Tree (Registry.all).all,
+                  Get_Attribute (Child, "name")));
+            Parse_Project (Prj_Node, Child);
+         end if;
+
+         Child := Child.Next;
+      end loop;
+   end Parse_Full_XML;
 
    ------------------
    -- Dump_Project --
@@ -177,6 +235,39 @@ package body Code_Analysis_XML is
          Dump_File (Sort_Arr (J), Loc);
       end loop;
    end Dump_Project;
+
+   -------------------
+   -- Parse_Project --
+   -------------------
+
+   procedure Parse_Project
+     (Prj_Node : Project_Access;
+      Parent   : Node_Ptr)
+   is
+      File_Node : Code_Analysis.File_Access;
+      Child     : Node_Ptr;
+   begin
+      XML_Parse_Coverage (Prj_Node.Analysis_Data.Coverage_Data, Parent);
+
+      if Parent.Child /= null then
+         Child := Parent.Child;
+         while Child /= null loop
+            if Child.Tag.all = "File" then
+               File_Node := Get_Or_Create
+                 (Prj_Node, Get_File_Child (Child, "name"));
+               --  Create a Line_Array with exactly the same number of elements
+               --  than to the number of code lines in the original src code
+               --  file. It will contain the lines with analysis information.
+               File_Node.Lines := new Line_Array
+                 (1 .. Positive'Value (Get_Attribute (Child, "line_count")));
+               File_Node.Lines.all := (others => Null_Line);
+               Parse_File (File_Node, Child);
+            end if;
+
+            Child := Child.Next;
+         end loop;
+      end if;
+   end Parse_Project;
 
    ---------------
    -- Dump_File --
@@ -214,6 +305,66 @@ package body Code_Analysis_XML is
          Dump_Line (File_Node.Lines (J), Loc);
       end loop;
    end Dump_File;
+
+   ----------------
+   -- Parse_File --
+   ----------------
+
+   procedure Parse_File
+     (File_Node : Code_Analysis.File_Access;
+      Parent    : Node_Ptr)
+   is
+      Child     : Node_Ptr;
+   begin
+      XML_Parse_Coverage (File_Node.Analysis_Data.Coverage_Data, Parent);
+
+      if Parent.Child /= null then
+         Child := Parent.Child;
+
+         while Child /= null loop
+            if Child.Tag.all = "Subprogram" then
+               --  We parse a subprogram node
+               declare
+                  Subp_Node : Subprogram_Access;
+               begin
+                  Subp_Node := Get_Or_Create
+                    (File_Node, new String'(Get_Attribute (Child, "name")));
+                  Subp_Node.Line :=
+                    Natural'Value (Get_Attribute (Child, "line"));
+                  Subp_Node.Column :=
+                    Natural'Value (Get_Attribute (Child, "column"));
+                  Subp_Node.Start :=
+                    Natural'Value (Get_Attribute (Child, "start"));
+                  Subp_Node.Stop :=
+                    Natural'Value (Get_Attribute (Child, "stop"));
+                  XML_Parse_Coverage
+                    (Subp_Node.Analysis_Data.Coverage_Data, Child);
+               end;
+            elsif Child.Tag.all = "Line" then
+               --  We parse a line node
+               declare
+                  Line_Node : Line;
+                  Line_Num  : Natural;
+                  Line_Contents : constant String :=
+                                    Get_Attribute (Child, "contents");
+               begin
+                  Line_Num := Natural'Value (Get_Attribute (Child, "number"));
+                  Line_Node.Number  := Line_Num;
+
+                  if Line_Contents /= "" then
+                     Line_Node.Contents := new String'(Line_Contents);
+                  end if;
+
+                  XML_Parse_Coverage
+                    (Line_Node.Analysis_Data.Coverage_Data, Child);
+                  File_Node.Lines (Line_Num) := Line_Node;
+               end;
+            end if;
+
+            Child := Child.Next;
+         end loop;
+      end if;
+   end Parse_File;
 
    ---------------------
    -- Dump_Subprogram --
