@@ -104,10 +104,10 @@ package body Data is
                if A_Name'Length > 8 then
                   --  We have a parameter
                   declare
-                     V : constant String
-                       := Strings.Fixed.Trim
-                           (A_Name (A_Name'First + 8 .. A_Name'Last),
-                            Strings.Both);
+                     V : constant String :=
+                           Strings.Fixed.Trim
+                             (A_Name (A_Name'First + 8 .. A_Name'Last),
+                              Strings.Both);
                      N : Integer;
                   begin
                      if V (V'First) = '('
