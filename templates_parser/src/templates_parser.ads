@@ -32,6 +32,8 @@ package Templates_Parser is
 
    use Ada.Strings.Unbounded;
 
+   Version : constant String := "11.6";
+
    Template_Error : exception;
 
    Default_Begin_Tag : constant String := "@_";
