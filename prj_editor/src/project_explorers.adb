@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2011, AdaCore                  --
+--                 Copyright (C) 2001-2012, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2601,6 +2601,8 @@ package body Project_Explorers is
          Result         : out Gtk_Tree_Iter;
          Finish         : out Boolean) is
       begin
+         Finish := False;
+
          if Check_Match
            and then Start /= C.Current and then Match (C, Name) /= -1
          then
@@ -2634,8 +2636,6 @@ package body Project_Explorers is
             Result := Start;
             Next (Explorer.Tree.Model, Result);
          end if;
-
-         Finish := False;
       end Next_Or_Child;
 
       --------------------
