@@ -3019,6 +3019,15 @@ package body Src_Editor_Buffer is
       B.Tab_Width            := Gint (String_Utils.Tab_Width);
    end Execute;
 
+   ---------------------
+   -- Load_Empty_File --
+   ---------------------
+
+   procedure Load_Empty_File (Buffer : access Source_Buffer_Record) is
+   begin
+      Buffer.Original_Text_Inserted := True;
+   end Load_Empty_File;
+
    ---------------
    -- Load_File --
    ---------------

@@ -132,6 +132,10 @@ package Src_Editor_Buffer is
    --  the language from the filename, then Lang will be unset, and syntax
    --  highlighting will be deactivated.
 
+   procedure Load_Empty_File (Buffer : access Source_Buffer_Record);
+   --  Inform the buffer that the initial data has been loaded.
+   --  Call this on every buffer for a "new" file.
+
    procedure Save_To_File
      (Buffer   : access Source_Buffer_Record;
       Filename : GNATCOLL.VFS.Virtual_File;

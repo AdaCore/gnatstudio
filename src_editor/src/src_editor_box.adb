@@ -2461,6 +2461,7 @@ package body Src_Editor_Box is
       Set_Charset (Editor.Source_Buffer, Get_File_Charset (Filename));
       Set_Text (Editor.Modified_Label, -"Unmodified");
       Set_Writable (Editor.Source_Buffer, Writable => True, Explicit => False);
+      Load_Empty_File (Editor.Source_Buffer);
    end Load_Empty_File;
 
    ------------------
