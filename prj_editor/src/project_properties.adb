@@ -4170,87 +4170,85 @@ package body Project_Properties is
                      and then Path_Is_Selected
                        (Get_Selection (Ed.View), Path)))
       then
-         if Row_Found then
-            Iter := Get_Iter (Ed.Model, Path);
+         Iter := Get_Iter (Ed.Model, Path);
 
-            declare
-               Attribute_Index : constant String :=
-                 Get_String (Ed.Model, Iter, 0);
-            begin
-               Typ := Get_Attribute_Type_From_Description
-                 (Ed.Attribute, Index => Attribute_Index);
+         declare
+            Attribute_Index : constant String :=
+              Get_String (Ed.Model, Iter, 0);
+         begin
+            Typ := Get_Attribute_Type_From_Description
+              (Ed.Attribute, Index => Attribute_Index);
 
-               if Ed.Attribute.Is_List then
-                  Gtk_New (Dialog,
-                           Title  => -"Enter new value",
-                           Parent => Gtk_Window (Get_Toplevel (Editor)),
-                           Flags  => Modal or Destroy_With_Parent);
-                  Value_Ed := Create_Widget_Attribute
-                    (Kernel          => Ed.Kernel,
-                     Wiz             => Ed.Wiz,
-                     Project         => Ed.Project,
-                     Description     => Ed.Attribute,
-                     Attribute_Index => Attribute_Index,
-                     Path_Widget     => Ed.Path_Widget,
-                     Is_List         => True);
-                  Pack_Start (Get_Vbox (Dialog), Value_Ed,
-                              Expand => True, Fill => True);
-                  Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-                  Grab_Default (Button);
-                  Button := Add_Button
-                    (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+            if Ed.Attribute.Is_List then
+               Gtk_New (Dialog,
+                        Title  => -"Enter new value",
+                        Parent => Gtk_Window (Get_Toplevel (Editor)),
+                        Flags  => Modal or Destroy_With_Parent);
+               Value_Ed := Create_Widget_Attribute
+                 (Kernel          => Ed.Kernel,
+                  Wiz             => Ed.Wiz,
+                  Project         => Ed.Project,
+                  Description     => Ed.Attribute,
+                  Attribute_Index => Attribute_Index,
+                  Path_Widget     => Ed.Path_Widget,
+                  Is_List         => True);
+               Pack_Start (Get_Vbox (Dialog), Value_Ed,
+                           Expand => True, Fill => True);
+               Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+               Grab_Default (Button);
+               Button := Add_Button
+                 (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
-                  Show_All (Dialog);
+               Show_All (Dialog);
 
-                  case Run (Dialog) is
-                     when Gtk_Response_OK =>
-                        for C in Ed.Current_Values'Range loop
-                           if Ed.Current_Values (C).Index.all =
-                             Attribute_Index
-                           then
-                              Free (Ed.Current_Values (C).Values);
-                              Ed.Current_Values (C).Values :=
-                                new GNAT.Strings.String_List'
-                                  (Get_Value_As_List (Value_Ed, ""));
-                              Set (Ed.Model, Iter, 1,
-                                   To_String
-                                     (Ed.Current_Values (C).Values.all));
-                           end if;
-                        end loop;
-                        Destroy (Dialog);
-                     when others =>
-                        Destroy (Dialog);
-                  end case;
-
-               else
-                  --  No need to open a dialog to edit simple string, this is
-                  --  done in-line
-                  if Typ.Typ /= Attribute_As_String then
-                     declare
-                        Value : GNAT.Strings.String_List :=
-                          Create_Attribute_Dialog
-                            (Kernel          => Ed.Kernel,
-                             Toplevel        =>
-                               Gtk_Window (Get_Toplevel (Ed)),
-                             Project         => Ed.Project,
-                             Description     => Ed.Attribute,
-                             Attribute_Index => Attribute_Index,
-                             Project_Path    =>
-                             +Get_Safe_Text (Ed.Path_Widget));
-                        --  ??? What if the filesystem path is non-UTF8?
-                     begin
-                        if Value'Length /= 0 then
-                           Set (Ed.Model, Iter, 1, Value (Value'First).all);
-                           Free (Value);
+               case Run (Dialog) is
+                  when Gtk_Response_OK =>
+                     for C in Ed.Current_Values'Range loop
+                        if Ed.Current_Values (C).Index.all =
+                          Attribute_Index
+                        then
+                           Free (Ed.Current_Values (C).Values);
+                           Ed.Current_Values (C).Values :=
+                             new GNAT.Strings.String_List'
+                               (Get_Value_As_List (Value_Ed, ""));
+                           Set (Ed.Model, Iter, 1,
+                                To_String
+                                  (Ed.Current_Values (C).Values.all));
                         end if;
-                     end;
-                  else
-                     Column := Get_Column (Ed.View, 1);
-                     Set_Cursor (Ed.View, Path, Column, Start_Editing => True);
-                  end if;
+                     end loop;
+                     Destroy (Dialog);
+                  when others =>
+                     Destroy (Dialog);
+               end case;
+
+            else
+               --  No need to open a dialog to edit simple string, this is
+               --  done in-line
+               if Typ.Typ /= Attribute_As_String then
+                  declare
+                     Value : GNAT.Strings.String_List :=
+                       Create_Attribute_Dialog
+                         (Kernel          => Ed.Kernel,
+                          Toplevel        =>
+                            Gtk_Window (Get_Toplevel (Ed)),
+                          Project         => Ed.Project,
+                          Description     => Ed.Attribute,
+                          Attribute_Index => Attribute_Index,
+                          Project_Path    =>
+                          +Get_Safe_Text (Ed.Path_Widget));
+                     --  ??? What if the filesystem path is non-UTF8?
+                  begin
+                     if Value'Length /= 0 then
+                        Set (Ed.Model, Iter, 1, Value (Value'First).all);
+                        Free (Value);
+                     end if;
+                  end;
+               else
+                  Column := Get_Column (Ed.View, 1);
+                  Set_Cursor (Ed.View, Path, Column, Start_Editing => True);
                end if;
-            end;
-         end if;
+            end if;
+         end;
 
          Path_Free (Path);
          return True;
