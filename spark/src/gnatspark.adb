@@ -281,8 +281,8 @@ procedure GNATSpark is
                 "[file] {arguments}");
       New_Line;
       Put_Line ("action: spark tool to run, among:");
-      Put_Line ("  examiner, metaexaminer, pogs, simplifier, sparkmake,");
-      Put_Line ("  sparkformat, sparksimp, zombiescope, victor");
+      Put_Line ("  examiner, metaexaminer, pogs, simplifier, sparkclean,");
+      Put_Line ("  sparkmake, sparkformat, sparksimp, zombiescope, victor");
       Put_Line ("project: project file (.gpr)");
       Put_Line ("-Xvar=value: set project variable var to value");
       Put_Line ("file: optional file to be processed");
