@@ -1178,6 +1178,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>examiner</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
         <arg>%F</arg>
      </command-line>
      <server>Tools_Server</server>
@@ -1193,6 +1194,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>/tool/</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
      </command-line>
      <server>Tools_Server</server>
      <icon>gps-custom-build</icon>
@@ -1211,6 +1213,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>examiner</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
         <arg>%F</arg>
      </command-line>
   </target>
@@ -1226,6 +1229,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>metaexaminer</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
         <arg>%F</arg>
      </command-line>
   </target>
@@ -1241,6 +1245,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>sparkmake</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
      </command-line>
   </target>
 
@@ -1255,6 +1260,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>sparkformat</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
         <arg>%F</arg>
      </command-line>
   </target>
@@ -1270,6 +1276,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>simplifier</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
         <arg>%F</arg>
      </command-line>
   </target>
@@ -1285,6 +1292,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>sparksimp</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
      </command-line>
   </target>
 
@@ -1298,6 +1306,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>pogs</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
      </command-line>
   </target>
 
@@ -1312,6 +1321,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>victor</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
         <arg>%F</arg>
      </command-line>
   </target>
@@ -1327,6 +1337,7 @@ b = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>zombiescope</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
         <arg>%F</arg>
      </command-line>
   </target>
