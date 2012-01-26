@@ -1789,13 +1789,18 @@ package body Templates_Parser is
    overriding procedure Finalize (Set : in out Translate_Set) is
       procedure Free is new Unchecked_Deallocation
         (Association_Map.Map, Map_Access);
+      Ref_Count : Integer_Access := Set.Ref_Count;
    begin
-      if Set.Ref_Count /= null then
-         Templates_Parser_Tasking.Lock;
-         Set.Ref_Count.all := Set.Ref_Count.all - 1;
+      --  Ensure call is idempotent
 
-         if Set.Ref_Count.all = 0 then
-            Free (Set.Ref_Count);
+      Set.Ref_Count := null;
+
+      if Ref_Count /= null then
+         Templates_Parser_Tasking.Lock;
+         Ref_Count.all := Ref_Count.all - 1;
+
+         if Ref_Count.all = 0 then
+            Free (Ref_Count);
             Free (Set.Set);
          end if;
          Templates_Parser_Tasking.Unlock;
@@ -1803,54 +1808,61 @@ package body Templates_Parser is
    end Finalize;
 
    overriding procedure Finalize (T : in out Tag) is
+      Ref_Count : Integer_Access := T.Ref_Count;
    begin
-      Templates_Parser_Tasking.Lock;
+      --  Ensure call is idempotent
 
-      T.Ref_Count.all := T.Ref_Count.all - 1;
+      T.Ref_Count := null;
 
-      if T.Ref_Count.all = 0 then
-         Templates_Parser_Tasking.Unlock;
+      if Ref_Count /= null then
+         Templates_Parser_Tasking.Lock;
 
-         declare
-            procedure Free is new Ada.Unchecked_Deallocation
-              (Tag_Node, Tag_Node_Access);
+         Ref_Count.all := Ref_Count.all - 1;
 
-            procedure Free is new Ada.Unchecked_Deallocation
-              (Tag, Tag_Access);
+         if Ref_Count.all = 0 then
+            Templates_Parser_Tasking.Unlock;
 
-            procedure Free is new Ada.Unchecked_Deallocation
-              (Tag_Data, Tag_Data_Access);
+            declare
+               procedure Free is new Ada.Unchecked_Deallocation
+                 (Tag_Node, Tag_Node_Access);
 
-            procedure Free is new Ada.Unchecked_Deallocation
-              (Tag_Values.Set, Tag_Values_Access);
+               procedure Free is new Ada.Unchecked_Deallocation
+                 (Tag, Tag_Access);
 
-            P, N : Tag_Node_Access;
-         begin
-            P := T.Data.Head;
+               procedure Free is new Ada.Unchecked_Deallocation
+                 (Tag_Data, Tag_Data_Access);
 
-            while P /= null loop
-               N := P.Next;
+               procedure Free is new Ada.Unchecked_Deallocation
+                 (Tag_Values.Set, Tag_Values_Access);
 
-               if P.Kind = Value_Set then
-                  Free (P.VS);
-               end if;
+               P, N : Tag_Node_Access;
+            begin
+               P := T.Data.Head;
 
-               Free (P);
+               while P /= null loop
+                  N := P.Next;
 
-               P := N;
-            end loop;
+                  if P.Kind = Value_Set then
+                     Free (P.VS);
+                  end if;
 
-            T.Data.Head := null;
-            T.Data.Last := null;
+                  Free (P);
 
-            Free (T.Ref_Count);
-            Free (T.Data.Tag_Nodes);
-            Free (T.Data.Values);
-            Free (T.Data);
-         end;
+                  P := N;
+               end loop;
 
-      else
-         Templates_Parser_Tasking.Unlock;
+               T.Data.Head := null;
+               T.Data.Last := null;
+
+               Free (Ref_Count);
+               Free (T.Data.Tag_Nodes);
+               Free (T.Data.Values);
+               Free (T.Data);
+            end;
+
+         else
+            Templates_Parser_Tasking.Unlock;
+         end if;
       end if;
    end Finalize;
 
