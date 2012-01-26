@@ -971,9 +971,7 @@ package body Project_Explorers is
          return;
       end if;
 
-      if Child = null
-        or else not (Get_Widget (Child).all in Project_Explorer_Record'Class)
-      then
+      if not (Get_Widget (Child).all in Project_Explorer_Record'Class) then
          Unselect_All (Get_Selection (E.Tree));
       end if;
    end Child_Selected;
