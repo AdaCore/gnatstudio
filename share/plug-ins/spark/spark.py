@@ -810,6 +810,7 @@ xml_sparkclean = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>sparkclean</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
      </command-line>
   </target>
 
