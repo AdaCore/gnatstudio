@@ -25,8 +25,13 @@ with Ada.Command_Line;        use Ada.Command_Line;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 procedure GNATSpark is
+
+   package List_Of_Strings is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
+   use List_Of_Strings;
 
    type Action_Kind is
      (Examiner, MetaExaminer, Pogs, Simplifier, SPARKMake, SPARKFormat,
@@ -44,6 +49,8 @@ procedure GNATSpark is
 
    File : Virtual_File;
    --  The file to be processed, if any
+
+   Ext_Vars : List_Of_Strings.List;
 
    procedure Append (List : in out String_List_Access; S : String);
    --  Append S to List.
@@ -124,10 +131,76 @@ procedure GNATSpark is
    procedure Parse_Project (Project : String; Tree : out Project_Tree) is
       Proj_Env     : Project_Environment_Access;
       GNAT_Version : GNAT.Strings.String_Access;
+      Cur          : List_Of_Strings.Cursor;
+
    begin
       Initialize (Proj_Env);
       Set_Path_From_Gnatls (Proj_Env.all, "gnatls", GNAT_Version);
       Tree.Load (GNATCOLL.VFS.Create (Filesystem_String (Project)), Proj_Env);
+
+      declare
+         Vars : Scenario_Variable_Array := Tree.Scenario_Variables;
+         Var_Name, Var_Val : GNAT.Strings.String_Access;
+      begin
+         Cur := Ext_Vars.First;
+         loop
+            exit when Cur = No_Element;
+
+            declare
+               S : constant String := Element (Cur);
+               F_Idx : constant Integer := S'First;
+               L_Idx : constant Integer := S'Last;
+            begin
+               for J in S'Range loop
+                  if S (J) = '=' then
+                     Var_Name := new String'(S (F_Idx .. J - 1));
+                     Var_Val  := new String'(S (J + 1 .. L_Idx));
+                     exit;
+                  end if;
+               end loop;
+
+               if Var_Name = null then
+                  Put_Line ("-X" & S & " is an illegal option, exiting.");
+                  OS_Exit (2);
+               end if;
+            end;
+
+            for J in Vars'Range loop
+               if External_Name (Vars (J)) = Var_Name.all then
+                  declare
+                     Pos_Vals : constant GNAT.Strings.String_List :=
+                       Tree.Possible_Values_Of (Vars (J));
+                     Present : Boolean := False;
+
+                  begin
+                     for K in Pos_Vals'Range loop
+                        if Pos_Vals (K).all = Var_Val.all then
+                           Present  := True;
+                           exit;
+                        end if;
+                     end loop;
+
+                     if not Present then
+                        Put_Line
+                          ("value " & Var_Val.all &
+                           " is illegal for " & Var_Name.all & ", exiting.");
+                        OS_Exit (2);
+                     end if;
+                  end;
+
+                  Set_Value (Vars (J), Var_Val.all);
+                  exit;
+               end if;
+            end loop;
+
+            Next (Cur);
+            Free (Var_Name);
+            Free (Var_Val);
+         end loop;
+
+         Tree.Change_Environment (Vars);
+         Tree.Recompute_View;
+      end;
 
    exception
       when others =>
@@ -142,7 +215,7 @@ procedure GNATSpark is
    procedure Parse_Command_Line is
       Count : constant Natural := Argument_Count;
    begin
-      if Count < 2 or else Count > 3 then
+      if Count < 2 then
          Usage;
          return;
       end if;
@@ -170,9 +243,17 @@ procedure GNATSpark is
          end if;
       end;
 
-      if Count = 3 then
-         File := Create_From_Base (Filesystem_String (Argument (3)));
-      end if;
+      for J in 3 .. Count loop
+         declare
+            S : constant String := Argument (J);
+         begin
+            if S'Length > 2 and then S (S'First .. S'First + 1) = "-X" then
+               Ext_Vars.Append (S (S'First + 2 .. S'Last));
+            else
+               File := Create_From_Base (Filesystem_String (S));
+            end if;
+         end;
+      end loop;
 
    exception
       when others =>
@@ -185,12 +266,13 @@ procedure GNATSpark is
 
    procedure Usage is
    begin
-      Put_Line ("usage: gnatspark <action> -P<project> [file]");
+      Put_Line ("usage: gnatspark <action> -P<project> {-Xvar=value} [file]");
       New_Line;
       Put_Line ("action: spark tool to run, among:");
       Put_Line ("  examiner, metaexaminer, pogs, simplifier, sparkmake,");
       Put_Line ("  sparkformat, sparksimp, zombiescope, victor");
       Put_Line ("project: project file (.gpr)");
+      Put_Line ("-Xvar=value: set project variable var to value");
       Put_Line ("file: optional file to be processed");
       OS_Exit (1);
    end Usage;
