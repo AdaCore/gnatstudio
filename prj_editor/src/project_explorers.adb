@@ -2597,6 +2597,8 @@ package body Project_Explorers is
          Result         : out Gtk_Tree_Iter;
          Finish         : out Boolean) is
       begin
+         Finish := False;
+
          if Check_Match
            and then Start /= C.Current and then Match (C, Name) /= -1
          then
@@ -2630,8 +2632,6 @@ package body Project_Explorers is
             Result := Start;
             Next (Explorer.Tree.Model, Result);
          end if;
-
-         Finish := False;
       end Next_Or_Child;
 
       --------------------
