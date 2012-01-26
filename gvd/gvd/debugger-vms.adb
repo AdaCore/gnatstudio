@@ -722,7 +722,7 @@ package body Debugger.VMS is
    begin
       --  ???
       return Command'Length > 9
-        and then Command (Command'First .. Command'First + 9) = "set break";
+        and then Command (Command'First .. Command'First + 8) = "set break";
    end Is_Break_Command;
 
    ----------------
