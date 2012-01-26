@@ -33,6 +33,11 @@ Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
               entity.
   Workaround: Press and release the ctrl key, or click outside of an entity.
 
+- F329-004: GPS: generating body does not work in directories with spaces
+  Problem:    Under Windows, using the menu "Edit->Generate body" does not
+              work if the full path to the file contains spaces.
+  Workaround: Work in a directory that does not contain spaces.
+
 Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
 
 - KC01-003: GPS: Changing the gtk theme may make GPS crash
