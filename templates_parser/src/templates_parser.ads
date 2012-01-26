@@ -32,7 +32,7 @@ package Templates_Parser is
 
    use Ada.Strings.Unbounded;
 
-   Version : constant String := "11.6";
+   Version : constant String := "11.7w";
 
    Template_Error : exception;
 
