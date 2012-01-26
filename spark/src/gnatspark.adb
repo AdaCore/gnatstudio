@@ -52,6 +52,9 @@ procedure GNATSpark is
 
    Ext_Vars : List_Of_Strings.List;
 
+   First_Param : Natural := 0;
+   Last_Param  : Natural := 0;
+
    procedure Append (List : in out String_List_Access; S : String);
    --  Append S to List.
    --  List should never be null
@@ -250,7 +253,15 @@ procedure GNATSpark is
             if S'Length > 2 and then S (S'First .. S'First + 1) = "-X" then
                Ext_Vars.Append (S (S'First + 2 .. S'Last));
             else
-               File := Create_From_Base (Filesystem_String (S));
+               if S'Length > 1 and then S (S'First) /= '-' then
+                  File := Create_From_Base (Filesystem_String (S));
+                  First_Param := J + 1;
+               else
+                  First_Param := J;
+               end if;
+
+               Last_Param := Count;
+               exit;
             end if;
          end;
       end loop;
@@ -266,7 +277,8 @@ procedure GNATSpark is
 
    procedure Usage is
    begin
-      Put_Line ("usage: gnatspark <action> -P<project> {-Xvar=value} [file]");
+      Put_Line ("usage: gnatspark <action> -P<project> {-Xvar=value} " &
+                "[file] {arguments}");
       New_Line;
       Put_Line ("action: spark tool to run, among:");
       Put_Line ("  examiner, metaexaminer, pogs, simplifier, sparkmake,");
@@ -274,6 +286,8 @@ procedure GNATSpark is
       Put_Line ("project: project file (.gpr)");
       Put_Line ("-Xvar=value: set project variable var to value");
       Put_Line ("file: optional file to be processed");
+      Put_Line ("arguments: optional list of switches to be passed to the " &
+                "underlying tool");
       OS_Exit (1);
    end Usage;
 
@@ -284,7 +298,7 @@ procedure GNATSpark is
    function Run
      (Command : String; Switches : String_List_Access) return Integer
    is
-      Exec   : GNAT.OS_Lib.String_Access;
+      Exec : GNAT.OS_Lib.String_Access;
    begin
       Put (Command);
 
@@ -457,6 +471,12 @@ begin
             end if;
          end;
    end case;
+
+   if First_Param /= 0 then
+      for J in First_Param .. Last_Param loop
+         Append (Switches, Argument (J));
+      end loop;
+   end if;
 
    Status := Run (Tool_Name (Action), Switches);
    OS_Exit (Status);
