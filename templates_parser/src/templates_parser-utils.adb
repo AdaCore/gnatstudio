@@ -255,10 +255,12 @@ package body Templates_Parser.Utils is
 
    function Is_Number (S : String) return Boolean is
    begin
-      return Strings.Fixed.Index
-        (S,
-         Strings.Maps.Constants.Decimal_Digit_Set,
-         Test => Strings.Outside) = 0;
+      return S'Length /= 0
+        and then
+          Strings.Fixed.Index
+            (S,
+             Strings.Maps.Constants.Decimal_Digit_Set,
+             Test => Strings.Outside) = 0;
    end Is_Number;
 
    -----------
