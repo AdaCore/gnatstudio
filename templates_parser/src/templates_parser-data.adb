@@ -835,8 +835,18 @@ package body Data is
             when Text =>
                declare
                   Value : constant String := To_String (N.Value);
+                  VL    : constant Natural := Value'Length;
+                  BL    : constant Natural := Utils.BOM_Utf8'Length;
                begin
-                  Text_IO.Put (Value);
+                  if VL >= BL
+                    and then
+                      Value
+                        (Value'First .. Value'First + BL - 1) = Utils.BOM_Utf8
+                  then
+                     Text_IO.Put ("U+<FEFF>");
+                  else
+                     Text_IO.Put (Value);
+                  end if;
                   if Value'Length > 0 then
                      NL := Value (Value'Last) = ASCII.LF;
                   else

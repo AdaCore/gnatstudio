@@ -52,6 +52,13 @@ package Templates_Parser.Utils is
    function Is_Number (S : String) return Boolean;
    --  Returns true if S is composed of digits only
 
+   --  Byte Order Mark
+
+   BOM_Utf8 : constant String :=
+                Character'Val (16#EF#)
+                & Character'Val (16#BB#)
+                & Character'Val (16#BF#);
+
 private
 
    subtype Windows_Host is Boolean;

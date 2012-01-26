@@ -2568,6 +2568,28 @@ package body Templates_Parser is
             end if;
          end if;
 
+         --  Check for Utf8 BOM, this can only occurs at the first line
+
+         if Line = 1
+           and then Last > Utils.BOM_Utf8'Length
+           and then Buffer (1 .. Utils.BOM_Utf8'Length) = Utils.BOM_Utf8
+         then
+            T := new Node (Text);
+            T.Line := Line;
+            T.Text := Data.Parse (Buffer (1 .. Utils.BOM_Utf8'Length));
+
+            --  Removes BOM from buffer
+
+            Buffer (1 .. Last - Utils.BOM_Utf8'Length) :=
+              Buffer (1 + Utils.BOM_Utf8'Length .. Last);
+            Last := Last - Utils.BOM_Utf8'Length;
+
+            --  Continued parsing the remaining of the line
+
+            T.Next := Parse (Mode, In_If, No_Read => True);
+            return T;
+         end if;
+
          case Mode is
             when Parse_Std =>
                if Is_Stmt (End_If_Token) then
