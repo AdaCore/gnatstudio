@@ -1431,13 +1431,13 @@ package body Filter is
    -------------
 
    procedure Release (P : in out Parameter_Data) is
-      procedure Free is new Ada.Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
    begin
       if P.Mode = Regpat then
-         Free (P.Regpat);
+         Unchecked_Free (P.Regpat);
       elsif P.Mode = Regexp then
-         Free (P.Regexp);
+         Unchecked_Free (P.Regexp);
       end if;
    end Release;
 

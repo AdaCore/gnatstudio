@@ -98,7 +98,7 @@ package body Cached_Files is
                while I /= null loop
                   O := I;
                   I := I.Next;
-                  Free (O);
+                  Unchecked_Free (O);
                end loop;
             end;
 
@@ -209,7 +209,7 @@ package body Cached_Files is
 
    procedure Growth is
 
-      procedure Free is
+      procedure Unchecked_Free is
          new Ada.Unchecked_Deallocation (File_Array, File_Array_Access);
 
    begin
@@ -222,7 +222,7 @@ package body Cached_Files is
          begin
             New_Array := new File_Array (1 .. Files'Length + Growing_Size);
             New_Array (1 .. Files'Length) := Files.all;
-            Free (Files);
+            Unchecked_Free (Files);
             Files := New_Array;
          end;
       end if;

@@ -114,9 +114,9 @@ package body Definitions is
    -------------
 
    procedure Release (D : in out Tree) is
-      procedure Free is new Unchecked_Deallocation (Def, Tree);
+      procedure Unchecked_Free is new Unchecked_Deallocation (Def, Tree);
    begin
-      Free (D);
+      Unchecked_Free (D);
    end Release;
 
 end Definitions;
