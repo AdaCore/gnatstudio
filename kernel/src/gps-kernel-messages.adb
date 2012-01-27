@@ -560,7 +560,7 @@ package body GPS.Kernel.Messages is
 
       else
          raise Constraint_Error
-           with "There is no note assiciated with message";
+           with "There is no note associated with the message";
       end if;
    end Get_Note;
 
