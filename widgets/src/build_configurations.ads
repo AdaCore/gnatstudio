@@ -485,19 +485,12 @@ package Build_Configurations is
    --  Load multiple targets from XML
    --  See Save_All_Targets_To_XML for the format XML should be in.
 
-   procedure Load_All_Targets_From_File (
-      Registry : Build_Config_Registry_Access;
-      Targets_File : GNATCOLL.VFS.Virtual_File);
-   --  fill registry with all "target" found in file.
-
-   procedure Load_All_Modes_From_File (
-      Registry : Build_Config_Registry_Access;
-      Modes_File : GNATCOLL.VFS.Virtual_File);
-   --  fill registry with all "builder-mode" found in file.
-
    procedure Load_Build_Config_Registry_From_File (
       Registry : Build_Config_Registry_Access;
-      File : GNATCOLL.VFS.Virtual_File);
+      File : GNATCOLL.VFS.Virtual_File;
+      Load_Builder_Modes : Boolean := True;
+      Load_Target_Models : Boolean := True;
+      Load_Targets : Boolean := True);
    --  fill regitry with all "builder-mode", "target-model", "target" found in
    --  the file
 

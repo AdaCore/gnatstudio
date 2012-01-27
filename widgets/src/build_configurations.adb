@@ -1375,41 +1375,6 @@ package body Build_Configurations is
       end loop;
    end Load_All_Targets_From_XML;
 
-   --------------------------------
-   -- Load_All_Targets_From_File --
-   --------------------------------
-
-   procedure Load_All_Targets_From_File (
-      Registry : Build_Config_Registry_Access;
-      Targets_File : GNATCOLL.VFS.Virtual_File)
-   is
-      N : Node_Ptr;
-      C : Node_Ptr;
-      T : Target_Access;
-      pragma Unreferenced (T);
-
-   begin
-      N := Parse (Targets_File);
-
-      if N = null then
-         Trace (Me, "Error when loading targets file");
-      else
-         C := N.Child;
-
-         while C /= null loop
-            if C.Tag.all /= "target" then
-               Trace (Me, "Error in targets file");
-            else
-               T := Load_Target_From_XML (Registry, C, True);
-            end if;
-            C := C.Next;
-         end loop;
-      end if;
-
-      Free (N);
-
-   end Load_All_Targets_From_File;
-
    -----------------------
    -- Load_Mode_From_XML --
    -----------------------
@@ -1523,44 +1488,16 @@ package body Build_Configurations is
 
    end Load_Mode_From_XML;
 
-   ------------------------------
-   -- Load_All_Modes_From_File --
-   ------------------------------
-
-   procedure Load_All_Modes_From_File (
-      Registry : Build_Config_Registry_Access;
-      Modes_File : GNATCOLL.VFS.Virtual_File)
-   is
-      N : Node_Ptr;
-      C : Node_Ptr;
-      M : Mode_Record;
-      pragma Unreferenced (M);
-
-   begin
-      N := Parse (Modes_File);
-
-      if N = null then
-         Trace (Me, "Error when loading modes file");
-      else
-         C := N.Child;
-
-         while C /= null loop
-            M := Load_Mode_From_XML (Registry, C);
-            C := C.Next;
-         end loop;
-      end if;
-
-      Free (N);
-
-   end Load_All_Modes_From_File;
-
    ------------------------------------------
    -- Load_Build_Config_Registry_From_File --
    ------------------------------------------
 
    procedure Load_Build_Config_Registry_From_File (
       Registry : Build_Config_Registry_Access;
-      File : GNATCOLL.VFS.Virtual_File)
+      File : GNATCOLL.VFS.Virtual_File;
+      Load_Builder_Modes : Boolean := True;
+      Load_Target_Models : Boolean := True;
+      Load_Targets : Boolean := True)
    is
       N : Node_Ptr;
       C : Node_Ptr;
@@ -1581,28 +1518,38 @@ package body Build_Configurations is
          --  creating target before model is not handled by
          --  Load_Target_From_XML, so create target-model objects in the first
          --  loop and then target objects.
-         while C /= null loop
-            if C.Tag.all = "builder-mode" then
-               M := Load_Mode_From_XML (Registry, C);
-            elsif C.Tag.all = "target-model" then
-               Create_Model_From_XML (Registry, C);
-            end if;
-            C := C.Next;
-         end loop;
+         if Load_Builder_Modes or Load_Target_Models then
 
-         C := N.Child;
+            while C /= null loop
+               if C.Tag.all = "builder-mode" then
+                  if Load_Builder_Modes then
+                     M := Load_Mode_From_XML (Registry, C);
+                  end if;
+               elsif C.Tag.all = "target-model" and Load_Target_Models then
+                  Create_Model_From_XML (Registry, C);
+               end if;
+               C := C.Next;
+            end loop;
 
-         --  add targets
-         while C /= null loop
-            if C.Tag.all = "target" then
-               T := Load_Target_From_XML (Registry, C, True);
-            end if;
-            C := C.Next;
-         end loop;
+         end if;
+
+         if Load_Targets then
+
+            C := N.Child;
+
+            --  add targets
+            while C /= null loop
+               if C.Tag.all = "target" then
+                  T := Load_Target_From_XML (Registry, C, True);
+               end if;
+               C := C.Next;
+            end loop;
+
+         end if;
+
+         Free (N);
 
       end if;
-
-      Free (N);
 
    end Load_Build_Config_Registry_From_File;
 
