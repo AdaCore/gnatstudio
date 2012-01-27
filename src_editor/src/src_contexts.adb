@@ -2854,9 +2854,11 @@ package body Src_Contexts is
          when Smart_Mixed =>
             declare
                O       : String (S'Range);
-               I1, I2  : Natural := S'First;
+               I1, I2  : Natural;
                Capitalize_Next : Boolean := True;
+
             begin
+               I2 := S'First;
                loop
                   I1 := I2;
                   I2 := UTF8_Next_Char (S, I1);
