@@ -3792,16 +3792,15 @@ package body Entities.Queries is
             Iter.Total := Iter.Total + Tmp;
             Iter.LI_Total := 0;
 
-            if Iter.LI /= null then
-               Free (Iter.LI.all);
-               Unchecked_Free (Iter.LI);
-            end if;
+            Free (Iter.LI.all);
+            Unchecked_Free (Iter.LI);
 
             --  We finished iterating for this project and language.
             --  Move to next language
 
             Iter.Current_Lang := Iter.Current_Lang + 1;
          end if;
+
          return False;
       end Process;
 
