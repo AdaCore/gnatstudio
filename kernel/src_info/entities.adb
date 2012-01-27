@@ -2537,8 +2537,6 @@ package body Entities is
          return Declaration;
       elsif Ref.Entity.References /= Entity_File_Maps.Empty_Map then
          return Element (Ref.Entity.References, Ref.Index).Kind;
-      elsif Ref.Index.Is_Declaration then
-         return Declaration;
       else
          return Reference;
       end if;
