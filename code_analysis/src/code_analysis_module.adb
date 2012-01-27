@@ -257,7 +257,8 @@ package body Code_Analysis_Module is
    function Get_Or_Create
      (Name : String := -"Coverage") return Code_Analysis_Instance;
    --  Create a new analysis instance.
-   --  The instance is inserted in the Instances set of the Module_ID
+   --  The instance is inserted in the Instances set of the Module_ID.
+   --  This function will always return a non null value.
 
    procedure Add_Gcov_File_Info_From_Menu
      (Widget  : access Glib.Object.GObject_Record'Class;
@@ -600,11 +601,6 @@ package body Code_Analysis_Module is
       Analysis := Get_Or_Create
         (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Analysis = null then
-         Set_Error_Msg (Data, -"The analysis no longer exists");
-         return;
-      end if;
-
       Name_Parameters (Data, (2 => Src_File_Cst'Access,
                               3 => Cov_File_Cst'Access));
       Src_Inst := Nth_Arg
@@ -747,11 +743,6 @@ package body Code_Analysis_Module is
       Analysis := Get_Or_Create
         (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Analysis = null then
-         Set_Error_Msg (Data, -"The analysis no longer exists");
-         return;
-      end if;
-
       Name_Parameters (Data, (2 => Prj_File_Cst'Access));
          Prj_Inst := Nth_Arg
            (Data, 2, Get_File_Class (Get_Kernel (Data)),
@@ -843,11 +834,6 @@ package body Code_Analysis_Module is
       Analysis := Get_Or_Create
         (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Analysis = null then
-         Set_Error_Msg (Data, -"The analysis no longer exists");
-         return;
-      end if;
-
       Prj_Name := Get_Project (Get_Kernel (Data));
       Prj_Iter := Start (Prj_Name);
 
@@ -906,11 +892,6 @@ package body Code_Analysis_Module is
       Analysis := Get_Or_Create
         (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Analysis = null then
-         Set_Error_Msg (Data, -"The analysis no longer exists");
-         return;
-      end if;
-
       Show_All_Coverage_Information (Get_Kernel (Data), Analysis.Projects);
 
       --  Build/Refresh the Coverage Report
@@ -936,11 +917,6 @@ package body Code_Analysis_Module is
       Analysis := Get_Or_Create
         (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Analysis = null then
-         Set_Error_Msg (Data, -"The analysis no longer exists");
-         return;
-      end if;
-
       Hide_All_Coverage_Information (Get_Kernel (Data), Analysis.Projects);
 
    exception
@@ -963,11 +939,6 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Analysis := Get_Or_Create
         (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
-
-      if Analysis = null then
-         Set_Error_Msg (Data, -"The analysis no longer exists");
-         return;
-      end if;
 
       Show_Analysis_Report (Get_Kernel (Data), Analysis);
 
@@ -1986,11 +1957,6 @@ package body Code_Analysis_Module is
       Analysis := Get_Or_Create
         (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Analysis = null then
-         Set_Error_Msg (Data, -"The analysis no longer exists");
-         return;
-      end if;
-
       --  Check the parameters of the command
       Name_Parameters (Data, (2 => Xml_File_Cst'Access));
       File_Inst := Nth_Arg
@@ -2030,11 +1996,6 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Analysis := Get_Or_Create
         (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
-
-      if Analysis = null then
-         Set_Error_Msg (Data, -"The analysis no longer exists");
-         return;
-      end if;
 
       --  Check the parameters of the command
       Name_Parameters (Data, (2 => Xml_File_Cst'Access));
