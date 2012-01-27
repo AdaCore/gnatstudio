@@ -3495,7 +3495,7 @@ package body Src_Editor_Buffer is
       --  not to another filename (which happens for example when doing
       --  automatic saves.
 
-      if Success and then not Internal then
+      if not Internal then
          Buffer.Save_Complete := not Has_Errors;
 
          if Buffer.Filename /= Filename then
