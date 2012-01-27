@@ -2409,6 +2409,8 @@ package body Browsers.Canvas is
          return;
       end if;
 
+      H := 0;
+
       for L in List.Lines'Range loop
          Text        := List.Lines (L).Text;
          First       := Text'First;
