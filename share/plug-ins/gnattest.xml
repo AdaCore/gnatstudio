@@ -112,10 +112,10 @@
   <submenu>
     <title>Tools/GNATTest</title>
     <menu action="run gnattest">
-      <title>Generate harness</title>
+      <title>Generate unit test setup</title>
     </menu>
     <menu action="re-generate harness project">
-      <title>Re-generate harness</title>
+      <title>Regenerate unit test setup</title>
     </menu>
     <menu action="open harness">
       <title>Open harness project</title>
@@ -126,11 +126,11 @@
   </submenu>
 
   <contextual action="run gnattest">
-    <title>GNATTest/Generate harness for %p</title>
+    <title>GNATTest/Generate unit test setup for %p</title>
   </contextual>
 
   <contextual action="re-generate harness project">
-    <title>GNATTest/Re-generate harness for %p</title>
+    <title>GNATTest/Regenerate unit test setup for %p</title>
   </contextual>
 
   <contextual action="open harness">
