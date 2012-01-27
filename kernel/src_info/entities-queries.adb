@@ -2257,6 +2257,7 @@ package body Entities.Queries is
 
          while It /= Null_Entity_Reference_Cursor loop
             Ref := Element (It);
+
             if Ref.Location.File = File then
                if (Force_Spec and then Ref.Kind = End_Of_Spec)
                    or else (not Force_Spec and then Ref.Kind = End_Of_Body)
@@ -2264,7 +2265,7 @@ package body Entities.Queries is
                   return Ref.Location;
                end if;
 
-               if Ref.Location.File = File and then Ref.Kind = Body_Entity then
+               if Ref.Kind = Body_Entity then
                   Body_Seen := True;
 
                   if Ref.Location = Entity.LI_Declaration then
@@ -2283,12 +2284,12 @@ package body Entities.Queries is
                if Force_Spec
                  and then not Body_Seen
                  and then Is_Parameter_Reference (Ref.Kind)
-                 and then Ref.Location.File = File
                then
                   Max := Ref.Location;
                   Max.Column := Max.Column + 1;
                end if;
             end if;
+
             It := Next (It);
          end loop;
 
