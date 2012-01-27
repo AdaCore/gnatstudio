@@ -150,10 +150,7 @@ package body Basic_Mapper is
       Last_2   : Integer := 1;
 
    begin
-      if Mapper = null then
-         Mapper := new File_Mapper;
-      end if;
-
+      Mapper := new File_Mapper;
       Ada.Text_IO.Open (File, Ada.Text_IO.In_File, +File_Name.Full_Name);
 
       while Last_2 >= 0
