@@ -408,6 +408,15 @@ package body Entities.Queries is
          Status := Success;
          Entity := Closest;
 
+      elsif Distance < Num_Columns_Per_Line then
+         --  If we found an entity on the same line, assume this is the right
+         --  entity, even if there are overloadings.
+         --  Improves the situation, in particular with C/C++ xrefs where
+         --  column info is not always accurate.
+
+         Status := Fuzzy_Match;
+         Entity := Closest;
+
       elsif Distance = Integer'Last then
          Status      := Entity_Not_Found;
          Entity      := null;
