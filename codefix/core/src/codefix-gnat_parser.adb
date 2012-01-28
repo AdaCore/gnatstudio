@@ -2808,7 +2808,7 @@ package body Codefix.GNAT_Parser is
       elsif First_Word = "unit" then
          Category := Cat_With;
          Operation_Mask := Options.Remove_Policy;
-      elsif First_Word = "" then
+      else
          Category := Cat_Unknown;
          Operation_Mask := Options.Remove_Policy or Add_Pragma_Unreferenced;
       end if;
