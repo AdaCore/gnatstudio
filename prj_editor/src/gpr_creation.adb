@@ -570,8 +570,9 @@ package body GPR_Creation is
       All_Source_Dirs : Boolean := False)
    is
       pragma Unreferenced (Root_Project);
-      Current_Dir : Natural;
+      Current_Dir : Natural := 0;
       Tmp         : Import_Project_Error;
+
    begin
       for D in Object_Dirs'Range loop
          --  Have we found the object directory matching our current project ?
@@ -591,11 +592,24 @@ package body GPR_Creation is
          end if;
       end loop;
 
-      Projects (Current_Project).Set_Attribute
-        (Attribute => Obj_Dir_Attribute,
-         Value     => Obj_Dirs (Current_Dir).all);
+      if Current_Dir in Obj_Dirs'Range then
+         Projects (Current_Project).Set_Attribute
+           (Attribute => Obj_Dir_Attribute,
+            Value     => Obj_Dirs (Current_Dir).all);
+      else
+         --  Should never happen, but no need to fail if it does
+         null;
+      end if;
 
-      if not All_Source_Dirs then
+      if All_Source_Dirs then
+         Process_List
+           (Projects (Current_Project), Source_Dirs_Attribute, Source_Dirs);
+         Generate_Source_Files_List
+           (Project       => Projects (Current_Project),
+            Src_Files     => Src_Files,
+            Obj_Dir_Index => Current_Dir);
+
+      else
          declare
             List  : String_List (Related_To'Range (1));
             Index : Integer := List'First;
@@ -611,14 +625,6 @@ package body GPR_Creation is
               (Attribute => Source_Dirs_Attribute,
                Values    => List (List'First .. Index - 1));
          end;
-
-      else
-         Process_List
-           (Projects (Current_Project), Source_Dirs_Attribute, Source_Dirs);
-         Generate_Source_Files_List
-           (Project       => Projects (Current_Project),
-            Src_Files     => Src_Files,
-            Obj_Dir_Index => Current_Dir);
       end if;
    end Generate_Withs;
 
