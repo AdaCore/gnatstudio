@@ -1270,7 +1270,7 @@ package body Task_Manager.GUI is
    is
       Index    : Natural := 0;
       Count    : Natural := 0;
-      Fraction : Gdouble;
+      Fraction : Gdouble := 0;
    begin
       if Manager.Queues = null then
          return Null_Progress_Data;
