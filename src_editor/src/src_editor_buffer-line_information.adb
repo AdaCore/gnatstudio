@@ -1539,7 +1539,7 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Note     : Line_Info_Note;
       The_Data : Line_Info_Width_Array_Access;
-      BL       : Buffer_Line_Type;
+      BL       : Buffer_Line_Type := 0;
 
       EL       : Editable_Line_Type := Editable_Line;
       Mark     : constant Editor_Mark'Class := Message.Get_Editor_Mark;
