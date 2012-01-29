@@ -38,9 +38,9 @@ package body Language.Documentation is
       Comment_Start := Current;
       Skip_To_Previous_Comment_Start
         (Context, Buffer, Comment_Start, Allow_Blanks);
+      Comment_End := Comment_Start;
 
       if Comment_Start /= 0 then
-         Comment_End := Comment_Start;
          Skip_To_Current_Comment_Block_End (Context, Buffer, Comment_End);
          Comment_End := Line_End (Buffer, Comment_End);
 
@@ -69,9 +69,9 @@ package body Language.Documentation is
       --  separated by a blank line)
       Comment_Start := Decl_Index;
       Skip_To_Next_Comment_Start (Context, Buffer, Comment_Start);
+      Comment_End := Comment_Start;
 
       if Comment_Start /= 0 then
-         Comment_End := Comment_Start;
          Skip_To_Current_Comment_Block_End (Context, Buffer, Comment_End);
          Comment_End := Line_End (Buffer, Comment_End);
 
