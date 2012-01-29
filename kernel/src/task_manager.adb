@@ -209,7 +209,7 @@ package body Task_Manager is
          return True;
       end Free_Queue;
 
-      Index : Natural;
+      Index : Natural := 0;
 
    begin
       if Manager.Queues = null then
