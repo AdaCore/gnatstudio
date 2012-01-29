@@ -687,80 +687,79 @@ package body Remote.Rsync is
                end if;
             end if;
 
-            if Cb_Data.Synchronous and then not Cb_Data.Dialog_Running then
-               --  Get number of files to consider
-               Pulse (Cb_Data.Dialog.Progress);
-               Last := Stripped_Buffer'First;
-
-               loop
-                  Match (Files_Considered_Regexp,
-                         Stripped_Buffer (Last .. Stripped_Buffer'Last),
-                         Matched);
-
-                  if Matched (0) = No_Match then
-                     --  Set back last match
-                     Matched := Last_Matched;
-                     exit;
-                  end if;
-
-                  Last := Matched (0).Last + 1;
-                  Last_Matched := Matched;
-               end loop;
-
-               if Matched (0) /= No_Match then
-                  Set_Fraction (Cb_Data.Dialog.Progress, 0.0);
-                  Set_Text
-                    (Cb_Data.Dialog.File_Progress,
-                     -"Files to consider: " &
-                     Stripped_Buffer (Matched (0).First .. Matched (0).Last));
-               end if;
-
-            elsif Cb_Data.Synchronous and then Cb_Data.Dialog_Running then
-
-               --  Get file transfered
-               Last_Matched (0) := No_Match;
-               Last := Stripped_Buffer'First;
-
-               loop
-                  Match (File_Regexp,
-                         Stripped_Buffer (Last .. Stripped_Buffer'Last),
-                         Matched);
-
-                  if Matched (0) = No_Match then
-                     --  Set back last match
-                     Matched := Last_Matched;
-                     exit;
-                  end if;
-
-                  Last := Matched (0).Last;
-                  Last_Matched := Matched;
-               end loop;
-
-               if Matched (0) /= No_Match then
-                  Set_Text (Cb_Data.Dialog.File_Progress,
-                            Stripped_Buffer
-                              (Matched (1).First .. Matched (1).Last));
-               end if;
-
-               --  Get file transfered progression
-               Match (File_Progress_Regexp,
-                      Stripped_Buffer,
-                      Matched);
-
-               if Matched (0) /= No_Match then
-                  declare
-                     Percent : constant Natural := Natural'Value
-                       (Stripped_Buffer
-                          (Matched (1).First .. Matched (1).Last));
-                  begin
-                     Set_Fraction
-                       (Cb_Data.Dialog.File_Progress,
-                        Gdouble (Percent) / 100.0);
-                  end;
-               end if;
-            end if;
-
             if Cb_Data.Synchronous then
+               if not Cb_Data.Dialog_Running then
+                  --  Get number of files to consider
+                  Pulse (Cb_Data.Dialog.Progress);
+                  Last := Stripped_Buffer'First;
+
+                  loop
+                     Match (Files_Considered_Regexp,
+                            Stripped_Buffer (Last .. Stripped_Buffer'Last),
+                            Matched);
+
+                     if Matched (0) = No_Match then
+                        --  Set back last match
+                        Matched := Last_Matched;
+                        exit;
+                     end if;
+
+                     Last := Matched (0).Last + 1;
+                     Last_Matched := Matched;
+                  end loop;
+
+                  if Matched (0) /= No_Match then
+                     Set_Fraction (Cb_Data.Dialog.Progress, 0.0);
+                     Set_Text
+                       (Cb_Data.Dialog.File_Progress,
+                        -"Files to consider: " &
+                        Stripped_Buffer
+                          (Matched (0).First .. Matched (0).Last));
+                  end if;
+
+               else
+
+                  --  Get file transfered
+                  Last_Matched (0) := No_Match;
+                  Last := Stripped_Buffer'First;
+
+                  loop
+                     Match (File_Regexp,
+                            Stripped_Buffer (Last .. Stripped_Buffer'Last),
+                            Matched);
+
+                     if Matched (0) = No_Match then
+                        --  Set back last match
+                        Matched := Last_Matched;
+                        exit;
+                     end if;
+
+                     Last := Matched (0).Last;
+                     Last_Matched := Matched;
+                  end loop;
+
+                  if Matched (0) /= No_Match then
+                     Set_Text (Cb_Data.Dialog.File_Progress,
+                               Stripped_Buffer
+                                 (Matched (1).First .. Matched (1).Last));
+                  end if;
+
+                  --  Get file transfered progression
+                  Match (File_Progress_Regexp, Stripped_Buffer, Matched);
+
+                  if Matched (0) /= No_Match then
+                     declare
+                        Percent : constant Natural := Natural'Value
+                          (Stripped_Buffer
+                             (Matched (1).First .. Matched (1).Last));
+                     begin
+                        Set_Fraction
+                          (Cb_Data.Dialog.File_Progress,
+                           Gdouble (Percent) / 100.0);
+                     end;
+                  end if;
+               end if;
+
                while Gtk.Main.Events_Pending loop
                   Dead := Gtk.Main.Main_Iteration;
                end loop;
