@@ -1144,9 +1144,9 @@ package body GVD_Module is
       Button2      : Boolean_Access := null;
       Cmd_Msg      : GNAT.Strings.String_Access := Arg_Msg'Unchecked_Access;
       Msg1         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
-      Msg2         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
+      Msg2         : GNAT.Strings.String_Access;
       Key1         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
-      Key2         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
+      Key2         : GNAT.Strings.String_Access;
 
    begin
       --  If the user has already requested to stop at the beginning (Start
