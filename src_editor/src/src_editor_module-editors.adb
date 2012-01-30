@@ -1989,12 +1989,12 @@ package body Src_Editor_Module.Editors is
       File        : Virtual_File := No_File;
       Internal    : Boolean := False)
    is
-      Success : Boolean;
-      pragma Unreferenced (Success);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
    begin
       if This.Contents.Buffer /= null then
          if File = No_File then
-            Success := Save_MDI_Children
+            Ignore := Save_MDI_Children
               (This.Contents.Kernel,
                Children =>
                  (1 => Find_Editor
@@ -2005,7 +2005,7 @@ package body Src_Editor_Module.Editors is
             Save_To_File
               (This.Contents.Buffer,
                Filename => File,
-               Success  => Success,
+               Success  => Ignore,
                Internal => Internal,
                Force    => not Interactive);
          end if;
