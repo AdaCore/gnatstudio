@@ -290,8 +290,8 @@ package body KeyManager_Module.GUI is
          Iter    : Key_Htable.Cursor;
          Binding : Key_Description_List;
          Found   : Boolean := False;
-         Success : Boolean;
-         pragma Unreferenced (Data, Changed, Accel_Key, Accel_Mods, Success);
+         Ignore  : Boolean;
+         pragma Unreferenced (Data, Changed, Accel_Key, Accel_Mods, Ignore);
 
       begin
          while First <= Accel_Path'Last
@@ -330,7 +330,7 @@ package body KeyManager_Module.GUI is
                   --  trying to set the same binding again, and will always
                   --  report a failure. We should not therefore fallback on
                   --  clearing the binding in case of failure. F721-013
-                  Success := Change_Entry
+                  Ignore := Change_Entry
                     (Accel_Path => Accel_Path,
                      Accel_Key  => Get_Key (Iter).Key,
                      Accel_Mods => Get_Key (Iter).Modifier,
@@ -345,7 +345,7 @@ package body KeyManager_Module.GUI is
          end loop Foreach_Binding;
 
          if not Found then
-            Success := Change_Entry
+            Ignore := Change_Entry
               (Accel_Path => Accel_Path,
                Accel_Key  => 0,
                Accel_Mods => 0,
