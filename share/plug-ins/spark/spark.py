@@ -178,8 +178,14 @@ def show_pogs_file():
 
   if not summary_file_option:
     # If the user has not specified an output file then the summary file
-    # is set to <objdir>/<project_name>.sum
-    focus_file = GPS.Project.root().object_dirs(False)[0] + re.sub("\.gpr$", ".sum", os.path.basename (GPS.Project.root().file().name()))
+    # is set to <SPARK'Output_Dir>/<project_name>.sum
+
+    prj = GPS.Project.root().file().name()
+    output_dir = GPS.Project.root().get_attribute_as_string("output_dir", "SPARK")
+    if output_dir == "":
+      output_dir = os.path.dirname(prj)
+
+    focus_file = output_dir + '/' + re.sub("\.gpr$", ".sum", os.path.basename(prj))
   else:
     focus_file = \
       summary_file_option.string[summary_file_option.start():summary_file_option.end()].lstrip("-o=")
@@ -753,6 +759,19 @@ xml_spark = """<?xml version="1.0"?>
   <key action="/SPARK/SPARKSimp">F10</key>
   <key action="/SPARK/POGS">F11</key>
   <key action="/SPARK/SPARKFormat File">F12</key>
+
+  <!-- SPARK project attributes -->
+
+  <project_attribute
+     name="output_dir"
+     package="SPARK"
+     editor_page="SPARK"
+     editor_section="SPARK configuration"
+     description="Output directory for SPARK tools (in particular Examiner, SPARKSimp, POGS). Defaults to the project's dir if not set"
+     label="Output directory"
+     hide_in="wizard library_wizard">
+     <string type="directory" />
+  </project_attribute>
 
 </SPARK>
 
