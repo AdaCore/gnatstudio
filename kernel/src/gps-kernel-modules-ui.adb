@@ -1179,10 +1179,10 @@ package body GPS.Kernel.Modules.UI is
       Filter      : Action_Filter  := null;
       Mnemonics   : Boolean := True)
    is
-      Item : Gtk_Menu_Item;
-      pragma Unreferenced (Item);
+      Ignore : Gtk_Menu_Item;
+      pragma Unreferenced (Ignore);
    begin
-      Item := Register_Menu
+      Ignore := Register_Menu
         (Kernel, Parent_Path, Text, Stock_Image, Callback, Command,
          Accel_Key, Accel_Mods, Ref_Item, Add_Before, Sensitive, Action,
          Filter, Mnemonics);
