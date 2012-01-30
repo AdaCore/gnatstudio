@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2011, AdaCore                     --
+--                     Copyright (C) 2009-2012, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1510,8 +1510,6 @@ package body Remote.Config_Dialog is
                Substr : constant String := Str (Idx .. Idx_End);
                List   : GNAT.Strings.String_List (1 .. N_Lines);
             begin
-               Idx := Substr'First;
-
                for J in List'Range loop
                   Idx_End := Line_End (Substr, Idx);
                   List (J) := new String'(Substr (Idx .. Idx_End));
