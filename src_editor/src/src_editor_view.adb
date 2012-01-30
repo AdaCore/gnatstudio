@@ -1702,13 +1702,13 @@ package body Src_Editor_View is
    -------------------------
 
    procedure Stop_Selection_Drag (View : access Source_View_Record'Class) is
-      Result : Boolean;
-      pragma Unreferenced (Result);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
    begin
       if View.Button_Pressed then
          Set_Time (View.Button_Event, 0);
 
-         Result := Return_Callback.Emit_By_Name
+         Ignore := Return_Callback.Emit_By_Name
            (View, Signal_Button_Release_Event, View.Button_Event);
       end if;
    end Stop_Selection_Drag;
@@ -1766,17 +1766,8 @@ package body Src_Editor_View is
       Get_Iter_Location (View, Iter, Iter_Location);
       Get_Line_Yrange (View, Iter, Unused, Line_Height);
 
-      Out_Of_Bounds := False;
-
-      if Buffer_X > Iter_Location.X then
-         Buffer_X := Iter_Location.X;
-         Out_Of_Bounds := True;
-      end if;
-
-      if Buffer_Y > Iter_Location.Y + Line_Height then
-         Buffer_Y := Iter_Location.Y + Line_Height;
-         Out_Of_Bounds := True;
-      end if;
+      Out_Of_Bounds := Buffer_X > Iter_Location.X
+        or else Buffer_Y > Iter_Location.Y + Line_Height;
    end Window_To_Buffer_Coords;
 
    ----------------------------
@@ -2043,6 +2034,7 @@ package body Src_Editor_View is
                       Source_Buffer (Get_Buffer (View));
       Start, Last : Gtk_Text_Iter;
       Result      : Boolean;
+      Ignore      : Boolean;
 
       Key         : Gdk_Key_Type;
    begin
@@ -2060,7 +2052,7 @@ package body Src_Editor_View is
       Key := Get_Key_Val (Event);
 
       if Key /= GDK_Control_L and then Key /= GDK_Control_R then
-         Result := Position_Set_Explicitely (Buffer, True);
+         Ignore := Position_Set_Explicitely (Buffer, True);
       end if;
 
       if not Get_Editable (View) then
@@ -2095,7 +2087,7 @@ package body Src_Editor_View is
             --  If there is a selection, delete it
 
             if Selection_Exists (Buffer) then
-               Result := Delete_Selection (Buffer, True, True);
+               Ignore := Delete_Selection (Buffer, True, True);
 
                External_End_Action (Buffer);
 
@@ -2112,14 +2104,14 @@ package body Src_Editor_View is
                   --  as-is modifier set.
 
                   if not View.As_Is_Enabled then
-                     Backward_Line (Start, Result);
+                     Backward_Line (Start, Ignore);
                   end if;
 
                   if not Ends_Line (Last) then
-                     Forward_To_Line_End (Last, Result);
+                     Forward_To_Line_End (Last, Ignore);
                   end if;
 
-                  Result := Do_Indentation (Buffer, Start, Last);
+                  Ignore := Do_Indentation (Buffer, Start, Last);
                end if;
 
                View.Reset_As_Is_Mode;
