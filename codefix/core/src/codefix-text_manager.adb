@@ -1067,7 +1067,6 @@ package body Codefix.Text_Manager is
       Last, Increment    : Integer;
       Result             : Word_Cursor;
       New_Cursor         : File_Cursor;
-      Old_Col            : Visible_Column_Type;
    begin
       New_Cursor := File_Cursor (Cursor);
 
@@ -1078,10 +1077,6 @@ package body Codefix.Text_Manager is
          when Reverse_Step =>
             Last := 1;
             Increment := -1;
-            Old_Col := New_Cursor.Col;
-            New_Cursor.Col := 1;
-
-            New_Cursor.Col := Old_Col;
       end case;
 
       loop
