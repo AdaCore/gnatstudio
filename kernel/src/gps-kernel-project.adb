@@ -529,8 +529,8 @@ package body GPS.Kernel.Project is
       Found               : Boolean;
       Is_Default          : Boolean := False;
 
-      Had_Project_Desktop : Boolean;
-      pragma Unreferenced (Had_Project_Desktop);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
 
    begin
       --  Save all open children, and close everything. A new desktop will be
@@ -570,7 +570,7 @@ package body GPS.Kernel.Project is
 
       if Load_Default_Desktop then
          Close_All_Children (Kernel);
-         Had_Project_Desktop := Load_Desktop (Kernel);
+         Ignore := Load_Desktop (Kernel);
       end if;
 
       Pop_State (Kernel_Handle (Kernel));
@@ -583,11 +583,11 @@ package body GPS.Kernel.Project is
    procedure Load_Empty_Project
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Had_Project_Desktop : Boolean;
-      pragma Unreferenced (Had_Project_Desktop);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
    begin
       Close_All_Children (Kernel);
-      Had_Project_Desktop := Load_Desktop (Kernel);
+      Ignore := Load_Desktop (Kernel);
 
       Entities.Reset (Get_Database (Kernel));
 
@@ -676,9 +676,9 @@ package body GPS.Kernel.Project is
          Set_Pref (Auto_Jump_To_First, Kernel, Old_Pref);
       end Report_Error;
 
-      Had_Project_Desktop : Boolean;
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
       New_Project_Loaded  : Boolean;
-      pragma Unreferenced (Had_Project_Desktop);
       Data                : aliased File_Hooks_Args;
 
       Same_Project     : Boolean;
@@ -757,7 +757,7 @@ package body GPS.Kernel.Project is
                Data.File := Previous_Project;
                Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
 
-               Had_Project_Desktop := Load_Desktop (Kernel);
+               Ignore := Load_Desktop (Kernel);
                Pop_State (Kernel_Handle (Kernel));
                return;
             end if;
@@ -786,7 +786,7 @@ package body GPS.Kernel.Project is
          --  anyway (corresponding to the default or empty project).
 
          if not Same_Project then
-            Had_Project_Desktop := Load_Desktop
+            Ignore := Load_Desktop
               (Kernel, For_Project => Local_Project);
          end if;
 
@@ -866,7 +866,7 @@ package body GPS.Kernel.Project is
          end if;
 
          if not New_Project_Loaded then
-            Had_Project_Desktop := Load_Desktop (Kernel);
+            Ignore := Load_Desktop (Kernel);
          end if;
 
          Run_Hook (Kernel, Project_Changed_Hook);
@@ -879,7 +879,7 @@ package body GPS.Kernel.Project is
          Console.Insert (Kernel, (-"Cannot find project file ")
                          & Display_Full_Name (Project),
                          Mode => Console.Error, Add_LF => False);
-         Had_Project_Desktop := Load_Desktop (Kernel);
+         Ignore := Load_Desktop (Kernel);
       end if;
    end Load_Project;
 
