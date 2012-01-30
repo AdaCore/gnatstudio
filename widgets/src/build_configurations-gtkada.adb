@@ -1081,7 +1081,8 @@ package body Build_Configurations.Gtkada is
       Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
 
       Buttons       : Gtk_Hbox;
-      Button        : Gtk_Button;
+      Button, Temp  : Gtk_Button;
+      pragma Unreferenced (Temp);
       Image         : Gtk_Image;
 
       Scrolled : Gtk_Scrolled_Window;
@@ -1194,10 +1195,10 @@ package body Build_Configurations.Gtkada is
 
       --  Create the dialog buttons
 
-      Button := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
-      Button := Gtk_Button
+      Temp := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Temp := Gtk_Button
         (Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply));
-      Button := Gtk_Button
+      Temp := Gtk_Button
         (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
