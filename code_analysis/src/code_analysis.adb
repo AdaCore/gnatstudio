@@ -300,9 +300,9 @@ package body Code_Analysis is
          Unchecked_Free (Analysis_Id.Coverage_Data);
       end if;
 
-      if Analysis_Id.Code_Peer_Data /= null then
-         Analysis_Id.Code_Peer_Data.Finalize;
-         Unchecked_Free (Analysis_Id.Code_Peer_Data);
+      if Analysis_Id.CodePeer_Data /= null then
+         Analysis_Id.CodePeer_Data.Finalize;
+         Unchecked_Free (Analysis_Id.CodePeer_Data);
       end if;
    end Free_Analysis;
 

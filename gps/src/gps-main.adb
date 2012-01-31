@@ -109,7 +109,7 @@ with Call_Graph_Views;
 with Casing_Exceptions;
 with Clipboard_Views;
 with Code_Analysis_Module;
-with Code_Peer.Module;
+with CodePeer.Module;
 with Codefix_Module;
 with Command_Window;
 with Cpp_Module;
@@ -191,8 +191,8 @@ procedure GPS.Main is
                        Create ("MODULE.Project_Templates", GNATCOLL.Traces.On);
    Code_Analysis_Trace    : constant Debug_Handle :=
                         Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
-   Code_Peer_Trace        : constant Debug_Handle :=
-                              Create ("MODULE.Code_Peer", GNATCOLL.Traces.On);
+   CodePeer_Trace         : constant Debug_Handle :=
+                              Create ("MODULE.CodePeer", GNATCOLL.Traces.On);
    GNATStack_Trace        : constant Debug_Handle :=
                               Create ("MODULE.GNATStack", GNATCOLL.Traces.On);
    Codefix_Trace          : constant Debug_Handle :=
@@ -1475,8 +1475,8 @@ procedure GPS.Main is
          Code_Analysis_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (Code_Peer_Trace) then
-         Code_Peer.Module.Register_Module (GPS_Main.Kernel);
+      if Active (CodePeer_Trace) then
+         CodePeer.Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (GNATStack_Trace) then
