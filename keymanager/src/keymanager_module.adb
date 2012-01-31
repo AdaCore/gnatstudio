@@ -1378,9 +1378,7 @@ package body KeyManager_Module is
                        & Prefix
                        & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier);
 
-                  elsif not Return_Multiple
-                    and then Prefix = ""
-                  then
+                  elsif Prefix = "" then
                      --  When returning a single key binding, give priority to
                      --  the ones with a single key, so that we can display
                      --  them in menu shortcuts
