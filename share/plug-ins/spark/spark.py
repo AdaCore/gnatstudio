@@ -405,8 +405,8 @@ xml_spark = """<?xml version="1.0"?>
 
       <title column="2" line="2">Analysis</title>
       <radio column="2" line="2">
-        <radio-entry label="Information and Data Flow" switch="-flow_analysis=information" />
         <radio-entry label="Automatic Selection" switch="-flow_analysis=auto" />
+        <radio-entry label="Information and Data Flow" switch="-flow_analysis=information" />
         <radio-entry label="Data Flow only" switch="-flow_analysis=data" />
       </radio>
       <check column="2" line="2" label="Generate VCs" switch="-vcg" />
@@ -421,11 +421,11 @@ xml_spark = """<?xml version="1.0"?>
       </combo>
       <title line="3" column-span="2">General</title>
       <combo label="Replacement Rules" switch="-rules" separator="="
-             noswitch="none" column="1" line="3"
+             noswitch="Lazy" column="1" line="3"
              tip="Replacement rules for composite constants">
         <combo-entry label="None" value="none" />
         <combo-entry label="Lazy" value="lazy" />
-	<combo-entry label="Keen" value="keen" />
+	     <combo-entry label="Keen" value="keen" />
         <combo-entry label="All" value="all" />
       </combo>
       <combo label="Error Explanations" switch="-error_explanations"
