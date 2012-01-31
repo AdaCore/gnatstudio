@@ -139,9 +139,9 @@ package body Scenario_Selectors is
       Col           : Gtk_Tree_View_Column;
       Toggle_Render : Gtk_Cell_Renderer_Toggle;
       Text_Render   : Gtk_Cell_Renderer_Text;
-      Num           : Gint;
+      Ignore        : Gint;
       Scrolled      : Gtk_Scrolled_Window;
-      pragma Unreferenced (Num);
+      pragma Unreferenced (Ignore);
 
    begin
       Initialize_Vbox (Selector, Homogeneous => False);
@@ -170,7 +170,7 @@ package body Scenario_Selectors is
 
       Gtk_New (Col);
       Set_Clickable (Col, True);
-      Num := Append_Column (View, Col);
+      Ignore := Append_Column (View, Col);
       Widget_Callback.Object_Connect
         (Col, Signal_Clicked,
          Select_All_Project'Access, Slot_Object => Selector);
@@ -186,7 +186,7 @@ package body Scenario_Selectors is
       Gtk_New (Col);
       Set_Clickable (Col, True);
       Set_Sort_Column_Id (Col, Project_Name_Column);
-      Num := Append_Column (View, Col);
+      Ignore := Append_Column (View, Col);
       Set_Title (Col, -"Project");
 
       Gtk_New (Text_Render);
@@ -422,8 +422,8 @@ package body Scenario_Selectors is
       Col           : Gtk_Tree_View_Column;
       Toggle_Render : Gtk_Cell_Renderer_Toggle;
       Text_Render   : Gtk_Cell_Renderer_Text;
-      Num           : Gint;
-      pragma Unreferenced (Num);
+      Ignore : Gint;
+      pragma Unreferenced (Ignore);
 
    begin
       Gtk.Scrolled_Window.Initialize (Selector);
@@ -439,7 +439,7 @@ package body Scenario_Selectors is
 
       Gtk_New (Col);
       Set_Clickable (Col, True);
-      Num := Append_Column (View, Col);
+      Ignore := Append_Column (View, Col);
       Widget_Callback.Object_Connect
         (Col, Signal_Clicked, Select_All_Var'Access, Slot_Object => Selector);
 
@@ -452,7 +452,7 @@ package body Scenario_Selectors is
          Slot_Object => Selector);
 
       Gtk_New (Col);
-      Num := Append_Column (View, Col);
+      Ignore := Append_Column (View, Col);
       Set_Title (Col, -"Scenario");
 
       Gtk_New (Text_Render);
