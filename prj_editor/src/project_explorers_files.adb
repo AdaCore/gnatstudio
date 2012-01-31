@@ -414,8 +414,8 @@ package body Project_Explorers_Files is
                Path_Found := True;
 
                declare
-                  Success   : Boolean;
-                  pragma Unreferenced (Success);
+                  Ignore    : Boolean;
+                  pragma Unreferenced (Ignore);
 
                   Path      : Gtk_Tree_Path;
                   Expanding : constant Boolean := D.Explorer.Expanding;
@@ -423,7 +423,7 @@ package body Project_Explorers_Files is
                   Path := Get_Path (D.Explorer.File_Model, D.Base);
 
                   D.Explorer.Expanding := True;
-                  Success := Expand_Row (D.Explorer.File_Tree, Path, False);
+                  Ignore := Expand_Row (D.Explorer.File_Tree, Path, False);
                   D.Explorer.Expanding := Expanding;
 
                   Set (D.Explorer.File_Model, D.Base, Icon_Column,
@@ -436,8 +436,8 @@ package body Project_Explorers_Files is
 
                if D.Norm_Dest = D.Files (J) then
                   declare
-                     Success   : Boolean;
-                     pragma Unreferenced (Success);
+                     Ignore    : Boolean;
+                     pragma Unreferenced (Ignore);
 
                      Expanding : constant Boolean := D.Explorer.Expanding;
                   begin
@@ -448,7 +448,7 @@ package body Project_Explorers_Files is
                         Iter, D.Depth, D.Norm_Dest, False);
 
                      D.Explorer.Expanding := True;
-                     Success := Expand_Row
+                     Ignore := Expand_Row
                        (D.Explorer.File_Tree,
                         D.Explorer.Path, False);
                      D.Explorer.Expanding := Expanding;
@@ -890,8 +890,8 @@ package body Project_Explorers_Files is
    is
       T       : constant Project_Explorer_Files :=
                   Project_Explorer_Files (Explorer);
-      Success : Boolean;
-      pragma Unreferenced (Success);
+      Ignore  : Boolean;
+      pragma Unreferenced (Ignore);
 
    begin
       if T.Expanding then
@@ -932,7 +932,7 @@ package body Project_Explorers_Files is
          end case;
       end;
 
-      Success := Expand_Row (T.File_Tree, Path, False);
+      Ignore := Expand_Row (T.File_Tree, Path, False);
       Scroll_To_Cell (T.File_Tree, Path, null, True, 0.1, 0.1);
 
       T.Expanding := False;
@@ -1147,9 +1147,9 @@ package body Project_Explorers_Files is
       Iter2     : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
       Dir       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.Dir (File);
       Path      : Gtk_Tree_Path;
-      Dead      : Boolean;
       Done      : Boolean;
-      pragma Unreferenced (Dead);
+      Ignore    : Boolean;
+      pragma Unreferenced (Ignore);
 
    begin
       Iter := Get_Iter_First (View.File_Model);
@@ -1248,7 +1248,7 @@ package body Project_Explorers_Files is
                   Sorted => True);
             end if;
 
-            Dead := Expand_Row (View.File_Tree, Path, False);
+            Ignore := Expand_Row (View.File_Tree, Path, False);
 
             return;
          end if;
