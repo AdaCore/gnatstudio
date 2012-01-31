@@ -862,8 +862,8 @@ package body Remote.View is
                      Get_Project (User.View.Kernel).Object_Dir;
       Reasons    : Ada.Strings.Unbounded.Unbounded_String;
       Failure    : Boolean := False;
-      Res        : Message_Dialog_Buttons;
-      pragma Unreferenced (W, Res);
+      Ignore     : Message_Dialog_Buttons;
+      pragma Unreferenced (W, Ignore);
 
    begin
       Push_State (User.View.Kernel, Busy);
@@ -932,11 +932,11 @@ package body Remote.View is
       Pop_State (User.View.Kernel);
 
       if not Failure then
-         Res := Message_Dialog
+         Ignore := Message_Dialog
            ("Remote configuration check has successfully completed",
             Buttons => Button_OK);
       else
-         Res := Message_Dialog
+         Ignore := Message_Dialog
            ("Remote configuration check has failed for the following reasons:"
             & ASCII.LF & To_String (Reasons),
             Dialog_Type => Error,
@@ -945,7 +945,7 @@ package body Remote.View is
 
    exception
       when E : others =>
-         Res := Message_Dialog
+         Ignore := Message_Dialog
            ("Remote configuration check has failed for the following reasons:"
             & ASCII.LF & "Exception received: " & ASCII.LF &
             Ada.Exceptions.Exception_Information (E),
