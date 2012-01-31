@@ -489,6 +489,7 @@ package body Code_Peer.Module is
                Element : constant Object_Access_Information :=
                  Object_Access_Vectors.Element (Position);
                Ignore  : Simple_Message_Access;
+               pragma Unreferenced (Ignore);
 
             begin
                Ignore :=
