@@ -229,8 +229,8 @@ package body Toolchains_Editor is
       Btn_Box         : Gtk.Box.Gtk_Vbox;
       Btn             : Gtk.Button.Gtk_Button;
       Col             : Gtk_Tree_View_Column;
-      Col_Number      : Gint;
-      pragma Unreferenced (Col_Number);
+      Ignore          : Gint;
+      pragma Unreferenced (Ignore);
       Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
       String_Renderer : Gtk_Cell_Renderer_Text;
       Frame           : Gtk_Frame;
@@ -268,7 +268,7 @@ package body Toolchains_Editor is
       Editor.Languages.Get_Selection.Set_Mode (Gtk.Enums.Selection_None);
 
       Gtk_New (Col);
-      Col_Number := Editor.Languages.Append_Column (Col);
+      Ignore := Editor.Languages.Append_Column (Col);
       Gtk_New (Toggle_Renderer);
       Col.Pack_Start (Toggle_Renderer, False);
       Col.Add_Attribute (Toggle_Renderer, "active", Active_Column);
@@ -279,7 +279,7 @@ package body Toolchains_Editor is
          User_Data   => Active_Column);
 
       Gtk_New (Col);
-      Col_Number := Editor.Languages.Append_Column (Col);
+      Ignore := Editor.Languages.Append_Column (Col);
       Gtk_New (String_Renderer);
       Col.Set_Title (-"Language");
       Col.Pack_Start (String_Renderer, False);
@@ -288,7 +288,7 @@ package body Toolchains_Editor is
       Col.Add_Attribute (String_Renderer, "foreground-set", Fg_Set_Column);
 
       Gtk_New (Col);
-      Col_Number := Editor.Languages.Append_Column (Col);
+      Ignore := Editor.Languages.Append_Column (Col);
       Gtk_New (Toggle_Renderer);
       Col.Set_Title (-"No compiler");
       Col.Pack_Start (Toggle_Renderer, False);
@@ -364,7 +364,7 @@ package body Toolchains_Editor is
 
       --  Add columns to the tree view and connect them to the tree model
       Gtk_New (Col);
-      Col_Number := Editor.Toolchains_Tree.Append_Column (Col);
+      Ignore := Editor.Toolchains_Tree.Append_Column (Col);
       Gtk_New (Toggle_Renderer);
       Col.Pack_Start (Toggle_Renderer, False);
       Col.Add_Attribute (Toggle_Renderer, "active", Active_Column);
@@ -377,21 +377,21 @@ package body Toolchains_Editor is
          User_Data   => Active_Column);
 
       Gtk_New (Col);
-      Col_Number := Editor.Toolchains_Tree.Append_Column (Col);
+      Ignore := Editor.Toolchains_Tree.Append_Column (Col);
       Gtk_New (String_Renderer);
       Col.Set_Title (-"Name");
       Col.Pack_Start (String_Renderer, False);
       Col.Add_Attribute (String_Renderer, "text", Label_Column);
 
       Gtk_New (Col);
-      Col_Number := Editor.Toolchains_Tree.Append_Column (Col);
+      Ignore := Editor.Toolchains_Tree.Append_Column (Col);
       Gtk_New (String_Renderer);
       Col.Set_Title (-"Location");
       Col.Pack_Start (String_Renderer, False);
       Col.Add_Attribute (String_Renderer, "text", Location_Column);
 
       Gtk_New (Col);
-      Col_Number := Editor.Toolchains_Tree.Append_Column (Col);
+      Ignore := Editor.Toolchains_Tree.Append_Column (Col);
       Gtk_New (String_Renderer);
       Col.Set_Title (-"Version");
       Col.Pack_Start (String_Renderer, False);
@@ -1428,11 +1428,11 @@ package body Toolchains_Editor is
       Editor     : constant Toolchains_Edit := Toolchains_Edit (W);
       Dialog     : Gtk.Dialog.Gtk_Dialog;
       Name_Entry : Gtk.Combo_Box.Gtk_Combo_Box;
-      Btn        : Gtk_Widget;
       Res        : Gtk_Response_Type;
       Known_Tc   : GNAT.Strings.String_List_Access :=
                      Toolchains.Known.Get_Known_Toolchain_Names;
-      pragma Unreferenced (Btn);
+      Ignore     : Gtk_Widget;
+      pragma Unreferenced (Ignore);
 
    begin
       Gtk.Dialog.Gtk_New
@@ -1449,10 +1449,10 @@ package body Toolchains_Editor is
 
       GNAT.Strings.Free (Known_Tc);
 
-      Btn := Dialog.Add_Button
+      Ignore := Dialog.Add_Button
         (Gtk.Stock.Stock_Ok, Response_Id => Gtk_Response_OK);
       Dialog.Set_Default_Response (Gtk_Response_OK);
-      Btn := Dialog.Add_Button
+      Ignore := Dialog.Add_Button
         (Gtk.Stock.Stock_Cancel, Response_Id => Gtk_Response_Cancel);
 
       Dialog.Show_All;
@@ -1563,8 +1563,8 @@ package body Toolchains_Editor is
                   GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args);
       Start   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Timeout : constant Duration := Duration (Timeout_MS) / 1000.0;
-      Dead    : Boolean;
-      pragma Unreferenced (Dead);
+      Ignore  : Boolean;
+      pragma Unreferenced (Ignore);
 
    begin
       --  If no such command exist, no need to try to spawn it
@@ -1586,7 +1586,7 @@ package body Toolchains_Editor is
             loop
                if Handle_GUI_Events then
                   while Gtk.Main.Events_Pending loop
-                     Dead := Gtk.Main.Main_Iteration;
+                     Ignore := Gtk.Main.Main_Iteration;
                   end loop;
                end if;
 
