@@ -353,8 +353,6 @@ package body Help_Module is
       Descr, Params, Returns, See_Also : Unbounded_String;
       Obsolescent, Example             : Unbounded_String;
    begin
-      Tmp := XML_Doc_File.Child;
-
       while Tmp /= null loop
          if Tmp.Tag.all = "shell_doc"
            and then (Get_Attribute (Tmp, "name", "") = Full_Name
@@ -929,8 +927,8 @@ package body Help_Module is
    is
       use ASCII;
 
-      Button     : Message_Dialog_Buttons;
-      pragma Unreferenced (Widget, Button);
+      Ignore     : Message_Dialog_Buttons;
+      pragma Unreferenced (Widget, Ignore);
 
       Verbose    : aliased String := "-v";
       Top        : constant GPS_Window :=
@@ -964,7 +962,7 @@ package body Help_Module is
          Append (About_Text, (1 => ASCII.LF));
       end if;
 
-      Button := Message_Dialog
+      Ignore := Message_Dialog
         (To_String (About_Text) & LF &
          (-"the GNAT Programming Studio") & LF & Contents.all & LF &
          "(c) 2001-2012 AdaCore",
