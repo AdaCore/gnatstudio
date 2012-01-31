@@ -391,9 +391,10 @@ package body Directory_Tree is
       Parent   : Gtk_Tree_Iter;
       Iter     : Gtk_Tree_Iter;
       Path     : Gtk_Tree_Path;
-      Success  : Boolean;
       Curr_Dir : Virtual_File;
-      pragma Unreferenced (Busy_Cursor_On);
+      Success  : Boolean;
+      Ignore   : Boolean;
+      pragma Unreferenced (Busy_Cursor_On, Ignore);
 
    begin
       --  Find the first non-expanded iter
@@ -422,7 +423,7 @@ package body Directory_Tree is
 
             --  Expand the selected directory
             if not Row_Expanded (Tree.File_Tree, Path) then
-               Success := Expand_Row (Tree.File_Tree, Path, False);
+               Ignore := Expand_Row (Tree.File_Tree, Path, False);
             end if;
 
             Path_Free (Path);
@@ -780,8 +781,8 @@ package body Directory_Tree is
       Dialog      : Gtk_Dialog;
       Label       : Gtk_Label;
       Ent         : Gtk_Entry;
-      Widget      : Gtk_Widget;
-      pragma Unreferenced (Widget);
+      Ignore      : Gtk_Widget;
+      pragma Unreferenced (Ignore);
 
    begin
       Gtk_New (Dialog,
@@ -798,8 +799,8 @@ package body Directory_Tree is
 
       Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
 
-      Widget := Add_Button (Dialog, "Create", Gtk_Response_OK);
-      Widget := Add_Button (Dialog, "Cancel", Gtk_Response_Cancel);
+      Ignore := Add_Button (Dialog, "Create", Gtk_Response_OK);
+      Ignore := Add_Button (Dialog, "Cancel", Gtk_Response_Cancel);
 
       Show_All (Dialog);
 
@@ -809,8 +810,8 @@ package body Directory_Tree is
             Model : Gtk_Tree_Model;
             Path  : Gtk_Tree_Path;
 
-            Success : Boolean;
-            pragma Unreferenced (Success);
+            Ignore : Boolean;
+            pragma Unreferenced (Ignore);
          begin
             Get_Selected
               (Get_Selection (Selector.Directory.File_Tree), Model, Iter);
@@ -820,8 +821,8 @@ package body Directory_Tree is
             Make_Dir_Recursive
               (Create_From_UTF8 (Get_Text (Ent)));
 
-            Success := Collapse_Row (Selector.Directory.File_Tree, Path);
-            Success := Expand_Row (Selector.Directory.File_Tree, Path, False);
+            Ignore := Collapse_Row (Selector.Directory.File_Tree, Path);
+            Ignore := Expand_Row (Selector.Directory.File_Tree, Path, False);
 
             Path_Free (Path);
 
@@ -1511,9 +1512,9 @@ package body Directory_Tree is
       Iter     : Gtk_Tree_Iter;
       Path     : Gtk_Tree_Path)
    is
-      T       : constant Dir_Tree := Dir_Tree (Explorer);
-      Success : Boolean;
-      pragma Unreferenced (Success);
+      T      : constant Dir_Tree := Dir_Tree (Explorer);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
 
    begin
       if T.Expanding then
@@ -1533,7 +1534,7 @@ package body Directory_Tree is
          File_Append_Directory (T, Iter_File, Iter, 1);
       end;
 
-      Success := Expand_Row (T.File_Tree, Path, False);
+      Ignore := Expand_Row (T.File_Tree, Path, False);
       Set_Cursor (T.File_Tree, Path, null, False);
 
       Scroll_To_Cell
@@ -1564,21 +1565,20 @@ package body Directory_Tree is
       if Iter /= Null_Iter then
          if Get_Event_Type (Event) = Gdk_2button_Press then
             declare
-               Path    : Gtk_Tree_Path;
-               Success : Boolean;
-               pragma Unreferenced (Success);
+               Path   : Gtk_Tree_Path;
+               Ignore : Boolean;
+               pragma Unreferenced (Ignore);
             begin
                Path := Get_Path (Model, Iter);
 
                if Row_Expanded (Tree, Path) then
-                  Success := Collapse_Row (Tree, Path);
+                  Ignore := Collapse_Row (Tree, Path);
                else
                   if Add_Dummy then
                      Append_Dummy_Iter (Model, Iter);
                   end if;
 
-                  Success := Expand_Row
-                    (Tree, Path, False);
+                  Ignore := Expand_Row (Tree, Path, False);
                end if;
 
                Path_Free (Path);
