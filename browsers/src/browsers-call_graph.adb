@@ -1357,13 +1357,13 @@ package body Browsers.Call_Graph is
    procedure On_Call_Graph
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Child       : MDI_Child;
-      pragma Unreferenced (Widget, Child);
+      Ignore : MDI_Child;
+      pragma Unreferenced (Widget, Ignore);
 
       Context     : constant Selection_Context := Get_Current_Context (Kernel);
       Node_Entity : Entity_Information;
    begin
-      Child := Open_Call_Graph_Browser (Kernel);
+      Ignore := Open_Call_Graph_Browser (Kernel);
 
       if Context /= No_Context then
          Node_Entity := Get_Entity (Context, Ask_If_Overloaded => True);
@@ -2170,14 +2170,14 @@ package body Browsers.Call_Graph is
       Include_Overriding : Gtk_Check_Button;
       Filter             : Reference_Kind_Filter := (others => False);
       Frame              : Gtk_Frame;
-      Widget             : Gtk_Widget;
+      Ignore             : Gtk_Widget;
       Entity             : constant Entity_Information :=
                              Get_Entity
                                (Context.Context, Ask_If_Overloaded => True);
       Current_File       : constant Virtual_File :=
                              File_Information (Context.Context);
       Button             : Gtk_Button;
-      pragma Unreferenced (Command, Widget);
+      pragma Unreferenced (Command, Ignore);
 
    begin
       Dialog := new References_Filter_Dialog_Record;
@@ -2282,8 +2282,8 @@ package body Browsers.Call_Graph is
       Associate (Get_History (Kernel).all, "Find_Prefs_Include_Overriding",
                  Include_Overriding);
 
-      Widget := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Widget := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
 
