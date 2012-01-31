@@ -631,14 +631,14 @@ package body Completion_Module is
       if Completion_Module /= null then
          Kill_File_Iteration
            (Get_Kernel (Completion_Module.all), Db_Loading_Queue);
+         Free
+           (Completion_Resolver_Access (Completion_Module.Completion_History));
+         Free (Completion_Resolver_Access
+               (Completion_Module.Completion_Keywords));
+
+         Reset_Completion_Data;
+         Completion_Module := null;
       end if;
-
-      Free (Completion_Resolver_Access (Completion_Module.Completion_History));
-      Free (Completion_Resolver_Access
-            (Completion_Module.Completion_Keywords));
-
-      Reset_Completion_Data;
-      Completion_Module := null;
    end Destroy;
 
    -----------------------
@@ -903,11 +903,11 @@ package body Completion_Module is
    -------------------------
 
    procedure Move_To_Next_Editor is
-      M    : Completion_Module_Access renames Completion_Module;
-      Iter : Gtk_Text_Iter;
-      Lang : Language_Context_Access;
-      Box  : Source_Editor_Box;
-      pragma Unreferenced (Box);
+      M      : Completion_Module_Access renames Completion_Module;
+      Iter   : Gtk_Text_Iter;
+      Lang   : Language_Context_Access;
+      Ignore : Source_Editor_Box;
+      pragma Unreferenced (Ignore);
    begin
       if M = null then
          return;
@@ -916,7 +916,7 @@ package body Completion_Module is
       --  If we are currently pointing to an editor, this is a valid candidate
       while Get (M.Child) /= null loop
          begin
-            Box := Get_Source_Box_From_MDI (Get (M.Child));
+            Ignore := Get_Source_Box_From_MDI (Get (M.Child));
             exit;
          exception
             when Constraint_Error =>
@@ -1476,10 +1476,10 @@ package body Completion_Module is
    ------------------------------
 
    function Trigger_Timeout_Callback return Boolean is
-      Result : Command_Return_Type;
-      pragma Unreferenced (Result);
+      Ignore : Command_Return_Type;
+      pragma Unreferenced (Ignore);
    begin
-      Result := Smart_Complete
+      Ignore := Smart_Complete
         (Get_Kernel (Completion_Module.all),
          Complete => False,
          Volatile => True);
