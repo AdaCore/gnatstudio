@@ -450,8 +450,8 @@ package body VCS_View_API is
       Label  : Gtk_Label;
       Box    : Gtk_Box;
       Browse : Gtk_Button;
-      Button : Gtk_Widget;
-      pragma Unreferenced (Button);
+      Ignore : Gtk_Widget;
+      pragma Unreferenced (Ignore);
    begin
       Dialog := new Create_Tag_Dialog_Record;
       Gtk.Dialog.Initialize
@@ -486,7 +486,7 @@ package body VCS_View_API is
       Pack_Start (Get_Vbox (Dialog), Dialog.Branch, Expand => False);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
    end Gtk_New;
 
    procedure Gtk_New
@@ -497,8 +497,8 @@ package body VCS_View_API is
       Label  : Gtk_Label;
       Box    : Gtk_Box;
       Browse : Gtk_Button;
-      Button : Gtk_Widget;
-      pragma Unreferenced (Button);
+      Ignore : Gtk_Widget;
+      pragma Unreferenced (Ignore);
    begin
       Dialog := new Switch_Tag_Dialog_Record;
       Gtk.Dialog.Initialize
@@ -530,7 +530,7 @@ package body VCS_View_API is
       Pack_Start (Box, Dialog.Tag_Name);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
    end Gtk_New;
 
    -------------------
