@@ -411,8 +411,9 @@ package body GPS.Kernel.MDI is
       Scrolled            : Gtk_Scrolled_Window;
       View                : Gtk_Tree_View;
       Col                 : Gtk_Tree_View_Column;
-      Col_Num             : Gint;
-      pragma Unreferenced (Col_Num);
+      Ignore              : Gint;
+      Ignore_Widget       : Gtk_Widget;
+      pragma Unreferenced (Ignore, Ignore_Widget);
       Label               : Gtk_Label;
       Button              : Gtk_Widget;
       Response            : Gtk_Response_Type;
@@ -575,7 +576,7 @@ package body GPS.Kernel.MDI is
 
          Gtk_New (Col);
          Set_Clickable (Col, True);
-         Col_Num := Append_Column (View, Col);
+         Ignore := Append_Column (View, Col);
          Set_Title (Col, -"Select");
          Pack_Start (Col, Toggle_Renderer, False);
          Add_Attribute (Col, Toggle_Renderer, "active", 0);
@@ -588,7 +589,7 @@ package body GPS.Kernel.MDI is
             Slot_Object => View);
 
          Gtk_New (Col);
-         Col_Num := Append_Column (View, Col);
+         Ignore := Append_Column (View, Col);
          Set_Clickable (Col, True);
          Set_Sort_Column_Id (Col, 1);
          Set_Title (Col, -"Title");
@@ -600,12 +601,14 @@ package body GPS.Kernel.MDI is
          Grab_Focus (Button);
 
          if Num_Unsaved = 1 then
-            Button := Add_Button (Dialog, -"_Don't Save", Gtk_Response_No);
+            Ignore_Widget :=
+              Add_Button (Dialog, -"_Don't Save", Gtk_Response_No);
          else
-            Button := Add_Button (Dialog, -"_None", Gtk_Response_No);
+            Ignore_Widget := Add_Button (Dialog, -"_None", Gtk_Response_No);
          end if;
 
-         Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+         Ignore_Widget :=
+           Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
          Show_All (Dialog);
          Response := Run (Dialog);
