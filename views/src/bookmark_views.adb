@@ -431,8 +431,9 @@ package body Bookmark_Views is
       Model : constant Gtk_Tree_Store :=
                 Gtk_Tree_Store (Get_Model (View.Tree));
       Iter  : Gtk_Tree_Iter;
-      Id    : Idle_Handler_Id;
-      pragma Unreferenced (Command, Id);
+
+      Ignore : Idle_Handler_Id;
+      pragma Unreferenced (Command, Ignore);
    begin
       if Context.Event /= null then
          Iter := Find_Iter_For_Event (View.Tree, Model, Context.Event);
@@ -444,8 +445,8 @@ package body Bookmark_Views is
             --  the focus when the menu is hidden, and stops the edition
             --  immediately.
 
-            Id := Add (Start_Editing_Idle'Access, View,
-                       Priority => Priority_High_Idle);
+            Ignore := Add (Start_Editing_Idle'Access, View,
+                           Priority => Priority_High_Idle);
             return Success;
          end if;
       end if;
@@ -550,8 +551,8 @@ package body Bookmark_Views is
                  Gtk_Tree_Store (Get_Model (View.Tree));
       Iter   : Gtk_Tree_Iter;
       Marker : Bookmark_Data_Access;
-      Result : Boolean;
-      pragma Unreferenced (Result);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
    begin
       if (Get_State (Event) and (Control_Mask or Shift_Mask)) /= 0 then
          --  If there is a ctrl or shift key modifier present, grab the focus
@@ -572,7 +573,7 @@ package body Bookmark_Views is
 
             if Marker /= null then
                --  Push_Current_Editor_Location_In_History (View.Kernel);
-               Result := Go_To (Marker.Marker, View.Kernel);
+               Ignore := Go_To (Marker.Marker, View.Kernel);
                Push_Marker_In_History (View.Kernel, Clone (Marker.Marker));
 
                --  Return True here to prevent focus from flickering between
@@ -607,8 +608,9 @@ package body Bookmark_Views is
       View   : Bookmark_View_Access;
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
-      Id     : Idle_Handler_Id;
-      pragma Unreferenced (Id);
+      Ignore : Idle_Handler_Id;
+      pragma Unreferenced (Ignore);
+
    begin
       if Mark /= null then
          Append (Bookmark_Views_Module.List,
@@ -644,7 +646,7 @@ package body Bookmark_Views is
 
          --  Register a callback for editing the selected node
 
-         Id := Add
+         Ignore := Add
            (Start_Editing_Idle'Access, View, Priority => Priority_Low_Idle);
          return Success;
       end if;
