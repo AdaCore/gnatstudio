@@ -720,19 +720,19 @@ package body Switches_Editors is
      (Command : access Edit_Switches_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Modified : Boolean;
-      pragma Unreferenced (Command, Modified);
+      Ignore : Boolean;
+      pragma Unreferenced (Command, Ignore);
    begin
       Assert (Me, Has_Project_Information (Context.Context),
               "Project unknown when editing switches");
 
       if Has_File_Information (Context.Context) then
-         Modified := Edit_Switches_For_Files
+         Ignore := Edit_Switches_For_Files
            (Get_Kernel (Context.Context),
             Project_Information (Context.Context),
             (1 => File_Information (Context.Context)));
       else
-         Modified := Edit_Switches_For_Files
+         Ignore := Edit_Switches_For_Files
            (Get_Kernel (Context.Context),
             Project_Information (Context.Context),
             (1 .. 0 => GNATCOLL.VFS.No_File));
@@ -751,12 +751,13 @@ package body Switches_Editors is
    is
       Switches  : Switches_Edit;
       Dialog    : Gtk_Dialog;
-      Button, Button_OK    : Gtk_Widget;
+      Button    : Gtk_Widget;
+      Ignore    : Gtk_Widget;
       B         : Gtk_Button;
       Box       : Gtk_Box;
       Selector  : Scenario_Selector;
       Modified  : Boolean;
-      pragma Unreferenced (Button_OK);
+      pragma Unreferenced (Ignore);
 
    begin
       Run_Hook (Kernel, Project_Editor_Hook);
@@ -800,7 +801,7 @@ package body Switches_Editors is
 
       Fill_Editor (Switches, Project, Files);
 
-      Button_OK := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
 
       if Files'Length /= 0 then
          Gtk_New_From_Stock (B, Stock_Revert_To_Saved);
