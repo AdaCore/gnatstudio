@@ -462,10 +462,10 @@ package body Browsers.Entities is
       pragma Unreferenced (Command);
       Child : constant MDI_Child :=
                 Open_Type_Browser_Child (Get_Kernel (Context.Context));
-      Item  : Type_Item;
-      pragma Unreferenced (Item);
+      Ignore  : Type_Item;
+      pragma Unreferenced (Ignore);
    begin
-      Item := Add_Or_Select_Item
+      Ignore := Add_Or_Select_Item
         (Browser => Type_Browser (Get_Widget (Child)),
          Entity  => Get_Entity (Context.Context, Ask_If_Overloaded => True));
       Layout (Type_Browser (Get_Widget (Child)), Force => False);
@@ -568,14 +568,14 @@ package body Browsers.Entities is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Entity : constant Entity_Information := Get_Data (Data, 1);
       Child  : MDI_Child;
-      Item   : Type_Item;
       Result : Entity_Information;
-      pragma Unreferenced (Item);
+      Ignore : Type_Item;
+      pragma Unreferenced (Ignore);
    begin
       if Entity /= null then
          if Command = "show" then
             Child := Open_Type_Browser_Child (Kernel);
-            Item := Add_Or_Select_Item
+            Ignore := Add_Or_Select_Item
               (Browser => Type_Browser (Get_Widget (Child)),
                Entity  => Entity);
 
@@ -805,9 +805,9 @@ package body Browsers.Entities is
    is
       Context : constant Selection_Context := Get_Current_Context (Kernel);
       Child   : MDI_Child;
-      Item    : Type_Item;
       Entity  : Entity_Information;
-      pragma Unreferenced (Widget, Item);
+      Ignore   : Type_Item;
+      pragma Unreferenced (Widget, Ignore);
 
    begin
       Child := Open_Type_Browser_Child (Kernel);
@@ -815,7 +815,7 @@ package body Browsers.Entities is
       if Context /= No_Context then
          Entity := Get_Entity (Context, Ask_If_Overloaded => True);
          if Entity /= null then
-            Item := Add_Or_Select_Item
+            Ignore := Add_Or_Select_Item
               (Browser => Type_Browser (Get_Widget (Child)),
                Entity  => Entity);
          end if;
