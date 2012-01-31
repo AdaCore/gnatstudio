@@ -1678,39 +1678,38 @@ package body GPS.Kernel.Scripts is
               (Inst, Get_Or_Create_Virtual_Console (Console));
 
             if Title /= ""
-              and then Console /= null
               and then On_Input /= null
             then
                Set_Command_Handler
                  (Console, On_Console_Input'Access, On_Input.all'Address);
             end if;
 
-            if Console /= null and then On_Destroy /= null then
+            if On_Destroy /= null then
                Subprogram_Callback.Connect
                  (Console, Signal_Destroy, On_Console_Destroy'Access,
                   User_Data => On_Destroy);
             end if;
 
-            if Console /= null and then On_Resize /= null then
+            if On_Resize /= null then
                Subprogram_Callback.Connect
                  (Console, Signal_Size_Allocate,
                   On_Console_Resize'Access,
                   User_Data => On_Resize);
             end if;
 
-            if Console /= null and then On_Interrupt /= null then
+            if On_Interrupt /= null then
                Set_Interrupt_Handler
                  (Console, On_Console_Interrupt'Access,
                   User_Data => On_Interrupt.all'Address);
             end if;
 
-            if Console /= null and then On_Completion /= null then
+            if On_Completion /= null then
                Set_Completion_Handler
                  (Console, On_Console_Completion'Access,
                   User_Data => On_Completion.all'Address);
             end if;
 
-            if Console /= null and then On_Key /= null then
+            if On_Key /= null then
                Set_Key_Handler
                  (Console, On_Console_Key'Access,
                   User_Data => On_Key.all'Address);
@@ -2811,11 +2810,11 @@ package body GPS.Kernel.Scripts is
    is
       Data   : Callback_Data'Class :=
                  Create (Get_Script (Link.Subprogram.all), 1);
-      Result : Boolean;
-      pragma Unreferenced (Result);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
    begin
       Set_Nth_Arg (Data, 1, Text);
-      Result := Execute (Link.Subprogram, Data);
+      Ignore := Execute (Link.Subprogram, Data);
       Free (Data);
    end On_Click;
 
