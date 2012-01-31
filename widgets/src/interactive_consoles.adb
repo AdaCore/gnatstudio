@@ -414,8 +414,8 @@ package body Interactive_Consoles is
    overriding procedure Process_Pending_Events_Primitive
      (Console : access Interactive_Virtual_Console_Record)
    is
-      Dead : Boolean;
-      pragma Unreferenced (Console, Dead);
+      Ignore : Boolean;
+      pragma Unreferenced (Console, Ignore);
    begin
       --  Process all gtk+ events, so that the text becomes visible
       --  immediately, even if the python program hasn't finished executing.
@@ -425,7 +425,7 @@ package body Interactive_Consoles is
       --  GPS.
 
       while Gtk.Main.Events_Pending loop
-         Dead := Gtk.Main.Main_Iteration;
+         Ignore := Gtk.Main.Main_Iteration;
       end loop;
    end Process_Pending_Events_Primitive;
 
@@ -1132,7 +1132,7 @@ package body Interactive_Consoles is
       Key         : constant Gdk_Key_Type  := Get_Key_Val (Event);
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
-      Success     : Boolean;
+      Ignore      : Boolean;
 
    begin
       if Console.On_Key /= null then
@@ -1182,7 +1182,7 @@ package body Interactive_Consoles is
 
                   Get_End_Iter (Console.Buffer, Prompt_Iter);
                   Place_Cursor (Console.Buffer, Prompt_Iter);
-                  Success := Scroll_To_Iter
+                  Ignore := Scroll_To_Iter
                     (Console.View,
                      Iter          => Prompt_Iter,
                      Within_Margin => 0.0,
@@ -1237,7 +1237,7 @@ package body Interactive_Consoles is
             Get_Iter_At_Mark
               (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
             Get_End_Iter (Console.Buffer, Last_Iter);
-            Backward_Char (Last_Iter, Success);
+            Backward_Char (Last_Iter, Ignore);
 
             declare
                Command : constant String :=
