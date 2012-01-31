@@ -2635,8 +2635,8 @@ package body Src_Editor_Box is
       Always_Reload : Boolean)
    is
       Dialog : Gtk_Dialog;
-      Button : Gtk_Widget;
-      pragma Unreferenced (Button);
+      Ignore : Gtk_Widget;
+      pragma Unreferenced (Ignore);
 
       Exists   : constant Boolean :=
                    Is_Regular_File
@@ -2686,7 +2686,7 @@ package body Src_Editor_Box is
                         Title         => -"File changed on disk",
                         Justification => Justify_Left,
                         Parent        => Get_Current_Window (Editor.Kernel));
-                     Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);
+                     Ignore := Add_Button (Dialog, -"Reload", Gtk_Response_No);
 
                   else
                      Dialog := Create_Gtk_Dialog
@@ -2700,10 +2700,10 @@ package body Src_Editor_Box is
                         Title         => -"File removed from disk",
                         Justification => Justify_Left,
                         Parent        => Get_Current_Window (Editor.Kernel));
-                     Button := Add_Button (Dialog, -"Close", Gtk_Response_No);
+                     Ignore := Add_Button (Dialog, -"Close", Gtk_Response_No);
                   end if;
 
-                  Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
+                  Ignore := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
 
                   --  Ungrab the pointer if needed, to avoid freezing the
                   --  interface if the user is e.g. moving the GPS window
@@ -2860,6 +2860,13 @@ package body Src_Editor_Box is
       End_Action (Editor.Source_Buffer);
       Success := Scroll_To_Iter
         (Editor.Source_View, Iter, 0.0, True, 0.5, 0.5);
+
+      if not Success then
+         --  Should never happen, but probably better not continue if it
+         --  does.
+         return;
+      end if;
+
       Place_Cursor (Editor.Source_Buffer, Iter);
 
       if Length /= 0 then
