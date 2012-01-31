@@ -454,8 +454,7 @@ begin
          Append (Switches, File.Display_Full_Name);
 
       when SPARKClean =>
-         --  Nothing more to do for sparkclean
-         null;
+         Change_Dir (Output_Dir);
 
       when SPARKSimp =>
          declare
