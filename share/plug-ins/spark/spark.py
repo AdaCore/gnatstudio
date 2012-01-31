@@ -100,8 +100,11 @@ def examine_metafile (file):
 def sparkmake ():
   GPS.BuildTarget ("SPARKMake").execute(synchronous=False)
 
-def sparkclean ():
-  GPS.BuildTarget ("SPARKClean").execute(synchronous=False)
+def sparkclean_custom ():
+  GPS.BuildTarget ("SPARKClean Custom").execute(synchronous=False)
+
+def sparkclean_all ():
+  GPS.BuildTarget ("SPARKClean All").execute(synchronous=False)
 
 def format_file ():
   buffer = GPS.EditorBuffer.get ()
@@ -175,8 +178,14 @@ def show_pogs_file():
 
   if not summary_file_option:
     # If the user has not specified an output file then the summary file
-    # is set to <objdir>/<project_name>.sum
-    focus_file = GPS.Project.root().object_dirs(False)[0] + re.sub("\.gpr$", ".sum", os.path.basename (GPS.Project.root().file().name()))
+    # is set to <SPARK'Output_Dir>/<project_name>.sum
+
+    prj = GPS.Project.root().file().name()
+    output_dir = GPS.Project.root().get_attribute_as_string("output_dir", "SPARK")
+    if output_dir == "":
+      output_dir = os.path.dirname(prj)
+
+    focus_file = output_dir + '/' + re.sub("\.gpr$", ".sum", os.path.basename(prj))
   else:
     focus_file = \
       summary_file_option.string[summary_file_option.start():summary_file_option.end()].lstrip("-o=")
@@ -396,8 +405,8 @@ xml_spark = """<?xml version="1.0"?>
 
       <title column="2" line="2">Analysis</title>
       <radio column="2" line="2">
-        <radio-entry label="Information and Data Flow" switch="-flow_analysis=information" />
         <radio-entry label="Automatic Selection" switch="-flow_analysis=auto" />
+        <radio-entry label="Information and Data Flow" switch="-flow_analysis=information" />
         <radio-entry label="Data Flow only" switch="-flow_analysis=data" />
       </radio>
       <check column="2" line="2" label="Generate VCs" switch="-vcg" />
@@ -412,11 +421,11 @@ xml_spark = """<?xml version="1.0"?>
       </combo>
       <title line="3" column-span="2">General</title>
       <combo label="Replacement Rules" switch="-rules" separator="="
-             noswitch="none" column="1" line="3"
+             noswitch="Lazy" column="1" line="3"
              tip="Replacement rules for composite constants">
         <combo-entry label="None" value="none" />
         <combo-entry label="Lazy" value="lazy" />
-	<combo-entry label="Keen" value="keen" />
+	     <combo-entry label="Keen" value="keen" />
         <combo-entry label="All" value="all" />
       </combo>
       <combo label="Error Explanations" switch="-error_explanations"
@@ -447,14 +456,14 @@ xml_spark = """<?xml version="1.0"?>
       <check line="2" label="Echo Simplifier output" switch="-e" />
       <title line="3">Simplification</title>
       <check line="3" label="No Simplification" switch="-ns" />
-      <title line="4">ViCToR (Currently available on GNU/Linux and Windows)</title>
-      <check line="4" label="Prove with ViCToR" switch="-victor" />
+      <title line="4">Victor (Currently available on GNU/Linux, Windows and OSX)</title>
+      <check line="4" label="Prove with Victor" switch="-victor" />
       <title line="5">ZombieScope</title>
       <check line="5" label="No ZombieScope" switch="-nz" />
       <title line="6">Process control</title>
       <check line="6" label="Dry run" switch="-n" />
       <spin line="6" label="Multiprocessing" switch="-p=" min="1" max="100" default="1"
-            tip="Use N processes to run the Simplifier/ZombieScope/ViCToR. On a multiprocessor machine analysis will occur in parallel" />
+            tip="Use N processes to run the Simplifier/ZombieScope/Victor. On a multiprocessor machine analysis will occur in parallel" />
     </switches>
   </tool>
 
@@ -478,12 +487,13 @@ xml_spark = """<?xml version="1.0"?>
     </switches>
   </tool>
 
-  <tool name="ViCToR">
+  <tool name="Victor">
     <language>Ada</language>
     <switches lines="2" switch_char="-">
       <title line="1">General behaviour</title>
       <check line="1" label="Plain output" switch="-plain" />
       <check line="1" label="Ignore SIV files" switch="-v" />
+      <check line="1" label="Do not use user rules" switch="-nouserrules" />
       <combo line="1" label="SMT solver used" switch="-solver" separator="=" noswitch="alt-ergo">
         <combo-entry label="Alt-Ergo" value="alt-ergo" />
         <combo-entry label="CVC3" value="cvc3" />
@@ -632,7 +642,7 @@ xml_spark = """<?xml version="1.0"?>
      <shell lang="python">"""+spark_module+""".simplify_file (GPS.File("%F"))</shell>
   </action>
 
-  <action name="ViCToR file" category="Spark" output="none">
+  <action name="Victor file" category="Spark" output="none">
     <filter language="VCG" />
     <filter language="SIV" />
      <shell lang="python">"""+spark_module+""".victor_file (GPS.File("%F"))</shell>
@@ -686,8 +696,8 @@ xml_spark = """<?xml version="1.0"?>
       <menu action="Simplify file">
         <Title>_Simplify File</Title>
       </menu>
-      <menu action="ViCToR file">
-        <Title>_ViCToR File</Title>
+      <menu action="Victor file">
+        <Title>_Victor File</Title>
       </menu>
       <menu action="ZombieScope file">
         <Title>_ZombieScope File</Title>
@@ -723,8 +733,8 @@ xml_spark = """<?xml version="1.0"?>
     <Title>SPARK/Simplify File</Title>
   </contextual>
 
-  <contextual action="ViCToR file" >
-    <Title>SPARK/ViCToR File</Title>
+  <contextual action="Victor file" >
+    <Title>SPARK/Victor File</Title>
   </contextual>
 
   <contextual action="ZombieScope file" >
@@ -750,6 +760,19 @@ xml_spark = """<?xml version="1.0"?>
   <key action="/SPARK/POGS">F11</key>
   <key action="/SPARK/SPARKFormat File">F12</key>
 
+  <!-- SPARK project attributes -->
+
+  <project_attribute
+     name="output_dir"
+     package="SPARK"
+     editor_page="SPARK"
+     editor_section="SPARK configuration"
+     description="Output directory for SPARK tools (in particular Examiner, SPARKSimp, POGS). Defaults to the project's dir if not set"
+     label="Output directory"
+     hide_in="wizard library_wizard">
+     <string type="directory" />
+  </project_attribute>
+
 </SPARK>
 
 """
@@ -768,39 +791,55 @@ xml_sparkclean = """<?xml version="1.0"?>
 
 <SPARKCLEAN>
 
-  <tool name="SPARKClean">
-    <language>Ada</language>
-    <switches lines="1" switch_char="-">
-      <title line="1">Options</title>
-      <check line="1" label="examiner" switch="-examiner"
-             tip="delete all files generated by the Examiner" />
-      <check line="1" label="simplifier" switch="-simplifier"
-             tip="delete all files generated by the Simplifier, ZombieScope and SPARKSimp" />
-      <check line="1" label="victor" switch="-victor"
-             tip="delete all files generated by Victor" />
-      <check line="1" label="pogs" switch="-pogs"
-             tip="delete all files generated by POGS" />
-    </switches>
-  </tool>
-
-  <action name="Launch SPARKClean" category="Spark" output="none">
+  <action name="Launch SPARKClean All" category="Spark" output="none">
     <filter language="Ada" />
-    <shell lang="python">"""+spark_module+""".sparkclean ()</shell>
+    <shell lang="python">"""+spark_module+""".sparkclean_all ()</shell>
   </action>
 
   <submenu before="Window">
      <Title>_SPARK</Title>
-       <menu action="Launch SPARKClean">
-         <Title>SPARKClean</Title>
+       <menu action="Launch SPARKClean All">
+         <Title>SPARKClean (all)</Title>
        </menu>
   </submenu>
 
-  <contextual action="Launch SPARKClean" >
-    <Title>SPARK/SPARKClean</Title>
+  <contextual action="Launch SPARKClean All" >
+    <Title>SPARK/SPARKClean (all)</Title>
   </contextual>
 
-  <target model="spark" category="SPARK" messages_category="SPARK"
-          name="SPARKClean">
+  <action name="Launch SPARKClean Custom" category="Spark" output="none">
+    <filter language="Ada" />
+    <shell lang="python">"""+spark_module+""".sparkclean_custom ()</shell>
+  </action>
+
+  <submenu before="Window">
+     <Title>_SPARK</Title>
+       <menu action="Launch SPARKClean Custom">
+         <Title>SPARKClean (custom)</Title>
+       </menu>
+  </submenu>
+
+  <contextual action="Launch SPARKClean Custom" >
+    <Title>SPARK/SPARKClean (custom)</Title>
+  </contextual>
+
+  <target model="sparkclean" category="SPARK" messages_category="SPARK"
+          name="SPARKClean Custom">
+     <icon>gps-compute-xref</icon>
+     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>sparkclean</arg>
+        <arg>-P%PP</arg>
+        <arg>%X</arg>
+     </command-line>
+  </target>
+
+  <target model="sparkclean" category="SPARK" messages_category="SPARK"
+          name="SPARKClean All">
      <icon>gps-compute-xref</icon>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
@@ -810,6 +849,7 @@ xml_sparkclean = """<?xml version="1.0"?>
         <arg>gnatspark</arg>
         <arg>sparkclean</arg>
         <arg>-P%PP</arg>
+        <arg>%X</arg>
      </command-line>
   </target>
 
@@ -1184,6 +1224,29 @@ b = """<?xml version="1.0"?>
      <server>Tools_Server</server>
      <icon>gps-syntax-check</icon>
      <switches command="">
+     </switches>
+  </target-model>
+
+  <!-- This is an XML model for launching sparkclean -->
+  <target-model name="sparkclean" category="">
+     <description>Run SPARKClean</description>
+     <command-line>
+        <arg>gnatspark</arg>
+        <arg>sparkclean</arg>
+        <arg>-P%PP</arg>
+        <arg>%X</arg>
+        <arg>%F</arg>
+     </command-line>
+     <server>Tools_Server</server>
+     <switches command="%(tool_name)s" columns="1">
+       <check label="Only delete Examiner generated files" switch="-examiner"
+              tip="Remove only the files generated by the Examiner (vcg, dpc, fdl, rls, rep, lst, sli), not other files" />
+       <check label="Only delete Simplifier, SPARKSimp and ZombieScope generated files" switch="-simplifier"
+              tip="Remove only the files generated by the Simplifier, ZombieScope and SPARKSimp (siv, sdp, slg, zlg, zsl, log), not other files" />
+       <check label="Only delete Victor generated files" switch="-victor"
+              tip="Remove only the files generated by Victor (vct, vsm, vlg), not other files" />
+       <check label="Only delete POGS generated files" switch="-pogs"
+              tip="Remove only the files generated by POGS (sum), not other files" />
      </switches>
   </target-model>
 

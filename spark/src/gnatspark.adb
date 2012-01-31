@@ -50,6 +50,9 @@ procedure GNATSpark is
    File : Virtual_File;
    --  The file to be processed, if any
 
+   Output_Dir : Virtual_File;
+   --  Output directory for Examiner, SPARKSimp, POGS
+
    Ext_Vars : List_Of_Strings.List;
 
    First_Param : Natural := 0;
@@ -132,6 +135,9 @@ procedure GNATSpark is
    -------------------
 
    procedure Parse_Project (Project : String; Tree : out Project_Tree) is
+      SPARK_Package        : constant String := "SPARK";
+      Output_Dir_Attribute : constant String := "output_dir";
+
       Proj_Env     : Project_Environment_Access;
       GNAT_Version : GNAT.Strings.String_Access;
       Cur          : List_Of_Strings.Cursor;
@@ -139,6 +145,19 @@ procedure GNATSpark is
    begin
       Initialize (Proj_Env);
       Set_Path_From_Gnatls (Proj_Env.all, "gnatls", GNAT_Version);
+
+      declare
+         Output : constant String := Register_New_Attribute
+           (Name => Output_Dir_Attribute,
+            Pkg  => SPARK_Package);
+      begin
+         if Output /= "" then
+            Put_Line ("cannot parse project file:");
+            Put_Line (Output);
+            OS_Exit (2);
+         end if;
+      end;
+
       Tree.Load (GNATCOLL.VFS.Create (Filesystem_String (Project)), Proj_Env);
 
       declare
@@ -203,6 +222,24 @@ procedure GNATSpark is
 
          Tree.Change_Environment (Vars);
          Tree.Recompute_View;
+
+         --  Set Output_Dir to SPARK'Output_Dir, and default to the project's
+         --  dir if attribute is not set.
+         declare
+            Project_Dir : constant Filesystem_String :=
+              Tree.Root_Project.Project_Path.Dir_Name;
+            Attribute   : constant String := Tree.Root_Project.Attribute_Value
+              (Build (SPARK_Package, Output_Dir_Attribute));
+
+         begin
+            if Attribute = "" then
+               Output_Dir := Create (Project_Dir);
+            else
+               Output_Dir := Create_From_Base
+                 (Base_Name => Filesystem_String (Attribute),
+                  Base_Dir  => Project_Dir);
+            end if;
+         end;
       end;
 
    exception
@@ -386,13 +423,13 @@ begin
 
          Append (Switches, "-brief");
          Append
-           (Switches, "-ou=" & Tree.Root_Project.Object_Dir.Display_Full_Name);
+           (Switches, "-ou=" & Output_Dir.Display_Full_Name);
          Append (Switches, File.Display_Full_Name);
 
       when MetaExaminer =>
          Append (Switches, "-brief");
          Append
-           (Switches, "-ou=" & Tree.Root_Project.Object_Dir.Display_Full_Name);
+           (Switches, "-ou=" & Output_Dir.Display_Full_Name);
          Append (Switches, "@" & File.Display_Full_Name);
 
       when Pogs =>
@@ -402,9 +439,10 @@ begin
             Append
               (Switches,
                "-o=" &
-               Tree.Root_Project.Object_Dir.Display_Dir_Name
-               & Project_Path.Display_Base_Name (".gpr") & ".sum");
+               Project_Path.Display_Base_Name (".gpr") & ".sum");
          end if;
+
+         Change_Dir (Output_Dir);
 
       when Simplifier =>
          --  Spadesimp only supports analyzing file in the current directory,
@@ -416,8 +454,7 @@ begin
          Append (Switches, File.Display_Full_Name);
 
       when SPARKClean =>
-         --  Nothing more to do for sparkclean
-         null;
+         Change_Dir (Output_Dir);
 
       when SPARKSimp =>
          declare
@@ -451,7 +488,7 @@ begin
             end if;
          end;
 
-         Change_Dir (Tree.Root_Project.Object_Dir);
+         Change_Dir (Output_Dir);
 
       when ZombieScope =>
          Append (Switches, File.Display_Full_Name);
