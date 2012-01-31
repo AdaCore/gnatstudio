@@ -384,7 +384,7 @@ package body Language.Tree is
          when True =>
             return Left.Offset <= String_Index_Type (Right.Index);
          when False =>
-            return Left.Line <= Right.Line
+            return Left.Line < Right.Line
               or else
                 (Left.Line = Right.Line
                  and then Left.Line_Offset <=
@@ -422,7 +422,7 @@ package body Language.Tree is
          when True =>
             return Left.Offset >= String_Index_Type (Right.Index);
          when False =>
-            return Left.Line >= Right.Line
+            return Left.Line > Right.Line
               or else
                 (Left.Line = Right.Line
                  and then Left.Line_Offset >=
@@ -565,71 +565,75 @@ package body Language.Tree is
          return Null_Construct_Tree_Iterator;
       end if;
 
-      if Position = Before then
-         if Match_Category (Tree.Contents (1).Construct.Category) then
-            Last_Matched := (Tree.Contents (1)'Access, 1);
-         end if;
-
-         for J in 2 .. Tree.Contents'Last loop
-            if Is_After (Tree.Contents (J).Construct) then
-               return Last_Matched;
+      case Position is
+         when Before =>
+            if Match_Category (Tree.Contents (1).Construct.Category) then
+               Last_Matched := (Tree.Contents (1)'Access, 1);
             end if;
 
-            if Match_Category (Tree.Contents (J).Construct.Category) then
-               Last_Matched := (Tree.Contents (J)'Access, J);
-            end if;
-         end loop;
-
-         return Last_Matched;
-      elsif Position = After then
-         for J in 1 .. Tree.Contents'Last loop
-            if Is_On_Or_After (Tree.Contents (J).Construct)
-              and then Match_Category (Tree.Contents (J).Construct.Category)
-            then
-               return (Tree.Contents (J)'Access, J);
-            end if;
-         end loop;
-      elsif Position = Specified then
-         declare
-            It : Construct_Tree_Iterator := First (Tree);
-         begin
-            while It /= Null_Construct_Tree_Iterator loop
-               if Is_On (It.Node.Construct)
-                 and then Match_Category (It.Node.Construct.Category)
-               then
-                  return It;
+            for J in 2 .. Tree.Contents'Last loop
+               if Is_After (Tree.Contents (J).Construct) then
+                  return Last_Matched;
                end if;
 
-               if Location < It.Node.Construct.Sloc_Entity then
-                  return Null_Construct_Tree_Iterator;
-               elsif Location >= It.Node.Construct.Sloc_Start then
-                  It := Next (Tree, It, Jump_Into);
-               else
-                  It := Next (Tree, It, Jump_Over);
+               if Match_Category (Tree.Contents (J).Construct.Category) then
+                  Last_Matched := (Tree.Contents (J)'Access, J);
                end if;
             end loop;
-         end;
-      elsif Position = Enclosing then
-         declare
-            It : Construct_Tree_Iterator := First (Tree);
-         begin
-            while It /= Null_Construct_Tree_Iterator loop
-               exit when Location < It.Node.Construct.Sloc_Start;
 
-               if Location <= It.Node.Construct.Sloc_End then
-                  if Match_Category (It.Node.Construct.Category) then
-                     Last_Matched := It;
+            return Last_Matched;
+
+         when After =>
+            for J in 1 .. Tree.Contents'Last loop
+               if Is_On_Or_After (Tree.Contents (J).Construct)
+                 and then Match_Category (Tree.Contents (J).Construct.Category)
+               then
+                  return (Tree.Contents (J)'Access, J);
+               end if;
+            end loop;
+
+         when Specified =>
+            declare
+               It : Construct_Tree_Iterator := First (Tree);
+            begin
+               while It /= Null_Construct_Tree_Iterator loop
+                  if Is_On (It.Node.Construct)
+                    and then Match_Category (It.Node.Construct.Category)
+                  then
+                     return It;
                   end if;
 
-                  It := Next (Tree, It, Jump_Into);
-               else
-                  It := Next (Tree, It, Jump_Over);
-               end if;
-            end loop;
-         end;
+                  if Location < It.Node.Construct.Sloc_Entity then
+                     return Null_Construct_Tree_Iterator;
+                  elsif Location >= It.Node.Construct.Sloc_Start then
+                     It := Next (Tree, It, Jump_Into);
+                  else
+                     It := Next (Tree, It, Jump_Over);
+                  end if;
+               end loop;
+            end;
 
-         return Last_Matched;
-      end if;
+         when Enclosing =>
+            declare
+               It : Construct_Tree_Iterator := First (Tree);
+            begin
+               while It /= Null_Construct_Tree_Iterator loop
+                  exit when Location < It.Node.Construct.Sloc_Start;
+
+                  if Location <= It.Node.Construct.Sloc_End then
+                     if Match_Category (It.Node.Construct.Category) then
+                        Last_Matched := It;
+                     end if;
+
+                     It := Next (Tree, It, Jump_Into);
+                  else
+                     It := Next (Tree, It, Jump_Over);
+                  end if;
+               end loop;
+            end;
+
+            return Last_Matched;
+      end case;
 
       return Null_Construct_Tree_Iterator;
    end Get_Iterator_At;
