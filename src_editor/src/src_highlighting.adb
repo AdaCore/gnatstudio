@@ -44,7 +44,7 @@ package body Src_Highlighting is
    --------------------------
 
    procedure New_Tag
-     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
+     (Tag        : in out Gtk.Text_Tag.Gtk_Text_Tag;
       Tag_Name   : String;
       Fore_Color : Gdk_Color := Null_Color;
       Back_Color : Gdk_Color := Null_Color;
@@ -57,7 +57,7 @@ package body Src_Highlighting is
    -------------
 
    procedure New_Tag
-     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
+     (Tag        : in out Gtk.Text_Tag.Gtk_Text_Tag;
       Tag_Name   : String;
       Fore_Color : Gdk_Color := Null_Color;
       Back_Color : Gdk_Color := Null_Color;
@@ -172,6 +172,7 @@ package body Src_Highlighting is
      (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
       Color : Gdk_Color) is
    begin
+      Tag := null;
       New_Tag (Tag, Highlight_Line_Tag_Name, Back_Color => Color);
       --  ??? Set the tag priority...
    end Create_Highlight_Line_Tag;
