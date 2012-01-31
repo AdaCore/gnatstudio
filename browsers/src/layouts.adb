@@ -334,6 +334,8 @@ package body Layouts is
          Index : Natural;
          F, L, Prev : Integer;
       begin
+         L := 0;
+
          while not At_End (Iter) loop
             Src := Get_Src (Get (Iter));
 
