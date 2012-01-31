@@ -716,25 +716,27 @@ package body Breakpoints_Editor is
       end if;
 
       --  Set the scope and action, if appropriate
-      if Br.Scope /= No_Scope then
-         if Br.Scope = Current_Task then
+      case Br.Scope is
+         when No_Scope =>
+            null;
+         when Current_Task =>
             Set_Active (Advanced.Scope_Task, True);
-         elsif Br.Scope = Tasks_In_PD then
+         when Tasks_In_PD =>
             Set_Active (Advanced.Scope_Pd, True);
-         elsif Br.Scope = Any_Task then
+         when Any_Task =>
             Set_Active (Advanced.Scope_Any, True);
-         end if;
-      end if;
+      end case;
 
-      if Br.Action /= No_Action then
-         if Br.Action = Current_Task then
+      case Br.Action is
+         when No_Action =>
+            null;
+         when Current_Task =>
             Set_Active (Advanced.Action_Task, True);
-         elsif Br.Action = Tasks_In_PD then
+         when Tasks_In_PD =>
             Set_Active (Advanced.Action_Pd, True);
-         elsif Br.Action = All_Tasks then
+         when All_Tasks =>
             Set_Active (Advanced.Action_All, True);
-         end if;
-      end if;
+      end case;
 
       Set_Active (Advanced.Set_Default, False);
    end Fill_Advanced_Dialog;
