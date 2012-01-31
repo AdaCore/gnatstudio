@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L131-031: GPS: jump to the current location when opening the search dialog
+  Problem:    When the cursor in an editor is outside of the visible area,
+              opening the Search dialog will cause the editor to scroll to
+              show the position of the cursor.
+  Workaround: Scroll manually, or position the cursor before opening the
+              search dialog.
+
 - L123-032: GPS Editing Library Interface in Project Properties
   Problem:    The project attribute Library_Interface must contain unit names.
               However, GPS will set it using file names instead, and as a
@@ -24,6 +31,12 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               project, GPS fails to report the references that are in files
               that are in other non-extending projects.
   Workaround: Manually load all Xref information via the /Build menu.
+
+- KA27-009: GPS: unwanted scrolling when canceling interactive search
+  Problem:    When using the interactive search (plugin isearch.py), if the
+              cursor is outside of the visible area, clicking on the editor
+              to replace the cursor will cause unwanted scrolling.
+  Workaround: Scroll back manually after the unwanted scrolling.
 
 - K930-020: Recursive project source dirs and Windows host
   Problem:    When GPS is running on a Windows host, but driving a Unix
