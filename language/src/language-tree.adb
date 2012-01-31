@@ -92,8 +92,6 @@ package body Language.Tree is
       Size              : constant Natural := List.Size;
       Current_Construct : Construct_Access;
    begin
-      Current_Construct := List.Last;
-
       if Size = 0 then
          return new Construct_Tree_Record (0);
       end if;
