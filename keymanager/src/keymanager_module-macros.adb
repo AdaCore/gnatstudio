@@ -414,12 +414,12 @@ package body KeyManager_Module.Macros is
       Current_Event : Macro_Item_Access renames Events.Current_Event;
       Timeout       : Guint;
       Wait          : Duration;
-      Success       : Boolean;
-      Id            : G_Source_Id;
-      pragma Unreferenced (Id, Success);
+      Ignore        : Boolean;
+      Ignore_Id     : G_Source_Id;
+      pragma Unreferenced (Id, Ignore);
    begin
       if Current_Event /= null then
-         Success := Play_Event
+         Ignore := Play_Event
            (Current_Event.all, Gtk_Widget (Get_Main_Window (Kernel)));
 
          --  Compute proper timeout value, taking into account the time
@@ -443,7 +443,7 @@ package body KeyManager_Module.Macros is
          --  can properly detect we are still processing a macro, and do
          --  nothing in that case (FC14-014)
 
-         Id := Event_Timeout.Timeout_Add
+         Ignore_Id := Event_Timeout.Timeout_Add
            (Timeout, Play_Macro_Timer'Access, Events,
             Priority => Priority_Low);
       end if;
@@ -457,9 +457,6 @@ package body KeyManager_Module.Macros is
       Kernel        : constant Kernel_Handle :=
                         Get_Kernel (Keymanager_Macro_Module.all);
       Current_Event : Macro_Item_Access renames Events.Current_Event;
-      Success       : Boolean;
-      Id            : G_Source_Id;
-      pragma Unreferenced (Id, Success);
 
    begin
       --  Move to next event
