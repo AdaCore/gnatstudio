@@ -2861,11 +2861,8 @@ package body Src_Editor_Box is
       Success := Scroll_To_Iter
         (Editor.Source_View, Iter, 0.0, True, 0.5, 0.5);
 
-      if not Success then
-         --  Should never happen, but probably better not continue if it
-         --  does.
-         return;
-      end if;
+      --  Ignore value of Success. We want to keep doing the code below
+      --  even in case of failure, see e.g. bookmarks.[12] tests
 
       Place_Cursor (Editor.Source_Buffer, Iter);
 
