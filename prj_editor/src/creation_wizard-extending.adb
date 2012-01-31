@@ -367,15 +367,14 @@ package body Creation_Wizard.Extending is
       Recompute    : Boolean;
       Obj_Dir      : Filesystem_String := "")
    is
-      Into_Dir   : Virtual_File := In_Dir;
-      Extended   : Project_Type;
-      Iter       : Project_Iterator := Start (Root_Project);
-      File_Names : Argument_List (Files'Range);
-      Success    : Boolean;
-      pragma Warnings (Off, Success);
-      Error      : Import_Project_Error;
-      Created    : Boolean := False;
-      pragma Unreferenced (Error);
+      Into_Dir     : Virtual_File := In_Dir;
+      Extended     : Project_Type;
+      Iter         : Project_Iterator := Start (Root_Project);
+      File_Names   : Argument_List (Files'Range);
+      Created      : Boolean := False;
+      Ignore       : Boolean;
+      Ignore_Error : Import_Project_Error;
+      pragma Unreferenced (Ignore, Ignore_Error);
    begin
       --  Search whether there is already a project extending File_Project
       while Current (Iter) /= No_Project
@@ -401,7 +400,7 @@ package body Creation_Wizard.Extending is
             Create_From_Dir
               (Project_Directory (Extended), Obj_Dir).Display_Full_Name);
 
-         Error := Root_Project.Add_Imported_Project
+         Ignore_Error := Root_Project.Add_Imported_Project
            (Imported_Project  => Extended,
             Use_Relative_Path => True);
 
@@ -427,11 +426,11 @@ package body Creation_Wizard.Extending is
 
       if Copy_Files then
          for S in Files'Range loop
-            Files (S).Copy (Into_Dir.Full_Name, Success  => Success);
+            Files (S).Copy (Into_Dir.Full_Name, Success => Ignore);
          end loop;
       end if;
 
-      Success := Extended.Save;
+      Ignore := Extended.Save;
 
       if Recompute then
          Recompute_View (Kernel);
@@ -454,13 +453,13 @@ package body Creation_Wizard.Extending is
         Get_Registry (Kernel).Tree.Info (File).Project;
       Dialog : Gtk_Dialog;
       Label  : Gtk_Label;
-      Button : Gtk_Widget;
+      Ignore : Gtk_Widget;
       Response : Gtk_Response_Type;
       Dirs   : constant GNATCOLL.VFS.File_Array :=
         Get_Project (Kernel).Source_Dirs (Recursive => False);
       Radio  : array (Dirs'Range) of Gtk_Radio_Button;
       Prj_Dir_Radio : Gtk_Radio_Button;
-      pragma Unreferenced (Command, Button);
+      pragma Unreferenced (Command, Ignore);
    begin
       Gtk_New
         (Dialog,
@@ -493,9 +492,9 @@ package body Creation_Wizard.Extending is
          Dialog.Get_Vbox.Pack_Start (Prj_Dir_Radio, Expand => False);
       end if;
 
-      Button := Dialog.Add_Button (-"Copy", Gtk_Response_Yes);
-      Button := Dialog.Add_Button (-"Do not copy", Gtk_Response_No);
-      Button := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
+      Ignore := Dialog.Add_Button (-"Copy", Gtk_Response_Yes);
+      Ignore := Dialog.Add_Button (-"Do not copy", Gtk_Response_No);
+      Ignore := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
 
       Dialog.Show_All;
       Response := Dialog.Run;
@@ -546,10 +545,10 @@ package body Creation_Wizard.Extending is
       Project : Project_Type;
       List    : String_List_Access;
       Dialog  : Gtk_Dialog;
-      Button  : Gtk_Widget;
+      Ignore  : Gtk_Widget;
       Response : Gtk_Response_Type;
       Label    : Gtk_Label;
-      pragma Unreferenced (Command, Button);
+      pragma Unreferenced (Command, Ignore);
 
    begin
       if Active (Traces.Testsuite_Handle) then
@@ -569,9 +568,9 @@ package body Creation_Wizard.Extending is
          Label.Set_Justify (Justify_Center);
          Dialog.Get_Vbox.Pack_Start (Label, Expand => False);
 
-         Button := Dialog.Add_Button (-"Delete", Gtk_Response_Yes);
-         Button := Dialog.Add_Button (-"Do not delete", Gtk_Response_No);
-         Button := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
+         Ignore := Dialog.Add_Button (-"Delete", Gtk_Response_Yes);
+         Ignore := Dialog.Add_Button (-"Do not delete", Gtk_Response_No);
+         Ignore := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
 
          Dialog.Show_All;
          Response := Dialog.Run;
