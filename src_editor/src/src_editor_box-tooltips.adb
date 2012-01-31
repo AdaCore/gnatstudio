@@ -77,7 +77,7 @@ package body Src_Editor_Box.Tooltips is
       Icon        : Gdk_Pixbuf;
       Widget      : Source_View;
       Draw_Border : Boolean;
-      Pixmap      : in out Cairo_Surface);
+      Pixmap      : out Cairo_Surface);
    --  Render a string to a pixmap
 
    overriding procedure Draw
@@ -202,7 +202,6 @@ package body Src_Editor_Box.Tooltips is
 
       while Has_Element (Cursor) loop
          Pixmap := Element (Cursor);
-         Pixmap_Width := Cairo.Image_Surface.Get_Width (Pixmap);
          Pixmap_Height := Cairo.Image_Surface.Get_Height (Pixmap);
 
          Save (Cr);
@@ -244,7 +243,7 @@ package body Src_Editor_Box.Tooltips is
       Icon        : Gdk_Pixbuf;
       Widget      : Source_View;
       Draw_Border : Boolean;
-      Pixmap      : in out Cairo_Surface)
+      Pixmap      : out Cairo_Surface)
    is
       Layout : Pango_Layout;
       Cr     : Cairo_Context;
