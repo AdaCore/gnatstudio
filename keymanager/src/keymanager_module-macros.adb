@@ -416,7 +416,7 @@ package body KeyManager_Module.Macros is
       Wait          : Duration;
       Ignore        : Boolean;
       Ignore_Id     : G_Source_Id;
-      pragma Unreferenced (Id, Ignore);
+      pragma Unreferenced (Ignore, Ignore_Id);
    begin
       if Current_Event /= null then
          Ignore := Play_Event
