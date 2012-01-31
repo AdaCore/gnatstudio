@@ -1042,25 +1042,18 @@ package body VCS.Generic_VCS is
       Args : GNAT.Strings.String_List_Access;
 
    begin
-      if Version_1 = ""
-        and then Version_2 = ""
-      then
+      if Version_1 = "" and then Version_2 = "" then
          Generic_Command (Rep, File, null, Diff_Head);
+      elsif Version_1 /= "" then
+         if Version_2 = "" then
+            Args := new GNAT.Strings.String_List (1 .. 1);
+            Args (1) := new String'(Version_1);
+         else
+            Args := new GNAT.Strings.String_List (1 .. 2);
+            Args (1) := new String'(Version_1);
+            Args (2) := new String'(Version_2);
+         end if;
 
-      elsif Version_1 /= ""
-        and then Version_2 = ""
-      then
-         Args := new GNAT.Strings.String_List (1 .. 1);
-         Args (1) := new String'(Version_1);
-         Generic_Command (Rep, File, Args, Diff);
-         GNAT.Strings.Free (Args);
-
-      elsif Version_1 /= ""
-        and then Version_2 /= ""
-      then
-         Args := new GNAT.Strings.String_List (1 .. 2);
-         Args (1) := new String'(Version_1);
-         Args (2) := new String'(Version_2);
          Generic_Command (Rep, File, Args, Diff2);
          GNAT.Strings.Free (Args);
       end if;
