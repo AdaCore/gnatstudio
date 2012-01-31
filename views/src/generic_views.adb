@@ -151,10 +151,10 @@ package body Generic_Views is
         (Widget : access GObject_Record'Class;
          Kernel : Kernel_Handle)
       is
-         View : View_Access;
-         pragma Unreferenced (Widget, View);
+         Ignore : View_Access;
+         pragma Unreferenced (Widget, Ignore);
       begin
-         View := Get_Or_Create_View (Kernel);
+         Ignore := Get_Or_Create_View (Kernel);
       end On_Open_View;
 
       ------------------------
