@@ -488,7 +488,10 @@ package body Code_Peer.Module is
 
                Element : constant Object_Access_Information :=
                  Object_Access_Vectors.Element (Position);
-               Message : Simple_Message_Access :=
+               Ignore  : Simple_Message_Access;
+
+            begin
+               Ignore :=
                  Create_Simple_Message
                    (Get_Messages_Container (Self.Kernel),
                     Category,
@@ -498,10 +501,6 @@ package body Code_Peer.Module is
                     Image (Element),
                     0,
                     Race_Message_Flags);
-               pragma Unreferenced (Message);
-
-            begin
-               null;
             end Process_Object_Access;
 
          begin
