@@ -1658,6 +1658,9 @@ package body Src_Editor_Buffer is
             T        : String (1 .. Length);
             Last     : Integer := 1;
             CR_Found : Boolean := False;
+            Ignore   : Boolean;
+            pragma Unreferenced (Ignore);
+
          begin
             --  Copy Text in T, replacing CRLF by LF and CR by LF
             for J in 1 .. Length loop
@@ -1681,7 +1684,7 @@ package body Src_Editor_Buffer is
                --  insertion and write the stripped text instead.
 
                Emit_Stop_By_Name (Object => Buffer, Name => "insert_text");
-               CR_Found := Insert_Interactive_At_Cursor
+               Ignore := Insert_Interactive_At_Cursor
                  (Buffer, T (1 .. Last), True);
                return;
             end if;
@@ -1707,7 +1710,8 @@ package body Src_Editor_Buffer is
         and not Buffer.Inserting
       then
          declare
-            Result : Boolean;
+            Result, Ignore : Boolean;
+            pragma Unreferenced (Ignore);
          begin
             Result := Fold_Unfold_Line (Buffer, Line, False);
 
@@ -1716,7 +1720,7 @@ package body Src_Editor_Buffer is
                --  new text at the cursor position.
                Emit_Stop_By_Name (Object => Buffer, Name => "insert_text");
 
-               Result := Insert_Interactive_At_Cursor
+               Ignore := Insert_Interactive_At_Cursor
                  (Buffer, Text (1 .. Length), True);
                return;
             end if;
@@ -3420,10 +3424,10 @@ package body Src_Editor_Buffer is
 
       if Has_Errors and then not Internal then
          declare
-            Buttons : Message_Dialog_Buttons;
-            pragma Unreferenced (Buttons);
+            Ignore : Message_Dialog_Buttons;
+            pragma Unreferenced (Ignore);
          begin
-            Buttons := Message_Dialog
+            Ignore := Message_Dialog
               (Msg            =>
                -("This buffer contains UTF-8 characters which"
                  & " could not be translated to ") & Buffer.Charset.all
@@ -3667,8 +3671,8 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record; Charset : String)
    is
       Success : Boolean;
-      Buttons : Message_Dialog_Buttons;
-      pragma Unreferenced (Buttons);
+      Ignore  : Message_Dialog_Buttons;
+      pragma Unreferenced (Ignore);
 
    begin
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
@@ -3702,7 +3706,7 @@ package body Src_Editor_Buffer is
          if Get_Status (Buffer) = Modified
            or else Get_Status (Buffer) = Unsaved
          then
-            Buttons := Message_Dialog
+            Ignore := Message_Dialog
               (Msg => -("The character set has been modified."
                & ASCII.LF
                & "Since the file is currently modified, the new"
@@ -4868,6 +4872,9 @@ package body Src_Editor_Buffer is
       elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
          Set_File_Information (Context, (1 => Buffer.File_Identifier));
       end if;
+
+      First := 0;
+      Last  := 0;
 
       --  Find the editable boundaries
 
