@@ -4125,7 +4125,7 @@ A file filter can be defined (such as "*.ads") to show only a category of files.
      <param name="msg">A string</param>
      <param name="...">Any number of strings</param>
      <return>A list of strings</return>
-     <description>Display a modal dialog and request some input from the user. The message is displayed at the top, and one input field is displayed for each remaining argument. The arguments can take the form ""label=value"", in which case ""value"" is used as default for this entry. The return value is the value that the user has input for each of these parameters.
+     <description>Display a modal dialog and request some input from the user. The message is displayed at the top, and one input field is displayed for each remaining argument. The arguments can take the form ""label=value"", in which case ""value"" is used as default for this entry. If argument is prepend with 'multiline:' prefix field is edited as multi-line text. The return value is the value that the user has input for each of these parameters.
 An empty list is returned if the user presses Cancel</description>
      <example lang="python">
           a, b = GPS.MDI.input_dialog("Please enter values", "a", "b")

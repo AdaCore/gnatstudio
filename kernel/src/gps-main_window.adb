@@ -69,6 +69,9 @@ with GUI_Utils;
 with Remote;                    use Remote;
 with Traces;                    use Traces;
 with User_Interface_Tools;
+with Gtk.Text_View;
+with Gtk.Text_Buffer;
+with Gtk.Scrolled_Window;
 
 package body GPS.Main_Window is
 
@@ -1197,6 +1200,9 @@ package body GPS.Main_Window is
 
       elsif Command = "input_dialog" then
          declare
+            use Gtk.Text_View;
+            use Gtk.Text_Buffer;
+
             Dialog : Gtk_Dialog;
             Label  : Gtk_Label;
             Group  : Gtk_Size_Group;
@@ -1206,6 +1212,11 @@ package body GPS.Main_Window is
                is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
             Ent : Ent_Array;
 
+            type Text_View_Array
+               is array (2 .. Number_Of_Arguments (Data)) of Gtk_Text_View;
+
+            Text : Text_View_Array;
+
             procedure Create_Entry (N : Natural);
             --  Create the Nth entry. N must be in Ent_Array'Range
 
@@ -1214,8 +1225,12 @@ package body GPS.Main_Window is
             ------------------
 
             procedure Create_Entry (N : Natural) is
+               Multiline_Prefix : constant String := "multiline:";
+               Is_Multiline     : Boolean := False;
+
                Arg   : constant String := Nth_Arg (Data, N);
                Index : Natural := Arg'First;
+               First : Natural := Arg'First;
                Hbox  : Gtk_Hbox;
             begin
                Gtk_New_Hbox (Hbox, Homogeneous => False);
@@ -1227,18 +1242,45 @@ package body GPS.Main_Window is
                   Index := Index + 1;
                end loop;
 
-               if Arg'First <= Index - 1 then
-                  Gtk_New (Label, Arg (Arg'First .. Index - 1) & ':');
+               if Index - Arg'First > Multiline_Prefix'Length then
+                  First := First + Multiline_Prefix'Length;
+
+                  if Arg (Arg'First .. First - 1) = Multiline_Prefix then
+                     Is_Multiline := True;
+                  else
+                     First := Arg'First;
+                  end if;
+               end if;
+
+               if First <= Index - 1 then
+                  Gtk_New (Label, Arg (First .. Index - 1) & ':');
+
                   Set_Alignment (Label, 0.0, 0.5);
                   Add_Widget (Group, Label);
                   Pack_Start (Hbox, Label, Expand => False, Padding => 3);
                end if;
 
-               Gtk_New (Ent (N));
-               Set_Text (Ent (N), Arg (Index + 1 .. Arg'Last));
+               if Is_Multiline then
+                  declare
+                     Buffer   : Gtk_Text_Buffer;
+                     Scrolled : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+                  begin
+                     Gtk_New (Buffer);
+                     Gtk_New (Text (N), Buffer);
+                     Buffer.Set_Text (Arg (Index + 1 .. Arg'Last));
+                     Gtk.Scrolled_Window.Gtk_New (Scrolled);
+                     Scrolled.Add (Text (N));
+                     Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
+                     Scrolled.Set_Shadow_Type (Shadow_In);
+                     Pack_Start (Hbox, Scrolled, Padding => 10);
+                  end;
+               else
+                  Gtk_New (Ent (N));
+                  Set_Text (Ent (N), Arg (Index + 1 .. Arg'Last));
 
-               Set_Activates_Default (Ent (N),  True);
-               Pack_Start (Hbox, Ent (N), Padding => 10);
+                  Set_Activates_Default (Ent (N),  True);
+                  Pack_Start (Hbox, Ent (N), Padding => 10);
+               end if;
             end Create_Entry;
 
          begin
@@ -1273,7 +1315,15 @@ package body GPS.Main_Window is
 
             if Run (Dialog) = Gtk_Response_OK then
                for Num in Ent'Range loop
-                  Set_Return_Value (Data, Get_Text (Ent (Num)));
+                  if Ent (Num) /= null then
+                     Set_Return_Value (Data, Get_Text (Ent (Num)));
+                  else
+                     Set_Return_Value
+                       (Data,
+                        Glib.Properties.Get_Property
+                          (Text (Num).Get_Buffer,
+                           Gtk.Text_Buffer.Text_Property));
+                  end if;
                end loop;
             end if;
 
