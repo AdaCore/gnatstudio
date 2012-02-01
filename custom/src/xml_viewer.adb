@@ -630,9 +630,9 @@ package body XML_Viewer is
    is
       Col          : Gtk_Tree_View_Column;
       Rend         : Gtk_Cell_Renderer_Text;
-      Dumm         : Gint;
+      Ignore       : Gint;
+      pragma Unreferenced (Ignore);
       Scroll       : Gtk_Scrolled_Window;
-      pragma Unreferenced (Dumm);
       Column_Types : Glib.GType_Array (1 .. Guint (Columns) + 3) :=
                        (others => GType_String);
    begin
@@ -675,7 +675,7 @@ package body XML_Viewer is
          Pack_Start (Col, Rend, False);
          Add_Attribute (Col, Rend, "markup", Gint (C - 1));
          Set_Sort_Column_Id (Col, View.Sort_Column);
-         Dumm := Append_Column (View.Tree, Col);
+         Ignore := Append_Column (View.Tree, Col);
          if C = 1 and then View.Sorted then
             Clicked (Col);
          end if;
