@@ -1023,12 +1023,12 @@ package body Src_Editor_Module is
    is
       Current : constant Source_Editor_Box :=
                   Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Box     : Source_Editor_Box;
-      pragma Unreferenced (Box);
+      Ignore  : Source_Editor_Box;
+      pragma Unreferenced (Ignore);
 
    begin
       if Current /= null then
-         Box := New_View (Kernel, Current);
+         Ignore := New_View (Kernel, Current);
       end if;
    end New_View;
 
@@ -1531,8 +1531,8 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Label  : Gtk_Label;
-      Button : Gtk_Widget;
-      pragma Unreferenced (Widget, Button);
+      Ignore : Gtk_Widget;
+      pragma Unreferenced (Widget, Ignore);
 
       Open_File_Dialog : Gtk_Dialog;
       Open_File_Entry  : Gtkada_Entry;
@@ -1575,8 +1575,8 @@ package body Src_Editor_Module is
          Select_Region (Get_Entry (Open_File_Entry), 0, -1);
       end if;
 
-      Button := Add_Button (Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button
+      Ignore := Add_Button (Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
+      Ignore := Add_Button
         (Open_File_Dialog, Stock_Cancel, Gtk_Response_Cancel);
       Set_Default_Response (Open_File_Dialog, Gtk_Response_OK);
 
@@ -1669,15 +1669,16 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Context : constant Selection_Context := Get_Current_Context (Kernel);
-      Editor  : Source_Editor_Box;
-      pragma Unreferenced (Widget, Editor);
+      Ignore  : Source_Editor_Box;
+      pragma Unreferenced (Widget, Ignore);
       Dir     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+
    begin
       if Has_Directory_Information (Context) then
          Dir := Directory_Information (Context);
       end if;
 
-      Editor := Open_File
+      Ignore := Open_File
         (Kernel,
          File => Dir,
          Line => 1, Column => 1, Column_End => 1);
@@ -2102,11 +2103,11 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
       Current : constant Source_Editor_Box :=
                   Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Result  : Boolean;
-      pragma Unreferenced (Result);
+      Ignore  : Boolean;
+      pragma Unreferenced (Ignore);
    begin
       if Current /= null then
-         Result := Do_Refill (Get_Buffer (Current));
+         Ignore := Do_Refill (Get_Buffer (Current));
       end if;
 
    exception
@@ -2124,7 +2125,6 @@ package body Src_Editor_Module is
       D      : constant Source_File_Hooks_Args :=
                  Source_File_Hooks_Args (Data.all);
       Child  : MDI_Child;
-      Column : Visible_Column_Type := D.Column;
       Source : Source_Editor_Box;
       Edit   : Source_Editor_Box;
       Tmp    : Boolean;
@@ -2172,10 +2172,6 @@ package body Src_Editor_Module is
 
          if Source /= null then
             Edit := Source;
-         end if;
-
-         if Column = 0 then
-            Column := 1;
          end if;
 
          if D.Title /= "" then
@@ -2346,14 +2342,14 @@ package body Src_Editor_Module is
         File_Information (Context.Context);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dialog  : Gtk_Dialog;
-      Button  : Gtk_Widget;
       Label   : Gtk_Label;
       Lang    : Gtk_Combo_Box;
       Charset : Gtk_Combo_Box;
       Box     : Gtk_Box;
       Size    : Gtk_Size_Group;
       Buffer  : Source_Buffer;
-      pragma Unreferenced (Button);
+      Ignore  : Gtk_Widget;
+      pragma Unreferenced (Ignore);
 
    begin
       Buffer := Get_Buffer
@@ -2423,7 +2419,7 @@ package body Src_Editor_Module is
         (File, Default => Get_Charset (Buffer));
       Pack_Start (Box, Charset, Expand => True, Fill => True);
 
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Grab_Default (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
       Show_All (Dialog);
