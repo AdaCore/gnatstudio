@@ -324,12 +324,12 @@ package body Variable_Editors is
       Index    : Natural;
       Found    : Boolean;
       Num_Rows : Natural := 0;
-      Message  : Message_Dialog_Buttons;
-      pragma Unreferenced (Message);
+      Ignore   : Message_Dialog_Buttons;
+      pragma Unreferenced (Ignore);
 
    begin
       if New_Name = "" then
-         Message := Message_Dialog
+         Ignore := Message_Dialog
            (Msg     => -"You must specify a name for the variable",
             Buttons => Button_OK,
             Parent  => Gtk_Window (Editor));
@@ -378,7 +378,7 @@ package body Variable_Editors is
       end loop;
 
       if Num_Rows = 0 then
-         Message := Message_Dialog
+         Ignore := Message_Dialog
            (Msg     => -"You must specify some possible values",
             Buttons => Button_OK,
             Parent  => Gtk_Window (Editor));
@@ -394,7 +394,7 @@ package body Variable_Editors is
          begin
             for V in Vars'Range loop
                if New_Name = External_Name (Vars (V)) then
-                  Message := Message_Dialog
+                  Ignore := Message_Dialog
                     (Msg     => -"There is already a variable with this name",
                      Buttons => Button_OK,
                      Parent  => Gtk_Window (Editor));
