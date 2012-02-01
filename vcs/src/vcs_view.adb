@@ -337,8 +337,6 @@ package body VCS_View is
    is
       Pixbuf : Gdk_Pixbuf;
    begin
-      Success := True;
-
       if Line_Info.Status.File = No_File then
          Success := False;
          return;
