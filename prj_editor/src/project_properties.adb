@@ -1050,7 +1050,8 @@ package body Project_Properties is
       Attribute             : constant Attribute_Pkg_List :=
                                 Build (Attr.Pkg.all, Attr.Name.all);
       Lower_Attribute_Index : String := Attribute_Index;
-      Equal                 : Boolean := True;
+      Equal                 : Boolean;
+
    begin
       if not Attr.Case_Sensitive_Index then
          To_Lower (Lower_Attribute_Index);
@@ -2675,8 +2676,8 @@ package body Project_Properties is
       Toggle     : Gtk_Cell_Renderer_Toggle;
       Text       : Gtk_Cell_Renderer_Text;
       Col        : Gtk_Tree_View_Column;
-      Col_Number : Gint;
-      pragma Unreferenced (Col_Number);
+      Ignore     : Gint;
+      pragma Unreferenced (Ignore);
 
       Current_Value : GNAT.Strings.String_List_Access;
 
@@ -2766,7 +2767,7 @@ package body Project_Properties is
            (Toggle, Signal_Toggled, Attribute_List_Changed'Access, Editor);
 
          Gtk_New (Col);
-         Col_Number := Append_Column (View, Col);
+         Ignore := Append_Column (View, Col);
          Pack_Start (Col, Toggle, False);
          Add_Attribute (Col, Toggle, "active", 1);
          Set_Reorderable (Col, False);
@@ -2820,6 +2821,8 @@ package body Project_Properties is
       Source   : Natural;
       File     : GNATCOLL.VFS.Virtual_File;
       Button   : Gtk_Widget;
+      Ignore   : Gtk_Widget;
+      pragma Unreferenced (Ignore);
       Prj      : Project_Type;
       Scrolled : Gtk_Scrolled_Window;
    begin
@@ -2890,7 +2893,7 @@ package body Project_Properties is
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Grab_Default (Button);
-            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+            Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
             Show_All (Dialog);
 
@@ -3238,8 +3241,8 @@ package body Project_Properties is
       Toggle     : Gtk_Cell_Renderer_Toggle;
       Col        : Gtk_Tree_View_Column;
       Arrow      : Gtk_Arrow;
-      Col_Number : Gint;
-      pragma Unreferenced (Col_Number);
+      Ignore : Gint;
+      pragma Unreferenced (Ignore);
 
       Attr       : constant Attribute_Type :=
                      Get_Attribute_Type_From_Description
@@ -3291,7 +3294,7 @@ package body Project_Properties is
          Gtk_New (Col);
          Set_Resizable (Col, True);
          Set_Title (Col, -"Directory");
-         Col_Number := Append_Column (Editor.View, Col);
+         Ignore := Append_Column (Editor.View, Col);
          Pack_Start (Col, Text, True);
          Add_Attribute (Col, Text, "text", 0);
 
@@ -3324,7 +3327,7 @@ package body Project_Properties is
             Gtk_New (Col);
             Set_Resizable (Col, True);
             Set_Title (Col, -"Include subdirectories");
-            Col_Number := Append_Column (Editor.View, Col);
+            Ignore := Append_Column (Editor.View, Col);
             Pack_Start (Col, Toggle, False);
             Add_Attribute (Col, Toggle, "active", 1);
 
@@ -3461,6 +3464,8 @@ package body Project_Properties is
                    (Description, Attribute_Index);
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
+      Ignore : Gtk_Widget;
+      pragma Unreferenced (Ignore);
       Ent    : Gtk_Entry;
       Model  : Gtk_Tree_Store;
       View   : Gtk_Tree_View;
@@ -3484,7 +3489,7 @@ package body Project_Properties is
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Grab_Default (Button);
-            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+            Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
             Show_All (Dialog);
 
@@ -3562,7 +3567,7 @@ package body Project_Properties is
 
             Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
             Grab_Default (Button);
-            Button := Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+            Ignore := Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
             Show_All (Dialog);
 
             case Run (Dialog) is
@@ -3630,7 +3635,7 @@ package body Project_Properties is
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Grab_Default (Button);
-            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+            Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
             Show_All (Dialog);
 
@@ -4156,6 +4161,8 @@ package body Project_Properties is
       Value_Ed       : Attribute_Editor;
       Dialog         : Gtk_Dialog;
       Button         : Gtk_Widget;
+      Ignore         : Gtk_Widget;
+      pragma Unreferenced (Ignore);
       Typ            : Attribute_Type;
    begin
       Get_Path_At_Pos
@@ -4196,7 +4203,7 @@ package body Project_Properties is
                            Expand => True, Fill => True);
                Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
                Grab_Default (Button);
-               Button := Add_Button
+               Ignore := Add_Button
                  (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
                Show_All (Dialog);
@@ -4292,8 +4299,8 @@ package body Project_Properties is
       Text          : Gtk_Cell_Renderer_Text;
       Col           : Gtk_Tree_View_Column;
       Scrolled      : Gtk_Scrolled_Window;
-      Col_Number    : Gint;
-      pragma Unreferenced (Col_Number);
+      Ignore        : Gint;
+      pragma Unreferenced (Ignore);
       Index         : constant Attribute_Description_Access :=
                         Get_Attribute_Type_From_Name
                           (Pkg  => Attr.Index_Package.all,
@@ -4430,7 +4437,7 @@ package body Project_Properties is
          Set_Title (Col, Index.Label.all);
       end if;
 
-      Col_Number := Append_Column (Ed.View, Col);
+      Ignore := Append_Column (Ed.View, Col);
       Pack_Start (Col, Text, True);
       Add_Attribute (Col, Text, "text", Index_Col);
 
@@ -4452,7 +4459,7 @@ package body Project_Properties is
          Set_Title (Col, -"(Click to edit)");
       end if;
 
-      Col_Number := Append_Column (Ed.View, Col);
+      Ignore := Append_Column (Ed.View, Col);
       Pack_Start (Col, Text, True);
       Add_Attribute (Col, Text, "text", Attribute_Col);
       Add_Attribute (Col, Text, "editable", Editable_Col);
@@ -4989,6 +4996,7 @@ package body Project_Properties is
       for S in Page.Sections'Range loop
          Box   := null;
          Frame := null;
+         Expandable := False;
 
          for A in Page.Sections (S).Attributes'Range loop
             Create_Widget_Attribute
@@ -5022,8 +5030,6 @@ package body Project_Properties is
 
                if Box = null then
                   Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 2);
-
-                  Expandable := False;
 
                   if Page.Sections (S).Name.all /= "" then
                      Gtk_New (Frame, Page.Sections (S).Name.all);
@@ -5180,10 +5186,11 @@ package body Project_Properties is
       Always_Load_Source : Boolean) return Project_Edition_Type
    is
       D : Gtk_Dialog;
-      B : Gtk_Widget;
       L : Gtk_Label;
       C : Gtk_Check_Button;
-      pragma Unreferenced (B);
+
+      Ignore : Gtk_Widget;
+      pragma Unreferenced (Ignore);
    begin
       Gtk_New (D,
                Title  => -"Project had errors",
@@ -5201,12 +5208,12 @@ package body Project_Properties is
       end if;
 
       if Always_Load_Source then
-         B := Add_Button (D, -"Open Source",   Gtk_Response_OK);
+         Ignore := Add_Button (D, -"Open Source",   Gtk_Response_OK);
       else
-         B := Add_Button (D, Stock_Open,   Gtk_Response_OK);
+         Ignore := Add_Button (D, Stock_Open,   Gtk_Response_OK);
       end if;
 
-      B := Add_Button (D, Stock_Cancel, Gtk_Response_Cancel);
+      Ignore := Add_Button (D, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (D);
 
@@ -5297,7 +5304,8 @@ package body Project_Properties is
       Editor                   : Properties_Editor;
       Changed                  : Boolean := False;
       Response                 : Gtk_Response_Type;
-      Response2                : Message_Dialog_Buttons;
+      Ignore                   : Message_Dialog_Buttons;
+      pragma Unreferenced (Ignore);
       Project_Renamed_Or_Moved : Boolean := False;
 
       Incomplete : constant String := -"The project """
@@ -5352,7 +5360,7 @@ package body Project_Properties is
          exit when Response /= Gtk_Response_OK;
 
          if not Is_Valid_Project_Name (Get_Safe_Text (Editor.Name)) then
-            Response2 := Message_Dialog
+            Ignore := Message_Dialog
               (Msg         => (-"Invalid name for the project ") &
                (-"(only letters, digits and underscores)"),
                Buttons     => Button_OK,
@@ -5363,7 +5371,7 @@ package body Project_Properties is
          elsif not
            Is_Directory (Create_From_UTF8 (Get_Safe_Text (Editor.Path)))
          then
-            Response2 := Message_Dialog
+            Ignore := Message_Dialog
               (Msg         => Get_Safe_Text (Editor.Path)
                & (-" is not a valid directory"),
                Buttons     => Button_OK,
@@ -5392,17 +5400,13 @@ package body Project_Properties is
                    or else New_Path /= Project_Directory (Project))
                  and then Is_Regular_File (New_File)
                then
-                  Response2 := Message_Dialog
+                  exit when Message_Dialog
                     (New_File.Display_Full_Name
                      & (-" already exists. Do you want to overwrite ?"),
                      Buttons     => Button_Yes or Button_No,
                      Dialog_Type => Error,
                      Title       => -"Error",
-                     Parent      => Get_Current_Window (Kernel));
-
-                  if Response2 = Button_Yes then
-                     exit;
-                  end if;
+                     Parent      => Get_Current_Window (Kernel)) = Button_Yes;
                else
                   exit;
                end if;
