@@ -85,9 +85,10 @@ NF-52-K121-030 GPS: Codefix support for unrequired out-mode (2011-10-21)
   Added support to automatically fix the warning reported by the GNAT
   compiler in in-out formal parameters.
 
-NF-52-I527-048 GPS: add multi-line fields in MDI.input_dialog (2012-02-01)
+NF-52-I527-048 GPS: multi-line option in MDI.input_dialog (2012-02-01)
 
-  MDI.input_dialog is extended to accept multi-line inputs on some fields.
+  The GPS function MDI.input_dialog used in plug-ins has been enhanced and
+  now offers multi-line input on fields as an option.
 
 NF-52-I402-011 ECL: GNATbench needs launch configs for Ada (2011-10-13)
 
