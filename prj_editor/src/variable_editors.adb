@@ -134,12 +134,11 @@ package body Variable_Editors is
       Col             : Gtk_Tree_View_Column;
       Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
 
-      Col_Number      : Gint;
-      Button          : Gtk_Widget;
-      pragma Unreferenced (Col_Number, Button);
+      Ignore          : Gint;
+      Ignore_Widget   : Gtk_Widget;
+      pragma Unreferenced (Ignore, Ignore_Widget);
 
       Iter            : Gtk_Tree_Iter;
-      Is_Default      : Boolean;
 
    begin
       Editor := new New_Var_Edit_Record;
@@ -173,14 +172,14 @@ package body Variable_Editors is
       --  appropriate cell renderers.
 
       Gtk_New (Col);
-      Col_Number := Append_Column (Editor.Values_List, Col);
+      Ignore := Append_Column (Editor.Values_List, Col);
       Set_Title (Col, -"Default");
       Pack_Start (Col, Toggle_Renderer, False);
 
       Add_Attribute (Col, Toggle_Renderer, "active", Default_Value_Column);
 
       Gtk_New (Col);
-      Col_Number := Append_Column (Editor.Values_List, Col);
+      Ignore := Append_Column (Editor.Values_List, Col);
       Set_Title (Col, -"Value");
       Pack_Start (Col, Editor.Editable_Renderer, True);
       Add_Attribute (Col, Editor.Editable_Renderer, "text", Value_Column);
@@ -193,8 +192,8 @@ package body Variable_Editors is
       --  Add the dialog buttons at the bottom. This is done so that Run can be
       --  called on the dialog.
 
-      Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
+      Ignore_Widget := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
+      Ignore_Widget := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
 
       Widget_Callback.Object_Connect
         (Editor.New_Variable, Signal_Clicked, New_Variable'Access, Editor);
@@ -235,19 +234,13 @@ package body Variable_Editors is
               (Gtk_Entry (Editor.Variable_Name.Get_Child),
                External_Name (Var));
 
-            Is_Default := True;
-
             for E in Values'Range loop
                Append (Editor.Model, Iter, Null_Iter);
-               Is_Default := External_Default (Var) = Values (E).all;
-
                Variable_Editor_Set
                  (Editor.Model, Iter,
-                  Is_Default  => Is_Default,
+                  Is_Default  => External_Default (Var) = Values (E).all,
                   Value       => Values (E).all,
                   Is_Editable => True);
-
-               Is_Default := False;
             end loop;
 
             Free (Values);
