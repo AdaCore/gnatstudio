@@ -910,11 +910,13 @@ package body Tries is
             if Iter.Root_Name.all = "" then
                Iter.Current_Cell := Tree_Root_Cell;
                Iter.Current_Index := 1;
-            else
-               Find_Cell_Child
-                 (Tree_Root_Cell, Iter.Case_Sensitive, Iter.Root_Name.all,
-                  Pointer);
+               Iter.Initial_Timestamp := Iter.Mod_Clock.all;
+               return;
             end if;
+
+            Find_Cell_Child
+              (Tree_Root_Cell, Iter.Case_Sensitive, Iter.Root_Name.all,
+               Pointer);
 
             if Pointer.Scenario /= 3 then
                Iter.Current_Cell := null;
@@ -922,14 +924,8 @@ package body Tries is
             end if;
 
             Iter.Root_Cell := Pointer.Cell;
-
-            if Full_Name = "" then
-               Iter.Current_Cell := Tree_Root_Cell;
-               Iter.Current_Index := 1;
-            else
-               Find_Cell_Child
-                 (Tree_Root_Cell, Iter.Case_Sensitive, Full_Name, Pointer);
-            end if;
+            Find_Cell_Child
+              (Tree_Root_Cell, Iter.Case_Sensitive, Full_Name, Pointer);
 
             if Pointer.Scenario /= 3 then
                Iter.Current_Cell := null;
@@ -937,7 +933,6 @@ package body Tries is
             end if;
 
             Iter.Current_Cell := Pointer.Cell;
-
             Iter.Initial_Timestamp := Iter.Mod_Clock.all;
          end;
       end if;
