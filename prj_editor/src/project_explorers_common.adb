@@ -605,20 +605,20 @@ package body Project_Explorers_Common is
                   if Get_Event_Type (Event) = Gdk_2button_Press then
                      declare
                         Path    : Gtk_Tree_Path;
-                        Success : Boolean;
-                        pragma Unreferenced (Success);
+                        Ignore  : Boolean;
+                        pragma Unreferenced (Ignore);
                      begin
                         Path := Get_Path (Model, Iter);
 
                         if Row_Expanded (Tree, Path) then
-                           Success := Collapse_Row (Tree, Path);
+                           Ignore := Collapse_Row (Tree, Path);
 
                         else
                            if Add_Dummy then
                               Append_Dummy_Iter (Model, Iter);
                            end if;
 
-                           Success := Expand_Row (Tree, Path, False);
+                           Ignore := Expand_Row (Tree, Path, False);
                         end if;
 
                         Path_Free (Path);
