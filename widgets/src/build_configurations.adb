@@ -861,19 +861,6 @@ package body Build_Configurations is
       return Target.Command_Line.all;
    end Get_Command_Line_Unexpanded;
 
-   ----------------------
-   -- Get_Switch_Value --
-   ----------------------
-
-   function Get_Switch_Value
-     (Target : Target_Access;
-      Switch : String) return String is
-   begin
-      --  Generated stub: replace with real body!
-      raise Program_Error;
-      return Get_Switch_Value (Target, Switch);
-   end Get_Switch_Value;
-
    ----------
    -- Free --
    ----------
@@ -1134,7 +1121,6 @@ package body Build_Configurations is
       if Target.Command_Line /= null then
          C.Next := Command_Line_To_XML
            (Target.Command_Line.all, "command-line");
-         C := C.Next;
       end if;
 
       return N;
@@ -1354,9 +1340,9 @@ package body Build_Configurations is
      (Registry : Build_Config_Registry_Access;
       XML      : Node_Ptr)
    is
-      N : Node_Ptr;
-      T : Target_Access;
-      pragma Unreferenced (T);
+      N       : Node_Ptr;
+      Ignore : Target_Access;
+      pragma Unreferenced (Ignore);
    begin
       if XML = null
         or else XML.Tag = null
@@ -1369,7 +1355,7 @@ package body Build_Configurations is
       N := XML.Child;
 
       while N /= null loop
-         T := Load_Target_From_XML
+         Ignore := Load_Target_From_XML
            (Registry => Registry, XML => N, From_User => True);
          N := N.Next;
       end loop;
@@ -1503,8 +1489,8 @@ package body Build_Configurations is
       C : Node_Ptr;
       M : Mode_Record;
       pragma Unreferenced (M);
-      T : Target_Access;
-      pragma Unreferenced (T);
+      Ignore : Target_Access;
+      pragma Unreferenced (Ignore);
 
    begin
       N := Parse (File);
@@ -1540,7 +1526,7 @@ package body Build_Configurations is
             --  add targets
             while C /= null loop
                if C.Tag.all = "target" then
-                  T := Load_Target_From_XML (Registry, C, True);
+                  Ignore := Load_Target_From_XML (Registry, C, True);
                end if;
                C := C.Next;
             end loop;

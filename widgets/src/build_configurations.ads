@@ -341,11 +341,6 @@ package Build_Configurations is
    --  Note that Command_Line should include the executable as well as the
    --  arguments
 
-   function Get_Switch_Value
-     (Target : Target_Access;
-      Switch : String) return String;
-   --  Return the value of Switch as configured in Target
-
    function Get_Name (Target : Target_Access) return String;
    --  Return the name of Target
 
