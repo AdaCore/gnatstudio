@@ -1145,9 +1145,8 @@ package body Src_Editor_Buffer.Line_Information is
       Offset : Gint)
    is
       BL     : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
-      Result : Command_Return_Type;
-
-      pragma Unreferenced (Result);
+      Ignore : Command_Return_Type;
+      pragma Unreferenced (Ignore);
 
       Command : Command_Access;
    begin
@@ -1172,7 +1171,7 @@ package body Src_Editor_Buffer.Line_Information is
                        (Command.all).Base_Line := Line;
                   end if;
 
-                  Result := Execute (Command);
+                  Ignore := Execute (Command);
                end if;
 
                return;
@@ -2356,8 +2355,8 @@ package body Src_Editor_Buffer.Line_Information is
 
    procedure Fold_All (Buffer : access Source_Buffer_Record'Class) is
       Command      : Command_Access;
-      Result       : Command_Return_Type;
-      pragma Unreferenced (Result);
+      Ignore       : Command_Return_Type;
+      pragma Unreferenced (Ignore);
 
       Cursor_Move : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Line        : Editable_Line_Type;
@@ -2415,7 +2414,7 @@ package body Src_Editor_Buffer.Line_Information is
                              Hide_Editable_Lines_Type
                                (Command.all).Number - 1;
 
-                           Result := Execute (Command);
+                           Ignore := Execute (Command);
 
                            --  even though lines have been deleted,
                            --  constructs info hasn't changed.
@@ -2489,11 +2488,11 @@ package body Src_Editor_Buffer.Line_Information is
         Buffer.Editable_Lines;
 
       Command        : Command_Access;
-      Returned       : Command_Return_Type;
       BL             : Buffer_Line_Type;
       Action         : Line_Information_Access;
+      Ignore         : Command_Return_Type;
+      pragma Unreferenced (Ignore);
 
-      pragma Unreferenced (Returned);
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return False;
@@ -2521,7 +2520,7 @@ package body Src_Editor_Buffer.Line_Information is
                   then
                      Base_Editor_Command (Command).Base_Line :=
                        Buffer.Editable_Lines (L).Buffer_Line;
-                     Returned := Execute (Command);
+                     Ignore := Execute (Command);
                      return True;
                   end if;
 
@@ -2566,14 +2565,14 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type)
    is
-      Result : Boolean;
-      pragma Unreferenced (Result);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
    begin
       if Get_Constructs_State (Buffer) /= Exact then
          Compute_Blocks (Buffer);
       end if;
 
-      Result := Fold_Unfold_Line (Buffer, Line, Fold => True);
+      Ignore := Fold_Unfold_Line (Buffer, Line, Fold => True);
    end Fold_Block;
 
    -----------------------------------
