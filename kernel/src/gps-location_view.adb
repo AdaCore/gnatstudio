@@ -1239,8 +1239,8 @@ package body GPS.Location_View is
 
       Value   : GValue;
       Action  : GPS.Kernel.Standard_Hooks.Action_Item;
-      Success : Commands.Command_Return_Type;
-      pragma Unreferenced (Success);
+      Ignore  : Commands.Command_Return_Type;
+      pragma Unreferenced (Ignore);
 
    begin
       Self.View.Get_Model.Get_Value (Iter, Action_Command_Column, Value);
@@ -1249,7 +1249,7 @@ package body GPS.Location_View is
       if Action /= null
         and then Action.Associated_Command /= null
       then
-         Success := Action.Associated_Command.Execute;
+         Ignore := Action.Associated_Command.Execute;
       end if;
 
       Unset (Value);
@@ -1634,12 +1634,12 @@ package body GPS.Location_View is
             File : constant Virtual_File :=
               Get_Data
                 (Nth_Arg (Data, 2, Get_File_Class (Get_Kernel (Data))));
-            Message : Message_Access;
-            pragma Unreferenced (Message);
+            Ignore : Message_Access;
+            pragma Unreferenced (Ignore);
 
          begin
             if File.Is_Absolute_Path then
-               Message :=
+               Ignore :=
                  GPS.Kernel.Messages.Tools_Output.Add_Tool_Message
                    (Get_Messages_Container (Get_Kernel (Data)),
                     Glib.Convert.Escape_Text (Nth_Arg (Data, 1)),
