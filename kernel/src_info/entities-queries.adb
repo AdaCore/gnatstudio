@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2011, AdaCore                  --
+--                 Copyright (C) 2003-2012, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -408,6 +408,15 @@ package body Entities.Queries is
 
       if Distance = 0 then
          Status := Success;
+         Entity := Closest;
+
+      elsif Distance < Num_Columns_Per_Line then
+         --  If we found an entity on the same line, assume this is the right
+         --  entity, even if there are overloadings.
+         --  Improves the situation, in particular with C/C++ xrefs where
+         --  column info is not always accurate.
+
+         Status := Fuzzy_Match;
          Entity := Closest;
 
       elsif Distance = Integer'Last then
