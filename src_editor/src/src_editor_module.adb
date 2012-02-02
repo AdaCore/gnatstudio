@@ -912,6 +912,10 @@ package body Src_Editor_Module is
 
    function Is_Source_Box (Child : Gtkada.MDI.MDI_Child) return Boolean is
    begin
+      if Child = null then
+         return False;
+      end if;
+
       return Get_Widget (Child).all in Source_Editor_Box_Record'Class;
    end Is_Source_Box;
 
