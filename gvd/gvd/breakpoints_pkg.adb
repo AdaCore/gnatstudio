@@ -55,9 +55,17 @@ package body Breakpoints_Pkg is
       Alignment      : Gtk_Alignment;
       HBox           : Gtk_Hbox;
       Label          : Gtk_Label;
+      Main_Vbox      : Gtk_Box;
+      Scroll         : Gtk_Scrolled_Window;
 
    begin
       Gtk.Box.Initialize_Vbox (Breakpoints, False, 0);
+
+      Gtk_New (Scroll);
+      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
+      Pack_Start (Breakpoints, Scroll);
+      Gtk_New_Vbox (Main_Vbox);
+      Add_With_Viewport (Scroll, Main_Vbox);
 
       Gtk_New (Breakpoints.Notebook1);
       Set_Scrollable (Breakpoints.Notebook1, False);
@@ -66,7 +74,7 @@ package body Breakpoints_Pkg is
       Set_Tab_Hborder (Breakpoints.Notebook1, 2);
       Set_Tab_Vborder (Breakpoints.Notebook1, 2);
       Set_Tab_Pos (Breakpoints.Notebook1, Pos_Top);
-      Pack_Start (Breakpoints, Breakpoints.Notebook1, True, True, 0);
+      Pack_Start (Main_Vbox, Breakpoints.Notebook1, True, True, 0);
 
       Gtk_New_Hbox (Breakpoints.Hbox2, False, 0);
       Add (Breakpoints.Notebook1, Breakpoints.Hbox2);
@@ -367,7 +375,7 @@ package body Breakpoints_Pkg is
 
       Gtk_New (Breakpoints.Frame11, -"Breakpoints");
       Set_Shadow_Type (Breakpoints.Frame11, Shadow_Etched_In);
-      Pack_Start (Breakpoints, Breakpoints.Frame11, True, True, 0);
+      Pack_Start (Main_Vbox, Breakpoints.Frame11, True, True, 0);
 
       Gtk_New_Vbox (Breakpoints.Vbox16, False, 0);
       Add (Breakpoints.Frame11, Breakpoints.Vbox16);
