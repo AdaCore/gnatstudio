@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2011, AdaCore                 --
+--                  Copyright (C) 2001-2012, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -632,7 +632,7 @@ package body GPS.Kernel.Project is
          Set_Pref (Auto_Jump_To_First, Kernel, Old_Pref);
       end Report_Error;
 
-      Reloaded : Boolean;
+      Reloaded : Boolean := False;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
@@ -647,6 +647,7 @@ package body GPS.Kernel.Project is
       if Reloaded then
          Run_Hook (Kernel, Project_Changed_Hook);
       end if;
+
       Pop_State (Kernel_Handle (Kernel));
    end Reload_Project_If_Needed;
 
