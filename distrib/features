@@ -95,6 +95,12 @@ NF-52-I402-011 ECL: GNATbench needs launch configs for Ada (2011-10-13)
   Added Ada-specific launch configurations for local and remote debugging,
   attaching to a running process, and post mortem debugging.
 
+NF-52-G917-017 GPS: Coverage Report accessible through Back button (2012-02-02)
+
+  When clicking on a file or subprogram in the Code Coverage report, GPS open
+  this location in an editor, and it is now possible to click the "Back" button
+  in the toolbar to go back to the Code Coverage report.
+
 NF-52-FB01-013 ECL: Missing right-click debug options in editor (2011-10-12)
 
   The Ada editor now supports debug context menu items for run to line, move

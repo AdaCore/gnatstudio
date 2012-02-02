@@ -146,16 +146,17 @@ package Code_Analysis_GUI is
    --  information to the given context
 
    procedure Open_File_Editor_On_File
-     (Kernel : Kernel_Handle; Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter);
+     (Kernel : Kernel_Handle; View : Code_Analysis_View; Iter : Gtk_Tree_Iter);
    --  Opens a file editor on the source file pointed out by Iter in Model
 
    procedure Open_File_Editor_On_Subprogram
-     (Kernel : Kernel_Handle; Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter);
+     (Kernel : Kernel_Handle; View : Code_Analysis_View; Iter : Gtk_Tree_Iter);
    --  Opens a file editor on the source file containing the Subprogram
    --  pointed out by Iter in Model
 
    procedure Open_File_Editor
      (Kernel    : Kernel_Handle;
+      View      : Code_Analysis_View;
       File_Node : Code_Analysis.File_Access;
       Quiet     : Boolean;
       Line      : Natural := 1;

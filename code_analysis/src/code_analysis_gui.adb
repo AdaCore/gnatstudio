@@ -32,6 +32,7 @@ with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
@@ -326,7 +327,8 @@ package body Code_Analysis_GUI is
       Kernel : Kernel_Handle) return Boolean
    is
       use Code_Analysis_Tree_Model.File_Set;
-      Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Object);
+      View  : constant Code_Analysis_View := Code_Analysis_View (Object);
+      Tree  : constant Gtk_Tree_View := View.Tree;
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
    begin
@@ -345,10 +347,10 @@ package body Code_Analysis_GUI is
                   null;
                elsif Node.all in Code_Analysis.File'Class then
                   --  So we are on a file node
-                  Open_File_Editor_On_File (Kernel, Model, Iter);
+                  Open_File_Editor_On_File (Kernel, View, Iter);
                elsif Node.all in Code_Analysis.Subprogram'Class then
                   --  So we are on a subprogram node
-                  Open_File_Editor_On_Subprogram (Kernel, Model, Iter);
+                  Open_File_Editor_On_Subprogram (Kernel, View, Iter);
                end if;
             end;
             return True;
@@ -367,13 +369,20 @@ package body Code_Analysis_GUI is
 
    procedure Open_File_Editor
      (Kernel    : Kernel_Handle;
+      View      : Code_Analysis_View;
       File_Node : Code_Analysis.File_Access;
       Quiet     : Boolean;
       Line      : Natural := 1;
-      Column    : Natural := 1) is
+      Column    : Natural := 1)
+   is
+      Marker : MDI_Location_Marker;
    begin
       Do_Not_Goto_First_Location (Kernel);
       List_File_Uncovered_Lines (Kernel, File_Node, Quiet);
+
+      Marker := Create_MDI_Marker (View.Name & (-" Report"));
+      Push_Marker_In_History (Kernel, Marker);
+
       Open_File_Editor
         (Kernel, File_Node.Name, Line,
          Basic_Types.Visible_Column_Type (Column));
@@ -385,12 +394,14 @@ package body Code_Analysis_GUI is
    ------------------------------
 
    procedure Open_File_Editor_On_File
-     (Kernel : Kernel_Handle; Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter)
+     (Kernel : Kernel_Handle;
+      View   : Code_Analysis_View;
+      Iter   : Gtk_Tree_Iter)
    is
       File_Node : constant File_Access := File_Access
-        (File_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+        (File_Set.Get (View.Model, Iter, Node_Col));
    begin
-      Open_File_Editor (Kernel, File_Node, False);
+      Open_File_Editor (Kernel, View, File_Node, False);
    end Open_File_Editor_On_File;
 
    ------------------------------------
@@ -398,15 +409,17 @@ package body Code_Analysis_GUI is
    ------------------------------------
 
    procedure Open_File_Editor_On_Subprogram
-     (Kernel : Kernel_Handle; Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter)
+     (Kernel : Kernel_Handle;
+      View   : Code_Analysis_View;
+      Iter   : Gtk_Tree_Iter)
    is
       File_Node : constant File_Access := File_Access
-        (File_Set.Get (Gtk_Tree_Store (Model), Iter, File_Col));
+        (File_Set.Get (View.Model, Iter, File_Col));
       Subp_Node : constant Subprogram_Access := Subprogram_Access
-        (Subprogram_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+        (Subprogram_Set.Get (View.Model, Iter, Node_Col));
    begin
       Open_File_Editor
-        (Kernel, File_Node, True, Subp_Node.Start, Subp_Node.Column);
+        (Kernel, View, File_Node, True, Subp_Node.Start, Subp_Node.Column);
    end Open_File_Editor_On_Subprogram;
 
    ------------------

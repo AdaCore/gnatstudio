@@ -1119,7 +1119,7 @@ package body Code_Analysis_Module is
          Kernel_Return_Cb.Object_Connect
            (View.Tree, Signal_Button_Press_Event,
             Kernel_Return_Cb.To_Marshaller
-              (On_Double_Click'Access), View.Tree, Kernel);
+              (On_Double_Click'Access), View, Kernel);
 
          Put (Get_MDI (Kernel), Child);
       end if;
