@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L202-022: GPS: visual glitches when the Breakpoints editor is too small
+  Problem:    When the Breakpoints editor is too small, there is a visual
+              overlap in the display of its contents.
+  Workaround: Resize, move, or float the Breakpoints editor.
+
 - L131-031: GPS: jump to the current location when opening the search dialog
   Problem:    When the cursor in an editor is outside of the visible area,
               opening the Search dialog will cause the editor to scroll to
