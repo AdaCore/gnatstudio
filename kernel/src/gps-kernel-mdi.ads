@@ -18,6 +18,8 @@
 --  This package contains various constants and subprograms used for the
 --  GPS-specific usage of the MDI.
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
 with Commands;
 with Gtkada.MDI;         use Gtkada.MDI;
 with Gtk.Accel_Group;
@@ -30,6 +32,17 @@ with Gtk.Widget;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
 package GPS.Kernel.MDI is
+
+   type General_UI_Module_Record is new Module_ID_Record with null record;
+   type General_UI_Module is access all General_UI_Module_Record'Class;
+
+   overriding function Bookmark_Handler
+     (Module : access General_UI_Module_Record;
+      Load   : XML_Utils.Node_Ptr := null) return Location_Marker;
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the General_UI_Module
 
    ----------------------
    -- Desktop handling --
@@ -215,6 +228,35 @@ package GPS.Kernel.MDI is
       Fixed_Font : Boolean);
    --  Change the style of the widget based on the preferences
 
+   --------------------------
+   -- MDI Location markers --
+   --------------------------
+
+   --  These location markers allow placing a location mark on an MDI child.
+
+   type MDI_Location_Marker_Record
+     is new GPS.Kernel.Location_Marker_Record with private;
+   type MDI_Location_Marker is access all MDI_Location_Marker_Record'Class;
+
+   function Create_MDI_Marker (Name : String) return MDI_Location_Marker;
+   --  Create a location marker from the name of an MDI child
+
+   overriding function Go_To
+     (Marker : access MDI_Location_Marker_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean;
+   overriding function Clone
+     (Marker : access MDI_Location_Marker_Record) return Location_Marker;
+   overriding function To_String
+     (Marker : access MDI_Location_Marker_Record) return String;
+   overriding function Save
+     (Marker : access MDI_Location_Marker_Record) return XML_Utils.Node_Ptr;
+   overriding function Similar
+     (Left  : access MDI_Location_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Boolean;
+   overriding function Distance
+     (Left  : access MDI_Location_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Integer;
+
    -----------------------------------
    -- Misc Gtk+ Related Subprograms --
    -----------------------------------
@@ -302,6 +344,12 @@ private
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
       Module              : Abstract_Module_ID;
       Desktop_Independent : Boolean;
+   end record;
+
+   type MDI_Location_Marker_Record
+     is new GPS.Kernel.Location_Marker_Record
+   with record
+      Title : Unbounded_String;
    end record;
 
 end GPS.Kernel.MDI;

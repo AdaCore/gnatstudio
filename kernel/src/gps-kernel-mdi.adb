@@ -15,7 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Tags;
 with Ada.Unchecked_Conversion;
+
 with GNAT.Strings;             use GNAT.Strings;
 
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -1048,7 +1050,7 @@ package body GPS.Kernel.MDI is
       Default_Project_Node    : Node_Ptr;
       Perspectives            : Node_Ptr;
       Success_Loading_Desktop : Boolean := False;
-      Err                     : String_Access;
+      Err                     : GNAT.Strings.String_Access;
       Is_Default_Desktop      : Boolean := False;
       Try_User_Desktop        : Boolean := True;
       Project_From_Node       : Virtual_File;
@@ -1389,5 +1391,140 @@ package body GPS.Kernel.MDI is
    begin
       Add_Watch (Id, Data);
    end Setup;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create_MDI_Marker (Name : String) return MDI_Location_Marker is
+      M : MDI_Location_Marker;
+   begin
+      M := new MDI_Location_Marker_Record;
+      M.Title := To_Unbounded_String (Name);
+      return M;
+   end Create_MDI_Marker;
+
+   -----------
+   -- Go_To --
+   -----------
+
+   overriding function Go_To
+     (Marker : access MDI_Location_Marker_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean
+   is
+      Child : MDI_Child;
+   begin
+      Child := Find_MDI_Child_By_Name (MDI  => Get_MDI (Kernel),
+                                       Name => To_String (Marker.Title));
+
+      if Child /= null then
+         Child.Raise_Child (Give_Focus => True);
+         return True;
+      end if;
+
+      return False;
+   end Go_To;
+
+   -----------
+   -- Clone --
+   -----------
+
+   overriding function Clone
+     (Marker : access MDI_Location_Marker_Record) return Location_Marker
+   is
+   begin
+      return Location_Marker (Create_MDI_Marker (To_String (Marker.Title)));
+   end Clone;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   overriding function To_String
+     (Marker : access MDI_Location_Marker_Record) return String is
+   begin
+      return "MDI: " & To_String (Marker.Title);
+   end To_String;
+
+   ----------
+   -- Save --
+   ----------
+
+   overriding function Save
+     (Marker : access MDI_Location_Marker_Record) return XML_Utils.Node_Ptr is
+      Node : constant Node_Ptr := new XML_Utils.Node;
+   begin
+      Node.Tag := new String'("mdi_marker");
+      Set_Attribute (Node, "title", To_String (Marker.Title));
+      return Node;
+   end Save;
+
+   -------------
+   -- Similar --
+   -------------
+
+   overriding function Similar
+     (Left  : access MDI_Location_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Boolean
+   is
+      use type Ada.Tags.Tag;
+   begin
+      if Right.all'Tag /= MDI_Location_Marker_Record'Tag then
+         return False;
+      end if;
+
+      return Left.Title = MDI_Location_Marker (Right).Title;
+   end Similar;
+
+   --------------
+   -- Distance --
+   --------------
+
+   overriding function Distance
+     (Left  : access MDI_Location_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Integer is
+   begin
+      if Similar (Left, Right) then
+         return 0;
+      else
+         return Integer'Last;
+      end if;
+   end Distance;
+
+   ----------------------
+   -- Bookmark_Handler --
+   ----------------------
+
+   overriding function Bookmark_Handler
+     (Module : access General_UI_Module_Record;
+      Load   : XML_Utils.Node_Ptr := null) return Location_Marker is
+      pragma Unreferenced (Module);
+   begin
+      if Load /= null
+        and then Load.Tag.all = "mdi_marker"
+      then
+         return Location_Marker
+           (Create_MDI_Marker (Get_Attribute (Load, "title")));
+      end if;
+
+      return null;
+   end Bookmark_Handler;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   UI_Module : General_UI_Module;
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      UI_Module := new General_UI_Module_Record;
+      Register_Module
+        (Module      => UI_Module,
+         Kernel      => Kernel,
+         Module_Name => "General_UI",
+         Priority    => Default_Priority);
+   end Register_Module;
 
 end GPS.Kernel.MDI;

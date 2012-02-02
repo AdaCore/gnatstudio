@@ -1273,6 +1273,8 @@ procedure GPS.Main is
 
       GPS.Kernel.Console.Register_Module (GPS_Main.Kernel);
 
+      GPS.Kernel.MDI.Register_Module (GPS_Main.Kernel);
+
       --  Register the locations view before all the modules that register a
       --  highlighting category. Otherwise, when loading the desktop, the
       --  locations view might create highligthting with categories that don't
