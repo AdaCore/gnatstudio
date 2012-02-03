@@ -644,6 +644,8 @@ package body VCS_View_API is
          end Check_VCS;
 
       begin
+         VCS := null;
+
          if Dir /= No_File then
             For_Every_VCS (Check_VCS'Access);
          end if;
