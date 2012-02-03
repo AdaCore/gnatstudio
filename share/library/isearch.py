@@ -212,7 +212,9 @@ class Isearch (CommandWindow):
 
    def highlight_match (self, save_in_stack=1):
      """Highlight the match at self.loc"""
-     self.editor.current_view ().center(self.loc)
+     view = self.editor.current_view()
+     view.goto(self.loc)
+     view.center(self.loc)
      self.editor.select (self.loc, self.end_loc)
 
      if save_in_stack:

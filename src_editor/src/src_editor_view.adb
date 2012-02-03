@@ -705,13 +705,16 @@ package body Src_Editor_View is
    is
       Line : constant Gint := Get_Int (Nth (Params, 1));
    begin
-      --  If we have the focus and are setting the position explicitely,
-      --  save the cursor position and scroll to the cursor location
+      --  If we are changing the cursor while this editor has the focus,
+      --  we need save the cursor position
       if Gtkada.MDI.MDI_Child (User.Child) =
         Get_Focus_Child (Get_MDI (User.Kernel))
-        and then Buffer.Position_Set_Explicitely (Reset => True)
       then
-         Scroll_To_Cursor_Location (User, Minimal);
+         --  If the position has been set explicitely, also scroll to the
+         --  cursor location minimally the first time.
+         if Buffer.Position_Set_Explicitely (Reset => True) then
+            Scroll_To_Cursor_Location (User, Minimal);
+         end if;
          Save_Cursor_Position (User);
       end if;
 
