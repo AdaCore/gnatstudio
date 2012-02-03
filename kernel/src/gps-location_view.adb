@@ -723,8 +723,9 @@ package body GPS.Location_View is
       File_Path     : Gtk_Tree_Path;
       Category_Path : Gtk_Tree_Path;
       Model         : Gtk_Tree_Model;
-      Success       : Boolean := True;
-      pragma Warnings (Off, Success);
+      Success       : Boolean;
+      Ignore        : Boolean;
+      pragma Unreferenced (Ignore);
 
    begin
       Get_Selected (Get_Selection (Self.View), Model, Iter);
@@ -737,6 +738,7 @@ package body GPS.Location_View is
 
       --  Expand to the next path corresponding to a location node
 
+      Success := True;
       while Success and then Get_Depth (Path) < 3 loop
          Success := Expand_Row (Self.View, Path, False);
          Down (Path);
@@ -750,7 +752,7 @@ package body GPS.Location_View is
       end if;
 
       File_Path := Copy (Path);
-      Success := Up (File_Path);
+      Ignore := Up (File_Path);
 
       Category_Path := Copy (File_Path);
       Success := Up (Category_Path);
@@ -780,7 +782,7 @@ package body GPS.Location_View is
                      Next (File_Path);
                   end loop;
 
-                  Success := Prev (File_Path);
+                  Ignore := Prev (File_Path);
                end if;
             else
                Path_Free (File_Path);
@@ -790,7 +792,7 @@ package body GPS.Location_View is
             end if;
          end if;
 
-         Success := Expand_Row (Self.View, File_Path, False);
+         Ignore := Expand_Row (Self.View, File_Path, False);
          Path := Copy (File_Path);
          Down (Path);
 
@@ -799,7 +801,7 @@ package body GPS.Location_View is
                Next (Path);
             end loop;
 
-            Success := Prev (Path);
+            Ignore := Prev (Path);
          end if;
       end if;
 
