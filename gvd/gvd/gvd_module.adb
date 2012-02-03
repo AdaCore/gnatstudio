@@ -711,8 +711,8 @@ package body GVD_Module is
       Process_List : List_Select_Access;
       Success      : Boolean;
       Info         : Process_Info;
-      Button       : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
+      Ignore       : Message_Dialog_Buttons;
+      pragma Unreferenced (Ignore);
 
    begin
       if Process = null or else Process.Debugger = null then
@@ -720,7 +720,7 @@ package body GVD_Module is
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
-         Button := Message_Dialog
+         Ignore := Message_Dialog
            ((-"Cannot attach to a task/process while the") & ASCII.LF &
             (-"underlying debugger is busy.") & ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
@@ -772,8 +772,8 @@ package body GVD_Module is
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-      Button  : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
+      Ignore  : Message_Dialog_Buttons;
+      pragma Unreferenced (Ignore);
 
    begin
       if Process = null or else Process.Debugger = null then
@@ -781,7 +781,7 @@ package body GVD_Module is
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
-         Button := Message_Dialog
+         Ignore := Message_Dialog
            ((-"Cannot detach the task/process while the") & ASCII.LF &
             (-"underlying debugger is busy.") & ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
@@ -1243,15 +1243,15 @@ package body GVD_Module is
 
       Process : constant Visual_Debugger :=
                   Get_Current_Process (GPS_Window (Get_Main_Window (Kernel)));
-      Button  : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
+      Ignore  : Message_Dialog_Buttons;
+      pragma Unreferenced (Ignore);
    begin
       if Process = null or else Process.Debugger = null then
          return;
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
-         Button := Message_Dialog
+         Ignore := Message_Dialog
            ((-"Cannot rerun while the underlying debugger is busy.") &
             ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
@@ -1284,8 +1284,8 @@ package body GVD_Module is
       Ent_Protocol : Gtk_Entry;
       Ent_Target   : Gtk_Entry;
       Label        : Gtk_Label;
-      Button       : Gtk_Widget;
-      pragma Unreferenced (Widget, Button);
+      Ignore       : Gtk_Widget;
+      pragma Unreferenced (Widget, Ignore);
 
    begin
       Gtk_New
@@ -1318,8 +1318,8 @@ package body GVD_Module is
       Attach (Table, Ent_Protocol, 1, 2, 1, 2);
       Set_Activates_Default (Ent_Protocol, True);
 
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
       Show_All (Dialog);
@@ -1799,10 +1799,10 @@ package body GVD_Module is
       Data   : File_Project_Record;
       Args   : String)
    is
-      Page : Visual_Debugger;
-      pragma Unreferenced (Page);
+      Ignore : Visual_Debugger;
+      pragma Unreferenced (Ignore);
    begin
-      Page := Spawn
+      Ignore := Spawn
         (Kernel, Debugger_Kind.Get_Pref, Data.File,
          Get_Project (Kernel), Args);
    end Debug_Init;
