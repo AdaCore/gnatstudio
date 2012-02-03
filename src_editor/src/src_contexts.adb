@@ -357,6 +357,8 @@ package body Src_Contexts is
          Matches       : Match_Array (0 .. 0);
 
       begin
+         Section_End := Buffer'Last;
+
          while Pos <= Buffer'Last
            and then Scanning_Allowed (State) /= Looking_For
          loop
@@ -513,6 +515,7 @@ package body Src_Contexts is
       end if;
 
       Language := Get_Language_Context (Lang);
+      Old_State := Lexical_State;
 
       --  Always find the longest possible range, so that we can benefit
       --  as much as possible from the efficient string searching
@@ -572,6 +575,8 @@ package body Src_Contexts is
       Line          : Editable_Line_Type;
       Box           : Source_Editor_Box;
    begin
+      Was_Partial := False;
+
       --  If there is already an open editor, that might contain local
       --  modification, use its contents, otherwise read the buffer from the
       --  file itself.
@@ -598,7 +603,6 @@ package body Src_Contexts is
       --  ??? Would be nice to handle backward search, which is extremely hard
       --  with regular expressions
 
-      Was_Partial := False;
       Lang := Get_Language_From_File (Handler, Name);
 
       if Child = null then
@@ -697,9 +701,9 @@ package body Src_Contexts is
       --  ??? Would be nice to handle backward search, which is extremely hard
       --  with regular expressions
 
+      Was_Partial := False;
       Box := Get_Source_Box_From_MDI (Editor);
 
-      Was_Partial := False;
       Lang := Get_Language_From_File (Handler, Get_Filename (Box));
 
       if not Is_Valid_Position
@@ -1092,6 +1096,7 @@ package body Src_Contexts is
 
       Was_Partial : Boolean;
    begin
+      Result := null;
       Scan_File (Context, Handler, Kernel,
                  Name, Callback'Unrestricted_Access, Scope,
                  Lexical_State, Start_Line, Start_Column, Force_Read,
