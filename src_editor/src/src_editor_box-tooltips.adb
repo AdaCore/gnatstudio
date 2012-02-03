@@ -126,10 +126,10 @@ package body Src_Editor_Box.Tooltips is
       Filename : constant Virtual_File := Get_Filename (Editor);
    begin
       Ref := No_Entity_Reference;
+      Status := Entity_Not_Found;
+      Entity := null;
 
       if Filename = GNATCOLL.VFS.No_File then
-         Entity := null;
-         Status := Entity_Not_Found;
          return;
       end if;
 
@@ -153,7 +153,6 @@ package body Src_Editor_Box.Tooltips is
       when E : others =>
          Trace (Exception_Handle, E);
          Pop_State (Editor.Kernel);
-         Entity := null;
    end Get_Declaration_Info;
 
    ----------------------
