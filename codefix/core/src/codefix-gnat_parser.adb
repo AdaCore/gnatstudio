@@ -2014,7 +2014,7 @@ package body Codefix.GNAT_Parser is
       Line_Cursor : File_Cursor := File_Cursor (Message);
       Message_Kind : constant String :=
         Get_Message (Message) (Matches (1).First .. Matches (1).Last);
-      Match_Number : Integer;
+      Match_Number : Integer := 1;
 
    begin
       Set_Location (Line_Cursor, Get_Line (Line_Cursor), 1);
@@ -2357,7 +2357,8 @@ package body Codefix.GNAT_Parser is
       All_Occurrences      : Boolean := False;
       Word_Read            : String_Access;
       Unallowed_Characters : String_Access;
-      Format_Str           : String_Mode;
+      Format_Str           : String_Mode := Text_Ascii;
+
    begin
       Assign
         (Word_Read,
@@ -2380,6 +2381,8 @@ package body Codefix.GNAT_Parser is
          Solutions := Expand_Tabs (Current_Text, Message);
          Free (Word_Read);
          return;
+      else
+         raise Codefix_Panic;
       end if;
 
       Solutions :=
