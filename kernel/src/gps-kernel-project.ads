@@ -53,11 +53,12 @@ package GPS.Kernel.Project is
    -------------------
 
    procedure Load_Project
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Project    : GNATCOLL.VFS.Virtual_File;
-      No_Save    : Boolean := False;
-      Clear      : Boolean := True;
-      Is_Default : Boolean := False);
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Project      : GNATCOLL.VFS.Virtual_File;
+      No_Save      : Boolean := False;
+      Clear        : Boolean := True;
+      Is_Default   : Boolean := False;
+      Keep_Desktop : Boolean := False);
    --  Load project Project as the current project.
    --  This emits the "project_changed" and "project_view_changed" signals.
    --  If the project isn't found, nothing is done (the previous project is
@@ -67,6 +68,8 @@ package GPS.Kernel.Project is
    --  If Clear is true, the Messages window is cleared before loading the
    --  project
    --  If Is_Default is true, the project is considered the default project
+   --  If Keep_Desktop is false, load saved desktop configuration, keep current
+   --  otherwise
 
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;

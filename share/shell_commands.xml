@@ -1724,9 +1724,11 @@ Related hooks:
   <shell_doc name="GPS.Project.load">
        <param name="filename">A string, the full path to a project file</param>
        <param name="force" default="False">A boolean</param>
+       <param name="keep_desktop" default="False">A boolean</param>
        <return>An instance of GPS.Project</return>
        <description>Load a new project, which replaces the current root project, and return a handle to it. All imported projects are also loaded at the same time. If the project is not found, a default project is loaded.
-If force is True, then the user will not be asked whether to save the current project, whether it was modified or not</description>
+If force is True, then the user will not be asked whether to save the current project, whether it was modified or not.
+If keep_desktop is False, then load saved desktop configuration, keep current otherwise</description>
   </shell_doc>
 
   <shell_doc name="GPS.Project.name">

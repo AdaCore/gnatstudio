@@ -649,11 +649,12 @@ package body GPS.Kernel.Project is
    ------------------
 
    procedure Load_Project
-     (Kernel     : access Kernel_Handle_Record'class;
-      Project    : GNATCOLL.VFS.Virtual_File;
-      No_Save    : Boolean := False;
-      Clear      : Boolean := True;
-      Is_Default : Boolean := False)
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Project      : GNATCOLL.VFS.Virtual_File;
+      No_Save      : Boolean := False;
+      Clear        : Boolean := True;
+      Is_Default   : Boolean := False;
+      Keep_Desktop : Boolean := False)
    is
 
       procedure Report_Error (S : String);
@@ -724,7 +725,9 @@ package body GPS.Kernel.Project is
          --  Close all children before loading the new projet, in case a new
          --  editor needs to be loaded to display error messages
 
-         Close_All_Children (Kernel);
+         if not Keep_Desktop then
+            Close_All_Children (Kernel);
+         end if;
 
          --  Clear the console so that obsolete messages are not displayed
          if Clear then
@@ -786,7 +789,7 @@ package body GPS.Kernel.Project is
          --  If we fail to load the project, we will reload another project
          --  anyway (corresponding to the default or empty project).
 
-         if not Same_Project then
+         if not Same_Project and not Keep_Desktop then
             Ignore := Load_Desktop
               (Kernel, For_Project => Local_Project);
          end if;

@@ -1103,7 +1103,8 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Open_Cmd_Parameters);
          Load_Project (Kernel,
                        Create (Normalize_Pathname (Nth_Arg (Data, 1))),
-                       No_Save => Nth_Arg (Data, 2, False));
+                       No_Save => Nth_Arg (Data, 2, False),
+                       Keep_Desktop => Nth_Arg (Data, 3, False));
          Set_Return_Value
            (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
 
@@ -2115,7 +2116,7 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, "load",
          Minimum_Args  => 1,
-         Maximum_Args  => 2,
+         Maximum_Args  => 3,
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);

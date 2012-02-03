@@ -19,7 +19,7 @@ def open_harness_project ():
    cur = GPS.current_context().project()
    harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
    prj = os.path.join (cur.file().directory(), harness_dir, "test_driver.gpr")
-   GPS.Project.load (prj)
+   GPS.Project.load (prj, False, True)
    GPS.Console ("Messages").write ("Switched to harness project: " +
       GPS.Project.root().file().name() +"\n")
 
@@ -34,6 +34,6 @@ def exit_harness_project ():
                user_project = d
                break
 
-   GPS.Project.load (user_project.file().name())
+   GPS.Project.load (user_project.file().name(), False, True)
    GPS.Console ("Messages").write ("Exit harness project: " +
       GPS.Project.root().file().name() +"\n")
