@@ -1389,8 +1389,8 @@ package body Build_Configurations.Gtkada is
    is
       UI     : Build_UI_Access;
       Dialog : Gtk_Dialog;
-      Button : Gtk_Button;
-      pragma Unreferenced (Button);
+      Ignore : Gtk_Button;
+      pragma Unreferenced (Ignore);
 
       function Exists
         (List : GNAT.Strings.String_List_Access;
@@ -1461,9 +1461,9 @@ package body Build_Configurations.Gtkada is
 
       --  Create the dialog buttons
 
-      Button := Gtk_Button
+      Ignore := Gtk_Button
         (Add_Button (Dialog, Stock_Execute, Gtk_Response_OK));
-      Button := Gtk_Button
+      Ignore := Gtk_Button
         (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
