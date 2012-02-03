@@ -887,12 +887,13 @@ package body Build_Configurations.Gtkada is
 
       Buttons       : Gtk_Hbox;
       Button        : Gtk_Button;
+      Ignore        : Gtk_Button;
       Image         : Gtk_Image;
 
       Scrolled : Gtk_Scrolled_Window;
 
       Dummy : Gint;
-      pragma Unreferenced (Dummy);
+      pragma Unreferenced (Dummy, Ignore);
    begin
       Changes_Made := False;
 
@@ -1013,10 +1014,10 @@ package body Build_Configurations.Gtkada is
 
       --  Create the dialog buttons
 
-      Button := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
-      Button := Gtk_Button
+      Ignore := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Ignore := Gtk_Button
         (Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply));
-      Button := Gtk_Button
+      Ignore := Gtk_Button
         (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
