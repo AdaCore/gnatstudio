@@ -2854,11 +2854,13 @@ package body Src_Editor_Box is
       Iter      : Gtk_Text_Iter;
       Mark_Iter : Gtk_Text_Iter;
       Success   : Boolean;
+      Ignore    : Boolean;
+      pragma Unreferenced (Ignore);
 
    begin
       Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Mark);
       End_Action (Editor.Source_Buffer);
-      Success := Scroll_To_Iter
+      Ignore := Scroll_To_Iter
         (Editor.Source_View, Iter, 0.0, True, 0.5, 0.5);
 
       --  Ignore value of Success. We want to keep doing the code below
