@@ -1378,10 +1378,8 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end if;
 
-      if To_Column = 0 then
-         To_Column   := From_Column +
-           Visible_Column_Type (Message.Get_Highlighting_Length);
-      end if;
+      To_Column   := From_Column +
+        Visible_Column_Type (Message.Get_Highlighting_Length);
 
       if From_Column = To_Column then
          Remove_Line_Highlighting (Buffer, Line, Style);
