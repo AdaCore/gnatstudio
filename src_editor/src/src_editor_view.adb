@@ -775,8 +775,6 @@ package body Src_Editor_View is
       then
          if Position_Set_Explicitely (Buffer, False) then
             Scroll_To_Cursor_Location (V, Center);
-         else
-            Scroll_To_Cursor_Location (V, Minimal);
          end if;
       end if;
 
