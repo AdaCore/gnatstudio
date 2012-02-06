@@ -153,10 +153,7 @@ package body Basic_Mapper is
       Mapper := new File_Mapper;
       Ada.Text_IO.Open (File, Ada.Text_IO.In_File, +File_Name.Full_Name);
 
-      while Last_2 >= 0
-        and then Last_1 >= 0
-        and then not Ada.Text_IO.End_Of_File (File)
-      loop
+      while not Ada.Text_IO.End_Of_File (File) loop
          Ada.Text_IO.Get_Line (File, Buffer_1, Last_1);
          Ada.Text_IO.Get_Line (File, Buffer_2, Last_2);
          Add_Entry (Mapper,
