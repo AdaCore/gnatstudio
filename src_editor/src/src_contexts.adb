@@ -573,7 +573,6 @@ package body Src_Contexts is
       Child         : MDI_Child;
       Start         : Natural;
       Line          : Editable_Line_Type;
-      Box           : Source_Editor_Box;
    begin
       Was_Partial := False;
 
@@ -650,25 +649,6 @@ package body Src_Contexts is
                end if;
             end if;
          end;
-      else
-         Box := Get_Source_Box_From_MDI (Child);
-
-         if not Is_Valid_Position
-           (Get_Buffer (Box), Start_Line, Start_Column)
-         then
-            return;
-         end if;
-
-         Buffer := new String'
-           (Get_Text (Get_Buffer (Box), Start_Line, 1));
-
-         Start := Natural (Start_Column);
-
-         if Start <= Buffer'Last then
-            Scan_Buffer
-              (Buffer.all, Start, Context, Callback, Scope,
-               Lexical_State, Lang, Start_Line, Start_Column, Was_Partial);
-         end if;
       end if;
 
       Free (Buffer);
