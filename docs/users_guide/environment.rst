@@ -532,3 +532,15 @@ installing GPS.
   *Using space key to input non-breakable space character* and then select
   *Usual space at any level* and then close the dialogs.
 
+*GPS crashes on some GNU/Linux distributions at start up*
+
+  Look at the :file:`~/.gps/log.xxx` file and if there is a message that
+  looks like:
+
+    [GPS.MAIN_WINDOW] 1/16 loading gps-animation.png
+    [UNEXPECTED_EXCEPTION] 1/17 Unexpected exception: Exception name: CONSTRAINT_ERROR
+    _UNEXPECTED_EXCEPTION_ Message: gtk-image.adb:281 access check failed
+
+  Then it means there is a conflict with :file:`~/.local/share/mime/mime.cache`.
+  Removing this file will solve this conflict.
+
