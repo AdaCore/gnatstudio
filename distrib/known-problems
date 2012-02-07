@@ -117,6 +117,12 @@ Known Problems fixed in GPS 5.1.1 / GNATbench 2.6.1
               it, then GPS may crash.
   Workaround: Kill the remote program manually.
 
+- K801-006: GPS: control-<something> shortcuts not working in modal dialogs
+  Problem:    When using key shortcuts such as control-c to copy or control-v
+              to paste in dialog entries, GPS will enter 'c' or 'v' instead
+              of executing the corresponding action.
+  Workaround: Edit the entry manually.
+
 - K125-013: GPS: problem examining files outside the project
   Problem:    GPS accepted to examine files outside the project but then was
               unable to locate the file when displaying error messages. GPS
