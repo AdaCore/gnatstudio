@@ -1133,10 +1133,8 @@ package body Ada_Semantic_Tree.Units is
 
    function "<" (Left, Right : Unit_Access) return Boolean is
    begin
-      if Left = null and then Right = null then
-         return False;
-      elsif Left = null and then Right /= null then
-         return True;
+      if Left = null then
+         return Right /= null;
       elsif Right = null then
          return False;
       else
