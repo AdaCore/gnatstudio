@@ -77,12 +77,12 @@ package body Task_Manager is
    function Active_Incremental
      (Manager : Task_Manager_Access) return Boolean
    is
-      Result      : Boolean;
+      Ignore      : Boolean;
       Return_Type : Command_Return_Type;
-      pragma Unreferenced (Result, Return_Type);
+      pragma Unreferenced (Ignore, Return_Type);
 
    begin
-      Result := Execute_Incremental (Manager, True);
+      Ignore := Execute_Incremental (Manager, True);
 
       --  The active loop ends when there are no more active queues left
 
@@ -118,11 +118,11 @@ package body Task_Manager is
    function Passive_Incremental
      (Manager : Task_Manager_Access) return Boolean
    is
-      Result      : Boolean;
+      Ignore      : Boolean;
       Return_Type : Command_Return_Type;
-      pragma Unreferenced (Result, Return_Type);
+      pragma Unreferenced (Ignore, Return_Type);
    begin
-      Result := Execute_Incremental (Manager, False);
+      Ignore := Execute_Incremental (Manager, False);
 
       --  The passive loop ends when there are no more queues left
 
@@ -318,15 +318,15 @@ package body Task_Manager is
      (Manager : Task_Manager_Access;
       Active  : Boolean)
    is
-      Idle_Handler    : Idle_Handler_Id;
-      Timeout_Handler : G_Source_Id;
+      Unused_Handler  : Idle_Handler_Id;
+      Unused_Id       : G_Source_Id;
       Result          : Command_Return_Type;
-      pragma Unreferenced (Idle_Handler, Timeout_Handler, Result);
+      pragma Unreferenced (Unused_Handler, Unused_Id, Result);
    begin
       if not Manager.Running_Passive then
          Manager.Running_Passive := True;
 
-         Timeout_Handler := Task_Manager_Timeout.Timeout_Add
+         Unused_Id := Task_Manager_Timeout.Timeout_Add
            (Timeout, Passive_Incremental'Access, Manager,
             Priority => Glib.Main.Priority_Default_Idle);
       end if;
@@ -335,7 +335,7 @@ package body Task_Manager is
          Manager.Running_Active := True;
 
          if Active_Incremental (Manager) then
-            Idle_Handler := Task_Manager_Idle.Add
+            Unused_Handler := Task_Manager_Idle.Add
               (Active_Incremental'Access, Manager);
          end if;
       end if;
