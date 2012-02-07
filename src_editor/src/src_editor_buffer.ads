@@ -932,6 +932,13 @@ package Src_Editor_Buffer is
    --  set explicitely: further calls to Position_Set_Explicitely will return
    --  False.
 
+   procedure Set_Position_Set_Explicitely
+     (Buffer : access Source_Buffer_Record);
+   --  Set the flag "Position_Set_Explicitely".
+   --  This should only be called when opening an editor or when jumping to
+   --  a location. This flag will not do anything on editors that are already
+   --  open and scrolled.
+
    procedure End_Action (Buffer : access Source_Buffer_Record'Class);
    --  This procedure should be called every time that an internal
    --  event should cancel the current user action: focus switching
@@ -1461,6 +1468,12 @@ private
       --  True when the user requested to scroll to this position when the
       --  editor was first opened. This is used to scroll to this position in
       --  the callbacks that display the editor.
+
+      Initial_Scroll_Has_Occurred : Boolean := False;
+      --  Whether the initial scroll has occurred.
+      --  This flag, in cunjunction with Cursor_Set_Explicitely above, are used
+      --  to make sure that a newly-created editor will scroll to the given
+      --  location when it is first opened.
 
       In_Destruction : Boolean := False;
       --  Indicates whether the buffer is currently being destroyed

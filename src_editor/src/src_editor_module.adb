@@ -1185,6 +1185,8 @@ package body Src_Editor_Module is
               (Editor, Line, Real_Column, Focus,
                Centering => With_Margin);
 
+            Set_Position_Set_Explicitely (Get_Buffer (Editor));
+
             if Column_End /= 0
               and then Is_Valid_Position
                 (Get_Buffer (Editor), Line, Column_End)

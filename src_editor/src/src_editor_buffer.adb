@@ -3784,15 +3784,16 @@ package body Src_Editor_Buffer is
          Remove_Completion;
       end if;
 
+      if Centering /= Minimal
+        and then not Buffer.Initial_Scroll_Has_Occurred
+      then
+         Buffer.Cursor_Set_Explicitely := True;
+      end if;
+
       --  At this point, we know that the (Line, Column) position is
       --  valid, so we can safely get the iterator at this position.
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
-
-      if Centering /= Minimal then
-         Buffer.Cursor_Set_Explicitely := True;
-      end if;
-
       Place_Cursor (Buffer, Iter);
    end Set_Cursor_Position;
 
@@ -4540,7 +4541,6 @@ package body Src_Editor_Buffer is
    is
    begin
       End_Action (Buffer);
-      Buffer.Cursor_Set_Explicitely := True;
       Select_Range (Buffer, Ins => Cursor_Iter, Bound => Bound_Iter);
    end Select_Region;
 
@@ -4580,7 +4580,6 @@ package body Src_Editor_Buffer is
            (Buffer, Start_Iter, Start_Line, Start_Column);
          Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
          Select_Range (Buffer, Ins => End_Iter, Bound => Start_Iter);
-         Buffer.Cursor_Set_Explicitely := True;
       end if;
    end Select_Region;
 
@@ -6882,10 +6881,23 @@ package body Src_Editor_Buffer is
    begin
       if Reset then
          Buffer.Cursor_Set_Explicitely := False;
+         Buffer.Initial_Scroll_Has_Occurred := True;
       end if;
 
       return Set;
    end Position_Set_Explicitely;
+
+   ----------------------------------
+   -- Set_Position_Set_Explicitely --
+   ----------------------------------
+
+   procedure Set_Position_Set_Explicitely
+     (Buffer : access Source_Buffer_Record) is
+   begin
+      if not Buffer.Initial_Scroll_Has_Occurred then
+         Buffer.Cursor_Set_Explicitely := True;
+      end if;
+   end Set_Position_Set_Explicitely;
 
    ---------------------------
    -- In_Destruction_Is_Set --

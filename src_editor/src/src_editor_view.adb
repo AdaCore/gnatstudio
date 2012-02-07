@@ -710,11 +710,6 @@ package body Src_Editor_View is
       if Gtkada.MDI.MDI_Child (User.Child) =
         Get_Focus_Child (Get_MDI (User.Kernel))
       then
-         --  If the position has been set explicitely, also scroll to the
-         --  cursor location minimally the first time.
-         if Buffer.Position_Set_Explicitely (Reset => True) then
-            Scroll_To_Cursor_Location (User, Minimal);
-         end if;
          Save_Cursor_Position (User);
       end if;
 
@@ -1507,8 +1502,6 @@ package body Src_Editor_View is
            (Source_Buffer (Get_Buffer (View)), True)
          then
             Scroll_To_Cursor_Location (View, Center);
-         else
-            Scroll_To_Cursor_Location (View, Minimal);
          end if;
       end if;
 
