@@ -251,20 +251,20 @@ package body Commands is
       Queue.Command_In_Progress := True;
 
       declare
-         Action  : constant Command_Access := Queue.The_Queue.First_Element;
-         Success : Boolean;
-         Result  : Command_Return_Type;
-         pragma Unreferenced (Success, Result);
+         Action : constant Command_Access := Queue.The_Queue.First_Element;
+         Ignore : Boolean;
+         Ignore_Command : Command_Return_Type;
+         pragma Unreferenced (Ignore, Ignore_Command);
 
       begin
          Queue.The_Queue.Delete_First;
 
          case Action.Mode is
             when Normal | Undone =>
-               Result := Execute (Action);
+               Ignore_Command := Execute (Action);
 
             when Done =>
-               Success := Undo (Action);
+               Ignore := Undo (Action);
          end case;
       end;
    end Execute_Next_Action;
@@ -389,10 +389,10 @@ package body Commands is
    -------------
 
    procedure Execute (Command : access Root_Command) is
-      Success : Command_Return_Type;
-      pragma Unreferenced (Success);
+      Ignore : Command_Return_Type;
+      pragma Unreferenced (Ignore);
    begin
-      Success := Execute (Command_Access (Command));
+      Ignore := Execute (Command_Access (Command));
    end Execute;
 
    --------------------------
