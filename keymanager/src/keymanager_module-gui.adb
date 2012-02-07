@@ -815,14 +815,14 @@ package body KeyManager_Module.GUI is
 --        Button    : Gtk_Button;
       Col       : Gtk_Tree_View_Column;
       Render    : Gtk_Cell_Renderer_Text;
-      Num       : Gint;
+      Ignore    : Gint;
       Frame     : Gtk_Frame;
       Pane      : Gtk_Paned;
       Sep       : Gtk_Separator;
       Event     : Gtk_Event_Box;
       Text      : Gtk_Text_View;
-      Action    : Gtk_Widget;
-      pragma Unreferenced (Widget, Num, Action);
+      Ignore_Action : Gtk_Widget;
+      pragma Unreferenced (Widget, Ignore, Ignore_Action);
 
    begin
       Editor := new Keys_Editor_Record;
@@ -963,7 +963,7 @@ package body KeyManager_Module.GUI is
       Gtk_New (Render);
 
       Gtk_New (Col);
-      Num := Append_Column (Editor.View, Col);
+      Ignore := Append_Column (Editor.View, Col);
       Set_Title (Col, -"Action");
       Pack_Start (Col, Render, True);
       Add_Attribute (Col, Render, "text", Action_Column);
@@ -974,7 +974,7 @@ package body KeyManager_Module.GUI is
       Clicked (Col);
 
       Gtk_New (Col);
-      Num := Append_Column (Editor.View, Col);
+      Ignore := Append_Column (Editor.View, Col);
       Set_Title (Col, -"Shortcut");
       Pack_Start (Col, Render, False);
       Add_Attribute (Col, Render, "markup", Key_Column);
@@ -984,8 +984,8 @@ package body KeyManager_Module.GUI is
 
       Fill_Editor (Editor);
 
-      Action := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
-      Action := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
+      Ignore_Action := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
+      Ignore_Action := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Editor);
       Hide (Editor.Grab_Label);
