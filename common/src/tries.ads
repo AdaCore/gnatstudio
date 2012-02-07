@@ -173,7 +173,7 @@ private
    type Trie_Tree (Case_Sensitive : Boolean) is record
       Mod_Clock : Mod_Access;
       --  This value is incremented each time a modification is done in the
-      --  trie trie. This way, if there is any change made during e.g. the
+      --  trie tree. This way, if there is any change made during e.g. the
       --  iteration, it's detected.
 
       Child     : Cell_Child_Access := null;
@@ -226,6 +226,8 @@ private
       Last              : Integer;
       Index_Length      : Integer;
       Scenario          : Short_Short_Integer;
+      --  ??? Need documentation on possible values for Scenario, and
+      --  preferably replace Short_Short_Integer by an enumerated type.
       First_Not_Matched : Character;
    end record;
 
