@@ -1138,9 +1138,11 @@ package body Browsers.Entities is
 
       for A in Entity_Information_Arrays.First .. Last (Arr) loop
          if Is_Container (Get_Kind (Arr.Table (A)).Kind) then
+            Trace (Me, "Browser " & Debug_Name (Arr.Table (A)));
             Add_Subprogram (Meth_List, Item, Arr.Table (A));
 
          elsif Get_Kind (Arr.Table (A)).Is_Type then
+            Trace (Me, "Browser " & Debug_Name (Arr.Table (A)));
             declare
                Name : constant String := Entity_As_Link (Arr.Table (A));
             begin
@@ -1157,7 +1159,11 @@ package body Browsers.Entities is
                end if;
             end;
 
-         else
+         --  We want to show variables declared in this package, but not the
+         --  parameters to subprograms.
+
+         elsif Is_Parameter_Of (Arr.Table (A)) = null then
+            Trace (Me, "Browser: " & Debug_Name (Arr.Table (A)));
             Add_Type
               (Attr_List, Item, Arr.Table (A),
                Get (Get_Name (Arr.Table (A))).all);
