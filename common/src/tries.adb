@@ -110,6 +110,7 @@ package body Tries is
       Pointer        : out Cell_Pointer);
    --  Access a specific cell in the tree. The result value should only be
    --  used before the next write-access to the tree, or it becomes obsolete.
+   --  Index should not be a null string.
 
    ----------
    -- Free --
@@ -232,6 +233,8 @@ package body Tries is
       Child    : Integer;
       TL       : Character;
    begin
+      pragma Assert (Index'Length /= 0);
+
       --  If we are processing the root node
       if Root_Cell.Children = null then
          Pointer.Cell_Parent := null;
