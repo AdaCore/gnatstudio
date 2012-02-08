@@ -56,6 +56,12 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               Windows specific and rejected by the build server.
   Workaround: Edit the project manually to replace "\**" with "/**".
 
+- K930-009: GB: Search view double clicking on Ada references exceptions
+  Problem:    In some cases, when double clicking on an Ada reference from the
+              Search view, the ada file is opened but the cursor is not moved
+              to the reference.
+  Workaround: Retry the Ada references search process.
+
 - K926-014: GB: GNATbench freezes when viewing/editing Ada files
   Problem:    Randomly when using the GNATbench Ada editor for code edition
               or program debug, GNATbench freezes. The only solution to get
