@@ -20,11 +20,19 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Scroll manually, or position the cursor before opening the
               search dialog.
 
-- L123-032: GPS Editing Library Interface in Project Properties
+- L123-032: GPS: Editing Library Interface in Project Properties
   Problem:    The project attribute Library_Interface must contain unit names.
               However, GPS will set it using file names instead, and as a
               result the compiler complains.
   Workaround: Edit the project manually (*.gpr).
+
+- L123-031: GPS: Project editor discards the Executable attribute
+  Problem:    On Windows, when a project contains the "Executable" attribute
+              to specify an explicit file name for the executable generated
+              from a main unit, and the casing in the index isn't lower cases,
+              the attribute is discarded every time the project is edited.
+  Workaround: Fix the casing manually in the .gpr file to use lower cases
+              only. 
 
 - KC20-025: GPS: Removing a server makes some other servers unuseable
   Problem:    After removing a server from your server list, the other servers
@@ -37,7 +45,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               that are in other non-extending projects.
   Workaround: Manually load all Xref information via the /Build menu.
 
-- KC01-011: GPS Show Entity <package> shows subprogram parameters
+- KC01-011: GPS: Show Entity <package> shows subprogram parameters
   Problem:    If you select the contextual menu Browsers/Show Entity for
               a package, the resulting box contains the parameters of the
               subprograms. The solution involves changes in GPS but also

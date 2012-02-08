@@ -2278,8 +2278,15 @@ package body Project_Properties is
       A.Ordered_List := Ordered = "true" or else Ordered = "1";
       A.Omit_If_Default := Omit = "true" or else Omit = "1";
       A.Base_Name_Only := Base = "true" or else Omit = "1";
-      A.Case_Sensitive_Index :=
-        Case_Sensitive_Index = "true" or else Case_Sensitive_Index = "1";
+
+      if Case_Sensitive_Index = "file" then
+         A.Case_Sensitive_Index :=
+           GNATCOLL.VFS_Utils.Is_Case_Sensitive (Local_Host);
+      else
+         A.Case_Sensitive_Index :=
+           Case_Sensitive_Index = "true" or else Case_Sensitive_Index = "1";
+      end if;
+
       A.Disable_If_Not_Set := Disable_If_Not_Set = "true"
         or else Disable_If_Not_Set = "1";
       A.Disable := new String'(Disable);

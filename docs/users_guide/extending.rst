@@ -3706,15 +3706,18 @@ The `<project_attribute>` tag accepts the following attributes:
   files should only contain base names. This also increases the portability of
   project files.
 
-* `case_sensitive_index` (a boolean, default value: "false")
+* `case_sensitive_index` (a string ("true", "false" or "file), default: "false")
 
   This XML attribute is only relevant for project attributes that are indexed
   on another one (see below for more information on indexed attributes). It
   indicates whether two indexes that differ only by their casing should be
   considered the same. For instance, if the index is the name of one of the
   languages supported by GPS, the index is case insensitive since "Ada" is the
-  same as "C". However, if the index is the name of a file on Windows, the
-  index is case-insensitive.
+  same as "C".
+ 
+  As a special case, the value "file" can be passed to indicate that the case
+  sensitivity is the same as on the filesystem of the local host. This should
+  be used when the index is the name of a file. 
 
 * `hide_in` (a string, default value: "")
 
