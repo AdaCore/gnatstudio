@@ -3706,7 +3706,7 @@ The `<project_attribute>` tag accepts the following attributes:
   files should only contain base names. This also increases the portability of
   project files.
 
-* `case_sensitive_index` (a string ("true", "false" or "file), default: "false")
+* `case_sensitive_index` (a string ("true", "false" or "file"), default: "false")
 
   This XML attribute is only relevant for project attributes that are indexed
   on another one (see below for more information on indexed attributes). It
