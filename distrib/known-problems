@@ -40,7 +40,8 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 - KC01-011: GPS Show Entity <package> shows subprogram parameters
   Problem:    If you select the contextual menu Browsers/Show Entity for
               a package, the resulting box contains the parameters of the
-              subprograms.
+              subprograms. The solution involves changes in GPS but also
+              requires a version of GNAT more recent than 2012-02-08.
   Workaround: None.
 
 - KA27-009: GPS: unwanted scrolling when canceling interactive search

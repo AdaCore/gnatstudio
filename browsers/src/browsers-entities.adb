@@ -1114,6 +1114,7 @@ package body Browsers.Entities is
       Iter   : Calls_Iterator;
       Arr    : Entity_Information_Arrays.Instance;
       Called : Entity_Information;
+
    begin
       if Parent /= null then
          Add_Line (General_List, "Parent: " & Entity_As_Link (Parent),
@@ -1137,12 +1138,12 @@ package body Browsers.Entities is
       Sort (Arr);
 
       for A in Entity_Information_Arrays.First .. Last (Arr) loop
-         if Is_Container (Get_Kind (Arr.Table (A)).Kind) then
-            Trace (Me, "Browser " & Debug_Name (Arr.Table (A)));
+         if Is_Subprogram (Arr.Table (A)) then
+            Trace (Me, "Container: " & Debug_Name (Arr.Table (A)));
             Add_Subprogram (Meth_List, Item, Arr.Table (A));
 
          elsif Get_Kind (Arr.Table (A)).Is_Type then
-            Trace (Me, "Browser " & Debug_Name (Arr.Table (A)));
+            Trace (Me, "Type: " & Debug_Name (Arr.Table (A)));
             declare
                Name : constant String := Entity_As_Link (Arr.Table (A));
             begin
@@ -1162,8 +1163,11 @@ package body Browsers.Entities is
          --  We want to show variables declared in this package, but not the
          --  parameters to subprograms.
 
-         elsif Is_Parameter_Of (Arr.Table (A)) = null then
-            Trace (Me, "Browser: " & Debug_Name (Arr.Table (A)));
+         elsif Is_Parameter_Of (Arr.Table (A)) = null
+           and then Get_Caller (Declaration_As_Reference (Arr.Table (A))) =
+             Item.Entity
+         then
+            Trace (Me, "Variable: " & Debug_Name (Arr.Table (A)));
             Add_Type
               (Attr_List, Item, Arr.Table (A),
                Get (Get_Name (Arr.Table (A))).all);
