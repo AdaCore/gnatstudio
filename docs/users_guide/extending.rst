@@ -119,7 +119,7 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
 
     * `Gnatmake` to always use *gnatmake* for builds.
     
-    * `Gprbuild_Always` to alwaus use *gprbuild* for builds.
+    * `Gprbuild_Always` to always use *gprbuild* for builds.
 
     `Always_Remove` means that the code will be removed by GPS.
     `Always_Comment` means that the code will always be commented out.
@@ -1422,16 +1422,18 @@ Among the plug-ins that are provided with GPS, you will find:
   its possible targets, so that you can easily start a make command.
 
 * Cross-references enhancements
+
   Various plug-ins take advantage of GPS's cross-references information to
   create additional menus to navigate (for instance to jump to the primitive
   operations of Ada tagged types, to the body of Ada separate entities, ...)
 
 * Text manipulation
+
   Several plug-ins provide support for advanced text manipulation in the
   editors, for instance to be able to align a set of lines based on various
   criteria, or to manipulate a rectangular selection of text.
 
-You can chose graphically which plug-ins should or should not be loaded on
+You can choose graphically which plug-ins should or should not be loaded on
 startup. To do so, select the menu `/Tools/Plug-ins`.  This brings up a new
 window, containing two parts:
 
@@ -1444,7 +1446,7 @@ window, containing two parts:
   This list indicates the name of the plug-in, and whether it has been loaded
   in this GPS session (when the toggle button is checked).
 
-* On the right are the details for the selected plug-in
+* On the right are the details for the selected plug-in.
 
   This window is displayed as a notebook with two pages: on the first one you
   will see the exact location of the plug-in, the reason why it was loaded or
@@ -1455,7 +1457,7 @@ window, containing two parts:
   For those interested, this also contains the plug-in itself, so that this can
   act as an example to create your own customization script.
 
-  Technically, the list of plug-in to load or not to load are stored in the
+  Technically, the list of plug-ins to load or not to load are stored in the
   file :file:`HOME/.gps/startup.xml`.
 
   If you have modified anything through this dialog (the list of plug-ins to
@@ -1494,12 +1496,12 @@ or will simply be made visible in the Plug-ins Editor
 
 These directories are searched for in the order given below. Any script loaded
 latter can override setups done by previously loaded scripts. For instance,
-they could override a key shortcut, remove a menu, redefining a GPS action, ...
+they could override a key shortcut, remove a menu, redefine a GPS action, ...
 
 In the directory names below, :file:`INSTALL` is the name of the directory in
 which you have installed GPS. :file:`HOME` is the user's home directory, either
 by default or as overriden by the `GPS_HOME` environment variable. If none of
-these exist, GPS will use the `USERPROFILE` environment variable.
+these exists, GPS will use the `USERPROFILE` environment variable.
 
 In all these directories, only the files with :file:`.xml` or :file:`.py`
 extensions are taken into account. Other files are ignored, although for
@@ -1512,7 +1514,7 @@ files in the same directory.
   that GPS will automatically load by default (unless overriden by the user
   through the Plug-ins Editor). These plug-ins are visible to any user on the
   system that uses the same GPS installation. This directory should be reserved
-  for critical plug-ins that almost every one should use.
+  for critical plug-ins that almost everyone should use.
 
 * Not automatically loaded system wide modules
 
@@ -1865,7 +1867,7 @@ The following XML tags are valid children for `<action>`.
   command and fill the location window appropriately
   (:ref:`Processing_the_tool_output`).
 
-  For instance, the following action spawn an external tool, and parses its
+  For instance, the following action spawns an external tool, and parses its
   output to the location window and the automatic fixing tool if the external
   tool happens to fail.
 
@@ -2289,7 +2291,7 @@ These arguments are the following
   By default, when the action "Repeat Next" is invoked by the user, it will
   repeat the following action as many times as the user specified. However, in
   some cases, either for efficiency reasons or simply for technical reasons,
-  you might want to handle yourself the repear. This can be done with the
+  you might want to handle yourself the repeat. This can be done with the
   following action declaration::
 
     <action name="my_action">
@@ -2300,7 +2302,7 @@ These arguments are the following
        """Perform an action count times"""
        ...
 
-  Basically, the technics here is to only perform something the first time the
+  Basically, the technique here is to only perform something the first time the
   action is called (hence the if statement), but pass your shell function the
   number of times that it should repeat (hence the `$remaining` parameter).
 
@@ -5717,7 +5719,7 @@ A similar feature is available in the python console, which also provides
 completion for all the standard python commands and modules.
 
 All the scripting languages share the same set of commands exported by GPS,
-thanks to a abstract interface defined in the GPS core. As a result, GPS
+thanks to an abstract interface defined in the GPS core. As a result, GPS
 modules do not have to be modified when new scripting languages are added.
 
 .. index:: --load
@@ -5883,7 +5885,7 @@ In the first line, a new instance of the class Entity is created through the
 including `find_all_refs`, which lists all references to that entity in the
 location window::
 
-  >>> e=GPS.Entity ("entity_name", "file_name.adb")
+  >>> e=GPS.Entity ("entity_name", GPS.File ("file_name.adb"))
   >>> e.find_all_refs()
 
 The screen representation of the classes exported by GPS to python has
@@ -5927,7 +5929,7 @@ scripts more readable. A notable exception to this rule are the functions that
 take a variable number of parameters.  Using named parameters allows you to
 specify the parameters in any order you wish, e.g::
 
-  >>> e=GPS.Entity (name="foo", file="file.adb")
+  >>> e=GPS.Entity (name="foo", file=GPS.File("file.adb"))
 
 Python modules
 --------------
@@ -6248,7 +6250,7 @@ line::
 
   $ gps --load=python:hello_world.py
 
-If would want the plug-in to be loaded everytime you launch GPS without having
+If would want the plug-in to be loaded every time you launch GPS without having
 to specify it on the command line, you should copy hello_world.py to your
 `$HOME/.gps/plug-ins/` directory or `%USERPROFILE%\\.gps\\` under Windows.
 
@@ -6862,7 +6864,7 @@ The type of the hook must be one of the following:
   parameters.
 
 A small trick worth noting: if the command bound to a hook doesn't have the
-right number of parameters that this hook provide, the command will not be
+right number of parameters that this hook provides, the command will not be
 executed and GPS will report an error. You can make sure that your command will
 always be executed by either giving default values for its parameter, or by
 using python's syntax to indicate a variable number of arguments.
