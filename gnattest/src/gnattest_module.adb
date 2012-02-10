@@ -566,25 +566,28 @@ package body GNATTest_Module is
          Command     => Go_Command,
          Filter      => Filter);
 
+      GPS.Kernel.Modules.UI.Register_Contextual_Submenu
+        (Kernel   => Kernel,
+         Name     => "GNATTest",
+         Label    => "GNATTest",
+         Filter   => GPS.Kernel.Lookup_Filter (Kernel, "Entity is subprogram"),
+         Submenu  => Submenu_Factory,
+         Ref_Item => "Coverage");
+
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel      => Kernel,
          Name        => "Goto tested subprogram",
          Action      => Go_Command,
          Label       => "GNATTest/Go to %C",
-         Custom      => Tested_Subprogram_Name'Access);
+         Custom      => Tested_Subprogram_Name'Access,
+         Ref_Item    => "GNATTest",
+         Add_Before  => False);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel,
          GPS.Kernel.Project_View_Changed_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Project_Changed'Access),
          "gnattest.project_view_changed");
-
-      GPS.Kernel.Modules.UI.Register_Contextual_Submenu
-        (Kernel  => Kernel,
-         Name    => "GNATTest",
-         Label   => "GNATTest",
-         Filter  => GPS.Kernel.Lookup_Filter (Kernel, "Entity is subprogram"),
-         Submenu => Submenu_Factory);
 
    end Register_Module;
 

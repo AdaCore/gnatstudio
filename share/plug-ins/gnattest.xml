@@ -116,7 +116,7 @@
     <shell lang="python">gnattest.open_harness_project()</shell>
   </action>
 
-  <contextual action="make single test">
+  <contextual action="make single test" after="GNATTest">
     <title>GNATTest/Generate unit test setup for %f</title>
   </contextual>
 
@@ -136,19 +136,19 @@
     </menu>
   </submenu>
 
-  <contextual action="run gnattest">
+  <contextual action="run gnattest" after="GNATTest">
     <title>GNATTest/Generate unit test setup for %p</title>
   </contextual>
 
-  <contextual action="re-generate harness project">
+  <contextual action="re-generate harness project" after="GNATTest">
     <title>GNATTest/Regenerate unit test setup for %p</title>
   </contextual>
 
-  <contextual action="open harness">
+  <contextual action="open harness" after="GNATTest">
     <title>GNATTest/Open harness project for %p</title>
   </contextual>
 
-  <contextual action="exit harness">
+  <contextual action="exit harness" after="GNATTest">
     <title>GNATTest/Exit harness project</title>
   </contextual>
 
