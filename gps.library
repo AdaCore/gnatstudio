@@ -108,9 +108,11 @@ Source (Directory => "vcs/obj/codepeer/SCIL",
 Source (Directory => "vfs/obj/codepeer/SCIL",
         Files     => ("*.scil"),
         Language  => SCIL);
-Source (Directory => "code_analysis/obj/codepeer/SCIL",
-        Files     => ("*.scil"),
-        Language  => SCIL);
+--  ???Disabled for now, takes a very long time, probably due to heavy use of
+--  containers.
+--Source (Directory => "code_analysis/obj/codepeer/SCIL",
+--        Files     => ("*.scil"),
+--        Language  => SCIL);
 Source (Directory => "gnattest/obj/codepeer/SCIL",
         Files     => ("*.scil"),
         Language  => SCIL);
