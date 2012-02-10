@@ -109,6 +109,17 @@
     <shell lang="python">gnattest.exit_harness_project()</shell>
   </action>
 
+  <action name="make single test" output="none">
+    <filter id="Library package declaration"/>
+    <description>Run gnattest on single package</description>
+    <shell lang="python">GPS.BuildTarget("GNATTest for file").execute(synchronous=False)</shell>
+    <shell lang="python">gnattest.open_harness_project()</shell>
+  </action>
+
+  <contextual action="make single test">
+    <title>GNATTest/Generate unit test setup for %f</title>
+  </contextual>
+
   <submenu>
     <title>Tools/GNATTest</title>
     <menu action="run gnattest">
@@ -218,6 +229,20 @@
       <arg>gnattest</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
+    </command-line>
+  </target>
+
+  <target model="gnattest" category="_File_" name="GNATTest for file">
+    <in-toolbar>FALSE</in-toolbar>
+    <in-menu>FALSE</in-menu>
+    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%pp</arg>
+      <arg>%X</arg>
+      <arg>%F</arg>
     </command-line>
   </target>
 

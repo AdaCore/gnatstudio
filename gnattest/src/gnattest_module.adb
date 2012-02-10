@@ -85,6 +85,13 @@ package body GNATTest_Module is
      (Filter  : access Go_To_Tested_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
+   type Package_Declaration_Filter is
+     new GPS.Kernel.Action_Filter_Record with null record;
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Package_Declaration_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+
    type Submenu_Factory_Record is
      new GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
 
@@ -383,6 +390,34 @@ package body GNATTest_Module is
       end if;
    end Filter_Matches_Primitive;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Package_Declaration_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      use type GNATCOLL.Projects.Unit_Parts;
+      File : GNATCOLL.VFS.Virtual_File;
+      Info : GNATCOLL.Projects.File_Info;
+   begin
+      if GPS.Kernel.Contexts.Has_File_Information (Context) then
+         File := GPS.Kernel.Contexts.File_Information (Context);
+
+         if File.Is_Regular_File then
+            Info := GPS.Kernel.Project.Get_Registry
+              (GPS.Kernel.Get_Kernel (Context)).Tree.Info (File);
+
+            return Info.Language = "ada" and then
+              Info.Unit_Part = GNATCOLL.Projects.Unit_Spec;
+         end if;
+      end if;
+
+      return False;
+   end Filter_Matches_Primitive;
+
    -----------------
    -- Find_Tested --
    -----------------
@@ -518,6 +553,9 @@ package body GNATTest_Module is
 
       Filter := new Harness_Project_Exists_Filter;
       Register_Filter (Kernel, Filter, "Harness project exists");
+
+      Filter := new Package_Declaration_Filter;
+      Register_Filter (Kernel, Filter, "Library package declaration");
 
       Filter := new Go_To_Tested_Filter;
       Register_Filter (Kernel, Filter, "Tested exists");
