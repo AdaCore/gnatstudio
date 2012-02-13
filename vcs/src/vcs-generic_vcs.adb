@@ -1049,13 +1049,14 @@ package body VCS.Generic_VCS is
          if Version_2 = "" then
             Args := new GNAT.Strings.String_List (1 .. 1);
             Args (1) := new String'(Version_1);
+            Generic_Command (Rep, File, Args, Diff);
          else
             Args := new GNAT.Strings.String_List (1 .. 2);
             Args (1) := new String'(Version_1);
             Args (2) := new String'(Version_2);
+            Generic_Command (Rep, File, Args, Diff2);
          end if;
 
-         Generic_Command (Rep, File, Args, Diff2);
          GNAT.Strings.Free (Args);
       end if;
    end Diff;
