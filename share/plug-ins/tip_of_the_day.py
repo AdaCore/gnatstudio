@@ -617,18 +617,26 @@ GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").create (
   0)
 
 def on_gps_started (hook):
-     if not GPS.Preference ("General/Display-Tip-Of-The-Day").get():
-          return
-     # If we reach this point, display the tip of the day
+    if not GPS.Preference ("General/Display-Tip-Of-The-Day").get():
+         return
+    # If we reach this point, display the tip of the day
 
-     # Parse the tips file
-     results = parse_tips ()
+    # Parse the tips file
+    results = parse_tips ()
 
-     # Get the main window
-     messages = GPS.MDI.get ("Messages").pywidget()
-     top = messages.get_toplevel()
-     t = Tip (results, top,
-              GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").get ())
-     t.on_next_button (None)
+    # Get the main window
+    messages = GPS.MDI.get ("Messages").pywidget()
+    top = messages.get_toplevel()
+
+    # If one toplevel is a dialog for the main window, do not display the
+    # tip-of-the-day
+
+    for t in gtk.window_list_toplevels():
+        if t.get_transient_for() == top:
+            return
+
+    t = Tip (results, top,
+             GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").get ())
+    t.on_next_button (None)
 
 GPS.Hook ("gps_started").add (on_gps_started)
