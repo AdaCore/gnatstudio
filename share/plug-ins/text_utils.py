@@ -602,7 +602,7 @@ def transpose_lines (location = None):
 def open_line():
    """Insert a newline and leave cursor at its current place."""
    buffer = GPS.EditorBuffer.get()
-   buffer.insert (cursor, "\n")
+   buffer.insert (buffer.current_view().cursor(), "\n")
 
 @interactive ("Editor", "Source editor", name="Join line")
 def join_line ():

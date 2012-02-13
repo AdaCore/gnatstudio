@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L213-003: GPS: emacs plugin's ctrl-o does not work
+  Problem:    When you load the Emacs plugin, it binds the key ctrl-o to
+              "open line". The implementation for this function had a bug,
+              and nothing was changed in the editor when pressing ctrl-o.
+  Workaround: Press <enter> and <left arrow> will have the same result.
+
 - L202-022: GPS: visual glitches when the Breakpoints editor is too small
   Problem:    When the Breakpoints editor is too small, there is a visual
               overlap in the display of its contents.
