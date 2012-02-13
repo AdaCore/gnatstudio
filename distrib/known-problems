@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L213-022: GPS: tip-of-the-day hides modal dialogs
+  Problem:    When opening GPS, if a modal dialog is brought up immediately
+              after the main window (for instance when using the key shortcuts
+              to launch a custom build), the tip-of-the-day window appears over
+              the dialog, making it difficult to close.
+  Workaround: Press ESC to close the dialog.
+
 - L213-003: GPS: emacs plugin's ctrl-o does not work
   Problem:    When you load the Emacs plugin, it binds the key ctrl-o to
               "open line". The implementation for this function had a bug,
@@ -38,7 +45,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               from a main unit, and the casing in the index isn't lower cases,
               the attribute is discarded every time the project is edited.
   Workaround: Fix the casing manually in the .gpr file to use lower cases
-              only. 
+              only.
 
 - KC20-025: GPS: Removing a server makes some other servers unuseable
   Problem:    After removing a server from your server list, the other servers
