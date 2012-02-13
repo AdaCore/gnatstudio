@@ -26,9 +26,10 @@ with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;       use GNATCOLL.Scripts.Utils;
 
 with Basic_Types;
+with Commands;                     use Commands;
 with Commands.Custom;              use Commands.Custom;
 with Commands.Interactive;         use Commands.Interactive;
-with Commands;                     use Commands;
+with Generic_List;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
@@ -41,15 +42,14 @@ with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;      use GPS.Kernel.Task_Manager;
-with Generic_List;
+with String_Utils;                 use String_Utils;
 with Traces;                       use Traces;
+with VCS.Branching_Commands;       use VCS.Branching_Commands;
 with VCS_Activities;               use VCS_Activities;
-with VCS_View.Activities;          use VCS_View.Activities;
-with VCS_View.Explorer;            use VCS_View.Explorer;
 with VCS_Module;                   use VCS_Module;
 with VCS_Status;                   use VCS_Status;
-with VCS.Branching_Commands;       use VCS.Branching_Commands;
-with String_Utils;                 use String_Utils;
+with VCS_View.Activities;          use VCS_View.Activities;
+with VCS_View.Explorer;            use VCS_View.Explorer;
 with XML_Utils;                    use XML_Utils;
 
 package body VCS.Generic_VCS is
@@ -558,8 +558,8 @@ package body VCS.Generic_VCS is
       Args       : GNAT.Strings.String_List_Access;
       Dir        : Virtual_File;
 
-      use type GNAT.Strings.String_List_Access;
       use GNAT.Strings;
+      use type GNAT.Strings.String_List_Access;
 
    begin
       if The_Action = null then
@@ -1044,6 +1044,7 @@ package body VCS.Generic_VCS is
    begin
       if Version_1 = "" and then Version_2 = "" then
          Generic_Command (Rep, File, null, Diff_Head);
+
       elsif Version_1 /= "" then
          if Version_2 = "" then
             Args := new GNAT.Strings.String_List (1 .. 1);

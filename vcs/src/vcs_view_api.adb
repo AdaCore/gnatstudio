@@ -62,12 +62,12 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
-with VCS_View.Activities;       use VCS_View.Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
+with VCS_View.Activities;       use VCS_View.Activities;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 
 with UTF8_Utils;                use UTF8_Utils;
@@ -3067,11 +3067,7 @@ package body VCS_View_API is
 
       if One_Rev then
          if Str'Length /= 0 then
-            Diff
-              (Ref,
-               Files (Files'First),
-               Str.all,
-               "");
+            Diff (Ref, Files (Files'First), Str.all, "");
          end if;
 
       else
