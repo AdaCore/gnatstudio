@@ -190,6 +190,7 @@ package GPS.Editors is
 
    function Starts_Word (This : Editor_Location) return Boolean is abstract;
    function Ends_Word (This : Editor_Location) return Boolean is abstract;
+   function Inside_Word (This : Editor_Location) return Boolean is abstract;
    --  Whether the location is on a word boundary. The definition of a word
    --  depends on the language
 
@@ -684,6 +685,8 @@ private
    overriding function Starts_Word
      (This : Dummy_Editor_Location) return Boolean;
    overriding function Ends_Word
+     (This : Dummy_Editor_Location) return Boolean;
+   overriding function Inside_Word
      (This : Dummy_Editor_Location) return Boolean;
 
    overriding function Get_Overlays

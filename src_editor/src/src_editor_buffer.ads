@@ -383,6 +383,7 @@ package Src_Editor_Buffer is
 
    function Ends_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
    function Starts_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
+   function Inside_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
    --  Whether the iterator ends or starts a word. This takes '_' properly
    --  into account
 

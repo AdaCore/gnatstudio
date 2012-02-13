@@ -5041,6 +5041,12 @@ the same line/column even if new lines are added in the buffer. This location is
       <description>Return true if self is currently at the end of a word. The definition of a word depends on the language used</description>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorLocation.inside_word">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <return>A boolean</return>
+      <description>Return true if self is currently inside a word. The definition of a word depends on the language used</description>
+  </shell_doc>
+
   <shell_doc name="GPS.EditorLocation.forward_line">
       <param name="self">The instance of GPS.EditorLocation</param>
       <param name="count">An integer</param>

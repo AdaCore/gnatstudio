@@ -2060,6 +2060,9 @@ package body Src_Editor_Module.Shell is
       elsif Command = "ends_word" then
          Set_Return_Value (Data, Get_Location (Data, 1).Ends_Word);
 
+      elsif Command = "inside_word" then
+         Set_Return_Value (Data, Get_Location (Data, 1).Inside_Word);
+
       elsif Command = "forward_line" then
          Name_Parameters (Data, (1 => Count_Cst'Access));
          Set_Return_Value
@@ -2496,6 +2499,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, "starts_word", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "ends_word", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "inside_word", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "subprogram_name", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command

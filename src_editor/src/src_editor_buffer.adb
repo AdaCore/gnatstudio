@@ -4041,6 +4041,8 @@ package body Src_Editor_Buffer is
       Res  : Boolean;
       N    : Character;
    begin
+      --  ??? This implementation should be fixed to take the language into
+      --  account
       Copy (Iter, Next);
       Forward_Char (Next, Res);
 
@@ -4066,6 +4068,8 @@ package body Src_Editor_Buffer is
       Res  : Boolean;
       P    : Character;
    begin
+      --  ??? This implementation should be fixed to take the language into
+      --  account
       Copy (Iter, Prev);
       Backward_Char (Prev, Res);
 
@@ -4081,6 +4085,17 @@ package body Src_Editor_Buffer is
          return True;
       end if;
    end Starts_Word;
+
+   -----------------
+   -- Inside_Word --
+   -----------------
+
+   function Inside_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean is
+   begin
+      --  ??? This implementation should be fixed to take the language into
+      --  account
+      return Gtk.Text_Iter.Inside_Word (Iter) or else Get_Char (Iter) = '_';
+   end Inside_Word;
 
    -------------------------
    -- Select_Current_Word --

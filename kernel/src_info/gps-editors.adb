@@ -450,6 +450,17 @@ package body GPS.Editors is
       return False;
    end Ends_Word;
 
+   -----------------
+   -- Inside_Word --
+   -----------------
+
+   overriding function Inside_Word
+     (This : Dummy_Editor_Location) return Boolean is
+      pragma Unreferenced (This);
+   begin
+      return False;
+   end Inside_Word;
+
    --------------
    -- Get_Char --
    --------------
