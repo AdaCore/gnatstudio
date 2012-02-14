@@ -659,7 +659,6 @@ xml_spark = """<?xml version="1.0"?>
   </action>
 
   <action name="SPARKFormat selection" category="Spark" output="none">
-     <filter language="SPARK" />
      <filter language="Ada" />
      <shell lang="python">"""+spark_module+""".format_selection ()</shell>
   </action>
