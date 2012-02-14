@@ -13,7 +13,12 @@ from gps_utils import *
 
 # Constants
 
-LINES_IN_ONE_BATCH=2 # Number of lines to process in one batch
+ENTITIES_IN_ONE_BATCH=2
+# Number of lines to process in one batch when processing entities
+
+WORDS_IN_ONE_BATCH=5
+# Number of lines to process in one batch when processing words
+
 TIMEOUT=50           # Interval (in milliseconds) between two batches
 
 default_colors =  {
@@ -23,7 +28,7 @@ default_colors =  {
   "subprogram" : "#ffcf90",
   "package/namespace" : "lightgreen",
   "type"              : "lightgreen",
-  "unknown"    : "lightblue" }
+  "unknown"    : "#D7D7D7" }
 
 editor_location_styles = {}
 
@@ -35,6 +40,28 @@ GPS.Preference ("Plugins/auto_highlight_occurrences/speedbar").create (
       "Whether to display the matches in the speed bar in editors."
       " You must restart gps to take changes into account.",
       False)
+
+GPS.Preference ("Plugins/auto_highlight_occurrences/highlight_entities"
+     ).create (
+    "Highlight entities", "boolean",
+    "Whether this plugin should highlight occurrences of the current entity.",
+    True)
+
+GPS.Preference ("Plugins/auto_highlight_occurrences/highlight_selection"
+    ).create (
+    "Highlight selection", "boolean",
+    "Whether to attempt highlighting of the current selection.",
+    True)
+
+GPS.Preference ("Plugins/auto_highlight_occurrences/highlight_word"
+    ).create (
+    "Highlight current word", "boolean",
+    "Whether to attempt highlighting of the word under the cursor.",
+    True)
+
+highlight_entities = True
+highlight_selection = True
+highlight_word = True
 
 # The default colors
 for k in default_colors:
@@ -61,7 +88,12 @@ class LocationHighlighter:
         s = self.buffer.get_chars (beg_loc, end_loc).decode("utf8")
         s_len = len(s)
 
-        l = len(self.entity_name)
+        if self.word:
+            the_word = self.word
+        else:
+            the_word = self.entity_name
+
+        l = len(the_word)
 
         # Find name and expand tabs at the same time
 
@@ -69,34 +101,48 @@ class LocationHighlighter:
         tab_expanded_index = 0
 
         while index + l < s_len:
-            if s[index:index+l] == self.entity_name:
-                # Cet the entity at this match
+            if s[index:index+l] == the_word:
+                # Cet the entity at this match if we are trying to highlight
+                # entities
 
-                # GPS.Entity might raise an exception: catch it
-                try:
-                    e=GPS.Entity("", self.file, line, tab_expanded_index+1)
-                except:
-                    e=None
+                if self.entity:
+                    # GPS.Entity might raise an exception: catch it
+                    try:
+                        e=GPS.Entity("", self.file, line, tab_expanded_index+1)
+                    except:
+                        e=None
 
-                if e:
-                    # We have found an entity: verify whether it is the same as the one
-                    # we are interested in.
+                    if e:
+                        # We have found an entity: verify whether it is the
+                        # same as the one we are interested in.
 
-                    if e.declaration()==self.declaration:
-                        # It is the same entity: create a message
-                        msg = GPS.Message (
-                            "dynamic occurrences",
-                            self.file,
-                            line,
-                            tab_expanded_index+1,
-                            "",
-                            2)
-                        msg.set_style(self.style, l)
+                        if e.declaration()==self.declaration:
+                            # It is the same entity: create a message
+                            msg = GPS.Message (
+                                "dynamic occurrences",
+                                self.file,
+                                line,
+                                tab_expanded_index+1,
+                                "",
+                                2)
+                            msg.set_style(self.style, l)
 
-                        self.messages += [msg]
+                            self.messages += [msg]
+                else:
+                    # we are highlighting a word
+                    msg = GPS.Message (
+                        "dynamic occurrences",
+                        self.file,
+                        line,
+                        tab_expanded_index+1,
+                        "",
+                        2)
+                    msg.set_style(self.style, l)
 
-                index += l+1
-                tab_expanded_index += l
+                    self.messages += [msg]
+
+                index += l
+                tab_expanded_index += l - 1
 
             else:
                 index += 1
@@ -113,7 +159,10 @@ class LocationHighlighter:
         """ Process a batch of search locations.
         """
 
-        counter = LINES_IN_ONE_BATCH
+        if self.entity:
+            counter = ENTITIES_IN_ONE_BATCH
+        else:
+            counter = WORDS_IN_ONE_BATCH
 
         found = True
 
@@ -145,22 +194,29 @@ class LocationHighlighter:
             timeout.remove()
             self.timeout=None
 
-    def __init__ (self, context, entity):
+    def __init__ (self, context, buffer, entity=None, word=None):
         # Get the current buffer
 
-        self.buffer = GPS.EditorBuffer.get()
+        self.buffer = buffer
         self.entity = entity  # The original entity
-        self.entity_name = entity.name().decode("utf8")
         self.messages = []    # The registered messages
-
+        self.declaration = None
+        self.entity_name = None
         self.timeout = None
         self.file=self.buffer.file()
-        self.declaration=self.entity.declaration()
+        self.word = word  # The original word
 
-        cat = self.entity.category()
-        if cat in editor_location_styles:
-            self.style = editor_location_styles[cat]
-        else:
+        if self.entity:
+            self.entity_name = entity.name().decode("utf8")
+            self.declaration=self.entity.declaration()
+
+            cat = self.entity.category()
+            if cat in editor_location_styles:
+                self.style = editor_location_styles[cat]
+            else:
+                self.style = editor_location_styles["unknown"]
+
+        elif self.word:
             self.style = editor_location_styles["unknown"]
 
         line=context.location().line()
@@ -234,28 +290,90 @@ def re_highlight():
     if exiting:
         return
 
-    context=GPS.current_context()
+    entity  = None
+    word    = None
+    context = GPS.current_context()
+    buffer  = GPS.EditorBuffer.get()
 
-    # Is there an entity?
-    if context.__class__ == GPS.EntityContext:
+    start_loc = None
+    end_loc   = None
+
+    # If we want to highlight based on the selection, look for it first
+
+    if highlight_selection:
+        start_loc = buffer.selection_start()
+        end_loc = buffer.selection_end()
+
+        if (start_loc != end_loc):
+            end_loc = end_loc.forward_char(-1)
+            word = buffer.get_chars(start_loc, end_loc)
+
+    # If we have not found a word, and are attempting to highlight entities,
+    # look for an entity now
+
+    if (not word) and (highlight_entities) and (
+        context.__class__ == GPS.EntityContext):
+
         try:
             entity = context.entity()
         except:
             entity = None
 
-        if entity:
-            # Destroy the current highlighter if it is highlighting another
-            # entity
-            if (current_highlighter
-                and (not entity.declaration()
-                         == current_highlighter.declaration)):
-                destroy_current_highlighter()
+    # If we have not found an entity and a selection, and we are trying to
+    # highlight the currently selected word, look for it now.
 
-            # Highlight the current entity
-            if not current_highlighter:
-                current_highlighter=LocationHighlighter(context, entity)
+    if (not entity) and (not word) and (highlight_word):
+        try:
+            location = context.location()
+        except:
+            location = None
 
+        if location:
+            location = GPS.EditorLocation (
+                buffer, location.line(), location.column())
+
+            if location.inside_word():
+                start_loc = location
+
+                while not start_loc.starts_word():
+                    start_loc = start_loc.forward_char(-1)
+
+                end_loc = location
+
+                while not end_loc.ends_word():
+                    end_loc = end_loc.forward_char()
+
+                word = buffer.get_chars(start_loc, end_loc)
+
+    if entity:
+        # Destroy the current highlighter unless it is already highlighting
+        # the same entity
+        if (current_highlighter
+            and (not entity.declaration() == current_highlighter.declaration)):
+            destroy_current_highlighter()
+
+        # Highlight the current entity
+        if not current_highlighter:
+            current_highlighter=LocationHighlighter(
+                context, buffer, entity)
+
+        return
+
+    if word:
+        if word.strip() == "":
             return
+
+        # Destroy the current highlighter unless it is already highlighting
+        # the same word
+        if (current_highlighter and (word != current_highlighter.word)):
+            destroy_current_highlighter()
+
+        # Highlight the current word
+        if not current_highlighter:
+            current_highlighter=LocationHighlighter(
+                context, buffer, word=word)
+
+        return
 
     # If we reach this point, there is no entity in the context: remove
     # highlighting
@@ -279,6 +397,10 @@ def remove_all_messages():
         m.remove()
 
 def on_preferences_changed (hook_name):
+    global highlight_selection
+    global highlight_word
+    global highlight_entities
+
     remove_all_messages()
 
     # Create preferences
@@ -294,6 +416,14 @@ def on_preferences_changed (hook_name):
           GPS.Preference ("Plugins/auto_highlight_occurrences/speedbar").get())
 
         GPS.Hook ("location_changed").add(on_location_changed)
+
+    # Read word and selection preferences
+    highlight_entities = GPS.Preference (
+        "Plugins/auto_highlight_occurrences/highlight_entities").get()
+    highlight_selection = GPS.Preference (
+        "Plugins/auto_highlight_occurrences/highlight_selection").get()
+    highlight_word = GPS.Preference (
+        "Plugins/auto_highlight_occurrences/highlight_word").get()
 
     # Re-highlight after preferences changed
 
