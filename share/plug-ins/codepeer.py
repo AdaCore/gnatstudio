@@ -51,35 +51,68 @@ if codepeer != "":
       <menu before="About">/Help/CodePeer/CodePeer Tutorial</menu>
     </documentation_file>
 
-    <action name="codepeer_example_false_tests" category=""
+    <action name="codepeer_example_backpack" category=""
             show-command="false" output="none">
       <shell>Project.load """ + '"' + example_root + \
-             """/false_tests/example.gpr"</shell>
-      <shell>Editor.edit "false_tests.adb"</shell>
+             """/backpack/backpack.gpr"</shell>
+      <shell>Editor.edit "backpack.ads"</shell>
+      <shell>Editor.edit "backpack.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
     <submenu before="About">
       <title>/Help/CodePeer/Examples</title>
-      <menu action="codepeer_example_false_tests">
-        <title>False Tests</title>
+      <menu action="codepeer_example_backpack">
+        <title>Backpack</title>
       </menu>
     </submenu>
 
-    <action name="codepeer_example_uninitialized" category=""
+    <action name="codepeer_example_coach" category=""
             show-command="false" output="none">
       <shell>Project.load """ + '"' + example_root + \
-             """/uninitialized/uninitialized.gpr"</shell>
-      <shell>Editor.edit "adt.ads"</shell>
-      <shell>Editor.edit "adt.adb"</shell>
-      <shell>Editor.edit "uninit.adb"</shell>
+             """/coach/coach.gpr"</shell>
+      <shell>Editor.edit "coach.ads"</shell>
+      <shell>Editor.edit "coach.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
     <submenu before="About">
       <title>/Help/CodePeer/Examples</title>
-      <menu action="codepeer_example_uninitialized">
-        <title>Uninitialized</title>
+      <menu action="codepeer_example_coach">
+        <title>Coach</title>
+      </menu>
+    </submenu>
+
+    <action name="codepeer_example_conductor" category=""
+            show-command="false" output="none">
+      <shell>Project.load """ + '"' + example_root + \
+             """/conductor/conductor.gpr"</shell>
+      <shell>Editor.edit "score.ads"</shell>
+      <shell>Editor.edit "conductor.ads"</shell>
+      <shell>Editor.edit "conductor.adb"</shell>
+      <shell>Editor.edit "README.txt"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/CodePeer/Examples</title>
+      <menu action="codepeer_example_conductor">
+        <title>Conductor</title>
+      </menu>
+    </submenu>
+
+    <action name="codepeer_example_configs" category=""
+            show-command="false" output="none">
+      <shell>Project.load """ + '"' + example_root + \
+             """/configs/configs.gpr"</shell>
+      <shell>Editor.edit "configs.ads"</shell>
+      <shell>Editor.edit "configs.adb"</shell>
+      <shell>Editor.edit "README.txt"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/CodePeer/Examples</title>
+      <menu action="codepeer_example_configs">
+        <title>Configs</title>
       </menu>
     </submenu>
 
@@ -115,19 +148,34 @@ if codepeer != "":
       </menu>
     </submenu>
 
-    <action name="codepeer_example_configs" category=""
+    <action name="codepeer_example_false_tests" category=""
             show-command="false" output="none">
       <shell>Project.load """ + '"' + example_root + \
-             """/configs/configs.gpr"</shell>
-      <shell>Editor.edit "configs.ads"</shell>
-      <shell>Editor.edit "configs.adb"</shell>
+             """/false_tests/example.gpr"</shell>
+      <shell>Editor.edit "false_tests.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
     <submenu before="About">
       <title>/Help/CodePeer/Examples</title>
-      <menu action="codepeer_example_configs">
-        <title>Configs</title>
+      <menu action="codepeer_example_false_tests">
+        <title>False Tests</title>
+      </menu>
+    </submenu>
+
+    <action name="codepeer_example_pilot" category=""
+            show-command="false" output="none">
+      <shell>Project.load """ + '"' + example_root + \
+             """/pilot/pilot.gpr"</shell>
+      <shell>Editor.edit "pilot.ads"</shell>
+      <shell>Editor.edit "pilot.adb"</shell>
+      <shell>Editor.edit "README.txt"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/CodePeer/Examples</title>
+      <menu action="codepeer_example_pilot">
+        <title>Pilot</title>
       </menu>
     </submenu>
 
@@ -147,52 +195,36 @@ if codepeer != "":
       </menu>
     </submenu>
 
-    <action name="codepeer_example_conductor" category=""
+    <action name="codepeer_example_uninitialized" category=""
             show-command="false" output="none">
       <shell>Project.load """ + '"' + example_root + \
-             """/conductor/conductor.gpr"</shell>
-      <shell>Editor.edit "score.ads"</shell>
-      <shell>Editor.edit "conductor.ads"</shell>
-      <shell>Editor.edit "conductor.adb"</shell>
+             """/uninitialized/uninitialized.gpr"</shell>
+      <shell>Editor.edit "adt.ads"</shell>
+      <shell>Editor.edit "adt.adb"</shell>
+      <shell>Editor.edit "uninit.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
     <submenu before="About">
       <title>/Help/CodePeer/Examples</title>
-      <menu action="codepeer_example_conductor">
-        <title>Conductor</title>
+      <menu action="codepeer_example_uninitialized">
+        <title>Uninitialized</title>
       </menu>
     </submenu>
 
-    <action name="codepeer_example_coach" category=""
+    <action name="codepeer_example_voting" category=""
             show-command="false" output="none">
       <shell>Project.load """ + '"' + example_root + \
-             """/coach/coach.gpr"</shell>
-      <shell>Editor.edit "coach.ads"</shell>
-      <shell>Editor.edit "coach.adb"</shell>
+             """/voting/voting.gpr"</shell>
+      <shell>Editor.edit "voting.ads"</shell>
+      <shell>Editor.edit "voting.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
     <submenu before="About">
       <title>/Help/CodePeer/Examples</title>
-      <menu action="codepeer_example_coach">
-        <title>Coach</title>
-      </menu>
-    </submenu>
-
-    <action name="codepeer_example_backpack" category=""
-            show-command="false" output="none">
-      <shell>Project.load """ + '"' + example_root + \
-             """/backpack/backpack.gpr"</shell>
-      <shell>Editor.edit "backpack.ads"</shell>
-      <shell>Editor.edit "backpack.adb"</shell>
-      <shell>Editor.edit "README.txt"</shell>
-    </action>
-
-    <submenu before="About">
-      <title>/Help/CodePeer/Examples</title>
-      <menu action="codepeer_example_backpack">
-        <title>Backpack</title>
+      <menu action="codepeer_example_voting">
+        <title>Voting</title>
       </menu>
     </submenu>
 
