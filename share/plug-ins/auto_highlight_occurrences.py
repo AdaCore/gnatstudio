@@ -59,9 +59,9 @@ GPS.Preference ("Plugins/auto_highlight_occurrences/highlight_word"
     "Whether to attempt highlighting of the word under the cursor.",
     True)
 
-highlight_entities = True
-highlight_selection = True
-highlight_word = True
+highlight_entities = None
+highlight_selection = None
+highlight_word = None
 
 # The default colors
 for k in default_colors:
@@ -216,7 +216,7 @@ class LocationHighlighter:
             else:
                 self.style = editor_location_styles["unknown"]
 
-        elif self.word:
+        else:
             self.style = editor_location_styles["unknown"]
 
         line=context.location().line()
@@ -298,6 +298,11 @@ def re_highlight():
     global current_highlighter
 
     if exiting:
+        return
+
+    if highlight_entities is None:
+        # This means that the callback to preferences_changed has not yet
+        # been called: exit now
         return
 
     entity  = None
