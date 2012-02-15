@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L215-011: GPS: navigating causes automatic reloads
+  Problem:    When using GPS to navigate through the code, for instance with
+              the "Goto declaration of" menu, if the target editor is already
+              open but has been modified outside of GPS, then it will be
+              reloaded from disk without prompting the user first.
+  Workaround: Avoid editing files outside of GPS.
+
 - L213-022: GPS: tip-of-the-day hides modal dialogs
   Problem:    When opening GPS, if a modal dialog is brought up immediately
               after the main window (for instance when using the key shortcuts
