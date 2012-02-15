@@ -3572,6 +3572,13 @@ package body Src_Editor_Buffer is
          Remove_Completion;
       end if;
 
+      if Name_Changed then
+         --  Emit the "file_renamed" hook.
+         File_Renamed (Handle   => Buffer.Kernel,
+                       File     => Original_Filename,
+                       New_Path => Filename);
+      end if;
+
       Internal_Save_To_File
         (Source_Buffer (Buffer), Filename, Internal, Success,
          Force => Force);

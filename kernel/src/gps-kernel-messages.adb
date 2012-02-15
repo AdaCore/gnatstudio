@@ -26,6 +26,7 @@ with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.View;
 with GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles; use GPS.Kernel.Styles;
 with Traces;
 with XML_Parsers;
@@ -66,6 +67,11 @@ package body GPS.Kernel.Messages is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Save messages and clears messages container.
+
+   procedure On_File_Renamed_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  React to a file renaming
 
    package Notifiers is
 
@@ -194,6 +200,12 @@ package body GPS.Kernel.Messages is
          Project_Changed_Hook,
          Wrapper (On_Project_Changed_Hook'Access),
          "messages_container.project_changed");
+
+      Add_Hook
+        (Kernel,
+         File_Renamed_Hook,
+         Wrapper (On_File_Renamed_Hook'Access),
+         "messages_container.file_renamed");
 
       return To_Address (Result);
    end Create_Messages_Container;
@@ -1274,6 +1286,50 @@ package body GPS.Kernel.Messages is
 
       Container.Remove_All_Messages (Empty_Message_Flags);
    end On_Project_Changing_Hook;
+
+   --------------------------
+   -- On_File_Renamed_Hook --
+   --------------------------
+
+   procedure On_File_Renamed_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      File : constant Virtual_File := Files_2_Hooks_Args (Data.all).File;
+
+      Container : constant Messages_Container_Access :=
+        Get_Messages_Container (Kernel);
+
+      Categories : constant Unbounded_String_Array :=
+        Get_Categories (Container);
+      Category_Position : Category_Maps.Cursor;
+      Category_Node     : Node_Access;
+      File_Position     : File_Maps.Cursor;
+      File_Index        : Positive;
+      File_Node         : Node_Access;
+
+   begin
+      --  ??? In the future it would be nice to move all messages from the
+      --  original file to the new file. For now we just remove messages
+      --  from the original file, for safety.
+
+      for J in Categories'Range loop
+         Category_Position := Container.Category_Map.Find (Categories (J));
+         if Has_Element (Category_Position) then
+            Category_Node := Element (Category_Position);
+
+            File_Position := Category_Node.File_Map.Find (File);
+
+            if Has_Element (File_Position) then
+               File_Node := Element (File_Position);
+               File_Index := Category_Node.Children.Find_Index (File_Node);
+               Container.Remove_File
+                 (File_Position,
+                  File_Index, File_Node, (others => True), True);
+            end if;
+         end if;
+      end loop;
+   end On_File_Renamed_Hook;
 
    -----------------------
    -- Register_Listener --
