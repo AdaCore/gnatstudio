@@ -1218,7 +1218,7 @@ package body Src_Editor_Module is
          if Child2 /= null then
             Check_Timestamp_And_Reload
               (Source_Editor_Box (Get_Widget (Child2)),
-               Interactive   => False,
+               Interactive   => not Force,
                Always_Reload => Force);
 
             Raise_Child (Child2, Focus);
