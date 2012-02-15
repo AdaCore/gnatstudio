@@ -2,6 +2,7 @@
 
 Output_Dir := "gps.output";
 Database_Dir := "gps.db";
+Message_Patterns := "@INSTALL@/share/doc/codepeer/MessagePatterns.warning.xml";
 
 Source (Directory => "kernel/obj/codepeer/SCIL",
         Files     => ("*.scil"),
