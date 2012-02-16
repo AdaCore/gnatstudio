@@ -93,6 +93,24 @@ package body Expect_Interface is
    Expect_Args : constant Cst_Argument_List :=
                    (Regexp_Cst'Access, Timeout_Cst'Access);
 
+   type End_Action_Record is new Root_Command with record
+      Inst             : Class_Instance;
+      Status           : Integer := 0;
+      On_Exit          : Subprogram_Type;
+      Unmatched_Output : String_Access;
+   end record;
+   --  This action is used to make sure that the On_Exit callback is always
+   --  called after the synchronization from Server to Local host in case
+   --  of a remote action.
+
+   type End_Action_Access is access all End_Action_Record;
+
+   overriding function Execute
+     (Command : access End_Action_Record) return Command_Return_Type;
+
+   overriding procedure Free (X : in out End_Action_Record);
+   --  Free memory associated to X
+
    type Custom_Action_Record is new Root_Command with record
       Pattern          : Pattern_Matcher_Access;
       Server           : Server_Type;
@@ -125,6 +143,7 @@ package body Expect_Interface is
       --  Output of the process since the last time On_Match was called (ie
       --  since the last time Pattern matched).
 
+      End_Action        : End_Action_Access;
    end record;
 
    overriding function Name (X : access Custom_Action_Record) return String;
@@ -451,16 +470,25 @@ package body Expect_Interface is
          Trace (Me, "Exiting");
 
          if D.On_Exit /= null then
-            declare
-               C : Callback_Data'Class := Create
-                 (Get_Script (D.Inst), Arguments_Count => 3);
-            begin
-               Set_Nth_Arg (C, 1, D.Inst);
-               Set_Nth_Arg (C, 2, D.Status);
-               Set_Nth_Arg (C, 3, To_String (D.Unmatched_Output));
-               Tmp := Execute (D.On_Exit, C);
-               Free (C);
-            end;
+            if D.End_Action /= null then
+               --  An End_Action command is pending: Just update its status
+               --  and unmatched_output values.
+               D.End_Action.Status           := D.Status;
+               D.End_Action.Unmatched_Output := D.Unmatched_Output;
+               D.Unmatched_Output := null;
+
+            else
+               declare
+                  C : Callback_Data'Class := Create
+                    (Get_Script (D.Inst), Arguments_Count => 3);
+               begin
+                  Set_Nth_Arg (C, 1, D.Inst);
+                  Set_Nth_Arg (C, 2, D.Status);
+                  Set_Nth_Arg (C, 3, To_String (D.Unmatched_Output));
+                  Tmp := Execute (D.On_Exit, C);
+                  Free (C);
+               end;
+            end if;
 
             --  Avoid running a second time
             D.On_Exit := null;
@@ -471,6 +499,37 @@ package body Expect_Interface is
 
       --  ??? Add exception handler ?
    end Exit_Cb;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access End_Action_Record) return Command_Return_Type
+   is
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+      C : Callback_Data'Class := Create
+        (Get_Script (Command.Inst), Arguments_Count => 3);
+   begin
+      Set_Nth_Arg (C, 1, Command.Inst);
+      Set_Nth_Arg (C, 2, Command.Status);
+      Set_Nth_Arg (C, 3, To_String (Command.Unmatched_Output));
+      Tmp := Execute (Command.On_Exit, C);
+      Free (C);
+
+      return Success;
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (X : in out End_Action_Record) is
+   begin
+      Free (X.Unmatched_Output);
+      Free (X.On_Exit);
+   end Free;
 
    --------------------
    -- Before_Kill_Cb --
@@ -893,12 +952,12 @@ package body Expect_Interface is
 
             D              := new Custom_Action_Record;
             D.Command      := Parse_String (Command_Line, Separate_Args);
-            D.On_Match        := Nth_Arg (Data, 4, null);
-            D.On_Exit         := Nth_Arg (Data, 5, null);
-            D.Before_Kill     := Nth_Arg (Data, 10, null);
-            D.Show_Command    := Nth_Arg (Data, 12, False);
-            D.Inst            := Inst;
-            D.Strip_CR        := Strip_CR;
+            D.On_Match     := Nth_Arg (Data, 4, null);
+            D.On_Exit      := Nth_Arg (Data, 5, null);
+            D.Before_Kill  := Nth_Arg (Data, 10, null);
+            D.Show_Command := Nth_Arg (Data, 12, False);
+            D.Inst         := Inst;
+            D.Strip_CR     := Strip_CR;
 
             if Progress_Regexp /= "" then
                D.Progress_Regexp := new Pattern_Matcher'
@@ -1001,6 +1060,24 @@ package body Expect_Interface is
                             Print_Output  => False,
                             Force         => False,
                             Queue_Id      => Q_Id);
+
+               --  We need to enqueue an End_Action that'll in turn call
+               --  On_Exit when executed so that the pending sync action
+               --  for remote operation can occur.
+
+               if D.On_Exit /= null then
+                  D.End_Action := new End_Action_Record;
+
+                  D.End_Action.Inst    := D.Inst;
+                  D.End_Action.On_Exit := D.On_Exit;
+
+                  Launch_Background_Command
+                    (Kernel,
+                     D.End_Action,
+                     Active   => False,
+                     Show_Bar => True,
+                     Queue_Id => Q_Id);
+               end if;
             end if;
 
             Set_Instance (Created_Command, Get_Script (Data), Inst);

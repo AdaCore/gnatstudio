@@ -130,12 +130,13 @@ def show_gnatdg(for_subprogram = False, in_external_editor = False):
   """Show the .dg file of the current file"""
   GPS.MDI.save_all (False)
   context = GPS.current_context()
-  file = context.file().name()
+  local_file = context.file().name()
+  file = context.file().name("Build_Server")
   line = context.location().line()
 
   if context.project():
     l = context.project().object_dirs (False)
-    prj = " -P" + GPS.Project.root().file().name()
+    prj = " -P" + GPS.Project.root().file().name("Build_Server")
   else:
     l = GPS.Project.root().object_dirs (False)
     prj = " -a"
@@ -148,22 +149,22 @@ def show_gnatdg(for_subprogram = False, in_external_editor = False):
        "Could not find an object directory for %s, reverting to %s" %
          (file, objdir))
 
-  dg = os.path.join (objdir, os.path.basename (file)) + '.dg'
+  dg = os.path.join (objdir, os.path.basename (local_file)) + '.dg'
 
-  if distutils.dep_util.newer (file, dg):
+  if distutils.dep_util.newer (local_file, dg):
     gnatmake = GPS.Project.root().get_attribute_as_string ("compiler_command",
                  package="ide", index="ada")
     cmd = gnatmake + " -q" + prj + \
           " -f -c -u -gnatcdx -gnatws -gnatGL " + file
     GPS.Console ("Messages").write ("Generating " + dg + "...\n")
-    proc = GPS.Process (cmd, on_exit=on_exit)
-    proc.source_filename = file
+    proc = GPS.Process (cmd, on_exit=on_exit, remote_server="Build_Server")
+    proc.source_filename = local_file
     proc.dg = dg
     proc.line = line
     proc.for_subprogram = for_subprogram
     proc.in_external_editor = in_external_editor
   else:
-    edit_dg (dg, file, line, for_subprogram, in_external_editor)
+    edit_dg (dg, local_file, line, for_subprogram, in_external_editor)
 
 #################################
 # Register the contextual menus #

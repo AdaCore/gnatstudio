@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L215-043: GPS: expanded code not working in remote mode
+  Problem:    When configured with a remote build server, the "expanded code"
+              actions are still trying to use the local host's toolchain even
+              when it's not available.
+  Workaround: Manually generate the .dg file and copy it locally before
+              executing the command, or install a local toolchain.
+
 - L215-011: GPS: navigating causes automatic reloads
   Problem:    When using GPS to navigate through the code, for instance with
               the "Goto declaration of" menu, if the target editor is already
