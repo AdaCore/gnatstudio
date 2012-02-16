@@ -40,6 +40,11 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Scroll manually, or position the cursor before opening the
               search dialog.
 
+- L124-025: GPS: plugin highlight_selection.py is slow on large files
+  Problem:    When activating the plugin highlight_selection.py, GPS might be
+              slow to react to a selection on editors for large files.
+  Workaround: Deactivate highlight_selection.py
+
 - L123-032: GPS: Editing Library Interface in Project Properties
   Problem:    The project attribute Library_Interface must contain unit names.
               However, GPS will set it using file names instead, and as a
