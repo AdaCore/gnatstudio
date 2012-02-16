@@ -588,15 +588,41 @@ package body CodePeer.Messages_Summary_Models is
                Set_Integer_Image (0, True);
 
             elsif File_Node /= null then
-               Set_Integer_Image
-                 (CodePeer.File_Data
+               if CodePeer.File_Data
                     (File_Node.Node.Analysis_Data.CodePeer_Data.all).
-                       Total_Checks - File_Node.Checks_Count,
-                  True);
+                        Total_Checks < File_Node.Checks_Count
+               then
+                  --  KC30-001: total number of checks may be less than number
+                  --  of check messages because of inconsistency of CodePeer
+                  --  database. This code is used in such cases to prevent GPS
+                  --  from crash.
+
+                  Glib.Values.Init (Value, Glib.GType_String);
+                  Glib.Values.Set_String (Value, "ERROR");
+
+               else
+                  Set_Integer_Image
+                    (CodePeer.File_Data
+                       (File_Node.Node.Analysis_Data.CodePeer_Data.all).
+                          Total_Checks - File_Node.Checks_Count,
+                     True);
+               end if;
 
             elsif Project_Node /= null then
-               Set_Integer_Image
-                 (Project_Node.Total_Checks - Project_Node.Checks_Count, True);
+               if Project_Node.Total_Checks < Project_Node.Checks_Count then
+                  --  KC30-001: total number of checks may be less than number
+                  --  of check messages because of inconsistency of CodePeer
+                  --  database. This code is used in such cases to prevent GPS
+                  --  from crash.
+
+                  Glib.Values.Init (Value, Glib.GType_String);
+                  Glib.Values.Set_String (Value, "ERROR");
+
+               else
+                  Set_Integer_Image
+                    (Project_Node.Total_Checks - Project_Node.Checks_Count,
+                     True);
+               end if;
 
             else
                declare
