@@ -58,6 +58,7 @@ package body GPS.Styles.UI is
    procedure Allocate_Color
      (Name : String; Color : out Gdk_Color)
    is
+      Ignored : Boolean;
    begin
       Color := Null_Color;
 
@@ -68,6 +69,7 @@ package body GPS.Styles.UI is
 
       begin
          Color := Parse (Name);
+         Alloc_Color (Get_Default_Colormap, Color, Success => Ignored);
       exception
          when Wrong_Color =>
             Trace (Me, "Could not parse color " & Name);
