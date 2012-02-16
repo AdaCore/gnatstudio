@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2011, AdaCore                 --
+--                  Copyright (C) 2008-2012, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -590,15 +590,41 @@ package body Code_Peer.Messages_Summary_Models is
                Set_Integer_Image (0, True);
 
             elsif File_Node /= null then
-               Set_Integer_Image
-                 (Code_Peer.File_Data
+               if Code_Peer.File_Data
                     (File_Node.Node.Analysis_Data.Code_Peer_Data.all).
-                       Total_Checks - File_Node.Checks_Count,
-                  True);
+                        Total_Checks < File_Node.Checks_Count
+               then
+                  --  KC30-001: total number of checks may be less than number
+                  --  of check messages because of inconsistency of CodePeer
+                  --  database. This code is used in such cases to prevent GPS
+                  --  from crash.
+
+                  Glib.Values.Init (Value, Glib.GType_String);
+                  Glib.Values.Set_String (Value, "ERROR");
+
+               else
+                  Set_Integer_Image
+                    (Code_Peer.File_Data
+                       (File_Node.Node.Analysis_Data.Code_Peer_Data.all).
+                          Total_Checks - File_Node.Checks_Count,
+                     True);
+               end if;
 
             elsif Project_Node /= null then
-               Set_Integer_Image
-                 (Project_Node.Total_Checks - Project_Node.Checks_Count, True);
+               if Project_Node.Total_Checks < Project_Node.Checks_Count then
+                  --  KC30-001: total number of checks may be less than number
+                  --  of check messages because of inconsistency of CodePeer
+                  --  database. This code is used in such cases to prevent GPS
+                  --  from crash.
+
+                  Glib.Values.Init (Value, Glib.GType_String);
+                  Glib.Values.Set_String (Value, "ERROR");
+
+               else
+                  Set_Integer_Image
+                    (Project_Node.Total_Checks - Project_Node.Checks_Count,
+                     True);
+               end if;
 
             else
                declare
