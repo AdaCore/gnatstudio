@@ -2692,12 +2692,17 @@ package body Src_Editor_Buffer is
         (Kernel, GPS.Kernel.File_Deleted_Hook, Deleted_Hook,
          Name  => "project_explorers_files.file_deleted",
          Watch => GObject (Buffer));
+
+      --  Renamed_Hook.Execute will change the buffer's filename:
+      --  Add it with Last=>True so that other modules have a chance to react
+      --  on the editor before it is renamed
       Renamed_Hook := new File_Renamed_Hook_Record;
       Renamed_Hook.Buffer := Source_Buffer (Buffer);
       Add_Hook
         (Kernel, GPS.Kernel.File_Renamed_Hook, Renamed_Hook,
          Name  => "project_explorers_files.file_renamed",
-         Watch => GObject (Buffer));
+         Watch => GObject (Buffer),
+         Last  => True);
 
       for Entity_Kind in Standout_Language_Entity'Range loop
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
@@ -3509,6 +3514,10 @@ package body Src_Editor_Buffer is
                File_Closed (Buffer.Kernel, Buffer.File_Identifier);
             end if;
 
+            File_Renamed (Handle   => Buffer.Kernel,
+                          File     => Buffer.Filename,
+                          New_Path => Filename);
+
             Buffer.Filename := Filename;
          end if;
 
@@ -3570,13 +3579,6 @@ package body Src_Editor_Buffer is
    begin
       if not Internal then
          Remove_Completion;
-      end if;
-
-      if Name_Changed then
-         --  Emit the "file_renamed" hook.
-         File_Renamed (Handle   => Buffer.Kernel,
-                       File     => Original_Filename,
-                       New_Path => Filename);
       end if;
 
       Internal_Save_To_File
