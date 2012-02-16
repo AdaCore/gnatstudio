@@ -4700,6 +4700,8 @@ package body Project_Properties is
                      end loop;
                   end loop;
                end loop;
+
+               Index := Index + 1;
             end loop;
          end if;
       end if;
