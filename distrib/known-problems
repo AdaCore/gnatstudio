@@ -33,6 +33,11 @@ Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
               entity.
   Workaround: Press and release the ctrl key, or click outside of an entity.
 
+- KC30-001: GPS: crash on expanding of CodePeer report
+  Problem:    When project level nodes of CodePeer report tree is expanded
+              GPS exits silently.
+  Workaround: No known workaround.
+
 - F329-004: GPS: generating body does not work in directories with spaces
   Problem:    Under Windows, using the menu "Edit->Generate body" does not
               work if the full path to the file contains spaces.
