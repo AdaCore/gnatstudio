@@ -18,7 +18,11 @@ def open_harness_project ():
 
    cur = GPS.current_context().project()
    harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
-   prj = os.path.join (cur.file().directory(), harness_dir, "test_driver.gpr")
+
+   if harness_dir == "" :
+      harness_dir = "gnattest/harness"
+
+   prj = os.path.join (cur.object_dirs()[0], harness_dir, "test_driver.gpr")
    GPS.Project.load (prj, False, True)
    GPS.Console ("Messages").write ("Switched to harness project: " +
       GPS.Project.root().file().name() +"\n")

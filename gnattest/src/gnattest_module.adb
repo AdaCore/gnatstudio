@@ -358,13 +358,14 @@ package body GNATTest_Module is
       Name  : constant GNATCOLL.Projects.Attribute_Pkg_String
         := GNATCOLL.Projects.Build ("GNATtest", "Harness_Dir");
 
-      Value : constant String := Project.Attribute_Value (Name);
+      Value : constant String := Project.Attribute_Value
+        (Name, Default => "gnattest/harness");
 
-      Project_Path : constant GNATCOLL.VFS.Virtual_File
-        := Project.Project_Path;
+      Object_Dir : constant GNATCOLL.VFS.Virtual_File
+        := Project.Object_Dir;
 
       Harness_Dir : constant GNATCOLL.VFS.Virtual_File
-        := GNATCOLL.VFS.Create_From_Base (+Value, Project_Path.Dir_Name);
+        := GNATCOLL.VFS.Create_From_Base (+Value, Object_Dir.Full_Name);
 
       Harness_Project : constant GNATCOLL.VFS.Virtual_File
         := Harness_Dir.Create_From_Dir ("test_driver.gpr");
