@@ -8,7 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
 
-- L124-030: GPS.CodeAnalysis.dump_to_file not exporting the full information
+- L213-019: GPS: menus and popups appear behind the task bar under Windows
+  Problem:    Menus and some popups (such as tooltips) appear behind the
+              Windows task bar.
+  Workaround: Set the task bar to auto-hide.
+
+- L124-030: GPS: CodeAnalysis.dump_to_file not exporting the full information
   Problem:    The function GPS.CodeAnalysis.dump_to_file no longer exports
               the full report, only the project/file level.
   Workaround: Use a previous GPS version to export the full analysis.
@@ -339,7 +344,7 @@ Known Problems fixed in GPS 5.1.0 / GNATbench 2.6.0
               file is opened at the right location but the selected text is not
               exactly the expected identifier.
   Workaround: Move the cursor manually or using the mouse to the exact column.
-  
+
 - K513-018 GB: GNATbench non-responsive after a build
   Problem:    When building Ada projects having a huge number of errors or
               warnings, the "Building Projects" task takes minutes to
