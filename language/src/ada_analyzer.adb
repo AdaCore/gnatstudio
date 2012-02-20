@@ -3233,6 +3233,7 @@ package body Ada_Analyzer is
             Ref_Indent      : Natural;
             Success         : Boolean;
             Entity          : Language_Entity;
+            First_Indent    : Boolean := True;
 
          begin
             Ref_Indent := Num_Spaces;
@@ -3263,7 +3264,20 @@ package body Ada_Analyzer is
                --     --  comment
 
                if Indent_Comments then
-                  Do_Indent (P, L, Ref_Indent);
+                  if First_Indent
+                    and then ((Prev_Token in Reserved_Token_Type
+                               and then Prev_Token not in Token_Class_No_Cont)
+                              or else Prev_Token = Tok_Right_Paren)
+                  then
+                     --  Add simple handling of comment and continuation lines
+                     Do_Indent (P, L, Ref_Indent, Continuation => True);
+                     Ref_Indent := Ref_Indent + Continuation_Val;
+                     Continuation_Val := 0;
+                  else
+                     Do_Indent (P, L, Ref_Indent);
+                  end if;
+
+                  First_Indent := False;
                end if;
 
                --  Keep track of the indentation of the first comment line,
