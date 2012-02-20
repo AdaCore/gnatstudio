@@ -654,12 +654,18 @@ xml_spark = """<?xml version="1.0"?>
   </action>
 
   <action name="SPARKFormat file" category="Spark" output="none">
-     <filter language="Ada" />
+     <filter_and>
+        <filter language="Ada" />
+        <filter id="Source editor" />
+     </filter_and>
      <shell lang="python">"""+spark_module+""".format_file ()</shell>
   </action>
 
   <action name="SPARKFormat selection" category="Spark" output="none">
-     <filter language="Ada" />
+     <filter_and>
+        <filter language="Ada" />
+        <filter id="Source editor" />
+     </filter_and>
      <shell lang="python">"""+spark_module+""".format_selection ()</shell>
   </action>
 
