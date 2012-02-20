@@ -635,21 +635,30 @@ package body Ada_Analyzer is
    function Is_Library_Level
      (Stack : Token_Stack.Simple_Stack) return Boolean
    is
-      Tmp : Token_Stack.Simple_Stack;
+      Tok1 : Token_Type;
+      Tok2 : Token_Stack.Generic_Type_Access;
    begin
-      Tmp := Stack;
+      --  ??? Note: this implementation is not quite correct in case of
+      --  nested packages inside subprograms, but is good enough for now.
 
-      while Tmp /= null and then Tmp.Val.Token /= No_Token loop
-         if Tmp.Val.Token /= Tok_Package
-           and then Tmp.Val.Token /= Tok_Generic
-         then
-            return False;
-         end if;
+      Tok1 := Top (Stack).Token;
+      Tok2 := Next (Stack);
 
-         Tmp := Tmp.Next;
-      end loop;
+      if Tok1 /= Tok_Package
+        and then Tok1 /= Tok_Generic
+      then
+         return False;
 
-      return True;
+      elsif Tok2 /= null
+        and then Tok2.Token /= No_Token
+        and then Tok2.Token /= Tok_Package
+        and then Tok2.Token /= Tok_Generic
+      then
+         return False;
+
+      else
+         return True;
+      end if;
    end Is_Library_Level;
 
    ------------------------
@@ -2922,7 +2931,7 @@ package body Ada_Analyzer is
                Pop (Paren_Stack);
             end if;
 
-            if Indents = null or else Top (Indents).Level = None then
+            if Is_Empty (Indents) or else Top (Indents).Level = None then
                --  Syntax error
                null;
 
@@ -3108,15 +3117,17 @@ package body Ada_Analyzer is
             Offset_Align : Natural;
             J            : Natural;
             First_Paren  : Natural;
+            Next_Tok     : Token_Stack.Generic_Type_Access;
 
          begin
             Do_Indent (P, L, Num_Spaces);
             Prev_Token := Tok_Arrow;
 
+            Next_Tok := Next (Tokens);
+
             if (Local_Top_Token.Token = Tok_When
-                and then (Tokens.Next = null
-                          or else
-                            Tokens.Next.Val.Token /= Tok_Select))
+                and then (Next_Tok = null
+                          or else Next_Tok.Token /= Tok_Select))
               or else Local_Top_Token.Token = Tok_For
             then
                Pop_And_Set_Local (Tokens);

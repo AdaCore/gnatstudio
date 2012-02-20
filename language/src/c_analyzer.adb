@@ -1516,7 +1516,7 @@ package body C_Analyzer is
                Enclosing := Top (Tokens);
 
                if Enclosing.Token = Tok_Identifier then
-                  Enclosing := Tokens.Next.Val'Access;
+                  Enclosing := Next (Tokens);
                end if;
 
                if not Indent_Separate_Line (Enclosing.Token)
