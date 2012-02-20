@@ -635,30 +635,26 @@ package body Ada_Analyzer is
    function Is_Library_Level
      (Stack : Token_Stack.Simple_Stack) return Boolean
    is
-      Tok1 : Token_Type;
-      Tok2 : Token_Stack.Generic_Type_Access;
-   begin
-      --  ??? Note: this implementation is not quite correct in case of
-      --  nested packages inside subprograms, but is good enough for now.
+      Result : Boolean := True;
 
-      Tok1 := Top (Stack).Token;
-      Tok2 := Next (Stack);
+      function Check_Token (Token : Extended_Token) return Boolean;
 
-      if Tok1 /= Tok_Package
-        and then Tok1 /= Tok_Generic
-      then
-         return False;
+      function Check_Token (Token : Extended_Token) return Boolean is
+      begin
+         if Token.Token /= No_Token
+           and then Token.Token /= Tok_Package
+           and then Token.Token /= Tok_Generic
+         then
+            Result := False;
+            return False;
+         end if;
 
-      elsif Tok2 /= null
-        and then Tok2.Token /= No_Token
-        and then Tok2.Token /= Tok_Package
-        and then Tok2.Token /= Tok_Generic
-      then
-         return False;
-
-      else
          return True;
-      end if;
+      end Check_Token;
+
+   begin
+      Traverse_Stack (Stack, Check_Token'Access);
+      return Result;
    end Is_Library_Level;
 
    ------------------------
