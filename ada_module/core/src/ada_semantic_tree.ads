@@ -20,7 +20,6 @@ with Language; use Language;
 with Language.Tree.Database; use Language.Tree.Database;
 with Virtual_Lists;
 with Virtual_Lists.Extensive;
-with Generic_Stack;
 with Generic_List;
 with Language.Tree;     use Language.Tree;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
@@ -337,12 +336,15 @@ private
       From_Visibility : Visibility_Context := Null_Visibility_Context;
    end record;
 
-   package Excluded_Stack_Pckg is new Generic_Stack (Entity_Access);
+   procedure Free (This : in out Entity_Access) is null;
+   --  Used to instantiate the generic list, does not actually do anything
 
-   use Excluded_Stack_Pckg;
+   package Excluded_Entities is new Generic_List (Entity_Access, Free);
+
+   use Excluded_Entities;
 
    type Excluded_Stack_Type_Record is record
-      Entities : Excluded_Stack_Pckg.Simple_Stack;
+      Entities : Excluded_Entities.List;
       Refs     : Integer := 0;
    end record;
 

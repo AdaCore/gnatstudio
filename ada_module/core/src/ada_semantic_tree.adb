@@ -324,7 +324,7 @@ package body Ada_Semantic_Tree is
 
    procedure Pop_Entity (Stack : in out Excluded_Stack_Type) is
    begin
-      Pop (Stack.Entities);
+      Next (Stack.Entities);
    end Pop_Entity;
 
    -----------------
@@ -334,7 +334,7 @@ package body Ada_Semantic_Tree is
    procedure Push_Entity
      (Stack : in out Excluded_Stack_Type; Entity : Entity_Access) is
    begin
-      Push (Stack.Entities, Entity);
+      Prepend (Stack.Entities, Entity);
    end Push_Entity;
 
    -----------------
@@ -344,17 +344,17 @@ package body Ada_Semantic_Tree is
    function Is_Excluded
      (Stack : Excluded_Stack_Type; Entity : Entity_Access) return Boolean
    is
-      Excluded : Excluded_Stack_Pckg.Simple_Stack;
+      Excluded : Excluded_Entities.List_Node;
    begin
       if Stack = null then
          return False;
       end if;
 
-      Excluded := Stack.Entities;
+      Excluded := First (Stack.Entities);
 
-      while Excluded /= null loop
+      while Excluded /= Null_Node loop
          declare
-            Excluded_Entity : constant Entity_Access := Excluded.Val;
+            Excluded_Entity : constant Entity_Access := Data (Excluded);
          begin
             --  If the two entities are exactly on the same construct, or if
             --  they are parts of the same enitity, then we found an excluded
@@ -369,7 +369,7 @@ package body Ada_Semantic_Tree is
             end if;
          end;
 
-         Excluded := Excluded.Next;
+         Excluded := Next (Excluded);
       end loop;
 
       return False;
@@ -400,7 +400,7 @@ package body Ada_Semantic_Tree is
          Stack.Refs := Stack.Refs - 1;
 
          if Stack.Refs = 0 then
-            Clear (Stack.Entities);
+            Free (Stack.Entities);
             Free (Stack);
          end if;
       end if;
@@ -465,7 +465,9 @@ package body Ada_Semantic_Tree is
                   --  just dismiss the all keyword and stop the analysis.
 
                   Remove_Nodes
-                    (Result.Tokens, Null_Node, First (Result.Tokens));
+                    (Result.Tokens,
+                     Token_List.Null_Node,
+                     First (Result.Tokens));
                   Stop := True;
 
                   return;
@@ -714,7 +716,7 @@ package body Ada_Semantic_Tree is
       Length : Natural := 0;
       Iter   : Token_List.List_Node := First (Expression.Tokens);
    begin
-      while Iter /= Null_Node loop
+      while Iter /= Token_List.Null_Node loop
          Length := Length + Get_Name (Expression, Data (Iter))'Length;
          Iter := Next (Iter);
       end loop;
@@ -723,7 +725,7 @@ package body Ada_Semantic_Tree is
          Iter := First (Expression.Tokens);
          Length := Result'First;
 
-         while Iter /= Null_Node loop
+         while Iter /= Token_List.Null_Node loop
             declare
                N : constant String := Get_Name (Expression, Data (Iter));
             begin
