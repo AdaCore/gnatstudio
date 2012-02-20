@@ -810,7 +810,7 @@ package body Language.Ada is
         (Offset            : in out Natural;
          Incomplete_String : out Boolean);
       --  Assuming offset is on a closing double quote, skips to before the
-      --  corresponding openning double quote. If such openning double quote
+      --  corresponding opening double quote. If such opening double quote
       --  can't be found, Incomplete_String is set to True, false otherwise.
 
       procedure Skip_Comment_Line
@@ -1122,10 +1122,7 @@ package body Language.Ada is
                   end if;
                end;
 
-               if Token.Tok_Type = No_Token then
-                  Incomplete_String := True;
-                  exit;
-               end if;
+               exit when Token.Tok_Type = No_Token;
 
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
@@ -1295,7 +1292,6 @@ package body Language.Ada is
                   Handle_Token (Token, Offset, Stop);
                   exit when Stop;
                end if;
-
          end case;
 
          Offset := UTF8_Find_Prev_Char (Buffer, Offset);
