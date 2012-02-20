@@ -1898,6 +1898,25 @@ package body Ada_Analyzer is
          Index_Next    : Natural;
          Tmp_Index     : Natural;
 
+         procedure Adjust_Block_Column;
+         --  Adjust status column of declare block to take into
+         --  account a label at start of the line by using the first
+         --  non blank character on the line.
+
+         -------------------------
+         -- Adjust_Block_Column --
+         -------------------------
+
+         procedure Adjust_Block_Column is
+         begin
+            if Prev_Token = Tok_Colon then
+               Tmp_Index := Start_Of_Line;
+               Skip_Blanks (Buffer, Tmp_Index);
+               Temp.Sloc.Column := Tmp_Index - Start_Of_Line + 1;
+               Temp.Sloc.Index  := Tmp_Index;
+            end if;
+         end Adjust_Block_Column;
+
       begin
          Do_Push := False;
          Do_Pop := 0;
@@ -2302,18 +2321,7 @@ package body Ada_Analyzer is
                end if;
 
                Temp.In_Declaration := True;
-
-               if Prev_Token = Tok_Colon then
-                  --  Adjust status column of declare block to take into
-                  --  account a label at start of the line by using the first
-                  --  non blank character on the line.
-
-                  Tmp_Index := Start_Of_Line;
-                  Skip_Blanks (Buffer, Tmp_Index);
-                  Temp.Sloc.Column := Tmp_Index - Start_Of_Line + 1;
-                  Temp.Sloc.Index  := Tmp_Index;
-               end if;
-
+               Adjust_Block_Column;
                Do_Push := True;
 
             elsif Reserved = Tok_Is then
@@ -2363,6 +2371,7 @@ package body Ada_Analyzer is
                   Top_Token.In_Declaration := False;
 
                else
+                  Adjust_Block_Column;
                   Do_Push := True;
                end if;
 
