@@ -92,6 +92,11 @@ NF-52-K401-026 Quick fix alternative for unreferenced objects (2011-10-31)
   Two alternatives are now suggested to quick fix an unreferenced object:
   either remove the object declaration or add a pragma unreferenced.
 
+NF-52-K225-019 Improved indentation of comments within expressions (2012-02-20)
+
+  Comments within expressions or as part of continuation lines are better
+  indented, taking the extra continuation line preference into account.
+
 NF-52-K223-021 GPS: Automatic removal of Subversion errors (2011-10-28)
 
   Errors emitted by Subversion are removed from the Locations view when the
