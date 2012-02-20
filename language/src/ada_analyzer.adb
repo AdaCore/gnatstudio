@@ -2054,6 +2054,7 @@ package body Ada_Analyzer is
                      or else Reserved = Tok_Abstract
                      or else Reserved = Tok_Separate
                      or else (Reserved = Tok_Null
+                              and then not In_Generic
                               and then Top_Token.Token = Tok_Procedure))
          then
             In_Declaration := Subprogram_Decl;
@@ -2158,6 +2159,7 @@ package body Ada_Analyzer is
            or else (Reserved = Tok_Elsif and then Num_Parens = 0)
            or else (Reserved = Tok_Null
                     and then Prev_Token = Tok_Is
+                    and then not In_Generic
                     and then Top_Token.Token = Tok_Procedure)
          then
             --  unindent after end of elsif, e.g:
@@ -2506,6 +2508,7 @@ package body Ada_Analyzer is
                      or else Reserved = Tok_Abstract
                      or else Reserved = Tok_Separate
                      or else (Reserved = Tok_Null
+                              and then not In_Generic
                               and then Top_Token.Token = Tok_Procedure))
          then
             --  Handle indentation of e.g.
@@ -2574,6 +2577,7 @@ package body Ada_Analyzer is
          elsif Reserved = Tok_End
            or else (Reserved = Tok_Elsif and then Num_Parens = 0)
            or else (Reserved = Tok_Null
+                    and then not In_Generic
                     and then Prev_Token = Tok_Is
                     and then Top_Token.Token = Tok_Procedure)
          then
