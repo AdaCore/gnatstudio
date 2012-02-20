@@ -107,6 +107,12 @@ NF-52-K121-030 GPS: Codefix support for unrequired out-mode (2011-10-21)
   Added support to automatically fix the warning reported by the GNAT
   compiler in in-out formal parameters.
 
+NF-52-JA26-020 Improved indentation in parenthesized exprs (2012-02-20)
+
+  'or else' and 'and then' constructs at the end of lines inside parenthesized
+  expressions are better intended and in particular no longer generate an
+  extra indentation on the next line.
+
 NF-52-I527-048 GPS: multi-line option in MDI.input_dialog (2012-02-01)
 
   The GPS function MDI.input_dialog used in plug-ins has been enhanced and
