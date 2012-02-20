@@ -18,12 +18,7 @@
 generic
    type Generic_Type is private;
 package Generic_Stack is
-   type Stack_Record;
-   type Simple_Stack is access Stack_Record;
-   type Stack_Record is record
-      Val  : aliased Generic_Type;
-      Next : Simple_Stack;
-   end record;
+   type Simple_Stack is private;
 
    type Generic_Type_Access is access all Generic_Type;
 
@@ -47,6 +42,9 @@ package Generic_Stack is
    --  modify the contents of the stack.
    --  Raise Stack_Empty if Stack is empty.
 
+   function Next (Stack : Simple_Stack) return Generic_Type_Access;
+   --  Return a pointer to the next item of the stack, or null if none.
+
    procedure Clear (Stack : in out Simple_Stack);
    --  Clear the contents of stack. This automatically frees memory for Stack
    --  as well.
@@ -55,7 +53,15 @@ package Generic_Stack is
    --  Returns True if the stack is empty.
 
 private
+   type Stack_Record;
+   type Simple_Stack is access Stack_Record;
+   type Stack_Record is record
+      Val  : aliased Generic_Type;
+      Next : Simple_Stack;
+   end record;
+
    pragma Inline (Push);
    pragma Inline (Pop);
    pragma Inline (Top);
+   pragma Inline (Next);
 end Generic_Stack;

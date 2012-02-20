@@ -81,6 +81,19 @@ package body Generic_Stack is
       end if;
    end Top;
 
+   ----------
+   -- Next --
+   ----------
+
+   function Next (Stack : Simple_Stack) return Generic_Type_Access is
+   begin
+      if Stack = null or else Stack.Next = null then
+         return null;
+      else
+         return Stack.Next.Val'Access;
+      end if;
+   end Next;
+
    --------------
    -- Is_Empty --
    --------------
