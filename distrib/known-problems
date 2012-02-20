@@ -90,6 +90,12 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               to replace the cursor will cause unwanted scrolling.
   Workaround: Scroll back manually after the unwanted scrolling.
 
+- KA04-024: GPS: wrong column highlighted for label:begin
+  Problem:    When GPS highlights the current block which starts with a
+              label followed by the begin keyword, the wrong column is used
+              to highlight the block.
+  Workaround: Disable block highlighting or ignore this visual glitch.
+
 - K930-020: Recursive project source dirs and Windows host
   Problem:    When GPS is running on a Windows host, but driving a Unix
               build server, and the user edits the project to use recursive
