@@ -20,29 +20,39 @@ with Ada.Unchecked_Deallocation;
 package body Generic_Stack is
 
    procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (Stack_Record, Simple_Stack);
+     Ada.Unchecked_Deallocation (Type_Array, Type_Array_Access);
 
    -----------
    -- Clear --
    -----------
 
    procedure Clear (Stack : in out Simple_Stack) is
-      P : Simple_Stack;
    begin
-      while Stack /= null loop
-         P := Stack;
-         Stack := Stack.Next;
-         Unchecked_Free (P);
-      end loop;
+      Unchecked_Free (Stack.Values);
+      Stack.Last := 0;
    end Clear;
 
    ----------
    -- Push --
    ----------
 
+   Minimal_Array_Length : constant := 64;
+   --  Minimal length to allocate on an array
+
    procedure Push (Stack : in out Simple_Stack; Value : Generic_Type) is
+      Tmp : Type_Array_Access;
    begin
-      Stack := new Stack_Record'(Value, Stack);
+      if Stack.Values = null then
+         Stack.Values := new Type_Array (1 .. Minimal_Array_Length);
+      elsif Stack.Last >= Stack.Values'Last then
+         Tmp := Stack.Values;
+         Stack.Values := new Type_Array (1 .. Tmp'Length * 2);
+         Stack.Values (Tmp'Range) := Tmp.all;
+         Unchecked_Free (Tmp);
+      end if;
+
+      Stack.Last := Stack.Last + 1;
+      Stack.Values (Stack.Last) := Value;
    end Push;
 
    ---------
@@ -50,15 +60,12 @@ package body Generic_Stack is
    ---------
 
    procedure Pop (Stack : in out Simple_Stack; Value : out Generic_Type) is
-      P : Simple_Stack;
    begin
-      if Stack = null then
+      if Stack.Last = 0 then
          raise Stack_Empty;
       else
-         Value := Stack.Val;
-         P     := Stack;
-         Stack := Stack.Next;
-         Unchecked_Free (P);
+         Value := Stack.Values (Stack.Last);
+         Stack.Last := Stack.Last - 1;
       end if;
    end Pop;
 
@@ -74,10 +81,10 @@ package body Generic_Stack is
 
    function Top (Stack : Simple_Stack) return Generic_Type_Access is
    begin
-      if Stack = null then
+      if Stack.Last = 0 then
          raise Stack_Empty;
       else
-         return Stack.Val'Access;
+         return Stack.Values (Stack.Last)'Access;
       end if;
    end Top;
 
@@ -87,10 +94,10 @@ package body Generic_Stack is
 
    function Next (Stack : Simple_Stack) return Generic_Type_Access is
    begin
-      if Stack = null or else Stack.Next = null then
+      if Stack.Last <= 1 then
          return null;
       else
-         return Stack.Next.Val'Access;
+         return Stack.Values (Stack.Last - 1)'Access;
       end if;
    end Next;
 
@@ -100,11 +107,20 @@ package body Generic_Stack is
 
    function Is_Empty (Stack : Simple_Stack) return Boolean is
    begin
-      if Stack = null then
-         return True;
-      else
-         return False;
-      end if;
+      return Stack.Last = 0;
    end Is_Empty;
+
+   --------------------
+   -- Traverse_Stack --
+   --------------------
+
+   procedure Traverse_Stack
+     (Stack    : Simple_Stack;
+      Callback : access function (Obj : Generic_Type) return Boolean) is
+   begin
+      for J in 1 .. Stack.Last loop
+         exit when not Callback (Stack.Values (J));
+      end loop;
+   end Traverse_Stack;
 
 end Generic_Stack;

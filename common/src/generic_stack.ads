@@ -45,6 +45,12 @@ package Generic_Stack is
    function Next (Stack : Simple_Stack) return Generic_Type_Access;
    --  Return a pointer to the next item of the stack, or null if none.
 
+   procedure Traverse_Stack
+     (Stack    : Simple_Stack;
+      Callback : access function (Obj : Generic_Type) return Boolean);
+   --  Traverse Stack and call Callback on each element of the stack.
+   --  Stop when Stack is traversed or when Callback returns False.
+
    procedure Clear (Stack : in out Simple_Stack);
    --  Clear the contents of stack. This automatically frees memory for Stack
    --  as well.
@@ -53,11 +59,12 @@ package Generic_Stack is
    --  Returns True if the stack is empty.
 
 private
-   type Stack_Record;
-   type Simple_Stack is access Stack_Record;
-   type Stack_Record is record
-      Val  : aliased Generic_Type;
-      Next : Simple_Stack;
+   type Type_Array is array (Positive range <>) of aliased Generic_Type;
+   type Type_Array_Access is access all Type_Array;
+
+   type Simple_Stack is record
+      Values : Type_Array_Access;  --  Index starts at 1
+      Last   : Natural := 0; --  Last significant element in Values
    end record;
 
    pragma Inline (Push);
