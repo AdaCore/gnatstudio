@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2009, AdaCore                 --
+--                  Copyright (C) 2005-2012, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -500,6 +500,7 @@ package body XML_Viewer is
    is
       Error : GNAT.Strings.String_Access;
       Root  : Node_Ptr;
+      Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
       Col   : Gint;
       Dummy : Boolean;
@@ -602,10 +603,12 @@ package body XML_Viewer is
       View.XML := Root;
 
       --  Expand the first iter
-
-      Path := Get_Path (View.Tree.Model, Get_Iter_First (View.Tree.Model));
-      Dummy := Expand_Row (View.Tree, Path, True);
-      Path_Free (Path);
+      Iter := Get_Iter_First (View.Tree.Model);
+      if Iter /= Null_Iter then
+         Path := Get_Path (View.Tree.Model, Get_Iter_First (View.Tree.Model));
+         Dummy := Expand_Row (View.Tree, Path, True);
+         Path_Free (Path);
+      end if;
 
       return "";
    end Parse_XML;

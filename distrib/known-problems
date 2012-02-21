@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
 
+- L221-023: GPS: crash when using Metrics
+  Problem:    When computing Metrics for a project with only the option
+              "all coupling metrics" selected, GPS might crash when
+              displaying the results.
+  Workaround: Select another metric in addition to "all coupling metrics".
+
 - L213-019: GPS: menus and popups appear behind the task bar under Windows
   Problem:    Menus and some popups (such as tooltips) appear behind the
               Windows task bar.
