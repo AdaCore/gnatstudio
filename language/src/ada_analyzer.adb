@@ -745,7 +745,8 @@ package body Ada_Analyzer is
       Index_Ident         : Natural;
       In_Generic          : Boolean           := False;
 
-      type In_Declaration_Kind is (No_Decl, Subprogram_Decl, Type_Decl);
+      type In_Declaration_Kind is
+        (No_Decl, Subprogram_Decl, Subprogram_Aspect, Type_Decl);
 
       In_Declaration : In_Declaration_Kind := No_Decl;
       --  Identifies when we are in a declaration
@@ -1315,7 +1316,22 @@ package body Ada_Analyzer is
          --------------------------
 
          function Is_Continuation_Line return Boolean is
+            Tmp_Index : Natural := Prec + 1;
          begin
+            if Prev_Token = Tok_With and then Token = Tok_Identifier then
+               Skip_Blanks (Buffer, Tmp_Index);
+
+               if Look_For (Tmp_Index, "=>") then
+                  --  We have an aspects clause, e.g:
+                  --  procedure G with
+                  --    Pre => F
+
+                  return True;
+               else
+                  return False;
+               end if;
+            end if;
+
             return (Prev_Token = Tok_Is and then In_Generic)
               or else
                 (Top_Tok /= No_Token
@@ -1411,13 +1427,21 @@ package body Ada_Analyzer is
                Do_Indent (Prec, Line_Count, Num_Spaces + Indent_Use);
 
             elsif Num_Parens = 0 then
-               if In_Declaration = Subprogram_Decl then
-                  --  May happen with aspects:
-                  --  procedure G with
-                  --    Pre => F,
-                  --    Post => F;
+               if Continuation_Val > 0 then
+                  declare
+                     Tmp_Index : Natural := Prec + 1;
+                  begin
+                     Skip_Blanks (Buffer, Tmp_Index);
 
-                  Continuation_Val := Continuation_Val - Indent_Continue;
+                     if Look_For (Tmp_Index, "=>") then
+                        --  May happen with aspects:
+                        --  procedure G with
+                        --    Pre => F,
+                        --    Post => F;
+
+                        Continuation_Val := Continuation_Val - Indent_Continue;
+                     end if;
+                  end;
                end if;
 
                Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
@@ -1874,7 +1898,7 @@ package body Ada_Analyzer is
             end case;
 
             Constructs.Current.Is_Declaration :=
-              In_Declaration = Subprogram_Decl
+              In_Declaration in Subprogram_Decl .. Subprogram_Aspect
                 or else Value.Type_Declaration
                 or else Value.Package_Declaration
                 or else Value.Protected_Declaration;
@@ -4125,8 +4149,7 @@ package body Ada_Analyzer is
                         Pop_And_Set_Local (Tokens);
 
                      elsif Num_Parens = 0 then
-                        if In_Declaration = Subprogram_Decl
-                          or else In_Declaration = Type_Decl
+                        if In_Declaration /= No_Decl
                           or else
                             (Local_Top_Token.Token = Tok_Task
                              and then In_Declaration = Type_Decl)
@@ -4597,6 +4620,10 @@ package body Ada_Analyzer is
                  or else (Token = Tok_Is and then not In_Generic)
                then
                   In_Declaration := No_Decl;
+               elsif In_Declaration = Subprogram_Decl
+                 and then Token = Tok_With
+               then
+                  In_Declaration := Subprogram_Aspect;
                end if;
             end;
          end if;
@@ -4629,7 +4656,7 @@ package body Ada_Analyzer is
 
          if Token /= Tok_Is then
             Compute_Indentation
-              (Token, Prev_Token, Prec, Line_Count, Num_Spaces);
+              (Token, Prev_Token, Current, Line_Count, Num_Spaces);
          end if;
 
          Prec            := Current + 1;
