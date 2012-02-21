@@ -90,19 +90,25 @@
     description="Map tests to subprograms."
     />
 
-  <action  name="run gnattest">
-    <filter id="Create harness project"/>
-    <description>Run gnattest on current project file</description>
+  <action name="run gnattest">
+    <filter_and>
+      <filter id="Project only"/>
+      <filter id="Non harness project"/>
+    </filter_and>
+    <description>Run gnattest on current project</description>
     <shell lang="python" output="none"
-    >GPS.BuildTarget("GNATTest for project").execute(synchronous=False)</shell>
+    >GPS.BuildTarget("GNATTest for project").execute()</shell>
     <shell lang="python">gnattest.open_harness_project()</shell>
   </action>
 
-  <action  name="re-generate harness project">
-    <filter id="Harness project exists"/>
-    <description>Run gnattest on current project file</description>
+  <action name="run gnattest recursive">
+    <filter_and>
+      <filter id="Project only"/>
+      <filter id="Non harness project"/>
+    </filter_and>
+    <description>Run gnattest on current project and subprojects</description>
     <shell lang="python" output="none"
-    >GPS.BuildTarget("GNATTest for project").execute(synchronous=False)</shell>
+    >GPS.BuildTarget("GNATTest for project").execute(extra_args="-r")</shell>
     <shell lang="python">gnattest.open_harness_project()</shell>
   </action>
 
@@ -122,23 +128,19 @@
   </action>
 
   <action name="make single test" output="none">
-    <filter id="Library package declaration"/>
+    <filter_and>
+      <filter id="Library package declaration"/>
+      <filter id="Non harness project"/>
+    </filter_and>
     <description>Run gnattest on single package</description>
-    <shell lang="python">GPS.BuildTarget("GNATTest for file").execute(synchronous=False)</shell>
+    <shell lang="python">GPS.BuildTarget("GNATTest for file").execute()</shell>
     <shell lang="python">gnattest.open_harness_project()</shell>
   </action>
-
-  <contextual action="make single test" after="GNATTest">
-    <title>GNATTest/Generate unit test setup for %f</title>
-  </contextual>
 
   <submenu after="Documentation">
     <title>Tools/GNATTest</title>
     <menu action="run gnattest">
       <title>Generate unit test setup</title>
-    </menu>
-    <menu action="re-generate harness project">
-      <title>Regenerate unit test setup</title>
     </menu>
     <menu action="open harness">
       <title>Open harness project</title>
@@ -152,8 +154,8 @@
     <title>GNATTest/Generate unit test setup for %p</title>
   </contextual>
 
-  <contextual action="re-generate harness project" after="GNATTest">
-    <title>GNATTest/Regenerate unit test setup for %p</title>
+  <contextual action="run gnattest recursive" after="GNATTest">
+    <title>GNATTest/Generate unit test setup for %p and subprojects</title>
   </contextual>
 
   <contextual action="open harness" after="GNATTest">
@@ -162,6 +164,10 @@
 
   <contextual action="exit harness" after="GNATTest">
     <title>GNATTest/Exit harness project</title>
+  </contextual>
+
+  <contextual action="make single test" after="GNATTest">
+    <title>GNATTest/Generate unit test setup for %f</title>
   </contextual>
 
   <target-model name="gnattest" category="">
