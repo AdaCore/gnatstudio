@@ -2055,7 +2055,10 @@ package body Ada_Analyzer is
                Top_Token.Protected_Declaration := False;
             end if;
 
-         elsif Prev_Token /= Tok_End and then Reserved = Tok_Case then
+         elsif Prev_Token /= Tok_End
+           and then Reserved = Tok_Case
+           and then Num_Parens = 0
+         then
             Temp.Visibility_Section := Top_Token.Visibility_Section;
 
             --  If the case is in a type declaration (e.g. protected), then
@@ -2424,7 +2427,7 @@ package body Ada_Analyzer is
             elsif Reserved = Tok_Else
               or else (Top_Token.Token = Tok_Select
                        and then Reserved = Tok_Then)
-              or else Reserved = Tok_When
+              or else (Reserved = Tok_When and then Num_Parens = 0)
               or else Reserved = Tok_Or
               or else Reserved = Tok_Private
             then
@@ -2667,7 +2670,9 @@ package body Ada_Analyzer is
                Syntax_Error := True;
             end if;
 
-         elsif    (Reserved = Tok_Is and then not In_Generic)
+         elsif    (Reserved = Tok_Is
+                   and then Num_Parens = 0
+                   and then not In_Generic)
            or else Reserved = Tok_Declare
            or else Reserved = Tok_Begin
            or else Reserved = Tok_Do
@@ -2790,7 +2795,7 @@ package body Ada_Analyzer is
             elsif Reserved = Tok_Else
               or else (Top_Token.Token = Tok_Select
                        and then Reserved = Tok_Then)
-              or else Reserved = Tok_When
+              or else (Reserved = Tok_When and then Num_Parens = 0)
               or else Reserved = Tok_Or
               or else Reserved = Tok_Private
             then
