@@ -31,7 +31,7 @@ if codepeer != "":
     </documentation_file>
 
     <documentation_file>
-      <name>user_guide/html/index.html</name>
+      <name>users_guide/html/index.html</name>
       <descr>CodePeer User's Guide</descr>
       <category>CodePeer</category>
       <menu before="About">/Help/CodePeer/CodePeer User's Guide</menu>
