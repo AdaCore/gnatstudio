@@ -138,7 +138,7 @@ class gnatCheckProc:
      if len (res) > 3:
        msg = res[1]+":"+res[2]
      GPS.Locations.parse (msg, self.locations_string)
-     GPS.Codefix.parse (msg, self.locations_string)
+     GPS.Codefix.parse (self.locations_string, msg)
 
    def on_match (self, process, matched, unmatched):
       if unmatched == "\n":
