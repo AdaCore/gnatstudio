@@ -20,7 +20,8 @@ codepeer = os_utils.locate_exec_on_path("codepeer")
 if codepeer != "":
   example_root=os.path.dirname (os.path.dirname(codepeer)).replace('\\', '/')+\
     '/share/examples/codepeer'
-  GPS.parse_xml ("""
+  xml_codepeer = """<?xml version="1.0"?>
+  <CODEPEER>
     <doc_path>share/doc/codepeer</doc_path>
 
     <documentation_file>
@@ -433,4 +434,6 @@ if codepeer != "":
           <arg>%Pb.library</arg>
        </command-line>
     </target>
-""")
+    </CODEPEER>
+"""
+  GPS.parse_xml(xml_codepeer)
