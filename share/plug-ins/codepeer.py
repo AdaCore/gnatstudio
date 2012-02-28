@@ -15,7 +15,12 @@ import GPS, os_utils, os.path
 
 # Check for GNAT toolchain: codepeer, gps_codepeer_bridge
 
-xml_codepeer = """<?xml version="1.0"?>
+codepeer = os_utils.locate_exec_on_path("codepeer")
+
+if codepeer != "":
+  example_root=os.path.dirname (os.path.dirname(codepeer)).replace('\\', '/')+\
+    '/share/examples/codepeer'
+  xml_codepeer = """<?xml version="1.0"?>
   <CODEPEER>
     <doc_path>share/doc/codepeer</doc_path>
 
@@ -431,9 +436,4 @@ xml_codepeer = """<?xml version="1.0"?>
     </target>
     </CODEPEER>
 """
-codepeer = os_utils.locate_exec_on_path("codepeer")
-
-if codepeer != "":
-  example_root=os.path.dirname (os.path.dirname(codepeer)).replace('\\', '/')+\
-    '/share/examples/codepeer'
   GPS.parse_xml(xml_codepeer)
