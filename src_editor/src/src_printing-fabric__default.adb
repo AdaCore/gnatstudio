@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2012, AdaCore                     --
+--                       Copyright (C) 2012, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,18 +17,21 @@
 
 --  Default version of this file.
 
-package body Src_Printing is
+with GPS.Kernel.Preferences;
+with Src_Printing.Gtk_Printer;
+with Src_Printing.Command_Printer;
 
-   procedure Print
-     (Editor     : Source_Editor_Box;
-      Font_Name  : String;
-      Font_Size  : Positive;
-      Bold       : Boolean := False;
-      Italicized : Boolean := False)
-   is
-      pragma Unreferenced (Editor, Font_Name, Font_Size, Bold, Italicized);
+package body Src_Printing.Fabric is
+
+   function Create return Abstract_Printer'Class is
+      Print_Helper     : constant String :=
+        GPS.Kernel.Preferences.Print_Command.Get_Pref;
    begin
-      null;
-   end Print;
+      if Print_Helper = "" then
+         return Src_Printing.Gtk_Printer.Create;
+      else
+         return Src_Printing.Command_Printer.Create (Print_Helper);
+      end if;
+   end Create;
 
-end Src_Printing;
+end Src_Printing.Fabric;

@@ -15,24 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides printing for Source_Buffers.
+--  This package provides printing under Windows.
 
-with Src_Editor_Box;
-with Src_Editor_Buffer; use Src_Editor_Buffer;
+with Src_Editor_Box; use Src_Editor_Box;
 
-package Src_Printing is
+package Src_Printing.Win32_Printer is
 
-   type Abstract_Printer is abstract tagged null record;
+   type Printer is new Abstract_Printer with private;
 
-   procedure Print
-     (This       : Abstract_Printer;
+   overriding procedure Print
+     (This       : Printer;
       Editor     : Src_Editor_Box.Source_Editor_Box;
       From       : Editable_Line_Type := 1;
-      To         : Editable_Line_Type := Editable_Line_Type'Last) is abstract;
-   --  Print the contents of the buffer associated with the Source_Editor_Box
-   --  using the indicated font.  Has no effect if the buffer is empty.
-   --  Limit line range to From .. To if specified.
-   --  Under Windows will ask user for printer selection via dialog box, the
-   --  cancellation of which will return without printing.
+      To         : Editable_Line_Type := Editable_Line_Type'Last);
 
-end Src_Printing;
+   function Create return Printer;
+
+private
+
+   type Printer is new Abstract_Printer with null record;
+
+end Src_Printing.Win32_Printer;

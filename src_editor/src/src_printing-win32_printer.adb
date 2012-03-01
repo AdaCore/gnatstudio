@@ -25,8 +25,13 @@ with System;              use System;
 with Win32_Printing_Defs; use Win32_Printing_Defs;
 with Traces;              use Traces;
 with Ada.Exceptions;      use Ada.Exceptions;
+with Ada.Text_IO;
+with Pango.Font;
+with GPS.Kernel.Preferences;
+with Pango.Enums;
+with Glib;
 
-package body Src_Printing is
+package body Src_Printing.Win32_Printer is
 
    use Src_Editor_Buffer;
 
@@ -76,6 +81,14 @@ package body Src_Printing is
    --  Create a logical font with the indciated chacteristics indicated for the
    --  specified printer.
 
+   procedure Print
+     (Editor     : Source_Editor_Box;
+      Font_Name  : String;
+      Font_Size  : Positive;
+      From_Line  : Editable_Line_Type;
+      To_Line    : Editable_Line_Type);
+   --  Print buffer or part of it
+
    procedure Print_Header
      (File_Name : String;
       Alt_Font  : HFONT;
@@ -83,7 +96,8 @@ package body Src_Printing is
    --  Print the file name at the top of the page with the font indicated.
 
    procedure Print_Body
-     (This_Page      : INT;
+     (From_Line      : Editable_Line_Type;
+      This_Page      : INT;
       Lines_Per_Page : INT;
       Line_Height    : INT;
       Chars_Per_Line : INT;
@@ -104,6 +118,44 @@ package body Src_Printing is
    --  Return the location of the input string centered on the page
    --  with the current font of the selected printer, in pixel units.
 
+   ------------
+   -- Create --
+   ------------
+
+   function Create return Printer is
+   begin
+      return (Abstract_Printer with null record);
+   end Create;
+
+   -----------
+   -- Print --
+   -----------
+
+   overriding procedure Print
+     (This       : Printer;
+      Editor     : Src_Editor_Box.Source_Editor_Box;
+      From       : Editable_Line_Type := 1;
+      To         : Editable_Line_Type := Editable_Line_Type'Last)
+   is
+      pragma Unreferenced (This);
+
+      Source_Font      : constant Pango.Font.Pango_Font_Description :=
+        GPS.Kernel.Preferences.View_Fixed_Font.Get_Pref;
+      Source_Font_Name : constant String :=
+        Pango.Font.Get_Family (Source_Font);
+      Source_Font_Size : constant Glib.Gint :=
+        Pango.Enums.To_Pixels (Pango.Font.Get_Size (Source_Font));
+      Last_Line        : constant Editable_Line_Type :=
+        Editable_Line_Type (Editor.Get_Last_Line);
+   begin
+      Print
+        (Editor,
+         Source_Font_Name,
+         Positive (Source_Font_Size),
+         From,
+         Editable_Line_Type'Min (Last_Line, To));
+   end Print;
+
    -----------
    -- Print --
    -----------
@@ -112,8 +164,8 @@ package body Src_Printing is
      (Editor     : Source_Editor_Box;
       Font_Name  : String;
       Font_Size  : Positive;
-      Bold       : Boolean := False;
-      Italicized : Boolean := False)
+      From_Line  : Editable_Line_Type;
+      To_Line    : Editable_Line_Type)
    is
       PD             : PrintDlg;
       Document       : DOCINFO;
@@ -141,15 +193,11 @@ package body Src_Printing is
 
       Document_Name  : constant String := +File_Name.Full_Name & ASCII.NUL;
 
-      Total_Lines    : constant INT := INT (Get_Line_Count (Buffer));
+      Total_Lines    : constant INT := INT (To_Line - From_Line + 1);
 
       pragma Unreferenced (Status, Result);
 
    begin
-      if Total_Lines = 0 then
-         return;
-      end if;
-
       Document.cbSize := (Document'Size + Storage_Unit - 1) / Storage_Unit;
       Document.lpszOutput := Null_Address;
       Document.lpszDocName := Document_Name'Address;
@@ -168,7 +216,7 @@ package body Src_Printing is
       Status := SetMapMode (PD.DC, MM_TEXT);
 
       --  Create a logical font for the selected printer
-      New_Font := Foundary (Font_Name, Font_Size, Bold, Italicized, PD.DC);
+      New_Font := Foundary (Font_Name, Font_Size, False, False, PD.DC);
 
       --  Make the background opaque instead of transparent (as necessary)
       Old_Mode := SetBkMode (PD.DC, OPAQUE);
@@ -229,7 +277,8 @@ package body Src_Printing is
                   Print_Header
                     (+File_Name.Full_Name, Banner_Font, PD.DC);
                   Print_Body
-                    (This_Page,
+                    (From_Line,
+                     This_Page,
                      Lines_Per_Page,
                      Line_Height,
                      Chars_Per_Line,
@@ -338,7 +387,8 @@ package body Src_Printing is
    ----------------
 
    procedure Print_Body
-     (This_Page      : INT;
+     (From_Line      : Editable_Line_Type;
+      This_Page      : INT;
       Lines_Per_Page : INT;
       Line_Height    : INT;
       Chars_Per_Line : INT;
@@ -347,10 +397,15 @@ package body Src_Printing is
       Buffer         : Source_Buffer;
       Printer        : HDC)
    is
+      Actual_Line_Number    : Editable_Line_Type;
+      Actual_Line_Image     : String (1 .. 5);
       Paginated_Line_Number : INT;
       Content_Length        : INT;
       Result                : BOOL;
       pragma Unreferenced (Result);
+
+      package Line_Number_IO is new
+        Ada.Text_IO.Integer_IO (Editable_Line_Type);
 
       use Src_Editor_Buffer.Text_Handling;
    begin
@@ -360,10 +415,14 @@ package body Src_Printing is
 
          exit when Paginated_Line_Number > Total_Lines - 1;
 
+         Actual_Line_Number := Editable_Line_Type (Paginated_Line_Number) +
+           From_Line;
+
+         Line_Number_IO.Put (Actual_Line_Image, Actual_Line_Number);
+
          declare
-            Content : constant String := Get_Chars
-              (Buffer,
-               Editable_Line_Type (Paginated_Line_Number) + 1);
+            Content : constant String := Actual_Line_Image & ": " &
+              Get_Chars (Buffer, Actual_Line_Number);
 
             use Ada.Characters.Latin_1;
          begin
@@ -371,9 +430,7 @@ package body Src_Printing is
             --  and slicing off the trailing linefeed that
             --  appears on every line except the last.
 
-            if Content'Length > 0
-              and then Content (Content'Last) = LF
-            then
+            if Content (Content'Last) = LF then
                Content_Length := Content'Length - 1;
             else
                Content_Length := Content'Length;
@@ -601,4 +658,4 @@ package body Src_Printing is
       Offsets.Bottom := INT ((Bottom * PPI_Height) + 0.5) - Bottom_Gap;
    end Get_Margins;
 
-end Src_Printing;
+end Src_Printing.Win32_Printer;

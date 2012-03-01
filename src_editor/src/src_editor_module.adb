@@ -21,7 +21,6 @@ with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
-with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 
@@ -57,8 +56,6 @@ with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Handlers;                   use Gtkada.Handlers;
 with Gtkada.Types;                      use Gtkada.Types;
 
-with Pango.Enums;
-with Pango.Font;
 with Pango.Layout;                      use Pango.Layout;
 
 with Aliases_Module;                    use Aliases_Module;
@@ -81,7 +78,6 @@ with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Timeout;                use GPS.Kernel.Timeout;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -103,7 +99,7 @@ with Src_Editor_Module.Messages;        use Src_Editor_Module.Messages;
 
 with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
 with Src_Editor_View;                   use Src_Editor_View;
-with Src_Printing;
+with Src_Printing.Fabric;
 with String_Utils;                      use String_Utils;
 with UTF8_Utils;                        use UTF8_Utils;
 with Traces;                            use Traces;
@@ -229,6 +225,10 @@ package body Src_Editor_Module is
    procedure On_Print
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Print menu
+
+   procedure On_Print_Selection
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Edit->Selection->Print Selection menu
 
    procedure On_Select_All
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1786,17 +1786,9 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      use Pango.Font, Pango.Enums;
 
       Child            : constant MDI_Child := Find_Current_Editor (Kernel);
       Source           : Source_Editor_Box;
-      Print_Helper     : constant String := Print_Command.Get_Pref;
-      Source_Font      : constant Pango_Font_Description :=
-                           Default_Style.Get_Pref_Font;
-      Source_Font_Name : constant String := Get_Family (Source_Font);
-      Source_Font_Size : constant Gint := To_Pixels (Get_Size (Source_Font));
-      Success          : Boolean;
-
    begin
       if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
          Console.Insert (Kernel, "No source file selected", Mode => Error);
@@ -1809,42 +1801,51 @@ package body Src_Editor_Module is
          return;
       end if;
 
-      if Print_Helper = "" then
-         --  Use our internal facility
-
-         Src_Printing.Print
-           (Source,
-            Font_Name  => Source_Font_Name,
-            Font_Size  => Integer (Source_Font_Size),
-            Bold       => False,
-            Italicized => False);
-
-      else
-         --  Use helper
-
-         if Save_MDI_Children
-           (Kernel,
-            Children => (1 => Child),
-            Force    => Auto_Save.Get_Pref)
-         then
-            declare
-               CL  : Arg_List;
-            begin
-               CL := Parse_String (Print_Helper, Separate_Args);
-               Append_Argument
-                 (CL, +Full_Name (Get_Filename (Source)), One_Arg);
-
-               Launch_Process
-                 (Kernel, CL,
-                  Console   => Get_Console (Kernel),
-                  Success   => Success);
-            end;
-         end if;
-      end if;
+      Src_Printing.Fabric.Create.Print (Source);
 
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Print;
+
+   ------------------------
+   -- On_Print_Selection --
+   ------------------------
+
+   procedure On_Print_Selection
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Child            : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source           : Source_Editor_Box;
+
+      Context    : constant Selection_Context := Get_Current_Context (Kernel);
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type;
+   begin
+      if Has_Area_Information (Context) then
+         Get_Area (Context, Natural (Start_Line), Natural (End_Line));
+      else
+         Console.Insert (Kernel, "No selection", Mode => Error);
+         return;
+      end if;
+
+      if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
+         Console.Insert (Kernel, "No source file selected", Mode => Error);
+         return;
+      end if;
+
+      Source := Get_Source_Box_From_MDI (Child);
+
+      if Source = null then
+         return;
+      end if;
+
+      Src_Printing.Fabric.Create.Print (Source, Start_Line, End_Line);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Print_Selection;
 
    -------------------
    -- On_Select_All --
@@ -3033,6 +3034,11 @@ package body Src_Editor_Module is
                      GDK_equal, Control_Mask,
                      Ref_Item   => "Expand Alias",
                      Add_Before => False,
+                     Filter     => Src_Action_Context);
+      Register_Menu (Kernel, Selection, -"Print Selection",
+                     Callback   => On_Print_Selection'Access,
+                     Ref_Item   => "Refill",
+                     Add_Before => True,
                      Filter     => Src_Action_Context);
 
       Gtk_New (Sep);
