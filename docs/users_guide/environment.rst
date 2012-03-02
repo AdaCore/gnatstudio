@@ -64,13 +64,6 @@ Environment Variables
 The following environment variables can be set to override some default
 settings in GPS:
 
-*GPS_ROOT*
-  .. index:: GPS_ROOT
-
-  Override the default root directory specified when GPS is built (during the
-  *configure* process, see the file `INSTALL` in the GPS sources for more
-  details) to access information such as the location of the translation files.
-
 *GPS_HOME*
   .. index:: GPS_HOME
   .. index:: Windows
@@ -90,7 +83,6 @@ settings in GPS:
 
   Contains a list of directories to search for custom files. See
   :ref:`Customizing_through_XML_and_Python_files` for more details.
-
 
 *GPS_CHANGELOG_USER*
   .. index:: GPS_CHANGELOG_USER
@@ -135,6 +127,15 @@ settings in GPS:
   languages. If file or directory names are using accents for example it may be
   necessary to set this variable to `CP_ACP` which is the default Windows ANSI
   code page.
+
+*GPS_ROOT*
+  .. index:: GPS_ROOT
+
+  Override and hardcode the default root installation directory.
+  This variable should in general not be needed, except by GPS developers,
+  in some rare circumstances. GPS will find all its resource files (e.g.
+  images, plug-ins, xml files) from this root prefix, so setting GPS_ROOT
+  to a wrong value will cause GPS to misbehave.
 
 .. _Running_GPS_on_Mac_OS_X:
 
