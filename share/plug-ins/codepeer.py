@@ -86,6 +86,19 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <submenu before="About">
       <title>/Help/CodePeer/Examples</title>
+      <menu action="codepeer_example_codepeer_by_example">
+        <title>CodePeer by Example</title>
+      </menu>
+    </submenu>
+
+    <action name="codepeer_example_codepeer_by_example" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/codepeer_by_example/codepeer_by_example.gpr"</shell>
+      <shell>Editor.edit "README.txt"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/CodePeer/Examples</title>
       <menu action="codepeer_example_conductor">
         <title>Conductor</title>
       </menu>
