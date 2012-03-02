@@ -255,25 +255,27 @@ package body CodePeer.Module.Editors is
          end Process_Annotations;
 
       begin
-         Data.Mark :=
-           new GPS.Editors.Editor_Mark'Class'
-             (Buffer.Add_Special_Line
-                  (Subprogram_Node.Line,
-                   Indent & "--",
-                   Annotation_Style_Name));
-         Data.Special_Lines := Data.Special_Lines + 1;
+         if Data.Lifeage in Added .. Unchanged then
+            Data.Mark :=
+              new GPS.Editors.Editor_Mark'Class'
+                (Buffer.Add_Special_Line
+                     (Subprogram_Node.Line,
+                      Indent & "--",
+                      Annotation_Style_Name));
+            Data.Special_Lines := Data.Special_Lines + 1;
 
-         Buffer.Add_Special_Line
-           (Subprogram_Node.Line,
-            Indent & "--  Subprogram: " & Subprogram_Node.Name.all,
-            Annotation_Style_Name);
-         Data.Special_Lines := Data.Special_Lines + 1;
+            Buffer.Add_Special_Line
+              (Subprogram_Node.Line,
+               Indent & "--  Subprogram: " & Subprogram_Node.Name.all,
+               Annotation_Style_Name);
+            Data.Special_Lines := Data.Special_Lines + 1;
 
-         Buffer.Add_Special_Line
-           (Subprogram_Node.Line, Indent & "--", Annotation_Style_Name);
-         Data.Special_Lines := Data.Special_Lines + 1;
+            Buffer.Add_Special_Line
+              (Subprogram_Node.Line, Indent & "--", Annotation_Style_Name);
+            Data.Special_Lines := Data.Special_Lines + 1;
 
-         Data.Annotations.Iterate (Process_Annotations'Access);
+            Data.Annotations.Iterate (Process_Annotations'Access);
+         end if;
       end Process_Subprogram;
 
    begin
