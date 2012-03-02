@@ -10,7 +10,7 @@ Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
 
 - L223-020: GPS: CodePeer's messages are not displayed in Locations view
   Problem:    CodePeer's messages are not displayed in Locations view
-              sometimes.
+              when analysis contains removed subprograms.
   Workaround: Use HTML report or remove CodePeer database and redo analysis.
 
 - L222-019: GPS: wrong default fonts under SuSE Linux
