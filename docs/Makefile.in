@@ -1,5 +1,6 @@
 prefix = @prefix@
 docdir = $(prefix)/share/doc/gps
+sharedir = $(prefix)/share/gps
 
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
