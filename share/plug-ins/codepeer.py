@@ -75,12 +75,9 @@ xml_codepeer = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
-    <action name="codepeer_example_conductor" category=""
+    <action name="codepeer_example_codepeer_by_example" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/conductor/conductor.gpr"</shell>
-      <shell>Editor.edit "score.ads"</shell>
-      <shell>Editor.edit "conductor.ads"</shell>
-      <shell>Editor.edit "conductor.adb"</shell>
+      <shell>Project.load "@EXAMPLE@/codepeer_by_example/codepeer_by_example.gpr"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
@@ -91,9 +88,12 @@ xml_codepeer = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
-    <action name="codepeer_example_codepeer_by_example" category=""
+    <action name="codepeer_example_conductor" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/codepeer_by_example/codepeer_by_example.gpr"</shell>
+      <shell>Project.load "@EXAMPLE@/conductor/conductor.gpr"</shell>
+      <shell>Editor.edit "score.ads"</shell>
+      <shell>Editor.edit "conductor.ads"</shell>
+      <shell>Editor.edit "conductor.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
