@@ -57,7 +57,7 @@ class Check:
       xml = """<%s label="%s" switch="%s" line="%s" column="%s" """ % (self._tag(), self.label, self.Switch(), line, col)
 
       if self.SwitchOff() != "":
-         xml += """switchoff="%s" """ % (self.SwitchOff())
+         xml += """switch-off="%s" """ % (self.SwitchOff())
 
       if self.Default() != "":
          xml += """default="%s" """ % (self.Default())
