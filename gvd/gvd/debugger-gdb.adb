@@ -1752,7 +1752,7 @@ package body Debugger.Gdb is
         or else Command (Command'First .. Index - 1) = "c"
         or else Command (Command'First .. Index - 1) = "run"
         or else Command (Command'First .. Index - 1) = "r"
-        or else Command = "finish"
+        or else Starts_With (Command, "fin")  --  fin/fini/finish/...
         or else Starts_With (Command, "attach")
         or else Starts_With (Command, "target")
         or else Starts_With (Command, "run")
