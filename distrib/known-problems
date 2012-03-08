@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L306-045: Project editor issue with gnat warnings switches
+  Problem:    Default warnings, appearing greyed out when editing the
+              switches in the project editor, cannot be turned off when
+              clearing the button.
+  Workaround: Disable all warnings with -gnatws, then activate only the
+              warnings you want.
+
 - L215-043: GPS: expanded code not working in remote mode
   Problem:    When configured with a remote build server, the "expanded code"
               actions are still trying to use the local host's toolchain even
