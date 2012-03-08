@@ -658,8 +658,9 @@ package body GPS.Kernel.Preferences is
       Annotated_Comments_Style := Create
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Annotated-Comments-Variant",
-         Label        => -"Annotated Comments",
-         Doc          => -"Style to use when displaying annotated comments."
+         Label        => -"SPARK Annotations",
+         Doc          => -"Style to use when displaying SPARK annotations "
+         & "within Ada comments (starting with --#)."
          & " The background color will be that of the default if left"
          & " to white",
          Base            => Default_Style,
@@ -996,7 +997,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
            -"Pattern used to detect file locations (e.g error messages)",
          Default =>
-           "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(info|Note)?" &
+           "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(info|Note|check)?" &
            "(\(style)?.*)",
          Page => -"Messages");
 

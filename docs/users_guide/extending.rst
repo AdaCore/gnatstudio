@@ -451,10 +451,9 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
       Font variant and colors used to highlight comments.
       Setting the color to white will set a transparent color.
 
-    *Annotated  Comments*
-      Font variant and colors used to highlight annotated comments.  Only
-      relevant to Ada currently. Annotated comments are comments immediately
-      followed by a special character, e.g. `#[]`.  Setting the color to white
+    *SPARK Annotations*
+      Font variant and colors used to highlight SPARK annotations within
+      Ada comments (Starting with `--#`). Setting the color to white
       will set a transparent color.
 
     *Strings*
