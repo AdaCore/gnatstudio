@@ -150,8 +150,7 @@ package body CodePeer.Module.Editors is
              (Get_Registry (Module.Kernel).Tree.Info (D.File).Project);
 
          if Project_Node.Files.Contains (D.File) then
-            Editors.Show_Annotations
-              (Module, Project_Node.Files.Element (D.File));
+            Show_Annotations (Module, Project_Node.Files.Element (D.File));
          end if;
       end if;
    end On_File_Edited_Hook;
