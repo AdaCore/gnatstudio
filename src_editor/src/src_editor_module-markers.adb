@@ -351,20 +351,29 @@ package body Src_Editor_Module.Markers is
               (Source_Buffer (Marker.Buffer), Signal_Closed,
                Markers_Callback.To_Marshaller (On_Closed'Access),
                File_Marker (Marker));
+
          else
             --  The mark already exists: simply move it to its intended
             --  location. This can happen for instance when reloading a file
             --  editor.
+
             declare
                Buffer : constant Source_Buffer := Get_Buffer (Source);
                Iter   : Gtk_Text_Iter;
+               Line   : Editable_Line_Type;
+               Column : Visible_Column_Type;
+
             begin
-               Buffer.Get_Iter_At_Screen_Position
-                 (Iter   => Iter,
-                  Line   => Marker.Line,
-                  Column => Visible_Column_Type'Max (1, Marker.Column));
-               Buffer.Move_Mark (Mark  => Marker.Mark,
-                                 Where => Iter);
+               Buffer.Get_Iter_At_Mark (Iter, Marker.Mark);
+               Get_Iter_Position (Buffer, Iter, Line, Column);
+
+               if Marker.Line /= Line or Marker.Column /= Column then
+                  Buffer.Get_Iter_At_Screen_Position
+                    (Iter   => Iter,
+                     Line   => Marker.Line,
+                     Column => Visible_Column_Type'Max (1, Marker.Column));
+                  Buffer.Move_Mark (Marker.Mark, Iter);
+               end if;
             end;
          end if;
       end if;
