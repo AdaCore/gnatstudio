@@ -13,6 +13,12 @@ Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
               when analysis contains removed subprograms.
   Workaround: Use HTML report or remove CodePeer database and redo analysis.
 
+- L222-020: GPS: CodePeer: hiding annotations problem
+  Problem:    CodePeer's annotations cann't be hidden when source file is
+              opened after loading of analysis data.
+  Workaround: Close CodePeer Report window, open source file and display
+              CodePeer Report again.
+
 - L222-019: GPS: wrong default fonts under SuSE Linux
   Problem:    Under some versions of SuSE Linux, the default font in GPS
               is not set to a standard "Sans" font.
