@@ -311,14 +311,49 @@ package body Refactoring.Rename is
             Execute_Label => Gtk.Stock.Stock_Ok,
             Cancel_Label  => Gtk.Stock.Stock_Undo)
          then
-            for L in Location_Arrays.First .. Last (Refs) loop
-               if L = Location_Arrays.First
-                 or else Refs.Table (L).File /= Refs.Table (L - 1).File
-               then
-                  Get_Buffer_Factory (Kernel).Get
-                    (Get_Filename (Refs.Table (L).File)).Undo;
-               end if;
-            end loop;
+            declare
+               Filenames   : File_Array (1 .. Integer (Last (Refs)));
+               First_Empty : Positive := 1;
+               Found       : Boolean;
+               The_File    : Virtual_File;
+            begin
+               for L in Location_Arrays.First .. Last (Refs) loop
+                  if L = Location_Arrays.First
+                    or else Refs.Table (L).File /= Refs.Table (L - 1).File
+                  then
+                     The_File := Get_Filename (Refs.Table (L).File);
+
+                     --  We do not want to undo with No_File, since the
+                     --  call to Get below would return the current buffer
+
+                     if The_File /= No_File then
+
+                        --  Check whether this file is already in the array
+
+                        Found := False;
+                        for F in 1 .. First_Empty - 1 loop
+                           if Filenames (F) = The_File then
+                              Found := True;
+                              exit;
+                           end if;
+                        end loop;
+
+                        --  The file is not found: add it
+
+                        if not Found then
+                           Filenames (First_Empty) := The_File;
+                           First_Empty := First_Empty + 1;
+                        end if;
+                     end if;
+                  end if;
+
+                  --  Undo once for every buffer we have
+
+                  for F in 1 .. First_Empty - 1 loop
+                     Get_Buffer_Factory (Kernel).Get (Filenames (F)).Undo;
+                  end loop;
+               end loop;
+            end;
          end if;
       end if;
    end Execute;
