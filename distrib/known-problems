@@ -15,6 +15,14 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Disable all warnings with -gnatws, then activate only the
               warnings you want.
 
+- L301-025: GPS: Current editor performing automatic undo after refactoring
+  Problem:    When attempting a refactoring through the menu Refactoring ->
+              Rename <name of entity>, if the entity information is not
+              up-to-date, pressing "Undo" in the confirmation dialog risks
+              causing the current editor to "Undo" more than once.
+  Workaround: After choosing "Undo" on the confirmation dialog, verify the
+              state of the current editor, and press "Redo" as necessary.
+
 - L215-043: GPS: expanded code not working in remote mode
   Problem:    When configured with a remote build server, the "expanded code"
               actions are still trying to use the local host's toolchain even
