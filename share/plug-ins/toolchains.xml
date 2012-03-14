@@ -78,6 +78,8 @@
     <compiler lang="c++">c++ppc</compiler>
   </toolchain>
 
+  <toolchain name="e500v2-wrs-linux"/>
+
   <toolchain name="powerpc-elf-lynxos"/>
 
   <toolchain name="powerpc-xcoff-lynxos"/>
