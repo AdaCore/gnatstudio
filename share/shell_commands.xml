@@ -5566,12 +5566,15 @@ submenu 'Update Directory' of the submenu 'Directory' of the menu 'VCS'. Path is
      <param name="on_activate" default="">A subprogram, see the GPS documentation on subprogram parameters</param>
      <param name="ref" default="">A string</param>
      <param name="add_before" default="True">A boolean</param>
+     <param name="filter" default="None">A subprogram</param>
+     <param name="group" default="">A string</param>
      <return>The instance of GPS.Menu</return>
      <description>Create a new menu in the GPS system. The menu is added at the given location (see GPS.Menu.get for more information on the path parameter). Submenus are created as necessary so that path is valid.
 If on_activate is specified, it will be executed every time the user selects that menu. It is called with only one parameter, the instance of GPS.Menu that was just created.
 If ref and add_before are specified, they specify the name of another item in the parent menu (and not a full path) before or after which the new menu should be added.
 If the name of the menu starts with a '-' sign, as in "/Edit/-", then a menu separator is inserted instead. In this case, on_activate is ignored.
-Underscore characters ('_') need to be duplicated in the path. A single underscore indicates the mnemonic to be used for that menu. For instance, if you create the menu "/_File", then the user can open the menu by pressing alt-F. But the underscore itself will not be displayed in the name of the menu.</description>
+Underscore characters ('_') need to be duplicated in the path. A single underscore indicates the mnemonic to be used for that menu. For instance, if you create the menu "/_File", then the user can open the menu by pressing alt-F. But the underscore itself will not be displayed in the name of the menu.
+If group is specified, create radio menu item in given group.</description>
      <example lang="python">
          def on_activate (self):
              print "A menu was selected: " + self.data
@@ -5579,6 +5582,18 @@ Underscore characters ('_') need to be duplicated in the path. A single undersco
          menu = GPS.Menu.create ("/Edit/My Company/My Action", on_activate)
          menu.data = "my own data"   ## Store your own data in the instance
      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Menu.get_active">
+     <param name="self">The instance of GPS.Menu</param>
+     <return>A boolean</return>
+     <description>Return True if the widget is currently active radio menu item</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Menu.set_active">
+     <param name="self">The instance of GPS.Menu</param>
+     <param name="is_active" default="True">A boolean</param>
+     <description>Set active state of radio menu item</description>
   </shell_doc>
 
   <shell_doc name="GPS.Menu.rename">

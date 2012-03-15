@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -27,6 +28,7 @@ with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
+with Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
@@ -34,13 +36,12 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Radio_Menu_Item;       use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
-
-with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Commands.Custom;           use Commands.Custom;
 with Commands.Interactive;      use Commands.Interactive;
@@ -89,17 +90,21 @@ package body Custom_Module is
    Category_Cst      : aliased constant String := "category";
    Key_Cst           : aliased constant String := "key";
    Action_Cst        : aliased constant String := "action";
+   Is_Active_Cst     : aliased constant String := "is_active";
 
    Menu_Get_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access);
    Menu_Rename_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
+   Menu_Set_Active_Params : constant Cst_Argument_List :=
+     (1 => Is_Active_Cst'Access);
    Menu_Create_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access,
       2 => On_Activate_Cst'Access,
       3 => Ref_Cst'Access,
       4 => Add_Before_Cst'Access,
-      5 => Filter_Cst'Access);
+      5 => Filter_Cst'Access,
+      6 => Group_Cst'Access);
    Contextual_Constructor_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Contextual_Create_Params : constant Cst_Argument_List :=
@@ -121,10 +126,15 @@ package body Custom_Module is
       7 => Group_Cst'Access,
       8 => Visibility_Filter_Cst'Access);
 
-   type Subprogram_Type_Menu_Record is new Gtk_Menu_Item_Record with record
-      On_Activate : Subprogram_Type;
-   end record;
-   type Subprogram_Type_Menu is access all Subprogram_Type_Menu_Record'Class;
+   package Radio_Group_Maps is new Ada.Containers.Indefinite_Ordered_Maps
+     (Key_Type     => String,
+      Element_Type => Widget_SList.GSlist,
+      "="          => Widget_SList."=");
+
+   Radio_Groups : Radio_Group_Maps.Map;
+
+   package Subprogram_Callback is new
+     Gtk.Handlers.User_Callback (Gtk_Menu_Item_Record, Subprogram_Type);
 
    type Action_Filter_Wrapper is new Action_Filter_Record with record
       Filter : Subprogram_Type;
@@ -134,11 +144,14 @@ package body Custom_Module is
       Context : Selection_Context) return Boolean;
    --  A filter that executes a shell subprogram
 
-   procedure On_Activate (Menu : access Gtk_Widget_Record'Class);
+   procedure On_Activate
+     (Menu        : access Gtk_Menu_Item_Record'Class;
+      On_Activate : Subprogram_Type);
    --  Called when a Subprogram_Type_Menu is activated
 
    procedure On_Destroy_Subprogram_Menu
-     (Menu : access Gtk_Widget_Record'Class);
+     (Menu        : access Gtk_Menu_Item_Record'Class;
+      On_Activate : Subprogram_Type);
    --  Called when a subprogram_type_menu is destroyed
 
    overriding procedure Customize
@@ -1371,13 +1384,14 @@ package body Custom_Module is
    -- On_Activate --
    -----------------
 
-   procedure On_Activate (Menu : access Gtk_Widget_Record'Class) is
-      M : constant Subprogram_Type_Menu := Subprogram_Type_Menu (Menu);
+   procedure On_Activate
+     (Menu        : access Gtk_Menu_Item_Record'Class;
+      On_Activate : Subprogram_Type) is
    begin
-      if M.On_Activate /= null then
+      if On_Activate /= null then
          declare
             Inst : constant Class_Instance :=
-              Get_Instance (Get_Script (M.On_Activate.all), M);
+              Get_Instance (Get_Script (On_Activate.all), Menu);
             C : Callback_Data'Class := Create
               (Get_Script (Inst), Arguments_Count => 1);
             Tmp : Boolean;
@@ -1385,7 +1399,7 @@ package body Custom_Module is
          begin
             Trace (Me, "Callback for menu");
             Set_Nth_Arg (C, 1, Inst);
-            Tmp := Execute (M.On_Activate, C);
+            Tmp := Execute (On_Activate, C);
             Free (C);
          end;
       end if;
@@ -1453,12 +1467,13 @@ package body Custom_Module is
          declare
             Inst : Class_Instance;
             Path : constant String := Nth_Arg (Data, 1);
+            Group : constant String := Nth_Arg (Data, 6, "");
             Filter : constant Subprogram_Type := Nth_Arg (Data, 5, null);
             Filter_A : Action_Filter;
+            Subprogram : constant Subprogram_Type := Nth_Arg (Data, 2, null);
 
             Item : Gtk_Menu_Item;
             Sep  : Gtk_Separator_Menu_Item;
-            Menu : Subprogram_Type_Menu;
             Last : Integer := Path'First - 1;
 
          begin
@@ -1478,18 +1493,50 @@ package body Custom_Module is
                Gtk_New (Sep);
                Item := Gtk_Menu_Item (Sep);
             else
-               Menu := new Subprogram_Type_Menu_Record;
-               Gtk.Menu_Item.Initialize_With_Mnemonic
-                 (Menu, Label => Unprotect (Path (Last + 1 .. Path'Last)));
-               Menu.On_Activate := Nth_Arg (Data, 2, null);
-               Widget_Callback.Connect
-                 (Menu, Signal_Activate, On_Activate'Access);
-               Widget_Callback.Connect
-                 (Menu, "destroy", On_Destroy_Subprogram_Menu'Access);
-               Set_Accel_Path
-                 (Menu, "<gps>" & Path, Get_Default_Accelerators (Kernel));
+               if Group = "" then
+                  Gtk.Menu_Item.Gtk_New_With_Mnemonic
+                    (Item,
+                     Label => Unprotect (Path (Last + 1 .. Path'Last)));
+               else
+                  declare
+                     Inserted : Boolean;
+                     Cursor   : Radio_Group_Maps.Cursor;
+                     List     : Widget_SList.GSlist;
+                     Menu     : Gtk_Radio_Menu_Item;
+                  begin
+                     Radio_Groups.Insert (Group, List, Cursor, Inserted);
 
-               Item := Gtk_Menu_Item (Menu);
+                     if not Inserted then
+                        List := Radio_Group_Maps.Element (Cursor);
+                     end if;
+
+                     Gtk.Radio_Menu_Item.Gtk_New_With_Mnemonic
+                       (Menu,
+                        Group => List,
+                        Label => Unprotect (Path (Last + 1 .. Path'Last)));
+
+                     List := Get_Group (Menu);
+
+                     Radio_Groups.Replace_Element (Cursor, List);
+
+                     Item := Gtk_Menu_Item (Menu);
+                  end;
+               end if;
+
+               Subprogram_Callback.Connect
+                 (Item,
+                  Signal_Activate,
+                  On_Activate'Access,
+                  Subprogram);
+
+               Subprogram_Callback.Connect
+                 (Item,
+                  "destroy",
+                  On_Destroy_Subprogram_Menu'Access,
+                  Subprogram);
+
+               Set_Accel_Path
+                 (Item, "<gps>" & Path, Get_Default_Accelerators (Kernel));
             end if;
 
             if Filter /= null then
@@ -1509,7 +1556,34 @@ package body Custom_Module is
             Set_Data (Inst, Widget => GObject (Item));
             Set_Return_Value (Data, Inst);
          end;
-
+      elsif Command = "get_active" then
+         declare
+            use Gtk.Check_Menu_Item;
+            Inst : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
+            W    : constant GObject := Get_Data (Inst);
+         begin
+            if W /= null and then
+              W.all in Gtk_Check_Menu_Item_Record'Class
+            then
+               Set_Return_Value (Data, Get_Active (Gtk_Check_Menu_Item (W)));
+            else
+               Set_Return_Value (Data, False);
+            end if;
+         end;
+      elsif Command = "set_active" then
+         Name_Parameters (Data, Menu_Set_Active_Params);
+         declare
+            use Gtk.Check_Menu_Item;
+            Inst  : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
+            Value : constant Boolean := Nth_Arg (Data, 2, True);
+            W     : constant GObject := Get_Data (Inst);
+         begin
+            if W /= null and then
+              W.all in Gtk_Check_Menu_Item_Record'Class
+            then
+               Set_Active (Gtk_Check_Menu_Item (W), Value);
+            end if;
+         end;
       elsif Command = "rename" then
          Name_Parameters (Data, Menu_Rename_Params);
          declare
@@ -1541,9 +1615,13 @@ package body Custom_Module is
    --------------------------------
 
    procedure On_Destroy_Subprogram_Menu
-     (Menu : access Gtk_Widget_Record'Class) is
+     (Menu        : access Gtk_Menu_Item_Record'Class;
+      On_Activate : Subprogram_Type)
+   is
+      pragma Unreferenced (Menu);
+      Object : Subprogram_Type := On_Activate;
    begin
-      Free (Subprogram_Type_Menu (Menu).On_Activate);
+      Free (Object);
    end On_Destroy_Subprogram_Menu;
 
    ------------------------
@@ -1931,13 +2009,24 @@ package body Custom_Module is
       Register_Command
         (Kernel, "create",
          Minimum_Args  => 1,
-         Maximum_Args  => 5,
+         Maximum_Args  => 6,
          Static_Method => True,
          Class         => Menu_Class,
          Handler       => Menu_Handler'Access);
       Register_Command
         (Kernel, "rename",
          Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Menu_Class,
+         Handler       => Menu_Handler'Access);
+      Register_Command
+        (Kernel, "get_active",
+         Maximum_Args  => 0,
+         Class         => Menu_Class,
+         Handler       => Menu_Handler'Access);
+      Register_Command
+        (Kernel, "set_active",
+         Minimum_Args  => 0,
          Maximum_Args  => 1,
          Class         => Menu_Class,
          Handler       => Menu_Handler'Access);
