@@ -154,10 +154,13 @@ package Src_Editor_Module is
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
+      Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Create_New : Boolean := True) return Src_Editor_Box.Source_Editor_Box;
    --  Create a new text editor that edits File.
    --  If File is the empty string, or the file doesn't exist and Create_New is
    --  True, then an empty editor is created.
+   --  Dir is the directory in which the file should be saved initially, if
+   --  File = VFS.No_File.
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
 
@@ -345,7 +348,8 @@ private
       Column_End : Visible_Column_Type;
       Group      : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position : Gtkada.MDI.Child_Position :=
-        Gtkada.MDI.Position_Automatic)
+        Gtkada.MDI.Position_Automatic;
+      Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
       return Src_Editor_Box.Source_Editor_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
@@ -354,5 +358,7 @@ private
    --  Position indicates the position to give to the editor in the MDI.
    --  If Force is true, then the file is reloaded without asking confirmation
    --  from the user
+   --  Initial_Dir is the initial directory to create the file in, in case
+   --  we are creating an editor for a new file.
 
 end Src_Editor_Module;

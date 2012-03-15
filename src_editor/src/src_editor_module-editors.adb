@@ -718,7 +718,8 @@ package body Src_Editor_Module.Editors is
 
             if Box = null then
                if Open_Buffer then
-                  Box := Create_File_Editor (This.Kernel, File, False);
+                  Box := Create_File_Editor
+                    (This.Kernel, File, No_File, False);
                   Pure_Editors_Hash.Set
                     (This.Pure_Buffers.all, File, (Box => Box));
                end if;

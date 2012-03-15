@@ -1073,6 +1073,7 @@ package body Src_Editor_Module is
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
+      Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Create_New : Boolean := True) return Source_Editor_Box
    is
       Success     : Boolean;
@@ -1123,7 +1124,7 @@ package body Src_Editor_Module is
 
          if Is_Writable then
             Gtk_New (Editor, Kernel_Handle (Kernel));
-            Load_Empty_File (Editor, File, Get_Language_Handler (Kernel));
+            Load_Empty_File (Editor, File, Dir, Get_Language_Handler (Kernel));
          end if;
       end if;
 
@@ -1155,7 +1156,9 @@ package body Src_Editor_Module is
       Column_End       : Visible_Column_Type;
       Group            : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position : Gtkada.MDI.Child_Position :=
-        Gtkada.MDI.Position_Automatic) return Source_Editor_Box
+        Gtkada.MDI.Position_Automatic;
+      Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      return Source_Editor_Box
    is
       Id      : constant Source_Editor_Module :=
                   Source_Editor_Module (Src_Editor_Module_Id);
@@ -1230,7 +1233,7 @@ package body Src_Editor_Module is
          end if;
       end if;
 
-      Editor := Create_File_Editor (Kernel, File, Create_New);
+      Editor := Create_File_Editor (Kernel, File, Initial_Dir, Create_New);
 
       --  If we have created an editor, put it into a box, and give it
       --  to the MDI to handle
@@ -1686,8 +1689,9 @@ package body Src_Editor_Module is
 
       Ignore := Open_File
         (Kernel,
-         File => Dir,
-         Line => 1, Column => 1, Column_End => 1);
+         File => GNATCOLL.VFS.No_File,
+         Line => 1, Column => 1, Column_End => 1,
+         Initial_Dir => Dir);
 
    exception
       when E : others => Trace (Exception_Handle, E);

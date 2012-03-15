@@ -2447,6 +2447,7 @@ package body Src_Editor_Box is
    procedure Load_Empty_File
      (Editor          : access Source_Editor_Box_Record;
       Filename        : GNATCOLL.VFS.Virtual_File;
+      Initial_Dir     : GNATCOLL.VFS.Virtual_File;
       Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True) is
    begin
@@ -2458,6 +2459,7 @@ package body Src_Editor_Box is
 
       Set_Cursor_Location (Editor, 1, 1);
       Set_Filename (Editor.Source_Buffer, Filename);
+      Set_Initial_Dir (Editor.Source_Buffer, Initial_Dir);
       Set_Charset (Editor.Source_Buffer, Get_File_Charset (Filename));
       Set_Text (Editor.Modified_Label, -"Unmodified");
       Set_Writable (Editor.Source_Buffer, Writable => True, Explicit => False);

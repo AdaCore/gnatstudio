@@ -506,6 +506,17 @@ package Src_Editor_Buffer is
       Name   : GNATCOLL.VFS.Virtual_File);
    --  Set the name of the file associated with Buffer to Name
 
+   procedure Set_Initial_Dir
+     (Buffer : access Source_Buffer_Record;
+      Name   : GNATCOLL.VFS.Virtual_File);
+   --  Set the directory in which we are going to create the file. This is
+   --  useful only when creating new files, and Name is used to determine
+   --  the directory shown in the file selector.
+
+   function Get_Initial_Dir
+     (Buffer : access Source_Buffer_Record) return GNATCOLL.VFS.Virtual_File;
+   --  Return the directory specified in Set_Initial_Dir
+
    procedure Filename_Changed
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "filename_changed" signal
@@ -1288,6 +1299,9 @@ private
       Filename        : GNATCOLL.VFS.Virtual_File;
       File_Identifier : GNATCOLL.VFS.Virtual_File;
       --  This identifier is used to identify buffers for untitled files
+
+      Initial_Dir     : GNATCOLL.VFS.Virtual_File;
+      --  Where to save the file initially, for editors for empty files
 
       Lang          : Language.Language_Access;
       Syntax_Tags   : Src_Highlighting.Highlighting_Tags;

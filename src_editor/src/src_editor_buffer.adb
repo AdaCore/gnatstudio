@@ -4852,6 +4852,27 @@ package body Src_Editor_Buffer is
       end if;
    end Set_Filename;
 
+   ---------------------
+   -- Set_Initial_Dir --
+   ---------------------
+
+   procedure Set_Initial_Dir
+     (Buffer : access Source_Buffer_Record;
+      Name   : GNATCOLL.VFS.Virtual_File) is
+   begin
+      Buffer.Initial_Dir := Name;
+   end Set_Initial_Dir;
+
+   ---------------------
+   -- Get_Initial_Dir --
+   ---------------------
+
+   function Get_Initial_Dir
+     (Buffer : access Source_Buffer_Record) return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Buffer.Initial_Dir;
+   end Get_Initial_Dir;
+
    -------------------------
    -- Get_File_Identifier --
    -------------------------

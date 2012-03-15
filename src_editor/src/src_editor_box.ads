@@ -145,6 +145,7 @@ package Src_Editor_Box is
    procedure Load_Empty_File
      (Editor          : access Source_Editor_Box_Record;
       Filename        : GNATCOLL.VFS.Virtual_File;
+      Initial_Dir     : GNATCOLL.VFS.Virtual_File;
       Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True);
    --  Similar to Load_File, but assume that Filename is a new file that
