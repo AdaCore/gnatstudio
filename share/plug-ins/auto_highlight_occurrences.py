@@ -28,7 +28,7 @@ default_colors =  {
   "subprogram" : "#ffcf90",
   "package/namespace" : "lightgreen",
   "type"              : "lightgreen",
-  "unknown"    : "#D7D7D7" }
+  "unknown"    : "#d7d7d7" }
 
 editor_location_styles = {}
 
