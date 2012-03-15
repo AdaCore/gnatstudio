@@ -272,7 +272,7 @@ package body Src_Editor_Module.Markers is
          --          and python instance no longer references a mark.
          --  So we cannot remove the mark explicitly from the buffer, and it
          --  will be destroyed when the buffer is destroyed. This might mean
-         --  extra memory use other time, until the buffer is closed.
+         --  extra memory use over time, until the buffer is closed.
          --
          --  One solution would be to have a boolean that indicates whether
          --  there is a python class for the mark (in fact we can check that
