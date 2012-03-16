@@ -5574,7 +5574,7 @@ If on_activate is specified, it will be executed every time the user selects tha
 If ref and add_before are specified, they specify the name of another item in the parent menu (and not a full path) before or after which the new menu should be added.
 If the name of the menu starts with a '-' sign, as in "/Edit/-", then a menu separator is inserted instead. In this case, on_activate is ignored.
 Underscore characters ('_') need to be duplicated in the path. A single underscore indicates the mnemonic to be used for that menu. For instance, if you create the menu "/_File", then the user can open the menu by pressing alt-F. But the underscore itself will not be displayed in the name of the menu.
-If group is specified, create radio menu item in given group.</description>
+If group is specified, create a radio menu item in given group.</description>
      <example lang="python">
          def on_activate (self):
              print "A menu was selected: " + self.data
@@ -5587,13 +5587,13 @@ If group is specified, create radio menu item in given group.</description>
   <shell_doc name="GPS.Menu.get_active">
      <param name="self">The instance of GPS.Menu</param>
      <return>A boolean</return>
-     <description>Return True if the widget is currently active radio menu item</description>
+     <description>Return True if the widget is a currently active radio menu item</description>
   </shell_doc>
 
   <shell_doc name="GPS.Menu.set_active">
      <param name="self">The instance of GPS.Menu</param>
      <param name="is_active" default="True">A boolean</param>
-     <description>Set active state of radio menu item</description>
+     <description>Set the active state of a radio menu item</description>
   </shell_doc>
 
   <shell_doc name="GPS.Menu.rename">
