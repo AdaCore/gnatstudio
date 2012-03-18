@@ -172,6 +172,7 @@ package body Entities is
       Enumeration_Kind      => True,
       Record_Kind           => True,
       Overloaded_Entity     => True,
+      Class                 => True,
       --  ??? Should we check that at least one of the possible
       --  completions is a container.
       others                => False);

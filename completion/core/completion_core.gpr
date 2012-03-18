@@ -2,6 +2,7 @@ with "../../kernel/kernel";
 with "../../common/common";
 with "../../shared";
 with "../../ada_module/core/ada_module_core";
+with "../../cpp_module/cpp_module";
 with "../../vsearch/vsearch";
 
 project Completion_Core is

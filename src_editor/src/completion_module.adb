@@ -1526,7 +1526,7 @@ package body Completion_Module is
             Buffer := Source_Buffer (Get_Buffer (View));
          end if;
 
-         if Buffer = null then
+         if Buffer = null or else Buffer.Get_Language /= Ada_Lang then
             return False;
          end if;
 
