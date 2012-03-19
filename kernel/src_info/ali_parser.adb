@@ -1081,6 +1081,23 @@ package body ALI_Parser is
 
                      if Get_LI (Location.File) = LI then
                         Set_End_Of_Scope (Entity, Location, Kind);
+
+                     --  Handle end of scope of C++ classes
+
+                     elsif +Get_ALI_Ext (Handler) = ".gli"
+                       and then Get_Kind (Entity).Kind = Class
+                     then
+                        declare
+                           Loc : File_Location;
+                           K   : Reference_Kind;
+
+                        begin
+                           Get_End_Of_Scope (Entity, Loc, K);
+
+                           if Loc = No_File_Location then
+                              Set_End_Of_Scope (Entity, Location, Kind);
+                           end if;
+                        end;
                      end if;
 
                   elsif Kind = Primitive_Operation

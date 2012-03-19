@@ -17,6 +17,8 @@
 
 --  This package provides a C-specific completer
 
+with Cpp_Semantic_Tree; use Cpp_Semantic_Tree;
+
 package Completion.C is
 
    type C_Completion_Manager is new Completion_Manager with private;
@@ -31,7 +33,8 @@ private
    type C_Completion_Manager is
       new Completion_Manager with null record;
 
-   type C_Completion_Context is
-      new Completion_Context_Record with null record;
+   type C_Completion_Context is new Completion_Context_Record with record
+      Expression : Parsed_Expression;
+   end record;
 
 end Completion.C;

@@ -41,13 +41,19 @@ package body Completion.C is
         new C_Completion_Context'(Buffer => Context.Buffer,
                                   Offset => Context.Offset,
                                   Lang   => Context.Lang,
-                                  File   => Context.File);
+                                  File   => Context.File,
+                                  Expression => Null_Parsed_Expression);
+      New_Context_All : C_Completion_Context renames
+        C_Completion_Context (New_Context.all);
 
       It     : Completion_Resolver_List_Pckg.Cursor;
       Result : Completion_List;
 
    begin
       Append (Manager.Contexts, New_Context);
+
+      New_Context_All.Expression :=
+        Parse_Expression_Backward (Context.Buffer, Context.Offset);
 
       --  Scan backward to locate the beginning of the current word
 
