@@ -81,6 +81,13 @@ NF-52-KA28-027 GPS: new Editor action "toggle wrapping" (2011-10-28)
   conveniently switch between no wrapping and word wrapping in the current
   editor.
 
+NF-52-KA27-013 GPS: improved smart completion on C/C++ (2012-03-19)
+
+  GPS incorporates support to analyze the context and provide better
+  proposals for smart completion of C/C++ entities, including cases
+  like: x.field, x->field, x.method, x->method, x[...][...]->field,
+  x[...][...]->method, and class::method.
+
 NF-52-KA03-005 GPS: force use of gprbuild (2011-12-06)
 
   It is now possible to always use gprbuild as a builder for projects,
