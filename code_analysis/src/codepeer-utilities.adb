@@ -82,7 +82,7 @@ package body CodePeer.Utilities is
             end case;
          end if;
 
-         --  Count all chechs with non-suppressed ranking
+         --  Count all checks with non-suppressed ranking
 
          if Message.Is_Check
            and then Message.Current_Ranking /= Suppressed
