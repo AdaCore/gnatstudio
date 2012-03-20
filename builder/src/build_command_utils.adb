@@ -567,7 +567,7 @@ package body Build_Command_Utils is
    ----------------
 
    function Expand_Arg
-     (Adapter     : Abstract_Build_Command_Adapter_Access;
+     (Adapter    : Abstract_Build_Command_Adapter_Access;
       Target     : Target_Access;
       Arg        : String;
       Server     : Server_Type;
@@ -588,6 +588,15 @@ package body Build_Command_Utils is
 
       function Get_Index (A, B : Natural) return Natural;
       --  Return A if A /= 0, B otherwise
+
+      function Multi_Language_Build (Prj : Project_Type) return Boolean;
+      --  Return True if the build is multi-language, False if build is Ada
+      --  only.
+
+      function Create_Command
+        (Command : String; Tc : Toolchains.Toolchain) return Arg_List;
+      --  Create an Arg_List containing the given Command, and possibly
+      --  appended with --target=xxx if Tc is a cross toolchain.
 
       ---------------
       -- Get_Index --
@@ -654,6 +663,40 @@ package body Build_Command_Utils is
          return Get_Context_Project (Adapter.all).Attribute_Value
            (Build (Pkg, Attr), Default => Arg (K + 1 .. Arg'Last - 1));
       end Get_Attr_Value;
+
+      --------------------------
+      -- Multi_Language_Build --
+      --------------------------
+
+      function Multi_Language_Build (Prj : Project_Type) return Boolean is
+         Langs  : Argument_List := Prj.Languages (Recursive => True);
+         Result : Boolean;
+      begin
+         Result := Get_Multi_Language_Builder (Adapter.all) = Gprbuild
+           or else (Get_Multi_Language_Builder (Adapter.all) = Auto
+                    and then not (Langs'Length = 1
+                                  and then Langs (Langs'First).all = "ada"));
+         Free (Langs);
+         return Result;
+      end Multi_Language_Build;
+
+      --------------------
+      -- Create_Command --
+      --------------------
+
+      function Create_Command
+        (Command : String; Tc : Toolchains.Toolchain) return Arg_List
+      is
+         Result : Arg_List;
+      begin
+         Result := Create (Command);
+
+         if not Is_Native (Tc) then
+            Append_Argument (Result, "--target=" & Get_Name (Tc), One_Arg);
+         end if;
+
+         return Result;
+      end Create_Command;
 
    begin
       --  ??? Special case for "%X"
@@ -723,79 +766,33 @@ package body Build_Command_Utils is
         or else Arg = "%gprclean"
       then
          declare
-            Builder  : constant Boolean := Arg /= "%gprclean";
-            Prj      : constant Project_Type :=
-                         Get_Context_Project (Adapter.all);
-            Tc       : constant Toolchains.Toolchain :=
-                         Get_Toolchain
-                           (Get_Context_Toolchains_Manager (Adapter.all), Prj);
-            Langs    : Argument_List := Prj.Languages (Recursive => True);
+            Prj   : constant Project_Type := Get_Context_Project (Adapter.all);
+            Tc    : constant Toolchains.Toolchain :=
+                      Get_Toolchain
+                        (Get_Context_Toolchains_Manager (Adapter.all), Prj);
+            Res   : Expansion_Result;
+            Clean : constant Boolean := Arg = "%gprclean";
 
-            Multi_Language_Build : Boolean := True;
-            Res      : Expansion_Result;
          begin
-            if Arg /= "%gprbuild"
-              and then ((Langs'Length = 1
-                         and then Langs (Langs'First).all = "ada")
-                        or else
-                           Get_Multi_Language_Builder (Adapter.all) = Gnatmake)
-              and then Get_Multi_Language_Builder (Adapter.all) /=
-                 Gprbuild_Always
-            then
-               --  Determine if the project has only Ada set and user didn't
-               --  specify Gprbuild_Always as builder. If so, set
-               --  Multi_Language_Build to False.
-
-               Multi_Language_Build := False;
-            end if;
-
-            Free (Langs);
-
-            if Get_Multi_Language_Builder (Adapter.all) = Gprbuild_Always
-              or else (Multi_Language_Build
-                       and then
-                          Get_Multi_Language_Builder (Adapter.all) = Gprbuild)
-            then
-               if not Is_Native (Tc) then
-                  if Builder then
-                     Res.Args := Create ("gprbuild");
-                     Append_Argument
-                       (Res.Args,
-                        "--target=" & Get_Name (Tc),
-                        One_Arg);
-                     return Res;
-                  else
-                     Res.Args := Create ("gprclean");
-                     Append_Argument
-                       (Res.Args,
-                        "--target=" & Get_Name (Tc),
-                        One_Arg);
-                     return Res;
-                  end if;
-
-               elsif Builder then
-                  Res.Args := Create ("gprbuild");
-                  return Res;
+            if Multi_Language_Build (Prj) then
+               if Clean then
+                  Res.Args := Create_Command ("gprclean", Tc);
                else
-                  Res.Args := Create ("gprclean");
-                  return Res;
-               end if;
-
-            elsif Builder then
-               if Multi_Language_Build then
-                  Res.Args := Create ("gprmake");
-                  return Res;
-               else
-                  Res.Args := Create (Get_Exe (Get_Compiler (Tc, "Ada")));
-                  return Res;
+                  Res.Args := Create_Command ("gprbuild", Tc);
                end if;
             else
-               Res.Args := Create
-                 (Prj.Attribute_Value
-                    (GNAT_Attribute, Default => "gnat"));
-               Append_Argument (Res.Args, "clean", One_Arg);
-               return Res;
+               if Clean then
+                  Res.Args := Create
+                    (Prj.Attribute_Value
+                       (GNAT_Attribute, Default => "gnat"));
+                  Append_Argument (Res.Args, "clean", One_Arg);
+               else
+                  --  Compiler ("Ada") is the gnatmake command
+                  Res.Args := Create (Get_Exe (Get_Compiler (Tc, "Ada")));
+               end if;
             end if;
+
+            return Res;
          end;
 
       elsif Arg = "%external" then
@@ -1079,14 +1076,13 @@ package body Build_Command_Utils is
 
    overriding
    function Substitute
-     (Adapter : Build_Command_Adapter;
+     (Adapter   : Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
       Done      : access Boolean;
       Server    : Server_Type := GPS_Server;
       For_Shell : Boolean := False) return String
    is
-
       --  In this routine it is important to *not* quote backslahes on paths.
       --  This is important because on Windows a backslash is the directory
       --  separator and we do not want to escape it. Doing so will work in most

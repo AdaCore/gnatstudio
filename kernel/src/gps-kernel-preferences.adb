@@ -394,18 +394,18 @@ package body GPS.Kernel.Preferences is
 
       Multi_Language_Builder := Multi_Language_Builder_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
-         Name    => "General-Multi-Language-Builder",
+         Name    => "General-Default-Builder",
          Label   => -"Default builder",
          Doc     =>
          -("GPS default builder choice:" & ASCII.LF &
-           "  - Gprbuild (default for multi-language projects)" & ASCII.LF &
-           "  - Gprmake (deprecated multi-language builder)" & ASCII.LF &
+           "  - Auto (gnatmake for Ada projects, gprbuild otherwise)" &
+           ASCII.LF &
            "  - Gnatmake (default for Ada only projects, disable multi-" &
            "language builds)" & ASCII.LF &
-           "  - Gprbuild_Always (force use of gprbuild even for Ada projects)"
+           "  - Gprbuild (force use of gprbuild even for Ada projects)"
           ),
          Page    => -"General",
-         Default => Gprbuild);
+         Default => Default_Builder);
 
       Auto_Jump_To_First := Create
         (Manager => Kernel.Preferences,

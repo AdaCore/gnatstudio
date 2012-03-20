@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2012, AdaCore                     --
+--                     Copyright (C) 2012, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,8 +17,12 @@
 
 package GPS_Preferences_Types is
 
-   type Multi_Language_Builder_Policy is
-     (Gprbuild, Gprmake, Gnatmake, Gprbuild_Always);
+   type Multi_Language_Builder_Policy is (Auto, Gnatmake, Gprbuild);
    --  The List of possible multi-language builders
+   --   - Auto: gnatmake for Ada projects, gprbuild otherwise
+   --   - Gnatmake: always use gnatmake (disable multi-language builds)
+   --   - Gprbuild: always use gprbuild, even for Ada projects
+
+   Default_Builder : constant Multi_Language_Builder_Policy := Auto;
 
 end GPS_Preferences_Types;

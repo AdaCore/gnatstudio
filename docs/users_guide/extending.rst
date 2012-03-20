@@ -111,27 +111,15 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
   *Default builder*
     The default builder to be used by GPS.
 
-    * `Gprbuild` to use *gprbuild* for multi-language projects and
-      *gnatmake* for Ada-only projects.
+    * `Auto` to use *gnatmake* for Ada-only projects and *gprbuild* otherwise
+      (for multi-language and non Ada projects).
 
-    * `Gprmake` to use *gprmake* (old, deprecated builder) for
-      multi-language projects.
+    * `Gnatmake` to always use *gnatmake* for builds, even for projects that
+      contain other sources. This will disable support for building non Ada
+      projects.
 
-    * `Gnatmake` to always use *gnatmake* for builds.
-    
-    * `Gprbuild_Always` to always use *gprbuild* for builds.
-
-    `Always_Remove` means that the code will be removed by GPS.
-    `Always_Comment` means that the code will always be commented out.
-    `Propose_Both_Choices` will propose a menu with both choices.
-
-    By default, `gprbuild` will be used. Alternatively, its prototype
-    `gprmake` can be selected to help the transition, although we do not
-    recommend it at this stage.
-
-    Finally, if you want to force the use of gnatmake, even for projects
-    that contain other sources, you can use the `gnatmake` setting. Note
-    that Gnatmake will only consider Ada files.
+    * `Gprbuild` to always use *gprbuild* for builds, even for Ada only
+      projects.
 
   *Jump to first location*
     .. index:: location
@@ -392,7 +380,7 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
       Unix systems), you can use an external terminal command, e.g::
 
         xterm -geo 80x50 -exe vi +%l %f
-        
+
       The following substitutions are provided:
 
       *%l*
@@ -530,7 +518,7 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
         variable1,
             variable2,
             variable3 : Integer;
-        
+
     *Conditional continuation lines*
       .. index:: conditional line
 
@@ -543,14 +531,14 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
         if (Condition1
             and then Condition2)
         then
-        
+
 
       When this preference is set to 3, this gives::
 
         if (Condition1
               and then Condition2)
         then
-        
+
     *Record indentation*
       .. index:: record indentation
 
@@ -564,7 +552,7 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
            record
               F : Integer;
            end record;
-        
+
       When this preference is set to 1, this gives::
 
         type T is
@@ -582,14 +570,14 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
            when others =>
               null;
         end case;
-        
+
       If this preference is set to `Non_Rm_Style`, this would be indented as::
 
         case Value is
         when others =>
            null;
         end case;
-        
+
       By default (`Automatic`), GPS will choose to indent with an extra
       level or not based on the first `when` construct: if the first
       `when` is indented by an extra level, the whole case statement will
@@ -649,12 +637,12 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
 
         Variable : constant String :=
           "a string";
-        
+
       If this preference is enabled, it will be indented as follows::
 
         Variable : constant String :=
                      "a string";
-        
+
     *Indent comments*
       Whether to indent lines containing only comments and blanks, or to keep
       these lines unchanged.
@@ -670,7 +658,7 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
 
            [...]
         end P;
-        
+
 
       When disabled, the indentation will be::
 
@@ -679,7 +667,7 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
 
            [...]
         end P;
-        
+
   *C & C++*
     .. index:: C
     .. index:: C++
@@ -714,7 +702,7 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
           {
             int x;
           }
-        
+
 
       If disabled, the same code will be indented as::
 
@@ -1599,7 +1587,7 @@ makes it easier for users to understand the goal of the plug-ins:
          ... launch the script
 
       GPS.Hook ("gps_started").add (on_gps_started)
-    
+
 XML files
 ^^^^^^^^^
 
@@ -1614,7 +1602,7 @@ as in the following example::
   <submenu>
     <title>encoded text</title>
   </submenu>
-  
+
 These files must be valid XML files, i.e. must start with the `<?xml?>` tag,
 and contain a single root XML node, the name of which is left to your
 consideration. The general format is therefore::
@@ -1623,7 +1611,7 @@ consideration. The general format is therefore::
   <root_node>
      ...
   </root_node>
-  
+
 It is also recommended that the first line after the `<?xml?>` tag contains a
 general comment describing the purpose and usage of the script.  This comment
 will be made visible in the Plug-ins editor.
@@ -1884,7 +1872,7 @@ The following XML tags are valid children for `<action>`.
         <external>echo the tool succeeded with message %1</external>
       </action>
     </action_launch_to_location>
-    
+
   .. index:: shell
   .. index:: shell
   .. index:: interactive command
@@ -1993,8 +1981,7 @@ whether the context is properly defined.
 *%builder*
   Replaced by the default builder configured in GPS.
   This can be e.g. `gnatmake` if your project contains only Ada code,
-  or `gprbuild` for non Ada or multi-language projects, or `gprmake`
-  if you have set the multi language builder preference accordingly.
+  or `gprbuild` for non Ada or multi-language projects.
   Note: this macro is only available in the commands defined in the Build
   Manager and the Build Launcher dialogs.
 
@@ -2003,7 +1990,7 @@ whether the context is properly defined.
   Python equivalent::
 
     GPS.current_context().column()
-    
+
 *%d*
   The current directory.
   Python equivalent::
@@ -2067,8 +2054,7 @@ whether the context is properly defined.
   Replaced by the gnatmake executable configured in your project file.
 
 *%gprbuild*
-  Replaced by the gprbuild or gprmake command line configured in your project
-  file.
+  Replaced by the gprbuild command line configured in your project file.
 
 *%gprclean*
   Replaced by the default cleaner configured in GPS.  This can be e.g. `gnat
@@ -2120,7 +2106,7 @@ whether the context is properly defined.
   Python equivalent::
 
     GPS.current_context().project().file().name()
-    
+
 *%PP*
   The root project pathname.
   Python equivalent::
@@ -2136,7 +2122,7 @@ whether the context is properly defined.
 
     if GPS.current_context().project():
        return "-P" & GPS.current_context().project().file().name()
-    
+
 *%PPs*
   This is similar to `%PP`, except it returns the project name prepended
   with `-P`, or an empty string if the root project is the default project.
@@ -2170,7 +2156,7 @@ whether the context is properly defined.
     Python equivalent::
 
       GPS.current_context().project().sources()
-      
+
   *f*
     output the list into a file and substitute the parameter with the name of
     that file. This file is never deleted by GPS, it is your responsibility to
@@ -2425,7 +2411,7 @@ In addition, the `<filter>` has the following specific attributes:
          <shell>pwd</shell>
       </action>
     </test_filter>
-    
+
   A number of filters are predefined by GPS itself.
 
   *Source editor*
@@ -2509,7 +2495,7 @@ possible with `id`), they must all match for the action to be executed::
         <shell>pwd</shell>
     </action>
   </ada_editor>
-  
+
 
 .. _Adding_new_menus:
 
@@ -2606,7 +2592,7 @@ The following has exactly the same effect::
       <title>Edit/mymenu</title>
     </menu>
   </test>
-  
+
 
 The following adds a new item "stats" to the "unit testing" submenu
 in "my_tools"::
@@ -2617,7 +2603,7 @@ in "my_tools"::
        <title>/My_Tools/unit testing/stats</title>
     </menu>
   </test>
-  
+
 The previous syntax is shorter, but less flexible than the following,
 where we also force the My_Tools menu, if it doesn't exist yet, to
 appear after the File menu. This is not doable by using only `<menu>`
@@ -2653,7 +2639,7 @@ followed by a File/Custom menu::
        </menu>
     </submenu>
   </menus>
-  
+
 
 .. _Adding_contextual_menus:
 
@@ -2729,7 +2715,7 @@ separator line, visible when the menu is visible::
     </contextual>
     <contextual action="" after="Print Current File Name" />
   </print>
-  
+
 .. _Adding_tool_bar_buttons:
 
 Adding tool bar buttons
@@ -2768,7 +2754,7 @@ The following example defines a new button::
       <pixmap>/my_pixmaps/button.jpg</pixmap>
     </button>
   </stats>
-  
+
 
 The `<button>` tag allows you to create a simple button that the user can press
 to start an action. GPS also supports another type of button, a combo box, from
@@ -2806,7 +2792,7 @@ that particular value is selected::
         <choice>Elephant</choice>
         <choice on-selected="gnu-selected">Gnu</choice>
      </entry>
-  
+
 A more convenient interface exists for Python, the GPS.Toolbar class, which
 gives you the same flexibility as above, but also gives you dynamic control
 over the entry, and allows placement of buttons at arbitrary positions in
@@ -2853,7 +2839,7 @@ binding::
     <!--  Bind a key to a menu -->
     <key action="/Window/Close">control-x control-w</key>
   </key>
-  
+
 
 Multiple actions can be bound to the same key binding. They will all be
 executed in turn, followed by any menu for which this key is an accelerator.
@@ -2973,7 +2959,7 @@ Here is an example that defines a few new preferences::
   </custom>
 
 .. highlight:: python
-  
+
 The values of the above preferences can be queries in the scripting languages:
 
 * GPS shell::
@@ -3070,7 +3056,7 @@ own GPS directory::
          <menu action="my action"><title>/Edit/My Theme Menu</title></menu>
      </theme>
   </my-plug-in>
-  
+
 .. _Defining_new_search_patterns:
 
 Defining new search patterns
@@ -3126,7 +3112,7 @@ defined::
       <regexp case-sensitive="false">\\b(\\w+)\\s*:=</regexp>
     </vsearch-pattern>
   </search>
-  
+
 .. _Adding_support_for_new_languages:
 
 Adding support for new languages
@@ -3338,11 +3324,11 @@ The following tags are available in a `Language` section:
     would therefore look like::
 
        for Name ("Index") use "value";
-      
+
     e.g::
 
        for Compiler_Command ("my_language") use "my_compiler";
-      
+
     The value of the index should be either the empty string or the
     name of the language.
 
@@ -3715,10 +3701,10 @@ The `<project_attribute>` tag accepts the following attributes:
   considered the same. For instance, if the index is the name of one of the
   languages supported by GPS, the index is case insensitive since "Ada" is the
   same as "C".
- 
+
   As a special case, the value "file" can be passed to indicate that the case
   sensitivity is the same as on the filesystem of the local host. This should
-  be used when the index is the name of a file. 
+  be used when the index is the name of a file.
 
 * `hide_in` (a string, default value: "")
 
@@ -3938,7 +3924,7 @@ can simply copy this into a :file:`.xml` file in your
         <string type="directory" default="/my/directory/" />
     </project_attribute>
   </custom>
-  
+
 The following example declares an attribute whose value is a
 string. However, a list of predefined possible values is also
 provided, as an help for interactive edition for the user. If the
@@ -3960,7 +3946,7 @@ be one of the three possible choices::
         <string />
     </project_attribute>
   </custom>
-  
+
 The following example declares an attribute whose value is one of the
 languages currently supported by GPS. Since this list of languages is
 only know when GPS is executed, a script command is used to query this
@@ -3978,7 +3964,7 @@ list::
         <shell default="C" >supported_languages</shell>
     </project_attribute>
   </custom>
-  
+
 The following example declares an attribute whose value is a set of
 file names. The order of files in this list matters to the tools that
 are using this project attribute::
@@ -4043,7 +4029,7 @@ value::
         </specialized_index>
     </project_attribute>
   </custom>
-  
+
 Accessing the project attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -4057,12 +4043,12 @@ python command similar to::
 
 
   GPS.Project.root().get_attribute_as_string ("Compiler_Name", "Test", "Ada")
-  
+
 You can also access the list of main files for the project, for
 instance, by calling::
 
   GPS.Project.root().get_attribute_as_list ("main")
-  
+
 .. _Adding_casing_exceptions:
 
 Adding casing exceptions
@@ -4087,7 +4073,7 @@ set to Unchanged). :ref:`The_Preferences_Dialog`::
        <substring>IO</substring>
     </case_exceptions>
   </exceptions>
-  
+
 .. _Adding_documentation:
 
 Adding documentation
@@ -4117,7 +4103,7 @@ example show how to insert a link that will in effect open a file in GPS when
 clicked by the user::
 
   <a href="%shell:Editor.editor g-os_lib.ads">Open runtime file</a>
-  
+
 The first word after '%' is the name of the language, and the command to
 execute is found after the ':' character.
 
@@ -4180,7 +4166,7 @@ menu, that will display :file:`file.html`. The latter is searched in the
         <menu>/Help/item</menu>
      </documentation_file>
   </index>
-  
+
 .. index:: <doc_path>
 
 As mentioned above, HTML files are looked for through the `GPS_DOC_PATH`
@@ -4193,7 +4179,7 @@ Such a directory is relative to the installation directory of GPS::
   <GPS>
      <doc_path>doc/application/</doc_path>
   </GPS>
-  
+
 will add the directory :file:`<prefix>/doc/application` to the search path
 for the documentation.
 
@@ -4202,7 +4188,7 @@ for the documentation.
 Such a directory can also be added through Python, as in::
 
   GPS.HTML.add_doc_directory ('doc/application')
-  
+
 .. _Adding_stock_icons:
 
 Adding stock icons
@@ -4270,7 +4256,7 @@ Here is an example::
 
     </stock>
   </my_visual_preferences>
-  
+
 Note: as shown in the example above, it is a good practice to prefix the label
 by a unique name (e.g. `myproject-`), in order to make sure that
 predefined stock icons will not get overridden by your icons.
@@ -4707,7 +4693,7 @@ Targets are defined in a `target` node which has three attributes:
            </command-line>
       </target>
     </my_target>
-  
+
 .. _Defining_new_Modes:
 
 Defining new Modes
@@ -4921,7 +4907,7 @@ to avoid splitting switches each time a space is encountered::
        <initial-cmd-line>-a -b -c</initial-cmd-line>
     </tool>
   </my_tool>
-  
+
 
 .. _Defining_tool_switches:
 
@@ -5328,7 +5314,7 @@ in the way when calling external commands::
       <external> echo without quotes: %2</external/>
     </action>
   </quotes>
-  
+
 If one of the commands in the action raises an error, the execution of the
 action is stopped immediately, and no further command is performed.
 
@@ -5355,7 +5341,7 @@ simply put it in its own `<shell>` command, as in::
       <external>echo Run unless Cancel was pressed</external>
     </action>
   </save_children>
-  
+
 .. _Querying_project_switches:
 
 Querying project switches
@@ -5377,7 +5363,7 @@ in the GPS shell console window::
 
   help Project.get_attribute_as_string
   help Project.get_attribute_as_list
-  
+
 The following is a short example on how to query the switches for the tool
 "Find" from the project, :ref:`Tool_example`. It first creates an object
 representing the current project, then passes this object as the first
@@ -5498,7 +5484,7 @@ will always be the empty string, i.e. output is sent to the GPS console::
        <external output="Current directory contents" >/bin/ls</external>
     </action>
   </ls>
-  
+
 .. _Processing_the_tool_output:
 
 Processing the tool output
@@ -5525,7 +5511,7 @@ further integration of the tool in GPS.
 
     file:line: message
     file:line:column: message
-    
+
 
   Please refer to the online help for this command to get more information (by
   e.g. typing `help Locations.parse` in the GPS Shell).
@@ -5709,7 +5695,7 @@ completion of the command names through the :kbd:`tab` key.
 For instance, in the GPS shell console you can start typing::
 
   GPS> File
-  
+
 
 then press the :kbd:`tab` key, which will list all the functions whose name
 starts with "File".
@@ -5727,7 +5713,7 @@ Scripts can be executed immediately upon startup of GPS by using the command
 line switch `--load`. Specifying the following command line::
 
   gps --load=shell:mytest.gps
-  
+
 will force the gps script :file:`mytest.gps` to be executed immediately, before
 GPS starts reacting to user's requests. This is useful if you want to do some
 special initializations of the environment. It can also be used as a command
@@ -5774,7 +5760,7 @@ following example::
   execute_action "Split horizontally"
 
   GPS.execute_action (action="Split horizontally")
-  
+
 
 The list of actions known to GPS can be found through the `Edit->Key shortcuts`
 dialog. Action names are case sensitive.
@@ -5812,7 +5798,7 @@ automatically display all matching references in the location window::
   GPS> Entity my_entity file_name.adb
   <Entity_0x09055790>
   GPS> Entity.find_all_refs <Entity_0x09055790>
-  
+
 
 Since the GPS shell is very simple, it doesn't provide any reference counting
 for the result types. As a result, all the values returned by a command, such
@@ -5832,7 +5818,7 @@ be rewritten as::
   GPS> Entity my_entity file_name.adb
   <Entity_0x09055790>
   GPS> Entity.find_all_refs %1
-  
+
 
 These return values will be modified also for internal commands sent by GPS, so
 you should really only use this when you emit multiple commands at the same
@@ -5851,7 +5837,7 @@ double-quotes characters set. This is useful if you do not know in advance the
 contents of the string you are quoting::
 
   Locations.parse """%1 """ category_name
-  
+
 
 .. _The_Python_Interpreter:
 
@@ -5899,14 +5885,14 @@ with the following command::
   Help on instance of Entity:
 
   <GPS.Entity instance>
-  
+
 It is also possible to find all attributes and methods that can be
 applied to `e`, as in the following example::
 
   >>> dir (e)
   ['__doc__', '__gps_data__', '__module__', 'called_by', 'calls',
   'find_all_refs']
-  
+
 
 Note that the list of methods may vary depending on what modules were
 loaded in GPS, since each module can add its own methods to any class.
@@ -5916,12 +5902,12 @@ in the interpreter can be found with the following command::
 
   >>> dir ()
   ['GPS', 'GPSStdout', '__builtins__', '__doc__', '__name__', 'e', 'sys']
-  
+
 You can also load and execute python scripts with the `execfile` command,
 as in the following example::
 
   >>> execfile ("test.py")
-  
+
 Python supports named parameters. Most functions exported by GPS define names
 for their parameters, so that you can use this Python feature, and make your
 scripts more readable. A notable exception to this rule are the functions that
@@ -6040,7 +6026,7 @@ This is handled in different ways depending on what language your are using:
                  <shell>echo "File edited"</shell></action>"""
     Hook "file_edited"
     Hook.add %1 "on_edition"
-    
+
 
 * Python
 
@@ -6052,7 +6038,7 @@ This is handled in different ways depending on what language your are using:
     def on_edition(self, *arg):
       print "File edited"
     GPS.Hook ("file_edited").add (on_edition)
-    
+
   Things are in fact slightly more complex if you want to pass methods as
   arguments. Python has basically three notions of callable subprograms,
   detailed below. The following examples all create a combo box in the toolbar,
@@ -6087,7 +6073,7 @@ This is handled in different ways depending on what language your are using:
         ("name", label="name", on_changed=on_changed)
       GPS.Toolbar().append (combo)
       combo.data = "My own data"
-      
+
 
   * Unbound methods
 
@@ -6141,7 +6127,7 @@ This is handled in different ways depending on what language your are using:
                combo.myclass.my_var + " " + combo.data + " " + choice
 
       MyClass()
-      
+
   * Bound methods
 
     The last example works as expected, but is not convenient to use. The
@@ -6182,7 +6168,7 @@ This is handled in different ways depending on what language your are using:
 
         def on_match (self, process, matched, unmatched);
            print "Process output: " + unmatched + matched + "\\n"
-      
+
     A more natural approach, rather than having a class that has a process
     field, is to directly extend the `GPS.Process` class, as in::
 
@@ -6193,7 +6179,7 @@ This is handled in different ways depending on what language your are using:
 
         def on_match (self, matched, unmatched);
            print "Process output: " + unmatched + matched + "\\n"
-      
+
     Any command that can be used on a process (such as `send`) can then
     directly be used on instances of MyClass.
 
@@ -6242,7 +6228,7 @@ Here is the code that you need to put in hello_world.py::
      GPS.MDI.dialog ("Hello World!")
 
   GPS.Menu.create ("/Help/Hello World!", on_activate=hello_world)
-  
+
 
 In order to use this plug-in, you can launch GPS with the following command
 line::
@@ -6310,7 +6296,7 @@ There are two solutions for this:
        console = GPS.Console ("ls")
        for l in f.readlines():
           console.write ('   ' + l)
-    
+
   This solution allows you, at the same time, to modify the output, for
   instance to indent it as in the example above.
 
@@ -6326,7 +6312,7 @@ There are two solutions for this:
 
     def my_external():
        GPS.execute_action ("ls")
-    
+
   This solution also allows you to send the output to a different window than
   the rest of your script. But you cannot filter or modify the output as in the
   first solution.
@@ -6358,7 +6344,7 @@ contextual menu entry will not be visible in other contexts::
         <Title>Test on object directory</Title>
      </contextual>
   </root>
-  
+
 Another example would be to have a filter so that the contextual menu only
 appears when on a project node in the Project View. Using `%P` in your command
 is not enough, since the current context when you click on a file or directory
@@ -6395,7 +6381,7 @@ We'll implement this contextual menu in a Python file, called
   </contextual>""")
 
 .. highlight:: xml
-  
+
 The example above shows the flexibility of filters, since you can pretty much
 do anything you wish through the shell commands. However, it is complex to
 write for such a simple filter. Luckily, GPS provides a predefined filter
@@ -6405,7 +6391,7 @@ just for that purpose, so that you can write instead, in an XML file::
   <filter id="Explorer_Project_Node" />
   <shell>echo current project is %P</shell>
   </action>
-  
+
 .. _Redirecting_the_output_to_specific_windows:
 
 Redirecting the output to specific windows
@@ -6428,7 +6414,7 @@ GPS for this output. This can be done in one of two ways:
          <shell lang="python">print "a"</shell>
       </action>
     </root>
-    
+
   All the various shell commands in your action can be output in a different
   window, and this also applies for the output of external commands.
 
@@ -6444,7 +6430,7 @@ GPS for this output. This can be done in one of two ways:
     print "foo"
     print (sys.stdin.read ())
     sys.stdin = sys.stdout = GPS.Console ("Python")
-    
+
   The first line redirect all input and output to a new window, which is
   created if it doesn't exist yet. Note however that the output of stderr
   is not redirected, and you need to explicitely do it for `sys.stderr`.
@@ -6488,7 +6474,7 @@ which contains the following::
 
   def myfunc():
      print "In myfunc\\n"
-  
+
 
 As you can guess from this file, it defines an action "my_action", that you can
 for instance associate with a keybinding through the Edit->Key shortcuts menu.
@@ -6514,7 +6500,7 @@ the function `myfunc` will be defined in the global namespace, and thus
 the new definition is accessible through::
 
   > myfunc()
-  
+
 Thus, the key shortcut you had set, which still executes `mymod.myfunc()` will
 keep executing the old definition.
 
@@ -6538,7 +6524,7 @@ for any python module, including GPS, and print the result::
 
   import pydoc
   pydoc.writedoc (GPS)
-  
+
 In the last comamnd, `GPS` is the name of the module that you want to print the
 documentation for.
 
@@ -6699,7 +6685,7 @@ parameter, the command to be executed. This is a subprogram parameter
     def my_callback (name):
         print "The hook " + name + " was executed by GPS"
     GPS.Hook ("project_changed").add (my_callback)
-    
+
 The example above shows the simplest type of hook, which doesn't take any
 argument. However, most hooks receive several parameters. For instance, the
 hook "file_edited" receives the file name as a parameter.
@@ -6712,7 +6698,7 @@ hook "file_edited" receives the file name as a parameter.
     GPS> parse_xml """<action name="my_action"><shell>echo name=$1 file=$2</shell></action>"""
     GPS> Hook "file_edited"
     GPS> Hook.add %1 "my_action"
-    
+
 
 * Python
 
@@ -6806,7 +6792,7 @@ the hook for more information on the other parameters::
   GPS.Hook ("project_changed").run()
   GPS.Hook ("open_file_action_hook").run \\
                 (GPS.File ("test.adb"), 100, 1, 0, 1, 1, 1)
-  
+
 
 Creating new hooks
 ^^^^^^^^^^^^^^^^^^
@@ -7503,11 +7489,11 @@ Now, on a separate terminal, create a simple client by typing the following::
   GPS>> pwd
   c:\\working-dir\\
   GPS>>
-  
+
 Then in the GPS Python Console::
 
   >>> GPS.Socket ("test-1").send ("hello, it's time to logout\\n");
-  
+
 
 At this point, the following is received on the client (telnet) side::
 
@@ -7552,7 +7538,7 @@ with the following syntax::
 
   [Description]
   <the description>
-  
+
 
 Where the following should be defined:
 
