@@ -23,6 +23,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L320-004 GPS: simplify Default Builder preference (2012-03-20)
+
+  The Default Builder preference has been simplified, with the following
+  changes:
+    - 'Gprmake' setting removed, since gprmake is no longer supported;
+    - 'Gprbuild' setting renamed 'Auto', more accurate;
+    - 'Gprbuild_Always' setting renamed 'Gprbuild', for consistency with the
+      'Gnatmake' setting.
+
+  Note that if you were using a non default setting for this preference, you
+  will need to reset it manually.
+
 NF-52-L227-030 GB: project names need not be legal Ada identifiers (2012-03-09)
 
   The name of an Eclipse/Workbench project need not conform to the rules for
