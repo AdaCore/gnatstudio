@@ -39,7 +39,6 @@ package body CodePeer.Bridge.Inspection_Readers is
    Format_Attribute        : constant String := "format";
    Identifier_Attribute    : constant String := "identifier";
    Is_Check_Attribute      : constant String := "is_check";
-   Is_Warning_Attribute    : constant String := "is_warning";
    Kind_Attribute          : constant String := "kind";
    Line_Attribute          : constant String := "line";
    Name_Attribute          : constant String := "name";
@@ -154,10 +153,6 @@ package body CodePeer.Bridge.Inspection_Readers is
       --  Returns value of "is_check" attribute is any, otherwise returns
       --  False.
 
-      function Is_Warning return Boolean;
-      --  Returns value of "is_warning" attribute is any, otherwise returns
-      --  False.
-
       function Get_Optional_Column return Positive;
       --  Returns value of "column" attribute is specified and 1 instead.
 
@@ -223,22 +218,6 @@ package body CodePeer.Bridge.Inspection_Readers is
             return Boolean'Value (Attrs.Get_Value (Index));
          end if;
       end Is_Check;
-
-      ----------------
-      -- Is_Warning --
-      ----------------
-
-      function Is_Warning return Boolean is
-         Index : constant Integer := Attrs.Get_Index (Is_Warning_Attribute);
-
-      begin
-         if Index = -1 then
-            return False;
-
-         else
-            return Boolean'Value (Attrs.Get_Value (Index));
-         end if;
-      end Is_Warning;
 
       -------------
       -- Lifeage --
@@ -403,7 +382,6 @@ package body CodePeer.Bridge.Inspection_Readers is
                  Positive'Value (Attrs.Get_Value ("column")),
                  Self.Message_Categories.Element
                    (Positive'Value (Attrs.Get_Value ("category"))),
-                 Is_Warning,
                  Is_Check,
                  Computed_Ranking,
                  CodePeer.Message_Ranking_Level'Value
@@ -426,46 +404,6 @@ package body CodePeer.Bridge.Inspection_Readers is
                  Positive'Value (Attrs.Get_Value ("from_column"));
             end if;
 
-            if Self.Version = 1 then
-               --  Use heuristic to compute value of 'is_warning' attribute.
-               --  This code is used for CodePeer 2.0 and can be removed in
-               --  the future.
-               --  ??? Should be reviewed after begining of 2013 and be
-               --  removed.
-
-               declare
-
-                  function Starts_With
-                    (Item : String; Prefix : String) return Boolean;
-                  --  Returns True when Item starts with Prefix.
-
-                  -----------------
-                  -- Starts_With --
-                  -----------------
-
-                  function Starts_With
-                    (Item : String; Prefix : String) return Boolean
-                  is
-                     Last : constant Natural := Item'First + Prefix'Length - 1;
-
-                  begin
-                     return Item'Length >= Prefix'Length
-                       and then Item (Item'First .. Last) = Prefix;
-                  end Starts_With;
-
-                  Category : constant String := Message.Category.Name.all;
-
-               begin
-                  Message.Is_Warning :=
-                    Category = "dead code"
-                      or else Starts_With (Category, "mismatched ")
-                      or else Starts_With (Category, "suspicious ")
-                      or else Starts_With (Category, "test ")
-                      or else Starts_With (Category, "unused ")
-                      or else Starts_With (Category, "unprotected ");
-               end;
-            end if;
-
             --  Append message to the list of subprogram's messages
 
             Self.Subprogram_Data.Messages.Append (Message);
@@ -473,19 +411,14 @@ package body CodePeer.Bridge.Inspection_Readers is
             --  Append message's category to the list of corresponding
             --  categories.
 
-            if Message.Is_Warning then
-               CodePeer.Project_Data'Class
-                 (Self.Root_Inspection.all).Warning_Categories.Include
-                 (Message.Category);
-
-            elsif Message.Is_Check then
+            if Message.Is_Check then
                CodePeer.Project_Data'Class
                  (Self.Root_Inspection.all).Check_Categories.Include
                  (Message.Category);
 
             else
                CodePeer.Project_Data'Class
-                 (Self.Root_Inspection.all).General_Categories.Include
+                 (Self.Root_Inspection.all).Warning_Categories.Include
                  (Message.Category);
             end if;
          end;

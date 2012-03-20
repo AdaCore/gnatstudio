@@ -2191,7 +2191,7 @@ package body CodePeer.Module is
             function Probability_Image
               (Message : CodePeer.Message_Access) return String is
             begin
-               if Message.Is_Warning then
+               if not Message.Is_Check then
                   return "warning: ";
                end if;
 

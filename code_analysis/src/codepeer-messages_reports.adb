@@ -910,26 +910,6 @@ package body CodePeer.Messages_Reports is
            (On_Show_High_Messages_Toggled'Access),
          Messages_Report (Self));
 
-      --  General messages categories
-
-      Gtk.Separator.Gtk_New_Hseparator (Separator);
-      Filter_Box.Pack_Start (Separator, False);
-
-      CodePeer.Categories_Criteria_Editors.Gtk_New
-        (Self.General_Categories_Editor,
-         Self.Kernel,
-         -"Message categories",
-         "codepeer-summary_report-categories-general",
-         Project_Data.General_Categories);
-      Filter_Box.Pack_Start (Self.General_Categories_Editor);
-
-      Message_Categories_Criteria_Callbacks.Connect
-        (Self.General_Categories_Editor,
-         CodePeer.Categories_Criteria_Editors.Signal_Criteria_Changed,
-         Message_Categories_Criteria_Callbacks.To_Marshaller
-           (On_Categories_Criteria_Changed'Access),
-         Messages_Report (Self));
-
       --  Warning messages categories
 
       CodePeer.Categories_Criteria_Editors.Gtk_New
@@ -1003,11 +983,9 @@ package body CodePeer.Messages_Reports is
       --  Is_Messages_Category_Visible is called during initialization,
       --  thus this member can be null, just because editor is not created.
 
-      if Self.General_Categories_Editor /= null then
+      if Self.Warning_Categories_Editor /= null then
          Visible :=
-           Self.General_Categories_Editor.Get_Visible_Categories.Contains
-             (Category)
-           or Self.Warning_Categories_Editor.Get_Visible_Categories.Contains
+           Self.Warning_Categories_Editor.Get_Visible_Categories.Contains
              (Category)
            or Self.Check_Categories_Editor.Get_Visible_Categories.Contains
              (Category);
@@ -1120,9 +1098,8 @@ package body CodePeer.Messages_Reports is
 
    begin
       Self.Analysis_Model.Set_Visible_Message_Categories
-        (Self.General_Categories_Editor.Get_Visible_Categories.Union
-           (Self.Warning_Categories_Editor.Get_Visible_Categories.Union
-              (Self.Check_Categories_Editor.Get_Visible_Categories)));
+        (Self.Warning_Categories_Editor.Get_Visible_Categories.Union
+           (Self.Check_Categories_Editor.Get_Visible_Categories));
       Self.Messages_Filter.Refilter;
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
@@ -1302,9 +1279,8 @@ package body CodePeer.Messages_Reports is
    is
    begin
       Criteria.Categories :=
-        Self.General_Categories_Editor.Get_Visible_Categories.Union
-          (Self.Warning_Categories_Editor.Get_Visible_Categories.Union
-               (Self.Check_Categories_Editor.Get_Visible_Categories));
+        Self.Warning_Categories_Editor.Get_Visible_Categories.Union
+          (Self.Check_Categories_Editor.Get_Visible_Categories);
       Criteria.Rankings   := Self.Show_Ranking;
       Criteria.Lineages   := Self.Show_Lifeage;
    end Update_Criteria;

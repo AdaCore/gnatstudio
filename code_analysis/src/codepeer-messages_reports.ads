@@ -80,8 +80,6 @@ private
         CodePeer.Entity_Messages_Models.Entity_Messages_Model;
       Messages_Filter     : Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
       Messages_View       : Gtk.Tree_View.Gtk_Tree_View;
-      General_Categories_Editor :
-        CodePeer.Categories_Criteria_Editors.Categories_Criteria_Editor;
       Warning_Categories_Editor :
         CodePeer.Categories_Criteria_Editors.Categories_Criteria_Editor;
       Check_Categories_Editor :

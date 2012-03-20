@@ -77,8 +77,6 @@ package CodePeer is
       Line             : Positive;
       Column           : Positive;
       Category         : Message_Category_Access;
-      Is_Warning       : Boolean;
-      --  True means this message is warning, there is no ranking for it.
       Is_Check         : Boolean;
       --  True means this message is check.
       Computed_Ranking : Message_Ranking_Level;
@@ -187,7 +185,6 @@ package CodePeer is
 
       Check_Categories      : Message_Category_Sets.Set;
       Warning_Categories    : Message_Category_Sets.Set;
-      General_Categories    : Message_Category_Sets.Set;
       --  These sets of categories are subsets of Message_Categories and
       --  are used by messages filter.
 
