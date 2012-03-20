@@ -1134,13 +1134,25 @@ package body Build_Command_Utils is
             Protect_Quotes      => Quoted,
             Protect_Backslashes => For_Shell);
 
-      elsif Param = "PP" then
+      elsif Param = "pp" or else Param = "PP" then
          return String_Utils.Protect
            (+To_Remote
               (Project_Path (Get_Context_Project (Adapter)),
                Get_Nickname (Server)).Full_Name,
             Protect_Quotes      => Quoted,
             Protect_Backslashes => For_Shell);
+
+      elsif Param = "Pb" then
+         declare
+            Name      : constant String :=
+              String (Project_Path (Get_Context_Project (Adapter)).Base_Name);
+            Extension : constant String :=
+              String (Project_Path (
+                 Get_Context_Project (Adapter)).File_Extension);
+
+         begin
+            return Name (Name'First .. Name'Last - Extension'Length);
+         end;
 
       end if;
 
