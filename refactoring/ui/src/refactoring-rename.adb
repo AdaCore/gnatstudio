@@ -50,7 +50,6 @@ with Traces;                     use Traces;
 
 package body Refactoring.Rename is
 
-   use File_Arrays;
    use Location_Arrays;
 
    Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
@@ -80,8 +79,8 @@ package body Refactoring.Rename is
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Entity_Information;
       Refs          : Location_Arrays.Instance;
-      No_LI_List    : File_Arrays.Instance;
-      Stale_LI_List : File_Arrays.Instance);
+      No_LI_List    : Source_File_Set;
+      Stale_LI_List : Source_File_Set);
    --  Implements the "Renaming entity" refactoring
 
    type Entity_Renaming_Dialog_Record is new Gtk_Dialog_Record with record
@@ -206,13 +205,13 @@ package body Refactoring.Rename is
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Entity_Information;
       Refs          : Location_Arrays.Instance;
-      No_LI_List    : File_Arrays.Instance;
-      Stale_LI_List : File_Arrays.Instance)
+      No_LI_List    : Source_File_Set;
+      Stale_LI_List : Source_File_Set)
    is
       pragma Unreferenced (No_LI_List, Stale_LI_List);
 
       Name   : constant Cst_String_Access  := Get (Get_Name (Entity));
-      Errors : File_Arrays.Instance := File_Arrays.Empty_Instance;
+      Errors : Source_File_Set;
       Was_Open : Boolean;
 
       procedure Terminate_File (File : Virtual_File);
@@ -273,11 +272,7 @@ package body Refactoring.Rename is
                0,
                (Editor_Side => True, Locations => True));
 
-            if Length (Errors) = 0
-              or else Refs.Table (L).File /= Errors.Table (Last (Errors))
-            then
-               Append (Errors, Refs.Table (L).File);
-            end if;
+            Errors.Include (Refs.Table (L).File);
 
          else
             --  Renaming done, insert entry into locations view
@@ -300,7 +295,7 @@ package body Refactoring.Rename is
            (Get_Filename (Refs.Table (Location_Arrays.First).File));
       end if;
 
-      if Length (Errors) > 0 then
+      if not Errors.Is_Empty then
          if not Dialog
            (Kernel,
             Title         => -"References not replaced",

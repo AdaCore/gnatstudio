@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L321-021: Refactoring read-only files shows dialog with duplicates
+  Problem:    If you do a refactoring that involves a read-only file and
+              you haven't selected the "Make writable" option, a dialog
+              is displayed that indicates which file will not be modified.
+              But a file might be listed several times (for instance when
+              renaming an entity that has multiple references in the file)
+  Workaround: This is a visual glitch only.
+
 - L306-045: Project editor issue with gnat warnings switches
   Problem:    Default warnings, appearing greyed out when editing the
               switches in the project editor, cannot be turned off when

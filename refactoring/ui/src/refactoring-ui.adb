@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+pragma Ada_2012;
+
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Intl;             use GPS.Intl;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
@@ -38,8 +40,6 @@ with Gtk.Widget;            use Gtk.Widget;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 
 package body Refactoring.UI is
-
-   use File_Arrays;
    use Location_Arrays;
 
    ------------
@@ -50,7 +50,7 @@ package body Refactoring.UI is
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Title         : String;
       Msg           : String;
-      Files         : File_Arrays.Instance;
+      Files         : Source_File_Set;
       Execute_Label : String := Stock_Execute;
       Cancel_Label  : String := Stock_Cancel) return Boolean
    is
@@ -59,7 +59,7 @@ package body Refactoring.UI is
       Label  : Gtk_Label;
       Result : Boolean;
    begin
-      if Length (Files) > 0 then
+      if not Files.Is_Empty then
          Gtk_New (Dialog,
                   Title  => Title,
                   Parent => Get_Current_Window (Kernel),
@@ -92,9 +92,9 @@ package body Refactoring.UI is
 
    function Confirm_Files
      (Kernel          : access Kernel_Handle_Record'Class;
-      Read_Only_Files : File_Arrays.Instance;
-      No_LI_List      : File_Arrays.Instance;
-      Stale_LI_List   : File_Arrays.Instance) return Boolean is
+      Read_Only_Files : Source_File_Set;
+      No_LI_List      : Source_File_Set;
+      Stale_LI_List   : Source_File_Set) return Boolean is
    begin
       return Dialog
         (Kernel,
@@ -129,7 +129,7 @@ package body Refactoring.UI is
    ----------------------
 
    function Create_File_List
-     (List : File_Arrays.Instance) return Gtk_Scrolled_Window
+     (List : Source_File_Set) return Gtk_Scrolled_Window
    is
       Col        : Gtk_Tree_View_Column;
       Render     : Gtk_Cell_Renderer_Text;
@@ -139,6 +139,7 @@ package body Refactoring.UI is
       Model      : Gtk_Tree_Store;
       Scrolled   : Gtk_Scrolled_Window;
       pragma Unreferenced (Col_Number);
+
    begin
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -165,15 +166,28 @@ package body Refactoring.UI is
       Pack_Start (Col, Render, True);
       Add_Attribute (Col, Render, "text", 1);
 
-      for F in File_Arrays.First .. Last (List) loop
-         Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, 0,
-              Display_Base_Name (Get_Filename (List.Table (F))));
-         Set (Model, Iter, 1,
-              Display_Dir_Name (Get_Filename (List.Table (F))));
+      for F of List loop
+         declare
+            Name : constant Virtual_File := Get_Filename (F);
+         begin
+            Append (Model, Iter, Null_Iter);
+            Set (Model, Iter, 0, Name.Display_Base_Name);
+            Set (Model, Iter, 1, Name.Display_Dir_Name);
+         end;
       end loop;
 
       return Scrolled;
    end Create_File_List;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash
+     (File : Entities.Source_File) return Ada.Containers.Hash_Type
+   is
+   begin
+      return GNATCOLL.VFS.Full_Name_Hash (Get_Filename (File));
+   end Hash;
 
 end Refactoring.UI;

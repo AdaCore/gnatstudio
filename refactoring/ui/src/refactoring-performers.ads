@@ -30,8 +30,8 @@ package Refactoring.Performers is
       Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Entity        : Entities.Entity_Information;
       Refs          : Location_Arrays.Instance;
-      No_LI_List    : File_Arrays.Instance;
-      Stale_LI_List : File_Arrays.Instance) is abstract;
+      No_LI_List    : Source_File_Set;
+      Stale_LI_List : Source_File_Set) is abstract;
    --  Called after we have found all the references to an entity, to perform
    --  some actual refactoring. Refs is the list of all known references to the
    --  entity. No_LI_List is the list of source files for which no LI file

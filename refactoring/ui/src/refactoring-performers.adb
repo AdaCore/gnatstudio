@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+pragma Ada_2012;
+
 with Ada.Unchecked_Deallocation;
 
 with Commands.Generic_Asynchronous;
@@ -32,11 +34,10 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package body Refactoring.Performers is
    use Location_Arrays;
-   use File_Arrays;
 
    type Renaming_Error_Record is new File_Error_Reporter_Record with
       record
-         No_LI_List : File_Arrays.Instance := File_Arrays.Empty_Instance;
+         No_LI_List : Source_File_Set;
       end record;
    type Renaming_Error is access all Renaming_Error_Record'Class;
    overriding procedure Error
@@ -44,8 +45,8 @@ package body Refactoring.Performers is
 
    type Get_Locations_Data is record
       Refs                : Location_Arrays.Instance;
-      Stale_LI_List       : File_Arrays.Instance;
-      Read_Only_Files     : File_Arrays.Instance;
+      Stale_LI_List       : Source_File_Set;
+      Read_Only_Files     : Source_File_Set;
       On_Completion       : Refactor_Performer;
       Kernel              : Kernel_Handle;
       Entity              : Entity_Information;
@@ -89,8 +90,8 @@ package body Refactoring.Performers is
         (Renaming_Error_Record'Class, Renaming_Error);
    begin
       Free (Data.Refs);
-      Free (Data.Errors.No_LI_List);
-      Free (Data.Stale_LI_List);
+      Data.Errors.No_LI_List.Clear;
+      Data.Stale_LI_List.Clear;
       Destroy (Data.Iter);
       if Data.On_Completion /= null then
          Free (Data.On_Completion.all);
@@ -116,7 +117,7 @@ package body Refactoring.Performers is
    overriding procedure Error
      (Report : in out Renaming_Error_Record; File : Entities.Source_File) is
    begin
-      Append (Report.No_LI_List, File);
+      Report.No_LI_List.Include (File);
    end Error;
 
    -----------------------
@@ -188,7 +189,7 @@ package body Refactoring.Performers is
       if Data.Make_Writable then
          Confirmed := Confirm_Files
            (Data.Kernel,
-            File_Arrays.Empty_Instance,
+            Source_File_Sets.Empty_Set,
             Data.Errors.No_LI_List,
             Data.Stale_LI_List);
       else
@@ -203,10 +204,8 @@ package body Refactoring.Performers is
          Push_State (Data.Kernel, Busy);
 
          if Data.Make_Writable then
-            for F in File_Arrays.First .. Last (Data.Read_Only_Files) loop
-               Get_Buffer_Factory (Data.Kernel).Get
-                 (Get_Filename
-                    (Data.Read_Only_Files.Table (F))).
+            for F of Data.Read_Only_Files loop
+               Get_Buffer_Factory (Data.Kernel).Get (Get_Filename (F)).
                  Open.Set_Read_Only (False);
             end loop;
          end if;
@@ -254,17 +253,11 @@ package body Refactoring.Performers is
                     (File   => Source,
                      Line   => Get_Line (Get_Location (Ref)),
                      Column => Get_Column (Get_Location (Ref))));
-
-            if Length (Data.Stale_LI_List) = 0
-              or else Source /=
-                Data.Stale_LI_List.Table (Last (Data.Stale_LI_List))
-            then
-               Append (Data.Stale_LI_List, Source);
-            end if;
+            Data.Stale_LI_List.Include (Source);
          end if;
 
          if not Is_Writable (Get_Filename (Source)) then
-            Append (Data.Read_Only_Files, Source);
+            Data.Read_Only_Files.Include (Source);
          end if;
 
          Next (Data.Iter.all);
