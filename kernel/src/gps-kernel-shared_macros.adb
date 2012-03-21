@@ -21,14 +21,8 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-
-with Entities;                use Entities;
 with String_Utils;            use String_Utils;
-with GNATCOLL.Projects;       use GNATCOLL.Projects;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.Templates;      use GNATCOLL.Templates;
-
-with GNAT.Strings;
 
 package body GPS.Kernel.Shared_Macros is
 

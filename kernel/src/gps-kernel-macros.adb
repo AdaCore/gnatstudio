@@ -15,10 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Text_IO;             use Ada.Text_IO;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-
 with Entities;                use Entities;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
@@ -133,9 +129,6 @@ package body GPS.Kernel.Macros is
       Server    : Server_Type := GPS_Server;
       For_Shell : Boolean := False) return String
    is
-      Project                          : Project_Type := No_Project;
-      Index                            : Integer;
-      Recurse, List_Dirs, List_Sources : Boolean;
       Entity                           : Entity_Information;
 
       --  In this routine it is important to *not* quote backslahes on paths.

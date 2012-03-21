@@ -29,7 +29,6 @@ with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GPS.Intl;                    use GPS.Intl;
 with GPS.Kernel.Shared_Macros; use GPS.Kernel.Shared_Macros;
 with Traces;                      use Traces;
-with String_Utils;                use String_Utils;
 with GNAT.Strings;
 
 package body Build_Command_Utils is
