@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2012;
-
 with Ada.Unchecked_Deallocation;
 
 with Commands.Generic_Asynchronous;
@@ -182,7 +180,9 @@ package body Refactoring.Performers is
    ----------------------
 
    procedure On_End_Of_Search (Data : Get_Locations_Data) is
+      use Source_File_Sets;
       Confirmed : Boolean;
+      C : Source_File_Sets.Cursor;
    begin
       Pop_State (Data.Kernel);
 
@@ -204,9 +204,12 @@ package body Refactoring.Performers is
          Push_State (Data.Kernel, Busy);
 
          if Data.Make_Writable then
-            for F of Data.Read_Only_Files loop
-               Get_Buffer_Factory (Data.Kernel).Get (Get_Filename (F)).
+            C := Data.Read_Only_Files.First;
+            while Has_Element (C) loop
+               Get_Buffer_Factory (Data.Kernel)
+                 .Get (Get_Filename (Element (C))).
                  Open.Set_Read_Only (False);
+               Next (C);
             end loop;
          end if;
 

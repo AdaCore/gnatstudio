@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2012;
-
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Intl;             use GPS.Intl;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
@@ -140,6 +138,9 @@ package body Refactoring.UI is
       Scrolled   : Gtk_Scrolled_Window;
       pragma Unreferenced (Col_Number);
 
+      use Source_File_Sets;
+      C : Source_File_Sets.Cursor;
+
    begin
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -166,14 +167,17 @@ package body Refactoring.UI is
       Pack_Start (Col, Render, True);
       Add_Attribute (Col, Render, "text", 1);
 
-      for F of List loop
+      C := List.First;
+      while Has_Element (C) loop
          declare
+            F : constant Source_File := Element (C);
             Name : constant Virtual_File := Get_Filename (F);
          begin
             Append (Model, Iter, Null_Iter);
-            Set (Model, Iter, 0, Name.Display_Base_Name);
-            Set (Model, Iter, 1, Name.Display_Dir_Name);
+            Model.Set (Iter, 0, Name.Display_Base_Name);
+            Model.Set (Iter, 1, Name.Display_Dir_Name);
          end;
+         Next (C);
       end loop;
 
       return Scrolled;
