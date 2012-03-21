@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;          use Ada.Calendar;
+
 with GNAT.Strings;                 use GNAT.Strings;
 
 with Language.Tree.Database;       use Language.Tree.Database;
@@ -59,6 +61,12 @@ package body Ada_Semantic_Tree_Module is
       File     : Virtual_File) return Integer
    is
       Editor : Gtkada.MDI.MDI_Child;
+
+      Stamp : Time;
+      Y     : Year_Number;
+      M     : Month_Number;
+      D     : Day_Number;
+      S     : Day_Duration;
    begin
       if Is_Open (Provider.Kernel, File) then
          Editor := Find_Editor (Provider.Kernel, File);
@@ -70,7 +78,11 @@ package body Ada_Semantic_Tree_Module is
          end if;
       end if;
 
-      return -1;
+      Stamp := File.File_Time_Stamp;
+
+      Split (Stamp, Y, M, D, S);
+
+      return D * 86400 + Integer (S);
    end Get_Timestamp;
 
    ----------------
