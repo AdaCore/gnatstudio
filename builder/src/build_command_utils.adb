@@ -27,6 +27,7 @@ with GNATCOLL.Templates;          use GNATCOLL.Templates;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
 with GPS.Intl;                    use GPS.Intl;
+with GPS.Kernel.Shared_Macros; use GPS.Kernel.Shared_Macros;
 with Traces;                      use Traces;
 with String_Utils;                use String_Utils;
 with GNAT.Strings;
@@ -1083,78 +1084,16 @@ package body Build_Command_Utils is
       Server    : Server_Type := GPS_Server;
       For_Shell : Boolean := False) return String
    is
-      --  In this routine it is important to *not* quote backslahes on paths.
-      --  This is important because on Windows a backslash is the directory
-      --  separator and we do not want to escape it. Doing so will work in most
-      --  cases except for remote directory (\\server\drive). Having 4
-      --  backslashes at the start of the PATH is not recognized by Windows.
-
    begin
-      Done.all := True;
-
-      if Param = "f"
-        or else Param = "F"
-        or else Param = "fk"
-      then
-         if Param = "f" then
-            return String_Utils.Protect
-              (+Get_Context_File_Information (Adapter).Base_Name,
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
-
-         elsif Param = "fk" then
-            return String_Utils.Protect
-              (Krunch (+Get_Context_File_Information (Adapter).Base_Name),
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
-
-         else
-            return String_Utils.Protect
-              (+To_Remote
-                 (Get_Context_File_Information (Adapter),
-                  Get_Nickname (Server)).Full_Name,
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
-         end if;
-
-      elsif Param = "gnatmake" then
-         return Get_Context_Project (Adapter).Attribute_Value
-                  (Compiler_Command_Attribute,
-                   Default => "gnatmake",
-                   Index   => "Ada");
-
-      elsif Param = "O" then
-         return String_Utils.Protect
-           (String (Full_Name (Object_Dir
-              (Get_Context_Project (Adapter))).all),
-            Protect_Quotes      => Quoted,
-            Protect_Backslashes => For_Shell);
-
-      elsif Param = "pp" or else Param = "PP" then
-         return String_Utils.Protect
-           (+To_Remote
-              (Project_Path (Get_Context_Project (Adapter)),
-               Get_Nickname (Server)).Full_Name,
-            Protect_Quotes      => Quoted,
-            Protect_Backslashes => For_Shell);
-
-      elsif Param = "Pb" then
-         declare
-            Name      : constant String :=
-              String (Project_Path (Get_Context_Project (Adapter)).Base_Name);
-            Extension : constant String :=
-              String (Project_Path (
-                 Get_Context_Project (Adapter)).File_Extension);
-
-         begin
-            return Name (Name'First .. Name'Last - Extension'Length);
-         end;
-
-      end if;
-
-      --  No substitution
-      Done.all := False;
-      return "";
+      return Shared_Macros_Substitute (
+         Get_Context_Project (Adapter),
+         Get_Context_Project (Adapter),
+         Get_Context_File_Information (Adapter),
+         Param,
+         Quoted,
+         Done,
+         Server,
+         For_Shell);
    end Substitute;
 
    --------------------
