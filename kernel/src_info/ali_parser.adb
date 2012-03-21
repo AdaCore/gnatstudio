@@ -1084,9 +1084,7 @@ package body ALI_Parser is
 
                      --  Handle end of scope of C++ classes
 
-                     elsif +Get_ALI_Ext (Handler) = ".gli"
-                       and then Get_Kind (Entity).Kind = Class
-                     then
+                     elsif Get_Kind (Entity).Kind = Class then
                         declare
                            Loc : File_Location;
                            K   : Reference_Kind;

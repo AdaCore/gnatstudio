@@ -73,6 +73,15 @@ package body Completion.C.Constructs_Extractor is
          E       : Entity_Information);
       --  Append to the list To_List the proposal E
 
+      procedure Add_Scope_Proposals
+        (To_List      : in out Extensive_List_Pckg.List;
+         Scope        : Entity_Information;
+         Prefix_Token : Token_Record);
+      --  Append to To_List all the proposals defined in Scope which match
+      --  the prefix available in Prefix_Token. If Prefix_Token is not an
+      --  identifier then all the entities defined in Scope are appended
+      --  to To_List.
+
       function Gen_Doc (E_Info : Entity_Information) return String_Access;
       --  Generate the documentation associated with E_Info
 
@@ -97,6 +106,56 @@ package body Completion.C.Constructs_Extractor is
 
          Append (To_List, Proposal);
       end Add_Proposal;
+
+      -------------------------
+      -- Add_Scope_Proposals --
+      -------------------------
+
+      procedure Add_Scope_Proposals
+        (To_List      : in out Extensive_List_Pckg.List;
+         Scope        : Entity_Information;
+         Prefix_Token : Token_Record)
+      is
+         Prefix_Text : constant String :=
+                         Context.Buffer
+                           (Natural (Prefix_Token.Token_First)
+                              .. Natural (Prefix_Token.Token_Last));
+         It : Calls_Iterator;
+         E  : Entity_Information;
+
+      begin
+         It := Get_All_Called_Entities (Scope);
+         while not At_End (It) loop
+            E := Get (It);
+
+            --  The last token is a delimiter (dot, scope or dereference)
+
+            if Prefix_Token.Tok_Type /= Tok_Identifier then
+               Add_Proposal (To_List, E);
+
+            --  The last token is an identifier. Check if the name of the
+            --  entity is a valid prefix
+
+            else
+               declare
+                  Nam : constant String := Get (Get_Name (E)).all;
+
+               begin
+                  if Prefix_Text'Length <= Nam'Length
+                    and then
+                      Nam (Nam'First .. Nam'First + Prefix_Text'Length - 1)
+                        = Prefix_Text
+                  then
+                     Add_Proposal (To_List, E);
+                  end if;
+               end;
+            end if;
+
+            Next (It);
+         end loop;
+
+         Destroy (It);
+      end Add_Scope_Proposals;
 
       -------------
       -- Gen_Doc --
@@ -141,16 +200,13 @@ package body Completion.C.Constructs_Extractor is
          end if;
       end Gen_Doc;
 
-      use Completion_List_Extensive_Pckg;
-
       --  Local variables
 
       use Entities_Search_Tries;
-      use Completion_List_Extensive_Pckg.Extensive_List_Pckg;
 
       C_Context  : C_Completion_Context;
       Expression : Parsed_Expression;
-      E_List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.List;
+      E_List     : Extensive_List_Pckg.List;
       Iter       : Vector_Trie_Iterator;
       Token      : Token_Record;
 
@@ -348,51 +404,10 @@ package body Completion.C.Constructs_Extractor is
                            if Ent_Kind.Kind = Class
                              or else Ent_Kind.Kind = Record_Kind
                            then
-                              declare
-                                 It : Calls_Iterator;
-                                 E1 : Entity_Information;
-
-                              begin
-                                 It := Get_All_Called_Entities (E);
-                                 while not At_End (It) loop
-                                    E1 := Get (It);
-
-                                    --  The last token is a delimiter (dot,
-                                    --  scope or dereference)
-
-                                    if Last_Token.Tok_Type
-                                      /= Tok_Identifier
-                                    then
-                                       Add_Proposal (E_List, E1);
-
-                                    --  The last token is an identifier. Check
-                                    --  if the name of the entity is a valid
-                                    --  prefix
-
-                                    else
-                                       declare
-                                          Nam : constant String :=
-                                                  Get (Get_Name (E1)).all;
-                                       begin
-                                          if Last_Token_Text'Length
-                                               <= Nam'Length
-                                            and then
-                                              Nam (Nam'First
-                                                   .. Nam'First
-                                                       + Last_Token_Text'Length
-                                                       - 1)
-                                               = Last_Token_Text
-                                          then
-                                             Add_Proposal (E_List, E1);
-                                          end if;
-                                       end;
-                                    end if;
-
-                                    Next (It);
-                                 end loop;
-
-                                 Destroy (It);
-                              end;
+                              Add_Scope_Proposals
+                                (To_List      => E_List,
+                                 Scope        => E,
+                                 Prefix_Token => Last_Token);
 
                               Completion_List_Pckg.Append
                                 (Result.List,
