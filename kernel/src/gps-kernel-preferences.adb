@@ -706,7 +706,7 @@ package body GPS.Kernel.Preferences is
       Current_Line_Thin := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Line-Thin",
-         Default => False,
+         Default => True,
          Doc     => -("Whether to use a thin line rather than full background"
            & ASCII.LF & " highlighting on the current line."),
          Label   => -"Draw current line as a thin line",
