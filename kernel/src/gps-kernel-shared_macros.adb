@@ -154,8 +154,6 @@ package body GPS.Kernel.Shared_Macros is
                if Index < Param'Last and then Param (Index + 1) = 'f' then
                   --  Append the list to a file
                   declare
-                     use GNAT.Strings;
-
                      File       : File_Type;
                      Files_List : File_Array_Access;
 
