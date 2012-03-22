@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2010, AdaCore                 --
+--                  Copyright (C) 2007-2012, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Ada.Calendar;          use Ada.Calendar;
 
 with GNAT.Strings;                 use GNAT.Strings;
 
@@ -59,6 +61,12 @@ package body Ada_Semantic_Tree_Module is
       File     : Virtual_File) return Integer
    is
       Editor : Gtkada.MDI.MDI_Child;
+
+      Stamp : Time;
+      Y     : Year_Number;
+      M     : Month_Number;
+      D     : Day_Number;
+      S     : Day_Duration;
    begin
       if Is_Open (Provider.Kernel, File) then
          Editor := Find_Editor (Provider.Kernel, File);
@@ -70,7 +78,11 @@ package body Ada_Semantic_Tree_Module is
          end if;
       end if;
 
-      return -1;
+      Stamp := File.File_Time_Stamp;
+
+      Split (Stamp, Y, M, D, S);
+
+      return D * 86400 + Integer (S);
    end Get_Timestamp;
 
    ----------------
