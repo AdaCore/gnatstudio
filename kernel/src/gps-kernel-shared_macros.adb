@@ -205,8 +205,6 @@ package body GPS.Kernel.Shared_Macros is
 
                else
                   declare
-                     use GNAT.Strings;
-
                      Result     : Unbounded_String;
                      Files_List : File_Array_Access;
                   begin
