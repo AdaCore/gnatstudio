@@ -1076,7 +1076,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Secondary File pattern",
          Doc     =>
            -"Pattern used to detect secondary file locations in messages",
-         Default => "([^: ]+):(\d+)(:(\d+):)?",
+         Default => "(([^: ]+):(\d+)(:(\d+):?)?)",
          Page    => -"Messages");
 
       Secondary_File_Pattern_Index := Create
@@ -1084,7 +1084,7 @@ package body GPS.Kernel.Preferences is
          Name    => "Messages-Secondary-File-Regexp-Index",
          Minimum => 1,
          Maximum => 99,
-         Default => 1,
+         Default => 2,
          Doc     => -"Index of secondary filename in the pattern",
          Label   => -"Secondary File index",
          Page    => -"Messages");
@@ -1094,7 +1094,7 @@ package body GPS.Kernel.Preferences is
          Name    => "Messages-Secondary-Line-Regexp-Index",
          Minimum => 1,
          Maximum => 99,
-         Default => 2,
+         Default => 3,
          Doc     => -"Index of secondary location line number in the pattern",
          Label   => -"Secondary Line index",
          Page    => -"Messages");
@@ -1104,7 +1104,7 @@ package body GPS.Kernel.Preferences is
          Name    => "Messages-Secondary-Column-Regexp-Index",
          Minimum => 0,
          Maximum => 99,
-         Default => 3,
+         Default => 5,
          Doc     =>
          -"Index of secondary column number in the pattern, 0 if none",
          Label   => -"Secondary Column index",
