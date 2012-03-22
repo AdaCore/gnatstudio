@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
 
+- L321-002: GPS: Performance of cross-reference operations
+  Problem:    When querying cross-reference and navigation operations, such
+              as the "Called by" menu on a subprogram, or when extending
+              the "Called by" call graph, GPS can be slow to react.
+  Workaround: None known.
+
 - L223-020: GPS: CodePeer's messages are not displayed in Locations view
   Problem:    CodePeer's messages are not displayed in Locations view
               when analysis contains removed subprograms.
