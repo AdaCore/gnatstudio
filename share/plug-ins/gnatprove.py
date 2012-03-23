@@ -49,5 +49,5 @@ xml_gnatprove = """<?xml version="1.0"?>
 
 gnatprove = os_utils.locate_exec_on_path("gnatprove")
 
-if gnatprove != "":
+if gnatprove:
   GPS.parse_xml(xml_gnatprove)

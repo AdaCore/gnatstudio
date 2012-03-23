@@ -436,7 +436,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
 codepeer = os_utils.locate_exec_on_path("codepeer")
 
-if codepeer != "":
+if codepeer:
   example_root=os.path.dirname (os.path.dirname(codepeer)).replace('\\', '/')+\
     '/share/examples/codepeer'
   xml_codepeer = xml_codepeer.replace('@EXAMPLE@', example_root)
