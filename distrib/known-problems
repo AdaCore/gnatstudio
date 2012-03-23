@@ -16,6 +16,11 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               renaming an entity that has multiple references in the file)
   Workaround: This is a visual glitch only.
 
+- L321-020: Refactoring "Name parameters" requires an extra undo
+  Problem:    After a refactoring "Name parameters" operation, GPS requires
+              two "Undo" to revert the refactoring.
+  Workaround: Perform the extra undo manually.
+
 - L306-045: Project editor issue with gnat warnings switches
   Problem:    Default warnings, appearing greyed out when editing the
               switches in the project editor, cannot be turned off when
