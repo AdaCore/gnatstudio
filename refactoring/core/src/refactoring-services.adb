@@ -1393,11 +1393,14 @@ package body Refactoring.Services is
          end;
       end if;
 
+      Editor.Start_Undo_Group;
+
       if Replaced_Length > 0 then
          Editor.Delete (Loc_Start, Loc_End);
       end if;
 
       if Text = "" then
+         Editor.Finish_Undo_Group;
          return True;
       end if;
 
@@ -1444,6 +1447,7 @@ package body Refactoring.Services is
               (Line + Lines_Count (Text) - 1, 0).End_Of_Line);
       end if;
 
+      Editor.Finish_Undo_Group;
       return True;
    end Insert_Text;
 
