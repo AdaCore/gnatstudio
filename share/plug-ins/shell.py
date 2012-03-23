@@ -23,23 +23,28 @@
 import GPS, re, traceback, os
 from gps_utils.console_process import *
 
-class Unix_Shell (ANSI_Console_Process):
-  def __init__ (self, process, args=""):
-    oldterm = os.environ["TERM"]
-    os.environ["TERM"] = "xterm"
-    ANSI_Console_Process.__init__ (self, process, args)
-    os.environ["TERM"] = oldterm
 
-class Win32_Shell (Console_Process):
-  def __init__ (self, process, args=""):
-    Console_Process.__init__ (self, process, args)
+class Unix_Shell(ANSI_Console_Process):
+    def __init__ self, process, args=""):
+        oldterm = os.environ["TERM"]
+        os.environ["TERM"] = "xterm"
+        ANSI_Console_Process.__init__(self, process, args)
+        os.environ["TERM"] = oldterm
 
-def create_default_shell (menu):
-  """Spawns the user's shell as read from the environment variable SHELL"""
-  if os.getenv ("SHELL") and os.getenv ("TERM"):
-    Unix_Shell (os.getenv ("SHELL"), "-i")
-  elif os.getenv ("COMSPEC"):
-    Win32_Shell (os.getenv ("COMSPEC"), "/Q")
 
-GPS.Menu.create ("/Tools/Consoles/_OS Shell", create_default_shell, ref="Auxiliary Builds", add_before=1)
+class Win32_Shell(Console_Process):
+    def __init__(self, process, args=""):
+        Console_Process.__init__(self, process, args)
 
+
+def create_default_shell(menu):
+    """Spawns the user's shell as read from the environment variable SHELL"""
+    if os.getenv("SHELL") and os.getenv("TERM"):
+        Unix_Shell(os.getenv("SHELL"), "-i")
+    elif os.getenv("COMSPEC"):
+        Win32_Shell(os.getenv("COMSPEC"), "/Q")
+
+
+GPS.Menu.create("/Tools/Consoles/_OS Shell",
+                create_default_shell,
+                ref="Auxiliary Builds", add_before=1)
