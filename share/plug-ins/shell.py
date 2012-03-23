@@ -25,7 +25,7 @@ from gps_utils.console_process import *
 
 
 class Unix_Shell(ANSI_Console_Process):
-    def __init__ self, process, args=""):
+    def __init__(self, process, args=""):
         oldterm = os.environ["TERM"]
         os.environ["TERM"] = "xterm"
         ANSI_Console_Process.__init__(self, process, args)
