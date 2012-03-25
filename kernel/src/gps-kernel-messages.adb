@@ -647,7 +647,7 @@ package body GPS.Kernel.Messages is
       Self.Weight := Weight;
       Self.Flags  := Flags;
 
-      if Container.Create_Marks and File /= No_File then
+      if File /= No_File then
          Self.Mark :=
            new Editor_Mark'Class'
              (Container.Kernel.Get_Buffer_Factory.New_Mark
@@ -749,7 +749,7 @@ package body GPS.Kernel.Messages is
       Self.Column := Column;
       Self.Flags := Flags;
 
-      if Parent.Get_Container.Create_Marks and File /= No_File then
+      if File /= No_File then
          Self.Mark :=
            new Editor_Mark'Class'
              (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
@@ -1008,22 +1008,6 @@ package body GPS.Kernel.Messages is
    begin
       return True;
    end Message_Can_Be_Destroyed;
-
-   ----------------------------
-   -- New_Messages_Container --
-   ----------------------------
-
-   function New_Messages_Container
-     (Kernel       : not null access Kernel_Handle_Record'Class;
-      Create_Marks : Boolean) return not null Messages_Container_Access
-   is
-      Result : constant Messages_Container_Access :=
-                 new Messages_Container (Kernel);
-   begin
-      Result.Create_Marks := Create_Marks;
-
-      return Result;
-   end New_Messages_Container;
 
    ---------------
    -- Notifiers --

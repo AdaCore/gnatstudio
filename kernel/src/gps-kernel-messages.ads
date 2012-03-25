@@ -262,13 +262,6 @@ package GPS.Kernel.Messages is
       return not null Messages_Container_Access;
    --  Returns messages conntainer for the specified instance of the kernel.
 
-   function New_Messages_Container
-     (Kernel       : not null access Kernel_Handle_Record'Class;
-      Create_Marks : Boolean) return not null Messages_Container_Access;
-   --  Create a new empty messages container, with no models and no listeners.
-   --  Create_Marks indicates whether messages in this container should
-   --  create marks to track their location
-
    function Has_Category
      (Self     : not null access constant Messages_Container'Class;
       Category : String) return Boolean;
@@ -550,8 +543,6 @@ private
       Primary_Loaders   : Primary_Message_Load_Maps.Map;
       Secondary_Loaders : Secondary_Message_Load_Maps.Map;
       Sort_Order_Hints  : Sort_Order_Hint_Maps.Map;
-
-      Create_Marks      : Boolean := True;
    end record;
 
    procedure Register_Message_Class
