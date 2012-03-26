@@ -6,7 +6,6 @@
    See menu Tools->GNATprove.
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################
@@ -16,7 +15,7 @@ import GPS, os_utils, os.path
 xml_gnatprove = """<?xml version="1.0"?>
   <GNATPROVE>
 
-    <target-model name="gnatprove" >
+    <target-model name="gnatprove">
        <description>Target model for GNATprove</description>
        <command-line>
           <arg>gnatprove</arg>
@@ -31,7 +30,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     </target-model>
 
     <target model="gnatprove" name="Prove Root Project" category="GNATprove">
-       <in-menu>TRUE</in-menu>
+       <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
@@ -42,12 +41,39 @@ xml_gnatprove = """<?xml version="1.0"?>
        </command-line>
     </target>
 
+    <target model="gnatprove" name="Prove File" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--mode=prove</arg>
+          <arg>-u</arg>
+          <arg>%fp</arg>
+       </command-line>
+    </target>
+
   </GNATPROVE>
 """
+
+prefix             = "/GNATprove"
+prove_root_project = "Prove Root Project"
+prove_file         = "Prove File"
 
 # Check for GNAT toolchain: gnatprove
 
 gnatprove = os_utils.locate_exec_on_path("gnatprove")
 
+def on_prove_root_project(self):
+    GPS.BuildTarget(prove_root_project).execute()
+
+def on_prove_file(self):
+    GPS.BuildTarget(prove_file).execute()
+
 if gnatprove:
+  GPS.Menu.create(prefix, ref = "Window", add_before = True)
+  GPS.Menu.create(prefix + "/" + prove_root_project, on_prove_root_project)
+  GPS.Menu.create(prefix + "/" + prove_file, on_prove_file)
   GPS.parse_xml(xml_gnatprove)
