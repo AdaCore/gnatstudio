@@ -20,8 +20,12 @@ all:
 
 	gprbuild -m -j0 -Pentities.gpr
 
-test: createdb
+test:
 	@gnatmake -u -p -Ptest1/test1.gpr
+
+run_test:
+	rm -f entities.db
+	time ./obj/test_entities
 
 profile:
 	@sync ; echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
@@ -44,6 +48,4 @@ doc:
 	@ps2pdf -sPAGESIZE=a4 schema.ps
 	@${RM} schema.ps schema.dot
 	@echo "Created schema.pdf"
-
-
-
+	xdg-open schema.pdf

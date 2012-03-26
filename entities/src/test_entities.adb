@@ -116,12 +116,6 @@ begin
       Project           => Tree.Root_Project,
       Database_Is_Empty => Need_To_Create_DB);
 
---     Put_Line ("Number of traces on SQL.SELECT: "
---               & GNATCOLL.Traces.Count
---                 (GNATCOLL.Traces.Create ("SQL.SELECT"))'Img);
---     Put_Line ("Number of traces on SQL: "
---               & GNATCOLL.Traces.Count (GNATCOLL.Traces.Create ("SQL"))'Img);
-
    --  Free memory
 
    Tree.Unload;

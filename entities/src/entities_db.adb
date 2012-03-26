@@ -36,6 +36,11 @@ with Orm;               use Orm;
 package body Entities_Db is
    Me_Error : constant Trace_Handle := Create ("ENTITIES.ERROR");
    Me_Debug : constant Trace_Handle := Create ("ENTITIES.DEBUG", Off);
+   Me_Forward : constant Trace_Handle := Create ("ENTITIES.FORWARD");
+
+   Do_Database : constant Boolean := True;
+   --  Whether to perform database operations. Settings this to False only
+   --  makes sense to measure performance of the ALI parser itself.
 
    Instances_Provide_Column : constant Boolean := False;
    --  Whether instance info in the ALI files provide the column information.
@@ -534,7 +539,7 @@ package body Entities_Db is
             return False;
          end if;
 
-         if Is_Predefined then
+         if Is_Predefined and then Do_Database then
             declare
                R : Forward_Cursor;
                Name : aliased String := String (Str (Start .. Name_Last));
@@ -586,7 +591,7 @@ package body Entities_Db is
             end if;
          end if;
 
-         if Ref_Entity /= -1 then
+         if Ref_Entity /= -1 and then Do_Database then
             Session.DB.Execute
               (Query_Insert_E2E,
                Params => (1 => +Current_Entity,
@@ -663,15 +668,17 @@ package body Entities_Db is
             end loop;
             Index := Index + 1;
 
-            declare
-               Name : aliased String :=
-                 String (Str (Start .. Index - 2));
-            begin
-               Session.DB.Execute
-                 (Query_Set_Entity_Import,
-                  Params => (1 => +Current_Entity,
-                             2 => +Name'Unrestricted_Access));
-            end;
+            if Do_Database then
+               declare
+                  Name : aliased String :=
+                    String (Str (Start .. Index - 2));
+               begin
+                  Session.DB.Execute
+                    (Query_Set_Entity_Import,
+                     Params => (1 => +Current_Entity,
+                                2 => +Name'Unrestricted_Access));
+               end;
+            end if;
          end if;
       end Skip_Import_Info;
 
@@ -760,8 +767,8 @@ package body Entities_Db is
          Id    : Integer;
       begin
          if File = GNATCOLL.VFS.No_File then
-            if Active (Me_Debug) then
-               Trace (Me_Debug, "File not found in project: " & Basename);
+            if Active (Me_Error) then
+               Trace (Me_Error, "File not found in project: " & Basename);
             end if;
             return -1;
          end if;
@@ -769,7 +776,7 @@ package body Entities_Db is
          Found := VFS_To_Id.Find (File);
          if Has_Element (Found) then
             Id := Element (Found);
-            if Clear then
+            if Clear and then Do_Database then
                Session.DB.Execute
                  (Query_Delete_File_Dep, Params => (1 => +Id));
             end if;
@@ -781,25 +788,28 @@ package body Entities_Db is
             return Id;
          end if;
 
-         Files := Query_Get_File.Get
-           (Session, Params => (1 => +Name'Access));
-         if Files.Has_Row then
-            Id := Files.Element.Id;
+         if Do_Database then
+            Files := Query_Get_File.Get
+              (Session, Params => (1 => +Name'Access));
+            if Files.Has_Row then
+               Id := Files.Element.Id;
 
-            if Clear then
-               Session.DB.Execute
-                 (Query_Delete_File_Dep, Params => (1 => +Id));
+               if Clear and then Do_Database then
+                  Session.DB.Execute
+                    (Query_Delete_File_Dep, Params => (1 => +Id));
+               end if;
+            else
+               R.Fetch
+                 (Session.DB,
+                  Query_Insert_File,
+                  Params => (1  => +Name'Access,
+                             2  => +File.File_Time_Stamp,
+                             3  => +Language'Unrestricted_Access));
+
+               Id := R.Last_Id (Session.DB, Database.Files.Id);
             end if;
-
          else
-            R.Fetch
-              (Session.DB,
-               Query_Insert_File,
-               Params => (1  => +Name'Access,
-                          2  => +File.File_Time_Stamp,
-                          3  => +Language'Unrestricted_Access));
-
-            Id := R.Last_Id (Session.DB, Database.Files.Id);
+            Id := 0;  --  Random, special case when not using database
          end if;
 
          VFS_To_Id.Insert (File, Id);
@@ -852,24 +862,28 @@ package body Entities_Db is
                return -1;
             end if;
 
-            R.Fetch
-              (Session.DB,
-               Query_Find_Entity_From_Decl_No_Column,
-               Params =>
-                 (1 => +Decl_File,
-                  2 => +Decl_Line));
+            if Do_Database then
+               R.Fetch
+                 (Session.DB,
+                  Query_Find_Entity_From_Decl_No_Column,
+                  Params =>
+                    (1 => +Decl_File,
+                     2 => +Decl_Line));
 
-            while R.Has_Row loop
-               Candidate := R.Integer_Value (0);
-               exit when R.Value (1) /= "";
-               R.Next;
-            end loop;
+               while R.Has_Row loop
+                  Candidate := R.Integer_Value (0);
+                  exit when R.Value (1) /= "";
+                  R.Next;
+               end loop;
+            end if;
 
-            if Candidate = -1 then
+            if Candidate = -1 and then Do_Database then
                --  We need to insert a forward declaration for an entity whose
                --  name and column of the declaration we do not know. We'll
                --  try to complete later.
 
+               Trace
+                 (Me_Forward, "Insert forward declaration (column unknown)");
                R.Fetch
                  (Session.DB,
                   Query_Insert_Entity,
@@ -914,34 +928,37 @@ package body Entities_Db is
          if Name'Length /= 0
            or else not Has_Element (C)
          then
-            R.Fetch
-              (Session.DB,
-               Query_Find_Entity_From_Decl,
-               Params =>
-                 (1 => +Decl_File,
-                  2 => +Decl_Line,
-                  3 => +Decl_Column));
+            if Do_Database then
+               R.Fetch
+                 (Session.DB,
+                  Query_Find_Entity_From_Decl,
+                  Params =>
+                    (1 => +Decl_File,
+                     2 => +Decl_Line,
+                     3 => +Decl_Column));
 
-            while R.Has_Row loop
-               if Name'Length /= 0 and then R.Value (1) = Name then
-                  Candidate := R.Integer_Value (0);
-                  Candidate_Is_Forward := False;
-                  exit;
-               elsif Name'Length = 0 and then R.Value (1) /= "" then
-                  Candidate := R.Integer_Value (0);
-                  Candidate_Is_Forward := False;
-                  exit;
-               elsif R.Value (1) = "" then
-                  Candidate := R.Integer_Value (0);
-                  Candidate_Is_Forward := True;
-                  --  keep looking, we only found a forward declaration
-               end if;
+               while R.Has_Row loop
+                  if Name'Length /= 0 and then R.Value (1) = Name then
+                     Candidate := R.Integer_Value (0);
+                     Candidate_Is_Forward := False;
+                     exit;
+                  elsif Name'Length = 0 and then R.Value (1) /= "" then
+                     Candidate := R.Integer_Value (0);
+                     Candidate_Is_Forward := False;
+                     exit;
+                  elsif R.Value (1) = "" then
+                     Candidate := R.Integer_Value (0);
+                     Candidate_Is_Forward := True;
+                     --  keep looking, we only found a forward declaration
+                  end if;
 
-               R.Next;
-            end loop;
+                  R.Next;
+               end loop;
+            end if;
 
             if Candidate = -1
               and then not Instances_Provide_Column
+              and then Do_Database
             then
                --  No candidate found, perhaps there is a forward declaration
                --  coming from a generic instantiation, ie without column
@@ -974,11 +991,14 @@ package body Entities_Db is
                elsif Name'Length /= 0 then
                   --  We had a forward declaration in the database, we can
                   --  now update its name.
-                  Session.DB.Execute
-                    (Query_Set_Entity_Name_And_Kind,
-                     Params => (1 => +Candidate,
-                                2 => +Name'Unrestricted_Access,
-                                3 => +Kind));
+                  if Do_Database then
+                     Session.DB.Execute
+                       (Query_Set_Entity_Name_And_Kind,
+                        Params => (1 => +Candidate,
+                                   2 => +Name'Unrestricted_Access,
+                                   3 => +Kind));
+                  end if;
+
                   Entity_Decl_To_Id.Include
                     (Decl,
                      Entity_Info'(Id         => Candidate,
@@ -1000,16 +1020,21 @@ package body Entities_Db is
          --  we are creating a forward declaration.
 
          if not Has_Element (C) then
-            R.Fetch
-              (Session.DB,
-               Query_Insert_Entity,
-               Params =>
-                 (1 => +Name'Unrestricted_Access,
-                  2 => +Kind,
-                  3 => +Decl_File,
-                  4 => +Decl_Line,
-                  5 => +Decl_Column));
-            Candidate := R.Last_Id (Session.DB, Database.Entities.Id);
+            if Do_Database then
+               R.Fetch
+                 (Session.DB,
+                  Query_Insert_Entity,
+                  Params =>
+                    (1 => +Name'Unrestricted_Access,
+                     2 => +Kind,
+                     3 => +Decl_File,
+                     4 => +Decl_Line,
+                     5 => +Decl_Column));
+               Candidate := R.Last_Id (Session.DB, Database.Entities.Id);
+            else
+               Candidate := 0;  --  Random, only when not using database
+            end if;
+
             Entity_Decl_To_Id.Insert
               (Decl,
                Entity_Info'(Id         => Candidate,
@@ -1323,14 +1348,16 @@ package body Entities_Db is
                   declare
                      Inst : aliased String := To_String (Instance);
                   begin
-                     Session.DB.Execute
-                       (Query_Insert_Ref,
-                        Params => (1 => +Current_Entity,
-                                   2 => +Xref_File,
-                                   3 => +Xref_Line,
-                                   4 => +Xref_Col,
-                                   5 => +Xref_Kind,
-                                   6 => +Inst'Unrestricted_Access));
+                     if Do_Database then
+                        Session.DB.Execute
+                          (Query_Insert_Ref,
+                           Params => (1 => +Current_Entity,
+                                      2 => +Xref_File,
+                                      3 => +Xref_Line,
+                                      4 => +Xref_Col,
+                                      5 => +Xref_Kind,
+                                      6 => +Inst'Unrestricted_Access));
+                     end if;
                   end;
                else
                   --  The reference necessarily points to the declaration of
@@ -1341,12 +1368,16 @@ package body Entities_Db is
                     ((File_Id => Xref_File,
                       Line    => Xref_Line,
                       Column  => Xref_Col)).Id;
-                  Session.DB.Execute
-                    (Query_Insert_E2E,
-                     Params => (1 => +Current_Entity,
-                                2 => +Ref_Entity,
-                                3 => +Eid,
-                                4 => +Order));
+
+                  if Do_Database then
+                     Session.DB.Execute
+                       (Query_Insert_E2E,
+                        Params => (1 => +Current_Entity,
+                                   2 => +Ref_Entity,
+                                   3 => +Eid,
+                                   4 => +Order));
+                  end if;
+
                   Order := Order + 1;
                end if;
             end loop;
@@ -1397,7 +1428,7 @@ package body Entities_Db is
                   Is_Internal => True,
                   Clear    => True);
 
-               if Current_Unit_Id /= -1 then
+               if Current_Unit_Id /= -1 and then Do_Database then
                   Session.DB.Execute
                     (Query_Set_ALI,
                      Params => (1 => +Current_Unit_Id,
@@ -1405,22 +1436,35 @@ package body Entities_Db is
                end if;
 
             when 'W' =>
-               --  Describes a "with" dependency with the last seen U line
+               --  Describes a "with" dependency with the last seen U line.
+               --  There are two cases:
+               --      W system%s  system.ads   system.ali
+               --      W unchecked_deallocation%s
+               --  The second line does not have ALI information.
 
                Index := Index + 2;
                Skip_Word;
-               Skip_Spaces;
-               Start := Index;
-               Skip_Word;
 
-               Dep_Id := Insert_File
-                 (Basename => String (Str (Start .. Index - 1)),
-                  Language => "ada");
+               if Str (Index) = ASCII.LF then
+                  --  second format ("unchecked_deallocation"). Nothing to do
+                  null;
+               else
+                  Skip_Spaces;
+                  Start := Index;
+                  Skip_Word;
 
-               if Dep_Id /= -1 and then Current_Unit_Id /= -1 then
-                  Session.DB.Execute
-                    (Query_Set_File_Dep,
-                     Params => (1 => +Current_Unit_Id, 2 => +Dep_Id));
+                  Dep_Id := Insert_File
+                    (Basename => String (Str (Start .. Index - 1)),
+                     Language => "ada");
+
+                  if Dep_Id /= -1
+                    and then Current_Unit_Id /= -1
+                    and then Do_Database
+                  then
+                     Session.DB.Execute
+                       (Query_Set_File_Dep,
+                        Params => (1 => +Current_Unit_Id, 2 => +Dep_Id));
+                  end if;
                end if;
 
             when 'D' =>
@@ -1504,7 +1548,8 @@ package body Entities_Db is
       use Library_Info_Lists;
       LI_Files  : Library_Info_Lists.List;
       Lib_Info  : Library_Info_Lists.Cursor;
-      Start     : Time := Clock;
+      Start : Time := Clock;
+      Dur : Duration;
       VFS_To_Id : VFS_To_Ids.Map;
       Has_Pragma : Boolean := True;
       Entity_Decl_To_Id : Loc_To_Ids.Map;
@@ -1525,12 +1570,15 @@ package body Entities_Db is
          while Has_Element (C) loop
             Ren := Element (C);
 
-            Session.DB.Execute
-              (Query_Set_Entity_Renames,
-               Params => (1 => +Ren.Entity,
-                          2 => +Ren.File,
-                          3 => +Ren.Line,
-                          4 => +Ren.Column));
+            if Do_Database then
+               Session.DB.Execute
+                 (Query_Set_Entity_Renames,
+                  Params => (1 => +Ren.Entity,
+                             2 => +Ren.File,
+                             3 => +Ren.Line,
+                             4 => +Ren.Column));
+            end if;
+
             Next (C);
          end loop;
       end Resolve_Renamings;
@@ -1607,15 +1655,31 @@ package body Entities_Db is
          Next (Lib_Info);
       end loop;
 
+      Dur := Clock - Start;
+      Put_Line ("Done parsing all files: ("
+                & Duration'Image (Dur) & " seconds) = "
+                & Duration'Image (Dur / Integer (Length (LI_Files)))
+                & "s per file");
+      Start := Clock;
+
       Session.DB.Execute
         ("CREATE INDEX entity_refs_file_line_col"
          & " on entity_refs(file,line,column)");
       Resolve_Renamings;
 
+      Put_Line ("Processed all renamings: "
+                & Length (Entity_Renamings)'Img
+                & " entities ("
+                & Duration'Image (Clock - Start) & " seconds)");
+      Start := Clock;
+
       --  It might be safer to commit after each LI file, but this is much
       --  slower. At worse, if there is an error parsing one file, we are not
       --  going to load anything, and the files will be loaded on demand later.
       Session.Commit;
+
+      Put_Line ("Committed:" & Duration'Image (Clock - Start) & " seconds");
+      Start := Clock;
 
       if Has_Pragma then
          Session.DB.Execute ("PRAGMA foreign_keys=ON");
@@ -1631,13 +1695,21 @@ package body Entities_Db is
          --  We can store temporary tables in memory
          Session.DB.Execute ("PRAGMA temp_store=MEMORY");
 
+         Put_Line
+           ("put back pragmas:" & Duration'Image (Clock - Start) & " s");
+         Start := Clock;
+
          --  Gather statistic to speed up the query optimizer
+         --  ??? Is this useful when we have already prepared the queries ?
          Session.DB.Execute ("ANALYZE");
+
+         Put_Line ("ANALYZE:" & Duration'Image (Clock - Start) & " s");
+         Start := Clock;
+
          Session.Commit;
+         Put_Line ("COMMIT:" & Duration'Image (Clock - Start) & " s");
       end if;
 
-      Put_Line
-        ("Done parsing files:" & Duration'Image (Clock - Start) & " seconds");
    end Parse_All_LI_Files;
 
 end Entities_Db;
