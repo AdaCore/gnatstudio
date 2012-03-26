@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L323-022: Scrolling occurs in Project View when reloading project
+  Problem:    When reloading the project, the Project View might scroll.
+              This can be cumbersome if, for instance, you are using the
+              Project View to add files to an extending project.
+  Workaround: Scroll manually.
+
 - L321-021: Refactoring read-only files shows dialog with duplicates
   Problem:    If you do a refactoring that involves a read-only file and
               you haven't selected the "Make writable" option, a dialog

@@ -2356,8 +2356,33 @@ package body Project_Explorers is
       --  status, so as to minimize the changes the user sees.
 
       else
-         Update_Node
-           (T, Get_Iter_First (T.Tree.Model), Files_In_Project => null);
+         declare
+            Path_Start, Path_End : Gtk_Tree_Path;
+            Success : Boolean;
+         begin
+
+            --  Memorize the visible path before updating
+
+            T.Tree.Get_Visible_Range (Path_Start, Path_End, Success);
+
+            --  Update the tree
+
+            Update_Node
+              (T, Get_Iter_First (T.Tree.Model), Files_In_Project => null);
+
+            --  Scroll to the initial location after updating
+
+            if Success then
+               T.Tree.Scroll_To_Cell
+                 (Path      => Path_Start,
+                  Column    => null,
+                  Use_Align => True,
+                  Row_Align => 0.0,
+                  Col_Align => 0.0);
+               Path_Free (Path_Start);
+               Path_Free (Path_End);
+            end if;
+         end;
       end if;
 
    exception
