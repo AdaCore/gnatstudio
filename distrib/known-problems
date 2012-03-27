@@ -8,13 +8,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
-- L323-022: Scrolling occurs in Project View when reloading project
+- L325-001: GPS: Refill requires an extra undo
+  Problem:    After a Refill operation (menu Edit->Selection->Refill, shortcut
+              Ctrl+=), GPS requires two "Undo" to revert the refill.
+  Workaround: Perform the extra undo manually.
+
+- L323-022: GPS: Scrolling occurs in Project View when reloading project
   Problem:    When reloading the project, the Project View might scroll.
               This can be cumbersome if, for instance, you are using the
               Project View to add files to an extending project.
   Workaround: Scroll manually.
 
-- L321-021: Refactoring read-only files shows dialog with duplicates
+- L321-021: GPS: Refactoring read-only files shows dialog with duplicates
   Problem:    If you do a refactoring that involves a read-only file and
               you haven't selected the "Make writable" option, a dialog
               is displayed that indicates which file will not be modified.
@@ -22,7 +27,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               renaming an entity that has multiple references in the file)
   Workaround: This is a visual glitch only.
 
-- L321-020: Refactoring "Name parameters" requires an extra undo
+- L321-020: GPS: Refactoring "Name parameters" requires an extra undo
   Problem:    After a refactoring "Name parameters" operation, GPS requires
               two "Undo" to revert the refactoring.
   Workaround: Perform the extra undo manually.
