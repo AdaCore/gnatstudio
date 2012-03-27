@@ -6473,6 +6473,9 @@ package body Src_Editor_Buffer is
          return False;
       end if;
 
+      Start_Group (Buffer.Queue);
+      Enter_Current_Group (Buffer);
+
       Get_Selection_Bounds (Buffer, From, To, Success);
 
       --  No selection; get the current position
@@ -6610,6 +6613,9 @@ package body Src_Editor_Buffer is
          Unchecked_Free (Multiple_Lines_EC_Pattern);
       end if;
 
+      End_Action (Buffer);
+      End_Group (Buffer.Queue);
+      Leave_Current_Group (Buffer);
       return True;
    end Do_Refill;
 
