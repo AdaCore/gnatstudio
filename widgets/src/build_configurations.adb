@@ -1647,6 +1647,16 @@ package body Build_Configurations is
       return Target.Properties.Messages_Category;
    end Get_Messages_Category;
 
+   ----------------------------------
+   -- Get_Messages_Category_String --
+   ----------------------------------
+
+   function Get_Messages_Category_String
+     (Target : Target_Access) return String is
+   begin
+      return To_String (Get_Messages_Category (Target));
+   end Get_Messages_Category_String;
+
    ----------------
    -- Get_Server --
    ----------------

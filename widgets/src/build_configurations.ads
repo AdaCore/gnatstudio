@@ -359,6 +359,10 @@ package Build_Configurations is
    --  Return the messages category to be used for messages in messages
    --  container
 
+   function Get_Messages_Category_String
+     (Target : Target_Access) return String;
+   --  Return the messages category
+
    function Get_Icon (Target : Target_Access) return String;
    --  Return the stock-id corresponding to the icon for target
 
