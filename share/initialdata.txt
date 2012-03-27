@@ -105,6 +105,10 @@
 |    14 | in out parameter | # B is an "in out" parameter for A  |
 |    15 | access parameter | # B is an "access" parameter for A  |
 
+| TABLE | files |
+| id    | path  | stamp      | language |
+| -1    |  /    | 1970-01-01 | ada      |
+
 # The predefined entities for each languages. New ones will be inserted as
 # needed, but having a pre-made list helps documentation.
 

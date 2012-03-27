@@ -17,11 +17,13 @@
 
 with Ada.Calendar;          use Ada.Calendar;
 with Ada.Text_IO;           use Ada.Text_IO;
+with GNAT.Command_Line;     use GNAT.Command_Line;
 with GNAT.Strings;          use GNAT.Strings;
 with GNAT.OS_Lib;
 with GNATCOLL.SQL.Exec;     use GNATCOLL.SQL.Exec;
 with GNATCOLL.SQL.Inspect;  use GNATCOLL.SQL.Inspect;
 with GNATCOLL.SQL.Sessions; use GNATCOLL.SQL.Sessions;
+with GNATCOLL.SQL.Postgres;
 with GNATCOLL.SQL.Sqlite;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
@@ -29,6 +31,13 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with Entities_Db;           use Entities_Db;
 
 procedure Test_Entities is
+
+   Use_Postgres : aliased Boolean := False;
+   --  Whether to use sqlite or postgreSQL
+
+   Do_Not_Perform_Queries : aliased Boolean := False;
+   --  Whether to perform the queries in the database
+
    DB_Name      : constant String := "entities.db";
    GPR_File     : constant Virtual_File :=
      --  Create ("entities.gpr");
@@ -40,13 +49,40 @@ procedure Test_Entities is
    Tree    : Project_Tree;
    Start   : Time;
    GNAT_Version : String_Access;
+   Cmdline_Config : Command_Line_Configuration;
 
    Need_To_Create_DB : constant Boolean :=
      not GNAT.OS_Lib.Is_Regular_File (DB_Name);
 
 begin
    GNATCOLL.Traces.Parse_Config_File;
-   GNATCOLL.SQL.Exec.Perform_Queries := True;
+
+   Define_Switch
+     (Cmdline_Config, Do_Not_Perform_Queries'Access,
+      Long_Switch => "--nodb",
+      Help => "Disable all SQL commands (timing measurement only)");
+   Define_Switch
+     (Cmdline_Config, Use_Postgres'Access,
+      Long_Switch => "--postgres",
+      Help => "Use postgreSQL as the backend, instead of sqlite");
+
+   Getopt (Cmdline_Config);
+
+   GNATCOLL.SQL.Exec.Perform_Queries := not Do_Not_Perform_Queries;
+   Put_Line ("Perform queries ? " & GNATCOLL.SQL.Exec.Perform_Queries'Img);
+   Put_Line ("Use postgres ? " & Use_Postgres'Img);
+
+   --  Prepare database
+
+   if Use_Postgres then
+      GNATCOLL.SQL.Sessions.Setup
+        (Descr        => GNATCOLL.SQL.Postgres.Setup (Database => DB_Name),
+         Max_Sessions => 1);
+   else
+      GNATCOLL.SQL.Sessions.Setup
+        (Descr        => GNATCOLL.SQL.Sqlite.Setup (Database => DB_Name),
+         Max_Sessions => 1);
+   end if;
 
    Start := Clock;
 
@@ -69,12 +105,6 @@ begin
    Put_Line ("Done loading project:"
              & Duration'Image (Clock - Start) & " seconds");
 
-   --  Prepare database
-
-   GNATCOLL.SQL.Sessions.Setup
-     (Descr        => GNATCOLL.SQL.Sqlite.Setup (Database => DB_Name),
-      Max_Sessions => 1);
-
    --  Create the database if needed
 
    declare
@@ -91,14 +121,18 @@ begin
          Schema := New_Schema_IO (DB_Schema_Descr).Read_Schema;
          New_Schema_IO (Session.DB).Write_Schema (Schema);
 
-         --  Load initial data
+         if Session.DB.Success then
+            --  Load initial data
 
-         Load_Data
-           (Session.DB,
-            File   => Initial_Data,
-            Schema => Schema);
-
-         Session.Commit;
+            Load_Data
+              (Session.DB,
+               File   => Initial_Data,
+               Schema => Schema);
+            Session.Commit;
+         else
+            Session.Rollback;
+            return;
+         end if;
 
          Put_Line
            ("Created database:" & Duration'Image (Clock - Start) & " seconds");
@@ -121,4 +155,8 @@ begin
    Tree.Unload;
    Free (Env);
    GNATCOLL.Projects.Finalize;
+
+exception
+   when GNAT.Command_Line.Exit_From_Command_Line =>
+      null;
 end Test_Entities;

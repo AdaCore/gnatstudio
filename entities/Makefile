@@ -27,6 +27,11 @@ run_test:
 	rm -f entities.db
 	time ./obj/test_entities
 
+run_postgresql_test:
+	dropdb entities.db
+	createdb entities.db
+	time ./obj/test_entities --postgres
+
 profile:
 	@sync ; echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
 	@echo "===== Flushing disk caches ====="

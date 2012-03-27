@@ -1,5 +1,6 @@
 with "gnatcoll.gpr";
 with "gnatcoll_sqlite.gpr";
+with "gnatcoll_postgres.gpr";
 with "test1/test1.gpr";
 
 project Entities is

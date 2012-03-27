@@ -120,8 +120,8 @@
 #    55m1 __minor{unsigned int} 57r12
 
 | TABLE      | e2e                      |                   |   |                                                                            |
-| fromEntity | FK entities(links)       | NOT NULL          |   |                                                                            |
-| toEntity   | FK entities(linked_from) | NOT NULL          |   |                                                                            |
+| fromentity | FK entities(links)       | NOT NULL          |   |                                                                            |
+| toentity   | FK entities(linked_from) | NOT NULL          |   |                                                                            |
 | kind       | FK e2e_kind()            | NOT NULL, NOINDEX |   | The type of link. Defined through an enumeration type in Ada               |
 | order_by   | INTEGER                  | NOT NULL          | 1 | Ordering among the references. Used for instance for subprogram parameters |
 
@@ -154,11 +154,11 @@
 | entity             | FK entities(references) | NOT NULL                  |   | The entity to which we have a reference                       |             |                        |                                       |       |
 | file               | FK files(references)    | NOT NULL, NOINDEX         |   |                                                               |             |                        |                                       |       |
 | line               | INTEGER                 | NOT NULL                  |   |                                                               |             |                        |                                       |       |
-| column             | INTEGER                 | NOT NULL                  |   |                                                               |             |                        |                                       |       |
+| col                | INTEGER                 | NOT NULL                  |   |                                                               |             |                        |                                       |       |
 | kind               | FK reference_kinds()    | NOT NULL, NOINDEX         |   | Type of reference (same letter as in ALI files)               |             |                        |                                       |       |
 | caller             | FK entities(calling)    | NULL, NOINDEX             |   | Enclosing entity at that location                             |             |                        |                                       |       |
 | from_instantiation | TEXT                    |                           |   | The instances in which the ref occurs, in the form "file1     | line1,file2 | line2,..." where file1 | line1 is itself instantiated by file2 | line2 |
-| INDEX:             | file,line,column        | entity_refs_file_line_col |   | # Do not include 'entity' to speed up Query_Set_Entity_Rename |             |                        |                                       |       |
+| INDEX:             | file,line,col           | entity_refs_file_line_col |   | # Do not include 'entity' to speed up Query_Set_Entity_Rename |             |                        |                                       |       |
 
-# ??? CREATE INDEX entity_refs__loc on entity_refs (file,kind,line,column);
+# ??? CREATE INDEX entity_refs__loc on entity_refs (file,kind,line,col);
 # See http://www.sqlite.org/queryplanner.html
