@@ -68,8 +68,6 @@ begin
    Getopt (Cmdline_Config);
 
    GNATCOLL.SQL.Exec.Perform_Queries := not Do_Not_Perform_Queries;
-   Put_Line ("Perform queries ? " & GNATCOLL.SQL.Exec.Perform_Queries'Img);
-   Put_Line ("Use postgres ? " & Use_Postgres'Img);
 
    --  Prepare database
 

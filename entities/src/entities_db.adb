@@ -1567,6 +1567,9 @@ package body Entities_Db is
          Session.DB.Execute ("PRAGMA temp_store=MEMORY");
       end if;
 
+      Session.DB.Automatic_Transactions (False);
+      Session.DB.Execute ("BEGIN");
+
       --  It is faster to recreate the index once at the end than maintain it
       --  for every insert.
 
