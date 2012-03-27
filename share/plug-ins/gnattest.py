@@ -12,11 +12,10 @@ def is_harness_project ():
                                                    package="GNATtest")
    return mapping.strip() != ""
 
-def open_harness_project ():
+def open_harness_project (cur):
    if is_harness_project():
       return
 
-   cur = GPS.current_context().project()
    harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
 
    if harness_dir == "" :

@@ -98,7 +98,7 @@
     <description>Run gnattest on current project</description>
     <shell lang="python" output="none"
     >GPS.BuildTarget("GNATTest for project").execute()</shell>
-    <shell lang="python">gnattest.open_harness_project()</shell>
+    <shell lang="python">gnattest.open_harness_project(GPS.current_context().project())</shell>
   </action>
 
   <action name="run gnattest recursive">
@@ -109,7 +109,27 @@
     <description>Run gnattest on current project and subprojects</description>
     <shell lang="python" output="none"
     >GPS.BuildTarget("GNATTest for project").execute(extra_args="-r")</shell>
-    <shell lang="python">gnattest.open_harness_project()</shell>
+    <shell lang="python">gnattest.open_harness_project(GPS.current_context().project())</shell>
+  </action>
+
+  <action name="run gnattest on root">
+    <filter_and>
+      <filter id="Non harness project"/>
+    </filter_and>
+    <description>Run gnattest on root project</description>
+    <shell lang="python" output="none"
+    >GPS.BuildTarget("GNATTest for root project").execute()</shell>
+    <shell lang="python">gnattest.open_harness_project(GPS.Project.root())</shell>
+  </action>
+
+  <action name="run gnattest on root recursive">
+    <filter_and>
+      <filter id="Non harness project"/>
+    </filter_and>
+    <description>Run gnattest on root project and subprojects</description>
+    <shell lang="python" output="none"
+    >GPS.BuildTarget("GNATTest for root project").execute(extra_args="-r")</shell>
+    <shell lang="python">gnattest.open_harness_project(GPS.Project.root())</shell>
   </action>
 
   <action name="open harness" output="none">
@@ -118,7 +138,7 @@
       <filter id="Non harness project"/>
     </filter_and>
     <description>Open harness project for current project</description>
-    <shell lang="python">gnattest.open_harness_project()</shell>
+    <shell lang="python">gnattest.open_harness_project(GPS.current_context().project())</shell>
   </action>
 
   <action name="exit harness" output="none">
@@ -134,16 +154,16 @@
     </filter_and>
     <description>Run gnattest on single package</description>
     <shell lang="python">GPS.BuildTarget("GNATTest for file").execute()</shell>
-    <shell lang="python">gnattest.open_harness_project()</shell>
+    <shell lang="python">gnattest.open_harness_project(GPS.current_context().project())</shell>
   </action>
 
   <submenu after="Documentation">
     <title>Tools/GNATTest</title>
-    <menu action="run gnattest">
+    <menu action="run gnattest on root">
       <title>Generate unit test setup</title>
     </menu>
-    <menu action="open harness">
-      <title>Open harness project</title>
+    <menu action="run gnattest on root recursive">
+      <title>Generate unit test setup recursive</title>
     </menu>
     <menu action="exit harness">
       <title>Exit from harness project</title>
@@ -236,7 +256,7 @@
              tip="Enables Liskov verification: run all tests from all parents in order to check substitutability." />
     </switches>
   </target-model>
-  
+
   <target model="gnattest" category="_Project_" name="GNATTest for project">
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
@@ -260,6 +280,19 @@
       <arg>-P%pp</arg>
       <arg>%X</arg>
       <arg>%F</arg>
+    </command-line>
+  </target>
+
+  <target model="gnattest" category="_Project_"
+          name="GNATTest for root project">
+    <in-menu>FALSE</in-menu>
+    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%PP</arg>
+      <arg>%X</arg>
     </command-line>
   </target>
 
