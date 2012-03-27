@@ -159,3 +159,8 @@ NF-52-FB01-013 ECL: Missing right-click debug options in editor (2011-10-12)
   The Ada editor now supports debug context menu items for run to line, move
   to line, resume at line, add watch expression, and ruler context menu items
   toggle breakpoint, enabled/disable breakpoint, and breakpoint properties.
+
+NF-52-D528-005 GPS: UI: add custom radio menu items (2012-03-27)
+
+  The GPS API GPS.Menu has been enhanced to allow creation of radio menu items
+  and get/set their activity status.
