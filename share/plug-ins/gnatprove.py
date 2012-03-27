@@ -58,7 +58,8 @@ xml_gnatprove = """<?xml version="1.0"?>
   </GNATPROVE>
 """
 
-prefix             = "/GNATprove"
+prefix             = "Prove"
+menu_prefix        = "/" + prefix
 prove_root_project = "Prove Root Project"
 prove_file         = "Prove File"
 prove_line         = "Prove Line"
@@ -80,9 +81,9 @@ def on_prove_line(self):
     target.execute (extra_args="--limit-line="+locstring)
 
 if gnatprove:
-  GPS.Menu.create(prefix, ref = "Window", add_before = True)
-  GPS.Menu.create(prefix + "/" + prove_root_project, on_prove_root_project)
-  GPS.Menu.create(prefix + "/" + prove_file, on_prove_file)
-  GPS.Contextual ("GNATprove/" + prove_file).create(on_activate = on_prove_file)
-  GPS.Contextual ("GNATprove/" + prove_line).create(on_activate = on_prove_line)
+  GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
+  GPS.Menu.create(menu_prefix + "/" + prove_root_project, on_prove_root_project)
+  GPS.Menu.create(menu_prefix + "/" + prove_file, on_prove_file)
+  GPS.Contextual (prefix + "/" + prove_file).create(on_activate = on_prove_file)
+  GPS.Contextual (prefix + "/" + prove_line).create(on_activate = on_prove_line)
   GPS.parse_xml(xml_gnatprove)
