@@ -61,6 +61,7 @@ xml_gnatprove = """<?xml version="1.0"?>
 prefix             = "/GNATprove"
 prove_root_project = "Prove Root Project"
 prove_file         = "Prove File"
+prove_line         = "Prove Line"
 
 # Check for GNAT toolchain: gnatprove
 
@@ -72,8 +73,16 @@ def on_prove_root_project(self):
 def on_prove_file(self):
     GPS.BuildTarget(prove_file).execute()
 
+def on_prove_line(self):
+    target = GPS.BuildTarget(prove_root_project)
+    loc = self.location()
+    locstring = os.path.basename(loc.file().name()) + ":" + str(loc.line())
+    target.execute (extra_args="--limit-line="+locstring)
+
 if gnatprove:
   GPS.Menu.create(prefix, ref = "Window", add_before = True)
   GPS.Menu.create(prefix + "/" + prove_root_project, on_prove_root_project)
   GPS.Menu.create(prefix + "/" + prove_file, on_prove_file)
+  GPS.Contextual ("GNATprove/" + prove_file).create(on_activate = on_prove_file)
+  GPS.Contextual ("GNATprove/" + prove_line).create(on_activate = on_prove_line)
   GPS.parse_xml(xml_gnatprove)
