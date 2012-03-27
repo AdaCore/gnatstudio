@@ -51,8 +51,7 @@ procedure Test_Entities is
    GNAT_Version : String_Access;
    Cmdline_Config : Command_Line_Configuration;
 
-   Need_To_Create_DB : constant Boolean :=
-     not GNAT.OS_Lib.Is_Regular_File (DB_Name);
+   Need_To_Create_DB : Boolean;
 
 begin
    GNATCOLL.Traces.Parse_Config_File;
@@ -78,10 +77,12 @@ begin
       GNATCOLL.SQL.Sessions.Setup
         (Descr        => GNATCOLL.SQL.Postgres.Setup (Database => DB_Name),
          Max_Sessions => 1);
+      Need_To_Create_DB := True;
    else
       GNATCOLL.SQL.Sessions.Setup
         (Descr        => GNATCOLL.SQL.Sqlite.Setup (Database => DB_Name),
          Max_Sessions => 1);
+      Need_To_Create_DB := not GNAT.OS_Lib.Is_Regular_File (DB_Name);
    end if;
 
    Start := Clock;
@@ -129,7 +130,9 @@ begin
                File   => Initial_Data,
                Schema => Schema);
             Session.Commit;
-         else
+         end if;
+
+         if not Session.DB.Success then
             Session.Rollback;
             return;
          end if;

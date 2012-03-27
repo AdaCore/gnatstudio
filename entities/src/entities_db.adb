@@ -97,7 +97,7 @@ package body Entities_Db is
             ((Database.Entity_Refs.Entity   = Integer_Param (1))
              & (Database.Entity_Refs.File   = Integer_Param (2))
              & (Database.Entity_Refs.Line   = Integer_Param (3))
-             & (Database.Entity_Refs.Col    = Integer_Param (4))
+             & (Database.Entity_Refs.Column = Integer_Param (4))
              & (Database.Entity_Refs.Kind   = Text_Param (5))
              & (Database.Entity_Refs.From_Instantiation = Text_Param (6))),
         On_Server => True, Name => "insert_ref");
@@ -151,7 +151,7 @@ package body Entities_Db is
              & (Database.E2e.Kind = E2e_Renames),
              Where => Database.Entity_Refs.File = Integer_Param (2)
                and Database.Entity_Refs.Line = Integer_Param (3)
-               and Database.Entity_Refs.Col = Integer_Param (4)),
+               and Database.Entity_Refs.Column = Integer_Param (4)),
         On_Server => True, Name => "set_entity_renames");
 
    Query_Set_Entity_Name_And_Kind : constant Prepared_Statement :=
@@ -1625,7 +1625,7 @@ package body Entities_Db is
 
       Session.DB.Execute
         ("CREATE INDEX entity_refs_file_line_col"
-         & " on entity_refs(file,line,col)");
+         & " on entity_refs(file,line,""column"")");
       Put_Line ("Done recreating entity_refs index "
                 & Duration'Image (Clock - Start));
 
