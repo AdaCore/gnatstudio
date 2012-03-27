@@ -10,6 +10,18 @@
    the rest is much smaller. Should likely try to get a system that really does
    nothing. This is with disk caches
 
+** Database in memory
+   We could try to create a database in memory, and dump it into a file in the
+   end.
+   Timing to fill the :memory: sqlite database: 40.09u 0.88s 0:59.33elapsed
+      (for the parsing of ALI files: 50.75s)
+   Then we can dump it into a file with:
+
+   http://www.sqlite.org/backup.html 
+
+   This also allows creating the database on the side, and then make it
+   available to GPS, without blocking all GPS SQL queries in the meantime.
+
 ** Using SQL commands similar to Django's bulk_create.
    Django 1.4 introduces a new bulk_create command, which emits a different
    SQL command (but then does not provide a way to retrieve the new primary

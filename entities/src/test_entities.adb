@@ -38,7 +38,7 @@ procedure Test_Entities is
    Do_Not_Perform_Queries : aliased Boolean := False;
    --  Whether to perform the queries in the database
 
-   DB_Name      : constant String := "entities.db";
+   DB_Name      : constant String := ":memory:";  --  "entities.db";
    GPR_File     : constant Virtual_File :=
      --  Create ("entities.gpr");
      Create ("../gps/gps.gpr");
@@ -140,16 +140,33 @@ begin
       else
          Put_Line ("Database already exists, reusing");
       end if;
+
+      --  Parse all LI files (should use the same session, it is safer with
+      --  :memory: databases)
+
+      Parse_All_LI_Files
+        (Session,
+         Tree              => Tree,
+         Env               => Env,
+         Project           => Tree.Root_Project,
+         Database_Is_Empty => Need_To_Create_DB);
+
+      --  Dump into a file
+
+      if DB_Name = ":memory:" then
+         Start := Clock;
+
+         if not GNATCOLL.SQL.Sqlite.Backup
+           (From => Session.DB,
+            To   => "entities.db")
+         then
+            Put_Line ("Failed to backup the database to disk");
+         end if;
+
+         Put_Line ("Total time for backup:"
+                   & Duration'Image (Clock - Start) & " seconds");
+      end if;
    end;
-
-   --  Parse ALI files
-
-   Parse_All_LI_Files
-     (Get_New_Session,
-      Tree              => Tree,
-      Env               => Env,
-      Project           => Tree.Root_Project,
-      Database_Is_Empty => Need_To_Create_DB);
 
    --  Free memory
 
