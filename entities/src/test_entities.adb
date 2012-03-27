@@ -31,6 +31,7 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with Entities_Db;           use Entities_Db;
 
 procedure Test_Entities is
+   Me_Timing : constant Trace_Handle := Create ("ENTITIES.TIMING");
 
    Use_Postgres : aliased Boolean := False;
    --  Whether to use sqlite or postgreSQL
@@ -38,7 +39,9 @@ procedure Test_Entities is
    Do_Not_Perform_Queries : aliased Boolean := False;
    --  Whether to perform the queries in the database
 
-   DB_Name      : constant String := ":memory:";  --  "entities.db";
+   Tmp_DB_Name : constant String := ":memory:";
+   DB_Name     : constant String := "entities.db";
+
    GPR_File     : constant Virtual_File :=
      --  Create ("entities.gpr");
      Create ("../gps/gps.gpr");
@@ -48,6 +51,7 @@ procedure Test_Entities is
    Env     : Project_Environment_Access;
    Tree    : Project_Tree;
    Start   : Time;
+   Absolute_Start : Time;
    GNAT_Version : String_Access;
    Cmdline_Config : Command_Line_Configuration;
 
@@ -78,9 +82,9 @@ begin
       Need_To_Create_DB := True;
    else
       GNATCOLL.SQL.Sessions.Setup
-        (Descr        => GNATCOLL.SQL.Sqlite.Setup (Database => DB_Name),
+        (Descr        => GNATCOLL.SQL.Sqlite.Setup (Database => Tmp_DB_Name),
          Max_Sessions => 1);
-      Need_To_Create_DB := not GNAT.OS_Lib.Is_Regular_File (DB_Name);
+      Need_To_Create_DB := not GNAT.OS_Lib.Is_Regular_File (Tmp_DB_Name);
    end if;
 
    Start := Clock;
@@ -101,8 +105,13 @@ begin
      (Root_Project_Path => GPR_File,
       Env               => Env,
       Errors            => Put_Line'Access);
-   Put_Line ("Done loading project:"
-             & Duration'Image (Clock - Start) & " seconds");
+
+   if Active (Me_Timing) then
+      Trace (Me_Timing,
+             "Loaded project:" & Duration'Image (Clock - Start) & " s");
+   end if;
+
+   Absolute_Start := Clock;
 
    --  Create the database if needed
 
@@ -135,10 +144,12 @@ begin
             return;
          end if;
 
-         Put_Line
-           ("Created database:" & Duration'Image (Clock - Start) & " seconds");
-      else
-         Put_Line ("Database already exists, reusing");
+         if Active (Me_Timing) then
+            Trace
+              (Me_Timing,
+               "Created database:"
+               & Duration'Image (Clock - Start) & " s");
+         end if;
       end if;
 
       --  Parse all LI files (should use the same session, it is safer with
@@ -153,19 +164,24 @@ begin
 
       --  Dump into a file
 
-      if DB_Name = ":memory:" then
+      if not Use_Postgres and then Tmp_DB_Name = ":memory:" then
          Start := Clock;
 
          if not GNATCOLL.SQL.Sqlite.Backup
            (From => Session.DB,
-            To   => "entities.db")
+            To   => DB_Name)
          then
             Put_Line ("Failed to backup the database to disk");
          end if;
 
-         Put_Line ("Total time for backup:"
-                   & Duration'Image (Clock - Start) & " seconds");
+         if Active (Me_Timing) then
+            Trace (Me_Timing,
+                   "Total time for backup:"
+                   & Duration'Image (Clock - Start) & " s");
+         end if;
       end if;
+
+      Put_Line (Duration'Image (Clock - Absolute_Start) & " s");
    end;
 
    --  Free memory

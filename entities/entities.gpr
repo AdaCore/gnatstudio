@@ -11,7 +11,7 @@ project Entities is
    package Compiler is
       for Switches("ada") use ("-gnat12", "-g", "-gnatwaCJe", "-gnatyg0",
                                "-gnateE",
-                               "-gnatQ", "-O2");
+                               "-gnatQ", "-O2", "-gnatn");
    end Compiler;
 
    package Binder is

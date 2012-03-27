@@ -6,6 +6,7 @@ DB2ADA=gnatcoll_db2ada -output generated -dbmodel=${MODEL}
 
 all:
 	@mkdir -p obj
+	@mkdir -p generated
 
 	@# Create the Ada API for the database
 	@${DB2ADA} -api Database -orm Orm
@@ -18,14 +19,15 @@ all:
 		-api-enums Database_Enums -enum "f2f_kind,id,name,F2F_,Integer"  \
 		-api-enums Database_Enums -enum "e2e_kind,id,name,E2E_,Integer" 
 
-	gprbuild -m -j0 -Pentities.gpr
-
-test:
-	@gnatmake -u -p -Ptest1/test1.gpr
+	@gprbuild -m -j0 -q -Pentities.gpr
 
 run_test:
 	rm -f entities.db
 	time ./obj/test_entities
+
+quiet:
+	@rm -f entities.db log
+	@unset ADA_DEBUG_FILE; ./obj/test_entities
 
 run_postgresql_test:
 	dropdb entities.db

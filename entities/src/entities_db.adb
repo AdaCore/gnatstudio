@@ -22,7 +22,6 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Text_IO;       use Ada.Text_IO;
 with Database;          use Database;
 with Database_Enums;    use Database_Enums;
 with GNATCOLL.Mmap;     use GNATCOLL.Mmap;
@@ -37,6 +36,7 @@ package body Entities_Db is
    Me_Error : constant Trace_Handle := Create ("ENTITIES.ERROR");
    Me_Debug : constant Trace_Handle := Create ("ENTITIES.DEBUG", Off);
    Me_Forward : constant Trace_Handle := Create ("ENTITIES.FORWARD");
+   Me_Timing : constant Trace_Handle := Create ("ENTITIES.TIMING");
 
    Instances_Provide_Column : constant Boolean := False;
    --  Whether instance info in the ALI files provide the column information.
@@ -1507,8 +1507,7 @@ package body Entities_Db is
    procedure Parse_All_LI_Files
      (Session : Session_Type;
       Tree    : Project_Tree;
-      Project : Project_Type
-      ;
+      Project : Project_Type;
       Env     : Project_Environment_Access := null;
       Database_Is_Empty : Boolean := False)
    is
@@ -1602,10 +1601,14 @@ package body Entities_Db is
          end loop;
       end;
 
-      Put_Line ("Number of .ali + .gli files:" & Length (LI_Files)'Img
-                & " (" & Duration'Image (Clock - Start) & " seconds)");
+      if Active (Me_Timing) then
+         Trace (Me_Timing,
+                "Found" & Length (LI_Files)'Img
+                & " ali + gli files:"
+                & Duration'Image (Clock - Start) & " s");
+         Start := Clock;
+      end if;
 
-      Start := Clock;
       Lib_Info := LI_Files.First;
       while Has_Element (Lib_Info) loop
          Parse_LI (Session              => Session,
@@ -1619,35 +1622,36 @@ package body Entities_Db is
          Next (Lib_Info);
       end loop;
 
-      Dur := Clock - Start;
-      Put_Line ("Done parsing all files: ("
-                & Duration'Image (Dur) & " seconds) = "
+      if Active (Me_Timing) then
+         Dur := Clock - Start;
+         Trace (Me_Timing,
+                "Parsed files:"
                 & Duration'Image (Dur / Integer (Length (LI_Files)))
-                & "s per file");
-      Start := Clock;
+                & " s/file," & Duration'Image (Dur) & " s");
+         Start := Clock;
+      end if;
 
       Session.DB.Execute
         ("CREATE INDEX entity_refs_file_line_col"
          & " on entity_refs(file,line,""column"")");
-      Put_Line ("Done recreating entity_refs index "
-                & Duration'Image (Clock - Start));
 
-      Start := Clock;
+      if Active (Me_Timing) then
+         Trace (Me_Timing,
+                "Created entity_refs index: "
+                & Duration'Image (Clock - Start) & " s");
+         Start := Clock;
+      end if;
+
       Resolve_Renamings;
 
-      Put_Line ("Processed all renamings: "
-                & Length (Entity_Renamings)'Img
-                & " entities ("
-                & Duration'Image (Clock - Start) & " seconds)");
-      Start := Clock;
+      if Active (Me_Timing) then
+         Trace (Me_Timing,
+                "Processed" & Length (Entity_Renamings)'Img
+                & " renaming:" & Duration'Image (Clock - Start) & " s");
+         Start := Clock;
+      end if;
 
-      --  It might be safer to commit after each LI file, but this is much
-      --  slower. At worse, if there is an error parsing one file, we are not
-      --  going to load anything, and the files will be loaded on demand later.
       Session.Commit;
-
-      Put_Line ("Committed:" & Duration'Image (Clock - Start) & " seconds");
-      Start := Clock;
 
       if Session.DB.Has_Pragmas then
          Session.DB.Execute ("PRAGMA foreign_keys=ON");
@@ -1662,22 +1666,21 @@ package body Entities_Db is
 
          --  We can store temporary tables in memory
          Session.DB.Execute ("PRAGMA temp_store=MEMORY");
-
-         Put_Line
-           ("put back pragmas:" & Duration'Image (Clock - Start) & " s");
-         Start := Clock;
       end if;
 
       --  Gather statistic to speed up the query optimizer
-      --  ??? Is this useful when we have already prepared the queries ?
       Session.DB.Execute ("ANALYZE");
 
-      Put_Line ("ANALYZE:" & Duration'Image (Clock - Start) & " s");
-      Start := Clock;
+      if Active (Me_Timing) then
+         Trace (Me_Timing, "ANALYZE:" & Duration'Image (Clock - Start) & " s");
+         Start := Clock;
+      end if;
 
       Session.Commit;
-      Put_Line ("COMMIT:" & Duration'Image (Clock - Start) & " s");
 
+      if Active (Me_Timing) then
+         Trace (Me_Timing, "COMMIT:" & Duration'Image (Clock - Start) & " s");
+      end if;
    end Parse_All_LI_Files;
 
 end Entities_Db;
