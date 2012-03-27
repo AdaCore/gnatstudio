@@ -939,7 +939,7 @@ package body GPS.Kernel.Messages is
 
          while Category_XML_Node /= null loop
             if Category_XML_Node.Tag.all = "sort_order_hint" then
-               Self.Sort_Order_Hints.Insert
+               Self.Sort_Order_Hints.Include
                  (To_Unbounded_String
                     (Get_Attribute (Category_XML_Node, "category", "")),
                   Sort_Order_Hint'Value
