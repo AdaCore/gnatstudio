@@ -23,7 +23,7 @@ all:
 
 run_test:
 	rm -f entities.db
-	time ./obj/test_entities
+	./obj/test_entities
 
 quiet:
 	@rm -f entities.db log
