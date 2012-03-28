@@ -74,6 +74,9 @@ private
 
       Is_Horizontal : Boolean := True;
 
+      Is_New        : Boolean := True;
+      --  True when the entity view was just created
+
       Dialog        : Gtk_Dialog;
 
       Vertical_Position   : Gint := -1;

@@ -401,9 +401,18 @@ package body Completion_Window.Entity_Views is
       Width := Get_Allocation_Width (View);
       Height := Get_Allocation_Height (View);
 
+      --  If the view is new, set its horizontal position.
+      --  If the original orientation is vertical, it will be switched
+      --  immediately below.
+      if View.Is_New then
+         Set_Position (View.Pane, View.Horizontal_Position);
+      end if;
+
       if (Width > Height and then not View.Is_Horizontal)
         or else (Width < Height and then View.Is_Horizontal)
       then
+         View.Is_New := False;
+
          --  We need to switch the orientation
 
          View.Is_Horizontal := not View.Is_Horizontal;
@@ -474,6 +483,7 @@ package body Completion_Window.Entity_Views is
          Set_Attribute
            (N, "position_vertical", Get_Position (View.Pane)'Img);
       end if;
+
       return N;
    end Save_Desktop;
 
