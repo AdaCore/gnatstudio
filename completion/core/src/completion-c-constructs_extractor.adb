@@ -408,10 +408,6 @@ package body Completion.C.Constructs_Extractor is
                                 (To_List      => E_List,
                                  Scope        => E,
                                  Prefix_Token => Last_Token);
-
-                              Completion_List_Pckg.Append
-                                (Result.List,
-                                 To_Extensive_List (E_List));
                            end if;
                         end if;
 
@@ -419,6 +415,10 @@ package body Completion.C.Constructs_Extractor is
                      end loop;
 
                      Free (Iter);
+
+                     Completion_List_Pckg.Append
+                       (Result.List,
+                        To_Extensive_List (E_List));
 
                      if Last_Token.Tok_Type = Tok_Identifier then
                         Result.Searched_Identifier :=

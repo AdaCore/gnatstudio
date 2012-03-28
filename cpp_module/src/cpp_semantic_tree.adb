@@ -44,8 +44,6 @@ package body Cpp_Semantic_Tree is
          Tok_Typ : constant Token_Type := Token.Tok_Type;
 
       begin
-         Stop := False;
-
          case Tok_Typ is
             when Language.Cpp.Tok_Identifier  |
                  Language.Cpp.Tok_Dot         |

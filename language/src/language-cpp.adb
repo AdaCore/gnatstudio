@@ -321,6 +321,11 @@ package body Language.Cpp is
       procedure Prev_Char is
       begin
          if Index = Lowest or else Stop then
+            if Index = Lowest then
+               Index := String_Index_Type'Pred (Lowest);
+               Word_Begin := Index;
+            end if;
+
             Ch   := ' ';
             Stop := True;
             return;
@@ -794,6 +799,7 @@ package body Language.Cpp is
 
             if Suffix_Found
               or else Is_Alphanumeric (Ch)
+              or else Ch = '_'
             then
                while not Stop
                  and then
