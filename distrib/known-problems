@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L328-003: GPS: The Entity View forgets the position of the separator
+  Problem:    When the Entity View is in horizontal layout (with the list and
+              the documentation window side-by-side), the position of the
+              separator between windows is not remembered between sessions.
+  Workaround: Position the separator manually.
+
 - L325-001: GPS: Refill requires an extra undo
   Problem:    After a Refill operation (menu Edit->Selection->Refill, shortcut
               Ctrl+=), GPS requires two "Undo" to revert the refill.
