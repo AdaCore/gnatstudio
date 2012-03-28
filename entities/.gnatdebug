@@ -1,9 +1,0 @@
->log
-DEBUG.COUNT=yes
-SQL.*=no
-SQL.SQLITE.GNADE=no   # Requires change in source to activate, too
-SQL.SQLITE.LOG=yes
-SQL.ERROR=yes >&1
-ENTITIES.*=yes
-ENTITIES.DEBUG=no
-*.TIMING >&1
