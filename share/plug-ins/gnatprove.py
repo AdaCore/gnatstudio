@@ -63,10 +63,21 @@ menu_prefix        = "/" + prefix
 prove_root_project = "Prove Root Project"
 prove_file         = "Prove File"
 prove_line         = "Prove Line"
+prove_subp         = "Prove Subprogram"
 
 # Check for GNAT toolchain: gnatprove
 
 gnatprove = os_utils.locate_exec_on_path("gnatprove")
+
+def is_entity_context(self):
+    if isinstance (self, GPS.EntityContext) and self.entity():
+        return True
+    else:
+        return False
+
+def mk_loc_string (sloc):
+    locstring = os.path.basename(sloc.file().name()) + ":" + str(sloc.line())
+    return locstring
 
 def on_prove_root_project(self):
     GPS.BuildTarget(prove_root_project).execute()
@@ -77,8 +88,12 @@ def on_prove_file(self):
 def on_prove_line(self):
     target = GPS.BuildTarget(prove_root_project)
     loc = self.location()
-    locstring = os.path.basename(loc.file().name()) + ":" + str(loc.line())
-    target.execute (extra_args="--limit-line="+locstring)
+    target.execute (extra_args="--limit-line="+mk_loc_string(loc))
+
+def on_prove_subp(self):
+    target = GPS.BuildTarget(prove_root_project)
+    loc = self.entity().declaration()
+    target.execute (extra_args="--limit-subp="+mk_loc_string (loc))
 
 if gnatprove:
   GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
@@ -86,4 +101,6 @@ if gnatprove:
   GPS.Menu.create(menu_prefix + "/" + prove_file, on_prove_file)
   GPS.Contextual (prefix + "/" + prove_file).create(on_activate = on_prove_file)
   GPS.Contextual (prefix + "/" + prove_line).create(on_activate = on_prove_line)
+  GPS.Contextual (prefix + "/" + prove_subp).create(
+          on_activate = on_prove_subp, filter = is_entity_context)
   GPS.parse_xml(xml_gnatprove)
