@@ -239,9 +239,10 @@ class Isearch (CommandWindow):
 
        self.locked = True
        case_sensitive = self.case_sensitive
-       self.write (input[:cursor_pos + 1] + \
+       Isearch.last_search = input[:cursor_pos + 1] + \
                    self.editor.get_chars (start, end) + \
-                   input[cursor_pos + 1 :])
+                   input[cursor_pos + 1 :]
+       self.write(Isearch.last_search)
        self.locked = False
        self.editor.select (self.loc, end + 1)
        self.case_sensitive = case_sensitive

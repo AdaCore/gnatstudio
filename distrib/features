@@ -23,6 +23,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L329-021 GPS: isearch.py stores result of ctrl+w in history (2012-03-29)
+
+  When you start a search (ctrl+s) and then use ctrl+w to copy parts of the
+  current identifier as the search pattern, this pattern is now stored
+  immediately in the history. That way, cancelling the search and restarting
+  it with ctrl+s ctrl+s will search what was copied (we used to update the
+  pattern only after you pressed ctrl+s a second time after ctrl+w).
+  This is closer to Emacs' behavior.
+
 NF-52-L320-004 GPS: simplify Default Builder preference (2012-03-20)
 
   The Default Builder preference has been simplified, with the following
