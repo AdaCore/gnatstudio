@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+with Ada.Calendar;
 with Ada.Containers.Ordered_Maps;
 
 with Commands.GNATTest;
@@ -21,12 +22,14 @@ with Commands.Interactive;
 with Entities;
 with Glib.Object;                       use Glib.Object;
 
+with GNAT.Calendar.Time_IO;
 with GNATCOLL.Projects;
 
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;
+with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;
@@ -125,6 +128,7 @@ package body GNATTest_Module is
       File_Name        : Unbounded_String;
       Line             : Natural;
       Column           : Natural;
+      Stamp            : Ada.Calendar.Time;
    end record;
 
    package Source_Entity_Maps is new Ada.Containers.Ordered_Maps
@@ -151,6 +155,14 @@ package body GNATTest_Module is
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class);
+
+   type Show_Not_Implemented_Tests_Command_Type is
+     new Commands.Interactive.Interactive_Command with null record;
+
+   overriding function Execute
+     (Command : access Show_Not_Implemented_Tests_Command_Type;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
 
    Map : Mapping_File;
 
@@ -252,11 +264,60 @@ package body GNATTest_Module is
                (Entity => Source_Entity_Maps.Element (Cursor),
                 Kernel => GPS.Kernel.Get_Kernel (Context)));
 
-            Cursor := Source_Entity_Maps.Next (Cursor);
+            Source_Entity_Maps.Next (Cursor);
          end;
       end loop;
 
    end Append_To_Menu;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Show_Not_Implemented_Tests_Command_Type;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      use type Ada.Calendar.Time;
+
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Messages : constant GPS.Kernel.Messages.Messages_Container_Access :=
+        GPS.Kernel.Messages.Get_Messages_Container (Kernel);
+      Cursor   : Source_Entity_Maps.Cursor := Map.Source_Map.First;
+   begin
+      while Source_Entity_Maps.Has_Element (Cursor) loop
+         declare
+            use type GNATCOLL.VFS.Filesystem_String;
+            Key  : constant Source_Entity := Source_Entity_Maps.Key (Cursor);
+            Item : constant Test_Entity := Source_Entity_Maps.Element (Cursor);
+            File : constant GNATCOLL.VFS.Virtual_File := GPS.Kernel.Create
+              (+To_String (Key.Source_File), Kernel);
+            Test : constant GNATCOLL.VFS.Virtual_File := GPS.Kernel.Create
+              (+To_String (Item.File_Name), Kernel);
+         begin
+            if Test.File_Time_Stamp = Item.Stamp then
+               GPS.Kernel.Messages.Simple.Create_Simple_Message
+                 (Container => Messages,
+                  Category  => "GNATTest",
+                  File      => File,
+                  Line      => Key.Line,
+                  Column    => Basic_Types.Visible_Column_Type (Key.Column),
+                  Text      => "Unimplemented " &
+                    To_String (Key.Test_Case_Name) & " " &
+                    To_String (Key.Subprogram_Name),
+                  Weight    => 1,
+                  Flags     => (GPS.Kernel.Messages.Locations => True,
+                                others => <>));
+            end if;
+
+            Source_Entity_Maps.Next (Cursor);
+         end;
+      end loop;
+
+      return Commands.Success;
+   end Execute;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -529,11 +590,14 @@ package body GNATTest_Module is
       use Commands.GNATTest;
       Filter : Action_Filter;
 
-      Go_Command : constant Commands.Interactive.Interactive_Command_Access :=
-        new Go_To_Tested_Command_Type;
+      Go_Command : constant Commands.Interactive.Interactive_Command_Access
+        := new Go_To_Tested_Command_Type;
 
-      Submenu_Factory : constant GPS.Kernel.Modules.UI.Submenu_Factory :=
-        new Submenu_Factory_Record;
+      Show_Command : constant Commands.Interactive.Interactive_Command_Access
+        := new Show_Not_Implemented_Tests_Command_Type;
+
+      Submenu_Factory : constant GPS.Kernel.Modules.UI.Submenu_Factory
+        := new Submenu_Factory_Record;
    begin
       GNATTest_Module_ID := new GNATTest_Module_Record;
 
@@ -545,6 +609,12 @@ package body GNATTest_Module is
 
       Filter := new Harness_Project_Filter;
       Register_Filter (Kernel, Filter, "Harness project");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel      => Kernel,
+         Name        => "Show not implemented tests",
+         Command     => Show_Command,
+         Filter      => Filter);
 
       Filter := new Non_Harness_Project_Filter;
       Register_Filter (Kernel, Filter, "Non harness project");
@@ -607,6 +677,7 @@ package body GNATTest_Module is
       pragma Unreferenced (Qname);
 
       function To_Integer (Name : String) return Integer;
+      function To_Time (Name : String) return Ada.Calendar.Time;
       procedure Add_Setup_Teardown;
 
       procedure Add_Setup_Teardown is
@@ -628,6 +699,21 @@ package body GNATTest_Module is
       begin
          return Integer'Value (Atts.Get_Value (Name));
       end To_Integer;
+
+      Null_Time : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
+        (Year    => Ada.Calendar.Year_Number'First,
+         Month   => Ada.Calendar.Month_Number'First,
+         Day     => Ada.Calendar.Day_Number'First);
+
+      function To_Time (Name : String) return Ada.Calendar.Time is
+         Image : constant String := Atts.Get_Value (Name);
+      begin
+         if Image /= "modified" then
+            return GNAT.Calendar.Time_IO.Value (Image);
+         end if;
+
+         return Null_Time;
+      end To_Time;
    begin
       if Local_Name = "unit" then
          Self.Last_Source.Source_File :=
@@ -659,12 +745,14 @@ package body GNATTest_Module is
               To_Unbounded_String (Atts.Get_Value ("file"));
          Self.Setup.Line := To_Integer ("line");
          Self.Setup.Column := To_Integer ("column");
+         Self.Setup.Stamp := Null_Time;
 
       elsif Local_Name = "teardown" then
          Self.Teardown.File_Name :=
               To_Unbounded_String (Atts.Get_Value ("file"));
          Self.Teardown.Line := To_Integer ("line");
          Self.Teardown.Column := To_Integer ("column");
+         Self.Setup.Stamp := Null_Time;
 
       elsif Local_Name = "test" then
          declare
@@ -674,6 +762,7 @@ package body GNATTest_Module is
               To_Unbounded_String (Atts.Get_Value ("file"));
             Target.Line := To_Integer ("line");
             Target.Column := To_Integer ("column");
+            Target.Stamp := To_Time ("timestamp");
 
             Self.Source_Map.Include (Self.Last_Source, Target);
             Self.Test_Map.Include (Target.File_Name, Self.Last_Source);

@@ -165,6 +165,9 @@
     <menu action="run gnattest on root recursive">
       <title>Generate unit test setup recursive</title>
     </menu>
+    <menu action="Show not implemented tests">
+      <title>Show not implemented tests</title>
+    </menu>
     <menu action="exit harness">
       <title>Exit from harness project</title>
     </menu>
