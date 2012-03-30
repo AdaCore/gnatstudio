@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L330-002: Extra references to generic entity
+  Problem:    When looking for all references to a generic entity, extra
+              references are listed in the Locations view, pointing to the
+              locations of their instantiations.
+  Workaround: Simply ignore the extra references.
+
 - L329-043: Too many ALI files parsed when using library projects
   Problem:    If your project tree includes library projects, the IDE parses
               too many .ali files when you select /Build/Load Xref in Memory,
