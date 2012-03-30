@@ -46,6 +46,7 @@ package body ALI_Parser is
    Me          : constant Trace_Handle := Create ("ALI", Off);
    Assert_Me   : constant Trace_Handle := Create ("ALI.Assert", Off);
    MU_Trace    : constant Trace_Handle := Create ("ALI.Multi_Unit", Off);
+   Me_Parsing  : constant Trace_Handle := Create ("ALI.PARSING", Off);
 
    SLI_Support : constant Trace_Handle := Create ("SPARK.SLI", Off);
 
@@ -1894,8 +1895,11 @@ package body ALI_Parser is
                     and then Last >= Short_ALI_Filename'First
                   loop
                      declare
-                        Path : constant File_Array :=
-                                 Object_Path (P, False, True, True);
+                        Path : constant File_Array := Object_Path
+                          (Project             => P,
+                           Recursive           => False,
+                           Including_Libraries => True,
+                           Xrefs_Dirs          => True);
                         File : constant Filesystem_String :=
                                  (Short_ALI_Filename
                                    (Short_ALI_Filename'First .. Last)
@@ -2065,8 +2069,11 @@ package body ALI_Parser is
 
             while P /= No_Project loop
                declare
-                  Paths : constant File_Array :=
-                    Object_Path (P, False, True, True);
+                  Paths : constant File_Array := Object_Path
+                    (Project             => P,
+                     Recursive           => False,
+                     Including_Libraries => True,
+                     Xrefs_Dirs          => True);
                   Path  : Virtual_File;
                   Files : File_Array_Access;
                   F_Idx : Natural := 0;
@@ -2369,9 +2376,11 @@ package body ALI_Parser is
             declare
                Dir  : constant Virtual_File :=
                         Get_Parent (Get_LI_Filename (Get_LI (Source)));
-               Path : constant File_Array :=
-                        Object_Path
-                          (Get_Project (Get_LI (Source)), False, True, True);
+               Path : constant File_Array := Object_Path
+                 (Project             => Get_Project (Get_LI (Source)),
+                  Recursive           => False,
+                  Including_Libraries => True,
+                  Xrefs_Dirs          => True);
             begin
                for J in Path'Range loop
                   Is_Up_To_Date := Path (J) = Dir;
@@ -2630,10 +2639,12 @@ package body ALI_Parser is
             Result := No_ALI_Id;
 
          else
+            if Active (Me_Parsing) then
+               Trace (Me_Parsing, "Parsing " & ALI_Filename.Display_Full_Name);
+            end if;
+
             if Active (Assert_Me) then
-               Trace (Assert_Me,
-                      "Parsing " & ALI_Filename.Display_Full_Name &
-                        " Reset=" & Reset_First'Img);
+               Trace (Assert_Me, "   Reset=" & Reset_First'Img);
             end if;
 
             --  Replace the last char by an EOF. Scan_ALI uses this character
