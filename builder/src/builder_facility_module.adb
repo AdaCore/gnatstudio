@@ -1414,7 +1414,7 @@ package body Builder_Facility_Module is
 
          if Toplevel_Menu then
             Builder_Module_ID.Menus.Prepend
-              (To_Unbounded_String (Main_Menu & Name));
+              (To_Unbounded_String (Parent_Path & Name));
          else
             Builder_Module_ID.Menus.Prepend (Cat_Path & "/" & Name);
          end if;

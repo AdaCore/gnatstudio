@@ -14,6 +14,15 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               locations of their instantiations.
   Workaround: Simply ignore the extra references.
 
+- L329-027: GPS: Duplicate menu entries for build targets
+  Problem:    When specifying a new build target through XML, if the target
+              is using a "toplevel" category (ie, which starts and ends with
+              an underscore), and if the target is set in a specific menu
+              through the "menu" attribute, then this target will appear
+              several times in the menu.
+  Workaround: Do not display these targets in the menu, but create a specific
+              menu to launch these targets, in Python or XML.
+
 - L329-043: Too many ALI files parsed when using library projects
   Problem:    If your project tree includes library projects, the IDE parses
               too many .ali files when you select /Build/Load Xref in Memory,
