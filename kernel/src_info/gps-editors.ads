@@ -312,12 +312,15 @@ package GPS.Editors is
      (This       : Editor_View;
       Location   : Editor_Location'Class;
       Raise_View : Boolean := False;
-      Centering  : Centering_Type := With_Margin) is abstract;
+      Centering  : Centering_Type := With_Margin;
+      Extend_Selection : Boolean := False) is abstract;
    --  Moves the cursor at the given location. Each view of a particular buffer
    --  has its own cursor position, which is where characters typed by the user
    --  will be inserted.
    --  The view is scrolled to make the cursor visible according to the
    --  specified policy
+   --  If Extend_Selection is True, extend the selection from the current
+   --  selection bound to the Location.
 
    function Cursor
      (This : Editor_View) return Editor_Location'Class is abstract;
@@ -922,7 +925,8 @@ private
      (This       : Dummy_Editor_View;
       Location   : Editor_Location'Class;
       Raise_View : Boolean := False;
-      Centering  : Centering_Type := With_Margin) is null;
+      Centering  : Centering_Type := With_Margin;
+      Extend_Selection : Boolean := False) is null;
 
    overriding function Cursor
      (This : Dummy_Editor_View) return Editor_Location'Class;

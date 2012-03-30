@@ -480,7 +480,8 @@ package body Src_Editor_Module.Editors is
      (This       : Src_Editor_View;
       Location   : Editor_Location'Class;
       Raise_View : Boolean := False;
-      Centering  : Centering_Type := With_Margin);
+      Centering  : Centering_Type := With_Margin;
+      Extend_Selection : Boolean := False);
 
    overriding function Cursor
      (This : Src_Editor_View) return Editor_Location'Class;
@@ -2363,7 +2364,8 @@ package body Src_Editor_Module.Editors is
      (This       : Src_Editor_View;
       Location   : Editor_Location'Class;
       Raise_View : Boolean := False;
-      Centering  : Centering_Type := With_Margin)
+      Centering  : Centering_Type := With_Margin;
+      Extend_Selection : Boolean := False)
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
@@ -2384,7 +2386,8 @@ package body Src_Editor_Module.Editors is
                   Line        => Line,
                   Column      => Col,
                   Force_Focus => Raise_View,
-                  Centering   => Centering);
+                  Centering   => Centering,
+                  Extend_Selection => Extend_Selection);
             end;
 
          end if;

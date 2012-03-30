@@ -3774,7 +3774,8 @@ package body Src_Editor_Buffer is
       Line      : Gint;
       Column    : Gint;
       Centering : Centering_Type;
-      Internal  : Boolean)
+      Internal  : Boolean;
+      Extend_Selection : Boolean := False)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -3803,7 +3804,12 @@ package body Src_Editor_Buffer is
       --  valid, so we can safely get the iterator at this position.
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
-      Place_Cursor (Buffer, Iter);
+
+      if Extend_Selection then
+         Move_Mark (Buffer, Buffer.Insert_Mark, Iter);
+      else
+         Place_Cursor (Buffer, Iter);
+      end if;
    end Set_Cursor_Position;
 
    procedure Set_Cursor_Position
@@ -3811,7 +3817,8 @@ package body Src_Editor_Buffer is
       Line      : Editable_Line_Type;
       Column    : Character_Offset_Type;
       Centering : Centering_Type := Center;
-      Internal  : Boolean)
+      Internal  : Boolean;
+      Extend_Selection : Boolean := False)
    is
       Buffer_Line : Buffer_Line_Type := Get_Buffer_Line (Buffer, Line);
    begin
@@ -3828,7 +3835,8 @@ package body Src_Editor_Buffer is
 
       Set_Cursor_Position
         (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1),
-         Centering, Internal => Internal);
+         Centering, Internal => Internal,
+         Extend_Selection => Extend_Selection);
    end Set_Cursor_Position;
 
    ---------------------------------

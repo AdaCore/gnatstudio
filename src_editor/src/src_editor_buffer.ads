@@ -220,7 +220,8 @@ package Src_Editor_Buffer is
       Line      : Editable_Line_Type;
       Column    : Character_Offset_Type;
       Centering : GPS.Editors.Centering_Type := GPS.Editors.Center;
-      Internal  : Boolean);
+      Internal  : Boolean;
+      Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given position.
    --  If, following this call, the cursor location needs to be displayed, the
    --  editor will scroll so that the cursor is visible, with the behavior
@@ -233,6 +234,9 @@ package Src_Editor_Buffer is
    --  Internal should be set to True if the call is due to internal
    --  mechanics of GPS (ie, implementation of editor commands), and False if
    --  it is due to something external (ie, through python/xml commands).
+   --
+   --  If Extend_Selection is True, extend the selection from the current
+   --  bound to the given position.
 
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
@@ -1063,7 +1067,8 @@ private
       Line      : Gint;
       Column    : Gint;
       Centering : GPS.Editors.Centering_Type;
-      Internal  : Boolean);
+      Internal  : Boolean;
+      Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given position.
    --  If, following this call, the cursor location needs to be displayed, the
    --  editor will scroll so that the cursor is centered if Center is True.
@@ -1077,6 +1082,10 @@ private
    --  Internal should be set to True if the call is due to internal
    --  mechanics of GPS (ie, implementation of editor commands), and False if
    --  it is due to something external (ie, through python/xml commands).
+   --
+
+   --  If Extend_Selection is True, extend the selection from the current
+   --  bound to the given position.
 
    function Is_In_Comment
      (Buffer : Source_Buffer;

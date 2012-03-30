@@ -5524,7 +5524,8 @@ To get a handle on the current editor, use the following code:
   <shell_doc name="GPS.EditorView.goto">
       <param name="self">An instance of GPS.EditorView</param>
       <param name="location">An instance of GPS.EditorLocation</param>
-      <description>Moves the cursor at the given location. Each view of a particular buffer has its own cursor position, which is where characters typed by the user will be inserted</description>
+      <param name="extend_selection">A Boolean</param>
+      <description>Moves the cursor at the given location. Each view of a particular buffer has its own cursor position, which is where characters typed by the user will be inserted. If extend_selection is True, extend the selection from the current bound to the new location.</description>
   </shell_doc>
 
   <shell_doc name="GPS.EditorView.cursor">

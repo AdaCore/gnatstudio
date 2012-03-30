@@ -23,6 +23,9 @@ import navigation_utils
 import gtk
 from gps_utils import *
 
+should_extend_selection = False
+# Whether the selection should be extended when moving the cursor
+
 GPS.Preference ("Plugins/emacs/transient_mark").create (
    "Transient Mark", "boolean",
    """If unset, the selected region is never unselected when the clipboard is modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs mode with the same name""", False)
@@ -461,19 +464,20 @@ def kill_line (location = None, count=1):
 def beginning_of_buffer():
    """Move the cursor to the beginning of the buffer"""
    buffer = GPS.EditorBuffer.get()
-   buffer.current_view().goto (buffer.beginning_of_buffer())
+   buffer.current_view().goto (buffer.beginning_of_buffer(),
+       should_extend_selection)
 
 @interactive ("Editor", "Source editor", name="goto end of buffer")
 def end_of_buffer():
    """Move the cursor to the end of the buffer"""
    buffer = GPS.EditorBuffer.get()
-   buffer.current_view().goto (buffer.end_of_buffer())
+   buffer.current_view().goto (buffer.end_of_buffer(), should_extend_selection)
 
 @interactive ("Editor", "Source editor", name="goto beginning of line")
 def goto_beginning_of_line():
    """Goto the beginning of line"""
    view = GPS.EditorBuffer.get().current_view()
-   view.goto (view.cursor().beginning_of_line())
+   view.goto (view.cursor().beginning_of_line(), should_extend_selection)
 
 def end_of_line(file, line):
    """Goto to the end of the line in file"""
@@ -485,7 +489,7 @@ def end_of_line(file, line):
 def goto_end_of_line():
    """Goto the end of line"""
    view = GPS.EditorBuffer.get().current_view()
-   view.goto (view.cursor().end_of_line())
+   view.goto (view.cursor().end_of_line(), should_extend_selection)
 
 def is_space (char):
    return char == ' ' or char == '\t'
@@ -845,6 +849,11 @@ try:
    def override_key_bindings (select):
        """Override the default TextView keybinding to either always force
           the extension the selection, or not"""
+
+       global should_extend_selection
+
+       should_extend_selection = select
+
        override (RIGHT,    0, gtk.MOVEMENT_VISUAL_POSITIONS, 1, select)
        override (KP_RIGHT, 0, gtk.MOVEMENT_VISUAL_POSITIONS, 1, select)
        override (LEFT,     0, gtk.MOVEMENT_VISUAL_POSITIONS, -1, select)

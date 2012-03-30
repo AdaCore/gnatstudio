@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L329-026 GPS: Improved emacs selection mode support (2012-03-30)
+
+  When using the emacs mode, after setting a mark, the commands to go to the
+  beginning and end of line will extend the selection.
+
 NF-52-L329-021 GPS: isearch.py stores result of ctrl+w in history (2012-03-29)
 
   When you start a search (ctrl+s) and then use ctrl+w to copy parts of the

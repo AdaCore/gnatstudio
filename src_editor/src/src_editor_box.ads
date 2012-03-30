@@ -176,13 +176,16 @@ package Src_Editor_Box is
       Line        : Editable_Line_Type;
       Column      : Character_Offset_Type := 1;
       Force_Focus : Boolean := True;
-      Centering   : GPS.Editors.Centering_Type := GPS.Editors.Minimal);
+      Centering   : GPS.Editors.Centering_Type := GPS.Editors.Minimal;
+      Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given location. Success is set to False
    --  if the position is outside of the buffer.
    --  If Force_Focus is False, then the editor will not grab the focus
    --  before setting the cursor position.
    --  Centering indicates the behavior when scrolling the editor to reveal
    --  the cursor location.
+   --  If Extend_Selection is True, extend the selection from the current
+   --  bound to the given position.
 
    procedure Goto_Declaration_Or_Body
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;

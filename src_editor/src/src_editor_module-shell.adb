@@ -2245,7 +2245,8 @@ package body Src_Editor_Module.Shell is
       elsif Command = "goto" then
          Get_View (Data, 1).Cursor_Goto
            (Get_Location (Data, 2),
-            Centering => Minimal);
+            Centering => Minimal,
+            Extend_Selection => Nth_Arg (Data, 3, False));
 
       elsif Command = "cursor" then
          Set_Return_Value
@@ -2631,7 +2632,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "is_read_only", 0, 0, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "center", 0, 1, View_Cmds'Access, EditorView);
-      Register_Command (Kernel, "goto", 1, 1, View_Cmds'Access, EditorView);
+      Register_Command (Kernel, "goto", 1, 2, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "cursor", 0, 0, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "title", 0, 1, View_Cmds'Access, EditorView);
 

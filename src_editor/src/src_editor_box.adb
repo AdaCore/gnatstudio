@@ -2765,7 +2765,8 @@ package body Src_Editor_Box is
       Line        : Editable_Line_Type;
       Column      : Character_Offset_Type := 1;
       Force_Focus : Boolean := True;
-      Centering   : Centering_Type := Minimal)
+      Centering   : Centering_Type := Minimal;
+      Extend_Selection : Boolean := False)
    is
       Editable_Line : Editable_Line_Type renames Line;
 
@@ -2780,7 +2781,8 @@ package body Src_Editor_Box is
          Set_Cursor_Position
            (Editor.Source_Buffer, Editable_Line, Column,
             Centering => Centering,
-            Internal  => False);
+            Internal  => False,
+            Extend_Selection => Extend_Selection);
          Save_Cursor_Position (Editor.Source_View);
          Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 
@@ -2796,7 +2798,8 @@ package body Src_Editor_Box is
          end if;
 
          Set_Cursor_Position
-           (Editor.Source_Buffer, Editable_Line, 1, Centering, False);
+           (Editor.Source_Buffer, Editable_Line, 1, Centering, False,
+            Extend_Selection => Extend_Selection);
          Save_Cursor_Position (Editor.Source_View);
          Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 
