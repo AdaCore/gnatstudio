@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L329-043: Too many ALI files parsed when using library projects
+  Problem:    If your project tree includes library projects, the IDE parses
+              too many .ali files when you select /Build/Load Xref in Memory,
+              by loading files both from the object_dir and the library_dir.
+  Workaround: Let the IDE load the files on demand, rather than force a full
+              load manually.
+
 - L328-003: GPS: The Entity View forgets the position of the separator
   Problem:    When the Entity View is in horizontal layout (with the list and
               the documentation window side-by-side), the position of the
