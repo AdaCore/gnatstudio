@@ -51,6 +51,7 @@ package body GPS.Kernel.Messages.Shell is
    File_Cst       : aliased constant String := "file";
    Text_Cst       : aliased constant String := "text";
    Flags_Cst      : aliased constant String := "flags";
+   Hint_Cst       : aliased constant String := "hint";
 
    type Message_Property_Record is new Instance_Property_Record with record
       Message : Message_Access;
@@ -403,6 +404,21 @@ package body GPS.Kernel.Messages.Shell is
             Message.Set_Action (Action);
          end;
 
+      elsif Command = "set_sort_order_hint" then
+         Name_Parameters
+           (Data,
+            (1 => Category_Cst'Access,
+             2 => Hint_Cst'Access));
+
+         declare
+            Category : constant String := Nth_Arg (Data, 1);
+            Hint     : constant Sort_Order_Hint :=
+              Sort_Order_Hint'Value (Nth_Arg (Data, 2));
+
+         begin
+            Container.Set_Sort_Order_Hint (Category, Hint);
+         end;
+
       elsif Command = "list" then
          Name_Parameters
            (Data,
@@ -509,6 +525,10 @@ package body GPS.Kernel.Messages.Shell is
 
       Register_Command
         (Kernel, "list", 0, 2, Message_Command_Handler'Access,
+         Message_Class, True);
+
+      Register_Command
+        (Kernel, "set_sort_order_hint", 2, 2, Message_Command_Handler'Access,
          Message_Class, True);
 
       Register_Command
