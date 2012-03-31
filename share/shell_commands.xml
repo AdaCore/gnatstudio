@@ -6239,6 +6239,14 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      </description>
   </shell_doc>
 
+  <shell_doc name="GPS.Message.set_sort_order_hint">
+     <param name="category">Name of messages category</param>
+     <param name="hint">Default sorting method ("chronological" or
+     "alphabetical")</param>
+     <description>Sets default sorting method for files in Locations
+     view.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Message.get_category">
      <description>Return the message's category.</description>
   </shell_doc>
