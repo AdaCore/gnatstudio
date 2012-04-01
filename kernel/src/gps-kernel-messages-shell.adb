@@ -67,28 +67,6 @@ package body GPS.Kernel.Messages.Shell is
    overriding function Execute
      (Command : access Subprogram_Command_Record) return Command_Return_Type;
 
-   package Instance_Linked_List is new Ada.Containers.Doubly_Linked_Lists
-     (Class_Instance);
-   use Instance_Linked_List;
-
-   type Shell_Note_Record is new Abstract_Note with record
-      Instances : List;
-   end record;
-   type Shell_Note is access all Shell_Note_Record'Class;
-
-   type Shell_Listener
-     (Kernel : not null access Kernel_Handle_Record'Class)
-     is new Abstract_Listener with null record;
-   type Shell_Listener_Access is access all Shell_Listener'Class;
-
-   Manager : Shell_Listener_Access;
-   --  Listener for messages
-
-   overriding procedure Message_Removed
-     (Self    : not null access Shell_Listener;
-      Message : not null access Abstract_Message'Class);
-   --  Called when a message is removed
-
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -132,6 +110,22 @@ package body GPS.Kernel.Messages.Shell is
          return Failure;
       end if;
    end Execute;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : not null access Shell_Note_Record) is
+      Position : Instance_Linked_List.Cursor := Self.Instances.First;
+
+   begin
+      while Has_Element (Position) loop
+         Set_Data (Element (Position), Message_Access'(null));
+         Next (Position);
+      end loop;
+
+      Self.Instances.Clear;
+   end Finalize;
 
    --------------
    -- Set_Data --
@@ -196,14 +190,6 @@ package body GPS.Kernel.Messages.Shell is
       end if;
 
       if Command = Destructor_Method then
-         --  When deleting the Python module, the destructor will be called
-         --  on all remaining messages. At this point, do not manipulate
-         --  message notes since there is no longer a message container.
-
-         if Manager = null then
-            return;
-         end if;
-
          --  Remove the message instance from the list of instances stored in
          --  the message note
 
@@ -504,15 +490,8 @@ package body GPS.Kernel.Messages.Shell is
    -----------------------
 
    procedure Register_Commands
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Manager := new Shell_Listener (Kernel);
-      --  Register the Messages listener
-      Get_Messages_Container (Kernel).Register_Listener
-        (Listener_Access (Manager),
-         (others => True));
-
       Message_Class := New_Class (Kernel, Class);
 
       Register_Command
@@ -570,46 +549,5 @@ package body GPS.Kernel.Messages.Shell is
         (Kernel, "execute_action", 0, 0, Accessors'Access, Message_Class);
 
    end Register_Commands;
-
-   ---------------------
-   -- Message_Removed --
-   ---------------------
-
-   overriding procedure Message_Removed
-     (Self    : not null access Shell_Listener;
-      Message : not null access Abstract_Message'Class)
-   is
-      pragma Unreferenced (Self);
-      Note : Shell_Note;
-      C    : Instance_Linked_List.Cursor;
-   begin
-      if Message.Has_Note (Shell_Note_Record'Tag) then
-         --  Invalidate all the instances referring to this message
-
-         Note := Shell_Note (Message.Get_Note (Shell_Note_Record'Tag));
-
-         C := Note.Instances.First;
-
-         while Has_Element (C) loop
-            Set_Data (Instance_Linked_List.Element (C), Message_Access'(null));
-            Next (C);
-         end loop;
-      end if;
-   end Message_Removed;
-
-   ----------------
-   -- Unregister --
-   ----------------
-
-   procedure Unregister
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Shell_Listener'Class, Shell_Listener_Access);
-   begin
-      Get_Messages_Container (Kernel).Unregister_Listener
-        (Listener => Listener_Access (Manager));
-      Unchecked_Free (Manager);
-      Manager := null;
-   end Unregister;
 
 end GPS.Kernel.Messages.Shell;

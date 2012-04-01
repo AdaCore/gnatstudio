@@ -23,8 +23,18 @@ package GPS.Kernel.Messages.Shell is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the shell commands used to handle messages
 
-   procedure Unregister
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Unregister the listener
+private
+
+   package Instance_Linked_List is new Ada.Containers.Doubly_Linked_Lists
+     (GNATCOLL.Scripts.Class_Instance,
+      GNATCOLL.Scripts."=");
+   use Instance_Linked_List;
+
+   type Shell_Note_Record is new Abstract_Note with record
+      Instances : Instance_Linked_List.List;
+   end record;
+   type Shell_Note is access all Shell_Note_Record'Class;
+
+   overriding procedure Finalize (Self : not null access Shell_Note_Record);
 
 end GPS.Kernel.Messages.Shell;

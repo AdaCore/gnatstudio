@@ -1782,9 +1782,6 @@ procedure GPS.Main is
          Save_Desktop (Kernel);
       end if;
 
-      --  Unregister listeners
-      GPS.Kernel.Messages.Shell.Unregister (GPS_Main.Kernel);
-
       if Started then
          Get_Messages_Container (Kernel).Save;
          Get_Messages_Container (Kernel).Remove_All_Messages
