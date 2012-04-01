@@ -251,7 +251,9 @@ package GPS.Kernel.Messages is
    -------------------
 
    procedure Finalize (Self : not null access Abstract_Note) is null;
-   --  Called to release resources occupied by the note.
+   --  Called to release resources occupied by the note. It is called in two
+   --  cases: when message is destroyed and when application request remove of
+   --  the note. It is removed from the set of notes of message before call.
 
    ------------------------
    -- Messages Container --
@@ -365,6 +367,13 @@ package GPS.Kernel.Messages is
    procedure Message_Removed
      (Self    : not null access Abstract_Listener;
       Message : not null access Abstract_Message'Class) is null;
+   --  Called when messages is no longer visible for listener.
+   --
+   --  Note, it doesn't mean that messages will be destroyed immediately. Also,
+   --  Message_Added subprogram can be called for this message again, when
+   --  message will be visible to listener again.
+   --
+   --  To track phisical destruction of messages use Note mechanism.
 
    function Message_Can_Be_Destroyed
      (Self    : not null access Abstract_Listener;
