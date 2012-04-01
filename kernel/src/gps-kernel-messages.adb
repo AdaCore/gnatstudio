@@ -219,20 +219,19 @@ package body GPS.Kernel.Messages is
       procedure Free is
         new Ada.Unchecked_Deallocation (Editor_Mark'Class, Editor_Mark_Access);
 
-      Position : Note_Maps.Cursor := Self.Notes.First;
+      Position : Note_Maps.Cursor;
       Aux      : Note_Access;
 
    begin
       --  Destroy notes.
 
-      while Has_Element (Position) loop
+      while not Self.Notes.Is_Empty loop
+         Position := Self.Notes.First;
          Aux := Element (Position);
+         Self.Notes.Delete (Position);
          Finalize (Aux);
          Free (Aux);
-         Next (Position);
       end loop;
-
-      Self.Notes.Clear;
 
       --  Delete editor's mark.
 
@@ -1930,19 +1929,18 @@ package body GPS.Kernel.Messages is
      (Self : not null access Abstract_Message'Class;
       Note : not null Note_Access)
    is
-      Position : constant Note_Maps.Cursor := Self.Notes.Find (Note'Tag);
+      Position : Note_Maps.Cursor := Self.Notes.Find (Note'Tag);
       Aux      : Note_Access;
 
    begin
       if Has_Element (Position) then
          Aux := Element (Position);
+         Self.Notes.Delete (Position);
          Finalize (Aux);
          Free (Aux);
-         Self.Notes.Replace_Element (Position, Note);
-
-      else
-         Self.Notes.Insert (Note'Tag, Note);
       end if;
+
+      Self.Notes.Insert (Note'Tag, Note);
    end Set_Note;
 
    -----------------
