@@ -64,6 +64,9 @@ package body GPS.Kernel.Messages.Shell is
    end record;
    type Subprogram_Command is access all Subprogram_Command_Record'Class;
 
+   overriding function Execute
+     (Command : access Subprogram_Command_Record) return Command_Return_Type;
+
    package Instance_Linked_List is new Ada.Containers.Doubly_Linked_Lists
      (Class_Instance);
    use Instance_Linked_List;
@@ -72,9 +75,6 @@ package body GPS.Kernel.Messages.Shell is
       Instances : List;
    end record;
    type Shell_Note is access all Shell_Note_Record'Class;
-
-   overriding function Execute
-     (Command : access Subprogram_Command_Record) return Command_Return_Type;
 
    type Shell_Listener
      (Kernel : not null access Kernel_Handle_Record'Class)
