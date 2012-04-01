@@ -1953,14 +1953,14 @@ package body GPS.Kernel.Messages is
      (Self : not null access Abstract_Message'Class;
       Tag  : Ada.Tags.Tag)
    is
-      Position : constant Note_Maps.Cursor := Self.Notes.Find (Tag);
+      Position : Note_Maps.Cursor := Self.Notes.Find (Tag);
       Aux      : Note_Access;
    begin
       if Has_Element (Position) then
          Aux := Element (Position);
+         Self.Notes.Delete (Position);
          Finalize (Aux);
          Free (Aux);
-         Self.Notes.Delete (Tag);
       end if;
    end Remove_Note;
 
