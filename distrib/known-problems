@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L314-011: GPS: Messages category blank in CodePeer report
+  Problem:    Messages category filter panel is always empty for recent
+              versions of CodePeer.
+  Workaround: Ignore this filter panel.
+
 - L330-002: Extra references to generic entity
   Problem:    When looking for all references to a generic entity, extra
               references are listed in the Locations view, pointing to the
