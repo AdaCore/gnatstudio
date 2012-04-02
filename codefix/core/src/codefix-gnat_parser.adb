@@ -32,6 +32,30 @@ with Language.Tree.Database;         use Language.Tree.Database;
 package body Codefix.GNAT_Parser is
    use Cursor_Lists;
 
+   ---------------------------
+   -- Parsers for GNATCHECK --
+   ---------------------------
+
+   type GnatCheck_Missing_Storage_Order is
+     new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out GnatCheck_Missing_Storage_Order);
+
+   overriding
+   procedure Fix
+     (This         : GnatCheck_Missing_Storage_Order;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix missing representation clause Scalar_Storage_Order
+
+   ----------------------
+   -- Parsers for GNAT --
+   ----------------------
+
    type Agregate_Misspelling is new Error_Parser (1) with null record;
 
    overriding
@@ -1203,6 +1227,46 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like no statements may follow "then" on same line
+
+   --------------------------------------
+   --  GnatCheck_Missing_Storage_Order --
+   --------------------------------------
+
+   overriding procedure Initialize
+     (This : in out GnatCheck_Missing_Storage_Order) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("check: Scalar_Storage_Order is not specified")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : GnatCheck_Missing_Storage_Order;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Matches, Options);
+
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions :=
+        Add_Record_Rep_Clause
+          (Current_Text  => Current_Text,
+           Cursor        => Message,
+           Caption       => "Low_Order_First",
+           Record_Clause =>
+             "'Scalar_Storage_Order use System.Low_Order_First;");
+
+      Concat (Solutions,
+        Add_Record_Rep_Clause
+          (Current_Text  => Current_Text,
+           Cursor        => Message,
+           Caption       => "High_Order_First",
+           Record_Clause =>
+             "'Scalar_Storage_Order use System.High_Order_First;"));
+   end Fix;
 
    ---------------------------
    -- Aggregate_Misspelling --
@@ -4018,6 +4082,10 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Wrong_Index_Usage);
       Add_Parser (Processor, new Wrong_Sb_Order);
       Add_Parser (Processor, new No_Statement_Following_Then);
+
+      --  GNATCheck parsers
+
+      Add_Parser (Processor, new GnatCheck_Missing_Storage_Order);
    end Register_Parsers;
 
 end Codefix.GNAT_Parser;

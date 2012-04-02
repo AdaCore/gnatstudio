@@ -1755,6 +1755,171 @@ package body Codefix.Text_Manager.Ada_Commands is
    ----------------
 
    procedure Initialize
+     (This          : in out Add_Record_Rep_Clause_Cmd;
+      Current_Text  : Text_Navigator_Abstr'Class;
+      Cursor        : File_Cursor'Class;
+      Record_Clause : String)
+   is
+   begin
+      This.Location :=
+        new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Cursor));
+      This.Record_Clause := new String'(Record_Clause);
+   end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding
+   procedure Execute
+     (This         : Add_Record_Rep_Clause_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor : File_Cursor'Class :=
+                 Current_Text.Get_Current_Cursor (This.Location.all);
+
+      function Scan_Forward_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean;
+         Line           : String) return Boolean;
+      --  Scan forward for the termination of the full record type declaration
+
+      ---------------------------
+      -- Scan_Forward_Callback --
+      ---------------------------
+
+      In_Header              : Boolean := True;
+      In_Header_Word_Counter : Natural := 0;
+      Record_Name            : String (1 .. 80);
+      Record_Name_Len        : Natural := 0;
+
+      In_Epilog              : Boolean := False;
+      End_Record             : Boolean := False;
+
+      function Scan_Forward_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean;
+         Line           : String) return Boolean
+      is
+         pragma Unreferenced (Partial_Entity);
+
+         Name : constant String := Line (Sloc_Start.Column .. Sloc_End.Column);
+         Stop_Scanning : Boolean := False;
+
+      begin
+         if In_Header then
+            In_Header_Word_Counter := In_Header_Word_Counter + 1;
+
+            --  Save the name of the record type
+
+            if In_Header_Word_Counter = 2 then
+               Record_Name (1 .. Name'Length) :=
+                 Name (Name'First .. Name'Last);
+               Record_Name_Len := Name'Length;
+
+               In_Header := False;
+            end if;
+         end if;
+
+         --  Scan searching for "end record"
+
+         case Entity is
+            when Keyword_Text =>
+               if Name = "end" then
+                  In_Epilog := True;
+
+               elsif In_Epilog then
+                  if Name = "record" then
+                     End_Record := True;
+
+                  --  We found the termination of a record variant
+
+                  elsif Name = "case" then
+                     In_Epilog := False;
+
+                  else
+                     pragma Assert (False);
+                     null;
+                  end if;
+               end if;
+
+            --  Stop on the location of the first semicolon after "end record"
+
+            when Operator_Text =>
+               Stop_Scanning := End_Record and then Name = ";";
+
+            --  5. For any other token we continue scanning
+
+            when others =>
+               null;
+         end case;
+
+         --  Update cursor location
+
+         if Stop_Scanning then
+            Set_Location
+              (This   => Cursor,
+               Line   => Sloc_End.Line,
+               Column => To_Column_Index
+                           (String_Index_Type (Sloc_End.Column), Line));
+         end if;
+
+         return Stop_Scanning;
+      end Scan_Forward_Callback;
+
+   --  Start of processing for Add_Record_Rep_Clause_Cmd.Execute
+
+   begin
+      --  Scan forward searching for the end of the record type declaration. As
+      --  a side effect we save locally the name of the record type to append
+      --  it to the added record representation clause.
+
+      Parse_Entities
+        (Lang     => Ada_Lang,
+         This     => Current_Text,
+         Callback => Scan_Forward_Callback'Unrestricted_Access,
+         Start    => Cursor);
+
+      --  Append the record representation clause
+
+      Current_Text.Add_Line
+        (Cursor   => Cursor,
+         Indent   => True,
+         New_Line => "for "
+                       & Record_Name (1 .. Record_Name_Len)
+                       & This.Record_Clause.all);
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding
+   procedure Free (This : in out Add_Record_Rep_Clause_Cmd) is
+   begin
+      Free (This.Location);
+      Free (This.Record_Clause);
+   end Free;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Add_Record_Rep_Clause_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
      (This           : in out Change_To_Tick_Valid_Cmd;
       Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class)

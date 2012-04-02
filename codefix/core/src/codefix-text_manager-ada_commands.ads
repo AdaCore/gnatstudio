@@ -399,6 +399,32 @@ package Codefix.Text_Manager.Ada_Commands is
    function Is_Writable (This : Change_To_Tick_Valid_Cmd) return Boolean;
    --  See inherited documentation
 
+   -------------------------------
+   -- Add_Record_Rep_Clause_Cmd --
+   -------------------------------
+
+   type Add_Record_Rep_Clause_Cmd is new Text_Command (Simple) with private;
+
+   procedure Initialize
+     (This          : in out Add_Record_Rep_Clause_Cmd;
+      Current_Text  : Text_Navigator_Abstr'Class;
+      Cursor        : File_Cursor'Class;
+      Record_Clause : String);
+   --  Add the missing record representation clause Record_Clause after the end
+   --  of the record type declaration
+
+   overriding
+   procedure Execute
+     (This         : Add_Record_Rep_Clause_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding
+   procedure Free (This : in out Add_Record_Rep_Clause_Cmd);
+
+   overriding
+   function Is_Writable (This : Add_Record_Rep_Clause_Cmd) return Boolean;
+   --  See inherited documentation
+
    -----------------------------
    -- Remove_Extra_Underlines --
    -----------------------------
@@ -673,6 +699,11 @@ private
 
    type Change_To_Tick_Valid_Cmd is new Text_Command (Simple) with record
       Location : Ptr_Mark;
+   end record;
+
+   type Add_Record_Rep_Clause_Cmd is new Text_Command (Simple) with record
+      Location      : Ptr_Mark;
+      Record_Clause : String_Access;
    end record;
 
    type Remove_Extra_Underlines_Cmd is new Text_Command (Simple) with record

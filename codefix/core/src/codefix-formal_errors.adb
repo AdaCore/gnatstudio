@@ -299,6 +299,29 @@ package body Codefix.Formal_Errors is
       Free (This, True);
    end Free_List;
 
+   ---------------------------
+   -- Add_Record_Rep_Clause --
+   ---------------------------
+
+   function Add_Record_Rep_Clause
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Cursor        : File_Cursor'Class;
+      Caption       : String;
+      Record_Clause : String)
+      return Solution_List
+   is
+      Command_Ptr : constant Ptr_Command := new Add_Record_Rep_Clause_Cmd;
+      Command     : Add_Record_Rep_Clause_Cmd renames
+                      Add_Record_Rep_Clause_Cmd (Command_Ptr.all);
+      Result      : Solution_List;
+   begin
+      Initialize (Command, Current_Text, Cursor, Record_Clause);
+      Set_Caption (Command, Caption);
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Add_Record_Rep_Clause;
+
    ---------------
    -- Should_Be --
    ---------------
