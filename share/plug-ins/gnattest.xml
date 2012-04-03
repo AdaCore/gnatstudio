@@ -97,8 +97,7 @@
     </filter_and>
     <description>Run gnattest on current project</description>
     <shell lang="python" output="none"
-    >GPS.BuildTarget("GNATTest for project").execute()</shell>
-    <shell lang="python">gnattest.open_harness_project(GPS.current_context().project())</shell>
+    >gnattest.run(GPS.current_context().project(), "GNATTest for project")</shell>
   </action>
 
   <action name="run gnattest recursive">
@@ -108,8 +107,7 @@
     </filter_and>
     <description>Run gnattest on current project and subprojects</description>
     <shell lang="python" output="none"
-    >GPS.BuildTarget("GNATTest for project").execute(extra_args="-r")</shell>
-    <shell lang="python">gnattest.open_harness_project(GPS.current_context().project())</shell>
+    >gnattest.run(GPS.current_context().project(), "GNATTest for project", "-r")</shell>
   </action>
 
   <action name="run gnattest on root">
@@ -118,8 +116,7 @@
     </filter_and>
     <description>Run gnattest on root project</description>
     <shell lang="python" output="none"
-    >GPS.BuildTarget("GNATTest for root project").execute()</shell>
-    <shell lang="python">gnattest.open_harness_project(GPS.Project.root())</shell>
+    >gnattest.run(GPS.Project.root(), "GNATTest for root project")</shell>
   </action>
 
   <action name="run gnattest on root recursive">
@@ -128,8 +125,7 @@
     </filter_and>
     <description>Run gnattest on root project and subprojects</description>
     <shell lang="python" output="none"
-    >GPS.BuildTarget("GNATTest for root project").execute(extra_args="-r")</shell>
-    <shell lang="python">gnattest.open_harness_project(GPS.Project.root())</shell>
+    >gnattest.run(GPS.Project.root(), "GNATTest for root project", "-r")</shell>
   </action>
 
   <action name="open harness" output="none">
@@ -153,8 +149,8 @@
       <filter id="Non harness project"/>
     </filter_and>
     <description>Run gnattest on single package</description>
-    <shell lang="python">GPS.BuildTarget("GNATTest for file").execute()</shell>
-    <shell lang="python">gnattest.open_harness_project(GPS.current_context().project())</shell>
+    <shell lang="python" output="none"
+    >gnattest.run(GPS.current_context().project(), "GNATTest for file")</shell>
   </action>
 
   <submenu after="Documentation">

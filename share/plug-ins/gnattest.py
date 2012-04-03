@@ -5,14 +5,23 @@
 
 import os.path, GPS
 
+last_gnattest_project = None
+
+def run (project, target, extra_args=""):
+   """ Run gnattest and switch to harness if success. """
+   global last_gnattest_project
+   last_gnattest_project = project
+   GPS.BuildTarget(target).execute(extra_args=extra_args)
+
 def is_harness_project ():
-   # Determine the root project
+   """ Check if root project is harness project. """
    root_project = GPS.Project.root()
    mapping = root_project.get_attribute_as_string ("GNATTest_Mapping_File",
                                                    package="GNATtest")
    return mapping.strip() != ""
 
 def open_harness_project (cur):
+   """ Open harness project if it hasn't open yet."""
    if is_harness_project():
       return
 
@@ -27,7 +36,7 @@ def open_harness_project (cur):
       GPS.Project.root().file().name() +"\n")
 
 def exit_harness_project ():
-   # Determine the root project
+   """ Leave harness project and open user's project. """
    root_project = GPS.Project.root()
 
    for p in root_project.dependencies():
@@ -40,3 +49,18 @@ def exit_harness_project ():
    GPS.Project.load (user_project.file().name(), False, True)
    GPS.Console ("Messages").write ("Exit harness project: " +
       GPS.Project.root().file().name() +"\n")
+
+def on_compilation_finished(hook, category,
+    target_name="", mode_name="", status=""):
+
+   global last_gnattest_project
+
+   if not target_name.startswith("GNATTest"):
+      return
+
+   if status:
+      return
+
+   open_harness_project (last_gnattest_project)
+
+GPS.Hook("compilation_finished").add(on_compilation_finished)
