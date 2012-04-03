@@ -39,7 +39,9 @@ project Shared is
 
          when "Production" =>
             for Default_Switches ("Ada") use
-              ("-O2", "-gnatn", "-gnatws", "-gnat05");
+              ("-O2", "-gnatn", 
+               "-gnatT3", --  Temporary, L403-023.
+               "-gnatws", "-gnat05");
             for Default_Switches ("C") use
               ("-g", "-O2") & GnatColl_Shared.Gtk_Include;
       end case;
