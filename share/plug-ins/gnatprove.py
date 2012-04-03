@@ -87,15 +87,28 @@ xml_gnatprove = """<?xml version="1.0"?>
        </command-line>
     </target>
 
+    <target model="gnatprove" name="Show Unprovable Code" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--mode=detect</arg>
+       </command-line>
+    </target>
+
   </GNATPROVE>
 """
 
-prefix             = "Prove"
-menu_prefix        = "/" + prefix
-prove_root_project = "Prove Root Project"
-prove_file         = "Prove File"
-prove_line         = "Prove Line"
-prove_subp         = "Prove Subprogram"
+prefix               = "Prove"
+menu_prefix          = "/" + prefix
+prove_root_project   = "Prove Root Project"
+prove_file           = "Prove File"
+prove_line           = "Prove Line"
+prove_subp           = "Prove Subprogram"
+show_unprovable_code = "Show Unprovable Code"
 
 # Check for GNAT toolchain: gnatprove
 
@@ -130,10 +143,14 @@ def on_prove_line(self):
 def on_prove_subp(self):
     GPS.BuildTarget(prove_subp).execute()
 
+def on_show_unprovable_code(self):
+    GPS.BuildTarget(show_unprovable_code).execute()
+
 if gnatprove:
   GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
   GPS.Menu.create(menu_prefix + "/" + prove_root_project, on_prove_root_project)
   GPS.Menu.create(menu_prefix + "/" + prove_file, on_prove_file)
+  GPS.Menu.create(menu_prefix + "/" + show_unprovable_code, on_show_unprovable_code)
   GPS.Contextual (prefix + "/" + prove_file).create(on_activate = on_prove_file)
   GPS.Contextual (prefix + "/" + prove_line).create(on_activate = on_prove_line)
   GPS.Contextual (prefix + "/" + prove_subp).create(
