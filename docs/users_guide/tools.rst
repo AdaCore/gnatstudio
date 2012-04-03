@@ -154,6 +154,11 @@ The list of active items includes:
 
   :ref:`Documentation_Generation`.
 
+*GNATTest*
+  .. index:: gnattest
+
+  :ref:`Working_With_Unit_Tests`.
+
 *Stack Analysis*
   .. index:: stack analysis
 
@@ -501,6 +506,69 @@ not apply:
 
 * Parameters and objects of private generic types may be considered as
   types.
+
+.. _Working_With_Unit_Tests:
+
+Working With Unit Tests
+=======================
+
+GPS relies on `gnattest` tool that creates unit-test stubs as well as a test
+driver infrastructure (harness). Harness can be generated for project
+hierarchy, single project or a package. Generation process can be launched
+from `Tools->GNATTest` menu or from contextual menu.
+
+After generation of harness project GPS will switch to it, allowing you
+to implement tests, compile and run the harness.
+At any moment you can exit harness project and return to original project.
+
+The GNATTest Menu
+-----------------
+
+The `GNATTest` submenu is available from the `Tools` global menu and
+contains:
+
+*Generate unit test setup*
+  Generate harness for the root project.
+
+*Generate unit test setup recursive*
+  Generate harness for the root project and subprojects.
+
+*Show not implemented tests*
+  Find never modified tests and show them in Locations view. This menu is
+  active in harness project only.
+
+*Exit from harness project*
+  Return from harness to original project.
+
+The Contextual Menu
+-------------------
+
+When relevant (depending on the context), right-clicking with your mouse will
+show GNATTest-related contextual menu entries.
+
+Pointing to a source file containing the library package declaration, you
+have an option called *Generate unit test setup for <file>* that will generate
+the harness for this single package.
+
+From a project contextual menu (:ref:`The_Project_View`), you have an option
+*Generate unit test setup for <project>* that will generate the harness for
+the project. An option *Generate unit test setup for <project> and subprojects*
+will generate harness for whole hierarchy of projects. If harness project
+already exists, an option "Open harness project" will switch GPS to harness
+project.
+
+While harness project is opened it's easy to navigate from tested routine
+to test code and back. Pointing to name of tested routine provides
+options *Go to test case*, *Go to test setup* and *Go to test teardown*.
+From contextual menu for source file of test case or setup/teardown,
+you have an option called *Go to <routine>* to go to tested routine.
+
+Project Properties
+------------------
+
+Gnattest's behaviour could be configured through project properties.
+GNATTest page in (:ref:`The_Project_Properties_Editor`) gives you
+convenient access to these properties.
 
 .. _Metrics:
 
