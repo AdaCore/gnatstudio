@@ -1784,8 +1784,7 @@ procedure GPS.Main is
 
       if Started then
          Get_Messages_Container (Kernel).Save;
-         Get_Messages_Container (Kernel).Remove_All_Messages
-           (Empty_Message_Flags);
+         Get_Messages_Container (Kernel).Clear;
       end if;
 
       if Get_Registry (Kernel).Tree.Status = Default then

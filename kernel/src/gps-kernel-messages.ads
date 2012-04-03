@@ -289,6 +289,9 @@ package GPS.Kernel.Messages is
    --  Returns list of messages for the specified file in the specified
    --  category. Returns empty list when there is no file or category.
 
+   procedure Clear (Self : not null access Messages_Container'Class);
+   --  Removes all messages, clear all internal structures.
+
    procedure Remove_All_Messages
      (Self  : not null access Messages_Container'Class;
       Flags : Message_Flags);

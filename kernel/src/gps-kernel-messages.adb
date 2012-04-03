@@ -170,6 +170,16 @@ package body GPS.Kernel.Messages is
    procedure Free is
      new Ada.Unchecked_Deallocation (Abstract_Note'Class, Note_Access);
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Self : not null access Messages_Container'Class) is
+   begin
+      Self.Remove_All_Messages (Empty_Message_Flags);
+      Self.Sort_Order_Hints.Clear;
+   end Clear;
+
    -------------------------------
    -- Create_Messages_Container --
    -------------------------------
@@ -264,7 +274,7 @@ package body GPS.Kernel.Messages is
       Container : Messages_Container_Access := Get_Messages_Container (Kernel);
 
    begin
-      Container.Remove_All_Messages (Empty_Message_Flags);
+      Container.Clear;
 
       Free (Container);
    end Free_Messages_Container;
@@ -1265,9 +1275,9 @@ package body GPS.Kernel.Messages is
 
       Container.Save;
 
-      --  Remove all messages from container.
+      --  Clear container.
 
-      Container.Remove_All_Messages (Empty_Message_Flags);
+      Container.Clear;
    end On_Project_Changing_Hook;
 
    --------------------------
