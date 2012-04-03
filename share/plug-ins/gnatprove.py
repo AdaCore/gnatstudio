@@ -101,11 +101,12 @@ prove_subp         = "Prove Subprogram"
 
 gnatprove = os_utils.locate_exec_on_path("gnatprove")
 
-# This is the context of an entity declaration if there is an entity, there is
-# a corresponding declaration, and their file:line locations match.
-def is_entity_decl_context(self):
+# This is the context of a subprogram declaration if there is a subprogram,
+# there is a corresponding declaration, and their file:line locations match.
+def is_subp_decl_context(self):
     if isinstance (self, GPS.EntityContext) and \
        self.entity() and \
+       self.entity().category() == "subprogram" and \
        self.entity().declaration() and \
        self.location().file() == self.entity().declaration().file() and \
        self.location().line() == self.entity().declaration().line():
@@ -136,5 +137,5 @@ if gnatprove:
   GPS.Contextual (prefix + "/" + prove_file).create(on_activate = on_prove_file)
   GPS.Contextual (prefix + "/" + prove_line).create(on_activate = on_prove_line)
   GPS.Contextual (prefix + "/" + prove_subp).create(
-          on_activate = on_prove_subp, filter = is_entity_decl_context)
+          on_activate = on_prove_subp, filter = is_subp_decl_context)
   GPS.parse_xml(xml_gnatprove)
