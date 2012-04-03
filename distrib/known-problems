@@ -36,11 +36,6 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               separator between windows is not remembered between sessions.
   Workaround: Position the separator manually.
 
-- L327-016: GPS: Exception raised on open of project.
-  Problem:    Unexpected exception is reported by GPS in log file on opening of
-              project in running GPS.
-  Workaround: Ignore this messages.
-
 - L325-001: GPS: Refill requires an extra undo
   Problem:    After a Refill operation (menu Edit->Selection->Refill, shortcut
               Ctrl+=), GPS requires two "Undo" to revert the refill.
