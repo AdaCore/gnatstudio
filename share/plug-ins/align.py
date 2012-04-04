@@ -322,6 +322,7 @@ def align_arrows ():
    bottom = buffer.selection_end ()
    tmark  = top.create_mark("top")
    bmark  = bottom.create_mark("bottom")
+   found  = False
    if top == bottom:
       GPS.MDI.dialog ("You must first select the intended text")
       return
@@ -338,12 +339,15 @@ def align_arrows ():
                level = level + 1
             elif chars[k] == ')':
                level = level - 1
+            elif chars[k] == '\n':
+               found = False
             elif k + 4 < len(chars) and chars[k:k+4] == "case":
                level = level + 1
             elif k + 8 < len(chars) and chars[k:k+8] == "end case":
                level = level - 1
-            elif level == lr and k + 2 < len(chars) and chars[k:k+2] == "=>":
+            elif level == lr and k + 2 < len(chars) and chars[k:k+2] == "=>" and not found:
                chars = chars[:k] + "@>" + chars[k+2:]
+               found=True
          buffer.delete (top, bottom)
          buffer.insert (top, chars)
          tmark = top.create_mark("top")
