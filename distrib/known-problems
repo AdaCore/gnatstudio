@@ -149,9 +149,9 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Fix the casing manually in the .gpr file to use lower cases
               only.
 
-- KC20-025: GPS: Removing a server makes some other servers unuseable
+- KC20-025: GPS: Removing a server makes some other servers unusable
   Problem:    After removing a server from your server list, the other servers
-              using the same shell or remote access tool become unuseable.
+              using the same shell or remote access tool become unusable.
   Workaround: Remove the server manually from the .gps/remote.xml file.
 
 - KC12-009: Find All References missing refs with extending projects
