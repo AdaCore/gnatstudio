@@ -60,6 +60,12 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               two "Undo" to revert the refactoring.
   Workaround: Perform the extra undo manually.
 
+- L321-019: Casing, Align actions on read-only buffer
+  Problem:    When using align or casing actions on a read-only buffer nothing
+              happens without giving any clue except for a cryptic message
+              in the message window.
+  Workaround: None
+
 - L314-011: GPS: Messages category blank in CodePeer report
   Problem:    Messages category filter panel is always empty for recent
               versions of CodePeer.

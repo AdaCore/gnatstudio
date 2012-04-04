@@ -172,6 +172,13 @@ def in_ada_file (context):
          and buffer.file ().language ().lower () == "ada"
    return context.in_ada_file
 
+def is_writable (context):
+   """Returns True if the focus is currently inside a writable editor"""
+   if not hasattr (context, "is_writable"):
+      buffer = EditorBuffer.get (open=False)
+      context.is_writable =  buffer and not buffer.is_read_only ()
+   return context.is_writable
+
 def in_xml_file (context):
    """Returns True if the focus is in an XML editor"""
    if not hasattr (context, "in_xml_file"):

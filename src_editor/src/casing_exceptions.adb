@@ -84,6 +84,11 @@ package body Casing_Exceptions is
      (Filter  : access Empty_Filter_Record;
       Context : Selection_Context) return Boolean;
 
+   type RW_Filter_Record is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access RW_Filter_Record;
+      Context : Selection_Context) return Boolean;
+
    -----------------
    -- Subprograms --
    -----------------
@@ -458,6 +463,28 @@ package body Casing_Exceptions is
       end if;
    end Filter_Matches_Primitive;
 
+   overriding function Filter_Matches_Primitive
+     (Filter  : access RW_Filter_Record;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+   begin
+      if Has_File_Information (Context) then
+         declare
+            File   : constant Virtual_File :=
+                       File_Information (Context);
+            Editor : constant Editor_Buffer'Class :=
+                       Kernel.Get_Buffer_Factory.Get (File);
+         begin
+            return not Editor.Is_Read_Only;
+         end;
+
+      else
+         return False;
+      end if;
+   end Filter_Matches_Primitive;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -474,6 +501,7 @@ package body Casing_Exceptions is
       Substring_Filter   : Action_Filter;
       Full_String_Filter : Action_Filter;
       Empty_Filter       : Action_Filter;
+      RW_Filter          : Action_Filter;
       Filter             : Action_Filter;
    begin
       Casing_Module_Id := new Casing_Module_Record;
@@ -489,6 +517,7 @@ package body Casing_Exceptions is
          Read_Only => False);
 
       Empty_Filter := new Empty_Filter_Record;
+      RW_Filter    := new RW_Filter_Record;
 
       Filter :=
         Create (Module => Src_Editor_Module_Name) and not Empty_Filter;
@@ -499,7 +528,7 @@ package body Casing_Exceptions is
       Register_Contextual_Menu
         (Kernel, "Lower case entity",
          Label  => Label,
-         Filter => Filter,
+         Filter => Filter and RW_Filter,
          Action => Command);
 
       Command := new Change_Case_Command (Upper);
@@ -508,7 +537,7 @@ package body Casing_Exceptions is
       Register_Contextual_Menu
         (Kernel, "Upper case entity",
          Label  => Label,
-         Filter => Filter,
+         Filter => Filter and RW_Filter,
          Action => Command);
 
       Command := new Change_Case_Command (Mixed);
@@ -517,7 +546,7 @@ package body Casing_Exceptions is
       Register_Contextual_Menu
         (Kernel, "Mixed case entity",
          Label  => Label,
-         Filter => Filter,
+         Filter => Filter and RW_Filter,
          Action => Command);
 
       Command := new Change_Case_Command (Smart_Mixed);
@@ -526,14 +555,14 @@ package body Casing_Exceptions is
       Register_Contextual_Menu
         (Kernel, "Smart mixed case entity",
          Label  => Label,
-         Filter => Filter,
+         Filter => Filter and RW_Filter,
          Action => Command);
 
       Register_Contextual_Menu
         (Kernel,
          Name   => "casing separator",
          Action => null,
-         Filter => Filter,
+         Filter => Filter and RW_Filter,
          Label  => -"Casing/");
 
       Substring_Filter   := new Substring_Filter_Record;
