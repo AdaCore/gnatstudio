@@ -555,6 +555,9 @@ private
       Primary_Loaders   : Primary_Message_Load_Maps.Map;
       Secondary_Loaders : Secondary_Message_Load_Maps.Map;
       Sort_Order_Hints  : Sort_Order_Hint_Maps.Map;
+      Cleanup_Mode      : Boolean := False;
+      --  When set to True, messages are removed even when listner requests
+      --  to hide them.
    end record;
 
    procedure Register_Message_Class

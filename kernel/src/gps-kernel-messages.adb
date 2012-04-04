@@ -176,8 +176,10 @@ package body GPS.Kernel.Messages is
 
    procedure Clear (Self : not null access Messages_Container'Class) is
    begin
+      Self.Cleanup_Mode := True;
       Self.Remove_All_Messages (Empty_Message_Flags);
       Self.Sort_Order_Hints.Clear;
+      Self.Cleanup_Mode := False;
    end Clear;
 
    -------------------------------
@@ -1565,7 +1567,8 @@ package body GPS.Kernel.Messages is
       Index   : constant Positive :=
         Parent.Children.Find_Index (Node_Access (Message));
       Destroy : constant Boolean :=
-        Notifiers.Ask_About_Message_Destroy (Self, Message);
+        Self.Cleanup_Mode
+          or else Notifiers.Ask_About_Message_Destroy (Self, Message);
 
    begin
       if Flags = Empty_Message_Flags or else Match (Message.Flags, Flags) then

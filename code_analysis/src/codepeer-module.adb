@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
 with Input_Sources.File;
@@ -211,6 +212,11 @@ package body CodePeer.Module is
    --  and Show_Messages subprograms must be used to show and hide files,
    --  instead of direct manipulation with filter's criteria and call to
    --  this subprogram.
+
+   procedure Remove_Codepeer_Messages
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Remove all messages of all categories, which name starts from
+   --  CodePeer_Category_Prefix.
 
    procedure Fill_Object_Races (Self : access Module_Id_Record'Class);
    --  Fill object races information into Locations view.
@@ -1878,8 +1884,10 @@ package body CodePeer.Module is
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Module.Listener.Set_Cleanup_Mode (True);
-      Get_Messages_Container (Kernel).Remove_Category
-        (CodePeer_Category_Name, Empty_Message_Flags);
+      Remove_Codepeer_Messages (Kernel);
+      --  Remove all messages of all categories starting from
+      --  Codepeer_Category_Prefix to be sure that all possible categories are
+      --  removed.
       Module.Listener.Set_Cleanup_Mode (False);
    end On_Project_Changed_Hook;
 
@@ -1954,6 +1962,36 @@ package body CodePeer.Module is
       when E : others =>
          Trace (Me, E);
    end On_Show_Messages;
+
+   --------------------------------
+   -- Remove_Codepeer_Categories --
+   --------------------------------
+
+   procedure Remove_Codepeer_Messages
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Container  : constant GPS.Kernel.Messages.Messages_Container_Access :=
+        Get_Messages_Container (Kernel);
+      Categories : constant GPS.Kernel.Messages.Unbounded_String_Array :=
+        Container.Get_Categories;
+      Category   : Ada.Strings.Unbounded.Unbounded_String;
+
+   begin
+      for J in Categories'Range loop
+         Category := Categories (J);
+
+         if Ada.Strings.Unbounded.Length (Category)
+              >= CodePeer_Category_Prefix'Length
+           and then Ada.Strings.Unbounded.Slice
+                      (Category, 1, CodePeer_Category_Prefix'Length)
+                          = CodePeer_Category_Prefix
+         then
+            Container.Remove_Category
+              (Ada.Strings.Unbounded.To_String (Category),
+               Empty_Message_Flags);
+         end if;
+      end loop;
+   end Remove_Codepeer_Messages;
 
    --------------------
    -- Review_Message --
