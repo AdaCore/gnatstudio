@@ -90,6 +90,7 @@ class gnatCheckProc:
 
       self.locations_string = "Coding Standard violations"
       self.gnatCmd = ""
+      self.full_output = ""
 
    def updateGnatCmd(self):
       self.gnatCmd = GPS.Project.root().get_attribute_as_string("gnat", "ide")
@@ -138,7 +139,10 @@ class gnatCheckProc:
      if len (res) > 3:
        msg = res[1]+":"+res[2]
      GPS.Locations.parse (msg, self.locations_string)
-     GPS.Codefix.parse (self.locations_string, msg)
+
+     # Aggregate output in self.full_output: CodeFix needs to be looking at
+     # the whole output in one go.
+     self.full_output += msg + "\n"
 
    def on_match (self, process, matched, unmatched):
       if unmatched == "\n":
@@ -153,6 +157,10 @@ class gnatCheckProc:
          GPS.Locations.parse (self.msg, self.locations_string)
          self.parse_output (self.msg)
          self.msg = ""
+
+      if self.full_output:
+         # There is a full output: run CodeFix.
+         GPS.Codefix.parse (self.locations_string, self.full_output)
 
    def internalSpawn (self, filestr, project, recursive=False):
       need_rules_file = False
