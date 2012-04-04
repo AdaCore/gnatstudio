@@ -19,7 +19,7 @@ def save_dir (fn):
          apply (fn, args, kwargs)
       finally:
          cd (saved)
-   do_work.__name__ = fn.__name__   # Reset name 
+   do_work.__name__ = fn.__name__   # Reset name
    do_work.__doc__ = fn.__doc__
    return do_work
 
@@ -180,5 +180,3 @@ def in_xml_file (context):
          MDI.current() == MDI.get_by_child (buffer.current_view()) \
          and buffer.file ().language ().lower () in ["xml", "html"]
    return context.in_xml_file
-
-

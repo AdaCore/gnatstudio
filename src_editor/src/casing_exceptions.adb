@@ -25,8 +25,8 @@ with Glib.Convert;            use Glib.Convert;
 
 with Case_Handling.IO;        use Case_Handling.IO;
 with Commands.Interactive;    use Commands, Commands.Interactive;
-with GPS.Intl;                use GPS.Intl;
 with GPS.Editors;             use GPS.Editors;
+with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
@@ -439,10 +439,6 @@ package body Casing_Exceptions is
       end if;
       return False;
    end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
 
    overriding function Filter_Matches_Primitive
      (Filter  : access Empty_Filter_Record;
