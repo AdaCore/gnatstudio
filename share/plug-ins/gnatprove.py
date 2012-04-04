@@ -44,6 +44,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--mode=prove</arg>
+          <arg>--ide-progress-bar</arg>
        </command-line>
     </target>
 
@@ -56,6 +57,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--mode=prove</arg>
+          <arg>--ide-progress-bar</arg>
           <arg>-u</arg>
           <arg>%fp</arg>
        </command-line>
@@ -70,6 +72,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--mode=prove</arg>
+          <arg>--ide-progress-bar</arg>
           <arg>--limit-subp=%f:%l</arg>
        </command-line>
     </target>
@@ -83,6 +86,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--mode=prove</arg>
+          <arg>--ide-progress-bar</arg>
           <arg>--limit-line=%f:%l</arg>
        </command-line>
     </target>
@@ -132,19 +136,19 @@ def mk_loc_string (sloc):
     return locstring
 
 def on_prove_root_project(self):
-    GPS.BuildTarget(prove_root_project).execute()
+    GPS.BuildTarget(prove_root_project).execute(synchronous=False)
 
 def on_prove_file(self):
-    GPS.BuildTarget(prove_file).execute()
+    GPS.BuildTarget(prove_file).execute(synchronous=False)
 
 def on_prove_line(self):
-    GPS.BuildTarget(prove_line).execute()
+    GPS.BuildTarget(prove_line).execute(synchronous=False)
 
 def on_prove_subp(self):
-    GPS.BuildTarget(prove_subp).execute()
+    GPS.BuildTarget(prove_subp).execute(synchronous=False)
 
 def on_show_unprovable_code(self):
-    GPS.BuildTarget(show_unprovable_code).execute()
+    GPS.BuildTarget(show_unprovable_code).execute(synchronous=False)
 
 if gnatprove:
   GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
