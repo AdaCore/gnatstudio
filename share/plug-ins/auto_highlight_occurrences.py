@@ -57,7 +57,7 @@ GPS.Preference ("Plugins/auto_highlight_occurrences/highlight_word"
     ).create (
     "Highlight current word", "boolean",
     "Whether to attempt highlighting of the word under the cursor.",
-    True)
+    False)
 
 highlight_entities = None
 highlight_selection = None
