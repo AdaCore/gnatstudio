@@ -65,6 +65,11 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               versions of CodePeer.
   Workaround: Ignore this filter panel.
 
+- L312-031: CodePeer's messages are not removed when another project loaded
+  Problem:    CodePeer's race messages are displayed after loading of another
+              project.
+  Workaround: Ignore these messages.
+
 - L306-045: Project editor issue with gnat warnings switches
   Problem:    Default warnings, appearing greyed out when editing the
               switches in the project editor, cannot be turned off when
