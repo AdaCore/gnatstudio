@@ -100,6 +100,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--mode=detect</arg>
+          <arg>-f</arg>
        </command-line>
     </target>
 
