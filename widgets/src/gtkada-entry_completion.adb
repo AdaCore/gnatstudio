@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
-with Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
 with GNAT.Regexp;
 with GNAT.Strings;               use GNAT.Strings;
@@ -313,18 +311,12 @@ package body Gtkada.Entry_Completion is
    is
       GEntry : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
 
-      Pattern_Characters : constant Ada.Strings.Maps.Character_Set :=
-        Ada.Strings.Maps.To_Set ("*?[{");
-
       function Next_Matching
         (Regexp   : GNAT.Regexp.Regexp;
          Start_At : Positive) return Integer;
       --  Return the index of the first possible completion for Regexp after
       --  index Start_At.
       --  Integer'Last is returned if no completion was found.
-
-      function Is_Regexp (Text : String) return Boolean;
-      --  Check if Text looks like wildcards pattern
 
       procedure Append
         (User_Text       : String;
@@ -338,15 +330,6 @@ package body Gtkada.Entry_Completion is
       --  completions.
       --  Has_Description is set to True if at least one of the entries had a
       --  completion.
-
-      ---------------
-      -- Is_Regexp --
-      ---------------
-
-      function Is_Regexp (Text : String) return Boolean is
-      begin
-         return Ada.Strings.Fixed.Index (Text, Pattern_Characters) > 0;
-      end Is_Regexp;
 
       -------------------
       -- Next_Matching --
@@ -471,13 +454,8 @@ package body Gtkada.Entry_Completion is
                  (Get_Position (Get_Entry (GEntry)));
 
                begin
-                  if Is_Regexp (T) then
-                     Regexp := GNAT.Regexp.Compile
-                       (T, True, GEntry.Case_Sensitive);
-                  else
-                     Regexp := GNAT.Regexp.Compile
-                       (T & "*", True, GEntry.Case_Sensitive);
-                  end if;
+                  Regexp := GNAT.Regexp.Compile
+                    (T & "*", True, GEntry.Case_Sensitive);
 
                   First_Index := Next_Matching (Regexp, Positive'First);
                exception
