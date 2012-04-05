@@ -4,7 +4,6 @@ with "../plugins";
 
 with "../ada_module/ui/ada_module_ui";
 with "../aliases/aliases";
-with "../aunit/aunit_support";
 with "../browsers/browsers";
 with "../builder/builder";
 with "../code_analysis/code_analysis";

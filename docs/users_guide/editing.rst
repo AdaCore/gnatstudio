@@ -917,23 +917,6 @@ The Edit Menu
   Generate Ada body stub for the current source editor by calling the external
   tool `gnatstub`.
 
-*Unit Testing*
-  .. index:: AUnit
-  .. index:: unit testing
-  .. index:: testing
-
-  This sub menu gives access to dialogs that make it easy to generate AUnit
-  stubs. AUnit is an Ada unit testing framework.
-
-*New Test Case...*
-  Create a new test case. See AUnit documentation for more details.
-
-*New Test Suite...*
-  Create a new test suite. See AUnit documentation for more details.
-
-*New Test Harness...*
-  Create a new test harness. See AUnit documentation for more details.
-
 *Edit with external editor*
   :ref:`Using_an_External_Editor`.
 

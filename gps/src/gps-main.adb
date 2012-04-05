@@ -95,7 +95,6 @@ with Welcome_Page;                     use Welcome_Page;
 
 with Ada_Module;
 with Aliases_Module;
-with Aunit_Module;
 with Bookmark_Views;
 with Browsers.Call_Graph;
 with Browsers.Dependency_Items;
@@ -201,8 +200,6 @@ procedure GPS.Main is
                               Create ("MODULE.Builder", GNATCOLL.Traces.On);
    GVD_Trace              : constant Debug_Handle :=
                               Create ("MODULE.GVD", GNATCOLL.Traces.On);
-   Aunit_Trace            : constant Debug_Handle :=
-                              Create ("MODULE.Aunit", GNATCOLL.Traces.On);
    GNATTest_Trace         : constant Debug_Handle :=
                               Create ("MODULE.GNATTest", GNATCOLL.Traces.On);
    Startup_Trace          : constant Debug_Handle :=
@@ -1396,10 +1393,6 @@ procedure GPS.Main is
 
       if Active (Project_Properties_Trace) then
          Project_Properties.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (Aunit_Trace) then
-         Aunit_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (GNATTest_Trace) then
