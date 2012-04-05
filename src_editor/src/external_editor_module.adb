@@ -830,7 +830,7 @@ package body External_Editor_Module is
       Register_Menu
         (Kernel, -"/Edit/", -"Edit with external editor", "",
          null, Command,
-         Ref_Item   => "Unit Testing",
+         Ref_Item   => "Aliases",
          Add_Before => False,
          Filter     => Lookup_Filter (Kernel, "File"));
 
