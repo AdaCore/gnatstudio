@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Fixed;
+with Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
+with GNAT.Regexp;
 with GNAT.Strings;               use GNAT.Strings;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Types;                  use Gdk.Types;
@@ -311,10 +313,18 @@ package body Gtkada.Entry_Completion is
    is
       GEntry : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
 
-      function Next_Matching (T : String; Start_At : Positive) return Integer;
-      --  Return the index of the first possible completion for T after
+      Pattern_Characters : constant Ada.Strings.Maps.Character_Set :=
+        Ada.Strings.Maps.To_Set ("*?[{");
+
+      function Next_Matching
+        (Regexp   : GNAT.Regexp.Regexp;
+         Start_At : Positive) return Integer;
+      --  Return the index of the first possible completion for Regexp after
       --  index Start_At.
       --  Integer'Last is returned if no completion was found.
+
+      function Is_Regexp (Text : String) return Boolean;
+      --  Check if Text looks like wildcards pattern
 
       procedure Append
         (User_Text       : String;
@@ -329,12 +339,22 @@ package body Gtkada.Entry_Completion is
       --  Has_Description is set to True if at least one of the entries had a
       --  completion.
 
+      ---------------
+      -- Is_Regexp --
+      ---------------
+
+      function Is_Regexp (Text : String) return Boolean is
+      begin
+         return Ada.Strings.Fixed.Index (Text, Pattern_Characters) > 0;
+      end Is_Regexp;
+
       -------------------
       -- Next_Matching --
       -------------------
 
       function Next_Matching
-        (T : String; Start_At : Positive) return Integer
+        (Regexp   : GNAT.Regexp.Regexp;
+         Start_At : Positive) return Integer
       is
          S : Positive := Start_At;
       begin
@@ -345,14 +365,8 @@ package body Gtkada.Entry_Completion is
             begin
                exit when Compl = "";
 
-               if Compl'Length >= T'Length then
-                  if Equal
-                    (Compl (Compl'First .. Compl'First + T'Length - 1),
-                     T,
-                     Case_Sensitive => GEntry.Case_Sensitive)
-                  then
-                     return S;
-                  end if;
+               if GNAT.Regexp.Match (Compl, Regexp) then
+                  return S;
                end if;
             end;
 
@@ -443,6 +457,7 @@ package body Gtkada.Entry_Completion is
             Matched        : String_List.List;
             Descr_Matched  : String_List.List;
             Iter           : Gtk_Tree_Iter;
+            Regexp         : GNAT.Regexp.Regexp;
 
          begin
             Set_Mode (Selection, Selection_Single);
@@ -454,7 +469,21 @@ package body Gtkada.Entry_Completion is
                Clear (GEntry.List);
                GEntry.Last_Position := Integer
                  (Get_Position (Get_Entry (GEntry)));
-               First_Index := Next_Matching (T, Positive'First);
+
+               begin
+                  if Is_Regexp (T) then
+                     Regexp := GNAT.Regexp.Compile
+                       (T, True, GEntry.Case_Sensitive);
+                  else
+                     Regexp := GNAT.Regexp.Compile
+                       (T & "*", True, GEntry.Case_Sensitive);
+                  end if;
+
+                  First_Index := Next_Matching (Regexp, Positive'First);
+               exception
+                  when GNAT.Regexp.Error_In_Regexp =>
+                     First_Index := Integer'Last;
+               end;
 
                --  At least one match
                if First_Index /= Integer'Last then
@@ -463,7 +492,7 @@ package body Gtkada.Entry_Completion is
                           Matched, Descr_Matched);
 
                   loop
-                     S := Next_Matching (T, S + 1);
+                     S := Next_Matching (Regexp, S + 1);
                      exit when S = Integer'Last;
 
                      Append (T, S, Compl_Access, Has_Description,

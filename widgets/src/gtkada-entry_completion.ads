@@ -65,7 +65,7 @@ package Gtkada.Entry_Completion is
      (Factory : Completions_Factory; Index : Positive) return String
      is abstract;
    --  Return the Index-th element in the list of completions. This
-   --  doesn't necessarily matches the current prefix, the check is done by
+   --  doesn't necessarily matches the current pattern, the check is done by
    --  the entry itself.
    --  The empty string should be returned if there are no more possible
    --  completions
