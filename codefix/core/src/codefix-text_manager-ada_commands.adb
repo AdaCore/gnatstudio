@@ -1758,12 +1758,27 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This          : in out Add_Record_Rep_Clause_Cmd;
       Current_Text  : Text_Navigator_Abstr'Class;
       Cursor        : File_Cursor'Class;
-      Record_Clause : String)
+      First_Clause  : String;
+      Second_Clause : String := "";
+      With_Clause   : String := "")
    is
    begin
       This.Location :=
         new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Cursor));
-      This.Record_Clause := new String'(Record_Clause);
+      This.First_Clause := new String'(First_Clause);
+
+      if Second_Clause /= "" then
+         This.Second_Clause := new String'(Second_Clause);
+      else
+         This.Second_Clause := null;
+      end if;
+
+      if With_Clause /= "" then
+         This.With_Clause := new String'(With_Clause);
+         This.File := Cursor.File;
+      else
+         This.With_Clause := null;
+      end if;
    end Initialize;
 
    -------------
@@ -1884,14 +1899,33 @@ package body Codefix.Text_Manager.Ada_Commands is
          Callback => Scan_Forward_Callback'Unrestricted_Access,
          Start    => Cursor);
 
-      --  Append the record representation clause
+      --  Append the record representation clauses
+
+      if This.Second_Clause /= null then
+         Current_Text.Add_Line
+           (Cursor   => Cursor,
+            Indent   => True,
+            New_Line => "for "
+                          & Record_Name (1 .. Record_Name_Len)
+                          & This.Second_Clause.all);
+      end if;
 
       Current_Text.Add_Line
         (Cursor   => Cursor,
          Indent   => True,
          New_Line => "for "
                        & Record_Name (1 .. Record_Name_Len)
-                       & This.Record_Clause.all);
+                       & This.First_Clause.all);
+
+      if This.With_Clause /= null then
+         if File_Cursor (Search_With (Current_Text, This.File, "System"))
+           = Null_File_Cursor
+         then
+            Current_Text.Add_Line
+              (Get_Next_With_Position (Current_Text, This.File),
+               "with " & This.With_Clause.all & ";");
+         end if;
+      end if;
    end Execute;
 
    ----------
@@ -1902,7 +1936,9 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Add_Record_Rep_Clause_Cmd) is
    begin
       Free (This.Location);
-      Free (This.Record_Clause);
+      Free (This.First_Clause);
+      Free (This.Second_Clause);
+      Free (This.With_Clause);
    end Free;
 
    -----------------

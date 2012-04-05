@@ -409,9 +409,12 @@ package Codefix.Text_Manager.Ada_Commands is
      (This          : in out Add_Record_Rep_Clause_Cmd;
       Current_Text  : Text_Navigator_Abstr'Class;
       Cursor        : File_Cursor'Class;
-      Record_Clause : String);
-   --  Add the missing record representation clause Record_Clause after the end
-   --  of the record type declaration
+      First_Clause  : String;
+      Second_Clause : String := "";
+      With_Clause   : String := "");
+   --  Add the record representation clauses First_Clause and Second_Clause
+   --  after the end of the full record type declaration. If With_Clause is
+   --  specified then append it to the list of the with clauses of the file.
 
    overriding
    procedure Execute
@@ -703,7 +706,10 @@ private
 
    type Add_Record_Rep_Clause_Cmd is new Text_Command (Simple) with record
       Location      : Ptr_Mark;
-      Record_Clause : String_Access;
+      First_Clause  : String_Access;
+      Second_Clause : String_Access;
+      With_Clause   : String_Access;
+      File          : Virtual_File;
    end record;
 
    type Remove_Extra_Underlines_Cmd is new Text_Command (Simple) with record

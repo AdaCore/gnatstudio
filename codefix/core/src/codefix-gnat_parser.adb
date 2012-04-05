@@ -1249,23 +1249,64 @@ package body Codefix.GNAT_Parser is
    is
       pragma Unreferenced (This, Matches, Options);
 
-      Message : constant Error_Message := Get_Message (Message_It);
-   begin
-      Solutions :=
-        Add_Record_Rep_Clause
-          (Current_Text  => Current_Text,
-           Cursor        => Message,
-           Caption       => "Low_Order_First",
-           Record_Clause =>
-             "'Scalar_Storage_Order use System.Low_Order_First;");
+      Message      : constant Error_Message := Get_Message (Message_It);
+      Message_Str  : constant String := Get_Message (Message);
+      Msg_Suffix_1 : constant String := "(Bit_Order is Low_Order_First)";
+      Msg_Suffix_2 : constant String := "(Bit_Order is High_Order_First)";
 
-      Concat (Solutions,
-        Add_Record_Rep_Clause
-          (Current_Text  => Current_Text,
-           Cursor        => Message,
-           Caption       => "High_Order_First",
-           Record_Clause =>
-             "'Scalar_Storage_Order use System.High_Order_First;"));
+   begin
+      --  Case 1: Bit order is Low_Order_First
+
+      if Message_Str (Message_Str'Last - Msg_Suffix_1'Length + 1
+                      .. Message_Str'Last)
+        = Msg_Suffix_1
+      then
+         Solutions :=
+           Add_Record_Rep_Clause
+             (Current_Text  => Current_Text,
+              Cursor        => Message,
+              Caption       => "Low_Order_First",
+              First_Clause  =>
+                "'Scalar_Storage_Order use System.Low_Order_First;");
+
+      --  Case 2: Bit order is High_Order_First
+
+      elsif Message_Str (Message_Str'Last - Msg_Suffix_2'Length + 1
+                      .. Message_Str'Last)
+        = Msg_Suffix_2
+      then
+         Solutions :=
+           Add_Record_Rep_Clause
+             (Current_Text  => Current_Text,
+              Cursor        => Message,
+              Caption       => "Low_Order_First",
+              First_Clause  =>
+                "'Scalar_Storage_Order use System.High_Order_First;");
+
+      --  Case 3: Bit order has not been specified
+
+      else
+         Solutions :=
+           Add_Record_Rep_Clause
+             (Current_Text  => Current_Text,
+              Cursor        => Message,
+              Caption       => "Low_Order_First",
+              First_Clause  =>
+                "'Bit_Order use System.Low_Order_First;",
+              Second_Clause =>
+                "'Scalar_Storage_Order use System.Low_Order_First;",
+              With_Clause   => "System");
+
+         Concat (Solutions,
+           Add_Record_Rep_Clause
+             (Current_Text  => Current_Text,
+              Cursor        => Message,
+              Caption       => "High_Order_First",
+              First_Clause  =>
+                "'Bit_Order use System.High_Order_First;",
+              Second_Clause =>
+                "'Scalar_Storage_Order use System.High_Order_First;"));
+      end if;
    end Fix;
 
    ---------------------------

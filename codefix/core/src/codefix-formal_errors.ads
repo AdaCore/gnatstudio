@@ -294,7 +294,9 @@ package Codefix.Formal_Errors is
      (Current_Text  : Text_Navigator_Abstr'Class;
       Cursor        : File_Cursor'Class;
       Caption       : String;
-      Record_Clause : String)
+      First_Clause  : String;
+      Second_Clause : String := "";
+      With_Clause   : String := "")
       return Solution_List;
    --  Proposes to add a record representation clause to a record type
    --  declaration

@@ -307,7 +307,9 @@ package body Codefix.Formal_Errors is
      (Current_Text  : Text_Navigator_Abstr'Class;
       Cursor        : File_Cursor'Class;
       Caption       : String;
-      Record_Clause : String)
+      First_Clause  : String;
+      Second_Clause : String := "";
+      With_Clause   : String := "")
       return Solution_List
    is
       Command_Ptr : constant Ptr_Command := new Add_Record_Rep_Clause_Cmd;
@@ -315,7 +317,9 @@ package body Codefix.Formal_Errors is
                       Add_Record_Rep_Clause_Cmd (Command_Ptr.all);
       Result      : Solution_List;
    begin
-      Initialize (Command, Current_Text, Cursor, Record_Clause);
+      Initialize
+        (Command, Current_Text, Cursor,
+         First_Clause, Second_Clause, With_Clause);
       Set_Caption (Command, Caption);
       Append (Result, Command_Ptr);
 
