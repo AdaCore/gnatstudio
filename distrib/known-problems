@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L404-002: Align on arrows could clobber the sources
+  Problem:    When calling align action on a line containing multiple arrows
+              the code is not compilable anymore.
+  Workaround: Align manually.
+
 - L330-002: Extra references to generic entity
   Problem:    When looking for all references to a generic entity, extra
               references are listed in the Locations view, pointing to the
