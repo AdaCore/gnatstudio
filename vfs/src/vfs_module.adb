@@ -802,13 +802,7 @@ package body VFS_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Explorer_Filter : constant Action_Filter :=
-                          Lookup_Filter (Kernel, "Explorer_View")
-                          or  Lookup_Filter (Kernel, "File_View");
-      File_Filter     : constant Action_Filter :=
-                          new File_Filter_Record;
-      Dir_Filter      : constant Action_Filter :=
-                          new Dir_Filter_Record;
+      Dir_Filter      : constant Action_Filter := new Dir_Filter_Record;
       Command         : Interactive_Command_Access;
    begin
       VFS_Module_Id := new Module_ID_Record;
@@ -833,28 +827,6 @@ package body VFS_Module is
          Action => Command,
          Filter => Lookup_Filter (Kernel, "File_View") and Dir_Filter,
          Label  => "File operations/Create a subdirectory");
-      Command := new Rename_Command;
-      Register_Contextual_Menu
-        (Kernel, "Rename file",
-         Action => Command,
-         Filter => Explorer_Filter and File_Filter,
-         Label  => "File operations/Rename file %f");
-      Register_Contextual_Menu
-        (Kernel, "Rename directory",
-         Action => Command,
-         Filter => Explorer_Filter and Dir_Filter,
-         Label  => "File operations/Rename directory");
-      Command := new Delete_Command;
-      Register_Contextual_Menu
-        (Kernel, "Delete file",
-         Action => Command,
-         Filter => Explorer_Filter and File_Filter,
-         Label  => "File operations/Delete file %f");
-      Register_Contextual_Menu
-        (Kernel, "Delete directory",
-         Action => Command,
-         Filter => Explorer_Filter and Dir_Filter,
-         Label  => "File operations/Delete directory recursively");
 
       Register_Command
         (Kernel, "pwd",
