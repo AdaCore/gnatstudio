@@ -28,7 +28,7 @@
 
    <submenu>
      <title>Edit</title>
-     <menu action="Pretty print" before="Unit Testing" >
+     <menu action="Pretty print" before="Aliases" >
         <title>P_retty Print</title>
      </menu>
    </submenu>

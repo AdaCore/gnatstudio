@@ -1099,7 +1099,7 @@ package body Bookmark_Views is
       Register_Menu
         (Kernel,
          "/" & (-"Edit"), -"Create Boo_kmark", "",
-         Ref_Item => -"Unit Testing",
+         Ref_Item => -"Aliases",
          Callback => null,
          Command  => Command,
          Filter   => Src_Action_Context);

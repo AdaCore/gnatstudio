@@ -28,7 +28,7 @@
 
    <submenu>
      <title>Edit</title>
-     <menu action="Generate body" before="Unit Testing" >
+     <menu action="Generate body" before="Aliases" >
         <title>_Generate Body</title>
      </menu>
    </submenu>
