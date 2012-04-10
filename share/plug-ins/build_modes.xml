@@ -120,6 +120,7 @@
   <server>Tools_Server</server>
   <substitutions>
     <substitute src="%builder" dest="gprbuild"/>
+    <substitute src="%gnatmake" dest="gprbuild"/>
   </substitutions>
   <extra-args>
     <arg>-margs</arg>
