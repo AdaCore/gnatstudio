@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Hashed_Sets;
 with Glib;                             use Glib;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Button;                       use Gtk.Button;
@@ -57,6 +58,9 @@ package body Creation_Wizard.Dependencies is
 
    package Wizard_Page_Handlers is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Project_Wizard_Page);
+
+   package File_Sets is
+     new Ada.Containers.Hashed_Sets (Virtual_File, Full_Name_Hash, "=");
 
    type Dependency_Project_Page is new Project_Wizard_Page_Record with record
       Kernel  : Kernel_Handle;
@@ -270,20 +274,14 @@ package body Creation_Wizard.Dependencies is
       Files            : File_Array_Access;
       Imported_Prj     : Project_Type;
       Imported         : Project_Iterator;
+      Visited          : File_Sets.Set;
 
    begin
       for J in Project_Path'Range loop
-         --  Make sure the path isn't duplicated
-         Found := False;
-
-         for K in Project_Path'Range loop
-            if Project_Path (J) = Project_Path (K) then
-               Found := True;
-               exit;
-            end if;
-         end loop;
+         Found := Visited.Contains (Project_Path (J));
 
          if not Found then
+            Visited.Include (Project_Path (J));
             begin
                Files := Project_Path (J).Read_Dir (Files_Only);
 
