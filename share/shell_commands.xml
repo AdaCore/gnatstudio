@@ -16,9 +16,11 @@
      <description>This package groups all the classes and functions exported by the GNAT Programming System.
 
 These functions are made available through various programming languages (Python and the GPS shell at the moment). The documentation in this package is mostly oriented towards Python, but it can also be used as a reference for the GPS shell.
-
-&lt;b&gt;Functions description&lt;/b&gt;
-
+     </description>
+     <description>
+== Functions description ==
+     </description>
+     <description>
 For all functions, the list of parameters is given. The first parameter will often be called "self", and refers to the instance of the class to which the method applies. In Python, the parameter is generally put before the method's name,
 as in:</description>
      <example lang="python">
@@ -36,9 +38,11 @@ in:</description>
      <description>which makes the call slightly more readable. The method above would be defined with three parameters in this documentation (resp. "self", "arg1" and "arg2").
 
 Some examples are also provides for several functions, to help clarify the use of the function.
-
-&lt;b&gt;User data in instances&lt;/b&gt;
-
+     </description>
+     <description>
+== User data in instances ==
+     </description>
+     <description>
 A very useful feature of python is that all class instances can be associated with any number of user data fields. For example, if you create an instance of
 the class GPS.EditorBuffer, you can associate two fields "field1" and "field2" to it (the names and number are purely for demonstration purposes, and you can use your own), as in:</description>
      <example lang="python">
@@ -52,9 +56,11 @@ the class GPS.EditorBuffer, you can associate two fields "field1" and "field2" t
 	# ed.field1 is still "value1"
      </example>
      <description>This is a very convenient way to store your own data associated with the various objects exported by GPS. These data will cease to exist when the GPS object itself is destroyed (for instance when the editor is closed in the example above).
-
-&lt;b&gt;Hooks&lt;/b&gt;
-
+    </description>
+    <description>
+== Hooks ==
+    </description>
+    <description>
 In a lot of cases, you will need to connect to specific hooks exported by GPS to be aware of events happening in GPS (loading of a file, closing a file,...). These hooks and their use are described in the GPS manual. </description>
   </shell_doc>
 
