@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L411-050: GPS: Only one item at a time can be moved in graph views
+  Problem:    In the graph views, for instance the debugger data, or the
+              dependency graph, it is no longer possible to move all items
+              in a selection.
+  Workaround: Move items one by one.
+
 - L404-002: Align on arrows could clobber the sources
   Problem:    When calling align action on a line containing multiple arrows
               the code is not compilable anymore.
