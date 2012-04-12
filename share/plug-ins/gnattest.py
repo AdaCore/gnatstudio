@@ -25,7 +25,7 @@ def open_harness_project (cur):
    if is_harness_project():
       return
 
-   harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest").strip()
+   harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
 
    if harness_dir == "" :
       harness_dir = "gnattest/harness"
