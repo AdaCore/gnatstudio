@@ -1531,7 +1531,11 @@ package body Project_Properties is
 
          else
             for L in List'Range loop
-               Append (Result, List (L).all & " ");
+               Append (Result, List (L).all);
+
+               if L /= List'Last then
+                  Append (Result, " ");
+               end if;
             end loop;
             Set_Return_Value (Data, To_String (Result));
          end if;
