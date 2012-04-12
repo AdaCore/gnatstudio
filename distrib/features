@@ -179,6 +179,10 @@ NF-52-FB01-013 ECL: Missing right-click debug options in editor (2011-10-12)
   to line, resume at line, add watch expression, and ruler context menu items
   toggle breakpoint, enabled/disable breakpoint, and breakpoint properties.
 
+NF-52-F831-008 GPS: inherit ALI parser for custom language (2012-04-12)
+
+  Add ability to use ALI parser to read xrefs for custom languages.
+
 NF-52-D528-005 GPS: UI: add custom radio menu items (2012-03-27)
 
   The GPS API GPS.Menu has been enhanced to allow creation of radio menu items
