@@ -19,10 +19,12 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
+with ALI_Parser;              use ALI_Parser;
 with GNAT.Expect;             use GNAT.Expect;
 with GNAT.Regpat;             use GNAT.Regpat;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with Glib;
 with Glib.Module;             use Glib.Module;
@@ -35,13 +37,14 @@ with Language.C;
 with Language.Cpp;
 with Language.Java;
 with Basic_Types;
-with Entities;
 with Dummy_Parser;              use Dummy_Parser;
+with Entities;                  use Entities;
 with Language_Handlers;         use Language_Handlers;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Intl;                  use GPS.Intl;
 with Project_Viewers;           use Project_Viewers;
+with Projects;                  use Projects;
 with Naming_Editors;            use Naming_Editors;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -80,6 +83,77 @@ package body Language.Custom is
    --  Create the naming scheme editor page
 
    Dummy_Handler : constant Entities.LI_Handler := Create_Dummy_LI_Handler;
+
+   ------------------------
+   --  Custom LI Handler --
+   ------------------------
+
+   package Custom_LI_Handler_Record_Pkg is
+      type Custom_Handler_Record is new ALI_Handler_Record with record
+         Lang   : Custom_Language_Access;
+         Suffix : String_Ptr;
+      end record;
+
+      overriding function Get_Name
+        (LI : access Custom_Handler_Record) return String;
+
+      overriding function Case_Insensitive_Identifiers
+        (Handler : access Custom_Handler_Record) return Boolean;
+
+      overriding function Get_ALI_Ext
+        (LI : access Custom_Handler_Record) return Filesystem_String;
+
+      overriding function Get_ALI_Filename
+        (Handler   : access Custom_Handler_Record;
+         Base_Name : Filesystem_String) return Filesystem_String;
+      --  See doc for inherited subprograms
+
+   end Custom_LI_Handler_Record_Pkg;
+
+   package body Custom_LI_Handler_Record_Pkg is
+
+      --------------
+      -- Get_Name --
+      --------------
+
+      overriding function Get_Name
+        (LI : access Custom_Handler_Record) return String is
+      begin
+         return LI.Lang.Get_Name;
+      end Get_Name;
+
+      ----------------------------------
+      -- Case_Insensitive_Identifiers --
+      ----------------------------------
+
+      overriding function Case_Insensitive_Identifiers
+        (Handler : access Custom_Handler_Record) return Boolean is
+      begin
+         return Handler.Lang.Get_Language_Context.Case_Sensitive;
+      end Case_Insensitive_Identifiers;
+
+      -----------------
+      -- Get_ALI_Ext --
+      -----------------
+
+      overriding function Get_ALI_Ext
+        (LI : access Custom_Handler_Record) return Filesystem_String is
+      begin
+         return Filesystem_String (LI.Suffix.all);
+      end Get_ALI_Ext;
+
+      ----------------------
+      -- Get_ALI_Filename --
+      ----------------------
+
+      overriding function Get_ALI_Filename
+        (Handler   : access Custom_Handler_Record;
+         Base_Name : Filesystem_String) return Filesystem_String is
+      begin
+         return Base_Name & Get_ALI_Ext (Handler);
+      end Get_ALI_Filename;
+
+   end Custom_LI_Handler_Record_Pkg;
 
    ---------------------
    -- Array_Item_Name --
@@ -244,6 +318,9 @@ package body Language.Custom is
       procedure Parse_Shared_Lib (Lib_Name : String);
       --  Parse xml part related to shared library symbols
 
+      function Create_LI_Handler return Entities.LI_Handler;
+      --  Create custom LI Handler if needed. Return Dummy otherwise.
+
       ---------------------------------
       -- Contains_Special_Characters --
       ---------------------------------
@@ -383,6 +460,29 @@ package body Language.Custom is
          end;
       end Parse_Shared_Lib;
 
+      -----------------------
+      -- Create_LI_Handler --
+      -----------------------
+
+      function Create_LI_Handler return Entities.LI_Handler is
+         use Custom_LI_Handler_Record_Pkg;
+         Suffix : constant String := Get_String (Get_Field (Top, "LI_Suffix"));
+      begin
+         if Suffix = "" then
+            return Dummy_Handler;
+         else
+            return new Custom_Handler_Record'
+              (LI_Handler_Record with
+                 Lang => Lang,
+                 Suffix => new String'(Suffix),
+                 Db => Get_Database (Kernel),
+                 Registry => Project_Registry (Get_Registry (Kernel).all),
+                 Lang_Handler => Language_Handler (Handler),
+                 Unmangle_Pd  => null,
+                 Launch_Unmangle_Subprocess => False);
+         end if;
+      end Create_LI_Handler;
+
    begin  -- Initialize
       Lang.Next := Custom_Root;
       Custom_Root := Lang;
@@ -390,7 +490,7 @@ package body Language.Custom is
       Lang.Name := new String'(Get_String (Get_Field (Top, "Name")));
 
       Register_Language (Handler, Language_Access (Lang), null,
-                         LI => Dummy_Handler);
+                         LI => Create_LI_Handler);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
         (Language_Name       => Get_Name (Lang),
          Default_Spec_Suffix =>
