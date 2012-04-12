@@ -73,7 +73,6 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>-P%PP</arg>
           <arg>--mode=prove</arg>
           <arg>--ide-progress-bar</arg>
-          <arg>--limit-subp=%f:%l</arg>
        </command-line>
     </target>
 
@@ -132,6 +131,22 @@ def is_subp_decl_context(self):
     else:
         return False
 
+# This is the context of a subprogram body if there is a subprogram, there is a
+# corresponding body, and their file:line locations match.
+def is_subp_body_context(self):
+    if isinstance (self, GPS.EntityContext) and \
+       self.entity() and \
+       self.entity().category() == "subprogram" and \
+       self.entity().body() and \
+       self.location().file() == self.entity().body().file() and \
+       self.location().line() == self.entity().body().line():
+        return True
+    else:
+        return False
+
+def is_subp_context(self):
+    return is_subp_decl_context(self) or is_subp_body_context(self)
+
 def mk_loc_string (sloc):
     locstring = os.path.basename(sloc.file().name()) + ":" + str(sloc.line())
     return locstring
@@ -145,8 +160,16 @@ def on_prove_file(self):
 def on_prove_line(self):
     GPS.BuildTarget(prove_line).execute(synchronous=False)
 
+# The argument --limit-subp is not defined in the prove_subp build target,
+# because we have no means of designating the proper location at that point.
+# A mild consequence is that --limit-subp does not appear in the editable
+# box shown to the user, even if appears in the uneditable argument list
+# displayed below it.
 def on_prove_subp(self):
-    GPS.BuildTarget(prove_subp).execute(synchronous=False)
+    loc = self.entity().declaration()
+    target = GPS.BuildTarget(prove_subp)
+    target.execute (extra_args="--limit-subp="+mk_loc_string (loc),
+                    synchronous=False)
 
 def on_show_unprovable_code(self):
     GPS.BuildTarget(show_unprovable_code).execute(synchronous=False)
@@ -159,5 +182,5 @@ if gnatprove:
   GPS.Contextual (prefix + "/" + prove_file).create(on_activate = on_prove_file)
   GPS.Contextual (prefix + "/" + prove_line).create(on_activate = on_prove_line)
   GPS.Contextual (prefix + "/" + prove_subp).create(
-          on_activate = on_prove_subp, filter = is_subp_decl_context)
+          on_activate = on_prove_subp, filter = is_subp_context)
   GPS.parse_xml(xml_gnatprove)
