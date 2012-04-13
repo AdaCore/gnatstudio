@@ -154,7 +154,7 @@ The list of active items includes:
 
   :ref:`Documentation_Generation`.
 
-*GNATTest*
+*GNATtest*
   .. index:: gnattest
 
   :ref:`Working_With_Unit_Tests`.
@@ -515,16 +515,16 @@ Working With Unit Tests
 GPS relies on `gnattest` tool that creates unit-test stubs as well as a test
 driver infrastructure (harness). Harness can be generated for project
 hierarchy, single project or a package. Generation process can be launched
-from `Tools->GNATTest` menu or from contextual menu.
+from `Tools->GNATtest` menu or from contextual menu.
 
 After generation of harness project GPS will switch to it, allowing you
 to implement tests, compile and run the harness.
 At any moment you can exit harness project and return to original project.
 
-The GNATTest Menu
+The GNATtest Menu
 -----------------
 
-The `GNATTest` submenu is available from the `Tools` global menu and
+The `GNATtest` submenu is available from the `Tools` global menu and
 contains:
 
 *Generate unit test setup*
@@ -544,7 +544,7 @@ The Contextual Menu
 -------------------
 
 When relevant (depending on the context), right-clicking with your mouse will
-show GNATTest-related contextual menu entries.
+show GNATtest-related contextual menu entries.
 
 Pointing to a source file containing the library package declaration, you
 have an option called *Generate unit test setup for <file>* that will generate
@@ -567,7 +567,7 @@ Project Properties
 ------------------
 
 Gnattest's behaviour could be configured through project properties.
-GNATTest page in (:ref:`The_Project_Properties_Editor`) gives you
+GNATtest page in (:ref:`The_Project_Properties_Editor`) gives you
 convenient access to these properties.
 
 .. _Metrics:
