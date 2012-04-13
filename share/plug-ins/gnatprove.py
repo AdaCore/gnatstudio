@@ -17,14 +17,15 @@ xml_gnatprove = """<?xml version="1.0"?>
 
     <tool name="GNATprove" package="Prove" attribute="switches" index="">
       <language>Ada</language>
-      <switches columns="1" lines="3" switch_char="-">
+      <switches columns="2" lines="3" switch_char="-">
+        <title line="1">Proof</title>
         <combo line="1" label="Report mode" switch="--report" separator="="
                noswitch="fail" tip="Amount of information reported">
           <combo-entry label="fail" value="fail"
                        tip="Only failed proof attempts"/>
           <combo-entry label="all" value="all"
                        tip="All proof attempts"/>
-          <combo-entry label="details" value="detailed"
+          <combo-entry label="detailed" value="detailed"
                        tip="Detailed proof attempts"/>
         </combo>
         <spin label="Prover timeout" switch="--timeout="
@@ -33,6 +34,10 @@ xml_gnatprove = """<?xml version="1.0"?>
         <spin label="Prover max steps" switch="--steps="
               default="0" min="0" max="1000000"
               tip="Set the prover maximum number of steps for individual VCs" />
+        <title line="1" column="2">Process control</title>
+        <spin label="Multiprocessing" column="2" switch="-j"
+              default="1" min="1" max="100"
+              tip="Use N processes to compile and prove. On a multiprocessor machine compilation and proof will occur in parallel" />
       </switches>
     </tool>
 
