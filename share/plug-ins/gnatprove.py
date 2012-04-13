@@ -61,6 +61,20 @@ xml_gnatprove = """<?xml version="1.0"?>
        </switches>
     </target-model>
 
+    <target model="gnatprove" name="Prove All" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--mode=prove</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-U</arg>
+       </command-line>
+    </target>
+
     <target model="gnatprove" name="Prove Root Project" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
@@ -148,6 +162,7 @@ xml_gnatprove = """<?xml version="1.0"?>
 
 prefix               = "Prove"
 menu_prefix          = "/" + prefix
+prove_all            = "Prove All"
 prove_root_project   = "Prove Root Project"
 prove_file           = "Prove File"
 prove_line           = "Prove Line"
@@ -191,6 +206,9 @@ def mk_loc_string (sloc):
     locstring = os.path.basename(sloc.file().name()) + ":" + str(sloc.line())
     return locstring
 
+def on_prove_all(self):
+    GPS.BuildTarget(prove_all).execute(synchronous=False)
+
 def on_prove_root_project(self):
     GPS.BuildTarget(prove_root_project).execute(synchronous=False)
 
@@ -216,6 +234,7 @@ def on_show_unprovable_code(self):
 
 if gnatprove:
   GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
+  GPS.Menu.create(menu_prefix + "/" + prove_all, on_prove_all)
   GPS.Menu.create(menu_prefix + "/" + prove_root_project, on_prove_root_project)
   GPS.Menu.create(menu_prefix + "/" + prove_file, on_prove_file)
   GPS.Menu.create(menu_prefix + "/" + show_unprovable_code, on_show_unprovable_code)
