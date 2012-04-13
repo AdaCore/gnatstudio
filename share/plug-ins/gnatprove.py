@@ -15,6 +15,27 @@ import GPS, os_utils, os.path
 xml_gnatprove = """<?xml version="1.0"?>
   <GNATPROVE>
 
+    <tool name="GNATprove" package="Prove" attribute="switches" index="">
+      <language>Ada</language>
+      <switches columns="1" lines="3" switch_char="-">
+        <combo line="1" label="Report mode" switch="--report" separator="="
+               noswitch="fail" tip="Amount of information reported">
+          <combo-entry label="fail" value="fail"
+                       tip="Only failed proof attempts"/>
+          <combo-entry label="all" value="all"
+                       tip="All proof attempts"/>
+          <combo-entry label="details" value="detailed"
+                       tip="Detailed proof attempts"/>
+        </combo>
+        <spin label="Prover timeout" switch="--timeout="
+              default="1" min="1" max="3600"
+              tip="Set the prover timeout (in s) for individual VCs" />
+        <spin label="Prover max steps" switch="--steps="
+              default="0" min="0" max="1000000"
+              tip="Set the prover maximum number of steps for individual VCs" />
+      </switches>
+    </tool>
+
     <target-model name="gnatprove">
        <description>Target model for GNATprove</description>
        <command-line>
