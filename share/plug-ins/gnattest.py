@@ -16,7 +16,7 @@ def run (project, target, extra_args=""):
 def is_harness_project ():
    """ Check if root project is harness project. """
    root_project = GPS.Project.root()
-   mapping = root_project.get_attribute_as_string ("GNATTest_Mapping_File",
+   mapping = root_project.get_attribute_as_string ("GNATtest_Mapping_File",
                                                    package="GNATtest")
    return mapping.strip() != ""
 
@@ -55,7 +55,7 @@ def on_compilation_finished(hook, category,
 
    global last_gnattest_project
 
-   if not target_name.startswith("GNATTest"):
+   if not target_name.startswith("GNATtest"):
       return
 
    if status:

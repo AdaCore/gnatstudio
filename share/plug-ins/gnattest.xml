@@ -5,7 +5,7 @@
 <gnattest>
   <project_attribute package="gnattest"
     name="harness_dir"
-    editor_page="GNATTest"
+    editor_page="GNATtest"
     editor_section="Directories"
     label="Harness Directory"
     description="is used to specify the directory in which to place harness packages and project file for the test driver"
@@ -16,7 +16,7 @@
 
   <project_attribute package="gnattest"
     name="tests_dir"
-    editor_page="GNATTest"
+    editor_page="GNATtest"
     editor_section="Directories"
     disable_if_not_set="true"
     disable="gnattest.tests_root gnattest.stub_subdir"
@@ -29,7 +29,7 @@
 
   <project_attribute package="gnattest"
     name="tests_root"
-    editor_page="GNATTest"
+    editor_page="GNATtest"
     editor_section="Directories"
     disable_if_not_set="true"
     disable="gnattest.tests_dir gnattest.stub_subdir"
@@ -40,7 +40,7 @@
 
   <project_attribute package="gnattest"
     name="stub_subdir"
-    editor_page="GNATTest"
+    editor_page="GNATtest"
     editor_section="Directories"
     disable_if_not_set="true"
     disable="gnattest.tests_dir gnattest.tests_root"
@@ -52,7 +52,7 @@
 
   <project_attribute package="gnattest"
     name="additional_tests"
-    editor_page="GNATTest"
+    editor_page="GNATtest"
     label="Additional Tests"
     description="Sources described in given project are considered potential additional manual tests to be added to the test suite."
     hide_in="wizard library_wizard"
@@ -62,7 +62,7 @@
 
   <project_attribute package="gnattest"
     name="stubs_default"
-    editor_page="GNATTest"
+    editor_page="GNATtest"
     label="Stubs Default"
     description="Default behavior of generated stubs."
     hide_in="wizard library_wizard"
@@ -73,7 +73,7 @@
 
   <project_attribute package="gnattest"
     name="gnattest_switches"
-    editor_page="GNATTest"
+    editor_page="GNATtest"
     list="true"
     label="GNATtest Switches"
     description="Custom switches for gnattest."
@@ -85,8 +85,8 @@
   <project_attribute package="gnattest"
     name="gnattest_mapping_file"
     hide_in="all"
-    editor_page="GNATTest"
-    label="GNATTest Mapping File"
+    editor_page="GNATtest"
+    label="GNATtest Mapping File"
     description="Map tests to subprograms."
     />
 
@@ -97,7 +97,7 @@
     </filter_and>
     <description>Run gnattest on current project</description>
     <shell lang="python" output="none"
-    >gnattest.run(GPS.current_context().project(), "GNATTest for project")</shell>
+    >gnattest.run(GPS.current_context().project(), "GNATtest for project")</shell>
   </action>
 
   <action name="run gnattest recursive">
@@ -107,7 +107,7 @@
     </filter_and>
     <description>Run gnattest on current project and subprojects</description>
     <shell lang="python" output="none"
-    >gnattest.run(GPS.current_context().project(), "GNATTest for project", "-r")</shell>
+    >gnattest.run(GPS.current_context().project(), "GNATtest for project", "-r")</shell>
   </action>
 
   <action name="run gnattest on root">
@@ -116,7 +116,7 @@
     </filter_and>
     <description>Run gnattest on root project</description>
     <shell lang="python" output="none"
-    >gnattest.run(GPS.Project.root(), "GNATTest for root project")</shell>
+    >gnattest.run(GPS.Project.root(), "GNATtest for root project")</shell>
   </action>
 
   <action name="run gnattest on root recursive">
@@ -125,7 +125,7 @@
     </filter_and>
     <description>Run gnattest on root project and subprojects</description>
     <shell lang="python" output="none"
-    >gnattest.run(GPS.Project.root(), "GNATTest for root project", "-r")</shell>
+    >gnattest.run(GPS.Project.root(), "GNATtest for root project", "-r")</shell>
   </action>
 
   <action name="open harness" output="none">
@@ -150,11 +150,11 @@
     </filter_and>
     <description>Run gnattest on single package</description>
     <shell lang="python" output="none"
-    >gnattest.run(GPS.current_context().project(), "GNATTest for file")</shell>
+    >gnattest.run(GPS.current_context().project(), "GNATtest for file")</shell>
   </action>
 
   <submenu after="Documentation">
-    <title>Tools/GNATTest</title>
+    <title>Tools/GNATtest</title>
     <menu action="run gnattest on root">
       <title>Generate unit test setup</title>
     </menu>
@@ -169,24 +169,24 @@
     </menu>
   </submenu>
 
-  <contextual action="run gnattest" after="GNATTest">
-    <title>GNATTest/Generate unit test setup for %p</title>
+  <contextual action="run gnattest" after="GNATtest">
+    <title>GNATtest/Generate unit test setup for %p</title>
   </contextual>
 
-  <contextual action="run gnattest recursive" after="GNATTest">
-    <title>GNATTest/Generate unit test setup for %p and subprojects</title>
+  <contextual action="run gnattest recursive" after="GNATtest">
+    <title>GNATtest/Generate unit test setup for %p and subprojects</title>
   </contextual>
 
-  <contextual action="open harness" after="GNATTest">
-    <title>GNATTest/Open harness project</title>
+  <contextual action="open harness" after="GNATtest">
+    <title>GNATtest/Open harness project</title>
   </contextual>
 
-  <contextual action="exit harness" after="GNATTest">
-    <title>GNATTest/Exit harness project</title>
+  <contextual action="exit harness" after="GNATtest">
+    <title>GNATtest/Exit harness project</title>
   </contextual>
 
-  <contextual action="make single test" after="GNATTest">
-    <title>GNATTest/Generate unit test setup for %f</title>
+  <contextual action="make single test" after="GNATtest">
+    <title>GNATtest/Generate unit test setup for %f</title>
   </contextual>
 
   <target-model name="gnattest" category="">
@@ -256,7 +256,7 @@
     </switches>
   </target-model>
 
-  <target model="gnattest" category="_Project_" name="GNATTest for project">
+  <target model="gnattest" category="_Project_" name="GNATtest for project">
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
@@ -268,7 +268,7 @@
     </command-line>
   </target>
 
-  <target model="gnattest" category="_File_" name="GNATTest for file">
+  <target model="gnattest" category="_File_" name="GNATtest for file">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
@@ -283,7 +283,7 @@
   </target>
 
   <target model="gnattest" category="_Project_"
-          name="GNATTest for root project">
+          name="GNATtest for root project">
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
