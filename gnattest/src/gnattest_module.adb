@@ -300,7 +300,7 @@ package body GNATTest_Module is
             if Test.File_Time_Stamp = Item.Stamp then
                GPS.Kernel.Messages.Simple.Create_Simple_Message
                  (Container => Messages,
-                  Category  => "GNATTest",
+                  Category  => "GNATtest",
                   File      => File,
                   Line      => Key.Line,
                   Column    => Basic_Types.Visible_Column_Type (Key.Column),
@@ -530,7 +530,7 @@ package body GNATTest_Module is
      return String
    is
       Name  : constant GNATCOLL.Projects.Attribute_Pkg_String
-        := GNATCOLL.Projects.Build ("GNATtest", "GNATTest_Mapping_File");
+        := GNATCOLL.Projects.Build ("GNATtest", "GNATtest_Mapping_File");
    begin
       return Project.Attribute_Value (Name);
    end Get_Mapping_File;
@@ -639,8 +639,8 @@ package body GNATTest_Module is
 
       GPS.Kernel.Modules.UI.Register_Contextual_Submenu
         (Kernel   => Kernel,
-         Name     => "GNATTest",
-         Label    => "GNATTest",
+         Name     => "GNATtest",
+         Label    => "GNATtest",
          Filter   => GPS.Kernel.Lookup_Filter (Kernel, "Entity is subprogram"),
          Submenu  => Submenu_Factory,
          Ref_Item => "Coverage");
@@ -649,9 +649,9 @@ package body GNATTest_Module is
         (Kernel      => Kernel,
          Name        => "Goto tested subprogram",
          Action      => Go_Command,
-         Label       => "GNATTest/Go to %C",
+         Label       => "GNATtest/Go to %C",
          Custom      => Tested_Subprogram_Name'Access,
-         Ref_Item    => "GNATTest",
+         Ref_Item    => "GNATtest",
          Add_Before  => False);
 
       GPS.Kernel.Hooks.Add_Hook
