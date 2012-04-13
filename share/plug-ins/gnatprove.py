@@ -90,7 +90,21 @@ xml_gnatprove = """<?xml version="1.0"?>
        </command-line>
     </target>
 
-    <target model="gnatprove" name="Show Unprovable Code" category="GNATprove">
+    <target-model name="gnatprovable">
+       <description>Target model for GNATprove in detection mode</description>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+       </command-line>
+       <icon>gps-build-all</icon>
+       <switches command="%(tool_name)s" columns="1" lines="1">
+         <title column="1" line="1" >Compilation</title>
+         <check label="Force Recompilation" switch="-f" column="1"
+                tip="All actions are redone entirely, including compilation and proof" />
+       </switches>
+    </target-model>
+
+    <target model="gnatprovable" name="Show Unprovable Code" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
