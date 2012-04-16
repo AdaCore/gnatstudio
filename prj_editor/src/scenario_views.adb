@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with System.Assertions;
+
 with Gdk.Event;           use Gdk.Event;
 with Glib;                use Glib;
 with Glib.Convert;        use Glib.Convert;
@@ -278,14 +280,23 @@ package body Scenario_Views is
       Combo  : access Gtk_Combo_Box_Record'Class;
       Var    : Scenario_Variable)
    is
-      Values : GNAT.Strings.String_List :=
-                 Get_Registry (Kernel).Tree.Possible_Values_Of (Var);
    begin
-      for Iter in Values'Range loop
-         Combo.Append_Text (Locale_To_UTF8 (Values (Iter).all));
-      end loop;
+      declare
+         Values : GNAT.Strings.String_List :=
+           Get_Registry (Kernel).Tree.Possible_Values_Of (Var);
+      begin
 
-      Free (Values);
+         for Iter in Values'Range loop
+            Combo.Append_Text (Locale_To_UTF8 (Values (Iter).all));
+         end loop;
+
+         Free (Values);
+      end;
+   exception
+      when System.Assertions.Assert_Failure =>
+         Trace
+           (Exception_Handle,
+            "Scenario variable not found: " & External_Name (Var));
    end Add_Possible_Values;
 
    ------------------
