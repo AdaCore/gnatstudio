@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L416-024: GPS: Crash when clearing call graphs while a computation is running
+  Problem:    GPS might crash if call graphs are cleared while a "calls" or a
+              "call by" operation is running.
+  Workaround: Cancel the operation before clearing the call graph.
+
 - L413-013: GB: Unable to open Ada file from egit team provider
   Problem:    When opening an Ada file shared in the egit team provider
               from the history view you will get a null pointer exception.
