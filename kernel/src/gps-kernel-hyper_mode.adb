@@ -389,6 +389,13 @@ package body GPS.Kernel.Hyper_Mode is
          if Data.Kernel.In_Hyper_Mode
            and then not Data.Hyper_Mode
          then
+            --  Check for the pressed state of the control key. If it is not
+            --  pressed, leave the hyper mode.
+            if (Get_State (Event) and Control_Mask) = 0 then
+               Hyper_Mode_Leave (Data);
+               return False;
+            end if;
+
             Hyper_Mode_Enter (Data);
          end if;
       end if;
