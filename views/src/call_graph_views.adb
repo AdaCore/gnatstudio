@@ -187,8 +187,8 @@ package body Call_Graph_Views is
 
    type Ancestors_User_Data is new Commands_User_Data_Record with record
       View           : Callgraph_View_Access;
-      Entity_Iter    : Gtk_Tree_Iter;
-      Computing_Iter : Gtk_Tree_Iter := Null_Iter;  --  "computing..." node
+      Entity_Ref     : Gtk_Tree_Row_Reference;
+      Computing_Ref  : Gtk_Tree_Row_Reference;  --  "computing..." node
    end record;
    type Ancestors_User_Data_Access is access all Ancestors_User_Data'Class;
    overriding procedure Destroy
@@ -790,6 +790,10 @@ package body Call_Graph_Views is
       Entity : Entity_Information;
       Column : Gint;
       Data   : Ancestors_User_Data_Access;
+      Computing_Iter : Gtk_Tree_Iter := Null_Iter;
+
+      Local_Path  : Gtk_Tree_Path;
+      Model : constant Gtk_Tree_Model := V.Tree.Get_Model;
    begin
       if V.Block_On_Expanded then
          return;
@@ -813,17 +817,23 @@ package body Call_Graph_Views is
       --  Keep one child (the computing node), or the expanded status is lost
       --  by gtk+.
 
+      Local_Path := Get_Path (Model, Iter);
       Data := new Ancestors_User_Data'
         (Commands_User_Data_Record with
-         View           => V,
-         Computing_Iter => Null_Iter,
-         Entity_Iter    => Iter);
+           View        => V,
+         Computing_Ref => null,
+         Entity_Ref    => Gtk_New (Model, Local_Path));
+      Path_Free (Local_Path);
 
-      Prepend (M, Data.Computing_Iter, Iter);
-      Set (M, Data.Computing_Iter, Name_Column, Computing_Label);
+      Prepend (M, Computing_Iter, Iter);
+      Set (M, Computing_Iter, Name_Column, Computing_Label);
 
-      Iter_Copy (Data.Computing_Iter, Child);
+      Iter_Copy (Computing_Iter, Child);
       Next (M, Child);
+
+      Local_Path := Get_Path (Model, Computing_Iter);
+      Data.Computing_Ref := Gtk_New (Model, Local_Path);
+      Path_Free (Local_Path);
 
       while Child /= Null_Iter loop
          Iter_Copy (Child, Dummy);
@@ -1537,13 +1547,27 @@ package body Call_Graph_Views is
      (Data : in out Ancestors_User_Data; Cancelled : Boolean)
    is
       Model : Gtk_Tree_Store;
+      Path  : Gtk_Tree_Path;
+      Iter  : Gtk_Tree_Iter;
    begin
       if not Cancelled
-        and then Data.Computing_Iter /= Null_Iter
+        and then Valid (Data.Computing_Ref)
       then
+         Path := Get_Path (Data.Computing_Ref);
          Model := Gtk_Tree_Store (Get_Model (Data.View.Tree));
-         Remove (Model, Data.Computing_Iter);
+         Iter := Get_Iter (Model, Path);
+         Remove (Model, Iter);
+         Path_Free (Path);
       end if;
+
+      if Data.Computing_Ref /= null then
+         Row_Reference_Free (Data.Computing_Ref);
+      end if;
+
+      if Data.Entity_Ref /= null then
+         Row_Reference_Free (Data.Entity_Ref);
+      end if;
+
    end Destroy;
 
    ---------------------
@@ -1560,8 +1584,18 @@ package body Call_Graph_Views is
    is
       Iter : Gtk_Tree_Iter;
       pragma Unreferenced (Is_Renaming, Iter);
+
+      Entity_Iter : Gtk_Tree_Iter;
+      Path        : Gtk_Tree_Path;
    begin
-      case Get_View_Type (Get_Model (Data.View.Tree), Data.Entity_Iter) is
+      if not Valid (Data.Entity_Ref) then
+         return False;
+      end if;
+
+      Path := Get_Path (Data.Entity_Ref);
+      Entity_Iter := Get_Iter (Get_Model (Data.Entity_Ref), Path);
+
+      case Get_View_Type (Get_Model (Data.View.Tree), Entity_Iter) is
          when View_Called_By =>
             Iter := Insert_Entity
               (View                => Data.View,
@@ -1571,7 +1605,7 @@ package body Call_Graph_Views is
                Kind                => View_Called_By,
                Suffix              => "",
                Through_Dispatching => Through_Dispatching,
-               Parent_Iter         => Data.Entity_Iter);
+               Parent_Iter         => Entity_Iter);
 
          when View_Calls =>
             Iter := Insert_Entity
@@ -1582,8 +1616,11 @@ package body Call_Graph_Views is
                Kind                => View_Calls,
                Suffix              => "",
                Through_Dispatching => Through_Dispatching,
-               Parent_Iter         => Data.Entity_Iter);
+               Parent_Iter         => Entity_Iter);
       end case;
+
+      Path_Free (Path);
+
       return True;
    end On_Entity_Found;
 
