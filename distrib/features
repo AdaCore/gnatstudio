@@ -23,6 +23,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L416-043 GB: Improved search results interaction (2012-04-16)
+
+  When a non-nested entry is selected in the search results, the editor is now
+  opened on the first enclosed match rather than on the enclosing construct
+  itself.  For example, if one or more references occur to the intended entity
+  within a subprogram, the subprogram name is the entry in the results, rather
+  than each enclosed match being given a distinct entry. Selecting the entry
+  for the subprogram will no longer open the editor on the subprogram name in
+  the declaration. It will open the editor at the first enclosed reference.
+
 NF-52-L329-026 GPS: Improved emacs selection mode support (2012-03-30)
 
   When using the emacs mode, after setting a mark, the commands to go to the
