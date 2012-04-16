@@ -17,7 +17,8 @@
 
 --  This package offers a few utilities for handling time.
 
-with Ada.Calendar; use Ada.Calendar;
+with Ada.Calendar;             use Ada.Calendar;
+with Ada.Calendar.Formatting;  use Ada.Calendar.Formatting;
 
 package Time_Utils is
 
@@ -29,5 +30,16 @@ package Time_Utils is
       Seconds : out Day_Duration);
    --  Similar to Ada.Calendar.Split, but computes the time relative to the
    --  local time zone.
+
+   procedure Local_Split
+     (Date       : Time;
+      Year       : out Year_Number;
+      Month      : out Month_Number;
+      Day        : out Day_Number;
+      Hour       : out Hour_Number;
+      Minute     : out Minute_Number;
+      Second     : out Second_Number;
+      Sub_Second : out Second_Duration);
+   --  Same as above.
 
 end Time_Utils;

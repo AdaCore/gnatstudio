@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar.Formatting;
 with Ada.Calendar.Time_Zones;  use Ada.Calendar.Time_Zones;
 
 package body Time_Utils is
@@ -42,6 +41,30 @@ package body Time_Utils is
                                      Month       => Month,
                                      Day         => Day,
                                      Seconds     => Seconds,
+                                     Leap_Second => Ls,
+                                     Time_Zone   => TZ);
+   end Local_Split;
+
+   procedure Local_Split
+     (Date       : Time;
+      Year       : out Year_Number;
+      Month      : out Month_Number;
+      Day        : out Day_Number;
+      Hour       : out Hour_Number;
+      Minute     : out Minute_Number;
+      Second     : out Second_Number;
+      Sub_Second : out Second_Duration)
+   is
+      Ls : Boolean;
+   begin
+      Ada.Calendar.Formatting.Split (Date        => Date,
+                                     Year        => Year,
+                                     Month       => Month,
+                                     Day         => Day,
+                                     Hour        => Hour,
+                                     Minute      => Minute,
+                                     Second      => Second,
+                                     Sub_Second  => Sub_Second,
                                      Leap_Second => Ls,
                                      Time_Zone   => TZ);
    end Local_Split;
