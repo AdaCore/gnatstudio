@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L413-013: GB: Unable to open Ada file from egit team provider
+  Problem:    When opening an Ada file shared in the egit team provider
+              from the history view you will get a null pointer exception.
+  Workaround: None.
+
 - L411-050: GPS: Only one item at a time can be moved in graph views
   Problem:    In the graph views, for instance the debugger data, or the
               dependency graph, it is no longer possible to move all items
