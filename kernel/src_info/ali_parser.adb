@@ -17,9 +17,9 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Calendar.Formatting;   use Ada.Calendar.Formatting;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
-with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
@@ -37,6 +37,7 @@ with Projects;                  use Projects;
 with Remote;                    use Remote;
 with Traces;
 with Language.Tree.Database;    use Language.Tree.Database;
+with Time_Utils;                use Time_Utils;
 
 with ALI;                       use ALI;
 with Types;                     use Types;
@@ -2574,6 +2575,10 @@ package body ALI_Parser is
       function Is_ALI_File (LI : LI_File) return Boolean;
       --  Return True is LI represents an ALI file (as opposed to e.g. a .sli)
 
+      function Local_Timestamp_Image (T : Ada.Calendar.Time) return String;
+      pragma Inline (Local_Timestamp_Image);
+      --  Return an "%D-%T" image for D.
+
       procedure Load_And_Scan_ALI
         (ALI_Filename          : Virtual_File;
          Reset_First           : Boolean;
@@ -2676,6 +2681,24 @@ package body ALI_Parser is
          end if;
       end Load_And_Scan_ALI;
 
+      ---------------------------
+      -- Local_Timestamp_Image --
+      ---------------------------
+
+      function Local_Timestamp_Image (T : Ada.Calendar.Time) return String is
+         Y : Year_Number;
+         M : Month_Number;
+         D : Day_Number;
+         H : Hour_Number;
+         Mi : Minute_Number;
+         S : Second_Number;
+         Ss : Second_Duration;
+      begin
+         Local_Split (T, Y, M, D, H, Mi, S, Ss);
+         return Image (Y, 4) & Image (M, 2) & Image (D, 2) & "-" &
+           Image (H, 2) & ":" & Image (Mi, 2) & ":" & Image (S, 2);
+      end Local_Timestamp_Image;
+
       --  Local variables
 
       New_ALI_Id            : ALI_Id := No_ALI_Id;
@@ -2725,9 +2748,9 @@ package body ALI_Parser is
             Trace (Assert_Me, "Load_And_Scan_ALI: "
                    & Display_Full_Name (Get_LI_Filename (LI))
                    & " since timestamp incorrect: old="
-                   & Image (Get_Timestamp (LI), "%D-%T")
+                   & Local_Timestamp_Image (Get_Timestamp (LI))
                    & " new="
-                   & Image (New_Timestamp, "%D-%T"));
+                   & Local_Timestamp_Image (New_Timestamp));
          else
             Trace (Me, "Load_And_Scan_ALI: "
                    & Display_Full_Name (Get_LI_Filename (LI)));
