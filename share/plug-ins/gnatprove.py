@@ -48,16 +48,18 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>-P%PP</arg>
        </command-line>
        <icon>gps-build-all</icon>
-       <switches command="%(tool_name)s" columns="2" lines="1">
+       <switches command="%(tool_name)s" columns="2" lines="2">
          <title column="1" line="1" >Compilation</title>
          <check label="Force Recompilation" switch="-f" column="1"
                 tip="All actions are redone entirely, including compilation and proof" />
-         <title column="2" line="1" >Proof</title>
-         <check label="Report Proved VCs" switch="--report=all" column="2"
+         <check label="Report Proved VCs" switch="--report=all" column="1"
                 tip="Report the status of all VCs, including those proved" />
+         <title column="2" line="1" >Proof</title>
          <spin label="Prover Timeout" switch="--timeout=" column="2"
                 default="1" min="1" max="3600"
                 tip="Set the prover timeout (in s) for individual VCs" />
+         <field label="Alternate Prover" switch="--prover=" column="2"
+                tip="Alternate prover to use instead of Alt-Ergo" />
        </switches>
     </target-model>
 
