@@ -1378,7 +1378,7 @@ private
 
       Line_Terminator : Line_Terminator_Style := Unknown;
 
-      Strip_Trailing_Blanks : Boolean := False;
+      Strip_Trailing_Blanks : Boolean := True;
       --  Whether the buffer should strip trailing spaces
 
       Timeout_Id         : Gtk.Main.Timeout_Handler_Id := 0;
