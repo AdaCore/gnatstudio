@@ -953,14 +953,18 @@ package body String_Utils is
      (Text      : in out String;
       Last      : out Integer;
       CR_Found  : out Boolean;
-      NUL_Found : out Boolean)
+      NUL_Found : out Boolean;
+      Trailing_Space_Found : out Boolean)
    is
       pragma Suppress (All_Checks);
+
+      Last_Is_Space : Boolean := False;
 
       J : Natural := Text'First;
    begin
       CR_Found := False;
       NUL_Found := False;
+      Trailing_Space_Found := False;
 
       if Text'Length = 0 then
          Last := 0;
@@ -968,22 +972,24 @@ package body String_Utils is
       end if;
 
       loop
-         --  Manual unrolling for efficiency
-
-         exit when Text (J) = ASCII.CR
+         if Text (J) = ASCII.CR
            or else Text (J) = ASCII.NUL
-           or else J = Text'Last;
+           or else J = Text'Last
+         then
+            exit;
+         elsif Text (J) = ASCII.LF then
+            if Last_Is_Space then
+               Trailing_Space_Found := True;
+               Last_Is_Space := False;
+            end if;
+         elsif Text (J) = ASCII.HT or else Text (J) = ' ' then
+            Last_Is_Space := True;
+         else
+            Last_Is_Space := False;
+         end if;
+
          J := J + 1;
 
-         exit when Text (J) = ASCII.CR
-           or else Text (J) = ASCII.NUL
-           or else J = Text'Last;
-         J := J + 1;
-
-         exit when Text (J) = ASCII.CR
-           or else Text (J) = ASCII.NUL
-           or else J = Text'Last;
-         J := J + 1;
       end loop;
 
       case Text (J) is
@@ -991,6 +997,11 @@ package body String_Utils is
             Last := J - 1;
          when others =>
             Last := J;
+
+            if Last_Is_Space then
+               Trailing_Space_Found := True;
+            end if;
+
             return;
       end case;
 
@@ -1000,11 +1011,28 @@ package body String_Utils is
                NUL_Found := True;
             when ASCII.CR  =>
                CR_Found := True;
+            when ASCII.HT | ' ' =>
+               Last_Is_Space := True;
+               Last := Last + 1;
+               Text (Last) := Text (Index);
+            when ASCII.LF =>
+               if Last_Is_Space then
+                  Trailing_Space_Found := True;
+                  Last_Is_Space := False;
+               end if;
+
+               Last := Last + 1;
+               Text (Last) := Text (Index);
             when others =>
+               Last_Is_Space := False;
                Last := Last + 1;
                Text (Last) := Text (Index);
          end case;
       end loop;
+
+      if Last_Is_Space then
+         Trailing_Space_Found := True;
+      end if;
    end Strip_CR_And_NUL;
 
    -----------------------------

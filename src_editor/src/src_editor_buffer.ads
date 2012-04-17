@@ -174,6 +174,17 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Language.Language_Access;
    --  Get the current language. Return null if the language is not set
 
+   procedure Set_Strip_Trailing_Blanks
+     (Buffer : access Source_Buffer_Record;
+      Value  : Boolean);
+   --  Set stripping behavior of the given buffer.
+   --  It also memorize the setting in the GPS properties, so that future
+   --  uses of the same file use the same setting automatically.
+
+   function Get_Strip_Trailing_Blanks
+     (Buffer : access Source_Buffer_Record) return Boolean;
+   --  Get stripping behavior of the given buffer.
+
    procedure Set_Charset
      (Buffer : access Source_Buffer_Record; Charset : String);
    --  Set the charset to use for this buffer. If unset, the buffer will use
@@ -1366,6 +1377,9 @@ private
       --  Whether the buffer has been modified since last auto save
 
       Line_Terminator : Line_Terminator_Style := Unknown;
+
+      Strip_Trailing_Blanks : Boolean := False;
+      --  Whether the buffer should strip trailing spaces
 
       Timeout_Id         : Gtk.Main.Timeout_Handler_Id := 0;
       Timeout_Registered : Boolean := False;

@@ -226,9 +226,11 @@ package String_Utils is
      (Text      : in out String;
       Last      : out Integer;
       CR_Found  : out Boolean;
-      NUL_Found : out Boolean);
+      NUL_Found : out Boolean;
+      Trailing_Space_Found : out Boolean);
    --  Same as Strip_CR, and strip also ASCII.NUL characters
    --  Note that CR chars alone are not replaced by LF chars.
+   --  Also check if Text has trailing spaces in a line.
 
    function Strip_Ending_Linebreaks (Text : String) return String;
    --  Return a version of Text after stripping all ending CR and LF

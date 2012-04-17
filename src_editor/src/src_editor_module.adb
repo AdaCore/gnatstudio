@@ -33,6 +33,7 @@ with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;                       use Glib.Values;
 
 with Gtk.Box;                           use Gtk.Box;
+with Gtk.Check_Button;                  use Gtk.Check_Button;
 with Gtk.Combo_Box;                     use Gtk.Combo_Box;
 with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
@@ -2356,6 +2357,7 @@ package body Src_Editor_Module is
       Label   : Gtk_Label;
       Lang    : Gtk_Combo_Box;
       Charset : Gtk_Combo_Box;
+      Strip   : Gtk_Check_Button;
       Box     : Gtk_Box;
       Size    : Gtk_Size_Group;
       Buffer  : Source_Buffer;
@@ -2430,6 +2432,20 @@ package body Src_Editor_Module is
         (File, Default => Get_Charset (Buffer));
       Pack_Start (Box, Charset, Expand => True, Fill => True);
 
+      --  Trailing spaces
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+
+      Gtk_New (Label, -"Strip blanks: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+
+      Gtk_New (Strip, "");
+      Strip.Set_Active (Get_Strip_Trailing_Blanks (Buffer));
+      Pack_Start (Box, Strip, Expand => True, Fill => True);
+
       Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Grab_Default (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
@@ -2452,6 +2468,8 @@ package body Src_Editor_Module is
                  (Get_Language_Handler (Kernel),
                   Text (Index .. Text'Last)));
             Set_Charset (Buffer, Get_Active_Text (Charset));
+
+            Set_Strip_Trailing_Blanks (Buffer, Strip.Get_Active);
          end;
       end if;
 

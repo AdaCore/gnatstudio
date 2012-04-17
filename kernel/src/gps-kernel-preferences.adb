@@ -464,13 +464,13 @@ package body GPS.Kernel.Preferences is
 
       -- Source Editor --
 
-      Strip_Blanks := Create
+      Strip_Blanks := Strip_Trailing_Blanks_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Strip-Blanks",
-         Default => True,
+         Name    => "Src-Editor-Strip-Trailing-Blanks",
+         Label   => -"Strip blanks",
          Doc     =>
            -"Should the editor remove trailing blanks when saving files",
-         Label   => -"Strip blanks",
+         Default => Autodetect,
          Page    => -"Editor");
 
       Line_Terminator := Line_Terminators_Prefs.Create

@@ -112,6 +112,11 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics
        (Entities.Queries.Dispatching_Menu_Policy);
 
+   type Strip_Trailing_Blanks_Policy is (Never, Autodetect, Always);
+   package Strip_Trailing_Blanks_Policy_Prefs is new
+     Default_Preferences.Enums.Generics (Strip_Trailing_Blanks_Policy);
+   --  The list of possible behaviours for stripping trailing blanks
+
    -----------------------
    -- List of constants --
    -----------------------
@@ -183,7 +188,7 @@ package GPS.Kernel.Preferences is
    Current_Block_Color       : Color_Preference;
    Search_Results_Color      : Color_Preference;
 
-   Strip_Blanks              : Boolean_Preference;
+   Strip_Blanks              : Strip_Trailing_Blanks_Policy_Prefs.Preference;
    Line_Terminator           : Line_Terminators_Prefs.Preference;
    Display_Line_Numbers      : Boolean_Preference;
    Display_Subprogram_Names  : Boolean_Preference;
