@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L417-023: GPS: Crash after creating a build target that contain underscores
+  Problem:    When using the Target Configuration dialog to create a build
+              target whose name contains an underscore, GPS might crash when
+              refreshing the dialog.
+  Workaround: Give a placeholder name to the target, and give its real name
+              by modifying directly the file targets.xml in the .gps directory.
+
 - L416-024: GPS: Crash when clearing call graphs while a computation is running
   Problem:    GPS might crash if call graphs are cleared while a "calls" or a
               "call by" operation is running.
