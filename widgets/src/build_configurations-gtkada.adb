@@ -1539,7 +1539,7 @@ package body Build_Configurations.Gtkada is
       Count : Gint := 1;
       --  Indicates the number of the target that we are currently adding
 
-      Target_Iter : Gtk_Tree_Iter;
+      Target_Iter : Gtk_Tree_Row_Reference;
 
       procedure Add_Target
         (View   : Tree_View;
@@ -1624,6 +1624,7 @@ package body Build_Configurations.Gtkada is
 
          Category : Gtk_Tree_Iter;
          Iter     : Gtk_Tree_Iter;
+         Path     : Gtk_Tree_Path;
 
          Icon_Str : Unbounded_String;
       begin
@@ -1645,7 +1646,9 @@ package body Build_Configurations.Gtkada is
          end if;
 
          if Select_Target = To_String (Target.Name) then
-            Target_Iter := Iter;
+            Path := Get_Path (View.Model, Iter);
+            Target_Iter := Gtk_New (View.Model, Path);
+            Path_Free (Path);
          end if;
       end Add_Target;
 
@@ -1688,8 +1691,20 @@ package body Build_Configurations.Gtkada is
 
       --  Select the target
 
-      if Select_Target /= "" then
-         Select_Iter (Get_Selection (UI.View), Target_Iter);
+      if Target_Iter /= null then
+         if Valid (Target_Iter) then
+            declare
+               Path : Gtk_Tree_Path;
+               Iter : Gtk_Tree_Iter;
+            begin
+               Path := Get_Path (Target_Iter);
+               Iter := Get_Iter (UI.View.Model, Path);
+               Select_Iter (Get_Selection (UI.View), Iter);
+               Path_Free (Path);
+            end;
+         end if;
+
+         Row_Reference_Free (Target_Iter);
       end if;
    end Refresh;
 
