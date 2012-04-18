@@ -20,6 +20,13 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               time before displaying a dialog.
   Workaround: Edit the project file manually.
 
+- L416-003: GPS: click causes jump after viewing a dialog under Windows
+  Problem:    Under Windows, when the focus is on an editor and a control-based
+              shortcut is used to bring up a dialog (for instance ctrl-g for
+              the "Goto Line" dialog), GPS may jump to the declaration when
+              clicking on an entity in the editor.
+  Workaround: Press the control key after going back to the editor.
+
 - L413-013: GB: Unable to open Ada file from egit team provider
   Problem:    When opening an Ada file shared in the egit team provider
               from the history view you will get a null pointer exception.
