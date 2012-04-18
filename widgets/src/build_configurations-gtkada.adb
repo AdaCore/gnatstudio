@@ -45,6 +45,7 @@ with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;               use Gtk.Widget;
 
 with GUI_Utils;                use GUI_Utils;
+with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 
 with Build_Configurations.Gtkada.Dialogs;
@@ -1261,7 +1262,7 @@ package body Build_Configurations.Gtkada is
             Name     => To_String (Name),
             Category => To_String (Cat),
             Model    => To_String (Model));
-         Refresh (UI, To_String (Name));
+         Refresh (UI, Strip_Single_Underscores (To_String (Name)));
       end if;
    exception
       when E : others =>
