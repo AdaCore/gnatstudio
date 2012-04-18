@@ -13,6 +13,13 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               "call by" operation is running.
   Workaround: Cancel the operation before clearing the call graph.
 
+- L416-005: GPS: long time to open the dialog to add main files to a project
+  Problem:    In the "Main files" section of the Project Properties dialog,
+              when editing a project tree which contains a lot of source files,
+              clicking on the "Add" button may cause GPS to wait for a long
+              time before displaying a dialog.
+  Workaround: Edit the project file manually.
+
 - L413-013: GB: Unable to open Ada file from egit team provider
   Problem:    When opening an Ada file shared in the egit team provider
               from the history view you will get a null pointer exception.
