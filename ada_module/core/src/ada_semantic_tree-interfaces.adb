@@ -105,16 +105,18 @@ package body Ada_Semantic_Tree.Interfaces is
    function Lt_Nocase (Left, Right : String) return Boolean;
 
    function Lt_Nocase (Left, Right : String) return Boolean is
+      Lc, Rc : Character;
    begin
       for J in 1 .. Left'Length loop
          if J > Right'Length then
             return False;
          end if;
 
-         if To_Lower (Left (Left'First + J - 1)) <
-           To_Lower (Right (Right'First + J - 1))
-         then
-            return True;
+         Lc := To_Lower (Left (Left'First + J - 1));
+         Rc := To_Lower (Right (Right'First + J - 1));
+
+         if Lc /= Rc then
+            return Lc < Rc;
          end if;
       end loop;
 
