@@ -2886,14 +2886,16 @@ package body Project_Properties is
             while Prj /= GNATCOLL.Projects.No_Project loop
                declare
                   Sources : File_Array_Access := Prj.Source_Files;
+                  Sort_Id : Gint;
                begin
+                  Sort_Id := Freeze_Sort (Model);
                   for S in Sources'Range loop
                      Append (Model, Iter, Null_Iter);
                      Set (Model, Iter, 0, False);
                      Set (Model, Iter, 1, Sources (S).Display_Base_Name);
                      Set (Model, Iter, 2, Sources (S).Display_Full_Name);
                   end loop;
-
+                  Thaw_Sort (Model, Sort_Id);
                   Unchecked_Free (Sources);
                end;
 
