@@ -11,7 +11,7 @@ def run (project, target, extra_args=""):
    """ Run gnattest and switch to harness if success. """
    global last_gnattest_project
    last_gnattest_project = project
-   GPS.BuildTarget(target).execute(extra_args=extra_args)
+   GPS.BuildTarget(target).execute(synchronous=False, extra_args=extra_args)
 
 def is_harness_project ():
    """ Check if root project is harness project. """

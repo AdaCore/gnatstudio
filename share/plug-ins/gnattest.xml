@@ -193,6 +193,7 @@
     <description>Generic launch of gnattest</description>
     <command-line>
       <arg>gnattest</arg>
+      <arg>-dd</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
     </command-line>
@@ -263,6 +264,7 @@
 
     <command-line>
       <arg>gnattest</arg>
+      <arg>-dd</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
     </command-line>
@@ -276,6 +278,7 @@
 
     <command-line>
       <arg>gnattest</arg>
+      <arg>-dd</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
       <arg>%F</arg>
@@ -290,6 +293,7 @@
 
     <command-line>
       <arg>gnattest</arg>
+      <arg>-dd</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
     </command-line>
