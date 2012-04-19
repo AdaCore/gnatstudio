@@ -185,6 +185,17 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Boolean;
    --  Get stripping behavior of the given buffer.
 
+   procedure Set_Strip_Trailing_Lines
+     (Buffer : access Source_Buffer_Record;
+      Value  : Boolean);
+   --  Set trailing empty lines stripping behavior of the given buffer.
+   --  It also memorize the setting in the GPS properties, so that future
+   --  uses of the same file use the same setting automatically.
+
+   function Get_Strip_Trailing_Lines
+     (Buffer : access Source_Buffer_Record) return Boolean;
+   --  Get stripping behavior of the given buffer.
+
    procedure Set_Charset
      (Buffer : access Source_Buffer_Record; Charset : String);
    --  Set the charset to use for this buffer. If unset, the buffer will use
@@ -1380,6 +1391,9 @@ private
 
       Strip_Trailing_Blanks : Boolean := True;
       --  Whether the buffer should strip trailing spaces
+
+      Strip_Trailing_Lines : Boolean := True;
+      --  Whether the buffer should strip empty trailing lines
 
       Timeout_Id         : Gtk.Main.Timeout_Handler_Id := 0;
       Timeout_Registered : Boolean := False;

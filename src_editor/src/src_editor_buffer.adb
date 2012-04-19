@@ -149,6 +149,7 @@ package body Src_Editor_Buffer is
    --  ??? Should we get that from the language ?
 
    Strip_Blanks_Property_Name : constant String := "strip-blanks";
+   Strip_Lines_Property_Name  : constant String := "strip-blanks-lines";
 
    --------------------
    -- Signal Support --
@@ -754,6 +755,41 @@ package body Src_Editor_Buffer is
             Persistent => True);
       end if;
    end Set_Strip_Trailing_Blanks;
+
+   ------------------------------
+   -- Get_Strip_Trailing_Lines --
+   ------------------------------
+
+   function Get_Strip_Trailing_Lines
+     (Buffer : access Source_Buffer_Record) return Boolean is
+   begin
+      return Buffer.Strip_Trailing_Lines;
+   end Get_Strip_Trailing_Lines;
+
+   ------------------------------
+   -- Set_Strip_Trailing_Lines --
+   ------------------------------
+
+   procedure Set_Strip_Trailing_Lines
+     (Buffer : access Source_Buffer_Record;
+      Value  : Boolean)
+   is
+      Prop : GPS.Properties.String_Property_Access;
+   begin
+      Buffer.Strip_Trailing_Lines := Value;
+
+      if Buffer.Filename /= GNATCOLL.VFS.No_File then
+         Prop := new GPS.Properties.String_Property'
+           (Value => new String'(Boolean'Image (Value)));
+
+         Set_Property
+           (Buffer.Kernel,
+            Buffer.Filename,
+            Strip_Lines_Property_Name,
+            Prop,
+            Persistent => True);
+      end if;
+   end Set_Strip_Trailing_Lines;
 
    ----------------------
    -- Get_Buffer_Lines --
@@ -3092,6 +3128,12 @@ package body Src_Editor_Buffer is
          Trailing_Spaces_Found : Boolean);
       --  Detect and set strip trailing space policy for Buffer
 
+      procedure Set_Trailing_Lines_Policy
+        (Buffer  : access Source_Buffer_Record;
+         File    : GNATCOLL.VFS.Virtual_File;
+         Content : String);
+      --  Detect and set strip trailing empty lines policy for Buffer
+
       ------------------
       -- Reset_Buffer --
       ------------------
@@ -3192,6 +3234,55 @@ package body Src_Editor_Buffer is
             Buffer.Strip_Trailing_Blanks := False;
          end if;
       end Set_Trailing_Space_Policy;
+
+      -------------------------------
+      -- Set_Trailing_Lines_Policy --
+      -------------------------------
+
+      procedure Set_Trailing_Lines_Policy
+        (Buffer  : access Source_Buffer_Record;
+         File    : GNATCOLL.VFS.Virtual_File;
+         Content : String)
+      is
+         Found   : Boolean;
+         Prop    : GPS.Properties.String_Property;
+         Default : constant Strip_Trailing_Blanks_Policy :=
+           Strip_Lines.Get_Pref;
+         Trailing_Lines_Found : Boolean := False;
+      begin
+         if File /= GNATCOLL.VFS.No_File then
+            GPS.Properties.Get_Property
+              (Prop, File, Strip_Lines_Property_Name, Found);
+
+            if Found then
+               Buffer.Strip_Trailing_Blanks :=
+                 Boolean'Value (Prop.Value.all);
+
+               return;
+            end if;
+
+            case Default is
+               when Always =>
+                  Set_Strip_Trailing_Lines (Buffer, True);
+               when Never =>
+                  Set_Strip_Trailing_Lines (Buffer, False);
+               when Autodetect =>
+                  for J in reverse Content'Range loop
+                     if Content (J) = ASCII.LF then
+                        if J /= Content'Last then
+                           Trailing_Lines_Found := True;
+                           exit;
+                        end if;
+                     elsif Content (J) /= ' ' and Content (J) /= ASCII.HT then
+                        exit;
+                     end if;
+                  end loop;
+
+                  Set_Strip_Trailing_Lines (Buffer, not Trailing_Lines_Found);
+            end case;
+         end if;
+      end Set_Trailing_Lines_Policy;
+
       Contents      : GNAT.Strings.String_Access;
       UTF8          : Gtkada.Types.Chars_Ptr;
       Ignore        : aliased Natural;
@@ -3273,6 +3364,9 @@ package body Src_Editor_Buffer is
          Set_Charset (Buffer, Get_File_Charset (Filename));
 
          Set_Trailing_Space_Policy (Buffer, Filename, Trailing_Spaces_Found);
+
+         Set_Trailing_Lines_Policy
+           (Buffer, Filename, Contents (Contents'First .. Last));
 
          if NUL_Found then
             Console.Insert
@@ -3432,6 +3526,7 @@ package body Src_Editor_Buffer is
          procedure Unchecked_Free is new Ada.Unchecked_Deallocation
            (GError, GError_Access);
 
+         Last_Line : Editable_Line_Type := 0;
       begin
          case Terminator_Pref is
             when Unix =>
@@ -3442,9 +3537,26 @@ package body Src_Editor_Buffer is
                null;
          end case;
 
-         for Line in
-           Buffer.Editable_Lines'First .. Buffer.Last_Editable_Line
-         loop
+         if Buffer.Strip_Trailing_Lines then
+            for Line in reverse
+              Buffer.Editable_Lines'First .. Buffer.Last_Editable_Line
+            loop
+               declare
+                  Str  : constant Src_String := Get_String (Buffer, Line);
+               begin
+                  if Str.Contents /= null
+                    and then not Is_Blank_Line (Str.Contents (1 .. Str.Length))
+                  then
+                     Last_Line := Line;
+                     exit;
+                  end if;
+               end;
+            end loop;
+         else
+            Last_Line := Buffer.Last_Editable_Line;
+         end if;
+
+         for Line in Buffer.Editable_Lines'First .. Last_Line loop
             declare
                Str : Src_String := Get_String (Buffer, Line);
             begin

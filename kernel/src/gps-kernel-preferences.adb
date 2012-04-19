@@ -473,6 +473,15 @@ package body GPS.Kernel.Preferences is
          Default => Autodetect,
          Page    => -"Editor");
 
+      Strip_Lines := Strip_Trailing_Blanks_Policy_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Strip-Trailing-Lines",
+         Label   => -"Strip lines",
+         Doc     =>
+           -"Should the editor remove trailing blank lines when saving files",
+         Default => Autodetect,
+         Page    => -"Editor");
+
       Line_Terminator := Line_Terminators_Prefs.Create
         (Manager => Kernel.Preferences,
          Name  => "Src-Editor-Line-Terminator",

@@ -2358,6 +2358,7 @@ package body Src_Editor_Module is
       Lang    : Gtk_Combo_Box;
       Charset : Gtk_Combo_Box;
       Strip   : Gtk_Check_Button;
+      Strip_Lines : Gtk_Check_Button;
       Box     : Gtk_Box;
       Size    : Gtk_Size_Group;
       Buffer  : Source_Buffer;
@@ -2446,6 +2447,20 @@ package body Src_Editor_Module is
       Strip.Set_Active (Get_Strip_Trailing_Blanks (Buffer));
       Pack_Start (Box, Strip, Expand => True, Fill => True);
 
+      --  Trailing blank lines
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+
+      Gtk_New (Label, -"Strip lines: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+
+      Gtk_New (Strip_Lines, "");
+      Strip_Lines.Set_Active (Get_Strip_Trailing_Lines (Buffer));
+      Pack_Start (Box, Strip_Lines, Expand => True, Fill => True);
+
       Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Grab_Default (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
@@ -2470,6 +2485,7 @@ package body Src_Editor_Module is
             Set_Charset (Buffer, Get_Active_Text (Charset));
 
             Set_Strip_Trailing_Blanks (Buffer, Strip.Get_Active);
+            Set_Strip_Trailing_Lines (Buffer, Strip_Lines.Get_Active);
          end;
       end if;
 

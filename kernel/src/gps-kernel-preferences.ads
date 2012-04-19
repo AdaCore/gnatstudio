@@ -188,7 +188,10 @@ package GPS.Kernel.Preferences is
    Current_Block_Color       : Color_Preference;
    Search_Results_Color      : Color_Preference;
 
+   --  stripping blanks at end of line
    Strip_Blanks              : Strip_Trailing_Blanks_Policy_Prefs.Preference;
+   --  stripping blank lines at end of file
+   Strip_Lines               : Strip_Trailing_Blanks_Policy_Prefs.Preference;
    Line_Terminator           : Line_Terminators_Prefs.Preference;
    Display_Line_Numbers      : Boolean_Preference;
    Display_Subprogram_Names  : Boolean_Preference;
