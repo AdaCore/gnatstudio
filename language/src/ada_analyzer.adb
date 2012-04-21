@@ -662,7 +662,7 @@ package body Ada_Analyzer is
    ------------------------
 
    SPARK_Keywords : constant Pattern_Matcher := Compile
-                     ("^(a(bs|ll|nd|ssert)|check|derives|e(lse|nd)|" &
+                     ("^(a(bs|ll|nd|ss(ert|ume))|check|derives|e(lse|nd)|" &
                       "f(or|rom|unction)|global|" &
                       "h(ide|old)|i(n|s)|in(herit|itializes|variant)|" &
                       "main_program|n(ot|ull)|o(r|wn|thers)|post|pre|some|" &
