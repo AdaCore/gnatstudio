@@ -334,14 +334,16 @@ package body Codefix_Module is
 
                      if Unique_Simple_Command /= null
                        and then
-                         (Mitem.Fix_Mode /= Style_And_Warnings
-                          or else Is_Style_Or_Warning
-                            (Get_Error_Message (Error)))
-                       and then
-                         (Mitem.Fix_Mode /= Similar
+                         (Mitem.Fix_Mode = Simple
                           or else
-                            Unique_Simple_Command.Get_Parser.all'Tag
-                          = Mitem.Matching_Parser.all'Tag)
+                            (Mitem.Fix_Mode = Style_And_Warnings
+                             and then Is_Style_Or_Warning
+                               (Get_Error_Message (Error)))
+                          or else
+                            (Mitem.Fix_Mode = Similar
+                             and then
+                             Unique_Simple_Command.Get_Parser.all'Tag
+                               = Mitem.Matching_Parser.all'Tag))
                      then
                         --  If this is an error set up to be fixed, fix it
 
