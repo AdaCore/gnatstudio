@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L404-042: GB: Null pointer exception on references request
+  Problem:    When issuing a request for references to an entity declared in
+              a source file that has no corresponding GNAT project file (i.e.,
+              no gpr file), a dialog box is presented, indicating a null pointer
+              exception.
+  Workaround: Only request references on files in projects that have an
+              associated GNAT project file.
+
 - L417-023: GPS: Crash after creating a build target that contain underscores
   Problem:    When using the Target Configuration dialog to create a build
               target whose name contains an underscore, GPS might crash when
