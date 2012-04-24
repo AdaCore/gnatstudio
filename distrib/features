@@ -72,7 +72,7 @@ NF-52-L213-028 GPS: new command GPS.EditorLocation.inside_word (2012-02-13)
 
 NF-52-L211-002 GPS: wildcard support in Open From Project (2012-04-09)
 
-  Wildcards characters are now taken into account in the "Open From Project..."
+  Wildcard characters are now taken into account in the "Open From Project..."
   dialog.
 
 NF-52-L124-025 GPS: improvements in auto_highlight_occurrences.py (2012-02-16)
@@ -163,7 +163,8 @@ NF-52-K121-030 GPS: Codefix support for unrequired out-mode (2011-10-21)
 
 NF-52-JA30-007 GPS: strip trailing blank lines (2012-04-24)
 
-  New preference to strip or keep trailing blank lines at end of file.
+  A new preference is provided in GPS to strip or keep trailing
+  blank lines at end of file when saving editors.
 
 NF-52-JA26-020 Improved indentation in parenthesized exprs (2012-02-20)
 
