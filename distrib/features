@@ -161,6 +161,10 @@ NF-52-K121-030 GPS: Codefix support for unrequired out-mode (2011-10-21)
   Added support to automatically fix the warning reported by the GNAT
   compiler in in-out formal parameters.
 
+NF-52-JA30-007 GPS: strip trailing blank lines (2012-04-24)
+
+  New preference to strip or keep trailing blank lines at end of file.
+
 NF-52-JA26-020 Improved indentation in parenthesized exprs (2012-02-20)
 
   'or else' and 'and then' constructs at the end of lines inside parenthesized
@@ -182,6 +186,11 @@ NF-52-G917-017 GPS: Coverage Report accessible through Back button (2012-02-02)
   When clicking on a file or subprogram in the Code Coverage report, GPS open
   this location in an editor, and it is now possible to click the "Back" button
   in the toolbar to go back to the Code Coverage report.
+
+NF-52-G507-003 GPS: automatic mode for "strip blanks" preference (2012-04-24)
+
+  In new automatic mode GPS detects trailing blanks on open file and
+  strip or keep blanks on saving file accordingly.
 
 NF-52-FB01-013 ECL: Missing right-click debug options in editor (2011-10-12)
 
