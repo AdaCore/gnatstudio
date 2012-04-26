@@ -520,7 +520,7 @@ package body GPS.Kernel.Console is
                Manage_Prompt => Manage_Prompt,
                ANSI_Support => ANSI_Support,
                Highlight    => Message_Highlight.Get_Pref);
-            Set_Font_And_Colors (Get_View (Console), Fixed_Font => False);
+            Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
             Set_Max_Length   (Get_History (Kernel).all, 100, History);
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 
