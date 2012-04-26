@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L412-018: GPS: Interactive consoles using a proportional font
+  Problem:    Interactive consoles, such as the GPS Shell or the Python
+              console, use a proportional font rather than a fixed font, which
+              is not natural for their use.
+  Workaround: Set the "Default font" preference to a fixed font.
+
 - L404-042: GB: Null pointer exception on references request
   Problem:    When issuing a request for references to an entity declared in
               a source file that has no corresponding GNAT project file (i.e.,
