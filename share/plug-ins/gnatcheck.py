@@ -163,6 +163,7 @@ class gnatCheckProc:
          GPS.Codefix.parse (self.locations_string, self.full_output)
 
    def internalSpawn (self, filestr, project, recursive=False):
+      self.full_output = ""
       need_rules_file = False
       opts = project.get_attribute_as_list("default_switches", package="check", index="ada")
       if len(opts) == 0:
