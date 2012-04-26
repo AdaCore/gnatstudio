@@ -129,6 +129,7 @@ package body Codefix_Module is
       Fix_Command     : Ptr_Command;
       Error           : Error_Id;
       Matching_Parser : Error_Parser_Access;
+      Solution_Index  : Positive;
    end record;
    type Codefix_Menu_Item is access all Codefix_Menu_Item_Record;
 
@@ -305,6 +306,8 @@ package body Codefix_Module is
                Error                 : Error_Id :=
                  Get_First_Error (Mitem.Session.Corrector.all);
                Solution_Node         : Solution_List_Iterator;
+               Solution_Index        : Positive;
+               Command               : Ptr_Command;
                Unique_Simple_Command : Ptr_Command;
             begin
                --  Loop over all the errors stored in the session and fix
@@ -313,38 +316,41 @@ package body Codefix_Module is
                while Error /= Null_Error_Id loop
                   if not Is_Fixed (Error) then
                      Unique_Simple_Command := null;
+                     Solution_Index := 1;
 
                      Solution_Node := First (Get_Solutions (Error));
 
                      while not At_End (Solution_Node) loop
-                        if Get_Command (Solution_Node).Complexity = Simple
-                          and then Unique_Simple_Command = null
-                        then
-                           Unique_Simple_Command :=
-                             Get_Command (Solution_Node);
-                        else
-                           Free (Unique_Simple_Command);
+                        Command := Get_Command (Solution_Node);
 
-                           Unique_Simple_Command := null;
-                           exit;
+                        if Command.Complexity = Simple then
+                           if Mitem.Fix_Mode = Simple
+                             or else
+                               (Mitem.Fix_Mode = Style_And_Warnings
+                                and then Is_Style_Or_Warning
+                                  (Get_Error_Message (Error)))
+                             or else
+                               (Mitem.Fix_Mode = Similar
+                                and then Command.Get_Parser.all'Tag
+                                  = Mitem.Matching_Parser.all'Tag
+                                and then Solution_Index
+                                  = Mitem.Solution_Index)
+                           then
+                              if Unique_Simple_Command = null then
+                                 Unique_Simple_Command := Command;
+                              else
+                                 Unique_Simple_Command := null;
+                                 exit;
+                              end if;
+                           end if;
+
+                           Solution_Index := Solution_Index + 1;
                         end if;
 
                         Solution_Node := Next (Solution_Node);
                      end loop;
 
-                     if Unique_Simple_Command /= null
-                       and then
-                         (Mitem.Fix_Mode = Simple
-                          or else
-                            (Mitem.Fix_Mode = Style_And_Warnings
-                             and then Is_Style_Or_Warning
-                               (Get_Error_Message (Error)))
-                          or else
-                            (Mitem.Fix_Mode = Similar
-                             and then
-                             Unique_Simple_Command.Get_Parser.all'Tag
-                               = Mitem.Matching_Parser.all'Tag))
-                     then
+                     if Unique_Simple_Command /= null then
                         --  If this is an error set up to be fixed, fix it
 
                         On_Fix
@@ -1132,42 +1138,62 @@ package body Codefix_Module is
       Session : access Codefix_Session_Record;
       Error   : Error_Id)
    is
-      Mitem : Codefix_Menu_Item;
-      Solution_Node : Solution_List_Iterator;
-      Simple_Number : Integer := 0;
-      Matching_Parser : Error_Parser_Access;
+      Fix_Command    : Ptr_Command;
+      Mitem          : Codefix_Menu_Item;
+      Sub_Menu       : Gtk.Menu.Gtk_Menu;
+      Menu_Item      : Gtk.Menu_Item.Gtk_Menu_Item;
+      Solution_Node  : Solution_List_Iterator;
+      Simple_Number  : Integer := 0;
    begin
       Solution_Node := First (Get_Solutions (Error));
 
       while not At_End (Solution_Node) loop
-         Gtk_New (Mitem, Get_Caption (Get_Command (Solution_Node).all));
+         Fix_Command := Get_Command (Solution_Node);
 
-         Mitem.Fix_Mode     := Specific;
-         Mitem.Fix_Command  := Get_Command (Solution_Node);
-         Mitem.Error        := Error;
-         Mitem.Kernel       := Kernel_Handle (Kernel);
-         Mitem.Session      := Codefix_Session (Session);
-         Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
-         Append (Menu, Mitem);
+         if Fix_Command.Complexity = Simple then
+            Simple_Number := Simple_Number + 1;
+
+            Gtk.Menu.Gtk_New (Sub_Menu);
+            Gtk.Menu_Item.Gtk_New
+              (Menu_Item, Get_Caption (Get_Command (Solution_Node).all));
+
+            Menu_Item.Set_Submenu (Sub_Menu);
+
+            Gtk_New (Mitem, "Apply to this occurence");
+            Mitem.Fix_Mode     := Specific;
+            Mitem.Fix_Command  := Fix_Command;
+            Mitem.Error        := Error;
+            Mitem.Kernel       := Kernel_Handle (Kernel);
+            Mitem.Session      := Codefix_Session (Session);
+            Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
+            Append (Sub_Menu, Mitem);
+
+            Gtk_New (Mitem, "Apply to all similar errors");
+            Mitem.Fix_Mode        := Similar;
+            Mitem.Matching_Parser := Fix_Command.Get_Parser;
+            Mitem.Solution_Index  := Simple_Number;
+            Mitem.Kernel          := Kernel_Handle (Kernel);
+            Mitem.Session         := Codefix_Session (Session);
+            Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
+            Append (Sub_Menu, Mitem);
+
+            Append (Menu, Menu_Item);
+         else
+            Gtk_New (Mitem, Get_Caption (Get_Command (Solution_Node).all));
+
+            Mitem.Fix_Mode     := Specific;
+            Mitem.Fix_Command  := Fix_Command;
+            Mitem.Error        := Error;
+            Mitem.Kernel       := Kernel_Handle (Kernel);
+            Mitem.Session      := Codefix_Session (Session);
+            Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
+            Append (Menu, Mitem);
+         end if;
 
          Solution_Node := Next (Solution_Node);
-
-         if Mitem.Fix_Command.Complexity = Simple then
-            Simple_Number := Simple_Number + 1;
-            Matching_Parser := Mitem.Fix_Command.Get_Parser;
-         end if;
       end loop;
 
-      if Simple_Number = 1 then
-         Gtk_New (Mitem, "Fix all similar errors");
-
-         Mitem.Fix_Mode := Similar;
-         Mitem.Matching_Parser := Matching_Parser;
-         Mitem.Kernel   := Kernel_Handle (Kernel);
-         Mitem.Session  := Codefix_Session (Session);
-         Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
-         Append (Menu, Mitem);
-
+      if Simple_Number > 0 then
          if Is_Style_Or_Warning (Get_Error_Message (Error)) then
             Gtk_New (Mitem, "Fix all simple style errors and warnings");
 
