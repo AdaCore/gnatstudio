@@ -8,6 +8,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L425-025: GPS: Python console blocked on incorrect indentation
+  Problem:    When starting a block such as "def main():", if the next line
+              is empty, the interactive console will keep showing the
+              secondary prompt, and never return an error or the primary
+              prompt.
+  Workaround: None known, GPS needs to be restarted. When writing multi-line
+              Python constructs, prefer a text editor to the interactive
+              console.
+
 - L412-018: GPS: Interactive consoles using a proportional font
   Problem:    Interactive consoles, such as the GPS Shell or the Python
               console, use a proportional font rather than a fixed font, which
