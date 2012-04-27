@@ -173,7 +173,7 @@ package body Debugger.Gdb is
      ("(b(~|_).+\.(adb|c))");
 
    Version_Pattern : constant Pattern_Matcher := Compile
-     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+) .*");
+     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(.[0-9]+)? .*");
    --  To detect the version of GDB
 
    No_Definition_Of          : constant String := "No definition of";
