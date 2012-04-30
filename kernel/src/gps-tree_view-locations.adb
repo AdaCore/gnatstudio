@@ -27,9 +27,7 @@ with Gtk.Handlers;
 with Gtk.Tooltip;
 with Gtk.Widget;
 
-with GPS.Intl;
 with GPS.Location_View.Listener;
-with String_Utils;
 with Traces;
 
 package body GPS.Tree_View.Locations is
@@ -46,13 +44,10 @@ package body GPS.Tree_View.Locations is
    use Gtk.Cell_Renderer_Text;
    use Gtk.Tooltip;
    use Gtk.Tree_Model;
-   use Gtk.Tree_Model_Filter;
    use Gtk.Tree_View_Column;
    use Gtk.Widget;
-   use GPS.Intl;
    use GPS.Location_View.Listener;
    use GPS.Sort_Model.Locations;
-   use String_Utils;
    use Traces;
 
    function On_Button_Press
@@ -70,14 +65,6 @@ package body GPS.Tree_View.Locations is
       Params : Glib.Values.GValues) return Boolean;
    --  Handle "query-tooltip" request. Shows tooltip when the size of the
    --  renderer is larger than its visible size in the view.
-
-   procedure On_Modify
-     (Self   : access Gtk_Tree_Model_Filter_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Value  : out Glib.Values.GValue;
-      Column : Gint);
-   --  Used by model filter for modify items (to substitute number of child
-   --  items in category and file).
 
    procedure Action_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
@@ -200,17 +187,27 @@ package body GPS.Tree_View.Locations is
          After => False);
    end Class_Initialize;
 
+   ----------------------
+   -- Get_Filter_Model --
+   ----------------------
+
+   function Get_Filter_Model
+     (Self : not null access GPS_Locations_Tree_View_Record)
+      return GPS.Location_View_Filter.Location_View_Filter_Model is
+   begin
+      return Self.Filter;
+   end Get_Filter_Model;
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
      (Object : in out GPS_Locations_Tree_View;
-      Filter : out Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
       Model  : not null Gtk.Tree_Model.Gtk_Tree_Model) is
    begin
       Object := new GPS_Locations_Tree_View_Record;
-      GPS.Tree_View.Locations.Initialize (Object, Filter, Model);
+      GPS.Tree_View.Locations.Initialize (Object, Model);
    end Gtk_New;
 
    ----------------
@@ -218,41 +215,17 @@ package body GPS.Tree_View.Locations is
    ----------------
 
    procedure Initialize
-     (Self   : not null access GPS_Locations_Tree_View_Record'Class;
-      Filter : out Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
-      Model  : not null Gtk.Tree_Model.Gtk_Tree_Model)
+     (Self  : not null access GPS_Locations_Tree_View_Record'Class;
+      Model : not null Gtk.Tree_Model.Gtk_Tree_Model)
    is
-
-      function Columns_Types
-        (Model : not null Gtk_Tree_Model) return GType_Array;
-      --  Returns array filled by column types of given model
-
-      -------------------
-      -- Columns_Types --
-      -------------------
-
-      function Columns_Types
-        (Model : not null Gtk_Tree_Model) return GType_Array
-      is
-         Result : GType_Array (0 .. Guint (Model.Get_N_Columns) - 1);
-
-      begin
-         for J in Result'Range loop
-            Result (J) := Model.Get_Column_Type (Gint (J));
-         end loop;
-
-         return Result;
-      end Columns_Types;
 
    begin
       GPS.Tree_View.Initialize (Self, Model);
       Class_Initialize (Self);
       Gtk_New (Self.Sort, Model);
-      Gtk_New (Self.Filter, Self.Sort);
-      Self.Filter.Set_Modify_Func (Columns_Types (Model), On_Modify'Access);
+      GPS.Location_View_Filter.Gtk_New (Self.Filter);
+      Self.Filter.Set_Source_Model (Self.Sort);
       Self.Set_Source_Model (Gtk_Tree_Model (Self.Filter));
-
-      Filter := Self.Filter;
    end Initialize;
 
    ----------------------
@@ -384,77 +357,6 @@ package body GPS.Tree_View.Locations is
       --  behavior.
       --  XXX Not implemented yet.
    end On_Lowerst_Model_Row_Inserted;
-
-   ---------------
-   -- On_Modify --
-   ---------------
-
-   procedure On_Modify
-     (Self   : access Gtk_Tree_Model_Filter_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Value  : out Glib.Values.GValue;
-      Column : Gint)
-   is
-      Model : constant Gtk_Tree_Model := Self.Get_Model;
-      Aux   : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
-
-   begin
-      Path := Self.Get_Path (Iter);
-      Self.Convert_Iter_To_Child_Iter (Aux, Iter);
-
-      if Column = Node_Markup_Column
-        and then Get_Depth (Path) < 3
-      then
-         declare
-            Message : constant String :=
-                        Model.Get_String (Aux, Column);
-            Total   : constant Natural :=
-                        Natural
-                          (Model.Get_Int (Aux, Number_Of_Children_Column));
-            Img     : constant String := Image (Total);
-            Visible : Natural := Total;
-
-         begin
-            if Get_Depth (Path) = 1 then
-               Visible := 0;
-               Aux := Self.Children (Iter);
-
-               while Aux /= Null_Iter loop
-                  Visible := Visible + Integer (Self.N_Children (Aux));
-                  Self.Next (Aux);
-               end loop;
-
-            elsif Get_Depth (Path) = 2 then
-               Visible := Integer (Self.N_Children (Iter));
-            end if;
-
-            Init (Value, GType_String);
-
-            if Total = 1 then
-               Set_String (Value, Message & " (" & Img & (-" item") & ")");
-
-            else
-               if Visible = Total then
-                  Set_String (Value, Message & " (" & Img & (-" items") & ")");
-
-               else
-                  Set_String
-                    (Value,
-                     Message
-                     & " (" & Image (Visible)
-                     & (-" of ") & Img & (-" items") & ")");
-               end if;
-            end if;
-         end;
-
-      else
-         Unset (Value);
-         Model.Get_Value (Aux, Column, Value);
-      end if;
-
-      Path_Free (Path);
-   end On_Modify;
 
    ----------------------
    -- On_Query_Tooltip --
@@ -647,14 +549,9 @@ package body GPS.Tree_View.Locations is
    overriding function To_Lowerst_Model_Iter
      (Self : not null access GPS_Locations_Tree_View_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
-   is
-      Aux_1 : Gtk_Tree_Iter;
-
+      return Gtk.Tree_Model.Gtk_Tree_Iter is
    begin
-      Self.Filter.Convert_Iter_To_Child_Iter (Aux_1, Iter);
-
-      return Self.Sort.Map_To_Source (Aux_1);
+      return Self.Sort.Map_To_Source (Self.Filter.Map_To_Source (Iter));
    end To_Lowerst_Model_Iter;
 
 end GPS.Tree_View.Locations;

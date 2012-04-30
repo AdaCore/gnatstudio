@@ -19,8 +19,6 @@ with Ada.Strings.Fixed;
 with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
-with GNAT.Expect;                use GNAT.Expect;
-with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
@@ -250,12 +248,6 @@ package body GPS.Location_View is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
-   function Is_Visible
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self  : Location_View) return Boolean;
-   --  Used by model filter for query item visibility
-
    procedure On_Apply_Filter (Self : access Location_View_Record'Class);
    --  Called on "apply-filter" signal from filter panel
 
@@ -277,9 +269,6 @@ package body GPS.Location_View is
 
    package Location_View_Callbacks is
      new Gtk.Handlers.Callback (Location_View_Record);
-
-   package Visible_Funcs is
-     new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
 
    procedure Export_Messages
      (Out_File  : Ada.Text_IO.File_Type;
@@ -835,11 +824,6 @@ package body GPS.Location_View is
          Glib.Main.Remove (V.Idle_Expand_Handler);
       end if;
 
-      --  Free regular expression
-
-      Basic_Types.Unchecked_Free (V.Regexp);
-      GNAT.Strings.Free (V.Text);
-
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
@@ -1154,7 +1138,6 @@ package body GPS.Location_View is
 
       Gtk_New
         (Self.View,
-         Self.Filter,
          Get_Model (Locations_Listener_Access (Self.Listener)));
       Location_View_Callbacks.Object_Connect
         (Get_Model (Locations_Listener_Access (Self.Listener)),
@@ -1163,9 +1146,6 @@ package body GPS.Location_View is
          Location_View (Self),
          True);
 
-      Visible_Funcs.Set_Visible_Func
-        (Self.Filter, Is_Visible'Access, Location_View (Self));
-      Self.Filter.Unref;
       Self.View.Set_Name ("Locations Tree");
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
       Gtk_New (Scrolled);
@@ -1679,36 +1659,11 @@ package body GPS.Location_View is
    ---------------------
 
    procedure On_Apply_Filter (Self : access Location_View_Record'Class) is
-      Pattern     : constant String := Self.Filter_Panel.Get_Pattern;
-      New_Regexp  : GNAT.Expect.Pattern_Matcher_Access;
-      New_Text    : GNAT.Strings.String_Access;
-
    begin
-      if Pattern /= "" then
-         if Self.Filter_Panel.Get_Is_Regexp then
-            begin
-               New_Regexp := new GNAT.Regpat.Pattern_Matcher'
-                 (GNAT.Regpat.Compile (Pattern));
-            exception
-               when GNAT.Regpat.Expression_Error =>
-                  New_Regexp := null;
-                  New_Text := new String'(Pattern);
-            end;
-
-         else
-            New_Text := new String'(Pattern);
-         end if;
-      end if;
-
-      Basic_Types.Unchecked_Free (Self.Regexp);
-      GNAT.Strings.Free (Self.Text);
-
-      Self.Regexp := New_Regexp;
-      Self.Text := New_Text;
-      Self.Is_Hide := Self.Filter_Panel.Get_Hide_Matched;
-
-      Self.Filter.Refilter;
-
+      Self.View.Get_Filter_Model.Set_Pattern
+        (Self.Filter_Panel.Get_Pattern,
+         Self.Filter_Panel.Get_Is_Regexp,
+         Self.Filter_Panel.Get_Hide_Matched);
       Get_Or_Create_Location_View_MDI (Self.Kernel).Set_Title
         (+"Locations (filtered)");
    end On_Apply_Filter;
@@ -1719,11 +1674,7 @@ package body GPS.Location_View is
 
    procedure On_Cancel_Filter (Self : access Location_View_Record'Class) is
    begin
-      Basic_Types.Unchecked_Free (Self.Regexp);
-      GNAT.Strings.Free (Self.Text);
-
-      Self.Filter.Refilter;
-
+      Self.View.Get_Filter_Model.Set_Pattern ("", False, False);
       Get_Or_Create_Location_View_MDI (Self.Kernel).Set_Title (+"Locations");
    end On_Cancel_Filter;
 
@@ -1764,74 +1715,11 @@ package body GPS.Location_View is
    procedure On_Visibility_Toggled
      (Self : access Location_View_Record'Class) is
    begin
-      Self.Is_Hide := Self.Filter_Panel.Get_Hide_Matched;
-
-      Self.Filter.Refilter;
+      Self.View.Get_Filter_Model.Set_Pattern
+        (Self.Filter_Panel.Get_Pattern,
+         Self.Filter_Panel.Get_Is_Regexp,
+         Self.Filter_Panel.Get_Hide_Matched);
    end On_Visibility_Toggled;
-
-   ----------------
-   -- Is_Visible --
-   ----------------
-
-   function Is_Visible
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self  : Location_View) return Boolean
-   is
-      use type GNAT.Strings.String_Access;
-
-      Message : constant String := Model.Get_String (Iter, Text_Column);
-      Depth   : Natural;
-      Path    : Gtk_Tree_Path;
-      Found   : Boolean;
-      Child   : Gtk_Tree_Iter;
-
-   begin
-      Path := Model.Get_Path (Iter);
-      Depth := Natural (Get_Depth (Path));
-      Path_Free (Path);
-
-      if Depth = 1 then
-         --  Category rows are displayed always, otherwise view doesn't
-         --  display any rows at all when model is filled from empty state.
-
-         return True;
-
-      elsif Depth = 2 then
-         --  File rows are displayed only when they have visible messages.
-
-         Child := Model.Children (Iter);
-
-         while Child /= Null_Iter loop
-            if Is_Visible (Model, Child, Self) then
-               return True;
-            end if;
-
-            Model.Next (Child);
-         end loop;
-
-         return False;
-
-      else
-         --  Messages rows are displayed when match filter.
-
-         if Self.Regexp /= null then
-            Found := GNAT.Regpat.Match (Self.Regexp.all, Message);
-
-         elsif Self.Text /= null then
-            Found := Ada.Strings.Fixed.Index (Message, Self.Text.all) /= 0;
-
-         else
-            return True;
-         end if;
-
-         if Self.Is_Hide then
-            Found := not Found;
-         end if;
-
-         return Found;
-      end if;
-   end Is_Visible;
 
    --------------------
    -- On_Row_Deleted --
@@ -1846,6 +1734,7 @@ package body GPS.Location_View is
             Destroy (Self);
          end if;
       end if;
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Row_Deleted;

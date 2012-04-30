@@ -20,13 +20,10 @@
 
 private with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
-with GNAT.Expect;
-with GNAT.Strings;
 
 with Gtk.Box;                        use Gtk.Box;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;                 use Gtk.Tree_Model;
-with Gtk.Tree_Model_Filter;          use Gtk.Tree_Model_Filter;
 with Glib;
 with Glib.Main;
 
@@ -102,20 +99,12 @@ private
      new Ada.Containers.Vectors (Positive, Expansion_Request);
 
    type Location_View_Record is new Gtk_Hbox_Record with record
-      Kernel : Kernel_Handle;
-
-      Filter_Panel : Locations_Filter_Panel;
-
-      Regexp       : GNAT.Expect.Pattern_Matcher_Access;
-      Text         : GNAT.Strings.String_Access;
-      Is_Hide      : Boolean := False;
-
-      Sort_By_Category : Boolean := False;
+      Kernel              : Kernel_Handle;
+      Filter_Panel        : Locations_Filter_Panel;
+      Sort_By_Category    : Boolean := False;
       --  Whether the view should be sorted by category
 
-      View   : GPS_Locations_Tree_View;
-      Filter : Gtk_Tree_Model_Filter;
-      --  Tree filter model
+      View                : GPS_Locations_Tree_View;
 
       --  Idle handlers
 
@@ -124,7 +113,7 @@ private
       --  Expansion requests.
 
       --  Message listener
-      Listener : GPS.Kernel.Messages.Listener_Access;
+      Listener            : GPS.Kernel.Messages.Listener_Access;
 
       Do_Not_Delete_Messages_On_Exit : Boolean := False;
       --  Protection against reentrancy

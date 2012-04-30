@@ -43,8 +43,8 @@
 with Glib;
 private with Glib.Main;
 private with Gtk.Cell_Renderer_Text;
-with Gtk.Tree_Model_Filter;
 private with Gtk.Tree_View_Column;
+with GPS.Location_View_Filter;
 private with GPS.Sort_Model.Locations;
 
 package GPS.Tree_View.Locations is
@@ -55,15 +55,18 @@ package GPS.Tree_View.Locations is
    type GPS_Locations_Tree_View is
      access all GPS_Locations_Tree_View_Record'Class;
 
+   function Get_Filter_Model
+     (Self : not null access GPS_Locations_Tree_View_Record)
+      return GPS.Location_View_Filter.Location_View_Filter_Model;
+   --  Returns filter model.
+
    procedure Gtk_New
      (Object : in out GPS_Locations_Tree_View;
-      Filter : out Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
       Model  : not null Gtk.Tree_Model.Gtk_Tree_Model);
 
    procedure Initialize
-     (Self   : not null access GPS_Locations_Tree_View_Record'Class;
-      Filter : out Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
-      Model  : not null Gtk.Tree_Model.Gtk_Tree_Model);
+     (Self  : not null access GPS_Locations_Tree_View_Record'Class;
+      Model : not null Gtk.Tree_Model.Gtk_Tree_Model);
 
    procedure Sort_By_Subcategory
      (Self : not null access GPS_Locations_Tree_View_Record'Class);
@@ -102,7 +105,8 @@ private
       Text_Renderer           : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
       --  Renderer for location and its text
 
-      Filter                  : Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
+      Filter                  :
+        GPS.Location_View_Filter.Location_View_Filter_Model;
       Sort                    : GPS.Sort_Model.Locations.Locations_Proxy_Model;
       --  Intermediate models to support filtering and custom sorting of items
       --  in the view
