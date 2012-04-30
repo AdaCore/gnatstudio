@@ -130,6 +130,7 @@ package body Codefix_Module is
       Error           : Error_Id;
       Matching_Parser : Error_Parser_Access;
       Solution_Index  : Positive;
+      Total_Solutions : Positive;
    end record;
    type Codefix_Menu_Item is access all Codefix_Menu_Item_Record;
 
@@ -334,7 +335,9 @@ package body Codefix_Module is
                                 and then Command.Get_Parser.all'Tag
                                   = Mitem.Matching_Parser.all'Tag
                                 and then Solution_Index
-                                  = Mitem.Solution_Index)
+                                  = Mitem.Solution_Index
+                                and then Length (Get_Solutions (Error))
+                                  = Mitem.Total_Solutions)
                            then
                               if Unique_Simple_Command = null then
                                  Unique_Simple_Command := Command;
@@ -1142,10 +1145,11 @@ package body Codefix_Module is
       Mitem          : Codefix_Menu_Item;
       Sub_Menu       : Gtk.Menu.Gtk_Menu;
       Menu_Item      : Gtk.Menu_Item.Gtk_Menu_Item;
+      Solutions      : constant Solution_List := Get_Solutions (Error);
       Solution_Node  : Solution_List_Iterator;
       Simple_Number  : Integer := 0;
    begin
-      Solution_Node := First (Get_Solutions (Error));
+      Solution_Node := First (Solutions);
 
       while not At_End (Solution_Node) loop
          Fix_Command := Get_Command (Solution_Node);
@@ -1172,6 +1176,7 @@ package body Codefix_Module is
             Mitem.Fix_Mode        := Similar;
             Mitem.Matching_Parser := Fix_Command.Get_Parser;
             Mitem.Solution_Index  := Simple_Number;
+            Mitem.Total_Solutions := Length (Solutions);
             Mitem.Kernel          := Kernel_Handle (Kernel);
             Mitem.Session         := Codefix_Session (Session);
             Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
