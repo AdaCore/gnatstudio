@@ -33,6 +33,11 @@ NF-52-L416-043 GB: Improved search results interaction (2012-04-16)
   for the subprogram will no longer open the editor on the subprogram name in
   the declaration. It will open the editor at the first enclosed reference.
 
+NF-52-L416-019 GPS: improve batch codefix support (2012-05-03)
+
+  Add ability to autofix similar errors in batch mode when multiply choices
+  available.
+
 NF-52-L329-026 GPS: Improved emacs selection mode support (2012-03-30)
 
   When using the emacs mode, after setting a mark, the commands to go to the
