@@ -2482,7 +2482,7 @@ package body Src_Editor_Module is
               (Buffer, Get_Language_By_Name
                  (Get_Language_Handler (Kernel),
                   Text (Index .. Text'Last)));
-            Set_Charset (Buffer, Get_Active_Text (Charset));
+            Set_Charset (Buffer, Selected_Charset (Charset));
 
             Set_Strip_Trailing_Blanks (Buffer, Strip.Get_Active);
             Set_Strip_Trailing_Lines (Buffer, Strip_Lines.Get_Active);

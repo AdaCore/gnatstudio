@@ -123,31 +123,59 @@ package body GPS.Kernel.Charsets is
      (File    : GNATCOLL.VFS.Virtual_File;
       Default : String := "") return Gtk.Combo_Box.Gtk_Combo_Box
    is
+      function Get_Default_Charset_Name return String;
       Combo : Gtk_Combo_Box;
-      Found : Boolean := False;
-      Prop  : String_Property;
 
+      function Get_Default_Charset_Name return String is
+         Found : Boolean := False;
+         Prop  : String_Property;
+      begin
+         if File /= GNATCOLL.VFS.No_File then
+            Get_Property (Prop, File, "charset", Found);
+         end if;
+
+         if Found then
+            return Prop.Value.all;
+         elsif Default /= "" then
+            return Default;
+         else
+            return Get_Pref (Default_Charset);
+         end if;
+      end Get_Default_Charset_Name;
+
+      Default_Name  : constant String := Get_Default_Charset_Name;
+      Default_Index : Integer := -1;
    begin
       Gtk_New_Combo_Text_With_Entry (Combo);
 
       for C in Charsets'Range loop
          Combo.Append_Text (Charsets (C).Description.all);
+
+         if Charsets (C).Name.all = Default_Name then
+            Default_Index := C;
+         end if;
       end loop;
 
-      if File /= GNATCOLL.VFS.No_File then
-         Get_Property (Prop, File, "charset", Found);
-      end if;
-
-      if Found then
-         Set_Text (Gtk_Entry (Get_Child (Combo)), Prop.Value.all);
-      elsif Default /= "" then
-         Set_Text (Gtk_Entry (Get_Child (Combo)), Default);
-      else
-         Set_Text (Gtk_Entry (Get_Child (Combo)), Get_Pref (Default_Charset));
-      end if;
+      Set_Active (Combo, Gint (Default_Index));
 
       return Combo;
    end Create_Charset_Combo;
+
+   ----------------------
+   -- Selected_Charset --
+   ----------------------
+
+   function Selected_Charset
+     (Combo : Gtk.Combo_Box.Gtk_Combo_Box) return String
+   is
+      Index : constant Integer := Integer (Combo.Get_Active);
+   begin
+      if Index in Charsets'Range then
+         return Charsets (Index).Name.all;
+      else
+         return "";
+      end if;
+   end Selected_Charset;
 
    ----------
    -- Edit --

@@ -59,6 +59,10 @@ package GPS.Kernel.Charsets is
    --  Default is used if File is VFS.No_File. If unspecified, the
    --  corresponding preference is used.
 
+   function Selected_Charset
+     (Combo : Gtk.Combo_Box.Gtk_Combo_Box) return String;
+   --  Return Charset name from Charset_Combo
+
    function Get_File_Charset (File : GNATCOLL.VFS.Virtual_File) return String;
    --  Return the charset that should be used to edit File.
    --  If File is VFS.No_File, the default charset is returned.
