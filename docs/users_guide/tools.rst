@@ -319,9 +319,13 @@ of a missing semicolon.
 You can also check what action will be performed by clicking on the right
 button which will display a contextual menu with a text explaining the action
 that will be performed. Similarly, if you display the contextual menu anywhere
-else on the message line, a sub menu called *Code Fixing* gives you access to
+else on the message line, a sub menu called *Auto Fix* gives you access to
 the same information. In the previous example of a missing semicolon, the menu
-will contain an entry labeled *Add expected string ";"*.
+will contain an entry labelled *Add expected string ";"*. Two nested menu items
+let you choose to *Apply to this occurrence* or *Apply to all similar errors*.
+Latter choice will apply the same simple fix for all errors which are
+detected by the system as being the same kind. This is based on message
+parsing.
 
 Once the code change has been performed, the tool icon is no longer displayed.
 
@@ -333,13 +337,9 @@ the compiler for resolving an entity.
 
 Right clicking on a message with a fix will open a contextual menu with an
 entry "Auto Fix". Fixes that can be applied by clicking on the wrench are
-available through that menu as well. In addiditon, if exactly one of the fixes
+available through that menu as well. In addiditon, if one of the fixes
 is considered to be safe by GPS, additional entries will be provided to apply
 fixes on multiple messages:
-
-*Fix all similar errors*
-  Will apply the same simple fix for all errors which are detected by the system
-  as being the same kind. This is based on message parsing.
 
 *Fix all simple style errors and warnings*
   This entry is offered only when the selected message is a warning and a style
