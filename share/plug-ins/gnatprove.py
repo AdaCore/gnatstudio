@@ -170,6 +170,8 @@ prove_file           = "Prove File"
 prove_line           = "Prove Line"
 prove_subp           = "Prove Subprogram"
 show_unprovable_code = "Show Unprovable Code"
+show_path            = "Show Path"
+trace_category       = "gnatprove_trace"
 
 # Check for GNAT toolchain: gnatprove
 
@@ -234,7 +236,54 @@ def on_prove_subp(self):
 def on_show_unprovable_code(self):
     GPS.BuildTarget(show_unprovable_code).execute(synchronous=False)
 
+def compute_trace_filename(msg):
+    text = msg.get_text()
+    return (os.path.join("gnatprove",
+                         os.path.basename(msg.get_file().name()) + "_" + str(msg.get_line()) +
+                         "_" + str(msg.get_column()) + "_" +
+                         text[:(len(text)-11)].replace(' ','_') + ".trace"))
+
+def show_trace(msg):
+    fn = compute_trace_filename(msg)
+    s = GPS.Style("style")
+    s.set_background("lightblue")
+    trace_text = ("trace for " + os.path.basename(msg.get_file().name()) + ":"
+                  + str(msg.get_line()) + ":" + str(msg.get_column())
+                  + ": " + msg.get_text())
+    with open(fn,"r") as f:
+        msgs = []
+        for line in f:
+            sl = line.split(':')
+            msgs.append (GPS.Message(trace_category,
+                            GPS.File(sl[0]),
+                            int(sl[1]),
+                            int(sl[2]),
+                            trace_text, 2))
+    for k in msgs:
+        k.set_style(s, 0)
+    buf = GPS.EditorBuffer.get(msgs[0].get_file())
+    view = buf.current_view()
+    t = view.title()
+    GPS.MDI.get(t).raise_window()
+
+def clear_trace():
+    for msg in GPS.Message.list(category=trace_category):
+        msg.remove()
+
+def on_show_path(self):
+    clear_trace()
+    loc = self.location()
+    my_file = loc.file()
+    my_line = loc.line()
+    my_col = loc.column()
+    for msg in GPS.Message.list():
+        if (msg.get_file() == my_file and msg.get_line() == my_line and
+                msg.get_column() == my_col):
+            if msg.get_text().endswith("not proved"):
+               show_trace(msg)
+
 if gnatprove:
+  clear_trace()
   GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
   GPS.Menu.create(menu_prefix + "/" + prove_all, on_prove_all)
   GPS.Menu.create(menu_prefix + "/" + prove_root_project, on_prove_root_project)
@@ -242,6 +291,7 @@ if gnatprove:
   GPS.Menu.create(menu_prefix + "/" + show_unprovable_code, on_show_unprovable_code)
   GPS.Contextual (prefix + "/" + prove_file).create(on_activate = on_prove_file)
   GPS.Contextual (prefix + "/" + prove_line).create(on_activate = on_prove_line)
+  GPS.Contextual (prefix + "/" + show_path).create(on_activate = on_show_path)
   GPS.Contextual (prefix + "/" + prove_subp).create(
           on_activate = on_prove_subp, filter = is_subp_context)
   GPS.parse_xml(xml_gnatprove)
