@@ -35,8 +35,8 @@ NF-52-L416-043 GB: Improved search results interaction (2012-04-16)
 
 NF-52-L416-019 GPS: improve batch codefix support (2012-05-03)
 
-  Add ability to autofix similar errors in batch mode when multiply choices
-  available.
+  GPS now provides the ability to fix automatically similar errors in batch
+  mode when multiple choices available.
 
 NF-52-L329-026 GPS: Improved emacs selection mode support (2012-03-30)
 
