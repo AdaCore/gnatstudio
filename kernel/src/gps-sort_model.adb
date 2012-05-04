@@ -532,7 +532,7 @@ package body GPS.Sort_Model is
 
    begin
       if Node.Parent /= null and then Node /= null then
-         Position := Node.Parent.From_Source.Find (Node);
+         Position := Node.Parent.From_Proxy.Find (Node);
 
          if Has_Element (Position) then
             Next (Position);
