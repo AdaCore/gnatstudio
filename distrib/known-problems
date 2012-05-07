@@ -201,6 +201,11 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Scroll manually, or position the cursor before opening the
               search dialog.
 
+- L127-003: GPS: incorrect behavior of Locations filter
+  Problem:    In some cases Locations filter can hide unexpected messages.
+  Workaround: Export messages into text file and use another program to filter
+              them.
+
 - L124-025: GPS: plugin highlight_selection.py is slow on large files
   Problem:    When activating the plugin highlight_selection.py, GPS might be
               slow to react to a selection on editors for large files.
