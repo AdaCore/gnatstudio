@@ -378,7 +378,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Gtk_New_With_Model_And_Entry (Combo, M);
       Combo.Set_Entry_Text_Column (0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
-      Cat_E.Set_Name ("new_target-target_cateogry");
+      Cat_E.Set_Name ("new_target-target_category");
       Set_Tooltip_Text
         (Combo,
          -"Type a new category name, or select an existing one");
