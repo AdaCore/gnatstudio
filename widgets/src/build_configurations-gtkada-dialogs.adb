@@ -336,6 +336,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       Combo := Models_Combo (UI);
       Model_E := Gtk_Entry (Get_Child (Combo));
+      Model_E.Set_Name ("new_target-target_model");
       Set_Editable (Model_E, False);
       Set_Tooltip_Text
         (Combo,
@@ -356,6 +357,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       Gtk_New (Name_E);
       Set_Text (Name_E, "New target");
+      Name_E.Set_Name ("new_target-target_name");
       Select_Region (Name_E, 0);
 
       Attach (Table, Name_E, 1, 2, 0, 1, Expand or Fill, 0, 3, 3);
@@ -376,6 +378,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Gtk_New_With_Model_And_Entry (Combo, M);
       Combo.Set_Entry_Text_Column (0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
+      Cat_E.Set_Name ("new_target-target_cateogry");
       Set_Tooltip_Text
         (Combo,
          -"Type a new category name, or select an existing one");
