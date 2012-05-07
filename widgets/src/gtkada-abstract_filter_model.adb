@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with System.Address_To_Access_Conversions;
 
 with Gtk.Handlers;
@@ -69,6 +71,12 @@ package body Gtkada.Abstract_Filter_Model is
       Params : Glib.Values.GValues);
    --  Handles reordering of the rows.
 
+   procedure On_Destroy
+     (Data   : System.Address;
+      Object : System.Address);
+   pragma Convention (C, On_Destroy);
+   --  Frees all internal data
+
    function Visible_Child
      (Self   : not null access Gtk_Abstract_Filter_Model_Record'Class;
       Parent : not null Node_Access;
@@ -95,11 +103,19 @@ package body Gtkada.Abstract_Filter_Model is
    --  Shows all visible children of the specified node. Source_Path and
    --  Source_Iter are path and iter of the first child node of Parent_Node.
 
+   procedure Deep_Free
+     (Self : access Gtk_Abstract_Filter_Model_Record'Class;
+      Node : not null Node_Access);
+   --  Deallocate node and all its children.
+
    package Conversions is
      new System.Address_To_Access_Conversions (Node_Record);
 
    package Gtk_Abstract_Filter_Model_Callbacks is
      new Gtk.Handlers.Callback (Gtk_Abstract_Filter_Model_Record);
+
+   procedure Free is
+     new Ada.Unchecked_Deallocation (Node_Record, Node_Access);
 
    --------------
    -- Children --
@@ -315,6 +331,30 @@ package body Gtkada.Abstract_Filter_Model is
 
       return Path;
    end Create_Path;
+
+   ---------------
+   -- Deep_Free --
+   ---------------
+
+   procedure Deep_Free
+     (Self : access Gtk_Abstract_Filter_Model_Record'Class;
+      Node : not null Node_Access)
+   is
+      Aux      : Node_Access         := Node;
+      Position : Node_Vectors.Cursor := Node.Children.First;
+
+   begin
+      while Node_Vectors.Has_Element (Position) loop
+         Self.Deep_Free (Node_Vectors.Element (Position));
+         Node_Vectors.Next (Position);
+      end loop;
+
+      Node.Children.Clear;
+
+      if Node /= Self.Root then
+         Free (Aux);
+      end if;
+   end Deep_Free;
 
    ---------------------
    -- Get_Column_Type --
@@ -538,7 +578,12 @@ package body Gtkada.Abstract_Filter_Model is
    ----------------
 
    procedure Initialize
-     (Self : not null access Gtk_Abstract_Filter_Model_Record'Class) is
+     (Self : not null access Gtk_Abstract_Filter_Model_Record'Class)
+   is
+      function To_Address is
+        new Ada.Unchecked_Conversion
+              (Gtk_Abstract_Filter_Model, System.Address);
+
    begin
       Gtkada.Abstract_Tree_Model.Initialize (Self);
 
@@ -546,6 +591,9 @@ package body Gtkada.Abstract_Filter_Model is
       Self.Stamp := 1;
       Self.Root  := new Node_Record;
       Self.Root.Visibility := Visible;
+
+      Self.Weak_Ref
+        (On_Destroy'Access, To_Address (Gtk_Abstract_Filter_Model (Self)));
    end Initialize;
 
    ----------------
@@ -720,6 +768,27 @@ package body Gtkada.Abstract_Filter_Model is
       return Self.Create_Iter (Self.Visible_Child (Self.To_Node (Parent), N));
    end Nth_Child;
 
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Data   : System.Address;
+      Object : System.Address)
+   is
+      pragma Unreferenced (Object);
+
+      function To_Object is
+        new Ada.Unchecked_Conversion
+                  (System.Address, Gtk_Abstract_Filter_Model);
+
+      Self : constant Gtk_Abstract_Filter_Model := To_Object (Data);
+
+   begin
+      Self.Deep_Free (Self.Root);
+      Free (Self.Root);
+   end On_Destroy;
+
    --------------------
    -- On_Row_Changed --
    --------------------
@@ -846,7 +915,7 @@ package body Gtkada.Abstract_Filter_Model is
 
       --  Deallocate node and its children recursively.
 
-      --  ??? Not implemented jet.
+      Self.Deep_Free (Child);
    end On_Row_Deleted_Callback;
 
    ------------------------------
