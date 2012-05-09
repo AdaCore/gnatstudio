@@ -192,7 +192,8 @@
   <target-model name="gnattest" category="">
     <description>Generic launch of gnattest</description>
     <command-line>
-      <arg>gnattest</arg>
+      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>test</arg>
       <arg>-dd</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
@@ -263,7 +264,8 @@
     <read-only>TRUE</read-only>
 
     <command-line>
-      <arg>gnattest</arg>
+      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>test</arg>
       <arg>-dd</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
@@ -277,7 +279,8 @@
     <read-only>TRUE</read-only>
 
     <command-line>
-      <arg>gnattest</arg>
+      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>test</arg>
       <arg>-dd</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
@@ -292,7 +295,8 @@
     <read-only>TRUE</read-only>
 
     <command-line>
-      <arg>gnattest</arg>
+      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>test</arg>
       <arg>-dd</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
