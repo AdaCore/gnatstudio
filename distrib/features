@@ -187,6 +187,11 @@ NF-52-I402-011 ECL: GNATbench needs launch configs for Ada (2011-10-13)
   Added Ada-specific launch configurations for local and remote debugging,
   attaching to a running process, and post mortem debugging.
 
+NF-52-HC11-001 GPS: add clear in messages contextual menu (2012-05-10)
+
+  The contextual menu for messages window is customizable through plugins
+  and has 'Clear messages' item.
+
 NF-52-G917-017 GPS: Coverage Report accessible through Back button (2012-02-02)
 
   When clicking on a file or subprogram in the Code Coverage report, GPS open
