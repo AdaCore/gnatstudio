@@ -478,6 +478,13 @@ package body GPS.Kernel.Console is
          Console_Destroyed'Access, Kernel_Handle (Kernel));
       Return_Callback.Connect
         (Console, Gtk.Widget.Signal_Delete_Event, Console_Delete_Event'Access);
+
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Get_View (Console),
+         Object          => Console,
+         ID              => Module_ID (Console_Module_Id),
+         Context_Func    => null);
    end Initialize_Console;
 
    --------------------------------

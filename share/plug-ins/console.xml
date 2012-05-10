@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<console>
+  <action name="Clear messages">
+    <filter module="GPS.Kernel.Console"/>
+    <shell>Console</shell>
+    <shell>Console.clear %1</shell>
+  </action>
+
+  <contextual action="Clear messages"/>
+</console>
