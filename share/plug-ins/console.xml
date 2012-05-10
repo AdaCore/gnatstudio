@@ -1,4 +1,6 @@
 <?xml version="1.0"?>
+<!--  This file adds contextual menu to GPS Messages window. -->
+
 <console>
   <action name="Clear messages">
     <filter module="GPS.Kernel.Console"/>
