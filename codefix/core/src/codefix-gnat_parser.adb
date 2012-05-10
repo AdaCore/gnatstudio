@@ -1055,7 +1055,12 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'a generic package is not allowed in a use clause'.
 
-   type Non_Visible_Declaration is new Error_Parser (2) with null record;
+   type Non_Visible_Declaration is new Error_Parser (1) with record
+      Get_From_Current_File : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("non-visible declaration at (line) ([\d]+)"));
+      Get_From_Other_File : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("non-visible declaration at ([^\:]+):([\d]+)"));
+   end record;
 
    overriding
    procedure Initialize (This : in out Non_Visible_Declaration);
@@ -3594,11 +3599,8 @@ package body Codefix.GNAT_Parser is
 
    overriding procedure Initialize (This : in out Non_Visible_Declaration) is
    begin
-      This.Matcher :=
-        (new Pattern_Matcher'
-           (Compile ("non-visible declaration at ([^\:]+):([\d]+)")),
-         new Pattern_Matcher'
-           (Compile ("non-visible declaration at (line) ([\d]+)")));
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("""""?([^""]+)""""? is not visible")));
    end Initialize;
 
    overriding procedure Fix
@@ -3609,36 +3611,74 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Options);
+      pragma Unreferenced (Options, Matches);
 
-      Source_Cursor : File_Cursor;
-      Seek_With     : Boolean;
-      Message : constant Error_Message := Get_Message (Message_It);
+      Next_Message  : Error_Message_Iterator := Message_It;
+      Message       : constant Error_Message := Get_Message (Message_It);
+
    begin
-      Set_Location
-        (Source_Cursor,
-         Line => Natural'Value
-           (Get_Message (Message)
-              (Matches (2).First .. Matches (2).Last)),
-         Column => 1);
+      Solutions := Null_Solution_List;
 
-      if Get_Message (Message)
-        (Matches (1).First .. Matches (1).Last) = "line"
-      then
-         Set_File (Source_Cursor, Get_File (Message));
-         Seek_With := False;
-      else
-         Set_File
-           (Source_Cursor,
-            Get_Registry (Current_Text).Tree.Create
-             (+Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
-         Seek_With := True;
+      loop
+         declare
+            Preview         : Error_Message;
+            Matches_Loc     : Match_Array (0 .. 2);
+            Solution_Cursor : File_Cursor;
+            Seek_With       : Boolean;
+         begin
+            Next_Message := Next (Next_Message);
+
+            exit when At_End (Next_Message);
+
+            Preview := Get_Message (Next_Message);
+
+            Match
+              (This.Get_From_Other_File.all,
+               Get_Message (Preview),
+               Matches_Loc);
+
+            if Matches_Loc (0) = No_Match then
+               Match
+                 (This.Get_From_Current_File.all,
+                  Get_Message (Preview),
+                  Matches_Loc);
+
+               exit when Matches_Loc (0) = No_Match;
+
+               Seek_With := False;
+
+               Set_File (Solution_Cursor, Get_File (Message));
+            else
+               Seek_With := True;
+
+               Set_File
+                 (Solution_Cursor,
+                  Get_Registry (Current_Text).Tree.Create
+                    (+Get_Message (Preview)
+                       (Matches_Loc (1).First .. Matches_Loc (1).Last)));
+            end if;
+
+            Set_Location
+              (Solution_Cursor,
+               Line => Integer'Value
+                 (Get_Message (Preview)
+                    (Matches_Loc (2).First .. Matches_Loc (2).Last)),
+               Column => 1);
+
+            Concat
+              (Solutions,
+               Resolve_Unvisible_Declaration
+                 (Current_Text, Message, Solution_Cursor, Seek_With));
+
+            Cancel_Message (Next_Message);
+            Free (Solution_Cursor);
+         end;
+      end loop;
+
+      if Length (Solutions) = 0 then
+         raise Uncorrectable_Message;
       end if;
 
-      Solutions := Resolve_Unvisible_Declaration
-        (Current_Text, Message, Source_Cursor, Seek_With);
-
-      Free (Source_Cursor);
    end Fix;
 
    ----------------------------
