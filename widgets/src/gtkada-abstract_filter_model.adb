@@ -875,6 +875,20 @@ package body Gtkada.Abstract_Filter_Model is
 
                Self.Hide (Node);
             end if;
+
+         elsif Is_Visible then
+            --  Row's visibility doesn't changed
+
+            declare
+                  Node_Path : constant Gtk.Tree_Model.Gtk_Tree_Path :=
+                    Self.Create_Path (Node);
+                  Node_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+                    Self.Create_Iter (Node);
+
+            begin
+               Self.Row_Changed (Node_Path, Node_Iter);
+               Gtk.Tree_Model.Path_Free (Node_Path);
+            end;
          end if;
       end if;
    end On_Row_Changed;
