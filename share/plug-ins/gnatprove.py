@@ -232,6 +232,15 @@ def is_subp_body_context(self):
 def is_subp_context(self):
     return is_subp_decl_context(self) or is_subp_body_context(self)
 
+# This is the context of a file, which may currently be also the context of
+# a non-Ada file in the project, or a spec file. Ideally, we should restrict
+# this to Ada main file for a unit (body when both spec and body are present,
+# spec when spec alone), so that calling gnatprove is allowed on such a file.
+# The test on file() != None excludes a directory or a project file.
+def is_file_context(self):
+    return isinstance (self, GPS.FileContext) \
+        and self.file() != None
+
 def mk_loc_string (sloc):
     locstring = os.path.basename(sloc.file().name()) + ":" + str(sloc.line())
     return locstring
@@ -263,7 +272,6 @@ def on_show_unprovable_code(self):
     GPS.BuildTarget(show_unprovable_code).execute(synchronous=False)
 
 def on_clean_up(self):
-    print "here"
     GPS.BuildTarget(clean_up).execute(synchronous=False)
 
 def compute_trace_filename(msg):
@@ -317,7 +325,8 @@ if gnatprove:
   GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
   GPS.Menu.create(menu_prefix + "/" + prove_all, on_prove_all)
   GPS.Menu.create(menu_prefix + "/" + prove_root_project, on_prove_root_project)
-  GPS.Menu.create(menu_prefix + "/" + prove_file, on_prove_file)
+  GPS.Menu.create(menu_prefix + "/" + prove_file, on_prove_file,
+          filter = is_file_context)
   GPS.Menu.create(menu_prefix + "/" + show_unprovable_code, on_show_unprovable_code)
   GPS.Menu.create(menu_prefix + "/" + clean_up, on_clean_up)
   GPS.Contextual (prefix + "/" + prove_file).create(on_activate = on_prove_file)
