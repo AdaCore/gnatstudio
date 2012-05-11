@@ -5441,20 +5441,16 @@ package body Src_Editor_Buffer is
          --  If we are removing a highlight where no highlight is defined,
          --  we can exit immediately.
 
-         if Set then
-            Editor.Line_Data (Line).Enabled_Highlights :=
-              new Boolean_Array (1 .. Last_Index);
-            Editor.Line_Data (Line).Enabled_Highlights.all :=
-              (others   => False);
-            Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
-            Editor.Line_Data (Line).Highlight_Category := Category;
-            Editor.Line_Data (Line).Highlight_In       := Highlight_In;
+         if not Set then
+            return;
          end if;
 
-         return;
-      end if;
+         Editor.Line_Data (Line).Enabled_Highlights :=
+           new Boolean_Array (1 .. Last_Index);
+         Editor.Line_Data (Line).Enabled_Highlights.all := (others   => False);
+         Editor.Line_Data (Line).Highlight_In := Highlight_In;
 
-      if Editor.Line_Data (Line).Enabled_Highlights'Last < Last_Index then
+      elsif Editor.Line_Data (Line).Enabled_Highlights'Last < Last_Index then
          declare
             A : Boolean_Array_Access;
          begin
@@ -5475,7 +5471,17 @@ package body Src_Editor_Buffer is
          Editor.Line_Data (Line).Highlight_In := Highlight_In;
       end if;
 
-      Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
+      --  Sets highlighting enabled flag only when highlighting of the hole
+      --  line in the editor is requested.
+
+      if Highlight_In (Highlight_Editor) then
+         Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
+
+      --  But resets it always when hide of highlighting is requested.
+
+      elsif not Set then
+         Editor.Line_Data (Line).Enabled_Highlights (Category) := False;
+      end if;
 
       --  Find out which category has priority for highlighting
 
