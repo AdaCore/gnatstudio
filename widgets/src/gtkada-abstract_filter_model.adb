@@ -871,13 +871,13 @@ package body Gtkada.Abstract_Filter_Model is
                end if;
 
             else
-               --  Row is hided
+               --  Row is hidden
 
                Self.Hide (Node);
             end if;
 
          elsif Is_Visible then
-            --  Row's visibility doesn't changed
+            --  Row visibility hasn't changed
 
             declare
                   Node_Path : constant Gtk.Tree_Model.Gtk_Tree_Path :=
