@@ -159,6 +159,31 @@ xml_gnatprove = """<?xml version="1.0"?>
        </command-line>
     </target>
 
+    <target-model name="gnatprove_clean">
+       <description>Target model for GNATprove for cleaning</description>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+       </command-line>
+       <icon>gps-build-all</icon>
+       <switches command="%(tool_name)s" columns="1" lines="1">
+         <title column="1" line="1" >Compilation</title>
+         <check label="Force Recompilation" switch="-f" column="1"
+                tip="All actions are redone entirely, including compilation and proof" />
+       </switches>
+    </target-model>
+
+    <target model="gnatprove_clean" name="Clean Proofs" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--clean</arg>
+       </command-line>
+    </target>
   </GNATPROVE>
 """
 
@@ -170,6 +195,7 @@ prove_file           = "Prove File"
 prove_line           = "Prove Line"
 prove_subp           = "Prove Subprogram"
 show_unprovable_code = "Show Unprovable Code"
+clean_up             = "Clean Proofs"
 show_path            = "Show Path"
 trace_category       = "gnatprove_trace"
 
@@ -236,6 +262,10 @@ def on_prove_subp(self):
 def on_show_unprovable_code(self):
     GPS.BuildTarget(show_unprovable_code).execute(synchronous=False)
 
+def on_clean_up(self):
+    print "here"
+    GPS.BuildTarget(clean_up).execute(synchronous=False)
+
 def compute_trace_filename(msg):
     text = msg.get_text()
     return (os.path.join("gnatprove",
@@ -289,6 +319,7 @@ if gnatprove:
   GPS.Menu.create(menu_prefix + "/" + prove_root_project, on_prove_root_project)
   GPS.Menu.create(menu_prefix + "/" + prove_file, on_prove_file)
   GPS.Menu.create(menu_prefix + "/" + show_unprovable_code, on_show_unprovable_code)
+  GPS.Menu.create(menu_prefix + "/" + clean_up, on_clean_up)
   GPS.Contextual (prefix + "/" + prove_file).create(on_activate = on_prove_file)
   GPS.Contextual (prefix + "/" + prove_line).create(on_activate = on_prove_line)
   GPS.Contextual (prefix + "/" + show_path).create(on_activate = on_show_path)
