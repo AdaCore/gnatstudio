@@ -3694,7 +3694,15 @@ package body Src_Editor_Module is
       C    : constant MDI_Child := MDI_Child (Child);
       Iter : Child_Iterator := First_Child (Get_MDI (C));
       Current : MDI_Child;
+
+      package MDI_Child_List is new Ada.Containers.Doubly_Linked_Lists
+        (MDI_Child);
+
+      Children_To_Close : MDI_Child_List.List;
    begin
+      --  MDI iterators might become invalid as children as being destroyed,
+      --  so first fill up a list of children to close...
+
       loop
          Current := Get (Iter);
          exit when Current = null;
@@ -3704,10 +3712,21 @@ package body Src_Editor_Module is
          if Current /= C
            and then Current.all in Editor_Child_Record'Class
          then
-            Close_Child (Current, Force => False);
+            Children_To_Close.Append (Current);
          end if;
-
       end loop;
+
+      --  ... and then close all elements in this list.
+
+      declare
+         C : MDI_Child_List.Cursor;
+      begin
+         C := Children_To_Close.First;
+         while MDI_Child_List.Has_Element (C) loop
+            Close_Child (MDI_Child_List.Element (C), Force => False);
+            MDI_Child_List.Next (C);
+         end loop;
+      end;
    end On_Close_Other_Editors;
 
    --------------------
