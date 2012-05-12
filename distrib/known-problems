@@ -17,6 +17,12 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               Python constructs, prefer a text editor to the interactive
               console.
 
+- L420-022: GPS: Crash when using the menu "Close all other editors".
+  Problem:    When bringing up the contextual menu on notebook tabs and
+              activating "Close all other editors", GPS might crash.
+  Workaround: Use the global menu File->Close All Editors Except Current
+              instead.
+
 - L412-018: GPS: Interactive consoles using a proportional font
   Problem:    Interactive consoles, such as the GPS Shell or the Python
               console, use a proportional font rather than a fixed font, which
