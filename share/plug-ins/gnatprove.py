@@ -239,7 +239,7 @@ def is_subp_context(self):
 def is_ada_file_context(self):
     return isinstance (self, GPS.FileContext) \
         and self.file() != None \
-        and self.file().language() == "ada"
+        and self.file().language().lower() == "ada"
 
 def mk_loc_string (sloc):
     locstring = os.path.basename(sloc.file().name()) + ":" + str(sloc.line())
