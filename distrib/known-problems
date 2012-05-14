@@ -37,6 +37,11 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Only request references on files in projects that have an
               associated GNAT project file.
 
+- L404-018: GPS: Wrong color of line highlighting
+  Problem:    GPS use wrong color to highlight lines in source editor when
+              message is associated with this line.
+  Workaround: Not needed.
+
 - L417-023: GPS: Crash after creating a build target that contain underscores
   Problem:    When using the Target Configuration dialog to create a build
               target whose name contains an underscore, GPS might crash when
