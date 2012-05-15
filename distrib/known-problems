@@ -299,6 +299,11 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               "Format Selection" in the "Editor" section in the Key Shortcuts
               view).
 
+- K726-011: GPS: Source editor is not raised on double click in CodePeer report
+  Problem:    On double click in CodePeer report source editor is opened, but
+              not raised to be active MDI window, which is annoying.
+  Workaround: Raise source editor window by click on corresponding tab.
+
 - K325-019: GPS: autofix for lines containing only spaces
   Problem:    The autofix for blanks at end of line removes the whole line if
               the line is composed only by spaces.
