@@ -3625,6 +3625,7 @@ package body Codefix.GNAT_Parser is
             Matches_Loc     : Match_Array (0 .. 2);
             Solution_Cursor : File_Cursor;
             Seek_With       : Boolean;
+            Resolve_List    : Solution_List;
          begin
             Next_Message := Next (Next_Message);
 
@@ -3665,13 +3666,14 @@ package body Codefix.GNAT_Parser is
                     (Matches_Loc (2).First .. Matches_Loc (2).Last)),
                Column => 1);
 
-            Concat
-              (Solutions,
-               Resolve_Unvisible_Declaration
-                 (Current_Text, Message, Solution_Cursor, Seek_With));
+            Resolve_List := Resolve_Unvisible_Declaration
+              (Current_Text, Message, Solution_Cursor, Seek_With);
+
+            Unique_Concat (Solutions, Resolve_List);
 
             Cancel_Message (Next_Message);
             Free (Solution_Cursor);
+            Free_List (Resolve_List);
          end;
       end loop;
 

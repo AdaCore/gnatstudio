@@ -89,6 +89,11 @@ package Codefix.Formal_Errors is
    --  Adds the contents of Sources at the end of Dest. No deep copy is done by
    --  this function.
 
+   procedure Unique_Concat
+     (Dest : in out Solution_List; Source : Solution_List);
+   --  The same as Concat but avoid dublicated solutions.
+   --  Source list isn't modified.
+
    function Length (List : Solution_List) return Integer;
    --  Return the number of elements in the list.
 

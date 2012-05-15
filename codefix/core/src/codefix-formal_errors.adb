@@ -212,6 +212,51 @@ package body Codefix.Formal_Errors is
       Concat (Command_List.List (Dest), Command_List.List (Source));
    end Concat;
 
+   -------------------
+   -- Unique_Concat --
+   -------------------
+
+   procedure Unique_Concat
+     (Dest   : in out Solution_List;
+      Source : Solution_List)
+   is
+      function Has_Caption
+        (Dest    : Solution_List;
+         Caption : String)
+         return Boolean;
+
+      -----------------
+      -- Has_Caption --
+      -----------------
+
+      function Has_Caption
+        (Dest    : Solution_List;
+         Caption : String)
+         return Boolean
+      is
+         Item : Command_List.List_Node := First (Dest);
+      begin
+         for J in 1 .. Length (Dest) loop
+            if Data (Item).Get_Caption = Caption then
+               return True;
+            end if;
+            Item := Next (Item);
+         end loop;
+
+         return False;
+      end Has_Caption;
+
+      Item : Command_List.List_Node := First (Source);
+   begin
+      for J in 1 .. Length (Source) loop
+         if not Has_Caption (Dest, Data (Item).Get_Caption) then
+            Append (Dest, Data (Item));
+            Data_Ref (Item).all := null;
+         end if;
+         Item := Next (Item);
+      end loop;
+   end Unique_Concat;
+
    ------------
    -- Length --
    ------------
@@ -1347,6 +1392,10 @@ package body Codefix.Formal_Errors is
         Get_Visible_Declaration_Cmd (Use_Solution_Ptr.all);
       Prefix_Solution     : Get_Visible_Declaration_Cmd renames
         Get_Visible_Declaration_Cmd (Prefix_Solution_Ptr.all);
+
+      Pkg_Name : constant String := Get_Package_To_Be_Withed
+        (Current_Text, Pkg_Cursor);
+      Prefix   : constant String := Get_Full_Prefix (Current_Text, Pkg_Cursor);
    begin
       Add_Use
         (Use_Solution,
@@ -1355,15 +1404,24 @@ package body Codefix.Formal_Errors is
          Get_File (Object_Cursor),
          Seek_With);
       Set_Caption
-        (Use_Solution, "Update with and use clauses to show the object");
+        (Use_Solution, "Add 'with' and 'use' clauses for " & Pkg_Name);
       Prefix_Object
         (Prefix_Solution,
          Current_Text,
          Pkg_Cursor,
          Object_Cursor,
          Seek_With);
-      Set_Caption
-        (Prefix_Solution, "Update with clauses and prefix the object");
+
+      if Pkg_Name = Prefix then
+         Set_Caption
+           (Prefix_Solution, "Add 'with' clause for " & Pkg_Name
+            & " and prefix the object");
+      else
+         Set_Caption
+           (Prefix_Solution, "Add 'with' clause for " & Pkg_Name
+            & " and prefix the object with " & Prefix);
+      end if;
+
       Append (Result, Use_Solution_Ptr);
       Append (Result, Prefix_Solution_Ptr);
 
