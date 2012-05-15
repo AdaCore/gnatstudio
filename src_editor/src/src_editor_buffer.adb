@@ -2414,6 +2414,8 @@ package body Src_Editor_Buffer is
 
       Slice_Offset_Column : Gint;
       Result              : Boolean;
+      Ignored             : Boolean;
+      Entity_Kind         : Language_Entity;
       Slice               : Unchecked_String_Access;
       pragma Suppress (Access_Check, Slice);
 
@@ -2615,6 +2617,57 @@ package body Src_Editor_Buffer is
       --  provides a nice optimization over rehighlighting the whole buffer.
 
       Forward_To_Line_End (Entity_End, Result);
+
+      --  Search the initial minimum area to re-highlight...
+
+      Entity_Kind := Normal_Text;
+
+      Entity_Kind_Search_Loop :
+      for Current_Entity in Standout_Language_Entity loop
+         if Has_Tag (Entity_Start, Tags (Current_Entity)) then
+            --  This means that we are in a highlighted region. The minimum
+            --  region to re-highlight starts from the begining of the current
+            --  region to the end of the following region.
+
+            Entity_Kind := Current_Entity;
+
+            Backward_To_Tag_Toggle
+              (Entity_Start, Tags (Current_Entity), Result => Ignored);
+            Forward_To_Tag_Toggle (Entity_End, Tags (Entity_Kind), Ignored);
+            Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
+
+            exit Entity_Kind_Search_Loop;
+
+         elsif Begins_Tag (Entity_End, Tags (Current_Entity))
+           or else Ends_Tag (Entity_Start, Tags (Current_Entity))
+         then
+            --  Case Begins_Tag:
+            --    This means that we inserted right at the begining of
+            --    a highlighted region... The minimum region to re-highlight
+            --    starts from the begining of the previous region to the
+            --    end of the current region.
+            --  Case Ends_Tag:
+            --    This means that we inserted right at the end of a highlighted
+            --    region. In this case, the minimum region to re-highlight
+            --    starts from the begining of the previous region to the end of
+            --    the current region.
+            --  In both cases, the processing is the same...
+
+            Entity_Kind := Current_Entity;
+            Backward_To_Tag_Toggle (Entity_Start, Result => Ignored);
+            Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
+
+            exit Entity_Kind_Search_Loop;
+         end if;
+      end loop Entity_Kind_Search_Loop;
+
+      if Entity_Kind = Normal_Text then
+         --  We are inside a normal text region. Just re-highlight this region
+
+         Backward_To_Tag_Toggle (Entity_Start, Result => Ignored);
+         Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
+      end if;
+
       Local_Highlight;
 
       if not Highlight_Complete then
@@ -7052,11 +7105,6 @@ package body Src_Editor_Buffer is
    procedure Process_Highlight_Region (Buffer : Source_Buffer) is
       Start_Iter  : Gtk_Text_Iter;
       End_Iter    : Gtk_Text_Iter;
-      Ignored     : Boolean;
-
-      Tags        : Highlighting_Tags renames Buffer.Syntax_Tags;
-      Entity_Kind : Language_Entity;
-
    begin
       if not Buffer.Highlight_Needed then
          return;
@@ -7064,56 +7112,6 @@ package body Src_Editor_Buffer is
 
       Get_Iter_At_Mark (Buffer, Start_Iter, Buffer.First_Highlight_Mark);
       Get_Iter_At_Mark (Buffer, End_Iter, Buffer.Last_Highlight_Mark);
-
-      --  Search the initial minimum area to re-highlight...
-
-      Entity_Kind := Normal_Text;
-
-      Entity_Kind_Search_Loop :
-      for Current_Entity in Standout_Language_Entity loop
-         if Has_Tag (Start_Iter, Tags (Current_Entity)) then
-            --  This means that we are in a highlighted region. The minimum
-            --  region to re-highlight starts from the begining of the current
-            --  region to the end of the following region.
-
-            Entity_Kind := Current_Entity;
-
-            Backward_To_Tag_Toggle
-              (Start_Iter, Tags (Current_Entity), Result => Ignored);
-            Forward_To_Tag_Toggle (End_Iter, Tags (Entity_Kind), Ignored);
-            Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
-
-            exit Entity_Kind_Search_Loop;
-
-         elsif Begins_Tag (End_Iter, Tags (Current_Entity))
-           or else Ends_Tag (Start_Iter, Tags (Current_Entity))
-         then
-            --  Case Begins_Tag:
-            --    This means that we inserted right at the begining of
-            --    a highlighted region... The minimum region to re-highlight
-            --    starts from the begining of the previous region to the
-            --    end of the current region.
-            --  Case Ends_Tag:
-            --    This means that we inserted right at the end of a highlighted
-            --    region. In this case, the minimum region to re-highlight
-            --    starts from the begining of the previous region to the end of
-            --    the current region.
-            --  In both cases, the processing is the same...
-
-            Entity_Kind := Current_Entity;
-            Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
-            Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
-
-            exit Entity_Kind_Search_Loop;
-         end if;
-      end loop Entity_Kind_Search_Loop;
-
-      if Entity_Kind = Normal_Text then
-         --  We are inside a normal text region. Just re-highlight this region
-
-         Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
-         Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
-      end if;
 
       Highlight_Slice (Buffer, Start_Iter, End_Iter);
       Buffer.Highlight_Needed := False;
