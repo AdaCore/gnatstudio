@@ -153,7 +153,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               versions of CodePeer.
   Workaround: Ignore this filter panel.
 
-- L312-031: CodePeer's messages are not removed when another project loaded
+- L312-031: CodePeer messages not removed when another project is loaded
   Problem:    CodePeer's race messages are displayed after loading of another
               project.
   Workaround: Ignore these messages.
@@ -300,9 +300,9 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               view).
 
 - K726-011: GPS: Source editor is not raised on double click in CodePeer report
-  Problem:    On double click in CodePeer report source editor is opened, but
-              not raised to be active MDI window, which is annoying.
-  Workaround: Raise source editor window by click on corresponding tab.
+  Problem:    When double clicking in the CodePeer report, a source editor is
+              opened but not raised in front.
+  Workaround: Raise the source editor window manually by clicking on its tab.
 
 - K325-019: GPS: autofix for lines containing only spaces
   Problem:    The autofix for blanks at end of line removes the whole line if
