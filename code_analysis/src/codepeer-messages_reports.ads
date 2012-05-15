@@ -87,6 +87,9 @@ private
 
       Show_Lifeage        : Lifeage_Kinds_Flags;
       Show_Ranking        : Message_Ranking_Level_Flags;
+      Double_Click        : Boolean := False;
+      --  Used to handle double click by setting to True on mouse double-press
+      --  event and checking of value on mouse release event.
    end record;
 
    Signal_Activated        : constant Glib.Signal_Name := "activated";

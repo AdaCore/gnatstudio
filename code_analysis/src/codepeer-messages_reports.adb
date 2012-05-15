@@ -134,6 +134,8 @@ package body CodePeer.Messages_Reports is
      (View  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
       Event : Gdk.Event.Gdk_Event;
       Self  : Messages_Report) return Boolean;
+   --  Handler of mouse press, double-press and release events. It handle
+   --  selection on mouse press, and activation on double-press/release events.
 
    function Compare
      (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
@@ -800,6 +802,13 @@ package body CodePeer.Messages_Reports is
            (On_Analysis_Click'Access),
          Messages_Report (Self),
          False);
+      Tree_View_Report_Return_Boolean_Callbacks.Connect
+        (Self.Analysis_View,
+         Gtk.Widget.Signal_Button_Release_Event,
+         Tree_View_Report_Return_Boolean_Callbacks.To_Marshaller
+           (On_Analysis_Click'Access),
+         Messages_Report (Self),
+         False);
 
       --  Filter view
 
@@ -1030,6 +1039,10 @@ package body CodePeer.Messages_Reports is
       if Gdk.Event.Get_Button (Event) = 1
         and then Gdk.Event.Get_Event_Type (Event) = Gdk.Event.Button_Press
       then
+         --  Reset double click flag.
+
+         Self.Double_Click := False;
+
          --  When the callback is called the tree selection contains old
          --  selection, so we need to calculate and update selection.
 
@@ -1078,6 +1091,17 @@ package body CodePeer.Messages_Reports is
       elsif Gdk.Event.Get_Button (Event) = 1
         and then Gdk.Event.Get_Event_Type (Event) = Gdk.Event.Gdk_2button_Press
       then
+         --  Set double click flag.
+
+         Self.Double_Click := True;
+
+      elsif Gdk.Event.Get_Button (Event) = 1
+        and then Gdk.Event.Get_Event_Type (Event) = Gdk.Event.Button_Release
+        and then Self.Double_Click
+      then
+         --  Reset double-click flag and emit signal.
+
+         Self.Double_Click := False;
          Emit_By_Name (Self.Get_Object, Signal_Activated & ASCII.NUL);
       end if;
 
