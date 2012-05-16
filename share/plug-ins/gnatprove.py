@@ -238,7 +238,7 @@ def is_subp_context(self):
 # and the test on language() excludes non-Ada files.
 def is_ada_file_context(self):
     return isinstance (self, GPS.FileContext) \
-        and self.file() != None \
+        and self.file() \
         and self.file().language().lower() == "ada"
 
 def mk_loc_string (sloc):
