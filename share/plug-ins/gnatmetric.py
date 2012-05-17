@@ -264,5 +264,18 @@ def on_compilation_finished(hook, category,
     v = GPS.XMLViewer.create_metric("Metrics")
     v.parse("metrix.xml")
 
+def show_metrics_window(self):
+    w=GPS.MDI.get("Metrics")
+
+    if w == None:
+        v = GPS.XMLViewer.create_metric("Metrics")
+        v.parse("metrix.xml")
+    else:
+        v = w.get_child()
+        w.raise_window()
+
 GPS.parse_xml(xml_base)
 GPS.Hook("compilation_finished").add(on_compilation_finished)
+GPS.Menu.create("/Tools/Views/Metrics",
+                show_metrics_window,
+                ref="Messages", add_before=0)
