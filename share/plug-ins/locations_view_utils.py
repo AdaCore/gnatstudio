@@ -96,5 +96,10 @@ def export_locations_to_editor (menu):
     # Write the contents
     buf.insert (GPS.EditorLocation (buf, 1, 1), text)
 
-GPS.Menu.create ("/File/Messages/_Export Locations to Editor", export_locations_to_editor)
+def on_filter (context):
+   return context.module_name == "Location View"
 
+GPS.Menu.create ("/File/Messages/_Export Locations to Editor", export_locations_to_editor)
+GPS.Contextual ("Export messages to editor").create (
+  on_activate=export_locations_to_editor,
+  filter=on_filter)
