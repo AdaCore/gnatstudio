@@ -92,6 +92,11 @@ NF-52-L124-025 GPS: improvements in auto_highlight_occurrences.py (2012-02-16)
   Both of these behaviors can be deactivated through the Preferences dialog,
   section Plugins->auto_highlight_occurrences.
 
+NF-52-L120-062 GB: set actual name of main in debug config (2012-05-16)
+
+  Newly created debug configurations now set the default breakpoint to the
+  procedure of the main executable rather than simply "main".
+
 NF-52-L109-019 GPS: goto next/previous bookmark (2012-01-23)
 
   Two new actions ("Goto Next Bookmark" and "Goto Previous Bookmark") are
