@@ -52,6 +52,11 @@ NF-52-L329-021 GPS: isearch.py stores result of ctrl+w in history (2012-03-29)
   pattern only after you pressed ctrl+s a second time after ctrl+w).
   This is closer to Emacs' behavior.
 
+NF-52-L327-003 GPS: displaying metrics in GPS (2012-05-17)
+
+  The GPS is able to reopen the Metrics view from the Tools->View->Metrics
+  menu.
+
 NF-52-L320-004 GPS: simplify Default Builder preference (2012-03-20)
 
   The Default Builder preference has been simplified, with the following
