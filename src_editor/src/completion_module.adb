@@ -1501,23 +1501,66 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      function Auto_Complete_Ada_Keyword return Boolean;
-      --  Return true if the cursor is at a location where an Ada keyword
-      --  should open an auto-completion, false otherwise
+      function Triggers_Auto_Completion (C : Character) return Boolean;
+      --  Return true if C enables opening an auto-completion window; false
+      --  otherwise.
 
-      -------------------------------
-      -- Auto_Complete_Ada_Keyword --
-      -------------------------------
+      ------------------------------
+      -- Triggers_Auto_Completion --
+      -----------------------------
 
-      function Auto_Complete_Ada_Keyword return Boolean is
-         Widget        : constant Gtk_Widget :=
-           Get_Current_Focus_Widget (Kernel);
-         View   : Source_View;
+      function Triggers_Auto_Completion (C : Character) return Boolean is
          Buffer : Source_Buffer;
 
-         The_Text : String_Access;
-         It   : Gtk_Text_Iter;
-         Exp  : Parsed_Expression;
+         function Auto_Complete_Ada_Keyword return Boolean;
+         --  Return true if the cursor is at a location where an Ada keyword
+         --  should open an auto-completion, false otherwise
+
+         -------------------------------
+         -- Auto_Complete_Ada_Keyword --
+         -------------------------------
+
+         function Auto_Complete_Ada_Keyword return Boolean is
+            Exp      : Parsed_Expression;
+            It       : Gtk_Text_Iter;
+            The_Text : String_Access;
+
+         begin
+            The_Text := Get_String (Buffer);
+            Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+
+            Exp :=
+              Parse_Expression_Backward
+                (The_Text,
+                 String_Index_Type (Get_Byte_Index (It)));
+
+            if Token_List.Length (Exp.Tokens) = 1 then
+               case Token_List.Data
+                 (Token_List.First (Exp.Tokens)).Tok_Type
+               is
+               when Tok_With | Tok_Use | Tok_Pragma | Tok_Accept | Tok_Raise =>
+                  return True;
+
+               when others =>
+                  return False;
+
+               end case;
+            end if;
+
+            Free (The_Text);
+            Free (Exp);
+
+            return False;
+         end Auto_Complete_Ada_Keyword;
+
+         --  Local variables
+
+         Widget : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+         View   : Source_View;
+         Lang   : Language.Language_Access;
+
+      --  Start of processing for Enables_Auto_Completion
+
       begin
          if Widget /= null
            and then Widget.all in Source_View_Record'Class
@@ -1526,35 +1569,45 @@ package body Completion_Module is
             Buffer := Source_Buffer (Get_Buffer (View));
          end if;
 
-         if Buffer = null or else Buffer.Get_Language /= Ada_Lang then
+         if Buffer = null then
             return False;
          end if;
 
-         The_Text := Get_String (Buffer);
-         Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+         Lang := Buffer.Get_Language;
 
-         Exp := Parse_Expression_Backward
-           (The_Text,
-            String_Index_Type (Get_Byte_Index (It)));
+         --  ??? this whole test is too language-specific for the moment.
+         --  Should probably be moved to some new language primitive in order
+         --  to support other auto-completion triggers for other languages.
 
-         if Token_List.Length (Exp.Tokens) = 1 then
-            case Token_List.Data
-              (Token_List.First (Exp.Tokens)).Tok_Type
-            is
-               when Tok_With | Tok_Use | Tok_Pragma | Tok_Accept | Tok_Raise =>
-                  return True;
+         if Lang = Ada_Lang then
+            return
+              C = '.'
+                or else C = ','
+                or else C = '('
+                or else C = '''
+                or else (C = ' ' and then Auto_Complete_Ada_Keyword);
 
-               when others =>
-                  return False;
+         elsif Lang = Cpp_Lang
+           or else Lang = C_Lang
+         then
+            if C = '.' then
+               pragma Assert (C = '.');
+               null;
+            elsif C = '(' then
+               pragma Assert (C = '(');
+               Lang := Cpp_Lang;
+               null;
+            end if;
 
-            end case;
+            return
+              C = '.' or else C = '(';
+
+         else
+            return False;
          end if;
+      end Triggers_Auto_Completion;
 
-         Free (The_Text);
-         Free (Exp);
-
-         return False;
-      end Auto_Complete_Ada_Keyword;
+      --  Local variables
 
       pragma Unreferenced (Kernel);
       Edition_Data : constant File_Edition_Hooks_Args :=
@@ -1568,6 +1621,9 @@ package body Completion_Module is
                                 Smart_Completion.Get_Pref;
 
       Timeout : Gint;
+
+   --  Start of processing for Character_Added_Hook_Callback
+
    begin
       if Edition_Data.Character = 8 then
          --  This is a special case: we are calling Character_Added after
@@ -1584,18 +1640,7 @@ package body Completion_Module is
 
       Unichar_To_UTF8 (Edition_Data.Character, Buffer, Last);
 
-      if Last = 1
-        and then (Buffer (1) = '.'
-                  or else Buffer (1) = ','
-                  or else Buffer (1) = '('
-                  or else Buffer (1) = '''
-                  or else
-                    (Buffer (1) = ' '
-                     and then Auto_Complete_Ada_Keyword))
-      --  ??? this whole test is too Ada-specific for the moment. Should
-      --  probably be move to some primitive of language at some point, in
-      --  order to support other auto-completion triggers for other languages.
-      then
+      if Last = 1 and then Triggers_Auto_Completion (Buffer (Last)) then
          if Smart_Completion_Pref = Dynamic then
             Timeout := 0;
          else

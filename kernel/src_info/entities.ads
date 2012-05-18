@@ -1510,6 +1510,7 @@ private
 
    type LI_Handler_Record is abstract tagged limited record
       Name_Index : aliased Entities_Search_Tries.Vector_Trie;
+      --  Entities defined in C/C++
 
       Has_Unresolved_Imported_Refs : Boolean := False;
       --  Flag set when the contents associated with this LI handler have

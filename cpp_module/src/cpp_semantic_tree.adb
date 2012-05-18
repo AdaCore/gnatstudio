@@ -33,6 +33,7 @@ package body Cpp_Semantic_Tree is
 
       Result           : Parsed_Expression;
       Expression_Depth : Natural := 0;
+      Is_First_Token   : Boolean := True;
 
       procedure Handle_Token (Token : Token_Record; Stop : in out Boolean);
 
@@ -51,6 +52,13 @@ package body Cpp_Semantic_Tree is
                  Language.Cpp.Tok_Dereference =>
                Prepend (Result.Tokens, Token);
 
+            when Language.Cpp.Tok_Left_Paren =>
+               if Is_First_Token then
+                  Prepend (Result.Tokens, Token);
+               else
+                  Stop := True;
+               end if;
+
             when Language.Cpp.Tok_Right_Sq_Bracket =>
                Prepend (Result.Tokens, Token);
                Expression_Depth := Expression_Depth + 1;
@@ -67,6 +75,8 @@ package body Cpp_Semantic_Tree is
                end if;
 
          end case;
+
+         Is_First_Token := False;
       end Handle_Token;
 
    begin

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with ALI_Parser;       use ALI_Parser;
 with Entities;         use Entities;
 with Entities.Queries; use Entities.Queries;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
@@ -102,10 +103,73 @@ package body Completion.C.Constructs_Extractor is
             Name          => new String'(Name),
             Category      => To_Language_Category (Get_Kind (E)),
             Documentation => Gen_Doc (E),
-            Entity_Info   => E);
+            Entity_Info   => E,
+            With_Params   => False,
+            Is_Param      => False);
 
          Append (To_List, Proposal);
       end Add_Proposal;
+
+      procedure Add_Proposal_With_Params
+        (To_List : in out Extensive_List_Pckg.List;
+         E       : Entity_Information);
+      --  Append to the list To_List one proposal containing all the
+      --  parameters needed to call E. In addition, in order to provide the
+      --  same behavior of Ada completions, one proposal per parameter is
+      --  added to To_List.
+
+      ------------------------------
+      -- Add_Proposal_With_Params --
+      ------------------------------
+
+      procedure Add_Proposal_With_Params
+        (To_List : in out Extensive_List_Pckg.List;
+         E       : Entity_Information)
+      is
+         Name     : aliased constant String := Get (Get_Name (E)).all;
+         Proposal : C_Completion_Proposal;
+
+      begin
+         Proposal :=
+           (Resolver      => Resolver,
+            Name          => new String'(Name),
+            Category      => To_Language_Category (Get_Kind (E)),
+            Documentation => Gen_Doc (E),
+            Entity_Info   => E,
+            With_Params   => True,
+            Is_Param      => False);
+         Append (To_List, Proposal);
+
+         declare
+            It    : Subprogram_Iterator;
+            Param : Entity_Information;
+
+         begin
+            It := Get_Subprogram_Parameters (E);
+            Get (It, Param);
+
+            while Param /= null loop
+               declare
+                  Name : aliased constant String :=
+                           Get (Get_Name (Param)).all;
+               begin
+                  Proposal :=
+                    (Resolver      => Resolver,
+                     Name          => new String'(Name),
+                     Category      => To_Language_Category (Get_Kind (Param)),
+                     Documentation => Gen_Doc (Param),
+                     Entity_Info   => Param,
+                     With_Params   => False,
+                     Is_Param      => True);
+
+                  Append (To_List, Proposal);
+               end;
+
+               Next (It);
+               Get (It, Param);
+            end loop;
+         end;
+      end Add_Proposal_With_Params;
 
       -------------------------
       -- Add_Scope_Proposals --
@@ -116,10 +180,13 @@ package body Completion.C.Constructs_Extractor is
          Scope        : Entity_Information;
          Prefix_Token : Token_Record)
       is
-         Prefix_Text : constant String :=
-                         Context.Buffer
-                           (Natural (Prefix_Token.Token_First)
-                              .. Natural (Prefix_Token.Token_Last));
+         GLI_Extension : constant Filesystem_String :=
+                           Get_ALI_Ext (ALI_Handler (Resolver.GLI_Handler));
+
+         Prefix_Text   : constant String :=
+                           Context.Buffer
+                             (Natural (Prefix_Token.Token_First)
+                                .. Natural (Prefix_Token.Token_Last));
          It : Calls_Iterator;
          E  : Entity_Information;
 
@@ -128,9 +195,17 @@ package body Completion.C.Constructs_Extractor is
          while not At_End (It) loop
             E := Get (It);
 
+            --  Skip entities associated with other languages
+
+            if File_Extension
+                (Get_LI_Filename (Get_LI (Get_Declaration_Of (E).File)))
+                  /= GLI_Extension
+            then
+               null;
+
             --  The last token is a delimiter (dot, scope or dereference)
 
-            if Prefix_Token.Tok_Type /= Tok_Identifier then
+            elsif Prefix_Token.Tok_Type /= Tok_Identifier then
                Add_Proposal (To_List, E);
 
             --  The last token is an identifier. Check if the name of the
@@ -313,8 +388,13 @@ package body Completion.C.Constructs_Extractor is
                procedure Prev_Token is
                begin
                   Tok_Index := Tok_Prev;
-                  Tok_Prev  := Prev (Expression.Tokens, Tok_Index);
-                  Token     := Data (Tok_Index);
+
+                  if Tok_Prev /= Token_List.Null_Node then
+                     Tok_Prev  := Prev (Expression.Tokens, Tok_Index);
+                     Token     := Data (Tok_Index);
+                  else
+                     Token     := Null_Token;
+                  end if;
                end Prev_Token;
 
             begin
@@ -322,13 +402,50 @@ package body Completion.C.Constructs_Extractor is
                Tok_Prev  := Prev (Expression.Tokens, Tok_Index);
                Token     := Data (Tok_Index);
 
-               if Token.Tok_Type = Tok_Identifier
-                 and then Tok_Prev /= Token_List.Null_Node
-               then
+               if Token.Tok_Type = Tok_Left_Paren then
                   Prev_Token;
-               end if;
 
-               if Token.Tok_Type = Tok_Dot
+                  if Token.Tok_Type /= Tok_Identifier then
+                     return;
+                  end if;
+
+                  --  Adding subprogram call proposals
+
+                  declare
+                     Prefix : constant String :=
+                                Context.Buffer
+                                  (Natural (Token.Token_First)
+                                    .. Natural (Token.Token_Last));
+                     E      : Entity_Information;
+                     Iter   : Vector_Trie_Iterator;
+
+                  begin
+                     Iter :=
+                       Start
+                         (Trie       => Get_Name_Index (Resolver.GLI_Handler),
+                          Prefix     => Prefix,
+                          Is_Partial => False);
+
+                     while not At_End (Iter) loop
+                        E := Get (Iter);
+
+                        if Is_Subprogram (E) then
+                           Add_Proposal_With_Params
+                             (To_List => E_List,
+                              E       => E);
+                        end if;
+
+                        Next (Iter);
+                     end loop;
+
+                     Free (Iter);
+
+                     Completion_List_Pckg.Append
+                       (Result.List,
+                        To_Extensive_List (E_List));
+                  end;
+
+               elsif Token.Tok_Type = Tok_Dot
                  or else Token.Tok_Type = Tok_Dereference
                  or else Token.Tok_Type = Tok_Scope
                then
@@ -362,6 +479,12 @@ package body Completion.C.Constructs_Extractor is
                              or else Tok_Prev = Token_List.Null_Node;
                         end loop;
                      end;
+                  end if;
+
+                  --  Protect us against wrong sources
+
+                  if Token = Null_Token then
+                     return;
                   end if;
 
                   --  Adding proposals
@@ -452,6 +575,26 @@ package body Completion.C.Constructs_Extractor is
       null;
    end Free;
 
+   ----------------------
+   -- To_Completion_Id --
+   ----------------------
+
+   overriding function To_Completion_Id
+     (Proposal : C_Completion_Proposal) return Completion_Id
+   is
+      Id  : constant String := Proposal.Name.all;
+      Loc : constant Entities.File_Location :=
+                       Get_Declaration_Of (Proposal.Entity_Info);
+
+   begin
+      return (Id_Length   => Id'Length,
+              Resolver_Id => Resolver_ID,
+              Id          => Id,
+              File        => Get_Filename (Loc.File),
+              Line        => Get_Line (Loc),
+              Column      => Integer (Get_Column (Loc)));
+   end To_Completion_Id;
+
    ------------------
    -- Get_Category --
    ------------------
@@ -462,6 +605,116 @@ package body Completion.C.Constructs_Extractor is
    begin
       return Proposal.Category;
    end Get_Category;
+
+   --------------------
+   -- Get_Completion --
+   --------------------
+
+   overriding
+   function Get_Completion
+     (Proposal : C_Completion_Proposal) return UTF8_String
+   is
+      function Single_Param_Text (Param : Entity_Information) return String;
+      --  Generate the named notation associated with Param as a C comment.
+      --  For example: "/* Param */"
+
+      function All_Params_Text return String;
+      --  Recursively traverse the whole list of parameters of the subprogram
+      --  proposal and generate the named notation associated with all the
+      --  parameters as C comments.
+
+      -----------------------
+      -- To_Named_Notation --
+      -----------------------
+
+      function Single_Param_Text (Param : Entity_Information) return String is
+      begin
+         return "/* " & Get (Get_Name (Param)).all & " */";
+      end Single_Param_Text;
+
+      --------------------
+      -- Get_All_Params --
+      --------------------
+
+      function All_Params_Text return String is
+         Separator : constant String := "," & ASCII.LF;
+         Spaces    : constant String := "  ";
+         It        : Subprogram_Iterator;
+         Param     : Entity_Information;
+
+         function Next_Params (Prev_Params : String) return String;
+         --  Prev_Params is used to accumulate the output.
+
+         function Next_Params (Prev_Params : String) return String is
+         begin
+            Next (It);
+            Get (It, Param);
+
+            if Param = null then
+               return Prev_Params;
+            else
+               return
+                 Next_Params
+                   (Prev_Params
+                    & Separator
+                    & Single_Param_Text (Param)
+                    & Spaces);
+            end if;
+         end Next_Params;
+
+      --  Start of processing for All_Params_Text
+
+      begin
+         It := Get_Subprogram_Parameters (Proposal.Entity_Info);
+         Get (It, Param);
+
+         if Param = null then
+            return "";
+         else
+            return Next_Params (Single_Param_Text (Param) & Spaces);
+         end if;
+      end All_Params_Text;
+
+   --  Start of processing for Get_Completion
+
+   begin
+      if Proposal.With_Params then
+         return All_Params_Text & ")";
+
+      elsif Proposal.Is_Param then
+         return Single_Param_Text (Proposal.Entity_Info);
+
+      else
+         return Proposal.Name.all;
+      end if;
+   end Get_Completion;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   overriding
+   function Get_Label
+     (Proposal : C_Completion_Proposal)  return UTF8_String is
+   begin
+      if not Proposal.With_Params then
+         return Proposal.Name.all;
+      else
+         declare
+            It    : Subprogram_Iterator;
+            Param : Entity_Information;
+         begin
+            It := Get_Subprogram_Parameters (Proposal.Entity_Info);
+            Get (It, Param);
+
+            if Param = null then
+               return Proposal.Name.all & " without params";
+            else
+               return "params of " & Proposal.Name.all;
+            end if;
+         end;
+      end if;
+   end Get_Label;
 
    ------------------
    -- Get_Location --
