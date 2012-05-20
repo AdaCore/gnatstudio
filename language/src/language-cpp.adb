@@ -790,7 +790,9 @@ package body Language.Cpp is
                      return;
                   end if;
 
-               elsif not Is_Alphanumeric (Ch) then
+               elsif not Is_Alphanumeric (Ch)
+                 and then Ch /= '_'
+               then
                   Tok_Begin := Word_Begin + 1;
                   Token := Tok_Literal_Number;
                   return;
