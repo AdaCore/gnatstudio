@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L510-043: GPS: rectangles.py off-by-one error in open and clear
+  Problem:    The menus /Edit/Rectangles/Open and /Edit/Rectangles/Clear
+              are off-by-one.
+  Workaround: Select one more column than what you want to open or clear.
+
 - L425-025: GPS: Python console blocked on incorrect indentation
   Problem:    When starting a block such as "def main():", if the next line
               is empty, the interactive console will keep showing the

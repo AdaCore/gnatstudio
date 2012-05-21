@@ -182,7 +182,7 @@ class Rectangle(object):
         """Insert blank spaces to fill the selected rectangle.
          This pushes its text to the right"""
         self.__apply(self.__insert_func, self.__open_line_func, ' '
-                     * (self.end_col - self.start_col))
+                     * (self.end_col - self.start_col + 1))
 
     def copy(self):
         """Copy the selected rectangle into the clipboard"""
@@ -208,8 +208,8 @@ class Rectangle(object):
 
     def clear(self):
         """Replaces the contents of the rectangle with spaces"""
-        self.__apply(self.__replace_func, None, ' ' * (self.end_col
-                     - self.start_col))
+        self.__apply(self.__replace_func, None,
+                     ' ' * (self.end_col - self.start_col + 1))
 
     def string(self, text):
         """Replaces the contents of the rectangle with TEXT on each line.
