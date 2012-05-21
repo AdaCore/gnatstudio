@@ -50,6 +50,7 @@ package body Case_Handling is
       Do_Upper : Boolean;
       Index    : Natural := S'First;
       Last     : Natural;
+      C        : Gunichar;
    begin
       if S'Length = 0 then
          return;
@@ -58,24 +59,31 @@ package body Case_Handling is
       Do_Upper := True;
 
       while Index <= S'Last loop
-         if S (Index) = '.'
-           or S (Index) = '_'
-           or S (Index) = ' '
-           or S (Index) = ASCII.HT
-           or S (Index) = ASCII.LF
-           or S (Index) = ASCII.CR
+         C := UTF8_Get_Char (S (Index .. S'Last));
+
+         if C = Character'Pos ('.')
+           or else C = Character'Pos ('_')
+           or else C = Character'Pos (' ')
+           or else C = Character'Pos ('(')
+           or else C = Character'Pos (')')
+           or else C = Character'Pos ('+')
+           or else C = Character'Pos ('-')
+           or else C = Character'Pos ('*')
+           or else C = Character'Pos ('/')
+           or else C = Character'Pos (',')
+           or else C = Character'Pos (';')
+           or else C = Character'Pos (''')
+           or else C = Character'Pos (ASCII.HT)
+           or else C = Character'Pos (ASCII.LF)
+           or else C = Character'Pos (ASCII.CR)
          then
             Do_Upper := True;
 
          else
             if Do_Upper then
-               Unichar_To_UTF8
-                 (To_Upper (UTF8_Get_Char (S (Index .. S'Last))),
-                  S (Index .. S'Last), Last);
+               Unichar_To_UTF8 (To_Upper (C), S (Index .. S'Last), Last);
             elsif not Smart then
-               Unichar_To_UTF8
-                 (To_Lower (UTF8_Get_Char (S (Index .. S'Last))),
-                  S (Index .. S'Last), Last);
+               Unichar_To_UTF8 (To_Lower (C), S (Index .. S'Last), Last);
             end if;
 
             Do_Upper := False;
