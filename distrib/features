@@ -23,6 +23,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L514-028 GPS: Action tooltip in Locations view (2012-05-21)
+
+  Locations view display tooltip for the action associated with message.
+
 NF-52-L416-043 GB: Improved search results interaction (2012-04-16)
 
   When a non-nested entry is selected in the search results, the editor is now
