@@ -163,13 +163,6 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               project.
   Workaround: Ignore these messages.
 
-- L306-045: Project editor issue with gnat warnings switches
-  Problem:    Default warnings, appearing greyed out when editing the
-              switches in the project editor, cannot be turned off when
-              clearing the button.
-  Workaround: Disable all warnings with -gnatws, then activate only the
-              warnings you want.
-
 - L301-025: GPS: Current editor performing automatic undo after refactoring
   Problem:    When attempting a refactoring through the menu Refactoring ->
               Rename <name of entity>, if the entity information is not
