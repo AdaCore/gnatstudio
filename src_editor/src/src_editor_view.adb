@@ -1656,7 +1656,7 @@ package body Src_Editor_View is
             --  with a margin to see context above and below the cursor.
             Scroll_To_Mark
               (View, View.Saved_Cursor_Mark, Use_Align => False,
-               Within_Margin                           => 0.2,
+               Within_Margin                           => 0.05,
                Xalign                                  => 0.5,
                Yalign                                  => 0.5);
       end case;
