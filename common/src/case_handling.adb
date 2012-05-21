@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Unchecked_Deallocation;
 
 with Glib.Unicode;               use Glib.Unicode;
 
