@@ -384,52 +384,63 @@ package body GPS.Tree_View.Locations is
       Height        : Gint;
       X1            : Gint;
       X2            : Gint;
+      Column        : Glib.Gint := Glib.Gint'Last;
 
    begin
       Self.Get_Tooltip_Context
         (X, Y, Keyboard_Mode, Model, Path, Iter, Success);
 
-      if not Success then
-         Path_Free (Path);
+      if Success then
+         Self.Location_Column.Cell_Set_Cell_Data (Model, Iter, False, False);
 
-         return False;
+         --  Check whether mouse position is in the action column or in the
+         --  text column.
+
+         Self.Get_Cell_Area (Path, Self.Action_Column, Rect);
+
+         if Rect.X <= X and X <= Rect.X + Rect.Width then
+            Column := Action_Tooltip_Column;
+
+         else
+            --  Check whether text column is partially hidden.
+
+            Self.Get_Cell_Area (Path, Self.Location_Column, Rect);
+            X1 := Rect.X;
+            X2 := Rect.X;
+
+            Self.Location_Column.Cell_Get_Position
+              (Self.Text_Renderer, Start, Width, Success);
+
+            if Success then
+               X2 := X2 + Start;
+
+               Self.Text_Renderer.Get_Size
+                 (Self, Rect, X_Offset, Y_Offset, Width, Height);
+               X2 := X2 + Width;
+
+               Self.Get_Visible_Rect (Rect);
+
+               if X1 <= Rect.X or X2 >= (Rect.X + Rect.Width) then
+                  --  Text column is partially hidden, display text tooltip.
+
+                  Column := Node_Tooltip_Column;
+               end if;
+            end if;
+         end if;
       end if;
 
-      Self.Location_Column.Cell_Set_Cell_Data (Model, Iter, False, False);
+      --  Set tooltip's markup
 
-      Self.Get_Cell_Area (Path, Self.Location_Column, Rect);
-      X1 := Rect.X;
-      X2 := Rect.X;
-
-      Self.Location_Column.Cell_Get_Position
-        (Self.Text_Renderer, Start, Width, Success);
-
-      if not Success then
-         Path_Free (Path);
-
-         return False;
+      if Column /= Glib.Gint'Last then
+         Tooltip.Set_Markup (Model.Get_String (Iter, Column));
+         Self.Set_Tooltip_Row (Tooltip, Path);
       end if;
 
-      X2 := X2 + Start;
+      --  Cleanup
 
-      Self.Text_Renderer.Get_Size
-        (Self, Rect, X_Offset, Y_Offset, Width, Height);
-      X2 := X2 + Width;
+      Gtk.Tree_Model.Path_Free (Path);
 
-      Self.Get_Visible_Rect (Rect);
-
-      if X1 > Rect.X and X2 < (Rect.X + Rect.Width) then
-         Gtk.Tree_Model.Path_Free (Path);
-
-         return False;
-      end if;
-
-      Tooltip.Set_Markup (Model.Get_String (Iter, Node_Tooltip_Column));
-      Self.Set_Tooltip_Row (Tooltip, Path);
-
-      Path_Free (Path);
-
-      return True;
+      return Column /= Glib.Gint'Last;
    end On_Query_Tooltip;
 
    ---------------------

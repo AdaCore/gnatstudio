@@ -18,6 +18,7 @@
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings;
 with System.Address_To_Access_Conversions;
 
 with Glib.Object;
@@ -472,6 +473,9 @@ package body GPS.Location_View.Listener is
          when Action_Command_Column =>
             return Glib.GType_Pointer;
 
+         when Action_Tooltip_Column =>
+            return Glib.GType_String;
+
          when Number_Of_Children_Column =>
             return Glib.GType_Int;
 
@@ -584,6 +588,7 @@ package body GPS.Location_View.Listener is
    is
       use Basic_Types;
       use Glib.Values;
+      use type GNAT.Strings.String_Access;
 
       function To_Address is
         new Ada.Unchecked_Conversion (Action_Item, System.Address);
@@ -885,6 +890,28 @@ package body GPS.Location_View.Listener is
 
                when Node_Message =>
                   Set_Address (Value, To_Address (Node.Message.Get_Action));
+            end case;
+
+         when Action_Tooltip_Column =>
+            Init (Value, GType_String);
+
+            case Node.Kind is
+               when Node_Category =>
+                  Set_String (Value, To_String (Node.Name));
+
+               when Node_File =>
+                  Set_String (Value, String (Node.File.Base_Name));
+
+               when Node_Message =>
+                  if Node.Message.Get_Action /= null
+                    and then Node.Message.Get_Action.Tooltip_Text /= null
+                  then
+                     Set_String
+                       (Value, Node.Message.Get_Action.Tooltip_Text.all);
+
+                  else
+                     Self.Get_Value (Iter, Node_Tooltip_Column, Value);
+                  end if;
             end case;
 
          when Number_Of_Children_Column =>
