@@ -35,23 +35,23 @@ package body CodePeer.Categories_Criteria_Editors is
         Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Interfaces.C.Strings.chars_ptr;
       Self   : Categories_Criteria_Editor);
-   --  Called on click on the list's item.
+   --  Called on click on the list's item
 
    procedure On_Select_All_Toggled
      (Object : access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class;
       Self   : Categories_Criteria_Editor);
-   --  Called on click on the column header.
+   --  Called on click on the column header
 
    procedure On_Model_Row_Changed
      (Object : access
         CodePeer.Categories_Criteria_Models.
           Categories_Criteria_Model_Record'Class;
       Self   : Categories_Criteria_Editor);
-   --  Called on changes in the underlying model.
+   --  Called on changes in the underlying model
 
    procedure On_Destroy
      (Self : access Categories_Criteria_Editor_Record'Class);
-   --  Called on widget destroy.
+   --  Called on widget destroy
 
    procedure Update_Toggle_State
      (Self : not null access Categories_Criteria_Editor_Record'Class);
@@ -120,8 +120,7 @@ package body CodePeer.Categories_Criteria_Editors is
    ----------------
 
    procedure Initialize
-     (Self           :
-        not null access Categories_Criteria_Editor_Record'Class;
+     (Self           : not null access Categories_Criteria_Editor_Record'Class;
       Kernel         : GPS.Kernel.Kernel_Handle;
       Title          : String;
       History_Prefix : String;

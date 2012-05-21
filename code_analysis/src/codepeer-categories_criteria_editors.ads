@@ -19,10 +19,11 @@
 --  filter criteria editor. It is used by Summary Report form.
 
 with Glib;
+with Gtk.Widget;
+
 private with Gtk.Check_Button;
 private with Gtk.Scrolled_Window;
 private with Gtk.Tree_View;
-with Gtk.Widget;
 
 private with CodePeer.Categories_Criteria_Models;
 
@@ -42,8 +43,7 @@ package CodePeer.Categories_Criteria_Editors is
       Categories     : CodePeer.Message_Category_Sets.Set);
 
    procedure Initialize
-     (Self           :
-        not null access Categories_Criteria_Editor_Record'Class;
+     (Self           : not null access Categories_Criteria_Editor_Record'Class;
       Kernel         : GPS.Kernel.Kernel_Handle;
       Title          : String;
       History_Prefix : String;
@@ -52,10 +52,10 @@ package CodePeer.Categories_Criteria_Editors is
    function Get_Visible_Categories
      (Self : access Categories_Criteria_Editor_Record'Class)
       return CodePeer.Message_Category_Sets.Set;
-   --  Returns a set of selected message categories.
+   --  Returns a set of selected message categories
 
    Signal_Criteria_Changed : constant Glib.Signal_Name;
-   --  This signal emitted by the editor in the case of the criteria change.
+   --  This signal emitted by the editor in the case of the criteria change
 
 private
 

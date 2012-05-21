@@ -32,8 +32,8 @@ package CodePeer.Bridge.Audit_Trail_Readers is
 private
 
    type Reader is new Sax.Readers.Reader with record
-      Audit                 : CodePeer.Audit_Vectors.Vector;
-      Audit_Record          : CodePeer.Audit_Record_Access;
+      Audit        : CodePeer.Audit_Vectors.Vector;
+      Audit_Record : CodePeer.Audit_Record_Access;
    end record;
 
    overriding procedure Start_Element

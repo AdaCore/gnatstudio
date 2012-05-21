@@ -19,8 +19,8 @@ with GNAT.Strings; use GNAT.Strings;
 
 package body CodePeer.Bridge.Audit_Trail_Readers is
 
-   Audit_Trail_Tag         : constant String := "audit_trail";
-   Audit_Tag               : constant String := "audit";
+   Audit_Trail_Tag : constant String := "audit_trail";
+   Audit_Tag       : constant String := "audit";
 
    ----------------
    -- Characters --
@@ -76,9 +76,9 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
    -----------
 
    procedure Parse
-     (Self   : in out Reader;
-      Input  : in out Input_Sources.Input_Source'Class;
-      Audit  : out CodePeer.Audit_Vectors.Vector)
+     (Self  : in out Reader;
+      Input : in out Input_Sources.Input_Source'Class;
+      Audit : out CodePeer.Audit_Vectors.Vector)
    is
    begin
       Self.Audit.Clear;

@@ -23,7 +23,7 @@ package body CodePeer.Categories_Criteria_Models is
      (Self     : not null access Categories_Criteria_Model_Record'Class;
       Category : CodePeer.Message_Category_Access)
       return Histories.History_Key;
-   --  Constructs history key for specified category.
+   --  Constructs history key for specified category
 
    -----------
    -- Clear --
@@ -199,7 +199,7 @@ package body CodePeer.Categories_Criteria_Models is
       Categories     : CodePeer.Message_Category_Sets.Set)
    is
       procedure Restore (Position : CodePeer.Message_Category_Sets.Cursor);
-      --  Restores previous state from history.
+      --  Restores previous state from history
 
       -------------
       -- Restore --

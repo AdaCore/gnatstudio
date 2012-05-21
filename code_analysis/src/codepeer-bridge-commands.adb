@@ -81,14 +81,14 @@ package body CodePeer.Bridge.Commands is
       Export_File_Name  : Virtual_File;
       Message_Id        : Positive)
    is
-      Database_Node      : XML_Utils.Node_Ptr :=
-                             new XML_Utils.Node'
-                                   (Tag    => new String'("database"),
-                                    others => <>);
-      Audit_Trail_Node   : constant XML_Utils.Node_Ptr :=
-                             new XML_Utils.Node'
-                                   (Tag    => new String'("audit_trail"),
-                                    others => <>);
+      Database_Node    : XML_Utils.Node_Ptr :=
+                           new XML_Utils.Node'
+                             (Tag    => new String'("database"),
+                              others => <>);
+      Audit_Trail_Node : constant XML_Utils.Node_Ptr :=
+                           new XML_Utils.Node'
+                             (Tag    => new String'("audit_trail"),
+                              others => <>);
 
    begin
       XML_Utils.Set_Attribute
@@ -115,14 +115,14 @@ package body CodePeer.Bridge.Commands is
       Output_Directory  : Virtual_File;
       Export_File_Name  : Virtual_File)
    is
-      Database_Node      : XML_Utils.Node_Ptr :=
-        new XML_Utils.Node'
-          (Tag    => new String'("database"),
-           others => <>);
-      Inspection_Node    : constant XML_Utils.Node_Ptr :=
-        new XML_Utils.Node'
-          (Tag    => new String'("inspection"),
-           others => <>);
+      Database_Node   : XML_Utils.Node_Ptr :=
+                          new XML_Utils.Node'
+                            (Tag    => new String'("database"),
+                             others => <>);
+      Inspection_Node : constant XML_Utils.Node_Ptr :=
+                          new XML_Utils.Node'
+                            (Tag    => new String'("inspection"),
+                             others => <>);
 
    begin
       XML_Utils.Set_Attribute

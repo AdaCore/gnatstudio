@@ -219,12 +219,12 @@ package body CodePeer.Module is
    --  CodePeer_Category_Prefix.
 
    procedure Fill_Object_Races (Self : access Module_Id_Record'Class);
-   --  Fill object races information into Locations view.
+   --  Fill object races information into Locations view
 
    procedure Hide_Messages
      (Self : not null access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
-   --  Hides file and its messages in the location view.
+   --  Hides file and its messages in the location view
 
    procedure Show_Messages
      (Self : not null access Module_Id_Record'Class;
@@ -301,7 +301,7 @@ package body CodePeer.Module is
 
       function Hash
         (Item : GNATCOLL.VFS.Virtual_File) return Ada.Containers.Hash_Type;
-      --  Returns hash for specified file.
+      --  Returns hash for specified file
 
       -------------------------------
       -- Generate_Source_Directive --
@@ -367,7 +367,7 @@ package body CodePeer.Module is
       Ada.Text_IO.New_Line (F);
 
       if File = No_File then
-         --  Construct list of SCIL directories.
+         --  Construct list of SCIL directories
 
          Iterator :=
            GNATCOLL.Projects.Start (Project, Recursive, False, False);
@@ -388,7 +388,7 @@ package body CodePeer.Module is
             Current := GNATCOLL.Projects.Current (Iterator);
          end loop;
 
-         --  Generate Source directive for each SCIL directory.
+         --  Generate Source directive for each SCIL directory
 
          SCIL_Cursor := SCIL_Dirs.First;
 
@@ -445,9 +445,9 @@ package body CodePeer.Module is
         (Position : CodePeer.Object_Race_Vectors.Cursor)
       is
          Element  : constant Object_Race_Information :=
-           Object_Race_Vectors.Element (Position);
+                      Object_Race_Vectors.Element (Position);
          Category : constant String :=
-           Race_Condition_Category (Element.Name.all);
+                      Race_Condition_Category (Element.Name.all);
 
          procedure Process_Entry_Point
            (Position : Entry_Point_Object_Access_Vectors.Cursor);
@@ -545,13 +545,13 @@ package body CodePeer.Module is
       Recursive   : Boolean := True;
       File        : Virtual_File := No_File)
    is
-      Mode             : constant String :=
-                           CodePeer.Shell_Commands.Get_Build_Mode
-                             (Kernel_Handle (Module.Kernel));
-      Project          : constant Project_Type :=
-                           Get_Project (Module.Kernel);
-      CodePeer_Subdir  : constant Boolean :=
-                           Use_CodePeer_Subdir (Kernel_Handle (Module.Kernel));
+      Mode            : constant String :=
+                          CodePeer.Shell_Commands.Get_Build_Mode
+                            (Kernel_Handle (Module.Kernel));
+      Project         : constant Project_Type :=
+                          Get_Project (Module.Kernel);
+      CodePeer_Subdir : constant Boolean :=
+                          Use_CodePeer_Subdir (Kernel_Handle (Module.Kernel));
 
    begin
       if CodePeer_Subdir then
@@ -723,18 +723,18 @@ package body CodePeer.Module is
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
    is
       Name      : constant GNATCOLL.VFS.Filesystem_String :=
-        GNATCOLL.VFS.Filesystem_String
-          (Ada.Characters.Handling.To_Lower
-               (String (Project_Path (Project).Base_Name)));
+                    GNATCOLL.VFS.Filesystem_String
+                      (Ada.Characters.Handling.To_Lower
+                         (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
-        Project_Path (Project).File_Extension;
+                    Project_Path (Project).File_Extension;
 
    begin
       if Project.Has_Attribute (Database_Directory_Attribute) then
          declare
             Dir : constant GNATCOLL.VFS.Filesystem_String :=
-              GNATCOLL.VFS.Filesystem_String
-                (Project.Attribute_Value (Database_Directory_Attribute));
+                    GNATCOLL.VFS.Filesystem_String
+                      (Project.Attribute_Value (Database_Directory_Attribute));
 
          begin
             return
@@ -759,10 +759,10 @@ package body CodePeer.Module is
       Suffix  : String := "") return GNATCOLL.VFS.Virtual_File
    is
       Name      : constant GNATCOLL.VFS.Filesystem_String :=
-        GNATCOLL.VFS.Filesystem_String
-          (String (Project_Path (Project).Base_Name));
+                    GNATCOLL.VFS.Filesystem_String
+                      (String (Project_Path (Project).Base_Name));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
-        Project_Path (Project).File_Extension;
+                    Project_Path (Project).File_Extension;
 
    begin
       --  J506-031: File name must be synchronized with the name used to run
@@ -789,7 +789,7 @@ package body CodePeer.Module is
                       (Ada.Characters.Handling.To_Lower
                          (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
-        Project_Path (Project).File_Extension;
+                    Project_Path (Project).File_Extension;
 
    begin
       if Project.Has_Attribute (Output_Directory_Attribute) then
@@ -850,10 +850,10 @@ package body CodePeer.Module is
         (Position : Code_Analysis.Subprogram_Maps.Cursor)
       is
          Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-           Code_Analysis.Subprogram_Maps.Element (Position);
+                             Code_Analysis.Subprogram_Maps.Element (Position);
          Data            : CodePeer.Subprogram_Data'Class
-         renames CodePeer.Subprogram_Data'Class
-           (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
+                             renames CodePeer.Subprogram_Data'Class
+                             (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
 
       begin
          Data.Messages.Iterate (Process_Message'Access);
@@ -1000,9 +1000,10 @@ package body CodePeer.Module is
       use type Code_Analysis.Subprogram_Access;
 
       File       : constant Code_Analysis.File_Access :=
-        Context.Module.Report.Messages_Report.Get_Selected_File;
+                     Context.Module.Report.Messages_Report.Get_Selected_File;
       Subprogram : constant Code_Analysis.Subprogram_Access :=
-        Context.Module.Report.Messages_Report.Get_Selected_Subprogram;
+                     Context.Module.Report.
+                       Messages_Report.Get_Selected_Subprogram;
 
    begin
       if Subprogram /= null then
@@ -1072,8 +1073,8 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Widget);
 
-      Mode             : constant String := Get_Build_Mode (Kernel);
-      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+      Mode            : constant String := Get_Build_Mode (Kernel);
+      CodePeer_Subdir : constant Boolean := Use_CodePeer_Subdir (Kernel);
 
    begin
       if CodePeer_Subdir then
@@ -1124,8 +1125,8 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Widget);
 
-      Mode             : constant String := Get_Build_Mode (Kernel);
-      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+      Mode            : constant String := Get_Build_Mode (Kernel);
+      CodePeer_Subdir : constant Boolean := Use_CodePeer_Subdir (Kernel);
 
    begin
       if CodePeer_Subdir then
@@ -1176,10 +1177,11 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Widget);
 
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-      Mode             : constant String :=
-                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
-      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+      Context         : constant Selection_Context :=
+                          Get_Current_Context (Kernel);
+      Mode            : constant String :=
+                          Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir : constant Boolean := Use_CodePeer_Subdir (Kernel);
 
    begin
       if CodePeer_Subdir then
@@ -1234,9 +1236,9 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Widget);
 
-      Mode             : constant String :=
-                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
-      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+      Mode            : constant String :=
+                          Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir : constant Boolean := Use_CodePeer_Subdir (Kernel);
 
    begin
       if CodePeer_Subdir then
@@ -1288,9 +1290,9 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Mode             : constant String :=
-                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
-      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+      Mode            : constant String :=
+                          Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir : constant Boolean := Use_CodePeer_Subdir (Kernel);
 
    begin
       if CodePeer_Subdir then
@@ -1341,9 +1343,9 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Mode             : constant String :=
-                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
-      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+      Mode            : constant String :=
+                          Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir : constant Boolean := Use_CodePeer_Subdir (Kernel);
 
    begin
       if CodePeer_Subdir then
@@ -1617,13 +1619,14 @@ package body CodePeer.Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
    is
-      Hook_Data : constant
-        GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args :=
-          GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args (Data.all);
+      Hook_Data : constant GPS.Kernel.Standard_Hooks.
+                    Compilation_Finished_Hooks_Args :=
+                      GPS.Kernel.Standard_Hooks.
+                        Compilation_Finished_Hooks_Args (Data.all);
       Mode      : constant String :=
-        CodePeer.Shell_Commands.Get_Build_Mode
-          (GPS.Kernel.Kernel_Handle (Kernel));
-      Action : constant CodePeer_Action := Module.Action;
+                    CodePeer.Shell_Commands.Get_Build_Mode
+                      (GPS.Kernel.Kernel_Handle (Kernel));
+      Action    : constant CodePeer_Action := Module.Action;
 
    begin
       Module.Action := None;
@@ -1901,8 +1904,8 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Widget);
 
-      Mode             : constant String := Get_Build_Mode (Kernel);
-      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+      Mode            : constant String := Get_Build_Mode (Kernel);
+      CodePeer_Subdir : constant Boolean := Use_CodePeer_Subdir (Kernel);
 
    begin
       if CodePeer_Subdir then
@@ -1971,9 +1974,9 @@ package body CodePeer.Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Container  : constant GPS.Kernel.Messages.Messages_Container_Access :=
-        Get_Messages_Container (Kernel);
+                     Get_Messages_Container (Kernel);
       Categories : constant GPS.Kernel.Messages.Unbounded_String_Array :=
-        Container.Get_Categories;
+                     Container.Get_Categories;
       Category   : Ada.Strings.Unbounded.Unbounded_String;
 
    begin
@@ -2104,7 +2107,7 @@ package body CodePeer.Module is
             --  end editor.
 
             procedure Create_GPS_Message;
-            --  Creates GPS message.
+            --  Creates GPS message
 
             ------------------------
             -- Create_GPS_Message --
@@ -2321,7 +2324,7 @@ package body CodePeer.Module is
          Name       : String;
          Preference : Default_Preferences.Color_Preference;
          Speedbar   : Boolean);
-      --  Initializes style and sets background color from preference.
+      --  Initializes style and sets background color from preference
 
       ----------------------
       -- Initialize_Style --

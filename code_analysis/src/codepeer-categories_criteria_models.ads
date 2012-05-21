@@ -24,9 +24,9 @@ with CodePeer.Message_Categories_Models;
 
 package CodePeer.Categories_Criteria_Models is
 
-   Active_Column      : constant := 0;
-   Name_Column        : constant := 1;
-   Column_Count       : constant := 2;
+   Active_Column : constant := 0;
+   Name_Column   : constant := 1;
+   Column_Count  : constant := 2;
 
    type Categories_Criteria_Model_Record is
      new CodePeer.Message_Categories_Models.Message_Categories_Model_Record
@@ -67,11 +67,11 @@ package CodePeer.Categories_Criteria_Models is
 
    function Is_Empty
      (Self : access Categories_Criteria_Model_Record'Class) return Boolean;
-   --  Returns True if there are no selected items in the model.
+   --  Returns True if there are no selected items in the model
 
    function Is_Full
      (Self : access Categories_Criteria_Model_Record'Class) return Boolean;
-   --  Returns True is all items is selected.
+   --  Returns True is all items is selected
 
    overriding procedure Clear (Self : access Categories_Criteria_Model_Record);
 
@@ -79,7 +79,7 @@ private
 
    type Categories_Criteria_Model_Record is
      new CodePeer.Message_Categories_Models.Message_Categories_Model_Record
-       with record
+   with record
       Kernel              : GPS.Kernel.Kernel_Handle;
       History_Prefix      : Ada.Strings.Unbounded.Unbounded_String;
       Selected_Categories : CodePeer.Message_Category_Sets.Set;

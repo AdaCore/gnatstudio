@@ -225,7 +225,7 @@ package body CodePeer.Module.Bridge is
       Status  : Integer)
    is
       Context : Bridge_Context'Class
-      renames Bridge_Context'Class (Process.Callback_Data.all);
+                  renames Bridge_Context'Class (Process.Callback_Data.all);
 
    begin
       if Status = 0 then

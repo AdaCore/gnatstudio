@@ -49,7 +49,7 @@ package CodePeer.Message_Categories_Models is
    procedure Row_Changed
      (Self     : access Message_Categories_Model_Record'Class;
       Category : CodePeer.Message_Category_Access);
-   --  Emit "row_changed" signal.
+   --  Emit "row_changed" signal
 
    --  GtkTreeModel operations
 
@@ -78,7 +78,8 @@ package CodePeer.Message_Categories_Models is
 private
 
    type Message_Categories_Model_Record is abstract
-     new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with record
+     new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record
+   with record
       Categories : Message_Category_Ordered_Sets.Set;
    end record;
 
