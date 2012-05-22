@@ -31,7 +31,8 @@ NF-52-L521-019 GPS: Minimal scrolling when jumping to a location (2012-05-21)
 
 NF-52-L514-028 GPS: Action tooltip in Locations view (2012-05-21)
 
-  Locations view display tooltip for the action associated with message.
+  The Locations View now displays a tooltip for the action associated with a
+  message.
 
 NF-52-L416-043 GB: Improved search results interaction (2012-04-16)
 
