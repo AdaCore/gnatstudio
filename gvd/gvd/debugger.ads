@@ -30,6 +30,7 @@ with GPS.Kernel; use GPS.Kernel;
 with GNATCOLL.VFS;
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Strings.Unbounded;
 
 package Debugger is
 
@@ -855,12 +856,24 @@ package Debugger is
    -- Memory operations --
    -----------------------
 
+   type Memory_Dump_Item is record
+      Label : Ada.Strings.Unbounded.Unbounded_String;
+      Value : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+   --  Element of memody dump. Value should be a hexadecimal string with no
+   --  separator. Label is optional symbol corresponding to first byte of
+   --  Value.
+
+   type Memory_Dump is array (Positive range <>) of Memory_Dump_Item;
+
+   type Memory_Dump_Access is access all Memory_Dump;
+
    function Get_Memory
      (Debugger : access Debugger_Root;
       Size     : Integer;
-      Address  : String) return String is abstract;
+      Address  : String) return Memory_Dump_Access is abstract;
    --  Return the contents of the byte at a given address. The output should
-   --  be a hexadecimal string representing Size bytes, with no separator.
+   --  have representation for Size bytes.
    --  Address is "0x" followed by an hexadecimal number.
 
    procedure Put_Memory_Byte

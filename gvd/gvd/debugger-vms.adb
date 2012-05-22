@@ -1049,7 +1049,7 @@ package body Debugger.VMS is
      (Debugger : access VMS_Debugger;
       Size     : Integer;
       Address  : String)
-      return String
+      return Memory_Dump_Access
    is
       S : constant String := Send
         (Debugger,
@@ -1058,7 +1058,7 @@ package body Debugger.VMS is
       pragma Unreferenced (S);
    begin
       --  ??? parse S
-      return "";
+      return null;
    end Get_Memory;
 
    ---------------------

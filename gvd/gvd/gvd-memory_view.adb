@@ -17,8 +17,10 @@
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;
 with Ada.Strings.Maps;         use Ada.Strings.Maps;
 with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
@@ -100,6 +102,12 @@ package body GVD.Memory_View is
 
          Starting_Address  : Long_Long_Integer := 0;
          --  The first address that is being explored.
+
+         Dump              : Memory_Dump_Access;
+         --  Dump of memory returned by Debugger
+
+         Label_Length      : Natural;
+         --  Length of labels printed after address
 
          Values            : GNAT.Strings.String_Access;
          --  The values that are to be shown in the window.
@@ -243,6 +251,8 @@ package body GVD.Memory_View is
      (Object : access Gtk_Widget_Record'Class) return Boolean;
    --  Callbacks for the various buttons
 
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Memory_Dump, Memory_Dump_Access);
    --------------------
    -- Local packages --
    --------------------
@@ -425,6 +435,7 @@ package body GVD.Memory_View is
 
       Row_Length :=
         Address_Length + Address_Separator'Length +
+        1 + View.Label_Length +
         (View.Number_Of_Columns * (View.Trunc + Data_Separator'Length)) +
         ASCII_Size + End_Of_Line'Length;
 
@@ -432,7 +443,8 @@ package body GVD.Memory_View is
 
       Column :=
         (Integer (Position) - Row * Row_Length -
-          (Address_Length + Address_Separator'Length)) + 1;
+         (Address_Length + Address_Separator'Length + 1 + View.Label_Length))
+        + 1;
 
       if Column <= 0 then
          Column := -1;
@@ -480,7 +492,9 @@ package body GVD.Memory_View is
       if Column >= View.Number_Of_Columns
         or else Column < 0
       then
-         Set_Offset (Iter, Address_Separator'Length + Gint (Address_Length));
+         Set_Offset
+           (Iter, Address_Separator'Length + Gint (Address_Length)
+                     + 1 + Gint (View.Label_Length));
          Place_Cursor (Buffer, Iter);
       else
          while not Editable (Iter, False) loop
@@ -764,6 +778,7 @@ package body GVD.Memory_View is
          Get_Iter_At_Mark (Buffer, End_Iter, Get_Insert (Buffer));
          Start_Mark := Create_Mark (Buffer, Where => End_Iter);
 
+         --  Insert address and label
          Insert
            (Buffer,
             End_Iter,
@@ -772,7 +787,10 @@ package body GVD.Memory_View is
                  Long_Long_Integer
                    ((Line_Index - 1) * View.Number_Of_Columns *
                       View.Unit_Size / 2),
-               16, Address_Length) & Address_Separator);
+               16, Address_Length)
+            & ' ' & Ada.Strings.Unbounded.To_String
+              (View.Dump (Line_Index).Label)
+            & Address_Separator);
 
          Get_Iter_At_Mark (Buffer, Start_Iter, Start_Mark);
 
@@ -880,18 +898,50 @@ package body GVD.Memory_View is
            * View.Unit_Size / 2;
       end if;
 
+      Set_Busy (Process, True);
+      Set_Busy_Cursor (Get_Window (View), True);
+
       declare
+         use Ada.Strings.Unbounded;
          Values : String (1 .. 2 * View.Number_Of_Bytes);
       begin
-         Set_Busy (Process, True);
-         Set_Busy_Cursor (Get_Window (View), True);
-         Values := Get_Memory
+         Free (View.Dump);
+
+         View.Dump := Get_Memory
            (Process.Debugger,
             View.Number_Of_Bytes,
             "0x" & To_Standard_Base (Address, 16));
+
          View.Starting_Address := Address;
          Free (View.Values);
          Free (View.Flags);
+
+         if View.Dump /= null then
+            declare
+               Index : Positive := Values'First;
+            begin
+               View.Label_Length := 0;
+               --  Copy all Dump.Value-s to Values
+               for J in View.Dump'Range loop
+                  Values (Index .. Index + Length (View.Dump (J).Value) - 1)
+                    := To_String (View.Dump (J).Value);
+
+                  Index := Index + Length (View.Dump (J).Value);
+
+                  if View.Label_Length < Length (View.Dump (J).Label) then
+                     View.Label_Length := Length (View.Dump (J).Label);
+                  end if;
+               end loop;
+
+               --  Make length of all labels equal
+               for J in View.Dump'Range loop
+                  Head (View.Dump (J).Label, View.Label_Length);
+               end loop;
+            end;
+         else
+            Values := (others => '.');
+         end if;
+
          View.Values := new String'(Values);
          View.Flags  := new String'(Values);
          View.Data   := Byte;
@@ -1122,6 +1172,8 @@ package body GVD.Memory_View is
                         Position
                         + Gint (Address_Length)
                         + Address_Separator'Length
+                        + 1
+                        + Gint (View.Label_Length)
                         + Data_Separator'Length
                         + Gint (ASCII_Size)
                         + End_Of_Line'Length);
@@ -1156,6 +1208,8 @@ package body GVD.Memory_View is
                         Position
                         - Gint (Address_Length)
                         - Address_Separator'Length
+                        - 1
+                        - Gint (View.Label_Length)
                         - Data_Separator'Length
                         - Gint (ASCII_Size)
                         - End_Of_Line'Length);
@@ -1317,10 +1371,13 @@ package body GVD.Memory_View is
             Value_Index :=
               (Integer (Position)
                - Row *
-                 (Address_Length + Address_Separator'Length + ASCII_Size
+                 (Address_Length + Address_Separator'Length
+                  + 1 + View.Label_Length
+                  + ASCII_Size
                   + End_Of_Line'Length
                   + View.Number_Of_Columns * Data_Separator'Length)
                - Address_Length - Address_Separator'Length
+               - 1 - View.Label_Length
                - (Column - 1) * (Data_Separator'Length)) * 2 - 1;
 
             View.Flags (Value_Index .. Value_Index + 1) :=

@@ -369,7 +369,7 @@ package Debugger.Gdb is
    overriding function Get_Memory
      (Debugger : access Gdb_Debugger;
       Size     : Integer;
-      Address  : String) return String;
+      Address  : String) return Memory_Dump_Access;
 
    overriding procedure Put_Memory_Byte
      (Debugger : access Gdb_Debugger;

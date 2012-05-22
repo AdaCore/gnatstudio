@@ -312,7 +312,7 @@ package Debugger.VMS is
    overriding function Get_Memory
      (Debugger : access VMS_Debugger;
       Size     : Integer;
-      Address  : String) return String;
+      Address  : String) return Memory_Dump_Access;
 
    overriding procedure Put_Memory_Byte
      (Debugger : access VMS_Debugger;

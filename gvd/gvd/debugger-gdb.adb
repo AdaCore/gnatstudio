@@ -3982,22 +3982,88 @@ package body Debugger.Gdb is
    overriding function Get_Memory
      (Debugger : access Gdb_Debugger;
       Size     : Integer;
-      Address  : String) return String
+      Address  : String) return Memory_Dump_Access
    is
-      Endian       : constant Endian_Type := Get_Endian_Type (Debugger);
+      procedure Get_Label
+        (Text  : String;
+         From  : in out Positive;
+         Value : out Unbounded_String);
+      --  Scan Text starting from From position and search for label.
+      --  If found put label into Value.
+
+      subtype Gigantic_Word is String (1 .. 16);
+
+      function Swap (Dump : String) return Gigantic_Word;
+      --  Swap bytes in Dump if little endian
+
+      Endian : constant Endian_Type := Get_Endian_Type (Debugger);
+
+      ---------------
+      -- Get_Label --
+      ---------------
+
+      procedure Get_Label
+        (Text  : String;
+         From  : in out Positive;
+         Value : out Unbounded_String)
+      is
+         --  We expect Text in the form: "address <label> : 0x...", for example
+         --  0x1234567 <label+123>: 0xff
+         Start : Positive := Text'First;
+      begin
+         while From <= Text'Last loop
+            if Text (From) = '<' then
+               Start := From + 1;
+            elsif Text (From) = '>' then
+               Value := To_Unbounded_String (Text (Start .. From - 1));
+               return;
+            elsif Text (From) = ':' then
+               return;
+            end if;
+
+            From := From + 1;
+         end loop;
+      end Get_Label;
+
+      ----------
+      -- Swap --
+      ----------
+
+      function Swap (Dump : String) return Gigantic_Word is
+      begin
+         if Endian = Little_Endian then
+            declare
+               Result : Gigantic_Word;
+            begin
+               for J in 1 .. 8 loop
+                  Result (J * 2 - 1 .. J * 2) :=
+                    Dump (Dump'Last - J * 2 + 1 .. Dump'Last - J * 2 + 2);
+               end loop;
+
+               return Result;
+            end;
+         else
+            return Dump;
+         end if;
+      end Swap;
+
+      Dump_Item_Size : constant := 16;
+      --  Expected size of an Memory_Dump_Item.Value
+
       Error_String : constant String := "Cannot access memory at";
       Image        : constant String := Integer'Image (Size / 8);
       S            : GNAT.OS_Lib.String_Access := new String'(Send
         (Debugger,
          "x/" & Image (Image'First + 1 .. Image'Last)
          & "gx " & Address, Mode => Internal));
-      Result       : String (1 .. Size * 2);
       S_Index      : Integer := S'First + 2;
       Last_Index   : Integer := S'First + 2;
+      Result       : constant Memory_Dump_Access :=
+        new Memory_Dump (1 .. (Size + Dump_Item_Size - 1) / Dump_Item_Size);
       Result_Index : Integer := Result'First;
       Last         : Integer := S'Last;
+      Total        : Integer := 0;
       Has_Error    : Boolean := False;
-      Bytes        : Boolean := False;
    begin
       --  Detect "Cannot access memory at ..."
 
@@ -4011,13 +4077,7 @@ package body Debugger.Gdb is
 
       if Has_Error then
          --  We may have missed some bytes here due to the fact that we were
-         --  fetching gigantic works. Now try to fetch memory using byte units.
-
-         Bytes := True;
-
-         S_Index := S'First + 2;
-         Last_Index := S'First + 2;
-         Last := S'Last;
+         --  fetching gigantic words. Now try to fetch memory using byte units.
 
          Free (S);
 
@@ -4029,6 +4089,10 @@ package body Debugger.Gdb is
                  "x/" & Image (Image'First + 1 .. Image'Last)
                  & "b " & Address, Mode => Internal));
 
+            S_Index := S'First + 2;
+            Last_Index := S'First + 2;
+            Last := S'Last;
+
             --  Detect "Cannot access memory at ..."
 
             Skip_To_String (S.all, Last_Index, Error_String);
@@ -4038,14 +4102,24 @@ package body Debugger.Gdb is
                Last := Last_Index;
             end if;
 
-            while S_Index <= Last loop
-               --  Detect actual data : 0xXX... right after an ASCII.HT
+            Get_Label (S.all, S_Index, Result (Result_Index).Label);
 
-               if S (S_Index) = '0' then
-                  if S (S_Index - 1) = ASCII.HT then
-                     Result (Result_Index .. Result_Index + 1) :=
-                       S (S_Index + 2 .. S_Index + 3);
-                     Result_Index := Result_Index + 2;
+            while S_Index <= Last loop
+
+               --  Detect actual data : 0xXX... right after an ASCII.HT
+               if S (S_Index) = '0' and S (S_Index - 1) = ASCII.HT then
+                  Append (Result (Result_Index).Value,
+                          S (S_Index + 2 .. S_Index + 3));
+                  Total := Total + 1;
+               elsif S (S_Index) = ASCII.LF and then
+                 Length (Result (Result_Index).Value) >= Dump_Item_Size * 2
+               then
+                  --  If new line and we have collected enought bytes
+                  --  Read label in new string
+                  Result_Index := Result_Index + 1;
+
+                  if Result_Index in Result'Range then
+                     Get_Label (S.all, S_Index, Result (Result_Index).Label);
                   end if;
                end if;
 
@@ -4053,14 +4127,22 @@ package body Debugger.Gdb is
             end loop;
          end;
       else
+         --  Read label: 0x1234567 <label+123>: 0xff
+         Get_Label (S.all, S_Index, Result (Result_Index).Label);
+
          while S_Index <= Last loop
             --  Detect actual data : 0xXX... right after an ASCII.HT
 
-            if S (S_Index) = '0' then
-               if S (S_Index - 1) = ASCII.HT then
-                  Result (Result_Index .. Result_Index + 15) :=
-                    S (S_Index + 2 .. S_Index + 17);
-                  Result_Index := Result_Index + 16;
+            if S (S_Index) = '0' and S (S_Index - 1) = ASCII.HT then
+               Append (Result (Result_Index).Value,
+                       Swap (S (S_Index + 2 .. S_Index + 17)));
+               Total := Total + 8;
+            elsif S (S_Index) = ASCII.LF then
+               --  Read label in new string
+               Result_Index := Result_Index + 1;
+
+               if Result_Index in Result'Range then
+                  Get_Label (S.all, S_Index, Result (Result_Index).Label);
                end if;
             end if;
 
@@ -4069,35 +4151,22 @@ package body Debugger.Gdb is
       end if;
 
       --  Fill the values that could not be accessed with "-"
-      while Result_Index <= Result'Last loop
-         Result (Result_Index) := '-';
-         Result_Index := Result_Index + 1;
+      while Total < Size loop
+         if Length (Result (Result_Index).Value) >= Dump_Item_Size * 2 then
+            Result_Index := Result_Index + 1;
+         end if;
+
+         Append (Result (Result_Index).Value, "--");
+
+         Total := Total + 1;
       end loop;
-
-      if Endian = Little_Endian and then not Bytes then
-         --  We need to reverse the blocks
-
-         for J in 1 .. Result'Length / 16 loop
-            declare
-               Block : constant String (1 .. 16) :=
-                         Result (Result'First + (J - 1) * 16 ..
-                                   Result'First + J * 16 - 1);
-            begin
-               for K in 1 .. 8 loop
-                  Result (Result'First + (J - 1) * 16 + (K - 1) * 2
-                          .. Result'First + (J - 1) * 16 + K * 2 - 1)
-                    := Block (16 - K * 2 + 1 .. 16 - (K - 1) * 2);
-               end loop;
-            end;
-         end loop;
-      end if;
 
       Free (S);
       return Result;
 
    exception
       when Constraint_Error =>
-         return "";
+         return null;
    end Get_Memory;
 
    ---------------------
