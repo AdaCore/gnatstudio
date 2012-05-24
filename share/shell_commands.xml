@@ -3425,6 +3425,16 @@ If the regular expression does not contain any parenthesis, the text that matche
       <description>Return the content of the console</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Console.select_all">
+      <param name="self">The instance of GPS.Console</param>
+      <description>Select the complete contents of the console</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Console.copy_clipboard">
+      <param name="self">The instance of GPS.Console</param>
+      <description>Copy the selection to the clipboard</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   Toolbar class
     ###################################################################-->

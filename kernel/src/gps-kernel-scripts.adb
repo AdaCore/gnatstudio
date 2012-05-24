@@ -34,6 +34,7 @@ with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 with Gdk.Types;               use Gdk.Types;
 with Glib.Object;             use Glib.Object;
 with Glib.Values;             use Glib.Values;
+with Gtkada.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Label;               use Gtk.Label;
@@ -1779,6 +1780,22 @@ package body GPS.Kernel.Scripts is
            (Console,
             Text      => Nth_Arg (Data, 2),
             Add_LF    => False);
+      elsif Command = "select_all" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         if Console /= null then
+            Gtkada.Handlers.Widget_Callback.Emit_By_Name
+              (Console.Get_View, Gtk.Text_View.Signal_Select_All, Gint'(-1));
+         else
+            Set_Error_Msg (Data, -"Console was closed by user");
+         end if;
+      elsif Command = "copy_clipboard" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         if Console /= null then
+            Gtkada.Handlers.Widget_Callback.Emit_By_Name
+              (Console.Get_View, Gtk.Text_View.Signal_Copy_Clipboard);
+         else
+            Set_Error_Msg (Data, -"Console was closed by user");
+         end if;
       end if;
    end Console_Command_Handler;
 
@@ -1904,6 +1921,14 @@ package body GPS.Kernel.Scripts is
         (Kernel, "write_with_links",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "select_all",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "copy_clipboard",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
 
