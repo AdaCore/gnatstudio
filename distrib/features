@@ -191,6 +191,10 @@ NF-52-K121-030 GPS: Codefix support for unrequired out-mode (2011-10-21)
   Added support to automatically fix the warning reported by the GNAT
   compiler in in-out formal parameters.
 
+NF-52-JB23-037 GPS: display symbol names in memory view (2012-05-24)
+
+  Memory view is extended to display symbol information.
+
 NF-52-JA30-007 GPS: strip trailing blank lines (2012-04-24)
 
   A new preference is provided in GPS to strip or keep trailing
