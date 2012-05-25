@@ -276,10 +276,11 @@ def on_clean_up(self):
 
 def compute_trace_filename(msg):
     text = msg.get_text()
+    cutoff = text.find("not proved")
     return (os.path.join("gnatprove",
                          os.path.basename(msg.get_file().name()) + "_" + str(msg.get_line()) +
                          "_" + str(msg.get_column()) + "_" +
-                         text[:(len(text)-11)].replace(' ','_') + ".trace"))
+                         text[:(cutoff - 1)].replace(' ','_') + ".trace"))
 
 def show_trace(msg):
     fn = compute_trace_filename(msg)
@@ -317,7 +318,7 @@ def on_show_path(self):
     for msg in GPS.Message.list():
         if (msg.get_file() == my_file and msg.get_line() == my_line and
                 msg.get_column() == my_col):
-            if msg.get_text().endswith("not proved"):
+            if "not proved" in msg.get_text():
                show_trace(msg)
 
 if gnatprove:
