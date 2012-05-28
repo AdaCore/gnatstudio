@@ -402,7 +402,6 @@ package body Commands.Editor is
 
       if Is_Valid_Position
         (Command.Buffer, Command.End_Line_After, Command.End_Column_After)
-        and then Command.Force_End
       then
          Editor := Get_Source_Box_From_MDI
            (Find_Current_Editor (Get_Kernel (Command.Buffer)));
