@@ -2938,13 +2938,15 @@ package body Project_Explorers is
             end if;
 
             declare
-               Sources : File_Array_Access := Current (Iter).Source_Files;
+               Files   : File_Array_Access := Current (Iter).Source_Files;
+               Sources : constant File_Array := Current (Iter).Source_Dirs
+                 & Files.all;
             begin
                Project_Marked := False;
                for S in Sources'Range loop
                   declare
                      Base : constant Filesystem_String :=
-                       Base_Name (Sources (S));
+                       Base_Dir_Name (Sources (S));
                   begin
                      if Match (C, +Base) /= -1 then
                         Mark_File_And_Projects
@@ -2971,7 +2973,7 @@ package body Project_Explorers is
                   end;
                end loop;
 
-               GNATCOLL.VFS.Unchecked_Free (Sources);
+               GNATCOLL.VFS.Unchecked_Free (Files);
             end;
 
             Next (Iter);
