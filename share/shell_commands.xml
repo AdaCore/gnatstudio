@@ -1500,7 +1500,6 @@ The parameter kind_in is a list of comma-separated list of reference kinds (as w
       <return>A dictionary, see below</return>
       <description>Display the list of entities called by the entity. The returned value is a dictionary whose keys are instances of Entity called by this entity, and whose value is a list of FileLocation instances where the entity is referenced.
 If dispatching_calls is true, then calls done through dispatching will result in multiple entities being listed (ie all the possible subprograms that are called at that location)</description>
-      <param name="dispatching_calls" default="false">A boolean</param>
       <see_also name="GPS.Entity.is_called_by()"/>
   </shell_doc>
 
@@ -2387,7 +2386,7 @@ If the line and column are not specified, then the current selection is returned
       <param name="column">An integer</param>
       <param name="text">A string</param>
       <param name="before" default="-1">An integer</param>
-      <param name="after" defalt="-1">An integer</param>
+      <param name="after" default="-1">An integer</param>
       <description>Replace the characters around a certain position. "before" characters before (line, column), and up to "after" characters after are removed, and the new text is inserted instead. If "before" or "after" is omitted, the bounds will be at the beginning and/or the end of the line</description>
   </shell_doc>
 
@@ -4310,7 +4309,6 @@ highlight_category, style_category and warning_category reference the colors to 
   </shell_doc>
 
   <shell_doc name="GPS.Locations.set_sort_order_hint">
-     <param name="category">A string</param>
      <param name="category">A string ("Chronological" or "Alphabetical")</param>
      <description>Sets desired sorting order for file nodes of the category. Actual sort order can be overrided by user.</description>
   </shell_doc>
@@ -4491,7 +4489,7 @@ If show_in_console is True, the output of the command is displayed in the debugg
      <param name="type">A string, one of "integer", "boolean", "string", "color", "font", "enum", "multiline"</param>
      <param name="doc" default="">A string</param>
      <param name="default" default="">Depends on the type</param>
-     <param name="*">Additional parameters depending on the type</param>
+     <param name="*args">Additional parameters depending on the type</param>
      <description>This function creates a new preference, and makes it visible in the preferences dialog. In the dialog, the preference appears in the page given by the name used when creating the instance of GPS.Preference. The label is used to qualify the preference, and doc will appear as a tooltip to explain the preference to users. The type describes the type of preference, and therefore how it should be edited by users.
 The additional parameters depend on the type of preference you are creating:
 
@@ -6304,8 +6302,8 @@ The package gps_utils.py provides a somewhat more convenient python interface to
   </shell_doc>
 
   <shell_doc name="GPS.Message.set_style">
-     <param>An instance of Style</param>
-     <param>An Integer</param>
+     <param name="self">An instance of Style</param>
+     <param name="style">An Integer</param>
      <description>Set the style of the message. The second parameter indicates
      the length in number of characters to highlight. If 0, then highlight the
      whole line. If left out, this means the length of the message highlighting
