@@ -1,0 +1,1509 @@
+:mod:`GPS`
+===================================
+
+.. automodule:: GPS
+
+.. inheritance-diagram: GPS    # DISABLED, add "::" to enable
+
+
+Functions
+---------
+
+.. autofunction:: add_location_command
+.. autofunction:: base_name
+.. autofunction:: cd
+.. autofunction:: compute_xref
+.. autofunction:: contextual_context
+.. autofunction:: current_context
+.. autofunction:: delete
+.. autofunction:: dir
+.. autofunction:: dir_name
+.. autofunction:: dump
+.. autofunction:: dump_file
+.. autofunction:: dump_xref_db
+.. autofunction:: exec_in_console
+.. autofunction:: execute_action
+.. autofunction:: execute_asynchronous_action
+.. autofunction:: exit
+.. autofunction:: freeze_xref
+.. autofunction:: get_build_mode
+.. autofunction:: get_build_output
+.. autofunction:: get_busy
+.. autofunction:: get_home_dir
+.. autofunction:: get_system_dir
+.. autofunction:: get_tmp_dir
+.. autofunction:: insmod
+.. autofunction:: is_server_local
+.. autofunction:: last_command
+.. autofunction:: lookup_actions
+.. autofunction:: lookup_actions_from_key
+.. autofunction:: ls
+.. autofunction:: lsmod
+.. autofunction:: parse_xml
+.. autofunction:: pwd
+.. autofunction:: repeat_next
+.. autofunction:: reset_xref_db
+.. autofunction:: save_persistent_properties
+.. autofunction:: set_build_mode
+.. autofunction:: set_busy
+.. autofunction:: set_last_command
+.. autofunction:: supported_languages
+.. autofunction:: thaw_xref
+.. autofunction:: unset_busy
+.. autofunction:: version
+
+Classes
+-------
+
+
+:class:`GPS.Action`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Action
+
+   .. inheritance-diagram:: GPS.Action
+
+   .. automethod:: GPS.Action.__init__
+
+   .. automethod:: GPS.Action.contextual
+
+   .. automethod:: GPS.Action.create
+
+   .. automethod:: GPS.Action.key
+
+   .. automethod:: GPS.Action.menu
+
+:class:`GPS.Activities`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Activities
+
+   
+
+   .. automethod:: GPS.Activities.__init__
+
+   .. automethod:: GPS.Activities.add_file
+
+   .. automethod:: GPS.Activities.commit
+
+   .. automethod:: GPS.Activities.files
+
+   .. automethod:: GPS.Activities.from_file
+
+   .. automethod:: GPS.Activities.get
+
+   .. automethod:: GPS.Activities.group_commit
+
+   .. automethod:: GPS.Activities.has_log
+
+   .. automethod:: GPS.Activities.id
+
+   .. automethod:: GPS.Activities.is_closed
+
+   .. automethod:: GPS.Activities.list
+
+   .. automethod:: GPS.Activities.log
+
+   .. automethod:: GPS.Activities.log_file
+
+   .. automethod:: GPS.Activities.name
+
+   .. automethod:: GPS.Activities.remove_file
+
+   .. automethod:: GPS.Activities.set_closed
+
+   .. automethod:: GPS.Activities.toggle_group_commit
+
+   .. automethod:: GPS.Activities.vcs
+
+:class:`GPS.AreaContext`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: AreaContext
+
+   .. inheritance-diagram:: GPS.AreaContext
+
+   .. automethod:: GPS.AreaContext.__init__
+
+   .. automethod:: GPS.AreaContext.end_line
+
+   .. automethod:: GPS.AreaContext.start_line
+
+:class:`GPS.Bookmark`
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Bookmark
+
+   
+
+   .. automethod:: GPS.Bookmark.__init__
+
+   .. automethod:: GPS.Bookmark.create
+
+   .. automethod:: GPS.Bookmark.delete
+
+   .. automethod:: GPS.Bookmark.get
+
+   .. automethod:: GPS.Bookmark.goto
+
+   .. automethod:: GPS.Bookmark.list
+
+   .. automethod:: GPS.Bookmark.name
+
+   .. automethod:: GPS.Bookmark.rename
+
+:class:`GPS.BuildTarget`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: BuildTarget
+
+   
+
+   .. automethod:: GPS.BuildTarget.__init__
+
+   .. automethod:: GPS.BuildTarget.clone
+
+   .. automethod:: GPS.BuildTarget.execute
+
+   .. automethod:: GPS.BuildTarget.remove
+
+:class:`GPS.Button`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Button
+
+   .. inheritance-diagram:: GPS.Button
+
+   .. automethod:: GPS.Button.__init__
+
+   .. automethod:: GPS.Button.set_text
+
+:class:`GPS.Clipboard`
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Clipboard
+
+   
+
+   .. automethod:: GPS.Clipboard.contents
+
+   .. automethod:: GPS.Clipboard.copy
+
+   .. automethod:: GPS.Clipboard.current
+
+   .. automethod:: GPS.Clipboard.merge
+
+:class:`GPS.CodeAnalysis`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: CodeAnalysis
+
+   
+
+   .. automethod:: GPS.CodeAnalysis.__init__
+
+   .. automethod:: GPS.CodeAnalysis.add_all_gcov_project_info
+
+   .. automethod:: GPS.CodeAnalysis.add_gcov_file_info
+
+   .. automethod:: GPS.CodeAnalysis.add_gcov_project_info
+
+   .. automethod:: GPS.CodeAnalysis.clear
+
+   .. automethod:: GPS.CodeAnalysis.dump_to_file
+
+   .. automethod:: GPS.CodeAnalysis.get
+
+   .. automethod:: GPS.CodeAnalysis.hide_coverage_information
+
+   .. automethod:: GPS.CodeAnalysis.load_from_file
+
+   .. automethod:: GPS.CodeAnalysis.show_analysis_report
+
+   .. automethod:: GPS.CodeAnalysis.show_coverage_information
+
+:class:`GPS.Codefix`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Codefix
+
+   
+
+   .. automethod:: GPS.Codefix.__init__
+
+   .. automethod:: GPS.Codefix.error_at
+
+   .. automethod:: GPS.Codefix.errors
+
+   .. automethod:: GPS.Codefix.parse
+
+   .. automethod:: GPS.Codefix.sessions
+
+:class:`GPS.CodefixError`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: CodefixError
+
+   
+
+   .. automethod:: GPS.CodefixError.__init__
+
+   .. automethod:: GPS.CodefixError.fix
+
+   .. automethod:: GPS.CodefixError.location
+
+   .. automethod:: GPS.CodefixError.message
+
+   .. automethod:: GPS.CodefixError.possible_fixes
+
+:class:`GPS.Combo`
+^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Combo
+
+   .. inheritance-diagram:: GPS.Combo
+
+   .. automethod:: GPS.Combo.__init__
+
+   .. automethod:: GPS.Combo.add
+
+   .. automethod:: GPS.Combo.clear
+
+   .. automethod:: GPS.Combo.get_text
+
+   .. automethod:: GPS.Combo.remove
+
+   .. automethod:: GPS.Combo.set_text
+
+:class:`GPS.Command`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Command
+
+   
+
+   .. automethod:: GPS.Command.get
+
+   .. automethod:: GPS.Command.get_result
+
+   .. automethod:: GPS.Command.interrupt
+
+   .. automethod:: GPS.Command.list
+
+   .. automethod:: GPS.Command.name
+
+   .. automethod:: GPS.Command.progress
+
+:class:`GPS.CommandWindow`
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: CommandWindow
+
+   .. inheritance-diagram:: GPS.CommandWindow
+
+   .. automethod:: GPS.CommandWindow.__init__
+
+   .. automethod:: GPS.CommandWindow.read
+
+   .. automethod:: GPS.CommandWindow.set_background
+
+   .. automethod:: GPS.CommandWindow.set_prompt
+
+   .. automethod:: GPS.CommandWindow.write
+
+:class:`GPS.Console`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Console
+
+   .. inheritance-diagram:: GPS.Console
+
+   .. automethod:: GPS.Console.__init__
+
+   .. automethod:: GPS.Console.accept_input
+
+   .. automethod:: GPS.Console.add_input
+
+   .. automethod:: GPS.Console.clear
+
+   .. automethod:: GPS.Console.clear_input
+
+   .. automethod:: GPS.Console.create_link
+
+   .. automethod:: GPS.Console.enable_input
+
+   .. automethod:: GPS.Console.flush
+
+   .. automethod:: GPS.Console.get_text
+
+   .. automethod:: GPS.Console.isatty
+
+   .. automethod:: GPS.Console.read
+
+   .. automethod:: GPS.Console.readline
+
+   .. automethod:: GPS.Console.write
+
+   .. automethod:: GPS.Console.write_with_links
+
+:class:`GPS.Context`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Context
+
+   
+
+
+   .. autoattribute:: GPS.Context.module_name
+
+
+:class:`GPS.Contextual`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Contextual
+
+   
+
+   .. automethod:: GPS.Contextual.__init__
+
+   .. automethod:: GPS.Contextual.create
+
+   .. automethod:: GPS.Contextual.create_dynamic
+
+   .. automethod:: GPS.Contextual.hide
+
+   .. automethod:: GPS.Contextual.list
+
+   .. automethod:: GPS.Contextual.set_sensitive
+
+   .. automethod:: GPS.Contextual.show
+
+:class:`GPS.Debugger`
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Debugger
+
+   
+
+   .. automethod:: GPS.Debugger.__init__
+
+   .. automethod:: GPS.Debugger.close
+
+   .. automethod:: GPS.Debugger.command
+
+   .. automethod:: GPS.Debugger.get
+
+   .. automethod:: GPS.Debugger.get_executable
+
+   .. automethod:: GPS.Debugger.get_num
+
+   .. automethod:: GPS.Debugger.is_break_command
+
+   .. automethod:: GPS.Debugger.is_busy
+
+   .. automethod:: GPS.Debugger.is_context_command
+
+   .. automethod:: GPS.Debugger.is_exec_command
+
+   .. automethod:: GPS.Debugger.list
+
+   .. automethod:: GPS.Debugger.non_blocking_send
+
+   .. automethod:: GPS.Debugger.send
+
+   .. automethod:: GPS.Debugger.spawn
+
+:class:`GPS.Docgen`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Docgen
+
+   
+
+   .. automethod:: GPS.Docgen.generate_index_file
+
+   .. automethod:: GPS.Docgen.get_current_file
+
+   .. automethod:: GPS.Docgen.get_doc_dir
+
+   .. automethod:: GPS.Docgen.register_css
+
+   .. automethod:: GPS.Docgen.register_main_index
+
+   .. automethod:: GPS.Docgen.register_tag_handler
+
+:class:`GPS.DocgenTagHandler`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: DocgenTagHandler
+
+   
+
+   .. automethod:: GPS.DocgenTagHandler.__init__
+
+:class:`GPS.Editor`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Editor
+
+   
+
+   .. automethod:: GPS.Editor.add_blank_lines
+
+   .. automethod:: GPS.Editor.add_case_exception
+
+   .. automethod:: GPS.Editor.block_fold
+
+   .. automethod:: GPS.Editor.block_get_end
+
+   .. automethod:: GPS.Editor.block_get_level
+
+   .. automethod:: GPS.Editor.block_get_name
+
+   .. automethod:: GPS.Editor.block_get_start
+
+   .. automethod:: GPS.Editor.block_get_type
+
+   .. automethod:: GPS.Editor.block_unfold
+
+   .. automethod:: GPS.Editor.close
+
+   .. automethod:: GPS.Editor.copy
+
+   .. automethod:: GPS.Editor.create_mark
+
+   .. automethod:: GPS.Editor.cursor_center
+
+   .. automethod:: GPS.Editor.cursor_get_column
+
+   .. automethod:: GPS.Editor.cursor_get_line
+
+   .. automethod:: GPS.Editor.cursor_set_position
+
+   .. automethod:: GPS.Editor.cut
+
+   .. automethod:: GPS.Editor.delete_mark
+
+   .. automethod:: GPS.Editor.edit
+
+   .. automethod:: GPS.Editor.get_buffer
+
+   .. automethod:: GPS.Editor.get_chars
+
+   .. automethod:: GPS.Editor.get_column
+
+   .. automethod:: GPS.Editor.get_file
+
+   .. automethod:: GPS.Editor.get_last_line
+
+   .. automethod:: GPS.Editor.get_line
+
+   .. automethod:: GPS.Editor.goto_mark
+
+   .. automethod:: GPS.Editor.highlight
+
+   .. automethod:: GPS.Editor.highlight_range
+
+   .. automethod:: GPS.Editor.indent
+
+   .. automethod:: GPS.Editor.indent_buffer
+
+   .. automethod:: GPS.Editor.insert_text
+
+   .. automethod:: GPS.Editor.mark_current_location
+
+   .. automethod:: GPS.Editor.paste
+
+   .. automethod:: GPS.Editor.print_line_info
+
+   .. automethod:: GPS.Editor.redo
+
+   .. automethod:: GPS.Editor.refill
+
+   .. automethod:: GPS.Editor.register_highlighting
+
+   .. automethod:: GPS.Editor.remove_blank_lines
+
+   .. automethod:: GPS.Editor.remove_case_exception
+
+   .. automethod:: GPS.Editor.replace_text
+
+   .. automethod:: GPS.Editor.save
+
+   .. automethod:: GPS.Editor.save_buffer
+
+   .. automethod:: GPS.Editor.select_all
+
+   .. automethod:: GPS.Editor.select_text
+
+   .. automethod:: GPS.Editor.set_background_color
+
+   .. automethod:: GPS.Editor.set_synchronized_scrolling
+
+   .. automethod:: GPS.Editor.set_title
+
+   .. automethod:: GPS.Editor.set_writable
+
+   .. automethod:: GPS.Editor.subprogram_name
+
+   .. automethod:: GPS.Editor.undo
+
+   .. automethod:: GPS.Editor.unhighlight
+
+   .. automethod:: GPS.Editor.unhighlight_range
+
+:class:`GPS.EditorBuffer`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: EditorBuffer
+
+   
+
+   .. automethod:: GPS.EditorBuffer.__init__
+
+   .. automethod:: GPS.EditorBuffer.add_special_line
+
+   .. automethod:: GPS.EditorBuffer.apply_overlay
+
+   .. automethod:: GPS.EditorBuffer.beginning_of_buffer
+
+   .. automethod:: GPS.EditorBuffer.blocks_fold
+
+   .. automethod:: GPS.EditorBuffer.blocks_unfold
+
+   .. automethod:: GPS.EditorBuffer.characters_count
+
+   .. automethod:: GPS.EditorBuffer.close
+
+   .. automethod:: GPS.EditorBuffer.copy
+
+   .. automethod:: GPS.EditorBuffer.create_overlay
+
+   .. automethod:: GPS.EditorBuffer.current_view
+
+   .. automethod:: GPS.EditorBuffer.cut
+
+   .. automethod:: GPS.EditorBuffer.delete
+
+   .. automethod:: GPS.EditorBuffer.end_of_buffer
+
+   .. automethod:: GPS.EditorBuffer.file
+
+   .. automethod:: GPS.EditorBuffer.finish_undo_group
+
+   .. automethod:: GPS.EditorBuffer.get
+
+   .. automethod:: GPS.EditorBuffer.get_chars
+
+   .. automethod:: GPS.EditorBuffer.get_mark
+
+   .. automethod:: GPS.EditorBuffer.get_new
+
+   .. automethod:: GPS.EditorBuffer.indent
+
+   .. automethod:: GPS.EditorBuffer.insert
+
+   .. automethod:: GPS.EditorBuffer.is_modified
+
+   .. automethod:: GPS.EditorBuffer.is_read_only
+
+   .. automethod:: GPS.EditorBuffer.lines_count
+
+   .. automethod:: GPS.EditorBuffer.list
+
+   .. automethod:: GPS.EditorBuffer.paste
+
+   .. automethod:: GPS.EditorBuffer.redo
+
+   .. automethod:: GPS.EditorBuffer.refill
+
+   .. automethod:: GPS.EditorBuffer.remove_overlay
+
+   .. automethod:: GPS.EditorBuffer.remove_special_lines
+
+   .. automethod:: GPS.EditorBuffer.save
+
+   .. automethod:: GPS.EditorBuffer.select
+
+   .. automethod:: GPS.EditorBuffer.selection_end
+
+   .. automethod:: GPS.EditorBuffer.selection_start
+
+   .. automethod:: GPS.EditorBuffer.set_read_only
+
+   .. automethod:: GPS.EditorBuffer.start_undo_group
+
+   .. automethod:: GPS.EditorBuffer.undo
+
+   .. automethod:: GPS.EditorBuffer.unselect
+
+   .. automethod:: GPS.EditorBuffer.views
+
+:class:`GPS.EditorHighlighter`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: EditorHighlighter
+
+   
+
+   .. automethod:: GPS.EditorHighlighter.__init__
+
+   .. automethod:: GPS.EditorHighlighter.remove
+
+:class:`GPS.EditorLocation`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: EditorLocation
+
+   
+
+   .. automethod:: GPS.EditorLocation.__init__
+
+   .. automethod:: GPS.EditorLocation.backward_overlay
+
+   .. automethod:: GPS.EditorLocation.beginning_of_line
+
+   .. automethod:: GPS.EditorLocation.block_end
+
+   .. automethod:: GPS.EditorLocation.block_end_line
+
+   .. automethod:: GPS.EditorLocation.block_fold
+
+   .. automethod:: GPS.EditorLocation.block_level
+
+   .. automethod:: GPS.EditorLocation.block_name
+
+   .. automethod:: GPS.EditorLocation.block_start
+
+   .. automethod:: GPS.EditorLocation.block_start_line
+
+   .. automethod:: GPS.EditorLocation.block_type
+
+   .. automethod:: GPS.EditorLocation.block_unfold
+
+   .. automethod:: GPS.EditorLocation.buffer
+
+   .. automethod:: GPS.EditorLocation.column
+
+   .. automethod:: GPS.EditorLocation.create_mark
+
+   .. automethod:: GPS.EditorLocation.end_of_line
+
+   .. automethod:: GPS.EditorLocation.ends_word
+
+   .. automethod:: GPS.EditorLocation.forward_char
+
+   .. automethod:: GPS.EditorLocation.forward_line
+
+   .. automethod:: GPS.EditorLocation.forward_overlay
+
+   .. automethod:: GPS.EditorLocation.forward_word
+
+   .. automethod:: GPS.EditorLocation.get_char
+
+   .. automethod:: GPS.EditorLocation.get_overlays
+
+   .. automethod:: GPS.EditorLocation.has_overlay
+
+   .. automethod:: GPS.EditorLocation.inside_word
+
+   .. automethod:: GPS.EditorLocation.line
+
+   .. automethod:: GPS.EditorLocation.offset
+
+   .. automethod:: GPS.EditorLocation.search
+
+   .. automethod:: GPS.EditorLocation.starts_word
+
+   .. automethod:: GPS.EditorLocation.subprogram_name
+
+:class:`GPS.EditorMark`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: EditorMark
+
+   
+
+   .. automethod:: GPS.EditorMark.__init__
+
+   .. automethod:: GPS.EditorMark.delete
+
+   .. automethod:: GPS.EditorMark.is_present
+
+   .. automethod:: GPS.EditorMark.location
+
+   .. automethod:: GPS.EditorMark.move
+
+:class:`GPS.EditorOverlay`
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: EditorOverlay
+
+   
+
+   .. automethod:: GPS.EditorOverlay.__init__
+
+   .. automethod:: GPS.EditorOverlay.get_property
+
+   .. automethod:: GPS.EditorOverlay.name
+
+   .. automethod:: GPS.EditorOverlay.set_property
+
+:class:`GPS.EditorView`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: EditorView
+
+   .. inheritance-diagram:: GPS.EditorView
+
+   .. automethod:: GPS.EditorView.__init__
+
+   .. automethod:: GPS.EditorView.buffer
+
+   .. automethod:: GPS.EditorView.center
+
+   .. automethod:: GPS.EditorView.cursor
+
+   .. automethod:: GPS.EditorView.goto
+
+   .. automethod:: GPS.EditorView.is_read_only
+
+   .. automethod:: GPS.EditorView.set_read_only
+
+   .. automethod:: GPS.EditorView.title
+
+:class:`GPS.Entity`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Entity
+
+   
+
+   .. automethod:: GPS.Entity.__init__
+
+   .. automethod:: GPS.Entity.attributes
+
+   .. automethod:: GPS.Entity.body
+
+   .. automethod:: GPS.Entity.called_by
+
+   .. automethod:: GPS.Entity.called_by_browser
+
+   .. automethod:: GPS.Entity.calls
+
+   .. automethod:: GPS.Entity.category
+
+   .. automethod:: GPS.Entity.declaration
+
+   .. automethod:: GPS.Entity.derived_types
+
+   .. automethod:: GPS.Entity.discriminants
+
+   .. automethod:: GPS.Entity.documentation
+
+   .. automethod:: GPS.Entity.end_of_scope
+
+   .. automethod:: GPS.Entity.fields
+
+   .. automethod:: GPS.Entity.find_all_refs
+
+   .. automethod:: GPS.Entity.full_name
+
+   .. automethod:: GPS.Entity.methods
+
+   .. automethod:: GPS.Entity.name
+
+   .. automethod:: GPS.Entity.name_parameters
+
+   .. automethod:: GPS.Entity.parameters
+
+   .. automethod:: GPS.Entity.pointed_type
+
+   .. automethod:: GPS.Entity.primitive_of
+
+   .. automethod:: GPS.Entity.references
+
+   .. automethod:: GPS.Entity.rename
+
+   .. automethod:: GPS.Entity.return_type
+
+   .. automethod:: GPS.Entity.show
+
+   .. automethod:: GPS.Entity.type
+
+:class:`GPS.EntityContext`
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: EntityContext
+
+   .. inheritance-diagram:: GPS.EntityContext
+
+   .. automethod:: GPS.EntityContext.__init__
+
+   .. automethod:: GPS.EntityContext.entity
+
+:class:`GPS.Exception`
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Exception
+
+   .. inheritance-diagram:: GPS.Exception
+
+:class:`GPS.File`
+^^^^^^^^^^^^^^^^^
+
+.. autoclass:: File
+
+   
+
+   .. automethod:: GPS.File.__init__
+
+   .. automethod:: GPS.File.compile
+
+   .. automethod:: GPS.File.directory
+
+   .. automethod:: GPS.File.entities
+
+   .. automethod:: GPS.File.generate_doc
+
+   .. automethod:: GPS.File.get_property
+
+   .. automethod:: GPS.File.imported_by
+
+   .. automethod:: GPS.File.imports
+
+   .. automethod:: GPS.File.language
+
+   .. automethod:: GPS.File.make
+
+   .. automethod:: GPS.File.name
+
+   .. automethod:: GPS.File.other_file
+
+   .. automethod:: GPS.File.project
+
+   .. automethod:: GPS.File.remove_property
+
+   .. automethod:: GPS.File.search
+
+   .. automethod:: GPS.File.search_next
+
+   .. automethod:: GPS.File.set_property
+
+   .. automethod:: GPS.File.used_by
+
+   .. automethod:: GPS.File.uses
+
+:class:`GPS.FileContext`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: FileContext
+
+   .. inheritance-diagram:: GPS.FileContext
+
+   .. automethod:: GPS.FileContext.__init__
+
+   .. automethod:: GPS.FileContext.directory
+
+   .. automethod:: GPS.FileContext.file
+
+   .. automethod:: GPS.FileContext.files
+
+   .. automethod:: GPS.FileContext.location
+
+   .. automethod:: GPS.FileContext.project
+
+:class:`GPS.FileLocation`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: FileLocation
+
+   
+
+   .. automethod:: GPS.FileLocation.__init__
+
+   .. automethod:: GPS.FileLocation.column
+
+   .. automethod:: GPS.FileLocation.file
+
+   .. automethod:: GPS.FileLocation.line
+
+:class:`GPS.GUI`
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: GUI
+
+   
+
+   .. automethod:: GPS.GUI.__init__
+
+   .. automethod:: GPS.GUI.destroy
+
+   .. automethod:: GPS.GUI.hide
+
+   .. automethod:: GPS.GUI.is_sensitive
+
+   .. automethod:: GPS.GUI.pywidget
+
+   .. automethod:: GPS.GUI.set_sensitive
+
+   .. automethod:: GPS.GUI.show
+
+:class:`GPS.HTML`
+^^^^^^^^^^^^^^^^^
+
+.. autoclass:: HTML
+
+   
+
+   .. automethod:: GPS.HTML.add_doc_directory
+
+   .. automethod:: GPS.HTML.browse
+
+:class:`GPS.Help`
+^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Help
+
+   
+
+   .. automethod:: GPS.Help.__init__
+
+   .. automethod:: GPS.Help.file
+
+   .. automethod:: GPS.Help.getdoc
+
+   .. automethod:: GPS.Help.reset
+
+:class:`GPS.Hook`
+^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Hook
+
+   
+
+   .. automethod:: GPS.Hook.__init__
+
+   .. automethod:: GPS.Hook.add
+
+   .. automethod:: GPS.Hook.describe_functions
+
+   .. automethod:: GPS.Hook.list
+
+   .. automethod:: GPS.Hook.list_types
+
+   .. automethod:: GPS.Hook.register
+
+   .. automethod:: GPS.Hook.remove
+
+   .. automethod:: GPS.Hook.run
+
+   .. automethod:: GPS.Hook.run_until_failure
+
+   .. automethod:: GPS.Hook.run_until_success
+
+:class:`GPS.Invalid_Argument`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Invalid_Argument
+
+   .. inheritance-diagram:: GPS.Invalid_Argument
+
+:class:`GPS.Locations`
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Locations
+
+   
+
+   .. automethod:: GPS.Locations.add
+
+   .. automethod:: GPS.Locations.dump
+
+   .. automethod:: GPS.Locations.list_categories
+
+   .. automethod:: GPS.Locations.list_locations
+
+   .. automethod:: GPS.Locations.parse
+
+   .. automethod:: GPS.Locations.remove_category
+
+   .. automethod:: GPS.Locations.set_sort_order_hint
+
+:class:`GPS.Logger`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Logger
+
+   
+
+
+   .. autoattribute:: GPS.Logger.count
+
+
+   .. automethod:: GPS.Logger.__init__
+
+   .. automethod:: GPS.Logger.check
+
+   .. automethod:: GPS.Logger.log
+
+   .. automethod:: GPS.Logger.set_active
+
+:class:`GPS.MDI`
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: MDI
+
+   
+
+   .. automethod:: GPS.MDI.add
+
+   .. automethod:: GPS.MDI.children
+
+   .. automethod:: GPS.MDI.current
+
+   .. automethod:: GPS.MDI.dialog
+
+   .. automethod:: GPS.MDI.file_selector
+
+   .. automethod:: GPS.MDI.get
+
+   .. automethod:: GPS.MDI.get_by_child
+
+   .. automethod:: GPS.MDI.hide
+
+   .. automethod:: GPS.MDI.input_dialog
+
+   .. automethod:: GPS.MDI.save_all
+
+   .. automethod:: GPS.MDI.show
+
+   .. automethod:: GPS.MDI.yes_no_dialog
+
+:class:`GPS.MDIWindow`
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: MDIWindow
+
+   .. inheritance-diagram:: GPS.MDIWindow
+
+   .. automethod:: GPS.MDIWindow.__init__
+
+   .. automethod:: GPS.MDIWindow.float
+
+   .. automethod:: GPS.MDIWindow.get_child
+
+   .. automethod:: GPS.MDIWindow.is_floating
+
+   .. automethod:: GPS.MDIWindow.name
+
+   .. automethod:: GPS.MDIWindow.next
+
+   .. automethod:: GPS.MDIWindow.raise_window
+
+   .. automethod:: GPS.MDIWindow.rename
+
+   .. automethod:: GPS.MDIWindow.split
+
+:class:`GPS.Menu`
+^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Menu
+
+   .. inheritance-diagram:: GPS.Menu
+
+   .. automethod:: GPS.Menu.__init__
+
+   .. automethod:: GPS.Menu.create
+
+   .. automethod:: GPS.Menu.get
+
+   .. automethod:: GPS.Menu.get_active
+
+   .. automethod:: GPS.Menu.rename
+
+   .. automethod:: GPS.Menu.set_active
+
+:class:`GPS.Message`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Message
+
+   
+
+   .. automethod:: GPS.Message.__init__
+
+   .. automethod:: GPS.Message.execute_action
+
+   .. automethod:: GPS.Message.get_category
+
+   .. automethod:: GPS.Message.get_column
+
+   .. automethod:: GPS.Message.get_file
+
+   .. automethod:: GPS.Message.get_flags
+
+   .. automethod:: GPS.Message.get_line
+
+   .. automethod:: GPS.Message.get_mark
+
+   .. automethod:: GPS.Message.get_text
+
+   .. automethod:: GPS.Message.list
+
+   .. automethod:: GPS.Message.remove
+
+   .. automethod:: GPS.Message.set_action
+
+   .. automethod:: GPS.Message.set_sort_order_hint
+
+   .. automethod:: GPS.Message.set_style
+
+   .. automethod:: GPS.Message.set_subprogram
+
+:class:`GPS.Missing_Arguments`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Missing_Arguments
+
+   .. inheritance-diagram:: GPS.Missing_Arguments
+
+:class:`GPS.Preference`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Preference
+
+   
+
+   .. automethod:: GPS.Preference.__init__
+
+   .. automethod:: GPS.Preference.create
+
+   .. automethod:: GPS.Preference.get
+
+   .. automethod:: GPS.Preference.set
+
+:class:`GPS.Process`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Process
+
+   .. inheritance-diagram:: GPS.Process
+
+   .. automethod:: GPS.Process.__init__
+
+   .. automethod:: GPS.Process.expect
+
+   .. automethod:: GPS.Process.get_result
+
+   .. automethod:: GPS.Process.interrupt
+
+   .. automethod:: GPS.Process.kill
+
+   .. automethod:: GPS.Process.send
+
+   .. automethod:: GPS.Process.set_size
+
+   .. automethod:: GPS.Process.wait
+
+:class:`GPS.Project`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Project
+
+   
+
+   .. automethod:: GPS.Project.__init__
+
+   .. automethod:: GPS.Project.add_attribute_values
+
+   .. automethod:: GPS.Project.add_dependency
+
+   .. automethod:: GPS.Project.add_main_unit
+
+   .. automethod:: GPS.Project.add_predefined_paths
+
+   .. automethod:: GPS.Project.add_source_dir
+
+   .. automethod:: GPS.Project.ancestor_deps
+
+   .. automethod:: GPS.Project.clear_attribute_values
+
+   .. automethod:: GPS.Project.dependencies
+
+   .. automethod:: GPS.Project.file
+
+   .. automethod:: GPS.Project.generate_doc
+
+   .. automethod:: GPS.Project.get_attribute_as_list
+
+   .. automethod:: GPS.Project.get_attribute_as_string
+
+   .. automethod:: GPS.Project.get_executable_name
+
+   .. automethod:: GPS.Project.get_property
+
+   .. automethod:: GPS.Project.get_tool_switches_as_list
+
+   .. automethod:: GPS.Project.get_tool_switches_as_string
+
+   .. automethod:: GPS.Project.is_modified
+
+   .. automethod:: GPS.Project.languages
+
+   .. automethod:: GPS.Project.load
+
+   .. automethod:: GPS.Project.name
+
+   .. automethod:: GPS.Project.object_dirs
+
+   .. automethod:: GPS.Project.properties_editor
+
+   .. automethod:: GPS.Project.recompute
+
+   .. automethod:: GPS.Project.remove_attribute_values
+
+   .. automethod:: GPS.Project.remove_dependency
+
+   .. automethod:: GPS.Project.remove_property
+
+   .. automethod:: GPS.Project.remove_source_dir
+
+   .. automethod:: GPS.Project.rename
+
+   .. automethod:: GPS.Project.root
+
+   .. automethod:: GPS.Project.scenario_variables
+
+   .. automethod:: GPS.Project.scenario_variables_cmd_line
+
+   .. automethod:: GPS.Project.scenario_variables_values
+
+   .. automethod:: GPS.Project.search
+
+   .. automethod:: GPS.Project.set_attribute_as_string
+
+   .. automethod:: GPS.Project.set_property
+
+   .. automethod:: GPS.Project.set_scenario_variable
+
+   .. automethod:: GPS.Project.source_dirs
+
+   .. automethod:: GPS.Project.sources
+
+   .. automethod:: GPS.Project.update_xref
+
+:class:`GPS.ProjectTemplate`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ProjectTemplate
+
+   
+
+   .. automethod:: GPS.ProjectTemplate.add_templates_dir
+
+:class:`GPS.ReferencesCommand`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ReferencesCommand
+
+   .. inheritance-diagram:: GPS.ReferencesCommand
+
+   .. automethod:: GPS.ReferencesCommand.get_result
+
+:class:`GPS.Revision`
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Revision
+
+   
+
+   .. automethod:: GPS.Revision.add_link
+
+   .. automethod:: GPS.Revision.add_log
+
+   .. automethod:: GPS.Revision.add_revision
+
+   .. automethod:: GPS.Revision.clear_view
+
+:class:`GPS.Style`
+^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Style
+
+   
+
+   .. automethod:: GPS.Style.__init__
+
+   .. automethod:: GPS.Style.get_background
+
+   .. automethod:: GPS.Style.get_foreground
+
+   .. automethod:: GPS.Style.get_in_speedbar
+
+   .. automethod:: GPS.Style.get_name
+
+   .. automethod:: GPS.Style.list
+
+   .. automethod:: GPS.Style.set_background
+
+   .. automethod:: GPS.Style.set_foreground
+
+   .. automethod:: GPS.Style.set_in_speedbar
+
+:class:`GPS.SwitchesChooser`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: SwitchesChooser
+
+   .. inheritance-diagram:: GPS.SwitchesChooser
+
+   .. automethod:: GPS.SwitchesChooser.__init__
+
+   .. automethod:: GPS.SwitchesChooser.get_cmd_line
+
+   .. automethod:: GPS.SwitchesChooser.set_cmd_line
+
+:class:`GPS.Task`
+^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Task
+
+   
+
+   .. automethod:: GPS.Task.interrupt
+
+   .. automethod:: GPS.Task.list
+
+   .. automethod:: GPS.Task.name
+
+   .. automethod:: GPS.Task.pause
+
+   .. automethod:: GPS.Task.resume
+
+   .. automethod:: GPS.Task.status
+
+:class:`GPS.Timeout`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Timeout
+
+   
+
+   .. automethod:: GPS.Timeout.__init__
+
+   .. automethod:: GPS.Timeout.remove
+
+:class:`GPS.ToolButton`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ToolButton
+
+   .. inheritance-diagram:: GPS.ToolButton
+
+   .. automethod:: GPS.ToolButton.__init__
+
+:class:`GPS.Toolbar`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Toolbar
+
+   .. inheritance-diagram:: GPS.Toolbar
+
+   .. automethod:: GPS.Toolbar.__init__
+
+   .. automethod:: GPS.Toolbar.append
+
+   .. automethod:: GPS.Toolbar.get
+
+   .. automethod:: GPS.Toolbar.get_by_pos
+
+   .. automethod:: GPS.Toolbar.insert
+
+:class:`GPS.Unexpected_Exception`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Unexpected_Exception
+
+   .. inheritance-diagram:: GPS.Unexpected_Exception
+
+:class:`GPS.VCS`
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: VCS
+
+   
+
+   .. automethod:: GPS.VCS.annotate
+
+   .. automethod:: GPS.VCS.annotations_parse
+
+   .. automethod:: GPS.VCS.commit
+
+   .. automethod:: GPS.VCS.diff_head
+
+   .. automethod:: GPS.VCS.diff_working
+
+   .. automethod:: GPS.VCS.get_current_vcs
+
+   .. automethod:: GPS.VCS.get_log_file
+
+   .. automethod:: GPS.VCS.get_status
+
+   .. automethod:: GPS.VCS.log
+
+   .. automethod:: GPS.VCS.log_parse
+
+   .. automethod:: GPS.VCS.remove_annotations
+
+   .. automethod:: GPS.VCS.repository_dir
+
+   .. automethod:: GPS.VCS.repository_path
+
+   .. automethod:: GPS.VCS.revision_parse
+
+   .. automethod:: GPS.VCS.set_reference
+
+   .. automethod:: GPS.VCS.status_parse
+
+   .. automethod:: GPS.VCS.supported_systems
+
+   .. automethod:: GPS.VCS.update
+
+   .. automethod:: GPS.VCS.update_parse
+
+:class:`GPS.Vdiff`
+^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Vdiff
+
+   
+
+   .. automethod:: GPS.Vdiff.__init__
+
+   .. automethod:: GPS.Vdiff.close_editors
+
+   .. automethod:: GPS.Vdiff.create
+
+   .. automethod:: GPS.Vdiff.files
+
+   .. automethod:: GPS.Vdiff.get
+
+   .. automethod:: GPS.Vdiff.list
+
+   .. automethod:: GPS.Vdiff.recompute
+
+:class:`GPS.XMLViewer`
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: XMLViewer
+
+   
+
+   .. automethod:: GPS.XMLViewer.__init__
+
+   .. automethod:: GPS.XMLViewer.create_metric
+
+   .. automethod:: GPS.XMLViewer.parse
+
+   .. automethod:: GPS.XMLViewer.parse_string

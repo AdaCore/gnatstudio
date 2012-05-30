@@ -22,6 +22,7 @@ Using the GNAT Programming Studio
    remote
    extending
    environment
+   generated/GPS
    license
 
 Indices and tables
