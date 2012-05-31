@@ -164,6 +164,13 @@ package body Project_Explorers is
    No_Match     : constant Search_Status := 0;
    Unknown      : constant Search_Status := -1;
 
+   package Project_Sets is
+     new Ada.Containers.Indefinite_Hashed_Sets
+       (String, Ada.Strings.Hash, "=");
+
+   Projects : Project_Sets.Set;
+   --  Cache for project passed through search
+
    procedure Nop (X : in out Search_Status) is null;
    --  Do nothing, required for instantiation of string_boolean_hash
 
@@ -186,6 +193,9 @@ package body Project_Explorers is
       --  each matching project, directory or file, an entry is made in this
       --  table (set to true). This then speeds up the traversing of the tree
       --  to find the matching entities.
+      --  Key is
+      --    Base_Name for File and Project
+      --    Display_Full_Name for directories
    end record;
    type Explorer_Search_Context_Access is access all Explorer_Search_Context;
 
@@ -2553,15 +2563,18 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Search_Backward, Give_Focus, Continue);
 
-      package Project_Sets is
-        new Ada.Containers.Indefinite_Hashed_Sets
-             (String, Ada.Strings.Hash, "=");
-
       C        : constant Explorer_Search_Context_Access :=
                    Explorer_Search_Context_Access (Context);
       Explorer : constant Project_Explorer :=
                    Get_Or_Create_Project_View (Kernel, Raise_Window => True);
-      Projects : Project_Sets.Set;
+
+      Full_Name_For_Dirs : constant Boolean := Get_History
+        (Get_History (Explorer.Kernel).all, Show_Absolute_Paths);
+      --  Use full name of directory in search
+
+      function Directory_Name (Dir : Virtual_File) return String;
+      --  Return directory name for search.
+      --  It returns Base_Name or Full_Name depending on Full_Name_For_Dirs
 
       procedure Initialize_Parser;
       --  Compute all the matching files and mark them in the htable
@@ -2571,6 +2584,7 @@ package body Project_Explorers is
 
       procedure Next_Or_Child
         (Name           : String;
+         Key            : String;
          Start          : Gtk_Tree_Iter;
          Check_Match    : Boolean;
          Check_Projects : Boolean;
@@ -2578,9 +2592,11 @@ package body Project_Explorers is
          Finish         : out Boolean);
       pragma Inline (Next_Or_Child);
       --  Move to the next node, starting from a project or directory node by
-      --  name Name.
+      --  name Name and key Key.
+      --  Key may differ from Name for directories, where Key is Full_Name,
+      --  but Name could be Base_Name.
       --  If Check_Match is false, then this subprogram doesn't test if the
-      --  node matches context.
+      --  node's Name matches context.
       --  If Check_Projects is true, then this subprogram maintain set of
       --  projects and process children nodes only for first occurrence of the
       --  project.
@@ -2610,12 +2626,26 @@ package body Project_Explorers is
       --  importing projects (should be 1 if the file is added, -1 if the file
       --  is removed)
 
+      --------------------
+      -- Directory_Name --
+      --------------------
+
+      function Directory_Name (Dir : Virtual_File) return String is
+      begin
+         if Full_Name_For_Dirs then
+            return Dir.Display_Full_Name;
+         else
+            return +Dir.Base_Dir_Name;
+         end if;
+      end Directory_Name;
+
       -------------------
       -- Next_Or_Child --
       -------------------
 
       procedure Next_Or_Child
         (Name           : String;
+         Key            : String;
          Start          : Gtk_Tree_Iter;
          Check_Match    : Boolean;
          Check_Projects : Boolean;
@@ -2630,7 +2660,7 @@ package body Project_Explorers is
             Result := Start;
             Finish := True;
 
-         elsif Get (C.Matches, Name) /= No_Match then
+         elsif Get (C.Matches, Key) /= No_Match then
             if Check_Projects then
                declare
                   Project_Name : constant String :=
@@ -2758,26 +2788,44 @@ package body Project_Explorers is
             begin
                case Get_Node_Type (Explorer.Tree.Model, Start_Node) is
                   when Project_Node_Types =>
-                     Next_Or_Child
-                       (Get_Project_From_Node
-                          (Explorer.Tree.Model,
-                           Kernel, Start_Node, False).Name,
-                        Start_Node,
-                        Context.Include_Projects, True, Tmp, Finish);
+                     declare
+                        Name : constant String :=
+                          Get_Project_From_Node
+                            (Explorer.Tree.Model, Kernel, Start_Node, False)
+                            .Name;
+                     begin
+                        Next_Or_Child
+                          (Name           => Name,
+                           Key            => Name,
+                           Start          => Start_Node,
+                           Check_Match    => Context.Include_Projects,
+                           Check_Projects => True,
+                           Result         => Tmp,
+                           Finish         => Finish);
 
-                     if Finish then
-                        return Tmp;
-                     end if;
+                        if Finish then
+                           return Tmp;
+                        end if;
+                     end;
 
                   when Directory_Node =>
-                     Next_Or_Child
-                       (Get_Directory_From_Node
-                          (Explorer.Tree.Model, Start_Node).Display_Full_Name,
-                        Start_Node,
-                        Context.Include_Directories, False, Tmp, Finish);
-                     if Finish and then Context.Include_Directories then
-                        return Tmp;
-                     end if;
+                     declare
+                        Dir : constant Virtual_File := Get_Directory_From_Node
+                          (Explorer.Tree.Model, Start_Node);
+                     begin
+                        Next_Or_Child
+                          (Name           => Directory_Name (Dir),
+                           Key            => Display_Full_Name (Dir),
+                           Start          => Start_Node,
+                           Check_Match    => Context.Include_Directories,
+                           Check_Projects => False,
+                           Result         => Tmp,
+                           Finish         => Finish);
+
+                        if Finish and then Context.Include_Directories then
+                           return Tmp;
+                        end if;
+                     end;
 
                   when Obj_Directory_Node | Exec_Directory_Node =>
                      Tmp := Start_Node;
@@ -2876,19 +2924,27 @@ package body Project_Explorers is
          Mark_File      : Search_Status;
          Increment      : Search_Status)
       is
-         Dir  : constant Filesystem_String := Dir_Name (File);
-         Iter : Project_Iterator;
+         Parent : constant Virtual_File := Dir (File);
+         Dir    : constant String := Display_Full_Name (Parent);
+         Iter   : Project_Iterator;
 
       begin
-         Set (C.Matches, +Base_Name (File), Mark_File);
+         if File.Is_Directory then
+            --  Use full name of directories to keep them unique
+            Set (C.Matches, Display_Full_Name (File), Mark_File);
+            --  Don't mark parent directory, because project view doesn't
+            --  place directories inside directory
+         else
+            Set (C.Matches, +Base_Name (File), Mark_File);
 
-         --  Mark the number of entries in the directory, so that if a file
-         --  doesn't match we can decrease it later, and finally no longer
-         --  examine the directory
-         if Get (C.Matches, +Dir) /= No_Match then
-            Set (C.Matches, +Dir, Get (C.Matches, +Dir) + Increment);
-         elsif Increment > 0 then
-            Set (C.Matches, +Dir, 1);
+            --  Mark the number of entries in the directory, so that if a file
+            --  doesn't match we can decrease it later, and finally no longer
+            --  examine the directory
+            if Get (C.Matches, Dir) /= No_Match then
+               Set (C.Matches, Dir, Get (C.Matches, Dir) + Increment);
+            elsif Increment > 0 then
+               Set (C.Matches, Dir, 1);
+            end if;
          end if;
 
          if not Project_Marked then
@@ -2925,10 +2981,12 @@ package body Project_Explorers is
            (Get_Project (Kernel), Recursive => True);
          Project_Marked : Boolean := False;
       begin
+         Projects.Clear;
+
          while Current (Iter) /= No_Project loop
+            Project_Marked := False;
 
             if Match (C, Current (Iter).Name) /= -1 then
-               Project_Marked := False;
                Mark_File_And_Projects
                  (File           => Project_Path (Current (Iter)),
                   Project_Marked => Project_Marked,
@@ -2937,18 +2995,36 @@ package body Project_Explorers is
                   Increment      => 1);
             end if;
 
+            if Context.Include_Directories then
+               declare
+                  Sources : constant File_Array := Current (Iter).Source_Dirs;
+               begin
+                  for S in Sources'Range loop
+                     declare
+                        Name : constant String := Directory_Name (Sources (S));
+                     begin
+                        if Match (C, Name) /= -1 then
+                           Mark_File_And_Projects
+                             (File           => Sources (S),
+                              Project_Marked => Project_Marked,
+                              Project        => Current (Iter),
+                              Mark_File      => Search_Match,
+                              Increment      => 1);
+                           Project_Marked  := True;
+                        end if;
+                     end;
+                  end loop;
+               end;
+            end if;
+
             declare
-               Files   : File_Array_Access := Current (Iter).Source_Files;
-               Sources : constant File_Array := Current (Iter).Source_Dirs
-                 & Files.all;
+               Sources : File_Array_Access := Current (Iter).Source_Files;
             begin
-               Project_Marked := False;
                for S in Sources'Range loop
                   declare
-                     Base : constant Filesystem_String :=
-                       Base_Dir_Name (Sources (S));
+                     Base : constant String := Display_Base_Name (Sources (S));
                   begin
-                     if Match (C, +Base) /= -1 then
+                     if Match (C, Base) /= -1 then
                         Mark_File_And_Projects
                           (File           => Sources (S),
                            Project_Marked => Project_Marked,
@@ -2973,7 +3049,7 @@ package body Project_Explorers is
                   end;
                end loop;
 
-               GNATCOLL.VFS.Unchecked_Free (Files);
+               GNATCOLL.VFS.Unchecked_Free (Sources);
             end;
 
             Next (Iter);
