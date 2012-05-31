@@ -17,6 +17,13 @@
    </documentation_file>
 
    <documentation_file>
+      <name>html/users_guide/GPS.html</name>
+      <descr>GPS'extensions for Python</descr>
+      <menu>/Help/Python extensions</menu>
+      <category>Scripts</category>
+   </documentation_file>
+
+   <documentation_file>
       <name>html/users_guide/index.html</name>
       <descr>Using the GNAT Programming Studio</descr>
       <category>GPS</category>

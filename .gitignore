@@ -119,6 +119,7 @@ design/tests/HC01-002-refactor_ro_no_acl/b.adb
 design/tests/HC10-015/t.adb
 design/tests/HC22-012-auto-casing/t.adb
 design/tests/I115-004/locations.xml
+design/tests/L530-024_doc/GPS.rst
 design/tests/aliases.G613-006/a.adb
 design/tests/align.1/a.adb
 design/tests/builder.1/prj/dummy.gpr

@@ -72,6 +72,9 @@ endif
 	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/pygps/*.py) | (cd $(sharedir)/gps; tar xf -)
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
+	$(RM) $(sharedir)/gps/plug-ins/python_doc.py
+	$(RM) $(sharedir)/gps/plug-ins/python_doc.pyc
+	$(RM) $(sharedir)/gps/shell_commands.xml
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - templates/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)

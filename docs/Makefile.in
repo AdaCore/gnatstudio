@@ -26,6 +26,7 @@ install:
 	$(MKDIR) $(docdir)/html
 	$(MKDIR) $(docdir)/pdf
 	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
+	-$(CP) users_guide/GPS.py $(sharedir)/library/GPS_doc.py
 
 	${MKDIR} $(docdir)/html/users_guide/
 	-${CP} -r users_guide/_build/html/* $(docdir)/html/users_guide/
