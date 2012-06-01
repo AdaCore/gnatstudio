@@ -330,6 +330,8 @@ Classes
 
    .. automethod:: GPS.Console.clear_input
 
+   .. automethod:: GPS.Console.copy_clipboard
+
    .. automethod:: GPS.Console.create_link
 
    .. automethod:: GPS.Console.enable_input
@@ -343,6 +345,8 @@ Classes
    .. automethod:: GPS.Console.read
 
    .. automethod:: GPS.Console.readline
+
+   .. automethod:: GPS.Console.select_all
 
    .. automethod:: GPS.Console.write
 
