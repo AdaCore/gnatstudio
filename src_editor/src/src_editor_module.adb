@@ -41,7 +41,6 @@ with Gtk.GEntry;                        use Gtk.GEntry;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
 with Gtk.Main;                          use Gtk.Main;
-with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Rc;                            use Gtk.Rc;
 with Gtk.Size_Group;                    use Gtk.Size_Group;
@@ -134,9 +133,6 @@ package body Src_Editor_Module is
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
-   overriding procedure Tab_Contextual
-     (Child : access Editor_Child_Record;
-      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding function Get_Command_Queue
      (Child : access Editor_Child_Record) return Commands.Command_Queue;
    overriding function Dnd_Data
@@ -190,10 +186,6 @@ package body Src_Editor_Module is
       User   : Kernel_Handle)
       return Node_Ptr;
    --  Support functions for the MDI
-
-   procedure On_Close_Other_Editors
-     (Child : access Gtk_Widget_Record'Class);
-   --  Close all editors except Child
 
    procedure On_Open_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -3683,68 +3675,6 @@ package body Src_Editor_Module is
          return Id.Character_Width;
       end if;
    end Line_Number_Character_Width;
-
-   ----------------------------
-   -- On_Close_Other_Editors --
-   ----------------------------
-
-   procedure On_Close_Other_Editors
-     (Child : access Gtk_Widget_Record'Class)
-   is
-      C    : constant MDI_Child := MDI_Child (Child);
-      Iter : Child_Iterator := First_Child (Get_MDI (C));
-      Current : MDI_Child;
-
-      package MDI_Child_List is new Ada.Containers.Doubly_Linked_Lists
-        (MDI_Child);
-
-      Children_To_Close : MDI_Child_List.List;
-   begin
-      --  MDI iterators might become invalid as children as being destroyed,
-      --  so first fill up a list of children to close...
-
-      loop
-         Current := Get (Iter);
-         exit when Current = null;
-
-         Next (Iter);
-
-         if Current /= C
-           and then Current.all in Editor_Child_Record'Class
-         then
-            Children_To_Close.Append (Current);
-         end if;
-      end loop;
-
-      --  ... and then close all elements in this list.
-
-      declare
-         C : MDI_Child_List.Cursor;
-      begin
-         C := Children_To_Close.First;
-         while MDI_Child_List.Has_Element (C) loop
-            Close_Child (MDI_Child_List.Element (C), Force => False);
-            MDI_Child_List.Next (C);
-         end loop;
-      end;
-   end On_Close_Other_Editors;
-
-   --------------------
-   -- Tab_Contextual --
-   --------------------
-
-   overriding procedure Tab_Contextual
-     (Child : access Editor_Child_Record;
-      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      Item : Gtk_Menu_Item;
-   begin
-      Gtk_New (Item, "Close all other editors");
-      Widget_Callback.Object_Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         On_Close_Other_Editors'Access, Child);
-      Append (Menu, Item);
-   end Tab_Contextual;
 
    -----------------------
    -- Get_Command_Queue --
