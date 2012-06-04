@@ -189,8 +189,8 @@ package body Debugger.Gdb is
    --  Used to parse output of -symbol-list-lines command
 
    Info_Tasks_Pattern : constant Pattern_Matcher := Compile
-     ("^(.+ID|\* +[0-9]+| +[0-9]+) +(TID|[^ ]+)"
-      & " +(P-ID|.....) +(Pri| *[0-9]+) +(State|.*)  (Name|[^ ]*)$");
+     ("^(.+ID|\* +[0-9]+| +[0-9]+) +(TID|[^ ]+) +(P-ID|.... )"
+      & "(Pri| *[0-9]+) +(State|.* ) (Name|.*)$");
    --  Used to parse the output of "info tasks"
 
    procedure Language_Filter
