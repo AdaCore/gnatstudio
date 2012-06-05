@@ -282,11 +282,19 @@ package body GNATTest_Module is
       pragma Unreferenced (Command);
       use type Ada.Calendar.Time;
 
+      Flags    : constant GPS.Kernel.Messages.Message_Flags :=
+        (GPS.Kernel.Messages.Locations => True,
+         others                        => False);
+
+      Category : constant String := "GNATtest";
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Messages : constant GPS.Kernel.Messages.Messages_Container_Access :=
         GPS.Kernel.Messages.Get_Messages_Container (Kernel);
       Cursor   : Source_Entity_Maps.Cursor := Map.Source_Map.First;
    begin
+      GPS.Kernel.Messages.Get_Messages_Container (Kernel).Remove_Category
+        (Category, Flags);
+
       while Source_Entity_Maps.Has_Element (Cursor) loop
          declare
             use type GNATCOLL.VFS.Filesystem_String;
@@ -300,7 +308,7 @@ package body GNATTest_Module is
             if Test.File_Time_Stamp = Item.Stamp then
                GPS.Kernel.Messages.Simple.Create_Simple_Message
                  (Container => Messages,
-                  Category  => "GNATtest",
+                  Category  => Category,
                   File      => File,
                   Line      => Key.Line,
                   Column    => Basic_Types.Visible_Column_Type (Key.Column),
@@ -308,8 +316,7 @@ package body GNATTest_Module is
                     To_String (Key.Test_Case_Name) & " " &
                     To_String (Key.Subprogram_Name),
                   Weight    => 1,
-                  Flags     => (GPS.Kernel.Messages.Locations => True,
-                                others => <>));
+                  Flags     => Flags);
             end if;
 
             Source_Entity_Maps.Next (Cursor);
