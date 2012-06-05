@@ -50,7 +50,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s" columns="2" lines="2">
          <title column="1" line="1" >Compilation</title>
-         <check label="Force Recompilation" switch="-f" column="1"
+         <check label="Ignore cached results" switch="-f" column="1"
                 tip="All actions are redone entirely, including compilation and proof" />
          <check label="Report Proved VCs" switch="--report=all" column="1"
                 tip="Report the status of all VCs, including those proved" />
@@ -141,7 +141,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s" columns="1" lines="1">
          <title column="1" line="1" >Compilation</title>
-         <check label="Force Recompilation" switch="-f" column="1"
+         <check label="Ignore cached results" switch="-f" column="1"
                 tip="All actions are redone entirely, including compilation and proof" />
        </switches>
     </target-model>
@@ -168,7 +168,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s" columns="1" lines="1">
          <title column="1" line="1" >Compilation</title>
-         <check label="Force Recompilation" switch="-f" column="1"
+         <check label="Ignore cached results" switch="-f" column="1"
                 tip="All actions are redone entirely, including compilation and proof" />
        </switches>
     </target-model>
