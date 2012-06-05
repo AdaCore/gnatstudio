@@ -2060,11 +2060,11 @@ package body Toolchains is
       end loop;
    end Create_Anonymous_Name;
 
-   -----------------------
-   -- Compute_If_Needed --
-   -----------------------
+   --------------------
+   -- Compute_Always --
+   --------------------
 
-   procedure Compute_If_Needed
+   procedure Compute_Always
      (Manager : access Toolchain_Manager_Record;
       This    : in out Ada_Library_Info)
    is
@@ -2101,10 +2101,12 @@ package body Toolchains is
       end To_Path_Array;
 
    begin
-      if This.Is_Computed then
-         return;
-      else
-         This.Is_Computed := True;
+
+      This.Is_Computed := True;
+
+      if This.Error /= null then
+         Free (This.Error);
+         This.Error := null;
       end if;
 
       declare
@@ -2263,6 +2265,22 @@ package body Toolchains is
          --  This happens typically if the GNATLS process didn't go through
 
          This.Error := new String'(Exception_Message (E));
+   end Compute_Always;
+
+   -----------------------
+   -- Compute_If_Needed --
+   -----------------------
+
+   procedure Compute_If_Needed
+     (Manager : access Toolchain_Manager_Record;
+      This    : in out Ada_Library_Info)
+   is
+   begin
+      if This.Is_Computed then
+         return;
+      else
+         Compute_Always (Manager, This);
+      end if;
    end Compute_If_Needed;
 
    ----------------------
