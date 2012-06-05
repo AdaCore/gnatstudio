@@ -1104,8 +1104,10 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Open_Cmd_Parameters);
          Load_Project (Kernel,
                        Create (Normalize_Pathname (Nth_Arg (Data, 1))),
-                       No_Save => Nth_Arg (Data, 2, False),
-                       Keep_Desktop => Nth_Arg (Data, 3, False));
+                       No_Save      => Nth_Arg (Data, 2, False),
+                       Keep_Desktop => Nth_Arg (Data, 3, False),
+                       Clear        => not Nth_Arg (Data, 3, False));
+
          Set_Return_Value
            (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
 
