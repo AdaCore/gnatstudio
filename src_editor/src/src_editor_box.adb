@@ -2746,7 +2746,10 @@ package body Src_Editor_Box is
                         Filename        => Get_Filename (Editor.Source_Buffer),
                         Lang_Autodetect => True,
                         Success         => Success);
-                     Set_Cursor_Location (Editor, Line, Column, False);
+
+                     if Is_Valid_Position (Editor.Source_Buffer, Line) then
+                        Set_Cursor_Location (Editor, Line, Column, False);
+                     end if;
                   end if;
 
                when others =>
