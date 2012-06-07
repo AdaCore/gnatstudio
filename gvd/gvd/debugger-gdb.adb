@@ -189,8 +189,7 @@ package body Debugger.Gdb is
    --  Used to parse output of -symbol-list-lines command
 
    Info_Tasks_Pattern : constant Pattern_Matcher := Compile
-     ("^(.+ID|\* +[0-9]+| +[0-9]+) +(TID|[^ ]+) +(P-ID|.... )"
-      & "(Pri| *[0-9]+) +(State|.* ) (Name|.*)$");
+     ("^ +(ID) +(TID) +(P-ID) +(Pri) +(State) +(Name).*$");
    --  Used to parse the output of "info tasks"
 
    procedure Language_Filter
@@ -2238,8 +2237,6 @@ package body Debugger.Gdb is
    is
       Output  : constant String :=
         Send (Debugger, "info tasks", Mode => Internal);
-      EOL     : Positive;
-      Index   : Positive := Output'First;
       Matched : Match_Array (0 .. 6);
    begin
       Len := 0;
@@ -2250,30 +2247,70 @@ package body Debugger.Gdb is
          return;
       end if;
 
-      while Index < Output'Last loop
-         EOL := Index;
+      declare
+         Lines : constant Unbounded_String_Array := Split (Output, ASCII.LF);
 
-         while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
-            EOL := EOL + 1;
+         Header_Found : Boolean := False;
+
+         ID_End : Natural;
+         TID_End : Natural;
+         P_ID_End : Natural;
+         Pri_End : Natural;
+         State_Start : Natural;
+         Name_Start : Natural;
+
+      begin
+         for L in Lines'Range loop
+            if not Header_Found then
+               declare
+                  S : constant String := To_String (Lines (L));
+               begin
+                  Match (Info_Tasks_Pattern, S, Matched);
+
+                  if Matched (0) /= No_Match then
+                     Header_Found := True;
+
+                     ID_End := Matched (1).Last - S'First;
+                     TID_End := Matched (2).Last - S'First;
+                     P_ID_End := Matched (3).Last - S'First;
+                     Pri_End := Matched (4).Last - S'First;
+                     State_Start := Matched (5).First - S'First;
+                     Name_Start := Matched (6).First - S'First;
+
+                     Len := Len + 1;
+                     Info (Len) :=
+                       (Num_Fields => 6,
+                        Information =>
+                          (New_String ("ID"),
+                           New_String ("TID"),
+                           New_String ("P-ID"),
+                           New_String ("Pri"),
+                           New_String ("State"),
+                           New_String ("Name")));
+                  end if;
+               end;
+            else
+               declare
+                  S : constant String := To_String (Lines (L));
+                  F : constant Natural := S'First;
+               begin
+                  if S'Length > Name_Start then
+                     Len := Len + 1;
+                     Info (Len) :=
+                       (Num_Fields => 6,
+                        Information =>
+                          (New_String (S (F .. ID_End + F)),
+                           New_String (S (ID_End + F + 1 .. TID_End + F)),
+                           New_String (S (TID_End + F + 1 .. P_ID_End + F)),
+                           New_String (S (P_ID_End + F + 1 .. Pri_End + F)),
+                           New_String
+                             (S (State_Start + F .. Name_Start + F - 1)),
+                           New_String (S (Name_Start + F .. S'Last))));
+                  end if;
+               end;
+            end if;
          end loop;
-
-         Match (Info_Tasks_Pattern, Output (Index .. EOL - 1), Matched);
-
-         if Matched (0) /= No_Match  then
-            Len := Len + 1;
-            Info (Len) :=
-              (Num_Fields => 6,
-               Information =>
-                 (New_String (Output (Matched (1).First .. Matched (1).Last)),
-                  New_String (Output (Matched (2).First .. Matched (2).Last)),
-                  New_String (Output (Matched (3).First .. Matched (3).Last)),
-                  New_String (Output (Matched (4).First .. Matched (4).Last)),
-                  New_String (Output (Matched (5).First .. Matched (5).Last)),
-                  New_String (Output (Matched (6).First .. Matched (6).Last))
-                 ));
-         end if;
-         Index := EOL + 1;
-      end loop;
+      end;
 
       exception
          when Constraint_Error =>
