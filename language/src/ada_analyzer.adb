@@ -1517,6 +1517,7 @@ package body Ada_Analyzer is
          Prev      : Natural := P - 1;
          Start     : Natural;
          New_Lines : Natural;
+         Last_Dot  : Natural;
 
       begin
          --  Do not try to go past '.' and line breaks when reformatting,
@@ -1546,6 +1547,8 @@ package body Ada_Analyzer is
                return Prev;
             end if;
 
+            Last_Dot := Tmp;
+
             while Tmp < Buffer_Last loop
                Tmp := Tmp + 1;
 
@@ -1573,7 +1576,10 @@ package body Ada_Analyzer is
 
                Line_Count := Line_Count + New_Lines;
                return Tmp;
-
+            elsif not Is_Entity_Letter
+              (UTF8_Get_Char (Buffer (Tmp .. Buffer_Last)))
+            then
+               return Last_Dot;
             else
                Start := Tmp;
                Tmp   := End_Of_Word (Tmp);
