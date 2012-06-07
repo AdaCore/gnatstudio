@@ -431,7 +431,7 @@ package body GVD.Consoles is
          Wrap_Mode           => Wrap_Char,
          ANSI_Support        => Active (ANSI_Support),
          Empty_Equals_Repeat => True);
-      Set_Font_And_Colors (Get_View (Console), Fixed_Font => False);
+      Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
 
       Set_Max_Length (Get_History (Kernel).all, 100, "gvd_console");
       Allow_Duplicates
@@ -531,7 +531,7 @@ package body GVD.Consoles is
          Key          => "gvd_tty_console",
          ANSI_Support => True,
          Wrap_Mode    => Wrap_Char);
-      Set_Font_And_Colors (Get_View (Console), Fixed_Font => False);
+      Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
       Widget_Callback.Connect
         (Console, Signal_Destroy, On_Debuggee_Destroy'Access);
 
