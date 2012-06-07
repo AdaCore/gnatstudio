@@ -1304,6 +1304,11 @@ package body Src_Editor_Buffer.Line_Information is
       B : Buffer_Line_Type;
    begin
       Unfold_Line (Buffer, Line);
+
+      if Line not in Buffer.Editable_Lines'Range then
+         return null;
+      end if;
+
       B := Buffer.Editable_Lines (Line).Buffer_Line;
       M := Add_Blank_Lines
         (Buffer, B, Line, Highlight_Category, Text, Name, Column_Id, Info);

@@ -1611,7 +1611,11 @@ package body Src_Editor_Module.Editors is
                Column_Id,
                Info);
 
-            return Create_Editor_Mark (This, Mark);
+            if Mark = null then
+               return Nil_Editor_Mark;
+            else
+               return Create_Editor_Mark (This, Mark);
+            end if;
          end;
       else
          return Nil_Editor_Mark;
