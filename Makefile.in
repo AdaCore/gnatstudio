@@ -86,10 +86,12 @@ endif
 install: install-common
 ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) gps/obj/gps.exe $(bindir)
+	$(INSTALL_PROGRAM) gnatlib/src/obj/gnatinspect.exe $(bindir)
 	$(INSTALL_PROGRAM) spark/obj/gnatspark.exe $(bindir)
 	$(MAKE) -C common/expect install
 else
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
+	$(INSTALL_PROGRAM) gnatlib/src/obj/gnatinspect $(bindir)
 	$(INSTALL_PROGRAM) spark/obj/gnatspark $(bindir)
 endif
 
