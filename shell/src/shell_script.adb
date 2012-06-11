@@ -45,7 +45,6 @@ with Commands.Interactive;      use Commands.Interactive;
 with Histories;                 use Histories;
 with Interactive_Consoles;      use Interactive_Consoles;
 with String_Utils;              use String_Utils;
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package body Shell_Script is
 
@@ -263,6 +262,7 @@ package body Shell_Script is
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Error  : aliased Boolean;
    begin
       if Command = "help" then
          if Number_Of_Arguments (Data) = 0 then
@@ -276,24 +276,17 @@ package body Shell_Script is
                & ASCII.LF);
 
          else
-            Execute_GPS_Shell_Command (Kernel, Create ("Help"));
             declare
-               Usage  : constant String :=
-                 Execute_GPS_Shell_Command
-                   (Kernel,
-                    Parse_String ("Help.getdoc %1 GPS." & Nth_Arg (Data, 1),
-                      Separate_Args));
-
-               --  Needs to be executed separately, or we wouldn't get output
-               --  in Usage.
-               Ignored : constant String := Execute_GPS_Shell_Command
-                 (Kernel => Kernel,
-                  CL     => Parse_String ("Help.reset %2", Separate_Args));
-               pragma Unreferenced (Ignored);
+               --  Can't call python's help(), since that would display the
+               --  help in the Python console, not the GPS shell console
+               N : constant String := Execute_Command
+                  (Lookup_Scripting_Language (Get_Scripts (Kernel), "python"),
+                   "import GPS_doc; GPS_doc." & Nth_Arg (Data, 1) & ".__doc__",
+                   Errors => Error'Access);
             begin
                Insert_Text
-                 (Get_Script (Data), null,
-                  -("Usage: ") & Nth_Arg (Data, 1) & ASCII.LF & Usage);
+                  (Get_Script (Data), null,
+                  N & ASCII.LF);
             end;
          end if;
       end if;
