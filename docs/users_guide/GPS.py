@@ -752,7 +752,7 @@ class BuildTarget(object):
         pass  # implemented in Ada
 
     def execute(self, main_name='', file='', force=False, extra_args='',
-                build_mode='', synchronous=True, directory=''):
+                build_mode='', synchronous=True, directory='', quiet=False):
         """
         Launch the build target:
 
@@ -776,6 +776,7 @@ class BuildTarget(object):
         :param build_mode: A String
         :param synchronous: A Boolean
         :param directory: A String
+        :param quiet: A Boolean
         """
         pass  # implemented in Ada
 

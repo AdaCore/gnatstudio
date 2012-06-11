@@ -52,6 +52,8 @@ package body Builder_Facility_Module.Scripts is
    Shadow_Cst        : aliased constant String := "shadow";
    Background_Cst    : aliased constant String := "background";
    As_String_Cst     : aliased constant String := "as_string";
+   Directory_Cst     : aliased constant String := "directory";
+   Quiet_Cst         : aliased constant String := "quiet";
 
    Target_Class_Name : constant String := "BuildTarget";
 
@@ -64,7 +66,9 @@ package body Builder_Facility_Module.Scripts is
       4 => Force_Cst'Access,
       5 => Extra_Args_Cst'Access,
       6 => Build_Mode_Cst'Access,
-      7 => Synchronous_Cst'Access);
+      7 => Synchronous_Cst'Access,
+      8 => Directory_Cst'Access,
+      9 => Quiet_Cst'Access);
 
    type Target_Property is new Instance_Property_Record with record
       Target_Name : Unbounded_String;
@@ -202,6 +206,7 @@ package body Builder_Facility_Module.Scripts is
             Synchronous : constant Boolean := Nth_Arg (Data, 7, True);
             Directory   : constant Filesystem_String := Nth_Arg (Data, 8, "");
             Dir         : Virtual_File := No_File;
+            Quiet       : constant Boolean := Nth_Arg (Data, 9, False);
 
          begin
             Info := Get_Data
@@ -233,7 +238,7 @@ package body Builder_Facility_Module.Scripts is
                            Mode_Name    => Build_Mode,
                            Force_File   => Info,
                            Extra_Args   => Extra_Args,
-                           Quiet        => False,
+                           Quiet        => Quiet,
                            Synchronous  => Synchronous,
                            Dialog       => Mode,
                            Main         => Create (+Main),
@@ -378,7 +383,7 @@ package body Builder_Facility_Module.Scripts is
       Register_Command
         (Kernel, "execute",
          Minimum_Args => 0,
-         Maximum_Args => 8,
+         Maximum_Args => 9,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
