@@ -1691,9 +1691,17 @@ package body GPS.Kernel.Modules.UI is
                if First + 7 < Last
                  and then Files (First .. First + 7) = "file:///"
                then
-                  File := Create
-                    (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
-                       (URL_Decode (Files (First + 8 .. Last - 1)))));
+                  --  URL could be in forms
+                  --   * file:///path/file.ext
+                  --   * file:///C:\Path\File.ext
+                  --  Let's check both as absolute path:
+                  for From in First + 7 .. First + 8 loop
+                     File := Create
+                       (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
+                        (URL_Decode (Files (From .. Last - 1)))));
+
+                     exit when Is_Regular_File (File);
+                  end loop;
 
                   if Is_Regular_File (File) then
                      if File_Extension (File) = Project_File_Extension then
