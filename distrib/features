@@ -186,6 +186,10 @@ NF-52-K223-021 GPS: Automatic removal of Subversion errors (2011-10-28)
   Errors emitted by Subversion are removed from the Locations view when the
   file containing errors is committed successfully or reverted.
 
+NF-52-K129-003 GPS: drag'n'drop support on linux (2012-06-12)
+
+  Drag and drop file to GPS window now opens it in Linux.
+
 NF-52-K121-030 GPS: Codefix support for unrequired out-mode (2011-10-21)
 
   Added support to automatically fix the warning reported by the GNAT
