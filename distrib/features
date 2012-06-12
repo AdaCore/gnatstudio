@@ -188,7 +188,8 @@ NF-52-K223-021 GPS: Automatic removal of Subversion errors (2011-10-28)
 
 NF-52-K129-003 GPS: drag'n'drop support on linux (2012-06-12)
 
-  Drag and drop file to GPS window now opens it in Linux.
+  Under Linux, you can now drag and drop a file from the explorer or desktop
+  to the GPS window to open it.
 
 NF-52-K121-030 GPS: Codefix support for unrequired out-mode (2011-10-21)
 
