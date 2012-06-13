@@ -128,6 +128,21 @@ that can be found in the menu bar:
   Terminate all your debug sessions. Same as `Terminate Current` if there is
   only one debugger open.
 
+Initialize
+----------
+
+This menu contains one entry per main unit defined in your project, which
+will start a debug session and load the executable associated with the main
+unit selected and if relevant, all corresponding settings: a debug session
+will open the debug perspective and associated debug properties (e.g.
+saved breakpoints, and data display).
+
+*<No Main File>*
+
+  Will initialize the debugger with no executable. You can then use one of
+  the menu items in the `Debug` menu (e.g. `Load File...` or `Attach...`)
+  if needed.
+
 Debug
 -----
 
