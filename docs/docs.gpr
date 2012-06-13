@@ -2,7 +2,7 @@ with "../shared";
 
 project Docs is
 
-   for Languages use ("rest");
+   for Languages use ("rest", "python");
    for Object_Dir use ".";
    for Source_Dirs use ("programers_guide", "tutorial", "users_guide");
 
