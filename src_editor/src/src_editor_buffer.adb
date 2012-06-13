@@ -3200,11 +3200,7 @@ package body Src_Editor_Buffer is
          Unfold_All (Buffer);
          Clear (Buffer);
 
-         --  Clear the side column information
-
          Buffer.Original_Text_Inserted := False;
-
-         Free_Column_Info (Buffer.Editable_Line_Info_Columns);
 
          if Buffer.Editable_Lines /= null then
             for J in Buffer.Editable_Lines'Range loop
