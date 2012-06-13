@@ -161,10 +161,10 @@ package body Xref is
         and then Entity.Entity /= No_Entity
       then
          declare
-            C   : constant References_Cursor :=
-              Bodies (Db.Xref.all, Entity.Entity);
+            C   : References_Cursor;
             Ref : Entity_Reference;
          begin
+            Bodies (Db.Xref.all, Entity.Entity, Cursor => C);
             if Has_Element (C) then
                Ref := Element (C);
 
