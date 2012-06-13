@@ -2,6 +2,7 @@ with "../gnat";
 with "../common/common";
 with "../shared";
 with "../gnatlib/src/gnatcoll";
+with "../gnatlib/src/gnatcoll_sqlite";
 with "../language/language";
 
 project Kernel_Core is
