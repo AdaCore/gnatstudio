@@ -129,7 +129,7 @@ package body GPS.Kernel.Macros is
       Server    : Server_Type := GPS_Server;
       For_Shell : Boolean := False) return String
    is
-      Entity                           : Entity_Information;
+      Entity                           : Entities.Entity_Information;
 
       --  In this routine it is important to *not* quote backslahes on paths.
       --  This is important because on Windows a backslash is the directory
@@ -261,7 +261,7 @@ package body GPS.Kernel.Macros is
                             Has_Entity_Name_Information (Context);
       Is_Area_Context   : constant Boolean := Has_Area_Information (Context);
       Project           : Project_Type;
-      Entity            : Entity_Information;
+      Entity            : Entities.Entity_Information;
       Start, Last       : Integer;
    begin
       if Filter.Requires.Project = 'p'

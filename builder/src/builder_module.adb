@@ -437,14 +437,16 @@ package body Builder_Module is
       Gtk_New (Sep);
       Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
 
-      Register_Menu
-        (Kernel, Build_Menu, -"Recompute _Xref info", "",
-         On_Compute_Xref'Access, Ref_Item => -"Settings");
-      Register_Menu
-        (Kernel, Build_Menu, -"Load Xref info in memory", "",
-         On_Load_Xref_In_Memory'Access, Ref_Item => -"Settings");
+      if not Active (Entities.SQLITE) then
+         Register_Menu
+           (Kernel, Build_Menu, -"Recompute _Xref info", "",
+            On_Compute_Xref'Access, Ref_Item => -"Settings");
+         Register_Menu
+           (Kernel, Build_Menu, -"Load Xref info in memory", "",
+            On_Load_Xref_In_Memory'Access, Ref_Item => -"Settings");
+         Gtk_New (Sep);
+      end if;
 
-      Gtk_New (Sep);
       Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
 
       Gtk_New (Sep);

@@ -35,6 +35,8 @@ with Generic_Stack;
 with Vector_Tries;
 with Virtual_File_Indexes;
 
+with GNATCOLL.Traces;
+
 --  This package contains the list of all files and entities used in the
 --  current project.
 --  Some notes about reference counting: this structure provides reference
@@ -42,6 +44,10 @@ with Virtual_File_Indexes;
 --  reserved for users of these structures and not used internally.
 
 package Entities is
+
+   SQLITE : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create ("Entities.SQLITE", GNATCOLL.Traces.Off);
+   --  Whether to use the sqlite-based cross-reference system
 
    type Source_File_Record is tagged private;
    type Source_File is access all Source_File_Record'Class;
@@ -803,6 +809,9 @@ package Entities is
    function Declaration_As_Reference
      (Entity : Entity_Information) return Entity_Reference;
    --  Return a reference corresponding to the entity's declaration
+
+   function Get_Entity (Ref : Entity_Reference) return Entity_Information;
+   --  Return the entity pointed to by Ref
 
    -------------------------
    -- LI_Handler_Iterator --

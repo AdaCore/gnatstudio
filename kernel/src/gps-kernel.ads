@@ -29,6 +29,7 @@ with GNATCOLL.Scripts;
 with GNATCOLL.Symbols;
 with GNATCOLL.Tribooleans;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNATCOLL.Xref; use GNATCOLL.Xref;
 
 with Glib.Object;  use Glib;
 with Gtk.Window;
@@ -52,6 +53,7 @@ with String_List_Utils;
 with Task_Manager;
 with Toolchains;
 with XML_Utils;
+with Xref;
 
 with GPS.Editors;
 
@@ -289,10 +291,20 @@ package GPS.Kernel is
      (Kernel : access Kernel_Handle_Record) return Entities.Entities_Database;
    --  Return the database used for cross-references
 
+   function Get_Xref_Database
+     (Kernel : access Kernel_Handle_Record)
+      return GNATCOLL.Xref.Xref_Database_Access;
+   --  Return the database used for cross-references
+
    function Get_Construct_Database
      (Kernel : access Kernel_Handle_Record)
       return Language.Tree.Database.Construct_Database_Access;
    --  Return the database storing the construct information
+
+   function Databases
+     (Kernel : access Kernel_Handle_Record)
+      return Standard.Xref.General_Xref_Database;
+   --  Return the entity databases
 
    function Symbols
      (Kernel : access Kernel_Handle_Record)
@@ -911,6 +923,20 @@ private
       Is_Dispatching_Call : GNATCOLL.Tribooleans.Triboolean :=
         GNATCOLL.Tribooleans.Indeterminate;
       --  Whether we clicked on a dispatching call.
+
+      Xref_Entity : GNATCOLL.Xref.Entity_Information;
+      --  The Entity in the GNATCOLL-based world
+
+      Xref_Closest_Ref  : GNATCOLL.Xref.Entity_Reference :=
+        GNATCOLL.Xref.No_Entity_Reference;
+      --  The entity on which the user has clicked
+
+      Xref_Entity_Resolved : Entities.Queries.Find_Decl_Or_Body_Query_Status :=
+        Entities.Queries.Entity_Not_Found;
+      --  Set to True when we have called Get_Entity at least once. This is
+      --  used to differentiate cases where Entity is null because we have
+      --  never tested and cases where it is null because there is none to be
+      --  found.
    end record;
 
    type Selection_Context_Data is access all Selection_Context_Data_Record;
@@ -1015,6 +1041,9 @@ private
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Database : Entities.Entities_Database;
       --  The cross-reference information
+
+      Xref_Db : GNATCOLL.Xref.Xref_Database_Access;
+      --  The database-based cross-reference information
 
       Construct_Database : Language.Tree.Database.Construct_Database_Access;
       --  The construct information

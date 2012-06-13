@@ -48,6 +48,7 @@ with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with GPS.Kernel.Xref;
 
 package body GPS.Kernel.Project is
 
@@ -199,6 +200,22 @@ package body GPS.Kernel.Project is
         (Get_Database (Self.Handle), Reset_File_If_External'Access);
 
       Run_Hook (Self.Handle, Project_View_Changed_Hook);
+
+      --  The view has changed: recompute the cross-reference database
+
+      if Active (Entities.SQLITE) then
+         if Self.Handle.Xref_Db = null then
+            Self.Handle.Xref_Db := new
+              GPS.Kernel.Xref.GPS_Xref_Database;
+         else
+            Self.Handle.Xref_Db.Free;
+         end if;
+
+         GPS.Kernel.Xref.Setup
+           (GPS.Kernel.Xref.GPS_Xref_Database_Access
+              (Self.Handle.Xref_Db), Self.Handle);
+      end if;
+
       Pop_State (Self.Handle);
    end Recompute_View;
 

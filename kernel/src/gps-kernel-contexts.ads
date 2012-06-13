@@ -262,6 +262,24 @@ package GPS.Kernel.Contexts is
    --  the entity, an interactive dialog is opened for the user. Otherwise, the
    --  closest matching entity is returned
 
+   function Get_Entity
+     (Context           : Selection_Context;
+      Ask_If_Overloaded : Boolean := False)
+      return GNATCOLL.Xref.Entity_Information;
+   --  Return the location of the declaration for the entity in Context.
+   --  This information is automatically cached in the context, in case several
+   --  modules need to compute it; However, if you first do a call with
+   --  Ask_If_Overloaded set to False, then one set to True, the latter will
+   --  override the former if we have more precise information.
+   --  No_Entity_Information is returned if the information could not be found.
+   --  Note also that in most cases you should set the busy cursor before
+   --  calling this function, since it might take some time.
+   --  You do not need to free the memory, since it will automatically be freed
+   --  when the context is destroyed.
+   --  If Ask_If_Overloaded is true and there are several possible matches for
+   --  the entity, an interactive dialog is opened for the user. Otherwise, the
+   --  closest matching entity is returned
+
    function Get_Closest_Ref
      (Context : Selection_Context) return Entities.Entity_Reference;
    --  Return the entity reference corresponding to the current context. You

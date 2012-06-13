@@ -80,6 +80,8 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
+
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language.Ada;               use Language.Ada;
@@ -96,6 +98,8 @@ with Std_Dialogs;                use Std_Dialogs;
 with String_Utils;               use String_Utils;
 with Tooltips;                   use Tooltips;
 with Traces;                     use Traces;
+
+with Xref; use Xref;
 
 package body Src_Editor_Box is
 
@@ -301,11 +305,9 @@ package body Src_Editor_Box is
       Editor  : access Source_Editor_Box_Record'Class;
       Context : Selection_Context)
    is
-      Entity   : Entity_Information;
-      Location : File_Location;
-      L        : Editable_Line_Type;
-      C        : Visible_Column_Type;
-      Filename : Virtual_File;
+      Entity   : General_Entity;
+      Location : General_Location;
+      Db       : General_Xref_Database;
 
    begin
       if Get_Filename (Editor) = GNATCOLL.VFS.No_File then
@@ -315,38 +317,20 @@ package body Src_Editor_Box is
          return;
       end if;
 
+      Db := Kernel.Databases;
+
       Push_State (Kernel_Handle (Kernel), Busy);
 
       --  Before getting its entity we check if the LI handler has unresolved
       --  imported references to force updating its references
 
-      if Has_Entity_Name_Information (Context)
-        and then Has_Line_Information (Context)
-        and then Has_File_Information (Context)
-      then
-         declare
-            Handler : LI_Handler;
-            File    : Source_File;
+      Ensure_Context_Up_To_Date (Context);
 
-         begin
-            File :=
-              Get_Or_Create
-                (Db   => Get_Database (Get_Kernel (Context)),
-                 File => File_Information (Context));
+      --  Query the entity
 
-            Handler :=
-              Get_LI_Handler (Get_Database (Kernel), Get_Filename (File));
+      Entity := Get_Context_Entity (Context, Ask_If_Overloaded => True);
 
-            if Has_Unresolved_Imported_Refs (Handler) then
-               Set_Update_Forced (Handler);
-               Update_Xref (File);
-            end if;
-         end;
-      end if;
-
-      Entity := Get_Entity (Context, Ask_If_Overloaded => True);
-
-      if Entity = null then
+      if Entity = No_General_Entity then
          --  Probably means that we either could not locate the ALI file,
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
@@ -362,41 +346,24 @@ package body Src_Editor_Box is
 
       Ref (Entity);
 
+      --  Get the declaration/body
+
       if To_Body then
-         Find_Next_Body
-           (Entity           => Entity,
-            Current_Location =>
-              (File   => Get_Or_Create
-                 (Db   => Get_Database (Get_Kernel (Context)),
-                  File => File_Information (Context)),
-               Line   => GPS.Kernel.Contexts.Line_Information (Context),
-               Column =>
-                 GPS.Kernel.Contexts.Entity_Column_Information (Context)),
-            Location         => Location);
-
-         if Location = Entities.No_File_Location then
-            Location := Get_Declaration_Of (Entity);
-         end if;
-
-         --  Open the file, and reset Source to the new editor in order to
-         --  highlight the region returned by the Xref query.
-
-         L := Convert (Get_Line (Location));
-         C := Get_Column (Location);
-
-         Filename := Get_Filename (Get_File (Location));
-         Trace (Me, "Goto_Declaration_Or_Body: Opening file "
-                & (+Full_Name (Filename)));
+         Location := Get_Body (Db, Entity);
       else
-         --  Open the file, and reset Source to the new editor in order to
-         --  highlight the region returned by the Xref query.
-
-         L := Convert (Get_Line (Get_Declaration_Of (Entity)));
-         C := Get_Column (Get_Declaration_Of (Entity));
-         Filename := Get_Filename (Get_File (Get_Declaration_Of (Entity)));
+         Location := Get_Declaration (Db, Entity);
       end if;
 
-      Go_To_Closest_Match (Kernel, Filename, L, C, Entity);
+      --  Open a file editor at the location found
+
+      if Location /= No_Location then
+         Go_To_Closest_Match
+           (Kernel      => Kernel,
+            Filename    => Location.File,
+            Line        => Convert (Location.Line),
+            Column      => Location.Column,
+            Entity_Name => Get_Name (Db, Entity));
+      end if;
 
       Unref (Entity);
       Pop_State (Kernel_Handle (Kernel));

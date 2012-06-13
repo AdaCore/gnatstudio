@@ -100,7 +100,7 @@ package body GPS.Kernel.Scripts is
          when Contexts =>
             Context : Selection_Context := No_Context;
          when Entities =>
-            Entity  : Entity_Information;
+            Entity  : Standard.Entities.Entity_Information;
          when Projects =>
             Project : Project_Type;
          when File_Locations =>
@@ -318,7 +318,8 @@ package body GPS.Kernel.Scripts is
    --------------
 
    procedure Set_Data
-     (Instance : Class_Instance; Entity : Entity_Information) is
+     (Instance : Class_Instance;
+      Entity : Standard.Entities.Entity_Information) is
    begin
       if not Is_Subclass (Instance, Entity_Class_Name) then
          raise Invalid_Data;
@@ -353,7 +354,8 @@ package body GPS.Kernel.Scripts is
    --------------
 
    function Get_Data
-     (Data : Callback_Data'Class; N : Positive) return Entity_Information
+     (Data : Callback_Data'Class;
+      N    : Positive) return Standard.Entities.Entity_Information
    is
       Class : constant Class_Type := Get_Entity_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance := Nth_Arg
@@ -777,8 +779,8 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Entity : Entity_Information;
-      Ref    : Entity_Reference;
+      Entity : Standard.Entities.Entity_Information;
+      Ref    : Standard.Entities.Entity_Reference;
 
    begin
       if Command = Constructor_Method then
@@ -1056,7 +1058,7 @@ package body GPS.Kernel.Scripts is
          declare
             Iter   : Entity_Iterator;
             Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
-            Ent    : Entity_Information;
+            Ent    : Standard.Entities.Entity_Information;
             Source : Source_File;
          begin
             Set_Return_Value_As_List (Data);
@@ -2386,7 +2388,7 @@ package body GPS.Kernel.Scripts is
 
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
-      Entity : Entity_Information) return Class_Instance
+      Entity : Standard.Entities.Entity_Information) return Class_Instance
    is
       Instance : Class_Instance;
    begin

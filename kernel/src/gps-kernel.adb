@@ -82,6 +82,7 @@ with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Xref;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
@@ -128,7 +129,7 @@ package body GPS.Kernel is
      (Kernel      : access Kernel_Handle_Record'Class;
       File        : Source_File;
       Entity_Name : String;
-      Decl        : in out Entity_Information;
+      Decl        : in out Entities.Entity_Information;
       Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
    --  Open a dialog to ask the user to select among multiple declaration for
    --  the entity with name Entity_Name.
@@ -429,6 +430,22 @@ package body GPS.Kernel is
       return Kernel.Database;
    end Get_Database;
 
+   -----------------------
+   -- Get_Xref_Database --
+   -----------------------
+
+   function Get_Xref_Database
+     (Kernel : access Kernel_Handle_Record)
+      return GNATCOLL.Xref.Xref_Database_Access
+   is
+   begin
+      if Kernel.Xref_Db = null then
+         Kernel.Xref_Db := new GPS.Kernel.Xref.GPS_Xref_Database;
+      end if;
+
+      return Kernel.Xref_Db;
+   end Get_Xref_Database;
+
    ----------------------------
    -- Get_Construct_Database --
    ----------------------------
@@ -443,6 +460,20 @@ package body GPS.Kernel is
 
       return Kernel.Construct_Database;
    end Get_Construct_Database;
+
+   ---------------
+   -- Databases --
+   ---------------
+
+   function Databases
+     (Kernel : access Kernel_Handle_Record)
+      return Standard.Xref.General_Xref_Database
+   is
+   begin
+      return (Entities   => Get_Database (Kernel),
+              Xref       => Get_Xref_Database (Kernel),
+              Constructs => Get_Construct_Database (Kernel));
+   end Databases;
 
    ----------------------
    -- Load_Preferences --
@@ -1163,7 +1194,7 @@ package body GPS.Kernel is
      (Kernel      : access Kernel_Handle_Record'Class;
       File        : Source_File;
       Entity_Name : String;
-      Decl        : in out Entity_Information;
+      Decl        : in out Entities.Entity_Information;
       Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
    is
       procedure Set
@@ -1184,7 +1215,7 @@ package body GPS.Kernel is
       pragma Warnings (Off);
       --  This UC is safe aliasing-wise, so kill warning
       function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Entity_Information);
+        (System.Address, Entities.Entity_Information);
       pragma Warnings (On);
 
       Column_Types : constant GType_Array :=
@@ -1200,7 +1231,7 @@ package body GPS.Kernel is
          4 => new String'("Name"));
 
       Iter      : Entity_Iterator;
-      Candidate : Entity_Information;
+      Candidate : Entities.Entity_Information;
       Button    : Gtk_Widget;
       OK_Button : Gtk_Widget;
       Count     : Natural := 0;

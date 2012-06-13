@@ -143,6 +143,10 @@ package GPS.Kernel.Preferences is
    Tooltip_Color          : Color_Preference;
    Tip_Of_The_Day         : Boolean_Preference;
 
+   SQLITE_Db      : Boolean_Preference;
+   --  Internal preference: whether to use the GNATCOLL.Xref database.
+   --  This preference follows the trace "SQLITE"
+
    -- Messages --
    Message_Highlight              : Color_Preference;
    Error_Src_Highlight            : Color_Preference;

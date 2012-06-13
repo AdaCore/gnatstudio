@@ -3115,11 +3115,24 @@ package body Entities is
       end if;
    end Update_Forced;
 
+   -----------------------
+   -- Set_Update_Forced --
+   -----------------------
+
    procedure Set_Update_Forced
      (Handler : access LI_Handler_Record'Class;
       Value   : Boolean := True) is
    begin
       Handler.Update_Forced := Value;
    end Set_Update_Forced;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity (Ref : Entity_Reference) return Entity_Information is
+   begin
+      return Ref.Entity;
+   end Get_Entity;
 
 end Entities;
