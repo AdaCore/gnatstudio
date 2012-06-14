@@ -83,9 +83,6 @@ package body CodePeer.Module.Bridge is
       Mode              : constant String :=
                             CodePeer.Shell_Commands.Get_Build_Mode
                               (Kernel_Handle (Module.Kernel));
-      CodePeer_Subdir   : constant Boolean :=
-                            Use_CodePeer_Subdir
-                              (Kernel_Handle (Module.Kernel));
       Success           : Boolean;
       CL                : Arg_List;
       Ids               : Natural_Sets.Set;
@@ -95,10 +92,8 @@ package body CodePeer.Module.Bridge is
       CL := Create ("gps_codepeer_bridge");
       Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
 
-      if CodePeer_Subdir then
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), "codepeer");
-      end if;
+      CodePeer.Shell_Commands.Set_Build_Mode
+        (Kernel_Handle (Module.Kernel), "codepeer");
 
       --  Generate command file
 
@@ -135,11 +130,8 @@ package body CodePeer.Module.Bridge is
            new Bridge_Context'(Add_Audit, Module, No_File, Message),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
-
-      if CodePeer_Subdir then
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
-      end if;
+      CodePeer.Shell_Commands.Set_Build_Mode
+        (Kernel_Handle (Module.Kernel), Mode);
    end Add_Audit_Record;
 
    -------------
@@ -296,9 +288,6 @@ package body CodePeer.Module.Bridge is
       Mode               : constant String :=
                              CodePeer.Shell_Commands.Get_Build_Mode
                                (Kernel_Handle (Module.Kernel));
-      CodePeer_Subdir    : constant Boolean :=
-                             Use_CodePeer_Subdir
-                               (Kernel_Handle (Module.Kernel));
       CL                 : Arg_List;
       Success            : Boolean;
       pragma Warnings (Off, Success);
@@ -306,11 +295,8 @@ package body CodePeer.Module.Bridge is
    begin
       CL := Create ("gps_codepeer_bridge");
       Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
-
-      if CodePeer_Subdir then
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), "codepeer");
-      end if;
+      CodePeer.Shell_Commands.Set_Build_Mode
+        (Kernel_Handle (Module.Kernel), "codepeer");
 
       --  Generate command file
 
@@ -332,11 +318,8 @@ package body CodePeer.Module.Bridge is
            (Audit_Trail, Module, Reply_File_Name, Message),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
-
-      if CodePeer_Subdir then
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
-      end if;
+      CodePeer.Shell_Commands.Set_Build_Mode
+        (Kernel_Handle (Module.Kernel), Mode);
    end Review_Message;
 
 end CodePeer.Module.Bridge;

@@ -156,11 +156,6 @@ private
    --  Returns name of the library description file for CodePeer invocation.
    --  Append Suffix to name of file.
 
-   function Use_CodePeer_Subdir (Kernel : Kernel_Handle) return Boolean;
-   --  Returns True if 'codepeer' directory is present in the current object
-   --  directory. This means we need to switch build target to 'codepeer'
-   --  before doing any operations.
-
    --  Style names to be used by children packages
 
    Annotation_Style_Name                : constant String
