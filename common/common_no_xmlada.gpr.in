@@ -15,7 +15,7 @@ project Common is
       for Switches ("test_htables.adb") use ("-g", "-O2", "-gnatwue");
       for Switches ("s-memory.adb") use ("-g", "-O2", "-gnatpg");
 
-      No_Checks := ("-g", "-O2", "-gnat05", "-gnatpn");
+      No_Checks := ("-g", "-O2", "-gnat2012", "-gnatpn");
 
       case Shared.Build is
           when "Production" =>
