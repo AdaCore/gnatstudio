@@ -13,7 +13,7 @@ project Shared is
    for Library_Dir use Gnatcoll_Shared'Library_Dir;
 
    type VCS_Type is ("Subversion", "Git", "Auto");
-   VCS_Kind : VCS_Type := external ("PRJ_VCS", "Subversion");
+   VCS_Kind : VCS_Type := External ("PRJ_VCS", "Subversion");
 
    package IDE is
       case OS is
@@ -32,7 +32,7 @@ project Shared is
          when "Debug" =>
             for Default_Switches ("Ada") use
               ("-g", "-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
-               "-gnatwaCJe", "-gnat05", "-gnateE");
+               "-gnatwaCJe", "-gnat2012", "-gnateE");
 
             for Default_Switches ("C") use
               ("-g", "-O1", "-fdump-xref") & GnatColl_Shared.Gtk_Include;
@@ -41,7 +41,7 @@ project Shared is
             for Default_Switches ("Ada") use
               ("-O2", "-gnatn", 
                "-gnatT3", --  Temporary, L403-023.
-               "-gnatws", "-gnat05");
+               "-gnatws", "-gnat12");
             for Default_Switches ("C") use
               ("-g", "-O2") & GnatColl_Shared.Gtk_Include;
       end case;
