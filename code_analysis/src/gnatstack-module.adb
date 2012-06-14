@@ -724,7 +724,11 @@ package body GNATStack.Module is
    is
    begin
       if not Self.Loaded then
-         null;
+         GPS.Kernel.Console.Insert
+           (Self.Kernel,
+            "No stack usage information loaded.",
+            True,
+            GPS.Kernel.Console.Error);
 
       else
          if Self.Call_Tree_View_MDI /= null then
@@ -763,7 +767,11 @@ package body GNATStack.Module is
 
    begin
       if not Self.Loaded then
-         null;
+         GPS.Kernel.Console.Insert
+           (Self.Kernel,
+            "No stack usage information loaded.",
+            True,
+            GPS.Kernel.Console.Error);
 
       elsif Self.Data.CIs.Is_Empty then
          GPS.Kernel.Console.Insert
