@@ -445,9 +445,8 @@ package body Builder_Module is
            (Kernel, Build_Menu, -"Load Xref info in memory", "",
             On_Load_Xref_In_Memory'Access, Ref_Item => -"Settings");
          Gtk_New (Sep);
+         Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
       end if;
-
-      Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
 
       Gtk_New (Sep);
       Register_Menu (Kernel, Tools, Sep);
