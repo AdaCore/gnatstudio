@@ -328,10 +328,11 @@ package body Xref is
    -------------------
 
    function Documentation
-     (Self       : General_Xref_Database;
-      Handler    : Language_Handlers.Language_Handler;
-      Entity     : General_Entity;
-      Raw_Format : Boolean := False) return String
+     (Self             : General_Xref_Database;
+      Handler          : Language_Handlers.Language_Handler;
+      Entity           : General_Entity;
+      Raw_Format       : Boolean := False;
+      Check_Constructs : Boolean := True) return String
    is
       function Doc_From_Constructs return String;
       function Doc_From_LI return String;
@@ -372,13 +373,19 @@ package body Xref is
                  Decl_End   => Get_Construct (Node).Sloc_End.Index,
                  Language   => Context.Syntax,
                  Format     => Form);
+            Profile : constant String :=
+              Get_Profile (Tree_Lang, Ent, Raw_Format => Raw_Format);
+
          begin
             if Comment /= "" then
-               return Glib.Convert.Escape_Text (Comment)
-                 & ASCII.LF & ASCII.LF
-                 & Get_Profile (Tree_Lang, Ent, Raw_Format => Raw_Format);
+               if Profile /= "" then
+                  return Glib.Convert.Escape_Text (Comment)
+                    & ASCII.LF & ASCII.LF & Profile;
+               else
+                  return Glib.Convert.Escape_Text (Comment);
+               end if;
             else
-               return Get_Profile (Tree_Lang, Ent, Raw_Format => Raw_Format);
+               return Profile;
             end if;
          end;
       end Doc_From_Constructs;
@@ -388,6 +395,7 @@ package body Xref is
       -----------------
 
       function Doc_From_LI return String is
+         Buffer : GNAT.Strings.String_Access;
       begin
          if Entity.Entity /= No_Entity then
             return GNATCOLL.Xref.Documentation
@@ -395,22 +403,38 @@ package body Xref is
                Entity.Entity,
                Context.Syntax,
                Format => Form);
+         else
+            Buffer := Decl.File.Read_File;
+            return Result : constant String := Extract_Comment
+              (Buffer     => Buffer.all,
+               Decl_Start => Decl.Line,
+               Decl_End   => Decl.Line,
+               Language   => Context.Syntax,
+               Format     => Form)
+            do
+               Free (Buffer);
+            end return;
          end if;
-         return "";
       end Doc_From_LI;
 
-      R : constant String := Doc_From_Constructs;
    begin
-      if R = "" then
+      if not Check_Constructs then
          return Doc_From_LI;
+      else
+         declare
+            R : constant String := Doc_From_Constructs;
+         begin
+            if R = "" then
+               return Doc_From_LI;
+            end if;
+            return R;
+         end;
       end if;
 
       --  If still not found, we used to default to also searching just before
       --  the body. But when there is a separate spec, the doc should be there
       --  and when we don't have a separate spec the "declaration" is the
       --  location of the body.
-
-      return R;
    end Documentation;
 
 end Xref;

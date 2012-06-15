@@ -117,12 +117,16 @@ package Xref is
    --  Return the location of the first body for this entity
 
    function Documentation
-     (Self     : General_Xref_Database;
-      Handler  : Language_Handlers.Language_Handler;
-      Entity   : General_Entity;
-      Raw_Format : Boolean := False) return String;
+     (Self             : General_Xref_Database;
+      Handler          : Language_Handlers.Language_Handler;
+      Entity           : General_Entity;
+      Raw_Format       : Boolean := False;
+      Check_Constructs : Boolean := True) return String;
    --  Return the documentation (tooltips,...) for the entity.
    --  If Raw_Format is False, the documentation is formated in HTML.
+   --
+   --  Check_Constructs shoudl be False to disable the use of the constructs
+   --  database.
 
    -------------------------
    -- Life cycle handling --
