@@ -57,7 +57,7 @@ ENTITIES.QUERIES_FILE_GRANULARITY = yes
 ENTITIES.ASSERT                   = no
 
 --  Enable this to activate the use of sql-based entities
-ENTITIES.SQLITE                   = yes
+ENTITIES.SQLITE                   = no
 
 --  Deactivate SQL traces by default
 SQL.*                             = no
