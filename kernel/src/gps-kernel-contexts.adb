@@ -19,11 +19,10 @@ with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
-with GNATCOLL.Xref;
+with GNATCOLL.Traces;
 
 with Basic_Types;        use Basic_Types;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
-with GPS.Kernel.Xref;
 
 with Entities;           use Entities;
 with Entities.Queries;   use Entities.Queries;
@@ -620,7 +619,7 @@ package body GPS.Kernel.Contexts is
       Context.Data.Data.Entity_Column   :=
         Get_Column (Get_Declaration_Of
                     (Entities.Entity_Information (Entity)));
-      Context.Data.Data.Entity          :=
+      Context.Data.Data.Xref_Entity.Old_Entity :=
         Entities.Entity_Information (Entity);
       Context.Data.Data.Entity_Resolved := Success;
 
@@ -748,6 +747,21 @@ package body GPS.Kernel.Contexts is
      (Context           : Selection_Context;
       Ask_If_Overloaded : Boolean := False) return Entities.Entity_Information
    is
+      E : constant Xref.General_Entity := Get_Entity
+        (Context, Ask_If_Overloaded);
+   begin
+      return E.Old_Entity;
+   end Get_Entity;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity
+     (Context           : Selection_Context;
+      Ask_If_Overloaded : Boolean := False)
+      return Xref.General_Entity
+   is
       Never_Examined : constant Boolean :=
                          Context.Data.Data.Entity_Resolved = Entity_Not_Found
                          or else (Context.Data.Data.Entity_Resolved =
@@ -759,13 +773,34 @@ package body GPS.Kernel.Contexts is
       if Context.Data.Data.Entity_Resolved = Overloaded_Entity_Found
         and then not Ask_If_Overloaded
       then
-         return Context.Data.Data.Entity;
+         return Context.Data.Data.Xref_Entity;
 
       elsif Never_Examined
         and then Has_Entity_Name_Information (Context)
         and then Has_Line_Information (Context)
         and then Has_File_Information (Context)
       then
+         --  Query the entity in the new system
+
+         if GNATCOLL.Traces.Active (Entities.SQLITE) then
+            Context.Data.Data.Xref_Closest_Ref.Ref :=
+              Get_Kernel (Context).Databases.Xref.Get_Entity
+                (Name => Entity_Name_Information (Context),
+                 File => File_Information (Context),
+                 Line => Line_Information (Context),
+                 Column =>
+                   Visible_Column (Entity_Column_Information (Context)));
+
+            Context.Data.Data.Xref_Entity.Entity :=
+               Context.Data.Data.Xref_Closest_Ref.Ref.Entity;
+
+            if Context.Data.Data.Xref_Entity.Entity = No_Entity then
+               Context.Data.Data.Entity_Resolved := Success;
+            end if;
+         end if;
+
+         --  Query the entity in the old system
+
          File := Get_Or_Create
            (Db      => Get_Database (Get_Kernel (Context)),
             File    => File_Information (Context),
@@ -775,7 +810,7 @@ package body GPS.Kernel.Contexts is
 
          if File = null then
             Context.Data.Data.Entity_Resolved := Success;
-            return null;
+            return Context.Data.Data.Xref_Entity;
          end if;
 
          Find_Declaration_Or_Overloaded
@@ -785,8 +820,8 @@ package body GPS.Kernel.Contexts is
             Line              => Line_Information (Context),
             Column            => Entity_Column_Information (Context),
             Ask_If_Overloaded => Ask_If_Overloaded,
-            Entity            => Context.Data.Data.Entity,
-            Closest_Ref       => Context.Data.Data.Closest_Ref,
+            Entity            => Context.Data.Data.Xref_Entity.Old_Entity,
+            Closest_Ref       => Context.Data.Data.Xref_Closest_Ref.Old_Ref,
             Status            => Context.Data.Data.Entity_Resolved);
 
          if Context.Data.Data.Entity_Resolved = Fuzzy_Match
@@ -797,72 +832,15 @@ package body GPS.Kernel.Contexts is
             end if;
 
          elsif Context.Data.Data.Entity_Resolved /= Success then
-            Context.Data.Data.Entity := null;
-            Context.Data.Data.Closest_Ref := Entities.No_Entity_Reference;
+            Context.Data.Data.Xref_Entity.Old_Entity := null;
+            Context.Data.Data.Xref_Closest_Ref.Old_Ref :=
+              Entities.No_Entity_Reference;
             Context.Data.Data.Entity_Resolved := Success;
          end if;
 
-         Ref (Context.Data.Data.Entity);
+         Ref (Context.Data.Data.Xref_Entity.Old_Entity);
       else
          Context.Data.Data.Entity_Resolved := Success;
-      end if;
-
-      return Context.Data.Data.Entity;
-   end Get_Entity;
-
-   ----------------
-   -- Get_Entity --
-   ----------------
-
-   function Get_Entity
-     (Context           : Selection_Context;
-      Ask_If_Overloaded : Boolean := False)
-      return GNATCOLL.Xref.Entity_Information
-   is
-      Never_Examined : constant Boolean :=
-        Context.Data.Data.Xref_Entity_Resolved = Entity_Not_Found
-        or else (Context.Data.Data.Xref_Entity_Resolved =
-                   Overloaded_Entity_Found and then Ask_If_Overloaded);
-
-   begin
-      if Context.Data.Data.Xref_Entity_Resolved = Overloaded_Entity_Found
-        and then not Ask_If_Overloaded
-      then
-         return Context.Data.Data.Xref_Entity;
-
-      elsif Never_Examined
-        and then Has_Entity_Name_Information (Context)
-        and then Has_Line_Information (Context)
-        and then Has_File_Information (Context)
-      then
-
-         GPS.Kernel.Xref.Find_Declaration
-           (Db                => Get_Kernel (Context).Xref_Db.all,
-            File              => File_Information (Context),
-            Entity_Name       => Entity_Name_Information (Context),
-            Line              => Line_Information (Context),
-            Column            => Entity_Column_Information (Context),
-            Entity            => Context.Data.Data.Xref_Entity,
-            Closest_Ref       => Context.Data.Data.Xref_Closest_Ref,
-            Status            => Context.Data.Data.Xref_Entity_Resolved);
-
-         if Context.Data.Data.Xref_Entity_Resolved = Fuzzy_Match
-           or else Context.Data.Data.Xref_Entity_Resolved
-             = Overloaded_Entity_Found
-         then
-            if Ask_If_Overloaded then
-               Context.Data.Data.Xref_Entity_Resolved := Success;
-            end if;
-
-         elsif Context.Data.Data.Xref_Entity_Resolved /= Success then
-            Context.Data.Data.Xref_Entity := No_Entity;
-            Context.Data.Data.Xref_Closest_Ref :=
-              GNATCOLL.Xref.No_Entity_Reference;
-            Context.Data.Data.Xref_Entity_Resolved := Success;
-         end if;
-
-      else
-         Context.Data.Data.Xref_Entity_Resolved := Success;
       end if;
 
       return Context.Data.Data.Xref_Entity;
@@ -881,7 +859,7 @@ package body GPS.Kernel.Contexts is
       pragma Unreferenced (Entity);
    begin
       if Context.Data.Data.Entity_Resolved = Success then
-         return Context.Data.Data.Closest_Ref;
+         return Context.Data.Data.Xref_Closest_Ref.Old_Ref;
       else
          return Entities.No_Entity_Reference;
       end if;

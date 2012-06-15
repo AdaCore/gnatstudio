@@ -895,20 +895,9 @@ private
 
       Expression    : GNAT.Strings.String_Access := null;
 
-      Entity       : Entities.Entity_Information := null;
-      Closest_Ref  : Entities.Entity_Reference := Entities.No_Entity_Reference;
-      --  The entity on which the user has clicked
-
       Activities   : String_List_Utils.String_List.List :=
                        String_List_Utils.String_List.Null_List;
       --  Activities
-
-      Entity_Resolved : Entities.Queries.Find_Decl_Or_Body_Query_Status :=
-        Entities.Queries.Entity_Not_Found;
-      --  Set to True when we have called Get_Entity at least once. This is
-      --  used to differentiate cases where Entity is null because we have
-      --  never tested and cases where it is null because there is none to be
-      --  found.
 
       File_Checked    : Boolean := False;
       --  The current file is sometimes a virtual file (one temporarily
@@ -924,14 +913,14 @@ private
         GNATCOLL.Tribooleans.Indeterminate;
       --  Whether we clicked on a dispatching call.
 
-      Xref_Entity : GNATCOLL.Xref.Entity_Information;
+      Xref_Entity : Xref.General_Entity := Xref.No_General_Entity;
       --  The Entity in the GNATCOLL-based world
 
-      Xref_Closest_Ref  : GNATCOLL.Xref.Entity_Reference :=
-        GNATCOLL.Xref.No_Entity_Reference;
+      Xref_Closest_Ref  : Xref.General_Entity_Reference :=
+        Xref.No_General_Entity_Reference;
       --  The entity on which the user has clicked
 
-      Xref_Entity_Resolved : Entities.Queries.Find_Decl_Or_Body_Query_Status :=
+      Entity_Resolved : Entities.Queries.Find_Decl_Or_Body_Query_Status :=
         Entities.Queries.Entity_Not_Found;
       --  Set to True when we have called Get_Entity at least once. This is
       --  used to differentiate cases where Entity is null because we have

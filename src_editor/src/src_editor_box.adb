@@ -331,7 +331,7 @@ package body Src_Editor_Box is
 
       --  Query the entity
 
-      Entity := Get_Context_Entity (Context, Ask_If_Overloaded => True);
+      Entity := Get_Entity (Context, Ask_If_Overloaded => True);
 
       if Entity = No_General_Entity then
          --  Probably means that we either could not locate the ALI file,

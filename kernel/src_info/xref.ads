@@ -75,7 +75,10 @@ package Xref is
 
    --  Entity references
 
-   type General_Entity_Reference is private;
+   type General_Entity_Reference is record
+      Old_Ref : Entities.Entity_Reference := Entities.No_Entity_Reference;
+      Ref : Entity_Reference := No_Entity_Reference;
+   end record;
    No_General_Entity_Reference : constant General_Entity_Reference;
 
    ---------------------------
@@ -145,11 +148,6 @@ private
      (Old_Entity => null,
       Entity     => No_Entity,
       Node       => Language.Tree.Database.Null_Entity_Access);
-
-   type General_Entity_Reference is record
-      Old_Ref : Entities.Entity_Reference := Entities.No_Entity_Reference;
-      Ref : Entity_Reference := No_Entity_Reference;
-   end record;
 
    No_General_Entity_Reference : constant General_Entity_Reference :=
      (Old_Ref => Entities.No_Entity_Reference,

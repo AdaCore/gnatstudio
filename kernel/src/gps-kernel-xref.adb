@@ -16,21 +16,14 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.SQL.Sqlite;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with GPS.Kernel.Console;  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;  use GPS.Kernel.Project;
 
-with Entities.Queries; use Entities.Queries;
-
 package body GPS.Kernel.Xref is
 
    use Xref;
-   use type Entities.Entity_Information;
-   use type Entities.File_Location;
-
-   Me     : constant Trace_Handle := Create ("Entities.Queries", Off);
 
    --------------
    -- On_Error --
@@ -69,79 +62,6 @@ package body GPS.Kernel.Xref is
 
       Self.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all));
    end Setup;
-
-   ----------------------
-   -- Find_Declaration --
-   ----------------------
-
-   --  ??? Should be renamed Find_Entity ? Find ?
-
-   procedure Find_Declaration
-     (Db              : Xref_Database'Class;
-      File            : Virtual_File;
-      Entity_Name     : String := "";
-      Line            : Natural;
-      Column          : Basic_Types.Visible_Column_Type;
-      Entity          : out GNATCOLL.Xref.Entity_Information;
-      Closest_Ref     : out GNATCOLL.Xref.Entity_Reference;
-      Status          : out Entities.Queries.Find_Decl_Or_Body_Query_Status;
-      Check_Decl_Only : Boolean := False;
-      Fuzzy_Expected  : Boolean := False)
-   is
-      --  ??? Fuzzy_Expected should be renamed to fallback_on_constructs
-      pragma Unreferenced (Check_Decl_Only, Fuzzy_Expected);
-
-   begin
-      Closest_Ref := Db.Get_Entity
-        (Name   => Entity_Name,
-         File   => File,
-         Line   => Line,
-         Column => Visible_Column (Column));
-
-      Entity := Closest_Ref.Entity;
-
-      if Entity = No_Entity then
-         Status := Entity_Not_Found;
-         Entity := No_Entity;
-         Trace (Me, "Entity not found");
-         return;
-      end if;
-
-      --  At this point Entity is resolved
-
-      Status := Success;
-
-      --  ??? Do we want to port this?
-
---        if Active (Constructs_Heuristics)
---          and then Db.Construct_Db_Locks = 0
---          and then
---            (Status = Entity_Not_Found
---             or else
---               ((Status = Fuzzy_Match
---                 or else Status = Overloaded_Entity_Found)
---                and then not Fuzzy_Expected))
---        then
-   end Find_Declaration;
-
-   ------------------------
-   -- Get_Context_Entity --
-   ------------------------
-
-   function Get_Context_Entity
-     (Context : Selection_Context;
-      Ask_If_Overloaded : Boolean := False) return General_Entity
-   is
-      E : General_Entity;
-   begin
-      if Active (Entities.SQLITE) then
-         E.Entity := Get_Entity (Context, Ask_If_Overloaded);
-      end if;
-
-      E.Old_Entity := Get_Entity (Context, Ask_If_Overloaded);
-
-      return E;
-   end Get_Context_Entity;
 
    -------------------------------
    -- Ensure_Context_Up_To_Date --

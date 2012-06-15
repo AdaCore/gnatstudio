@@ -21,9 +21,6 @@
 with GNATCOLL.VFS;  use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
 
-with Basic_Types;   use Basic_Types;
-with Entities;
-
 with Xref; use Xref;
 
 package GPS.Kernel.Xref is
@@ -54,38 +51,6 @@ package GPS.Kernel.Xref is
    --  Ensure that the current context has up to date information
    --  ??? This is needed only for the "old" database, and should be removed
    --  when switching to GNATCOLL.Xref.
-
-   function Get_Context_Entity
-     (Context           : Selection_Context;
-      Ask_If_Overloaded : Boolean := False) return General_Entity;
-   --  Get the entity pointed to by the current context
-
-   -----------------------------------
-   -- Utilities working on entities --
-   -----------------------------------
-
-   --  These functions provide high-level facilities working on entities
-
-   procedure Find_Declaration
-     (Db              : Xref_Database'Class;
-      File            : Virtual_File;
-      Entity_Name     : String := "";
-      Line            : Natural;
-      Column          : Basic_Types.Visible_Column_Type;
-      Entity          : out GNATCOLL.Xref.Entity_Information;
-      Closest_Ref     : out GNATCOLL.Xref.Entity_Reference;
-      Status          : out Entities.Queries.Find_Decl_Or_Body_Query_Status;
-      Check_Decl_Only : Boolean := False;
-      Fuzzy_Expected  : Boolean := False);
-   --  Find the entity that is referenced at the given location.
-   --  If Entity_Name is unspecified, GPS will no take this into account
-   --  If Check_Decl_Only is True, then only declarations are checked, not
-   --  any other kind of reference.
-   --  The Handler is computed automatically if not passed as an argument.
-   --  Closest_Ref is the reference to the entity that was the closest to the
-   --  given location.
-   --  If Fuzzy_Expected is true, then the search won't try to fallback to
-   --  the constructs in case of a fuzzy result.
 
 private
 
