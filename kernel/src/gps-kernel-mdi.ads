@@ -336,9 +336,6 @@ package GPS.Kernel.MDI is
      (Glib.Object.GObject_Record, File_Project_Record);
    --  Generic callback that can be used to connect a signal to a kernel
 
-   package Entity_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Entities.Entity_Information);
-
 private
 
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record

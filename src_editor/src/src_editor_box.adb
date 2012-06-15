@@ -111,6 +111,9 @@ package body Src_Editor_Box is
       User_Type   => Source_Editor_Box,
       Setup       => Setup);
 
+   package Entity_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Entities.Entity_Information);
+
    --------------------------
    -- Forward declarations --
    --------------------------
@@ -225,7 +228,7 @@ package body Src_Editor_Box is
       Default_Title : String;
       Filter        : Reference_Kind_Filter;
       Show_Default  : Boolean;
-      Callback      : GPS.Kernel.MDI.Entity_Callback.Simple_Handler);
+      Callback      : Entity_Callback.Simple_Handler);
    --  Create the submenus for dispatching calls
 
    function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean;
@@ -1613,7 +1616,7 @@ package body Src_Editor_Box is
       Default_Title : String;
       Filter        : Reference_Kind_Filter;
       Show_Default  : Boolean;
-      Callback      : GPS.Kernel.MDI.Entity_Callback.Simple_Handler)
+      Callback      : Entity_Callback.Simple_Handler)
    is
       Item   : Gtk_Menu_Item;
       Label  : Gtk_Label;
@@ -1674,7 +1677,7 @@ package body Src_Editor_Box is
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
          Add (Item, Label);
-         GPS.Kernel.MDI.Entity_Callback.Object_Connect
+         Entity_Callback.Object_Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
             Callback, Get_Kernel (Context), E.Callee);
          Add (Menu, Item);
@@ -1737,7 +1740,7 @@ package body Src_Editor_Box is
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
          Add (Item, Label);
-         GPS.Kernel.MDI.Entity_Callback.Object_Connect
+         Entity_Callback.Object_Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
             Callback, Kernel, Get_Entity (Context));
          Add (Menu, Item);
