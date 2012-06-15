@@ -405,6 +405,11 @@ package body Xref is
                Format => Form);
          else
             Buffer := Decl.File.Read_File;
+
+            if Buffer = null then
+               return "";
+            end if;
+
             return Result : constant String := Extract_Comment
               (Buffer     => Buffer.all,
                Decl_Start => Decl.Line,
