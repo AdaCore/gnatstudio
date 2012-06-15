@@ -11,6 +11,7 @@ xml = """<?xml version="1.0" ?><GPS>
    <icon>gps-custom-build</icon>
    <command-line>
       <arg>gnatinspect</arg>
+      <arg>-d</arg>
       <arg>--exit</arg>
       <arg>--db=gnatinspect.db</arg>
       <arg>%eL</arg>
@@ -32,6 +33,7 @@ xml = """<?xml version="1.0" ?><GPS>
     <read-only>TRUE</read-only>
     <command-line>
        <arg>gnatinspect</arg>
+       <arg>-d</arg>
        <arg>--exit</arg>
        <arg>--db=gnatinspect.db</arg>
        <arg>-P%PP</arg>
