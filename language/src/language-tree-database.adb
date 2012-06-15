@@ -233,7 +233,7 @@ package body Language.Tree.Database is
 
             if Success then
                if Raw_Format then
-                  Append (Result, ": ");
+                  Append (Result, " ");
                else
                   Append (Result, "<b>Type:</b>" & ASCII.LF);
                end if;

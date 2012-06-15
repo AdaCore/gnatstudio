@@ -39,6 +39,7 @@ with Ada_Semantic_Tree;       use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Projects;                use Projects;
 with Entities;                use Entities;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with Ada_Semantic_Tree.Lang;  use Ada_Semantic_Tree.Lang;
 with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;

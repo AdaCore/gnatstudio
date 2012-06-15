@@ -82,7 +82,10 @@ package body Xref is
    function Get_Entity
      (Db   : General_Xref_Database;
       Name : String;
-      Loc  : General_Location) return General_Entity is
+      Loc  : General_Location) return General_Entity
+   is
+      use Entities;
+      Source : Entities.Source_File;
    begin
       if Active (Entities.SQLITE) then
          return General_Entity'
@@ -93,18 +96,23 @@ package body Xref is
                Column => Visible_Column (Loc.Column)).Entity,
             others => <>);
       else
-         return General_Entity'
-           (Old_Entity =>
-              Entities.Get_Or_Create
-                (Name  => Entities.Get_Symbols (Db.Entities).Find (Name),
-                 File  => Entities.Get_Or_Create (
-                   Db           => Db.Entities,
-                   File         => Loc.File,
-                   Allow_Create => False),
-                 Line         => Loc.Line,
-                 Column       => Loc.Column,
-                 Allow_Create => False),
-            others => <>);
+         Source := Entities.Get_Or_Create
+           (Db           => Db.Entities,
+            File         => Loc.File,
+            Allow_Create => False);
+         if Source = null then
+            return No_General_Entity;
+         else
+            return General_Entity'
+              (Old_Entity =>
+                 Entities.Get_Or_Create
+                   (Name  => Entities.Get_Symbols (Db.Entities).Find (Name),
+                    File         => Source,
+                    Line         => Loc.Line,
+                    Column       => Loc.Column,
+                    Allow_Create => False),
+               others => <>);
+         end if;
       end if;
    end Get_Entity;
 

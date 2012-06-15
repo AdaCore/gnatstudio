@@ -226,10 +226,23 @@ package body Ada_Semantic_Tree.Lang is
 
          procedure Append_Text (Str : String) is
          begin
-            Append
-              (Result,
-               Str (Str'First .. Str'First - 1 +
-                   Integer'Min (Str'Length, Max_Length - Length)));
+            if Length > Max_Length then
+               null;
+
+            elsif Length + Str'Length > Max_Length then
+               Append
+                 (Result,
+                  Str (Str'First .. Str'First - 4 +
+                      Integer'Min (Str'Length, Max_Length - Length)));
+               Append (Result, "...");
+
+            else
+               Append
+                 (Result,
+                  Str (Str'First .. Str'First - 1 +
+                      Integer'Min (Str'Length, Max_Length - Length)));
+            end if;
+
             Length := Length + Str'Length;
          end Append_Text;
 
@@ -284,7 +297,7 @@ package body Ada_Semantic_Tree.Lang is
                   Append_Text (Glib.Convert.Escape_Text (Text));
                end if;
 
-               return Length < Max_Length;
+               return Length > Max_Length;
             end if;
          end Token_Callback;
 
@@ -463,7 +476,7 @@ package body Ada_Semantic_Tree.Lang is
                      Append
                        (Result,
                         (1 .. Biggest_Affected_Type_Length -
-                           Current_Affected_Type_Length - 1 => ' '));
+                           Current_Affected_Type_Length => ' '));
 
                      Append (Result, " :=");
                      Append_Default_Value (Get_Construct (Sub_Iter).all);
@@ -531,7 +544,7 @@ package body Ada_Semantic_Tree.Lang is
 
             if Success then
                if Raw_Format then
-                  Append (Result, ": ");
+                  Append (Result, " ");
                else
                   Append (Result, "<b>Type: ");
                end if;
