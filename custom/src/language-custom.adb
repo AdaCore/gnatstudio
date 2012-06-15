@@ -59,12 +59,10 @@ package body Language.Custom is
      (Project_Field_Array, Project_Field_Array_Access);
 
    Null_Context : aliased Language_Context :=
-     (Comment_Start_Length          => 0,
-      Comment_End_Length            => 0,
-      Comment_Start                 => "",
-      Comment_End                   => "",
-      New_Line_Comment_Start        => null,
-      New_Line_Comment_Start_Regexp => null,
+     (Syntax => (Comment_Start                 => null,
+                 Comment_End                   => null,
+                 New_Line_Comment_Start        => null,
+                 New_Line_Comment_Start_Regexp => null),
       String_Delimiter              => ASCII.NUL,
       Quote_Character               => ASCII.NUL,
       Constant_Character            => ASCII.NUL,
@@ -286,9 +284,7 @@ package body Language.Custom is
       Tmp_Str                 : String_Ptr;
       Flags                   : Regexp_Flags;
       New_Line_Comment_Start  : String_Ptr;
-      Num_Categories,
-      Comment_Start_Length,
-      Comment_End_Length      : Natural := 0;
+      Num_Categories          : Natural := 0;
       Tmp                     : Project_Field_Array_Access;
       Str                     : Unbounded_String;
       Keyword_Append          : Boolean := False; -- default is override
@@ -591,16 +587,7 @@ package body Language.Custom is
          Lang.Context := Null_Context'Access;
       else
          Comment_Start := Get_Field (Node, "Comment_Start");
-
-         if Comment_Start /= null then
-            Comment_Start_Length := Comment_Start'Length;
-         end if;
-
          Comment_End := Get_Field (Node, "Comment_End");
-
-         if Comment_End /= null then
-            Comment_End_Length := Comment_End'Length;
-         end if;
 
          declare
             NL : constant Node_Ptr :=
@@ -613,39 +600,39 @@ package body Language.Custom is
               and then Lang.Parent /= null
               and then Get_Language_Context (Lang.Parent) /= null
               and then Get_Language_Context
-                (Lang.Parent).New_Line_Comment_Start /= null
+                (Lang.Parent).Syntax.New_Line_Comment_Start /= null
             then
                New_Line_Comment_Start :=
                  new String'(Get_Language_Context
-                             (Lang.Parent).New_Line_Comment_Start.all & '|' &
+                             (Lang.Parent).Syntax.New_Line_Comment_Start.all
+                             & '|' &
                              NL.Value.all);
             else
                New_Line_Comment_Start := NL.Value;
             end if;
          end;
 
-         Lang.Context := new Language_Context
-           (Comment_Start_Length,
-            Comment_End_Length);
-
+         Lang.Context := new Language_Context;
          if Comment_Start /= null then
-            Lang.Context.Comment_Start := Comment_Start.all;
+            Lang.Context.Syntax.Comment_Start :=
+              new String'(Comment_Start.all);
          end if;
 
          if Comment_End /= null then
-            Lang.Context.Comment_End := Comment_End.all;
+            Lang.Context.Syntax.Comment_End :=
+              new String'(Comment_End.all);
          end if;
 
          if New_Line_Comment_Start = null then
-            Lang.Context.New_Line_Comment_Start_Regexp := null;
+            Lang.Context.Syntax.New_Line_Comment_Start_Regexp := null;
          else
             if Contains_Special_Characters (New_Line_Comment_Start.all) then
-               Lang.Context.New_Line_Comment_Start_Regexp :=
+               Lang.Context.Syntax.New_Line_Comment_Start_Regexp :=
                  new Pattern_Matcher'
                    (Compile ("^(" & New_Line_Comment_Start.all & ")"));
 
             else
-               Lang.Context.New_Line_Comment_Start :=
+               Lang.Context.Syntax.New_Line_Comment_Start :=
                  new String'(New_Line_Comment_Start.all);
             end if;
          end if;

@@ -127,9 +127,6 @@ package Ada_Semantic_Tree.Declarations is
       Generic_Context : Instance_Info;
    end record;
 
-   overriding function Get_Documentation
-     (E : access Declaration_View_Record) return UTF8_String;
-
    overriding function Get_Name
      (E : access Declaration_View_Record) return UTF8_String;
 

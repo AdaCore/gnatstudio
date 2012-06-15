@@ -34,24 +34,6 @@ package String_Utils is
       Index    : in out Natural);
    --  Skip to the next blank character
 
-   procedure Skip_Lines
-     (Buffer        : String;
-      Lines         : Integer;
-      Index         : in out Natural;
-      Lines_Skipped : out Natural);
-   --  Skip Lines forward or backward. Index is set to the beginning of a line.
-   --  Lines_Skipped is the number of lines that have actually been skipped.
-   --  Use with Skip_To_Column to go to a specific position in a buffer.
-
-   procedure Skip_To_Column
-     (Buffer    : String;
-      Columns   : Visible_Column_Type := 0;
-      Index     : in out String_Index_Type;
-      Tab_Width : String_Index_Type := 8);
-   --  Assuming Index points to the begining of a line (as is the case after
-   --  Skip_Lines for instance), jump to the specific column on that line.
-   --  This procedure handles tabulations.
-
    procedure Skip_To_Index
      (Buffer        : String;
       Columns       : out Visible_Column_Type;
@@ -75,13 +57,6 @@ package String_Utils is
       Step     : Integer := 1);
    --  Skip every character up to the first occurence of Char in the string.
    --  If no occurrence found, then Index is set over Type_Str'Last.
-
-   procedure Skip_To_String
-     (Type_Str  : String;
-      Index     : in out Natural;
-      Substring : String);
-   --  Skip every character until an occurence of Substring is found.
-   --  Index is set to the first character of the occurence.
 
    procedure Skip_Word
      (Type_Str : String;
@@ -120,23 +95,6 @@ package String_Utils is
    function Is_Blank (C : Character) return Boolean;
    --  Return True if C is a blank character: CR, LF, HT or ' '
 
-   function Is_Blank_Line
-     (Buffer : String; Index : Natural := 0) return Boolean;
-   --  Return True if the line pointed by Index only contains blank characters
-   --  (' ', HT, LF, CR). By default, if Index is 0, then the line considered
-   --  is the first line of the buffer.
-
-   function Line_Start (Buffer : String; P : Natural) return Natural;
-   --  Return the start of the line pointed by P
-
-   function Line_End (Buffer : String; P : Natural) return Natural;
-   --  Return the end of the line pointed by P
-
-   function Next_Line (Buffer : String; P : Natural) return Natural;
-   --  Return the start of the next line or Buffer'Last if the end of the
-   --  buffer is reached.
-   --  Consider using procedure Next_Line below instead.
-
    procedure Next_Line
      (Buffer  : String;
       P       : Natural;
@@ -146,10 +104,6 @@ package String_Utils is
    --  the buffer is reached.
    --  Success is set to True if a new line was found, false otherwise (end of
    --  buffer reached).
-
-   function Previous_Line (Buffer : String; P : Natural) return Natural;
-   --  Return the start of the previous line or Buffer'First if P already
-   --  points to the first line of Buffer.
 
    procedure Parse_Num
      (Type_Str : String;

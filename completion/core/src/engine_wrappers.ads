@@ -19,9 +19,10 @@
 --  with a common interface, whether they come from the completion or the
 --  entities database.
 
+pragma Ada_2012;
+
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Strings; use GNAT.Strings;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Language;               use Language;
@@ -29,6 +30,7 @@ with Language.Tree.Database; use Language.Tree.Database;
 with Basic_Types;            use Basic_Types;
 with Completion;             use Completion;
 with Ada_Semantic_Tree;      use Ada_Semantic_Tree;
+with GPS.Kernel;
 
 package Engine_Wrappers is
 
@@ -49,12 +51,19 @@ package Engine_Wrappers is
      (Proposal : Root_Proposal) return Language_Category is abstract;
    function Get_Caret_Offset
      (Proposal : Root_Proposal) return Character_Offset_Type is abstract;
-   function Get_Documentation
-     (Proposal : Root_Proposal) return String is abstract;
    function Get_Location
      (Proposal : Root_Proposal) return File_Location is abstract;
 
-   procedure Free (X : in out Root_Proposal) is abstract;
+   function Get_Documentation
+     (Proposal : Root_Proposal;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return String is ("");
+   --  Some extra explanation on the proposal, to be displayed in the
+   --  completion dialog. Typically, this will display the documentation for
+   --  the corresponding entity if the proposal is based on a source code
+   --  entity.
+
+   procedure Free (X : in out Root_Proposal) is null;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Proposal'Class, Root_Proposal_Access);
@@ -93,10 +102,12 @@ package Engine_Wrappers is
      (Proposal : Comp_Proposal) return Language_Category;
    overriding function Get_Caret_Offset
      (Proposal : Comp_Proposal) return Character_Offset_Type;
-   overriding function Get_Documentation
-     (Proposal : Comp_Proposal) return String;
    overriding function Get_Location
      (Proposal : Comp_Proposal) return File_Location;
+   overriding function Get_Documentation
+     (Proposal : Comp_Proposal;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return String;
 
    overriding procedure Free (X : in out Comp_Proposal);
 
@@ -133,12 +144,12 @@ package Engine_Wrappers is
      (Proposal : Entity_Proposal) return Language_Category;
    overriding function Get_Caret_Offset
      (Proposal : Entity_Proposal) return Character_Offset_Type;
-   overriding function Get_Documentation
-     (Proposal : Entity_Proposal) return String;
    overriding function Get_Location
      (Proposal : Entity_Proposal) return File_Location;
-
-   overriding procedure Free (X : in out Entity_Proposal);
+   overriding function Get_Documentation
+     (Proposal : Entity_Proposal;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return String;
 
    --  Iterator
 
@@ -161,7 +172,6 @@ private
    type Entity_Proposal is new Root_Proposal with record
       File      : Virtual_File;
       Construct : Simple_Construct_Information;
-      Documentation : String_Access;
    end record;
 
 end Engine_Wrappers;

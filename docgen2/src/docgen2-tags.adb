@@ -23,6 +23,7 @@ with Docgen2_Backend;            use Docgen2_Backend;
 with Docgen2.Scripts;            use Docgen2.Scripts;
 with Docgen2.Utils;              use Docgen2.Utils;
 with String_Utils;               use String_Utils;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 package body Docgen2.Tags is
 

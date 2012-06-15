@@ -301,7 +301,7 @@ package body Completion.Ada.Constructs_Extractor is
       elsif Proposal.From_Accept_Statement then
          return Get_Label (Proposal)
            & " " & Ada_Tree_Lang.Get_Profile
-           (Get_Entity (Proposal.View), -1, True)
+           (Get_Entity (Proposal.View), Raw_Format => True)
            & " do"
            & ASCII.LF
            & "null;"
@@ -425,16 +425,6 @@ package body Completion.Ada.Constructs_Extractor is
          return Get_Construct (Proposal.View).Visibility;
       end if;
    end Get_Visibility;
-
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   overriding function Get_Documentation
-     (Proposal : Construct_Completion_Proposal) return UTF8_String is
-   begin
-      return Proposal.View.Get_Documentation;
-   end Get_Documentation;
 
    ------------------
    -- Get_Location --

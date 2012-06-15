@@ -1625,17 +1625,6 @@ package body Ada_Semantic_Tree.Declarations is
       end if;
    end Configure_View;
 
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   overriding function Get_Documentation
-     (E : access Declaration_View_Record) return UTF8_String
-   is
-   begin
-      return Get_Documentation (Ada_Tree_Lang, E.Entity);
-   end Get_Documentation;
-
    --------------
    -- Get_Name --
    --------------

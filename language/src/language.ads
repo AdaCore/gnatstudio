@@ -22,6 +22,7 @@ with GNAT.Expect;
 with GNAT.Regpat;       use GNAT;
 with GNAT.Strings;
 with GNATCOLL.Symbols;
+with GNATCOLL.Xref;
 with Basic_Types;       use Basic_Types;
 
 package Language is
@@ -204,25 +205,10 @@ package Language is
    -- Language Context --
    ----------------------
 
-   type Language_Context
-     (Comment_Start_Length : Natural;
-      Comment_End_Length   : Natural) is record
-      --  Set any of the length to 0 if there is no such comment
-
-      Comment_Start                 : String (1 .. Comment_Start_Length);
-      --  How comments start for this language. This is for comments that
-      --  do not end on Newline, but with Comment_End.
-
-      Comment_End                   : String (1 .. Comment_End_Length);
-      --  How comments end for this language
-
-      New_Line_Comment_Start        : Strings.String_Access;
-      --  How comments start. These comments end on the next newline
-      --  character. If null, use New_Line_Comment_Start_Regexp instead.
-
-      New_Line_Comment_Start_Regexp : GNAT.Expect.Pattern_Matcher_Access;
-      --  How comments start. These comments end on the next newline
-      --  character. If null, use New_Line_Comment_Start instead.
+   type Language_Context is record
+      Syntax : GNATCOLL.Xref.Language_Syntax;
+      --  Syntax information that is also useful in the context of the
+      --  cross references.
 
       String_Delimiter              : Character;
       --  How strings start and end
@@ -261,48 +247,6 @@ package Language is
 
    procedure Free (Context : in out Language_Context_Access);
    --  Free the memory allocated for Context
-
-   -------------------
-   -- Parsing files --
-   -------------------
-
-   procedure Skip_To_Current_Comment_Block_Start
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : in out Natural);
-   --  Assuming that Index is at the beginning or inside a comment line, moves
-   --  upward in the file till the end of the current block of comments.
-   --  This block is defined as a group of commented out lines, until a
-   --  non-comment line is seen.
-   --  If Index is not at the beginning or inside a comment line, Index is set
-   --  to 0.
-
-   procedure Skip_To_Current_Comment_Block_End
-     (Context            : Language_Context;
-      Buffer             : String;
-      Index              : in out Natural;
-      Ignore_Blank_Lines : Boolean := False);
-   --  Same as Skip_To_Current_Comment_Block_Start, except we move forward
-   --  to the beginning of the last line of comments in the block.
-   --  If Ignore_Blank_Lines is set to True, blocks separated from one another
-   --  with blank lines are considered as a single one.
-
-   procedure Skip_To_Next_Comment_Start
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : in out Natural);
-   --  Skip lines of code until we find the beginning of a comment.
-   --  If we see an empty line first Index is set to 0.
-   --  Likewise if no comment is found before the end of the buffer.
-
-   procedure Skip_To_Previous_Comment_Start
-     (Context      : Language_Context;
-      Buffer       : String;
-      Index        : in out Natural;
-      Allow_Blanks : Boolean := False);
-   --  Skip lines of code (backward) until we find the start of a comment.
-   --  If we see an empty line first Index is set to 0, unless Allow_Blanks.
-   --  Likewise if no comment is found before the beginning of the buffer.
 
    ----------------------
    -- Source Analyzing --

@@ -636,14 +636,20 @@ package body Outline_View.Model is
             if Self.Filter.Show_Profile
               and then Get_Construct (It).Category in Subprogram_Category
             then
-               Set_String
-                 (Value, Escape_Text (Get (Get_Construct (It).Name).all)
-                  & " <span foreground=""#A0A0A0"">"
-                  & Get_Profile
+               declare
+                  Profile : constant String :=
+                    Get_Profile
                     (Get_Tree_Language (Self.File),
                      To_Entity_Access (Entity),
-                     500)
-                  & "</span>");
+                     Raw_Format => True);
+               begin
+                  Set_String
+                    (Value, Escape_Text (Get (Get_Construct (It).Name).all)
+                     & " <span foreground=""#A0A0A0"">"
+                     & Profile (Profile'First ..
+                         Integer'Min (Profile'Last, Profile'First + 500))
+                     & "</span>");
+               end;
             else
                Set_String
                  (Value, Escape_Text (Get (Get_Construct (It).Name).all));

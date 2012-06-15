@@ -62,26 +62,15 @@ package Language.Tree.Database is
      (Tree : access Tree_Language) return Language_Access is abstract;
    --  Return the language associated to this tree.
 
-   function Get_Documentation
-     (Lang          : access Tree_Language;
-      Entity        : Entity_Access;
-      Comment_Found : access Boolean := null) return String;
-   --  This function returns the documentation for the entity given in
-   --  parameter, for the given language. By default, it computes a
-   --  documentation from generic knowledge on the constructs.
-   --  Language-specific computation may give more accurate information.
-   --  This documentation should be in Pango markup language.
-
    function Get_Profile
      (Lang       : access Tree_Language;
       Entity     : Entity_Access;
-      Max_Size   : Integer;
       Raw_Format : Boolean := False) return String;
    --  Return a formatted view of the profile of this construct - if any.
    --  For example, for subprogram, this would return
-   --  [(parameters)][return type] on one line.
-   --  If Max_Size is -1, then the entire profile is returned, otherwise it's
-   --  limited to the given number of parameters.
+   --       [(parameters)][return type]     on one line.
+   --  For a variable, it would be:
+   --       : [type]    on one line
    --  If Raw_Format is true, then no formatting characters or tag will be
    --  inserted (and the profile can be used as-is in e.g. code).
 

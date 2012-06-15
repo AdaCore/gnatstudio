@@ -29,20 +29,18 @@ with Gdk.Display;               use Gdk.Display;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Window;                use Gdk.Window;
-with Glib.Convert;              use Glib.Convert;
 with Glib;                      use Glib;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Style;              use Gtkada.Style;
 
 with Entities.Tooltips_Assistant; use Entities.Tooltips_Assistant;
-with Doc_Utils;                 use Doc_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Language;                  use Language;
 with Language.Icons;            use Language.Icons;
 with Language.Tree;             use Language.Tree;
-with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
+with Xref;                      use Xref;
 
 package body Entities.Tooltips is
 
@@ -51,6 +49,15 @@ package body Entities.Tooltips is
 
    function Get_Pixbuf (Entity : Entity_Information) return Gdk_Pixbuf;
    --  Return the image associated to an entity
+
+   function Draw_Tooltip
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Header      : String;
+      Doc         : String;
+      Pixbuf      : Gdk_Pixbuf;
+      Draw_Border : Boolean;
+      Guess       : Boolean := False) return Cairo.Cairo_Surface;
+   --  Helper function, factorizing the tooltip widget creation
 
    ----------------
    -- Get_Pixbuf --
@@ -61,45 +68,6 @@ package body Entities.Tooltips is
    begin
       return Entity_Icons (Info.Is_Spec, Info.Visibility) (Info.Category);
    end Get_Pixbuf;
-
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   function Get_Documentation
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information) return String
-   is
-      Handler    : constant Language_Handler := Get_Language_Handler (Kernel);
-      Database   : constant Construct_Database_Access :=
-                     Get_Construct_Database (Kernel);
-      Comment_Found : aliased Boolean := False;
-      Documentation : constant String := Get_Tooltip_Documentation
-         (Handler       => Handler,
-          Database      => Database,
-          Entity        => Entity,
-          Comment_Found => Comment_Found'Access);
-   begin
-      if Documentation = "" then
-         --  Try to get the documentation from somewhere else than the
-         --  construct database.
-         return Escape_Text (Get_Documentation (Handler, Entity));
-      elsif Comment_Found then
-         return Documentation;
-      else
-         --  No comment found, try to get them from entities
-         declare
-            Comments : constant String :=
-              Escape_Text (Get_Documentation (Handler, Entity));
-         begin
-            if Comments = "" then
-               return Documentation;
-            else
-               return Comments & ASCII.LF & ASCII.LF & Documentation;
-            end if;
-         end;
-      end if;
-   end Get_Documentation;
 
    ------------------
    -- Get_Instance --
@@ -152,15 +120,6 @@ package body Entities.Tooltips is
    ------------------
 
    function Draw_Tooltip
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Header      : String;
-      Doc         : String;
-      Pixbuf      : Gdk_Pixbuf;
-      Draw_Border : Boolean;
-      Guess       : Boolean := False) return Cairo.Cairo_Surface;
-   --  Helper function, factorizing the tooltip widget creation
-
-   function Draw_Tooltip
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Entity_Information;
       Ref           : Entity_Reference;
@@ -169,7 +128,11 @@ package body Entities.Tooltips is
       Draw_Border   : Boolean) return Cairo.Cairo_Surface
    is
       Doc : constant String :=
-              Get_Instance (Ref) & Get_Documentation (Kernel, Entity);
+        Get_Instance (Ref)
+        & Documentation (Kernel.Databases,
+                         Handler => Kernel.Get_Language_Handler,
+                         Entity  => General_Entity'
+                           (Old_Entity => Entity, others => <>));
    begin
       return Draw_Tooltip
         (Kernel      => Kernel,
@@ -179,6 +142,10 @@ package body Entities.Tooltips is
          Draw_Border => Draw_Border,
          Doc         => Doc);
    end Draw_Tooltip;
+
+   ------------------
+   -- Draw_Tooltip --
+   ------------------
 
    function Draw_Tooltip
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -196,12 +163,18 @@ package body Entities.Tooltips is
          Guess  => False,
          Header => "<b>" & Get (Get_Construct (Entity).Name).all & "</b>",
          Draw_Border => Draw_Border,
-         Doc    => Get_Documentation
-           (Get_Tree_Language (Get_File (Entity)), Entity, null),
+         Doc => Documentation
+           (Kernel.Databases,
+            Handler => Kernel.Get_Language_Handler,
+            Entity  => General_Entity'(Node => Entity, others => <>)),
          Pixbuf => Entity_Icons
            (Construct.Is_Declaration, Construct.Visibility)
            (Construct.Category));
    end Draw_Tooltip;
+
+   ------------------
+   -- Draw_Tooltip --
+   ------------------
 
    function Draw_Tooltip
      (Kernel      : access Kernel_Handle_Record'Class;

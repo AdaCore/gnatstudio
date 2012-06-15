@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Lang;  use Ada_Semantic_Tree.Lang;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
+with Xref;                    use Xref;
 
 package body Engine_Wrappers is
 
@@ -73,17 +73,6 @@ package body Engine_Wrappers is
    begin
       return Get_Caret_Offset (Proposal.P.all);
    end Get_Caret_Offset;
-
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   overriding function Get_Documentation
-     (Proposal : Comp_Proposal)
-      return String is
-   begin
-      return Get_Documentation (Proposal.P.all);
-   end Get_Documentation;
 
    ------------------
    -- Get_Location --
@@ -202,16 +191,6 @@ package body Engine_Wrappers is
       return 0;
    end Get_Caret_Offset;
 
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   overriding function Get_Documentation
-     (Proposal : Entity_Proposal) return String is
-   begin
-      return Proposal.Documentation.all;
-   end Get_Documentation;
-
    ------------------
    -- Get_Location --
    ------------------
@@ -227,15 +206,6 @@ package body Engine_Wrappers is
          Column    => Visible_Column_Type
            (Proposal.Construct.Sloc_Start.Column));
    end Get_Location;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (X : in out Entity_Proposal) is
-   begin
-      Free (X.Documentation);
-   end Free;
 
    ------------
    -- At_End --
@@ -303,9 +273,7 @@ package body Engine_Wrappers is
 
       return Entity_Proposal'
         (File      => File,
-         Construct => Construct,
-         Documentation => new String'
-           (Get_Documentation (Ada_Tree_Lang, Get_Entity (Iter.I))));
+         Construct => Construct);
    end Get_Proposal;
 
    -----------------------------
@@ -317,5 +285,53 @@ package body Engine_Wrappers is
    begin
       return C.P;
    end Get_Underlying_Proposal;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   overriding function Get_Documentation
+     (Proposal : Comp_Proposal;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return String
+   is
+      Loc : constant Completion.File_Location := Proposal.Get_Location;
+      Entity : General_Entity;
+   begin
+      Entity := Xref.Get_Entity
+        (Kernel.Databases,
+         Name  => Proposal.Get_Label,
+         Loc   => (File   => Loc.File_Path,
+                   Line   => Loc.Line,
+                   Column => Loc.Column));
+      return Documentation
+        (Kernel.Databases,
+         Kernel.Get_Language_Handler,
+         Entity);
+   end Get_Documentation;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   overriding function Get_Documentation
+     (Proposal : Entity_Proposal;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return String
+   is
+      Entity : General_Entity;
+   begin
+      Entity := Xref.Get_Entity
+        (Kernel.Databases,
+         Name  => Get (Proposal.Construct.Name).all,
+         Loc   => (File   => Proposal.File,
+                   Line   => Proposal.Construct.Sloc_Start.Line,
+                   Column => Visible_Column_Type
+                     (Proposal.Construct.Sloc_Start.Column)));
+      return Documentation
+        (Kernel.Databases,
+         Kernel.Get_Language_Handler,
+         Entity);
+   end Get_Documentation;
 
 end Engine_Wrappers;

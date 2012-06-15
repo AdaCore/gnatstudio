@@ -228,10 +228,6 @@ package Completion is
    --  completion. In the default implementation, it's always moved at the
    --  end of the inserted text.
 
-   function Get_Documentation
-     (Proposal : Completion_Proposal) return UTF8_String;
-   --  Return the documentation corresponding to the proposal.
-
    function Get_Location (Proposal : Completion_Proposal) return File_Location;
    --  Return the location of the object pointed by the given proposal, null
    --  if none. By default, return Null_Location.
@@ -397,10 +393,6 @@ private
    end record;
 
    overriding function Get_Completion
-     (Proposal : Simple_Completion_Proposal) return UTF8_String;
-   --  See inherited documentation
-
-   overriding function Get_Documentation
      (Proposal : Simple_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 

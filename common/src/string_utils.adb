@@ -24,7 +24,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Scripts.Utils;     use GNATCOLL.Scripts.Utils;
-with GNATCOLL.Utils;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Glib.Unicode;               use Glib, Glib.Unicode;
 
@@ -125,110 +125,6 @@ package body String_Utils is
    end Is_Blank;
 
    -------------------
-   -- Is_Blank_Line --
-   -------------------
-
-   function Is_Blank_Line
-     (Buffer : String; Index : Natural := 0) return Boolean
-   is
-      It : Natural := Index;
-   begin
-      if It = 0 then
-         It := Buffer'First;
-      end if;
-
-      if It >= Buffer'First then
-         while It <= Buffer'Last
-           and then Buffer (It) /= ASCII.CR
-           and then Buffer (It) /= ASCII.LF
-         loop
-            if Buffer (It) /= ' '
-              and then Buffer (It) /= ASCII.HT
-            then
-               return False;
-            end if;
-
-            It := It + 1;
-         end loop;
-      end if;
-
-      return True;
-   end Is_Blank_Line;
-
-   ----------------
-   -- Skip_Lines --
-   ----------------
-
-   procedure Skip_Lines
-     (Buffer        : String;
-      Lines         : Integer;
-      Index         : in out Natural;
-      Lines_Skipped : out Natural)
-   is
-      Index_Saved : Natural;
-   begin
-      Lines_Skipped := 0;
-
-      if Lines >= 0 then
-         while Lines_Skipped < Lines loop
-            Index := Next_Line (Buffer, Index);
-
-            if Index = Buffer'Last then
-               Index := Line_Start (Buffer, Index);
-               exit;
-            end if;
-
-            Lines_Skipped := Lines_Skipped + 1;
-         end loop;
-      else
-         Index_Saved := Line_Start (Buffer, Index);
-
-         while Lines_Skipped < -Lines loop
-            Index := Previous_Line (Buffer, Index);
-
-            exit when Index = Index_Saved;
-
-            Lines_Skipped := Lines_Skipped + 1;
-         end loop;
-      end if;
-   end Skip_Lines;
-
-   --------------------
-   -- Skip_To_Column --
-   --------------------
-
-   procedure Skip_To_Column
-     (Buffer        : String;
-      Columns       : Visible_Column_Type := 0;
-      Index         : in out String_Index_Type;
-      Tab_Width     : String_Index_Type := 8)
-   is
-      Current_Col   : Visible_Column_Type := 1;
-   begin
-      if Buffer = "" then
-         return;
-      end if;
-
-      while Current_Col < Columns
-        and then Natural (Index) <= Buffer'Last
-        and then Buffer (Natural (Index)) /= ASCII.LF
-      loop
-         if Natural (Index) < Buffer'Last
-           and then Buffer (Natural (Index)) = ASCII.HT
-         then
-            Current_Col := Current_Col
-              + Visible_Column_Type
-              (Tab_Width -
-                 ((String_Index_Type (Current_Col) - 1) mod Tab_Width));
-         else
-            Current_Col := Current_Col + 1;
-         end if;
-
-         Index := String_Index_Type (UTF8_Next_Char (Buffer, Natural (Index)));
-      end loop;
-   end Skip_To_Column;
-
-   -------------------
    -- Skip_To_Index --
    -------------------
 
@@ -270,84 +166,9 @@ package body String_Utils is
       return 8;
    end Tab_Width;
 
-   ----------------
-   -- Line_Start --
-   ----------------
-
-   function Line_Start (Buffer : String; P : Natural) return Natural is
-      Index : Natural := Natural'Min (Buffer'Last, P);
-   begin
-      if P <= Buffer'First then
-         return P;
-      end if;
-
-      if Buffer (Index) = ASCII.LF then
-         Index := Index - 1;
-
-         if Buffer (Index) = ASCII.LF then
-            return Index + 1;
-         elsif Buffer (Index) = ASCII.CR then
-            if Index > Buffer'First then
-               Index := Index - 1;
-
-               if Buffer (Index) = ASCII.LF then
-                  return Index + 1;
-               end if;
-            else
-               return Buffer'First;
-            end if;
-         end if;
-
-      elsif Buffer (Index) = ASCII.CR then
-         Index := Index - 1;
-
-         if Buffer (Index) = ASCII.LF then
-            return Index + 1;
-         end if;
-      end if;
-
-      for J in reverse Buffer'First .. Index loop
-         if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
-            if J < Buffer'Last then
-               return J + 1;
-            else
-               return Buffer'Last;
-            end if;
-         end if;
-      end loop;
-
-      return Buffer'First;
-   end Line_Start;
-
-   --------------
-   -- Line_End --
-   --------------
-
-   function Line_End (Buffer : String; P : Natural) return Natural is
-   begin
-      for J in P .. Buffer'Last loop
-         if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
-            return J - 1;
-         end if;
-      end loop;
-
-      return Buffer'Last;
-   end Line_End;
-
    ---------------
    -- Next_Line --
    ---------------
-
-   function Next_Line (Buffer : String; P : Natural) return Natural is
-   begin
-      for J in P .. Buffer'Last - 1 loop
-         if Buffer (J) = ASCII.LF then
-            return J + 1;
-         end if;
-      end loop;
-
-      return Buffer'Last;
-   end Next_Line;
 
    procedure Next_Line
      (Buffer  : String;
@@ -366,20 +187,6 @@ package body String_Utils is
       Success := False;
       Next    := Buffer'Last;
    end Next_Line;
-
-   -------------------
-   -- Previous_Line --
-   -------------------
-
-   function Previous_Line (Buffer : String; P : Natural) return Natural is
-      Index : constant Natural := Line_Start (Buffer, P);
-   begin
-      if Index > Buffer'First then
-         return Line_Start (Buffer, Index - 1);
-      else
-         return Buffer'First;
-      end if;
-   end Previous_Line;
 
    ---------------------
    -- Skip_Hexa_Digit --
@@ -422,24 +229,6 @@ package body String_Utils is
          Index := Index + Step;
       end loop;
    end Skip_To_Char;
-
-   --------------------
-   -- Skip_To_String --
-   --------------------
-
-   procedure Skip_To_String
-     (Type_Str  : String;
-      Index     : in out Natural;
-      Substring : String)
-   is
-      L : constant Natural := Substring'Length - 1;
-   begin
-      while Index + L <= Type_Str'Last
-        and then Type_Str (Index .. Index + L) /= Substring
-      loop
-         Index := Index + 1;
-      end loop;
-   end Skip_To_String;
 
    ---------------
    -- Parse_Num --

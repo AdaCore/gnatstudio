@@ -44,7 +44,6 @@ with Language;               use Language;
 with Language.Tree.Database; use Language.Tree.Database;
 with Refactoring.Services;   use Refactoring.Services;
 with Refactoring.Performers; use Refactoring.Performers;
-with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;

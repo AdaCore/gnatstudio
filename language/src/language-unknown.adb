@@ -116,12 +116,11 @@ package body Language.Unknown is
    Comment_Start_Pattern : aliased Pattern_Matcher := Never_Match;
 
    Unknown_Context : aliased Language_Context :=
-     (Comment_Start_Length          => 0,
-      Comment_End_Length            => 0,
-      Comment_Start                 => "",
-      Comment_End                   => "",
-      New_Line_Comment_Start        => null,
-      New_Line_Comment_Start_Regexp => Comment_Start_Pattern'Access,
+     (Syntax =>
+        (Comment_Start                 => null,
+         Comment_End                   => null,
+         New_Line_Comment_Start        => null,
+         New_Line_Comment_Start_Regexp => Comment_Start_Pattern'Access),
       String_Delimiter              => ASCII.NUL,
       Quote_Character               => ASCII.NUL,
       Constant_Character            => ASCII.NUL,

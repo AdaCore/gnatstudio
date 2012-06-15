@@ -17,8 +17,8 @@
 
 with GPS.Editors;            use GPS.Editors;
 with Language.Tree.Database; use Language.Tree.Database;
-with String_Utils; use String_Utils;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
 package body Refactoring.Buffer_Helpers is
    Me : constant Trace_Handle := Create ("Refactoring");

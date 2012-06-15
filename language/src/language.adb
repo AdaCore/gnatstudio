@@ -43,14 +43,6 @@ package body Language is
    --  considering that Buffer (First) is at line 1 column 1.
    --  Column is a byte index, not a character index.
 
-   type Comment_Type is
-     (No_Comment, Comment_Single_Line, Comment_Multi_Line);
-   function Looking_At_Start_Of_Comment
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : Natural) return Comment_Type;
-   --  Whether we have the start of a comment at Index in Buffer
-
    ---------------------------
    -- Can_Tooltip_On_Entity --
    ---------------------------
@@ -98,8 +90,11 @@ package body Language is
         (Language_Context, Language_Context_Access);
    begin
       if Context /= null then
-         Basic_Types.Unchecked_Free (Context.New_Line_Comment_Start_Regexp);
-         GNAT.Strings.Free (Context.New_Line_Comment_Start);
+         GNAT.Strings.Free (Context.Syntax.Comment_Start);
+         GNAT.Strings.Free (Context.Syntax.Comment_End);
+         Basic_Types.Unchecked_Free
+           (Context.Syntax.New_Line_Comment_Start_Regexp);
+         GNAT.Strings.Free (Context.Syntax.New_Line_Comment_Start);
          Unchecked_Free (Context);
       end if;
    end Free;
@@ -225,20 +220,16 @@ package body Language is
 
       --  Do we have a comment ?
 
-      if Context.Comment_Start_Length /= 0
-        and then Buffer_Length > Context.Comment_Start_Length
-        and then Buffer
-          (First .. First + Context.Comment_Start_Length - 1)
-           = Context.Comment_Start
+      if Context.Syntax.Comment_Start /= null
+        and then Starts_With
+          (Buffer (First .. Buffer'Last), Context.Syntax.Comment_Start.all)
       then
          Entity := Comment_Text;
-         Next_Char := First + Context.Comment_Start_Length;
-         Column := Column + Context.Comment_Start_Length;
+         Next_Char := First + Context.Syntax.Comment_Start'Length;
+         Column := Column + Context.Syntax.Comment_Start'Length;
 
-         while Next_Char + Context.Comment_End_Length - 1 <= Buffer'Last
-           and then Buffer
-             (Next_Char .. Next_Char + Context.Comment_End_Length - 1)
-           /= Context.Comment_End
+         while Starts_With
+           (Buffer (Next_Char .. Buffer'Last), Context.Syntax.Comment_End.all)
          loop
             Tmp := UTF8_Next_Char (Buffer, Next_Char);
             Column := Column + (Tmp - Next_Char);
@@ -252,18 +243,19 @@ package body Language is
             end if;
          end loop;
 
-         Next_Char := Next_Char + Context.Comment_End_Length;
-         Column := Column + Context.Comment_End_Length;
+         Next_Char := Next_Char + Context.Syntax.Comment_End'Length;
+         Column := Column + Context.Syntax.Comment_End'Length;
          return;
       end if;
 
       --  Do we have a comment that ends on newline ?
 
-      if Context.New_Line_Comment_Start /= null then
-         Found := Context.New_Line_Comment_Start.all =
-           Buffer (First .. First + Context.New_Line_Comment_Start'Length - 1);
-      elsif Context.New_Line_Comment_Start_Regexp /= null then
-         Found := Match (Context.New_Line_Comment_Start_Regexp.all,
+      if Context.Syntax.New_Line_Comment_Start /= null then
+         Found := Starts_With
+           (Buffer (First .. Buffer'Last),
+            Context.Syntax.New_Line_Comment_Start.all);
+      elsif Context.Syntax.New_Line_Comment_Start_Regexp /= null then
+         Found := Match (Context.Syntax.New_Line_Comment_Start_Regexp.all,
                          Buffer (First .. Buffer'Last));
       else
          Found := False;
@@ -606,6 +598,7 @@ package body Language is
       Buffer   : String;
       Callback : Entity_Callback)
    is
+      use type GNAT.Strings.String_Access;
       Index      : Natural := Buffer'First;
       Next_Char  : Natural;
       End_Char   : Natural;
@@ -658,7 +651,7 @@ package body Language is
             (Line, Column, Index),
             (Line + Line_Inc - 1, Col, End_Char),
             Get_Language_Context
-              (Language_Access (Lang)).Comment_Start_Length /= 0
+              (Language_Access (Lang)).Syntax.Comment_Start /= null
               and then Entity = Comment_Text and then Next_Char > Buffer'Last);
 
          Line := Line + Line_Inc - 1;
@@ -871,287 +864,6 @@ package body Language is
    begin
       return Default_Word_Character_Set;
    end Word_Character_Set;
-
-   ---------------------------------
-   -- Looking_At_Start_Of_Comment --
-   ---------------------------------
-
-   function Looking_At_Start_Of_Comment
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : Natural) return Comment_Type
-   is
-      use GNAT.Strings;
-   begin
-      if Context.New_Line_Comment_Start /= null
-        and then Index + Context.New_Line_Comment_Start'Length <= Buffer'Last
-        and then Buffer
-          (Index .. Index + Context.New_Line_Comment_Start'Length - 1) =
-          Context.New_Line_Comment_Start.all
-      then
-         return Comment_Single_Line;
-      end if;
-
-      if Context.New_Line_Comment_Start_Regexp /= null
-        and then Match (Context.New_Line_Comment_Start_Regexp.all,
-                        Buffer, Data_First => Index)
-      then
-         return Comment_Single_Line;
-      end if;
-
-      if Context.Comment_Start_Length /= 0
-        and then Index + Context.Comment_Start_Length <= Buffer'Last
-        and then Buffer (Index .. Index + Context.Comment_Start_Length - 1)
-        = Context.Comment_Start
-      then
-         return Comment_Multi_Line;
-      end if;
-
-      return No_Comment;
-   end Looking_At_Start_Of_Comment;
-
-   -----------------------------------------
-   -- Skip_To_Current_Comment_Block_Start --
-   -----------------------------------------
-
-   procedure Skip_To_Current_Comment_Block_Start
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : in out Natural)
-   is
-      Initial_Index : constant Natural := Index;
-      Lines_Skipped : Natural;
-      Tmp           : Integer;
-
-      function Only_Blanks_Before
-        (Buffer : String;
-         Index  : Natural)
-         return Boolean;
-      --  Return True if there are only blanks characters before the one
-      --  pointed by Index in Buffer.
-      --  Return False otherwise.
-
-      ------------------------
-      -- Only_Blanks_Before --
-      ------------------------
-
-      function Only_Blanks_Before
-        (Buffer : String;
-         Index  : Natural)
-         return Boolean
-      is
-         Tmp : Natural := Index - 1;
-      begin
-         Skip_Blanks_Backward (Buffer, Tmp);
-         return Buffer'First = Tmp + 1;
-      end Only_Blanks_Before;
-
-   begin
-      --  Are we in a multi-line comment ?
-
-      if Context.Comment_End_Length /= 0 then
-         Tmp := Line_End (Buffer, Index);
-
-         if Tmp - Context.Comment_End_Length + 1 >= Index
-           and then Buffer
-             (Tmp - Context.Comment_End_Length + 1 .. Tmp) =
-             Context.Comment_End
-         then -- The end of a multi-line comment has been found
-            while Index >= Buffer'First
-              and then Buffer
-                (Index .. Index + Context.Comment_Start_Length - 1) /=
-                Context.Comment_Start
-            loop
-               Index := Index - 1;
-            end loop;
-
-            if Looking_At_Start_Of_Comment (Context, Buffer, Index) =
-              Comment_Multi_Line
-            then -- The beginning of a multi-line comment has been found
-               return;
-            end if;
-         end if;
-      end if;
-
-      --  Check for single line comments
-
-      Tmp := Initial_Index;
-
-      loop
-         while Tmp <= Buffer'Last
-           and then (Buffer (Tmp) = ' ' or else Buffer (Tmp) = ASCII.HT)
-         loop
-            Tmp := Tmp + 1;
-         end loop;
-
-         exit when Looking_At_Start_Of_Comment (Context, Buffer, Tmp) =
-           No_Comment;
-
-         Index := Tmp;
-
-         exit when Only_Blanks_Before (Buffer, Tmp);
-
-         Skip_Lines (Buffer, -1, Tmp, Lines_Skipped);
-
-         exit when Lines_Skipped /= 1;
-      end loop;
-
-      if Looking_At_Start_Of_Comment (Context, Buffer, Index) = No_Comment then
-         Index := 0;
-      end if;
-   end Skip_To_Current_Comment_Block_Start;
-
-   ---------------------------------------
-   -- Skip_To_Current_Comment_Block_End --
-   ---------------------------------------
-
-   procedure Skip_To_Current_Comment_Block_End
-     (Context            : Language_Context;
-      Buffer             : String;
-      Index              : in out Natural;
-      Ignore_Blank_Lines : Boolean := False)
-   is
-      Last_Comment_Index : Integer := Index;
-      Typ                : Comment_Type;
-      Lines_Skipped      : Natural;
-   begin
-      Block_Iteration : loop
-         Typ := Looking_At_Start_Of_Comment (Context, Buffer, Index);
-
-         case Typ is
-         when No_Comment =>
-            Index := Last_Comment_Index;
-            exit Block_Iteration;
-
-         when Comment_Single_Line =>
-            Index := Line_End (Buffer, Index);
-
-            declare
-               Tmp : Integer := Index;
-            begin
-               loop
-                  Skip_Lines (Buffer, 1, Tmp, Lines_Skipped);
-
-                  exit when Lines_Skipped /= 1;
-
-                  while Tmp <= Buffer'Last
-                    and then (Buffer (Tmp) = ' ' or Buffer (Tmp) = ASCII.HT)
-                  loop
-                     Tmp := Tmp + 1;
-                  end loop;
-
-                  exit when
-                    Looking_At_Start_Of_Comment (Context, Buffer, Tmp) =
-                    No_Comment;
-
-                  Index := Tmp;
-               end loop;
-            end;
-
-         when Comment_Multi_Line =>
-            Skip_To_String (Buffer, Index, Context.Comment_End);
-
-         end case;
-
-         if Ignore_Blank_Lines then
-            Last_Comment_Index := Index;
-            Skip_Lines (Buffer, 1, Index, Lines_Skipped);
-
-            exit Block_Iteration when Lines_Skipped /= 1;
-
-            Skip_Blanks (Buffer, Index);
-         else
-            exit Block_Iteration;
-         end if;
-
-      end loop Block_Iteration;
-
-   end Skip_To_Current_Comment_Block_End;
-
-   --------------------------------
-   -- Skip_To_Next_Comment_Start --
-   --------------------------------
-
-   procedure Skip_To_Next_Comment_Start
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : in out Natural)
-   is
-      Lines_Skipped : Natural;
-   begin
-      while Index < Buffer'Last loop
-         Skip_Lines (Buffer, 1, Index, Lines_Skipped);
-
-         exit when Lines_Skipped /= 1 or else Is_Blank_Line (Buffer, Index);
-
-         Skip_Blanks (Buffer, Index);
-
-         if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
-           No_Comment
-         then
-            return;
-         end if;
-      end loop;
-
-      Index := 0;
-   end Skip_To_Next_Comment_Start;
-
-   ------------------------------------
-   -- Skip_To_Previous_Comment_Start --
-   ------------------------------------
-
-   procedure Skip_To_Previous_Comment_Start
-     (Context      : Language_Context;
-      Buffer       : String;
-      Index        : in out Natural;
-      Allow_Blanks : Boolean := False)
-   is
-      Lines_Skipped   : Natural;
-      No_Blanks       : Boolean := not Allow_Blanks;
-      Non_Blank_Found : Boolean := False;
-   begin
-      if Index = Buffer'First then
-         Skip_Blanks (Buffer, Index);
-
-         if Looking_At_Start_Of_Comment
-             (Context, Buffer, Index) /= No_Comment
-         then
-            Skip_To_Current_Comment_Block_Start (Context, Buffer, Index);
-         else
-            Index := 0;
-         end if;
-
-         return;
-      end if;
-
-      loop
-         Skip_Lines (Buffer, -1, Index, Lines_Skipped);
-
-         exit when Lines_Skipped /= 1;
-
-         if Is_Blank_Line (Buffer, Index) then
-            exit when No_Blanks;
-         else
-            if Non_Blank_Found then
-               --  No longer allow blank lines after a first non blank one
-               No_Blanks := True;
-            else
-               Non_Blank_Found := True;
-            end if;
-
-            Skip_Blanks (Buffer, Index);
-
-            if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
-              No_Comment
-            then
-               Skip_To_Current_Comment_Block_Start (Context, Buffer, Index);
-               return;
-            end if;
-         end if;
-      end loop;
-
-      Index := 0;
-   end Skip_To_Previous_Comment_Start;
 
    ------------------
    -- Is_Word_Char --

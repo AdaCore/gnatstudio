@@ -19,13 +19,12 @@
 --  This should be the preferred entry point for accessing entity
 --  information from Ada/C/C++ code.
 
-with Entities;
-with Language.Tree.Database;
-
 with Basic_Types;   use Basic_Types;
-
 with GNATCOLL.VFS;  use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
+with Entities;
+with Language_Handlers;
+with Language.Tree.Database;
 
 package Xref is
 
@@ -46,6 +45,12 @@ package Xref is
       --  The constructs database
    end record;
 
+   type Extended_Xref_Database is new GNATCOLL.Xref.Xref_Database
+      with private;
+   --  This database overrides a number of subprograms so that we use
+   --  either the constructs database or the LI database.
+   --  It is further extended (GPS-specific) in GPS.Kernel.Xref.
+
    --  File location
 
    type General_Location is record
@@ -60,6 +65,11 @@ package Xref is
    type General_Entity is record
       Old_Entity : Entities.Entity_Information := null;
       Entity     : GNATCOLL.Xref.Entity_Information := No_Entity;
+
+      Node       : Language.Tree.Database.Entity_Access :=
+        Language.Tree.Database.Null_Entity_Access;
+      --  The corresponding node in the constructs database. This can be
+      --  computed from the other two fields.
    end record;
    No_General_Entity : constant General_Entity;
 
@@ -77,6 +87,12 @@ package Xref is
    --
    --  Some operations might even query using one back-end, then fall back
    --  on a less precise back-end if the first query is not precise enough.
+
+   function Get_Entity
+     (Db   : General_Xref_Database;
+      Name : String;
+      Loc  : General_Location) return General_Entity;
+   --  Retrieve the entity referenced at the given location
 
    function Get_Entity (Ref : General_Entity_Reference) return General_Entity;
    --  Return the entity the reference is pointing to
@@ -100,6 +116,14 @@ package Xref is
       Entity : General_Entity) return General_Location;
    --  Return the location of the first body for this entity
 
+   function Documentation
+     (Self     : General_Xref_Database;
+      Handler  : Language_Handlers.Language_Handler;
+      Entity   : General_Entity;
+      Raw_Format : Boolean := False) return String;
+   --  Return the documentation (tooltips,...) for the entity.
+   --  If Raw_Format is False, the documentation is formated in HTML.
+
    -------------------------
    -- Life cycle handling --
    -------------------------
@@ -110,10 +134,13 @@ package Xref is
    --  ??? This is needed only as long as the legacy system is in place.
 
 private
+   type Extended_Xref_Database is new GNATCOLL.Xref.Xref_Database with
+      null record;
 
    No_General_Entity : constant General_Entity :=
      (Old_Entity => null,
-      Entity     => No_Entity);
+      Entity     => No_Entity,
+      Node       => Language.Tree.Database.Null_Entity_Access);
 
    type General_Entity_Reference is record
       Old_Ref : Entities.Entity_Reference := Entities.No_Entity_Reference;

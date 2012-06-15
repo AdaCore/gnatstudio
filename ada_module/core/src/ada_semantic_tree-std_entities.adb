@@ -55,9 +55,6 @@ package body Ada_Semantic_Tree.Std_Entities is
       Db   : Construct_Database_Access;
    end record;
 
-   overriding function Get_Documentation
-     (E : access Std_Entity_Record) return Glib.UTF8_String;
-
    overriding function Get_Name
      (E : access Std_Entity_Record) return Glib.UTF8_String;
 
@@ -574,20 +571,6 @@ package body Ada_Semantic_Tree.Std_Entities is
 
       Entity_List_Pckg.Append (Result.Contents, New_List);
    end Get_Possible_ASCII_Entities;
-
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   overriding function Get_Documentation
-     (E : access Std_Entity_Record) return Glib.UTF8_String is
-   begin
-      if E.Desc.Documentation /= null then
-         return E.Desc.Documentation.all;
-      else
-         return "";
-      end if;
-   end Get_Documentation;
 
    --------------
    -- Get_Name --

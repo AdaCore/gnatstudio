@@ -459,12 +459,10 @@ package body Language.Ada is
    --------------------------
 
    Ada_Context : aliased Language_Context :=
-                   (Comment_Start_Length          => 0,
-                    Comment_End_Length            => 0,
-                    Comment_Start                 => "",
-                    Comment_End                   => "",
-                    New_Line_Comment_Start        => new String'("--"),
-                    New_Line_Comment_Start_Regexp => null,
+                   (Syntax => (Comment_Start          => null,
+                               Comment_End            => null,
+                               New_Line_Comment_Start => new String'("--"),
+                               New_Line_Comment_Start_Regexp => null),
                     String_Delimiter              => '"',
                     Quote_Character               => ASCII.NUL,
                     Constant_Character            => ''',

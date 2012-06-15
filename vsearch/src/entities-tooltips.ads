@@ -47,10 +47,4 @@ package Entities.Tooltips is
    --  entity information is a guess - may not be the actual one for the
    --  tooltip.
 
-   function Get_Documentation
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information) return String;
-   --  Return the documentation for the entity (prefixed by a LF char if not
-   --  null)
-
 end Entities.Tooltips;

@@ -32,7 +32,7 @@ package GPS.Kernel.Xref is
    -- GPS_Xref_Database --
    -----------------------
 
-   type GPS_Xref_Database is new Xref_Database with private;
+   type GPS_Xref_Database is new Extended_Xref_Database with private;
    type GPS_Xref_Database_Access is access all GPS_Xref_Database'Class;
 
    overriding procedure On_Error
@@ -89,7 +89,7 @@ package GPS.Kernel.Xref is
 
 private
 
-   type GPS_Xref_Database is new Xref_Database with record
+   type GPS_Xref_Database is new Extended_Xref_Database with record
       Kernel : Kernel_Handle;
    end record;
 

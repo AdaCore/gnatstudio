@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;   use Ada.Strings;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with GNAT.Strings;
@@ -24,7 +24,6 @@ with Glib.Convert;            use Glib.Convert;
 
 with Diffing;
 with Language.Ada;                    use Language.Ada;
-with Language.Documentation;          use Language.Documentation;
 with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Generics;      use Ada_Semantic_Tree.Generics;
@@ -41,18 +40,6 @@ package body Ada_Semantic_Tree.Lang is
    end record;
 
    use type GNAT.Strings.String_Access;
-
-   type Doc_Kind is (All_Doc, Profile);
-
-   function Format_Documentation
-     (Lang          : access Ada_Tree_Language;
-      Entity        : Entity_Access;
-      Max_Size      : Integer;
-      Kind          : Doc_Kind;
-      Comment_Found : access Boolean := null;
-      Raw_Format    : Boolean := False) return String;
-   --  Factorization of the documentation information. If Max_Size is -1, then
-   --  all the documentation is returned, otherwise only the Max_Size first.
 
    ------------------
    -- Is_Enum_Type --
@@ -116,19 +103,6 @@ package body Ada_Semantic_Tree.Lang is
       end if;
    end Get_Name_Index;
 
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   overriding function Get_Documentation
-     (Lang          : access Ada_Tree_Language;
-      Entity        : Entity_Access;
-      Comment_Found : access Boolean := null) return String
-   is
-   begin
-      return Format_Documentation (Lang, Entity, -1, All_Doc, Comment_Found);
-   end Get_Documentation;
-
    -----------------
    -- Get_Profile --
    -----------------
@@ -136,24 +110,7 @@ package body Ada_Semantic_Tree.Lang is
    overriding function Get_Profile
      (Lang       : access Ada_Tree_Language;
       Entity     : Entity_Access;
-      Max_Size   : Integer;
-      Raw_Format : Boolean := False) return String is
-   begin
-      return Format_Documentation
-        (Lang, Entity, Max_Size, Profile, null, Raw_Format);
-   end Get_Profile;
-
-   --------------------------
-   -- Format_Documentation --
-   --------------------------
-
-   function Format_Documentation
-     (Lang          : access Ada_Tree_Language;
-      Entity        : Entity_Access;
-      Max_Size      : Integer;
-      Kind          : Doc_Kind;
-      Comment_Found : access Boolean := null;
-      Raw_Format    : Boolean := False) return String
+      Raw_Format : Boolean := False) return String
    is
       Tree                 : constant Construct_Tree :=
                                Get_Tree (Get_File (Entity));
@@ -162,66 +119,41 @@ package body Ada_Semantic_Tree.Lang is
       Node                 : constant Construct_Tree_Iterator :=
                                To_Construct_Tree_Iterator (Entity);
 
-      Beginning, Current   : Natural;
-      Result               : Unbounded.Unbounded_String;
-
+      Result               : Unbounded_String;
       Type_Start, Type_End : Source_Location;
       Success              : Boolean;
       Language             : constant Language_Access :=
                                Get_Language
                                  (Tree_Language'Class (Lang.all)'Access);
 
-      Overflow : Boolean := False;
+      Longest_Decoration : Integer := 0;
 
-      procedure Append (Str : String);
-      --  Add the string to the result. The global Overflow is modified to true
-      --  if the addition can't be done because Max_Size would be exceeded.
-
-      function Attribute_Decoration
+      procedure Append_Attribute_Decoration
         (Construct  : Simple_Construct_Information;
-         Default_In : Boolean) return String;
-      --  Return the decoration of the construct given in parameter, i.e.
-      --  parameter mode, constant properties, not null constraints...
+         Default_In : Boolean);
+      --  Append to result the extra qualifiers for the parameter (its mode,
+      --  whether it is constant,...). Blanks will be added to use at least
+      --  Longest_Decoration characters.
 
-      function Get_Default_Value
+      procedure Append_Default_Value
         (Construct  : Simple_Construct_Information;
-         Max_Length : Integer := 30) return String;
-      --  Return the default initialization expression for this construct, if
-      --  any. Result will be stripped when bigger than Max_Length characters
+         Max_Length : Integer := 30);
+      --  Append the default initialization expression to Result.
+      --  At most Max_Length characters of the default expression are appended.
 
       function Remove_Blanks (Str : String) return String;
       --  Return a string will all blanks characters removed (including tabs &
       --  end of line marks)
 
-      ------------
-      -- Append --
-      ------------
+      ---------------------------------
+      -- Append_Attribute_Decoration --
+      ---------------------------------
 
-      procedure Append (Str : String) is
-      begin
-         if Max_Size = -1 then
-            Unbounded.Append (Result, Str);
-         else
-            if not Overflow then
-               if Unbounded.Length (Result) + Str'Length <= Max_Size - 3 then
-                  Unbounded.Append (Result, Str);
-               else
-                  Overflow := True;
-               end if;
-            end if;
-         end if;
-      end Append;
-
-      --------------------------
-      -- Attribute_Decoration --
-      --------------------------
-
-      function Attribute_Decoration
+      procedure Append_Attribute_Decoration
         (Construct  : Simple_Construct_Information;
-         Default_In : Boolean) return String
+         Default_In : Boolean)
       is
-         Buffer : String (1 .. 30);
-         Ind    : Integer := 1;
+         Len : Natural := 0;
       begin
          if Construct.Attributes (Ada_In_Attribute)
            or else
@@ -229,57 +161,56 @@ package body Ada_Semantic_Tree.Lang is
                   (Construct.Attributes (Ada_Out_Attribute)
                    or else Construct.Attributes (Ada_Access_Attribute)))
          then
-            Buffer (Ind .. Ind + 2) := "in ";
-            Ind := Ind + 3;
+            Append (Result, "in ");
+            Len := Len + 3;
          end if;
 
          if Construct.Attributes (Ada_Out_Attribute) then
-            Buffer (Ind .. Ind + 3) := "out ";
-            Ind := Ind + 4;
+            Append (Result, "out ");
+            Len := Len + 4;
          end if;
 
          if Construct.Attributes (Ada_Not_Attribute) then
-            Buffer (Ind .. Ind + 3) := "not ";
-            Ind := Ind + 4;
+            Append (Result, "not ");
+            Len := Len + 4;
          end if;
 
          if Construct.Attributes (Ada_Null_Attribute) then
-            Buffer (Ind .. Ind + 4) := "null ";
-            Ind := Ind + 5;
+            Append (Result, "null ");
+            Len := Len + 5;
          end if;
 
          if Construct.Attributes (Ada_Access_Attribute) then
-            Buffer (Ind .. Ind + 6) := "access ";
-            Ind := Ind + 7;
+            Append (Result, "access ");
+            Len := Len + 7;
          end if;
 
          if Construct.Attributes (Ada_Constant_Attribute) then
-            Buffer (Ind .. Ind + 8) := "constant ";
-            Ind := Ind + 9;
+            Append (Result, "constant ");
+            Len := Len + 9;
          end if;
 
          if Construct.Attributes (Ada_Aliased_Attribute) then
-            Buffer (Ind .. Ind + 7) := "aliased ";
-            Ind := Ind + 8;
+            Append (Result, "aliased ");
+            Len := Len + 8;
          end if;
 
-         return Buffer (1 .. Ind - 1);
-      end Attribute_Decoration;
+         Append (Result, (1 .. Longest_Decoration - Len => ' '));
+      end Append_Attribute_Decoration;
 
-      ------------------------
-      --  Get_Default_Value --
-      ------------------------
+      --------------------------
+      -- Append_Default_Value --
+      --------------------------
 
-      function Get_Default_Value
+      procedure Append_Default_Value
         (Construct  : Simple_Construct_Information;
-         Max_Length : Integer := 30) return String
+         Max_Length : Integer := 30)
       is
-         Result        : String (1 .. Max_Length);
-         Current_Ind   : Integer := 0;
+         Length        : Natural := 0;
          Extract_Value : Boolean := False;
          Parent_Depth  : Integer := 0;
 
-         function Append_Text (Str : String) return Boolean;
+         procedure Append_Text (Str : String);
          --  Add text in the result, and return True if there is no more space
          --  left in the buffer.
 
@@ -293,27 +224,13 @@ package body Ada_Semantic_Tree.Lang is
          -- Append_Text --
          -----------------
 
-         function Append_Text (Str : String) return Boolean is
-            Size_Taken : Integer := Str'Length;
-            Stop       : Boolean := False;
+         procedure Append_Text (Str : String) is
          begin
-            if Size_Taken + Current_Ind > Result'Length - 3 then
-               Size_Taken := Result'Length - 3 - Current_Ind;
-               Stop := True;
-            end if;
-
-            Result (Current_Ind + 1 .. Current_Ind + 1 + Size_Taken - 1) :=
-              Str (Str'First .. Str'First + Size_Taken - 1);
-
-            Current_Ind := Current_Ind + Size_Taken;
-
-            if Stop then
-               Result (Result'Last - 2 .. Result'Last) := "...";
-               Current_Ind := Result'Last;
-               return True;
-            else
-               return False;
-            end if;
+            Append
+              (Result,
+               Str (Str'First .. Str'First - 1 +
+                   Integer'Min (Str'Length, Max_Length - Length)));
+            Length := Length + Str'Length;
          end Append_Text;
 
          --------------------
@@ -339,33 +256,35 @@ package body Ada_Semantic_Tree.Lang is
                if Entity = Operator_Text and then Text = ":=" then
                   Extract_Value := True;
                end if;
-
                return False;
 
             else
                if Entity = Operator_Text then
                   if Text = "(" then
                      Parent_Depth := Parent_Depth + 1;
-
-                     return Append_Text (" (");
+                     Append_Text (" ");
 
                   elsif Text = ")" or else Text = "," then
                      if Text = ")" then
                         if Parent_Depth = 0 then
                            return True;
                         end if;
-
                         Parent_Depth := Parent_Depth - 1;
                      end if;
-
-                     return Append_Text (Text);
-
                   else
-                     return Append_Text (" " & Text);
+                     Append_Text (" ");
                   end if;
+               else
+                  Append_Text (" ");
                end if;
 
-               return Append_Text (" " & Text);
+               if Raw_Format then
+                  Append_Text (Text);
+               else
+                  Append_Text (Glib.Convert.Escape_Text (Text));
+               end if;
+
+               return Length < Max_Length;
             end if;
          end Token_Callback;
 
@@ -374,9 +293,7 @@ package body Ada_Semantic_Tree.Lang is
            (Ada_Lang,
             Buffer (Construct.Sloc_Entity.Index .. Buffer'Last),
             Token_Callback'Unrestricted_Access);
-
-         return Result (1 .. Current_Ind);
-      end Get_Default_Value;
+      end Append_Default_Value;
 
       -------------------------
       -- Remove_Extra_Blanks --
@@ -397,127 +314,86 @@ package body Ada_Semantic_Tree.Lang is
       end Remove_Blanks;
 
       Has_Parameter : Boolean := False;
-      Add_New_Line  : Boolean := False;
 
    begin
-      if Kind = All_Doc then
-         Get_Documentation_Before
-           (Context       => Get_Language_Context (Language).all,
-            Buffer        => Buffer.all,
-            Decl_Index    => Get_Construct (Node).Sloc_Start.Index,
-            Comment_Start => Beginning,
-            Comment_End   => Current);
-
-         if Beginning = 0 then
-            Get_Documentation_After
-              (Context       => Get_Language_Context (Language).all,
-               Buffer        => Buffer.all,
-               Decl_Index    => Get_Construct (Node).Sloc_End.Index,
-               Comment_Start => Beginning,
-               Comment_End   => Current);
-         end if;
-
-         if Beginning /= 0 then
-            Append
-              (Escape_Text
-                 (Comment_Block
-                    (Language,
-                     Buffer (Beginning .. Current),
-                     Comment => False,
-                     Clean   => True)));
-            Add_New_Line := True;
-         end if;
-      end if;
-
-      if Comment_Found /= null then
-         Comment_Found.all := Add_New_Line;
-      end if;
-
       if Get_Construct (Node).Category in Subprogram_Category then
          declare
-            Sub_Iter                     : Construct_Tree_Iterator :=
-                                             Next (Tree, Node, Jump_Into);
-            Biggest_Parameter_Name       : Integer := 0;
-            Biggest_Decoration_Length    : Integer := 0;
+            Sub_Iter : Construct_Tree_Iterator := Next (Tree, Node, Jump_Into);
+            Longest_Param                : Integer := 0;
             Biggest_Affected_Type_Length : Integer := 0;
             Current_Affected_Type_Length : Integer := 0;
          begin
-            while Is_Parent_Scope (Node, Sub_Iter) loop
-               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                  if Get (Get_Construct (Sub_Iter).Name)'Length >
-                    Biggest_Parameter_Name
-                  then
-                     Biggest_Parameter_Name :=
-                       Get (Get_Construct (Sub_Iter).Name)'Length;
-                  end if;
+            if not Raw_Format then
+               while Is_Parent_Scope (Node, Sub_Iter) loop
+                  if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                     Longest_Param :=
+                       Integer'Max
+                         (Longest_Param,
+                          Get (Get_Construct (Sub_Iter).Name)'Length);
 
-                  if Attribute_Decoration
-                    (Get_Construct (Sub_Iter).all, True)'Length
-                    > Biggest_Decoration_Length
-                  then
-                     Biggest_Decoration_Length :=
-                       Attribute_Decoration
-                         (Get_Construct (Sub_Iter).all, True)'Length;
-                  end if;
-
-                  if Get_Construct (Sub_Iter).Attributes
-                    (Ada_Assign_Attribute)
-                  then
-                     Get_Referenced_Entity
-                       (Language,
-                        Buffer.all,
-                        Get_Construct (Sub_Iter).all,
-                        Type_Start,
-                        Type_End,
-                        Success);
-
-                     Current_Affected_Type_Length :=
-                       Type_End.Index - Type_Start.Index + 1;
+                     Result := Null_Unbounded_String;
+                     Append_Attribute_Decoration
+                       (Get_Construct (Sub_Iter).all, True);
+                     Longest_Decoration :=
+                       Integer'Max (Longest_Decoration, Length (Result));
 
                      if Get_Construct (Sub_Iter).Attributes
-                       (Ada_Class_Attribute)
+                       (Ada_Assign_Attribute)
                      then
-                        Current_Affected_Type_Length :=
-                          Current_Affected_Type_Length + 6;
-                        --  Addition of the 'Class attribute to the label
-                     end if;
+                        Get_Referenced_Entity
+                          (Language,
+                           Buffer.all,
+                           Get_Construct (Sub_Iter).all,
+                           Type_Start,
+                           Type_End,
+                           Success);
 
-                     if Success
-                       and then Current_Affected_Type_Length
-                         > Biggest_Affected_Type_Length
-                     then
-                        Biggest_Affected_Type_Length :=
-                          Current_Affected_Type_Length;
+                        Current_Affected_Type_Length :=
+                          Type_End.Index - Type_Start.Index + 1;
+
+                        if Get_Construct (Sub_Iter).Attributes
+                          (Ada_Class_Attribute)
+                        then
+                           Current_Affected_Type_Length :=
+                             Current_Affected_Type_Length + 6;
+                           --  Addition of the 'Class attribute to the label
+                        end if;
+
+                        if Success
+                          and then Current_Affected_Type_Length
+                            > Biggest_Affected_Type_Length
+                        then
+                           Biggest_Affected_Type_Length :=
+                             Current_Affected_Type_Length;
+                        end if;
                      end if;
                   end if;
-               end if;
 
-               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-            end loop;
+                  Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+               end loop;
 
-            Sub_Iter := Next (Tree, Node, Jump_Into);
+               Sub_Iter := Next (Tree, Node, Jump_Into);
+            end if;
+
+            Result := Null_Unbounded_String;
 
             while Is_Parent_Scope (Node, Sub_Iter) loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   if not Has_Parameter then
-                     if Add_New_Line then
-                        Append (ASCII.LF & ASCII.LF);
-                     end if;
-
-                     if Kind = All_Doc then
-                        Append ("<b>Parameters:</b>");
-                        Add_New_Line := True;
-                     else
-                        Append ("(");
-                     end if;
-
                      Has_Parameter := True;
-                  elsif Kind = Profile then
-                     Append ("; ");
-                  end if;
 
-                  if Kind = All_Doc then
-                     Append ((1 => ASCII.LF));
+                     if Raw_Format then
+                        Append (Result, "(");
+                     else
+                        Append (Result, "<b>Parameters:</b>" & ASCII.LF & " ");
+                     end if;
+
+                  else
+                     if Raw_Format then
+                        Append (Result, "; ");
+                     else
+                        Append (Result, ASCII.LF & " ");
+                     end if;
                   end if;
 
                   Get_Referenced_Entity
@@ -531,101 +407,69 @@ package body Ada_Semantic_Tree.Lang is
                   if Get_Construct (Sub_Iter).Attributes
                     (Ada_Assign_Attribute)
                   then
-                     if Kind = All_Doc then
-                        Append
-                          ("<span foreground=""#555555"">[");
-                     elsif not Raw_Format then
-                        Append ("[");
-                     end if;
-                  else
-                     if Kind = All_Doc then
-                        Append (" ");
+                     if not Raw_Format then
+                        Append (Result, "<span foreground=""#555555"">[");
                      end if;
                   end if;
 
                   Current_Affected_Type_Length :=
                     Type_End.Index - Type_Start.Index + 1;
 
-                  Append
-                    (Escape_Text (Get (Get_Construct (Sub_Iter).Name).all));
+                  declare
+                     Name : constant String :=
+                       Escape_Text (Get (Get_Construct (Sub_Iter).Name).all);
+                  begin
+                     Append (Result, Name);
 
-                  --  ??? These loops are highly inefficient. Consider
-                  --  improving these
-
-                  if Kind = All_Doc then
-                     for J in Get (Get_Construct (Sub_Iter).Name)'Length + 1
-                       .. Biggest_Parameter_Name
-                     loop
-                        Append (" ");
-                     end loop;
-                  end if;
+                     if not Raw_Format then
+                        Append (Result,
+                                (1 .. Longest_Param - Name'Length => ' '));
+                     end if;
+                  end;
 
                   if Success then
                      if Raw_Format then
-                        Append
-                          (" : "
-                           & Attribute_Decoration
-                             (Get_Construct (Sub_Iter).all, False));
+                        Append (Result, " : ");
+                        Append_Attribute_Decoration
+                          (Get_Construct (Sub_Iter).all, True);
                      else
-                        Append
-                          (" : <b>"
-                           & Attribute_Decoration
-                             (Get_Construct (Sub_Iter).all, True)
-                           & "</b>");
-                     end if;
-
-                     if Kind = All_Doc then
-                        for J in
-                          Attribute_Decoration
-                            (Get_Construct (Sub_Iter).all, True)'Length + 1
-                          .. Biggest_Decoration_Length
-                        loop
-                           Append (" ");
-                        end loop;
+                        Append (Result, " : <b>");
+                        Append_Attribute_Decoration
+                          (Get_Construct (Sub_Iter).all, True);
+                        Append (Result, "</b>");
                      end if;
 
                      Append
-                       (Remove_Blanks
+                       (Result,
+                        Remove_Blanks
                           (Escape_Text
                              (Buffer (Type_Start.Index .. Type_End.Index))));
 
                      if Get_Construct (Sub_Iter).Attributes
                        (Ada_Class_Attribute)
                      then
-                        Append ("'Class");
+                        Append (Result, "'Class");
                         Current_Affected_Type_Length :=
                           Current_Affected_Type_Length + 6;
                      end if;
 
                   else
-                     Append (" : ???");
+                     Append (Result, " : ???");
                   end if;
 
                   if Get_Construct (Sub_Iter).Attributes
                     (Ada_Assign_Attribute)
                   then
-                     for J in Current_Affected_Type_Length + 1
-                       .. Biggest_Affected_Type_Length
-                     loop
-                        Append (" ");
-                     end loop;
+                     Append
+                       (Result,
+                        (1 .. Biggest_Affected_Type_Length -
+                           Current_Affected_Type_Length - 1 => ' '));
 
-                     if Raw_Format then
-                        Append
-                          (" :=" & Get_Default_Value
-                             (Get_Construct (Sub_Iter).all));
-                     else
-                        Append
-                          (" :="
-                           & Reduce
-                             (Escape_Text
-                                (" " & Get_Default_Value
-                                   (Get_Construct (Sub_Iter).all))) & "]");
-                     end if;
+                     Append (Result, " :=");
+                     Append_Default_Value (Get_Construct (Sub_Iter).all);
 
-                     if Kind = All_Doc then
-                        Append
-                          ("</span>");
+                     if not Raw_Format then
+                        Append (Result, "]</span>");
                      end if;
                   end if;
                end if;
@@ -634,8 +478,12 @@ package body Ada_Semantic_Tree.Lang is
             end loop;
          end;
 
-         if Has_Parameter and then Kind = Profile then
-            Append (")");
+         if Has_Parameter then
+            if Raw_Format then
+               Append (Result, ")");
+            else
+               Append (Result, ASCII.LF);
+            end if;
          end if;
 
          Get_Referenced_Entity
@@ -647,29 +495,25 @@ package body Ada_Semantic_Tree.Lang is
             Success);
 
          if Success then
-            if Add_New_Line then
-               Append (ASCII.LF & ASCII.LF);
+            if Raw_Format then
+               Append (Result, " return ");
+            else
+               Append (Result, "<b>Return:</b>" & ASCII.LF & " <b>");
             end if;
 
-            if Kind = All_Doc then
-               Append
-                 ("<b>Return:</b>"
-                  & ASCII.LF & " <b>"
-                  & Attribute_Decoration (Get_Construct (Node).all, False)
-                  & "</b>"
-                  & Escape_Text
-                    (Buffer (Type_Start.Index .. Type_End.Index)));
-            else
-               Append
-                 (" return"
-                  & Attribute_Decoration (Get_Construct (Node).all, False)
-                  & " "
-                  & Escape_Text
-                    (Buffer (Type_Start.Index .. Type_End.Index)));
+            Longest_Decoration := 0;
+            Append_Attribute_Decoration (Get_Construct (Node).all, False);
+
+            if not Raw_Format then
+               Append (Result, "</b>");
             end if;
+
+            Append
+              (Result,
+               Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)));
 
             if Get_Construct (Node).Attributes (Ada_Class_Attribute) then
-               Append ("'Class");
+               Append (Result, "'Class");
             end if;
          end if;
 
@@ -686,30 +530,32 @@ package body Ada_Semantic_Tree.Lang is
                Success);
 
             if Success then
-               if Add_New_Line then
-                  Append (ASCII.LF & ASCII.LF);
+               if Raw_Format then
+                  Append (Result, ": ");
+               else
+                  Append (Result, "<b>Type: ");
+               end if;
+
+               Append_Attribute_Decoration (Get_Construct (Node).all, False);
+
+               if not Raw_Format then
+                  Append (Result, "</b>");
                end if;
 
                Append
-                 ("<b>Type: "
-                  & Attribute_Decoration (Get_Construct (Node).all, False)
-                  & "</b>"
-                  & Remove_Blanks
+                 (Result,
+                  Remove_Blanks
                     (Escape_Text (Buffer (Var_Start.Index .. Var_End.Index))));
 
                if Get_Construct (Node).Attributes (Ada_Class_Attribute) then
-                  Append ("'Class");
+                  Append (Result, "'Class");
                end if;
             end if;
          end;
       end if;
 
-      if not Overflow then
-         return Unbounded.To_String (Result);
-      else
-         return Unbounded.To_String (Result) & "...";
-      end if;
-   end Format_Documentation;
+      return To_String (Result);
+   end Get_Profile;
 
    ----------
    -- Diff --

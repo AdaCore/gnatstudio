@@ -147,11 +147,6 @@ private
    --  See inherited documentation
 
    overriding
-   function Get_Documentation
-     (Proposal : Construct_Completion_Proposal) return UTF8_String;
-   --  See inherited documentation
-
-   overriding
    function Get_Location
      (Proposal : Construct_Completion_Proposal) return File_Location;
    --  See inherited documentation

@@ -6672,7 +6672,7 @@ package body Src_Editor_Buffer is
       is
          Matches        : Match_Array (0 .. 0);
          Single_Line_BC : constant GNAT.Strings.String_Access :=
-                            Lang_Context.New_Line_Comment_Start;
+                            Lang_Context.Syntax.New_Line_Comment_Start;
       begin
          Kind := None;
          Last := 0;
@@ -6811,7 +6811,7 @@ package body Src_Editor_Buffer is
          --  Local variables
 
          Single_Line_BC : constant GNAT.Strings.String_Access :=
-                            Lang_Context.New_Line_Comment_Start;
+                            Lang_Context.Syntax.New_Line_Comment_Start;
       begin
          --  Handle single-line comments
 
@@ -6828,21 +6828,22 @@ package body Src_Editor_Buffer is
 
          --  Handle multi-line comments
 
-         if Lang_Context.Comment_Start_Length /= 0 then
-            pragma Assert (Lang_Context.Comment_End_Length /= 0);
+         if Lang_Context.Syntax.Comment_Start /= null then
+            pragma Assert (Lang_Context.Syntax.Comment_End /= null);
 
-            Multiple_Lines_BC_Len := Lang_Context.Comment_Start_Length;
-            Multiple_Lines_EC_Len := Lang_Context.Comment_End_Length;
+            Multiple_Lines_BC_Len := Lang_Context.Syntax.Comment_Start'Length;
+            Multiple_Lines_EC_Len := Lang_Context.Syntax.Comment_End'Length;
 
             S := To_Unbounded_String (Start_Comment_Pattern);
-            Append (S, Filter_Metachars (Lang_Context.Comment_Start));
+            Append
+              (S, Filter_Metachars (Lang_Context.Syntax.Comment_Start.all));
             Append (S, End_Comment_Pattern);
 
             Multiple_Lines_BC_Pattern :=
               new Pattern_Matcher'(Compile (To_String (S)));
 
             S := To_Unbounded_String
-                   (Filter_Metachars (Lang_Context.Comment_End));
+                   (Filter_Metachars (Lang_Context.Syntax.Comment_End.all));
             Multiple_Lines_EC_Pattern :=
               new Pattern_Matcher'(Compile (To_String (S)));
          end if;

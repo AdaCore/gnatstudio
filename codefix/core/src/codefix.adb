@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with String_Utils;   use String_Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 package body Codefix is
 
@@ -26,12 +27,12 @@ package body Codefix is
    function To_Char_Index
      (Index : Visible_Column_Type; Str : String) return String_Index_Type
    is
-      Current_Index : String_Index_Type := String_Index_Type (Str'First);
+      Current_Index : Integer := Str'First;
    begin
-      Skip_To_Column (Buffer  => Str,
-                      Columns => Index,
+      Skip_To_Column (Str     => Str,
+                      Columns => Integer (Index),
                       Index   => Current_Index);
-      return Current_Index;
+      return String_Index_Type (Current_Index);
    end To_Char_Index;
 
    ---------------------

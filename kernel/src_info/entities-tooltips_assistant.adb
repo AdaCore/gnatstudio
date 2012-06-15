@@ -24,11 +24,8 @@ with Glib.Convert;        use Glib.Convert;
 with GPS.Intl;            use GPS.Intl;
 with Language.Tree;       use Language.Tree;
 with String_Utils;        use String_Utils;
-with Traces;              use Traces;
 
 package body Entities.Tooltips_Assistant is
-
-   Me : constant Debug_Handle := Create ("Tooltip_Assistant");
 
    ------------------------
    -- Get_Tooltip_Header --
@@ -53,80 +50,6 @@ package body Entities.Tooltips_Assistant is
            ':' & Image (Get_Line (Get_Declaration_Of (Entity)));
       end if;
    end Get_Tooltip_Header;
-
-   -------------------------------
-   -- Get_Tooltip_Documentation --
-   -------------------------------
-
-   function Get_Tooltip_Documentation
-     (Handler  : Language_Handler;
-      Database : Construct_Database_Access;
-      Entity   : Entity_Information;
-      Comment_Found : access Boolean) return String
-   is
-      Loc       : constant File_Location := Get_Declaration_Of (Entity);
-      Decl_File : constant Virtual_File := Get_Filename (Loc.File);
-      Tree_Lang : constant Tree_Language_Access :=
-                    Get_Tree_Language_From_File (Handler, Decl_File, False);
-
-      Data_File : Structured_File_Access;
-      Node      : Construct_Tree_Iterator;
-      Tree      : Construct_Tree;
-
-   begin
-      Data_File := Language.Tree.Database.Get_Or_Create
-        (Db   => Database,
-         File => Decl_File);
-
-      if Data_File = null then
-         Trace (Me, "Get_Tooltip_Documentation, Data_File = null");
-         --  This probably means that this is not a Ada file. Caller will try
-         --  to get the documentation from somewhere else than the construct
-         --  database.
-         return "";
-      end if;
-
-      Tree := Get_Tree (Data_File);
-
-      Node := Get_Iterator_At
-        (Tree        => Tree,
-         Location    =>
-           (Absolute_Offset => False,
-            Line            => Loc.Line,
-            Line_Offset     =>
-              To_Line_String_Index (Data_File, Loc.Line, Loc.Column)),
-         From_Type   => Start_Name);
-
-      if Node = Null_Construct_Tree_Iterator then
-         Trace (Me, "Get_Tooltip_Documentation, Null_Construct_Tree_Iterator");
-         --  caller will try to get the documentation from somewhere else
-         --  than the construct database.
-         return "";
-      end if;
-
-      return Language.Tree.Database.Get_Documentation
-        (Lang     => Tree_Lang,
-         Entity   => To_Entity_Access (Data_File, Node),
-         Comment_Found => Comment_Found);
-   end Get_Tooltip_Documentation;
-
-   -------------------------------
-   -- Get_Tooltip_Documentation --
-   -------------------------------
-
-   function Get_Tooltip_Documentation
-     (Handler  : Language_Handler;
-      Database : Construct_Database_Access;
-      Entity   : Entity_Information) return String
-   is
-      Comment_Found : aliased Boolean := False;
-   begin
-      return Get_Tooltip_Documentation
-        (Handler,
-         Database,
-         Entity,
-         Comment_Found'Access);
-   end Get_Tooltip_Documentation;
 
    -----------------------------
    -- Get_Tooltip_Information --

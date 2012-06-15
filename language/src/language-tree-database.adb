@@ -18,10 +18,10 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Calendar;          use Ada.Calendar;
 with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
 
 with Glib.Convert; use Glib.Convert;
 
-with Language.Documentation; use Language.Documentation;
 with Language.Unknown;       use Language.Unknown;
 
 with System;            use System;
@@ -105,98 +105,64 @@ package body Language.Tree.Database is
       return Construct.Name;
    end Get_Name_Index;
 
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
+   -----------------
+   -- Get_Profile --
+   -----------------
 
-   function Get_Documentation
-     (Lang          : access Tree_Language;
-      Entity        : Entity_Access;
-      Comment_Found : access Boolean := null) return String
+   function Get_Profile
+     (Lang       : access Tree_Language;
+      Entity     : Entity_Access;
+      Raw_Format : Boolean := False) return String
    is
-      Tree                 : constant Construct_Tree :=
+      Tree   : constant Construct_Tree :=
         Get_Tree (Get_File (Entity));
-      Buffer               : constant GNAT.Strings.String_Access :=
+      Buffer : constant GNAT.Strings.String_Access :=
         Get_Buffer (Get_File (Entity));
-      Node : constant Construct_Tree_Iterator :=
+      Node   : constant Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (Entity);
-
-      Beginning, Current   : Natural;
-      Result               : Unbounded_String;
-
-      Type_Start, Type_End : Source_Location;
-      Success              : Boolean;
-      Language             : constant Language_Access :=
+      Result    : Unbounded_String;
+      Language  : constant Language_Access :=
         Get_Language (Tree_Language'Class (Lang.all)'Access);
-      Add_New_Line         : Boolean := False;
+      Type_Start, Type_End : Source_Location;
+      Success   : Boolean;
+
    begin
-      Get_Documentation_Before
-        (Context       => Get_Language_Context (Language).all,
-         Buffer        => Buffer.all,
-         Decl_Index    => Get_Construct (Node).Sloc_Start.Index,
-         Comment_Start => Beginning,
-         Comment_End   => Current);
-
-      if Beginning = 0 then
-         Get_Documentation_After
-           (Context       => Get_Language_Context (Language).all,
-            Buffer        => Buffer.all,
-            Decl_Index    => Get_Construct (Node).Sloc_End.Index,
-            Comment_Start => Beginning,
-            Comment_End   => Current);
-      end if;
-
-      if Beginning /= 0 then
-         Append
-           (Result,
-            Escape_Text
-              (Comment_Block
-                 (Language,
-                  Buffer (Beginning .. Current),
-                  Comment => False,
-                  Clean   => True)));
-
-         Add_New_Line := True;
-      end if;
-
-      if Comment_Found /= null then
-         Comment_Found.all := Add_New_Line;
-      end if;
-
       if Get_Construct (Node).Category in Subprogram_Category then
          declare
-            Sub_Iter               : Construct_Tree_Iterator :=
-              Next (Tree, Node, Jump_Into);
-            Has_Parameter          : Boolean := False;
-            Biggest_Parameter_Name : Integer := 0;
+            Sub_Iter : Construct_Tree_Iterator := Next (Tree, Node, Jump_Into);
+            Has_Parameter : Boolean := False;
+            Longest : Integer := 0;
          begin
-            while Is_Parent_Scope (Node, Sub_Iter) loop
-               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                  Add_New_Line := True;
-                  Biggest_Parameter_Name := Integer'Max
-                    (Biggest_Parameter_Name,
-                     Get (Get_Construct (Sub_Iter).Name)'Length);
-               end if;
+            if not Raw_Format then
+               while Is_Parent_Scope (Node, Sub_Iter) loop
+                  if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                     Longest := Integer'Max
+                       (Longest, Get (Get_Construct (Sub_Iter).Name)'Length);
+                  end if;
+                  Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+               end loop;
 
-               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-            end loop;
-
-            Sub_Iter := Next (Tree, Node, Jump_Into);
+               Sub_Iter := Next (Tree, Node, Jump_Into);
+            end if;
 
             while Is_Parent_Scope (Node, Sub_Iter) loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   if not Has_Parameter then
-                     if Add_New_Line then
-                        Append (Result, ASCII.LF & ASCII.LF);
+                     Has_Parameter := True;
+
+                     if Raw_Format then
+                        Append (Result, "(");
+                     else
+                        Append (Result, "<b>Parameters:</b>" & ASCII.LF);
                      end if;
 
-                     Append
-                       (Result, "<b>Parameters:</b>");
-                     Has_Parameter := True;
-                     Add_New_Line := True;
+                  else
+                     if Raw_Format then
+                        Append (Result, "; ");
+                     else
+                        Append (Result, ASCII.LF);
+                     end if;
                   end if;
-
-                  Append (Result, ASCII.LF);
 
                   Get_Referenced_Entity
                     (Language,
@@ -206,20 +172,20 @@ package body Language.Tree.Database is
                      Type_End,
                      Success);
 
-                  Append
-                    (Result,
-                     Escape_Text (Get (Get_Construct (Sub_Iter).Name).all));
+                  declare
+                     Name : constant String :=
+                       Escape_Text (Get (Get_Construct (Sub_Iter).Name).all);
+                  begin
+                     Append (Result, Name);
 
-                  for J in Get (Get_Construct (Sub_Iter).Name)'Length + 1
-                    .. Biggest_Parameter_Name
-                  loop
-                     Append (Result, " ");
-                  end loop;
+                     if not Raw_Format then
+                        Append (Result, (1 .. Longest - Name'Length => ' '));
+                     end if;
+                  end;
 
                   if Success then
                      Append
-                       (Result,
-                        " : " & Escape_Text
+                       (Result, " : " & Escape_Text
                           (Buffer (Type_Start.Index .. Type_End.Index)));
                   else
                      Append (Result, " : ???");
@@ -228,6 +194,10 @@ package body Language.Tree.Database is
 
                Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
             end loop;
+
+            if Raw_Format and then Has_Parameter then
+               Append (Result, ")");
+            end if;
          end;
 
          Get_Referenced_Entity
@@ -239,15 +209,14 @@ package body Language.Tree.Database is
             Success);
 
          if Success then
-            if Add_New_Line then
-               Append (Result, ASCII.LF & ASCII.LF);
+            if Raw_Format then
+               Append (Result, " return ");
+            else
+               Append (Result, "<b>Return:</b>" & ASCII.LF);
             end if;
 
-            Append
-              (Result,
-               "<b>Return:</b>"
-               & ASCII.LF
-               & Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)));
+            Append (Result,
+                    Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)));
          end if;
 
       elsif Get_Construct (Node).Category in Data_Category then
@@ -263,151 +232,20 @@ package body Language.Tree.Database is
                Success);
 
             if Success then
-               if Add_New_Line then
-                  Append (Result, ASCII.LF & ASCII.LF);
+               if Raw_Format then
+                  Append (Result, ": ");
+               else
+                  Append (Result, "<b>Type:</b>" & ASCII.LF);
                end if;
 
                Append
                  (Result,
-                  "<b>Type: </b>"
-                  & Escape_Text (Buffer (Var_Start.Index .. Var_End.Index)));
+                  Escape_Text (Buffer (Var_Start.Index .. Var_End.Index)));
             end if;
          end;
       end if;
 
       return To_String (Result);
-   end Get_Documentation;
-
-   -----------------
-   -- Get_Profile --
-   -----------------
-
-   function Get_Profile
-     (Lang       : access Tree_Language;
-      Entity     : Entity_Access;
-      Max_Size   : Integer;
-      Raw_Format : Boolean := False) return String
-   is
-      pragma Unreferenced (Raw_Format);
-
-      Tree                 : constant Construct_Tree :=
-        Get_Tree (Get_File (Entity));
-      Buffer               : constant GNAT.Strings.String_Access :=
-        Get_Buffer (Get_File (Entity));
-      Node : constant Construct_Tree_Iterator :=
-        To_Construct_Tree_Iterator (Entity);
-
-      Result : String (1 .. Max_Size);
-      Result_Index : Integer := 0;
-      Language             : constant Language_Access :=
-        Get_Language (Tree_Language'Class (Lang.all)'Access);
-      Type_Start, Type_End : Source_Location;
-      Success : Boolean;
-
-      function Append (Str : String) return Boolean;
-
-      function Append (Str : String) return Boolean is
-      begin
-         if Result_Index + Str'Length <= Result'Last then
-            Result
-              (Result_Index + 1 .. Result_Index + Str'Length) := Str;
-
-            Result_Index := Result_Index + Str'Length;
-
-            return True;
-         else
-            if Result_Index + 1 > Result'Last then
-               return False;
-            else
-               Result
-                 (Result_Index + 1 .. Result'Last) := Str
-                 (Str'First .. Str'First + (Result'Last - Result_Index - 1));
-
-               return False;
-            end if;
-         end if;
-      end Append;
-
-   begin
-      if Get_Construct (Node).Category in Subprogram_Category then
-         declare
-            Sub_Iter               : Construct_Tree_Iterator :=
-              Next (Tree, Node, Jump_Into);
-            Has_Parameter          : Boolean := False;
-         begin
-            while Is_Parent_Scope (Node, Sub_Iter) loop
-               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                  if not Has_Parameter then
-                     if not Append ("(") then
-                        return Result;
-                     end if;
-
-                     Has_Parameter := True;
-                  else
-                     if not Append ("; ") then
-                        return Result;
-                     end if;
-                  end if;
-
-                  Get_Referenced_Entity
-                    (Language,
-                     Buffer.all,
-                     Get_Construct (Sub_Iter).all,
-                     Type_Start,
-                     Type_End,
-                     Success);
-
-                  if not Append
-                    (Escape_Text (Get (Get_Construct (Sub_Iter).Name).all))
-                  then
-                     return Result;
-                  end if;
-
-                  if Success then
-                     if not Append
-                       (" : " & Escape_Text
-                          (Buffer (Type_Start.Index .. Type_End.Index)))
-                     then
-                        return Result;
-                     end if;
-                  else
-                     if not Append (" : ???") then
-                        return Result;
-                     end if;
-                  end if;
-               end if;
-
-               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-            end loop;
-
-            if Has_Parameter then
-               if not Append (")") then
-                  return Result;
-               end if;
-            end if;
-         end;
-
-         Get_Referenced_Entity
-           (Language,
-            Buffer.all,
-            Get_Construct (Node).all,
-            Type_Start,
-            Type_End,
-            Success);
-
-         if Success then
-            if not Append
-              (" return "
-               & Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)))
-            then
-               return Result;
-            end if;
-         end if;
-
-         return Result (1 .. Result_Index);
-      else
-         return "";
-      end if;
    end Get_Profile;
 
    ---------------------
@@ -737,14 +575,14 @@ package body Language.Tree.Database is
       Line   : Integer;
       Column : Visible_Column_Type) return String_Index_Type
    is
-      Current_Index : String_Index_Type := Get_Offset_Of_Line (File, Line);
+      Current_Index : Integer := Integer (Get_Offset_Of_Line (File, Line));
    begin
-      Skip_To_Column (Buffer  => Get_Buffer (File).all,
-                      Columns => Column,
+      Skip_To_Column (Str     => Get_Buffer (File).all,
+                      Columns => Integer (Column),
                       Index   => Current_Index);
 
       return String_Index_Type
-        (Current_Index - Get_Offset_Of_Line (File, Line)) + 1;
+        (Current_Index) - Get_Offset_Of_Line (File, Line) + 1;
    end To_Line_String_Index;
 
    ---------------------

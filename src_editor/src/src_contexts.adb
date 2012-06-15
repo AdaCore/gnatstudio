@@ -19,9 +19,9 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Expect;                use GNAT.Expect;
 with GNAT.Regexp;                use GNAT.Regexp;
 with GNAT.Regpat;                use GNAT.Regpat;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
@@ -347,8 +347,10 @@ package body Src_Contexts is
       is
          Str_Delim     : Character renames Lang.String_Delimiter;
          Quote_Char    : Character renames Lang.Quote_Character;
-         M_Comm_Start  : String    renames Lang.Comment_Start;
-         M_Comm_End    : String    renames Lang.Comment_End;
+         M_Comm_Start  : GNAT.Strings.String_Access
+            renames Lang.Syntax.Comment_Start;
+         M_Comm_End    : GNAT.Strings.String_Access
+            renames Lang.Syntax.Comment_End;
          Char_Delim    : Character renames Lang.Constant_Character;
 
          Looking_For   : constant Boolean := not Scanning_Allowed (State);
@@ -367,10 +369,9 @@ package body Src_Contexts is
 
                when Statements =>
                   while Pos <= Buffer'Last loop
-                     if M_Comm_Start'Length /= 0
-                       and then Pos + M_Comm_Start'Length - 1 <= Buffer'Last
-                       and then Buffer (Pos .. Pos + M_Comm_Start'Length - 1) =
-                       M_Comm_Start
+                     if M_Comm_Start /= null
+                       and then Starts_With
+                         (Buffer (Pos .. Buffer'Last), M_Comm_Start.all)
                      then
                         State := Multi_Comments;
                         Section_End := Pos - 1;
@@ -378,10 +379,13 @@ package body Src_Contexts is
                         exit;
 
                      else
-                        if Lang.New_Line_Comment_Start = null then
-                           if Lang.New_Line_Comment_Start_Regexp /= null then
-                              Match (Lang.New_Line_Comment_Start_Regexp.all,
-                                     Buffer, Matches, Pos);
+                        if Lang.Syntax.New_Line_Comment_Start = null then
+                           if Lang.Syntax.New_Line_Comment_Start_Regexp /=
+                             null
+                           then
+                              Match
+                                (Lang.Syntax.New_Line_Comment_Start_Regexp.all,
+                                 Buffer, Matches, Pos);
 
                               if Matches (0) /= No_Match then
                                  State := Mono_Comments;
@@ -391,16 +395,14 @@ package body Src_Contexts is
                               end if;
                            end if;
                         else
-                           if Pos <= Buffer'Last -
-                                      Lang.New_Line_Comment_Start'Length + 1
-                             and then
-                               Buffer (Pos .. Pos +
-                                       Lang.New_Line_Comment_Start'Length - 1)
-                                 = Lang.New_Line_Comment_Start.all
+                           if Starts_With
+                             (Buffer (Pos .. Buffer'Last),
+                              Lang.Syntax.New_Line_Comment_Start.all)
                            then
                               State := Mono_Comments;
                               Section_End := Pos - 1;
-                              Pos := Pos + Lang.New_Line_Comment_Start'Length;
+                              Pos := Pos
+                                + Lang.Syntax.New_Line_Comment_Start'Length;
                               exit;
                            end if;
                         end if;
@@ -459,10 +461,10 @@ package body Src_Contexts is
 
                when Multi_Comments =>
                   while Pos <= Buffer'Last loop
-                     if M_Comm_End'Length /= 0
-                       and then Pos + M_Comm_End'Length - 1 <= Buffer'Last
-                       and then Buffer (Pos .. Pos + M_Comm_End'Length - 1) =
-                       M_Comm_End
+                     if M_Comm_End /= null
+                       and then Starts_With
+                         (Buffer (Pos .. Buffer'Last),
+                          M_Comm_End.all)
                      then
                         State := Statements;
                         Section_End := Pos - 1;

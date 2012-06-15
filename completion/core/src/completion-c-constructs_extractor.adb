@@ -19,8 +19,8 @@ with ALI_Parser;       use ALI_Parser;
 with Entities;         use Entities;
 with Entities.Queries; use Entities.Queries;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
-with Doc_Utils;        use Doc_Utils;
 with Language.Cpp;     use Language.Cpp;
+with Xref;             use Xref;
 
 package body Completion.C.Constructs_Extractor is
    use Completion_List_Pckg;
@@ -268,10 +268,12 @@ package body Completion.C.Constructs_Extractor is
          if not Under_Doc_Treshold then
             return new String'(Doc_Header (E_Info));
          else
-            return new String'(Doc_Header (E_Info)
-                                 & Doc_Utils.Get_Documentation
-                                    (Get_Language_Handler
-                                      (Resolver.Kernel), E_Info));
+            return new String'
+              (Doc_Header (E_Info)
+               & Documentation
+                 (Resolver.Kernel.Databases,
+                  Resolver.Kernel.Get_Language_Handler,
+                  General_Entity'(Old_Entity => E_Info, others => <>)));
          end if;
       end Gen_Doc;
 

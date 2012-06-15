@@ -118,7 +118,10 @@ package body Completion_Utils is
 
       while Has_Element (C) loop
          declare
-            Doc      : constant String := Get_Documentation (Element (C).all);
+            --  ??? The doc should instead be loaded asynchronously the first
+            --  time the user scrolls on that entity.
+            Doc      : constant String :=
+              Element (C).Get_Documentation (Kernel);
             Location : constant File_Location :=
                          Get_Location (Element (C).all);
          begin

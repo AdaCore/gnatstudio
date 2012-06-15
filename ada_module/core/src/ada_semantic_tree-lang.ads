@@ -38,14 +38,9 @@ package Ada_Semantic_Tree.Lang is
      (Lang    : access Ada_Tree_Language;
       File    : Structured_File_Access;
       Index   : String_Index_Type) return Entity_Reference_Details;
-   overriding function Get_Documentation
-     (Lang          : access Ada_Tree_Language;
-      Entity        : Entity_Access;
-      Comment_Found : access Boolean := null) return String;
    overriding function Get_Profile
      (Lang       : access Ada_Tree_Language;
       Entity     : Entity_Access;
-      Max_Size   : Integer;
       Raw_Format : Boolean := False) return String;
    overriding procedure Diff
      (Lang               : access Ada_Tree_Language;

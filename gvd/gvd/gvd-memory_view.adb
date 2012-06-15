@@ -66,7 +66,6 @@ with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
 with GVD.Scripts;              use GVD.Scripts;
 with GVD.Views;                use GVD.Views;
-with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 
 with Gtk.Text_Tag;          use Gtk.Text_Tag;
@@ -75,6 +74,7 @@ with Gtk.Widget;            use Gtk.Widget;
 
 with Memory_View_Pkg;       use Memory_View_Pkg;
 with GNAT.Strings;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
 
 package body GVD.Memory_View is
 

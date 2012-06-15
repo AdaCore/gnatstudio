@@ -92,10 +92,6 @@ package Ada_Semantic_Tree is
      (E : access Entity_View_Record'Class) return Entity_Access;
    --  Return the entity pointed by this declaration view.
 
-   function Get_Documentation
-     (E       : access Entity_View_Record) return UTF8_String
-      is abstract;
-
    function Get_Name
      (E : access Entity_View_Record) return UTF8_String is abstract;
 

@@ -49,9 +49,7 @@ with Pango.Layout;              use Pango.Layout;
 with Basic_Types;
 
 with Browsers.Canvas;           use Browsers.Canvas;
-with Doc_Utils;                 use Doc_Utils;
 with Entities.Queries;          use Entities, Entities.Queries;
-with Entities.Tooltips;         use Entities.Tooltips;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GPS.Intl;                  use GPS.Intl;
@@ -65,6 +63,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;
 with XML_Utils;                 use XML_Utils;
+with Xref;                      use Xref;
 
 package body Browsers.Entities is
 
@@ -608,16 +607,14 @@ package body Browsers.Entities is
             declare
                Extended : constant Boolean := Nth_Arg (Data, 2, False);
             begin
-               if not Extended then
-                  Set_Return_Value
-                    (Data,
-                     Get_Documentation
-                       (Get_Language_Handler (Kernel), Entity));
-               else
-                  Set_Return_Value
-                    (Data,
-                     Get_Documentation (Kernel, Entity));
-               end if;
+               Set_Return_Value
+                 (Data,
+                  Documentation
+                    (Kernel.Databases,
+                     Kernel.Get_Language_Handler,
+                     Entity => General_Entity'
+                       (Old_Entity => Entity, others => <>),
+                     Raw_Format => not Extended));
             end;
 
          elsif Command = "parameters" then

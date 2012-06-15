@@ -301,18 +301,6 @@ package body Completion is
                (Get_Completion (Completion_Proposal'Class (Proposal))));
    end Get_Caret_Offset;
 
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   function Get_Documentation
-     (Proposal : Completion_Proposal) return UTF8_String
-   is
-      pragma Unreferenced (Proposal);
-   begin
-      return "";
-   end Get_Documentation;
-
    ------------------
    -- Get_Location --
    ------------------
@@ -423,20 +411,6 @@ package body Completion is
    begin
       return Proposal.Name.all;
    end Get_Completion;
-
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   overriding function Get_Documentation
-     (Proposal : Simple_Completion_Proposal) return UTF8_String is
-   begin
-      if Proposal.Documentation = null then
-         return "";
-      end if;
-
-      return Proposal.Documentation.all;
-   end Get_Documentation;
 
    ------------------
    -- Get_Category --
