@@ -88,20 +88,6 @@ package body GPS.Kernel.Standard_Hooks is
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  Convert some shell arguments into suitable hooks_data
 
-   ---------------------------
-   -- Compute_Parent_Entity --
-   ---------------------------
-
-   function Compute_Parent_Entity
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access File_Location_Hooks_Args)
-      return Entities.Entity_Information
-   is
-      pragma Unreferenced (Kernel, Data);
-   begin
-      return null;
-   end Compute_Parent_Entity;
-
    ----------
    -- Free --
    ----------

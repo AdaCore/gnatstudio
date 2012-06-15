@@ -26,10 +26,6 @@ package body Src_Editor_Buffer.Hooks is
       record
          Parent_Entity : Entities.Entity_Information;
       end record;
-   overriding function Compute_Parent_Entity
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Src_File_Location_Hooks_Args)
-      return Entity_Information;
    overriding procedure Destroy (Data : in out Src_File_Location_Hooks_Args);
    --  See inherited documentation
 
@@ -41,29 +37,6 @@ package body Src_Editor_Buffer.Hooks is
    begin
       Unref (Data.Parent_Entity);
    end Destroy;
-
-   ---------------------------
-   -- Compute_Parent_Entity --
-   ---------------------------
-
-   overriding function Compute_Parent_Entity
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Src_File_Location_Hooks_Args) return Entity_Information
-   is
-      Box : Source_Editor_Box;
-   begin
-      if Data.Parent_Entity = null then
-         Box := Get_Source_Box_From_MDI
-           (Find_Editor (Kernel, Data.File));
-         if Box /= null then
-            Data.Parent_Entity := Get_Subprogram
-              (Box, Editable_Line_Type (Data.Line));
-            Ref (Data.Parent_Entity);
-         end if;
-      end if;
-
-      return Data.Parent_Entity;
-   end Compute_Parent_Entity;
 
    ----------------------
    -- Location_Changed --

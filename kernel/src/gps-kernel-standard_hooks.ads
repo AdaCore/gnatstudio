@@ -26,7 +26,6 @@ with Basic_Types;
 with GPS.Editors;        use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with Entities;
 
 package GPS.Kernel.Standard_Hooks is
 
@@ -174,15 +173,6 @@ package GPS.Kernel.Standard_Hooks is
    type File_Location_Hooks_Args_Access is access all
      File_Location_Hooks_Args'Class;
    --  These hooks contains a location inside a source editor
-
-   function Compute_Parent_Entity
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access File_Location_Hooks_Args)
-      return Entities.Entity_Information;
-   --  Return the name of the entity enclosing the location. This is either
-   --  a subprogram, a package, ...
-   --  The result of this call will generally be cached in the arguments, so
-   --  that multiple calls are not more costly than one call.
 
    Location_Changed_Hook : constant Hook_Name := "location_changed";
    --  Hook called when the location in the current editor has changed. Its
