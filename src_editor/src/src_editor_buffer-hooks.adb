@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Entities;                  use Entities;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
@@ -23,9 +22,7 @@ with Src_Editor_Module;         use Src_Editor_Module;
 package body Src_Editor_Buffer.Hooks is
 
    type Src_File_Location_Hooks_Args is new File_Location_Hooks_Args with
-      record
-         Parent_Entity : Entities.Entity_Information;
-      end record;
+     null record;
    overriding procedure Destroy (Data : in out Src_File_Location_Hooks_Args);
    --  See inherited documentation
 
@@ -35,7 +32,7 @@ package body Src_Editor_Buffer.Hooks is
 
    overriding procedure Destroy (Data : in out Src_File_Location_Hooks_Args) is
    begin
-      Unref (Data.Parent_Entity);
+      null;
    end Destroy;
 
    ----------------------
@@ -47,8 +44,7 @@ package body Src_Editor_Buffer.Hooks is
                (Hooks_Data with
                 File          => Buffer.Filename,
                 Line          => 0,
-                Column        => 0,
-                Parent_Entity => null);
+                Column        => 0);
       Box : constant Source_Editor_Box := Get_Source_Box_From_MDI
         (Find_Editor (Get_Kernel (Buffer), Buffer.Filename));
    begin
