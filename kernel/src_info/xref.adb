@@ -368,11 +368,11 @@ package body Xref is
          declare
             Comment : constant String :=
               Extract_Comment
-                (Buffer     => Buffer.all,
-                 Decl_Start => Get_Construct (Node).Sloc_Start.Index,
-                 Decl_End   => Get_Construct (Node).Sloc_End.Index,
-                 Language   => Context.Syntax,
-                 Format     => Form);
+                (Buffer            => Buffer.all,
+                 Decl_Start_Index  => Get_Construct (Node).Sloc_Start.Index,
+                 Decl_End_Index    => Get_Construct (Node).Sloc_End.Index,
+                 Language          => Context.Syntax,
+                 Format            => Form);
             Profile : constant String :=
               Get_Profile (Tree_Lang, Ent, Raw_Format => Raw_Format);
 
@@ -411,11 +411,11 @@ package body Xref is
             end if;
 
             return Result : constant String := Extract_Comment
-              (Buffer     => Buffer.all,
-               Decl_Start => Decl.Line,
-               Decl_End   => Decl.Line,
-               Language   => Context.Syntax,
-               Format     => Form)
+              (Buffer            => Buffer.all,
+               Decl_Start_Line   => Decl.Line,
+               Decl_Start_Column => Integer (Decl.Column),
+               Language          => Context.Syntax,
+               Format            => Form)
             do
                Free (Buffer);
             end return;
