@@ -298,6 +298,10 @@ package body Engine_Wrappers is
       Loc : constant Completion.File_Location := Proposal.Get_Location;
       Entity : General_Entity;
    begin
+      if Proposal.P.Resolver.Get_Id = "Keywords" then
+         return "Language keyword.";
+      end if;
+
       Entity := Xref.Get_Entity
         (Kernel.Databases,
          Name  => Proposal.Get_Label,
