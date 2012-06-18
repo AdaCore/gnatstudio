@@ -396,6 +396,8 @@ package body Xref is
 
       function Doc_From_LI return String is
          Buffer : GNAT.Strings.String_Access;
+         Loc    : Entities.File_Location;
+         Result : Unbounded_String;
       begin
          if Entity.Entity /= No_Entity then
             return GNATCOLL.Xref.Documentation
@@ -410,15 +412,35 @@ package body Xref is
                return "";
             end if;
 
-            return Result : constant String := Extract_Comment
-              (Buffer            => Buffer.all,
-               Decl_Start_Line   => Decl.Line,
-               Decl_Start_Column => Integer (Decl.Column),
-               Language          => Context.Syntax,
-               Format            => Form)
-            do
-               Free (Buffer);
-            end return;
+            Result := To_Unbounded_String
+              (Extract_Comment
+                 (Buffer            => Buffer.all,
+                  Decl_Start_Line   => Decl.Line,
+                  Decl_Start_Column => Integer (Decl.Column),
+                  Language          => Context.Syntax,
+                  Format            => Form));
+
+            if Result = "" and then Entity.Old_Entity /= null then
+               Find_Next_Body
+                 (Entity.Old_Entity,
+                  Location => Loc,
+                  No_Location_If_First => True);
+
+               if Loc /= Entities.No_File_Location then
+                  Free (Buffer);
+                  Buffer := Entities.Get_Filename (Loc.File).Read_File;
+                  Result := To_Unbounded_String
+                    (Extract_Comment
+                       (Buffer            => Buffer.all,
+                        Decl_Start_Line   => Loc.Line,
+                        Decl_Start_Column => Integer (Loc.Column),
+                        Language          => Context.Syntax,
+                        Format            => Form));
+               end if;
+            end if;
+
+            Free (Buffer);
+            return To_String (Result);
          end if;
       end Doc_From_LI;
 
