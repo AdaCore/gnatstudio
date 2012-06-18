@@ -17,6 +17,7 @@
 
 pragma Ada_2012;
 
+with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Entities.Queries;          use Entities.Queries;
 with Glib.Convert;
@@ -400,11 +401,20 @@ package body Xref is
          Result : Unbounded_String;
       begin
          if Entity.Entity /= No_Entity then
-            return GNATCOLL.Xref.Documentation
-              (Self.Xref.all,
-               Entity.Entity,
-               Context.Syntax,
-               Format => Form);
+            Append
+              (Result,
+               Glib.Convert.Escape_Text
+                 (Self.Xref.Comment (Entity.Entity, Context.Syntax, Form))
+               & ASCII.LF
+               & Self.Xref.Text_Declaration (Entity.Entity, Form)
+               & ASCII.LF);
+
+            return To_String
+              (Ada.Strings.Unbounded.Trim
+                 (Result,
+                  Left => Ada.Strings.Maps.Null_Set,
+                  Right => Ada.Strings.Maps.To_Set
+                    (' ' & ASCII.HT & ASCII.LF & ASCII.CR)));
          else
             Buffer := Decl.File.Read_File;
 
@@ -413,12 +423,13 @@ package body Xref is
             end if;
 
             Result := To_Unbounded_String
-              (Extract_Comment
-                 (Buffer            => Buffer.all,
-                  Decl_Start_Line   => Decl.Line,
-                  Decl_Start_Column => Integer (Decl.Column),
-                  Language          => Context.Syntax,
-                  Format            => Form));
+              (Glib.Convert.Escape_Text
+                 (Extract_Comment
+                    (Buffer            => Buffer.all,
+                     Decl_Start_Line   => Decl.Line,
+                     Decl_Start_Column => Integer (Decl.Column),
+                     Language          => Context.Syntax,
+                     Format            => Form)));
 
             if Result = "" and then Entity.Old_Entity /= null then
                Find_Next_Body
