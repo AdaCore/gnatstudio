@@ -86,7 +86,8 @@ package body Xref is
       Loc  : General_Location) return General_Entity
    is
       use Entities;
-      Source : Entities.Source_File;
+      Old_Entity : Entities.Entity_Information;
+      Status     : Find_Decl_Or_Body_Query_Status;
    begin
       if Active (Entities.SQLITE) then
          return General_Entity'
@@ -97,23 +98,16 @@ package body Xref is
                Column => Visible_Column (Loc.Column)).Entity,
             others => <>);
       else
-         Source := Entities.Get_Or_Create
-           (Db           => Db.Entities,
-            File         => Loc.File,
-            Allow_Create => False);
-         if Source = null then
-            return No_General_Entity;
-         else
-            return General_Entity'
-              (Old_Entity =>
-                 Entities.Get_Or_Create
-                   (Name  => Entities.Get_Symbols (Db.Entities).Find (Name),
-                    File         => Source,
-                    Line         => Loc.Line,
-                    Column       => Loc.Column,
-                    Allow_Create => False),
-               others => <>);
-         end if;
+         Find_Declaration
+           (Db          => Db.Entities,
+            File_Name   => Loc.File,
+            Entity_Name => Name,
+            Line        => Loc.Line,
+            Column      => Loc.Column,
+            Entity      => Old_Entity,
+            Status      => Status);
+
+         return General_Entity'(Old_Entity => Old_Entity, others => <>);
       end if;
    end Get_Entity;
 
