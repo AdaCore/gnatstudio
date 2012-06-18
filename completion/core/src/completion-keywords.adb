@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib.Unicode; use Glib.Unicode;
-with GPS.Intl;     use GPS.Intl;
 
 package body Completion.Keywords is
 
@@ -38,8 +37,6 @@ package body Completion.Keywords is
       Word     : UTF8_String
         (Natural (Offset) + 1 .. Natural (Context.Offset)) :=
            Context.Buffer (Natural (Offset) + 1 .. Natural (Context.Offset));
-      Doc      : constant String :=
-                   -(Get_Name (Context.Lang) & " keyword.");
    begin
       if not Get_Language_Context (Context.Lang).Case_Sensitive then
          Word := UTF8_Strdown (Word);
@@ -54,8 +51,7 @@ package body Completion.Keywords is
             then
                Proposal := (Resolver => Resolver,
                             Name     => Keywords (J),
-                            Category => Cat_Custom,
-                            Documentation => new String'(Doc));
+                            Category => Cat_Custom);
 
                Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
                  (List, Proposal);

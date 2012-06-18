@@ -20,7 +20,6 @@ with Entities;         use Entities;
 with Entities.Queries; use Entities.Queries;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with Language.Cpp;     use Language.Cpp;
-with Xref;             use Xref;
 
 package body Completion.C.Constructs_Extractor is
    use Completion_List_Pckg;
@@ -66,9 +65,6 @@ package body Completion.C.Constructs_Extractor is
       --  this value. This threshold is required to allow the use of Dynamic
       --  Smart Completion in projects composed of many C/C++ files.
 
-      Under_Doc_Treshold : Boolean := True;
-      --  True if the number of candidates is smaller than Doc_Treshold
-
       procedure Add_Proposal
         (To_List : in out Extensive_List_Pckg.List;
          E       : Entity_Information);
@@ -82,9 +78,6 @@ package body Completion.C.Constructs_Extractor is
       --  the prefix available in Prefix_Token. If Prefix_Token is not an
       --  identifier then all the entities defined in Scope are appended
       --  to To_List.
-
-      function Gen_Doc (E_Info : Entity_Information) return String_Access;
-      --  Generate the documentation associated with E_Info
 
       ------------------
       -- Add_Proposal --
@@ -102,7 +95,6 @@ package body Completion.C.Constructs_Extractor is
            (Resolver      => Resolver,
             Name          => new String'(Name),
             Category      => To_Language_Category (Get_Kind (E)),
-            Documentation => Gen_Doc (E),
             Entity_Info   => E,
             With_Params   => False,
             Is_Param      => False);
@@ -134,7 +126,6 @@ package body Completion.C.Constructs_Extractor is
            (Resolver      => Resolver,
             Name          => new String'(Name),
             Category      => To_Language_Category (Get_Kind (E)),
-            Documentation => Gen_Doc (E),
             Entity_Info   => E,
             With_Params   => True,
             Is_Param      => False);
@@ -157,7 +148,6 @@ package body Completion.C.Constructs_Extractor is
                     (Resolver      => Resolver,
                      Name          => new String'(Name),
                      Category      => To_Language_Category (Get_Kind (Param)),
-                     Documentation => Gen_Doc (Param),
                      Entity_Info   => Param,
                      With_Params   => False,
                      Is_Param      => True);
@@ -232,51 +222,6 @@ package body Completion.C.Constructs_Extractor is
          Destroy (It);
       end Add_Scope_Proposals;
 
-      -------------
-      -- Gen_Doc --
-      -------------
-
-      function Gen_Doc (E_Info : Entity_Information) return String_Access is
-
-         function Doc_Header (E_Info : Entity_Information) return String;
-         --  Generate the header of the documentation of each entity
-
-         function Doc_Header (E_Info : Entity_Information) return String is
-            K : constant E_Kinds := Get_Kind (E_Info).Kind;
-         begin
-            if K = Include_File then
-               return "";
-            else
-               return
-                 Attributes_To_String (Get_Attributes (E_Info))
-                 & " " & Kind_To_String (Get_Kind (E_Info))
-                 & ASCII.LF;
-            end if;
-         end Doc_Header;
-
-      begin
-         --  Generate a minimum documentation indicating the type of the entity
-         --  and its location when the number of proposals passes the treshold.
-         --  This improves the behavior of GPS under Dynamic Smart Completion
-         --  since Gen_Completion_Root is invoked when the first letter is
-         --  pressed (to generate the whole list of proposals) and subsequent
-         --  letters are used to filter this list; that is, the list is not
-         --  re-generated each time a letter is pressed. As a consequence, if
-         --  the treshold is initially passed, this minimum documentation is
-         --  the only documentation available when the list is filtered.
-
-         if not Under_Doc_Treshold then
-            return new String'(Doc_Header (E_Info));
-         else
-            return new String'
-              (Doc_Header (E_Info)
-               & Documentation
-                 (Resolver.Kernel.Databases,
-                  Resolver.Kernel.Get_Language_Handler,
-                  General_Entity'(Old_Entity => E_Info, others => <>)));
-         end if;
-      end Gen_Doc;
-
       --  Local variables
 
       use Entities_Search_Tries;
@@ -334,8 +279,6 @@ package body Completion.C.Constructs_Extractor is
                   Count := Count + 1;
 
                   if Count > Doc_Threshold then
-                     Under_Doc_Treshold := False;
-
                      --  We don't need to count the exact number of proposals
                      --  that we have
 

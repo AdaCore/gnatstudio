@@ -458,7 +458,6 @@ package body Completion is
    overriding procedure Free (Proposal : in out Simple_Completion_Proposal) is
    begin
       Free (Proposal.Name);
-      Free (Proposal.Documentation);
    end Free;
 
    -----------

@@ -389,7 +389,6 @@ private
    type Simple_Completion_Proposal is new Completion_Proposal with record
       Name          : String_Access;
       Category      : Language_Category := Cat_Unknown;
-      Documentation : String_Access;
    end record;
 
    overriding function Get_Completion
@@ -427,7 +426,6 @@ private
                                 Simple_Completion_Proposal'
                                   (Resolver => null,
                                    Name     => null,
-                                   Category => Cat_Unknown,
-                                   Documentation => null);
+                                   Category => Cat_Unknown);
 
 end Completion;
