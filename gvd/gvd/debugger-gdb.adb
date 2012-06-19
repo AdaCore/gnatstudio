@@ -3858,6 +3858,21 @@ package body Debugger.Gdb is
       function Get_Disassembled return String;
       --  Return the output of the appropriate "disassemble" command
 
+      function Raw_Disassembled (Separator : String) return String;
+      --  Return the output of "disassemble" command without postprocessing
+
+      function Code_Address_To_String (Address : Address_Type) return String;
+      --  return address with explicit convertion to code
+
+      ----------------------------
+      -- Code_Address_To_String --
+      ----------------------------
+
+      function Code_Address_To_String (Address : Address_Type) return String is
+      begin
+         return "(void (*)())" & Address_To_String (Address);
+      end Code_Address_To_String;
+
       ----------------------
       -- Get_Disassembled --
       ----------------------
@@ -3872,12 +3887,7 @@ package body Debugger.Gdb is
               and then Version.Minor >= 1)
          then
             declare
-               S : constant String := Send
-                 (Debugger,
-                  "disassemble " &
-                  Address_To_String (Start_Address) & ", " &
-                  Address_To_String (End_Address),
-                  Mode => Internal);
+               S : constant String := Raw_Disassembled (", ");
                A : constant Unbounded_String_Array := Split (S, ASCII.LF);
                R : Unbounded_String;
             begin
@@ -3898,14 +3908,28 @@ package body Debugger.Gdb is
             end;
 
          else
-            return Send
-              (Debugger,
-               "disassemble " &
-               Address_To_String (Start_Address) & " " &
-               Address_To_String (End_Address),
-               Mode => Internal);
+            return Raw_Disassembled (" ");
          end if;
       end Get_Disassembled;
+
+      ----------------------
+      -- Raw_Disassembled --
+      ----------------------
+
+      function Raw_Disassembled (Separator : String) return String is
+      begin
+         Switch_Language (Debugger, "c");
+
+         return S : constant String := Send
+           (Debugger,
+            "disassemble " &
+              Code_Address_To_String (Start_Address) & Separator &
+              Code_Address_To_String (End_Address),
+            Mode => Internal)
+         do
+            Restore_Language (Debugger);
+         end return;
+      end Raw_Disassembled;
 
       Disassembled : constant String := Get_Disassembled;
       Tmp,
