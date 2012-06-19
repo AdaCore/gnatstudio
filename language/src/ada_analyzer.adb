@@ -1389,7 +1389,9 @@ package body Ada_Analyzer is
             return;
          end if;
 
-         if Prev_Token = Tok_Vertical_Bar and then Top_Tok = Tok_When then
+         if (Prev_Token = Tok_Vertical_Bar or else Prev_Token = Tok_Or)
+           and then Top_Tok = Tok_When
+         then
             --  Indent multiple-line when statements specially:
             --  case Foo is
             --     when A |
@@ -2807,6 +2809,8 @@ package body Ada_Analyzer is
             then
                if (Reserved = Tok_Or or else Reserved = Tok_Else)
                  and then Top_Token.Token = Tok_When
+                 and then (Next (Tokens) = null
+                           or else Next (Tokens).Token /= Tok_Case)
                then
                   Num_Spaces := Num_Spaces - Indent_Level;
                end if;
