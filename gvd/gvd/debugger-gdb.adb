@@ -3920,15 +3920,17 @@ package body Debugger.Gdb is
       begin
          Switch_Language (Debugger, "c");
 
-         return S : constant String := Send
-           (Debugger,
-            "disassemble " &
-              Code_Address_To_String (Start_Address) & Separator &
-              Code_Address_To_String (End_Address),
-            Mode => Internal)
-         do
+         declare
+            S : constant String := Send
+              (Debugger,
+               "disassemble " &
+                 Code_Address_To_String (Start_Address) & Separator &
+                 Code_Address_To_String (End_Address),
+               Mode => Internal);
+         begin
             Restore_Language (Debugger);
-         end return;
+            return S;
+         end;
       end Raw_Disassembled;
 
       Disassembled : constant String := Get_Disassembled;
