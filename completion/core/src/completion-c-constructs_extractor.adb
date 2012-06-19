@@ -179,18 +179,25 @@ package body Completion.C.Constructs_Extractor is
                                 .. Natural (Prefix_Token.Token_Last));
          It : Calls_Iterator;
          E  : Entity_Information;
+         LI : LI_File;
 
       begin
          It := Get_All_Called_Entities (Scope);
          while not At_End (It) loop
-            E := Get (It);
+            E  := Get (It);
+            LI := Get_LI (Get_Declaration_Of (E).File);
 
             --  Skip entities associated with other languages
 
-            if File_Extension
-                (Get_LI_Filename (Get_LI (Get_Declaration_Of (E).File)))
-                  /= GLI_Extension
+            if LI /= null
+              and then File_Extension (Get_LI_Filename (LI))
+                        /= GLI_Extension
             then
+               null;
+
+            --  Do not suggest subprogram parameters
+
+            elsif Is_Parameter_Of (E) /= null then
                null;
 
             --  The last token is a delimiter (dot, scope or dereference)

@@ -1590,18 +1590,10 @@ package body Completion_Module is
          elsif Lang = Cpp_Lang
            or else Lang = C_Lang
          then
-            if C = '.' then
-               pragma Assert (C = '.');
-               null;
-            elsif C = '(' then
-               pragma Assert (C = '(');
-               Lang := Cpp_Lang;
-               null;
-            end if;
-
             return
-              C = '.' or else C = '(';
-
+              C = '.'
+                or else C = '('
+                or else C = '>';
          else
             return False;
          end if;
