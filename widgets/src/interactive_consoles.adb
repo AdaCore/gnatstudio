@@ -1072,7 +1072,8 @@ package body Interactive_Consoles is
       then
          declare
             Errors : aliased Boolean;
-            S : constant String := Execute_Command
+         begin
+            Execute_Command
               (Script  => Interactive_Virtual_Console (Console.Virtual).Script,
                CL           => Parse_String
                  (Input,
@@ -1080,21 +1081,15 @@ package body Interactive_Consoles is
                     (Interactive_Virtual_Console (Console.Virtual).Script)),
                Show_Command => False,
                Hide_Output  => False,
-               Errors       => Errors'Unchecked_Access);
-         begin
+               Errors       => Errors);
+
             --  Preserve the focus on the console after an interactive
             --  execution.
 
             Grab_Focus (Console.View);
 
-            if S = ""
-              or else S (S'Last) = ASCII.LF
-              or else S (S'Last) = ASCII.CR
-            then
-               return S;
-            else
-               return S & ASCII.LF;
-            end if;
+            --  Output is done via the scripting language already
+            return "";
          end;
       end if;
       return "";
