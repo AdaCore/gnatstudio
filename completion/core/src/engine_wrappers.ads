@@ -121,6 +121,10 @@ package Engine_Wrappers is
       I : Completion_Iterator;
    end record;
 
+   procedure Set_Completion_Iterator
+     (Comp_Iter : in out Comp_Iterator;
+      Completion_Iter : Completion_Iterator);
+
    overriding function At_End (Iter : Comp_Iterator) return Boolean;
    overriding function Is_Valid (Iter : Comp_Iterator) return Boolean;
    overriding procedure Next (Iter : in out Comp_Iterator);

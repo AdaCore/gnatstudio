@@ -94,6 +94,17 @@ package body Engine_Wrappers is
       Free (X.P);
    end Free;
 
+   -----------------------------
+   -- Set_Completion_Iterator --
+   -----------------------------
+
+   procedure Set_Completion_Iterator
+     (Comp_Iter : in out Comp_Iterator;
+      Completion_Iter : Completion_Iterator) is
+   begin
+      Comp_Iter.I := Completion_Iter;
+   end Set_Completion_Iterator;
+
    ------------
    -- At_End --
    ------------
