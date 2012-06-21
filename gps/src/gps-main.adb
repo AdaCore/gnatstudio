@@ -965,7 +965,8 @@ procedure GPS.Main is
                Execute_File
                  (Script   => Script,
                   Filename => Normalize_Pathname
-                    (Batch (J + 1 .. Batch'Last), Startup_Dir.all),
+                     (Batch (J + 1 .. Batch'Last), Startup_Dir.all),
+                  Show_Command => False,
                   Errors   => Errors);
             else
                GNATCOLL.Scripts.Execute_Command
