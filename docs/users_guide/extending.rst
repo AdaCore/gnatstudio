@@ -2221,6 +2221,10 @@ whether the context is properly defined.
   current project tree will be listed.  Note: this macro is only available in
   the commands defined in the Build Manager and the Build Launcher dialogs.
 
+*%target*
+  Replaced by `--target=<t>` where <t> is the build target detected by the
+  toolchain being used.
+
 *%%*
   Replaced by the % sign.
 

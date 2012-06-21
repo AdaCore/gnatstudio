@@ -795,6 +795,19 @@ package body Build_Command_Utils is
             return Res;
          end;
 
+      elsif Arg = "%target" then
+         declare
+            Prj   : constant Project_Type := Get_Context_Project (Adapter.all);
+            Tc    : constant Toolchains.Toolchain :=
+                      Get_Toolchain
+                        (Get_Context_Toolchains_Manager (Adapter.all), Prj);
+            Res   : Expansion_Result;
+
+         begin
+            Res.Args := Create ("--target=" & Get_Name (Tc));
+            return Res;
+         end;
+
       elsif Arg = "%external" then
          Result.Args := Parse_String
            (Get_Execute_Command_Preference (Adapter.all), Separate_Args);
