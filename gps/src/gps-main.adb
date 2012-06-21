@@ -143,7 +143,6 @@ with Startup_Module;
 with Switches_Chooser.Scripts;
 with Theme_Manager_Module;
 with Toolchains_Editor;
-with VCS.ClearCase;
 with VCS_Module;
 with VFS_Module;
 with Vdiff2_Module;
@@ -182,8 +181,6 @@ procedure GPS.Main is
    VCS_Trace              : constant Debug_Handle :=
                         Create ("MODULE.VCS", GNATCOLL.Traces.On);
 
-   ClearCase_Trace        : constant Debug_Handle :=
-                        Create ("MODULE.ClearCase", GNATCOLL.Traces.On);
    Custom_Trace           : constant Debug_Handle :=
                         Create ("MODULE.Custom", GNATCOLL.Traces.On);
    Project_Templates_Trace : constant Debug_Handle :=
@@ -1443,12 +1440,6 @@ procedure GPS.Main is
       end if;
 
       GPS.Kernel.Preferences.Register_Module (GPS_Main.Kernel);
-
-      if Active (ClearCase_Trace)
-        and then Clearcase_Active.Get_Pref
-      then
-         VCS.ClearCase.Register_Module (GPS_Main.Kernel);
-      end if;
 
       if Active (Custom_Trace) then
          Custom_Module.Register_Module (GPS_Main.Kernel);
