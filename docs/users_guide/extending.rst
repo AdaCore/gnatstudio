@@ -993,12 +993,6 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
     command. If the network connection with the repository is slow
     disabling this command can speed-up the VCS actions.
 
-  *ClearCase module*
-    .. index:: ClearCase module
-
-    Whether the built-in ClearCase (see :ref:`Version_Control_System`)
-    module is activated or disabled.
-
   *Default VCS*
     .. index:: Default VCS
 
