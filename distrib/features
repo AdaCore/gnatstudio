@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L614-009 GPS: Removal of ClearCase module preference (2012-06-21)
+
+  This preference gave access to an old version of ClearCase support, replaced
+  by ClearCase native support since several versions. This preference is now
+  removed and all ClearCase users are invited to switch to ClearCase native
+  instead, if not already done.
+
 NF-52-L521-019 GPS: Minimal scrolling when jumping to a location (2012-05-21)
 
   The scrolling that occurs when going to an editor location is slightly
