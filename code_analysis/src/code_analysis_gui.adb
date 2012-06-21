@@ -213,6 +213,15 @@ package body Code_Analysis_GUI is
       return Get_Name (View.Tree);
    end Name;
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (View : access Code_Analysis_View_Record'Class) is
+   begin
+      View.Model.Clear;
+   end Clear;
+
    ----------------------------
    -- Expand_All_From_Report --
    ----------------------------

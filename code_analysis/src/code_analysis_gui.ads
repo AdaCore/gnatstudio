@@ -128,6 +128,9 @@ package Code_Analysis_GUI is
    function Name (View : access Code_Analysis_View_Record'Class) return String;
    --  Get the View's name.
 
+   procedure Clear (View : access Code_Analysis_View_Record'Class);
+   --  Clear data from the view.
+
    function On_Double_Click (Object : access Gtk_Widget_Record'Class;
                              Event  : Gdk_Event;
                              Kernel : Kernel_Handle) return Boolean;

@@ -1075,6 +1075,10 @@ package body Code_Analysis_Module is
       View  : Code_Analysis_View;
 
    begin
+      if Kernel.Is_In_Destruction then
+         return null;
+      end if;
+
       Child := GPS_MDI_Child
         (Find_MDI_Child_By_Name
            (Get_MDI (Kernel),
@@ -1305,13 +1309,17 @@ package body Code_Analysis_Module is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Code_Analysis_Instance_Record, Code_Analysis_Instance);
       Child     : GPS_MDI_Child;
+      View      : Code_Analysis_View;
 
    begin
-      if Close_View then
-         Child := Get_Or_Create (Kernel, Analysis, False);
+      Child := Get_Or_Create (Kernel, Analysis, False);
 
-         if Child /= null then
+      if Child /= null then
+         if Close_View then
             Close_Child (Child, Force => True);
+         else
+            View := Code_Analysis_View (Get_Widget (Child));
+            View.Clear;
          end if;
       end if;
 
@@ -1849,7 +1857,7 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Widget);
 
    begin
-      Destroy_All_Analyzes (Kernel, True);
+      Destroy_All_Analyzes (Kernel, False);
 
    exception
       when E : others => Trace (Exception_Handle, E);
