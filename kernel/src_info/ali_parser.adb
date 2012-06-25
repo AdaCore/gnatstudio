@@ -787,6 +787,7 @@ package body ALI_Parser is
                function CPP_Unmangled_Name
                  (LI_Handler   : Entities.LI_Handler;
                   Mangled_Name : String) return String;
+               pragma Unreferenced (CPP_Unmangled_Name);
                --  Invoke the process executing c++filt and return the C++
                --  unmangled name associated with Mangled_Name; if the process
                --  is not available or its invocation fails then return
@@ -1043,34 +1044,26 @@ package body ALI_Parser is
                         --  the reference has not been loaded yet!
 
                         else
-                           if Get_Name_String (Current_Xref.Imported_Lang)
-                             = "cpp"
-                           then
-                              Iter :=
-                                Start
-                                  (Trie   => Get_Name_Index (LI_Handler),
-                                   Prefix => CPP_Unmangled_Name
-                                              (LI_Handler, Xref_Imported_Name),
-                                   Is_Partial => False);
-                           end if;
+                           --  We used to search the unmanged name in the trie
+                           --  tree (via
+                           --     CPP_Unmangled_Name
+                           --       (LI_Handler, Xref_Imported_Name)
+                           --  but this is never correct, since in C++ for
+                           --  instance there exists overriding (and
+                           --  constructors have the same name as their class).
 
-                           if not At_End (Iter) then
-                              Location := Get_Declaration_Of (Get (Iter));
+                           Location :=
+                             (File   => Sfiles (Current_Sfile).File,
+                              Line   => Integer (Current_Xref.Line),
+                              Column => Visible_Column_Type
+                                (Current_Xref.Col));
 
-                           else
-                              Location :=
-                                (File   => Sfiles (Current_Sfile).File,
-                                 Line   => Integer (Current_Xref.Line),
-                                 Column => Visible_Column_Type
-                                             (Current_Xref.Col));
+                           --  Indicate that this ALI has unresolved
+                           --  entities imported from C. Done to force
+                           --  reloading the LI file if such entity is
+                           --  eventually needed for sources navigation.
 
-                              --  Indicate that this ALI has unresolved
-                              --  entities imported from C. Done to force
-                              --  reloading the LI file if such entity is
-                              --  eventually needed for sources navigation.
-
-                              Set_Has_Unresolved_Imported_Refs (Handler);
-                           end if;
+                           Set_Has_Unresolved_Imported_Refs (Handler);
                         end if;
                      end;
                   end if;
