@@ -49,8 +49,7 @@ package body Entities is
    --  If True, no memory is freed, this makes the structure more robust and
    --  easier to debug, but will of course use more memory.
 
-   Add_Reference_Force_Unique : constant Trace_Handle :=
-     Create ("Entities.Force_Unique_Ref", On);
+   Add_Reference_Force_Unique : constant Boolean := False;
    --  Activate this to force a check that all references are unique. This
    --  will slow down the parsing a little, but might help customers work
    --  around bugs in GPS. This should never be needed however, and is just
@@ -143,7 +142,6 @@ package body Entities is
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : GNATCOLL.VFS.Virtual_File;
       File          : GNATCOLL.VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
@@ -1366,20 +1364,17 @@ package body Entities is
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : GNATCOLL.VFS.Virtual_File;
       File          : GNATCOLL.VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
       Allow_Create  : Boolean := True) return Source_File
    is
-      S : Source_File_Item := Get (Db.Files, Full_Filename);
+      S : Source_File_Item := Get (Db.Files, File);
       F : Source_File;
       use LI_File_Arrays;
 
    begin
       if S = null and then not Allow_Create then
-         Trace
-           (Assert_Me, "MANU Internal_Get_Or_Create, not creation allowed");
          null;
 
       elsif S = null then
@@ -1389,15 +1384,10 @@ package body Entities is
          F.Depended_On  := Null_Dependency_List;
          F.Scope_Tree_Computed := False;
          F.Ref_Count    := 1;
+         F.Name         := File;
 
          if LI /= null then
             Append (F.LI_Files, LI);
-         end if;
-
-         if File = GNATCOLL.VFS.No_File then
-            F.Name := Full_Filename;
-         else
-            F.Name := File;
          end if;
 
          F.Ordered_Index := Get_Key (Db.FS_Optimizer, F.Name);
@@ -1457,7 +1447,7 @@ package body Entities is
       if H = null then
          return null;
       else
-         return Internal_Get_Or_Create (Db, File, File, H, LI, Allow_Create);
+         return Internal_Get_Or_Create (Db, File, H, LI, Allow_Create);
       end if;
    end Get_Or_Create;
 
@@ -1476,8 +1466,7 @@ package body Entities is
    begin
       if Is_Absolute_Path (Base_Name) then
          return Internal_Get_Or_Create
-           (Db, Create (Base_Name),
-            GNATCOLL.VFS.No_File, Handler, LI, Allow_Create);
+           (Db, Create (Base_Name), Handler, LI, Allow_Create);
 
       else
          File := Db.Registry.Tree.Create
@@ -1489,7 +1478,7 @@ package body Entities is
          end if;
 
          return Internal_Get_Or_Create
-           (Db, File, File, Handler, LI, Allow_Create);
+           (Db, File, Handler, LI, Allow_Create);
       end if;
    end Get_Or_Create;
 
@@ -1518,10 +1507,24 @@ package body Entities is
 
    function Lt_No_File (Left, Right : E_Reference) return Boolean is
    begin
-      return Left.Location.Line < Right.Location.Line
-        or else
-          (Left.Location.Line = Right.Location.Line
-           and then Left.Location.Column < Right.Location.Column);
+      if Left.Location.Line < Right.Location.Line then
+         return True;
+      elsif Left.Location.Line = Right.Location.Line then
+         if Left.Location.Column < Right.Location.Column then
+            return True;
+         elsif Left.Location.Column = Right.Location.Column then
+            --  Allow both 'i' and 'b' references at the same location
+            if Left.Kind = Implicit
+              and then
+                (Right.Kind = Body_Entity or else
+                 Right.Kind = Completion_Of_Private_Or_Incomplete_Type)
+            then
+               return True;
+            end if;
+         end if;
+      end if;
+
+      return False;
    end Lt_No_File;
 
    ----------
@@ -1923,14 +1926,14 @@ package body Entities is
 
          --  We might have a change that the reference already existed
 
-         if Active (Add_Reference_Force_Unique)
+         if Add_Reference_Force_Unique
            and then Refs.Refs.Contains ((Location => Location, others => <>))
          then
             return;
          end if;
       end if;
 
-      Refs.Refs.Insert
+      Refs.Refs.Include
         ((Location              => Location,
           Caller                => null,
           From_Instantiation_At => From_Instantiation_At,
