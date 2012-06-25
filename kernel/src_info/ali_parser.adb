@@ -787,7 +787,6 @@ package body ALI_Parser is
                function CPP_Unmangled_Name
                  (LI_Handler   : Entities.LI_Handler;
                   Mangled_Name : String) return String;
-               pragma Unreferenced (CPP_Unmangled_Name);
                --  Invoke the process executing c++filt and return the C++
                --  unmangled name associated with Mangled_Name; if the process
                --  is not available or its invocation fails then return
