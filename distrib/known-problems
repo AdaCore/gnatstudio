@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L625-022: GPS: isearch.py window disappearing
+  Problem:    Under some X servers, such as the Cygwin X11 server, the
+              window for doing incremental searches in the isearch.py
+              plugin disappears immediately after appearing.
+  Workaround: None known, use the standard search dialog instead.
+
 - L520-004: GPS: wrong smart mixed casing after parenthesis
   Problem:    The contextual menu Casing proposes an incorrect casing for
               smart mixed casing on selection if starting with a parenthesis.
