@@ -44,7 +44,7 @@
       <shell>dump "%1" TRUE</shell>
       <external>diff --normal -p %1 $1</external>
       <on-failure>
-	 <shell>base_name "$1"</shell>
+         <shell>base_name "$1"</shell>
          <shell>dump "%2" TRUE</shell>
          <shell>File "%1"</shell>
          <shell>File "$1"</shell>
@@ -138,16 +138,16 @@
         absolute_names="FALSE" atomic_commands="TRUE"
         commit_directory="FALSE"
 	administrative_directory=".git">
-      <status_files       action="generic_git_status"           label="Query status"/>
-      <local_status_files action="generic_git_local_status"     label="Local status"/>
-      <diff_head          action="generic_git_diff_head"        label="Compare against head revision"/>
-      <commit             action="generic_git_commit"           label="Commit"/>
-      <add_no_commit      action="generic_git_add_no_commit"    label="Add/No commit"/>
-      <annotate           action="generic_git_annotate"         label="Annotations"/>
-      <history            action="generic_git_history"          label="View entire revision history"/>
-      <history_text       action="generic_git_history_text"     label="View entire revision history (as text)"/>
-      <history_revision   action="generic_git_history_rev"      label="View specific revision history"/>
-      <revision           action="generic_git_revision"         label="View revision"/>
+      <status_files       action="generic_git_status"/>
+      <local_status_files action="generic_git_local_status"/>
+      <diff_head          action="generic_git_diff_head"/>
+      <commit             action="generic_git_commit"/>
+      <add_no_commit      action="generic_git_add_no_commit"/>
+      <annotate           action="generic_git_annotate"/>
+      <history            action="generic_git_history"/>
+      <history_text       action="generic_git_history_text"/>
+      <history_revision   action="generic_git_history_rev"/>
+      <revision           action="generic_git_revision"/>
 
       <status label="Up to date" stock="gps-vcs-up-to-date" />
       <status label="Locally modified" stock="gps-vcs-modified" />
