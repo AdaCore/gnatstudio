@@ -51,6 +51,10 @@ with Traces;                  use Traces;
 
 package body Command_Window is
 
+   type Rectangle is record
+      X, Y, Width, Height : Gint;
+   end record;
+
    type Command_Window_Record is new Gtk_Window_Record with record
       Kernel            : Kernel_Handle;
       Box               : Gtk_Box;
@@ -62,8 +66,14 @@ package body Command_Window is
       On_Activate       : Subprogram_Type;
       On_Cancel         : Subprogram_Type;
       Close_On_Activate : Boolean;
+
+      Parent            : Gtk_Window;
+      Parent_Geometry   : Rectangle;
    end record;
    type Command_Window is access all Command_Window_Record'Class;
+
+   function Get_Geometry (Window : Gtk_Window) return Rectangle;
+   --  Return the coordinates of Window
 
    procedure Gtk_New
      (Window            : out Command_Window;
@@ -111,6 +121,10 @@ package body Command_Window is
      (Window : access Gtk_Widget_Record'Class) return Boolean;
    --  Handles focus events on Window. This is used to grab key events in the
    --  command window, while allowing users to scroll editors.
+
+   function On_Parent_Configure
+     (Window : access Gtk_Widget_Record'Class) return Boolean;
+   --  Called when the toplevel displaying Window is reconfigured
 
    function Command_Window_Event_Handler
      (Event : Gdk_Event; Kernel : access Kernel_Handle_Record'Class)
@@ -326,6 +340,10 @@ package body Command_Window is
    begin
       Status := Keyboard_Grab (Get_Window (Window), False);
       return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
    end On_Focus_In;
 
    ------------------
@@ -341,7 +359,33 @@ package body Command_Window is
       --  grab.
       Destroy (Window);
       return True;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
    end On_Focus_Out;
+
+   -------------------------
+   -- On_Parent_Configure --
+   -------------------------
+
+   function On_Parent_Configure
+     (Window : access Gtk_Widget_Record'Class) return Boolean
+   is
+      Win : constant Command_Window := Command_Window (Window);
+   begin
+      if Get_Geometry (Win.Parent) /= Win.Parent_Geometry then
+         --  The geometry of the parent window has actually changed: destroy
+         --  the command window.
+         Destroy (Window);
+      end if;
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end On_Parent_Configure;
 
    -------------
    -- Gtk_New --
@@ -439,9 +483,12 @@ package body Command_Window is
          Set_UPosition (Window, X, Y);
       end if;
 
+      Window.Parent := Gtk_Window (Get_Toplevel (Applies_To));
+      Window.Parent_Geometry := Get_Geometry (Window.Parent);
+
       Return_Callback.Object_Connect
-        (Get_Toplevel (Applies_To), Signal_Configure_Event,
-         On_Focus_Out'Access, Window);
+        (Window.Parent, Signal_Configure_Event,
+         On_Parent_Configure'Access, Window);
 
       Add_Event_Handler (Kernel, Command_Window_Event_Handler'Access);
 
@@ -611,5 +658,17 @@ package body Command_Window is
         (Kernel, "set_prompt", 1, 1, Class => Class,
          Handler => Command_Handler'Access);
    end Register_Module;
+
+   ------------------
+   -- Get_Geometry --
+   ------------------
+
+   function Get_Geometry (Window : Gtk_Window) return Rectangle is
+      R : Rectangle;
+   begin
+      Window.Get_Position (R.X, R.Y);
+      Window.Get_Size (R.Width, R.Height);
+      return R;
+   end Get_Geometry;
 
 end Command_Window;
