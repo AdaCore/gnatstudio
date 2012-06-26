@@ -8952,23 +8952,25 @@ class VCS(object):
     @staticmethod
     def status_parse(vcs_identifier, string, clear_logs, local, dir=''):
         """
-Parses a string for VCS status. This command uses the parsers defined in the
-XML description node for the VCS corresponding to vcs_identifier.
+        Parses a string for VCS status. This command uses the parsers defined
+        in the XML description node for the VCS corresponding to
+        vcs_identifier.
 
-- When local is FALSE, the parser defined by the node status_parser is used.
+        - When local is FALSE, the parser defined by the node status_parser is
+          used.
 
-- When local is TRUE, the parser defined by the node local_status_parser is
-  used.
+        - When local is TRUE, the parser defined by the node
+          local_status_parser is used.
 
-If clear_logs is TRUE, the revision logs editors are closed for files that have
-the VCS status "up-to-date".  Parameter dir indicates the directory in which
-the files matched in string are located.
+        If clear_logs is TRUE, the revision logs editors are closed for files
+        that have the VCS status "up-to-date".  Parameter dir indicates the
+        directory in which the files matched in string are located.
 
-:param vcs_identifier: A string
-:param string: A string
-:param clear_logs: A boolean
-:param local: A boolean
-:param dir: A string
+        :param vcs_identifier: A string
+        :param string: A string
+        :param clear_logs: A boolean
+        :param local: A boolean
+        :param dir: A string
         """
         pass  # implemented in Ada
 
