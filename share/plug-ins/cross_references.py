@@ -2,6 +2,7 @@
 """
 
 import GPS
+import os.path
 
 xml = """<?xml version="1.0" ?><GPS>
 
@@ -46,13 +47,24 @@ xml = """<?xml version="1.0" ?><GPS>
 
 def recompute_xref():
     """ Launch recompilation of the cross references """
-    if not "Recompute Xref info" in [t.name() for t in GPS.Task.list()]:
-        target = GPS.BuildTarget("Recompute Xref info")
 
+    # The project might not exist, for instance when GPS is loading the
+    # default project in a directory
 
-        #  ??? should add <arg>--symlinks</arg> if preference "slow project loading" is activated
+    if not os.path.exists(GPS.Project.root().file().name()):
+        return
 
-        target.execute(synchronous=False, quiet=True)
+    # If we are already recomputing Xref info, do not launch another instance
+    # of gnatinspect
+
+    if "Recompute Xref info" in [t.name() for t in GPS.Task.list()]:
+        return
+
+    target = GPS.BuildTarget("Recompute Xref info")
+
+    #  ??? should add <arg>--symlinks</arg> if preference "slow project loading" is activated
+
+    target.execute(synchronous=False, quiet=True)
 
 def on_compilation_finished(hook, category,
     target_name="", mode_name="", status=""):
