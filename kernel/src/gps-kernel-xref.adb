@@ -56,6 +56,10 @@ package body GPS.Kernel.Xref is
 
       Dir := Get_Project (Kernel).Object_Dir;
 
+      if Dir = No_File then
+         Dir := GNATCOLL.VFS.Get_Current_Dir;
+      end if;
+
       File := Create_From_Dir
         (Dir       => Dir,
          Base_Name => "gnatinspect.db");
