@@ -1067,6 +1067,17 @@ package Src_Editor_Buffer is
       N      : Positive) return UTF8_String;
    --  Returns the N last typed characters
 
+   function Get_Timestamp
+     (Buffer : access Source_Buffer_Record'Class) return Integer;
+   --  Return the logical timestamp in Buffer. This logical timestamp is
+   --  increased with every modification in Buffer.
+
+   procedure Start_Undo_Group (Buffer : access Source_Buffer_Record'Class);
+   procedure Finish_Undo_Group (Buffer : access Source_Buffer_Record'Class);
+   --  Start / Finish an undo group on this buffer.
+
+private
+
    procedure Enter_Current_Group (Buffer : access Source_Buffer_Record'Class);
    --  Enter the current undo-redo group. This means that all subsequent
    --  actions will be placed in the same undo-redo group as the current
@@ -1076,13 +1087,6 @@ package Src_Editor_Buffer is
    procedure Leave_Current_Group (Buffer : access Source_Buffer_Record'Class);
    --  Leave the current undo-redo group. This needs to be called once for each
    --  call to Enter_Current_Group.
-
-   function Get_Timestamp
-     (Buffer : access Source_Buffer_Record'Class) return Integer;
-   --  Return the logical timestamp in Buffer. This logical timestamp is
-   --  increased with every modification in Buffer.
-
-private
 
    procedure Set_Cursor_Position
      (Buffer    : access Source_Buffer_Record;

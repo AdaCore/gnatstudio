@@ -7686,4 +7686,26 @@ package body Src_Editor_Buffer is
       Buffer.Inserting_Count := Buffer.Inserting_Count - 1;
    end End_Inserting;
 
+   ----------------------
+   -- Start_Undo_Group --
+   ----------------------
+
+   procedure Start_Undo_Group (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      End_Action (Buffer);
+      Start_Group (Buffer.Queue);
+      Enter_Current_Group (Buffer);
+   end Start_Undo_Group;
+
+   -----------------------
+   -- Finish_Undo_Group --
+   -----------------------
+
+   procedure Finish_Undo_Group (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      End_Action (Buffer);
+      End_Group (Buffer.Queue);
+      Leave_Current_Group (Buffer);
+   end Finish_Undo_Group;
+
 end Src_Editor_Buffer;

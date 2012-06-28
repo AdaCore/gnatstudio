@@ -1784,25 +1784,36 @@ package body Src_Contexts is
 
             Set_Avoid_Cursor_Move_On_Changes (Get_Buffer (Editor), True);
 
-            for M in reverse Matches'Range loop
-               if Case_Preserving then
-                  Current_Casing := Guess_Casing
-                    (Get_Text
-                       (Get_Buffer (Editor),
-                        Editable_Line_Type (Matches (M).Begin_Line),
-                        Matches (M).Begin_Column,
-                        Editable_Line_Type (Matches (M).End_Line),
-                        Matches (M).End_Column));
-               end if;
+            Start_Undo_Group (Get_Buffer (Editor));
 
-               Replace_Slice
-                 (Get_Buffer (Editor),
-                  Editable_Line_Type (Matches (M).Begin_Line),
-                  Matches (M).Begin_Column,
-                  Editable_Line_Type (Matches (M).End_Line),
-                  Matches (M).End_Column,
-                  Casings (Current_Casing));
-            end loop;
+            declare
+            begin
+               for M in reverse Matches'Range loop
+                  if Case_Preserving then
+                     Current_Casing := Guess_Casing
+                       (Get_Text
+                          (Get_Buffer (Editor),
+                           Editable_Line_Type (Matches (M).Begin_Line),
+                           Matches (M).Begin_Column,
+                           Editable_Line_Type (Matches (M).End_Line),
+                           Matches (M).End_Column));
+                  end if;
+
+                  Replace_Slice
+                    (Get_Buffer (Editor),
+                     Editable_Line_Type (Matches (M).Begin_Line),
+                     Matches (M).Begin_Column,
+                     Editable_Line_Type (Matches (M).End_Line),
+                     Matches (M).End_Column,
+                     Casings (Current_Casing));
+               end loop;
+            exception
+               when others =>
+                  --  For safety
+                  Finish_Undo_Group (Get_Buffer (Editor));
+            end;
+
+            Finish_Undo_Group (Get_Buffer (Editor));
 
             Set_Avoid_Cursor_Move_On_Changes (Get_Buffer (Editor), False);
             Free (Matches);

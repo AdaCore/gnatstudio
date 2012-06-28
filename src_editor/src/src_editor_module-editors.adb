@@ -46,7 +46,6 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;
-with Commands;                  use Commands;
 with Find_Utils;                use Find_Utils;
 with Language;                  use Language;
 with Src_Contexts;              use Src_Contexts;
@@ -2123,9 +2122,7 @@ package body Src_Editor_Module.Editors is
    overriding procedure Start_Undo_Group (This : Src_Editor_Buffer) is
    begin
       if This.Contents.Buffer /= null then
-         End_Action (This.Contents.Buffer);
-         Start_Group (Get_Command_Queue (This.Contents.Buffer));
-         Enter_Current_Group (This.Contents.Buffer);
+         This.Contents.Buffer.Start_Undo_Group;
       end if;
    end Start_Undo_Group;
 
@@ -2136,9 +2133,7 @@ package body Src_Editor_Module.Editors is
    overriding procedure Finish_Undo_Group (This : Src_Editor_Buffer) is
    begin
       if This.Contents.Buffer /= null then
-         End_Action (This.Contents.Buffer);
-         End_Group (Get_Command_Queue (This.Contents.Buffer));
-         Leave_Current_Group (This.Contents.Buffer);
+         This.Contents.Buffer.Finish_Undo_Group;
       end if;
    end Finish_Undo_Group;
 
