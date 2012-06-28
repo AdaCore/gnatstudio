@@ -71,9 +71,10 @@ package body Gtkada.Macro is
    --  return value.Id is left to null if no specific identifier could be
    --  found.
 
-   procedure Move_Pointer (X_Root, Y_Root : Gint);
+   procedure Move_Pointer (X_Root, Y_Root : Gint) is null;
    --  Move mouse pointer to specified absolute location.
-   pragma Import (C, Move_Pointer, "ada_gdk_move_pointer");
+   --  ??? This function needs to wrap to XWarpPointer on X11 platforms.
+   --  pragma Import (C, Move_Pointer, "ada_gdk_move_pointer");
 
    function Get_Focus_Widget return Gtk_Widget;
    --  Return the current top level widget having the focus
