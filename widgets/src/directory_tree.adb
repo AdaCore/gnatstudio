@@ -36,7 +36,6 @@ with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Paned;                 use Gtk.Paned;
@@ -1243,7 +1242,7 @@ package body Directory_Tree is
       D : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
       --  D is freed when Read_Directory ends (i.e. returns False)
 
-      Timeout_Id : Timeout_Handler_Id;
+      Timeout_Id : Glib.Main.G_Source_Id;
 
    begin
       Ensure_Directory (Dir);
@@ -1261,8 +1260,8 @@ package body Directory_Tree is
          --  Necessary for preserving order in drive names.
 
          if Read_Directory (D) then
-            Timeout_Id := File_Append_Directory_Timeout.Add
-              (1, Read_Directory'Access, D, Free'Access);
+            Timeout_Id := File_Append_Directory_Timeout.Timeout_Add
+              (1, Read_Directory'Access, D, Notify => Free'Access);
             Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
          else
             Free (D);
@@ -1408,7 +1407,7 @@ package body Directory_Tree is
      (Explorer : access Dir_Tree_Record'Class) is
    begin
       while not Timeout_Id_List.Is_Empty (Explorer.Fill_Timeout_Ids) loop
-         Timeout_Remove (Timeout_Id_List.Head (Explorer.Fill_Timeout_Ids));
+         Glib.Main.Remove (Timeout_Id_List.Head (Explorer.Fill_Timeout_Ids));
          Timeout_Id_List.Next (Explorer.Fill_Timeout_Ids);
       end loop;
    end File_Remove_Idle_Calls;
@@ -1612,16 +1611,6 @@ package body Directory_Tree is
       when E : others => Trace (Exception_Handle, E);
          return False;
    end File_Button_Press;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (D : in out Gtk.Main.Timeout_Handler_Id) is
-      pragma Unreferenced (D);
-   begin
-      null;
-   end Free;
 
    -------------
    -- Refresh --

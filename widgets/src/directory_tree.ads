@@ -25,9 +25,10 @@
 --  or GNAT.OS_Lib.Directory_Separator as a separator.
 --  They must end with a directory separator.
 
+with Glib.Main;
+
 with Gdk.Window;
 with Gtk.Menu;
-with Gtk.Main;
 with Gtk.Paned;
 
 with Gtk.Handlers;
@@ -143,11 +144,11 @@ private
    --  Custom data for the asynchronous fill function.
 
    package File_Append_Directory_Timeout is
-      new Gtk.Main.Timeout (Append_Directory_Idle_Data_Access);
+      new Glib.Main.Generic_Sources (Append_Directory_Idle_Data_Access);
 
-   procedure Free (D : in out Gtk.Main.Timeout_Handler_Id);
+   procedure Free (D : in out Glib.Main.G_Source_Id) is null;
 
-   package Timeout_Id_List is new Generic_List (Gtk.Main.Timeout_Handler_Id);
+   package Timeout_Id_List is new Generic_List (Glib.Main.G_Source_Id);
 
    type Dir_Tree_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
