@@ -37,9 +37,11 @@ with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Menu;                   use Gtk.Menu;
+with Gtk.Selection;              use Gtk.Selection;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Gdk.Types;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
@@ -54,6 +56,7 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
 with Projects;                   use Projects;
+with File_Utils;
 with GUI_Utils;                  use GUI_Utils;
 with Traces;                     use Traces;
 with Histories;                  use Histories;
@@ -250,6 +253,18 @@ package body Project_Explorers_Files is
       File : GNATCOLL.VFS.Virtual_File);
    --  Add a file or directory node in the tree
 
+   procedure Drag_Data_Get
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Get drag&drop data from File View's Tree
+
+   procedure Drag_Data_Received
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Accept drag&drop data in File View's Tree
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -276,6 +291,150 @@ package body Project_Explorers_Files is
         (Context, Get_Kernel (Module.all),
          Gtk_Widget (Child), Child, null, null);
    end Default_Context_Factory;
+
+   -------------------
+   -- Drag_Data_Get --
+   -------------------
+
+   procedure Drag_Data_Get
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Kernel);
+
+      Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Object);
+      Model : Gtk_Tree_Model := Tree.Get_Model;
+      Iter  : Gtk_Tree_Iter;
+      Kind  : Node_Types;
+      File  : Virtual_File;
+      Data  : constant Gtk.Selection.Selection_Data :=
+        Gtk.Selection.Selection_Data (Get_Proxy (Nth (Args, 2)));
+   begin
+      Get_Selected (Get_Selection (Tree), Model, Iter);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Kind := Node_Types'Val (Get_Int (Model, Iter, Node_Type_Column));
+
+      case Kind is
+
+         when File_Node | Directory_Node =>
+            File := Get_File (Model, Iter, File_Column);
+
+         when others =>
+            return;
+      end case;
+
+      Gtk.Selection.Selection_Data_Set
+        (Data, Gtk.Selection.Get_Target (Data), 8,
+         "file:///" & File.Display_Full_Name);
+   end Drag_Data_Get;
+
+   ------------------------
+   -- Drag_Data_Received --
+   ------------------------
+
+   procedure Drag_Data_Received
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      Tree    : constant Gtk_Tree_View := Gtk_Tree_View (Object);
+      Model   : constant Gtk_Tree_Model := Tree.Get_Model;
+      Context : constant Drag_Context :=
+                  Drag_Context (Get_Proxy (Nth (Args, 1)));
+      X       : constant Gint := Get_Int (Nth (Args, 2));
+      Y       : constant Gint := Get_Int (Nth (Args, 3));
+      Data    : constant Selection_Data :=
+                  Selection_Data (Get_Proxy (Nth (Args, 4)));
+      Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
+      Action  : constant Drag_Action := Get_Action (Context);
+      Iter    : Gtk_Tree_Iter;
+      Success : Boolean;
+   begin
+      declare
+         Path      : Gtk_Tree_Path;
+         Buffer_X  : Gint;
+         Buffer_Y  : Gint;
+         Column    : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      begin
+         Get_Path_At_Pos
+           (Tree, X, Y,
+            Path,
+            Column,
+            Buffer_X,
+            Buffer_Y,
+            Success);
+
+         if not Success or Path = null then
+            Iter := Null_Iter;
+         else
+            Iter := Get_Iter (Model, Path);
+            Path_Free (Path);
+         end if;
+      end;
+
+      if Get_Source_Widget (Context) /= Object then
+         --  Forward requests from other applications/widgets to common handler
+         GPS.Kernel.Modules.UI.Drag_Data_Received (Object, Args, Kernel);
+      elsif Iter /= Null_Iter
+        and then Get_Length (Data) >= 0
+        and then Get_Format (Data) = 8
+        and then (Action = Action_Copy or Action = Action_Move)
+      then
+         declare
+            Source  : Virtual_File;
+            Target  : Virtual_File;
+            Node    : constant Virtual_File
+              := Get_File (Model, Iter, File_Column);
+            Dir     : constant Virtual_File := Node.Dir;
+            Sources : constant File_Array_Access
+              := File_Utils.URL_List_To_Files (Get_Data_As_String (Data));
+         begin
+            if Sources = null then
+               Success := False;
+            else
+               --  Muti-selection not supported by Files View, so
+               --  process only first file
+               Source := Sources (Sources'First);
+               Target := Dir.Create_From_Dir (Source.Base_Name);
+
+               if Source = Target then
+                  Success := False;
+               elsif Action = Action_Move then
+                  Source.Rename (Target, Success);
+
+                  if Success then
+                     Kernel.File_Renamed (Source, Target);
+                  end if;
+               else
+                  Source.Copy (Target.Full_Name, Success);
+
+                  if Success then
+                     Kernel.File_Saved (Target);
+                  end if;
+               end if;
+            end if;
+
+            Gtk.Dnd.Finish
+              (Context,
+               Success => Success,
+               Del     => Success and (Action = Action_Move),
+               Time    => Time);
+
+            if Success then
+               Reload_Project_If_Needed (Kernel);
+               Recompute_View (Kernel);
+            end if;
+         end;
+      else
+         Gtk.Dnd.Finish
+           (Context, Success => False, Del => False, Time => Time);
+      end if;
+   end Drag_Data_Received;
 
    --------------------
    -- Read_Directory --
@@ -702,6 +861,11 @@ package body Project_Explorers_Files is
       Kernel_Callback.Connect
         (Explorer.File_Tree, Signal_Drag_Data_Received,
          Drag_Data_Received'Access, Kernel_Handle (Kernel));
+      Explorer.File_Tree.Enable_Model_Drag_Source
+        (Gdk.Types.Button1_Mask, Target_Table_Url, Action_Any);
+      Kernel_Callback.Connect
+        (Explorer.File_Tree, Signal_Drag_Data_Get,
+         Drag_Data_Get'Access, Kernel_Handle (Kernel));
 
       Deleted_Hook := new File_Deleted_Hook_Record;
       Deleted_Hook.View := Project_Explorer_Files (Explorer);

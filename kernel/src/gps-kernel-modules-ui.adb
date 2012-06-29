@@ -18,13 +18,12 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
@@ -69,12 +68,12 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
+with File_Utils;
 with System;                    use System;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with UTF8_Utils; use UTF8_Utils;
+with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel.Modules.UI is
 
@@ -1670,38 +1669,17 @@ package body GPS.Kernel.Modules.UI is
                   Selection_Data (Get_Proxy (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
       File    : Virtual_File;
-      First   : Natural;
-      Last    : Natural;
-
    begin
       if Get_Length (Data) >= 0
         and then Get_Format (Data) = 8
       then
          declare
-            Files : constant String := Strip_CR (Get_Data_As_String (Data));
+            Files : constant File_Array_Access
+              := File_Utils.URL_List_To_Files (Get_Data_As_String (Data));
          begin
-            First := Files'First;
-            Last  := First;
-
-            loop
-               exit when First > Files'Last;
-
-               Skip_To_Char (Files, Last, ASCII.LF);
-
-               if First + 7 < Last
-                 and then Files (First .. First + 7) = "file:///"
-               then
-                  --  URL could be in forms
-                  --   * file:///path/file.ext
-                  --   * file:///C:\Path\File.ext
-                  --  Let's check both as absolute path:
-                  for From in First + 7 .. First + 8 loop
-                     File := Create
-                       (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
-                        (URL_Decode (Files (From .. Last - 1)))));
-
-                     exit when Is_Regular_File (File);
-                  end loop;
+            if Files /= null then
+               for J in Files'Range loop
+                  File := Files (J);
 
                   if Is_Regular_File (File) then
                      if File_Extension (File) = Project_File_Extension then
@@ -1710,11 +1688,8 @@ package body GPS.Kernel.Modules.UI is
                         Open_File_Editor (Kernel, File, New_File => False);
                      end if;
                   end if;
-               end if;
-
-               First := Last + 1;
-               Last  := First;
-            end loop;
+               end loop;
+            end if;
          end;
 
          Gtk.Dnd.Finish (Context, Success => True, Del => False, Time => Time);

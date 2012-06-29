@@ -59,6 +59,10 @@ package File_Utils is
    --  used. In particular, when using -mwindows under Windows, this procedure
    --  will allocate a console window if needed.
 
+   function URL_List_To_Files (URL_List : String) return File_Array_Access;
+   --  Convert list of URLs in form "file:///path/file" to file array.
+   --  Files in list are separated by CR/LF characters.
+
 private
 
    type Path_Iterator is record

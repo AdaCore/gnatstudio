@@ -46,6 +46,8 @@ with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with Gtk.Selection;
+with Gtk.Dnd;
 
 package body Project_Explorers_Common is
 
@@ -591,9 +593,12 @@ package body Project_Explorers_Common is
          Iter := Find_Iter_For_Event (Tree, Model, Event);
 
          if Iter /= Null_Iter then
-            Path := Get_Path (Model, Iter);
-            Set_Cursor (Tree, Path, null, False);
-            Path_Free (Path);
+            if Get_Event_Type (Event) /= Button_Release then
+               --  Set cursor to pointed position before open menu, etc
+               Path := Get_Path (Model, Iter);
+               Set_Cursor (Tree, Path, null, False);
+               Path_Free (Path);
+            end if;
 
             case Node_Types'Val
               (Integer (Get_Int (Model, Iter, Node_Type_Column)))
@@ -640,6 +645,20 @@ package body Project_Explorers_Common is
                      return True;
 
                   elsif Get_Event_Type (Event) = Button_Press then
+
+                     declare
+                        use type Gtk.Selection.Target_List;
+                        X : constant Gtk.Selection.Target_List
+                          := Gtk.Dnd.Source_Get_Target_List (Tree);
+                     begin
+                        --  If Tree provides drag&drop source, then use it
+                        --  instead of MDI drag&drop
+                        if X /= null then
+                           Cancel_Child_Drag (Child);
+                           return False;
+                        end if;
+                     end;
+
                      --  Drag-and-drop does not work on floating MDI children
 
                      if Get_State (Child) /= Gtkada.MDI.Floating then

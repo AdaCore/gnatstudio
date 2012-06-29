@@ -17,6 +17,10 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with String_Utils;              use String_Utils;
+with GNAT.OS_Lib;
+with Glib.Convert;              use Glib.Convert;
 
 package body File_Utils is
 
@@ -153,5 +157,46 @@ package body File_Utils is
 
       return True;
    end Suffix_Matches;
+
+   -----------------------
+   -- URL_List_To_Files --
+   -----------------------
+
+   function URL_List_To_Files (URL_List : String) return File_Array_Access is
+
+      Files  : constant String := Strip_CR (URL_List);
+      File   : Virtual_File;
+      First  : Natural := Files'First;
+      Last   : Natural := First;
+      Result : File_Array_Access;
+   begin
+      while First <= Files'Last loop
+         String_Utils.Skip_To_Char (Files, Last, ASCII.LF);
+
+         if First + 7 < Last
+           and then Files (First .. First + 7) = "file:///"
+         then
+            --  if File in form like 'file:///C:/path'
+            if First + 9 < Last and then Files (First + 9) = ':' then
+               --  return C:/path
+               File := Create
+                 (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
+                  (URL_Decode (Files (8 .. Last - 1)))));
+            else
+               --  otherwise get leading '/' into file name
+               File := Create
+                 (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
+                  (URL_Decode (Files (7 .. Last - 1)))));
+            end if;
+
+            Append (Result, File);
+         end if;
+
+         First := Last + 1;
+         Last  := First;
+      end loop;
+
+      return Result;
+   end URL_List_To_Files;
 
 end File_Utils;
