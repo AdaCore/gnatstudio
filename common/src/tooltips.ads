@@ -23,18 +23,17 @@
 --  of the tooltip changes at each call, possibly depending on the position of
 --  the pointer at the time the tooltip is displayed)
 
-with Glib;
+with Glib.Main;
 with Cairo;      use Cairo;
 with Gtk.Widget; use Gtk.Widget;
 with Gdk.Rectangle;
-with Gtk.Main;
 with Gtk.Tree_Model;
 with Gtk.Tree_View;
 with Gtk.Window;
 
 package Tooltips is
 
-   Default_Timeout : constant Glib.Guint32 := 600;
+   Default_Timeout : constant Glib.Guint := 600;
    --  The delay before a tooltip is displayed, in milliseconds)
 
    procedure Initialize_Tooltips
@@ -76,7 +75,7 @@ package Tooltips is
    procedure Set_Tooltip
      (Tooltip   : access Tooltips;
       On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Timeout   : Glib.Guint32 := Default_Timeout);
+      Timeout   : Glib.Guint := Default_Timeout);
    --  Bind Tooltip to the widget, so that when the mouse is left over Widget,
    --  the tooltip is displayed.
    --  You can attach a given tooltip to a single widget for the time being.
@@ -108,7 +107,7 @@ package Tooltips is
 
 private
    type Tooltips is abstract tagged record
-      Timeout : Glib.Guint32 := Default_Timeout;
+      Timeout : Glib.Guint := Default_Timeout;
       --  The delay before draw function is called
 
       Active : Boolean := False;
@@ -118,7 +117,7 @@ private
       Display_Window : Gtk.Window.Gtk_Window := null;
       --  The window in which the tooltip is displayed
 
-      Handler_Id : Gtk.Main.Timeout_Handler_Id := 0;
+      Handler_Id : Glib.Main.G_Source_Id := 0;
       --  Reference in case handler should be blocked
 
       X, Y : Glib.Gint := 0;

@@ -34,7 +34,6 @@ with Glib;                 use Glib;
 
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Handlers;         use Gtk.Handlers;
-with Gtk.Main;             use Gtk.Main;
 with Gtk.Image;            use Gtk.Image;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View;        use Gtk.Tree_View;
@@ -55,7 +54,8 @@ package body Tooltips is
    --  These need to be at library level, not in a generic, which is why we
    --  had to have a package Generic_Tooltips.
 
-   package GVD_Tooltips_Timeout is new Timeout (Tooltips_Access);
+   package GVD_Tooltips_Timeout is new
+     Glib.Main.Generic_Sources (Tooltips_Access);
 
    function Tooltip_Event_Cb
      (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -267,7 +267,7 @@ package body Tooltips is
       Tooltip.Area.Height := 0;
       Tooltip.Active := True;
       Tooltip.Handler_Id :=
-        GVD_Tooltips_Timeout.Add
+        GVD_Tooltips_Timeout.Timeout_Add
           (Tooltip.Timeout, Display_Tooltip'Access, Tooltips_Access (Tooltip));
    end Show_Tooltip;
 
@@ -281,7 +281,7 @@ package body Tooltips is
       use type Gdk_Window;
    begin
       if Tooltip.Active then
-         Timeout_Remove (Tooltip.Handler_Id);
+         Glib.Main.Remove (Tooltip.Handler_Id);
 
          if Tooltip.Display_Window /= null then
             Destroy (Tooltip.Display_Window);
@@ -328,7 +328,7 @@ package body Tooltips is
    procedure Set_Tooltip
      (Tooltip   : access Tooltips;
       On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Timeout   : Glib.Guint32 := Default_Timeout)
+      Timeout   : Glib.Guint := Default_Timeout)
    is
       use type Gdk.Window.Gdk_Window;
    begin

@@ -893,7 +893,7 @@ package body Src_Editor_Box is
       Set_Tooltip
         (Tooltip   => Create_Tooltips (Box),
          On_Widget => Box.Source_View,
-         Timeout   => Guint32 (Tooltip_Timeout.Get_Pref));
+         Timeout   => Guint (Tooltip_Timeout.Get_Pref));
 
       --  The status bar, at the bottom of the window...
 
