@@ -24,6 +24,7 @@ with Glib;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Alignment;             use Gtk.Alignment;
+with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -1510,7 +1511,7 @@ package body Builder_Facility_Module is
                --  reference when inserting new items.
 
                if Menu_Name = -"/Build/Run" then
-                  Remove_Submenu (M);
+                  Set_Submenu (M, null);
                else
                   Destroy (M);
                end if;
@@ -1763,7 +1764,7 @@ package body Builder_Facility_Module is
             Show_All (Builder_Module_ID.Modes_Toolbar_Item);
             Combo_Box_Callback.Connect
               (Builder_Module_ID.Modes_Combo,
-               Signal_Changed,
+               Gtk.Combo_Box.Signal_Changed,
                On_Mode_Changed'Access);
          end if;
 
