@@ -18,9 +18,9 @@
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 
-with Gdk.Color;               use Gdk.Color;
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Main;                use Gdk.Main;
+with Gdk.RGBA;                use Gdk.RGBA;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Window;              use Gdk.Window;
@@ -33,7 +33,6 @@ with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Frame;               use Gtk.Frame;
 with Gtk.Label;               use Gtk.Label;
-with Gtk.Style;               use Gtk.Style;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_View;           use Gtk.Text_View;
@@ -397,11 +396,11 @@ package body Command_Window is
       Prompt            : String := "";
       Applies_To_Global : Boolean := True)
    is
-      X, Y        : Gint;
-      Requisition : Gtk_Requisition;
-      Frame       : Gtk_Frame;
-      Applies_To  : Gtk_Widget;
-      Success     : Boolean;
+      X, Y, W, H, D    : Gint;
+      Hints            : Gdk.Window.Gdk_Window_Hints;
+      Frame            : Gtk_Frame;
+      Applies_To       : Gtk_Widget;
+      Min_H, Natural_H : Gint;
    begin
       --  Do not make the window modal, although that is much more precise to
       --  be sure we always get all key events on the application. This has the
@@ -475,13 +474,20 @@ package body Command_Window is
 
       Show_All (Frame);
 
-      Get_Origin       (Get_Window (Applies_To), X, Y, Success);
-      Set_Size_Request (Window, Get_Allocation_Width (Applies_To), -1);
-      Size_Request     (Frame, Requisition);
-      if Success then
-         Y := Y + Get_Allocation_Height (Applies_To) - Requisition.Height;
-         Set_UPosition (Window, X, Y);
-      end if;
+      --  Aim for our window to appear as a strip over the bottom of
+      --  the Applies_To widget.
+      Get_Geometry (Get_Window (Applies_To), X, Y, W, H, D);
+      Get_Preferred_Height (Window, Min_H, Natural_H);
+      Hints := Gdk_Hint_Pos + Gdk_Hint_Min_Size + Gdk_Hint_Max_Size;
+      Gdk.Window.Set_Hints
+        (Window      => Get_Window (Window),
+         X           => X,
+         Y           => Y + H - Natural_H,
+         Min_Width   => W,
+         Min_Height  => Min_H,
+         Max_Width   => W,
+         Max_Height  => Natural_H,
+         Flags       => Hints);
 
       Window.Parent := Gtk_Window (Get_Toplevel (Applies_To));
       Window.Parent_Geometry := Get_Geometry (Window.Parent);
@@ -532,7 +538,7 @@ package body Command_Window is
                   New_Class (Get_Kernel (Data), "CommandWindow");
       Inst    : constant Class_Instance := Nth_Arg (Data, 1, Class);
       Window  : Command_Window;
-      Color   : Gdk_Color;
+      Color   : Gdk.RGBA.Gdk_RGBA;
       Success : Boolean;
    begin
       if Command = Constructor_Method then
@@ -617,13 +623,16 @@ package body Command_Window is
          Window := Command_Window (GObject'(Get_Data (Inst)));
          if Window /= null then
             if Nth_Arg (Data, 2, "") = "" then
-               Color := Get_Base (Get_Style (Window), State_Normal);
+               Color := Gdk.RGBA.Null_RGBA;
             else
-               Color := Parse (Nth_Arg (Data, 2));
+               Parse (Color, Nth_Arg (Data, 2), Success);
             end if;
-            Modify_Base (Window.Line, State_Normal, Color);
-            Modify_Base (Window.Line, State_Active, Color);
-            Modify_Base (Window.Line, State_Selected, Color);
+            Window.Line.Override_Background_Color
+              (Gtk_State_Flag_Normal, Color);
+            Window.Line.Override_Background_Color
+              (Gtk_State_Flag_Active, Color);
+            Window.Line.Override_Background_Color
+              (Gtk_State_Flag_Selected, Color);
          end if;
       end if;
    end Command_Handler;
