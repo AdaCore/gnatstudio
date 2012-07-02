@@ -1062,9 +1062,10 @@ package body Toolchains_Editor is
       Editor.Updating := True;
 
       while Gtk.Widget.Widget_List.Length
-        (Editor.Details_View.Children) > 0
+        (Editor.Details_View.Get_Children) > 0
       loop
-         W := Gtk.Widget.Widget_List.Get_Data (Editor.Details_View.Children);
+         W :=
+           Gtk.Widget.Widget_List.Get_Data (Editor.Details_View.Get_Children);
          Editor.Details_View.Remove (W);
       end loop;
 
@@ -1439,7 +1440,7 @@ package body Toolchains_Editor is
         (Dialog, -"New toolchain",
          Gtk_Window (Editor.Get_Toplevel),
          Modal);
-      Gtk_New_Combo_Text_With_Entry (Name_Entry);
+      Gtk_New_With_Entry (Name_Entry);
       Dialog.Get_Content_Area.Pack_Start (Name_Entry, False, False, 5);
       Gtk_Entry (Name_Entry.Get_Child).Set_Activates_Default (True);
 
@@ -1501,8 +1502,8 @@ package body Toolchains_Editor is
       --  to call gprconfig: we display a popup dialog to inform the user that
       --  he needs to wait a bit for the operation to finish
       Gtk.Dialog.Gtk_New
-        (Dialog, -"", Gtk_Window (W.Get_Ancestor (Gtk.Window.Get_Type)), 0);
-      Set_Has_Separator (Dialog, False);
+        (Dialog, -"", Gtk_Window (W.Get_Ancestor (Gtk.Window.Get_Type)),
+         No_Separator);
       Gtk_New
         (Label, -"Scanning host for available compilers, please wait ...");
       Pack_Start (Get_Content_Area (Dialog), Label);
