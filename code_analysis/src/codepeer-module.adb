@@ -517,7 +517,7 @@ package body CodePeer.Module is
    ---------------
 
    function Get_Color
-     (Ranking : CodePeer.Message_Ranking_Level) return Gdk.Color.Gdk_Color is
+     (Ranking : CodePeer.Message_Ranking_Level) return Gdk.RGBA.Gdk_RGBA is
    begin
       return Module.Message_Colors (Ranking).Get_Pref;
    end Get_Color;
