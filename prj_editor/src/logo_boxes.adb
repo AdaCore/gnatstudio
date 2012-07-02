@@ -53,22 +53,27 @@ package body Logo_Boxes is
       Title      : String;
       Parent     : Gtk.Window.Gtk_Window;
       Show_Toc   : Boolean := True;
-      Title_Font : Pango.Font.Pango_Font_Description)
+      Title_Font : Pango.Font.Pango_Font_Description;
+      Has_Separator : Boolean := True)
    is
       Color       : Gdk_Color;
       Style       : Gtk_Style;
       Box, Vbox   : Gtk_Box;
       Event       : Gtk_Event_Box;
       Image       : Gtk_Image;
+      Flags       : Gtk_Dialog_Flags := Modal or Destroy_With_Parent;
    begin
+      if not Has_Separator then
+         Flags := Flags or No_Separator;
+      end if;
+
       Gtk.Dialog.Initialize
         (Dialog  => Win,
          Title   => Title,
          Parent  => Parent,
-         Flags   => Modal or Destroy_With_Parent);
+         Flags   => Flags);
 
       Color := Parse ("#FF0000");
-      Alloc (Get_Default_Colormap, Color);
       Win.Error_Style := Copy (Get_Style (Win));
       Set_Foreground (Win.Error_Style, State_Normal, Color);
 
@@ -98,7 +103,7 @@ package body Logo_Boxes is
 
       if not Show_Toc then
          Set_Size_Request (Event, 0, 0);
-         Hide_All (Event);
+         Hide (Event);
          Set_Child_Visible (Event, False);
       end if;
 
