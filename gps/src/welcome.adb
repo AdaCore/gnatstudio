@@ -104,13 +104,13 @@ package body Welcome is
          Title      => -"Welcome to GPS " & Config.Version &
                        " (" & Config.Source_Date & ")",
          Parent     => null,
-         Title_Font => Wizard_Title_Font.Get_Pref);
+         Title_Font => Wizard_Title_Font.Get_Pref,
+         Has_Separator => False);
 
       Set_Default_Size (Screen, 600, 350);
 
       Screen.Kernel := Kernel_Handle (Kernel);
 
-      Set_Has_Separator (Screen, False);
       Set_Position (Screen, Win_Pos_Center);
 
       Gtk_New (Size);
@@ -301,7 +301,7 @@ package body Welcome is
                --  a "default.gpr" found while loading the default project.
                Get_Registry (Screen.Kernel).Tree.Set_Status (Default);
 
-               Hide_All (Screen);
+               Hide (Screen);
                declare
                   Cancelled : Boolean;
                begin
