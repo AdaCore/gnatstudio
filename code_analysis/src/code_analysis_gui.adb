@@ -259,7 +259,7 @@ package body Code_Analysis_GUI is
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
       Path : Gtk_Tree_Path;
    begin
-      Hide_All (View.Empty_Board);
+      Hide (View.Empty_Board);
       Clear (View.Model);
       Fill_Iter
         (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);

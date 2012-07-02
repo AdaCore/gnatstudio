@@ -464,14 +464,14 @@ package body Task_Manager.GUI is
       --  manager.
 
       if GUI.Manager.Queues = null then
-         Hide_All (GUI);
+         Hide (GUI);
       else
          declare
             Pd : constant Progress_Data :=
                    Get_Progress_Text (GUI.Manager, False);
          begin
             if Pd = Null_Progress_Data then
-               Hide_All (GUI);
+               Hide (GUI);
 
             else
                Set_Fraction (GUI.Main_Progress_Bar, Pd.Fraction);
@@ -479,7 +479,7 @@ package body Task_Manager.GUI is
                Show_All (GUI);
 
                if Pd.Multiple_Queues then
-                  Hide_All (GUI.Progress_Bar_Button);
+                  Hide (GUI.Progress_Bar_Button);
                end if;
             end if;
          end;

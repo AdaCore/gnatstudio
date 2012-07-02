@@ -339,8 +339,8 @@ package body Wizards is
       if W.Pages = null
         or else W.Pages'Length = 1
       then
-         Hide_All (W.Next);
-         Hide_All (W.Previous);
+         Hide (W.Next);
+         Hide (W.Previous);
       else
          Show_All (W.Next);
          Show_All (W.Previous);

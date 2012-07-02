@@ -168,7 +168,7 @@ package body Naming_Editors is
          if Exists then
             Show_All (Get_Window (Editor.Pages (P).Naming));
          else
-            Hide_All (Get_Window (Editor.Pages (P).Naming));
+            Hide (Get_Window (Editor.Pages (P).Naming));
          end if;
 
          if Exists then

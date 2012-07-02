@@ -1519,7 +1519,7 @@ package body Toolchains_Editor is
 
       --  Hide and destroy the dialog
       Gtk.Main.Grab_Remove (Dialog);
-      Dialog.Hide_All;
+      Dialog.Hide;
       Dialog.Unref;
 
       --  And finally display the toolchains

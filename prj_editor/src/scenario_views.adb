@@ -485,7 +485,7 @@ package body Scenario_Views is
       --  No project view => Clean up the scenario viewer
       if Get_Project (Kernel) = No_Project then
          Resize (V.Table, Rows => 1, Columns => 4);
-         Hide_All (V.Table);
+         Hide (V.Table);
          Show_All (V.Empty_Label);
          Set_Child_Visible (V.Empty_Label, True);
 
@@ -498,10 +498,10 @@ package body Scenario_Views is
                Show_All (V.Empty_Label);
                Set_Child_Visible (V.Empty_Label, True);
                Set_USize (V.Empty_Event, -1, -1);
-               Hide_All (V.Table);
+               Hide (V.Table);
 
             else
-               Hide_All (V.Empty_Label);
+               Hide (V.Empty_Label);
                Set_Child_Visible (V.Empty_Label, False);
                Resize (V.Table,
                        Rows => Guint (Scenar_Var'Length) + 1, Columns => 2);

@@ -137,7 +137,7 @@ package body Logo_Boxes is
       Set_Justify (Win.Message, Justify_Left);
       Set_Line_Wrap (Win.Message, False);
       Set_Style (Win.Message, Win.Error_Style);
-      Hide_All (Event);
+      Hide (Event);
       Set_Child_Visible (Event, False);
 
       --  Main content
@@ -157,7 +157,7 @@ package body Logo_Boxes is
       As_Error : Boolean := False) is
    begin
       if Msg = "" then
-         Hide_All (Get_Parent (Win.Message));
+         Hide (Get_Parent (Win.Message));
          Set_Child_Visible (Get_Parent (Win.Message), False);
       else
          Set_Text (Win.Message, Msg);

@@ -872,7 +872,7 @@ package body Completion_Window is
 
       if Iter = Null_Iter then
          --  Hide the contents window
-         Hide_All (Window.Notes_Window);
+         Hide (Window.Notes_Window);
 
       else
          --  Something is selected: the window is no longer Volatile
@@ -1641,7 +1641,7 @@ package body Completion_Window is
 
       Show_All (Window);
 
-      Hide_All (Get_Vscrollbar (Window.Explorer.Tree_Scroll));
+      Hide (Get_Vscrollbar (Window.Explorer.Tree_Scroll));
 
       Grab_Focus (Window.Text);
 

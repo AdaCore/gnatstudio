@@ -449,7 +449,7 @@ package body GPS.Main_Window is
       case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Hide_Toolbar =>
             Set_Child_Visible (Win.Toolbar_Box, False);
-            Hide_All (Win.Toolbar_Box);
+            Hide (Win.Toolbar_Box);
 
          when Small_Icons  =>
             Set_Size_Request (Win.Toolbar_Box, -1, -1);
@@ -475,7 +475,7 @@ package body GPS.Main_Window is
          Set_Child_Visible (Win.Statusbar, True);
          Set_Size_Request (Win.Statusbar, 0, -1);
       else
-         Hide_All (Win.Statusbar);
+         Hide (Win.Statusbar);
          Set_Child_Visible (Win.Statusbar, False);
          Set_Size_Request (Win.Statusbar, 0, 0);
       end if;
@@ -657,7 +657,7 @@ package body GPS.Main_Window is
       --  to avoid flickering
       Set_Size_Request (Main_Window.Toolbar_Box, -1, 0);
       Set_Child_Visible (Main_Window.Toolbar_Box, False);
-      Hide_All (Main_Window.Toolbar_Box);
+      Hide (Main_Window.Toolbar_Box);
 
       Add_Hook (Main_Window.Kernel, Project_Changed_Hook,
                 Wrapper (On_Project_Changed'Access),

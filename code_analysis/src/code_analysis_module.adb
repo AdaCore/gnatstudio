@@ -1024,7 +1024,7 @@ package body Code_Analysis_Module is
                end if;
             end if;
          else
-            Hide_All (View.Error_Board);
+            Hide (View.Error_Board);
          end if;
       end;
 

@@ -606,7 +606,7 @@ package body Command_Window is
                   Show_All (Window.Prompt);
                else
                   Set_Child_Visible (Window.Prompt, False);
-                  Hide_All (Window.Prompt);
+                  Hide (Window.Prompt);
                end if;
             end;
          end if;
