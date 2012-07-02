@@ -314,7 +314,7 @@ package body Src_Editor_View is
 
    procedure Register_Idle_Column_Redraw (View : Source_View) is
    begin
-      if Realized_Is_Set (View)
+      if View.Get_Realized
         and then not View.Idle_Redraw_Registered
       then
          View.Idle_Redraw_Registered := True;
@@ -590,7 +590,7 @@ package body Src_Editor_View is
       pragma Unreferenced (Params, Buffer);
    begin
       if not User.Redraw_Registered
-        and then Realized_Is_Set (User)
+        and then User.Get_Realized
       then
          User.Redraw_Idle_Handler :=
            Source_View_Idle.Idle_Add (Line_Highlight_Redraw'Access, User);
@@ -679,7 +679,7 @@ package body Src_Editor_View is
          View.Speed_Column_Buffer := Null_Surface;
       end if;
 
-      if Realized_Is_Set (View) then
+      if View.Get_Realized then
          Redraw_Columns (View);
          Redraw_Speed_Column (View);
       end if;
@@ -1449,7 +1449,7 @@ package body Src_Editor_View is
       X, Y, W, H, D : Gint;
 
    begin
-      --  ??? if Realized_Is_Set (View) then
+      --  ??? if View.Get_Realized then
       --  When will we connect Expose_Event_Cb in case the View isn't
       --  realized ???
 
@@ -1565,14 +1565,14 @@ package body Src_Editor_View is
             Source.Speed_Column_Buffer := Null_Surface;
          end if;
 
-         if Realized_Is_Set (Source.Area) then
+         if Source.Area.Get_Realized then
             Redraw_Speed_Column (Source);
          end if;
       end if;
 
       --  Modify the text background, color and font
 
-      if Realized_Is_Set (Source) then
+      if Source.Get_Realized then
          Modify_Font (Source, Default_Style.Get_Pref_Font);
       end if;
 
@@ -2031,7 +2031,7 @@ package body Src_Editor_View is
 
       Key         : Gdk_Key_Type;
    begin
-      if Realized_Is_Set (View)
+      if View.Get_Realized
         and then not Get_Property
           (Gtk_Window (Get_Toplevel (View)), Has_Toplevel_Focus_Property)
       then

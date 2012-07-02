@@ -669,7 +669,7 @@ package body VCS_View is
 
    procedure Clear (Explorer : access VCS_View_Record'Class) is
    begin
-      if Realized_Is_Set (Explorer.Tree) then
+      if Explorer.Tree.Get_Realized then
          Scroll_To_Point (Explorer.Tree, 0, 0);
       end if;
 

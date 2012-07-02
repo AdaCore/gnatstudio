@@ -135,7 +135,7 @@ package body GPS.Kernel.MDI is
       if Child /= null then
          Widget := Get_Widget (Child);
 
-         if Realized_Is_Set (Widget) then
+         if Widget.Get_Realized then
             return Gtk_Window (Get_Toplevel (Widget));
          end if;
       end if;

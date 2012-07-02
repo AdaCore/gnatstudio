@@ -921,7 +921,7 @@ package body Vsearch is
       --  is set, close the dialog.
 
       if not Replace
-        and then Realized_Is_Set (Vsearch)
+        and then Vsearch.Get_Realized
         and then Get_Child_Visible (Vsearch.Auto_Hide_Check)
         and then Get_Active (Vsearch.Auto_Hide_Check)
       then
