@@ -96,7 +96,7 @@ package body GNATStack.CI_Editors is
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Notebook.Insert_Page (Scrolled, Label, 0);
+      Dummy := Notebook.Insert_Page (Scrolled, Label, 0);
 
       Gtk.Tree_View.Gtk_New (View, Self.CI_Model);
       Scrolled.Add (View);
