@@ -37,12 +37,10 @@ with Glib.Unicode;              use Glib.Unicode;
 with Gtk;                       use Gtk;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Combo_Box;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -1845,10 +1843,6 @@ package body Gtkada.File_Selector is
    is
       pragma Suppress (All_Checks);
 
-      List     : Gtk_List_Store;
-      Cell     : Gtk_Cell_Renderer_Text;
-      Iter     : Gtk_Tree_Iter := Null_Iter;
-
       Toolbar1 : Gtk_Toolbar;
       Label1   : Gtk_Label;
       Button   : Gtk_Widget;
@@ -1863,26 +1857,14 @@ package body Gtkada.File_Selector is
       Hbox6    : Gtk_Hbox;
       Hbox7    : Gtk_Hbox;
 
-      Success  : Boolean;
-
    begin
-      Gtk.Dialog.Initialize (File_Selector_Window);
-
-      Set_Has_Separator (File_Selector_Window, False);
+      Gtk.Dialog.Initialize
+        (File_Selector_Window, Dialog_Title, Flags => No_Separator);
 
       File_Selector_Window.History := History;
 
       File_Selector_Window.Highlighted_Color := Parse ("#FF0000");
-      Alloc_Color
-        (Get_Default_Colormap,
-         File_Selector_Window.Highlighted_Color,
-         False, True, Success);
-
       File_Selector_Window.Insensitive_Color := Parse ("#808080");
-      Alloc_Color
-        (Get_Default_Colormap,
-         File_Selector_Window.Insensitive_Color,
-         False, True, Success);
 
       File_Selector_Window.Home_Directory := Root;
 
@@ -1890,19 +1872,18 @@ package body Gtkada.File_Selector is
         (File_Selector_Window.Explorer_Tree,
          Initial_Directory);
 
-      Set_Title (File_Selector_Window, Dialog_Title);
-
       if Show_Files then
          Set_Default_Size (File_Selector_Window, 600, 500);
       else
          Set_Default_Size (File_Selector_Window, 400, 647);
       end if;
 
-      Set_Policy (File_Selector_Window, False, True, False);
       Set_Position (File_Selector_Window, Win_Pos_Mouse);
       Set_Modal (File_Selector_Window, False);
 
-      Gtk_New (Toolbar1, Orientation_Horizontal, Toolbar_Both);
+      Gtk_New (Toolbar1);
+      Set_Orientation (Toolbar1, Orientation_Horizontal);
+      Set_Style (Toolbar1, Toolbar_Both);
       Pack_Start
         (File_Selector_Window.Get_Content_Area, Toolbar1, False, False);
 
@@ -1970,22 +1951,9 @@ package body Gtkada.File_Selector is
          Gtk_New (Label1, -("Host:"));
          Pack_Start (Hbox2, Label1, False, False, 3);
 
-         Gtk_New (List, (1 => Glib.GType_String));
-         Gtk_New_With_Model (File_Selector_Window.Hosts_Combo, List);
-         Gtk_New (Cell);
-         Pack_Start
-           (Implements_Cell_Layout.To_Interface
-              (File_Selector_Window.Hosts_Combo),
-            Cell,
-            True);
-         Add_Attribute
-           (Implements_Cell_Layout.To_Interface
-              (File_Selector_Window.Hosts_Combo),
-            Cell, "text", 0);
-
-         List.Append (Iter);
-         List.Set (Iter, 0, Display_Local_Nickname);
-         File_Selector_Window.Hosts_Combo.Set_Active_Iter (Iter);
+         Gtk_New_With_Entry (File_Selector_Window.Hosts_Combo);
+         Append_Text
+           (File_Selector_Window.Hosts_Combo, Display_Local_Nickname);
 
          declare
             Machines : constant GNAT.Strings.String_List := Get_Servers;
@@ -1993,14 +1961,14 @@ package body Gtkada.File_Selector is
             for J in Machines'Range loop
                Trace (Me, "Adding " & Machines (J).all &
                       " in servers list");
-               List.Append (Iter);
-               List.Set (Iter, 0, Machines (J).all);
+               Append_Text
+                 (File_Selector_Window.Hosts_Combo, Machines (J).all);
 
                if Initial_Directory /= No_File
                  and then not Is_Local (Initial_Directory)
                  and then Get_Host (Initial_Directory) = Machines (J).all
                then
-                  File_Selector_Window.Hosts_Combo.Set_Active_Iter (Iter);
+                  File_Selector_Window.Hosts_Combo.Set_Active (Gint (J));
                end if;
             end loop;
          end;
@@ -2022,7 +1990,7 @@ package body Gtkada.File_Selector is
       Gtk_New (Label1, -("Exploring :"));
       Pack_Start (Hbox3, Label1, False, False, 3);
 
-      Gtk_New_Combo_Text_With_Entry (File_Selector_Window.Location_Combo);
+      Gtk_New_With_Entry (File_Selector_Window.Location_Combo);
       Pack_Start (Hbox3,
                   File_Selector_Window.Location_Combo, True, True, 3);
       Widget_Callback.Object_Connect
