@@ -338,8 +338,8 @@ procedure GPS.Main is
 
          Close (FD);
          Gtk_New (Splash, Window_Toplevel);
-         Set_Property (Splash, Allow_Shrink_Property, False);
-         Set_Property (Splash, Allow_Grow_Property, False);
+         Splash.Set_Hexpand (False);
+         Splash.Set_Vexpand (False);
          Set_Property (Splash, Decorated_Property, False);
          Set_Position (Splash, Win_Pos_Center);
          Gdk_New_From_File (Pixbuf, +File.Full_Name, Error);
@@ -1018,7 +1018,7 @@ procedure GPS.Main is
    function Finish_Setup (Data : Process_Data) return Boolean is
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
-      Idle_Id           : Idle_Handler_Id;
+      Idle_Id           : Glib.Main.G_Source_Id;
       Project           : Project_Type;
       Screen            : Welcome_Screen;
       Icon              : Gdk_Pixbuf;
@@ -1548,7 +1548,7 @@ procedure GPS.Main is
       --   construct an icon list from gps-icon-16, gps-icon-32 and gps-icon-48
       --   and call Set_Default_Icon_List
 
-      Icon := Render_Icon (GPS_Main, "gps-icon-32", -1);
+      Icon := Render_Icon_Pixbuf (GPS_Main, "gps-icon-32", Icon_Size_Dialog);
 
       if Icon /= null then
          Set_Default_Icon (Icon);
@@ -1687,7 +1687,7 @@ procedure GPS.Main is
       Set_Main_Title
         (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 
-      Idle_Id := Idle_Add (On_GPS_Started'Access);
+      Idle_Id := Glib.Main.Idle_Add (On_GPS_Started'Access);
 
       Setenv ("PYTHONPATH", Python_Path.all);
       Free (Python_Path);
