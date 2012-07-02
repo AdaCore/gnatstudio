@@ -28,7 +28,6 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
-with GUI_Utils;                  use GUI_Utils;
 
 package body GPS.Kernel.Charsets is
 
@@ -191,7 +190,7 @@ package body GPS.Kernel.Charsets is
       Combo    : Gtk_Combo_Box_Text;
       Selected : Integer := -1;
    begin
-      Gtk_New_Combo_Text_With_Entry (Combo);
+      Gtk_New_With_Entry (Combo);
 
       for C in Charsets'Range loop
          Combo.Append_Text (Charsets (C).Description.all);
