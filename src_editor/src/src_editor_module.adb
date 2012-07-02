@@ -34,7 +34,7 @@ with Glib.Values;                       use Glib.Values;
 
 with Gtk.Box;                           use Gtk.Box;
 with Gtk.Check_Button;                  use Gtk.Check_Button;
-with Gtk.Combo_Box;                     use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;                use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.GEntry;                        use Gtk.GEntry;
@@ -2347,8 +2347,8 @@ package body Src_Editor_Module is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dialog  : Gtk_Dialog;
       Label   : Gtk_Label;
-      Lang    : Gtk_Combo_Box;
-      Charset : Gtk_Combo_Box;
+      Lang    : Gtk_Combo_Box_Text;
+      Charset : Gtk_Combo_Box_Text;
       Strip   : Gtk_Check_Button;
       Strip_Lines : Gtk_Check_Button;
       Box     : Gtk_Box;

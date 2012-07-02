@@ -609,7 +609,7 @@ package body Build_Configurations.Gtkada is
                  Bottom_Attach => 1,
                  Xoptions      => Expand or Fill);
 
-         Gtk_New_Text (Box.Launch_Combo);
+         Gtk_New (Box.Launch_Combo);
          for J in Launch_Mode_Type loop
             Append_Text (Box.Launch_Combo, Beautify (J'Img));
          end loop;

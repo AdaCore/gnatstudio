@@ -40,7 +40,7 @@ with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Combo_Box;             use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -433,7 +433,7 @@ package body Project_Properties is
 
    type List_Attribute_Editor_Record is new Attribute_Editor_Record with record
       Model : Gtk_Tree_Store;
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
    end record;
    type List_Attribute_Editor is access all List_Attribute_Editor_Record'Class;
 
@@ -2751,7 +2751,7 @@ package body Project_Properties is
             Gtk_New_Combo_Text_With_Entry (Editor.Combo);
             Set_Activates_Default (Gtk_Entry (Editor.Combo.Get_Child), True);
          else
-            Gtk_New_Text (Editor.Combo);
+            Gtk_New (Editor.Combo);
          end if;
       end if;
 

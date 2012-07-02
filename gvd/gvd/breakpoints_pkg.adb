@@ -154,7 +154,7 @@ package body Breakpoints_Pkg is
       Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
       Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
 
-      Gtk_New_Combo_Text_With_Entry (Breakpoints.Subprogram_Combo);
+      Gtk_New_With_Entry (Breakpoints.Subprogram_Combo);
       Breakpoints.Subprogram_Combo.Append_Text ("");
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
       Add (Alignment, Breakpoints.Subprogram_Combo);
@@ -174,7 +174,7 @@ package body Breakpoints_Pkg is
         (Alignment, 0.5, 0.5, 0.88, 0.88);
       Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
 
-      Gtk_New_Combo_Text_With_Entry (Breakpoints.Address_Combo);
+      Gtk_New_With_Entry (Breakpoints.Address_Combo);
       Breakpoints.Address_Combo.Append_Text ("");
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Add (Alignment, Breakpoints.Address_Combo);
@@ -193,7 +193,7 @@ package body Breakpoints_Pkg is
       Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
       Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
 
-      Gtk_New_Combo_Text_With_Entry (Breakpoints.Regexp_Combo);
+      Gtk_New_With_Entry (Breakpoints.Regexp_Combo);
       Breakpoints.Regexp_Combo.Append_Text ("");
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
       Add (Alignment, Breakpoints.Regexp_Combo);
@@ -253,7 +253,7 @@ package body Breakpoints_Pkg is
       Set_Line_Wrap (Breakpoints.Label10, False);
       Pack_Start (Breakpoints.Vbox7, Breakpoints.Label10, False, False, 5);
 
-      Gtk_New_Text (Breakpoints.Watchpoint_Type);
+      Gtk_New (Breakpoints.Watchpoint_Type);
       Breakpoints.Watchpoint_Type.Append_Text (-"written");
       Breakpoints.Watchpoint_Type.Append_Text (-"read");
       Breakpoints.Watchpoint_Type.Append_Text (-"read or written");

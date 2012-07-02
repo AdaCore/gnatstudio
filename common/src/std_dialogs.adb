@@ -23,7 +23,7 @@ with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Label;             use Gtk.Label;
-with Gtk.Combo_Box;         use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;    use Gtk.Combo_Box_Text;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
 with GUI_Utils;             use GUI_Utils;
@@ -31,7 +31,7 @@ with GUI_Utils;             use GUI_Utils;
 package body Std_Dialogs is
 
    type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
-      Entry_Field : Gtk_Combo_Box;
+      Entry_Field : Gtk_Combo_Box_Text;
       Label       : Gtk_Label;
    end record;
    type Simple_Entry_Dialog_Access is access

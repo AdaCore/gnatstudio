@@ -55,7 +55,7 @@ with Gdk.Color;           use Gdk.Color;
 with Gdk.Pixbuf;          use Gdk.Pixbuf;
 
 with Gtk.Button;          use Gtk.Button;
-with Gtk.Combo_Box;       use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Label;           use Gtk.Label;
@@ -334,7 +334,7 @@ private
       File_Name_Label        : Gtk_Label;
       File_Text_Label        : Gtk_Label;
 
-      Filter_Combo           : Gtk_Combo_Box;
+      Filter_Combo           : Gtk_Combo_Box_Text;
 --        Filter_Combo_Entry     : Gtk_Entry;
       Selection_Entry        : Gtk_Entry;
 

@@ -25,7 +25,7 @@ with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 
 with Gtk.Box;                  use Gtk.Box;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.List_Store;           use Gtk.List_Store;

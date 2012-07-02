@@ -15,30 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;     use GNAT.Strings;
+with GNAT.Strings;       use GNAT.Strings;
 
-with Glib;             use Glib;
-with Glib.Object;      use Glib.Object;
-with Gdk.Event;        use Gdk.Event;
+with Glib;               use Glib;
+with Glib.Object;        use Glib.Object;
+with Gdk.Event;          use Gdk.Event;
 with Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gdk.Window;        use Gdk.Window;
+with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
+with Gdk.Window;         use Gdk.Window;
 
-with Gtk;              use Gtk;
-with Gtk.Arguments;    use Gtk.Arguments;
-with Gtk.Box;          use Gtk.Box;
-with Gtk.Button;       use Gtk.Button;
-with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Combo_Box;    use Gtk.Combo_Box;
-with Gtk.Dialog;       use Gtk.Dialog;
-with Gtk.Enums;        use Gtk.Enums;
-with Gtk.GEntry;       use Gtk.GEntry;
-with Gtk.List_Store;   use Gtk.List_Store;
-with Gtk.Main;         use Gtk.Main;
-with Gtk.Notebook;     use Gtk.Notebook;
-with Gtk.Radio_Button; use Gtk.Radio_Button;
-with Gtk.Spin_Button;  use Gtk.Spin_Button;
-with Gtk.Widget;       use Gtk.Widget;
+with Gtk;                use Gtk;
+with Gtk.Arguments;      use Gtk.Arguments;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Button;         use Gtk.Button;
+with Gtk.Check_Button;   use Gtk.Check_Button;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.Dialog;         use Gtk.Dialog;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Gtk.List_Store;     use Gtk.List_Store;
+with Gtk.Main;           use Gtk.Main;
+with Gtk.Notebook;       use Gtk.Notebook;
+with Gtk.Radio_Button;   use Gtk.Radio_Button;
+with Gtk.Spin_Button;    use Gtk.Spin_Button;
+with Gtk.Widget;         use Gtk.Widget;
 
 with Gtk.Text_View;    use Gtk.Text_View;
 with Gtk.Text_Buffer;  use Gtk.Text_Buffer;

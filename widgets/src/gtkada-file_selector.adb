@@ -115,7 +115,8 @@ package body Gtkada.File_Selector is
       Dir            : Virtual_File);
    --  Sets the location in the combo
 
-   function Get_Location (Location_Combo : Gtk_Combo_Box) return Virtual_File;
+   function Get_Location
+     (Location_Combo : Gtk_Combo_Box_Text) return Virtual_File;
    --  Gets the location from the combo
 
    function Columns_Types return GType_Array;
@@ -286,7 +287,8 @@ package body Gtkada.File_Selector is
    -- Get_Location --
    ------------------
 
-   function Get_Location (Location_Combo : Gtk_Combo_Box) return Virtual_File
+   function Get_Location
+     (Location_Combo : Gtk_Combo_Box_Text) return Virtual_File
    is
       Str : constant String := Get_Active_Text (Location_Combo);
 
@@ -2099,7 +2101,7 @@ package body Gtkada.File_Selector is
         (Get_Vbox (File_Selector_Window),
          Hbox4, False, False, 3);
 
-      Gtk_New_Text (File_Selector_Window.Filter_Combo);
+      Gtk_New (File_Selector_Window.Filter_Combo);
 
       Widget_Callback.Connect
         (File_Selector_Window.Filter_Combo,

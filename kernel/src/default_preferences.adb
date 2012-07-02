@@ -34,7 +34,7 @@ with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Color_Button;         use Gtk.Color_Button;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
@@ -1118,7 +1118,7 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference)
    is
-      C : constant Gtk_Combo_Box := Gtk_Combo_Box (Combo);
+      C : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Combo);
    begin
       Set_Pref (Data.Pref, null, Get_Active_Text (C));
    end Combo_Changed;
@@ -1283,7 +1283,7 @@ package body Default_Preferences is
    procedure Variant_Changed
      (Combo : access GObject_Record'Class; Data  : Manager_Preference)
    is
-      C : constant Gtk_Combo_Box := Gtk_Combo_Box (Combo);
+      C : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Combo);
    begin
       Variant_Preference (Data.Pref).Variant := From_String
         (C.Get_Active_Text);
@@ -1748,11 +1748,11 @@ package body Default_Preferences is
       return Gtk.Widget.Gtk_Widget
    is
       Box   : Gtk_Box;
-      Variant_Combo : Gtk_Combo_Box;
+      Variant_Combo : Gtk_Combo_Box_Text;
       Count : Gint := 0;
 
    begin
-      Gtk_New_Text (Variant_Combo);
+      Gtk_New (Variant_Combo);
       for J in Variant_Enum loop
          Append_Text (Variant_Combo, To_String (J));
          if J = Pref.Variant then
@@ -1948,10 +1948,9 @@ package body Default_Preferences is
       Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      Theme_Combo : Gtk_Combo_Box;
-
+      Theme_Combo : Gtk_Combo_Box_Text;
    begin
-      Gtk_New_Text (Theme_Combo);
+      Gtk_New (Theme_Combo);
       Set_Tooltip_Text (Theme_Combo, -"Theme list");
 
       for J in Pref.Themes'Range loop

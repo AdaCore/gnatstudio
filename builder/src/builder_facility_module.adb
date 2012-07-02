@@ -24,7 +24,7 @@ with Glib;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Alignment;             use Gtk.Alignment;
-with Gtk.Combo_Box;             use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -175,7 +175,7 @@ package body Builder_Facility_Module is
       --  The number of builds currently running
 
       Modes_Toolbar_Item : Gtk_Tool_Item;
-      Modes_Combo : Gtk_Combo_Box;
+      Modes_Combo : Gtk_Combo_Box_Text;
       --  The toolbar item containing the modes
 
       Browsing_For_Mode    : Unbounded_String := Null_Unbounded_String;
@@ -294,7 +294,7 @@ package body Builder_Facility_Module is
    --  Called when a user clicks on a toolbar combo button
 
    procedure On_Mode_Changed
-     (Widget : access Gtk_Combo_Box_Record'Class);
+     (Widget : access Gtk_Combo_Box_Text_Record'Class);
    --  Called when a user selects a mode from the Mode combo box
 
    procedure On_Combo_Selection
@@ -1210,7 +1210,7 @@ package body Builder_Facility_Module is
    -- On_Mode_Changed --
    ---------------------
 
-   procedure On_Mode_Changed (Widget : access Gtk_Combo_Box_Record'Class)
+   procedure On_Mode_Changed (Widget : access Gtk_Combo_Box_Text_Record'Class)
    is
       Mode : constant String := Get_Active_Text (Widget);
       Reg  : Project_Registry renames
@@ -1748,7 +1748,7 @@ package body Builder_Facility_Module is
 
          if Builder_Module_ID.Modes_Combo = null then
             First_Mode := True;
-            Gtk_New_Text (Builder_Module_ID.Modes_Combo);
+            Gtk_New (Builder_Module_ID.Modes_Combo);
 
             --  ... and add it to the toolbar
 

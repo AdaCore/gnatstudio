@@ -17,7 +17,7 @@
 
 --  This package contains graphical utilities related to Language_Handlers.
 
-with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;
 with GNATCOLL.VFS;
 
 package Language_Handlers.GUI is
@@ -25,7 +25,7 @@ package Language_Handlers.GUI is
    function Create_Language_Combo
      (Handler : access Language_Handler_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo_Box.Gtk_Combo_Box;
+      Default : String := "") return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
    --  Create a combo box to select the language for File.
    --  File is used to select the default value in the combo.
    --  The first entry in the combo always indicates that the language from the

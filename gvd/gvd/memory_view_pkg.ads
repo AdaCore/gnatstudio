@@ -18,7 +18,7 @@
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Check_Button;    use Gtk.Check_Button;
-with Gtk.Combo_Box;       use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;     use Gtk.Spin_Button;
@@ -37,10 +37,10 @@ package Memory_View_Pkg is
       Submit         : Gtk_Button;
       Close          : Gtk_Button;
       Address_View   : Gtk_Button;
-      Format         : Gtk_Combo_Box;
+      Format         : Gtk_Combo_Box_Text;
       Search_Button  : Gtk_Button;
       Show_Ascii     : Gtk_Check_Button;
-      Size           : Gtk_Combo_Box;
+      Size           : Gtk_Combo_Box_Text;
       Address_Entry  : Gtk_Entry;
       Search_Entry   : Gtk_Entry;
       Lines_Spin     : Gtk_Spin_Button;

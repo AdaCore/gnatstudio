@@ -19,7 +19,7 @@ with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 
 with Glib;                             use Glib;
 with Gtk.Box;                          use Gtk.Box;
-with Gtk.Combo_Box;                    use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;               use Gtk.Combo_Box_Text;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Frame;                        use Gtk.Frame;
 with Gtk.GEntry;                       use Gtk.GEntry;

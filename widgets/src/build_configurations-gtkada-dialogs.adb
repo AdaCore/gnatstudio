@@ -55,7 +55,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
    procedure Fill_Combo
      (UI    : access Build_UI_Record'Class;
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
       Cat_E : Gtk_Entry);
    --  Fill Combo and Cat_E from information stored in UI
 
@@ -227,7 +227,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
    procedure Fill_Combo
      (UI    : access Build_UI_Record'Class;
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
       Cat_E : Gtk_Entry)
    is
       function Strip (S : String) return String;

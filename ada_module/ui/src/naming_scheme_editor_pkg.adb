@@ -103,7 +103,7 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox4, Naming_Scheme_Editor.Label_Naming_Scheme, False, False, 0);
 
-      Gtk_New_Text (Naming_Scheme_Editor.Standard_Scheme);
+      Gtk_New (Naming_Scheme_Editor.Standard_Scheme);
       Naming_Scheme_Editor.Standard_Scheme.Append_Text (-"GNAT default");
       Naming_Scheme_Editor.Standard_Scheme.Append_Text
         (-"unit.separate.1.ada");
@@ -133,7 +133,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Line_Wrap (Naming_Scheme_Editor.Label_Casing, False);
       Pack_Start (Hbox5, Naming_Scheme_Editor.Label_Casing, False, False, 0);
 
-      Gtk_New_Text (Naming_Scheme_Editor.Casing);
+      Gtk_New (Naming_Scheme_Editor.Casing);
       Naming_Scheme_Editor.Casing.Append_Text (-"");
       Naming_Scheme_Editor.Casing.Set_Active (0);
       Pack_Start (Hbox5, Naming_Scheme_Editor.Casing, True, True, 0);

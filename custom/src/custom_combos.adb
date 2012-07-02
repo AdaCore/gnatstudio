@@ -22,7 +22,7 @@ with Glib.Object;        use Glib.Object;
 with Glib.Properties;    use Glib.Properties;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
-with Gtk.Combo_Box;      use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
 with Gtk.List_Store;     use Gtk.List_Store;
 with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Toolbar;        use Gtk.Toolbar;
@@ -85,7 +85,7 @@ package body Custom_Combos is
                             (1 => Label_Cst'Access);
 
    type Custom_Combo_Record is new Gtk_Box_Record with record
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
    end record;
    type Custom_Combo is access all Custom_Combo_Record'Class;
 
@@ -309,7 +309,7 @@ package body Custom_Combos is
             Pack_Start (Combo, Label, Expand => False, Padding => 4);
          end if;
 
-         Gtk_New_Text (Combo.Combo);
+         Gtk_New (Combo.Combo);
          Set_Name (Combo, Id);
          Pack_Start
            (Combo, Combo.Combo, Expand => True, Fill => True, Padding => 4);

@@ -1760,7 +1760,7 @@ package body Vsearch is
       Vsearch.Scope_Frame.Set_Border_Width (4);
       Add (Scope_Box, Vsearch.Scope_Frame);
 
-      Gtk_New_Text (Vsearch.Context_Combo);
+      Gtk_New (Vsearch.Context_Combo);
       Set_Tooltip_Text (Vsearch.Context_Combo, -"The context of the search");
       Pack_Start (Vsearch.Scope_Frame, Vsearch.Context_Combo);
       Widget_Callback.Object_Connect

@@ -34,7 +34,7 @@ with Gtk.Tree_Model;      use Gtk.Tree_Model;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Viewport;        use Gtk.Viewport;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Combo_Box;       use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with XML_Utils;           use XML_Utils;
 with Gtkada.MDI;          use Gtkada.MDI;
@@ -100,12 +100,12 @@ package body Scenario_Views is
 
    procedure Add_Possible_Values
      (Kernel : access Kernel_Handle_Record'Class;
-      Combo  : access Gtk_Combo_Box_Record'Class;
+      Combo  : access Gtk_Combo_Box_Text_Record'Class;
       Var    : Scenario_Variable);
    --  Add all the possible values for type Typ into the List
 
    procedure Select_Value
-     (Combo : access Gtk_Combo_Box_Record'Class;
+     (Combo : access Gtk_Combo_Box_Text_Record'Class;
       Value : String);
    --  Selects value in Combo, if present
 
@@ -259,7 +259,7 @@ package body Scenario_Views is
      (Combo : access Gtk_Widget_Record'Class;
       User  : Variable_User_Data)
    is
-      Value : constant String := Get_Active_Text (Gtk_Combo_Box (Combo));
+      Value : constant String := Get_Active_Text (Gtk_Combo_Box_Text (Combo));
       Var   : Scenario_Variable := User.Var;
    begin
       if Value /= "" then
@@ -277,7 +277,7 @@ package body Scenario_Views is
 
    procedure Add_Possible_Values
      (Kernel : access Kernel_Handle_Record'Class;
-      Combo  : access Gtk_Combo_Box_Record'Class;
+      Combo  : access Gtk_Combo_Box_Text_Record'Class;
       Var    : Scenario_Variable)
    is
    begin
@@ -304,7 +304,7 @@ package body Scenario_Views is
    ------------------
 
    procedure Select_Value
-     (Combo : access Gtk_Combo_Box_Record'Class;
+     (Combo : access Gtk_Combo_Box_Text_Record'Class;
       Value : String)
    is
       Iter  : Gtk_Tree_Iter;
@@ -451,7 +451,7 @@ package body Scenario_Views is
    is
       V      : constant Scenario_View := Hook.View;
       Label  : Gtk_Label;
-      Combo  : Gtk_Combo_Box;
+      Combo  : Gtk_Combo_Box_Text;
       Row    : Guint;
       Event  : Gtk_Event_Box;
 
@@ -525,7 +525,7 @@ package body Scenario_Views is
                         -"Right-Click to edit properties or delete variable");
                   end;
 
-                  Gtk_New_Text (Combo);
+                  Gtk_New (Combo);
                   Attach (V.Table, Combo, 1, 2, Row, Row + 1);
 
                   Add_Possible_Values

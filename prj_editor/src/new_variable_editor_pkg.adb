@@ -68,7 +68,7 @@ package body New_Variable_Editor_Pkg is
               Fill, Fill,
               0, 0);
 
-      Gtk_New_Combo_Text_With_Entry (New_Variable_Editor.Variable_Name);
+      Gtk_New_With_Entry (New_Variable_Editor.Variable_Name);
       New_Variable_Editor.Variable_Name.Append_Text ("");
       Attach (New_Variable_Editor.Table1, New_Variable_Editor.Variable_Name,
               1, 2, 0, 1,

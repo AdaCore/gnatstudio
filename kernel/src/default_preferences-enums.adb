@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Case_Handling;            use Case_Handling;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Glib.Object;              use Glib.Object;
 with GUI_Utils;                use GUI_Utils;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
@@ -96,11 +96,11 @@ package body Default_Preferences.Enums is
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
       Idx   : Gint := 0;
 
    begin
-      Gtk_New_Text (Combo);
+      Gtk_New (Combo);
 
       for K in Pref.Choices'Range loop
          declare
@@ -194,11 +194,11 @@ package body Default_Preferences.Enums is
          return Gtk.Widget.Gtk_Widget
       is
          V       : constant Integer := Enum_Preference (Pref).Enum_Value;
-         Combo   : Gtk_Combo_Box;
+         Combo   : Gtk_Combo_Box_Text;
          Idx     : Gint := 0;
 
       begin
-         Gtk_New_Text (Combo);
+         Gtk_New (Combo);
 
          for K in Enumeration'Range loop
             declare

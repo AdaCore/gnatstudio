@@ -37,7 +37,7 @@ with Gdk.Event;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
@@ -1427,7 +1427,7 @@ package body Toolchains_Editor is
    procedure On_Add_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
       Editor     : constant Toolchains_Edit := Toolchains_Edit (W);
       Dialog     : Gtk.Dialog.Gtk_Dialog;
-      Name_Entry : Gtk.Combo_Box.Gtk_Combo_Box;
+      Name_Entry : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
       Res        : Gtk_Response_Type;
       Known_Tc   : GNAT.Strings.String_List_Access :=
                      Toolchains.Known.Get_Known_Toolchain_Names;

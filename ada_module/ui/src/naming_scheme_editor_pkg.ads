@@ -18,7 +18,7 @@
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Label;           use Gtk.Label;
-with Gtk.Combo_Box;       use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Tree_View;
@@ -28,13 +28,13 @@ package Naming_Scheme_Editor_Pkg is
 
    type Naming_Scheme_Editor_Record is new Gtk_Window_Record with record
       Main_Box                  : Gtk_Vbox;
-      Standard_Scheme           : Gtk_Combo_Box;
-      Spec_Extension            : Gtk_Combo_Box;
-      Body_Extension            : Gtk_Combo_Box;
-      Separate_Extension        : Gtk_Combo_Box;
+      Standard_Scheme           : Gtk_Combo_Box_Text;
+      Spec_Extension            : Gtk_Combo_Box_Text;
+      Body_Extension            : Gtk_Combo_Box_Text;
+      Separate_Extension        : Gtk_Combo_Box_Text;
       Dot_Replacement           : Gtk_Entry;
       Label_Casing              : Gtk_Label;
-      Casing                    : Gtk_Combo_Box;
+      Casing                    : Gtk_Combo_Box_Text;
       Exception_List            : Gtk.Tree_View.Gtk_Tree_View;
       Exception_List_Model      : Gtk.Tree_Store.Gtk_Tree_Store;
       Unit_Name_Entry           : Gtk_Entry;

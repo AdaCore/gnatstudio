@@ -18,7 +18,7 @@
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Check_Button;    use Gtk.Check_Button;
-with Gtk.Combo_Box;       use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
@@ -39,7 +39,7 @@ package Advanced_Breakpoint_Pkg is
       Condition_Frame    : Gtk_Frame;
       Vbox32             : Gtk_Vbox;
       Label104           : Gtk_Label;
-      Condition_Combo    : Gtk_Combo_Box;
+      Condition_Combo    : Gtk_Combo_Box_Text;
       Ignore_Count_Frame : Gtk_Frame;
       Vbox33             : Gtk_Vbox;
       Label105           : Gtk_Label;

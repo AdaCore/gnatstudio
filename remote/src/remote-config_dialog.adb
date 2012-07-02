@@ -35,7 +35,7 @@ with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
-with Gtk.Combo_Box;              use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -195,15 +195,15 @@ package body Remote.Config_Dialog is
       Nickname_Label        : Gtk_Label;
       Nickname_Entry        : Gtk_Entry;
       Network_Name_Entry    : Gtk_Entry;
-      Remote_Access_Combo   : Gtk_Combo_Box;
-      Remote_Shell_Combo    : Gtk_Combo_Box;
-      Remote_Sync_Combo     : Gtk_Combo_Box;
+      Remote_Access_Combo   : Gtk_Combo_Box_Text;
+      Remote_Shell_Combo    : Gtk_Combo_Box_Text;
+      Remote_Sync_Combo     : Gtk_Combo_Box_Text;
       --  Advanced config panel
       Advanced_Pane         : Collapsing_Pane.Collapsing_Pane;
       Advanced_Table        : Gtk_Table;
       User_Name_Entry       : Gtk_Entry;
       Max_Nb_Connected_Spin : Gtk_Spin_Button;
-      Cr_Lf_Combo           : Gtk_Combo_Box;
+      Cr_Lf_Combo           : Gtk_Combo_Box_Text;
       Timeout_Spin          : Gtk_Spin_Button;
       Init_Cmds_View        : Gtk_Text_View;
       Debug_Button          : Gtk_Check_Button;
@@ -934,7 +934,7 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
-      Gtk_New_Text (Dialog.Remote_Access_Combo);
+      Gtk_New (Dialog.Remote_Access_Combo);
       Set_Name (Dialog.Remote_Access_Combo, "remote access combo");
       Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
@@ -976,7 +976,7 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
-      Gtk_New_Text (Dialog.Remote_Shell_Combo);
+      Gtk_New (Dialog.Remote_Shell_Combo);
       Set_Name (Dialog.Remote_Shell_Combo, "remote shell combo");
       Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
@@ -996,7 +996,7 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
-      Gtk_New_Text (Dialog.Remote_Sync_Combo);
+      Gtk_New (Dialog.Remote_Sync_Combo);
       Attach (Dialog.Right_Table, Dialog.Remote_Sync_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
@@ -1099,7 +1099,7 @@ package body Remote.Config_Dialog is
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
               Fill or Expand, 0, 10);
-      Gtk_New_Text (Dialog.Cr_Lf_Combo);
+      Gtk_New (Dialog.Cr_Lf_Combo);
       Set_Name (Dialog.Cr_Lf_Combo, "crlf handling combo");
       Attach (Dialog.Advanced_Table, Dialog.Cr_Lf_Combo,
               1, 2, 3, 4,

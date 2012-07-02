@@ -18,7 +18,7 @@
 --  This package handles the charsets supported by GPS
 
 with Default_Preferences;  use Default_Preferences;
-with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;
 with Gtk.Widget;
 
 package GPS.Kernel.Charsets is
@@ -53,7 +53,7 @@ package GPS.Kernel.Charsets is
 
    function Create_Charset_Combo
      (File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo_Box.Gtk_Combo_Box;
+      Default : String := "") return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
    --  Return a combo box that can be used to edit the charset associated with
    --  a file.
    --  Default is used if File is VFS.No_File. If unspecified, the

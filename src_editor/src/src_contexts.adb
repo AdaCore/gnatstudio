@@ -2696,7 +2696,7 @@ package body Src_Contexts is
       Set_Alignment (Label, 0.0, 0.5);
       Gtk.Box.Pack_Start (Box, Label, False);
 
-      Gtk_New_Text (Selector.Combo);
+      Gtk_New (Selector.Combo);
       Gtk.Box.Pack_Start (Box, Selector.Combo, True, True, 2);
       Initialize_Scope_Combo (Selector.Combo, Kernel);
    end Gtk_New;
@@ -2718,7 +2718,7 @@ package body Src_Contexts is
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Extra.Files_Table, Label, 0, 1, 0, 1, Fill, 0);
 
-      Gtk_New_Text (Extra.Combo);
+      Gtk_New (Extra.Combo);
       Initialize_Scope_Combo (Extra.Combo, Kernel);
       Attach (Extra.Files_Table, Extra.Combo, 1, 2, 0, 1, Fill, 0);
 

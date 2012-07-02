@@ -24,7 +24,7 @@ with Gtk.Button;             use Gtk.Button;
 with Gtk.Check_Button;       use Gtk.Check_Button;
 with Gtkada.Check_Button;    use Gtkada.Check_Button;
 with Gtk.Container;          use Gtk.Container;
-with Gtk.Combo_Box;          use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;     use Gtk.Combo_Box_Text;
 with Gtk.Dialog;             use Gtk.Dialog;
 with Gtk.Editable;           use Gtk.Editable;
 with Gtk.Enums;              use Gtk.Enums;
@@ -271,7 +271,7 @@ package body Switches_Chooser.Gtkada is
       Data   : Switch_Data) is
    begin
       Change_Switch
-        (Data.Editor.all, Combo, Get_Active_Text (Gtk_Combo_Box (Combo)));
+        (Data.Editor.all, Combo, Get_Active_Text (Gtk_Combo_Box_Text (Combo)));
    end On_Combo_Changed;
 
    ---------------------
@@ -451,7 +451,7 @@ package body Switches_Chooser.Gtkada is
       Radio    : Gtk_Radio_Button;
       Hbox     : Gtk_Box;
       Button   : Gtk_Button;
-      Combo    : Gtk_Combo_Box;
+      Combo    : Gtk_Combo_Box_Text;
       Combo_Iter : Combo_Switch_Vectors.Cursor;
       Switch2  : Switch_Description_Vectors.Cursor;
       Pop      : Popup_Button;
@@ -550,7 +550,7 @@ package body Switches_Chooser.Gtkada is
             end if;
 
          when Switch_Combo =>
-            Gtk_New_Text (Combo);
+            Gtk_New (Combo);
             Set_Tooltip (Editor, Combo, Switch, S);
             Pack_Start (Hbox, Combo, True, True, Padding => 0);
 

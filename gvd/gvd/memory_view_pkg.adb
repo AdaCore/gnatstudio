@@ -131,7 +131,7 @@ package body Memory_View_Pkg is
       Set_Line_Wrap (Label98, False);
       Pack_Start (Hbox12, Label98, True, True, 4);
 
-      Gtk_New_Text (Memory_View.Size);
+      Gtk_New (Memory_View.Size);
       Memory_View.Size.Append_Text (-"Byte");
       Memory_View.Size.Append_Text (-"Halfword");
       Memory_View.Size.Append_Text (-"Word");
@@ -148,7 +148,7 @@ package body Memory_View_Pkg is
       Set_Line_Wrap (Label97, False);
       Pack_Start (Hbox12, Label97, True, True, 0);
 
-      Gtk_New_Text (Memory_View.Format);
+      Gtk_New (Memory_View.Format);
       Memory_View.Format.Append_Text (-"Hex");
       Memory_View.Format.Append_Text (-"Decimal");
       Memory_View.Format.Append_Text (-"Octal");

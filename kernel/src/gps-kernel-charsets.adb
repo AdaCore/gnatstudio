@@ -19,7 +19,7 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib.Object;                use Glib.Object;
 
-with Gtk.Combo_Box;              use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Widget;                 use Gtk.Widget;
 
@@ -91,7 +91,7 @@ package body GPS.Kernel.Charsets is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference)
    is
-      Value : constant String := Get_Active_Text (Gtk_Combo_Box (Combo));
+      Value : constant String := Get_Active_Text (Gtk_Combo_Box_Text (Combo));
    begin
       for C in Charsets'Range loop
          if Charsets (C).Description.all = Value then
@@ -121,10 +121,10 @@ package body GPS.Kernel.Charsets is
 
    function Create_Charset_Combo
      (File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo_Box.Gtk_Combo_Box
+      Default : String := "") return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text
    is
       function Get_Default_Charset_Name return String;
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
 
       function Get_Default_Charset_Name return String is
          Found : Boolean := False;
@@ -146,7 +146,7 @@ package body GPS.Kernel.Charsets is
       Default_Name  : constant String := Get_Default_Charset_Name;
       Default_Index : Integer := -1;
    begin
-      Gtk_New_Combo_Text_With_Entry (Combo);
+      Gtk_New_With_Entry (Combo);
 
       for C in Charsets'Range loop
          Combo.Append_Text (Charsets (C).Description.all);
