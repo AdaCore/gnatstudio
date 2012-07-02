@@ -26,13 +26,13 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
+with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -180,7 +180,7 @@ package body Completion_Module is
       --  The hook callback corresponding to character triggers
 
       Trigger_Timeout_Value : Gint;
-      Trigger_Timeout       : Timeout_Handler_Id;
+      Trigger_Timeout       : Glib.Main.G_Source_Id;
       --  The timeout associated to character triggers
 
       Has_Trigger_Timeout : Boolean := False;
@@ -1626,7 +1626,7 @@ package body Completion_Module is
 
       --  Remove the previous timeout, if registered
       if Completion_Module.Has_Trigger_Timeout then
-         Timeout_Remove (Completion_Module.Trigger_Timeout);
+         Glib.Main.Remove (Completion_Module.Trigger_Timeout);
          Completion_Module.Has_Trigger_Timeout := False;
       end if;
 
@@ -1640,8 +1640,8 @@ package body Completion_Module is
          end if;
 
          Completion_Module.Trigger_Timeout :=
-           Timeout_Add (Guint32 (Timeout),
-                        Trigger_Timeout_Callback'Access);
+           Glib.Main.Timeout_Add
+             (Guint (Timeout), Trigger_Timeout_Callback'Access);
 
          Completion_Module.Has_Trigger_Timeout := True;
       end if;

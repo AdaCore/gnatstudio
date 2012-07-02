@@ -17,6 +17,8 @@
 
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
+with Glib.Main;
+
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Box;          use Gtk.Box;
 with Gtk.Icon_Factory; use Gtk.Icon_Factory;
@@ -27,7 +29,6 @@ with Gdk.Pixbuf;       use Gdk.Pixbuf;
 with Gtk.Frame;        use Gtk.Frame;
 with Gtk.Image;        use Gtk.Image;
 with Gtk.Toolbar;      use Gtk.Toolbar;
-with Gtk.Main;
 
 with Gtkada.MDI;       use Gtkada.MDI;
 
@@ -58,7 +59,7 @@ package GPS.Main_Window is
       Animation         : Gdk_Pixbuf_Animation;
       Animation_Iter    : Gdk_Pixbuf_Animation_Iter;
       Animation_Image   : Gtk_Image;
-      Animation_Timeout : Gtk.Main.Timeout_Handler_Id := 0;
+      Animation_Timeout : Glib.Main.G_Source_Id := 0;
 
       State_Level       : Integer := 0;
       Busy_Level        : Integer := 0;

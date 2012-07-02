@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Main;                use Gtk.Main;
+with Glib.Main;               use Glib.Main;
 with GNAT.Sockets;            use GNAT.Sockets;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
@@ -50,7 +50,7 @@ package body Socket_Module is
    type Read_Data_Access is access Read_Data_Record;
 
    type Socket_Module_Record is new Module_ID_Record with record
-      Timeout_Handler  : Timeout_Handler_Id;
+      Timeout_Handler  : Glib.Main.G_Source_Id;
       Commands_Present : Boolean := False;
       Commands_List    : List;
 
@@ -76,7 +76,7 @@ package body Socket_Module is
       Name     : GNAT.Strings.String_Access := new String'("");
       Next     : Read_Data_Access;
 
-      Timeout  : Timeout_Handler_Id;
+      Timeout  : Glib.Main.G_Source_Id;
       --  The handler for Read()
    end record;
 
@@ -86,7 +86,7 @@ package body Socket_Module is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Read_Data_Record, Read_Data_Access);
 
-   package Read_Timeout is new Gtk.Main.Timeout (Read_Data_Access);
+   package Read_Timeout is new Glib.Main.Generic_Sources (Read_Data_Access);
 
    ------------------------
    -- Local declarations --
@@ -159,7 +159,7 @@ package body Socket_Module is
 
       Free (Id.Commands_List);
 
-      Timeout_Remove (Id.Timeout_Handler);
+      Glib.Main.Remove (Id.Timeout_Handler);
       Close_Socket (Id.Server);
    end Destroy;
 
@@ -364,8 +364,8 @@ package body Socket_Module is
             Set (Data.R_Set.all, Data.Socket);
             String'Write (Data.Channel, "GPS>> ");
 
-            Data.Timeout := Read_Timeout.Add
-              (100, Idle_Read'Access, Data, Close'Access);
+            Data.Timeout := Read_Timeout.Timeout_Add
+              (100, Idle_Read'Access, Data, Notify => Close'Access);
          end;
       end if;
 
@@ -411,7 +411,7 @@ package body Socket_Module is
       elsif Command = "close" then
          Read_Data := Find_Data (String'(Get_Data (Inst, Socket_Class)));
          if Read_Data /= null then
-            Timeout_Remove (Read_Data.Timeout);
+            Glib.Main.Remove (Read_Data.Timeout);
          end if;
       end if;
 
@@ -460,7 +460,7 @@ package body Socket_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Port   : Natural)
    is
-      T : Timeout_Handler_Id;
+      T : Glib.Main.G_Source_Id;
       pragma Unreferenced (T);
       Socket_Class : constant Class_Type := New_Class (Kernel, "Socket");
 
@@ -469,7 +469,7 @@ package body Socket_Module is
 
       Socket_Module_ID := new Socket_Module_Record;
       Socket_Module (Socket_Module_ID).Timeout_Handler :=
-        Timeout_Add (100, Timeout_Process_Commands'Access);
+        Glib.Main.Timeout_Add (100, Timeout_Process_Commands'Access);
       Socket_Module (Socket_Module_ID).Address.Addr :=
         Inet_Addr ("127.0.0.1");
 

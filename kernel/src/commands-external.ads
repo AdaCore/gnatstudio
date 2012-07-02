@@ -22,7 +22,7 @@ pragma Warnings (On);
 with GNAT.Strings;
 with GNATCOLL.VFS;
 
-with Gtk.Main;           use Gtk.Main;
+with Glib.Main;          use Glib.Main;
 with GPS.Kernel;         use GPS.Kernel;
 with String_List_Utils;  use String_List_Utils;
 
@@ -75,7 +75,7 @@ package Commands.External is
 private
 
    package String_List_Idle is
-     new Gtk.Main.Timeout (External_Command_Access);
+     new Glib.Main.Generic_Sources (External_Command_Access);
 
    type External_Command is new Root_Command with record
       Kernel          : access Kernel_Handle_Record'Class;

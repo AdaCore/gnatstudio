@@ -15,12 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Glib.Main; use Glib.Main;
+
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 
 with Gtk.Handlers; use Gtk.Handlers;
-with Gtk.Main; use Gtk.Main;
 
 with Traces; use Traces;
 with GNATCOLL.Traces;
@@ -45,7 +46,7 @@ package body GPS.Kernel.Hyper_Mode is
       --  Whether Hyper Mode has actually been enabled for this widget
 
       Hyper_Mode_Motion_Watch  : Boolean := False;
-      Hyper_Mode_Watch_Timeout :  Gtk.Main.Timeout_Handler_Id := 0;
+      Hyper_Mode_Watch_Timeout : Glib.Main.G_Source_Id := 0;
       On_Enter                 : Simple_Callback;
       On_Leave                 : Simple_Callback;
    end record;
@@ -59,7 +60,8 @@ package body GPS.Kernel.Hyper_Mode is
    package Widget_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Hyper_Mode_Data);
 
-   package Hyper_Mode_Timeout is new Gtk.Main.Timeout (Hyper_Mode_Data);
+   package Hyper_Mode_Timeout is new Glib.Main.Generic_Sources
+     (Hyper_Mode_Data);
 
    ---------------
    -- Callbacks --
@@ -193,7 +195,7 @@ package body GPS.Kernel.Hyper_Mode is
          --  the motion_notify event to detect when the global hyper mode is
          --  being entered.
          Data.Hyper_Mode_Motion_Watch := True;
-         Data.Hyper_Mode_Watch_Timeout := Hyper_Mode_Timeout.Add
+         Data.Hyper_Mode_Watch_Timeout := Hyper_Mode_Timeout.Timeout_Add
            (Watch_Timeout, Watch_Timeout_Cb'Access, Data);
       end if;
 
@@ -216,7 +218,7 @@ package body GPS.Kernel.Hyper_Mode is
       Trace (Me, "leave_notify");
 
       if Data.Hyper_Mode_Motion_Watch then
-         Timeout_Remove (Data.Hyper_Mode_Watch_Timeout);
+         Glib.Main.Remove (Data.Hyper_Mode_Watch_Timeout);
          Data.Hyper_Mode_Motion_Watch := False;
       end if;
 
@@ -449,7 +451,7 @@ package body GPS.Kernel.Hyper_Mode is
       Hyper_Mode_Leave (Data);
 
       if Data.Hyper_Mode_Motion_Watch then
-         Timeout_Remove (Data.Hyper_Mode_Watch_Timeout);
+         Glib.Main.Remove (Data.Hyper_Mode_Watch_Timeout);
       end if;
 
       Unchecked_Free (X);

@@ -39,7 +39,6 @@ with Gtk;                        use Gtk;
 with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Main;                   use Gtk.Main;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
@@ -89,7 +88,7 @@ package body Src_Editor_View is
    Speed_Column_Width : constant := 10;
    --  The width of the speed column
 
-   Speed_Column_Timeout : constant Guint32 := 1000;
+   Speed_Column_Timeout : constant Guint := 1000;
    --  The time (in milliseconds) after which the speed column should be hidden
    --  when the preference is auto-hide and there are no more lines.
 
@@ -102,8 +101,8 @@ package body Src_Editor_View is
       User_Type   => Source_View,
       Setup       => Setup);
 
-   package Source_View_Idle is new Gtk.Main.Idle (Source_View);
-   package Source_View_Timeout is new Gtk.Main.Timeout (Source_View);
+   package Source_View_Timeout is new Glib.Main.Generic_Sources (Source_View);
+   package Source_View_Idle renames Source_View_Timeout;
 
    --------------------------
    -- Forward declarations --
@@ -319,7 +318,7 @@ package body Src_Editor_View is
         and then not View.Idle_Redraw_Registered
       then
          View.Idle_Redraw_Registered := True;
-         View.Idle_Redraw_Id := Source_View_Idle.Add
+         View.Idle_Redraw_Id := Source_View_Idle.Idle_Add
            (Idle_Column_Redraw'Access, View);
       end if;
    end Register_Idle_Column_Redraw;
@@ -444,15 +443,15 @@ package body Src_Editor_View is
       Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
 
       if View.Connect_Expose_Registered then
-         Idle_Remove (View.Connect_Expose_Id);
+         Glib.Main.Remove (View.Connect_Expose_Id);
       end if;
 
       if View.Idle_Redraw_Registered then
-         Idle_Remove (View.Idle_Redraw_Id);
+         Glib.Main.Remove (View.Idle_Redraw_Id);
       end if;
 
       if View.Redraw_Registered then
-         Idle_Remove (View.Redraw_Idle_Handler);
+         Glib.Main.Remove (View.Redraw_Idle_Handler);
       end if;
 
       --  Mark the idle loops as registered, so that they can no longer be
@@ -464,11 +463,11 @@ package body Src_Editor_View is
       Remove_Synchronization (View);
 
       if View.Scroll_Requested then
-         Timeout_Remove (View.Scroll_Timeout);
+         Glib.Main.Remove (View.Scroll_Timeout);
       end if;
 
       if View.Speed_Column_Hide_Registered then
-         Timeout_Remove (View.Speed_Column_Hide_Timeout);
+         Glib.Main.Remove (View.Speed_Column_Hide_Timeout);
       end if;
    end Delete;
 
@@ -594,7 +593,7 @@ package body Src_Editor_View is
         and then Realized_Is_Set (User)
       then
          User.Redraw_Idle_Handler :=
-           Source_View_Idle.Add (Line_Highlight_Redraw'Access, User);
+           Source_View_Idle.Idle_Add (Line_Highlight_Redraw'Access, User);
          User.Redraw_Registered := True;
       end if;
 
@@ -1426,7 +1425,7 @@ package body Src_Editor_View is
       --  debugger are recomputed all at once (before the editor has a size).
 
       View.Connect_Expose_Registered := True;
-      View.Connect_Expose_Id := Source_View_Idle.Add
+      View.Connect_Expose_Id := Source_View_Idle.Idle_Add
         (Connect_Expose'Access,
          Source_View (View));
 
@@ -1823,7 +1822,7 @@ package body Src_Editor_View is
 
          if not View.Scroll_Requested then
             View.Scroll_Requested := True;
-            View.Scroll_Timeout := Source_View_Timeout.Add
+            View.Scroll_Timeout := Source_View_Timeout.Timeout_Add
               (10, Scroll_Timeout'Access, View);
          end if;
       end if;
@@ -2353,7 +2352,7 @@ package body Src_Editor_View is
          if Info_Exists then
             if View.Speed_Column_Hide_Registered then
                View.Speed_Column_Hide_Registered := False;
-               Timeout_Remove (View.Speed_Column_Hide_Timeout);
+               Glib.Main.Remove (View.Speed_Column_Hide_Timeout);
             end if;
 
             if Width = 1
@@ -2367,7 +2366,7 @@ package body Src_Editor_View is
            and then not View.Speed_Column_Hide_Registered
          then
             View.Speed_Column_Hide_Registered := True;
-            View.Speed_Column_Hide_Timeout := Source_View_Timeout.Add
+            View.Speed_Column_Hide_Timeout := Source_View_Timeout.Timeout_Add
               (Speed_Column_Timeout, Hide_Speed_Column_Timeout'Access,
                Source_View (View));
          end if;

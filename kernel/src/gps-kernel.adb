@@ -38,6 +38,7 @@ with Gdk;                       use Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
 
+with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with XML_Utils;                 use XML_Utils;
 
@@ -45,7 +46,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -1012,8 +1012,8 @@ package body GPS.Kernel is
       Window : constant GPS_Window := GPS_Window (Data.Kernel.Main_Window);
    begin
       if Anim_Cb (Data.Kernel) then
-         Window.Animation_Timeout := Process_Timeout.Add
-           (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
+         Window.Animation_Timeout := Process_Timeout.Timeout_Add
+           (Guint (Get_Delay_Time (Window.Animation_Iter)),
             Process_Anim'Access, Data);
       end if;
 
@@ -1061,8 +1061,8 @@ package body GPS.Kernel is
         and then Window.Animation_Timeout = 0
         and then Window.Animation_Iter /= null
       then
-         Window.Animation_Timeout := Process_Timeout.Add
-           (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
+         Window.Animation_Timeout := Process_Timeout.Timeout_Add
+           (Guint (Get_Delay_Time (Window.Animation_Iter)),
             Process_Anim'Access,
             (Kernel_Handle (Handle), null, null, null, null, null, False));
       end if;
@@ -1104,7 +1104,7 @@ package body GPS.Kernel is
            and then not Gtk.Widget.Destroyed_Is_Set (Get_Main_Window (Handle))
            and then Window.Animation_Timeout /= 0
          then
-            Timeout_Remove (Window.Animation_Timeout);
+            Glib.Main.Remove (Window.Animation_Timeout);
             Window.Animation_Timeout := 0;
             Display_Default_Image (Kernel_Handle (Handle));
          end if;

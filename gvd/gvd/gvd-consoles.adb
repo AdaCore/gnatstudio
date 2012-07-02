@@ -19,9 +19,9 @@ with System;                 use System;
 
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
+with Glib.Main;              use Glib.Main;
 with Gdk.Event;              use Gdk.Event;
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Main;               use Gtk.Main;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Text_View;
@@ -67,7 +67,7 @@ package body GVD.Consoles is
      Compile (".+", Single_Line or Multiple_Lines);
    --  Any non empty string, as long as possible.
 
-   Timeout       : constant Guint32 := 50;
+   Timeout : constant Guint := 50;
    --  Timeout between updates of the debuggee console
 
    type Debugger_Console_Record is new Console_Views.Process_View_Record with
@@ -80,13 +80,13 @@ package body GVD.Consoles is
       record
          Debuggee_TTY        : GNAT.TTY.TTY_Handle;
          Debuggee_Descriptor : GNAT.Expect.TTY.TTY_Process_Descriptor;
-         Debuggee_Id         : Gtk.Main.Timeout_Handler_Id := 0;
+         Debuggee_Id         : Glib.Main.G_Source_Id := 0;
          TTY_Initialized     : Boolean := False;
          Cleanup_TTY         : Boolean := False;
       end record;
    type Debuggee_Console is access all Debuggee_Console_Record'Class;
 
-   package TTY_Timeout is new Gtk.Main.Timeout (Debuggee_Console);
+   package TTY_Timeout is new Glib.Main.Generic_Sources (Debuggee_Console);
 
    function Initialize
      (Console : access Debugger_Console_Record'Class;
@@ -467,7 +467,8 @@ package body GVD.Consoles is
 
          Console.TTY_Initialized := True;
          Console.Debuggee_Id :=
-           TTY_Timeout.Add (Timeout, TTY_Cb'Access, Console.all'Access);
+           TTY_Timeout.Timeout_Add
+             (Timeout, TTY_Cb'Access, Console.all'Access);
 
          if Get_Process (Console) /= null
            and then Get_Process (Console).Debugger /= null
@@ -492,7 +493,7 @@ package body GVD.Consoles is
    begin
       if Console.TTY_Initialized then
          if Console.Debuggee_Id /= 0 then
-            Gtk.Main.Timeout_Remove (Console.Debuggee_Id);
+            Glib.Main.Remove (Console.Debuggee_Id);
             Console.Debuggee_Id := 0;
          end if;
 

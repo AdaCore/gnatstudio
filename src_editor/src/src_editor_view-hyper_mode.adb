@@ -38,7 +38,6 @@ with GPS.Kernel.Hyper_Mode; use GPS.Kernel.Hyper_Mode;
 
 package body Src_Editor_View.Hyper_Mode is
 
-   use type Gtk.Main.Timeout_Handler_Id;
    use type Gtk.Handlers.Handler_Id;
 
    Me : constant Debug_Handle := Create ("hyper_mode", GNATCOLL.Traces.Off);

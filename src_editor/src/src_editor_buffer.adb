@@ -49,7 +49,6 @@ with Glib.Values;                         use Glib.Values;
 with Gtk;                                 use Gtk;
 with Gtk.Enums;                           use Gtk.Enums;
 with Gtk.Handlers;                        use Gtk.Handlers;
-with Gtk.Main;                            use Gtk.Main;
 with Gtk.Text_Buffer;                     use Gtk.Text_Buffer;
 with Gtk.Text_Iter;                       use Gtk.Text_Iter;
 with Gtk.Text_Mark;                       use Gtk.Text_Mark;
@@ -112,11 +111,11 @@ package body Src_Editor_Buffer is
                               ("Source_Editor_Buffer.Indent_On_Block_Info",
                                Default => Off);
 
-   Buffer_Recompute_Interval : constant Guint32 := 200;
+   Buffer_Recompute_Interval : constant Guint := 200;
    --  The interval at which to check whether the buffer should be reparsed,
    --  in milliseconds.
 
-   Cursor_Stop_Interval      : constant Guint32 := 100;
+   Cursor_Stop_Interval      : constant Guint := 100;
    --  The interval after which we consider that the cursor has stopped
 
    Buffer_Recompute_Delay    : constant Duration := 1.0;
@@ -131,7 +130,7 @@ package body Src_Editor_Buffer is
      (Editor_Side => True,
       Locations   => True);
 
-   package Buffer_Timeout is new Gtk.Main.Timeout (Source_Buffer);
+   package Buffer_Timeout is new Glib.Main.Generic_Sources (Source_Buffer);
 
    function Strlen
      (Str : Interfaces.C.Strings.chars_ptr) return Interfaces.C.size_t;
@@ -1234,7 +1233,7 @@ package body Src_Editor_Buffer is
 
       if not Buffer.Cursor_Timeout_Registered then
          Buffer.Cursor_Timeout_Registered := True;
-         Buffer.Cursor_Timeout := Buffer_Timeout.Add
+         Buffer.Cursor_Timeout := Buffer_Timeout.Timeout_Add
            (Cursor_Stop_Interval,
             Cursor_Stop_Hook'Access,
             Source_Buffer (Buffer));
@@ -1252,7 +1251,7 @@ package body Src_Editor_Buffer is
 
       if not Buffer.Blocks_Timeout_Registered then
          Buffer.Blocks_Timeout_Registered := True;
-         Buffer.Blocks_Timeout := Buffer_Timeout.Add
+         Buffer.Blocks_Timeout := Buffer_Timeout.Timeout_Add
            (Buffer_Recompute_Interval,
             Edition_Timeout'Access,
             Source_Buffer (Buffer));
@@ -1420,11 +1419,11 @@ package body Src_Editor_Buffer is
       --  Unregister the blocks timeout
 
       if Buffer.Blocks_Timeout_Registered then
-         Timeout_Remove (Buffer.Blocks_Timeout);
+         Glib.Main.Remove (Buffer.Blocks_Timeout);
       end if;
 
       if Buffer.Cursor_Timeout_Registered then
-         Timeout_Remove (Buffer.Cursor_Timeout);
+         Glib.Main.Remove (Buffer.Cursor_Timeout);
       end if;
    end Destroy_Hook;
 
@@ -1494,7 +1493,7 @@ package body Src_Editor_Buffer is
       Destroy_Hook (Buffer);
 
       if Buffer.Timeout_Registered then
-         Timeout_Remove (Buffer.Timeout_Id);
+         Glib.Main.Remove (Buffer.Timeout_Id);
          Buffer.Timeout_Registered := False;
 
          if Buffer.Filename /= GNATCOLL.VFS.No_File then
@@ -3105,15 +3104,15 @@ package body Src_Editor_Buffer is
       --  Connect timeout, to handle automatic saving of buffer
 
       if B.Timeout_Registered then
-         Timeout_Remove (B.Timeout_Id);
+         Glib.Main.Remove (B.Timeout_Id);
          B.Timeout_Registered := False;
       end if;
 
       Timeout := Gint (Periodic_Save.Get_Pref);
 
       if Timeout > 0 then
-         B.Timeout_Id := Buffer_Timeout.Add
-           (Guint32 (Timeout) * 1000,  Automatic_Save'Access, B.all'Access);
+         B.Timeout_Id := Buffer_Timeout.Timeout_Add
+           (Guint (Timeout) * 1000,  Automatic_Save'Access, B.all'Access);
          B.Timeout_Registered := True;
       end if;
 
@@ -3229,14 +3228,14 @@ package body Src_Editor_Buffer is
          --  Unregister the blocks timeout
 
          if Buffer.Blocks_Timeout_Registered then
-            Timeout_Remove (Buffer.Blocks_Timeout);
+            Glib.Main.Remove (Buffer.Blocks_Timeout);
             Buffer.Blocks_Timeout_Registered := False;
          end if;
 
          --  Unregister the cursor timeout
 
          if Buffer.Cursor_Timeout_Registered then
-            Timeout_Remove (Buffer.Cursor_Timeout);
+            Glib.Main.Remove (Buffer.Cursor_Timeout);
             Buffer.Cursor_Timeout_Registered := False;
          end if;
 

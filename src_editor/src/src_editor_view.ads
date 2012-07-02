@@ -21,11 +21,11 @@
 --  </description>
 
 with Cairo;                  use Cairo;
+with Glib.Main;
 with Gdk.Color;
 with Gdk.Event;
 with Glib;                   use Glib;
 with Gtk.Drawing_Area;
-with Gtk.Main;
 with Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
@@ -191,12 +191,12 @@ private
 
       Side_Columns_Up_To_Date : Boolean := False;
 
-      Connect_Expose_Id : Gtk.Main.Idle_Handler_Id := 0;
+      Connect_Expose_Id : Glib.Main.G_Source_Id := 0;
       --  Handler ID for the Connect_Expose idle callback
       Connect_Expose_Registered : Boolean := False;
       --  Whether the Connect_Expose idle callback has been registered
 
-      Idle_Redraw_Id : Gtk.Main.Idle_Handler_Id := 0;
+      Idle_Redraw_Id : Glib.Main.G_Source_Id := 0;
       --  Handler ID for Idle redraw of the side columns
       Idle_Redraw_Registered : Boolean := False;
       --  Whether the Idle_Redraw has been registered
@@ -229,13 +229,13 @@ private
       Speed_Column_Mode    : Speed_Column_Policies := Automatic;
       --  The display policy for the speed column
 
-      Speed_Column_Hide_Timeout : Gtk.Main.Timeout_Handler_Id := 0;
+      Speed_Column_Hide_Timeout : Glib.Main.G_Source_Id := 0;
       --  The timeout to hide the speed column
 
       Speed_Column_Hide_Registered : Boolean := False;
       --  Whether the timeout to hide the speed column has been registered
 
-      Scroll_Timeout       : Gtk.Main.Timeout_Handler_Id := 0;
+      Scroll_Timeout       : Glib.Main.G_Source_Id := 0;
       Scroll_To_Value      : Gdouble := 0.0;
       Scroll_Requested     : Boolean := False;
 
@@ -271,7 +271,7 @@ private
       Redraw_Registered : Boolean := False;
       --  Whether we have registered an idle redraw of the highlights
 
-      Redraw_Idle_Handler : Gtk.Main.Idle_Handler_Id;
+      Redraw_Idle_Handler : Glib.Main.G_Source_Id;
       --  The idle handler corresponding to Redraw_Registered
 
       --  Handling of hyper mode

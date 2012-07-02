@@ -26,7 +26,7 @@ with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Glib;                      use Glib;
-with Gtk.Main;                  use Gtk.Main;
+with Glib.Main;                 use Glib.Main;
 
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -50,7 +50,7 @@ package body External_Editor_Module is
 
    Me : constant Debug_Handle := Create ("External_Editor_Module");
 
-   Timeout : constant Guint32 := 500;
+   Timeout : constant Guint := 500;
    --  Timeout in millisecond to check the external editor processes.
    --  This is intentionnaly very big currently, since all we want is to
    --  properly handle the death of an external process, to remove zombie
@@ -221,7 +221,7 @@ package body External_Editor_Module is
       Processes : Process_Descriptor_Array_Access;
       --  The list of external processes that have been started.
 
-      Timeout_Id : Gtk.Main.Timeout_Handler_Id := 0;
+      Timeout_Id : Glib.Main.G_Source_Id := 0;
       --  The timeout loop that takes care of all the spawned external
       --  editors.
    end record;
@@ -508,12 +508,12 @@ package body External_Editor_Module is
         new TTY_Process_Descriptor'(Process);
 
       if External_Editor_Module_Id.Timeout_Id = 0 then
-         External_Editor_Module_Id.Timeout_Id := Process_Timeout.Add
+         External_Editor_Module_Id.Timeout_Id := Process_Timeout.Timeout_Add
            (Interval => Timeout,
             Func     => External_Timeout'Access,
-            D        => Process_Data'
+            Data     => Process_Data'
               (Kernel_Handle (Kernel), null, null, null, null, null, False),
-           Destroy   => External_Timeout_Destroy'Access);
+            Notify   => External_Timeout_Destroy'Access);
       end if;
 
       Result := True;

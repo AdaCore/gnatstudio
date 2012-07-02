@@ -22,6 +22,7 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
 
 with Glib;                       use Glib;
+with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Gdk.Dnd;                    use Gdk.Dnd;
@@ -29,7 +30,6 @@ with Gdk.Event;                  use Gdk.Event;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
 with Gtk.Handlers;               use Gtk.Handlers;
-with Gtk.Main;                   use Gtk.Main;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
@@ -695,7 +695,7 @@ package body Project_Explorers_Files is
                      new Append_Directory_Idle_Data;
       --  D is freed when Read_Directory ends (i.e. returns False)
 
-      Timeout_Id : Timeout_Handler_Id;
+      Timeout_Id : G_Source_Id;
 
    begin
       D.Dir           := Dir;
@@ -719,7 +719,8 @@ package body Project_Explorers_Files is
 
          if Read_Directory (D) then
             Timeout_Id :=
-              File_Append_Directory_Timeout.Add (1, Read_Directory'Access, D);
+              File_Append_Directory_Timeout.Timeout_Add
+                (1, Read_Directory'Access, D);
             Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
          end if;
 
@@ -967,7 +968,7 @@ package body Project_Explorers_Files is
    begin
       while not Timeout_Id_List.Is_Empty (Explorer.Fill_Timeout_Ids) loop
          Pop_State (Explorer.Kernel);
-         Timeout_Remove (Timeout_Id_List.Head (Explorer.Fill_Timeout_Ids));
+         Glib.Main.Remove (Timeout_Id_List.Head (Explorer.Fill_Timeout_Ids));
          Timeout_Id_List.Next (Explorer.Fill_Timeout_Ids);
       end loop;
    end File_Remove_Idle_Calls;
@@ -1157,16 +1158,6 @@ package body Project_Explorers_Files is
          Trace (Exception_Handle, E);
          return False;
    end File_Key_Press;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (D : in out Gtk.Main.Timeout_Handler_Id) is
-      pragma Unreferenced (D);
-   begin
-      null;
-   end Free;
 
    -------------
    -- Refresh --

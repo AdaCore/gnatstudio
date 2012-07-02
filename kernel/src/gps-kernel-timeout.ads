@@ -18,7 +18,7 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.Expect;
 
-with Gtk.Main;
+with Glib.Main;
 
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;
@@ -69,7 +69,7 @@ package GPS.Kernel.Timeout is
      (GNAT.Expect.Process_Descriptor'Class,
       GNAT.Expect.Process_Descriptor_Access);
 
-   package Process_Timeout is new Gtk.Main.Timeout (Process_Data);
+   package Process_Timeout is new Glib.Main.Generic_Sources (Process_Data);
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;

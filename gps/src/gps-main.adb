@@ -147,6 +147,7 @@ with VCS_Module;
 with VFS_Module;
 with Vdiff2_Module;
 with Vsearch;
+with Glib.Main;
 
 procedure GPS.Main is
    use GPS.Main_Window;
@@ -250,7 +251,7 @@ procedure GPS.Main is
    User_Directory_Existed : Boolean;
    Cleanup_Needed         : Boolean := False;
    Unexpected_Exception   : Boolean := False;
-   Splash_Timeout         : Glib.Guint32 := 1000;
+   Splash_Timeout         : Glib.Guint := 1000;
    Server_Mode            : Boolean := False;
    Port_Number            : Natural := 0;
    Hide_GPS               : Boolean := False;
@@ -258,7 +259,7 @@ procedure GPS.Main is
 
    Button                 : Message_Dialog_Buttons;
    Result                 : Boolean;
-   Timeout_Id             : Timeout_Handler_Id;
+   Timeout_Id             : Glib.Main.G_Source_Id;
    pragma Unreferenced (Button, Result, Timeout_Id);
 
    --  We cannot use the default command line parser because gtk+ modifies
@@ -658,11 +659,11 @@ procedure GPS.Main is
       Display_Splash_Screen;
 
       if Splash = null then
-         Timeout_Id := Process_Timeout.Add
+         Timeout_Id := Process_Timeout.Timeout_Add
            (1, Finish_Setup'Unrestricted_Access,
             (GPS_Main.Kernel, null, null, null, null, null, False));
       else
-         Timeout_Id := Process_Timeout.Add
+         Timeout_Id := Process_Timeout.Timeout_Add
            (Splash_Timeout, Finish_Setup'Unrestricted_Access,
             (GPS_Main.Kernel, null, null, null, null, null, False));
       end if;

@@ -29,8 +29,8 @@ with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
+with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
-with Gtk.Main;                   use Gtk.Main;
 with XML_Utils;                  use XML_Utils;
 
 with GPS.Intl;                   use GPS.Intl;
@@ -103,7 +103,8 @@ package body GPS.Kernel.Remote is
       Kernel : Kernel_Handle;
    end record;
 
-   package Reload_Timeout is new Gtk.Main.Timeout (Reload_Callback_Data);
+   package Reload_Timeout is new Glib.Main.Generic_Sources
+     (Reload_Callback_Data);
 
    function Reload_Prj_Cb (Data : Reload_Callback_Data) return Boolean;
    --  Callback used to reload the project when build_server changed
@@ -600,8 +601,8 @@ package body GPS.Kernel.Remote is
                       Nickname_Length => Nickname'Length,
                       Server          => Server,
                       Nickname        => Nickname);
-      Timeout    : constant Guint32 := 50;
-      Id         : Timeout_Handler_Id;
+      Timeout    : constant Guint := 50;
+      Id         : G_Source_Id;
       Load_Data  : Reload_Callback_Data;
       Old_Server : constant String := Get_Nickname (Server);
       pragma Unreferenced (Id);
@@ -650,7 +651,7 @@ package body GPS.Kernel.Remote is
                ("in your Server setting dialog"))));
          else
             Trace (Me, "Asking project reload");
-            Id := Reload_Timeout.Add
+            Id := Reload_Timeout.Timeout_Add
               (Timeout, Reload_Prj_Cb'Access, Load_Data);
          end if;
       end if;

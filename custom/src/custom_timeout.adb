@@ -18,8 +18,7 @@
 with Ada.Unchecked_Deallocation;
 
 with Glib;               use Glib;
-
-with Gtk.Main;           use Gtk.Main;
+with Glib.Main;          use Glib.Main;
 
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
@@ -39,7 +38,7 @@ package body Custom_Timeout is
    Timeout_Class_Name : constant String := "Timeout";
 
    type Custom_Timeout is record
-      Handler  : Timeout_Handler_Id;
+      Handler  : Glib.Main.G_Source_Id;
       Instance : Class_Instance;
       Action   : Subprogram_Type;
    end record;
@@ -48,7 +47,8 @@ package body Custom_Timeout is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Custom_Timeout, Custom_Timeout_Access);
 
-   package Action_Timeout is new Timeout (Custom_Timeout_Access);
+   package Action_Timeout is new Glib.Main.Generic_Sources
+     (Custom_Timeout_Access);
 
    type Timeout_Property is new Instance_Property_Record with record
       Timeout : Custom_Timeout_Access;
@@ -156,8 +156,8 @@ package body Custom_Timeout is
             D := new Custom_Timeout;
             D.Instance := Inst;
             D.Action := Act;
-            D.Handler := Action_Timeout.Add
-              (Guint32 (Timeout), Callback'Access, D);
+            D.Handler := Action_Timeout.Timeout_Add
+              (Guint (Timeout), Callback'Access, D);
 
             Set_Data
               (Inst, Timeout_Class_Name, Timeout_Property'(Timeout => D));
@@ -165,7 +165,7 @@ package body Custom_Timeout is
 
       elsif Command = "remove" then
          D := Get_Data (Data, 1);
-         Timeout_Remove (D.Handler);
+         Glib.Main.Remove (D.Handler);
          Free (D);
       end if;
    end Custom_Timeout_Handler;

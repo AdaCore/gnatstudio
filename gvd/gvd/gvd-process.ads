@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Glib;
+with Glib.Main;
 with Glib.Object;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -23,7 +24,6 @@ with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Expect; use GNAT.Expect;
 
 with Gtk.Dialog;
-with Gtk.Main;
 with Gtk.Widget;
 
 with Debugger;            use Debugger;
@@ -98,7 +98,7 @@ package GVD.Process is
       --  This is used to store the launching method.
       --  (Added to handle sessions)
 
-      Timeout_Id              : Gtk.Main.Timeout_Handler_Id := 0;
+      Timeout_Id              : Glib.Main.G_Source_Id := 0;
       --  Timeout Id used to handle async. commands.
 
       Current_Command         : String_Access;

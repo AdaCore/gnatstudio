@@ -35,8 +35,8 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Gdk.Color;
 with Glib;                      use Glib;
+with Glib.Main;
 with Gtk;
-with Gtk.Main;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
@@ -1399,7 +1399,7 @@ private
       Strip_Trailing_Lines : Boolean := True;
       --  Whether the buffer should strip empty trailing lines
 
-      Timeout_Id         : Gtk.Main.Timeout_Handler_Id := 0;
+      Timeout_Id         : Glib.Main.G_Source_Id := 0;
       Timeout_Registered : Boolean := False;
       --  Whether Timeout corresponds to a registered timeout
 
@@ -1464,7 +1464,7 @@ private
       Blocks_Timeout_Registered : Boolean := False;
       --  Whether the blocks need to be recomputed
 
-      Blocks_Timeout : Gtk.Main.Timeout_Handler_Id;
+      Blocks_Timeout : Glib.Main.G_Source_Id;
       --  A timeout handling the refresh of the timeouts
 
       Blocks_Request_Timestamp : Ada.Calendar.Time;
@@ -1473,7 +1473,7 @@ private
       Cursor_Timeout_Registered : Boolean := False;
       --  Whether the cursor timeout is registered
 
-      Cursor_Timeout : Gtk.Main.Timeout_Handler_Id;
+      Cursor_Timeout : Glib.Main.G_Source_Id;
       --  A timeout handling the refresh of the timeouts
 
       Cursor_Timestamp : Ada.Calendar.Time;

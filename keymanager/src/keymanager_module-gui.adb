@@ -23,9 +23,12 @@ with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
+with Glib.Main;               use Glib.Main;
+with Glib.Object;             use Glib, Glib.Object;
+
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
-with Glib.Object;             use Glib, Glib.Object;
+
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
 with Gtk.Box;                 use Gtk.Box;
@@ -589,7 +592,7 @@ package body KeyManager_Module.GUI is
       Grabbed, Tmp : String_Access;
       Key          : Gdk_Key_Type;
       Modif        : Gdk_Modifier_Type;
-      Id           : Timeout_Handler_Id;
+      Id           : Glib.Main.G_Source_Id;
 
    begin
       Block_Key_Shortcuts (Kernel);
@@ -606,9 +609,9 @@ package body KeyManager_Module.GUI is
 
       if Allow_Multiple then
          loop
-            Id := Timeout_Add (500, Cancel_Grab'Access);
+            Id := Glib.Main.Timeout_Add (500, Cancel_Grab'Access);
             Key_Grab (Widget, Key, Modif);
-            Timeout_Remove (Id);
+            Glib.Main.Remove (Id);
 
             exit when Key = 0 and then Modif = 0;
 

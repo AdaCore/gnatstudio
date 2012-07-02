@@ -31,10 +31,10 @@ with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 with System;                     use System;
 
 with Glib;                       use Glib;
+with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 
 with Gtk.Dialog;                 use Gtk.Dialog;
-with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
@@ -1298,7 +1298,7 @@ package body GVD.Process is
 
       if Process.Timeout_Id /= 0 then
          Set_Busy (Process, False);
-         Timeout_Remove (Process.Timeout_Id);
+         Glib.Main.Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
       end if;
 

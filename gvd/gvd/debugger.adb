@@ -27,6 +27,7 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Glib;                       use Glib;
 with Glib.Convert;
+with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Window;                 use Gtk.Window;
@@ -57,11 +58,11 @@ package body Debugger is
 
    Me : constant Debug_Handle := Create ("Debugger");
 
-   Debug_Timeout : constant Guint32 := 100;
+   Debug_Timeout : constant Guint := 100;
    --  Timeout in millisecond to check input from the underlying debugger
    --  when handling asynchronous commands.
 
-   package Debugger_Timeout is new Gtk.Main.Timeout (Visual_Debugger);
+   package Debugger_Timeout is new Glib.Main.Generic_Sources (Visual_Debugger);
 
    ---------------------
    -- Local Functions --
@@ -399,14 +400,14 @@ package body Debugger is
       --  indirectly call the output filter.
 
       if Debugger = null then
-         Timeout_Remove (Process.Timeout_Id);
+         Glib.Main.Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
          return False;
       end if;
 
       if Wait_Prompt (Debugger, Timeout => 1) then
          Debugger.Continuation_Line := False;
-         Timeout_Remove (Process.Timeout_Id);
+         Glib.Main.Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
          Mode := Get_Command_Mode (Get_Process (Debugger));
 
@@ -476,7 +477,7 @@ package body Debugger is
          Traces.Trace (Exception_Handle, E);
 
          if Process.Timeout_Id > 0 then
-            Timeout_Remove (Process.Timeout_Id);
+            Glib.Main.Remove (Process.Timeout_Id);
          end if;
          Process.Timeout_Id := 0;
 
@@ -718,7 +719,7 @@ package body Debugger is
                      Process := GVD.Process.Convert (Debugger);
                      pragma Assert (Process.Timeout_Id = 0);
 
-                     Process.Timeout_Id := Debugger_Timeout.Add
+                     Process.Timeout_Id := Debugger_Timeout.Timeout_Add
                        (Debug_Timeout, Output_Available'Access, Process);
                   end if;
 
