@@ -26,7 +26,6 @@ with Gtk.Label;             use Gtk.Label;
 with Gtk.Combo_Box_Text;    use Gtk.Combo_Box_Text;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
-with GUI_Utils;             use GUI_Utils;
 
 package body Std_Dialogs is
 
@@ -98,7 +97,7 @@ package body Std_Dialogs is
       Set_Alignment (Dialog.Label, 0.0, 0.5);
       Pack_Start (Box, Dialog.Label, False, Padding => 10);
 
-      Gtk_New_Combo_Text_With_Entry (Dialog.Entry_Field);
+      Gtk_New_With_Entry (Dialog.Entry_Field);
       Pack_Start (Box, Dialog.Entry_Field, Padding => 10);
       Widget_Callback.Object_Connect
         (Dialog.Entry_Field.Get_Child, Signal_Activate,
@@ -158,7 +157,7 @@ package body Std_Dialogs is
       Dialog          : Simple_Entry_Dialog_Access;
    begin
       Dialog := new Simple_Entry_Dialog_Record;
-      Initialize (Dialog);
+      Gtk.Dialog.Initialize (Dialog);
 
       declare
          S : constant String := Internal_Simple_Entry_Dialog
@@ -191,7 +190,7 @@ package body Std_Dialogs is
       Dialog : Display_Dialog_Access;
    begin
       Dialog := new Display_Dialog_Record;
-      Initialize (Dialog);
+      Gtk.Dialog.Initialize (Dialog);
 
       if Check_Msg /= "" then
          Gtk_New (Dialog.Check, Check_Msg);
