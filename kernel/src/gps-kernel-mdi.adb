@@ -26,7 +26,7 @@ with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
 
-with Gdk.Color; use Gdk; use Gdk.Color;
+with Gdk.RGBA; use Gdk.RGBA;
 with Gdk.Window;
 
 with Gtk.Box;                  use Gtk.Box;
@@ -834,7 +834,7 @@ package body GPS.Kernel.MDI is
      (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Fixed_Font : Boolean)
    is
-      Active_Bg : constant Gdk_Color := Darken_Or_Lighten
+      Active_Bg : constant Gdk_RGBA := Darken_Or_Lighten
         (Default_Font.Get_Pref_Bg);
    begin
       if Fixed_Font then
@@ -843,11 +843,14 @@ package body GPS.Kernel.MDI is
          Modify_Font (Widget, Default_Font.Get_Pref_Font);
       end if;
 
-      Modify_Text (Widget, State_Normal, Default_Font.Get_Pref_Fg);
-      Modify_Text (Widget, State_Active, Default_Font.Get_Pref_Fg);
+      Override_Color (Widget, Gtk_State_Flag_Normal, Default_Font.Get_Pref_Fg);
+      Override_Color (Widget, Gtk_State_Flag_Active, Default_Font.Get_Pref_Fg);
 
-      Modify_Base (Widget, State_Normal, Default_Font.Get_Pref_Bg);
-      Modify_Base (Widget, State_Active, Active_Bg);
+      Override_Background_Color
+        (Widget, Gtk_State_Flag_Normal,
+         Default_Font.Get_Pref_Bg);
+      Override_Background_Color
+        (Widget, Gtk_State_Flag_Active, Active_Bg);
    end Set_Font_And_Colors;
 
    --------------------------------
@@ -919,6 +922,7 @@ package body GPS.Kernel.MDI is
       Perspectives, Central : Glib.Xml_Int.Node_Ptr;
       Perspectives_Convert, Central_Convert : Node_Ptr;
 
+      use type Gdk.Gdk_Drawable;
    begin
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
@@ -1255,7 +1259,7 @@ package body GPS.Kernel.MDI is
 
             if Get_Property (Toplevel, Has_Toplevel_Focus_Property) then
                W := Get_Focus (Toplevel);
-               if W /= null and then Has_Focus_Is_Set (W) then
+               if W /= null and then W.Has_Focus then
                   exit;
                end if;
                W := null;
