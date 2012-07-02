@@ -1738,6 +1738,7 @@ package body Project_Explorers is
       Dummy     : G_Source_Id;
       pragma Unreferenced (Dummy);
 
+      Alloc : Gtk_Allocation;
    begin
       if T.Expanding then
          return;
@@ -1789,13 +1790,14 @@ package body Project_Explorers is
          Get_Node_Type (T.Tree.Model, Iter),
          True);
 
-      if Realized_Is_Set (T.Tree) then
+      if T.Tree.Get_Realized then
          Iter2 := Children (T.Tree.Model, Iter);
 
          if Iter2 /= Null_Iter then
             Path2 := Get_Path (T.Tree.Model, Iter2);
             Get_Cell_Area (T.Tree, Path2, Get_Column (T.Tree, 0), Area_Rect);
-            if Area_Rect.Y > Get_Allocation_Height (T.Tree) - Margin then
+            T.Tree.Get_Allocation (Alloc);
+            if Area_Rect.Y > Alloc.Height - Margin then
                Dummy :=
                  Scroll_Idle.Idle_Add
                    (Idle_Scroll_To'Access, (T, Copy (Path)));
