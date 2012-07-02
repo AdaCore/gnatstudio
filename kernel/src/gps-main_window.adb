@@ -532,7 +532,6 @@ package body GPS.Main_Window is
                        & " Manager"),
          Default => True);
 
-      Set_Policy (Main_Window, False, True, False);
       --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many
       --  window managers as "top-left" corner, which may cause issues with
       --  taskbars.
@@ -633,8 +632,9 @@ package body GPS.Main_Window is
 
       Gtk_New_Hbox (Box1);
       Pack_Start (Main_Window.Toolbar_Box, Box1);
-      Gtk_New (Main_Window.Toolbar, Orientation_Horizontal, Toolbar_Icons);
-      Set_Tooltips (Main_Window.Toolbar, True);
+      Gtk_New (Main_Window.Toolbar);
+      Set_Orientation (Main_Window.Toolbar, Orientation_Horizontal);
+      Set_Style (Main_Window.Toolbar, Toolbar_Icons);
       Pack_Start (Box1, Main_Window.Toolbar, True, True);
 
       Gtk_New (Main_Window.Animation_Frame);
