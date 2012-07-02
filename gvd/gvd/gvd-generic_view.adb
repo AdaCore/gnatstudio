@@ -137,8 +137,7 @@ package body GVD.Generic_View is
             --  gtk_notebook_destroy's loop would then point to an invalid
             --  location.
             if Get_Main_Window (Get_Kernel (P)) /= null
-              and then not Gtk.Widget.In_Destruction_Is_Set
-                (Get_Main_Window (Get_Kernel (P)))
+              and then not Get_Main_Window (Get_Kernel (P)).In_Destruction
               and then Get_Process (V) /= null
             then
                Set_View (Get_Process (V), null);
