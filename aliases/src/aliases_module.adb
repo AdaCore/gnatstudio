@@ -29,11 +29,13 @@ with System.Assertions;
 
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Event;                use Gdk.Event;
+with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
+with Glib.Types;               use Glib.Types;
 with Glib.Unicode;             use Glib.Unicode;
 with Glib.Values;              use Glib.Values;
 
@@ -56,7 +58,6 @@ with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Style;                use Gtk.Style;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
@@ -100,6 +101,13 @@ package body Aliases_Module is
 
    Highlight_Color : constant String := "#DD0000";
    --  Color used to highlight special entities in the expansion
+
+   package Implements_Editable is new Glib.Types.Implements
+     (Gtk.Editable.Gtk_Editable, GObject_Record, GObject);
+   function "+"
+     (Widget : access GObject_Record'Class)
+      return Gtk.Editable.Gtk_Editable
+      renames Implements_Editable.To_Interface;
 
    type Interactive_Alias_Expansion_Command is new Interactive_Command with
    record
@@ -952,14 +960,16 @@ package body Aliases_Module is
    begin
       Boolean_Hash.String_Hash_Table.Reset (Aliases_Module_Id.Expanded);
 
-      if W /= null and then W.all in Gtk_Editable_Record'Class then
-         if Get_Editable (Gtk_Editable (W)) then
+      if W /= null
+        and then Is_A (W.Get_Type, Gtk.Editable.Get_Type)
+      then
+         if Get_Editable (+W) then
             declare
-               Text        : constant String := Get_Chars (Gtk_Editable (W));
+               Text        : constant String := Get_Chars (+W, 0);
                First, Last : Integer;
             begin
                Find_Current_Entity
-                 (Text, Integer (Get_Position (Gtk_Editable (W))),
+                 (Text, Integer (Get_Position (+W)),
                   First, Last);
 
                if First > Last then
@@ -979,11 +989,11 @@ package body Aliases_Module is
                begin
                   if Replace /= "" then
                      Delete_Text
-                       (Gtk_Editable (W),
+                       (+W,
                         F,
                         Gint (Last - Text'First));
-                     Insert_Text (Gtk_Editable (W), Replace, F);
-                     Set_Position (Gtk_Editable (W), F - Gint (Back));
+                     Insert_Text (+W, Replace, F);
+                     Set_Position (+W, F - Gint (Back));
                   end if;
                end;
 
@@ -1042,7 +1052,7 @@ package body Aliases_Module is
                                     Integer (Get_Line (First_Iter));
                begin
                   if Replace /= "" then
-                     Had_Focus := Has_Focus_Is_Set (W);
+                     Had_Focus := W.Has_Focus;
 
                      --  Simulate a focus_in/focus_out event, needed for the
                      --  GPS source editor, which saves and restores the
@@ -1679,12 +1689,14 @@ package body Aliases_Module is
       Number           : Gint;
       Event            : Gtk_Event_Box;
       Frame            : Gtk_Frame;
-      Color            : Gdk_Color;
+      Color            : Gdk_RGBA;
+      C                : Gdk_Color;
       Expansion_Buffer : Gtk_Text_Buffer;
       Scrolled         : Gtk_Scrolled_Window;
       Button           : Gtk_Button;
       Sep              : Gtk_Separator;
       W                : Gtk_Widget;
+      Success          : Boolean;
       pragma Unreferenced (Number, W);
 
    begin
@@ -1766,11 +1778,9 @@ package body Aliases_Module is
 
       Gtk_New (Event);
       Pack_Start (Box, Event, Expand => False);
-      Color := Parse ("#0e79bd");
+      Parse (Color, "#0e79bd", Success);
       --  ??? Should be shared with the preferences dialog and wizard
-      Alloc (Get_Default_Colormap, Color);
-      Set_Style (Event, Copy (Get_Style (Event)));
-      Set_Background (Get_Style (Event), State_Normal, Color);
+      Event.Override_Background_Color (Gtk_State_Flag_Normal, Color);
 
       Gtk_New (Editor.Current_Alias, "Current alias");
       Set_Alignment (Editor.Current_Alias, 0.1, 0.5);
@@ -1875,11 +1885,10 @@ package body Aliases_Module is
       W := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       W := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
 
-      Color := Parse (Highlight_Color);
-      Alloc (Get_Default_Colormap, Color);
+      C := Parse (Highlight_Color);
       Gtk_New (Editor.Highlight_Tag);
       Set_Property
-        (Editor.Highlight_Tag, Gtk.Text_Tag.Foreground_Gdk_Property, Color);
+        (Editor.Highlight_Tag, Gtk.Text_Tag.Foreground_Gdk_Property, C);
       Gtk.Text_Tag_Table.Add
         (Get_Tag_Table (Get_Buffer (Editor.Expansion)),
          Editor.Highlight_Tag);
