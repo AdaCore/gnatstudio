@@ -34,12 +34,12 @@ with Glib.Values;               use Glib.Values;
 with Cairo;                     use Cairo;
 with Cairo.Image_Surface;       use Cairo.Image_Surface;
 
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Cursor;                use Gdk.Cursor;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Keyval;                use Gdk.Keyval;
 with Gdk.Main;                  use Gdk.Main;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Types;                 use Gdk.Types;
@@ -67,7 +67,6 @@ with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Style;                 use Gtk.Style;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
@@ -440,7 +439,7 @@ package body GUI_Utils is
       --  propagated, and the contextual menu will be properly displayed.
       --  So we just avoid a gtk warning
 
-      if not No_Window_Is_Set (Widget) then
+      if Widget.Get_Has_Window then
          Add_Events
            (Widget,
             Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
@@ -574,7 +573,7 @@ package body GUI_Utils is
          User         : User_Data;
          Menu_Create  : Contextual_Menu_Create) is
       begin
-         if not No_Window_Is_Set (Widget) then
+         if Widget.Get_Has_Window then
             Add_Events
               (Widget,
                Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
@@ -830,7 +829,7 @@ package body GUI_Utils is
          Width  => Width,
          Height => Height);
 
-      Color := To_Cairo (Get_Black (Get_Default_Style));
+      Color := To_Cairo (Black_RGBA);
       Draw_Rectangle
         (Cr, Color,
          Filled => False,
@@ -1144,7 +1143,7 @@ package body GUI_Utils is
          Event_Mask => Button_Press_Mask or Button_Release_Mask,
          Confine_To => Get_Window (In_Widget),
          Time       => 0);
-      Grab_Add (In_Widget);
+      In_Widget.Grab_Add;
 
       Grab_Focus (In_Widget);
 
@@ -1165,7 +1164,7 @@ package body GUI_Utils is
          Mods := 0;
       end if;
 
-      Grab_Remove (In_Widget);
+      In_Widget.Grab_Remove;
       Keyboard_Ungrab (0);
       Pointer_Ungrab (0);
       Gtk.Handlers.Disconnect (In_Widget, Id);
@@ -1638,12 +1637,12 @@ package body GUI_Utils is
      (Label : out Gtk.Label.Gtk_Label;
       Event : out Gtk.Event_Box.Gtk_Event_Box)
    is
-      Color : Gdk_Color;
+      Color   : Gdk_RGBA;
+      Success : Boolean;
    begin
       Gtk_New (Event);
-      Color := Parse ("#0e79bd");
-      Set_Style (Event, Copy (Get_Style (Event)));
-      Set_Background (Get_Style (Event), State_Normal, Color);
+      Parse (Color, "#0e79bd", Success);
+      Event.Override_Background_Color (Gtk_State_Flag_Normal, Color);
 
       Gtk_New (Label, "");
       Set_Alignment (Label, 0.1, 0.5);
@@ -1947,8 +1946,6 @@ package body GUI_Utils is
    ------------
 
    function Darken (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA is
-      Output  : Gdk.RGBA.Gdk_RGBA;
-      Success : Boolean;
    begin
       return
         (Red   => Color.Red * 0.9,
@@ -1964,7 +1961,6 @@ package body GUI_Utils is
    function Lighten (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA is
       Percent : constant := 0.1;
       White   : constant := 0.1;
-      Success : Boolean;
    begin
       --  Very basic algorithm. Since we also want to change blacks, we can't
       --  simply multiply RGB components, so we just move part of the way to
