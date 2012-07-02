@@ -20,10 +20,10 @@ with GNAT.Strings;              use GNAT.Strings;
 
 with Cairo;                     use Cairo;
 
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
@@ -164,7 +164,7 @@ package body Clipboard_Views is
             Create_Pixmap_From_Text
               (Text.all,
                Default_Font.Get_Pref_Font,
-               White (Get_Default_Colormap),
+               White_RGBA,
                Tooltip.Clipboard_View.Tree,
                Pixmap);
             Free (Text);
