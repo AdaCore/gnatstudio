@@ -472,7 +472,7 @@ package body Scenario_Views is
 
       --  Remove all children, except the edit button
 
-      Child := Children (V.Table);
+      Child := Get_Children (V.Table);
       Tmp := Widget_List.First (Child);
 
       while Tmp /= Widget_List.Null_List loop
@@ -497,7 +497,7 @@ package body Scenario_Views is
             if Scenar_Var'Length = 0 then
                Show_All (V.Empty_Label);
                Set_Child_Visible (V.Empty_Label, True);
-               Set_USize (V.Empty_Event, -1, -1);
+               Set_Size_Request (V.Empty_Event, -1, -1);
                Hide (V.Table);
 
             else
