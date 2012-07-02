@@ -675,7 +675,7 @@ package body Completion_Window is
             Destroy (Window);
             return;
          else
-            if not Visible_Is_Set (Window) then
+            if not Get_Visible (Window) then
                declare
                   Previously_Volatile : constant Boolean := Window.Volatile;
                begin

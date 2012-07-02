@@ -270,7 +270,7 @@ package body Gtkada.Combo_Tool_Button is
       end if;
 
       if Button.Get_Active
-        and then not Visible_Is_Set (Widget.Menu)
+        and then not Get_Visible (Widget.Menu)
       then
          Menu_Popup.Popup
            (Widget.Menu, Gtkada_Combo_Tool_Button_Record (Widget.all)'Access,
@@ -585,7 +585,7 @@ package body Gtkada.Combo_Tool_Button is
       Widget.Items.Clear;
 
       if Widget.Menu /= null then
-         if Visible_Is_Set (Widget.Menu) then
+         if Get_Visible (Widget.Menu) then
             Deactivate (Widget.Menu);
          end if;
 

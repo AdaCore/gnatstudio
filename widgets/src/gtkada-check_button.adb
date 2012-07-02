@@ -317,7 +317,7 @@ package body Gtkada.Check_Button is
         (Get_Allocation_Height (Check) - Ind_Size) / 2;
 
       if Interior_Focus = 0
-        or else not (Child /= null and then Visible_Is_Set (Child))
+        or else not (Child /= null and then Get_Visible (Child))
       then
          X := X + Focus_Width + Focus_Pad;
       end if;
@@ -381,7 +381,7 @@ package body Gtkada.Check_Button is
       if Has_Focus_Is_Set (Check) then
          if Interior_Focus = 1
            and then Child /= null
-           and then Visible_Is_Set (Child)
+           and then Get_Visible (Child)
          then
             Paint_Focus
               (Style      => Get_Style (Check),
