@@ -692,7 +692,7 @@ package body Histories is
       Menu  : Gtk_Menu;
    begin
       if Get_Submenu (Notifier.Menu) /= null then
-         Remove_Submenu (Notifier.Menu);
+         Set_Submenu (Notifier.Menu, null);
       end if;
 
       Gtk_New (Menu);
