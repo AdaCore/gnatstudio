@@ -204,7 +204,7 @@ package body Welcome is
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => False);
 
-      Gtk_New_Combo_Text_With_Entry (Screen.Open_Project);
+      Gtk_New_With_Entry (Screen.Open_Project);
       Get_History (Get_History (Kernel).all,
                    "project_files", Screen.Open_Project);
       Pack_Start (Hbox, Screen.Open_Project, Expand => True, Fill => True);
