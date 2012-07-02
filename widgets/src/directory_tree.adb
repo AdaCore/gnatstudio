@@ -150,9 +150,9 @@ package body Directory_Tree is
    --  It is responsible for automatically adding the children of the current
    --  node if they are not there already.
 
-   function Expose_Event_Cb
+   procedure Expose_Event_Cb
      (Explorer : access Glib.Object.GObject_Record'Class;
-      Values   : GValues) return Boolean;
+      Values   : GValues);
    --  Scroll the explorer to the current directory
 
    procedure File_Tree_Collapse_Row_Cb
@@ -726,8 +726,6 @@ package body Directory_Tree is
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
-      use type Gint_List.Glist;
-
       Item        : Gtk_Menu_Item;
       Is_Valid    : Boolean := False;
       Menu        : Gtk_Menu;
@@ -793,7 +791,8 @@ package body Directory_Tree is
       Pack_Start
         (Get_Content_Area (Dialog), Label, Expand => False, Fill => True);
 
-      Gtk_New (Ent, Max => 1024);
+      Gtk_New (Ent);
+      Ent.Set_Max_Length (1024);
       Set_Width_Chars (Ent, 30);
       Set_Text (Ent, Display_Full_Name (Current_Dir));
 
@@ -1194,8 +1193,8 @@ package body Directory_Tree is
                      D.Explorer.Scroll_To_Directory := True;
 
                      D.Explorer.Realize_Cb_Id :=
-                       Gtkada.Handlers.Object_Return_Callback.Object_Connect
-                         (D.Explorer.File_Tree, Signal_Expose_Event,
+                       Gtkada.Handlers.Object_Callback.Object_Connect
+                         (D.Explorer.File_Tree, Signal_Draw,
                           Expose_Event_Cb'Access, D.Explorer, True);
                   end;
 
@@ -1464,9 +1463,9 @@ package body Directory_Tree is
    -- Expose_Event_Cb --
    ---------------------
 
-   function Expose_Event_Cb
+   procedure Expose_Event_Cb
      (Explorer : access Glib.Object.GObject_Record'Class;
-      Values   : GValues) return Boolean
+      Values   : GValues)
    is
       pragma Unreferenced (Values);
       T : constant Dir_Tree := Dir_Tree (Explorer);
@@ -1497,11 +1496,9 @@ package body Directory_Tree is
          Slot_Object => T,
          After => True);
 
-      return True;
    exception
       when E : others =>
          Trace (Me, E);
-         return True;
    end Expose_Event_Cb;
 
    -----------------------------
