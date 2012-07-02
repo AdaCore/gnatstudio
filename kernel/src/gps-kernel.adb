@@ -1047,7 +1047,7 @@ package body GPS.Kernel is
       Window := GPS_Window (Handle.Main_Window);
 
       if Window = null
-        or else Gtk.Widget.In_Destruction_Is_Set (Window)
+        or else Gtk.Widget.In_Destruction (Window)
       then
          return;
       end if;
@@ -1084,7 +1084,7 @@ package body GPS.Kernel is
       Window := GPS_Window (Handle.Main_Window);
 
       if Window = null
-        or else Gtk.Widget.In_Destruction_Is_Set (Window)
+        or else Gtk.Widget.In_Destruction (Window)
       then
          return;
       end if;

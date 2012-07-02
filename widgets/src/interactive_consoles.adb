@@ -1398,7 +1398,7 @@ package body Interactive_Consoles is
    begin
       --  Prevent recursion
 
-      if In_Destruction_Is_Set (Console) then
+      if Console.In_Destruction then
          return;
       end if;
 
@@ -1866,7 +1866,7 @@ package body Interactive_Consoles is
       Output := new String'
         (Console.Handler (Console, Command, Console.User_Data));
 
-      if In_Destruction_Is_Set (Console) then
+      if Console.In_Destruction then
          Unref (Console);
          return;
       end if;

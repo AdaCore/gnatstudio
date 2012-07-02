@@ -5152,7 +5152,7 @@ package body Project_Properties is
       Flags                : Selector_Flags;
    begin
       if Page >= Pages_From_XML_Count
-        and then not In_Destruction (Ed)
+        and then not Ed.In_Destruction
       then
          --  Some pages might not be visible though...
          P := Get_Nth_Project_Editor_Page

@@ -406,7 +406,7 @@ package body GPS.Kernel.Modules.UI is
       W := Get_Focus_Widget;
 
       if W = null
-        or else In_Destruction_Is_Set (W)
+        or else W.In_Destruction
       then
          --  No valid window has the focus ? It is probably because we had a
          --  dialog like the Open From Project dialog, which is being closed.

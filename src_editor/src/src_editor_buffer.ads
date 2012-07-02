@@ -982,9 +982,9 @@ package Src_Editor_Buffer is
    --  event should cancel the current user action: focus switching
    --  to another window, cursor moved, etc.
 
-   function In_Destruction_Is_Set
+   function In_Destruction
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
-   --  Similar to Gtk.Widget.In_Destruction_Is_Set
+   --  Similar to Gtk.Widget.In_Destruction
 
    function Get_Command_Queue
      (Buffer : access Source_Buffer_Record'Class) return Command_Queue;

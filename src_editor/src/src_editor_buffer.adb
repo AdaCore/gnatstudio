@@ -7152,15 +7152,15 @@ package body Src_Editor_Buffer is
       end if;
    end Set_Position_Set_Explicitely;
 
-   ---------------------------
-   -- In_Destruction_Is_Set --
-   ---------------------------
+   --------------------
+   -- In_Destruction --
+   --------------------
 
-   function In_Destruction_Is_Set
+   function In_Destruction
      (Buffer : access Source_Buffer_Record'Class) return Boolean is
    begin
       return Buffer.In_Destruction;
-   end In_Destruction_Is_Set;
+   end In_Destruction;
 
    --------------------------
    -- Get_Subprogram_Block --
