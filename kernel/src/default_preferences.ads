@@ -30,6 +30,7 @@ with GNAT.Strings;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
 with Gdk.Color;
+with Gdk.RGBA;
 with Gdk.Types;
 with Glib;            use Glib;
 with Glib.Object;
@@ -242,6 +243,8 @@ package Default_Preferences is
    overriding function Get_Pref
      (Pref : access Color_Preference_Record) return String;
    function Get_Pref
+     (Pref : access Color_Preference_Record) return Gdk.RGBA.Gdk_RGBA;
+   function Get_Pref
      (Pref : access Color_Preference_Record) return Gdk.Color.Gdk_Color;
 
    overriding function Get_Pref
@@ -260,6 +263,12 @@ package Default_Preferences is
    function Get_Pref_Font
      (Pref     : access Style_Preference_Record)
       return Pango.Font.Pango_Font_Description;
+   function Get_Pref_Fg
+     (Pref     : access Style_Preference_Record'Class)
+      return Gdk.RGBA.Gdk_RGBA;
+   function Get_Pref_Bg
+     (Pref     : access Style_Preference_Record'Class)
+      return Gdk.RGBA.Gdk_RGBA;
    function Get_Pref_Fg
      (Pref     : access Style_Preference_Record'Class)
       return Gdk.Color.Gdk_Color;
@@ -495,7 +504,7 @@ private
 
    type Color_Preference_Record is new Preference_Record with record
       Color_Value   : GNAT.Strings.String_Access;
-      Color         : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Color         : Gdk.RGBA.Gdk_RGBA;
    end record;
    overriding procedure Set_Pref
      (Pref    : access Color_Preference_Record;
@@ -540,9 +549,9 @@ private
       Style_Font    : GNAT.Strings.String_Access;
       Font_Descr    : Pango.Font.Pango_Font_Description;
       Style_Fg      : GNAT.Strings.String_Access;
-      Fg_Color      : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Fg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       Style_Bg      : GNAT.Strings.String_Access;
-      Bg_Color      : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Bg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
    end record;
    overriding procedure Set_Pref
      (Pref    : access Style_Preference_Record;
