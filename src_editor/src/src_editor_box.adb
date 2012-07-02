@@ -867,8 +867,8 @@ package body Src_Editor_Box is
       Gtk_New (Scrolling_Area);
       Set_Policy
         (Scrolling_Area,
-         H_Scrollbar_Policy => Policy_Automatic,
-         V_Scrollbar_Policy => Policy_Automatic);
+         Hscrollbar_Policy => Policy_Automatic,
+         Vscrollbar_Policy => Policy_Automatic);
       Pack_End (Hbox, Scrolling_Area, Expand => True, Fill => True);
 
       if Source = null then
@@ -900,7 +900,6 @@ package body Src_Editor_Box is
       --  We use an actual GtkStatusBar so that themes can correctly display
       --  the status bar as desired.
       Gtk_New (Status_Bar);
-      Status_Bar.Set_Has_Resize_Grip (False);
       Pack_Start (Box, Status_Bar, Expand => False, Fill => False);
       Box.Label_Box := Gtk_Hbox (Status_Bar.Get_Message_Area);
 
