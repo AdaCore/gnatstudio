@@ -591,7 +591,7 @@ package body Browsers.Call_Graph is
       Cb       : Show_Location_Callback_Access;
       Removed  : Boolean;
    begin
-      if not In_Destruction_Is_Set (Get_Browser (Item2)) then
+      if not Get_Browser (Item2).In_Destruction then
          --  Remove all references to the current item in other items, to keep
          --  the browser's contents as simple as possible.
 
