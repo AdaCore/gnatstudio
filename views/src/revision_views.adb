@@ -33,6 +33,7 @@ with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
+with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 use Gtk.Cell_Renderer.Cell_Renderer_List;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -897,21 +898,20 @@ package body Revision_Views is
       -------------------
 
       procedure Set_Attribute (Col : Gint) is
-         List : Cell_Renderer_List.Glist;
+         List : Glib.Object.Object_Simple_List.Glist;
       begin
-         List := Get_Cell_Renderers (Get_Column (View.Tree, Col));
+         List := Get_Cells (+Get_Column (View.Tree, Col));
          Add_Attribute
            (Get_Column (View.Tree, Col),
-            Cell_Renderer_List.Get_Data (List),
+            Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
             "foreground_gdk", Color_Column);
-         Free (List);
+         Object_Simple_List.Free (List);
       end Set_Attribute;
 
       Names   : GNAT.Strings.String_List :=
                   (1 => new String'(-"Revision"),
                    2 => new String'(-"Author"),
                    3 => new String'(-"Date / Log"));
-      Success : Boolean;
 
    begin
       View.Kernel := Kernel_Handle (Kernel);
@@ -947,8 +947,6 @@ package body Revision_Views is
       Add (View, View.Tree);
 
       View.Root_Color := Parse (Root_Color_Name);
-      Alloc_Color
-        (Get_Default_Colormap, View.Root_Color, False, True, Success);
 
       Set_Attribute (Revision_Column);
       Set_Attribute (Author_Column);
