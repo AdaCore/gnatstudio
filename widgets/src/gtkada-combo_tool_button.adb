@@ -84,8 +84,8 @@ package body Gtkada.Combo_Tool_Button is
    package Menu_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Menu_Record, Gtkada_Combo_Tool_Button);
 
-   package Menu_Popup is new User_Menu_Popup
-     (Gtkada_Combo_Tool_Button_Record);
+   package Menu_Popup is new Popup_User_Data
+     (Gtkada_Combo_Tool_Button);
 
    package Toggle_Button_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Toggle_Button_Record, Gtkada_Combo_Tool_Button);
@@ -121,10 +121,11 @@ package body Gtkada.Combo_Tool_Button is
    pragma Convention (C, Menu_Detacher);
 
    procedure Menu_Position
-     (Menu   : access Gtk_Menu_Record'Class;
-      X      : out Gint;
-      Y      : out Gint;
-      Widget : access Gtkada_Combo_Tool_Button_Record);
+     (Menu    : not null access Gtk_Menu_Record'Class;
+      X       : out Gint;
+      Y       : out Gint;
+      Push_In : out Boolean;
+      Widget  : Gtkada_Combo_Tool_Button);
 
    procedure Set_Icon_Size
      (Button : access Gtkada_Combo_Tool_Button_Record'Class;
@@ -239,8 +240,9 @@ package body Gtkada.Combo_Tool_Button is
    begin
       if Get_Button (Event) = 1 then
          Menu_Popup.Popup
-         (Widget.Menu, Gtkada_Combo_Tool_Button_Record (Widget.all)'Access,
+           (Widget.Menu,
             null, null, Menu_Position'Access,
+            Widget,
             Get_Button (Event), Get_Time (Event));
          Widget.Menu.Select_Item (Widget.Menu.Get_Active);
          Widget.Menu_Button.Set_Active (True);
@@ -273,8 +275,8 @@ package body Gtkada.Combo_Tool_Button is
         and then not Get_Visible (Widget.Menu)
       then
          Menu_Popup.Popup
-           (Widget.Menu, Gtkada_Combo_Tool_Button_Record (Widget.all)'Access,
-            null, null, Menu_Position'Access,
+           (Widget.Menu,
+            null, null, Menu_Position'Access, Widget,
             0, 0);
          Widget.Menu.Select_Item (Widget.Menu.Get_Active);
       end if;
@@ -306,23 +308,27 @@ package body Gtkada.Combo_Tool_Button is
    -------------------
 
    procedure Menu_Position
-     (Menu   : access Gtk_Menu_Record'Class;
-      X      : out Gint;
-      Y      : out Gint;
-      Widget : access Gtkada_Combo_Tool_Button_Record)
+     (Menu    : not null access Gtk_Menu_Record'Class;
+      X       : out Gint;
+      Y       : out Gint;
+      Push_In : out Boolean;
+      Widget  : Gtkada_Combo_Tool_Button)
    is
-      pragma Unreferenced (Menu);
+      pragma Unreferenced (Menu, Push_In);
       Menu_Req    : Gtk_Requisition;
       Success     : Boolean;
+      Allo : Gtk_Allocation;
 
    begin
       Size_Request (Widget.Menu, Menu_Req);
       Get_Origin (Get_Window (Widget), X, Y, Success);
-      X := X + Widget.Get_Allocation_X;
-      Y := Y + Widget.Get_Allocation_Y + Widget.Get_Allocation_Height;
+      Get_Allocation (Widget, Allo);
 
-      if Widget.Get_Allocation_Width > Menu_Req.Width then
-         X := X + Widget.Get_Allocation_Width - Menu_Req.Width;
+      X := X + Allo.X;
+      Y := Y + Allo.Y + Allo.Height;
+
+      if Allo.Width > Menu_Req.Width then
+         X := X + Allo.Width - Menu_Req.Width;
       end if;
 
    exception
@@ -445,7 +451,6 @@ package body Gtkada.Combo_Tool_Button is
          Type_Name    => "GtkadaComboToolButton",
          Parameters   => Signal_Parameters);
 
-      Unset_Flags (Button, Can_Focus + Can_Default + Receives_Default);
       Set_Homogeneous (Button, False);
       Button.Items    := Empty_Vector;
       Button.Selected := No_Index;
@@ -456,8 +461,6 @@ package body Gtkada.Combo_Tool_Button is
 
       Gtk_New (Button.Menu_Button);
       Button.Menu_Button.Set_Relief (Relief_None);
-      Unset_Flags
-        (Button.Menu_Button, Can_Focus + Can_Default + Receives_Default);
       Gtk_New_Hbox (Hbox);
       Add (Button.Menu_Button, Hbox);
       Button.Fixed.Put (Button.Menu_Button, 0, 0);
@@ -467,8 +470,6 @@ package body Gtkada.Combo_Tool_Button is
 
       Gtk_New (Button.Icon_Button);
       Button.Icon_Button.Set_Relief (Relief_None);
-      Unset_Flags
-        (Button.Icon_Button, Can_Focus + Can_Default + Receives_Default);
       Button.Fixed.Put (Button.Icon_Button, 0, 0);
 
       --  Create a default menu widget.
