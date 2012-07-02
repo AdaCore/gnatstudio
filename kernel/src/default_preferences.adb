@@ -22,6 +22,7 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
 with Gdk.Color;                use Gdk.Color;
+with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
 
 with Glib.Object;              use Glib.Object;
@@ -234,6 +235,24 @@ package body Default_Preferences is
      (Manager             : access Preferences_Manager_Record'Class;
       Name                : String) return Preferences_Maps.Cursor;
    --  Return a pointer to the preference Name
+
+   function To_Color (R : Gdk.RGBA.Gdk_RGBA) return Gdk.Color.Gdk_Color;
+   --  Conversion function
+   --  ??? Should be moved to GtkAda?
+
+   --------------
+   -- To_Color --
+   --------------
+
+   function To_Color (R : Gdk.RGBA.Gdk_RGBA) return Gdk.Color.Gdk_Color is
+      C : Gdk_Color;
+   begin
+      Set_Rgb (C,
+               Guint16 (65536.0 * R.Red),
+               Guint16 (65536.0 * R.Green),
+               Guint16 (65536.0 * R.Blue));
+      return C;
+   end To_Color;
 
    --------------
    -- Get_Name --
@@ -588,17 +607,23 @@ package body Default_Preferences is
    end Get_Pref;
 
    function Get_Pref
-     (Pref : access Color_Preference_Record) return Gdk.Color.Gdk_Color is
+     (Pref : access Color_Preference_Record) return Gdk.RGBA.Gdk_RGBA
+   is
+      Success : Boolean;
    begin
-      if Pref.Color = Gdk.Color.Null_Color then
-         Pref.Color := Parse (Pref.Color_Value.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Pref.Color);
+      if Pref.Color = Gdk.RGBA.Null_RGBA then
+         Parse (Pref.Color, Pref.Color_Value.all, Success);
+         if not Success then
+            Pref.Color := Black_RGBA;
+         end if;
       end if;
       return Pref.Color;
-   exception
-      when Wrong_Color =>
-         Pref.Color := Black (Get_Default_Colormap);
-         return Pref.Color;
+   end Get_Pref;
+
+   function Get_Pref
+     (Pref : access Color_Preference_Record) return Gdk.Color.Gdk_Color is
+   begin
+      return To_Color (Pref.Get_Pref);
    end Get_Pref;
 
    overriding function Get_Pref
@@ -700,32 +725,46 @@ package body Default_Preferences is
 
    function Get_Pref_Fg
      (Pref : access Style_Preference_Record'Class)
-      return Gdk.Color.Gdk_Color is
+      return Gdk.RGBA.Gdk_RGBA
+   is
+      Success : Boolean;
    begin
-      if Pref.Fg_Color = Gdk.Color.Null_Color then
-         Pref.Fg_Color := Parse (Pref.Style_Fg.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Pref.Fg_Color);
+      if Pref.Fg_Color = Gdk.RGBA.Null_RGBA then
+         Parse (Pref.Fg_Color, Pref.Style_Fg.all, Success);
+         if not Success then
+            Pref.Fg_Color := Black_RGBA;
+         end if;
       end if;
       return Pref.Fg_Color;
-   exception
-      when Wrong_Color =>
-         Pref.Fg_Color := Black (Get_Default_Colormap);
-         return Pref.Fg_Color;
    end Get_Pref_Fg;
 
    function Get_Pref_Bg
      (Pref : access Style_Preference_Record'Class)
-      return Gdk.Color.Gdk_Color is
+      return Gdk.RGBA.Gdk_RGBA
+   is
+      Success : Boolean;
    begin
-      if Pref.Bg_Color = Gdk.Color.Null_Color then
-         Pref.Bg_Color := Parse (Pref.Style_Bg.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Pref.Bg_Color);
+      if Pref.Bg_Color = Gdk.RGBA.Null_RGBA then
+         Parse (Pref.Bg_Color, Pref.Style_Bg.all, Success);
+         if not Success then
+            Pref.Bg_Color := Black_RGBA;
+         end if;
       end if;
       return Pref.Bg_Color;
-   exception
-      when Wrong_Color =>
-         Pref.Bg_Color := Black (Get_Default_Colormap);
-         return Pref.Bg_Color;
+   end Get_Pref_Bg;
+
+   function Get_Pref_Fg
+     (Pref     : access Style_Preference_Record'Class)
+      return Gdk.Color.Gdk_Color is
+   begin
+      return To_Color (Pref.Get_Pref_Fg);
+   end Get_Pref_Fg;
+
+   function Get_Pref_Bg
+     (Pref     : access Style_Preference_Record'Class)
+      return Gdk.Color.Gdk_Color is
+   begin
+      return To_Color (Pref.Get_Pref_Bg);
    end Get_Pref_Bg;
 
    -----------------------
@@ -819,9 +858,8 @@ package body Default_Preferences is
       Free (Pref.Color_Value);
       Pref.Color_Value := new String'(Value);
 
-      if Pref.Color /= Null_Color then
-         Free_Colors (Gtk.Widget.Get_Default_Colormap, (1 => Pref.Color));
-         Pref.Color := Null_Color;
+      if Pref.Color /= Null_RGBA then
+         Pref.Color := Null_RGBA;
       end if;
 
       Emit_Pref_Changed (Manager);
@@ -870,11 +908,9 @@ package body Default_Preferences is
       Free (Pref.Style_Fg);
       Free (Pref.Style_Bg);
 
-      if Pref.Fg_Color /= Null_Color then
-         Free_Colors (Gtk.Widget.Get_Default_Colormap,
-                      (1 => Pref.Fg_Color, 2 => Pref.Bg_Color));
-         Pref.Fg_Color := Null_Color;
-         Pref.Bg_Color := Null_Color;
+      if Pref.Fg_Color /= Null_RGBA then
+         Pref.Fg_Color := Null_RGBA;
+         Pref.Bg_Color := Null_RGBA;
       end if;
 
       Pref.Style_Font := new String'(Font);
@@ -1204,8 +1240,10 @@ package body Default_Preferences is
       Data   : Manager_Preference)
    is
       Btn : constant Gtk_Color_Button := Gtk_Color_Button (Button);
+      Rgba : Gdk_RGBA;
    begin
-      Set_Pref (Color_Preference (Data.Pref), null, To_String (Btn.Get_Color));
+      Btn.Get_Rgba (Rgba);
+      Set_Pref (Color_Preference (Data.Pref), null, To_String (Rgba));
    end Color_Changed;
 
    ---------------
@@ -1271,11 +1309,13 @@ package body Default_Preferences is
       Data  : Manager_Preference)
    is
       C : constant Gtk_Color_Button := Gtk_Color_Button (Combo);
+      R : Gdk_RGBA;
    begin
       Free (Style_Preference (Data.Pref).Style_Fg);
+      C.Get_Rgba (R);
       Style_Preference (Data.Pref).Style_Fg :=
-        new String'(To_String (Get_Color (C)));
-      Style_Preference (Data.Pref).Fg_Color := Get_Color (C);
+        new String'(To_String (R));
+      Style_Preference (Data.Pref).Fg_Color := R;
    end Fg_Color_Changed;
 
    ---------------------
@@ -1300,11 +1340,12 @@ package body Default_Preferences is
       Data  : Manager_Preference)
    is
       C : constant Gtk_Color_Button := Gtk_Color_Button (Combo);
+      R : Gdk_RGBA;
    begin
       Free (Style_Preference (Data.Pref).Style_Bg);
-      Style_Preference (Data.Pref).Style_Bg :=
-        new String'(To_String (Get_Color (C)));
-      Style_Preference (Data.Pref).Bg_Color := Get_Color (C);
+      C.Get_Rgba (R);
+      Style_Preference (Data.Pref).Style_Bg := new String'(To_String (R));
+      Style_Preference (Data.Pref).Bg_Color := R;
    end Bg_Color_Changed;
 
    ---------------
@@ -1659,7 +1700,7 @@ package body Default_Preferences is
 
       Get_Pref (Key_Preference (Pref), Modif, Key);
 
-      Append_Text (Ent, Image (Key, Modif));
+      Ent.Set_Text (Ent.Get_Text & Image (Key, Modif));
 
       Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Key_Grab'Access,
