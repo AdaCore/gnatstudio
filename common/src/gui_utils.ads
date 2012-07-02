@@ -28,9 +28,9 @@ with Glib;                     use Glib;
 
 with Cairo;
 
-with Gdk.Color;
 with Gdk.Event;
 with Gdk.Types;
+with Gdk.RGBA;
 with Gdk.Window;
 
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
@@ -79,14 +79,14 @@ package GUI_Utils is
    -- Colors --
    ------------
 
-   function Darken (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color;
-   function Lighten (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color;
+   function Darken (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA;
+   function Lighten (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA;
    --  Darken or lighten a color. This is linear darkening for all of RGB
    --  components.
    --  The returned color has been allocated
 
    function Darken_Or_Lighten
-     (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color;
+     (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA;
    --  Darken or lighten a color depending on its current luminosity. The goal
    --  is to obtain a contrast between the two
    --  The returned color has been allocated
@@ -402,7 +402,7 @@ package GUI_Utils is
    procedure Create_Pixmap_From_Text
      (Text       : String;
       Font       : Pango.Font.Pango_Font_Description;
-      Bg_Color   : Gdk.Color.Gdk_Color;
+      Bg_Color   : Gdk.RGBA.Gdk_RGBA;
       Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Pixmap     : out Cairo.Cairo_Surface;
       Wrap_Width : Gint := -1;

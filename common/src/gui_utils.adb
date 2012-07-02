@@ -750,7 +750,7 @@ package body GUI_Utils is
    procedure Create_Pixmap_From_Text
      (Text       : String;
       Font       : Pango.Font.Pango_Font_Description;
-      Bg_Color   : Gdk.Color.Gdk_Color;
+      Bg_Color   : Gdk.RGBA.Gdk_RGBA;
       Widget     : access Gtk_Widget_Record'Class;
       Pixmap     : out Cairo_Surface;
       Wrap_Width : Glib.Gint := -1;
@@ -1657,7 +1657,6 @@ package body GUI_Utils is
    begin
       Gtk_New (Event);
       Color := Parse ("#0e79bd");
-      Alloc (Get_Default_Colormap, Color);
       Set_Style (Event, Copy (Get_Style (Event)));
       Set_Background (Get_Style (Event), State_Normal, Color);
 
@@ -1962,51 +1961,35 @@ package body GUI_Utils is
    -- Darken --
    ------------
 
-   function Darken (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color is
-      Output  : Gdk.Color.Gdk_Color;
+   function Darken (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA is
+      Output  : Gdk.RGBA.Gdk_RGBA;
       Success : Boolean;
    begin
-      Set_Rgb
-        (Output,
-         Red   => Guint16 (Integer (Red (Color)) * 90 / 100),
-         Green => Guint16 (Integer (Green (Color)) * 90 / 100),
-         Blue  => Guint16 (Integer (Blue (Color)) * 90 / 100));
-      Alloc_Color (Get_Default_Colormap, Output, False, True, Success);
-      if Success then
-         return Output;
-      else
-         return Color;
-      end if;
+      return
+        (Red   => Color.Red * 0.9,
+         Green => Color.Green * 0.9,
+         Blue  => Color.Blue * 0.9,
+         Alpha => Color.Alpha);
    end Darken;
 
    -------------
    -- Lighten --
    -------------
 
-   function Lighten (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color is
-      Percent : constant := 10;
-      White   : constant Integer := Integer (Guint16'Last) * Percent / 100;
-      Output  : Gdk.Color.Gdk_Color;
+   function Lighten (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA is
+      Percent : constant := 0.1;
+      White   : constant := 0.1;
       Success : Boolean;
    begin
       --  Very basic algorithm. Since we also want to change blacks, we can't
       --  simply multiply RGB components, so we just move part of the way to
       --  white:    R' = R + (White - R) * 10% = 90% * R + 10% * White
 
-      Set_Rgb
-        (Output,
-         Red   =>
-           Guint16 (Integer (Red (Color)) * (100 - Percent) / 100 + White),
-         Green =>
-           Guint16 (Integer (Green (Color)) * (100 - Percent) / 100 + White),
-         Blue  =>
-           Guint16 (Integer (Blue (Color)) * (100 - Percent) / 100 + White));
-      Alloc_Color (Get_Default_Colormap, Output, False, True, Success);
-      if Success then
-         return Output;
-      else
-         return Color;
-      end if;
+      return
+        (Red   => Color.Red * (1.0 - Percent) + White,
+         Green => Color.Green * (1.0 - Percent) + White,
+         Blue  => Color.Blue * (1.0 - Percent) + White,
+         Alpha => Color.Alpha);
    end Lighten;
 
    -----------------------
@@ -2014,18 +1997,18 @@ package body GUI_Utils is
    -----------------------
 
    function Darken_Or_Lighten
-     (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color
+     (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA
    is
       --  Compute luminosity as in photoshop (as per wikipedia)
-      Luminosity : constant Float :=
-        0.299 * Float (Red (Color))
-        + 0.587 * Float (Green (Color))
-        + 0.114 * Float (Blue (Color));
+      Luminosity : constant Gdouble :=
+        0.299 * Color.Red
+        + 0.587 * Color.Green
+        + 0.114 * Color.Blue;
 
-      Gray_Luminosity : constant Float :=
-        0.299 * Float (Guint16'Last / 2)
-        + 0.587 * Float (Guint16'Last / 2)
-        + 0.114 * Float (Guint16'Last / 2);
+      Gray_Luminosity : constant Gdouble :=
+        0.299 * 0.5
+        + 0.587 * 0.5
+        + 0.114 * 0.5;
    begin
       if Luminosity > Gray_Luminosity then
          return Darken (Color);
