@@ -1639,7 +1639,7 @@ package body Call_Graph_Views is
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
-      R      : Gtk_Requisition;
+      Width, Height : Gint;
    begin
       if Entity /= null then
          View := Generic_View.Get_Or_Create_View
@@ -1652,9 +1652,8 @@ package body Call_Graph_Views is
               Kind                => View_Calls,
               Through_Dispatching => False));
 
-         Size_Request (View.Tree, R);
-         R := Get_Child_Requisition (View.Tree);
-         Set_Position (View.Pane, (R.Width * 3) / 2);
+         View.Tree.Get_Size_Request (Width, Height);
+         Set_Position (View.Pane, (Width * 3) / 2);
       end if;
 
       return Commands.Success;
@@ -1675,7 +1674,7 @@ package body Call_Graph_Views is
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
-      R      : Gtk_Requisition;
+      Width, Height : Gint;
    begin
       if Entity /= null then
          View := Generic_View.Get_Or_Create_View
@@ -1688,9 +1687,8 @@ package body Call_Graph_Views is
                Kind                => View_Called_By,
                Through_Dispatching => False));
 
-         Size_Request (View.Tree, R);
-         R := Get_Child_Requisition (View.Tree);
-         Set_Position (View.Pane, (R.Width * 3) / 2);
+         View.Tree.Get_Size_Request (Width, Height);
+         Set_Position (View.Pane, (Width * 3) / 2);
       end if;
 
       return Commands.Success;
