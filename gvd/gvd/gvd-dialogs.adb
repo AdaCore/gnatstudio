@@ -505,7 +505,7 @@ package body GVD.Dialogs is
       Sel         : Gtk_Tree_Selection;
    begin
       if Get_Process (Thread) /= null
-        and then Visible_Is_Set (Thread)
+        and then Thread.Get_Visible
         and then Get_Process (Get_Process (Thread).Debugger) /= null
       then
          Thread.Get_Info (Get_Process (Thread).Debugger, Info, Len);
@@ -660,7 +660,6 @@ package body GVD.Dialogs is
       Gtk.Dialog.Initialize (Dialog, -"Question", Main_Window, 0);
       Dialog.Main_Window := Main_Window;
 
-      Set_Policy (Dialog, False, True, False);
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, -1, 200);
 
@@ -676,7 +675,6 @@ package body GVD.Dialogs is
       Gtk_New (Dialog.Hbuttonbox1);
       Pack_Start (Dialog.Hbox1, Dialog.Hbuttonbox1, True, True, 0);
       Set_Spacing (Dialog.Hbuttonbox1, 10);
-      Set_Child_Size (Dialog.Hbuttonbox1, 85, 27);
       Set_Layout (Dialog.Hbuttonbox1, Buttonbox_Spread);
 
       Gtk_New_From_Stock (Dialog.Close_Button, Stock_Close);
