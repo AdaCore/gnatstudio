@@ -24,7 +24,7 @@ with GNAT.Regpat;
 with GNATCOLL.Scripts;
 with GNAT.Strings;
 
-with Gdk.Color;   use Gdk.Color;
+with Gdk.RGBA; use Gdk.RGBA;
 with Gdk.Types;
 with Glib;
 with Gtk.Enums;
@@ -90,7 +90,7 @@ package Interactive_Consoles is
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Gdk_Color := Null_Color;
+      Highlight           : Gdk_RGBA := Null_RGBA;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
@@ -120,7 +120,7 @@ package Interactive_Consoles is
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Gdk_Color := Null_Color;
+      Highlight           : Gdk_RGBA := Null_RGBA;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
@@ -238,7 +238,7 @@ package Interactive_Consoles is
 
    procedure Set_Highlight_Color
      (Console : access Interactive_Console_Record'Class;
-      Color   : Gdk_Color);
+      Color   : Gdk_RGBA);
    --  Set the color used for highlighting tags
 
    function Get_Chars
@@ -410,7 +410,7 @@ private
       --  Whether an empty command should be equivalent to repeating the
       --  last command.
 
-      Highlight    : Gdk_Color := Null_Color;
+      Highlight    : Gdk_RGBA := Null_RGBA;
       --  The color used for highlighting
 
       Waiting_For_Input : Boolean := False;
