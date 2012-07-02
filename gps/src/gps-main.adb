@@ -1018,7 +1018,7 @@ procedure GPS.Main is
    function Finish_Setup (Data : Process_Data) return Boolean is
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
-      Idle_Id           : Idle_Handler_Id;
+      Idle_Id           : Glib.Main.G_Source_Id;
       Project           : Project_Type;
       Screen            : Welcome_Screen;
       Icon              : Gdk_Pixbuf;
@@ -1687,7 +1687,7 @@ procedure GPS.Main is
       Set_Main_Title
         (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 
-      Idle_Id := Idle_Add (On_GPS_Started'Access);
+      Idle_Id := Glib.Main.Idle_Add (On_GPS_Started'Access);
 
       Setenv ("PYTHONPATH", Python_Path.all);
       Free (Python_Path);
