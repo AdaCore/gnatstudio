@@ -664,7 +664,7 @@ package body GVD.Dialogs is
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, -1, 200);
 
-      Dialog.Vbox1 := Get_Vbox (Dialog);
+      Dialog.Vbox1 := Get_Content_Area (Dialog);
       Set_Homogeneous (Dialog.Vbox1, False);
       Set_Spacing (Dialog.Vbox1, 0);
 

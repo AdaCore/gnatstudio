@@ -89,7 +89,7 @@ package body Std_Dialogs is
       Set_Position (Dialog, Position);
 
       Gtk_New_Vbox (Vbox);
-      Pack_Start (Get_Vbox (Dialog), Vbox, False);
+      Pack_Start (Get_Content_Area (Dialog), Vbox, False);
 
       Gtk_New_Hbox (Box);
       Pack_Start (Vbox, Box, False, Padding => 10);

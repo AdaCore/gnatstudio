@@ -34,6 +34,7 @@ with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Clipboard;             use Gtk.Clipboard;
+with Gtk.Combo_Box;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Editable;              use Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -1106,7 +1107,7 @@ package body Vsearch is
       if Ask_Confirmation_For_Replace_All.Get_Pref then
          Gtk_New (Do_Not_Ask, -"Do not ask this question again");
          Gtk_New_Hbox (Box);
-         Pack_Start (Get_Vbox (Dialog), Box, True, True, 3);
+         Pack_Start (Get_Content_Area (Dialog), Box, True, True, 3);
          Pack_Start (Box, Do_Not_Ask, True, False, 3);
 
          Button := Add_Button

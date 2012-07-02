@@ -539,7 +539,8 @@ package body Creation_Wizard.Dependencies is
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Pack_Start (Get_Vbox (Dialog), Scrolled, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Dialog), Scrolled, Expand => True, Fill => True);
 
       Tree := Create_Tree_View
         (Column_Types      =>

@@ -1234,7 +1234,7 @@ package body GPS.Main_Window is
                Hbox  : Gtk_Hbox;
             begin
                Gtk_New_Hbox (Hbox, Homogeneous => False);
-               Pack_Start (Get_Vbox (Dialog), Hbox, Padding => 3);
+               Pack_Start (Get_Content_Area (Dialog), Hbox, Padding => 3);
 
                while Index <= Arg'Last loop
                   exit when Arg (Index) = '=';
@@ -1297,7 +1297,8 @@ package body GPS.Main_Window is
 
             Set_Alignment (Label, 0.0, 0.5);
             Pack_Start
-              (Get_Vbox (Dialog), Label, Expand => True, Padding => 10);
+              (Get_Content_Area (Dialog),
+               Label, Expand => True, Padding => 10);
 
             Gtk_New (Group);
 

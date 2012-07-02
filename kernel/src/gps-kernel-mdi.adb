@@ -549,7 +549,7 @@ package body GPS.Kernel.MDI is
          end if;
 
          Set_Alignment (Label, 0.0, 0.0);
-         Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+         Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
 
          if Num_Unsaved > 1 then
             Gtk_New (Label);
@@ -559,13 +559,13 @@ package body GPS.Kernel.MDI is
                  (-"<span style=""oblique"">Select</span>") &
                  (-" label will select/unselect all"));
             Set_Alignment (Label, 0.0, 0.0);
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+            Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
          end if;
 
          Gtk_New (Scrolled);
          Set_Size_Request (Scrolled, -1, 150);
          Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-         Pack_Start (Get_Vbox (Dialog), Scrolled, Padding => 10);
+         Pack_Start (Get_Content_Area (Dialog), Scrolled, Padding => 10);
 
          Gtk_New (View, Gtk_Tree_Model (Model));
          Unref (Model);

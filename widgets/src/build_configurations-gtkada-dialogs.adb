@@ -55,7 +55,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
    procedure Fill_Combo
      (UI    : access Build_UI_Record'Class;
-      Combo : Gtk_Combo_Box_Text;
+      Combo : Gtk_Combo_Box;
       Cat_E : Gtk_Entry);
    --  Fill Combo and Cat_E from information stored in UI
 
@@ -227,7 +227,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
    procedure Fill_Combo
      (UI    : access Build_UI_Record'Class;
-      Combo : Gtk_Combo_Box_Text;
+      Combo : Gtk_Combo_Box;
       Cat_E : Gtk_Entry)
    is
       function Strip (S : String) return String;
@@ -388,7 +388,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Attach (Table, Combo, 1, 2, 2, 3, Expand or Fill, 0, 3, 3);
       --  ??? make this a combo-box-entry with the already existing categories
 
-      Pack_Start (Get_Vbox (Dialog), Table, False, False, 3);
+      Pack_Start (Get_Content_Area (Dialog), Table, False, False, 3);
 
       --  Add the buttons
 
@@ -502,7 +502,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Attach (Table, Combo, 1, 2, 2, 3, Expand or Fill, 0, 3, 3);
       --  ??? make this a combo-box-entry with the already existing categories
 
-      Pack_Start (Get_Vbox (Dialog), Table, False, False, 3);
+      Pack_Start (Get_Content_Area (Dialog), Table, False, False, 3);
 
       --  Add the buttons
 

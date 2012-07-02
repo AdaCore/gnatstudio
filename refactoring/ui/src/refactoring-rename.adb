@@ -132,10 +132,10 @@ package body Refactoring.Rename is
 
       Gtk_New (Label, -"Renaming " & Get_Full_Name (Entity => Entity));
       Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
 
       Gtk_New_Hbox (Box);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
       Gtk_New (Label, -"New name: ");
       Pack_Start (Box, Label, Expand => False);
@@ -148,7 +148,8 @@ package body Refactoring.Rename is
 
       Gtk_New (Dialog.Auto_Save, -"Automatically save modified files");
       Associate (Get_History (Kernel).all, Auto_Save_Hist, Dialog.Auto_Save);
-      Pack_Start (Get_Vbox (Dialog), Dialog.Auto_Save, Expand => False);
+      Pack_Start
+        (Get_Content_Area (Dialog), Dialog.Auto_Save, Expand => False);
 
       Gtk_New
         (Dialog.Auto_Compile,
@@ -157,7 +158,8 @@ package body Refactoring.Rename is
       Associate (Get_History (Kernel).all,
                  Auto_Compile_Hist,
                  Dialog.Auto_Compile);
-      Pack_Start (Get_Vbox (Dialog), Dialog.Auto_Compile, Expand => False);
+      Pack_Start
+        (Get_Content_Area (Dialog), Dialog.Auto_Compile, Expand => False);
 
       Gtk_New (Dialog.Rename_Primitives,
                -"Rename overriding and overridden entities");
@@ -174,7 +176,7 @@ package body Refactoring.Rename is
       Associate (Get_History (Kernel).all,
                  Rename_Primitives_Hist,
                  Dialog.Rename_Primitives);
-      Pack_Start (Get_Vbox (Dialog), Dialog.Rename_Primitives);
+      Pack_Start (Get_Content_Area (Dialog), Dialog.Rename_Primitives);
 
       Gtk_New (Dialog.Make_Writable, -"Make files writable");
       Set_Tooltip_Text
@@ -190,7 +192,7 @@ package body Refactoring.Rename is
       Associate (Get_History (Kernel).all,
                  Make_Writable_Hist,
                  Dialog.Make_Writable);
-      Pack_Start (Get_Vbox (Dialog), Dialog.Make_Writable);
+      Pack_Start (Get_Content_Area (Dialog), Dialog.Make_Writable);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);

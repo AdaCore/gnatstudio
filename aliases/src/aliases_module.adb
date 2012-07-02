@@ -877,7 +877,7 @@ package body Aliases_Module is
                W := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
                Gtk_New_Hbox (Box, Homogeneous => False);
-               Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+               Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
                Gtk_New (Label, -"Alias name: ");
                Add_Widget (S, Label);
@@ -891,7 +891,7 @@ package body Aliases_Module is
             end if;
 
             Gtk_New_Hbox (Box, Homogeneous => False);
-            Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+            Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
             Gtk_New (Label, P.Name.all & ":   ");
             Pack_Start (Box, Label, Expand => False, Fill => True);
@@ -1698,7 +1698,8 @@ package body Aliases_Module is
       Reset (Editor.Local_Aliases);
 
       Gtk_New_Hpaned (Pane);
-      Pack_Start (Get_Vbox (Editor), Pane, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Editor), Pane, Expand => True, Fill => True);
 
       --  List of aliases
 

@@ -1505,7 +1505,7 @@ package body Toolchains_Editor is
       Set_Has_Separator (Dialog, False);
       Gtk_New
         (Label, -"Scanning host for available compilers, please wait ...");
-      Pack_Start (Get_Vbox (Dialog), Label);
+      Pack_Start (Get_Content_Area (Dialog), Label);
       Dialog.Show_All;
       Dialog.Ref;
       Gtk.Main.Grab_Add (Dialog);

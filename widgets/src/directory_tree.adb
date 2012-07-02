@@ -790,13 +790,15 @@ package body Directory_Tree is
                Flags  => Modal or Destroy_With_Parent);
 
       Gtk_New (Label, "Directory Name:");
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Dialog), Label, Expand => False, Fill => True);
 
       Gtk_New (Ent, Max => 1024);
       Set_Width_Chars (Ent, 30);
       Set_Text (Ent, Display_Full_Name (Current_Dir));
 
-      Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Dialog), Ent, Expand => True, Fill => True);
 
       Ignore := Add_Button (Dialog, "Create", Gtk_Response_OK);
       Ignore := Add_Button (Dialog, "Cancel", Gtk_Response_Cancel);

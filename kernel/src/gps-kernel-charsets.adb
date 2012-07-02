@@ -19,6 +19,7 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib.Object;                use Glib.Object;
 
+with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -112,7 +113,7 @@ package body GPS.Kernel.Charsets is
       Data  : Manager_Preference) is
    begin
       Set_Text
-        (Gtk_Entry (Gtk_Combo_Box (Combo).Get_Child), Data.Pref.Get_Pref);
+        (Gtk_Entry (Gtk_Combo_Box_Text (Combo).Get_Child), Data.Pref.Get_Pref);
    end Update_Charset;
 
    --------------------------
@@ -166,7 +167,7 @@ package body GPS.Kernel.Charsets is
    ----------------------
 
    function Selected_Charset
-     (Combo : Gtk.Combo_Box.Gtk_Combo_Box) return String
+     (Combo : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text) return String
    is
       Index : constant Integer := Integer (Combo.Get_Active);
    begin
@@ -187,7 +188,7 @@ package body GPS.Kernel.Charsets is
       return Gtk.Widget.Gtk_Widget
    is
       Value    : constant String := Pref.Get_Pref;
-      Combo    : Gtk_Combo_Box;
+      Combo    : Gtk_Combo_Box_Text;
       Selected : Integer := -1;
    begin
       Gtk_New_Combo_Text_With_Entry (Combo);

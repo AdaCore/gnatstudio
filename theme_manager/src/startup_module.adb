@@ -243,7 +243,8 @@ package body Startup_Module is
                     & ASCII.LF & ASCII.LF
                     & "Do you want to exit GPS now ?"));
                Pack_Start
-                 (Get_Vbox (Dialog), Label, Expand => True, Fill => True);
+                 (Get_Content_Area (Dialog),
+                  Label, Expand => True, Fill => True);
                Button := Add_Button (Dialog, -"Exit GPS", Gtk_Response_OK);
                Button := Add_Button
                  (Dialog, -"Will restart later", Gtk_Response_Cancel);
@@ -329,7 +330,8 @@ package body Startup_Module is
       Set_Name (Editor, "Startup Plug-ins Editor");
 
       Gtk_New_Hpaned (Pane);
-      Pack_Start (Get_Vbox (Editor), Pane, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Editor), Pane, Expand => True, Fill => True);
 
       Gtk_New (Scrolled);
       Pack1 (Pane, Scrolled, True, True);

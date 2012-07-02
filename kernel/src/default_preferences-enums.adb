@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Case_Handling;            use Case_Handling;
+with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Glib.Object;              use Glib.Object;
 with GUI_Utils;                use GUI_Utils;
@@ -42,7 +43,7 @@ package body Default_Preferences.Enums is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference)
    is
-      C     : constant Gtk_Combo_Box := Gtk_Combo_Box (Combo);
+      C     : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Combo);
    begin
       Enum_Preference (Data.Pref).Enum_Value := Integer (Get_Active (C));
    end Enum_Changed;
@@ -55,7 +56,8 @@ package body Default_Preferences.Enums is
      (Ent  : access GObject_Record'Class;
       Data : Manager_Preference) is
    begin
-      Set_Active_Text (Gtk_Combo_Box (Ent), String'(Get_Pref (Data.Pref)));
+      Set_Active_Text
+        (Gtk_Combo_Box_Text (Ent), String'(Get_Pref (Data.Pref)));
    end Update_Combo;
 
    ------------

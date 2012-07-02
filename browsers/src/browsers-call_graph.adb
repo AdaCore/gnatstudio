@@ -2189,7 +2189,7 @@ package body Browsers.Call_Graph is
       --  Context choice
 
       Gtk_New (Frame, -"Context");
-      Pack_Start (Get_Vbox (Dialog), Frame);
+      Pack_Start (Get_Content_Area (Dialog), Frame);
       Gtk_New_Vbox (Box, Homogeneous => True);
       Add (Frame, Box);
 
@@ -2220,7 +2220,7 @@ package body Browsers.Call_Graph is
       --  Filter choice
 
       Gtk_New (Frame, -"Filter");
-      Pack_Start (Get_Vbox (Dialog), Frame);
+      Pack_Start (Get_Content_Area (Dialog), Frame);
       Gtk_New_Hbox (Box, Homogeneous => False);
       Add (Frame, Box);
 
@@ -2263,7 +2263,7 @@ package body Browsers.Call_Graph is
       --  Extra info choice
 
       Gtk_New (Frame, -"Advanced Search");
-      Pack_Start (Get_Vbox (Dialog), Frame);
+      Pack_Start (Get_Content_Area (Dialog), Frame);
       Gtk_New_Vbox (Box, Homogeneous => True);
       Add (Frame, Box);
 

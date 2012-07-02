@@ -461,7 +461,7 @@ package body VCS_View_API is
          Flags  => Destroy_With_Parent);
 
       Gtk_New_Hbox (Box);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
       Gtk_New (Label, -"From: ");
       Pack_Start (Box, Label, Expand => False);
@@ -475,7 +475,7 @@ package body VCS_View_API is
          On_Select_Dir'Access, Switch_Tag_Dialog (Dialog));
 
       Gtk_New_Hbox (Box);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
       Gtk_New (Label, -"Tag name: ");
       Pack_Start (Box, Label, Expand => False);
@@ -483,7 +483,7 @@ package body VCS_View_API is
       Pack_Start (Box, Dialog.Tag_Name);
 
       Gtk_New (Dialog.Branch, -"Is a branch tag");
-      Pack_Start (Get_Vbox (Dialog), Dialog.Branch, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Dialog.Branch, Expand => False);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -508,7 +508,7 @@ package body VCS_View_API is
          Flags  => Destroy_With_Parent);
 
       Gtk_New_Hbox (Box);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
       Gtk_New (Label, -"From: ");
       Pack_Start (Box, Label, Expand => False);
@@ -521,7 +521,7 @@ package body VCS_View_API is
         (Browse, Signal_Clicked, On_Select_Dir'Access, Dialog);
 
       Gtk_New_Hbox (Box);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
       Gtk_New (Label, -"Tag name: ");
       Pack_Start (Box, Label, Expand => False);

@@ -198,7 +198,7 @@ package body CodePeer.Message_Review_Dialogs is
       Self.Message := Message;
 
       Gtk.Table.Gtk_New (Table, 2, 3, False);
-      Self.Get_Vbox.Pack_Start (Table, False, False);
+      Self.Get_Content_Area.Pack_Start (Table, False, False);
 
       Gtk.Label.Gtk_New (Label, "Original ranking");
       Table.Attach (Label, 0, 1, 0, 1);
@@ -276,13 +276,13 @@ package body CodePeer.Message_Review_Dialogs is
 
       Gtk.Label.Gtk_New (Label, "Comment");
       Label.Set_Alignment (0.0, 0.5);
-      Self.Get_Vbox.Pack_Start (Label, False, False);
+      Self.Get_Content_Area.Pack_Start (Label, False, False);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Size_Request (Height => 200);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Self.Get_Vbox.Pack_Start (Scrolled, False, False);
+      Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
 
       Gtk.Text_View.Gtk_New (Text_View);
       Text_View.Set_Wrap_Mode (Gtk.Enums.Wrap_Word);
@@ -296,7 +296,7 @@ package body CodePeer.Message_Review_Dialogs is
       Scrolled.Set_Size_Request (Height => 300, Width => 700);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Self.Get_Vbox.Pack_End (Scrolled, True, True);
+      Self.Get_Content_Area.Pack_End (Scrolled, True, True);
 
       Gtk.Tree_Store.Gtk_New (Store, History_Model_Types);
 

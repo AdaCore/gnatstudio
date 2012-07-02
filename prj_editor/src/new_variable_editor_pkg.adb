@@ -41,7 +41,8 @@ package body New_Variable_Editor_Pkg is
       Set_Modal (New_Variable_Editor, False);
       Set_Default_Size (New_Variable_Editor, 600, 400);
 
-      New_Variable_Editor.Dialog_Vbox1 := Get_Vbox (New_Variable_Editor);
+      New_Variable_Editor.Dialog_Vbox1 :=
+        Get_Content_Area (New_Variable_Editor);
       Set_Homogeneous (New_Variable_Editor.Dialog_Vbox1, False);
       Set_Spacing (New_Variable_Editor.Dialog_Vbox1, 0);
 

@@ -26,6 +26,7 @@ with Glib.Convert;
 with Glib.Object;              use Glib.Object;
 
 with Gtk.Button;               use Gtk.Button;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.Editable;             use Gtk.Editable;
@@ -987,7 +988,7 @@ package body Build_Configurations.Gtkada is
       Gtk_New_Vbox (Vbox);
       Pack_Start (UI, Vbox, True, True, 3);
 
-      Pack_Start (Get_Vbox (Dialog), Buttons, False, False, 3);
+      Pack_Start (Get_Content_Area (Dialog), Buttons, False, False, 3);
 
       --  Create the main notebook
 
@@ -1025,7 +1026,7 @@ package body Build_Configurations.Gtkada is
 
       --  Add everything to the dialog/window
 
-      Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
+      Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
       Set_Has_Separator (Dialog, False);
 
       Refresh (UI, "");
@@ -1169,7 +1170,7 @@ package body Build_Configurations.Gtkada is
       Gtk_New_Vbox (Vbox);
       Pack_Start (UI, Vbox, True, True, 3);
 
-      Pack_Start (Get_Vbox (Dialog), Buttons, False, False, 3);
+      Pack_Start (Get_Content_Area (Dialog), Buttons, False, False, 3);
 
       --  Create the main notebook
 
@@ -1207,7 +1208,7 @@ package body Build_Configurations.Gtkada is
 
       --  Add everything to the dialog/window
 
-      Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
+      Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
       Set_Has_Separator (Dialog, False);
 
       Refresh (UI);
@@ -1447,7 +1448,7 @@ package body Build_Configurations.Gtkada is
 
       --  Add everything to the dialog/window
 
-      Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
+      Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
       Set_Has_Separator (Dialog, False);
 
       --  Create the target UI itself

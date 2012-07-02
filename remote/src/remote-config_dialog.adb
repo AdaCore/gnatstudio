@@ -111,7 +111,7 @@ package body Remote.Config_Dialog is
       Remote_Browse_Button : Gtk_Button;
       Remote_Frame         : Gtk_Frame;
       Remote_Hbox          : Gtk_Hbox;
-      Sync_Combo           : Gtk_Combo_Box;
+      Sync_Combo           : Gtk_Combo_Box_Text;
       Remove_Button        : Gtk_Button;
    end record;
    type Path_Row is access all Path_Row_Record;
@@ -844,7 +844,7 @@ package body Remote.Config_Dialog is
       Dialog.Kernel := Kernel;
 
       Gtk_New_Hpaned (Main_Table);
-      Pack_Start (Get_Vbox (Dialog), Main_Table);
+      Pack_Start (Get_Content_Area (Dialog), Main_Table);
 
       Gtk_New_Vbox (VBox, Homogeneous => False);
       Pack1 (Main_Table, VBox, Resize => False, Shrink => False);

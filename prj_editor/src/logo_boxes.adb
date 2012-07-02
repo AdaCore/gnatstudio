@@ -79,7 +79,7 @@ package body Logo_Boxes is
       Set_Font_Description (Style, Title_Font);
 
       Gtk_New_Hbox (Box, False, 0);
-      Pack_Start (Get_Vbox (Win), Box, True, True, 0);
+      Pack_Start (Get_Content_Area (Win), Box, True, True, 0);
 
       --  Side box
 

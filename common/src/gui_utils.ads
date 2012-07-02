@@ -37,7 +37,7 @@ with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;
 with Gtk.Container;
 with Gtk.Enums;
 with Gtk.Event_Box;
@@ -106,10 +106,6 @@ package GUI_Utils is
    -- Combos and lists --
    ----------------------
 
-   procedure Gtk_New_Combo_Text_With_Entry
-     (Combo : out Gtk.Combo_Box.Gtk_Combo_Box);
-   --  Similar to Gtk_New_Text *and* Gtk_New_With_Entry
-
    function Add_Unique_List_Entry
      (List    : access Gtk.List_Store.Gtk_List_Store_Record'Class;
       Text    : String;
@@ -119,11 +115,11 @@ package GUI_Utils is
    --  is already visible in the list. Text must be UTF8-encoded.
 
    procedure Add_Unique_Combo_Entry
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Select_Text    : Boolean := False;
-      Prepend        : Boolean := False;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+      Text         : String;
+      Select_Text  : Boolean := False;
+      Prepend      : Boolean := False;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True);
    --  Add Text to the popdown list of a text combo_box, if it is not already
    --  there.
@@ -133,19 +129,19 @@ package GUI_Utils is
    --  Text must be UTF8-encoded.
 
    function Add_Unique_Combo_Entry
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Select_Text    : Boolean := False;
-      Prepend        : Boolean := False;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+      Text         : String;
+      Select_Text  : Boolean := False;
+      Prepend      : Boolean := False;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Same as above, but return the inserted iter (or the previously existing
    --  one).
 
    procedure Set_Active_Text
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+      Text         : String;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True);
    --  Select the item containing Text in the Combo.
 

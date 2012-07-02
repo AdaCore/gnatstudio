@@ -22,6 +22,7 @@ with Glib.Object;        use Glib.Object;
 with Glib.Properties;    use Glib.Properties;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
+with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
 with Gtk.List_Store;     use Gtk.List_Store;
 with Gtk.Handlers;       use Gtk.Handlers;

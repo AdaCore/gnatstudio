@@ -186,19 +186,19 @@ package body Remote.Rsync is
                   Get_Main_Window (Kernel), 0);
       Set_Has_Separator (Dialog, False);
       Gtk_New (Label, -"Synchronisation with remote host in progress.");
-      Pack_Start (Get_Vbox (Dialog), Label);
+      Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Label);
       Set_Markup (Label, (-"From: ") & "<span foreground=""blue"">" &
                   Src_Path.Display_Full_Name & "</span>");
-      Pack_Start (Get_Vbox (Dialog), Label);
+      Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Label);
       Set_Markup (Label, (-"To: ") & "<span foreground=""blue"">" &
                   Dest_Path.Display_Full_Name & "</span>");
-      Pack_Start (Get_Vbox (Dialog), Label);
+      Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Dialog.Progress);
-      Pack_Start (Get_Vbox (Dialog), Dialog.Progress);
+      Pack_Start (Get_Content_Area (Dialog), Dialog.Progress);
       Gtk_New (Dialog.File_Progress);
-      Pack_Start (Get_Vbox (Dialog), Dialog.File_Progress);
+      Pack_Start (Get_Content_Area (Dialog), Dialog.File_Progress);
       Gtk_New_From_Stock (Dialog.Abort_Button, Stock_Cancel);
       Add_Action_Widget (Dialog, Dialog.Abort_Button, Gtk_Response_Cancel);
       Dialog.Aborted := False;

@@ -2862,7 +2862,7 @@ package body Project_Properties is
 
             Gtk_New (Scrolled);
             Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-            Pack_Start (Get_Vbox (Dialog), Scrolled, Expand => True);
+            Pack_Start (Get_Content_Area (Dialog), Scrolled, Expand => True);
 
             Tree := Create_Tree_View
               (Column_Types       => (0 => GType_Boolean,
@@ -3498,7 +3498,8 @@ package body Project_Properties is
             Set_Text (Ent, Get_Current_Value
                       (Project, Description, Index => Attribute_Index));
             Set_Activates_Default (Ent, True);
-            Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
+            Pack_Start
+              (Get_Content_Area (Dialog), Ent, Expand => True, Fill => True);
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Grab_Default (Button);
@@ -3527,7 +3528,7 @@ package body Project_Properties is
             Dialog.Set_Size_Request (600, 400);
 
             Gtk_New (Scrolled);
-            Dialog.Get_Vbox.Pack_Start (Scrolled, True, True);
+            Dialog.Get_Content_Area.Pack_Start (Scrolled, True, True);
 
             View := Create_Tree_View
               (Column_Types    => (1 => GType_String),
@@ -3644,7 +3645,8 @@ package body Project_Properties is
                Get_Current_Value
                  (Project, Description, Index => Attribute_Index),
                Case_Sensitive => Description.Case_Sensitive_Index);
-            Pack_Start (Get_Vbox (Dialog), W, Expand => True, Fill => True);
+            Pack_Start
+              (Get_Content_Area (Dialog), W, Expand => True, Fill => True);
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Grab_Default (Button);
@@ -4212,7 +4214,7 @@ package body Project_Properties is
                   Attribute_Index => Attribute_Index,
                   Path_Widget     => Ed.Path_Widget,
                   Is_List         => True);
-               Pack_Start (Get_Vbox (Dialog), Value_Ed,
+               Pack_Start (Get_Content_Area (Dialog), Value_Ed,
                            Expand => True, Fill => True);
                Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
                Grab_Default (Button);
@@ -4747,11 +4749,12 @@ package body Project_Properties is
       Realize (Editor);
 
       Gtk_New (Editor.Errors);
-      Pack_Start (Get_Vbox (Editor), Editor.Errors, Expand => False);
+      Pack_Start (Get_Content_Area (Editor), Editor.Errors, Expand => False);
       Set_No_Show_All (Editor.Errors, No_Show_All => True);
 
       Gtk_New_Hpaned (Main_Box);
-      Pack_Start (Get_Vbox (Editor), Main_Box, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Editor), Main_Box, Expand => True, Fill => True);
 
       Gtk_New (Editor.Note);
       Set_Name (Editor.Note, "Project Properties Notebook"); --  Testsuite
@@ -5214,12 +5217,12 @@ package body Project_Properties is
 
       Gtk_New (L, Message);
       Set_Alignment (L, 0.0, 0.5);
-      Pack_Start (Get_Vbox (D), L, Expand => True, Fill => True);
+      Pack_Start (Get_Content_Area (D), L, Expand => True, Fill => True);
 
       if not Always_Load_Source then
          Gtk_New (C, -"Edit the project file");
          Set_Active (C, True);
-         Pack_End (Get_Vbox (D), C, Expand => False);
+         Pack_End (Get_Content_Area (D), C, Expand => False);
       end if;
 
       if Always_Load_Source then

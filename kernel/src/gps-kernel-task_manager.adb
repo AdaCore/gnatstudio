@@ -120,10 +120,11 @@ package body GPS.Kernel.Task_Manager is
          ASCII.LF & (-"Warning: Quitting will kill all running tasks"));
 
       Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
+      Pack_Start
+        (Get_Content_Area (Dialog), Label, Expand => False, Padding => 10);
 
       Iface := Task_Manager_Dialog (Manager, Dialog => Gtk_Widget (Dialog));
-      Pack_Start (Get_Vbox (Dialog), Iface, Padding => 10);
+      Pack_Start (Get_Content_Area (Dialog), Iface, Padding => 10);
 
       Button := Add_Button (Dialog, Stock_Quit, Gtk_Response_Yes);
       Grab_Default (Button);

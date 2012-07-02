@@ -1560,7 +1560,7 @@ package body Src_Editor_Module is
       Set_Position (Open_File_Dialog, Win_Pos_Mouse);
 
       Gtk_New (Label, -"Enter file name (use <tab> for completion):");
-      Pack_Start (Get_Vbox (Open_File_Dialog), Label, Expand => False);
+      Pack_Start (Get_Content_Area (Open_File_Dialog), Label, Expand => False);
 
       --  Do not use a combo box, so that users can easily navigate to the list
       --  of completions through the keyboard (C423-005)
@@ -1568,7 +1568,7 @@ package body Src_Editor_Module is
                Case_Sensitive =>
                  Is_Case_Sensitive (Get_Nickname (Build_Server)));
       Set_Activates_Default (Get_Entry (Open_File_Entry), True);
-      Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
+      Pack_Start (Get_Content_Area (Open_File_Dialog), Open_File_Entry,
                   Fill => True, Expand => True);
 
       if Hist /= null then
@@ -2375,7 +2375,7 @@ package body Src_Editor_Module is
       --  Base name
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
       Gtk_New (Label, -"File:");
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
@@ -2387,7 +2387,7 @@ package body Src_Editor_Module is
       --  Directory
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
       Gtk_New (Label, -"Directory:");
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
@@ -2399,7 +2399,7 @@ package body Src_Editor_Module is
       --  Language
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
 
       Gtk_New (Label, -"Language: ");
       Set_Alignment (Label, 0.0, 0.5);
@@ -2414,7 +2414,7 @@ package body Src_Editor_Module is
       --  Charset
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
 
       Gtk_New (Label, -"Character set: ");
       Set_Alignment (Label, 0.0, 0.5);
@@ -2428,7 +2428,7 @@ package body Src_Editor_Module is
       --  Trailing spaces
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
 
       Gtk_New (Label, -"Strip blanks: ");
       Set_Alignment (Label, 0.0, 0.5);
@@ -2442,7 +2442,7 @@ package body Src_Editor_Module is
       --  Trailing blank lines
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
 
       Gtk_New (Label, -"Strip lines: ");
       Set_Alignment (Label, 0.0, 0.5);

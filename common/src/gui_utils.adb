@@ -52,7 +52,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -154,20 +153,6 @@ package body GUI_Utils is
       Output    : Event_Access) return Boolean;
    --  Temporary event filter set when grabing the key for a key preference
 
-   -----------------------------------
-   -- Gtk_New_Combo_Text_With_Entry --
-   -----------------------------------
-
-   procedure Gtk_New_Combo_Text_With_Entry
-     (Combo : out Gtk.Combo_Box.Gtk_Combo_Box)
-   is
-      List : Gtk_List_Store;
-   begin
-      Gtk_New (List, (0 => GType_String));
-      Gtk_New_With_Model_And_Entry (Combo, List);
-      Combo.Set_Entry_Text_Column (0);
-   end Gtk_New_Combo_Text_With_Entry;
-
    ---------------------------
    -- Add_Unique_List_Entry --
    ---------------------------
@@ -206,11 +191,11 @@ package body GUI_Utils is
    ----------------------------
 
    procedure Add_Unique_Combo_Entry
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Select_Text    : Boolean := False;
-      Prepend        : Boolean := False;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+      Text         : String;
+      Select_Text  : Boolean := False;
+      Prepend      : Boolean := False;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True)
    is
       Iter : Gtk_Tree_Iter;
@@ -225,17 +210,17 @@ package body GUI_Utils is
    ----------------------------
 
    function Add_Unique_Combo_Entry
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Select_Text    : Boolean := False;
-      Prepend        : Boolean := False;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+      Text         : String;
+      Select_Text  : Boolean := False;
+      Prepend      : Boolean := False;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True) return Gtk_Tree_Iter
    is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_List_Store;
    begin
-      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
+      Model := Gtk_List_Store (Gtk.Combo_Box_Text.Get_Model (Combo));
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
@@ -261,7 +246,7 @@ package body GUI_Utils is
       end if;
 
       if Select_Text then
-         Gtk.Combo_Box.Set_Active_Iter (Combo, Iter);
+         Gtk.Combo_Box_Text.Set_Active_Iter (Combo, Iter);
       end if;
 
       return Iter;
@@ -272,15 +257,15 @@ package body GUI_Utils is
    ---------------------
 
    procedure Set_Active_Text
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+      Text         : String;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True)
    is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_List_Store;
    begin
-      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
+      Model := Gtk_List_Store (Gtk.Combo_Box_Text.Get_Model (Combo));
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
@@ -1349,10 +1334,10 @@ package body GUI_Utils is
 
       Gtk_New (Label, Prompt);
       Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
 
       Gtk_New (GEntry);
-      Pack_Start (Get_Vbox (Dialog), GEntry, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), GEntry, Expand => False);
       Set_Activates_Default (GEntry, True);
       Set_Text (GEntry, Default);
 

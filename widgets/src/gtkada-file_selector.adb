@@ -40,6 +40,7 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Combo_Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Paned;                 use Gtk.Paned;
@@ -111,7 +112,7 @@ package body Gtkada.File_Selector is
    -----------------------
 
    procedure Set_Location
-     (Location_Combo : Gtk_Combo_Box;
+     (Location_Combo : Gtk_Combo_Box_Text;
       Dir            : Virtual_File);
    --  Sets the location in the combo
 
@@ -172,7 +173,7 @@ package body Gtkada.File_Selector is
    procedure Set_Busy (W : Gtk_Window; Busy : Boolean);
    --  Set/Reset the busy cursor on the specified window
 
-   function Get_Selected (Combo : Gtk_Combo_Box) return String;
+   function Get_Selected (Combo : Gtk_Combo_Box_Text) return String;
 
    ---------------
    -- Callbacks --
@@ -253,7 +254,7 @@ package body Gtkada.File_Selector is
    procedure Name_Selected (File : access Gtk_Widget_Record'Class);
    --  Called when a new file has been selected
 
-   function Get_Selected (Combo : Gtk_Combo_Box) return String is
+   function Get_Selected (Combo : Gtk_Combo_Box_Text) return String is
       Iter : constant Gtk_Tree_Iter := Combo.Get_Active_Iter;
    begin
       if Iter = Null_Iter then
@@ -268,7 +269,7 @@ package body Gtkada.File_Selector is
    ------------------
 
    procedure Set_Location
-     (Location_Combo : Gtk_Combo_Box;
+     (Location_Combo : Gtk_Combo_Box_Text;
       Dir            : Virtual_File) is
    begin
       if Is_Local (Dir) then
@@ -1902,7 +1903,8 @@ package body Gtkada.File_Selector is
       Set_Modal (File_Selector_Window, False);
 
       Gtk_New (Toolbar1, Orientation_Horizontal, Toolbar_Both);
-      Pack_Start (File_Selector_Window.Get_Vbox, Toolbar1, False, False);
+      Pack_Start
+        (File_Selector_Window.Get_Content_Area, Toolbar1, False, False);
 
       Set_Icon_Size (Toolbar1, Icon_Size_Small_Toolbar);
       Set_Style (Toolbar1,  Toolbar_Icons);
@@ -1962,7 +1964,8 @@ package body Gtkada.File_Selector is
 
       if Remote_Browsing then
          Gtk_New_Hbox (Hbox2, False, 0);
-         Pack_Start (Get_Vbox (File_Selector_Window), Hbox2, True, True);
+         Pack_Start
+           (Get_Content_Area (File_Selector_Window), Hbox2, True, True);
 
          Gtk_New (Label1, -("Host:"));
          Pack_Start (Hbox2, Label1, False, False, 3);
@@ -2013,7 +2016,8 @@ package body Gtkada.File_Selector is
       end if;
 
       Gtk_New_Hbox (Hbox3, False, 0);
-      Pack_Start (Get_Vbox (File_Selector_Window), Hbox3, False, False, 3);
+      Pack_Start
+        (Get_Content_Area (File_Selector_Window), Hbox3, False, False, 3);
 
       Gtk_New (Label1, -("Exploring :"));
       Pack_Start (Hbox3, Label1, False, False, 3);
@@ -2048,8 +2052,7 @@ package body Gtkada.File_Selector is
 
          Gtk_New_Hbox (Hbox7, False, 0);
          Pack_Start
-           (Get_Vbox (File_Selector_Window),
-            Hbox7, True, True, 3);
+           (Get_Content_Area (File_Selector_Window), Hbox7, True, True, 3);
 
          Pack_Start (Hbox7, Hpaned1, True, True, 3);
 
@@ -2092,13 +2095,13 @@ package body Gtkada.File_Selector is
 
       else
          Pack_Start
-           (Get_Vbox (File_Selector_Window),
+           (Get_Content_Area (File_Selector_Window),
             File_Selector_Window.Explorer_Tree, True, True, 3);
       end if;
 
       Gtk_New_Hbox (Hbox4, False, 0);
       Pack_Start
-        (Get_Vbox (File_Selector_Window),
+        (Get_Content_Area (File_Selector_Window),
          Hbox4, False, False, 3);
 
       Gtk_New (File_Selector_Window.Filter_Combo);
@@ -2113,7 +2116,7 @@ package body Gtkada.File_Selector is
 
       Gtk_New_Hbox (Hbox5, False, 0);
       Pack_Start
-        (Get_Vbox (File_Selector_Window),
+        (Get_Content_Area (File_Selector_Window),
          Hbox5, False, False, 3);
 
       Gtk_New (File_Selector_Window.Selection_Entry);
@@ -2146,7 +2149,7 @@ package body Gtkada.File_Selector is
 
       Gtk_New_Hbox (Hbox6, False, 0);
       Pack_Start
-        (Get_Vbox (File_Selector_Window),
+        (Get_Content_Area (File_Selector_Window),
          Hbox6, False, False, 3);
 
       File_Selector_Window.OK_Button :=

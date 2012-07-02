@@ -22,6 +22,7 @@ with Glib;                use Glib;
 with Glib.Convert;        use Glib.Convert;
 with Glib.Object;         use Glib.Object;
 with Gtk.Box;             use Gtk.Box;
+with Gtk.Combo_Box;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Event_Box;       use Gtk.Event_Box;

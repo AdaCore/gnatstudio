@@ -333,7 +333,7 @@ package body Completion_Module is
       Gtk_New (Dialog, "Goto entity...", Get_Main_Window (Kernel), 0);
 
       Set_Dialog (Explorer, Dialog);
-      Pack_Start (Get_Vbox (Dialog), Explorer, True, True, 3);
+      Pack_Start (Get_Content_Area (Dialog), Explorer, True, True, 3);
       Set_Default_Size (Dialog, 650, 300);
       Show_All (Dialog);
 

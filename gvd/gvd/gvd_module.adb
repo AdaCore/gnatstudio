@@ -1297,7 +1297,7 @@ package body GVD_Module is
       Set_Default_Size (Dialog, 300, 100);
 
       Gtk_New (Table, 2, 2, False);
-      Pack_Start (Get_Vbox (Dialog), Table, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Table, Expand => False);
 
       Gtk_New (Label, -"Target name:");
       Set_Alignment (Label, 0.0, 0.0);

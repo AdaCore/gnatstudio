@@ -19,6 +19,7 @@ with Glib;                   use Glib;
 
 with Gtk;                    use Gtk;
 with Gtk.Alignment;          use Gtk.Alignment;
+with Gtk.Combo_Box;
 with Gtk.Frame;              use Gtk.Frame;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Enums;              use Gtk.Enums;

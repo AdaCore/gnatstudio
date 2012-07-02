@@ -60,7 +60,7 @@ package GPS.Kernel.Charsets is
    --  corresponding preference is used.
 
    function Selected_Charset
-     (Combo : Gtk.Combo_Box.Gtk_Combo_Box) return String;
+     (Combo : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text) return String;
    --  Return Charset name from Charset_Combo
 
    function Get_File_Charset (File : GNATCOLL.VFS.Virtual_File) return String;

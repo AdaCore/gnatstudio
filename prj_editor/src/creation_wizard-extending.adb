@@ -472,7 +472,7 @@ package body Creation_Wizard.Extending is
          -"Should GPS copy the file into the extending projects source dir ?");
       Label.Set_Selectable (True);
       Label.Set_Justify (Justify_Center);
-      Dialog.Get_Vbox.Pack_Start (Label, Expand => False);
+      Dialog.Get_Content_Area.Pack_Start (Label, Expand => False);
 
       for D in Dirs'Range loop
          Gtk_New
@@ -480,7 +480,7 @@ package body Creation_Wizard.Extending is
             Group        => Radio (Radio'First),
             Label        => Dirs (D).Display_Full_Name);
          Radio (D).Set_Active (D = Dirs'First);
-         Dialog.Get_Vbox.Pack_Start (Radio (D), Expand => False);
+         Dialog.Get_Content_Area.Pack_Start (Radio (D), Expand => False);
       end loop;
 
       if Dirs'Length = 0 then
@@ -489,7 +489,7 @@ package body Creation_Wizard.Extending is
             Label        =>
               Project_Directory (Get_Project (Kernel)).Display_Full_Name);
          Prj_Dir_Radio.Set_Active (True);
-         Dialog.Get_Vbox.Pack_Start (Prj_Dir_Radio, Expand => False);
+         Dialog.Get_Content_Area.Pack_Start (Prj_Dir_Radio, Expand => False);
       end if;
 
       Ignore := Dialog.Add_Button (-"Copy", Gtk_Response_Yes);
@@ -566,7 +566,7 @@ package body Creation_Wizard.Extending is
             -"Should GPS remove the file from the disk as well ?");
          Label.Set_Selectable (True);
          Label.Set_Justify (Justify_Center);
-         Dialog.Get_Vbox.Pack_Start (Label, Expand => False);
+         Dialog.Get_Content_Area.Pack_Start (Label, Expand => False);
 
          Ignore := Dialog.Add_Button (-"Delete", Gtk_Response_Yes);
          Ignore := Dialog.Add_Button (-"Do not delete", Gtk_Response_No);

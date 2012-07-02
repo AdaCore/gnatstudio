@@ -30,7 +30,8 @@ with Glib.Error;                 use Glib.Error;
 with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Check_Button;           use Gtk.Check_Button;
-with Gtk.Combo_Box;              use Gtk.Combo_Box;
+with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
@@ -235,7 +236,7 @@ package body Src_Contexts is
    --  Free Result and its components
 
    procedure Initialize_Scope_Combo
-     (Combo  : access Gtk_Combo_Box_Record'Class;
+     (Combo  : access Gtk_Combo_Box_Text_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
    --  Initialize the combo box with all the entries for the selection of the
    --  scope.
@@ -2657,7 +2658,7 @@ package body Src_Contexts is
    ----------------------------
 
    procedure Initialize_Scope_Combo
-     (Combo  : access Gtk_Combo_Box_Record'Class;
+     (Combo  : access Gtk_Combo_Box_Text_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
    begin

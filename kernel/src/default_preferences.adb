@@ -34,6 +34,7 @@ with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Color_Button;         use Gtk.Color_Button;
+with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
@@ -1132,7 +1133,8 @@ package body Default_Preferences is
       Data  : Manager_Preference)
    is
    begin
-      Set_Active_Text (Gtk_Combo_Box (Combo), String'(Get_Pref (Data.Pref)));
+      Set_Active_Text
+        (Gtk_Combo_Box_Text (Combo), String'(Get_Pref (Data.Pref)));
    end Update_Combo;
 
    ----------------
@@ -1361,7 +1363,7 @@ package body Default_Preferences is
                Flags  => Modal or Destroy_With_Parent);
 
       Gtk_New (F);
-      Pack_Start (Get_Vbox (Dialog), F, Expand => True, Fill => True);
+      Pack_Start (Get_Content_Area (Dialog), F, Expand => True, Fill => True);
 
       Tmp := Add_Button (Dialog, Stock_Ok,     Gtk_Response_OK);
       Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -2145,7 +2147,7 @@ package body Default_Preferences is
       Manager.Pref_Editor := Gtk_Widget (Dialog);
 
       Gtk_New (Main_Table, Rows => 3, Columns => 2, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Main_Table);
+      Pack_Start (Get_Content_Area (Dialog), Main_Table);
 
       Gtk_New (Frame);
       Attach (Main_Table, Frame, 0, 1, 0, 3);

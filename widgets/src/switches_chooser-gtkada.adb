@@ -24,6 +24,7 @@ with Gtk.Button;             use Gtk.Button;
 with Gtk.Check_Button;       use Gtk.Check_Button;
 with Gtkada.Check_Button;    use Gtkada.Check_Button;
 with Gtk.Container;          use Gtk.Container;
+with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;     use Gtk.Combo_Box_Text;
 with Gtk.Dialog;             use Gtk.Dialog;
 with Gtk.Editable;           use Gtk.Editable;
@@ -231,7 +232,7 @@ package body Switches_Chooser.Gtkada is
          Rows        => Guint (S.Lines),
          Columns     => Guint (S.Columns),
          Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Table);
+      Pack_Start (Get_Content_Area (Dialog), Table);
       Create_Box_For_Popup
         (Editor    => Data.Editor,
          Popup     => S.To_Popup,
@@ -340,7 +341,7 @@ package body Switches_Chooser.Gtkada is
             Set_Value (Gtk_Spin_Button (Widget), Gdouble'Value (Parameter));
 
          when Switch_Combo =>
-            Set_Active_Text (Gtk_Combo_Box (Widget), Parameter);
+            Set_Active_Text (Gtk_Combo_Box_Text (Widget), Parameter);
 
          when Switch_Popup =>
             null;
@@ -785,7 +786,7 @@ package body Switches_Chooser.Gtkada is
       History            : Histories.History;
       Key                : History_Key)
    is
-      Combo                   : Gtk_Combo_Box;
+      Combo                   : Gtk_Combo_Box_Text;
       Widget_For_Command_Line : Gtk_Widget;
    begin
       Editor.Native_Dialogs := Use_Native_Dialogs;

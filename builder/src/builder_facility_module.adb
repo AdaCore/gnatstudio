@@ -104,7 +104,7 @@ package body Builder_Facility_Module is
      (Gtkada_Combo_Tool_Button_Record);
 
    package Combo_Box_Callback is new Gtk.Handlers.Callback
-     (Gtk_Combo_Box_Record);
+     (Gtk_Combo_Box_Text_Record);
 
    package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
      (Gtk_Tool_Item);

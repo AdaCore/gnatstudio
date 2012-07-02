@@ -318,9 +318,9 @@ private
       Up_Button              : Gtk_Tool_Button;
       Refresh_Button         : Gtk_Tool_Button;
 
-      Hosts_Combo            : Gtk_Combo_Box;
+      Hosts_Combo            : Gtk_Combo_Box_Text;
 
-      Location_Combo         : Gtk_Combo_Box;
+      Location_Combo         : Gtk_Combo_Box_Text;
 --        Location_Combo_Entry   : Gtk_Entry;
 
       Explorer_Tree          : Dir_Tree;

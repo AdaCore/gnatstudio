@@ -845,7 +845,8 @@ package body KeyManager_Module.GUI is
          To   => Editor.Bindings.all);
 
       Gtk_New_Vbox (Vbox, Homogeneous => False);
-      Pack_Start (Get_Vbox (Editor), Vbox, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Editor), Vbox, Expand => True, Fill => True);
 
       Gtk_New_Hbox (Filter_Box, Homogeneous => False);
       Pack_Start (Vbox, Filter_Box, Expand => False);
