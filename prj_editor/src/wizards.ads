@@ -36,13 +36,13 @@
 
 with Gtk.Button;
 with Gtk.Widget;
-with Gtk.Style;
 with Gtk.Label;
 with GPS.Kernel;
 with GNAT.Strings;
 with Ada.Unchecked_Deallocation;
 
 with Logo_Boxes;
+with Pango.Font; use Pango.Font;
 
 package Wizards is
 
@@ -217,10 +217,10 @@ private
       Next            : Gtk.Button.Gtk_Button;
       Previous        : Gtk.Button.Gtk_Button;
 
+      Highlight_Font  : Pango_Font_Description;
+
       Current_Page    : Positive;
       Pages           : Wizard_Pages_Array_Access;
-      Highlight_Style : Gtk.Style.Gtk_Style;
-      Normal_Style    : Gtk.Style.Gtk_Style;
       Kernel          : GPS.Kernel.Kernel_Handle;
    end record;
 end Wizards;
