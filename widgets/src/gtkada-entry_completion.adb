@@ -479,7 +479,8 @@ package body Gtkada.Entry_Completion is
 
                   --  Do we have a common prefix for all the possible choices?
                   if Compl_Access'Length /= 0 then
-                     Append_Text (Get_Entry (GEntry), Compl_Access.all);
+                     Get_Entry (GEntry).Set_Text
+                       (Get_Entry (GEntry).Get_Text & Compl_Access.all);
                      Set_Position (Get_Entry (GEntry), -1);
                   end if;
 
