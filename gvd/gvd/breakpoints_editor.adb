@@ -479,7 +479,7 @@ package body Breakpoints_Editor is
          Watch => GObject (Widget),
          Name  => "breakpoints_editor.on_breakpoints_changed");
 
-      Set_Page (Widget.Editor.Notebook1, 0);
+      Widget.Editor.Notebook1.Set_Current_Page (0);
 
       Show_All (Widget);
       return Gtk_Widget (Widget);
@@ -549,7 +549,7 @@ package body Breakpoints_Editor is
       --  Fill the information
 
       if Br.Except /= null then
-         Set_Page (View.Editor.Notebook1, 2);
+         View.Editor.Notebook1.Set_Current_Page (2);
          Set_Active (View.Editor.Stop_Always_Exception, True);
 
          if Br.Except.all = "all" then
@@ -567,7 +567,7 @@ package body Breakpoints_Editor is
          Set_Active (View.Editor.Temporary_Exception, Br.Disposition /= Keep);
 
       else
-         Set_Page (View.Editor.Notebook1, 0);
+         View.Editor.Notebook1.Set_Current_Page (0);
 
          if Br.File /= GNATCOLL.VFS.No_File then
             Set_Active (View.Editor.Location_Selected, True);
@@ -659,7 +659,6 @@ package body Breakpoints_Editor is
    function Get_Selection_Index
      (View : access Breakpoint_Editor_Record'Class) return Integer
    is
-      use Gint_List;
       Process   : constant Visual_Debugger := Get_Process (View);
       Br_Num    : Breakpoint_Identifier;
       Iter      : Gtk_Tree_Iter;
@@ -755,7 +754,7 @@ package body Breakpoints_Editor is
       Start, The_End : Gtk_Text_Iter;
 
    begin
-      if Visible_Is_Set (Adv.Condition_Box) then
+      if Adv.Condition_Box.Get_Visible then
          Get_Bounds (Get_Buffer (Adv.Command_Descr), Start, The_End);
 
          declare
