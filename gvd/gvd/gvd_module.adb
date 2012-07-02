@@ -19,7 +19,7 @@ with GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
-with Gdk.Color;                 use Gdk.Color;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
@@ -1708,7 +1708,7 @@ package body GVD_Module is
             Create_Pixmap_From_Text
               (Text       => Value.all,
                Font       => GPS.Kernel.Preferences.Default_Font.Get_Pref_Font,
-               Bg_Color   => White (Get_Default_Colormap),
+               Bg_Color   => White_RGBA,
                Widget     => Get_Main_Window (Kernel),
                Pixmap     => Pixmap,
                Wrap_Width => Max_Tooltip_Width);
@@ -1748,7 +1748,7 @@ package body GVD_Module is
 
    begin
       if Get_Main_Window (Kernel) /= null
-        and then not In_Destruction_Is_Set (Get_Main_Window (Kernel))
+        and then not Get_Main_Window (Kernel).In_Destruction
       then
          if State = Debug_Available then
             Add_Debug_Buttons (Kernel);
