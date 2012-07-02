@@ -133,7 +133,7 @@ package body Gtkada.Macro is
       while Current /= Widget_List.Null_List loop
          Widget := Widget_List.Get_Data (Current);
 
-         if Has_Focus_Is_Set (Widget) then
+         if Widget.Has_Focus then
             Widget_List.Free (List);
             return Widget;
          end if;
@@ -188,7 +188,7 @@ package body Gtkada.Macro is
             elsif W.all in Gtk_Container_Record'Class
               and then Id.Id_Type /= Title
             then
-               L := Children (Gtk_Container (W));
+               L := Get_Children (Gtk_Container (W));
 
                if L /= Widget_List.Null_List then
                   W := Get_Widget_From_Id (Id, L);
