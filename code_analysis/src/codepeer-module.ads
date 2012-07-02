@@ -26,7 +26,7 @@ with Gtk.Menu;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Gdk.Color;
+with Gdk.RGBA;
 private with Default_Preferences;
 with GPS.Kernel;   use GPS.Kernel;
 with GPS.Kernel.Modules.UI;
@@ -78,7 +78,7 @@ package CodePeer.Module is
    --  Register the module
 
    function Get_Color
-     (Ranking : CodePeer.Message_Ranking_Level) return Gdk.Color.Gdk_Color;
+     (Ranking : CodePeer.Message_Ranking_Level) return Gdk.RGBA.Gdk_RGBA;
 
    function Race_Condition_Category (Name : String) return String;
    --  Constructs name of the object race condition category for messages.
