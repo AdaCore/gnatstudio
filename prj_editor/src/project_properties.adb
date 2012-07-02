@@ -2748,7 +2748,7 @@ package body Project_Properties is
          end if;
 
          if Editable then
-            Gtk_New_Combo_Text_With_Entry (Editor.Combo);
+            Gtk_New_With_Entry (Editor.Combo);
             Set_Activates_Default (Gtk_Entry (Editor.Combo.Get_Child), True);
          else
             Gtk_New (Editor.Combo);
@@ -4741,11 +4741,6 @@ package body Project_Properties is
          Parent => Get_Current_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
       Set_Name (Editor, "Project Properties"); --  For testsuite
-      Set_Policy
-        (Editor,
-         Allow_Shrink => False,
-         Allow_Grow   => True,
-         Auto_Shrink  => True);
       Realize (Editor);
 
       Gtk_New (Editor.Errors);
@@ -5157,7 +5152,7 @@ package body Project_Properties is
       Flags                : Selector_Flags;
    begin
       if Page >= Pages_From_XML_Count
-        and then not In_Destruction_Is_Set (Ed)
+        and then not In_Destruction (Ed)
       then
          --  Some pages might not be visible though...
          P := Get_Nth_Project_Editor_Page
