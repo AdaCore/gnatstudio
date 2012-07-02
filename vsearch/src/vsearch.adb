@@ -418,7 +418,7 @@ package body Vsearch is
 
       Y := Gint'Value (Hist (Hist'First).all);
 
-      Set_UPosition (Win, X, Y);
+      Move (Gtk_Window (Win), X, Y);
    end Restore_Position;
 
    --------------------
@@ -547,7 +547,7 @@ package body Vsearch is
             Unref (Vsearch.View);
          end if;
 
-         Hide_All (Vsearch.Auto_Hide_Check);
+         Hide (Vsearch.Auto_Hide_Check);
          Set_Child_Visible (Vsearch.Auto_Hide_Check, False);
 
          --  Store the position of the floating window
