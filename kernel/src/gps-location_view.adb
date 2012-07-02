@@ -868,7 +868,7 @@ package body GPS.Location_View is
       Get_Selected (Get_Selection (Explorer.View), Model, Iter);
 
       Gtk_New (Check, -"Filter panel");
-      Set_Active (Check, Explorer.Filter_Panel.Mapped_Is_Set);
+      Set_Active (Check, Explorer.Filter_Panel.Get_Mapped);
       Append (Menu, Check);
       Location_View_Callbacks.Object_Connect
         (Check, Signal_Activate, On_Filter_Panel_Activated'Access, Explorer);
@@ -1413,7 +1413,7 @@ package body GPS.Location_View is
          N := new Node;
          N.Tag := new String'("Location_View_Record");
 
-         if View.Filter_Panel.Mapped_Is_Set then
+         if View.Filter_Panel.Get_Mapped then
             Set_Attribute (N, "filter_panel", "TRUE");
 
             if View.Filter_Panel.Get_Pattern /= "" then
@@ -1688,11 +1688,10 @@ package body GPS.Location_View is
    begin
       if Visible then
          Set_Child_Visible (Self.Filter_Panel, True);
-         Set_USize (Self.Filter_Panel, -1, -1);
+         Self.Filter_Panel.Set_Size_Request (-1, -1);
          Self.Filter_Panel.Show;
       else
          Set_Child_Visible (Self.Filter_Panel, False);
-         Set_USize (Self.Filter_Panel, -1, 0);
          Set_Size_Request (Self.Filter_Panel, -1, 0);
          Self.Filter_Panel.Hide;
       end if;
@@ -1705,7 +1704,7 @@ package body GPS.Location_View is
    procedure On_Filter_Panel_Activated
      (Self : access Location_View_Record'Class) is
    begin
-      Set_Filter_Visibility (Self, not Self.Filter_Panel.Mapped_Is_Set);
+      Set_Filter_Visibility (Self, not Self.Filter_Panel.Get_Mapped);
    end On_Filter_Panel_Activated;
 
    ---------------------------
