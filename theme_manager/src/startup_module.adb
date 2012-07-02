@@ -18,6 +18,7 @@
 with Ada.Unchecked_Conversion;
 with Glib.Object;              use Glib, Glib.Object;
 with Glib.Values;              use Glib.Values;
+with Gtk.Cell_Layout;          use Gtk.Cell_Layout;
 with XML_Utils;                use XML_Utils;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GPS.Kernel;               use GPS.Kernel;
@@ -312,7 +313,7 @@ package body Startup_Module is
       Note        : Gtk_Notebook;
       Script_Iter : Script_Iterator;
       Script      : Script_Description;
-      List        : Cell_Renderer_List.Glist;
+      List        : Glib.Object.Object_Simple_List.Glist;
       Label       : Gtk_Label;
       pragma Unreferenced (Button);
 
@@ -386,23 +387,23 @@ package body Startup_Module is
       Set_Editable (Text, False);
       Modify_Font (Text, Default_Style.Get_Pref_Font);
 
-      List := Get_Cell_Renderers (Get_Column (Editor.Tree, Column_Load));
+      List := Get_Cells (+Get_Column (Editor.Tree, Column_Load));
       Add_Attribute
         (Get_Column (Editor.Tree, Column_Load),
-         Cell_Renderer_List.Get_Data (List),
+         Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
          "cell_background", Column_Background);
       Widget_Callback.Object_Connect
-        (Cell_Renderer_List.Get_Data (List),
+        (Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
          Gtk.Cell_Renderer_Toggle.Signal_Toggled,
          On_Load_Toggled'Access, Editor, After => True);
-      Cell_Renderer_List.Free (List);
+      Object_Simple_List.Free (List);
 
-      List := Get_Cell_Renderers (Get_Column (Editor.Tree, Column_Name));
+      List := Get_Cells (+Get_Column (Editor.Tree, Column_Name));
       Add_Attribute
         (Get_Column (Editor.Tree, Column_Name),
-         Cell_Renderer_List.Get_Data (List),
+         Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
          "cell_background", Column_Background);
-      Cell_Renderer_List.Free (List);
+      Object_Simple_List.Free (List);
 
       Widget_Callback.Object_Connect
         (Get_Selection (Editor.Tree), Gtk.Tree_Selection.Signal_Changed,
