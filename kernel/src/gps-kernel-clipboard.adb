@@ -21,6 +21,7 @@ with System;                     use System;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with Glib.Types;                 use Glib.Types;
 with Glib.Object;                use Glib.Object;
 with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Editable;               use Gtk.Editable;
@@ -50,6 +51,14 @@ package body GPS.Kernel.Clipboard is
    Append_Cst          : aliased constant String := "append";
    Index1_Cst          : aliased constant String := "index1";
    Index2_Cst          : aliased constant String := "index2";
+
+   package Implements_Editable is new Glib.Types.Implements
+     (Gtk.Editable.Gtk_Editable, GObject_Record, GObject);
+   function "+"
+     (Widget : access GObject_Record'Class)
+      return Gtk.Editable.Gtk_Editable
+      renames Implements_Editable.To_Interface;
+   --  Conversion from objects to their Gtk.Editable interface
 
    function Convert is new Ada.Unchecked_Conversion
      (Clipboard_Access, System.Address);
@@ -272,8 +281,8 @@ package body GPS.Kernel.Clipboard is
    is
       Buffer : Gtk_Text_Buffer;
    begin
-      if Widget.all in Gtk_Editable_Record'Class then
-         Cut_Clipboard (Gtk_Editable (Widget));
+      if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
+         Cut_Clipboard (+Widget);
          Append_To_Clipboard (Clipboard);
 
       elsif Widget.all in Gtk_Text_View_Record'Class then
@@ -307,8 +316,8 @@ package body GPS.Kernel.Clipboard is
       --  the GPS clipboard is used (and therefore one can access the previous
       --  entry immediately). If we don't do that, the user has to press
       --  "previous" twice.
-      if Widget.all in Gtk_Editable_Record'Class then
-         Copy_Clipboard (Gtk_Editable (Widget));
+      if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
+         Copy_Clipboard (+Widget);
          Append_To_Clipboard (Clipboard);
 
       elsif Widget.all in Gtk_Text_View_Record'Class then
@@ -419,10 +428,10 @@ package body GPS.Kernel.Clipboard is
       end if;
 
       if Clipboard.Last_Widget /= null then
-         if Widget.all in Gtk_Editable_Record'Class then
-            Paste_Clipboard (Gtk_Editable (Widget));
+         if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
+            Paste_Clipboard (+Widget);
             Clipboard.Last_Position :=
-              Integer (Get_Position (Gtk_Editable (Widget)));
+              Integer (Get_Position (+Widget));
 
          else
             if Widget.all in Gtk_Text_View_Record'Class then
@@ -483,9 +492,9 @@ package body GPS.Kernel.Clipboard is
       --  If the position is not the same as at the end of the previous paste,
       --  do nothing.
 
-      if Widget.all in Gtk_Editable_Record'Class then
+      if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
          if Clipboard.Last_Position /=
-           Integer (Get_Position (Gtk_Editable (Widget)))
+           Integer (Get_Position (+Widget))
          then
             Clipboard.Last_Widget := null;
             Trace (Me, "Paste Previous not at the same position");
@@ -506,9 +515,9 @@ package body GPS.Kernel.Clipboard is
 
       --  Remove the previous insert
 
-      if Widget.all in Gtk_Editable_Record'Class then
+      if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
          Delete_Text
-           (Gtk_Editable (Widget),
+           (+Widget,
             Start_Pos => Gint (Clipboard.Last_Position
               - Clipboard.Last_Length - 1),
             End_Pos   => Gint (Clipboard.Last_Position));
@@ -541,10 +550,10 @@ package body GPS.Kernel.Clipboard is
          Clipboard.Last_Length := Clipboard.List (Clipboard.Last_Paste)'Length;
 
          --  Paste the new contents
-         if Widget.all in Gtk_Editable_Record'Class then
-            Paste_Clipboard (Gtk_Editable (Widget));
+         if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
+            Paste_Clipboard (+Widget);
             Clipboard.Last_Position :=
-              Integer (Get_Position (Gtk_Editable (Widget)));
+              Integer (Get_Position (+Widget));
          else
             Paste_Clipboard
               (Buffer, Gtk.Clipboard.Get,
