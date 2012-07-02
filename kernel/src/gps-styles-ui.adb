@@ -56,9 +56,7 @@ package body GPS.Styles.UI is
    --------------------
 
    procedure Allocate_Color
-     (Name : String; Color : out Gdk_Color)
-   is
-      Ignored : Boolean;
+     (Name : String; Color : out Gdk_Color) is
    begin
       Color := Null_Color;
 
@@ -69,7 +67,6 @@ package body GPS.Styles.UI is
 
       begin
          Color := Parse (Name);
-         Alloc_Color (Get_Default_Colormap, Color, Success => Ignored);
       exception
          when Wrong_Color =>
             Trace (Me, "Could not parse color " & Name);
@@ -169,7 +166,7 @@ package body GPS.Styles.UI is
       then
          Widget := Get_A_Widget;
          if Widget /= null
-           and then Realized_Is_Set (Widget)
+           and then Widget.Get_Realized
          then
             Style.Editor_Icon := Render_Icon
               (Widget, Style.Editor_Icon_Name.all, Icon_Size_Menu);
