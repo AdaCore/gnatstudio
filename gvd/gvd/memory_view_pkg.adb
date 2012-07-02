@@ -87,7 +87,6 @@ package body Memory_View_Pkg is
 
       Gtk_New (Memory_View.Address_View, -"View");
       Set_Relief (Memory_View.Address_View, Relief_Normal);
-      Set_Flags (Memory_View.Address_View, Can_Default);
       Attach (Table, Memory_View.Address_View, 2, 3, 0, 1, Xoptions => 0);
 
       Gtk_New (Label96, -("Find"));
@@ -109,7 +108,6 @@ package body Memory_View_Pkg is
       Gtk_New (Memory_View.Search_Button, -"Search");
       Set_Relief (Memory_View.Search_Button, Relief_Normal);
       Set_Sensitive (Memory_View.Search_Button, False);
-      Set_Flags (Memory_View.Search_Button, Can_Default);
       Attach (Table, Memory_View.Search_Button, 2, 3, 1, 2, Xoptions => 0);
 
       --  The toolbar
@@ -120,8 +118,6 @@ package body Memory_View_Pkg is
       Gtk_New (Vbuttonbox5);
       Set_Spacing (Vbuttonbox5, 10);
       Set_Layout (Vbuttonbox5, Buttonbox_Spread);
-      Set_Child_Size (Vbuttonbox5, 85, 27);
-      Set_Child_Ipadding (Vbuttonbox5, 7, 0);
       Pack_Start (Hbox12, Vbuttonbox5, False, False, 0);
 
       Gtk_New (Label98, -("Unit size: "));
@@ -168,7 +164,6 @@ package body Memory_View_Pkg is
 
       Gtk_New (Memory_View.Pgup);
       Set_Relief (Memory_View.Pgup, Relief_Normal);
-      Set_Flags (Memory_View.Pgup, Can_Default);
       Pack_Start (Hbox12, Memory_View.Pgup, True, True, 0);
 
       Gtk_New (Arrow1, Arrow_Up, Shadow_Out);
@@ -178,7 +173,6 @@ package body Memory_View_Pkg is
 
       Gtk_New (Memory_View.Pgdn);
       Set_Relief (Memory_View.Pgdn, Relief_Normal);
-      Set_Flags (Memory_View.Pgdn, Can_Default);
       Pack_Start (Hbox12, Memory_View.Pgdn, True, True, 0);
 
       Gtk_New (Arrow2, Arrow_Down, Shadow_Out);
@@ -209,18 +203,14 @@ package body Memory_View_Pkg is
       Gtk_New (Hbuttonbox11);
       Set_Spacing (Hbuttonbox11, 30);
       Set_Layout (Hbuttonbox11, Buttonbox_Spread);
-      Set_Child_Size (Hbuttonbox11, 85, 27);
-      Set_Child_Ipadding (Hbuttonbox11, 7, 0);
       Pack_Start (Memory_View, Hbuttonbox11, False, False, 0);
 
       Gtk_New (Memory_View.Reset, -"Undo changes");
       Set_Relief (Memory_View.Reset, Relief_Normal);
-      Set_Flags (Memory_View.Reset, Can_Default);
       Add (Hbuttonbox11, Memory_View.Reset);
 
       Gtk_New (Memory_View.Submit, -"Submit changes");
       Set_Relief (Memory_View.Submit, Relief_Normal);
-      Set_Flags (Memory_View.Submit, Can_Default);
       Add (Hbuttonbox11, Memory_View.Submit);
 
       Set_Wrap_Mode (Memory_View.View, Wrap_None);
