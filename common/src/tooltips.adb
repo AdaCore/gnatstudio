@@ -23,7 +23,6 @@ with Cairo.Surface;        use Cairo.Surface;
 
 with Gdk.Cairo;            use Gdk.Cairo;
 with Gdk.Event;            use Gdk.Event;
-with Gdk.Pixmap;           use Gdk.Pixmap;
 with Gdk.Rectangle;        use Gdk.Rectangle;
 with Gdk.Screen;           use Gdk.Screen;
 with Gdk.Types;            use Gdk.Types;
@@ -144,7 +143,7 @@ package body Tooltips is
             Y := Win_Height - Tooltip.Height - 12;
          end if;
 
-         Set_UPosition (Tooltip.Display_Window, X + 10, Y + 10);
+         Move (Tooltip.Display_Window, X + 10, Y + 10);
 
          Show_All      (Tooltip.Display_Window);
 
@@ -201,7 +200,6 @@ package body Tooltips is
       Surface : Cairo_Surface;
       Ptrn    : Cairo_Pattern;
       Pix     : Gtk_Image;
-      Pixmap  : Gdk_Pixmap;
       Cr      : Cairo_Context;
    begin
       Draw (Pixmap_Tooltips_Access (Tooltip), Surface, Tooltip.Area);
@@ -210,14 +208,10 @@ package body Tooltips is
          Tooltip.Width := Cairo.Image_Surface.Get_Width (Surface);
          Tooltip.Height := Cairo.Image_Surface.Get_Height (Surface);
 
-         Gdk.Pixmap.Gdk_New
-           (Pixmap, Get_Window (Tooltip.Widget),
-            Width => Tooltip.Width, Height => Tooltip.Height);
-
          Ptrn := Cairo.Pattern.Create_For_Surface (Surface);
          Cairo.Pattern.Set_Extend (Ptrn, Cairo_Extend_Repeat);
 
-         Cr := Gdk.Cairo.Create (Pixmap);
+         Cr := Gdk.Cairo.Create (Get_Window (Tooltip.Widget));
          Set_Source (Cr, Ptrn);
          Cairo.Paint (Cr);
 
@@ -226,9 +220,7 @@ package body Tooltips is
          Destroy (Surface);
 
          Gtk.Image.Gtk_New (Pix);
-         Gtk_New (Pix, Pixmap, null);
          Set_Size_Request (Pix, Tooltip.Width, Tooltip.Height);
-         Gdk.Pixmap.Unref (Pixmap);
          Contents := Gtk_Widget (Pix);
          Area     := Tooltip.Area;
       else
