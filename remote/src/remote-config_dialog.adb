@@ -35,6 +35,7 @@ with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
+with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
