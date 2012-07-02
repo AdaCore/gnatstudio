@@ -38,6 +38,7 @@ with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 with Gdk.Color;                           use Gdk.Color;
+with Gdk.RGBA;                            use Gdk.RGBA;
 
 with Glib.Convert;                        use Glib.Convert;
 with Glib.Error;                          use Glib.Error;
@@ -54,7 +55,6 @@ with Gtk.Text_Iter;                       use Gtk.Text_Iter;
 with Gtk.Text_Mark;                       use Gtk.Text_Mark;
 with Gtk.Text_Tag;                        use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;                  use Gtk.Text_Tag_Table;
-with Gtk.Widget;
 
 with Gtkada.Dialogs;                      use Gtkada.Dialogs;
 with Gtkada.MDI;                          use Gtkada.MDI;
@@ -2850,9 +2850,7 @@ package body Src_Editor_Buffer is
       Set_Property (Buffer.Hyper_Mode_Tag, Foreground_Gdk_Property,
                     Hyper_Links_Style.Get_Pref_Fg);
 
-      if Hyper_Links_Style.Get_Pref_Bg
-        /= White (Gtk.Widget.Get_Default_Colormap)
-      then
+      if Hyper_Links_Style.Get_Pref_Bg /= Gdk.RGBA.White_RGBA then
          Set_Property (Buffer.Hyper_Mode_Tag, Background_Gdk_Property,
                        Hyper_Links_Style.Get_Pref_Bg);
       end if;
