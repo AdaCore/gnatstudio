@@ -1046,9 +1046,7 @@ package body GPS.Kernel is
 
       Window := GPS_Window (Handle.Main_Window);
 
-      if Window = null
-        or else Gtk.Widget.In_Destruction (Window)
-      then
+      if Window = null or else Window.In_Destruction then
          return;
       end if;
 
@@ -1083,9 +1081,7 @@ package body GPS.Kernel is
 
       Window := GPS_Window (Handle.Main_Window);
 
-      if Window = null
-        or else Gtk.Widget.In_Destruction (Window)
-      then
+      if Window = null or else Window.In_Destruction then
          return;
       end if;
 
@@ -1101,7 +1097,7 @@ package body GPS.Kernel is
          end if;
 
          if Window.State_Level = 0
-           and then not Gtk.Widget.Destroyed_Is_Set (Get_Main_Window (Handle))
+           and then not In_Destruction (Get_Main_Window (Handle))
            and then Window.Animation_Timeout /= 0
          then
             Glib.Main.Remove (Window.Animation_Timeout);
