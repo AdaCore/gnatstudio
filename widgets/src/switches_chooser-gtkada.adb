@@ -808,7 +808,7 @@ package body Switches_Chooser.Gtkada is
          Gtk_New (Editor.Ent);
          Widget_For_Command_Line := Gtk_Widget (Editor.Ent);
       else
-         Gtk_New_Combo_Text_With_Entry (Combo);
+         Gtk_New_With_Entry (Combo);
          Editor.Ent := Gtk_Entry (Get_Child (Combo));
          Widget_For_Command_Line := Gtk_Widget (Combo);
          Get_History (History.all, Key, Combo, False, False);
