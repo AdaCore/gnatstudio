@@ -264,7 +264,6 @@ package body GVD.Assembly_View is
       Tag_Table : constant Gtk_Text_Tag_Table :=
                     Get_Tag_Table (Get_Buffer (View.View));
       Color     : Gdk_Color;
-      Success   : Boolean;
    begin
       --  Font
 
@@ -293,7 +292,6 @@ package body GVD.Assembly_View is
 
       Gtk_New (View.Pc_Tag);
       Set_Rgb (Color, 0, Guint16'Last, 0);
-      Alloc_Color (Get_Colormap (View), Color, Success => Success);
       Set_Property
         (View.Pc_Tag, Background_Gdk_Property, Color);
       Add (Tag_Table, View.Pc_Tag);

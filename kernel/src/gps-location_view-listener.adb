@@ -1016,17 +1016,12 @@ package body GPS.Location_View.Listener is
    ----------------
 
    procedure Initialize (Self : access Classic_Tree_Model_Record'Class) is
-      Success : Boolean;
-
    begin
       Gtkada.Abstract_Tree_Model.Initialize (Self);
 
       --  Allocate foreground color for category and file nodes
 
       Self.Non_Leaf_Color := Parse (Non_Leaf_Color_Name);
-      Alloc_Color
-        (Get_Default_Colormap, Self.Non_Leaf_Color, False, True, Success);
-
       Glib.Object.Weak_Ref (Self, On_Destroy'Access);
    end Initialize;
 

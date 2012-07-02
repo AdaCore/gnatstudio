@@ -620,7 +620,6 @@ package body Command_Window is
                Color := Get_Base (Get_Style (Window), State_Normal);
             else
                Color := Parse (Nth_Arg (Data, 2));
-               Alloc_Color (Get_Default_Colormap, Color, Success => Success);
             end if;
             Modify_Base (Window.Line, State_Normal, Color);
             Modify_Base (Window.Line, State_Active, Color);

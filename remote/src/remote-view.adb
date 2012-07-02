@@ -408,7 +408,6 @@ package body Remote.View is
       Gtk_New (View.Normal_Style);
       Gtk_New (View.Modified_Style);
       Color := Parse ("red");
-      Alloc_Color (Get_Default_Colormap, Color, Success => Success);
       for State in Gtk_State_Type loop
          Set_Text (View.Modified_Style, State, Color);
       end loop;
