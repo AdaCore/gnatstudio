@@ -183,8 +183,7 @@ package body Remote.Rsync is
    begin
       Dialog := new Rsync_Dialog_Record;
       Initialize (Dialog, -"Synchronisation in progress",
-                  Get_Main_Window (Kernel), 0);
-      Set_Has_Separator (Dialog, False);
+                  Get_Main_Window (Kernel), No_Separator);
       Gtk_New (Label, -"Synchronisation with remote host in progress.");
       Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Label);
@@ -783,7 +782,7 @@ package body Remote.Rsync is
       Trace (Me, "Rsync_Terminated");
 
       if Cb_Data.Synchronous and then Cb_Data.Dialog /= null then
-         Hide_All (Cb_Data.Dialog);
+         Hide (Cb_Data.Dialog);
          Gtk.Main.Grab_Remove (Cb_Data.Dialog);
          Cb_Data.Dialog := null;
       end if;
