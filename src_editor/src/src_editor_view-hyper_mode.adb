@@ -142,7 +142,7 @@ package body Src_Editor_View.Hyper_Mode is
          Gdk_New (Text_View_Cursor, Xterm);
       end if;
 
-      if not In_Destruction_Is_Set (View)
+      if not In_Destruction (View)
         and then not View.Cursor_Needs_Change
       then
          Set_Cursor (Get_Window (View, Text_Window_Text), Text_View_Cursor);
