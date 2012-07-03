@@ -78,7 +78,6 @@ package body Logo_Boxes is
       Set_Foreground (Win.Error_Style, State_Normal, Color);
 
       Color := Parse (Bg_Color);
-      Alloc (Get_Default_Colormap, Color);
       Style := Copy (Get_Style (Win));
       Set_Background (Style, State_Normal, Color);
       Set_Font_Description (Style, Title_Font);
