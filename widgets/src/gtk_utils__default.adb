@@ -25,7 +25,7 @@ package body Gtk_Utils is
 
    function Gtk_Major_Version return Integer is
       Version : Integer;
-      pragma Import (C, Version, "gtk_major_version");
+      pragma Import (C, Version, "gtk_get_major_version");
    begin
       return Version;
    end Gtk_Major_Version;
@@ -36,7 +36,7 @@ package body Gtk_Utils is
 
    function Gtk_Minor_Version return Integer is
       Version : Integer;
-      pragma Import (C, Version, "gtk_minor_version");
+      pragma Import (C, Version, "gtk_get_minor_version");
    begin
       return Version;
    end Gtk_Minor_Version;
@@ -47,7 +47,7 @@ package body Gtk_Utils is
 
    function Gtk_Micro_Version return Integer is
       Version : Integer;
-      pragma Import (C, Version, "gtk_micro_version");
+      pragma Import (C, Version, "gtk_get_micro_version");
    begin
       return Version;
    end Gtk_Micro_Version;
