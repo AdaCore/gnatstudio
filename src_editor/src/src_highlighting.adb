@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Color;    use Gdk.Color;
+with Gdk.RGBA;     use Gdk.RGBA;
 with Gtk;          use Gtk;
 with Gtk.Text_Tag; use Gtk.Text_Tag;
 with Gtk.Widget;   use Gtk.Widget;
@@ -46,8 +46,8 @@ package body Src_Highlighting is
    procedure New_Tag
      (Tag        : in out Gtk.Text_Tag.Gtk_Text_Tag;
       Tag_Name   : String;
-      Fore_Color : Gdk_Color := Null_Color;
-      Back_Color : Gdk_Color := Null_Color;
+      Fore_Color : Gdk_RGBA := Null_RGBA;
+      Back_Color : Gdk_RGBA := Null_RGBA;
       Font_Desc  : Pango_Font_Description := null);
    --  Create a new Gtk_Text_Tag with the given name.
    --  If the tag already exists, its properties are changed accordingly.
@@ -59,8 +59,8 @@ package body Src_Highlighting is
    procedure New_Tag
      (Tag        : in out Gtk.Text_Tag.Gtk_Text_Tag;
       Tag_Name   : String;
-      Fore_Color : Gdk_Color := Null_Color;
-      Back_Color : Gdk_Color := Null_Color;
+      Fore_Color : Gdk_RGBA := Null_RGBA;
+      Back_Color : Gdk_RGBA := Null_RGBA;
       Font_Desc  : Pango_Font_Description := null) is
    begin
       if Tag = null then
@@ -71,16 +71,16 @@ package body Src_Highlighting is
          Set_Property (Tag, Text_Tag.Font_Desc_Property, Font_Desc);
       end if;
 
-      if Fore_Color /= White (Get_Default_Colormap) then
-         Set_Property (Tag, Foreground_Gdk_Property, Fore_Color);
+      if Fore_Color /= White_RGBA then
+         Set_Property (Tag, Foreground_Rgba_Property, Fore_Color);
       else
-         Set_Property (Tag, Foreground_Gdk_Property, Null_Color);
+         Set_Property (Tag, Foreground_Rgba_Property, Null_RGBA);
       end if;
 
-      if Back_Color /= White (Get_Default_Colormap) then
-         Set_Property (Tag, Background_Gdk_Property, Back_Color);
+      if Back_Color /= White_RGBA then
+         Set_Property (Tag, Background_Rgba_Property, Back_Color);
       else
-         Set_Property (Tag, Background_Gdk_Property, Null_Color);
+         Set_Property (Tag, Background_Rgba_Property, Null_RGBA);
       end if;
    end New_Tag;
 
@@ -90,26 +90,26 @@ package body Src_Highlighting is
 
    procedure Create_Syntax_Tags
      (Result                      : in out Highlighting_Tags;
-      Type_Color                  : Gdk.Color.Gdk_Color;
-      Type_Color_Bg               : Gdk.Color.Gdk_Color;
+      Type_Color                  : Gdk.RGBA.Gdk_RGBA;
+      Type_Color_Bg               : Gdk.RGBA.Gdk_RGBA;
       Type_Font_Desc              : Pango.Font.Pango_Font_Description := null;
-      Block_Color                 : Gdk.Color.Gdk_Color;
-      Block_Color_Bg              : Gdk.Color.Gdk_Color;
+      Block_Color                 : Gdk.RGBA.Gdk_RGBA;
+      Block_Color_Bg              : Gdk.RGBA.Gdk_RGBA;
       Block_Font_Desc             : Pango.Font.Pango_Font_Description := null;
-      Keyword_Color               : Gdk.Color.Gdk_Color;
-      Keyword_Color_Bg            : Gdk.Color.Gdk_Color;
+      Keyword_Color               : Gdk.RGBA.Gdk_RGBA;
+      Keyword_Color_Bg            : Gdk.RGBA.Gdk_RGBA;
       Keyword_Font_Desc           : Pango.Font.Pango_Font_Description := null;
-      Comment_Color               : Gdk.Color.Gdk_Color;
-      Comment_Color_Bg            : Gdk.Color.Gdk_Color;
+      Comment_Color               : Gdk.RGBA.Gdk_RGBA;
+      Comment_Color_Bg            : Gdk.RGBA.Gdk_RGBA;
       Comment_Font_Desc           : Pango.Font.Pango_Font_Description := null;
-      Annotated_Comment_Color     : Gdk.Color.Gdk_Color;
-      Annotated_Comment_Color_Bg  : Gdk.Color.Gdk_Color;
+      Annotated_Comment_Color     : Gdk.RGBA.Gdk_RGBA;
+      Annotated_Comment_Color_Bg  : Gdk.RGBA.Gdk_RGBA;
       Annotated_Comment_Font_Desc : Pango.Font.Pango_Font_Description := null;
-      Character_Color             : Gdk.Color.Gdk_Color;
-      Character_Color_Bg          : Gdk.Color.Gdk_Color;
+      Character_Color             : Gdk.RGBA.Gdk_RGBA;
+      Character_Color_Bg          : Gdk.RGBA.Gdk_RGBA;
       Character_Font_Desc         : Pango.Font.Pango_Font_Description := null;
-      String_Color                : Gdk.Color.Gdk_Color;
-      String_Color_Bg             : Gdk.Color.Gdk_Color;
+      String_Color                : Gdk.RGBA.Gdk_RGBA;
+      String_Color_Bg             : Gdk.RGBA.Gdk_RGBA;
       String_Font_Desc            : Pango.Font.Pango_Font_Description := null)
    is
    begin
@@ -170,7 +170,7 @@ package body Src_Highlighting is
 
    procedure Create_Highlight_Line_Tag
      (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Color : Gdk_Color) is
+      Color : Gdk_RGBA) is
    begin
       Tag := null;
       New_Tag (Tag, Highlight_Line_Tag_Name, Back_Color => Color);
