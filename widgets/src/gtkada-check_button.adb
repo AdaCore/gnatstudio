@@ -284,7 +284,7 @@ package body Gtkada.Check_Button is
 
    begin
       --  Draw only when the Drawable state is set.
-      if not Drawable_Is_Set (Check) then
+      if not Is_Drawable (Check) then
          return False;
       end if;
 
@@ -378,7 +378,7 @@ package body Gtkada.Check_Button is
          Width       => Ind_Size,
          Height      => Ind_Size);
 
-      if Has_Focus_Is_Set (Check) then
+      if Has_Focus (Check) then
          if Interior_Focus = 1
            and then Child /= null
            and then Get_Visible (Child)
