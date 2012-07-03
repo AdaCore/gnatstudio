@@ -315,7 +315,7 @@ package body Project_Templates.GUI is
       use Project_Templates_List;
       C : Cursor;
 
-      package Forwarder is new Generic_Assistant_Functions (Boolean);
+      package Forwarder is new Set_Forward_Page_Func_User_Data (Boolean);
 
       function Next_Page
         (Current_Page : Gint; User_Data : Boolean) return Gint;
@@ -714,7 +714,7 @@ package body Project_Templates.GUI is
         (Assistant, "apply", On_Apply'Unrestricted_Access);
 
       Forwarder.Set_Forward_Page_Func
-        (Assistant, Next_Page'Unrestricted_Access, True);
+        (Assistant, Next_Page'Access, True);
 
       --  Launch the assistant
 
