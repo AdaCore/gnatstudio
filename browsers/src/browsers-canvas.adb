@@ -39,14 +39,14 @@ with Pango.Font;                        use Pango.Font;
 with Pango.Layout;                      use Pango.Layout;
 
 with Gdk.Cairo;                         use Gdk.Cairo;
-with Gdk.Color;                         use Gdk.Color;
+--  with Gdk.Color;                         use Gdk.Color;
 with Gdk.Event;                         use Gdk.Event;
 with Gdk.Pixbuf;                        use Gdk.Pixbuf;
 with Gdk.Rectangle;                     use Gdk.Rectangle;
 with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Window;                        use Gdk.Window;
 
-with Gtk.Accel_Group;                   use Gtk.Accel_Group;
+--  with Gtk.Accel_Group;                   use Gtk.Accel_Group;
 with Gtk.Button;                        use Gtk.Button;
 with Gtk.Check_Menu_Item;               use Gtk.Check_Menu_Item;
 with Gtk.Enums;                         use Gtk.Enums;
@@ -59,6 +59,7 @@ with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
 with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Style;                         use Gtk.Style;
+with Gtk.Style_Context;                 use Gtk.Style_Context;
 with Gtk.Widget;                        use Gtk.Widget;
 
 with Gtkada.Canvas;                     use Gtkada.Canvas;
@@ -428,50 +429,50 @@ package body Browsers.Canvas is
       Error           : GError;
       Iter            : Item_Iterator;
       Annotation_Font : Pango_Font_Description;
-      Style           : Gtk_Style;
+--      Style           : Gtk_Style;
       Need_Refresh    : Boolean := False;
 
       use type Gdk.Gdk_GC;
    begin
-      if Hook.Browser.Item_Style /= null then
-         Hook.Browser.Selected_Link_Color :=
-           To_Cairo (Selected_Link_Color.Get_Pref);
-         Hook.Browser.Unselected_Link_Color :=
-           To_Cairo (Unselected_Link_Color.Get_Pref);
+--        if Hook.Browser.Item_Style /= null then
+--           Hook.Browser.Selected_Link_Color :=
+--             Selected_Link_Color.Get_Pref;
+--           Hook.Browser.Unselected_Link_Color :=
+--             Unselected_Link_Color.Get_Pref;
+--
+--           Style := Hook.Browser.Item_Style;
 
-         Style := Hook.Browser.Item_Style;
-
-         Set_Bg (Style, State_Normal,
-                 Gdk_Color'(Get_Light (Get_Default_Style, State_Normal)));
-         Set_Bg (Style, State_Selected,
-                 Gdk_Color'(Get_Light (Get_Default_Style, State_Normal)));
-
-         Set_Text (Style, State_Active,
-                   Browsers_Hyper_Link_Color.Get_Pref);
-
-         Set_Base (Style, State_Normal,
-                   Title_Color.Get_Pref);
-         Set_Base (Style, State_Selected,
-                   GPS.Kernel.Preferences.Selected_Item_Color.Get_Pref);
-
-         if Hook.Browser.Item_Style_Parent_Linked /= null then
-            Unref (Hook.Browser.Item_Style_Parent_Linked);
-            Unref (Hook.Browser.Item_Style_Child_Linked);
-         end if;
-
-         Hook.Browser.Item_Style_Parent_Linked := Gtk.Style.Copy (Style);
-         Hook.Browser.Item_Style_Child_Linked := Gtk.Style.Copy (Style);
-
-         Set_Base
-           (Hook.Browser.Item_Style_Parent_Linked, State_Normal,
-            Parent_Linked_Item_Color.Get_Pref);
-         Set_Base
-           (Hook.Browser.Item_Style_Child_Linked, State_Normal,
-            Child_Linked_Item_Color.Get_Pref);
-
-         Set_Bg (Get_Style (Hook.Browser.Canvas), State_Normal,
-                 Browsers_Bg_Color.Get_Pref);
-      end if;
+--           Set_Bg (Style, State_Normal,
+--                   Gdk_RGBA'(Get_Light (Get_Default_Style, State_Normal)));
+--           Set_Bg (Style, State_Selected,
+--                   Gdk_RGBA'(Get_Light (Get_Default_Style, State_Normal)));
+--
+--           Set_Text (Style, State_Active,
+--                     Browsers_Hyper_Link_Color.Get_Pref);
+--
+--           Set_Base (Style, State_Normal,
+--                     Title_Color.Get_Pref);
+--           Set_Base (Style, State_Selected,
+--                     GPS.Kernel.Preferences.Selected_Item_Color.Get_Pref);
+--
+--           if Hook.Browser.Item_Style_Parent_Linked /= null then
+--              Unref (Hook.Browser.Item_Style_Parent_Linked);
+--              Unref (Hook.Browser.Item_Style_Child_Linked);
+--           end if;
+--
+--           Hook.Browser.Item_Style_Parent_Linked := Gtk.Style.Copy (Style);
+--           Hook.Browser.Item_Style_Child_Linked := Gtk.Style.Copy (Style);
+--
+--           Set_Base
+--             (Hook.Browser.Item_Style_Parent_Linked, State_Normal,
+--              Parent_Linked_Item_Color.Get_Pref);
+--           Set_Base
+--             (Hook.Browser.Item_Style_Child_Linked, State_Normal,
+--              Child_Linked_Item_Color.Get_Pref);
+--
+--           Set_Bg (Get_Style (Hook.Browser.Canvas), State_Normal,
+--                   Browsers_Bg_Color.Get_Pref);
+--        end if;
 
       Annotation_Font := Copy (Default_Font.Get_Pref_Font);
       Set_Size
@@ -593,8 +594,8 @@ package body Browsers.Canvas is
 
    begin
       if B.Item_Style = null then
-         B.Selected_Link_Color := To_Cairo (Selected_Link_Color.Get_Pref);
-         B.Unselected_Link_Color := To_Cairo (Unselected_Link_Color.Get_Pref);
+         B.Selected_Link_Color := Selected_Link_Color.Get_Pref;
+         B.Unselected_Link_Color := Unselected_Link_Color.Get_Pref;
 
          B.Item_Style := Copy (Get_Style (B.Canvas));
          Hook.Browser := B;
@@ -641,6 +642,7 @@ package body Browsers.Canvas is
       Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget);
+      pragma Unreferenced (Kernel);
       B            : constant General_Browser := General_Browser (Object);
       Mitem        : Gtk_Menu_Item;
       Sep          : Gtk_Separator_Menu_Item;
@@ -746,17 +748,18 @@ package body Browsers.Canvas is
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Zoom_In'Access, B);
-         Add_Accelerator
-           (Mitem, Gtk.Menu_Item.Signal_Activate,
-            Get_Default_Accelerators (Kernel), GDK_equal, 0, Accel_Visible);
+--           Add_Accelerator
+--             (Mitem, Gtk.Menu_Item.Signal_Activate,
+--              Get_Default_Accelerators (Kernel),
+--              GDK_equal, 0, Accel_Visible);
 
          Gtk_New (Mitem, Label => -"Zoom out");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Zoom_Out'Access, B);
-         Add_Accelerator
-           (Mitem, Gtk.Menu_Item.Signal_Activate,
-            Get_Default_Accelerators (Kernel), GDK_minus, 0, Accel_Visible);
+--           Add_Accelerator
+--             (Mitem, Gtk.Menu_Item.Signal_Activate,
+--            Get_Default_Accelerators (Kernel), GDK_minus, 0, Accel_Visible);
 
          Gtk_New (Zooms_Menu);
 
@@ -1197,9 +1200,9 @@ package body Browsers.Canvas is
          if not Is_Selected (Canvas, Canvas_Item (Get_Src (Link)))
            and then not Is_Selected (Canvas, Canvas_Item (Get_Dest (Link)))
          then
-            Set_Source_Color (Cr, Browser.Unselected_Link_Color);
+            Set_Source_Color (Cr, To_Cairo (Browser.Unselected_Link_Color));
          else
-            Set_Source_Color (Cr, Browser.Selected_Link_Color);
+            Set_Source_Color (Cr, To_Cairo (Browser.Selected_Link_Color));
          end if;
 
          Draw_Link
@@ -1321,27 +1324,30 @@ package body Browsers.Canvas is
       Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
       Cb     : Active_Area_Callback'Class)
    is
-      Thick         : constant Gint :=
-                        X_Thickness (Get_Item_Style (Item));
-      Button_Width  : constant Gint :=
-                        Get_Width  (Item.Browser.Close_Pixmap);
-      Button_Height : constant Gint :=
-                        Get_Height (Item.Browser.Close_Pixmap);
-      X             : Gint :=
-                        Item.Title_Coord.X + Item.Title_Coord.Width + Thick -
-                          (Num + 1) * (Margin + Button_Width);
-      Y, W, H       : Gint;
+      Style_Context : constant Gtk_Style_Context :=
+        Get_Style_Context (Get_Browser (Item));
+      Border        : Gtk.Style.Gtk_Border;
+      Thick         : Gint;
+      Button_Width  : Gint;
+      Button_Height : Gint;
+      X, Y, W, H    : Gint;
       Base          : Cairo_Color;
       Color         : Cairo_Color;
-      Style         : Gtk_Style renames Get_Item_Style (Item);
+--      Style         : Gtk_Style renames Get_Item_Style (Item);
       Ptrn          : Cairo_Pattern;
-      State         : Gtk_State_Type;
+--      State         : Gtk_State_Type;
 
       use type Gdk.Gdk_Drawable;
 
    begin
-      --  No title ? Don't draw any button
+      Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
+      Thick         := Border.Bottom;
+      Button_Width  := Get_Width  (Item.Browser.Close_Pixmap);
+      Button_Height := Get_Height (Item.Browser.Close_Pixmap);
+      X             := Item.Title_Coord.X + Item.Title_Coord.Width + Thick -
+                         (Num + 1) * (Margin + Button_Width);
 
+      --  No title ? Don't draw any button
       if Item.Title_Layout = null
         or else Surface (Item) = Null_Surface
       then
@@ -1365,13 +1371,14 @@ package body Browsers.Canvas is
       Ptrn := Cairo.Pattern.Create_Linear
         (0.0, Gdouble (Y), 0.0, Gdouble (Y + Button_Height - 1));
 
-      if Is_Selected (Canvas (Item), Item) then
-         State := State_Selected;
-      else
-         State := State_Normal;
-      end if;
-
-      Base := To_Cairo (Get_Base (Style, State));
+--        if Is_Selected (Canvas (Item), Item) then
+--           State := State_Selected;
+--        else
+--           State := State_Normal;
+--        end if;
+--
+--      Base := To_Cairo (Get_Base (Style, State));
+      Base := To_Cairo (White_RGBA);
 
       Color := Shade (Base, 1.3);
       Cairo.Pattern.Add_Color_Stop_Rgb (Ptrn, 0.0, Color.R, Color.G, Color.B);
@@ -1383,13 +1390,14 @@ package body Browsers.Canvas is
 
       --  Button's borders
       Draw_Shadow
-        (Cr, Get_Item_Style (Item),
-         Shadow_Out,
-         X - X_Thickness (Style),
-         Y - Y_Thickness (Style),
-         Button_Width + 2 * X_Thickness (Style),
-         Button_Height + 2 * Y_Thickness (Style),
-         2.0);
+        (Cr            => Cr,
+         Widget        => Get_Browser (Item),
+         Shadow_Type   => Shadow_Out,
+         X             => X - Border.Left,
+         Y             => Y - Border.Top,
+         Width         => Button_Width + Border.Left + Border.Right,
+         Height        => Button_Height + Border.Top + Border.Bottom,
+         Corner_Radius => 2.0);
 
       --  The icon
       X := X + (Button_Width - Get_Width (Pixbuf)) / 2;
@@ -1420,8 +1428,11 @@ package body Browsers.Canvas is
      (Item : access Browser_Item_Record;
       Cr   : Cairo.Cairo_Context)
    is
-      State    : Gtk_State_Type := State_Normal;
-      Style    : constant Gtk_Style := Get_Item_Style (Item);
+--        State    : Gtk_State_Type := State_Normal;
+--        Style    : constant Gtk_Style := Get_Item_Style (Item);
+      Style_Context : constant Gtk_Style_Context :=
+        Get_Style_Context (Get_Browser (Item));
+      Border        : Gtk.Style.Gtk_Border;
       W_L, H_L : Gint;
       Ptrn     : Cairo_Pattern;
       Base     : Cairo_Color;
@@ -1438,9 +1449,9 @@ package body Browsers.Canvas is
 
       Reset_Active_Areas (Item.all, Other_Areas => False);
 
-      if Is_Selected (Item.Browser.Canvas, Item) then
-         State := State_Selected;
-      end if;
+--        if Is_Selected (Item.Browser.Canvas, Item) then
+--           State := State_Selected;
+--        end if;
 
       --  The title background
       Rectangle
@@ -1450,7 +1461,8 @@ package body Browsers.Canvas is
       Ptrn := Create_Linear
         (0.0, Gdouble (Item.Title_Coord.Y), 0.0,
          Gdouble (Item.Title_Coord.Y + Item.Title_Coord.Height - 1));
-      Base := To_Cairo (Get_Base (Style, State));
+--      Base := To_Cairo (Get_Base (Style, State));
+      Base := To_Cairo (White_RGBA);
 
       Color := Shade (Base, 1.15);
       Add_Color_Stop_Rgb (Ptrn, 0.0, Color.R, Color.G, Color.B);
@@ -1465,15 +1477,28 @@ package body Browsers.Canvas is
 
       --  The title string
       Get_Pixel_Size (Item.Title_Layout, W_L, H_L);
+      Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
       Draw_Layout
-        (Cr, Get_Black (Style),
-         X      => Margin + Item.Title_Coord.X - X_Thickness (Style),
+        (Cr     => Cr,
+         Color  => To_Cairo (Black_RGBA),
+         X      => Margin + Item.Title_Coord.X - Border.Left,
          Y      => Item.Title_Coord.Y + (Item.Title_Coord.Height - H_L) / 2,
          Layout => Item.Title_Layout);
+--        Draw_Layout
+--          (Cr, Get_Black (Style),
+--           X      => Margin + Item.Title_Coord.X - X_Thickness (Style),
+--           Y    => Item.Title_Coord.Y + (Item.Title_Coord.Height - H_L) / 2,
+--           Layout => Item.Title_Layout);
 
       --  The separator between the title and the child part
+--        Draw_Line
+--          (Cr, Get_Black (Style),
+--           X1     => Item.Title_Coord.X,
+--           Y1     => Item.Title_Coord.Y + Item.Title_Coord.Height,
+--           X2     => Item.Title_Coord.X + Item.Title_Coord.Width,
+--           Y2     => Item.Title_Coord.Y + Item.Title_Coord.Height);
       Draw_Line
-        (Cr, Get_Black (Style),
+        (Cr, To_Cairo (Black_RGBA),
          X1     => Item.Title_Coord.X,
          Y1     => Item.Title_Coord.Y + Item.Title_Coord.Height,
          X2     => Item.Title_Coord.X + Item.Title_Coord.Width,
@@ -1560,13 +1585,18 @@ package body Browsers.Canvas is
       Button_Height : constant Gint := Get_Height (Item.Browser.Close_Pixmap);
       W, H          : Gint;
       Layout_H      : Gint := 0;
-      State         : Gtk_State_Type := State_Normal;
-      Style         : constant Gtk_Style := Get_Item_Style (Item);
+--        State         : Gtk_State_Type := State_Normal;
+--        Style         : constant Gtk_Style := Get_Item_Style (Item);
+
+      Style_Context : constant Gtk_Style_Context :=
+        Get_Style_Context (Get_Browser (Item));
+      Border        : Gtk.Style.Gtk_Border;
 
       use Gdk;
 
    begin
       Reset_Active_Areas (Item.all, Title_Bar_Areas => False);
+      Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
 
       if Item.Title_Layout /= null then
          Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
@@ -1575,15 +1605,27 @@ package body Browsers.Canvas is
               Num_Buttons * (Margin + Button_Width),
             Width);
          Item.Title_Coord :=
-           (X      => Xoffset + X_Thickness (Style),
-            Y      => Yoffset + Y_Thickness (Style),
-            Width  => W - 2 * X_Thickness (Style),
+           (X      => Xoffset + Border.Right,
+            Y      => Yoffset + Border.Bottom,
+            Width  => W - (Border.Left + Border.Right),
             Height =>
               Gint'Max
                 (Layout_H,
-                 Button_Height + 2 * Y_Thickness (Style)));
+                 Button_Height + Border.Top + Border.Bottom));
 
-         H := Item.Title_Coord.Height + 1 + Height + 2 * Y_Thickness (Style);
+         H := Item.Title_Coord.Height + 1 + Height +
+           Border.Top + Border.Bottom;
+--           Item.Title_Coord :=
+--             (X      => Xoffset + X_Thickness (Style),
+--              Y      => Yoffset + Y_Thickness (Style),
+--              Width  => W - 2 * X_Thickness (Style),
+--              Height =>
+--                Gint'Max
+--                  (Layout_H,
+--                   Button_Height + 2 * Y_Thickness (Style)));
+--
+--           H := Item.Title_Coord.Height + 1 + Height +
+--                2 * Y_Thickness (Style);
 
       else
          Item.Title_Coord := (others => 0);
@@ -1602,26 +1644,41 @@ package body Browsers.Canvas is
       Set_Screen_Size (Browser_Item (Item), W, H);
       Cr := Create (Item);
 
-      if Is_Selected (Canvas (Item), Item) then
-         State := State_Selected;
-      end if;
+--        if Is_Selected (Canvas (Item), Item) then
+--           State := State_Selected;
+--        end if;
 
+--        Draw_Rectangle
+--          (Cr, Get_Bg (Style, State),
+--           Filled => True,
+--           X      => Xoffset,
+--           Y      => Layout_H + Yoffset,
+--           Width  => W - Width_Offset,
+--           Height => H - Layout_H - Height_Offset,
+--           Corner_Radius => Gdouble (Margin - X_Thickness (Style)));
       Draw_Rectangle
-        (Cr, Get_Bg (Style, State),
+        (Cr, To_Cairo (Black_RGBA),
          Filled => True,
          X      => Xoffset,
          Y      => Layout_H + Yoffset,
          Width  => W - Width_Offset,
          Height => H - Layout_H - Height_Offset,
-         Corner_Radius => Gdouble (Margin - X_Thickness (Style)));
+         Corner_Radius => Gdouble (Margin - Border.Left));
 
+--        Draw_Shadow
+--          (Cr, Style, Shadow_Out,
+--           X      => Xoffset,
+--           Y      => Yoffset,
+--           Width  => W - Width_Offset - Xoffset,
+--           Height => H - Height_Offset - Yoffset,
+--           Corner_Radius => Gdouble (Margin - X_Thickness (Style)));
       Draw_Shadow
-        (Cr, Style, Shadow_Out,
+        (Cr, Get_Browser (Item), Shadow_Out,
          X      => Xoffset,
          Y      => Yoffset,
          Width  => W - Width_Offset - Xoffset,
          Height => H - Height_Offset - Yoffset,
-         Corner_Radius => Gdouble (Margin - X_Thickness (Style)));
+         Corner_Radius => Gdouble (Margin - Border.Left));
 
       if Item.Title_Layout /= null then
          Yoffset := Yoffset + Item.Title_Coord.Height + 1;
@@ -2355,11 +2412,11 @@ package body Browsers.Canvas is
       X2          : Gint;
       First, Last : Integer;
       In_Xref     : Boolean;
-      Color       : Gdk_Color;
+      Color       : Gdk_RGBA;
       W, H        : Gint;
       Num_In_Line : Natural;
       Text        : String_Access;
-      Style       : constant Gtk_Style := Get_Item_Style (Item);
+--      Style       : constant Gtk_Style := Get_Item_Style (Item);
 
       procedure Display (Text : String; Line : Xref_Line);
       --  Display Text on Item
@@ -2370,15 +2427,16 @@ package body Browsers.Canvas is
             return;
          end if;
 
-         Set_Text (Layout, Text);
+--           Set_Text (Layout, Text);
+--
+--           if In_Xref then
+--              Color := Get_Text (Style, State_Active);
+--           else
+--              Color := Get_Text (Style, State_Normal);
+--           end if;
+         Color := White_RGBA;
 
-         if In_Xref then
-            Color := Get_Text (Style, State_Active);
-         else
-            Color := Get_Text (Style, State_Normal);
-         end if;
-
-         Set_Source_Color (Cr, Color);
+         Set_Source_Color (Cr, To_Cairo (Color));
          Move_To (Cr, Gdouble (X2), Gdouble (Y));
          Pango.Cairo.Show_Layout (Cr, Pango_Layout (Layout));
 
