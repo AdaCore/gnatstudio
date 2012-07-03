@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Color;     use Gdk.Color;
+with Gdk.RGBA;      use Gdk.RGBA;
 with Gtk.Box;       use Gtk.Box;
 with Gtk.Dialog;    use Gtk.Dialog;
 with Gtk.Image;     use Gtk.Image;
@@ -56,12 +56,12 @@ package body Logo_Boxes is
       Title_Font : Pango.Font.Pango_Font_Description;
       Has_Separator : Boolean := True)
    is
-      Color       : Gdk_Color;
-      Style       : Gtk_Style;
+      Color       : Gdk_RGBA;
       Box, Vbox   : Gtk_Box;
       Event       : Gtk_Event_Box;
       Image       : Gtk_Image;
       Flags       : Gtk_Dialog_Flags := Modal or Destroy_With_Parent;
+      Success : Boolean;
    begin
       if not Has_Separator then
          Flags := Flags or No_Separator;
@@ -73,14 +73,7 @@ package body Logo_Boxes is
          Parent  => Parent,
          Flags   => Flags);
 
-      Color := Parse ("#FF0000");
-      Win.Error_Style := Copy (Get_Style (Win));
-      Set_Foreground (Win.Error_Style, State_Normal, Color);
-
-      Color := Parse (Bg_Color);
-      Style := Copy (Get_Style (Win));
-      Set_Background (Style, State_Normal, Color);
-      Set_Font_Description (Style, Title_Font);
+      Parse (Color, Bg_Color, Success);
 
       Gtk_New_Hbox (Box, False, 0);
       Pack_Start (Get_Content_Area (Win), Box, True, True, 0);
@@ -88,7 +81,7 @@ package body Logo_Boxes is
       --  Side box
 
       Gtk_New (Event);
-      Set_Style (Event, Style);
+      Event.Override_Background_Color (Gtk_State_Flag_Normal, Color);
       Pack_Start (Box, Event, False);
 
       Gtk_New_Vbox (Win.Side_Box, False, 6);
@@ -112,22 +105,19 @@ package body Logo_Boxes is
       Pack_Start (Box, Vbox, True, True, 0);
 
       Gtk_New (Event);
-      Set_Style (Event, Style);
+      Event.Override_Background_Color (Gtk_State_Flag_Normal, Color);
       Pack_Start (Vbox, Event, False);
       Gtk_New (Win.Title, Title);
       Set_Alignment (Win.Title, 0.5, 0.5);
       Set_Padding (Win.Title, 0, 10);
       Set_Line_Wrap (Win.Title, False);
-      Set_Style (Win.Title, Style);
+      Win.Title.Override_Font (Title_Font);
       Add (Event, Win.Title);
 
       --  Error box
 
-      Style := Copy (Get_Style (Win));
-      Set_Background (Style, State_Normal, White (Get_Default_Colormap));
-
       Gtk_New (Event);
-      Set_Style (Event, Style);
+      Event.Override_Background_Color (Gtk_State_Flag_Normal, White_RGBA);
       Pack_Start (Vbox, Event, False);
 
       Gtk_New (Win.Message, Title);
