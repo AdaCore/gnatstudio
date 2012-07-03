@@ -26,6 +26,7 @@ with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Gdk.Dnd;                    use Gdk.Dnd;
+with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
 with Gdk.Event;                  use Gdk.Event;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
@@ -345,13 +346,13 @@ package body Project_Explorers_Files is
       Tree    : constant Gtk_Tree_View := Gtk_Tree_View (Object);
       Model   : constant Gtk_Tree_Model := Tree.Get_Model;
       Context : constant Drag_Context :=
-                  Drag_Context (Get_Proxy (Nth (Args, 1)));
+                  Drag_Context (Get_Object (Nth (Args, 1)));
       X       : constant Gint := Get_Int (Nth (Args, 2));
       Y       : constant Gint := Get_Int (Nth (Args, 3));
       Data    : constant Selection_Data :=
                   Selection_Data (Get_Proxy (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
-      Action  : constant Drag_Action := Get_Action (Context);
+      Action  : constant Drag_Action := Get_Actions (Context);
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
    begin
@@ -621,7 +622,7 @@ package body Project_Explorers_Files is
                      D.Explorer.Scroll_To_Directory := True;
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Object_Return_Callback.Object_Connect
-                         (D.Explorer.File_Tree, Signal_Expose_Event,
+                         (D.Explorer.File_Tree, Signal_Draw,
                           Expose_Event_Cb'Access, D.Explorer, True);
                   end;
 
