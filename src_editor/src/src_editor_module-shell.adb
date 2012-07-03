@@ -1515,7 +1515,6 @@ package body Src_Editor_Module.Shell is
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
                Col := Parse (Color);
-               Alloc (Gtk.Widget.Get_Default_Colormap, Col);
                Modify_Base (Get_View (Box), State_Normal, Col);
             end if;
          end;

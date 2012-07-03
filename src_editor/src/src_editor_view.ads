@@ -24,6 +24,7 @@ with Cairo;                  use Cairo;
 with Glib.Main;
 with Gdk.Color;
 with Gdk.Event;
+with Gdk.RGBA;
 with Glib;                   use Glib;
 with Gtk.Drawing_Area;
 with Gtk.Scrolled_Window;
@@ -175,7 +176,7 @@ private
       Kernel              : GPS.Kernel.Kernel_Handle;
       Saved_Cursor_Mark   : Gtk_Text_Mark;
 
-      Current_Line_Color  : Gdk.Color.Gdk_Color;
+      Current_Line_Color  : Gdk.RGBA.Gdk_RGBA;
 
       Highlight_Current   : Boolean := False;
       Highlight_As_Line   : Boolean := False;

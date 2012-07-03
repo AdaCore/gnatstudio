@@ -27,6 +27,7 @@ with Gdk.Cairo;                  use Gdk.Cairo;
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Rectangle;              use Gdk.Rectangle;
+with Gdk.RGBA;                   use Gdk.RGBA;
 with Gdk.Window;                 use Gdk.Window;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
@@ -1093,7 +1094,7 @@ package body Src_Editor_View is
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
-            Set_Source_Color (Cr, View.Current_Line_Color);
+            Set_Source_RGBA (Cr, View.Current_Line_Color);
 
             if View.Highlight_As_Line then
                Move_To (Cr,
@@ -1474,7 +1475,7 @@ package body Src_Editor_View is
 
       if Win /= null then
          Get_Geometry (Win, X, Y, W, H, D);
-         Clear_Area_E (Win, X, Y, W, H);
+         Invalidate_Rect (Win, (X, Y, W, H), False); --  ??? Was Clear_Area_E
          Invalidate_Window (View);
       end if;
 
@@ -1594,8 +1595,7 @@ package body Src_Editor_View is
       end if;
 
       Source.Current_Line_Color := Current_Line_Color.Get_Pref;
-      Source.Highlight_Current :=
-        not Equal (Source.Current_Line_Color, White (Get_Default_Colormap));
+      Source.Highlight_Current := Source.Current_Line_Color /= White_RGBA;
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1683,7 +1683,7 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class;
       Iter : out Gtk.Text_Iter.Gtk_Text_Iter) is
    begin
-      if Has_Focus_Is_Set (View) then
+      if View.Has_Focus then
          Get_Cursor_Position (Source_Buffer (Get_Buffer (View)), Iter);
       else
          Get_Iter_At_Mark (Get_Buffer (View), Iter, View.Saved_Cursor_Mark);
