@@ -527,7 +527,7 @@ package body Build_Configurations.Gtkada is
       Label         : Gtk_Label;
       Main_Hbox     : Gtk_Hbox;
       Box           : Target_UI_Access;
-      Combo         : Gtk_Combo_Box;
+      Combo         : Gtk_Combo_Box_Text;
       Top_Box       : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
       Locations_Frame : Gtk_Frame;
