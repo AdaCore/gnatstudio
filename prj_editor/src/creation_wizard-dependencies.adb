@@ -17,6 +17,8 @@
 
 with Ada.Containers.Hashed_Sets;
 with Glib;                             use Glib;
+with Glib.Object;
+
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Button;                       use Gtk.Button;
 with Gtk.Dialog;                       use Gtk.Dialog;
@@ -25,6 +27,7 @@ with Gtk.Label;                        use Gtk.Label;
 with Gtk.Handlers;                     use Gtk.Handlers;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
 with Gtk.Stock;                        use Gtk.Stock;
+with Gtk.Cell_Layout;                  use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer;                use Gtk.Cell_Renderer;
 with Gtk.Tree_View;                    use Gtk.Tree_View;
 with Gtk.Tree_View_Column;             use Gtk.Tree_View_Column;
@@ -438,7 +441,7 @@ package body Creation_Wizard.Dependencies is
       Label     : Gtk_Label;
       Button    : Gtk_Button;
       Scrolled  : Gtk_Scrolled_Window;
-      List      : Cell_Renderer_List.Glist;
+      List      : Glib.Object.Object_Simple_List.Glist;
    begin
       Page.Kernel := Get_Kernel (Wiz);
       Page.Project := Get_Project (Project_Wizard (Wiz));
@@ -472,12 +475,12 @@ package body Creation_Wizard.Dependencies is
       Add (Scrolled, Page.Tree);
       Model := Gtk_Tree_Store (Get_Model (Page.Tree));
 
-      List := Get_Cell_Renderers (Get_Column (Page.Tree, Is_Limited_Column));
+      List := Get_Cells (+Get_Column (Page.Tree, Is_Limited_Column));
       Add_Attribute
         (Get_Column (Page.Tree, Is_Limited_Column),
-         Cell_Renderer_List.Get_Data (List),
+         Gtk_Cell_Renderer (Glib.Object.Object_Simple_List.Get_Data (List)),
          "activatable", Can_Change_Limited_Column);
-      Cell_Renderer_List.Free (List);
+      Glib.Object.Object_Simple_List.Free (List);
 
       Add_Imported_Projects (Get_Project (Project_Wizard (Wiz)), Model);
 
