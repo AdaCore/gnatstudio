@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Gdk.Pixbuf;              use Gdk.Pixbuf;
-with Gdk.Color;               use Gdk.Color;
 with Gdk.Event;               use Gdk.Event;
+with Gdk.RGBA;                use Gdk.RGBA;
 with Gdk.Window;              use Gdk.Window;
 with Gdk;                     use Gdk;
 with Glib;                    use Glib;
@@ -1027,8 +1027,8 @@ package body GVD.Canvas is
 
    procedure Initialize_GC (Canvas : access GVD_Canvas_Record'Class) is
    begin
-      Canvas.Item_Context.Foreground := Black (Get_Default_Colormap);
-      Canvas.Tooltip_Context.Foreground := Black (Get_Default_Colormap);
+      Canvas.Item_Context.Foreground := Black_RGBA;
+      Canvas.Tooltip_Context.Foreground := Black_RGBA;
 
       Canvas.Item_Context.Xref_Color := Xref_Color.Get_Pref;
       Canvas.Tooltip_Context.Xref_Color := Xref_Color.Get_Pref;
@@ -1039,7 +1039,7 @@ package body GVD.Canvas is
       Canvas.Item_Context.Selection_Color := Selected_Item_Color.Get_Pref;
       Canvas.Tooltip_Context.Selection_Color := Selected_Item_Color.Get_Pref;
 
-      Canvas.Box_Context.Black_Color := Black (Get_Default_Colormap);
+      Canvas.Box_Context.Black_Color := Black_RGBA;
       Canvas.Box_Context.Grey_Color := Title_Color.Get_Pref;
       Canvas.Box_Context.Thaw_Bg_Color := Thaw_Bg_Color.Get_Pref;
       Canvas.Box_Context.Freeze_Bg_Color := Freeze_Bg_Color.Get_Pref;
