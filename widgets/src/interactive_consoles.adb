@@ -1499,7 +1499,7 @@ package body Interactive_Consoles is
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Gdk_Color := Null_Color;
+      Highlight           : Gdk_RGBA := Null_RGBA;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
@@ -1522,7 +1522,7 @@ package body Interactive_Consoles is
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Gdk_Color := Null_Color;
+      Highlight           : Gdk_RGBA := Null_RGBA;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
@@ -1545,8 +1545,8 @@ package body Interactive_Consoles is
       Gtk.Scrolled_Window.Initialize (Console);
       Set_Policy
         (Console,
-         H_Scrollbar_Policy => Policy_Automatic,
-         V_Scrollbar_Policy => Policy_Automatic);
+         Hscrollbar_Policy => Policy_Automatic,
+         Vscrollbar_Policy => Policy_Automatic);
 
       if ANSI_Support then
          Gtk_New (Term, Prevent_Cursor_Motion_With_Mouse => True);
@@ -1580,7 +1580,7 @@ package body Interactive_Consoles is
 
       Gtk_New (Console.Highlight_Tag);
 
-      if Console.Highlight /= Null_Color then
+      if Console.Highlight /= Null_RGBA then
          Set_Property
            (Console.Highlight_Tag, Foreground_Gdk_Property,
             Console.Highlight);
@@ -1725,7 +1725,7 @@ package body Interactive_Consoles is
 
    procedure Set_Highlight_Color
      (Console : access Interactive_Console_Record'Class;
-      Color   : Gdk_Color) is
+      Color   : Gdk_RGBA) is
    begin
       Set_Property (Console.Highlight_Tag, Foreground_Gdk_Property, Color);
    end Set_Highlight_Color;
