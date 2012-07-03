@@ -24,7 +24,7 @@ with Cairo.Image_Surface;       use Cairo.Image_Surface;
 with Cairo.Surface;             use Cairo.Surface;
 
 with Glib;                      use Glib;
-with Gdk.Color;                 use Gdk, Gdk.Color;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Cairo;                 use Gdk.Cairo;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;
@@ -225,7 +225,7 @@ package body Src_Editor_Box.Tooltips is
 
       --  Border
       Cairo.Rectangle (Cr, 0.0, 0.0, Gdouble (Width), Gdouble (Height));
-      Set_Source_Color (Cr, Black (Get_Default_Colormap));
+      Set_Source_RGBA (Cr, Black_RGBA);
       Stroke (Cr);
 
       Destroy (Cr);
