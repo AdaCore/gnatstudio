@@ -29,7 +29,7 @@ with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with XML_Utils;              use XML_Utils;
 
-with Gdk.Color;              use Gdk.Color;
+--  with Gdk.Color;              use Gdk.Color;
 
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Button;             use Gtk.Button;
@@ -85,6 +85,7 @@ package body Remote.View is
       Set_Default_Button : Gtk_Button;
       Normal_Style       : Gtk_Style;
       Modified_Style     : Gtk_Style;
+      --  ??? Gtk3: These need to be converted to Gtk.Style_Context
       Connecting         : Boolean := False;
    end record;
    type Remote_View is access all Remote_View_Record'Class;
@@ -223,8 +224,8 @@ package body Remote.View is
       Server_Label   : Gtk_Label;
       Simple_Table   : Gtk_Table;
       Full_Table     : Gtk_Table;
-      Color          : Gdk_Color;
-      Success        : Boolean;
+--        Color          : Gdk_Color;
+--        Success        : Boolean;
       Hbox           : Gtk_Hbox;
       Buttons_Box    : Gtk_Hbox;
       To_Local_Img   : Gtk_Image;
@@ -401,10 +402,10 @@ package body Remote.View is
       --  Styles
       Gtk_New (View.Normal_Style);
       Gtk_New (View.Modified_Style);
-      Color := Parse ("red");
-      for State in Gtk_State_Type loop
-         Set_Text (View.Modified_Style, State, Color);
-      end loop;
+--        Color := Parse ("red");
+--        for State in Gtk_State_Type loop
+--           Set_Color (View.Modified_Style, State, Color);
+--        end loop;
 
       --  Buttons
 
