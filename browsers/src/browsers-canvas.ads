@@ -23,6 +23,7 @@ with Cairo;
 with Gdk.Event;
 with Gdk.Pixbuf;
 with Gdk.Rectangle;
+with Gdk.RGBA; use Gdk.RGBA;
 
 with Glib.Object;
 
@@ -35,7 +36,6 @@ with Gtk.Style;
 with Gtk.Widget;
 
 with Gtkada.Canvas;
-with Gtkada.Style;
 
 with Pango.Layout;
 
@@ -535,8 +535,8 @@ private
       Kernel                   : GPS.Kernel.Kernel_Handle;
       Toolbar                  : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
-      Selected_Link_Color      : Gtkada.Style.Cairo_Color;
-      Unselected_Link_Color    : Gtkada.Style.Cairo_Color;
+      Selected_Link_Color      : Gdk_RGBA;
+      Unselected_Link_Color    : Gdk_RGBA;
       Item_Style               : Gtk.Style.Gtk_Style;
       --  The following colors are used from this style:
       --  Bg[NORMAL|SELECTED]: the background of the item
