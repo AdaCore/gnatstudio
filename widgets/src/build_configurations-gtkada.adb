@@ -1027,7 +1027,6 @@ package body Build_Configurations.Gtkada is
       --  Add everything to the dialog/window
 
       Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
-      Set_Has_Separator (Dialog, False);
 
       Refresh (UI, "");
 
@@ -1209,7 +1208,6 @@ package body Build_Configurations.Gtkada is
       --  Add everything to the dialog/window
 
       Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
-      Set_Has_Separator (Dialog, False);
 
       Refresh (UI);
       Show_All (Dialog);
@@ -1449,7 +1447,6 @@ package body Build_Configurations.Gtkada is
       --  Add everything to the dialog/window
 
       Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
-      Set_Has_Separator (Dialog, False);
 
       --  Create the target UI itself
 
