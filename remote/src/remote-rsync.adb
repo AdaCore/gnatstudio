@@ -423,7 +423,7 @@ package body Remote.Rsync is
                     (Cb_Data.Dialog.Abort_Button, Signal_Clicked,
                      On_Abort_Clicked'Access,
                      Cb_Data.Dialog);
-                  Gtk.Main.Grab_Add (Cb_Data.Dialog);
+                  Cb_Data.Dialog.Grab_Add;
                end if;
 
                Real_Print_Output :=
@@ -783,7 +783,7 @@ package body Remote.Rsync is
 
       if Cb_Data.Synchronous and then Cb_Data.Dialog /= null then
          Hide (Cb_Data.Dialog);
-         Gtk.Main.Grab_Remove (Cb_Data.Dialog);
+         Cb_Data.Dialog.Grab_Remove;
          Cb_Data.Dialog := null;
       end if;
 
