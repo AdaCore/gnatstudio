@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Default implementation (non Windows systems)
-
 with Glib; use Glib;
 
 package body Gtk_Utils is
