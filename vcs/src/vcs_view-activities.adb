@@ -18,13 +18,13 @@
 with Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
+with Glib.Main;                 use Glib.Main;
 with Glib.Values;               use Glib.Values;
 
 with Gtk;                       use Gtk;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 
@@ -53,7 +53,8 @@ package body VCS_View.Activities is
    -- Local constants --
    ---------------------
 
-   package Activities_Idle is new Gtk.Main.Idle (VCS_Activities_View_Access);
+   package Activities_Idle is new Glib.Main.Generic_Sources
+     (VCS_Activities_View_Access);
    use Activities_Idle;
    function Start_Editing_Idle
      (Explorer : VCS_Activities_View_Access) return Boolean;
@@ -214,7 +215,7 @@ package body VCS_View.Activities is
                    Get_Activities_Explorer (Kernel, False, False);
       Activity : Activity_Id;
       Iter     : Gtk_Tree_Iter;
-      Id       : Idle_Handler_Id;
+      Id       : G_Source_Id;
       pragma Unreferenced (Id);
    begin
       Activity := New_Activity (Kernel);
@@ -228,8 +229,8 @@ package body VCS_View.Activities is
 
       Explorer.Iter := Iter;
 
-      Id := Add (Start_Editing_Idle'Access, Explorer,
-                 Priority => Priority_High_Idle);
+      Id := Idle_Add (Start_Editing_Idle'Access, Explorer,
+                      Priority => Priority_High_Idle);
    end On_Create_Activity;
 
    ------------------------

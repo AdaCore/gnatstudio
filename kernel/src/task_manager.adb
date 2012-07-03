@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib.Main;        use Glib.Main;
-with Gtk.Main;         use Gtk.Main;
 with Traces;           use Traces;
 
 with Task_Manager.GUI; use Task_Manager.GUI;
@@ -25,7 +24,8 @@ package body Task_Manager is
 
    Timeout : constant := 100;
 
-   package Task_Manager_Idle is new Gtk.Main.Idle (Task_Manager_Access);
+   package Task_Manager_Idle is new Glib.Main.Generic_Sources
+     (Task_Manager_Access);
    package Task_Manager_Timeout is new Glib.Main.Generic_Sources
      (Task_Manager_Access);
 
@@ -318,7 +318,7 @@ package body Task_Manager is
      (Manager : Task_Manager_Access;
       Active  : Boolean)
    is
-      Unused_Handler  : Idle_Handler_Id;
+      Unused_Handler  : G_Source_Id;
       Unused_Id       : G_Source_Id;
       Result          : Command_Return_Type;
       pragma Unreferenced (Unused_Handler, Unused_Id, Result);
@@ -335,7 +335,7 @@ package body Task_Manager is
          Manager.Running_Active := True;
 
          if Active_Incremental (Manager) then
-            Unused_Handler := Task_Manager_Idle.Add
+            Unused_Handler := Task_Manager_Idle.Idle_Add
               (Active_Incremental'Access, Manager);
          end if;
       end if;

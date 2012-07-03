@@ -22,10 +22,10 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Commands;
 with Gtkada.MDI;         use Gtkada.MDI;
+with Glib.Main;
 with Gtk.Accel_Group;
 with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Icon_Factory;
-with Gtk.Main;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Widget;
@@ -261,7 +261,7 @@ package GPS.Kernel.MDI is
    -- Misc Gtk+ Related Subprograms --
    -----------------------------------
 
-   package Object_Idle is new Gtk.Main.Idle (Glib.Object.GObject);
+   package Object_Idle is new Glib.Main.Generic_Sources (Glib.Object.GObject);
    --  General Idle loop for a GObject
 
    function Get_Current_Focus_Widget

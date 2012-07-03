@@ -899,9 +899,9 @@ package body Gtkada.File_Selector is
 
          if Win.Display_Idle_Handler = 0 then
             Win.Display_Idle_Handler :=
-              Add (Display_File'Access,
-                   Win,
-                   Destroy => On_Display_Idle_Destroy'Access);
+              Idle_Add (Display_File'Access,
+                        Win,
+                        Notify => On_Display_Idle_Destroy'Access);
          end if;
 
          return False;
@@ -1008,9 +1008,9 @@ package body Gtkada.File_Selector is
       begin
          if Win.Read_Idle_Handler = 0 then
             Win.Read_Idle_Handler :=
-              Add (Read_File'Access,
-                   File_Selector_Window_Access (Win),
-                   Destroy => On_Read_Idle_Destroy'Access);
+              Idle_Add (Read_File'Access,
+                        File_Selector_Window_Access (Win),
+                        Notify => On_Read_Idle_Destroy'Access);
          end if;
 
       exception
@@ -1429,11 +1429,11 @@ package body Gtkada.File_Selector is
       Free (Win.Filters);
 
       if Win.Display_Idle_Handler /= 0 then
-         Idle_Remove (Win.Display_Idle_Handler);
+         Remove (Win.Display_Idle_Handler);
       end if;
 
       if Win.Read_Idle_Handler /= 0 then
-         Idle_Remove (Win.Read_Idle_Handler);
+         Remove (Win.Read_Idle_Handler);
       end if;
 
    exception

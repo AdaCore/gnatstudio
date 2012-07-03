@@ -30,10 +30,10 @@ with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
+with Glib.Main;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -116,7 +116,7 @@ package body Browsers.Entities is
    type Type_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with record
       Primitive_Button : Gdk.Pixbuf.Gdk_Pixbuf;
-      Idle_Id          : Gtk.Main.Idle_Handler_Id := 0;
+      Idle_Id          : Glib.Main.G_Source_Id := 0;
    end record;
    type Type_Browser is access all Type_Browser_Record'Class;
 

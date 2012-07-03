@@ -24,6 +24,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
+with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
@@ -36,7 +37,6 @@ with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -181,7 +181,8 @@ package body Bookmark_Views is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands for this module
 
-   package Bookmark_Idle is new Gtk.Main.Idle (Bookmark_View_Access);
+   package Bookmark_Idle is new Glib.Main.Generic_Sources
+     (Bookmark_View_Access);
    use Bookmark_Idle;
    function Start_Editing_Idle (View : Bookmark_View_Access) return Boolean;
    --  Function called to start editing the selected line. This is necessary
@@ -432,7 +433,7 @@ package body Bookmark_Views is
                 Gtk_Tree_Store (Get_Model (View.Tree));
       Iter  : Gtk_Tree_Iter;
 
-      Ignore : Idle_Handler_Id;
+      Ignore : G_Source_Id;
       pragma Unreferenced (Command, Ignore);
    begin
       if Context.Event /= null then
@@ -445,8 +446,8 @@ package body Bookmark_Views is
             --  the focus when the menu is hidden, and stops the edition
             --  immediately.
 
-            Ignore := Add (Start_Editing_Idle'Access, View,
-                           Priority => Priority_High_Idle);
+            Ignore := Idle_Add (Start_Editing_Idle'Access, View,
+                                Priority => Priority_High_Idle);
             return Success;
          end if;
       end if;
@@ -608,7 +609,7 @@ package body Bookmark_Views is
       View   : Bookmark_View_Access;
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
-      Ignore : Idle_Handler_Id;
+      Ignore : G_Source_Id;
       pragma Unreferenced (Ignore);
 
    begin
@@ -646,8 +647,8 @@ package body Bookmark_Views is
 
          --  Register a callback for editing the selected node
 
-         Ignore := Add
-           (Start_Editing_Idle'Access, View, Priority => Priority_Low_Idle);
+         Ignore := Idle_Add
+           (Start_Editing_Idle'Access, View, Priority => Priority_Low);
          return Success;
       end if;
       return Failure;

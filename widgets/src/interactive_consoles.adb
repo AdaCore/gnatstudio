@@ -30,6 +30,7 @@ with Basic_Types;         use Basic_Types;
 with Config;              use Config;
 
 with Glib;                use Glib;
+with Glib.Main;           use Glib.Main;
 with Glib.Convert;
 with Glib.Values;         use Glib.Values;
 with Glib.Object;         use Glib.Object;
@@ -67,7 +68,7 @@ with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 package body Interactive_Consoles is
    Me : constant Debug_Handle := Create ("Console");
 
-   package Console_Idle is new Gtk.Main.Idle (Interactive_Console);
+   package Console_Idle is new Glib.Main.Generic_Sources (Interactive_Console);
 
    ---------------------------------
    -- Interactive_Virtual_Console --
@@ -985,7 +986,7 @@ package body Interactive_Consoles is
       if Console.Idle_Registered
         and then Console.Idle_Id /= 0
       then
-         Idle_Remove (Console.Idle_Id);
+         Remove (Console.Idle_Id);
          Console.Idle_Id := 0;
       end if;
 
@@ -1375,10 +1376,10 @@ package body Interactive_Consoles is
       Console.Idle_Registered := True;
 
       Console.Idle_Id :=
-        Console_Idle.Add
+        Console_Idle.Idle_Add
           (Place_Cursor_At_Prompt'Access,
            Console,
-           Destroy => Destroy_Idle'Access);
+           Notify => Destroy_Idle'Access);
    end Replace_Cursor;
 
    ----------------------
@@ -1448,7 +1449,7 @@ package body Interactive_Consoles is
       if C.Idle_Registered
         and then C.Idle_Id /= 0
       then
-         Idle_Remove (C.Idle_Id);
+         Remove (C.Idle_Id);
          C.Idle_Id := 0;
       end if;
 

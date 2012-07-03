@@ -28,6 +28,7 @@ with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Types;                         use Gdk.Types;
 with Gdk;                               use Gdk;
 
+with Glib.Main;
 with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;                       use Glib.Values;
@@ -40,7 +41,6 @@ with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.GEntry;                        use Gtk.GEntry;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
-with Gtk.Main;                          use Gtk.Main;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Rc;                            use Gtk.Rc;
 with Gtk.Size_Group;                    use Gtk.Size_Group;
@@ -709,7 +709,7 @@ package body Src_Editor_Module is
       Src         : Source_Editor_Box;
       F           : Virtual_File;
       Str         : XML_Utils.String_Ptr;
-      Id          : Idle_Handler_Id;
+      Id          : Glib.Main.G_Source_Id;
       Line        : Editable_Line_Type := 1;
       Column      : Visible_Column_Type := 1;
       Real_Column : Character_Offset_Type;

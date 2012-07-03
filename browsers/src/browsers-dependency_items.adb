@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Glib;                    use Glib;
+with Glib.Main;               use Glib.Main;
 with Glib.Object;             use Glib.Object;
 
 with Cairo;                   use Cairo;
@@ -23,7 +24,6 @@ with Cairo;                   use Cairo;
 with Gdk.Event;               use Gdk.Event;
 
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
-with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
@@ -106,7 +106,7 @@ package body Browsers.Dependency_Items is
    type Dependency_Browser_Record is new
      Browsers.Canvas.General_Browser_Record with
    record
-      Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
+      Idle_Id : Glib.Main.G_Source_Id := 0;
    end record;
    type Dependency_Browser is access all Dependency_Browser_Record'Class;
 
@@ -200,7 +200,7 @@ package body Browsers.Dependency_Items is
       Recompute_Layout : Boolean;
    end record;
    package Dependency_Idle is
-     new Gtk.Main.Idle (Examine_Dependencies_Idle_Data);
+     new Glib.Main.Generic_Sources (Examine_Dependencies_Idle_Data);
 
    procedure Examine_Dependencies
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -473,7 +473,7 @@ package body Browsers.Dependency_Items is
       B : constant Dependency_Browser := Dependency_Browser (Browser);
    begin
       if B.Idle_Id /= 0 then
-         Idle_Remove (B.Idle_Id);
+         Remove (B.Idle_Id);
       end if;
    end On_Destroy;
 
@@ -778,11 +778,11 @@ package body Browsers.Dependency_Items is
          Include_Self => False);
 
       if Interactive then
-         Browser.Idle_Id := Dependency_Idle.Add
-           (Cb       => Examine_Ancestors_Idle'Access,
-            D        => Data,
-            Priority => Priority_Low_Idle,
-            Destroy  => Destroy_Idle'Access);
+         Browser.Idle_Id := Dependency_Idle.Idle_Add
+           (Func     => Examine_Ancestors_Idle'Access,
+            Data     => Data,
+            Priority => Priority_Low,
+            Notify   => Destroy_Idle'Access);
       else
          while Examine_Ancestors_Idle (Data) loop
             null;

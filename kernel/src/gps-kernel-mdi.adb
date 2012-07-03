@@ -37,6 +37,7 @@ with Gtk.Container;            use Gtk.Container;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Label;                use Gtk.Label;
+with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;

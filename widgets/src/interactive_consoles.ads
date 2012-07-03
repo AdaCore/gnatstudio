@@ -27,8 +27,8 @@ with GNAT.Strings;
 with Gdk.RGBA; use Gdk.RGBA;
 with Gdk.Types;
 with Glib;
+with Glib.Main;
 with Gtk.Enums;
-with Gtk.Main;
 with Gtk.Text_Buffer;
 with Gtk.Text_View;
 with Gtk.Text_Mark;
@@ -402,7 +402,7 @@ private
       Current_Position : Integer := -1;
       --  The current position when browsing the command history
 
-      Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
+      Idle_Id : Glib.Main.G_Source_Id := 0;
       Idle_Registered : Boolean := False;
       --  The handler for idle callbacks
 

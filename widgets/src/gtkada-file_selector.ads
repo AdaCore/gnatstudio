@@ -51,6 +51,8 @@
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
+with Glib.Main;           use Glib.Main;
+
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Pixbuf;          use Gdk.Pixbuf;
 
@@ -59,7 +61,6 @@ with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Label;           use Gtk.Label;
-with Gtk.Main;            use Gtk.Main;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Tool_Button;     use Gtk.Tool_Button;
 with Gtk.Tree_Store;      use Gtk.Tree_Store;
@@ -255,7 +256,8 @@ private
    package Filter_List is new Generic_List (File_Filter, Free);
    use Filter_List;
 
-   package File_Selector_Idle is new Idle (File_Selector_Window_Access);
+   package File_Selector_Idle is new Glib.Main.Generic_Sources
+     (File_Selector_Window_Access);
    use File_Selector_Idle;
 
    package Dir_Stack is new Generic_Stack (GNATCOLL.VFS.Virtual_File);
@@ -301,10 +303,10 @@ private
       Moving_Through_History : Boolean := True;
       --  Set to true in case we are navigating using the back/forward buttons
 
-      Read_Idle_Handler      : Idle_Handler_Id := 0;
+      Read_Idle_Handler      : G_Source_Id := 0;
       --  Identifier for read idle loops
 
-      Display_Idle_Handler   : Idle_Handler_Id := 0;
+      Display_Idle_Handler   : G_Source_Id := 0;
       --  Identifier for display idle loops
 
       Home_Directory         : GNATCOLL.VFS.Virtual_File :=

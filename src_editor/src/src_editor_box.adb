@@ -804,7 +804,7 @@ package body Src_Editor_Box is
 
       --  Remove the idle handler if it was registered
       if Box.Check_Timestamp_Registered then
-         Idle_Remove (Box.Check_Timestamp_Id);
+         Glib.Main.Remove (Box.Check_Timestamp_Id);
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1168,7 +1168,7 @@ package body Src_Editor_Box is
       if not B.Check_Timestamp_Registered then
          B.Check_Timestamp_Registered := True;
          B.Check_Timestamp_Id :=
-           Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
+           Object_Idle.Idle_Add (Check_Timestamp_Idle'Access, GObject (Box));
       end if;
 
       --  Connect the Undo/Redo buttons to the buffer

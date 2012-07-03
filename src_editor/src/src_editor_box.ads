@@ -27,13 +27,13 @@
 with Ada.Unchecked_Deallocation;
 
 with Glib;
+with Glib.Main;
 with Glib.Object;
 with Gdk.Event;
 
 with Gtk.Box;
 with Gtk.Label;
 with Gtk.Menu;
-with Gtk.Main;
 with Gtk.Handlers;
 with Gtk.Separator;
 with Gtk.Text_Mark;
@@ -526,7 +526,7 @@ private
       Buffer_Info_Frames   : Frames_Array_Access := null;
 
       Check_Timestamp_Registered : Boolean := False;
-      Check_Timestamp_Id         : Gtk.Main.Idle_Handler_Id;
+      Check_Timestamp_Id         : Glib.Main.G_Source_Id;
       --  Used to protect the idle handler from being called after the box is
       --  destroyed.
    end record;
