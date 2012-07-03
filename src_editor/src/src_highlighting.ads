@@ -21,7 +21,7 @@
 --  also line or word highlighting, etc).
 --  </description>
 
-with Gdk.Color;
+with Gdk.RGBA;
 with Gtk.Text_Tag;
 with Pango.Font;
 
@@ -61,26 +61,26 @@ package Src_Highlighting is
 
    procedure Create_Syntax_Tags
      (Result                      : in out Highlighting_Tags;
-      Type_Color                  : Gdk.Color.Gdk_Color;
-      Type_Color_Bg               : Gdk.Color.Gdk_Color;
+      Type_Color                  : Gdk.RGBA.Gdk_RGBA;
+      Type_Color_Bg               : Gdk.RGBA.Gdk_RGBA;
       Type_Font_Desc              : Pango.Font.Pango_Font_Description := null;
-      Block_Color                 : Gdk.Color.Gdk_Color;
-      Block_Color_Bg              : Gdk.Color.Gdk_Color;
+      Block_Color                 : Gdk.RGBA.Gdk_RGBA;
+      Block_Color_Bg              : Gdk.RGBA.Gdk_RGBA;
       Block_Font_Desc             : Pango.Font.Pango_Font_Description := null;
-      Keyword_Color               : Gdk.Color.Gdk_Color;
-      Keyword_Color_Bg            : Gdk.Color.Gdk_Color;
+      Keyword_Color               : Gdk.RGBA.Gdk_RGBA;
+      Keyword_Color_Bg            : Gdk.RGBA.Gdk_RGBA;
       Keyword_Font_Desc           : Pango.Font.Pango_Font_Description := null;
-      Comment_Color               : Gdk.Color.Gdk_Color;
-      Comment_Color_Bg            : Gdk.Color.Gdk_Color;
+      Comment_Color               : Gdk.RGBA.Gdk_RGBA;
+      Comment_Color_Bg            : Gdk.RGBA.Gdk_RGBA;
       Comment_Font_Desc           : Pango.Font.Pango_Font_Description := null;
-      Annotated_Comment_Color     : Gdk.Color.Gdk_Color;
-      Annotated_Comment_Color_Bg  : Gdk.Color.Gdk_Color;
+      Annotated_Comment_Color     : Gdk.RGBA.Gdk_RGBA;
+      Annotated_Comment_Color_Bg  : Gdk.RGBA.Gdk_RGBA;
       Annotated_Comment_Font_Desc : Pango.Font.Pango_Font_Description := null;
-      Character_Color             : Gdk.Color.Gdk_Color;
-      Character_Color_Bg          : Gdk.Color.Gdk_Color;
+      Character_Color             : Gdk.RGBA.Gdk_RGBA;
+      Character_Color_Bg          : Gdk.RGBA.Gdk_RGBA;
       Character_Font_Desc         : Pango.Font.Pango_Font_Description := null;
-      String_Color                : Gdk.Color.Gdk_Color;
-      String_Color_Bg             : Gdk.Color.Gdk_Color;
+      String_Color                : Gdk.RGBA.Gdk_RGBA;
+      String_Color_Bg             : Gdk.RGBA.Gdk_RGBA;
       String_Font_Desc            : Pango.Font.Pango_Font_Description := null);
    --  Create or update a Highlighting_Tags object using the given color names.
    --  If some colors name can not be parsed, then no special color will be
@@ -88,7 +88,7 @@ package Src_Highlighting is
 
    procedure Create_Highlight_Line_Tag
      (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Color : Gdk.Color.Gdk_Color);
+      Color : Gdk.RGBA.Gdk_RGBA);
    --  Create a tag and set the Background_Gdk property using the given Color.
    --  The priority of this Tag is guarantied to exceed the priority of the
    --  syntax highlighting tags to ensure that highlighting a part of the
