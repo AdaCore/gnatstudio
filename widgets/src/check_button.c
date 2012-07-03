@@ -15,8 +15,7 @@
 -- of the license.                                                          --
 ----------------------------------------------------------------------------*/
 
-#include <gtk/gtkbutton.h>
-#include <gtk/gtktogglebutton.h>
+#include <gtk/gtk.h>
 
 void (* clicked_orig) (GtkButton *button);
 
@@ -34,6 +33,6 @@ void gtkada_check_button_clicked (GtkButton *button)
 
 void gtkada_check_button_force_state (GtkToggleButton *button, int state)
 {
-   button->active = state;
+   gtk_toggle_button_set_active (button, state);
 }
 
