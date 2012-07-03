@@ -29,12 +29,12 @@ with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Glib.Types;                use Glib.Types;
 
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Clipboard;             use Gtk.Clipboard;
-with Gtk.Combo_Box;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Editable;              use Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -110,6 +110,13 @@ package body Vsearch is
        & " unselected, the focus is left on the search window, which means"
        & " you can keep typing Enter to go to the next search, but can't"
        & " modify the editor directly");
+
+   package Implements_Editable is new Glib.Types.Implements
+     (Gtk.Editable.Gtk_Editable, GObject_Record, GObject);
+   function "+"
+     (Widget : access GObject_Record'Class)
+      return Gtk.Editable.Gtk_Editable
+      renames Implements_Editable.To_Interface;
 
    type Search_Module_Data is record
       Mask              : Search_Options_Mask;
@@ -731,8 +738,9 @@ package body Vsearch is
       Data    : constant Search_Module_Data :=
                   Find_Module
                     (Vsearch.Kernel, Get_Active_Text (Vsearch.Context_Combo));
+
       Pattern : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
-      Iter    : Gtk_Tree_Iter;
+      Iter    : Gtk_Tree_Iter := Null_Iter;
       List    : Gtk_List_Store;
       Options : Search_Options;
    begin
@@ -1592,7 +1600,7 @@ package body Vsearch is
         (Vsearch.Table, Vsearch.Pattern_Combo, 1, 2, 0, 1,
          Xpadding => 0,
          Ypadding => 2);
-      Layout := Implements_Cell_Layout.To_Interface (Vsearch.Pattern_Combo);
+      Layout := +Vsearch.Pattern_Combo;
 
       Gtk_New (Renderer);
       Gtk.Cell_Layout.Clear (Layout);
@@ -1933,15 +1941,16 @@ package body Vsearch is
 
       declare
          W : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
-         Start, Stop : Guint;
+         Start, Stop : Gint;
          Success : Boolean := False;
       begin
-         if W /= null and then W.all in Gtk_Editable_Record'Class then
-            Get_Selection_Bounds (Gtk_Editable (W), Success, Start, Stop);
+         if W /= null
+           and then Is_A (W.Get_Type, Gtk.Editable.Get_Type)
+         then
+            Get_Selection_Bounds (+W, Start, Stop, Success);
 
             if Success and then Start /= Stop then
-               Default_Pattern := new String'
-                 (Get_Chars (Gtk_Editable (W), Gint (Start), Gint (Stop)));
+               Default_Pattern := new String'(Get_Chars (+W, Start, Stop));
             end if;
          elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
             declare
