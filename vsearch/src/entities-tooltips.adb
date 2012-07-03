@@ -24,9 +24,9 @@ with Cairo.Image_Surface;       use Cairo.Image_Surface;
 
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Display;               use Gdk.Display;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Window;                use Gdk.Window;
 with Glib;                      use Glib;
@@ -194,7 +194,7 @@ package body Entities.Tooltips is
       Header_Layout, Doc_Layout : Pango_Layout;
 
       Width, Height, W1, H1, W2, H2 : Gint := 0;
-      Color  : Gtkada.Style.Cairo_Color;
+      Color  : Gdk_RGBA;
       Max_Height, Max_Width : Gint;
 
       H_Pad : constant := 4;
@@ -224,7 +224,7 @@ package body Entities.Tooltips is
 
       Width  := Gint'Max (W1 + Get_Width (Pixbuf) + H_Pad * 2, W2 + H_Pad * 2);
 
-      Color := To_Cairo (Tooltip_Color.Get_Pref);
+      Color := Tooltip_Color.Get_Pref;
 
       Max_Height := Get_Height (Get_Default_Screen (Gdk.Display.Get_Default));
       Height := Gint'Min (Height, Max_Height);
@@ -235,22 +235,26 @@ package body Entities.Tooltips is
       Pixmap := Create (Cairo_Format_ARGB32, Width, Height);
       Cr := Create (Pixmap);
       Set_Line_Width (Cr, 0.5);
-      Draw_Rectangle (Cr, Color, True, 0, 0, Width, Height);
+      Draw_Rectangle (Cr, To_Cairo (Color), True, 0, 0, Width, Height);
 
-      Color := To_Cairo (Gdk_Color'(Black (Get_Default_Colormap)));
+      Color := Black_RGBA;
       if Draw_Border then
-         Draw_Rectangle (Cr, Color, False, 0, 0, Width, Height);
+         Draw_Rectangle (Cr, To_Cairo (Color), False, 0, 0, Width, Height);
       end if;
 
       Draw_Pixbuf (Cr, Pixbuf, V_Pad, H_Pad);
 
       Draw_Layout
-        (Cr, Color, V_Pad + Get_Width (Pixbuf), H_Pad, Header_Layout);
+        (Cr,
+         To_Cairo (Color), V_Pad + Get_Width (Pixbuf), H_Pad, Header_Layout);
       Unref (Header_Layout);
 
       if Doc_Layout /= null then
-         Draw_Line (Cr, Color, 0, H1 + V_Pad * 2, Width - 1, H1 + V_Pad * 2);
-         Draw_Layout (Cr, Color, H_Pad, H1 + 1 + V_Pad * 3, Doc_Layout);
+         Draw_Line
+           (Cr,
+            To_Cairo (Color), 0, H1 + V_Pad * 2, Width - 1, H1 + V_Pad * 2);
+         Draw_Layout
+           (Cr, To_Cairo (Color), H_Pad, H1 + 1 + V_Pad * 3, Doc_Layout);
          Unref (Doc_Layout);
       end if;
 
