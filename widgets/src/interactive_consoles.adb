@@ -1582,7 +1582,7 @@ package body Interactive_Consoles is
 
       if Console.Highlight /= Null_RGBA then
          Set_Property
-           (Console.Highlight_Tag, Foreground_Gdk_Property,
+           (Console.Highlight_Tag, Foreground_Rgba_Property,
             Console.Highlight);
       end if;
 
@@ -1727,7 +1727,7 @@ package body Interactive_Consoles is
      (Console : access Interactive_Console_Record'Class;
       Color   : Gdk_RGBA) is
    begin
-      Set_Property (Console.Highlight_Tag, Foreground_Gdk_Property, Color);
+      Set_Property (Console.Highlight_Tag, Foreground_Rgba_Property, Color);
    end Set_Highlight_Color;
 
    ---------------
