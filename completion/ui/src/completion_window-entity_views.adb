@@ -398,8 +398,8 @@ package body Completion_Window.Entity_Views is
    is
       Width, Height : Allocation_Int;
    begin
-      Width := Get_Allocation_Width (View);
-      Height := Get_Allocation_Height (View);
+      Width := Get_Allocated_Width (View);
+      Height := Get_Allocated_Height (View);
 
       --  If the view is new, set its horizontal position.
       --  If the original orientation is vertical, it will be switched
