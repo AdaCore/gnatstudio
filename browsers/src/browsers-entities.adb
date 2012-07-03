@@ -26,6 +26,7 @@ with Cairo;                     use Cairo;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
@@ -37,6 +38,7 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style;                 use Gtk.Style;
+with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Canvas;             use Gtkada.Canvas;
@@ -1526,8 +1528,9 @@ package body Browsers.Entities is
       Meth_Lines                     : Xref_List;
       Parent                         : Entity_Information;
       Added                          : Boolean;
-      Style                          : Gtk_Style;
-
+      Style_Context                  : Gtk_Style_Context;
+      Color                          : Gdk_RGBA;
+      Border                         : Gtk.Style.Gtk_Border;
    begin
       Trace (Me, "Resize_And_Draw: " & Get_Full_Name (Item.Entity));
       Update_Xref (Get_File (Get_Declaration_Of (Item.Entity)));
@@ -1645,12 +1648,19 @@ package body Browsers.Entities is
 
       if Layout_H /= 0 and then Meth_Layout_H /= 0 then
          Y := Y + 2;
-         Style := Get_Item_Style (Item);
+
+         Style_Context := Get_Style_Context (Get_Browser (Item));
+         Style_Context.Get_Color (Gtk_State_Flag_Normal, Color);
+         --  We used to use Gtk.Style.X_Thickness to determine the width of
+         --  the line.  Now we'll use the thickness of the bottom border
+         --  instead.
+         Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
          Draw_Line
-           (Cr, Get_Fg (Style, State_Normal),
-            X1       => X_Thickness (Style),
+           (Cr,
+            Color    => To_Cairo (Color),
+            X1       => Border.Bottom,
             Y1       => Y,
-            X2       => Get_Coord (Item).Width - X_Thickness (Style) - 1,
+            X2       => Get_Coord (Item).Width - Border.Bottom - 1,
             Y2       => Y);
          Y := Y + 1;
       end if;
@@ -1944,7 +1954,10 @@ package body Browsers.Entities is
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class) is
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
+   is
+      Browser : constant Browsers.Canvas.General_Browser := Get_Browser (Item);
+      Color   : Gdk.RGBA.Gdk_RGBA;
    begin
       Yoffset := Yoffset + Generic_Item_Box_Height_Top;
       Resize_And_Draw
@@ -1953,8 +1966,11 @@ package body Browsers.Entities is
          Width_Offset + Generic_Item_Box_Width_Right,
          Height_Offset, Xoffset, Yoffset, Layout);
 
+      Get_Background_Color
+        (Get_Style_Context (Browser), Gtk_State_Flag_Normal, Color);
       Draw_Rectangle
-        (Cr, Get_Base (Get_Item_Style (Item), State_Normal),
+        (Cr,
+         Color  => To_Cairo (Color),
          Filled => True,
          X      => Get_Coord (Item).Width - Generic_Item_Box_Width + 1,
          Y      => 1,
@@ -1962,7 +1978,7 @@ package body Browsers.Entities is
          Height => Generic_Item_Box_Height - 2);
       Draw_Shadow
         (Cr,
-         Style       => Get_Style (Get_Browser (Item)),
+         Widget      => Browser,
          Shadow_Type => Shadow_Out,
          X           => Get_Coord (Item).Width - Generic_Item_Box_Width,
          Y           => 0,
