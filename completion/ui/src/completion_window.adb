@@ -1508,7 +1508,6 @@ package body Completion_Window is
       Iter_Coords        : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
       Gdk_X, Gdk_Y       : Gint;
-      Dummy              : Boolean;
       Dummy2             : Boolean;
       pragma Unreferenced (Dummy2);
 
@@ -1623,7 +1622,7 @@ package body Completion_Window is
          Y := Gdk_Y + Window_Y - Height - 1;
       end if;
 
-      Set_UPosition (Window, X, Y);
+      Move (Window, X, Y);
 
       --  Compute the size and position of the Notes window
 
@@ -1631,7 +1630,7 @@ package body Completion_Window is
         (Window.Notes_Window, Notes_Window_Width, Height);
 
       if Root_Width - (X + Width + 4) > Notes_Window_Width then
-         Set_UPosition (Window.Notes_Window, X + Width, Y);
+         Move (Window.Notes_Window, X + Width, Y);
 
       else
          --  Make sure the Notes window doesn't overlap the tree view
@@ -1641,8 +1640,7 @@ package body Completion_Window is
               (Window.Notes_Window, Notes_Window_Width, Height);
          end if;
 
-         Set_UPosition
-           (Window.Notes_Window, X - Notes_Window_Width, Y);
+         Move (Window.Notes_Window, X - Notes_Window_Width, Y);
       end if;
 
       Show_All (Window);
