@@ -21,6 +21,8 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
+with Cairo; use Cairo;
+
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
@@ -150,9 +152,9 @@ package body Directory_Tree is
    --  It is responsible for automatically adding the children of the current
    --  node if they are not there already.
 
-   procedure Expose_Event_Cb
-     (Explorer : access Glib.Object.GObject_Record'Class;
-      Values   : GValues);
+   function Expose_Event_Cb
+     (Explorer : access Gtk_Widget_Record'Class;
+      Cr       : Cairo_Context) return Boolean;
    --  Scroll the explorer to the current directory
 
    procedure File_Tree_Collapse_Row_Cb
@@ -1193,9 +1195,10 @@ package body Directory_Tree is
                      D.Explorer.Scroll_To_Directory := True;
 
                      D.Explorer.Realize_Cb_Id :=
-                       Gtkada.Handlers.Object_Callback.Object_Connect
+                       Gtkada.Handlers.Return_Callback.Object_Connect
                          (D.Explorer.File_Tree, Signal_Draw,
-                          Expose_Event_Cb'Access, D.Explorer, True);
+                          Gtkada.Handlers.Return_Callback.To_Marshaller
+                            (Expose_Event_Cb'Access), D.Explorer, True);
                   end;
 
                else
@@ -1463,11 +1466,11 @@ package body Directory_Tree is
    -- Expose_Event_Cb --
    ---------------------
 
-   procedure Expose_Event_Cb
-     (Explorer : access Glib.Object.GObject_Record'Class;
-      Values   : GValues)
+   function Expose_Event_Cb
+     (Explorer : access Gtk_Widget_Record'Class;
+      Cr       : Cairo_Context) return Boolean
    is
-      pragma Unreferenced (Values);
+      pragma Unreferenced (Cr);
       T : constant Dir_Tree := Dir_Tree (Explorer);
 
    begin
@@ -1496,9 +1499,12 @@ package body Directory_Tree is
          Slot_Object => T,
          After => True);
 
+      return True;
+
    exception
       when E : others =>
          Trace (Me, E);
+         return True;
    end Expose_Event_Cb;
 
    -----------------------------
