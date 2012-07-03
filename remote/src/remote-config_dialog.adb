@@ -32,7 +32,6 @@ with Glib.Object;                use Glib.Object;
 
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
-with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box;
@@ -46,7 +45,6 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
-with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Paned;                  use Gtk.Paned;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
@@ -441,7 +439,8 @@ package body Remote.Config_Dialog is
       Add (Row.Remote_Browse_Button, Pix);
       Set_Relief (Row.Remote_Browse_Button, Relief_None);
       Set_Border_Width (Row.Remote_Browse_Button, 0);
-      Unset_Flags (Row.Remote_Browse_Button, Can_Focus or Can_Default);
+      Set_Can_Focus (Row.Remote_Browse_Button, False);
+      Set_Can_Default (Row.Remote_Browse_Button, False);
       Pack_Start (Row.Remote_Hbox, Row.Remote_Browse_Button, False, False);
       Set_Tooltip_Text
         (Row.Remote_Browse_Button,
@@ -451,30 +450,18 @@ package body Remote.Config_Dialog is
 
       Gtk_New (Row.Sync_Combo);
       declare
-         Iter : Gtk_Tree_Iter;
-         List : Gtk_List_Store;
          Cell : Gtk_Cell_Renderer_Text;
       begin
-         Gtk_New (List, (1 => Glib.GType_String));
-         Gtk_New_With_Model (Row.Sync_Combo, List);
+         Gtk_New (Row.Sync_Combo);
          Gtk_New (Cell);
-         Pack_Start
-           (Implements_Cell_Layout.To_Interface (Row.Sync_Combo),
-            Cell,
-            True);
-         Add_Attribute
-           (Implements_Cell_Layout.To_Interface (Row.Sync_Combo),
-            Cell, "text", 0);
+         Row.Sync_Combo.Pack_Start (Cell, True);
+         Row.Sync_Combo.Add_Attribute (Cell, "text", 0);
 
-         Iter := Null_Iter;
          for J in Synchronisation_Type'Range loop
-            List.Append (Iter);
-            List.Set (Iter, 0, Synchronisation_String (J).all);
-
-            if J = Synchro then
-               Row.Sync_Combo.Set_Active_Iter (Iter);
-            end if;
+            Row.Sync_Combo.Append_Text (Synchronisation_String (J).all);
          end loop;
+
+         Row.Sync_Combo.Set_Active (Synchronisation_Type'Pos (Synchro));
       end;
 
       Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
