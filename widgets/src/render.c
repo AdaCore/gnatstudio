@@ -19,7 +19,7 @@
 #elif defined (__APPLE__)
 #include <gdk/gdk.h>
 int
-gps_have_render (GdkDrawable *drawable)
+gps_have_render (GdkDisplay *dpy)
 {
   return 1;
 }
@@ -30,13 +30,13 @@ gps_have_render (GdkDrawable *drawable)
 #include <cairo-xlib.h>
 
 int
-gps_have_render (GdkDrawable *drawable)
+gps_have_render (GdkDisplay *dpy)
 {
   int event_base, error_base;
 
-  if (drawable != NULL)
+  if (dpy != NULL)
     return XRenderQueryExtension
-      (GDK_DISPLAY_XDISPLAY (gdk_drawable_get_display (drawable)),
+      (GDK_DISPLAY_XDISPLAY (dpy),
        &event_base, &error_base);
   else
     return 1;
