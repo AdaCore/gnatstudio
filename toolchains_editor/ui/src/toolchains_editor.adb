@@ -1509,7 +1509,7 @@ package body Toolchains_Editor is
       Pack_Start (Get_Content_Area (Dialog), Label);
       Dialog.Show_All;
       Dialog.Ref;
-      Gtk.Main.Grab_Add (Dialog);
+      Dialog.Grab_Add;
 
       --  ??? At some point we should handle the 'Success' status and display
       --  an appropriate warning in the widget stating that we could not
@@ -1519,7 +1519,7 @@ package body Toolchains_Editor is
       Editor.Mgr.Do_Snapshot;
 
       --  Hide and destroy the dialog
-      Gtk.Main.Grab_Remove (Dialog);
+      Dialog.Grab_Remove;
       Dialog.Hide;
       Dialog.Unref;
 

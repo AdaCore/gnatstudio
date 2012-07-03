@@ -422,7 +422,7 @@ package body KeyManager_Module is
       if Keymanager_Module = null then
          --  This can happen when GPS is exiting and modules have been
          --  deallocated already.
-         Gtk.Main.Do_Event (Event);
+         Gtk.Main.Main_Do_Event (Event);
          return;
       end if;
 
@@ -464,7 +464,7 @@ package body KeyManager_Module is
       end if;
 
       --  Dispatch the event in the standard gtk+ main loop
-      Gtk.Main.Do_Event (Event);
+      Gtk.Main.Main_Do_Event (Event);
 
    --  We do not put a global exception handler in this procedure since
    --  it is called very often, so when using setjmp/longjmp, the cost

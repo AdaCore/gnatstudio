@@ -357,7 +357,7 @@ package body Interactive_Consoles is
                --  in GPS (user selecting a menu while python is running).
                Ref (Console.Console);
 
-               Gtk.Main.Grab_Add (Console.Console);
+               Console.Console.Grab_Add;
                Console.Took_Grab := True;
             end if;
          end if;
@@ -367,7 +367,7 @@ package body Interactive_Consoles is
          --  we need to check that it still exists.
 
          if Console.Took_Grab then
-            Gtk.Main.Grab_Remove (Console.Console);
+            Console.Console.Grab_Remove;
             Unref (Console.Console);
          end if;
       end if;
