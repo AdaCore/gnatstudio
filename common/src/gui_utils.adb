@@ -190,7 +190,7 @@ package body GUI_Utils is
    ----------------------------
 
    procedure Add_Unique_Combo_Entry
-     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
       Text         : String;
       Select_Text  : Boolean := False;
       Prepend      : Boolean := False;
@@ -209,7 +209,7 @@ package body GUI_Utils is
    ----------------------------
 
    function Add_Unique_Combo_Entry
-     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
       Text         : String;
       Select_Text  : Boolean := False;
       Prepend      : Boolean := False;
@@ -219,7 +219,7 @@ package body GUI_Utils is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_List_Store;
    begin
-      Model := Gtk_List_Store (Gtk.Combo_Box_Text.Get_Model (Combo));
+      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
@@ -245,7 +245,7 @@ package body GUI_Utils is
       end if;
 
       if Select_Text then
-         Gtk.Combo_Box_Text.Set_Active_Iter (Combo, Iter);
+         Gtk.Combo_Box.Set_Active_Iter (Combo, Iter);
       end if;
 
       return Iter;
@@ -256,7 +256,7 @@ package body GUI_Utils is
    ---------------------
 
    procedure Set_Active_Text
-     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
       Text         : String;
       Col          : Gint := 0;
       Case_Sensitive : Boolean := True)
@@ -264,7 +264,7 @@ package body GUI_Utils is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_List_Store;
    begin
-      Model := Gtk_List_Store (Gtk.Combo_Box_Text.Get_Model (Combo));
+      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop

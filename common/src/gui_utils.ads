@@ -37,7 +37,7 @@ with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Combo_Box_Text;
+with Gtk.Combo_Box;
 with Gtk.Container;
 with Gtk.Enums;
 with Gtk.Event_Box;
@@ -115,7 +115,7 @@ package GUI_Utils is
    --  is already visible in the list. Text must be UTF8-encoded.
 
    procedure Add_Unique_Combo_Entry
-     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
       Text         : String;
       Select_Text  : Boolean := False;
       Prepend      : Boolean := False;
@@ -129,7 +129,7 @@ package GUI_Utils is
    --  Text must be UTF8-encoded.
 
    function Add_Unique_Combo_Entry
-     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
       Text         : String;
       Select_Text  : Boolean := False;
       Prepend      : Boolean := False;
@@ -139,7 +139,7 @@ package GUI_Utils is
    --  one).
 
    procedure Set_Active_Text
-     (Combo        : access Gtk.Combo_Box_Text.Gtk_Combo_Box_Text_Record'Class;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
       Text         : String;
       Col          : Gint := 0;
       Case_Sensitive : Boolean := True);
