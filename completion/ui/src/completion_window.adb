@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 with Glib.Convert;              use Glib.Convert;
 
@@ -34,8 +35,8 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Style;                 use Gtk.Style;
 with Gtk.Scrollbar;             use Gtk.Scrollbar;
+with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Viewport;              use Gtk.Viewport;
 with Gtk.Label;                 use Gtk.Label;
@@ -1179,7 +1180,8 @@ package body Completion_Window is
             Expand_Selection (Explorer => Window.Explorer);
          end if;
 
-         Adj := Get_Vadjustment (Window.Explorer.View);
+         Adj := Gtk_Adjustment (Glib.Properties.Get_Property
+           (Window.Explorer.View, Gtk.Tree_View.Vadjustment_Property));
          Page_Increment := Get_Page_Increment (Adj);
          Page_Size := Get_Page_Size (Adj);
 
@@ -1193,7 +1195,9 @@ package body Completion_Window is
                   Get_Value (Adj) + Page_Increment));
          end if;
 
-         Set_Vadjustment (Window.Explorer.View, Adj);
+         Glib.Properties.Set_Property
+           (Window.Explorer.View, Gtk.Tree_View.Vadjustment_Property,
+            Adj);
 
          Get_Visible_Range (Window.Explorer.View, Path, End_Path, Success);
 
@@ -1508,10 +1512,10 @@ package body Completion_Window is
       Dummy2             : Boolean;
       pragma Unreferenced (Dummy2);
 
-      Rows               : Gint;
-      Width, Height      : Gint;
-      X, Y               : Gint;
-      Requisition        : Gtk_Requisition;
+      Rows                : Gint;
+      Width, Height       : Gint;
+      X, Y                : Gint;
+      Requisition, Ignore : Gtk_Requisition;
 
       Root_Width, Root_Height : Gint;
 
@@ -1546,19 +1550,21 @@ package body Completion_Window is
          Iter_Coords.Y + Iter_Coords.Height + 1,
          Window_X, Window_Y);
 
-      Get_Desk_Relative_Origin
-        (Get_Window (View, Text_Window_Text), Gdk_X, Gdk_Y, Dummy);
+      Get_Root_Origin
+        (Get_Window (View, Text_Window_Text), Gdk_X, Gdk_Y);
+      --  ??? Use to be Get_Desk_Origin, is the above replacement correct
       --  ??? should we check for the result ?
 
       --  Compute the placement of the window
 
-      Size_Request (Window.Explorer.View, Requisition);
-      Requisition := Get_Child_Requisition (Window.Explorer.View);
+      Get_Preferred_Size
+        (Window.Explorer.View, Ignore, Requisition);
 
       --  ??? Uposition should take into account the current desktop
 
       Window.Explorer.Fixed_Width_Font :=
-        Get_Font_Description (Get_Style (View));
+        Gtk.Style_Context.Get_Style_Context
+          (View).Get_Font (Gtk_State_Flag_Normal);
 
       declare
          Char_Width, Char_Height : Gint;
