@@ -580,7 +580,7 @@ package body Display_Items is
          Height => Title_Height);
 
       Draw_Shadow
-        (Cr, Get_Style (Get_Canvas (Item.Debugger)),
+        (Cr, Get_Canvas (Item.Debugger),
          Shadow_Type => Shadow_Out,
          X           => 0,
          Y           => 0,
