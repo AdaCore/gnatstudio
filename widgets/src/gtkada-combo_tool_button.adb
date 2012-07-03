@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with System;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
 with Glib.Object;              use Glib.Object;
@@ -116,8 +117,7 @@ package body Gtkada.Combo_Tool_Button is
       Widget : Gtkada_Combo_Tool_Button);
 
    procedure Menu_Detacher
-     (Attach_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Menu          : access Gtk_Menu_Record'Class);
+     (Attach_Widget : System.Address; Menu : System.Address);
    pragma Convention (C, Menu_Detacher);
 
    procedure Menu_Position
@@ -291,12 +291,14 @@ package body Gtkada.Combo_Tool_Button is
    -------------------
 
    procedure Menu_Detacher
-     (Attach_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Menu          : access Gtk_Menu_Record'Class)
+     (Attach_Widget : System.Address; Menu : System.Address)
    is
       pragma Unreferenced (Menu);
+      Stub : Gtkada_Combo_Tool_Button_Record;
+      pragma Unmodified (Stub);
    begin
-      Gtkada_Combo_Tool_Button (Attach_Widget).Menu := null;
+      Gtkada_Combo_Tool_Button
+        (Get_User_Data (Attach_Widget, Stub)).Menu := null;
 
    exception
       when E : others =>
