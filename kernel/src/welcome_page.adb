@@ -18,8 +18,8 @@
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with Gtk.Image;                 use Gtk.Image;
@@ -235,6 +235,7 @@ package body Welcome_Page is
       Scroll      : Gtk_Scrolled_Window;
       Box         : Gtk_Event_Box;
       Requisition : Gtk_Requisition;
+      Natural_Size : Gtk_Requisition;
       Win         : Gtk_Window;
 
    begin
@@ -266,7 +267,7 @@ package body Welcome_Page is
           & " debugging, system integration, and maintenance."));
       Set_Line_Wrap (Label, True);
       Pack_Start (Main_Vbox, Label, True, True, 3);
-      Requisition := Get_Child_Requisition (Image);
+      Image.Get_Preferred_Size (Requisition, Natural_Size);
       Set_Size_Request (Label, Requisition.Width, -1);
 
       Gtk_New_Vbox (Vbox);
@@ -325,8 +326,9 @@ package body Welcome_Page is
       Set_Title (Child, -"Welcome to GPS");
       Put (Get_MDI (Kernel), Child);
 
-      Modify_Bg (Get_Parent (Main_Box),
-                 State_Normal, White (Get_Default_Colormap));
+      Override_Background_Color
+        (Get_Parent (Main_Box),
+         Gtk_State_Flag_Normal, White_RGBA);
 
       return MDI_Child (Child);
    end Create_Welcome_Page;
