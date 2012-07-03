@@ -24,8 +24,7 @@ with Cairo;           use Cairo;
 with Pango.Cairo;     use Pango.Cairo;
 with Pango.Layout;    use Pango.Layout;
 
-with Gdk.Cairo;       use Gdk.Cairo;
-with Gdk.Color;       use Gdk.Color;
+with Gdk.RGBA;        use Gdk.RGBA;
 
 with Gtkada.Style;    use Gtkada.Style;
 
@@ -55,7 +54,7 @@ package body Items.Simples is
       Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
-      Color   : Gdk_Color;
+      Color   : Gdk_RGBA;
       X, Y    : Gint := 0);
    --  Paint a simple type or one of its children
 
@@ -173,10 +172,10 @@ package body Items.Simples is
       Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
-      Color   : Gdk_Color;
+      Color   : Gdk_RGBA;
       X, Y    : Gint := 0)
    is
-      Text_Color : Gdk_Color := Color;
+      Text_Color : Gdk_RGBA := Color;
       Y2         : Gint := Y;
       W, H       : Gint;
 
@@ -193,7 +192,7 @@ package body Items.Simples is
 
       if Item.Selected then
          Draw_Rectangle
-           (Cr, Context.Selection_Color,
+           (Cr, To_Cairo (Context.Selection_Color),
             Filled => True,
             X      => X,
             Y      => Y2,
@@ -209,7 +208,7 @@ package body Items.Simples is
         and then Item.Type_Name /= null
       then
          Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
-         Set_Source_Color (Cr, Text_Color);
+         Set_Source_Color (Cr, To_Cairo (Text_Color));
          Move_To (Cr, Gdouble (X), Gdouble (Y2));
          Pango.Cairo.Show_Layout (Cr, Context.Type_Layout);
          Get_Pixel_Size (Context.Type_Layout, W, H);
@@ -218,7 +217,7 @@ package body Items.Simples is
 
       if Show_Value (Mode) then
          Set_Text (Context.Text_Layout, Item.Value.all);
-         Set_Source_Color (Cr, Text_Color);
+         Set_Source_Color (Cr, To_Cairo (Text_Color));
          Move_To (Cr, Gdouble (X), Gdouble (Y2));
          Pango.Cairo.Show_Layout (Cr, Context.Text_Layout);
       end if;
@@ -565,7 +564,7 @@ package body Items.Simples is
       X, Y    : Gint := 0)
    is
       pragma Unreferenced (Lang, Mode);
-      Text_Color : Gdk_Color;
+      Text_Color : Gdk_RGBA;
       Line       : Gint := Y;
       Line_Start : Positive;
       W, H       : Gint;
@@ -583,7 +582,7 @@ package body Items.Simples is
 
       if Item.Selected then
          Draw_Rectangle
-           (Cr, Context.Selection_Color,
+           (Cr, To_Cairo (Context.Selection_Color),
             Filled => True,
             X      => X,
             Y      => Y,
@@ -603,7 +602,7 @@ package body Items.Simples is
 
             Set_Text
               (Context.Text_Layout, Item.Value (Line_Start + 1 .. J - 1));
-            Set_Source_Color (Cr, Text_Color);
+            Set_Source_Color (Cr, To_Cairo (Text_Color));
             Move_To (Cr, Gdouble (X), Gdouble (Line));
             Show_Layout (Cr, Context.Text_Layout);
             Get_Pixel_Size (Context.Text_Layout, W, H);
@@ -620,7 +619,7 @@ package body Items.Simples is
 
       Set_Text
         (Context.Text_Layout, Item.Value (Line_Start + 1 .. Item.Value'Last));
-      Set_Source_Color (Cr, Text_Color);
+      Set_Source_Color (Cr, To_Cairo (Text_Color));
       Move_To (Cr, Gdouble (X), Gdouble (Line));
       Show_Layout (Cr, Context.Text_Layout);
    end Paint;
