@@ -427,7 +427,7 @@ package body Project_Viewers is
       if Is_Default then
          Color := Viewer.Default_Switches_Color;
       else
-         Color := Parse ("#FFFFFF");
+         Color := Parse ("#000000");
       end if;
 
       Internal (Get_Object (Viewer.Model), Iter'Address,
