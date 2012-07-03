@@ -17,12 +17,10 @@
 
 --  This package defines utilities and dialogs used by the GtkAda-based GUI
 
-with Gtk.Combo_Box; use Gtk.Combo_Box;
-
 package Build_Configurations.Gtkada.Dialogs is
 
    function Models_Combo
-     (UI : access Build_UI_Record'Class) return Gtk_Combo_Box;
+     (UI : access Build_UI_Record'Class) return Gtk_Combo_Box_Text;
    --  Create and return a combo box allowing choice between the models in UI
 
    procedure Add_Target_Dialog
