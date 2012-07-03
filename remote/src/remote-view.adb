@@ -33,7 +33,6 @@ with Gdk.Color;              use Gdk.Color;
 
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Button;             use Gtk.Button;
-with Gtk.Cell_Layout;        use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Combo_Box;          use Gtk.Combo_Box;
 with Gtk.Enums;              use Gtk.Enums;
@@ -266,13 +265,8 @@ package body Remote.View is
          Gtk_New (List, (1 => Glib.GType_String));
          Gtk_New_With_Model (View.Servers_Combo (S), List);
          Gtk_New (Cell);
-         Pack_Start
-           (Implements_Cell_Layout.To_Interface (View.Servers_Combo (S)),
-            Cell,
-            True);
-         Add_Attribute
-           (Implements_Cell_Layout.To_Interface (View.Servers_Combo (S)),
-            Cell, "text", 0);
+         View.Servers_Combo (S).Pack_Start (Cell, True);
+         View.Servers_Combo (S).Add_Attribute (Cell, "text", 0);
          --  Set_Editable (Get_Entry (View.Servers_Combo (S)), False);
          --  Set_Width_Chars (Get_Entry (View.Servers_Combo (S)), 0);
          View_Callback.Connect
@@ -311,7 +305,6 @@ package body Remote.View is
          Show (View.To_Local_Buttons (S));
          Set_Relief (View.To_Local_Buttons (S), Relief_None);
          Set_Border_Width (View.To_Local_Buttons (S), 0);
-         Unset_Flags (View.To_Local_Buttons (S), Can_Focus or Can_Default);
          Set_Tooltip_Text
            (View.To_Local_Buttons (S),
             -("Synchronize all directories from the remote" &
