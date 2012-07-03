@@ -23,7 +23,7 @@ with GNAT.Strings;
 with Glib;
 with Cairo;
 with Pango.Layout;
-with Gdk.Color;
+with Gdk.RGBA;
 with Gdk.Pixbuf;    use Gdk.Pixbuf;
 
 with Language;
@@ -91,10 +91,10 @@ package Items is
    --  Whether we should display the type of the item
 
    type Drawing_Context is record
-      Foreground      : Gdk.Color.Gdk_Color;
-      Xref_Color      : Gdk.Color.Gdk_Color;
-      Modified_Color  : Gdk.Color.Gdk_Color;
-      Selection_Color : Gdk.Color.Gdk_Color;
+      Foreground      : Gdk.RGBA.Gdk_RGBA;
+      Xref_Color      : Gdk.RGBA.Gdk_RGBA;
+      Modified_Color  : Gdk.RGBA.Gdk_RGBA;
+      Selection_Color : Gdk.RGBA.Gdk_RGBA;
 
       Unknown_Pixmap : Gdk.Pixbuf.Gdk_Pixbuf;
       Hidden_Pixmap  : Gdk.Pixbuf.Gdk_Pixbuf;
