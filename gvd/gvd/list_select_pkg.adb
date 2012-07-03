@@ -112,7 +112,6 @@ package body List_Select_Pkg is
 
       List_Select.Help_Text := new String'(Help_Message);
 
-      Set_Policy (List_Select, False, True, False);
       Set_Modal (List_Select, True);
 
       Gtk_New_Vbox (List_Select.Vbox, False, 0);
@@ -177,19 +176,15 @@ package body List_Select_Pkg is
       Gtk_New (List_Select.Hbuttonbox);
       Set_Spacing (List_Select.Hbuttonbox, 30);
       Set_Layout (List_Select.Hbuttonbox, Buttonbox_Spread);
-      Set_Child_Size (List_Select.Hbuttonbox, 85, 27);
-      Set_Child_Ipadding (List_Select.Hbuttonbox, 7, 0);
       Pack_Start (List_Select.Vbox, List_Select.Hbuttonbox, False, True, 0);
 
       Gtk_New_From_Stock (List_Select.Ok, Stock_Ok);
-      Set_Flags (List_Select.Ok, Can_Default);
       Button_Callback.Connect
         (List_Select.Ok, Button.Signal_Clicked,
          Button_Callback.To_Marshaller (On_Ok_Clicked'Access));
       Add (List_Select.Hbuttonbox, List_Select.Ok);
 
       Gtk_New_From_Stock (List_Select.Cancel, Stock_Cancel);
-      Set_Flags (List_Select.Cancel, Can_Default);
       Button_Callback.Connect
         (List_Select.Cancel, Button.Signal_Clicked,
          Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
@@ -197,7 +192,6 @@ package body List_Select_Pkg is
 
       if List_Select.Help_Text.all /= "" then
          Gtk_New_From_Stock (List_Select.Help, Stock_Help);
-         Set_Flags (List_Select.Help, Can_Default);
          Button_Callback.Connect
            (List_Select.Help, Button.Signal_Clicked,
             Button_Callback.To_Marshaller (On_Help_Clicked'Access));
