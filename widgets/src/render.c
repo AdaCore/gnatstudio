@@ -15,11 +15,9 @@
 -- of the license.                                                          --
 ----------------------------------------------------------------------------*/
 
-#ifdef _WIN32
-#elif defined (__APPLE__)
-#include <gdk/gdk.h>
+#if defined (_WIN32) || defined (__APPLE__)
 int
-gps_have_render (GdkWindow *window)
+gps_have_render (void *window)
 {
   return 1;
 }
