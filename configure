@@ -3318,10 +3318,10 @@ echo $ECHO_N "checking for gtk+... $ECHO_C" >&6
 echo "${ECHO_T}not found" >&6
         WITH_GTK=no
      else
-        GTK_PREFIX=`$PKG_CONFIG gtk+-2.0 --variable=prefix`
+        GTK_PREFIX=`$PKG_CONFIG gtk+-3.0 --variable=prefix`
         echo "$as_me:$LINENO: result: $GTK_PREFIX" >&5
 echo "${ECHO_T}$GTK_PREFIX" >&6
-        GTK_GCC_FLAGS=`$PKG_CONFIG gtk+-2.0 --cflags`
+        GTK_GCC_FLAGS=`$PKG_CONFIG gtk+-3.0 --cflags`
         if test x"$GTK_GCC_FLAGS" != x ; then
            echo "$as_me:$LINENO: checking for gtkada" >&5
 echo $ECHO_N "checking for gtkada... $ECHO_C" >&6
@@ -3377,7 +3377,7 @@ echo "${ECHO_T}$WITH_GTK (from switch)" >&6
 
   echo "$as_me:$LINENO: checking GTK GLIB ATK PANGO prefix" >&5
 echo $ECHO_N "checking GTK GLIB ATK PANGO prefix... $ECHO_C" >&6
-  GTK="gtk+-2.0"
+  GTK="gtk+-3.0"
   GLIB="glib-2.0"
   PANGO="pango"
   ATK="atk"
