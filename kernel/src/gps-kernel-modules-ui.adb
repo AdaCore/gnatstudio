@@ -25,7 +25,7 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
 
-with Gdk.Dnd;                   use Gdk.Dnd;
+with Gdk.Drag_Contexts;         use Gdk.Drag_Contexts;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
 
@@ -1479,7 +1479,7 @@ package body GPS.Kernel.Modules.UI is
       pragma Unreferenced (Widget);
 
       procedure Remove_Item
-        (Item : access Gtk.Widget.Gtk_Widget_Record'Class);
+        (Item : not null access Gtk.Widget.Gtk_Widget_Record'Class);
       --  Remove one item from Data.Menu
 
       -----------------
@@ -1487,7 +1487,7 @@ package body GPS.Kernel.Modules.UI is
       -----------------
 
       procedure Remove_Item
-        (Item : access Gtk.Widget.Gtk_Widget_Record'Class) is
+        (Item : not null access Gtk.Widget.Gtk_Widget_Record'Class) is
       begin
          Remove (Data.Menu, Item);
       end Remove_Item;
@@ -1664,7 +1664,7 @@ package body GPS.Kernel.Modules.UI is
       pragma Unreferenced (Object);
 
       Context : constant Drag_Context :=
-                  Drag_Context (Get_Proxy (Nth (Args, 1)));
+                  Drag_Context (Get_Object (Nth (Args, 1)));
       Data    : constant Selection_Data :=
                   Selection_Data (Get_Proxy (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
