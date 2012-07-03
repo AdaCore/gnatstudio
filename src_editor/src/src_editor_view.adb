@@ -122,8 +122,8 @@ package body Src_Editor_View is
    --  size for instance.
 
    function Expose_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget  : access Gtk_Widget_Record'Class;
+      Cr      : Cairo_Context) return Boolean;
    --  This procedure handles all expose events happening on the left border
    --  window. It will redraw the exposed area (this window may contains
    --  things such as line number, breakpoint icons, etc).
@@ -822,12 +822,12 @@ package body Src_Editor_View is
    begin
       Redraw_Speed_Column (View);
 
-      return False;
+      return True;
 
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         return False;
+         return True;
    end Speed_Bar_Expose_Event_Cb;
 
    ---------------------
@@ -835,15 +835,11 @@ package body Src_Editor_View is
    ---------------------
 
    function Expose_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget  : access Gtk_Widget_Record'Class;
+      Cr      : Cairo_Context) return Boolean
    is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Window : constant Gdk.Window.Gdk_Window := Get_Window (Event);
-
-      Window_Type : constant Gtk_Text_Window_Type :=
-                      Get_Window_Type (View, Window);
 
       X, Y, Width, Height, Depth : Gint;
 
@@ -866,6 +862,8 @@ package body Src_Editor_View is
          Top_Line         : Buffer_Line_Type;
          Bottom_Line      : Buffer_Line_Type;
 
+         Window : constant Gdk.Window.Gdk_Window :=
+           View.Get_Window (Text_Window_Left);
       begin
          Get_Geometry (Window, X, Y, Width, Height, Depth);
 
@@ -940,7 +938,9 @@ package body Src_Editor_View is
          Bottom_In_Buffer : Gint;
          Color            : Gdk_Color;
          Tmp_Color        : HSV_Color;
-         Cr               : Cairo_Context;
+
+         Window : constant Gdk.Window.Gdk_Window :=
+           View.Get_Window (Text_Window_Text);
 
          procedure Draw_Block (B : in out Block_Record);
          --  Draw block B at line L
@@ -1036,7 +1036,6 @@ package body Src_Editor_View is
 
       begin
          Get_Visible_Rect (View, Rect);
-         Cr := Create (Window);
          Set_Line_Width (Cr, 1.0);
          Set_Antialias (Cr, Cairo_Antialias_None);
 
@@ -1146,16 +1145,11 @@ package body Src_Editor_View is
               (Cr, To_Cairo (Tmp_Color), X, Y, X, Y + Rect.Height);
             Restore (Cr);
          end if;
-
-         Destroy (Cr);
       end Highlight_Text;
 
    begin  -- Expose_Event_Cb
-      if Window_Type = Text_Window_Left then
-         Redraw_Side_Info;
-      elsif Window_Type = Text_Window_Text then
-         Highlight_Text;
-      end if;
+      Redraw_Side_Info;
+      Highlight_Text;
 
       --  Return false, so that the signal is not blocked, and other
       --  clients can use it.
@@ -1302,7 +1296,7 @@ package body Src_Editor_View is
          Slot_Object => View);
 
       Return_Callback.Object_Connect
-        (View.Area, Signal_Expose_Event,
+        (View.Area, Signal_Draw,
          Marsh       => Return_Callback.To_Marshaller
            (Speed_Bar_Expose_Event_Cb'Access),
          After       => False,
@@ -1455,7 +1449,7 @@ package body Src_Editor_View is
       --  realized ???
 
       Return_Callback.Connect
-        (View, Signal_Expose_Event,
+        (View, Signal_Draw,
          Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
          After => False);
 
