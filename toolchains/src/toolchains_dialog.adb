@@ -303,7 +303,8 @@ package body Toolchains_Dialog is
          Add (Browse, Pix);
          Set_Relief (Browse, Relief_None);
          Set_Border_Width (Browse, 0);
-         Unset_Flags (Browse, Can_Focus or Can_Default);
+         Set_Can_Focus (Browse, False);
+         Set_Can_Default (Browse, False);
          Show_All (Browse);
          Attach (Table, Browse, 2, 3, Guint (J - 1), Guint (J));
          Set_Tooltip_Text

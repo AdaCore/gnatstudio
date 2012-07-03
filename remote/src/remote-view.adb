@@ -319,7 +319,8 @@ package body Remote.View is
          Show (View.To_Remote_Buttons (S));
          Set_Relief (View.To_Remote_Buttons (S), Relief_None);
          Set_Border_Width (View.To_Remote_Buttons (S), 0);
-         Unset_Flags (View.To_Remote_Buttons (S), Can_Focus or Can_Default);
+         Set_Can_Focus (View.To_Remote_Buttons (S), False);
+         Set_Can_Default (View.To_Remote_Buttons (S), False);
          Set_Tooltip_Text
            (View.To_Remote_Buttons (S),
             -("Synchronize all directories from the local" &

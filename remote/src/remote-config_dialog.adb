@@ -415,7 +415,8 @@ package body Remote.Config_Dialog is
       Add (Row.Local_Browse_Button, Pix);
       Set_Relief (Row.Local_Browse_Button, Relief_None);
       Set_Border_Width (Row.Local_Browse_Button, 0);
-      Unset_Flags (Row.Local_Browse_Button, Can_Focus or Can_Default);
+      Set_Can_Focus (Row.Local_Browse_Button, False);
+      Set_Can_Default (Row.Local_Browse_Button, False);
       Pack_Start (Row.Local_Hbox, Row.Local_Browse_Button, False, False);
       Set_Tooltip_Text
         (Row.Local_Browse_Button,
