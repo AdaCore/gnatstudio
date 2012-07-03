@@ -248,9 +248,9 @@ package body Default_Preferences is
       C : Gdk_Color;
    begin
       Set_Rgb (C,
-               Guint16 (65536.0 * R.Red),
-               Guint16 (65536.0 * R.Green),
-               Guint16 (65536.0 * R.Blue));
+               Guint16 (65535.0 * R.Red),
+               Guint16 (65535.0 * R.Green),
+               Guint16 (65535.0 * R.Blue));
       return C;
    end To_Color;
 
