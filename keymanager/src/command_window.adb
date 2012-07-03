@@ -401,6 +401,7 @@ package body Command_Window is
       Frame            : Gtk_Frame;
       Applies_To       : Gtk_Widget;
       Min_H, Natural_H : Gint;
+      Geometry : Gdk_Geometry;
    begin
       --  Do not make the window modal, although that is much more precise to
       --  be sure we always get all key events on the application. This has the
@@ -479,15 +480,21 @@ package body Command_Window is
       Get_Geometry (Get_Window (Applies_To), X, Y, W, H, D);
       Get_Preferred_Height (Window, Min_H, Natural_H);
       Hints := Gdk_Hint_Pos + Gdk_Hint_Min_Size + Gdk_Hint_Max_Size;
-      Gdk.Window.Set_Hints
-        (Window      => Get_Window (Window),
-         X           => X,
-         Y           => Y + H - Natural_H,
-         Min_Width   => W,
-         Min_Height  => Min_H,
-         Max_Width   => W,
-         Max_Height  => Natural_H,
-         Flags       => Hints);
+      Geometry := (Min_Width => W,
+                   Min_Height => Min_H,
+                   Max_Width => W,
+                   Max_Height => Natural_H,
+                   Base_Width => W,
+                   Base_Height => Natural_H,
+                   Width_Inc => 1,
+                   Height_Inc => 1,
+                   Min_Aspect => Gdouble'First,
+                   Max_Aspect => Gdouble'Last,
+                   Win_Gravity => Gravity_North_West);
+      Gdk.Window.Set_Geometry_Hints
+        (Window   => Get_Window (Window),
+         Geometry => Geometry,
+         Flags    => Hints);
 
       Window.Parent := Gtk_Window (Get_Toplevel (Applies_To));
       Window.Parent_Geometry := Get_Geometry (Window.Parent);
