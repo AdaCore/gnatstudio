@@ -188,7 +188,7 @@ package body GPS.Kernel.Hyper_Mode is
          Hyper_Mode_Enter (Data);
       end if;
 
-      if not Data.Widget.Has_Focus_Is_Set
+      if not Data.Widget.Has_Focus
         and then not Data.Hyper_Mode_Motion_Watch
       then
          --  We don't have the focus on this widget: therefore we must activate
