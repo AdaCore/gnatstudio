@@ -3,7 +3,7 @@
 
 
 try:
-   from gi.repository import Gtk, GObject
+   from gi.repository import Gtk, GObject, Gdk
    import os
    import pygps
 
@@ -67,7 +67,8 @@ try:
       rect = view.get_cell_area (path, view.get_column (column))
 
       for t in events:
-         event = Gdk.Event (t)
+         event = Gdk.EventButton()
+         event.type = t
          event.window = view.get_bin_window()
          event.button = button
          event.x = float (rect.x + rect.width / 2)

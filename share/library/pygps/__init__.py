@@ -54,7 +54,7 @@ try:
        through GObject.idle_add, to avoid blocking the whole GPS interface."""
 
     while Gtk.events_pending():
-       Gtk.main_iteration (block=0)
+       Gtk.main_iteration_do (blocking=0)
 
   single_click_events = [Gdk.EventType.BUTTON_PRESS,
                          Gdk.EventType.BUTTON_RELEASE]
@@ -225,7 +225,7 @@ try:
        open_project_properties, open_project_wizard,..."""
     def internal_on_open (on_open, widgets, windows, args, kwargs):
        dialog = [w for w in Gtk.Window.list_toplevels() \
-                 if not w in windows and w.flags () & Gtk.MAPPED]
+                 if not w in windows and w.get_mapped()]
        if not dialog:
           # Will try again after same timeout or idle
           return True
