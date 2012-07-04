@@ -25,8 +25,8 @@ New features in GPS 5.2.0 / GNATbench 2.7.0
 
 NF-52-L702-019 GPS: Clear locations action for key shortcuts (2012-07-04)
 
-  New action allows to assign key shortcut to Clear locations action of
-  Locations View.
+  GPS provides a new action to assign a key shortcut to the 'Clear locations'
+  capability of the Locations View.
 
 NF-52-L614-009 GPS: Removal of ClearCase module preference (2012-06-21)
 
