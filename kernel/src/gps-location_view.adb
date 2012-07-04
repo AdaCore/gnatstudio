@@ -25,11 +25,11 @@ with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
 
 with Gdk.Event;                  use Gdk.Event;
 
+with Glib;                             use Glib;
 with Glib.Convert;
 with Glib.Main;                        use Glib.Main;
 with Glib.Object;                      use Glib.Object;
 with Glib.Values;                      use Glib.Values;
-with Glib;                             use Glib;
 
 with Gtk.Check_Menu_Item;              use Gtk.Check_Menu_Item;
 with Gtk.Enums;                        use Gtk.Enums;
@@ -46,11 +46,10 @@ with Gtkada.Handlers;                  use Gtkada.Handlers;
 with Gtkada.MDI;                       use Gtkada.MDI;
 
 with Basic_Types;                      use Basic_Types;
-with Commands.Interactive;
-with Default_Preferences;              use Default_Preferences;
-with GPS.Editors.GtkAda;               use GPS.Editors, GPS.Editors.GtkAda;
+with Commands;
+with GPS.Editors;                      use GPS.Editors;
+with GPS.Editors.GtkAda;               use GPS.Editors.GtkAda;
 with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;             use GPS.Kernel.Locations;
@@ -63,10 +62,10 @@ with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
+with GPS.Location_View.Actions;
+with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
 with XML_Utils;                        use XML_Utils;
 with Traces;                           use Traces;
-
-with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
 
 package body GPS.Location_View is
 
@@ -100,15 +99,6 @@ package body GPS.Location_View is
 
    package Message_Conversions is
      new System.Address_To_Access_Conversions (Abstract_Message'Class);
-
-   type Remove_Message_Command is
-     new Commands.Interactive.Interactive_Command with null record;
-
-   overriding function Execute
-     (Self    : access Remove_Message_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type;
-   --  Removes selected message
 
    ---------------------
    -- Local constants --
@@ -198,9 +188,6 @@ package body GPS.Location_View is
    procedure On_Collapse_All (Self : access Location_View_Record'Class);
    --  Collapse all categories in the Location View
 
-   procedure On_Clear_Locations (Self : access Location_View_Record'Class);
-   --  Remove all locations from the view
-
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
 
@@ -264,9 +251,6 @@ package body GPS.Location_View is
    procedure Goto_Location (Self : access Location_View_Record'Class);
    --  Goto the selected location in the Location_View
 
-   procedure On_Remove_Message (Self : access Location_View_Record'Class);
-   --  Removes selected message
-
    package Location_View_Callbacks is
      new Gtk.Handlers.Callback (Location_View_Record);
 
@@ -276,31 +260,6 @@ package body GPS.Location_View is
       Category  : Ada.Strings.Unbounded.Unbounded_String;
       File      : GNATCOLL.VFS.Virtual_File);
    --  Exports messages of the specified category and file into text file.
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self    : access Remove_Message_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type
-   is
-      pragma Unreferenced (Self);
-
-      Child : constant MDI_Child :=
-                Find_MDI_Child_By_Tag
-                  (Get_MDI (GPS.Kernel.Get_Kernel (Context.Context)),
-                   Location_View_Record'Tag);
-
-   begin
-      if Child /= null then
-         On_Remove_Message
-           (Location_View_Record'Class (Child.Get_Widget.all)'Access);
-      end if;
-
-      return Commands.Success;
-   end Execute;
 
    ---------------------
    -- Expand_Category --
@@ -1444,7 +1403,6 @@ package body GPS.Location_View is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Module_Name : constant String := "Location View";
-      Command     : Commands.Interactive.Interactive_Command_Access;
 
    begin
       Location_View_Module_Id := new Location_View_Module;
@@ -1453,22 +1411,8 @@ package body GPS.Location_View is
          Kernel      => Kernel,
          Module_Name => Module_Name);
 
-      --  Register actions
+      GPS.Location_View.Actions.Register_Actions (Kernel);
 
-      Command :=
-         new Remove_Message_Command'
-           (Commands.Interactive.Interactive_Command with null record);
-      GPS.Kernel.Actions.Register_Action
-        (Kernel,
-         -"Remove message",
-         Command,
-         -"Remove selected message",
-         null,
-         -"Locations view");
-      GPS.Kernel.Bind_Default_Key
-        (Kernel,
-         -"Remove message",
-         "alt-Delete");
       Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
