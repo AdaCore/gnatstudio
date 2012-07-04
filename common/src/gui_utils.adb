@@ -548,8 +548,6 @@ package body GUI_Utils is
                          Button        => Gdk.Event.Get_Button (Event),
                          Activate_Time => Gdk.Event.Get_Time (Event));
                end if;
-               Menu.Ref_Sink;
-               Menu.Unref;
 
                Emit_Stop_By_Name (Widget, "button_press_event");
                return True;
