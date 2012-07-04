@@ -277,17 +277,19 @@ try:
        except for special characters like GDK_RETURN.
     """
 
+    event = Gdk.EventKey()
+
     if key_press:
-      event = Gdk.Event (Gdk.KEY_PRESS)
+      event.type = Gdk.EventType.KEY_PRESS
     else:
-      event = Gdk.Event (Gdk.KEY_RELEASE)
+      event.type = Gdk.EventType.KEY_RELEASE
 
     if not window:
        window = Gtk.Window.list_toplevels()[0]
     if isinstance (window, Gtk.TextView):
        window = window.get_window (Gtk.TextWindowType.TEXT)
     if not isinstance (window, Gdk.Window):
-       window = window.window
+       window = window.get_window()
     event.window = window
     event.keyval = keyval
 
