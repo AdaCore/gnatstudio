@@ -119,4 +119,13 @@ private
       --  Protection against reentrancy
    end record;
 
+   --  These callbacks are used by actions of locations view, which are
+   --  declared in child package.
+
+   procedure On_Clear_Locations (Self : access Location_View_Record'Class);
+   --  Remove all locations from the view
+
+   procedure On_Remove_Message (Self : access Location_View_Record'Class);
+   --  Removes selected message
+
 end GPS.Location_View;
