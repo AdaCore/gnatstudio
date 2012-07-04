@@ -1326,7 +1326,8 @@ package body Browsers.Canvas is
    is
       Style_Context : constant Gtk_Style_Context :=
         Get_Style_Context (Get_Browser (Item));
-      Border        : Gtk.Style.Gtk_Border;
+      Border        : Gtk.Style.Gtk_Border_Record;
+      The_Border    : Gtk.Style.Gtk_Border;
       Thick         : Gint;
       Button_Width  : Gint;
       Button_Height : Gint;
@@ -1340,7 +1341,11 @@ package body Browsers.Canvas is
       use type Gdk.Gdk_Drawable;
 
    begin
-      Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
+      Style_Context.Get_Border (Gtk_State_Flag_Normal, The_Border);
+      if The_Border /= null then
+         Border := The_Border.all;
+      end if;
+
       Thick         := Border.Bottom;
       Button_Width  := Get_Width  (Item.Browser.Close_Pixmap);
       Button_Height := Get_Height (Item.Browser.Close_Pixmap);
@@ -1432,7 +1437,8 @@ package body Browsers.Canvas is
 --        Style    : constant Gtk_Style := Get_Item_Style (Item);
       Style_Context : constant Gtk_Style_Context :=
         Get_Style_Context (Get_Browser (Item));
-      Border        : Gtk.Style.Gtk_Border;
+      Border        : Gtk.Style.Gtk_Border_Record;
+      The_Border    : Gtk.Style.Gtk_Border;
       W_L, H_L : Gint;
       Ptrn     : Cairo_Pattern;
       Base     : Cairo_Color;
@@ -1477,7 +1483,11 @@ package body Browsers.Canvas is
 
       --  The title string
       Get_Pixel_Size (Item.Title_Layout, W_L, H_L);
-      Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
+      Style_Context.Get_Border (Gtk_State_Flag_Normal, The_Border);
+      if The_Border /= null then
+         Border := The_Border.all;
+      end if;
+
       Draw_Layout
         (Cr     => Cr,
          Color  => To_Cairo (Black_RGBA),
@@ -1590,13 +1600,17 @@ package body Browsers.Canvas is
 
       Style_Context : constant Gtk_Style_Context :=
         Get_Style_Context (Get_Browser (Item));
-      Border        : Gtk.Style.Gtk_Border;
+      Border        : Gtk.Style.Gtk_Border_Record;
+      The_Border    : Gtk.Style.Gtk_Border;
 
       use Gdk;
 
    begin
       Reset_Active_Areas (Item.all, Title_Bar_Areas => False);
-      Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
+      Style_Context.Get_Border (Gtk_State_Flag_Normal, The_Border);
+      if The_Border /= null then
+         Border := The_Border.all;
+      end if;
 
       if Item.Title_Layout /= null then
          Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
