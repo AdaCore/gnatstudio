@@ -59,8 +59,8 @@ package body Gtk_Utils is
    -- Have_Render --
    -----------------
 
-   function Have_Render (Window : Gdk.Gdk_Window) return Boolean is
-      pragma Unreferenced (Window);
+   function Have_Render (Display : Gdk_Display) return Boolean is
+      pragma Unreferenced (Display);
    begin
       --  Pretend we have RENDER extension under Windows, since this is
       --  not relevant to this platform
