@@ -20,6 +20,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
+with Gdk.Display;
 with Gtk_Utils;                 use Gtk_Utils;
 
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -78,7 +79,7 @@ package body GPS.Callbacks is
       --  associated with GPS_Main, which happens only very late in the
       --  processing
 
-      if not Have_Render (Get_Window (GPS_Main)) then
+      if not Have_Render (Gdk.Display.Get_Default) then
          Trace (Me, "RENDER extension NOT detected");
          Put_Line
            ("Warning: X RENDER extension is not detected, " &

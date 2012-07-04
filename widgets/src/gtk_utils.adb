@@ -15,7 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib; use Glib;
+with Gdk.Display; use Gdk.Display;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
+with System;
 
 package body Gtk_Utils is
 
@@ -56,11 +59,11 @@ package body Gtk_Utils is
    -- Have_Render --
    -----------------
 
-   function Have_Render (Window : Gdk.Gdk_Window) return Boolean is
-      function Internal (Window : Gdk.Gdk_Window) return Integer;
+   function Have_Render (Display : Gdk_Display) return Boolean is
+      function Internal (Display : System.Address) return Integer;
       pragma Import (C, Internal, "gps_have_render");
    begin
-      return Internal (Window) /= 0;
+      return Internal (Get_Object (Display)) /= 0;
    end Have_Render;
 
 end Gtk_Utils;

@@ -17,7 +17,7 @@
 
 #if defined (_WIN32) || defined (__APPLE__)
 int
-gps_have_render (void *window)
+gps_have_render (void *display)
 {
   return 1;
 }
@@ -28,14 +28,13 @@ gps_have_render (void *window)
 #include <cairo-xlib.h>
 
 int
-gps_have_render (GdkWindow *window)
+gps_have_render (GdkDisplay *display)
 {
   int event_base, error_base;
 
-  if (window != NULL)
+  if (display != NULL)
     return XRenderQueryExtension
-      (GDK_DISPLAY_XDISPLAY (gdk_window_get_display (window)),
-       &event_base, &error_base);
+      (GDK_DISPLAY_XDISPLAY (display), &event_base, &error_base);
   else
     return 1;
 }
