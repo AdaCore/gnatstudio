@@ -154,6 +154,7 @@ package body Gtkada.Combo_Tool_Button is
    is
       Icon : Gtk_Image;
       Hbox : Gtk_Hbox;
+      Child : Gtk_Widget;
    begin
       Item := new Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Item, "");
@@ -161,6 +162,14 @@ package body Gtkada.Combo_Tool_Button is
       Item.Stock_Id := To_Unbounded_String (Stock_Id);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 5);
+
+      --  Remove the existing widget if Gtk+ creates one by default
+
+      Child := Item.Get_Child;
+      if Child /= null then
+         Item.Remove (Child);
+      end if;
+
       Item.Add (Hbox);
 
       Gtk_New (Icon, Stock_Id, Icon_Size_Menu);
