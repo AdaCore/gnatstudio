@@ -4655,6 +4655,10 @@ Targets are defined in a `target` node which has three attributes:
   Optional, defaulting to `False`. A boolean indicating whether the
   Target should have an associated entry in the contextual menu for files.
 
+*<visible>*
+  Optional, defaulting to `True`. A boolean indicating whether the
+  Target should initially be vissible in GPS.
+
 *<read-only>*
   Optional, defaulting to `False`. A boolean indicating whether the
   Target can be removed by the user.
