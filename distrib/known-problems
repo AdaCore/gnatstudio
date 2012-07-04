@@ -14,16 +14,24 @@ Known Problems fixed in GPS 5.1.2 / GNATbench 2.6.1
               the "Called by" call graph, GPS can be slow to react.
   Workaround: None known.
 
-- L223-020: GPS: CodePeer's messages are not displayed in Locations view
-  Problem:    CodePeer's messages are not displayed in Locations view
-              when analysis contains removed subprograms.
-  Workaround: Use HTML report or remove CodePeer database and redo analysis.
+- L306-045: Project editor issue with gnat warnings switches
+  Problem:    Default warnings, appearing greyed out when editing the
+              switches in the project editor, cannot be turned off when
+              clearing the button.
+  Workaround: Disable all warnings with -gnatws, then activate only the
+              warnings you want.
 
-- L222-020: GPS: CodePeer: hiding annotations problem
-  Problem:    CodePeer's annotations cann't be hidden when source file is
-              opened after loading of analysis data.
-  Workaround: Close CodePeer Report window, open source file and display
-              CodePeer Report again.
+- L223-020: GPS: CodePeer messages are not displayed in Locations view
+  Problem:    CodePeer messages are not displayed in Locations view
+              when analysis contains removed subprograms.
+  Workaround: Use the HTML report or remove CodePeer database and redo
+              the analysis.
+
+- L222-020: GPS: CodePeer: problem whrn hiding annotations
+  Problem:    CodePeer annotations cannot be hidden when a source file is
+              opened after loading the analysis data.
+  Workaround: Close the CodePeer Report window, open source file and display
+              the CodePeer Report again.
 
 - L222-019: GPS: wrong default fonts under SuSE Linux
   Problem:    Under some versions of SuSE Linux, the default font in GPS

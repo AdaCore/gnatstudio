@@ -20,8 +20,26 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+New features in GPS 5.1.2
+-------------------------
+
+NF-51-L313-035 GPS: PowerPC E500v2 Wind River Linux support (2012-03-14)
+
+  GPS support for the e500v2-wrs-linux GNAT Pro toolchain has been added.
+
+NF-51-KC19-036 GPS: PowerPC/x86 Wind River Linux support (2011-12-23)
+
+  GPS support for the powerpc-wrs-linux and i586-wrs-linux GNAT Pro
+  toolchains have been added.
+
 New features in GPS 5.1.1 / GNATbench 2.6.1
 -------------------------------------------
+
+NF-51-L502-025 GB: New preference to skip parsing Ada runtime (2012-06-25)
+
+  GNATbench now has a preference to exclude the parsing of the Ada runtime
+  for code assist functionality.  This greatly reduces the overall parsing
+  time required when the IDE is launched.
 
 NF-51-KA19-011 GPS: Comments associated with bodies in tooltip (2011-10-25)
 
