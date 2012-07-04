@@ -20,7 +20,8 @@ See also emacs.xml
 import GPS
 import string, traceback
 import navigation_utils
-import gtk
+import gi
+from gi.repository import Gtk
 from gps_utils import *
 
 should_extend_selection = False
@@ -115,11 +116,11 @@ def toggle_editor_wrapping():
     buffer  = GPS.EditorBuffer.get ()
     v = buffer.current_view()
     from pygps import get_widgets_by_type
-    text_view = get_widgets_by_type(gtk.TextView, v.pywidget())[0]
-    if text_view.get_wrap_mode() == gtk.WRAP_NONE:
-        text_view.set_wrap_mode(gtk.WRAP_WORD)
+    text_view = get_widgets_by_type(Gtk.TextView, v.pywidget())[0]
+    if text_view.get_wrap_mode() == Gtk.WRAP_NONE:
+        text_view.set_wrap_mode(Gtk.WRAP_WORD)
     else:
-        text_view.set_wrap_mode(gtk.WRAP_NONE)
+        text_view.set_wrap_mode(Gtk.WRAP_NONE)
 
 
 @interactive ("Editor", in_ada_file, name="subprogram box")
@@ -817,7 +818,7 @@ class LineIterator:
 ### then reselect it, there is some flickering
 
 try:
-   import gtk, gobject
+   from gi.repository import Gtk, GObject, Gdk
    has_pygtk = 1
 
    HOME      = 65360
@@ -839,12 +840,12 @@ try:
    KP_END       = 65436
 
    def override (key, modifier, movement, step, select):
-       gtk.binding_entry_remove (gtk.TextView, key, modifier)
-       gtk.binding_entry_add_signal (gtk.TextView, key, modifier,
+       Gtk.binding_entry_remove (Gtk.TextView, key, modifier)
+       Gtk.binding_entry_add_signal (Gtk.TextView, key, modifier,
                                      "move_cursor",
-                                     gobject.TYPE_ENUM, movement,
-                                     gobject.TYPE_INT,  step,
-                                     gobject.TYPE_BOOLEAN, select)
+                                     GObject.TYPE_ENUM, movement,
+                                     GObject.TYPE_INT,  step,
+                                     GObject.TYPE_BOOLEAN, select)
 
    def override_key_bindings (select):
        """Override the default TextView keybinding to either always force
@@ -854,45 +855,61 @@ try:
 
        should_extend_selection = select
 
-       override (RIGHT,    0, gtk.MOVEMENT_VISUAL_POSITIONS, 1, select)
-       override (KP_RIGHT, 0, gtk.MOVEMENT_VISUAL_POSITIONS, 1, select)
-       override (LEFT,     0, gtk.MOVEMENT_VISUAL_POSITIONS, -1, select)
-       override (KP_LEFT,  0, gtk.MOVEMENT_VISUAL_POSITIONS, -1, select)
+       override (RIGHT,    0, Gtk.MovementStep.VISUAL_POSITIONS, 1, select)
+       override (KP_RIGHT, 0, Gtk.MovementStep.VISUAL_POSITIONS, 1, select)
+       override (LEFT,     0, Gtk.MovementStep.VISUAL_POSITIONS, -1, select)
+       override (KP_LEFT,  0, Gtk.MovementStep.VISUAL_POSITIONS, -1, select)
 
-       override (RIGHT,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, 1, select)
-       override (KP_RIGHT, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, 1, select)
-       override (LEFT,     gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, -1, select)
-       override (KP_LEFT,  gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, -1, select)
+       override (RIGHT,    Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.WORDS, 1, select)
+       override (KP_RIGHT, Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.WORDS, 1, select)
+       override (LEFT,     Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.WORDS, -1, select)
+       override (KP_LEFT,  Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.WORDS, -1, select)
 
-       override (UP,       0, gtk.MOVEMENT_DISPLAY_LINES, -1, select)
-       override (KP_UP,    0, gtk.MOVEMENT_DISPLAY_LINES, -1, select)
-       override (DOWN,     0, gtk.MOVEMENT_DISPLAY_LINES, 1, select)
-       override (KP_DOWN,  0, gtk.MOVEMENT_DISPLAY_LINES, 1, select)
+       override (UP,       0, Gtk.MovementStep.DISPLAY_LINES, -1, select)
+       override (KP_UP,    0, Gtk.MovementStep.DISPLAY_LINES, -1, select)
+       override (DOWN,     0, Gtk.MovementStep.DISPLAY_LINES, 1, select)
+       override (KP_DOWN,  0, Gtk.MovementStep.DISPLAY_LINES, 1, select)
 
-       override (UP,      gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, -1, select)
-       override (KP_UP,   gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, -1, select)
-       override (DOWN,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, 1, select)
-       override (KP_DOWN, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, 1, select)
+       override (UP,      Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.PARAGRAPHS, -1, select)
+       override (KP_UP,   Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.PARAGRAPHS, -1, select)
+       override (DOWN,    Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.PARAGRAPHS, 1, select)
+       override (KP_DOWN, Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.PARAGRAPHS, 1, select)
 
-       override (HOME,    0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, -1, select)
-       override (KP_HOME, 0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, -1, select)
-       override (END,     0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, 1, select)
-       override (KP_END,  0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, 1, select)
+       override (HOME,    0, Gtk.MovementStep.DISPLAY_LINE_ENDS, -1, select)
+       override (KP_HOME, 0, Gtk.MovementStep.DISPLAY_LINE_ENDS, -1, select)
+       override (END,     0, Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, select)
+       override (KP_END,  0, Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, select)
 
-       override (HOME,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_BUFFER_ENDS, -1, select)
-       override (KP_HOME, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_BUFFER_ENDS, -1, select)
-       override (END,     gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_BUFFER_ENDS, 1, select)
-       override (KP_END,  gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_BUFFER_ENDS, 1, select)
+       override (HOME,    Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.BUFFER_ENDS, -1, select)
+       override (KP_HOME, Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.BUFFER_ENDS, -1, select)
+       override (END,     Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.BUFFER_ENDS, 1, select)
+       override (KP_END,  Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.BUFFER_ENDS, 1, select)
 
-       override (PAGE_UP,      0, gtk.MOVEMENT_PAGES, -1, select)
-       override (KP_PAGE_UP,   0, gtk.MOVEMENT_PAGES, -1, select)
-       override (PAGE_DOWN,    0, gtk.MOVEMENT_PAGES, 1, select)
-       override (KP_PAGE_DOWN, 0, gtk.MOVEMENT_PAGES, 1, select)
+       override (PAGE_UP,      0, Gtk.MovementStep.PAGES, -1, select)
+       override (KP_PAGE_UP,   0, Gtk.MovementStep.PAGES, -1, select)
+       override (PAGE_DOWN,    0, Gtk.MovementStep.PAGES, 1, select)
+       override (KP_PAGE_DOWN, 0, Gtk.MovementStep.PAGES, 1, select)
 
-       override (PAGE_UP,      gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, -1, select)
-       override (KP_PAGE_UP,   gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, -1, select)
-       override (PAGE_DOWN,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, 1, select)
-       override (KP_PAGE_DOWN, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, 1, select)
+       override (PAGE_UP,      Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.HORIZONTAL_PAGES, -1, select)
+       override (KP_PAGE_UP,   Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.HORIZONTAL_PAGES, -1, select)
+       override (PAGE_DOWN,    Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.HORIZONTAL_PAGES, 1, select)
+       override (KP_PAGE_DOWN, Gdk.ModifierType.CONTROL_MASK,
+                 Gtk.MovementStep.HORIZONTAL_PAGES, 1, select)
 
 except ImportError:
    has_pygtk = 0

@@ -82,13 +82,6 @@ Preference ("Plugins/vi/ignorecase").create (
   """If enabled, searching will ignore casing by default""",
   False)
 
-try:
-   ## If we have PyGTK installed, we'll do the highlighting of the next
-   ## matches in the background, which makes the interface more responsive
-   import gobject
-   has_pygtk = 1
-except:
-   has_pygtk = 0
 
 def on_gps_started (hook_name):
   parse_xml ("""

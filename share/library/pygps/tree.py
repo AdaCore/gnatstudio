@@ -3,7 +3,8 @@
 
 
 try:
-   import gtk, gobject, os
+   from gi.repository import Gtk, GObject
+   import os
    import pygps
 
    def find_in_tree (tree, column, key, iter=None):
@@ -50,7 +51,7 @@ try:
          If you are using the third button to display a contextual menu, see
          also activate_contextual()
 
-         To send a double-click, emit an event with type=gtk.gdk._2BUTTON_PRESS
+         To send a double-click, emit an event with type=Gdk._2BUTTON_PRESS
       """
 
       if os.name=='nt' and button==3 and events==pygps.single_click_events:
@@ -66,17 +67,21 @@ try:
       rect = view.get_cell_area (path, view.get_column (column))
 
       for t in events:
-         event = gtk.gdk.Event (t)
+         event = Gdk.Event (t)
          event.window = view.get_bin_window()
          event.button = button
          event.x = float (rect.x + rect.width / 2)
          event.y = float (rect.y + rect.height / 2)
 
-         event.state = 0
-         if control: event.state = event.state or gtk.gdk.CONTROL_MASK
-         if shift:   event.state = event.state or gtk.gdk.SHIFT_MASK
-         if alt:     event.state = event.state or gtk.gdk.MOD1_MASK
+         state = 0
+         if control:
+             state += Gdk.ModifierType.CONTROL_MASK
+         if shift:
+             state += Gdk.ModifierType.SHIFT_MASK
+         if alt:
+             state += Gdk.ModifierType.MOD1_MASK
 
+         event.state = state
          event.put()
 
       if process_events:

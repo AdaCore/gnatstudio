@@ -31,7 +31,7 @@ Preference ("Plugins/dispatching/context").create (
 try:
    ## If we have PyGTK installed, we'll do the highlighting of the next
    ## matches in the background, which makes the interface more responsive
-   import gobject
+   from gi.repository import GObject, GLib
    has_pygtk = 1
 except:
    has_pygtk = 0
@@ -133,7 +133,7 @@ def highlight_dispatching_calls (buffer):
      if not buffer in to_highlight:
         to_highlight.append (buffer)
      if insert_overlays_id == 0:
-        insert_overlays_id = gobject.idle_add (highlight_file_idle)
+        insert_overlays_id = GLib.idle_add (highlight_file_idle)
 
   else:
      entities = buffer.file().entities (local = False)

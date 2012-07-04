@@ -1,11 +1,11 @@
 """ This module provides a higher-level interface to notebooks.
-    It relies on the pygtk package.
+    It relies on the pygobject package.
 """
 
 
 
 try:
-  import gtk, gobject
+  from gi.repository import Gtk, GObject
   import pygps
 
   def switch_notebook_page (notebook, label):
@@ -29,7 +29,7 @@ try:
        Page is an integer, the index of the page in the notebook"""
 
     return pygps.get_widgets_by_type \
-      (gtk.Label, notebook.get_tab_label (page)) [0]
+      (Gtk.Label, notebook.get_tab_label (page)) [0]
 
   def get_notebook_pages (notebook):
     """Return the list of all visible pages for the notebook"""
@@ -37,8 +37,8 @@ try:
     pages = []
     for p in range (0, notebook.get_n_pages()):
        page = notebook.get_nth_page (p)
-       if page.flags() & gtk.VISIBLE:
-          pages.append (page)
+       if page.get_visible():
+          pages.append(page)
     return pages
 
   def get_notebook_page_labels_text (notebook):

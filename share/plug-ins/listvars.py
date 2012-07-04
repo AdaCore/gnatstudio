@@ -11,7 +11,7 @@ used in the selected subprogram.
 ############################################################################
 
 import GPS
-import gobject
+from gi.repository import GLib
 
 def list_vars (subprogram, global_only=False):
    """List all variables referenced by the subprogram.
@@ -79,14 +79,14 @@ def on_filter (context):
 def on_label (context):
    entity = context.entity()
    if entity:
-     return "References/Variables used in <b>" + gobject.markup_escape_text (entity.name()) + "</b>"
+     return "References/Variables used in <b>" + GLib.markup_escape_text (entity.name()) + "</b>"
    else:
      return ""
 
 def on_global_label (context):
    entity = context.entity()
    if entity:
-     return "References/Non local variables used in <b>" + gobject.markup_escape_text (entity.name()) + "</b>"
+     return "References/Non local variables used in <b>" + GLib.markup_escape_text (entity.name()) + "</b>"
    else:
      return ""
 

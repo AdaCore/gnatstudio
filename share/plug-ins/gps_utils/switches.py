@@ -8,9 +8,7 @@ corresponding widgets for a GUI editor.
 """
 
 
-import GPS, pygtk
-pygtk.require('2.0')
-import gobject, gtk
+import GPS
 
 # call Check() from xml values:
 

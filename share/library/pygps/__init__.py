@@ -2,7 +2,7 @@
 
 This package contains a number of functions that you can use in your
 own scripts to pilot the GPS interface. In particular, most of the
-functions depend on the pygtk module, and can be used to simulate
+functions depend on the pygobject module, and can be used to simulate
 button clicks, open dialogs,...
 
 You do not need to auto load this module at startup, each module that
@@ -37,12 +37,12 @@ def delayed_exit (delay=200):
   GPS.Timeout (delay, exit_gps)
 
 try:
-  import gtk, gobject
+  from gi.repository import Gtk, GObject, Gdk
 
   ##########
   ## Misc ##
   ##########
-  # The following functions provide wrappers around pygtk functions, to make
+  # The following functions provide wrappers around pygobject functions, to make
   # their use easier
 
   def process_all_events ():
@@ -51,29 +51,29 @@ try:
        a view is refreshed for instance.
        Using this function is not recommended in the general case, but is
        sometimes unavoidable. In general, it is better to use idle callbacks
-       through gobject.idle_add, to avoid blocking the whole GPS interface."""
+       through GObject.idle_add, to avoid blocking the whole GPS interface."""
 
-    while gtk.events_pending():
-       gtk.main_iteration (block=0)
+    while Gtk.events_pending():
+       Gtk.main_iteration (block=0)
 
-  single_click_events = [gtk.gdk.BUTTON_PRESS,
-                         gtk.gdk.BUTTON_RELEASE]
+  single_click_events = [Gdk.EventType.BUTTON_PRESS,
+                         Gdk.EventType.BUTTON_RELEASE]
   # List of events to emit for a single click
 
-  double_click_events = [gtk.gdk.BUTTON_PRESS,
-                         gtk.gdk.BUTTON_RELEASE,
-                         gtk.gdk.BUTTON_PRESS,
-                         gtk.gdk._2BUTTON_PRESS,
-                         gtk.gdk.BUTTON_RELEASE]
+  double_click_events = [Gdk.EventType.BUTTON_PRESS,
+                         Gdk.EventType.BUTTON_RELEASE,
+                         Gdk.EventType.BUTTON_PRESS,
+                         Gdk.EventType._2BUTTON_PRESS,
+                         Gdk.EventType.BUTTON_RELEASE]
   # List of events to emit for a double click
 
-  triple_click_events = [gtk.gdk.BUTTON_PRESS,
-                         gtk.gdk.BUTTON_RELEASE,
-                         gtk.gdk._2BUTTON_PRESS,
-                         gtk.gdk.BUTTON_RELEASE,
-                         gtk.gdk.BUTTON_PRESS,
-                         gtk.gdk._3BUTTON_PRESS,
-                         gtk.gdk.BUTTON_RELEASE]
+  triple_click_events = [Gdk.EventType.BUTTON_PRESS,
+                         Gdk.EventType.BUTTON_RELEASE,
+                         Gdk.EventType._2BUTTON_PRESS,
+                         Gdk.EventType.BUTTON_RELEASE,
+                         Gdk.EventType.BUTTON_PRESS,
+                         Gdk.EventType._3BUTTON_PRESS,
+                         Gdk.EventType.BUTTON_RELEASE]
   # List of events to emit for a triple click
 
   ################################
@@ -93,7 +93,7 @@ try:
        if self.to_traverse == []:
           raise StopIteration
        w = self.to_traverse.pop()
-       if isinstance (w, gtk.Container):
+       if isinstance (w, Gtk.Container):
          self.to_traverse = self.to_traverse + w.get_children()
        return w
 
@@ -106,11 +106,11 @@ try:
        or for multiple dialogs:
            for w in WidgetTree ([dialog1, dialog2]): ...
        To get a list of all buttons in the interface:
-           [x for x in WidgetTree() if isinstance (x, gtk.Button)]
+           [x for x in WidgetTree() if isinstance (x, Gtk.Button)]
     """
 
     def __init__ (self, list = None):
-      if not list: list = gtk.window_list_toplevels()
+      if not list: list = Gtk.Window.list_toplevels()
       if list.__class__ != [].__class__: list = [list]
       self.list = list
     def __iter__ (self):
@@ -130,17 +130,17 @@ try:
        while self.to_traverse != []:
 	 (w, prefix, level) = self.to_traverse.pop ()
 
-	 if isinstance (w, gtk.MenuItem):
+	 if isinstance (w, Gtk.MenuItem):
 	   accel_path = ""
 	   result = None
 	   for m in w.get_children():
-	     if isinstance (m, gtk.Label):
+	     if isinstance (m, Gtk.Label):
 		accel_path = prefix + m.get_text()
 		accel = ""
-		if isinstance (m, gtk.AccelLabel):
-		   key = gtk.accel_map_lookup_entry (prefix + m.get_text())
+		if isinstance (m, Gtk.AccelLabel):
+		   key = Gtk.AccelMap.lookup_entry (prefix + m.get_text())
 		   if key and key[0] != 0:
-		      accel = gtk.accelerator_name (key[0], key[1])
+		      accel = Gtk.accelerator_name (key[0], key[1])
 		result = (w, accel_path, accel, level)
 
 	   if w.get_submenu ():
@@ -150,7 +150,7 @@ try:
 	   if result:
 	     return result
 
-	 elif isinstance (w, gtk.Container):
+	 elif isinstance (w, Gtk.Container):
 	   self.to_traverse = self.to_traverse + \
 	      [(c, prefix, level + 1) for c in w.get_children ()]
        raise StopIteration
@@ -158,7 +158,7 @@ try:
   class MenuTree:
     """Iterates over a menu and all its submenus. For each item, return
        a tuple (menu, label, accel, level), where menu is the
-       gtk.MenuItem widget"""
+       Gtk.MenuItem widget"""
 
     def __init__ (self, menu):
        self.menu = menu
@@ -186,25 +186,25 @@ try:
        first window with given title."""
 
     result = [x for x in WidgetTree (list) \
-              if isinstance (x, gtk.Window) and x.get_title() == title]
+              if isinstance (x, Gtk.Window) and x.get_title() == title]
     if result: return result[0]
     else:      return result
 
-  def get_stock_button (parents, stock = gtk.STOCK_OK):
+  def get_stock_button (parents, stock = Gtk.STOCK_OK):
     """Find the first button in the possible parents that is a stock button
        with the given stock label.
        Most dialogs in GPS use such buttons, that mix icons and text."""
 
     return [x for x in WidgetTree (parents) \
-            if isinstance (x, gtk.Button) \
+            if isinstance (x, Gtk.Button) \
                 and x.get_use_stock() and x.get_label() == stock][0]
 
   def get_button_from_label (label, parents=None):
     """Return the first button with the matching label"""
 
-    for x in get_widgets_by_type (gtk.Button, parents):
+    for x in get_widgets_by_type (Gtk.Button, parents):
        if x.get_label() == label: return x
-       for l in get_widgets_by_type (gtk.Label, x):
+       for l in get_widgets_by_type (Gtk.Label, x):
           if l.get_text() == label: return x
     return None
 
@@ -224,8 +224,8 @@ try:
        Do not use this directly in general, but rather
        open_project_properties, open_project_wizard,..."""
     def internal_on_open (on_open, widgets, windows, args, kwargs):
-       dialog = [w for w in gtk.window_list_toplevels() \
-                 if not w in windows and w.flags () & gtk.MAPPED]
+       dialog = [w for w in Gtk.Window.list_toplevels() \
+                 if not w in windows and w.flags () & Gtk.MAPPED]
        if not dialog:
           # Will try again after same timeout or idle
           return True
@@ -239,12 +239,12 @@ try:
        params = tuple \
          ([dialog] + [get_widget_by_name (name, dialog) for name in widgets])
        apply (on_open, params + args, kwargs)
-    windows = gtk.window_list_toplevels()
+    windows = Gtk.Window.list_toplevels()
     if timeout == 0:
-      gobject.idle_add \
+      GObject.idle_add \
         (lambda: internal_on_open (on_open, widgets, windows, args, kwargs))
     else:
-      gobject.timeout_add \
+      GObject.timeout_add \
         (timeout, lambda: internal_on_open (on_open, widgets, windows, args, kwargs))
     GPS.Menu.get (menu).pywidget().activate()
 
@@ -278,15 +278,15 @@ try:
     """
 
     if key_press:
-      event = gtk.gdk.Event (gtk.gdk.KEY_PRESS)
+      event = Gdk.Event (Gdk.KEY_PRESS)
     else:
-      event = gtk.gdk.Event (gtk.gdk.KEY_RELEASE)
+      event = Gdk.Event (Gdk.KEY_RELEASE)
 
     if not window:
-       window = gtk.window_list_toplevels()[0]
-    if isinstance (window, gtk.TextView):
-       window = window.get_window (gtk.TEXT_WINDOW_TEXT)
-    if not isinstance (window, gtk.gdk.Window):
+       window = Gtk.Window.list_toplevels()[0]
+    if isinstance (window, Gtk.TextView):
+       window = window.get_window (Gtk.TextWindowType.TEXT)
+    if not isinstance (window, Gdk.Window):
        window = window.window
     event.window = window
     event.keyval = keyval
@@ -299,15 +299,20 @@ try:
     event.send_event = 1
     event.time   = int (time.time())
 
-    # We cannot set event.string, because of a bug in pygtk, which tries
+    # We cannot set event.string, because of a bug in pygobject, which tries
     # to doubly deallocate the string later on
     # if keyval >= 32 and keyval <= 128:
     #   event.string = chr (keyval)
 
-    event.state = 0
-    if control: event.state = event.state or gtk.gdk.CONTROL_MASK
-    if shift:   event.state = event.state or gtk.gdk.SHIFT_MASK
-    if alt:     event.state = event.state or gtk.gdk.MOD1_MASK
+    state = 0
+    if control:
+       state += Gdk.ModifierType.CONTROL_MASK
+    if shift:
+       state += Gdk.ModifierType.SHIFT_MASK
+    if alt:
+       state += Gdk.ModifierType.MOD1_MASK
+
+    event.state = state
     event.put()
     if process_events:
       process_all_events()

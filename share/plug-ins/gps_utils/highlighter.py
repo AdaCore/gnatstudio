@@ -29,7 +29,7 @@
 from GPS import *
 
 try:
-   import gobject
+   from gi.repository import GObject
    gobject_available = 1
 except:
    gobject_available = 0
@@ -38,7 +38,7 @@ class Highlighter ():
   """This class provides a way to easily highlight text in an editor.
      When possible, the highlighting is done in the background, in
      which case it is also done on the fly every time the file is
-     modified. If pygtk is not available, the highlighting is only done
+     modified. If pygobject is not available, the highlighting is only done
      when the file is opened or saved"""
 
   def do_highlight (self, buffer, overlay, start, end):

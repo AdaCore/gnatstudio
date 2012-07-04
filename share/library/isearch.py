@@ -92,7 +92,7 @@ isearch_backward_menu = '/Navigate/Find Previous Incremental'
 try:
    ## If we have PyGTK installed, we'll do the highlighting of the next
    ## matches in the background, which makes the interface more responsive
-   import gobject
+   from gi.repository import GLib
    has_pygtk = 1
 except:
    has_pygtk = 0
@@ -162,7 +162,7 @@ class Isearch (CommandWindow):
    def cancel_idle_overlays (self):
      """Cancel the background loop that computes the next matches"""
      if self.insert_overlays_id != 0:
-        gobject.source_remove (self.insert_overlays_id)
+        GLib.source_remove (self.insert_overlays_id)
         self.insert_overlays_id = 0
 
    def remove_overlays (self):
@@ -206,7 +206,7 @@ class Isearch (CommandWindow):
         if input != "":
            if has_pygtk:
               self.insert_overlays_id = \
-                gobject.idle_add (self.insert_next_overlay, input)
+                GLib.idle_add (self.insert_next_overlay, input)
            elif len (input) > 2:
               while self.insert_next_overlay (input): pass
 

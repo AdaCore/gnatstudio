@@ -3,7 +3,6 @@
 
 
 try:
-  import gtk, gobject
   import pygps
 
   def open_project_wizard (on_open, *args, **kwargs):

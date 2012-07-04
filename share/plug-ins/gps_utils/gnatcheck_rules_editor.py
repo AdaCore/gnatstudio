@@ -1,12 +1,10 @@
-import GPS, os, os.path, re, string, pygtk, traceback, os_utils, sys
+import GPS, os, os.path, re, string, traceback, os_utils, sys
 import sys, gps_utils.gnat_rules
 from gps_utils.switches import *
 from gps_utils.gnatcheck_default import *
 from xml.dom import minidom
 from xml.dom import *
-
-pygtk.require('2.0')
-import gobject, gtk
+from gi.repository import Gtk, GObject
 
 def getText(nodelist):
     rc = ""
@@ -179,12 +177,12 @@ def activate (widg):
    """Utility function to activate a widget. Used as callback in foreach loop"""
    widg.set_sensitive(True)
 
-class rulesEditor(gtk.Dialog):
+class rulesEditor(Gtk.Dialog):
    """Dialog used to edit the coding standard file."""
 
    def __init__ (self, maincat, defaultfile):
       # call parent __init__
-      gtk.Dialog.__init__ (self, title="Coding Standard editor", parent=GPS.MDI.current().pywidget().get_toplevel(), flags=gtk.DIALOG_MODAL, buttons=None)
+      Gtk.Dialog.__init__ (self, title="Coding Standard editor", parent=GPS.MDI.current().pywidget().get_toplevel(), flags=Gtk.DialogFlags.MODAL, buttons=None)
       self.set_default_size (600, 400)
       self.set_name ("CodingStandardEditor")
 
@@ -196,19 +194,19 @@ class rulesEditor(gtk.Dialog):
       self.additional_switches = []
 
       # Selection of a coding standard file
-      hbox = gtk.HBox()
+      hbox = Gtk.HBox()
       hbox.show()
       self.vbox.pack_start (hbox, False, False, 0)
 
-      label=gtk.Label("coding standard file:")
+      label=Gtk.Label(label="coding standard file:")
       label.show()
       hbox.pack_start (label, False, False, 0)
 
-      hbox = gtk.HBox()
+      hbox = Gtk.HBox()
       hbox.show()
       self.vbox.pack_start (hbox, False, False, 0)
 
-      self.fileEntry = gtk.Entry()
+      self.fileEntry = Gtk.Entry()
       # Connect callbacks on the file entry modifications
       self.fileEntry.set_editable(True)
       self.fileEntry.show()
@@ -217,28 +215,28 @@ class rulesEditor(gtk.Dialog):
       self.fileEntry.connect ('changed', self.on_file_entry_changed)
       hbox.pack_start (self.fileEntry, True, True, 0)
 
-      button=gtk.Button ('Browse')
+      button=Gtk.Button ('Browse')
       button.connect ('clicked', self.on_coding_standard_file_browse)
       button.show()
       hbox.pack_start (button, False, False, 0)
 
       # rules container
-      self.switchvbox = gtk.VBox()
+      self.switchvbox = Gtk.VBox()
       self.switchvbox.show()
       self.vbox.pack_start (self.switchvbox, True, True, 0);
 
       # Check box for optional rules file edition after exit
-      hbox = gtk.HBox()
+      hbox = Gtk.HBox()
       hbox.show()
-      label = gtk.Label("")
+      label = Gtk.Label(label="")
       label.hide()
       hbox.pack_start (label, True, True, 0)
       self.vbox.pack_start (hbox, False, False, 0)
-      self.open_file_after_exit_check = gtk.CheckButton("Open rules file after exit")
+      self.open_file_after_exit_check = Gtk.CheckButton("Open rules file after exit")
       self.open_file_after_exit_check.show()
       hbox.pack_end (self.open_file_after_exit_check, False, False, 0)
 
-      label=gtk.Label()
+      label=Gtk.Label()
       label.set_markup("<span weight='bold' size='large'>Coding standard rules</span>")
       label.show()
       self.switchvbox.pack_start (label, False, False, 0)
@@ -250,12 +248,12 @@ class rulesEditor(gtk.Dialog):
       self.show_all()
 
       # Save - Cancel buttons
-      self.saveButton=gtk.Button ('Save')
+      self.saveButton=Gtk.Button ('Save')
       self.saveButton.connect ('clicked', self.on_save)
       self.saveButton.show()
       self.action_area.pack_start(self.saveButton, True, True, 0)
 
-      self.cancelButton=gtk.Button ('Cancel')
+      self.cancelButton=Gtk.Button ('Cancel')
       self.cancelButton.connect ('clicked', self.on_cancel)
       self.cancelButton.show()
       self.action_area.pack_start(self.cancelButton, True, True, 0)
@@ -285,10 +283,10 @@ class rulesEditor(gtk.Dialog):
       content2 = re.sub (r'\-\-.*\n','',content)
       if content2 != content:
         msg = "Warning: the selected file contains comments.\nThese will be removed if the coding standard file is saved from the graphical editor\n"
-        dialog = gtk.MessageDialog (self,
-                                    gtk.DIALOG_MODAL,
-                                    gtk.MESSAGE_WARNING,
-                                    gtk.BUTTONS_OK,
+        dialog = Gtk.MessageDialog (self,
+                                    Gtk.DialogFlags.MODAL,
+                                    Gtk.MessageType.WARNING,
+                                    Gtk.ButtonsType.OK,
                                     msg)
         dialog.run()
         dialog.destroy()
@@ -314,7 +312,7 @@ class rulesEditor(gtk.Dialog):
 
    def on_cancel (self, *args):
       """Callback to 'Cancel' button"""
-      self.response(gtk.RESPONSE_NONE)
+      self.response(Gtk.ResponseType.NONE)
 
    def on_save (self, *args):
       """Callback to 'Save' button"""
@@ -326,5 +324,5 @@ class rulesEditor(gtk.Dialog):
       f.close ()
       if self.open_file_after_exit_check.get_active():
         GPS.EditorBuffer.get(file)
-      self.response(gtk.RESPONSE_NONE)
+      self.response(Gtk.ResponseType.NONE)
 

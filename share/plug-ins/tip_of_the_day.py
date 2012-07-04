@@ -8,8 +8,7 @@
 
 import GPS
 
-import gtk
-import gtk.gdk
+from gi.repository import Gtk, Gdk
 import os.path
 import re
 
@@ -398,12 +397,12 @@ def parse_tips ():
 def display_tip (title, doc, img):
     """ Display the tip. Return a widget containing the tip. """
 
-    vbox = gtk.VBox()
+    vbox = Gtk.VBox()
 
     # display the title
-    hbox = gtk.HBox()
+    hbox = Gtk.HBox()
 
-    title_label = gtk.Label()
+    title_label = Gtk.Label()
     title_label.set_use_markup(True)
     title_label.set_markup ("""<big>%s</big>""" % title)
 
@@ -414,9 +413,9 @@ def display_tip (title, doc, img):
     # display the image if any
 
     if img != "":
-       hbox = gtk.HBox()
+       hbox = Gtk.HBox()
 
-       image = gtk.Image()
+       image = Gtk.Image()
        image.set_from_file (img)
        image.show()
 
@@ -425,8 +424,8 @@ def display_tip (title, doc, img):
        vbox.pack_start (hbox, False, False, 10)
 
     # display the documentation
-    hbox = gtk.HBox()
-    doc_label = gtk.Label()
+    hbox = Gtk.HBox()
+    doc_label = Gtk.Label()
     doc_label.set_use_markup(True)
     doc_label.set_markup ("""%s""" % doc)
 
@@ -441,7 +440,7 @@ class Tip:
     def on_key_press (self, widget, event):
         """ Callback on a key press event"""
 
-        if event.keyval == gtk.keysyms.Escape:
+        if event.keyval == Gdk.KEY_Escape:
            self.on_close_button (widget)
            return True
 
@@ -496,41 +495,41 @@ class Tip:
 
         self.results = results
 
-        border     = gtk.gdk.color_parse ("#6897CB") # GPS blue
-        background = gtk.gdk.color_parse ("#FFFFE0") # light yellow
+        border     = Gdk.color_parse ("#6897CB") # GPS blue
+        background = Gdk.color_parse ("#FFFFE0") # light yellow
 
-        window = gtk.Window()
+        window = Gtk.Window()
         self.window = window
 
         window.set_default_size (550, 350)
         window.set_decorated (False)
 
-        if isinstance (parent, gtk.Window):
+        if isinstance (parent, Gtk.Window):
             window.set_transient_for (parent)
 
-        window.set_position (gtk.WIN_POS_CENTER_ON_PARENT)
-        window.modify_bg (gtk.STATE_NORMAL, border)
+        window.set_position (Gtk.WindowPosition.CENTER_ON_PARENT)
+        window.modify_bg (Gtk.StateType.NORMAL, border)
 
         # EventBox for the blue frame
 
-        ebox = gtk.EventBox()
-        ebox.modify_bg(gtk.STATE_NORMAL, background)
+        ebox = Gtk.EventBox()
+        ebox.modify_bg(Gtk.StateType.NORMAL, background)
         ebox.set_border_width (5)
         window.add(ebox)
 
-        vbox = gtk.VBox()
+        vbox = Gtk.VBox()
         ebox.add (vbox)
 
         # window title
 
-        hbox = gtk.HBox()
-        title_label = gtk.Label()
+        hbox = Gtk.HBox()
+        title_label = Gtk.Label()
         title_label.set_use_markup(True)
         title_label.set_markup (
           """<big>Tip of the Day</big>""")
 
-        img=gtk.Image()
-        img.set_from_stock (gtk.STOCK_INFO, gtk.ICON_SIZE_LARGE_TOOLBAR)
+        img=Gtk.Image()
+        img.set_from_stock (Gtk.STOCK_INFO, Gtk.IconSize.LARGE_TOOLBAR)
         hbox.pack_start (img, False, False, 10)
         hbox.pack_start (title_label, False, False, 3)
         vbox.pack_start (hbox, False, False, 10)
@@ -539,34 +538,34 @@ class Tip:
 
         self.tip_number = initial_tip
 
-        self.tip_container = gtk.Frame()
-        self.tip_container.set_shadow_type (gtk.SHADOW_NONE)
+        self.tip_container = Gtk.Frame()
+        self.tip_container.set_shadow_type (Gtk.ShadowType.NONE)
 
         vbox.pack_start (self.tip_container, True, True, 0)
 
         # display the previous/next buttons
 
-        hbox = gtk.HBox()
+        hbox = Gtk.HBox()
 
-        label = gtk.Label()
+        label = Gtk.Label()
         label.set_use_markup (True)
         label.set_markup ('<span foreground="#0000FF">Next &gt;</span>')
 
-        next_button = gtk.Button ()
+        next_button = Gtk.Button ()
         next_button.add(label)
 
-        label = gtk.Label()
+        label = Gtk.Label()
         label.set_use_markup (True)
         label.set_markup ('<span foreground="#0000FF">&lt; Previous</span>')
 
-        prev_button = gtk.Button ()
+        prev_button = Gtk.Button ()
         prev_button.add(label)
 
         for button in [next_button, prev_button]:
-            button.modify_bg (gtk.STATE_NORMAL, background)
-            button.modify_bg (gtk.STATE_PRELIGHT, background)
-            button.modify_bg (gtk.STATE_ACTIVE, background)
-            button.set_relief (gtk.RELIEF_NONE)
+            button.modify_bg (Gtk.StateType.NORMAL, background)
+            button.modify_bg (Gtk.StateType.PRELIGHT, background)
+            button.modify_bg (Gtk.StateType.ACTIVE, background)
+            button.set_relief (Gtk.ReliefStyle.NONE)
 
         hbox.pack_end (next_button, False, False, 10)
         hbox.pack_end (prev_button, False, False, 3)
@@ -575,24 +574,23 @@ class Tip:
 
         # display the footer
 
-        hbox = gtk.HBox()
+        hbox = Gtk.HBox()
 
-        close_button = gtk.Button (gtk.STOCK_CLOSE)
+        close_button = Gtk.Button (Gtk.STOCK_CLOSE)
         close_button.set_use_stock (True)
         close_button.grab_focus()
 
         hbox.pack_end (close_button, False, False, 10)
 
-        self.check = gtk.CheckButton()
+        self.check = Gtk.CheckButton()
         self.check.set_active (True)
         self.check.set_label ("Display Tip of the Day on startup")
-        self.check.modify_bg (gtk.STATE_PRELIGHT, background)
+        self.check.modify_bg (Gtk.StateType.PRELIGHT, background)
 
         hbox.pack_start (self.check, False, False, 10)
 
         vbox.pack_start (hbox, False, False, 10)
 
-        close_button.set_flags(close_button.flags() and gtk.CAN_DEFAULT)
         window.set_default (close_button)
         window.set_focus (close_button)
         window.show_all()
@@ -631,7 +629,7 @@ def on_gps_started (hook):
     # If one toplevel is a dialog for the main window, do not display the
     # tip-of-the-day
 
-    for t in gtk.window_list_toplevels():
+    for t in Gtk.Window.list_toplevels():
         if t.get_transient_for() == top:
             return
 

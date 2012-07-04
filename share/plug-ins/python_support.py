@@ -30,7 +30,7 @@ GPS.Preference ("Plugins/python_support/port").create (
 This is a small local server to which your web browser connects to display the documentation for the standard python library. It is accessed through the /Python menu when editing a python file""", 9432)
 
 try:
-  import gtk
+  from gi.repository import Gtk
   has_pygtk=1
 except:
   has_pygtk=0
