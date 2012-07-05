@@ -4657,7 +4657,7 @@ Targets are defined in a `target` node which has three attributes:
 
 *<visible>*
   Optional, defaulting to `True`. A boolean indicating whether the
-  Target should initially be vissible in GPS.
+  Target should initially be visible in GPS.
 
 *<read-only>*
   Optional, defaulting to `False`. A boolean indicating whether the
