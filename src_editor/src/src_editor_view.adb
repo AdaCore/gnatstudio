@@ -1038,6 +1038,8 @@ package body Src_Editor_View is
          Get_Visible_Rect (View, Rect);
          Set_Line_Width (Cr, 1.0);
          Set_Antialias (Cr, Cairo_Antialias_None);
+         Save (Cr);
+         Translate (Cr, Gdouble (Width), 0.0);
 
          Buffer_To_Window_Coords
            (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
@@ -1145,6 +1147,8 @@ package body Src_Editor_View is
               (Cr, To_Cairo (Tmp_Color), X, Y, X, Y + Rect.Height);
             Restore (Cr);
          end if;
+
+         Restore (Cr);
       end Highlight_Text;
 
    begin  -- Expose_Event_Cb
