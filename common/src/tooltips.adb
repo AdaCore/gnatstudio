@@ -18,11 +18,10 @@
 with Ada.Unchecked_Deallocation;
 
 with Cairo.Image_Surface;  use Cairo.Image_Surface;
-with Cairo.Pattern;        use Cairo.Pattern;
 with Cairo.Surface;        use Cairo.Surface;
 
-with Gdk.Cairo;            use Gdk.Cairo;
 with Gdk.Event;            use Gdk.Event;
+with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gdk.Rectangle;        use Gdk.Rectangle;
 with Gdk.Screen;           use Gdk.Screen;
 with Gdk.Types;            use Gdk.Types;
@@ -125,7 +124,9 @@ package body Tooltips is
       if W /= null then
          Gtk_New       (Tooltip.Display_Window, Window_Popup);
          Add           (Tooltip.Display_Window, W);
-         Get_Pointer   (null, X, Y, Mask, Window);
+         Get_Pointer
+           (Get_Root_Window (Get_Screen (Get_Toplevel (W))),
+            X, Y, Mask, Window);
 
          --  Get screen size
 
@@ -198,9 +199,8 @@ package body Tooltips is
    is
       use type Gdk_Window;
       Surface : Cairo_Surface;
-      Ptrn    : Cairo_Pattern;
       Pix     : Gtk_Image;
-      Cr      : Cairo_Context;
+      Buf     : Gdk_Pixbuf;
    begin
       Draw (Pixmap_Tooltips_Access (Tooltip), Surface, Tooltip.Area);
 
@@ -208,21 +208,20 @@ package body Tooltips is
          Tooltip.Width := Cairo.Image_Surface.Get_Width (Surface);
          Tooltip.Height := Cairo.Image_Surface.Get_Height (Surface);
 
-         Ptrn := Cairo.Pattern.Create_For_Surface (Surface);
-         Cairo.Pattern.Set_Extend (Ptrn, Cairo_Extend_Repeat);
+         Buf := Get_From_Surface (Surface => Surface,
+                                  Src_X   => 0,
+                                  Src_Y   => 0,
+                                  Width   => Tooltip.Width,
+                                  Height  => Tooltip.Height);
 
-         Cr := Gdk.Cairo.Create (Get_Window (Tooltip.Widget));
-         Set_Source (Cr, Ptrn);
-         Cairo.Paint (Cr);
+         Gtk_New (Pix, Buf);
 
-         Destroy (Cr);
-         Destroy (Ptrn);
-         Destroy (Surface);
-
-         Gtk.Image.Gtk_New (Pix);
-         Set_Size_Request (Pix, Tooltip.Width, Tooltip.Height);
          Contents := Gtk_Widget (Pix);
          Area     := Tooltip.Area;
+
+         Unref (Buf);
+         Destroy (Surface);
+
       else
          Contents := null;
       end if;
