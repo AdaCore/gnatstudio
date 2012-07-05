@@ -1077,6 +1077,11 @@ package body Build_Configurations is
 
       C.Next := new Node;
       C := C.Next;
+      C.Tag := new String'("visible");
+      C.Value := new String'(Target.Properties.Visible'Img);
+
+      C.Next := new Node;
+      C := C.Next;
       C.Tag := new String'("in-menu");
       C.Value := new String'(Target.Properties.In_Menu'Img);
 
@@ -1234,6 +1239,9 @@ package body Build_Configurations is
 
          elsif Child.Tag.all = "icon" then
             Target.Properties.Icon := To_Unbounded_String (Child.Value.all);
+
+         elsif Child.Tag.all = "visible" then
+            Target.Properties.Visible := Boolean'Value (Child.Value.all);
 
          elsif Child.Tag.all = "in-toolbar" then
             Target.Properties.In_Toolbar := Boolean'Value (Child.Value.all);
@@ -1787,6 +1795,15 @@ package body Build_Configurations is
    begin
       return Target.Model.Is_Run;
    end Is_Run;
+
+   -------------
+   -- Visible --
+   -------------
+
+   procedure Visible (Target : Target_Access; Value : Boolean) is
+   begin
+      Target.Properties.Visible := Value;
+   end Visible;
 
    ----------------
    -- In_Toolbar --

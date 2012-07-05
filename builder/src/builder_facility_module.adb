@@ -461,10 +461,12 @@ package body Builder_Facility_Module is
            or else (Menu_Type = Build_Targets and then not Is_Run (T))
          then
             if (For_Files
-                and then Get_Properties (T).In_Contextual_Menu_For_Files)
+                and then Get_Properties (T).In_Contextual_Menu_For_Files
+                and then Get_Properties (T).Visible)
               or else
                 (For_Project
-                 and then Get_Properties (T).In_Contextual_Menu_For_Projects)
+                 and then Get_Properties (T).In_Contextual_Menu_For_Projects
+                 and then Get_Properties (T).Visible)
             then
                Add_Contextual (T);
             end if;
@@ -1333,6 +1335,7 @@ package body Builder_Facility_Module is
    begin
       if Target = null
         or else not Get_Properties (Target).In_Toolbar
+        or else not Get_Properties (Target).Visible
       then
          return;
       end if;
@@ -1425,7 +1428,9 @@ package body Builder_Facility_Module is
 
    begin
       --  Do nothing is the target is not supposed to be shown in the menu
-      if not Get_Properties (Target).In_Menu then
+      if not Get_Properties (Target).In_Menu
+        or else not Get_Properties (Target).Visible
+      then
          return;
       end if;
 

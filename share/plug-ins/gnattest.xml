@@ -258,6 +258,34 @@
     </switches>
   </target-model>
 
+  <!-- This is model for run test-driver executables geberated by GNATtest -->
+  <target-model name="GNATtest run" category="">
+    <description>Run a test-driver geberated by GNATtest</description>
+    <is-run>FALSE</is-run>
+    <command-line>
+      <arg>%E</arg>
+      <arg>--passed-tests=hide</arg>
+    </command-line>
+    <server>Execution_Server</server>
+    <icon>gtk-media-play</icon>
+
+    <switches command="%(tool_name)s" columns="1" separator="=">
+      <combo label="Default test behavior "
+        switch="--skeleton-default="
+        tip="How to count unimplemented tests in this run">
+        <combo-entry label="Pass" value="pass"/>
+        <combo-entry label="Fail" value="fail"/>
+      </combo>
+
+      <check label="Suppress passed tests output"
+        switch="--passed-tests=hide"
+        switch-off="--passed-tests=show"
+        default="on"
+        tip="hide passed tests from test river output"/>
+
+    </switches>
+  </target-model>
+
   <target model="gnattest" category="_Project_" name="GNATtest for project">
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
@@ -300,6 +328,21 @@
       <arg>-dd</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
+    </command-line>
+  </target>
+
+  <target model="GNATtest run" category="Run"
+          name="Run a test-driver"
+          messages_category="test-driver">
+    <visible>FALSE</visible>
+    <in-menu>TRUE</in-menu>
+    <in-toolbar>TRUE</in-toolbar>
+    <in-contextual-menus-for-projects>TRUE</in-contextual-menus-for-projects>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <target-type>executable</target-type>
+    <command-line>
+      <arg>%E</arg>
+      <arg>--passed-tests=hide</arg>
     </command-line>
   </target>
 

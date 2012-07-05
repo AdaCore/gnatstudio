@@ -1085,7 +1085,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Secondary File pattern",
          Doc     =>
            -"Pattern used to detect secondary file locations in messages",
-         Default => "(([^: ]+):(\d+)(:(\d+):?)?)",
+         Default => "(([^:( ]+):(\d+)(:(\d+):?)?)",
          Page    => -"Messages");
 
       Secondary_File_Pattern_Index := Create

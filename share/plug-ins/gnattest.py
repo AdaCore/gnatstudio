@@ -63,4 +63,17 @@ def on_compilation_finished(hook, category,
 
    open_harness_project (last_gnattest_project)
 
+def on_project_view_changed(hook):
+
+   test_run_target=GPS.BuildTarget ("Run a test-driver")
+   run_main_target=GPS.BuildTarget ("Run Main")
+
+   if is_harness_project():
+      run_main_target.hide()
+      test_run_target.show()
+   else:
+      run_main_target.show()
+      test_run_target.hide()
+
 GPS.Hook("compilation_finished").add(on_compilation_finished)
+GPS.Hook("project_view_changed").add(on_project_view_changed)

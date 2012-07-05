@@ -158,6 +158,40 @@ package body Builder_Facility_Module.Scripts is
                         (Target_Name => To_Unbounded_String (Name)));
          end;
 
+      elsif Command = "hide" then
+         declare
+            Inst : constant Class_Instance := Nth_Arg (Data, 1, Target_Class);
+            Name : constant String := Get_Target_Name (Inst);
+            Ref  : constant Target_Access
+              := Get_Target_From_Name (Registry, Name);
+         begin
+            if Ref = null then
+               Set_Error_Msg (Data, -"Invalid target");
+               return;
+            end if;
+
+            Visible (Ref, False);
+
+            Refresh_Graphical_Elements;
+         end;
+
+      elsif Command = "show" then
+         declare
+            Inst : constant Class_Instance := Nth_Arg (Data, 1, Target_Class);
+            Name : constant String := Get_Target_Name (Inst);
+            Ref  : constant Target_Access
+              := Get_Target_From_Name (Registry, Name);
+         begin
+            if Ref = null then
+               Set_Error_Msg (Data, -"Invalid target");
+               return;
+            end if;
+
+            Visible (Ref, True);
+
+            Refresh_Graphical_Elements;
+         end;
+
       elsif Command = "remove" then
          declare
             Inst : constant Class_Instance := Nth_Arg (Data, 1, Target_Class);
@@ -365,6 +399,20 @@ package body Builder_Facility_Module.Scripts is
    begin
       Register_Command
         (Kernel, Constructor_Method, 1, 1, Shell_Handler'Access, Target_Class);
+
+      Register_Command
+        (Kernel, "hide",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Target_Class,
+         Handler      => Shell_Handler'Access);
+
+      Register_Command
+        (Kernel, "show",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Target_Class,
+         Handler      => Shell_Handler'Access);
 
       Register_Command
         (Kernel, "remove",

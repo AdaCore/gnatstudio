@@ -259,6 +259,9 @@ package Build_Configurations is
    type Target_Properties is record
       Launch_Mode     : Launch_Mode_Type := Manually;
 
+      Visible    : Boolean          := True;
+      --  Whether target visible at all
+
       In_Toolbar : Boolean          := False;
       --  Whether to display an icon in the toolbar
 
@@ -387,6 +390,9 @@ package Build_Configurations is
       Model : Target_Model_Access);
    --  Change the name of the model for Target
 
+   procedure Visible (Target : Target_Access; Value : Boolean);
+   --  Change Visible value
+
    procedure In_Toolbar (Target : Target_Access; Value : Boolean);
    --  Change In_Toolbar value
 
@@ -415,6 +421,7 @@ package Build_Configurations is
    --     <icon>ICON</icon>
    --     <in-toolbar>IN_TOOLBAR</in-toolbar>
    --     <in-menu>IN_MENU</in-menu>
+   --     <visible>VISIBLE</visible>
    --     <read-only>RO</read-only>
    --     <represents-mains>RM</represents-mains>
    --     <key>KEY</key>
@@ -439,6 +446,8 @@ package Build_Configurations is
    --                  in the toolbar - False by default
    --     IN_MENU      (boolean) indicates whether the target should show up
    --                  in the menu - True by default
+   --     VISIBLE      (boolean) indicates whether the target should show up
+   --                  - True by default
    --     KEY          the key bound to the target
    --     SERVER       the server used to launch the target
 
