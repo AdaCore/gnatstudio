@@ -1099,14 +1099,14 @@ package body Src_Editor_View is
 
             if View.Highlight_As_Line then
                Move_To (Cr,
-                        Gdouble (Margin),
+                        0.0,
                         Gdouble (Buffer_Line_Y + Line_Height));
                Rel_Line_To (Cr, Gdouble (Rect.Width), 0.0);
                Stroke (Cr);
             else
                Cairo.Rectangle
                  (Cr,
-                  Gdouble (Margin),
+                  0.0,
                   Gdouble (Buffer_Line_Y),
                   Gdouble (Rect.Width),
                   Gdouble (Line_Height));
@@ -2181,7 +2181,6 @@ package body Src_Editor_View is
 
       Total_Width : Gint;
       Cr          : Cairo_Context;
-      Color       : Cairo_Color;
 
    begin
       Total_Width := Gint (Get_Total_Column_Width (Src_Buffer));
@@ -2239,17 +2238,6 @@ package body Src_Editor_View is
          Cr := Create (View.Side_Column_Buffer);
          Set_Source_Color (Cr, View.Background_Color_Other);
          Cairo.Paint (Cr);
-
-         Color := To_Cairo (View.Text_Color);
-         Color.Alpha := 0.5;
-         Set_Line_Width (Cr, 0.5);
-         Draw_Line
-           (Cr, Color,
-            X + Total_Width - 1,
-            0,
-            X + Total_Width - 1,
-            Height);
-
          Destroy (Cr);
 
          Draw_Line_Info
