@@ -6596,14 +6596,14 @@ should be displayed in them. There are several ways to control this:
 Creating custom graphical interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. index:: pygtk
+.. index:: pygobject
 
 GPS is based on the Gtk+ graphical toolkit, which is available under many
 platforms and for many programming languages.
 
-In particular, GPS comes with pygtk, a python binding to Gtk+.  Using pygtk,
-you will be able to create your own dialogs and graphical windows using the
-python capabilities provided by GPS.
+In particular, GPS comes with pygobject, a python binding to Gtk+.  Using
+pygobject, you will be able to create your own dialogs and graphical windows
+using the python capabilities provided by GPS.
 
 See the menu `Help->Python Extensions`, in particular the `GPS.MDI`
 documentation, for a sample of code on how to create your own graphical

@@ -159,8 +159,8 @@ class GUI(object):
     def pywidget(self):
         """
         This function is only available if GPS was compiled with support for
-        pygtk, and the latter was found at run time. It returns a widget that
-        can be manipulated through the usual PyGtk functions. PyGtk is a
+        pygobject, and the latter was found at run time. It returns a widget that
+        can be manipulated through the usual PyGtk functions. PyGObject is a
         binding to the gtk+ toolkit, and allows you to create your own windows
         easily, or manipulate the entire GPS GUI from python
 
@@ -6544,26 +6544,24 @@ class MDI(object):
 
     .. seealso:: :class:`GPS.MDIWindow`
 
-    If you have installed the pygtk package (see GPS's documentation}, GPS will
-    export a few more functions to python so that it is easier to interact with
-    GPS itself. In particular, the GPS.MDI.add function allows you to put a
-    widget created by pygtk under control of GPS's MDI, so that users can
+    If you have installed the pygobject package (see GPS's documentation}, GPS
+    will export a few more functions to python so that it is easier to interact
+    with GPS itself. In particular, the GPS.MDI.add function allows you to put a
+    widget created by pygobject under control of GPS's MDI, so that users can
     interact with it as with all other GPS windows.
 
     .. code-block:: python
 
        import GPS
 
-       ## The following three lines are the usual to make pygtk visible
-       import pygtk
-       pygtk.require('2.0')
-       import gtk
+       ## The following line is the usual way to make pygobject visible
+       from gi.repository import Gtk, GLib, Gdk, GObject
 
        def on_clicked(*args):
           GPS.Console().write("button was pressed\\n")
 
        def create():
-          button=gtk.Button('press')
+          button=Gtk.Button('press')
           button.connect('clicked', on_clicked)
           GPS.MDI.add(button, "From testgtk", "testgtk")
           win = GPS.MDI.get('testgtk')
@@ -6575,9 +6573,9 @@ class MDI(object):
     @staticmethod
     def add(widget, title, short):
         """
-        This function is only available if pygtk could be loaded in the python
-        shell. You must install this library first, see the documentation for
-        GPS.MDI itself.
+        This function is only available if pygobject could be loaded in the
+        python shell. You must install this library first, see the documentation
+        for GPS.MDI itself.
 
         This function adds a widget inside the MDI of GPS. The resulting window
         can then be manipulated by the user like any other standard GPS
@@ -6586,7 +6584,7 @@ class MDI(object):
         notebook tabs. You can immediately retrieve a handle to the created
         window by calling GPS.MDI.get (short).
 
-        :param widget: A widget, created by pygtk
+        :param widget: A widget, created by pygobject
         :param title: A string
         :param short: A string
 
