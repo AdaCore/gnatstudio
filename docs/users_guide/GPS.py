@@ -789,13 +789,13 @@ class BuildTarget(object):
 
     def hide(self):
         """
-        Hide target from menus and tollbar.
+        Hide target from menus and toolbar.
         """
         pass  # implemented in Ada
 
-    def hide(self):
+    def show(self):
         """
-        Show target in menus and tollbar where it was before hiding.
+        Show target in menus and toolbar where it was before hiding.
         """
         pass  # implemented in Ada
 
