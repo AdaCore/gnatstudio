@@ -1342,6 +1342,10 @@ package body Gtkada.File_Selector is
       Dir : constant Virtual_File := Get_Selection (Win.Explorer_Tree);
 
    begin
+      if Win.In_Destruction then
+         return;
+      end if;
+
       if Dir /= No_File then
          Change_Directory (Win, Dir);
       end if;
