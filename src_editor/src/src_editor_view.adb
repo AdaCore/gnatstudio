@@ -534,16 +534,16 @@ package body Src_Editor_View is
    -----------------------
 
    procedure Invalidate_Window (User : Source_View) is
-      Win           : Gdk.Window.Gdk_Window :=
+      Win           : Gdk.Gdk_Window :=
                         Get_Window (User, Text_Window_Text);
-      X, Y, W, H, D : Gint;
+      X, Y, W, H : Gint;
 
    begin
       if Win = null then
          return;
       end if;
 
-      Get_Geometry (Win, X, Y, W, H, D);
+      Get_Geometry (Win, X, Y, W, H);
       Gdk.Window.Invalidate_Rect (Win, (X, Y, W, H), True);
 
       Win := Get_Window (User.Area);
@@ -552,7 +552,7 @@ package body Src_Editor_View is
          return;
       end if;
 
-      Get_Geometry (Win, X, Y, W, H, D);
+      Get_Geometry (Win, X, Y, W, H);
       Gdk.Window.Invalidate_Rect (Win, (X, Y, W, H), True);
       Register_Idle_Column_Redraw (User);
    end Invalidate_Window;
@@ -841,7 +841,7 @@ package body Src_Editor_View is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
 
-      X, Y, Width, Height, Depth : Gint;
+      X, Y, Width, Height : Gint;
 
       procedure Redraw_Side_Info;
       --  Redraw the side window information
@@ -862,10 +862,10 @@ package body Src_Editor_View is
          Top_Line         : Buffer_Line_Type;
          Bottom_Line      : Buffer_Line_Type;
 
-         Window : constant Gdk.Window.Gdk_Window :=
+         Window : constant Gdk.Gdk_Window :=
            View.Get_Window (Text_Window_Left);
       begin
-         Get_Geometry (Window, X, Y, Width, Height, Depth);
+         Get_Geometry (Window, X, Y, Width, Height);
 
          Window_To_Buffer_Coords
            (View, Text_Window_Left,
@@ -939,7 +939,7 @@ package body Src_Editor_View is
          Color            : Gdk_Color;
          Tmp_Color        : HSV_Color;
 
-         Window : constant Gdk.Window.Gdk_Window :=
+         Window : constant Gdk.Gdk_Window :=
            View.Get_Window (Text_Window_Text);
 
          procedure Draw_Block (B : in out Block_Record);
@@ -1046,7 +1046,7 @@ package body Src_Editor_View is
 
          --  Get the window coordinates
 
-         Get_Geometry (Window, X, Y, Width, Height, Depth);
+         Get_Geometry (Window, X, Y, Width, Height);
 
          Window_To_Buffer_Coords
            (View, Text_Window_Text,
@@ -1443,9 +1443,9 @@ package body Src_Editor_View is
    --------------------
 
    function Connect_Expose (View : Source_View) return Boolean is
-      Win           : constant Gdk.Window.Gdk_Window :=
+      Win           : constant Gdk.Gdk_Window :=
                         Get_Window (View, Text_Window_Left);
-      X, Y, W, H, D : Gint;
+      X, Y, W, H : Gint;
 
    begin
       --  ??? if View.Get_Realized then
@@ -1472,7 +1472,7 @@ package body Src_Editor_View is
          Slot_Object => View);
 
       if Win /= null then
-         Get_Geometry (Win, X, Y, W, H, D);
+         Get_Geometry (Win, X, Y, W, H);
          Invalidate_Rect (Win, (X, Y, W, H), False); --  ??? Was Clear_Area_E
          Invalidate_Window (View);
       end if;
@@ -1787,7 +1787,7 @@ package body Src_Editor_View is
    is
       View         : constant Source_View := Source_View (Widget);
       Dummy_Gint   : Gint;
-      W, H, D      : Gint;
+      W, H         : Gint;
       Button_Y     : Gint;
       Lower, Upper : Gdouble;
       Adj          : Gtk_Adjustment;
@@ -1805,7 +1805,7 @@ package body Src_Editor_View is
          Button_Y := Gint (Get_Y (Event));
 
          Get_Geometry
-           (Get_Window (View.Area), Dummy_Gint, Dummy_Gint, W, H, D);
+           (Get_Window (View.Area), Dummy_Gint, Dummy_Gint, W, H);
 
          Adj := Get_Vadjustment (View.Scroll);
          Lower := Get_Lower (Adj);
@@ -1858,7 +1858,7 @@ package body Src_Editor_View is
       Event  : Gdk_Event) return Boolean
    is
       View        : constant Source_View := Source_View (Widget);
-      Left_Window : constant Gdk.Window.Gdk_Window :=
+      Left_Window : constant Gdk.Gdk_Window :=
                       Get_Window (View, Text_Window_Left);
 
    begin
@@ -1896,10 +1896,10 @@ package body Src_Editor_View is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
 
-      Left_Window : constant Gdk.Window.Gdk_Window :=
+      Left_Window : constant Gdk.Gdk_Window :=
                       Get_Window (View, Text_Window_Left);
 
-      Window : Gdk.Window.Gdk_Window;
+      Window : Gdk.Gdk_Window;
 
       Result : Boolean;
       pragma Unreferenced (Result);
@@ -2171,9 +2171,9 @@ package body Src_Editor_View is
    --------------------
 
    procedure Redraw_Columns (View : access Source_View_Record'Class) is
-      Left_Window : Gdk.Window.Gdk_Window;
+      Left_Window : Gdk.Gdk_Window;
 
-      X, Y, Width, Height, Depth : Gint;
+      X, Y, Width, Height        : Gint;
       Layout                     : Pango_Layout;
 
       Src_Buffer  : constant Source_Buffer :=
@@ -2229,10 +2229,10 @@ package body Src_Editor_View is
          Layout := Create_Pango_Layout (View);
          Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
 
-         Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
+         Get_Geometry (Left_Window, X, Y, Width, Height);
 
          View.Side_Column_Buffer := Gdk.Window.Create_Similar_Surface
-           (Gdk_Drawable (Left_Window), Cairo_Content_Color_Alpha,
+           (Left_Window, Cairo_Content_Color_Alpha,
             Total_Width, Height);
 
          Cr := Create (View.Side_Column_Buffer);
@@ -2259,9 +2259,9 @@ package body Src_Editor_View is
    -------------------------
 
    procedure Redraw_Speed_Column (View : access Source_View_Record'Class) is
-      Right_Window : Gdk.Window.Gdk_Window;
+      Right_Window : Gdk.Gdk_Window;
 
-      X, Y, Width, Height, Depth : Gint;
+      X, Y, Width, Height : Gint;
       Color        : Gdk_Color;
 
       Src_Buffer   : constant Source_Buffer :=
@@ -2286,7 +2286,7 @@ package body Src_Editor_View is
          return;
       end if;
 
-      Get_Geometry (Right_Window, X, Y, Width, Height, Depth);
+      Get_Geometry (Right_Window, X, Y, Width, Height);
 
       Total_Lines := Get_Line_Count (Src_Buffer);
 

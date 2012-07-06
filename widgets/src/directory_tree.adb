@@ -387,7 +387,7 @@ package body Directory_Tree is
    procedure Show_Directory
      (Tree           : access Dir_Tree_Record;
       Dir            : GNATCOLL.VFS.Virtual_File;
-      Busy_Cursor_On : Gdk.Window.Gdk_Window := null)
+      Busy_Cursor_On : Gdk.Gdk_Window := null)
    is
       Parent   : Gtk_Tree_Iter;
       Iter     : Gtk_Tree_Iter;

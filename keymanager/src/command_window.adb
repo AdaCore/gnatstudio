@@ -396,8 +396,8 @@ package body Command_Window is
       Prompt            : String := "";
       Applies_To_Global : Boolean := True)
    is
-      X, Y, W, H, D    : Gint;
-      Hints            : Gdk.Window.Gdk_Window_Hints;
+      X, Y, W, H       : Gint;
+      Hints            : Gdk_Window_Hints;
       Frame            : Gtk_Frame;
       Applies_To       : Gtk_Widget;
       Min_H, Natural_H : Gint;
@@ -477,9 +477,9 @@ package body Command_Window is
 
       --  Aim for our window to appear as a strip over the bottom of
       --  the Applies_To widget.
-      Get_Geometry (Get_Window (Applies_To), X, Y, W, H, D);
+      Get_Geometry (Get_Window (Applies_To), X, Y, W, H);
       Get_Preferred_Height (Window, Min_H, Natural_H);
-      Hints := Gdk_Hint_Pos + Gdk_Hint_Min_Size + Gdk_Hint_Max_Size;
+      Hints := Hint_Pos + Hint_Min_Size + Hint_Max_Size;
       Geometry := (Min_Width => W,
                    Min_Height => Min_H,
                    Max_Width => W,
@@ -492,9 +492,9 @@ package body Command_Window is
                    Max_Aspect => Gdouble'Last,
                    Win_Gravity => Gravity_North_West);
       Gdk.Window.Set_Geometry_Hints
-        (Window   => Get_Window (Window),
-         Geometry => Geometry,
-         Flags    => Hints);
+        (Self      => Get_Window (Window),
+         Geometry  => Geometry,
+         Geom_Mask => Hints);
 
       Window.Parent := Gtk_Window (Get_Toplevel (Applies_To));
       Window.Parent_Geometry := Get_Geometry (Window.Parent);

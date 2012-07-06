@@ -327,12 +327,11 @@ package body Gtkada.Combo_Tool_Button is
    is
       pragma Unreferenced (Menu, Push_In);
       Menu_Req    : Gtk_Requisition;
-      Success     : Boolean;
       Allo : Gtk_Allocation;
 
    begin
       Size_Request (Widget.Menu, Menu_Req);
-      Get_Origin (Get_Window (Widget), X, Y, Success);
+      Get_Origin (Get_Window (Widget), X, Y);
       Get_Allocation (Widget, Allo);
 
       X := X + Allo.X;

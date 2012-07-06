@@ -35,6 +35,7 @@ with Glib.Values;               use Glib.Values;
 
 with Cairo;                     use Cairo;
 
+with Gdk;                       use Gdk;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
@@ -1369,7 +1370,7 @@ package body Project_Explorers is
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
       Font       : Pango_Font_Description;
-      Window     : Gdk.Window.Gdk_Window;
+      Window     : Gdk.Gdk_Window;
       New_Window : Gdk_Window;
       Mask       : Gdk_Modifier_Type;
 

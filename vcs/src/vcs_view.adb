@@ -18,6 +18,7 @@
 with GNAT.Strings;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
+with Gdk;                       use Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
@@ -259,7 +260,7 @@ package body VCS_View is
       Pixmap  : out Cairo.Cairo_Surface;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
-      Window     : Gdk.Window.Gdk_Window;
+      Window     : Gdk.Gdk_Window;
       New_Window : Gdk_Window;
       Mask       : Gdk_Modifier_Type;
 

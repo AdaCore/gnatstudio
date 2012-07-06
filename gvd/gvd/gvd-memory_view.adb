@@ -22,6 +22,7 @@ with Ada.Strings.Maps;         use Ada.Strings.Maps;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
+with Gdk;                      use Gdk;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Types;                use Gdk.Types;
@@ -204,7 +205,7 @@ package body GVD.Memory_View is
 
    procedure Init_Graphics
      (View   : access GVD_Memory_View_Record'Class;
-      Window : Gdk.Window.Gdk_Window);
+      Window : Gdk.Gdk_Window);
    --  Initialize fonts and graphics used for this widget.
 
    procedure Update_Display (View : access GVD_Memory_View_Record'Class);
@@ -860,10 +861,9 @@ package body GVD.Memory_View is
          Y_Box      : Gint;
          Width_Box  : Gint;
          Height_Box : Gint;
-         Depth_Box  : Gint;
       begin
          Gdk.Window.Get_Geometry
-           (View.Get_Window, X_Box, Y_Box, Width_Box, Height_Box, Depth_Box);
+           (View.Get_Window, X_Box, Y_Box, Width_Box, Height_Box);
 
          Gdk.Window.Invalidate_Rect
            (View.Get_Window,

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Gdk;               use Gdk;
 with Gdk.Cursor;        use Gdk.Cursor;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
@@ -121,7 +122,7 @@ package body Src_Editor_View.Hyper_Mode is
    -- Hyper_Mode_Leave --
    ----------------------
 
-   Text_View_Cursor : Gdk.Cursor.Gdk_Cursor;
+   Text_View_Cursor : Gdk.Gdk_Cursor;
    --  This is set as a global variable in order to avoid memory leaks.
    --  See comments in body of GUI_Utils.Set_Busy_Cursor.
 

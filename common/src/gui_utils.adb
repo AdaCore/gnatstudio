@@ -34,6 +34,7 @@ with Glib.Values;               use Glib.Values;
 with Cairo;                     use Cairo;
 with Cairo.Image_Surface;       use Cairo.Image_Surface;
 
+with Gdk;                       use Gdk;
 with Gdk.Cursor;                use Gdk.Cursor;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Keyval;                use Gdk.Keyval;
@@ -96,6 +97,9 @@ with Traces;                    use Traces;
 package body GUI_Utils is
 
    Me : constant Debug_Handle := Create ("GUI_Utils");
+
+   Busy_Cursor : Gdk.Gdk_Cursor;
+   --  A global variable, allocated once and never freed
 
    type Contextual_Menu_Data is record
       Create  : Contextual_Menu_Create;
@@ -293,15 +297,10 @@ package body GUI_Utils is
    -- Set_Busy_Cursor --
    ---------------------
 
-   Busy_Cursor : Gdk.Cursor.Gdk_Cursor;
-   --  A global variable, allocated once and never freed
-
    procedure Set_Busy_Cursor
-     (Window        : Gdk.Window.Gdk_Window;
+     (Window        : Gdk.Gdk_Window;
       Busy          : Boolean := True;
-      Force_Refresh : Boolean := False)
-   is
-      use type Gdk_Window;
+      Force_Refresh : Boolean := False) is
    begin
       if Window /= null then
          if Busy then

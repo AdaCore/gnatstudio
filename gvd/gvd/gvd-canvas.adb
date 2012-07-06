@@ -1051,7 +1051,7 @@ package body GVD.Canvas is
 
    procedure On_Realize (Canvas : access Gtk_Widget_Record'Class) is
       C   : constant GVD_Canvas := GVD_Canvas (Canvas);
-      Win : constant Gdk.Window.Gdk_Window := Get_Window (Get_Canvas (C));
+      Win : constant Gdk.Gdk_Window := Get_Window (Get_Canvas (C));
    begin
       pragma Assert (Win /= null);
       if C.Box_Context.Close_Pixmap = null then

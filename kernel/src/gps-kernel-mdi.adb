@@ -27,7 +27,7 @@ with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
 
 with Gdk.RGBA; use Gdk.RGBA;
-with Gdk.Window;
+with Gdk;      use Gdk;
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -907,7 +907,7 @@ package body GPS.Kernel.MDI is
          end if;
       end Get_Project_Name;
 
-      Main_Window : constant Gdk.Window.Gdk_Window :=
+      Main_Window : constant Gdk.Gdk_Window :=
                       Get_Window (Handle.Main_Window);
       MDI          : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant Virtual_File :=
@@ -922,8 +922,6 @@ package body GPS.Kernel.MDI is
 
       Perspectives, Central : Glib.Xml_Int.Node_Ptr;
       Perspectives_Convert, Central_Convert : Node_Ptr;
-
-      use type Gdk.Gdk_Drawable;
    begin
       --  Read the previous contents of the file, to save the desktops for
       --  other projects

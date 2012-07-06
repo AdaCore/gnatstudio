@@ -19,6 +19,7 @@ with System;
 with Glib.Object;       use Glib.Object;
 with Gdk.Window;
 
+with Gdk;               use Gdk;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
@@ -210,7 +211,7 @@ package body Gtkada.Macro is
       W    := Get_Widget_From_Id (Item.Id, List);
       Widget_List.Free (List);
 
-      if W = null or else Get_Window (W) = Gdk.Window.Null_Window then
+      if W = null or else Get_Window (W) = null then
          return null;
       end if;
 
@@ -276,7 +277,7 @@ package body Gtkada.Macro is
       --  associated with an id.
 
       while Parent /= null loop
-         if Get_Window (Parent) /= Gdk.Window.Null_Window then
+         if Get_Window (Parent) /= null then
             Parent_Id := Get_Id (Parent);
             exit when Parent_Id.Id /= null;
          end if;
@@ -643,7 +644,7 @@ package body Gtkada.Macro is
 
    begin
       Move_Pointer (Item.X_Root, Item.Y_Root);
-      Gdk.Window.Window_At_Pointer (X, Y, Win);
+      Gdk.Window.At_Pointer (X, Y, Win);
 
       if W /= null then
          Parent := Get_Parent (W);
@@ -773,7 +774,7 @@ package body Gtkada.Macro is
 
    begin
       Move_Pointer (Item.X, Item.Y);
-      Gdk.Window.Window_At_Pointer (X, Y, Win);
+      Gdk.Window.At_Pointer (X, Y, Win);
       Allocate
         (Event      => E,
          Event_Type => Item.Event_Type,
@@ -800,7 +801,7 @@ package body Gtkada.Macro is
       Move_Pointer (Item.X, Item.Y);
 
       if Item.Mode /= Crossing_Normal then
-         Gdk.Window.Window_At_Pointer (X, Y, Win);
+         Gdk.Window.At_Pointer (X, Y, Win);
          Allocate
            (Event      => E,
             Event_Type => Item.Event_Type,
@@ -831,7 +832,7 @@ package body Gtkada.Macro is
 
    begin
       Move_Pointer (Item.X, Item.Y);
-      Gdk.Window.Window_At_Pointer (X, Y, Win);
+      Gdk.Window.At_Pointer (X, Y, Win);
       Allocate
         (Event      => E,
          Event_Type => Item.Event_Type,

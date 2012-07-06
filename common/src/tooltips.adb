@@ -20,6 +20,7 @@ with Ada.Unchecked_Deallocation;
 with Cairo.Image_Surface;  use Cairo.Image_Surface;
 with Cairo.Surface;        use Cairo.Surface;
 
+with Gdk;                  use Gdk;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gdk.Rectangle;        use Gdk.Rectangle;
@@ -321,7 +322,7 @@ package body Tooltips is
       On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Timeout   : Glib.Guint := Default_Timeout)
    is
-      use type Gdk.Window.Gdk_Window;
+      use type Gdk.Gdk_Window;
    begin
       if Tooltip.Widget /= null then
          --  Tooltips can be bound to only one widget for the time being

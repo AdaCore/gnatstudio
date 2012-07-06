@@ -31,7 +31,6 @@ with Cairo;
 with Gdk.Event;
 with Gdk.Types;
 with Gdk.RGBA;
-with Gdk.Window;
 
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Button;
@@ -146,7 +145,7 @@ package GUI_Utils is
    --  Select the item containing Text in the Combo.
 
    procedure Set_Busy_Cursor
-     (Window        : Gdk.Window.Gdk_Window;
+     (Window        : Gdk.Gdk_Window;
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False);
    --  Enable or disable the "busy" cursor for a specific top-level window.

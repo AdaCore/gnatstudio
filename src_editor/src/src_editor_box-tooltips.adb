@@ -331,7 +331,6 @@ package body Src_Editor_Box.Tooltips is
       Window           : Gdk.Gdk_Window;
       Window_Width     : Gint;
       Window_Height    : Gint;
-      Window_Depth     : Gint;
       Line_Info        : Line_Info_Width_Array_Access;
 
    begin
@@ -344,8 +343,7 @@ package body Src_Editor_Box.Tooltips is
 
       Window := Get_Window (Widget, Text_Window_Text);
 
-      Get_Geometry
-        (Window, Win_X, Win_Y, Window_Width, Window_Height, Window_Depth);
+      Get_Geometry (Window, Win_X, Win_Y, Window_Width, Window_Height);
       Get_Pointer
         (Window, Mouse_X, Mouse_Y, Mask, Win);
 
@@ -439,10 +437,10 @@ package body Src_Editor_Box.Tooltips is
       Area.Height := Win_Y - Area.Y + Location.Height;
 
       declare
-         Tmp_X, Tmp_Y, Tmp_Width, Tmp_Height, Tmp_Depth : Gint;
+         Tmp_X, Tmp_Y, Tmp_Width, Tmp_Height : Gint;
       begin
          Get_Geometry (Get_Window (Widget, Text_Window_Left),
-                       Tmp_X, Tmp_Y, Tmp_Width, Tmp_Height, Tmp_Depth);
+                       Tmp_X, Tmp_Y, Tmp_Width, Tmp_Height);
          Area.X := Area.X + Tmp_Width;
       end;
 

@@ -27,7 +27,7 @@
 
 with Glib.Main;
 
-with Gdk.Window;
+with Gdk;
 with Gtk.Menu;
 with Gtk.Paned;
 
@@ -75,7 +75,7 @@ package Directory_Tree is
    procedure Show_Directory
      (Tree           : access Dir_Tree_Record;
       Dir            : GNATCOLL.VFS.Virtual_File;
-      Busy_Cursor_On : Gdk.Window.Gdk_Window := null);
+      Busy_Cursor_On : Gdk.Gdk_Window := null);
    --  Expand the tree so that the directory Dir is visible.
    --  If Busy_Cursor_On is not null, then the cursor is that window is set to
    --  the busy cursor. It is recommended to use this parameter instead of

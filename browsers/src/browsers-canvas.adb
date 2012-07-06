@@ -38,15 +38,14 @@ with Pango.Enums;                       use Pango.Enums;
 with Pango.Font;                        use Pango.Font;
 with Pango.Layout;                      use Pango.Layout;
 
+with Gdk;                               use Gdk;
 with Gdk.Cairo;                         use Gdk.Cairo;
---  with Gdk.Color;                         use Gdk.Color;
 with Gdk.Event;                         use Gdk.Event;
 with Gdk.Pixbuf;                        use Gdk.Pixbuf;
 with Gdk.Rectangle;                     use Gdk.Rectangle;
 with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Window;                        use Gdk.Window;
 
---  with Gtk.Accel_Group;                   use Gtk.Accel_Group;
 with Gtk.Button;                        use Gtk.Button;
 with Gtk.Check_Menu_Item;               use Gtk.Check_Menu_Item;
 with Gtk.Enums;                         use Gtk.Enums;
@@ -213,12 +212,11 @@ package body Browsers.Canvas is
       Background        : Gdk.Pixbuf.Gdk_Pixbuf;
       Scaled_Background : Gdk.Pixbuf.Gdk_Pixbuf;
       Draw_Grid         : Boolean;
-      Pixmap            : Gdk.Gdk_Pixmap;
    end record;
    type Image_Canvas is access all Image_Canvas_Record'Class;
 
    overriding function Get_Window
-     (Canvas : access Image_Canvas_Record) return Gdk.Window.Gdk_Window;
+     (Canvas : access Image_Canvas_Record) return Gdk.Gdk_Window;
    --  Override Gtk.Widget.Get_Window, so that a different Window can be
    --  returned if needed (e.g. when exporting the canvas).
 
@@ -272,15 +270,9 @@ package body Browsers.Canvas is
    ----------------
 
    overriding function Get_Window
-     (Canvas : access Image_Canvas_Record) return Gdk.Window.Gdk_Window
-   is
-      use type Gdk.Gdk_Drawable;
+     (Canvas : access Image_Canvas_Record) return Gdk.Gdk_Window is
    begin
-      if Canvas.Pixmap = null then
-         return Get_Window (Gtk_Widget_Record (Canvas.all)'Access);
-      else
-         return Canvas.Pixmap;
-      end if;
+      return Get_Window (Gtk_Widget_Record (Canvas.all)'Access);
    end Get_Window;
 
    ---------------
@@ -652,14 +644,13 @@ package body Browsers.Canvas is
       Item         : Canvas_Item;
       Xr, Yr       : Gint;
       Xsave, Ysave : Gdouble;
-      Success      : Boolean;
 
    begin
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          --  Click on an item: this is a file selection
          --  ??? Should we convert to world coordinates here ?
 
-         Get_Origin (Get_Window (B.Canvas), Xr, Yr, Success);
+         Get_Origin (Get_Window (B.Canvas), Xr, Yr);
          Set_X (Event, Get_X_Root (Event) - Gdouble (Xr));
          Set_Y (Event, Get_Y_Root (Event) - Gdouble (Yr));
 
@@ -1334,11 +1325,7 @@ package body Browsers.Canvas is
       X, Y, W, H    : Gint;
       Base          : Cairo_Color;
       Color         : Cairo_Color;
---      Style         : Gtk_Style renames Get_Item_Style (Item);
       Ptrn          : Cairo_Pattern;
---      State         : Gtk_State_Type;
-
-      use type Gdk.Gdk_Drawable;
 
    begin
       Style_Context.Get_Border (Gtk_State_Flag_Normal, The_Border);
@@ -1444,8 +1431,6 @@ package body Browsers.Canvas is
       Base     : Cairo_Color;
       Color    : Cairo_Color;
 
-      use type Gdk.Gdk_Drawable;
-
    begin
       if Item.Title_Layout = null
         or else Surface (Item) = Null_Surface
@@ -1460,7 +1445,7 @@ package body Browsers.Canvas is
 --        end if;
 
       --  The title background
-      Rectangle
+      Cairo.Rectangle
         (Cr, Gdouble (Item.Title_Coord.X), Gdouble (Item.Title_Coord.Y),
          Gdouble (Item.Title_Coord.Width), Gdouble (Item.Title_Coord.Height));
 
