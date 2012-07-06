@@ -504,7 +504,7 @@ private
 
    type Color_Preference_Record is new Preference_Record with record
       Color_Value   : GNAT.Strings.String_Access;
-      Color         : Gdk.RGBA.Gdk_RGBA;
+      Color         : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
    end record;
    overriding procedure Set_Pref
      (Pref    : access Color_Preference_Record;
