@@ -306,13 +306,13 @@ try:
     # if keyval >= 32 and keyval <= 128:
     #   event.string = chr (keyval)
 
-    state = 0
+    state = Gdk.ModifierType(0)
     if control:
-       state += Gdk.ModifierType.CONTROL_MASK
+       state = state | Gdk.ModifierType.CONTROL_MASK
     if shift:
-       state += Gdk.ModifierType.SHIFT_MASK
+       state = state | Gdk.ModifierType.SHIFT_MASK
     if alt:
-       state += Gdk.ModifierType.MOD1_MASK
+       state = state | Gdk.ModifierType.MOD1_MASK
 
     event.state = state
     event.put()
