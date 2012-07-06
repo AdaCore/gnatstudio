@@ -418,8 +418,7 @@ package body Commands.Builder is
            (Kernel, Data.Shadow, Data.Background, False, New_Console_Name);
          Cb      := null;
          Exit_Cb := null;
-         Show_Output := not Data.Background;
-         Show_Command := not Data.Background;
+         Show_Output := not (Data.Background or else Data.Quiet);
          Is_A_Run := True;
 
          Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
@@ -430,9 +429,10 @@ package body Commands.Builder is
          Cb      := Build_Callback'Access;
          Exit_Cb := End_Build_Callback'Access;
          Show_Output := False;
-         Show_Command := not Data.Background;
          Is_A_Run := False;
       end if;
+
+      Show_Command := not (Data.Background or else Data.Quiet);
 
       if not Is_A_Run
         and then not Data.Background
@@ -499,7 +499,8 @@ package body Commands.Builder is
                   Name_In_Task_Manager => To_String (Cmd_Name),
                   Synchronous          => Synchronous,
                   Show_Exit_Status     => not (Data.Shadow
-                    or else Data.Background),
+                    or else Data.Background
+                    or else Data.Quiet),
                   Created_Command      => Created_Command);
             end;
 
@@ -521,7 +522,8 @@ package body Commands.Builder is
                Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
                Show_Exit_Status     => not (Data.Shadow
-                 or else Data.Background),
+                 or else Data.Background
+                 or else Data.Quiet),
                Created_Command      => Created_Command);
          end if;
 
