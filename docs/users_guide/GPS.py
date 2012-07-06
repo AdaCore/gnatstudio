@@ -787,6 +787,17 @@ class BuildTarget(object):
         """
         pass  # implemented in Ada
 
+    def hide(self):
+        """
+        Hide target from menus and toolbar.
+        """
+        pass  # implemented in Ada
+
+    def show(self):
+        """
+        Show target in menus and toolbar where it was before hiding.
+        """
+        pass  # implemented in Ada
 
 ###########################################################
 # Button
