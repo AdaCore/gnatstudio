@@ -17,7 +17,6 @@
 
 with Gdk.Pixbuf;              use Gdk.Pixbuf;
 with Gdk.Event;               use Gdk.Event;
-with Gdk.RGBA;                use Gdk.RGBA;
 with Gdk.Window;              use Gdk.Window;
 with Gdk;                     use Gdk;
 with Glib;                    use Glib;

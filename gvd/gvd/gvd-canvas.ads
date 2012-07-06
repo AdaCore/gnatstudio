@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.RGBA;
+with Gdk.RGBA; use Gdk.RGBA;
 with Gdk.Pixbuf;
 
 with Gtkada.Canvas;
@@ -60,11 +60,11 @@ package GVD.Canvas is
    --  canvas.
 
    type Box_Drawing_Context is record
-      Black_Color          : Gdk.RGBA.Gdk_RGBA;
-      Refresh_Button_Color : Gdk.RGBA.Gdk_RGBA;
-      Grey_Color           : Gdk.RGBA.Gdk_RGBA;
-      Thaw_Bg_Color        : Gdk.RGBA.Gdk_RGBA;
-      Freeze_Bg_Color      : Gdk.RGBA.Gdk_RGBA;
+      Black_Color          : Gdk.RGBA.Gdk_RGBA := Black_RGBA;
+      Refresh_Button_Color : Gdk.RGBA.Gdk_RGBA := (0.5, 0.5, 0.5, 1.0);
+      Grey_Color           : Gdk.RGBA.Gdk_RGBA := (0.7, 0.7, 0.7, 1.0);
+      Thaw_Bg_Color        : Gdk.RGBA.Gdk_RGBA := White_RGBA;
+      Freeze_Bg_Color      : Gdk.RGBA.Gdk_RGBA := (0.9, 0.5, 0.5, 1.0);
 
       Close_Pixmap        : Gdk.Pixbuf.Gdk_Pixbuf;
       Locked_Pixmap       : Gdk.Pixbuf.Gdk_Pixbuf;
