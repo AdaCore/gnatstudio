@@ -27,16 +27,16 @@ try:
 
       return None
 
-   def select_in_tree (tree, column, key):
+   def select_in_tree(tree, column, key):
       """Select a row in a tree view. The row is such that the
          contents of the given column is key"""
 
-      path = find_in_tree (tree, column, key)
+      path = find_in_tree(tree, column, key)
       if path:
          # Expand so that path is visible, but not path itself
-         if len (path) >= 2:
-            tree.expand_to_path (path[:-1])
-         tree.get_selection().select_path (path)
+         if path.get_depth() >= 2:
+            tree.expand_to_path(path.up())
+         tree.get_selection().select_path(path)
          pygps.process_all_events()
 
    def click_in_tree (view, path=None, column=0, button=1, \
