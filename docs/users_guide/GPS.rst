@@ -167,7 +167,11 @@ Classes
 
    .. automethod:: GPS.BuildTarget.execute
 
+   .. automethod:: GPS.BuildTarget.hide
+
    .. automethod:: GPS.BuildTarget.remove
+
+   .. automethod:: GPS.BuildTarget.show
 
 :class:`GPS.Button`
 ^^^^^^^^^^^^^^^^^^^
