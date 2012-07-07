@@ -143,7 +143,7 @@ package body Language.Unknown is
 
    overriding procedure Parse_Constructs
      (Lang   : access Unknown_Language;
-      Buffer : String;
+      Buffer : Glib.UTF8_String;
       Result : out Construct_List)
    is
       pragma Unreferenced (Lang, Buffer);
