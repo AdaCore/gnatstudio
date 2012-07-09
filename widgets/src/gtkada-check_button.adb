@@ -66,7 +66,8 @@ package body Gtkada.Check_Button is
         (Gtk.Check_Button.Gtk_Check_Button_Record with
          Default  => False,
          State    => State_Unchecked,
-         Internal => False);
+         Internal => False,
+         Forcing_Update => False);
       Gtk.Check_Button.Initialize (Check, Label);
       Set_Default (Check, Default);
 
@@ -210,6 +211,11 @@ package body Gtkada.Check_Button is
       Underlying_State : Boolean;
 
    begin
+      --  Prevent recursion loop
+      if Check.Forcing_Update then
+         return;
+      end if;
+
       --  Change state only when not an internal call, where the state is
       --  already in the desired state
       if not Check.Internal then
@@ -233,6 +239,8 @@ package body Gtkada.Check_Button is
       Underlying_State := Check.State /= State_Unchecked;
       --  the desired underlying GtkCheckButton state
 
+      Check.Forcing_Update := True;
+
       --  We want the underlying check_button state be different from the
       --  current state, as the original handler will toggle it.
       if Underlying_State = Get_Active (Check) then
@@ -243,6 +251,8 @@ package body Gtkada.Check_Button is
             Force_State (Get_Object (Check), 1);
          end if;
       end if;
+
+      Check.Forcing_Update := False;
 
       Original_Handler (Get_Object (Check));
 
