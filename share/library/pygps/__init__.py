@@ -74,6 +74,19 @@ try:
     # The following functions provide wrappers around pygobject functions, to make
     # their use easier
 
+    device = None  # The current event device
+
+
+    def default_event_device():
+        """ Retrieve and cache the default event device """
+        global device
+        if not device:
+            scr = Gdk.Screen.get_default()
+            dis = scr.get_display()
+            device = dis.list_devices()[0]
+
+        return device
+
 
     def process_all_events():
         """Process all pending events. This is often needed in the testsuite,
@@ -341,6 +354,7 @@ try:
             window = window.get_window()
         event.window = window
         event.keyval = keyval
+        event.device = device
 
         # Disabled for now as this does not work on all platforms. The keycode
         # depends on the OS but also on the keyboard kind.
