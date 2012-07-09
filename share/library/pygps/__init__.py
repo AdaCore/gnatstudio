@@ -144,19 +144,21 @@ try:
                 self.to_traverse = [(menu, accel_path_prefix, 0)]
             else:
                 self.to_traverse = [(w, accel_path_prefix, 0) for w in menu]
+            self.index = 0
 
         def __iter__(self):
             return self
 
         def next(self):
-            while self.to_traverse:
-                (w, prefix, level) = self.to_traverse.pop()
+            # Never delete elements from self.to_traverse, otherwise pygobject
+            # will call decref on it, and it is possible that the gtk+ widget
+            # will be destroyed as a result
+
+            while self.index < len(self.to_traverse):
+                (w, prefix, level) = self.to_traverse[self.index]
+                self.index += 1
 
                 if isinstance(w, Gtk.MenuItem):
-                    # A bug in pygobject ? If we do not call w.get_label,
-                    # then get_children() always returns an empty list.
-
-                    label = w.get_label()
                     accel_path = ''
 
                     submenu = w.get_submenu()
