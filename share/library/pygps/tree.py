@@ -6,6 +6,7 @@ try:
    from gi.repository import Gtk, GObject, Gdk
    import os
    import pygps
+   import GPS
 
    def find_in_tree (tree, column, key, iter=None):
       """Return the path for the row in tree that has "key" as the
@@ -35,7 +36,9 @@ try:
       if path:
          # Expand so that path is visible, but not path itself
          if path.get_depth() >= 2:
-            tree.expand_to_path(path.up())
+            p = path.copy()
+            p.up()
+            tree.expand_to_path(p)
          tree.get_selection().select_path(path)
          pygps.process_all_events()
 
