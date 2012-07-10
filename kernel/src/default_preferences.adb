@@ -1915,7 +1915,7 @@ package body Default_Preferences is
 
             --  Count the total number of available themes
             for J in Subdirs'Range loop
-               Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtkrc");
+               Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtk.css");
 
                if Rc_File.Is_Regular_File then
                   N_Themes := N_Themes + 1;
@@ -1929,7 +1929,7 @@ package body Default_Preferences is
             Num := Ret.Themes'First;
 
             for J in Subdirs'Range loop
-               Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtkrc");
+               Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtk.css");
 
                if Rc_File.Is_Regular_File then
                   declare
@@ -1937,7 +1937,7 @@ package body Default_Preferences is
                   begin
                      Ret.Themes (Num) := new String'(Theme);
 
-                     if Theme = "Raleigh" then
+                     if Theme = "bubble" then
                         --  Fallback in case the active theme cannot be
                         --  determined
                         Gtk_Default := Num;
