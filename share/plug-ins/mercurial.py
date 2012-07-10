@@ -104,10 +104,9 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
 
    <action name="generic_hg_diff_head" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
-      <shell lang="python">mercurial.from_hg_root ("$1")</shell>
-      <external>hg diff --git -r tip %1</external>
+      <external>hg cat -r tip "$1"</external>
       <shell>dump "%1" TRUE</shell>
-      <external>diff --normal -p %1 $1</external>
+      <external>diff %1 "$1"</external>
       <on-failure>
          <shell>base_name "$1"</shell>
          <shell>dump "%2" TRUE</shell>
@@ -116,9 +115,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
          <shell>Hook "diff_action_hook"</shell>
          <shell>Hook.run %1 "$1" null %2 %3 "%5 [tip]"</shell>
          <shell>delete "%5"</shell>
-         <shell>delete "%9"</shell>
       </on-failure>
-      <shell>delete "%2"</shell>
    </action>
 
    <!-- Mercurial add (no commit) -->
