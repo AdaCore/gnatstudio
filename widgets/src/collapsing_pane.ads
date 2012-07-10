@@ -82,11 +82,11 @@ private
    type Collapsing_Pane_Record is new Gtk.Event_Box.Gtk_Event_Box_Record with
       record
          Main_Box         : Gtk.Box.Gtk_Box;
-         State            : Foldable_Box_State := Expanded;
+         State            : Foldable_Box_State := Collapsed;
          Label            : Gtk.Label.Gtk_Label;
          Label_Box        : Gtk.Event_Box.Gtk_Event_Box;
-         Expanded_Box     : Gtk.Box.Gtk_Box;
-         Collapsed_Box    : Gtk.Box.Gtk_Box;
+         Expanded_Box     : Gtk.Widget.Gtk_Widget := null;
+         Collapsed_Box    : Gtk.Widget.Gtk_Widget := null;
          Arrow            : Gtk.Arrow.Gtk_Arrow;
       end record;
 
