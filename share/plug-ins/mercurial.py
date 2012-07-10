@@ -133,7 +133,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
 
    <action name="generic_hg_commit" show-command="false" output="none" category="">
       <shell output="">echo "Committing file(s) $2-"</shell>
-      <shell>dump "$1" TRUE</shell>
+      <shell>dump "$1 " TRUE</shell>
       <external>hg --noninteractive commit -l "%1" "$2-"</external>
       <on-failure>
          <shell output="">echo "Mercurial error:"</shell>
