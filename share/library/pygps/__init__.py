@@ -173,11 +173,7 @@ try:
 
                 if isinstance(w, Gtk.MenuItem):
                     accel_path = ''
-
-                    submenu = w.get_submenu()
-                    if submenu:
-                        self.to_traverse.extend(
-                            (c, accel_path + '/', level + 1) for c in submenu)
+                    result = None
 
                     for m in w.get_children():
                         if isinstance(m, Gtk.Label):
@@ -187,7 +183,18 @@ try:
                                 k = Gtk.AccelMap.lookup_entry(accel_path)
                                 if k and k[0] != 0:
                                     accel = Gtk.accelerator_name(k[0], k[1])
-                            return (w, accel_path, accel, level)
+                            result = (w, accel_path, accel, level)
+                            break
+
+                    # We now have modified accel_path for 'w'
+
+                    submenu = w.get_submenu()
+                    if submenu:
+                        self.to_traverse.extend(
+                            (c, accel_path + '/', level + 1) for c in submenu)
+
+                    if result:
+                        return result
 
                 elif isinstance(w, Gtk.Container):
                     self.to_traverse.extend(
