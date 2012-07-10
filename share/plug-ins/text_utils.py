@@ -839,77 +839,65 @@ try:
    KP_PAGE_DOWN = 65435
    KP_END       = 65436
 
-   def override (key, modifier, movement, step, select):
-       Gtk.binding_entry_remove (Gtk.TextView, key, modifier)
-       Gtk.binding_entry_add_signal (Gtk.TextView, key, modifier,
-                                     "move_cursor",
-                                     GObject.TYPE_ENUM, movement,
-                                     GObject.TYPE_INT,  step,
-                                     GObject.TYPE_BOOLEAN, select)
-
    def override_key_bindings (select):
        """Override the default TextView keybinding to either always force
           the extension the selection, or not"""
 
        global should_extend_selection
 
+       t = Gtk.TextView()   # make sure the BindingSet was created
+       bind = Gtk.binding_set_find("GtkTextView")
+
+       def override(key,mvt,step):
+           # pygobject does not have a binding to gtk_binding_entry_add_signal,
+           # which would be more convenient and efficient than going through a
+           # string.
+           # Gtk.binding_entry_remove(bind, key, modifier)
+           subst = (key, mvt, step, 1 if select else 0)
+           Gtk.binding_entry_add_signal_from_string(
+               bind, 'bind "%s" {"move_cursor" (%s,%s,%s)}' % subst)
+
        should_extend_selection = select
 
-       override (RIGHT,    0, Gtk.MovementStep.VISUAL_POSITIONS, 1, select)
-       override (KP_RIGHT, 0, Gtk.MovementStep.VISUAL_POSITIONS, 1, select)
-       override (LEFT,     0, Gtk.MovementStep.VISUAL_POSITIONS, -1, select)
-       override (KP_LEFT,  0, Gtk.MovementStep.VISUAL_POSITIONS, -1, select)
+       override("Right",    "visual-positions", 1)
+       override("KP_Right", "visual-positions", 1)
+       override("Left",     "visual-positions", -1)
+       override("KP_Left",  "visual-positions", -1)
 
-       override (RIGHT,    Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.WORDS, 1, select)
-       override (KP_RIGHT, Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.WORDS, 1, select)
-       override (LEFT,     Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.WORDS, -1, select)
-       override (KP_LEFT,  Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.WORDS, -1, select)
+       override("<ctrl>Right", "words", 1)
+       override("<ctrl>KP_Right", "words", 1)
+       override("<ctrl>Left", "words", -1)
+       override("<ctrl>KP_Left", "words", -1)
 
-       override (UP,       0, Gtk.MovementStep.DISPLAY_LINES, -1, select)
-       override (KP_UP,    0, Gtk.MovementStep.DISPLAY_LINES, -1, select)
-       override (DOWN,     0, Gtk.MovementStep.DISPLAY_LINES, 1, select)
-       override (KP_DOWN,  0, Gtk.MovementStep.DISPLAY_LINES, 1, select)
+       override("Up", "display-lines", -1)
+       override("KP_Up", "display-lines", -1)
+       override("Down", "display-lines", 1)
+       override("KP_Down", "display-lines", 1)
 
-       override (UP,      Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.PARAGRAPHS, -1, select)
-       override (KP_UP,   Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.PARAGRAPHS, -1, select)
-       override (DOWN,    Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.PARAGRAPHS, 1, select)
-       override (KP_DOWN, Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.PARAGRAPHS, 1, select)
+       override("<ctrl>Up", "paragraph", -1)
+       override("<ctrl>KP_Up", "paragraph", -1)
+       override("<ctrl>Down", "paragraph", 1)
+       override("<ctrl>KP_Down", "paragraph", 1)
 
-       override (HOME,    0, Gtk.MovementStep.DISPLAY_LINE_ENDS, -1, select)
-       override (KP_HOME, 0, Gtk.MovementStep.DISPLAY_LINE_ENDS, -1, select)
-       override (END,     0, Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, select)
-       override (KP_END,  0, Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, select)
+       override("Home", "display-line-ends", -1)
+       override("KP_Home", "display-line-ends", -1)
+       override("End", "display-line-ends", 1)
+       override("KP_End", "display-line-ends", 1)
 
-       override (HOME,    Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.BUFFER_ENDS, -1, select)
-       override (KP_HOME, Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.BUFFER_ENDS, -1, select)
-       override (END,     Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.BUFFER_ENDS, 1, select)
-       override (KP_END,  Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.BUFFER_ENDS, 1, select)
+       override("<ctrl>Home", "buffer-ends", -1)
+       override("<ctrl>KP_Home", "buffer-ends", -1)
+       override("<ctrl>End", "buffer-ends", 1)
+       override("<ctrl>KP_End", "buffer-ends", 1)
 
-       override (PAGE_UP,      0, Gtk.MovementStep.PAGES, -1, select)
-       override (KP_PAGE_UP,   0, Gtk.MovementStep.PAGES, -1, select)
-       override (PAGE_DOWN,    0, Gtk.MovementStep.PAGES, 1, select)
-       override (KP_PAGE_DOWN, 0, Gtk.MovementStep.PAGES, 1, select)
+       override("Page_Up", "pages", -1)
+       override("KP_Page_Up", "pages", -1)
+       override("Page_Down", "pages", 1)
+       override("KP_Page_Down", "pages", 1)
 
-       override (PAGE_UP,      Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.HORIZONTAL_PAGES, -1, select)
-       override (KP_PAGE_UP,   Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.HORIZONTAL_PAGES, -1, select)
-       override (PAGE_DOWN,    Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.HORIZONTAL_PAGES, 1, select)
-       override (KP_PAGE_DOWN, Gdk.ModifierType.CONTROL_MASK,
-                 Gtk.MovementStep.HORIZONTAL_PAGES, 1, select)
+       override("<ctrl>Page_Up", "horizontal-pages", -1)
+       override("<ctrl>KP_Page_Up", "horizontal-pages", -1)
+       override("<ctrl>Page_Down", "horizontal-pages", 1)
+       override("<ctrl>KP_Page_Down", "horizontal-pages", 1)
 
 except ImportError:
    has_pygtk = 0
