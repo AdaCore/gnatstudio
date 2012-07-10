@@ -38,7 +38,7 @@ actions = [
 
  SEPARATOR,
 
- { ACTION: "Diff against head",            LABEL: "Compare against head revision"  },
+ { ACTION: "Diff against head",            LABEL: "Compare against tip"  },
 
  SEPARATOR,
 
@@ -83,10 +83,6 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
       You can easily edit this file if you would like to customize
       the mercurial commands that are sent for each of the menus.
 
-      IMPORTANT NOTE1: Mercurial is quite different from CVS and Subversion
-      for example. Not all GPS VCS commands are implemented at the
-      moment because they won't integrate nicely or most of the power
-      will be lost.
 -->
 
 <GPS>
@@ -109,7 +105,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
    <action name="generic_hg_diff_head" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
       <shell lang="python">mercurial.from_hg_root ("$1")</shell>
-      <external>hg diff --git -r %1</external>
+      <external>hg diff --git -r tip %1</external>
       <shell>dump "%1" TRUE</shell>
       <external>diff --normal -p %1 $1</external>
       <on-failure>
@@ -118,7 +114,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
          <shell>File "%1"</shell>
          <shell>File "$1"</shell>
          <shell>Hook "diff_action_hook"</shell>
-         <shell>Hook.run %1 "$1" null %2 %3 "%5 [HEAD]"</shell>
+         <shell>Hook.run %1 "$1" null %2 %3 "%5 [tip]"</shell>
          <shell>delete "%5"</shell>
          <shell>delete "%9"</shell>
       </on-failure>
