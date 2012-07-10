@@ -44,6 +44,7 @@ with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Settings;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -387,7 +388,6 @@ package body GPS.Main_Window is
       Image    : constant Filesystem_String :=
                    Normalize_Pathname ("gps-animation.png", GPS_Dir.Full_Name);
       Error    : GError;
-      Pixbuf   : Gdk_Pixbuf;
 
    begin
       if Is_Regular_File (Image) then
@@ -404,8 +404,6 @@ package body GPS.Main_Window is
          Trace (Me, "loading gps-animation.gif");
          Gdk_New_From_File (Main_Window.Animation, +Throbber, Error);
          Main_Window.Animation_Iter := Get_Iter (Main_Window.Animation);
-         Pixbuf := Get_Pixbuf (Main_Window.Animation_Iter);
-         Set (Main_Window.Animation_Image, Pixbuf);
       else
          Trace (Me, "gps-animation.gif not found");
       end if;
@@ -493,10 +491,11 @@ package body GPS.Main_Window is
       Prefix_Directory : Virtual_File)
    is
       Vbox      : Gtk_Vbox;
-      Box1      : Gtk_Hbox;
       Progress  : Gtk.Progress_Bar.Gtk_Progress_Bar;
       Menu      : Gtk_Menu;
       Menu_Item : Gtk_Menu_Item;
+      Anim_Tb   : Gtk_Toolbar;
+      Anim_Item : Gtk_Tool_Item;
 
    begin
       --  Initialize the window first, so that it can be used while creating
@@ -575,11 +574,8 @@ package body GPS.Main_Window is
       Set_Size_Request (Progress, 0, -1);
       Pack_End (Vbox, Main_Window.Statusbar, False, False, 0);
 
-      Gtk_New_Hbox (Main_Window.Menu_Box, False, 0);
-      Pack_Start (Vbox, Main_Window.Menu_Box, False, False);
-
       Gtk_New (Main_Window.Menu_Bar);
-      Pack_Start (Main_Window.Menu_Box, Main_Window.Menu_Bar);
+      Pack_Start (Vbox, Main_Window.Menu_Bar, False);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_File");
       Append (Main_Window.Menu_Bar, Menu_Item);
@@ -627,20 +623,25 @@ package body GPS.Main_Window is
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 
-      Gtk_New_Vbox (Main_Window.Toolbar_Box, False, 0);
+      Gtk_New_Hbox (Main_Window.Toolbar_Box, False, 0);
       Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
 
-      Gtk_New_Hbox (Box1);
-      Pack_Start (Main_Window.Toolbar_Box, Box1);
       Gtk_New (Main_Window.Toolbar);
       Set_Orientation (Main_Window.Toolbar, Orientation_Horizontal);
       Set_Style (Main_Window.Toolbar, Toolbar_Icons);
-      Pack_Start (Box1, Main_Window.Toolbar, True, True);
+      Pack_Start (Main_Window.Toolbar_Box, Main_Window.Toolbar);
+
+      Gtk_New (Anim_Tb);
+      Set_Orientation (Anim_Tb, Orientation_Horizontal);
+      Set_Style (Anim_Tb, Toolbar_Icons);
+      Pack_End (Main_Window.Toolbar_Box, Anim_Tb, False);
 
       Gtk_New (Main_Window.Animation_Frame);
-      Set_Shadow_Type (Main_Window.Animation_Frame, Shadow_None);
-      Pack_End
-        (Main_Window.Menu_Box, Main_Window.Animation_Frame, False, False);
+      Main_Window.Animation_Frame.Set_Border_Width (0);
+      Main_Window.Animation_Frame.Set_Shadow_Type (Shadow_None);
+      Gtk_New (Anim_Item);
+      Anim_Item.Add (Main_Window.Animation_Frame);
+      Anim_Tb.Insert (Anim_Item, Pos => 0);
       Put_Animation (Main_Window);
 
       Add (Vbox, Main_Window.MDI);
