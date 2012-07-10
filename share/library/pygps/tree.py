@@ -77,13 +77,13 @@ try:
          event.x = float (rect.x + rect.width / 2)
          event.y = float (rect.y + rect.height / 2)
 
-         state = 0
+         state = Gdk.ModifierType(0)
          if control:
-             state += Gdk.ModifierType.CONTROL_MASK
+             state |= Gdk.ModifierType.CONTROL_MASK
          if shift:
-             state += Gdk.ModifierType.SHIFT_MASK
+             state |= Gdk.ModifierType.SHIFT_MASK
          if alt:
-             state += Gdk.ModifierType.MOD1_MASK
+             state |= Gdk.ModifierType.MOD1_MASK
 
          event.state = state
          event.put()
