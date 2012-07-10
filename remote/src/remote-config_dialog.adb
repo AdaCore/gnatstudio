@@ -40,6 +40,7 @@ with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
+with Gtk.Expander;               use Gtk.Expander;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Handlers;
@@ -63,7 +64,6 @@ with Gtkada;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;            use Gtkada.Handlers;
-with Collapsing_Pane;            use Collapsing_Pane;
 
 with Gexpect;                    use Gexpect;
 with GPS.Intl;                   use GPS.Intl;
@@ -198,7 +198,7 @@ package body Remote.Config_Dialog is
       Remote_Shell_Combo    : Gtk_Combo_Box_Text;
       Remote_Sync_Combo     : Gtk_Combo_Box_Text;
       --  Advanced config panel
-      Advanced_Pane         : Collapsing_Pane.Collapsing_Pane;
+      Advanced_Pane         : Gtk.Expander.Gtk_Expander;
       Advanced_Table        : Gtk_Table;
       User_Name_Entry       : Gtk_Entry;
       Max_Nb_Connected_Spin : Gtk_Spin_Button;
@@ -1028,14 +1028,13 @@ package body Remote.Config_Dialog is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Pane, -"Advanced configuration");
-      Set_State (Dialog.Advanced_Pane, Collapsed);
       Attach (Dialog.Right_Table, Dialog.Advanced_Pane,
               0, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10, 10);
 
       Gtk_New (Dialog.Advanced_Table,
                Rows => 5, Columns => 2, Homogeneous => False);
-      Set_Expanded_Widget (Dialog.Advanced_Pane, Dialog.Advanced_Table);
+      Dialog.Advanced_Pane.Add (Dialog.Advanced_Table);
 
       Gtk_New (Label, -"User name:");
       Set_Alignment (Label, 0.0, 0.5);
