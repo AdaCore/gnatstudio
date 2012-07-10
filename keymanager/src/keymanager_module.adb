@@ -392,7 +392,10 @@ package body KeyManager_Module is
       Tmp : Event_Handler_Access := Keymanager_Module.Handlers;
       N   : Event_Handler_Access;
    begin
-      if Tmp.Handler = Handler then
+      if Tmp = null then
+         null;
+
+      elsif Tmp.Handler = Handler then
          Keymanager_Module.Handlers := Tmp.Next;
          Unchecked_Free (Tmp);
 

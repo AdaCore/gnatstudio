@@ -396,12 +396,10 @@ package body Command_Window is
       Prompt            : String := "";
       Applies_To_Global : Boolean := True)
    is
-      X, Y, W, H       : Gint;
-      Hints            : Gdk_Window_Hints;
+      X, Y             : Gint;
       Frame            : Gtk_Frame;
       Applies_To       : Gtk_Widget;
       Min_H, Natural_H : Gint;
-      Geometry : Gdk_Geometry;
    begin
       --  Do not make the window modal, although that is much more precise to
       --  be sure we always get all key events on the application. This has the
@@ -473,28 +471,20 @@ package body Command_Window is
          Set_Transient_For (Window, Gtk_Window (Get_Toplevel (Applies_To)));
       end if;
 
-      Show_All (Frame);
+      Show_All (Window);
 
       --  Aim for our window to appear as a strip over the bottom of
       --  the Applies_To widget.
-      Get_Geometry (Get_Window (Applies_To), X, Y, W, H);
+
+      Get_Origin (Get_Window (Applies_To), X, Y);
       Get_Preferred_Height (Window, Min_H, Natural_H);
-      Hints := Hint_Pos + Hint_Min_Size + Hint_Max_Size;
-      Geometry := (Min_Width => W,
-                   Min_Height => Min_H,
-                   Max_Width => W,
-                   Max_Height => Natural_H,
-                   Base_Width => W,
-                   Base_Height => Natural_H,
-                   Width_Inc => 1,
-                   Height_Inc => 1,
-                   Min_Aspect => Gdouble'First,
-                   Max_Aspect => Gdouble'Last,
-                   Win_Gravity => Gravity_North_West);
-      Gdk.Window.Set_Geometry_Hints
-        (Self      => Get_Window (Window),
-         Geometry  => Geometry,
-         Geom_Mask => Hints);
+      Set_Size_Request
+        (Window,
+         Width  => Get_Allocated_Width (Applies_To),
+         Height => Natural_H);
+      Move (Window,
+            X => X,
+            Y => Y + Get_Allocated_Height (Applies_To) - Natural_H);
 
       Window.Parent := Gtk_Window (Get_Toplevel (Applies_To));
       Window.Parent_Geometry := Get_Geometry (Window.Parent);
@@ -505,11 +495,13 @@ package body Command_Window is
 
       Add_Event_Handler (Kernel, Command_Window_Event_Handler'Access);
 
-      Show_All (Window);
-
       Grab_Focus (Window.Line);
 
       KeyManager_Module.Block_Key_Shortcuts (Kernel);
+
+   exception
+      when E : others =>
+         Trace (Testsuite_Handle, E);
    end Gtk_New;
 
    ----------------------------------

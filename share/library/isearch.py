@@ -164,8 +164,7 @@ class Isearch(CommandWindow):
                 on_changed=self.on_changed,
                 on_cancel=self.on_cancel,
                 on_key=self.on_key,
-                on_activate=self.on_activate,
-                )
+                on_activate=self.on_activate)
             self.set_background(Preference('Plugins/isearch/bgcolor').get())
 
         except:
