@@ -1,4 +1,11 @@
 """Mercurial CVS support plug-in
+
+   Provides support for the Mercurial configuration management system.
+
+   It integrates into GPS's VCS support, and uses the same menus
+   as all other VCS systems supported by GPS.
+   You can easily edit this file if you would like to customize
+   the mercurial commands that are sent for each of the menus.
 """
 
 ###########################################################################
@@ -74,14 +81,6 @@ register_vcs_actions ("Mercurial", actions)
 #  Mercurial VCS plugin configuration
 
 MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
-<!--  Provides support for the Mercurial configuration management system.
-
-      It integrates into GPS's VCS support, and uses the same menus
-      as all other VCS systems supported by GPS.
-      You can easily edit this file if you would like to customize
-      the mercurial commands that are sent for each of the menus.
-
--->
 
 <GPS>
 
