@@ -101,6 +101,7 @@ private
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel              : Kernel_Handle;
       Filter_Panel        : Locations_Filter_Panel;
+      Filter_Panel_Shown  : Boolean := False;
       Sort_By_Category    : Boolean := False;
       --  Whether the view should be sorted by category
 

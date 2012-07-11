@@ -170,6 +170,9 @@ package body GPS.Location_View is
    --  Opens editor, moves text cursor to the location of the message and
    --  raises editor's window when specified node is a message node.
 
+   procedure On_Destroy
+     (Self : access Location_View_Record'Class);
+
    procedure On_Row_Deleted
      (Self : access Location_View_Record'Class);
    --  Called when a row has been delete in the model
@@ -1131,7 +1134,7 @@ package body GPS.Location_View is
          Signal_Visibility_Toggled,
          Location_View_Callbacks.To_Marshaller (On_Visibility_Toggled'Access),
          Location_View (Self));
-      Self.Pack_Start (Self.Filter_Panel, False, False);
+      Self.Filter_Panel.Ref;
 
       Widget_Callback.Connect (Self, Signal_Destroy, On_Destroy'Access);
 
@@ -1145,6 +1148,9 @@ package body GPS.Location_View is
          Signal_Location_Clicked,
          Location_View_Callbacks.To_Marshaller (On_Location_Clicked'Access),
          Self);
+      Location_View_Callbacks.Connect
+        (Self, Signal_Destroy,
+         Location_View_Callbacks.To_Marshaller (On_Destroy'Access));
 
       Register_Contextual_Menu
         (Self.Kernel,
@@ -1225,6 +1231,15 @@ package body GPS.Location_View is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Location_Clicked;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Self : access Location_View_Record'Class) is
+   begin
+      Self.Filter_Panel.Unref;
+   end On_Destroy;
 
    ---------------------------------
    -- Get_Or_Create_Location_View --
@@ -1628,17 +1643,20 @@ package body GPS.Location_View is
 
    procedure Set_Filter_Visibility
      (Self : access Location_View_Record'Class;
-      Visible : Boolean) is
+      Visible : Boolean)
+   is
    begin
-      if Visible then
-         Set_Child_Visible (Self.Filter_Panel, True);
-         Self.Filter_Panel.Set_Size_Request (-1, -1);
-         Self.Filter_Panel.Show;
-      else
-         Set_Child_Visible (Self.Filter_Panel, False);
-         Set_Size_Request (Self.Filter_Panel, -1, 0);
-         Self.Filter_Panel.Hide;
+      if Self.Filter_Panel_Shown = Visible then
+         return;
       end if;
+
+      if Visible then
+         Self.Pack_End (Self.Filter_Panel, False, False);
+      else
+         Self.Remove (Self.Filter_Panel);
+      end if;
+
+      Self.Filter_Panel_Shown := Visible;
    end Set_Filter_Visibility;
 
    -------------------------------
