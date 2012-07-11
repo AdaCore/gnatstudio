@@ -229,7 +229,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
       <status label="Added" stock="gps-vcs-added" />
 
       <status_parser>
-         <regexp>(^|\\n)(.)( |\\t)([^/\\n]*/)*([^ \\n]+)</regexp>
+         <regexp>(^|\\n)(.)( |\\t)([^\\\\/\\n]*[/|\\\\])*([^\\\\ \\n]+)</regexp>
 
          <status_index>2</status_index>
          <file_index>5</file_index>
