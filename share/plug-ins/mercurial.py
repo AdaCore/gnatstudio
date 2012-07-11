@@ -46,7 +46,7 @@ actions = [
  SEPARATOR,
 
  { ACTION: "Diff against head",            LABEL: "Compare against tip revision"  },
-{  ACTION: "Diff against revision",        LABEL: "Compare against specific revision" },
+{  ACTION: "Diff against revision",        LABEL: "Compare against other revision" },
 
  SEPARATOR,
 
