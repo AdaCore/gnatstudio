@@ -56,7 +56,6 @@ actions = [
 
  SEPARATOR,
 
- { ACTION: "Status dir",                   LABEL: "Directory/Query status for directory"  },
  { ACTION: "Status dir (recursively)",     LABEL: "Directory/Query status for directory recursively"  },
  { ACTION: "Update dir (recursively)",     LABEL: "Directory/Update directory recursively"  },
 
@@ -99,6 +98,14 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
       <shell output="">echo "Querying status for $2-"</shell>
       <shell>pwd</shell>
       <external>hg --noninteractive status --all $2-</external>
+      <shell>VCS.status_parse "Mercurial" "%1" FALSE FALSE "%2"</shell>
+   </action>
+
+   <action name="generic_hg_status_dir_recursive" show-command="false" output="none" category="">
+      <shell>pwd</shell>
+      <shell output="">echo "Querying status for %1"</shell>
+      <shell>pwd</shell>
+      <external>hg --noninteractive status --all</external>
       <shell>VCS.status_parse "Mercurial" "%1" FALSE FALSE "%2"</shell>
    </action>
 
@@ -200,16 +207,17 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
         absolute_names="FALSE" atomic_commands="TRUE"
         commit_directory="FALSE"
         administrative_directory=".hg">
-      <status_files       action="generic_hg_status"/>
-      <local_status_files action="generic_hg_local_status"/>
-      <diff_head          action="generic_hg_diff_head"/>
-      <commit             action="generic_hg_commit"/>
-      <add_no_commit      action="generic_hg_add_no_commit"/>
-      <annotate           action="generic_hg_annotate"/>
-      <history            action="generic_hg_history"/>
-      <history_text       action="generic_hg_history_text"/>
-      <history_revision   action="generic_hg_history_rev"/>
-      <revision           action="generic_hg_revision"/>
+      <status_files         action="generic_hg_status"/>
+      <status_dir_recursive action="generic_hg_status_dir_recursive"/>
+      <local_status_files   action="generic_hg_local_status"/>
+      <diff_head            action="generic_hg_diff_head"/>
+      <commit               action="generic_hg_commit"/>
+      <add_no_commit        action="generic_hg_add_no_commit"/>
+      <annotate             action="generic_hg_annotate"/>
+      <history              action="generic_hg_history"/>
+      <history_text         action="generic_hg_history_text"/>
+      <history_revision     action="generic_hg_history_rev"/>
+      <revision             action="generic_hg_revision"/>
 
       <status label="Up to date" stock="gps-vcs-up-to-date" />
       <status label="Locally modified" stock="gps-vcs-modified" />
