@@ -244,7 +244,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
       </local_status_parser>
 
       <annotations_parser>
-         <regexp>([^ \\t\\n]+) ([0-9]+) (... ... .. ..:..:.. ....) (\+....):( )?([0-9]+):(.*)(\\n|$)</regexp>
+         <regexp>[ \\t]*([^ \\t\\n]+)[ \\t]+([0-9]+) (... ... .. ..:..:.. ....) ([\+\-]....):( )?([0-9]+):(.*)(\\n|$)</regexp>
 
          <repository_revision_index>2</repository_revision_index>
          <author_index>1</author_index>
