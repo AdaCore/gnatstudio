@@ -38,7 +38,8 @@ actions = [
 
  SEPARATOR,
 
- { ACTION: "Diff against head",            LABEL: "Compare against tip"  },
+ { ACTION: "Diff against head",            LABEL: "Compare against tip revision"  },
+{  ACTION: "Diff against revision",        LABEL: "Compare against specific revision" },
 
  SEPARATOR,
 
@@ -51,8 +52,6 @@ actions = [
  SEPARATOR,
 
  { ACTION: "Add no commit",                LABEL: "Add, no commit"  },
-
- { ACTION: "View revision",                LABEL: "View revision"  },
 
  SEPARATOR,
 
@@ -125,6 +124,22 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
       </on-failure>
    </action>
 
+   <action name="generic_hg_diff" show-command="false" output="none" category="">
+      <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
+      <external>hg cat -r $1 "$2"</external>
+      <shell>dump "%1" TRUE</shell>
+      <external>diff %1 "$2"</external>
+      <on-failure>
+         <shell>base_name "$2"</shell>
+         <shell>dump "%2" TRUE</shell>
+         <shell>File "%1"</shell>
+         <shell>File "$2"</shell>
+         <shell>Hook "diff_action_hook"</shell>
+         <shell>Hook.run %1 "$2" null %2 %3 "%5 [$1]"</shell>
+         <shell>delete "%5"</shell>
+      </on-failure>
+   </action>
+
    <!-- Mercurial add (no commit) -->
 
    <action name="generic_hg_add_no_commit" show-command="false" output="none" category="">
@@ -189,8 +204,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
 
    <action name="generic_hg_revision" show-command="false" output="none" category="">
       <shell output="">echo "Getting $2 at revision $1"</shell>
-      <shell lang="python">mercurial.from_hg_root ("$2")</shell>
-      <external>hg --noninteractive cat --rev "$1" "%1"</external>
+      <external>hg --noninteractive cat --rev "$2" "$1"</external>
       <shell>base_name "$2"</shell>
       <shell>dump "%2" FALSE</shell>
       <shell>Editor.edit "%1"</shell>
@@ -212,6 +226,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
       <status_dir_recursive action="generic_hg_status_dir_recursive"/>
       <local_status_files   action="generic_hg_local_status"/>
       <diff_head            action="generic_hg_diff_head"/>
+      <diff                 action="generic_hg_diff"/>
       <commit               action="generic_hg_commit"/>
       <add_no_commit        action="generic_hg_add_no_commit"/>
       <annotate             action="generic_hg_annotate"/>
