@@ -2028,13 +2028,16 @@ package body Gtkada.File_Selector is
 
          Pack_Start (Hbox7, Hpaned1, True, True, 3);
 
-         Add (Hpaned1, File_Selector_Window.Explorer_Tree);
+         Hpaned1.Pack1
+           (File_Selector_Window.Explorer_Tree, True, True);
+         File_Selector_Window.Explorer_Tree.Set_Size_Request (1, 1);
 
          Gtk_New (File_Selector_Window.Files_Scrolledwindow);
          Set_Policy
            (File_Selector_Window.Files_Scrolledwindow,
             Policy_Automatic, Policy_Always);
-         Add (Hpaned1, File_Selector_Window.Files_Scrolledwindow);
+         Hpaned1.Pack2
+           (File_Selector_Window.Files_Scrolledwindow, True, True);
 
          Gtk_New (File_Selector_Window.File_Model, Columns_Types);
          Gtk_New
