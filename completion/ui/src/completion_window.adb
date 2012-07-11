@@ -1550,8 +1550,6 @@ package body Completion_Window is
          Window_X, Window_Y);
 
       Get_Origin (Get_Window (View, Text_Window_Text), Gdk_X, Gdk_Y);
-      --  ??? Use to be Get_Desk_Origin, is the above replacement correct
-      --  ??? should we check for the result ?
 
       --  Compute the placement of the window
 
