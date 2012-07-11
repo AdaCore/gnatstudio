@@ -208,6 +208,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
         commit_directory="FALSE"
         administrative_directory=".hg">
       <status_files         action="generic_hg_status"/>
+      <status_dir           action="generic_hg_status_dir_recursive"/>
       <status_dir_recursive action="generic_hg_status_dir_recursive"/>
       <local_status_files   action="generic_hg_local_status"/>
       <diff_head            action="generic_hg_diff_head"/>
