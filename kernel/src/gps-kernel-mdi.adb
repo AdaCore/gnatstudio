@@ -96,7 +96,6 @@ package body GPS.Kernel.MDI is
    Pref_Tabs_Position    : Tabs_Position_Preferences.Preference;
    MDI_Opaque            : Boolean_Preference;
    MDI_Destroy_Floats    : Boolean_Preference;
-   MDI_Background_Color  : Color_Preference;
    MDI_Title_Bar_Color   : Color_Preference;
    MDI_Focus_Title_Color : Color_Preference;
    MDI_All_Floating      : Boolean_Preference;
@@ -298,14 +297,6 @@ package body GPS.Kernel.MDI is
          Label   => -"Floating editors",
          Page    => "");  --  -"Windows"
 
-      MDI_Background_Color := Create
-        (Manager => Get_Preferences (Kernel),
-         Name    => "MDI-Background-Color",
-         Default => "#666666",
-         Doc     => -"Color to use for the background of the MDI",
-         Label   => -"Background color",
-         Page    => -"Windows");
-
       MDI_Title_Bar_Color := Create
         (Manager => Get_Preferences (Kernel),
          Name    => "MDI-Title-Bar-Color",
@@ -377,7 +368,6 @@ package body GPS.Kernel.MDI is
          Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref
            and not MDI_Editors_Floating.Get_Pref,
          Title_Font                => Default_Font.Get_Pref_Font,
-         Background_Color          => MDI_Background_Color.Get_Pref,
          Title_Bar_Color           => MDI_Title_Bar_Color.Get_Pref,
          Focus_Title_Color         => MDI_Focus_Title_Color.Get_Pref,
          Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
