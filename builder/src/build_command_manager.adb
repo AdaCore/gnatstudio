@@ -19,7 +19,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
-with Build_Command_Utils;           use Build_Command_Utils;
+with Build_Command_Utils;         use Build_Command_Utils;
 with Builder_Facility_Module;     use Builder_Facility_Module;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Commands.Builder;            use Commands.Builder;
@@ -34,12 +34,23 @@ with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                    use GPS.Intl;
+with GPS.Styles.UI;
+with Interactive_Consoles;        use Interactive_Consoles;
 with Remote;                      use Remote;
 with Extending_Environments;      use Extending_Environments;
 with Traces;                      use Traces;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
+
+with Tools_Output_Parsers;
+with Tools_Output_Parsers.Build_Output_Collectors;
+with Tools_Output_Parsers.Console_Writers;
+with Tools_Output_Parsers.Location_Parsers;
+with Tools_Output_Parsers.Output_Choppers;
+with Tools_Output_Parsers.Progress_Parsers;
+with Tools_Output_Parsers.Text_Splitters;
+with Tools_Output_Parsers.UTF8_Converters;
 
 package body Build_Command_Manager is
 
@@ -332,6 +343,64 @@ package body Build_Command_Manager is
          Background : Boolean);
       --  Compute and launch the command, for the given mode
 
+      function Create_Default_Output_Parser
+        (Console  : Interactive_Console;
+         Category : String;
+         Shadow   : Boolean;
+         Data     : Build_Callback_Data_Access)
+         return Tools_Output_Parsers.Tools_Output_Parser_Access;
+
+      ----------------------------------
+      -- Create_Default_Output_Parser --
+      ----------------------------------
+
+      function Create_Default_Output_Parser
+        (Console  : Interactive_Console;
+         Category : String;
+         Shadow   : Boolean;
+         Data     : Build_Callback_Data_Access)
+         return Tools_Output_Parsers.Tools_Output_Parser_Access
+      is
+         Progress_Pattern : constant String :=
+           "completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n";
+         --  ??? This is configurable in some cases (from XML for instance), so
+         --  we should not have a hard coded regexp here.
+
+         use Tools_Output_Parsers.Build_Output_Collectors;
+         use Tools_Output_Parsers.Console_Writers;
+         use Tools_Output_Parsers.Location_Parsers;
+         use Tools_Output_Parsers.Output_Choppers;
+         use Tools_Output_Parsers.Text_Splitters;
+         use Tools_Output_Parsers.UTF8_Converters;
+         use Tools_Output_Parsers.Progress_Parsers;
+
+         Progress_Parser : Tools_Output_Parsers.Tools_Output_Parser_Access;
+
+      begin
+         Progress_Parser := Create_Progress_Parser
+           (Pattern => Progress_Pattern,
+            Child => Create_Console_Writer
+              (Console => Console,
+               Child   => Create_Location_Parser
+                 (Kernel            => Kernel,
+                  Category          => Category,
+                  Styles            => GPS.Styles.UI.Builder_Styles,
+                  Show_In_Locations => not Background,
+                  Child             => Create_Text_Splitter
+                    (Child => Create_Build_Output_Collector
+                       (Kernel     => Kernel,
+                        Target     => Target_Name,
+                        Shadow     => Shadow,
+                        Background => Background)))));
+
+         Data.Progress_Parser := Progress_Parser_Access (Progress_Parser);
+
+         return Create_Output_Chopper
+           (Child => Create_UTF8_Converter
+              (Kernel => Kernel,
+               Child  => Progress_Parser));
+      end Create_Default_Output_Parser;
+
       ---------------------
       -- Launch_For_Mode --
       ---------------------
@@ -348,6 +417,7 @@ package body Build_Command_Manager is
          Server : Server_Type;
          Data   : Build_Callback_Data_Access;
          Background_Env : Extending_Environment;
+         Console        : Interactive_Console;
 
          function Expand_Cmd_Line (CL : String) return String;
          --  Callback for Single_Target_Dialog
@@ -520,18 +590,30 @@ package body Build_Command_Manager is
          Data.Shadow         := Shadow;
          Data.Background     := Background;
          Data.Background_Env := Background_Env;
+         Data.Is_A_Run       := Is_Run (T);
 
          if Is_Run (T) then
-            Launch_Build_Command
-              (Kernel, Full.Args, Data, Server,
-               Synchronous, Uses_Shell (T),
-               "Run: " & Main.Display_Base_Name, Dir);
+            Console := Get_Build_Console
+              (Kernel, Shadow, Background, False,
+               "Run: " & Main.Display_Base_Name);
 
+            --  Is_Run target writes its output directly to console, so
+            --  it doesn't need Output_Parser
          else
-            Launch_Build_Command
-              (Kernel, Full.Args, Data, Server,
-               Synchronous, Uses_Shell (T), "", Dir);
+            Console := Get_Build_Console
+              (Kernel, Shadow, Background, False);
+
+            Data.Output_Parser := Create_Default_Output_Parser
+              (Category => To_String (Data.Category_Name),
+               Shadow   => Shadow,
+               Data     => Data,
+               Console  => Console);
          end if;
+
+         Launch_Build_Command
+           (Kernel, Full.Args, Data, Server,
+            Synchronous, Uses_Shell (T),
+            Console, Dir);
 
          Unchecked_Free (All_Extra_Args);
       end Launch_For_Mode;
