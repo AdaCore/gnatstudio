@@ -17,18 +17,19 @@
 
 --  This package handles build commands
 
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GPS.Kernel;
-with Glib;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with Remote;       use Remote;
-with Interactive_Consoles; use Interactive_Consoles;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with Remote;                    use Remote;
+with Interactive_Consoles;      use Interactive_Consoles;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GPS.Kernel.Messages;
-with GPS.Kernel.Timeout;   use GPS.Kernel.Timeout;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with Extending_Environments;    use Extending_Environments;
+with Tools_Output_Parsers;      use Tools_Output_Parsers;
 
-with Extending_Environments; use Extending_Environments;
+with Tools_Output_Parsers.Progress_Parsers;
 
 package Commands.Builder is
 
@@ -65,30 +66,23 @@ package Commands.Builder is
       Shadow : Boolean := False;
       --  Whether this is a Shadow build
 
-      Buffer : Unbounded_String;
-      --  Stores the incomplete lines returned by the compilation process
+      Is_A_Run : Boolean := False;
+      --  Whether this is a run build
 
       Background_Env : Extending_Environment;
       --  The extending environment created for the purpose of running this
       --  target.
+
+      Output_Parser  : Tools_Output_Parser_Access;
+      --  Chain of output parsers
+
+      Progress_Parser : Progress_Parsers.Progress_Parser_Access;
+      --  Direct pointer to progress parser to be able to pass there
+      --  current command from callback
    end record;
 
    type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
    overriding procedure Destroy (Data : in out Build_Callback_Data);
-
-   procedure Process_Builder_Output
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command    : Commands.Command_Access;
-      Output     : Glib.UTF8_String;
-      Data       : Build_Callback_Data);
-   --  Process the builder output: update the progress bar in Command as
-   --  necessary, hide the progress output, and display the other outputs in
-   --  the console. Error messages are displayed in the locations window.
-   --
-   --  If Quiet is False, output will be displayed in the Messages window
-   --  Output can contain multiple lines.
-   --
-   --  Target indicates the name of the target being built.
 
    procedure Launch_Build_Command
      (Kernel           : GPS.Kernel.Kernel_Handle;
@@ -97,7 +91,7 @@ package Commands.Builder is
       Server           : Server_Type;
       Synchronous      : Boolean;
       Use_Shell        : Boolean;
-      New_Console_Name : String;
+      Console          : Interactive_Console;
       Directory        : Virtual_File);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
@@ -106,17 +100,9 @@ package Commands.Builder is
    --  Category_Name is the name of the target category being launched.
    --  If Use_Shell, and if the SHELL environment variable is defined,
    --  then call the command through $SHELL -c "command line".
-   --  If New_Console_Name is not empty, then this is considered to be a Run
-   --  command rather than a build command, and in this case we send the
-   --  output to a new console named New_Console_Name.
+   --  Use given Console to send the output.
    --  See Build_Command_Manager.Launch_Target for the meanings of Quiet and
    --  Synchronous.
-
-   procedure Display_Compiler_Message
-     (Kernel     : GPS.Kernel.Kernel_Handle;
-      Message    : String;
-      Data       : Build_Callback_Data);
-   --  Display Message
 
    function Get_Build_Console
      (Kernel              : GPS.Kernel.Kernel_Handle;
