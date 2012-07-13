@@ -1,0 +1,77 @@
+------------------------------------------------------------------------------
+--                                  G P S                                   --
+--                                                                          --
+--                     Copyright (C) 2012, AdaCore                          --
+--                                                                          --
+-- This is free software;  you can redistribute it  and/or modify it  under --
+-- terms of the  GNU General Public License as published  by the Free Soft- --
+-- ware  Foundation;  either version 3,  or (at your option) any later ver- --
+-- sion.  This software is distributed in the hope  that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public --
+-- License for  more details.  You should have  received  a copy of the GNU --
+-- General  Public  License  distributed  with  this  software;   see  file --
+-- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
+-- of the license.                                                          --
+------------------------------------------------------------------------------
+
+with Ada.Strings.Fixed;
+
+package body Tools_Output_Parsers.Output_Choppers is
+
+   New_Line : constant String := (1 => ASCII.LF);
+
+   ---------------------------
+   -- Create_Output_Chopper --
+   ---------------------------
+
+   function Create_Output_Chopper
+     (Child   : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access is
+   begin
+      return new Output_Chopper'
+        (Child  => Child,
+         Buffer => Null_Unbounded_String);
+   end Create_Output_Chopper;
+
+   ---------------------------
+   -- Parse_Standard_Output --
+   ---------------------------
+
+   overriding procedure Parse_Standard_Output
+     (Self : not null access Output_Chopper;
+      Item : String)
+   is
+      Last_EOL : Natural;
+   begin
+      if Self.Child = null then
+         return;
+      end if;
+
+      Last_EOL := Ada.Strings.Fixed.Index
+        (Item, New_Line, Ada.Strings.Backward);
+
+      if Last_EOL = 0 then
+         Append (Self.Buffer, Item);
+      else
+         Self.Child.Parse_Standard_Output
+           (To_String (Self.Buffer) & Item (Item'First .. Last_EOL));
+         Self.Buffer := To_Unbounded_String (Item (Last_EOL + 1 .. Item'Last));
+      end if;
+   end Parse_Standard_Output;
+
+   -------------------
+   -- End_Of_Stream --
+   -------------------
+
+   overriding procedure End_Of_Stream
+     (Self : not null access Output_Chopper) is
+   begin
+      if Self.Child = null or Self.Buffer = "" then
+         return;
+      end if;
+
+      Self.Child.Parse_Standard_Output (To_String (Self.Buffer) & New_Line);
+   end End_Of_Stream;
+
+end Tools_Output_Parsers.Output_Choppers;
