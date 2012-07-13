@@ -473,7 +473,9 @@ package body GPS.Kernel.Timeout is
             Enable_Prompt_Display (Data.Console, False);
          end if;
 
-         if Data.Delete_Id.Id /= Null_Handler_Id then
+         if Data.Delete_Id.Id /= Null_Handler_Id
+           and Data.Console /= null
+         then
             Gtk.Handlers.Disconnect (Data.Console, Data.Delete_Id);
          end if;
 
@@ -815,6 +817,11 @@ package body GPS.Kernel.Timeout is
       if Button = Button_Yes then
          --  The console is about to be destroyed: avoid dangling pointer.
          Console.Console := null;
+
+         if Console.D.Descriptor /= null then
+            Close (Console.D.Descriptor.all);
+         end if;
+
          return False;
 
       else
