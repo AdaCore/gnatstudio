@@ -813,6 +813,8 @@ package body GPS.Kernel.Timeout is
          Button_Yes);
 
       if Button = Button_Yes then
+         --  The console is about to be destroyed: avoid dangling pointer.
+         Console.Console := null;
          return False;
 
       else
