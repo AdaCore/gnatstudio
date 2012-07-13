@@ -27,7 +27,7 @@ all:
 	$(MAKE) Gnatcoll_Build=$(Build) -C ../gnatlib
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -ws -P../spark/spark
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
-	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps
+	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps -largs `pkg-config gmodule-2.0 --libs`
 
 scil: do_links
 	$(MAKE) -s Gnatcoll_Build=${Build} -C ../gnatlib do_links
