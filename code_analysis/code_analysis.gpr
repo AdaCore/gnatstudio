@@ -1,6 +1,7 @@
 with "../kernel/kernel";
 with "../language/language";
 with "../shared";
+with "xmlada";
 
 project Code_Analysis is
 
