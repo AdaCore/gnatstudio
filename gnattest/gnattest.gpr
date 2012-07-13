@@ -1,6 +1,7 @@
 with "../kernel/kernel";
 with "../shared";
 with "../src_editor/src_editor";
+with "xmlada";
 
 project GNATTest is
 
