@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L716-044 ECL: makefiles can now use gprbuild (2012-07-16)
+
+  When GNATbench for Eclipse project builds are driven by makefiles, the
+  builder name is passed as a macro.  In the past this builder name was
+  always passed as "gnatmake" but it can now also be "gprbuild" instead.
+
 NF-52-L702-019 GPS: Clear locations action for key shortcuts (2012-07-04)
 
   GPS provides a new action to assign a key shortcut to the 'Clear locations'
