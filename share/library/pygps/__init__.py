@@ -361,7 +361,7 @@ try:
             window = window.get_window()
         event.window = window
         event.keyval = keyval
-        event.device = device
+        event.device = default_event_device()
 
         # Disabled for now as this does not work on all platforms. The keycode
         # depends on the OS but also on the keyboard kind.
