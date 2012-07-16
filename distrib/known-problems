@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L713-004: GPS: crash when spawning a Run process and closing the console
+  Problem:    When launching an external process that has its own interactive
+              console in GPS, such as through the /Build/Run/Custom menu,
+              GPS will not kill the process when closing the console, and
+              may crash when the process actually exits.
+  Workaround: Kill the process outside of GPS before closing the console, or
+              leave the console open.
+
 - L625-022: GPS: isearch.py window disappearing
   Problem:    Under some X servers, such as the Cygwin X11 server, the
               window for doing incremental searches in the isearch.py
