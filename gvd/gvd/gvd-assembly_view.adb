@@ -1138,9 +1138,10 @@ package body GVD.Assembly_View is
       Set_Policy (Widget, Policy_Automatic, Policy_Automatic);
 
       Gtk_New (Widget.View);
+      Widget.View.Get_Buffer.Insert_At_Cursor ("");
+      Add (Widget, Widget.View);
       Set_Editable (Widget.View, False);
       Set_Wrap_Mode (Widget.View, Wrap_None);
-      Add (Widget, Widget.View);
 
       Assembly_View_Event_Cb.Object_Connect
         (Widget.View, Signal_Key_Press_Event,
