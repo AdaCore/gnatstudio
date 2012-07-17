@@ -16,16 +16,6 @@ import GPS
 import os.path
 from vcs import *
 
-def from_hg_root (filename):
-    "Given a filename it returns the pathname relative to the Mercurial root"
-    dir=os.getcwd()
-    full=""
-    while not os.path.exists(dir + '/.hg'):
-        full = os.path.basename (dir) + "/" + full
-        dir = os.path.dirname (dir)
-    full = full + filename
-    return full
-
 #  Mercurial VCS Menu
 
 actions = [
@@ -63,14 +53,11 @@ actions = [
  SEPARATOR,
 
  { ACTION: "Status dir (recursively)",     LABEL: "Directory/Query status for directory recursively"  },
- { ACTION: "Update dir (recursively)",     LABEL: "Directory/Update directory recursively"  },
 
  { ACTION: "List project",                 LABEL: "Project/List all files in project"  },
  { ACTION: "Status project",               LABEL: "Project/Query status for project"  },
- { ACTION: "Update project",               LABEL: "Project/Update project"  },
  { ACTION: "List project (recursively)",   LABEL: "Project/List all files in project (recursively)"  },
  { ACTION: "Status project (recursively)", LABEL: "Project/Query status for project (recursively)"  },
- { ACTION: "Update project (recursively)", LABEL: "Project/Update project (recursively)"  },
 
 ]
 
@@ -99,6 +86,14 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
       <shell>VCS.status_parse "Mercurial" "%1" FALSE FALSE "%2"</shell>
    </action>
 
+   <action name="generic_hg_status_dir" show-command="false" output="none" category="">
+      <shell>pwd</shell>
+      <shell output="">echo "Querying status for %1"</shell>
+      <shell>pwd</shell>
+      <external>hg --noninteractive status --all %1</external>
+      <shell>VCS.status_parse "Mercurial" "%1" FALSE FALSE "%2"</shell>
+   </action>
+
    <action name="generic_hg_status_dir_recursive" show-command="false" output="none" category="">
       <shell>pwd</shell>
       <shell output="">echo "Querying status for %1"</shell>
@@ -110,8 +105,8 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
    <action name="generic_hg_diff_head" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
       <external>hg cat -r tip "$1"</external>
-      <shell>dump "%1" TRUE</shell>
-      <external>diff %1 "$1"</external>
+      <shell>dump "%1" FALSE</shell>
+      <external>gnudiff %1 "$1"</external>
       <on-failure>
          <shell>base_name "$1"</shell>
          <shell>dump "%2" TRUE</shell>
@@ -126,8 +121,8 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
    <action name="generic_hg_diff" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
       <external>hg cat -r $1 "$2"</external>
-      <shell>dump "%1" TRUE</shell>
-      <external>diff %1 "$2"</external>
+      <shell>dump "%1" FALSE</shell>
+      <external>gnudiff %1 "$2"</external>
       <on-failure>
          <shell>base_name "$2"</shell>
          <shell>dump "%2" TRUE</shell>
@@ -155,7 +150,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
    <action name="generic_hg_commit" show-command="false" output="none" category="">
       <shell output="">echo "Committing file(s) $2-"</shell>
       <shell>dump "$1 " TRUE</shell>
-      <external>hg --noninteractive commit -l "%1" "$2-"</external>
+      <external>hg --noninteractive commit -l "%1" $2-</external>
       <on-failure>
          <shell output="">echo "Mercurial error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -221,7 +216,7 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
         commit_directory="FALSE"
         administrative_directory=".hg">
       <status_files         action="generic_hg_status"/>
-      <status_dir           action="generic_hg_status_dir_recursive"/>
+      <status_dir           action="generic_hg_status_dir"/>
       <status_dir_recursive action="generic_hg_status_dir_recursive"/>
       <local_status_files   action="generic_hg_local_status"/>
       <diff_head            action="generic_hg_diff_head"/>
