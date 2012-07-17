@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Interactive_Consoles;      use Interactive_Consoles;
+
 package body Tools_Output_Parsers.Console_Writers is
 
    ---------------------------
@@ -26,7 +28,11 @@ package body Tools_Output_Parsers.Console_Writers is
       Child   : Tools_Output_Parser_Access := null)
       return Tools_Output_Parser_Access is
    begin
-      return new Console_Writer'(Child => Child, Console => Console);
+      if Console =  null then
+         return Child;
+      else
+         return new Console_Writer'(Child => Child, Console => Console);
+      end if;
    end Create_Console_Writer;
 
    ---------------------------
