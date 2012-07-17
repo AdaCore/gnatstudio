@@ -6906,9 +6906,10 @@ step is to define the layout of the menus. The following three sections
 :ref:`Implementing_VCS_menus`) describe those steps.
 
 GPS is distributed with XML/Python files describing the interfaces to
-ClearCase, CVS, Subversion and Git. These XML/Python files are located in the
-directory `share/gps/plug-ins` in the GPS installation, and can be used as a
-reference for implementing new custom VCS interfaces.
+ClearCase, CVS, Subversion, Git and Mercurial (experimental support).
+These XML/Python files are located in the directory `share/gps/plug-ins`
+in the GPS installation, and can be used as a reference for implementing
+new custom VCS interfaces.
 
 .. _Describing_a_VCS:
 

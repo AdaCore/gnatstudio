@@ -60,6 +60,11 @@ The systems that are supported out of the box in GPS are:
 
   GPS needs a corresponding *diff* command that usually comes with it.
 
+*Mercurial*
+  .. index:: VCS, Mercurial
+
+  An experimental plugin for supporting Mercurial.
+
 *Subversion*
   .. index:: VCS, Subversion
 
