@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L718-050 GB: Allow all Ada versions in new-project wizard  (2012-07-18)
+
+  When using the new-project wizard to create GNATbech projects, the user can
+  choose among the Ada 95, 2005, and 2012 revisions of the language.
+
 NF-52-L716-044 ECL: makefiles can now use gprbuild (2012-07-16)
 
   When GNATbench for Eclipse project builds are driven by makefiles, the
