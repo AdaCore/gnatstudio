@@ -41,6 +41,12 @@ NF-52-L614-009 GPS: Removal of ClearCase module preference (2012-06-21)
   removed and all ClearCase users are invited to switch to ClearCase Native
   instead, if not already done.
 
+NF-52-L608-027 ECL: Scenario variables are passed to makefiles (2012-06-08)
+
+  Now when building or compiling using makefiles, the scenario variables (if
+  any) are passed to the makefile invocation so that the makefile can reference
+  them if need be.
+
 NF-52-L521-019 GPS: Minimal scrolling when jumping to a location (2012-05-21)
 
   The scrolling that occurs when going to an editor location is slightly
