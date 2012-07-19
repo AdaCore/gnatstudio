@@ -8,28 +8,119 @@
 
 import GPS, os.path, os_utils;
 
-def on_preferences_changed (name):
-   global gnatcov_menu_separator
+#
+# Project support
+#
 
-   gnatcov_menu = GPS.Menu.get ("/Tools/Coverage/GNATcov")
-   toolchain = GPS.Preference("Coverage-Toolchain").get()
+project_support_xml = """
 
-   if toolchain == "Gnatcov":
-      gnatcov_menu.show()
-      gnatcov_menu_separator.show()
+  <project_attribute
+    name="Gnatcov_Mode_Switches"
+    label="Switches in 'gnatcov' mode"
+    package="IDE_Coverage"
+    editor_page="GNATcov"
+    editor_section="Build"
+    hide_in="wizard library_wizard"
+    description="Extra build switches to pass to the builder when in 'gnatcov' mode.">
+    <string />
+  </project_attribute>
 
-   else:
-      gnatcov_menu.hide()
-      gnatcov_menu_separator.hide()
+  <project_attribute
+    name="Level_Run"
+    label="Coverage Level"
+    package="IDE_Coverage"
+    editor_page="GNATcov"
+    editor_section="Run"
+    hide_in="wizard library_wizard"
+    description="The coverage level to pass to gnatcov run.">
 
-#  Check for GNATcov
+      <choice>branch</choice>
+      <choice>insn</choice>
+      <choice default="true">stmt</choice>
+      <choice>stmt+decisison</choice>
+      <choice>stmt+mcdc</choice>
 
-def on_gps_started (hook_name):
-  global gnatcov_menu_separator
+  </project_attribute>
 
-  if os_utils.locate_exec_on_path ("gnatcov") != "":
-    gnatcov_menu_separator = GPS.Menu.create ("/Tools/Covera_ge/-")
-    GPS.parse_xml ("""
+  <project_attribute
+    name="Switches_Run"
+    label="Extra switches"
+    package="IDE_Coverage"
+    editor_page="GNATcov"
+    editor_section="Run"
+    hide_in="wizard library_wizard"
+    description="Extra build switches to pass to gnatcov run">
+    <string />
+  </project_attribute>
+
+  <project_attribute
+    name="Level_Coverage"
+    label="Coverage Level"
+    package="IDE_Coverage"
+    editor_page="GNATcov"
+    editor_section="Coverage"
+    hide_in="wizard library_wizard"
+    description="The coverage level to pass to gnatcov coverage.">
+
+      <choice>branch</choice>
+      <choice>insn</choice>
+      <choice default="true">stmt</choice>
+      <choice>stmt+decisison</choice>
+      <choice>stmt+mcdc</choice>
+
+  </project_attribute>
+
+  <project_attribute
+    name="Switches_Coverage"
+    label="Extra switches"
+    package="IDE_Coverage"
+    editor_page="GNATcov"
+    editor_section="Coverage"
+    hide_in="wizard library_wizard"
+    description="Extra build switches to pass to gnatcov coverage">
+    <string />
+  </project_attribute>
+"""
+
+_ = """
+
+  <tool name="gnatcov run" package="Coverage" index="" override="true" attribute="default_switches_run">
+     <language>Ada</language>
+     <switches>
+         <check label="Verbose" switch="-v" tip="Verbose output" />
+         <field label="Tag" switch="--tag" separator="=" tip="Put the given tag in trace files."/>
+
+         <combo switch="--level" separator="=" noswitch="insn">
+            <combo-entry label="Object Branch Coverage" value="branch" />
+            <combo-entry label="Object Instruction Coverage" value="insn" />
+            <combo-entry label="Source Statement Coverage" value="stmt" />
+            <combo-entry label="Source Decision Coverage" value="stmt+decision" />
+            <combo-entry label="Source MCDC Coverage" value="stmt+mcdc" />
+         </combo>
+     </switches>
+  </tool>
+
+  <tool name="gnatcov coverage" package="Coverage" index="" override="true" attribute="default_switches_coverage">
+     <language>Ada</language>
+     <switches>
+        <combo switch="--level" separator="=" noswitch="insn">
+           <combo-entry label="Object Branch Coverage" value="branch" />
+           <combo-entry label="Object Instruction Coverage" value="insn" />
+           <combo-entry label="Source Statement Coverage" value="stmt" />
+           <combo-entry label="Source Decision Coverage" value="stmt+decision" />
+           <combo-entry label="Source MCDC Coverage" value="stmt+mcdc" />
+        </combo>
+     </switches>
+  </tool>
+
+"""
+
+#
+# Build targets and modes
+#
+
+xml = """
+
   <!--  Program execution under instrumented execution environment  -->
 
   <target-model name="gnatcov-run" category="">
@@ -40,24 +131,12 @@ def on_gps_started (hook_name):
     </command-line>
     <icon>gps-build-all</icon>
     <switches command="%(tool_name)s" columns="2" lines="2">
-      <combo label="Target" switch="--target" separator="=" column="1">
-        <combo-entry label="qemu-prep" value="qemu-prep"/>
-        <combo-entry label="qemu-sbc834x" value="qemu-sbc834x"/>
-        <combo-entry label="leon-elf" value="leon-elf"/>
-        <combo-entry label="erc32-elf" value="erc32-elf"/>
-        <combo-entry label="i386-pok" value="i386-pok"/>
-        <combo-entry label="i386-linux" value="i386-linux"/>
-        <combo-entry label="prepare" value="prepare"/>
-      </combo>
-      <check label="Enable MCDC" switch="--level=stmt+mcdc"/>
-      <field label="Tag" switch="--tag" separator="=" column="2"/>
-      <field label="Trace file" switch="-o" separator=" " as-file="true" column="1"/>
-      <check label="Verbose" switch="--verbose" column="2"/>
     </switches>
   </target-model>
 
-  <target model="gnatcov-run" category="Run with GNATcov" name="Run under GNATcov"
-          menu="/Tools/Coverage/GNATcov/">
+  <target model="gnatcov-run" category="GNATcov run"
+      name="Run under GNATcov"
+      @MENU@>
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -67,10 +146,13 @@ def on_gps_started (hook_name):
     <command-line>
       <arg>gnatcov</arg>
       <arg>run</arg>
-      <arg>--target=powerpc-elf</arg>
-      <arg>%TT</arg>
+      <arg>-c</arg>
+      <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
       <arg>-o</arg>
       <arg>%TT.trace</arg>
+      <arg>%target</arg>
+      <arg>%E</arg>
+      <arg>%attr(ide_coverage'switches_run)</arg>
     </command-line>
   </target>
 
@@ -81,36 +163,16 @@ def on_gps_started (hook_name):
     <command-line>
       <arg>gnatcov</arg>
       <arg>coverage</arg>
-      <arg>--level=insn</arg>
       <arg>--annotate=xcov</arg>
     </command-line>
     <icon>gps-build-all</icon>
     <switches command="%(tool_name)s" columns="1" lines="4">
-      <combo label="Coverage Level" switch="--level" separator="=" column="1">
-        <combo-entry label="Instruction" value="insn"
-                     title="Object Instruction Coverage"/>
-        <combo-entry label="Branch" value="branch"
-                     title="Object Branch Coverage"/>
-        <combo-entry label="Statement" value="stmt"
-                     title="Source Statement Coverage"/>
-        <combo-entry label="Decision" value="stmt+decision"
-                     title="Source Decision Coverage"/>
-        <combo-entry label="MCDC" value="stmt+mcdc"
-                     title="Source MCDC Coverage"/>
-      </combo>
-      <combo label="Annotate" switch="--annotate" separator="=" column="1">
-        <combo-entry label="GNATcov" value="xcov"/>
-        <combo-entry label="GNATcov + Annotations" value="xcov+"/>
-      </combo>
-      <field label="SCO list" switch="--scos=" separator="@" as-file="true"/>
-      <field label="Routine list" switch="--routines=" separator="@"
-             as-file="true"/>
-      <field label="Trace file" switch="-T" separator=" " as-file="true"/>
     </switches>
   </target-model>
 
-  <target model="gnatcov-coverage" category="Coverage with GNATcov"
-          name="Generate GNATcov Main Report" menu="/Tools/Coverage/GNATcov/">
+  <target model="gnatcov-coverage" category="GNATcov coverage"
+          name="Generate GNATcov Main Report"
+          @MENU@>
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -120,33 +182,74 @@ def on_gps_started (hook_name):
     <command-line>
       <arg>gnatcov</arg>
       <arg>coverage</arg>
-      <arg>--level=insn</arg>
-      <arg>--annotate=xcov</arg>
+      <arg>-P</arg>
+      <arg>%PP</arg>
+      <arg>-c</arg>
+      <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
+      <arg>--annotate=xcov+</arg>
       <arg>--output-dir=%O</arg>
       <arg>-T</arg>
       <arg>%TT.trace</arg>
+      <arg>%attr(ide_coverage'switches_coverage)</arg>
     </command-line>
   </target>
 
-  <target model="gnatcov-coverage" category="Coverage with GNATcov"
-          name="Custom GNATcov Report..." menu="/Tools/Coverage/GNATcov/">
-    <in-toolbar>FALSE</in-toolbar>
-    <in-menu>TRUE</in-menu>
-    <read-only>TRUE</read-only>
-    <icon>gps-build-all</icon>
-    <launch-mode>MANUALLY</launch-mode>
-    <command-line>
-      <arg>gnatcov</arg>
-      <arg>coverage</arg>
-      <arg>--level=insn</arg>
-      <arg>--annotate=xcov</arg>
-      <arg>--output-dir=%O</arg>
-      <arg>-T</arg>
-      <arg>&lt;unknown&gt;</arg>
-    </command-line>
-  </target>""")
+  <builder-mode name="gnatcov">
+   <description>Build with GNATcoverage information</description>
+   <subdir>gnatcov</subdir>
+   <supported-model>builder</supported-model>
+   <supported-model>gnatmake</supported-model>
+   <supported-model>gprbuild</supported-model>
+   <supported-model filter="--subdirs=">gnatcov-coverage</supported-model>
+   <supported-model filter="--subdirs=">gprclean</supported-model>
+   <extra-args>
+      <arg>%attr(ide_coverage'gnatcov_mode_switches)</arg>
+      <arg>--subdirs=%subdir</arg>
+      <arg>-cargs</arg>
+      <arg>-g</arg>
+      <arg>-fdump-scos</arg>
+      <arg>-fpreserve-control-flow</arg>
+   </extra-args>
+  </builder-mode>
 
-    GPS.Hook ("preferences_changed").add (on_preferences_changed)
-    on_preferences_changed("preferences_changed")
+
+"""
+
+def reload_gnatcov_data():
+    """ Clean the coverage report and reload it from the files.
+    """
+    # Switch to gcov mode
+    if GPS.Preference("Coverage-Toolchain").get() != 'Gnatcov':
+        GPS.Preference("Coverage-Toolchain").set('Gnatcov')
+
+    GPS.execute_action("/Tools/Coverage/Clear coverage from memory")
+    GPS.execute_action("/Tools/Coverage/Load data for all projects")
+
+def on_gps_started (hook_name):
+    """ Called once, when GPS is starting.
+    """
+    global gnatcov_menu_separator
+
+    if os_utils.locate_exec_on_path ("gnatcov") != "":
+        GPS.Hook("compilation_finished").add(on_compilation_finished)
+
+        menu = "/Tools/GNATcov/"
+        ref  = "Coverage"
+        gnatcov_menu = GPS.Menu.create(menu + '-', ref=ref, add_before=False)
+
+        GPS.parse_xml(xml.replace("@MENU@", 'menu="%s"' % menu))
+
+def on_compilation_finished(hook, category,
+    target_name="", mode_name="", status=""):
+    """ Called whenever a compilation ends.
+    """
+
+    if status:
+        return
+
+    if target_name in ["Generate GNATcov Main Report"]:
+        reload_gnatcov_data()
+
+GPS.parse_xml (project_support_xml)
 
 GPS.Hook ("gps_started").add (on_gps_started)
