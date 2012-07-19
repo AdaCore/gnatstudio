@@ -51,6 +51,7 @@ with Tools_Output_Parsers.Output_Choppers;
 with Tools_Output_Parsers.Progress_Parsers;
 with Tools_Output_Parsers.Text_Splitters;
 with Tools_Output_Parsers.UTF8_Converters;
+with Tools_Output_Parsers.Elaboration_Circularities;
 
 package body Build_Command_Manager is
 
@@ -373,6 +374,7 @@ package body Build_Command_Manager is
          use Tools_Output_Parsers.Text_Splitters;
          use Tools_Output_Parsers.UTF8_Converters;
          use Tools_Output_Parsers.Progress_Parsers;
+         use Tools_Output_Parsers.Elaboration_Circularities;
 
          Progress_Parser : Tools_Output_Parsers.Tools_Output_Parser_Access;
 
@@ -391,7 +393,9 @@ package body Build_Command_Manager is
                        (Kernel     => Kernel,
                         Target     => Target_Name,
                         Shadow     => Shadow,
-                        Background => Background)))));
+                        Background => Background,
+                        Child      => Create_Elaboration_Circularity_Parser
+                          (Target => Target_Name))))));
 
          Data.Progress_Parser := Progress_Parser_Access (Progress_Parser);
 
