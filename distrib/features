@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L723-018 ECL: gprbuild use of cross compilers via makefiles (2012-07-23)
+
+  GNATbench for Eclipse now directly supports use of makefiles and gprbuild to
+  invoke cross-compilers.  The --target switch is passed to the makefile when
+  invoked.
+
 NF-52-L718-050 GB: Allow all Ada versions in new-project wizard  (2012-07-18)
 
   When using the new-project wizard to create GNATbech projects, the user can
