@@ -1,4 +1,63 @@
-""" Provides GNATcov related menus under Tools->Coverage.
+""" This plug-in adds support for GNATcoverage.
+
+This plug-in provides the following:
+   * A new Build Mode "gnatcov"
+   * Several new project attributes which GPS will
+     use to drive various tools in the context of
+     GNATcoverage
+   * Build targets to launch runs and analyses
+   * Menus corresponding to these build targets.
+
+The Build Mode "gnatcov" is listed in the Build Mode
+combo, in the main toolbar. Objects generated under
+this build mode are generated in a subdirectory "gnatcov"
+in all object and executable directories specified by
+the project hierarchy.
+
+The following Project Properties are added, which are
+available in the "GNATcov" section of the Project
+Properties editor, and which map to attributes in a
+package "IDE_Coverage" in the project files.
+
+  * Gnatcov_Mode_Switches: switches that GPS will pass
+    to the command line used to build while the "gnatcov"
+    Build Mode is selected
+
+  * Level_Run: the coverage level to pass to the
+    "gnatcov run" command
+
+  * Switches_Run: additional switches to pass to
+    the "gnatcov run" command
+
+  * Level_Coverage: the coverage level to pass to
+    the "gnatcov coverage" command
+
+  * Switches_Coverage: additional switches to pass
+    to the "gnatcov coverage" command
+
+This plugin defines two new build targets, to launch
+"gnatcov run" and "gnatcov coverage", automatically
+generated for every executable defined in the project
+hierarchy, along with menus, under the menu
+   Tools->GNATcoverage.
+
+In addition, this plugin automatically loads or refreshes
+the Coverage Report in GPS after every call to the
+"gnatcov coverage" build target.
+
+With this plugin, the steps to follow for a typical
+GNATcoverage session would be:
+  1 - switch to the "gnatcov" Build Mode in the toolbar
+  2 - build the executable using the standard mechanism
+  3 - launch a first run using the menu
+      Tools->GNATcoverage->Run under gnatcov
+  4 - launch a first analysis using the menu
+      Tools->GNATcoverage->Coverage with gnatcov
+  5 - edit the code or the test driver, then rerun
+      steps 2, 3, 4
+
+Note: this plug-in activates only when the command-line tool
+"gnatcov" is found on the PATH.
 """
 
 
@@ -80,39 +139,6 @@ project_support_xml = """
     description="Extra build switches to pass to gnatcov coverage">
     <string />
   </project_attribute>
-"""
-
-_ = """
-
-  <tool name="gnatcov run" package="Coverage" index="" override="true" attribute="default_switches_run">
-     <language>Ada</language>
-     <switches>
-         <check label="Verbose" switch="-v" tip="Verbose output" />
-         <field label="Tag" switch="--tag" separator="=" tip="Put the given tag in trace files."/>
-
-         <combo switch="--level" separator="=" noswitch="insn">
-            <combo-entry label="Object Branch Coverage" value="branch" />
-            <combo-entry label="Object Instruction Coverage" value="insn" />
-            <combo-entry label="Source Statement Coverage" value="stmt" />
-            <combo-entry label="Source Decision Coverage" value="stmt+decision" />
-            <combo-entry label="Source MCDC Coverage" value="stmt+mcdc" />
-         </combo>
-     </switches>
-  </tool>
-
-  <tool name="gnatcov coverage" package="Coverage" index="" override="true" attribute="default_switches_coverage">
-     <language>Ada</language>
-     <switches>
-        <combo switch="--level" separator="=" noswitch="insn">
-           <combo-entry label="Object Branch Coverage" value="branch" />
-           <combo-entry label="Object Instruction Coverage" value="insn" />
-           <combo-entry label="Source Statement Coverage" value="stmt" />
-           <combo-entry label="Source Decision Coverage" value="stmt+decision" />
-           <combo-entry label="Source MCDC Coverage" value="stmt+mcdc" />
-        </combo>
-     </switches>
-  </tool>
-
 """
 
 #
