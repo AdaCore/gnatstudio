@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  This package provides API to store cyclic elaboration dependencies
 --  parsed from gnatbind output
 
@@ -24,24 +25,39 @@ package Elaboration_Cycles is
 
    type Cycle is tagged private;
    --  Each elaboration dependency cycle contains one or more Dependency
+
    type Dependency is tagged private;
-   --  Dependency with reason ragma_Elaborate_All or Elaborate_All_Desirable
+   --  Dependency with reason pragma_Elaborate_All or Elaborate_All_Desirable
    --  in it's turn contains one or more Link
+   --
+   --  ??? Sorry, can't understand the above description. Perhaps something
+   --  like:
+   --  A dependency describes the relationship between two packages, and why
+   --  they depend on one another (perhaps through a pragma Elaborate_All for
+   --  instance).
+   --  A dependency contains one or more links.
+
    type Link is tagged private;
+   --   ??? missing doc
 
    function Length (Self : Cycle) return Natural;
    --  Number of dependencies in cycle
+   --  ??? Should this be named Dependencies_Count
 
    function Element (Self : Cycle'Class; Index : Positive) return Dependency;
-   --  Get dependency by Index
+   --  Get dependency by Index.
+   --  ??? A function returning a tagged type is often a pain if we want to
+   --  extend the type. Why not make this one primitive on Cycle instead,
+   --  especially since Append allows one to store a Dependency'Class ?
 
    procedure Append (Self : in out Cycle; Item : Dependency'Class);
    --  Append dependency to cycle
 
    function Before_Unit_Name (Self : Dependency) return String;
-   --  Name of unit that should be compiled before another
+   --  Name of unit that should be compiled first in this dependency.
+
    function After_Unit_Name (Self : Dependency) return String;
-   --  Name of unit that should be compiled after another
+   --  Name of unit that should be compiled second.
 
    type Dependency_Reason is
      (Withed,
@@ -54,17 +70,22 @@ package Elaboration_Cycles is
    function Reason (Self : Dependency) return Dependency_Reason;
    --  The reason of dependency
 
-   function Elaborate_Body (Self : Dependency) return Boolean;
-   --  A flag to mark dependencies as result of a pragma Elaborate_Body
-   --  Read "Note on handling of Elaborate_Body" in binde.adb for more info
    procedure Set_Elaborate_Body (Self : in out Dependency);
+   function Elaborate_Body (Self : Dependency) return Boolean;
+   --  Mark the dependency as coming from a "pragma Elaborate_Body". This
+   --  provides a special handling by the binder, so that both spec and body
+   --  are handled as a single entity from the point of view of determining
+   --  an elaboration order.
+   --  See also "Note on handling of Elaborate_Body" in binde.adb.
 
    function Length (Self : Dependency) return Natural;
    --  Length of chain of link for Pragma_Elaborate_All and
    --  Elaborate_All_Desirable reason
+   --  ??? Name is too generic. Why not Dependency_Chain_Length, or some such
 
    function Element (Self : Dependency'Class; Index : Positive) return Link;
    --  Get link by Index
+   --  ??? Same comment as the other Element above.
 
    procedure Append (Self : in out Dependency; Item : Link'Class);
    --  Append Link to chain
@@ -72,7 +93,10 @@ package Elaboration_Cycles is
    function Unit_Name (Self : Link) return String;
    --  Name of unit for link
 
-   type Link_Kind is (Withed, Body_With_Specification);
+   type Link_Kind is
+      (Withed,
+       Body_With_Specification);
+   --  ??? Missing comment describing the two possible values
 
    function Kind (Self : Link) return Link_Kind;
    --  Kind of link
@@ -81,12 +105,14 @@ package Elaboration_Cycles is
      (Unit : String;
       Kind : Link_Kind)
       return Link;
+   --  ??? Missing comment
 
    function Create_Dependency
      (Before_Unit : String;
       After_Unit  : String;
       Reason      : Dependency_Reason)
       return Dependency;
+   --  ??? Missing comment
 
 private
    type Link is tagged record
