@@ -720,6 +720,8 @@ package body Builder_Facility_Module is
       else
          Builder_Module_ID.Outputs (Normal_Output).Clear;
       end if;
+
+      Builder_Module_ID.Cycles.Clear;
    end Clear_Compilation_Output;
 
    --------------------

@@ -21,16 +21,16 @@ package body Elaboration_Cycles is
    -- Length --
    ------------
 
-   function Length (Self : Cycle) return Natural is
+   function Dependencies_Count (Self : Cycle) return Natural is
    begin
       return Self.Dependencies.Last_Index;
-   end Length;
+   end Dependencies_Count;
 
    -------------
    -- Element --
    -------------
 
-   function Element (Self : Cycle'Class; Index : Positive) return Dependency is
+   function Element (Self : Cycle; Index : Positive) return Dependency is
    begin
       return Self.Dependencies.Element (Index);
    end Element;
@@ -39,9 +39,9 @@ package body Elaboration_Cycles is
    -- Append --
    ------------
 
-   procedure Append (Self : in out Cycle; Item : Dependency'Class) is
+   procedure Append (Self : in out Cycle; Item : Dependency) is
    begin
-      Self.Dependencies.Append (Dependency (Item));
+      Self.Dependencies.Append (Item);
    end Append;
 
    ----------------------
@@ -89,20 +89,20 @@ package body Elaboration_Cycles is
       Self.Elaborate_Body := True;
    end Set_Elaborate_Body;
 
-   ------------
-   -- Length --
-   ------------
+   -----------------
+   -- Links_Count --
+   -----------------
 
-   function Length (Self : Dependency) return Natural is
+   function Links_Count (Self : Dependency) return Natural is
    begin
       return Self.Links.Last_Index;
-   end Length;
+   end Links_Count;
 
    -------------
    -- Element --
    -------------
 
-   function Element (Self : Dependency'Class; Index : Positive) return Link is
+   function Element (Self : Dependency; Index : Positive) return Link is
    begin
       return Self.Links.Element (Index);
    end Element;
@@ -111,9 +111,9 @@ package body Elaboration_Cycles is
    -- Append --
    ------------
 
-   procedure Append (Self : in out Dependency; Item : Link'Class) is
+   procedure Append (Self : in out Dependency; Item : Link) is
    begin
-      Self.Links.Append (Link (Item));
+      Self.Links.Append (Item);
    end Append;
 
    ---------------
