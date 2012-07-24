@@ -208,7 +208,7 @@ package body Tools_Output_Parsers.Elaboration_Circularities is
          when Skip_Recompile =>
             if not Start_With (Info & "     recompile ") then
                Self.State := New_Cycle;
-            elsif Self.Last_Dep.Reason = Elaborate_All_Desirable then
+            elsif Reason (Self.Last_Dep) = Elaborate_All_Desirable then
                Self.State := New_Link;
             else
                Self.State := Skip_Therefore;
@@ -232,18 +232,18 @@ package body Tools_Output_Parsers.Elaboration_Circularities is
                                   & " along with its spec:")
             then
                Self.State := New_Link;
-               Self.Last_Dep.Append
-                 (Create_Link
-                    (To_String (Self.Last_Link),
-                     Body_With_Specification));
+               Append (Self.Last_Dep,
+                       Create_Link
+                         (To_String (Self.Last_Link),
+                          Body_With_Specification));
             elsif Start_With (Info & "           is withed by:")
               or else Start_With (Info & "           which is withed by:")
             then
                Self.State := New_Link;
-               Self.Last_Dep.Append
-                 (Create_Link
-                    (To_String (Self.Last_Link),
-                     Withed));
+               Append (Self.Last_Dep,
+                       Create_Link
+                         (To_String (Self.Last_Link),
+                          Withed));
             else
                Self.State := Skip_Therefore;
                Fallback := True;
@@ -255,11 +255,11 @@ package body Tools_Output_Parsers.Elaboration_Circularities is
             if Matched (0) = No_Match then
                Fallback := True;
                Self.State := New_Dependency;
-               Self.Last_Cycle.Append (Self.Last_Dep);
+               Append (Self.Last_Cycle, Self.Last_Dep);
             else
                Self.State := Skip_Because;
-               Self.Last_Dep.Set_Elaborate_Body;
-               Self.Last_Cycle.Append (Self.Last_Dep);
+               Set_Elaborate_Body (Self.Last_Dep);
+               Append (Self.Last_Cycle, Self.Last_Dep);
             end if;
 
             Self.Has_Cycle := True;

@@ -23,41 +23,34 @@ with Ada.Containers.Vectors;
 
 package Elaboration_Cycles is
 
-   type Cycle is tagged private;
+   type Cycle is private;
    --  Each elaboration dependency cycle contains one or more Dependency
 
-   type Dependency is tagged private;
-   --  Dependency with reason pragma_Elaborate_All or Elaborate_All_Desirable
-   --  in it's turn contains one or more Link
-   --
-   --  ??? Sorry, can't understand the above description. Perhaps something
-   --  like:
-   --  A dependency describes the relationship between two packages, and why
+   type Dependency is private;
+   --  A dependency describes the relationship between two units, and why
    --  they depend on one another (perhaps through a pragma Elaborate_All for
    --  instance).
-   --  A dependency contains one or more links.
+   --  When dependency caused by explicit or implicit pragma Elaborate_All
+   --  relation between two units may include intermediate units.
+   --  These intermediate units collected as Links.
 
-   type Link is tagged private;
-   --   ??? missing doc
+   type Link is private;
+   --  Intermediate units for Elaborate_All dependencies.
 
-   function Length (Self : Cycle) return Natural;
+   function Dependencies_Count (Self : Cycle) return Natural;
    --  Number of dependencies in cycle
-   --  ??? Should this be named Dependencies_Count
 
-   function Element (Self : Cycle'Class; Index : Positive) return Dependency;
+   function Element (Self : Cycle; Index : Positive) return Dependency;
    --  Get dependency by Index.
-   --  ??? A function returning a tagged type is often a pain if we want to
-   --  extend the type. Why not make this one primitive on Cycle instead,
-   --  especially since Append allows one to store a Dependency'Class ?
 
-   procedure Append (Self : in out Cycle; Item : Dependency'Class);
+   procedure Append (Self : in out Cycle; Item : Dependency);
    --  Append dependency to cycle
 
    function Before_Unit_Name (Self : Dependency) return String;
    --  Name of unit that should be compiled first in this dependency.
 
    function After_Unit_Name (Self : Dependency) return String;
-   --  Name of unit that should be compiled second.
+   --  Name of unit that should be compiled last in this dependency.
 
    type Dependency_Reason is
      (Withed,
@@ -78,25 +71,23 @@ package Elaboration_Cycles is
    --  an elaboration order.
    --  See also "Note on handling of Elaborate_Body" in binde.adb.
 
-   function Length (Self : Dependency) return Natural;
+   function Links_Count (Self : Dependency) return Natural;
    --  Length of chain of link for Pragma_Elaborate_All and
    --  Elaborate_All_Desirable reason
-   --  ??? Name is too generic. Why not Dependency_Chain_Length, or some such
 
-   function Element (Self : Dependency'Class; Index : Positive) return Link;
+   function Element (Self : Dependency; Index : Positive) return Link;
    --  Get link by Index
-   --  ??? Same comment as the other Element above.
 
-   procedure Append (Self : in out Dependency; Item : Link'Class);
+   procedure Append (Self : in out Dependency; Item : Link);
    --  Append Link to chain
 
    function Unit_Name (Self : Link) return String;
-   --  Name of unit for link
+   --  Name of unit for given link
 
-   type Link_Kind is
-      (Withed,
-       Body_With_Specification);
-   --  ??? Missing comment describing the two possible values
+   type Link_Kind is (Withed, Body_With_Specification);
+   --  Kind of intermediate units for a dependency one of
+   --   * specification withed by other unit
+   --   * body for some specification
 
    function Kind (Self : Link) return Link_Kind;
    --  Kind of link
@@ -105,24 +96,24 @@ package Elaboration_Cycles is
      (Unit : String;
       Kind : Link_Kind)
       return Link;
-   --  ??? Missing comment
+   --  Link constructor
 
    function Create_Dependency
      (Before_Unit : String;
       After_Unit  : String;
       Reason      : Dependency_Reason)
       return Dependency;
-   --  ??? Missing comment
+   --  Dependency constructor
 
 private
-   type Link is tagged record
+   type Link is record
       Unit : Unbounded_String;
       Kind : Link_Kind;
    end record;
 
    package Link_Vectors is new Ada.Containers.Vectors (Positive, Link);
 
-   type Dependency is tagged record
+   type Dependency is record
       Before_Unit    : Unbounded_String;
       After_Unit     : Unbounded_String;
       Reason         : Dependency_Reason;
@@ -133,7 +124,7 @@ private
    package Dependency_Vectors is
      new Ada.Containers.Vectors (Positive, Dependency);
 
-   type Cycle is tagged record
+   type Cycle is record
       Dependencies : Dependency_Vectors.Vector;
    end record;
 
