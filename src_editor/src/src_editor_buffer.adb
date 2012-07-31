@@ -2912,11 +2912,11 @@ package body Src_Editor_Buffer is
          After => True);
       Buffer_Callback.Connect
         (Buffer, Signal_Delete_Range,
-         Cb => Delete_Range_Before_Handler'Access,
+         Cb    => Delete_Range_Before_Handler'Access,
          After => False);
 
-      Buffer.Editable_Line_Info_Columns := new Line_Info_Display_Array_Access'
-        (null);
+      Buffer.Editable_Line_Info_Columns :=
+        new Line_Info_Display_Array_Access'(null);
 
       Initialize_Hook (Buffer);
 
@@ -6272,7 +6272,7 @@ package body Src_Editor_Buffer is
 
          procedure Refill_One_Comment is
             Blanks_Prefix : constant String (1 .. Length (Prefix)) :=
-                             (others => ' ');
+                              (others => ' ');
             Search_For    : constant Character_Set := To_Set (ASCII.LF);
             From          : Positive;
             Is_First_Line : Boolean;
@@ -6789,6 +6789,10 @@ package body Src_Editor_Buffer is
          --  Filter regexp metacharacters. Currently only '*' needs to be
          --  filtered.
 
+         ----------------------
+         -- Filter_Metachars --
+         ----------------------
+
          function Filter_Metachars (S : String) return String is
             Result : String (1 .. 2 * S'Length);
             Pos    : Natural := 0;
@@ -6815,7 +6819,7 @@ package body Src_Editor_Buffer is
          --  Handle single-line comments
 
          if Single_Line_BC /= null then
-            Single_Line_BC_Len := Single_Line_BC.all'Length;
+            Single_Line_BC_Len := Single_Line_BC'Length;
 
             S := To_Unbounded_String (Start_Comment_Pattern);
             Append (S, Filter_Metachars (Single_Line_BC.all));
