@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+with GNAT.Regpat;
 
 package body GPS.Kernel.Messages.Markup is
 
@@ -49,6 +50,9 @@ package body GPS.Kernel.Messages.Markup is
       Actual_Column : Integer;
       Flags         : Message_Flags)
       return not null Markup_Message_Access;
+
+   Markup_Pattern : constant GNAT.Regpat.Pattern_Matcher :=
+     GNAT.Regpat.Compile ("<.*?>");
 
    ---------------------------
    -- Create_Markup_Message --
@@ -134,9 +138,35 @@ package body GPS.Kernel.Messages.Markup is
 
    overriding function Get_Text
      (Self : not null access constant Markup_Message)
-      return Ada.Strings.Unbounded.Unbounded_String is
+      return Ada.Strings.Unbounded.Unbounded_String
+   is
+      use type GNAT.Regpat.Match_Location;
+
+      Source : constant String := Ada.Strings.Unbounded.To_String (Self.Text);
+      Match  : GNAT.Regpat.Match_Array (0 .. 1);
+      First  : Natural := Source'First;
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+
    begin
-      return Self.Text;
+      --  Lookup for and remove all markups.
+
+      loop
+         GNAT.Regpat.Match (Markup_Pattern, Source, Match, First);
+
+         if Match (0) = GNAT.Regpat.No_Match then
+            Ada.Strings.Unbounded.Append
+              (Result, Source (First .. Source'Last));
+
+            exit;
+
+         else
+            Ada.Strings.Unbounded.Append
+              (Result, Source (First .. Match (0).First - 1));
+            First := Match (0).Last + 1;
+         end if;
+      end loop;
+
+      return Result;
    end Get_Text;
 
    ----------
