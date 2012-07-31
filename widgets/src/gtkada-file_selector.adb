@@ -773,6 +773,8 @@ package body Gtkada.File_Selector is
          Value      : Gdk_Color);
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr");
 
+      Has_Info : Boolean := False;
+
    begin
       if Win.Current_Directory = No_File then
          return False;
@@ -820,6 +822,7 @@ package body Gtkada.File_Selector is
                Set (Win.File_Model, Iter, Comment_Column,
                     Locale_To_UTF8 (Text.all));
                Free (Text);
+               Has_Info := True;
             end if;
 
             if Color /= Null_Color then
@@ -836,6 +839,10 @@ package body Gtkada.File_Selector is
 
          Win.Remaining_Files := Next (Win.Remaining_Files);
       end loop;
+
+      --  If there is nothing in the info column, we just hide it (to do so, we
+      --  simply hide all column headers)
+      Win.File_Tree.Set_Headers_Visible (Has_Info);
 
       return Win.Remaining_Files /= File_List.Null_Node;
    end Display_File;
@@ -950,7 +957,7 @@ package body Gtkada.File_Selector is
    begin
       State  := Normal;
       Pixbuf := null;
-      Text   := new String'("");
+      Text   := null;
    end Use_File_Filter;
 
    -------------------
@@ -1825,6 +1832,8 @@ package body Gtkada.File_Selector is
       Add_Attribute (Col, Text_Rend, "text", Comment_Column);
       Set_Title (Col, -"Info");
       Dummy := Append_Column (Tree, Col);
+
+      Tree.Set_Headers_Visible (False);
    end Set_Column_Types;
 
    ----------------

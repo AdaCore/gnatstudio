@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L730-016: GPS: remove Info column from File Selector dialog
+  Problem:    The dialog /File/Open... contains an Info column that is most
+              often empty. This column is now hidden when it contains no
+              information, to simplify the interface.
+  Workaround: The column can be ignored.
+
 - L713-004: GPS: crash when spawning a Run process and closing the console
   Problem:    When launching an external process that has its own interactive
               console in GPS, such as through the /Build/Run/Custom menu,
