@@ -14,6 +14,11 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               information, to simplify the interface.
   Workaround: The column can be ignored.
 
+- L720-022: GPS: text of exported messages includes Pango markup
+  Problem:    When text of messages in Locations view is exported into the file
+              it includes Pango markup in some conditions.
+  Workaround: Remove markup by external text editor or command line tools.
+
 - L713-004: GPS: crash when spawning a Run process and closing the console
   Problem:    When launching an external process that has its own interactive
               console in GPS, such as through the /Build/Run/Custom menu,
