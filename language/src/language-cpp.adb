@@ -303,20 +303,22 @@ package body Language.Cpp is
       Tok_End    : String_Index_Type;
       Word_Begin : String_Index_Type;
 
-      procedure Prev_Char;
-      --  Update Ch with the previous character
+      procedure Prev_Char (Skip_Comment_Lines : Boolean := True);
+      --  Update Ch with the previous character. If Skip_Comment_Lines is
+      --  true and we are located at the beginning of the line then skip
+      --  comment lines delimited by "//" found in previous lines.
 
       procedure Scan;
       --  Scan the previous token
 
       procedure Skip_Comment_Line;
-      --  Skip a comment
+      --  Skip a comment line (delimited by "//")
 
       ---------------
       -- Prev_Char --
       ---------------
 
-      procedure Prev_Char is
+      procedure Prev_Char (Skip_Comment_Lines : Boolean := True) is
       begin
          if Index = Lowest or else Stop then
             if Index = Lowest then
@@ -337,7 +339,9 @@ package body Language.Cpp is
             Line := Line + 1;
             Ch   := ' ';
 
-            Skip_Comment_Line;
+            if Skip_Comment_Lines then
+               Skip_Comment_Line;
+            end if;
 
          elsif Ch = ASCII.CR then
             Ch := ' ';
@@ -360,10 +364,16 @@ package body Language.Cpp is
            and then Line = Saved_Line
            and then Ch /= '/'
          loop
-            Prev_Char;
+            --  At this stage we don't want to skip consecutive comment lines
+            --  Otherwise we displace the scanning cursor too much.
+
+            Prev_Char (Skip_Comment_Lines => False);
          end loop;
 
-         if Ch = '/' and then not Stop then
+         if not Stop
+           and then Line = Saved_Line
+           and then Ch = '/'
+         then
             Prev_Char;
 
             if Ch = '/' then

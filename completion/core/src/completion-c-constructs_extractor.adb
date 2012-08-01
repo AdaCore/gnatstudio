@@ -328,8 +328,9 @@ package body Completion.C.Constructs_Extractor is
                                     (Natural (Last_Token.Token_First)
                                       .. Natural (Last_Token.Token_Last));
 
-               Tok_Index : Token_List.List_Node;
-               Tok_Prev  : Token_List.List_Node;
+               Tok_Index  : Token_List.List_Node;
+               Tok_Prev   : Token_List.List_Node;
+               Token_Prev : Token_Record;
 
                use Token_List;
 
@@ -342,10 +343,18 @@ package body Completion.C.Constructs_Extractor is
                   Tok_Index := Tok_Prev;
 
                   if Tok_Prev /= Token_List.Null_Node then
-                     Tok_Prev  := Prev (Expression.Tokens, Tok_Index);
-                     Token     := Data (Tok_Index);
+                     Token    := Data (Tok_Index);
+                     Tok_Prev := Prev (Expression.Tokens, Tok_Index);
+
+                     if Tok_Prev /= Token_List.Null_Node then
+                        Token_Prev := Data (Tok_Prev);
+                     else
+                        Token_Prev := Null_Token;
+                     end if;
+
                   else
-                     Token     := Null_Token;
+                     Token      := Null_Token;
+                     Token_Prev := Null_Token;
                   end if;
                end Prev_Token;
 
@@ -353,6 +362,15 @@ package body Completion.C.Constructs_Extractor is
                Tok_Index := Last (Expression.Tokens);
                Tok_Prev  := Prev (Expression.Tokens, Tok_Index);
                Token     := Data (Tok_Index);
+               Token_Prev := Data (Tok_Prev);
+
+               if Token.Tok_Type = Tok_Identifier
+                 and then (Token_Prev.Tok_Type = Tok_Dot
+                             or else Token_Prev.Tok_Type = Tok_Dereference
+                             or else Token_Prev.Tok_Type = Tok_Scope)
+               then
+                  Prev_Token;
+               end if;
 
                if Token.Tok_Type = Tok_Left_Paren then
                   Prev_Token;
