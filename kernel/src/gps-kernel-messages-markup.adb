@@ -53,6 +53,11 @@ package body GPS.Kernel.Messages.Markup is
 
    Markup_Pattern : constant GNAT.Regpat.Pattern_Matcher :=
      GNAT.Regpat.Compile ("<.*?>");
+   --  Pango markup is very small subset of SGML, this makes possible to use
+   --  very simple pattern to detect markup elements.
+   Entity_Pattern : constant GNAT.Regpat.Pattern_Matcher :=
+     GNAT.Regpat.Compile ("&quot;|&amp;|&apos;|&lt;|&gt;");
+   --  Pattern to detect predefined entities.
 
    ---------------------------
    -- Create_Markup_Message --
@@ -142,9 +147,10 @@ package body GPS.Kernel.Messages.Markup is
    is
       use type GNAT.Regpat.Match_Location;
 
-      Source : constant String := Ada.Strings.Unbounded.To_String (Self.Text);
+      Source : String := Ada.Strings.Unbounded.To_String (Self.Text);
       Match  : GNAT.Regpat.Match_Array (0 .. 1);
       First  : Natural := Source'First;
+      Last   : Natural := Source'Last;
       Result : Ada.Strings.Unbounded.Unbounded_String;
 
    begin
@@ -154,14 +160,63 @@ package body GPS.Kernel.Messages.Markup is
          GNAT.Regpat.Match (Markup_Pattern, Source, Match, First);
 
          if Match (0) = GNAT.Regpat.No_Match then
-            Ada.Strings.Unbounded.Append
-              (Result, Source (First .. Source'Last));
+            Ada.Strings.Unbounded.Append (Result, Source (First .. Last));
 
             exit;
 
          else
             Ada.Strings.Unbounded.Append
               (Result, Source (First .. Match (0).First - 1));
+            First := Match (0).Last + 1;
+         end if;
+      end loop;
+
+      --  Lookup for and replace predefined entity references.
+
+      First := Source'First;
+      Last  := Ada.Strings.Unbounded.Length (Result);
+      Source (First .. Last) := Ada.Strings.Unbounded.To_String (Result);
+      Result := Ada.Strings.Unbounded.Null_Unbounded_String;
+
+      loop
+         GNAT.Regpat.Match (Entity_Pattern, Source (First .. Last), Match);
+
+         if Match (0) = GNAT.Regpat.No_Match then
+            Ada.Strings.Unbounded.Append (Result, Source (First .. Last));
+
+            exit;
+
+         else
+            if Source (Match (0).First .. Match (0).Last) = "&quot;" then
+               Ada.Strings.Unbounded.Append
+                 (Result, Source (First .. Match (0).First - 1));
+               Ada.Strings.Unbounded.Append (Result, '"');
+
+            elsif Source (Match (0).First .. Match (0).Last) = "&amp;" then
+               Ada.Strings.Unbounded.Append
+                 (Result, Source (First .. Match (0).First - 1));
+               Ada.Strings.Unbounded.Append (Result, '&');
+
+            elsif Source (Match (0).First .. Match (0).Last) = "&apos;" then
+               Ada.Strings.Unbounded.Append
+                 (Result, Source (First .. Match (0).First - 1));
+               Ada.Strings.Unbounded.Append (Result, ''');
+
+            elsif Source (Match (0).First .. Match (0).Last) = "&lt;" then
+               Ada.Strings.Unbounded.Append
+                 (Result, Source (First .. Match (0).First - 1));
+               Ada.Strings.Unbounded.Append (Result, '<');
+
+            elsif Source (Match (0).First .. Match (0).Last) = "&gt;" then
+               Ada.Strings.Unbounded.Append
+                 (Result, Source (First .. Match (0).First - 1));
+               Ada.Strings.Unbounded.Append (Result, '>');
+
+            else
+               raise Program_Error;
+               --  Must be never happen
+            end if;
+
             First := Match (0).Last + 1;
          end if;
       end loop;
