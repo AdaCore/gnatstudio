@@ -25,11 +25,11 @@ project Widgets is
          when "Windows_NT" =>
             null;
          when "unix" =>
-            for Linker_Options use
-              GtkAda.Linker'Linker_Options
-              & ("-L/usr/X11R6/lib", "-L/usr/X11/lib",
-                 "-L/usr/X11R6/lib64", "-L/usr/X11/lib64",
-                 "-lXrender");
+            --  for Linker_Options use
+            --    GtkAda.Linker'Linker_Options
+            --    & ("-L/usr/X11R6/lib", "-L/usr/X11/lib",
+            --       "-L/usr/X11R6/lib64", "-L/usr/X11/lib64",
+            --       "-lXrender");
       end case;
    end Linker;
 
