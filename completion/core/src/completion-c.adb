@@ -26,17 +26,6 @@ package body Completion.C is
       Context : Completion_Context)
       return Completion_List
    is
-      Prev_Tok : Token_Record;
-
-      procedure Handle_Token (Token : Token_Record; Stop : in out Boolean);
-      procedure Handle_Token (Token : Token_Record; Stop : in out Boolean) is
-      begin
-         Prev_Tok := Token;
-         Stop := True;
-      end Handle_Token;
-
-      --  Local variables
-
       New_Context : constant Completion_Context :=
         new C_Completion_Context'(Buffer => Context.Buffer,
                                   Offset => Context.Offset,
@@ -44,10 +33,11 @@ package body Completion.C is
                                   File   => Context.File,
                                   Expression => Null_Parsed_Expression);
       New_Context_All : C_Completion_Context renames
-        C_Completion_Context (New_Context.all);
+                          C_Completion_Context (New_Context.all);
 
-      It     : Completion_Resolver_List_Pckg.Cursor;
-      Result : Completion_List;
+      It       : Completion_Resolver_List_Pckg.Cursor;
+      Result   : Completion_List;
+      Prev_Tok : Token_Record;
 
    begin
       Append (Manager.Contexts, New_Context);
@@ -55,13 +45,8 @@ package body Completion.C is
       New_Context_All.Expression :=
         Parse_Expression_Backward (Context.Buffer, Context.Offset);
 
-      --  Scan backward to locate the beginning of the current word
-
-      Context.Lang.Parse_Tokens_Backwards
-         (Buffer       => Context.Buffer.all,
-          Start_Offset => Context.Offset,
-          End_Offset   => 0,
-          Callback     => Handle_Token'Access);
+      Prev_Tok :=
+        Token_List.Data (Token_List.Last (New_Context_All.Expression.Tokens));
 
       It := First (Manager.Ordered_Resolvers);
       while It /= Completion_Resolver_List_Pckg.No_Element loop
