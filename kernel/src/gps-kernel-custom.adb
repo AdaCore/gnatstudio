@@ -173,6 +173,7 @@ package body GPS.Kernel.Custom is
                F     : Virtual_File renames Files (J);
                Error : String_Access;
             begin
+               Trace (Me, "Should we load " & F.Display_Full_Name);
                if File_Extension (F) = XML_Extension
                  and then Is_Regular_File (F)
                then
@@ -267,6 +268,8 @@ package body GPS.Kernel.Custom is
 
       for J in Env_Path'Range loop
          if Env_Path (J) /= No_File then
+            Trace (Me, "Loading XML file from "
+                & Env_Path (J).Display_Full_Name);
             Parse_Custom_Dir
               (Kernel, Env_Path (J), Project_Wide,
                Default_Autoload => True);
