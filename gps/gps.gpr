@@ -53,11 +53,11 @@ project GPS is
 
       case Shared.Build is
          when "Debug" =>
-           for Default_Switches ("Ada") use ("-m", "-g", "-j" & Processors);
+           for Default_Switches ("Ada") use ("-m", "-j" & Processors);
            for Global_Configuration_Pragmas use "gnat_debug.adc";
 
          when "Production" =>
-           for Default_Switches ("Ada") use ("-m", "-g", "-j" & Processors);
+           for Default_Switches ("Ada") use ("-m", "-j" & Processors);
            for Global_Configuration_Pragmas use "gnat.adc";
       end case;
    end Builder;

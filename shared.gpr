@@ -39,7 +39,7 @@ project Shared is
 
          when "Production" =>
             for Default_Switches ("Ada") use
-              ("-O2", "-gnatn", 
+              ("-O2", "-gnatn",  "-g",
                "-gnatT3", --  Temporary, L403-023.
                "-gnatws", "-gnat12");
             for Default_Switches ("C") use
