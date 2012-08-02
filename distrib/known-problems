@@ -8,12 +8,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
-- L730-016: GPS: remove Info column from File Selector dialog
-  Problem:    The dialog /File/Open... contains an Info column that is most
-              often empty. This column is now hidden when it contains no
-              information, to simplify the interface.
-  Workaround: The column can be ignored.
-
 - L720-022: GPS: text of exported messages includes Pango markup
   Problem:    When text of messages in Locations view is exported into the file
               it includes Pango markup in some conditions.

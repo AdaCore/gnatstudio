@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Strings;
@@ -774,6 +775,7 @@ package body Gtkada.File_Selector is
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr");
 
       Has_Info : Boolean := False;
+      F        : Virtual_File;
 
    begin
       if Win.Current_Directory = No_File then
@@ -783,13 +785,23 @@ package body Gtkada.File_Selector is
       for J in 1 .. 100 loop
          exit when Win.Remaining_Files = File_List.Null_Node;
 
+         F := Data (Win.Remaining_Files);
+
          Use_File_Filter
            (Win.Current_Filter,
             Win,
-            Data (Win.Remaining_Files),
+            F,
             State,
             Pixbuf,
             Text);
+
+         if Text = null and then F.Is_Local then
+            Text := new String'
+              (GNAT.Calendar.Time_IO.Image
+               (F.File_Time_Stamp,
+                GNAT.Calendar.Time_IO.ISO_Date
+                & " %H:%M:%S"));
+         end if;
 
          --  ??? The selectable state should be set here, if possible
 
