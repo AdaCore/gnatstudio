@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
-with Ada.Text_IO;
 
 with Input_Sources.File;
 
@@ -46,7 +45,6 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Styles;                 use GPS.Styles;
 with GPS.Styles.UI;              use GPS.Styles.UI;
-with Projects;                   use Projects;
 with Traces;                     use Traces;
 
 with CodePeer.Bridge.Audit_Trail_Readers;
@@ -236,30 +234,9 @@ package body CodePeer.Module is
    procedure Review
      (Module      : CodePeer.Module.CodePeer_Module_Id;
       Force       : Boolean;
-      Output_Only : Boolean := False;
-      Quick       : Boolean := False;
-      Recursive   : Boolean := True;
-      File        : Virtual_File := No_File);
-   --  Launch CodePeer review.
+      Build_Target : String := "Run CodePeer");
+   --  Launch CodePeer review using the specified build target.
    --  If Force is True, no dialog is displayed to change codepeer switches.
-   --  If Output_Only is True, run CodePeer in "output only" mode.
-   --  If Quick is True, run "Run CodePeer Quickly" target instead of
-   --  "Run CodePeer".
-   --  If Recursive is True, run CodePeer on the whole project tree, on the
-   --  project root only otherwise.
-   --  If File is set, run CodePeer on the specified file only. Recursive
-   --  should be set to False in this case.
-
-   procedure Create_Library_File
-     (Kernel    : Kernel_Handle;
-      Project   : Project_Type;
-      Recursive : Boolean;
-      File      : Virtual_File := No_File;
-      Suffix    : String := "");
-   --  Create CodePeer library file. Recursive is True if all project files
-   --  should be included. File if set represents the (only) file to analyze;
-   --  value of Recursive is not taken into account in this case.
-   --  Suffix is appended to the name of the library file.
 
    Output_Directory_Attribute   :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
@@ -270,146 +247,6 @@ package body CodePeer.Module is
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True);
-
-   -------------------------
-   -- Create_Library_File --
-   -------------------------
-
-   procedure Create_Library_File
-     (Kernel    : Kernel_Handle;
-      Project   : Project_Type;
-      Recursive : Boolean;
-      File      : Virtual_File := No_File;
-      Suffix    : String := "")
-   is
-      procedure Generate_Source_Directive
-        (File      : Ada.Text_IO.File_Type;
-         Directory : GNATCOLL.VFS.Virtual_File);
-      --  Generates Source directive in the specified file for the specified
-      --  directory.
-
-      function Hash
-        (Item : GNATCOLL.VFS.Virtual_File) return Ada.Containers.Hash_Type;
-      --  Returns hash for specified file
-
-      -------------------------------
-      -- Generate_Source_Directive --
-      -------------------------------
-
-      procedure Generate_Source_Directive
-        (File      : Ada.Text_IO.File_Type;
-         Directory : GNATCOLL.VFS.Virtual_File) is
-      begin
-         Ada.Text_IO.Put_Line
-           (File,
-            "Source (Directory => """
-              & String (Directory.Full_Name.all) & """,");
-         Ada.Text_IO.Put_Line
-           (File, "        Files     => (""*.scil""),");
-         Ada.Text_IO.Put_Line
-           (File, "        Language  => SCIL);");
-      end Generate_Source_Directive;
-
-      ----------
-      -- Hash --
-      ----------
-
-      function Hash
-        (Item : GNATCOLL.VFS.Virtual_File) return Ada.Containers.Hash_Type is
-      begin
-         return Ada.Strings.Hash (String (Item.Full_Name.all));
-      end Hash;
-
-      package Virtual_File_Sets is
-        new Ada.Containers.Hashed_Sets
-              (GNATCOLL.VFS.Virtual_File,
-               Hash,
-               GNATCOLL.VFS."=",
-               GNATCOLL.VFS."=");
-
-      F    : Ada.Text_IO.File_Type;
-      Prj  : Project_Type;
-      Info : File_Info;
-
-      SCIL_Dirs   : Virtual_File_Sets.Set;
-      SCIL_Cursor : Virtual_File_Sets.Cursor;
-      Iterator    : GNATCOLL.Projects.Project_Iterator;
-      Current     : GNATCOLL.Projects.Project_Type;
-      Object_Dir  : GNATCOLL.VFS.Virtual_File;
-
-   begin
-      Ada.Text_IO.Create
-        (F,
-         Ada.Text_IO.Out_File,
-         String (Codepeer_Library_File_Name (Project, Suffix).Full_Name.all));
-
-      Ada.Text_IO.Put_Line
-        (F,
-         "Output_Dir := """
-         & (+Codepeer_Output_Directory (Project).Full_Name) & """;");
-      Ada.Text_IO.New_Line (F);
-
-      Ada.Text_IO.Put_Line
-        (F,
-         "Database_Dir := """
-         & (+Codepeer_Database_Directory (Project).Full_Name) & """;");
-      Ada.Text_IO.New_Line (F);
-
-      if File = No_File then
-         --  Construct list of SCIL directories
-
-         Iterator :=
-           GNATCOLL.Projects.Start (Project, Recursive, False, False);
-         Current  := GNATCOLL.Projects.Current (Iterator);
-
-         while Current /= GNATCOLL.Projects.No_Project loop
-            Object_Dir := Current.Object_Dir;
-
-            --  When object directory is specified and project has language
-            --  "Ada" it is added to the list of object directories.
-
-            if Object_Dir /= No_File and then Current.Has_Language ("ada") then
-               SCIL_Dirs.Include
-                 (GNATCOLL.VFS.Create_From_Dir (Object_Dir, "SCIL"));
-            end if;
-
-            GNATCOLL.Projects.Next (Iterator);
-            Current := GNATCOLL.Projects.Current (Iterator);
-         end loop;
-
-         --  Generate Source directive for each SCIL directory
-
-         SCIL_Cursor := SCIL_Dirs.First;
-
-         while Virtual_File_Sets.Has_Element (SCIL_Cursor) loop
-            Generate_Source_Directive
-              (F, Virtual_File_Sets.Element (SCIL_Cursor));
-            Virtual_File_Sets.Next (SCIL_Cursor);
-         end loop;
-
-      else
-         Info := Get_Registry (Kernel).Tree.Info (File);
-         Prj := Info.Project;
-
-         Ada.Text_IO.Put_Line
-           (F, "Source (Directory => """
-              & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
-         Ada.Text_IO.Put (F, "        Files     => (""");
-         Ada.Text_IO.Put_Line (F, Info.Unit_Name & ".scil""),");
-         Ada.Text_IO.Put_Line (F, "        Language  => SCIL);");
-
-         if Info.Unit_Part = Unit_Body then
-            Ada.Text_IO.Put_Line
-              (F, "Source (Directory => """
-                 & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
-            Ada.Text_IO.Put (F, "        Files     => (""");
-            Ada.Text_IO.Put_Line (F, Info.Unit_Name & "__body.scil""),");
-            Ada.Text_IO.Put_Line (F, "        Language  => SCIL);");
-         end if;
-      end if;
-
-      Ada.Text_IO.Close (F);
-   end Create_Library_File;
 
    -----------------------
    -- Fill_Object_Races --
@@ -529,62 +366,29 @@ package body CodePeer.Module is
    procedure Review
      (Module      : CodePeer.Module.CodePeer_Module_Id;
       Force       : Boolean;
-      Output_Only : Boolean := False;
-      Quick       : Boolean := False;
-      Recursive   : Boolean := True;
-      File        : Virtual_File := No_File)
+      Build_Target : String := "Run CodePeer")
    is
-      Mode    : constant String :=
-                  CodePeer.Shell_Commands.Get_Build_Mode
-                    (Kernel_Handle (Module.Kernel));
-      Project : constant Project_Type :=
-                  Get_Project (Module.Kernel);
+      Saved_Mode    : constant String :=
+        CodePeer.Shell_Commands.Get_Build_Mode
+          (Kernel_Handle (Module.Kernel));
+      Project : constant Project_Type := Get_Project (Module.Kernel);
 
    begin
       CodePeer.Shell_Commands.Set_Build_Mode
         (Kernel_Handle (Module.Kernel), "codepeer");
       Module.Action := Load_UI;
 
-      if Quick then
-         Create_Library_File
-           (Kernel_Handle (Module.Kernel), Project, Recursive,
-            File, ".quick");
-      else
-         Create_Library_File
-           (Kernel_Handle (Module.Kernel), Project, Recursive, File);
-      end if;
-
-      if Output_Only then
-         CodePeer.Shell_Commands.Build_Target_Execute
-           (Kernel_Handle (Module.Kernel),
-            CodePeer.Shell_Commands.Build_Target
-              (Module.Get_Kernel, "Regenerate CodePeer Report"),
-            Force       => Force,
-            Build_Mode  => "codepeer",
-            Synchronous => False,
-            Dir         => Project.Object_Dir);
-      elsif Quick then
-         CodePeer.Shell_Commands.Build_Target_Execute
-           (Kernel_Handle (Module.Kernel),
-            CodePeer.Shell_Commands.Build_Target
-              (Module.Get_Kernel, "Run CodePeer Quickly"),
-            Force       => Force,
-            Build_Mode  => "codepeer",
-            Synchronous => False,
-            Dir         => Project.Object_Dir);
-      else
-         CodePeer.Shell_Commands.Build_Target_Execute
-           (Kernel_Handle (Module.Kernel),
-            CodePeer.Shell_Commands.Build_Target
-              (Module.Get_Kernel, "Run CodePeer"),
-            Force       => Force,
-            Build_Mode  => "codepeer",
-            Synchronous => False,
-            Dir         => Project.Object_Dir);
-      end if;
+      CodePeer.Shell_Commands.Build_Target_Execute
+        (Kernel_Handle (Module.Kernel),
+         CodePeer.Shell_Commands.Build_Target
+           (Module.Get_Kernel, Build_Target),
+         Force       => Force,
+         Build_Mode  => "codepeer",
+         Synchronous => False,
+         Dir         => Project.Object_Dir);
 
       CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+        (Kernel_Handle (Module.Kernel), Saved_Mode);
    end Review;
 
    --------------------
@@ -741,10 +545,10 @@ package body CodePeer.Module is
       Suffix  : String := "") return GNATCOLL.VFS.Virtual_File
    is
       Name      : constant GNATCOLL.VFS.Filesystem_String :=
-                    GNATCOLL.VFS.Filesystem_String
-                      (String (Project_Path (Project).Base_Name));
+        GNATCOLL.VFS.Filesystem_String
+          (String (Project_Path (Project).Base_Name));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
-                    Project_Path (Project).File_Extension;
+        Project_Path (Project).File_Extension;
 
    begin
       --  J506-031: File name must be synchronized with the name used to run
@@ -1064,7 +868,10 @@ package body CodePeer.Module is
                (-" does not exist. Please perform a full analysis first"),
                Mode => Console.Error);
          else
-            Review (Module, Force => False, Output_Only => True);
+            Review
+              (Module,
+               Force => False,
+               Build_Target  => "Regenerate CodePeer Report");
          end if;
       end;
 
@@ -1342,11 +1149,6 @@ package body CodePeer.Module is
       Action : CodePeer_Action) is
    begin
       Module.Action := Action;
-
-      if Action = Run_File then
-         Module.File := File_Information (Get_Current_Context (Kernel));
-      end if;
-
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel,
          CodePeer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
@@ -1561,24 +1363,21 @@ package body CodePeer.Module is
 
       case Action is
          when Run_All =>
-            Review (Module, Force => True);
+            Review (Module, Force => True, Build_Target => "Run CodePeer");
 
          when Run_Project =>
-            Review (Module, Force => True, Recursive => False);
+            Review
+              (Module, Force => True, Build_Target => "Run CodePeer Root");
 
          when Run_File =>
             Review
-              (Module, Force => True, Recursive => False, File => Module.File);
-            Module.File := No_File;
+              (Module, Force => True, Build_Target => "Run CodePeer File");
 
          when Quick_Run =>
-            Review (Module, Force => True, Quick => True);
+            Review
+              (Module, Force => True, Build_Target => "Run CodePeer Quickly");
 
          when Load_UI =>
-            --  If a codepeer dir is found in the object dir, then use this
-            --  directory, otherwise use the default object dir (advanced
-            --  mode).
-
             CodePeer.Shell_Commands.Set_Build_Mode
               (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
             CodePeer.Module.Bridge.Inspection (Module);
