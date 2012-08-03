@@ -15,13 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Text_IO;               use Ada.Text_IO;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
-
-with Gdk.Display;
-with Gtk_Utils;                 use Gtk_Utils;
 
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -29,7 +25,6 @@ with Traces;                    use Traces;
 
 package body GPS.Callbacks is
 
-   Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
 
    -------------
@@ -75,17 +70,6 @@ package body GPS.Callbacks is
 
    function On_GPS_Started return Boolean is
    begin
-      --  Cannot call Have_Render earlier, since we need a valid Gdk Window
-      --  associated with GPS_Main, which happens only very late in the
-      --  processing
-
-      if not Have_Render (Gdk.Display.Get_Default) then
-         Trace (Me, "RENDER extension NOT detected");
-         Put_Line
-           ("Warning: X RENDER extension is not detected, " &
-            "display will be slow");
-      end if;
-
       Run_Hook (GPS_Main.Kernel, GPS_Started_Hook);
       return False;
 

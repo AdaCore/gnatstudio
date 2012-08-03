@@ -55,16 +55,4 @@ package body Gtk_Utils is
       return Version;
    end Gtk_Micro_Version;
 
-   -----------------
-   -- Have_Render --
-   -----------------
-
-   function Have_Render (Display : Gdk_Display) return Boolean is
-      pragma Unreferenced (Display);
-   begin
-      --  Pretend we have RENDER extension under Windows, since this is
-      --  not relevant to this platform
-      return True;
-   end Have_Render;
-
 end Gtk_Utils;
