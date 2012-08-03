@@ -135,9 +135,6 @@ private
       Action           : CodePeer_Action := None;
       --  Indicate possible action to be performed when a build target is
       --  finished.
-
-      File             : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      --  If Action is Run_File, indicates which file should be analyzed
    end record;
 
    function Codepeer_Output_Directory

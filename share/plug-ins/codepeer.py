@@ -291,12 +291,11 @@ xml_codepeer = """<?xml version="1.0"?>
        <description>Review code with codepeer</description>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-all</arg>
           <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
-          <arg>-lib</arg>
-          <arg>%Pb.library</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
        </command-line>
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s" columns="3" lines="5">
@@ -380,12 +379,48 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-all</arg>
           <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
-          <arg>-lib</arg>
-          <arg>%Pb.library</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+       </command-line>
+    </target>
+
+    <target model="codepeer" category="CodePeer" name="Run CodePeer Root"
+            messages_category="CodePeer">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-background</arg>
+          <arg>-dbg-on</arg>
+          <arg>ide_progress_bar</arg>
+          <arg>-root-only</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+       </command-line>
+    </target>
+
+    <target model="codepeer" category="CodePeer" name="Run CodePeer File"
+            messages_category="CodePeer">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <icon>gps-compile</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-background</arg>
+          <arg>-dbg-on</arg>
+          <arg>ide_progress_bar</arg>
+          <arg>-P%PP</arg>
+          <arg>-file</arg>
+          <arg>%X</arg>
+          <arg>%F</arg>
        </command-line>
     </target>
 
@@ -398,18 +433,12 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-all</arg>
+          <arg>-quick</arg>
           <arg>-background</arg>
-          <arg>-no-race-conditions</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
-          <arg>-dbg-partition-limit</arg>
-          <arg>200</arg>
-          <arg>-method-timeout</arg>
-          <arg>30</arg>
-          <arg>-no-html-output</arg>
-          <arg>-lib</arg>
-          <arg>%Pb.quick.library</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
        </command-line>
     </target>
 
@@ -422,11 +451,10 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-all</arg>
           <arg>-background</arg>
           <arg>-output-only</arg>
-          <arg>-lib</arg>
-          <arg>%Pb.library</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
        </command-line>
     </target>
   </CODEPEER>
