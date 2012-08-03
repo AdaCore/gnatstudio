@@ -55,15 +55,4 @@ package body Gtk_Utils is
       return Integer (Version);
    end Gtk_Micro_Version;
 
-   -----------------
-   -- Have_Render --
-   -----------------
-
-   function Have_Render (Display : Gdk_Display) return Boolean is
-      function Internal (Display : System.Address) return Integer;
-      pragma Import (C, Internal, "gps_have_render");
-   begin
-      return Internal (Get_Object (Display)) /= 0;
-   end Have_Render;
-
 end Gtk_Utils;

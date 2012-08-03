@@ -17,8 +17,6 @@
 
 --  This package gives access to run-time specific information about Gtk+
 
-with Gdk.Display;
-
 package Gtk_Utils is
 
    function Gtk_Major_Version return Integer;
@@ -29,11 +27,6 @@ package Gtk_Utils is
 
    function Gtk_Micro_Version return Integer;
    --  Return the Gtk+ run-time micro version
-
-   function Have_Render (Display : Gdk.Display.Gdk_Display) return Boolean;
-   --  Return True if the display associated with Window has the RENDER
-   --  extension, or if the RENDER extension is not relevant (e.g. under
-   --  Windows).
 
 private
    pragma Inline (Gtk_Major_Version);
