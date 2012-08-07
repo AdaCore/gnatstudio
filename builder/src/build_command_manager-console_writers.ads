@@ -15,24 +15,41 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Declare parser to split text to lines and pass to child line by line.
+--  Declare parser to write each output item to console.
 
-package Tools_Output_Parsers.Text_Splitters is
+with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+with Interactive_Consoles;
 
-   type Text_Splitter is new Tools_Output_Parser with private;
-   --  This parser splits text to lines
+package Build_Command_Manager.Console_Writers is
 
-   function Create_Text_Splitter
-     (Child : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access;
-   --  Create new parser to split text to lines
+   type Console_Writer is new Tools_Output_Parser with private;
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Text_Splitter;
+     (Self : not null access Console_Writer;
       Item : String);
+
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+
+   procedure Set_Console
+     (Self    : access Output_Parser_Fabric;
+      Console : Interactive_Consoles.Interactive_Console);
+
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access;
+   --  Create new parser to write on given Console.
 
 private
 
-   type Text_Splitter is new Tools_Output_Parser with null record;
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
+      Console : Interactive_Consoles.Interactive_Console;
+   end record;
 
-end Tools_Output_Parsers.Text_Splitters;
+   type Console_Writer is new Tools_Output_Parser with record
+      Console : Interactive_Consoles.Interactive_Console;
+   end record;
+
+end Build_Command_Manager.Console_Writers;

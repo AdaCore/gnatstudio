@@ -16,29 +16,29 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Containers.Ordered_Maps;
 
-package body Tools_Output_Parsers is
+package body GPS.Kernel.Tools_Output is
 
-   -----------
-   -- Child --
-   -----------
+   type Output_Parser_Fabric_Access is access all Output_Parser_Fabric'Class;
 
-   function Child
-     (Self : not null access Tools_Output_Parser'Class)
-      return access Tools_Output_Parser'Class is
-   begin
-      return Self.Child;
-   end Child;
+   package Fabric_Maps is new Ada.Containers.Ordered_Maps
+     (Natural, Output_Parser_Fabric_Access);
+
+   Last : Natural := 0;
+   --  Unique parser index
+   Map : Fabric_Maps.Map;
+   --  Map of registered parser sorted by priority and unique parser index
 
    -------------
    -- Destroy --
    -------------
 
    procedure Destroy (Self : not null access Tools_Output_Parser) is
+      Child : Tools_Output_Parser_Access := Self.Child;
    begin
-      if Self.Child /= null then
-         Self.Child.Destroy;
-         Free (Self.Child);
+      if Child /= null then
+         Free (Child);
       end if;
    end Destroy;
 
@@ -53,13 +53,35 @@ package body Tools_Output_Parsers is
       end if;
    end End_Of_Stream;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (Self : in out Tools_Output_Parser_Access) is
       procedure Free_Instance is
         new Ada.Unchecked_Deallocation
           (Tools_Output_Parser'Class, Tools_Output_Parser_Access);
    begin
+      Self.Destroy;
       Free_Instance (Self);
    end Free;
+
+   ----------------------
+   -- New_Parser_Chain --
+   ----------------------
+
+   function New_Parser_Chain return Tools_Output_Parser_Access is
+      use Fabric_Maps;
+      Pos    : Cursor := Map.Last;
+      Result : Tools_Output_Parser_Access;
+   begin
+      while Has_Element (Pos) loop
+         Result := Element (Pos).Create (Result);
+         Previous (Pos);
+      end loop;
+
+      return Result;
+   end New_Parser_Chain;
 
    ---------------------------
    -- Parse_Standard_Output --
@@ -87,4 +109,18 @@ package body Tools_Output_Parsers is
       end if;
    end Parse_Standard_Error;
 
-end Tools_Output_Parsers;
+   ----------------------------
+   -- Register_Output_Parser --
+   ----------------------------
+
+   procedure Register_Output_Parser
+     (Fabric   : access Output_Parser_Fabric'Class;
+      Priority : Parser_Priority)
+   is
+      Index : constant Natural := Last + Natural (Priority) * 1024;
+   begin
+      Map.Insert (Index, Output_Parser_Fabric_Access (Fabric));
+      Last := Last + 1;
+   end Register_Output_Parser;
+
+end GPS.Kernel.Tools_Output;

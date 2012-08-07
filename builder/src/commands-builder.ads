@@ -27,9 +27,7 @@ with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GPS.Kernel.Messages;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Extending_Environments;    use Extending_Environments;
-with Tools_Output_Parsers;      use Tools_Output_Parsers;
-
-with Tools_Output_Parsers.Progress_Parsers;
+with GPS.Kernel.Tools_Output;   use GPS.Kernel.Tools_Output;
 
 package Commands.Builder is
 
@@ -75,10 +73,6 @@ package Commands.Builder is
 
       Output_Parser  : Tools_Output_Parser_Access;
       --  Chain of output parsers
-
-      Progress_Parser : Progress_Parsers.Progress_Parser_Access;
-      --  Direct pointer to progress parser to be able to pass there
-      --  current command from callback
    end record;
 
    type Build_Callback_Data_Access is access all Build_Callback_Data'Class;

@@ -15,29 +15,47 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Declare parser to convert output to UTF-8 encoding.
+with Interactive_Consoles;      use Interactive_Consoles;
 
-with GPS.Kernel;
+package body Build_Command_Manager.Console_Writers is
 
-package Tools_Output_Parsers.UTF8_Converters is
+   ------------
+   -- Create --
+   ------------
 
-   type UTF8_Converter is new Tools_Output_Parser with private;
-   --  This parser converts output to UTF-8 encoding
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access is
+   begin
+      if Self.Console =  null then
+         return Child;
+      else
+         return new Console_Writer'(Child => Child, Console => Self.Console);
+      end if;
+   end Create;
 
-   function Create_UTF8_Converter
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Child  : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access;
-   --  Create new parser to convert to UTF-8 encoding
+   ---------------------------
+   -- Parse_Standard_Output --
+   ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access UTF8_Converter;
-      Item : String);
+     (Self : not null access Console_Writer;
+      Item : String) is
+   begin
+      Self.Console.Insert (Item, Add_LF => False);
+      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
+   end Parse_Standard_Output;
 
-private
+   -----------------
+   -- Set_Console --
+   -----------------
 
-   type UTF8_Converter is new Tools_Output_Parser with record
-      Kernel : GPS.Kernel.Kernel_Handle;
-   end record;
+   procedure Set_Console
+     (Self    : access Output_Parser_Fabric;
+      Console : Interactive_Consoles.Interactive_Console) is
+   begin
+      Self.Console := Console;
+   end Set_Console;
 
-end Tools_Output_Parsers.UTF8_Converters;
+end Build_Command_Manager.Console_Writers;

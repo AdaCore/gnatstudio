@@ -20,22 +20,21 @@ with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Console;
 with UTF8_Utils;
 
-package body Tools_Output_Parsers.UTF8_Converters is
+package body Builder_Facility_Module.UTF8_Converters is
 
-   ---------------------------
-   -- Create_UTF8_Converter --
-   ---------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_UTF8_Converter
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Child  : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access
-   is
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access is
    begin
       return new UTF8_Converter'
         (Child  => Child,
-         Kernel => GPS.Kernel.Kernel_Handle (Kernel));
-   end Create_UTF8_Converter;
+         Kernel => Self.Kernel);
+   end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
@@ -78,4 +77,15 @@ package body Tools_Output_Parsers.UTF8_Converters is
       Basic_Types.Free (Output);
    end Parse_Standard_Output;
 
-end Tools_Output_Parsers.UTF8_Converters;
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Self   : access Output_Parser_Fabric;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Self.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
+   end Set;
+
+end Builder_Facility_Module.UTF8_Converters;

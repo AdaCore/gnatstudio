@@ -15,30 +15,61 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package body Tools_Output_Parsers.Console_Writers is
+with GPS.Kernel.Messages.Tools_Output;
 
-   ---------------------------
-   -- Create_Console_Writer --
-   ---------------------------
+package body Build_Command_Manager.Location_Parsers is
 
-   function Create_Console_Writer
-     (Console : Interactive_Consoles.Interactive_Console;
-      Child   : Tools_Output_Parser_Access := null)
+   ------------
+   -- Create --
+   ------------
+
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access is
    begin
-      return new Console_Writer'(Child => Child, Console => Console);
-   end Create_Console_Writer;
+      return new Location_Parser'
+        (Child             => Child,
+         Kernel            => Self.Kernel,
+         Category          => Self.Category,
+         Styles            => Self.Styles,
+         Show_In_Locations => Self.Show_In_Locations);
+   end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Console_Writer;
+     (Self : not null access Location_Parser;
       Item : String) is
    begin
-      Self.Console.Insert (Item, Add_LF => False);
+      GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
+        (Self.Kernel,
+         Item,
+         Category          => To_String (Self.Category),
+         Highlight         => True,
+         Styles            => Self.Styles,
+         Show_In_Locations => Self.Show_In_Locations);
+
       Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
    end Parse_Standard_Output;
 
-end Tools_Output_Parsers.Console_Writers;
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Self              : access Output_Parser_Fabric;
+      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Category          : String;
+      Styles            : GPS.Styles.UI.Builder_Message_Styles;
+      Show_In_Locations : Boolean) is
+   begin
+      Self.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
+      Self.Category := To_Unbounded_String (Category);
+      Self.Styles := Styles;
+      Self.Show_In_Locations := Show_In_Locations;
+   end Set;
+
+end Build_Command_Manager.Location_Parsers;

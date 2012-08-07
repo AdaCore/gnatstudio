@@ -98,6 +98,7 @@ with Aliases_Module;
 with Bookmark_Views;
 with Browsers.Call_Graph;
 with Browsers.Dependency_Items;
+with Browsers.Elaborations;
 with Browsers.Entities;
 with Browsers.Projects;
 with Revision_Views;
@@ -224,6 +225,8 @@ procedure GPS.Main is
                       Create ("MODULE.Toolchains", GNATCOLL.Traces.On);
    Toolchains_Editor_Trace  : constant Debug_Handle :=
                       Create ("MODULE.Toolchains_Editor", GNATCOLL.Traces.On);
+   Elaboration_Browser_Trace : constant Debug_Handle :=
+     Create ("MODULE.Elaboration_Browser", GNATCOLL.Traces.On);
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
@@ -1372,6 +1375,10 @@ procedure GPS.Main is
 
       if Active (Entities_Browser_Trace) then
          Browsers.Entities.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Elaboration_Browser_Trace) then
+         Browsers.Elaborations.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Revision_Views_Trace) then

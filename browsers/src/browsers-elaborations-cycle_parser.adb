@@ -16,9 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Regpat;                      use GNAT.Regpat;
-with Builder_Facility_Module;
 
-package body Tools_Output_Parsers.Elaboration_Circularities is
+package body Browsers.Elaborations.Cycle_Parser is
 
    --  Binder circularities messages:
    --
@@ -46,15 +45,16 @@ package body Tools_Output_Parsers.Elaboration_Circularities is
    --  "info:   $ must therefore be elaborated before $",
    --  +"info:      (because $ has a pragma Elaborate_Body)"
 
-   -------------------------------------------
-   -- Create_Elaboration_Circularity_Parser --
-   -------------------------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_Elaboration_Circularity_Parser
-     (Target : String;
-      Child  : Tools_Output_Parser_Access := null)
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access
    is
+      pragma Unreferenced (Self);
    begin
       return new Circularity_Parser'
         (Child       => Child,
@@ -64,9 +64,8 @@ package body Tools_Output_Parsers.Elaboration_Circularities is
          Last_Link   => <>,
          Last_Before => <>,
          Last_After  => <>,
-         State       => New_Cycle,
-         Target      => To_Unbounded_String (Target));
-   end Create_Elaboration_Circularity_Parser;
+         State       => New_Cycle);
+   end Create;
 
    Info : constant String := "info:  ";
    --  Common binder prefix
@@ -128,9 +127,7 @@ package body Tools_Output_Parsers.Elaboration_Circularities is
                declare
                   Empty : Elaboration_Cycles.Cycle;
                begin
-                  Builder_Facility_Module.Append_To_Build_Elaboration_Cycles
-                    (Target => To_String (Self.Target),
-                     Cycle  => Self.Last_Cycle);
+                  Set_Elaboration_Cycle (Self.Last_Cycle);
                   Self.Has_Cycle := False;
                   Self.Last_Cycle := Empty;
                end;
@@ -276,4 +273,4 @@ package body Tools_Output_Parsers.Elaboration_Circularities is
       Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
    end Parse_Standard_Output;
 
-end Tools_Output_Parsers.Elaboration_Circularities;
+end Browsers.Elaborations.Cycle_Parser;

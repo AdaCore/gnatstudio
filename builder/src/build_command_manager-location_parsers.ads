@@ -17,30 +17,46 @@
 
 --  Declare parser to fill Locations view and highlight locations in editors.
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with GPS.Kernel;
+with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
 with GPS.Styles.UI;
 
-package Tools_Output_Parsers.Location_Parsers is
+package Build_Command_Manager.Location_Parsers is
 
    type Location_Parser is new Tools_Output_Parser with private;
-
-   function Create_Location_Parser
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Category          : String;
-      Styles            : GPS.Styles.UI.Builder_Message_Styles;
-      Show_In_Locations : Boolean;
-      Child             : Tools_Output_Parser_Access := null)
-      return Tools_Output_Parser_Access;
-   --  Create new parser to fill Locations view under given Category, if
-   --  Show_In_Locations = True, otherwise show messages only in the editors.
-   --  Use Styles to highlight locations in editor.
 
    overriding procedure Parse_Standard_Output
      (Self : not null access Location_Parser;
       Item : String);
 
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+
+   procedure Set
+     (Self              : access Output_Parser_Fabric;
+      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Category          : String;
+      Styles            : GPS.Styles.UI.Builder_Message_Styles;
+      Show_In_Locations : Boolean);
+
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access;
+   --  Create new parser to fill Locations view under given Category, if
+   --  Show_In_Locations = True, otherwise show messages only in the editors.
+   --  Use Styles to highlight locations in editor.
+
 private
+
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
+      Kernel            : GPS.Kernel.Kernel_Handle;
+      Category          : Unbounded_String;
+      Styles            : GPS.Styles.UI.Builder_Message_Styles;
+      Show_In_Locations : Boolean;
+   end record;
 
    type Location_Parser is new Tools_Output_Parser with record
       Kernel            : GPS.Kernel.Kernel_Handle;
@@ -49,4 +65,4 @@ private
       Show_In_Locations : Boolean;
    end record;
 
-end Tools_Output_Parsers.Location_Parsers;
+end Build_Command_Manager.Location_Parsers;

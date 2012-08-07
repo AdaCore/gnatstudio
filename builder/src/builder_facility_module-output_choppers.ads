@@ -15,38 +15,39 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Root of filters hierarchy to parse output of tools running by GPS.
---  Filters organized in the chains.
+--  Declare parser to round output by line bounds.
 
-package Tools_Output_Parsers is
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
 
-   type Tools_Output_Parser is abstract tagged private;
-   type Tools_Output_Parser_Access is access all Tools_Output_Parser'Class;
+package Builder_Facility_Module.Output_Choppers is
 
-   procedure Parse_Standard_Output
-     (Self : not null access Tools_Output_Parser;
+   type Output_Chopper is new Tools_Output_Parser with private;
+   --  This parser rounds output by line bounds
+
+   overriding procedure Parse_Standard_Output
+     (Self : not null access Output_Chopper;
       Item : String);
 
-   procedure Parse_Standard_Error
-     (Self : not null access Tools_Output_Parser;
-      Item : String);
+   overriding
+   procedure End_Of_Stream (Self : not null access Output_Chopper);
 
-   procedure End_Of_Stream (Self : not null access Tools_Output_Parser);
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
 
-   function Child
-     (Self : not null access Tools_Output_Parser'Class)
-      return access Tools_Output_Parser'Class;
-
-   procedure Destroy (Self : not null access Tools_Output_Parser);
-   --  Free internal allocated data
-
-   procedure Free (Self : in out Tools_Output_Parser_Access);
-   --  Deallocate Self object
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access;
+   --  Create new parser to round output by line bounds.
 
 private
 
-   type Tools_Output_Parser is abstract tagged record
-      Child : Tools_Output_Parser_Access;
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with null record;
+
+   type Output_Chopper is new Tools_Output_Parser with record
+      Buffer : Unbounded_String;
    end record;
 
-end Tools_Output_Parsers;
+end Builder_Facility_Module.Output_Choppers;

@@ -15,63 +15,67 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
+with Builder_Facility_Module;
 
-package body Tools_Output_Parsers.Output_Choppers is
+package body Build_Command_Manager.Build_Output_Collectors is
 
-   New_Line : constant String := (1 => ASCII.LF);
+   ------------
+   -- Create --
+   ------------
 
-   ---------------------------
-   -- Create_Output_Chopper --
-   ---------------------------
-
-   function Create_Output_Chopper
-     (Child   : Tools_Output_Parser_Access)
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access is
    begin
-      return new Output_Chopper'
-        (Child  => Child,
-         Buffer => Null_Unbounded_String);
-   end Create_Output_Chopper;
+      return new Build_Output_Collector'
+        (Child      => Child,
+         Kernel     => Self.Kernel,
+         Shadow     => Self.Shadow,
+         Target     => Self.Target,
+         Background => Self.Background);
+   end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Output_Chopper;
+     (Self : not null access Build_Output_Collector;
       Item : String)
    is
-      Last_EOL : Natural;
+      Last     : Natural := Item'Last;
    begin
-      if Self.Child = null then
-         return;
+      --  Strip trailing new line character
+      if Last >= Item'First and then Item (Last) = ASCII.LF then
+         Last := Last - 1;
       end if;
 
-      Last_EOL := Ada.Strings.Fixed.Index
-        (Item, New_Line, Ada.Strings.Backward);
+      Builder_Facility_Module.Append_To_Build_Output
+        (Self.Kernel,
+         Item (Item'First .. Last),
+         To_String (Self.Target),
+         Self.Shadow,
+         Self.Background);
 
-      if Last_EOL = 0 then
-         Append (Self.Buffer, Item);
-      else
-         Self.Child.Parse_Standard_Output
-           (To_String (Self.Buffer) & Item (Item'First .. Last_EOL));
-         Self.Buffer := To_Unbounded_String (Item (Last_EOL + 1 .. Item'Last));
-      end if;
+      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
    end Parse_Standard_Output;
 
-   -------------------
-   -- End_Of_Stream --
-   -------------------
+   ---------
+   -- Set --
+   ---------
 
-   overriding procedure End_Of_Stream
-     (Self : not null access Output_Chopper) is
+   procedure Set
+     (Self       : access Output_Parser_Fabric;
+      Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Target     : String;
+      Shadow     : Boolean;
+      Background : Boolean) is
    begin
-      if Self.Child = null or Self.Buffer = "" then
-         return;
-      end if;
+      Self.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
+      Self.Target := To_Unbounded_String (Target);
+      Self.Shadow := Shadow;
+      Self.Background := Background;
+   end Set;
 
-      Self.Child.Parse_Standard_Output (To_String (Self.Buffer) & New_Line);
-   end End_Of_Stream;
-
-end Tools_Output_Parsers.Output_Choppers;
+end Build_Command_Manager.Build_Output_Collectors;

@@ -15,47 +15,53 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Messages.Tools_Output;
+with Ada.Strings.Fixed;
 
-package body Tools_Output_Parsers.Location_Parsers is
+package body Builder_Facility_Module.Text_Splitters is
 
-   ----------------------------
-   -- Create_Location_Parser --
-   ----------------------------
+   New_Line : constant String := (1 => ASCII.LF);
 
-   function Create_Location_Parser
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Category          : String;
-      Styles            : GPS.Styles.UI.Builder_Message_Styles;
-      Show_In_Locations : Boolean;
-      Child             : Tools_Output_Parser_Access := null)
-      return Tools_Output_Parser_Access is
+   ------------
+   -- Create --
+   ------------
+
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access
+   is
+      pragma Unreferenced (Self);
    begin
-      return new Location_Parser'
-        (Child             => Child,
-         Kernel            => GPS.Kernel.Kernel_Handle (Kernel),
-         Category          => To_Unbounded_String (Category),
-         Styles            => Styles,
-         Show_In_Locations => Show_In_Locations);
-   end Create_Location_Parser;
+      return new Text_Splitter'(Child => Child);
+   end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Location_Parser;
-      Item : String) is
+     (Self : not null access Text_Splitter;
+      Item : String)
+   is
+      use type Tools_Output_Parser_Access;
+      From : Positive := Item'First;
+      To   : Natural;
    begin
-      GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
-        (Self.Kernel,
-         Item,
-         Category          => To_String (Self.Category),
-         Highlight         => True,
-         Styles            => Self.Styles,
-         Show_In_Locations => Self.Show_In_Locations);
+      if Self.Child = null then
+         return;
+      end if;
 
-      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
+      while From <= Item'Last loop
+         To := Ada.Strings.Fixed.Index (Item, New_Line, From => From);
+
+         if To = 0 then
+            Self.Child.Parse_Standard_Output (Item (From .. Item'Last));
+            exit;
+         else
+            Self.Child.Parse_Standard_Output (Item (From .. To));
+            From := To + 1;
+         end if;
+      end loop;
    end Parse_Standard_Output;
 
-end Tools_Output_Parsers.Location_Parsers;
+end Builder_Facility_Module.Text_Splitters;

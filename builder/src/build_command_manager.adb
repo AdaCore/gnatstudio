@@ -43,19 +43,22 @@ with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 
-with Tools_Output_Parsers;
-with Tools_Output_Parsers.Build_Output_Collectors;
-with Tools_Output_Parsers.Console_Writers;
-with Tools_Output_Parsers.Location_Parsers;
-with Tools_Output_Parsers.Output_Choppers;
-with Tools_Output_Parsers.Progress_Parsers;
-with Tools_Output_Parsers.Text_Splitters;
-with Tools_Output_Parsers.UTF8_Converters;
-with Tools_Output_Parsers.Elaboration_Circularities;
+with GPS.Kernel.Tools_Output;     use GPS.Kernel.Tools_Output;
+
+with Build_Command_Manager.Build_Output_Collectors;
+with Build_Command_Manager.Console_Writers;
+with Build_Command_Manager.Location_Parsers;
 
 package body Build_Command_Manager is
 
    Me : constant Debug_Handle := Create ("Build_Command_Manager");
+
+   Output_Collector   : aliased Build_Output_Collectors.Output_Parser_Fabric;
+   Console_Writer     : aliased Console_Writers.Output_Parser_Fabric;
+   Location_Parser    : aliased Location_Parsers.Output_Parser_Fabric;
+   Parsers_Registered : Boolean := False;
+
+   procedure Register_Output_Parsers;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
@@ -344,67 +347,6 @@ package body Build_Command_Manager is
          Background : Boolean);
       --  Compute and launch the command, for the given mode
 
-      function Create_Default_Output_Parser
-        (Console  : Interactive_Console;
-         Category : String;
-         Shadow   : Boolean;
-         Data     : Build_Callback_Data_Access)
-         return Tools_Output_Parsers.Tools_Output_Parser_Access;
-
-      ----------------------------------
-      -- Create_Default_Output_Parser --
-      ----------------------------------
-
-      function Create_Default_Output_Parser
-        (Console  : Interactive_Console;
-         Category : String;
-         Shadow   : Boolean;
-         Data     : Build_Callback_Data_Access)
-         return Tools_Output_Parsers.Tools_Output_Parser_Access
-      is
-         Progress_Pattern : constant String :=
-           "completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n";
-         --  ??? This is configurable in some cases (from XML for instance), so
-         --  we should not have a hard coded regexp here.
-
-         use Tools_Output_Parsers.Build_Output_Collectors;
-         use Tools_Output_Parsers.Console_Writers;
-         use Tools_Output_Parsers.Location_Parsers;
-         use Tools_Output_Parsers.Output_Choppers;
-         use Tools_Output_Parsers.Text_Splitters;
-         use Tools_Output_Parsers.UTF8_Converters;
-         use Tools_Output_Parsers.Progress_Parsers;
-         use Tools_Output_Parsers.Elaboration_Circularities;
-
-         Progress_Parser : Tools_Output_Parsers.Tools_Output_Parser_Access;
-
-      begin
-         Progress_Parser := Create_Progress_Parser
-           (Pattern => Progress_Pattern,
-            Child => Create_Console_Writer
-              (Console => Console,
-               Child   => Create_Location_Parser
-                 (Kernel            => Kernel,
-                  Category          => Category,
-                  Styles            => GPS.Styles.UI.Builder_Styles,
-                  Show_In_Locations => not Background,
-                  Child             => Create_Text_Splitter
-                    (Child => Create_Build_Output_Collector
-                       (Kernel     => Kernel,
-                        Target     => Target_Name,
-                        Shadow     => Shadow,
-                        Background => Background,
-                        Child      => Create_Elaboration_Circularity_Parser
-                          (Target => Target_Name))))));
-
-         Data.Progress_Parser := Progress_Parser_Access (Progress_Parser);
-
-         return Create_Output_Chopper
-           (Child => Create_UTF8_Converter
-              (Kernel => Kernel,
-               Child  => Progress_Parser));
-      end Create_Default_Output_Parser;
-
       ---------------------
       -- Launch_For_Mode --
       ---------------------
@@ -607,11 +549,20 @@ package body Build_Command_Manager is
             Console := Get_Build_Console
               (Kernel, Shadow, Background, False);
 
-            Data.Output_Parser := Create_Default_Output_Parser
-              (Category => To_String (Data.Category_Name),
-               Shadow   => Shadow,
-               Data     => Data,
-               Console  => Console);
+            --  Configure output parser fabrics
+            Output_Collector.Set
+              (Kernel     => Kernel,
+               Target     => Target_Name,
+               Shadow     => Shadow,
+               Background => Background);
+
+            Location_Parser.Set
+              (Kernel            => Kernel,
+               Category          => To_String (Data.Category_Name),
+               Styles            => GPS.Styles.UI.Builder_Styles,
+               Show_In_Locations => not Background);
+
+            Console_Writer.Set_Console (Console);
          end if;
 
          Launch_Build_Command
@@ -623,6 +574,9 @@ package body Build_Command_Manager is
       end Launch_For_Mode;
 
    begin
+      --  Check if output parsers have been registered
+      Register_Output_Parsers;
+
       --  If there is already a background build running, interrupt it
       --  and clean up before launching a new build.
       Interrupt_Background_Build;
@@ -790,5 +744,22 @@ package body Build_Command_Manager is
       Item.Dialog := Dialog;
       Item.Quiet := Quiet;
    end Create;
+
+   -----------------------------
+   -- Register_Output_Parsers --
+   -----------------------------
+
+   procedure Register_Output_Parsers is
+   begin
+      if Parsers_Registered then
+         return;
+      end if;
+
+      Register_Output_Parser (Console_Writer'Access, Reserved + 20);
+      Register_Output_Parser (Location_Parser'Access, Reserved + 30);
+      Register_Output_Parser (Output_Collector'Access, Line_By_Line + 10);
+
+      Parsers_Registered := True;
+   end Register_Output_Parsers;
 
 end Build_Command_Manager;

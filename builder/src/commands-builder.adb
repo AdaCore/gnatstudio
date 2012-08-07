@@ -32,10 +32,14 @@ with GPS.Kernel.Messages.Legacy;       use GPS.Kernel.Messages.Legacy;
 with GPS.Intl;                         use GPS.Intl;
 
 with Builder_Facility_Module;          use Builder_Facility_Module;
+with Commands.Builder.Progress_Parsers;
 
 package body Commands.Builder is
 
    Shell_Env : constant String := Getenv ("SHELL").all;
+
+   Progress_Parser   : aliased Progress_Parsers.Output_Parser_Fabric;
+   Parser_Registered : Boolean := False;
 
    -----------------------
    -- Local subprograms --
@@ -54,7 +58,6 @@ package body Commands.Builder is
    overriding procedure Destroy (Data : in out Build_Callback_Data) is
    begin
       if Data.Output_Parser /= null then
-         Data.Output_Parser.Destroy;
          Free (Data.Output_Parser);
       end if;
    end Destroy;
@@ -166,13 +169,14 @@ package body Commands.Builder is
    --------------------
 
    procedure Build_Callback (Data : Process_Data; Output : String) is
-      use type Tools_Output_Parsers.Progress_Parsers.Progress_Parser_Access;
-
       Build_Data : Build_Callback_Data
         renames Build_Callback_Data (Data.Callback_Data.all);
    begin
-      if Build_Data.Progress_Parser /= null then
-         Build_Data.Progress_Parser.Set_Command (Data.Command);
+      if not Build_Data.Is_A_Run and Build_Data.Output_Parser = null then
+         --  Initialize progress parser with command
+         Progress_Parser.Set_Command (Data.Command);
+            --  Create new chain of output parsers
+         Build_Data.Output_Parser := New_Parser_Chain;
       end if;
 
       if Build_Data.Output_Parser /= null then
@@ -202,6 +206,20 @@ package body Commands.Builder is
       Created_Command : Scheduled_Command_Access;
       Background : constant Boolean := Data.Background;
    begin
+      --  Register progress output parser once
+      if not Parser_Registered then
+         declare
+            Progress_Pattern : constant String :=
+              "completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n";
+            --  ??? This is configurable in some cases (from XML for instance),
+            --  so we should not have a hard coded regexp here.
+         begin
+            Register_Output_Parser (Progress_Parser'Access, Reserved + 10);
+            Progress_Parser.Set_Pattern (Progress_Pattern);
+            Parser_Registered := True;
+         end;
+      end if;
+
       Show_Output  := Data.Is_A_Run and not Data.Background and not Data.Quiet;
       Show_Command := not Data.Background and not Data.Quiet;
 
