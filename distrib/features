@@ -224,6 +224,15 @@ NF-52-K225-019 Improved indentation of comments within expressions (2012-02-20)
   Comments within expressions or as part of continuation lines are better
   indented, taking the extra continuation line preference into account.
 
+NF-52-K223-024 ECL: support for gprbuild (2012-08-07)
+
+  GNATbench for Eclipse now directly supports use of gprbuild, in addition
+  to gnatmake, when building.  Selection of the builder is via the Ada
+  "General" preferences.  The preferences are to 1) always use gprbuild,
+  2) always use gnatmake, or 3) to automatically select the builder on a
+  per-project basis.  Automatic selection is based upon whether multiple
+  languages are specified in the project gpr file.
+
 NF-52-K223-021 GPS: Automatic removal of Subversion errors (2011-10-28)
 
   Errors emitted by Subversion are removed from the Locations view when the
