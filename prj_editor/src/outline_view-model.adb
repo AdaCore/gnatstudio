@@ -192,6 +192,12 @@ package body Outline_View.Model is
                return False;
             end if;
 
+            if Filter.Hide_Objects
+              and then Construct.Category in Data_Category
+            then
+               return False;
+            end if;
+
             if Construct.Category in Subprogram_Category
               and then Filter.Hide_Declarations
               and then Construct.Is_Declaration
