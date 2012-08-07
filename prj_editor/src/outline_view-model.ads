@@ -50,6 +50,7 @@ private package Outline_View.Model is
 
    type Tree_Filter is record
       Hide_Types        : Boolean := False;
+      Hide_Objects      : Boolean := False;
       Hide_Declarations : Boolean := False;
       Show_Profile      : Boolean := False;
    end record;

@@ -90,6 +90,7 @@ package body Outline_View is
    Hist_Editor_Link       : constant History_Key := "outline-editor-link";
    Hist_Show_Decls        : constant History_Key := "outline-show-decls";
    Hist_Show_Types        : constant History_Key := "outline-show-types";
+   Hist_Show_Objects      : constant History_Key := "outline-show-objects";
 
    overriding procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
@@ -437,6 +438,12 @@ package body Outline_View is
          Widget_Callback.Object_Connect
            (Check, Signal_Toggled, Force_Refresh'Access, Outline);
 
+         Gtk_New (Check, Label => -"Show objects");
+         Associate (Get_History (Kernel).all, Hist_Show_Objects, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
+
          Gtk_New (Check, Label => -"Show specifications");
          Associate (Get_History (Kernel).all, Hist_Show_Decls, Check);
          Append (Submenu, Check);
@@ -468,6 +475,9 @@ package body Outline_View is
         (Hide_Types        => not Get_History
            (Get_History (Kernel).all,
             Hist_Show_Types),
+         Hide_Objects      => not Get_History
+           (Get_History (Kernel).all,
+            Hist_Show_Objects),
          Hide_Declarations => not Get_History
            (Get_History (Kernel).all,
             Hist_Show_Decls),
@@ -1041,6 +1051,8 @@ package body Outline_View is
         (Get_History (Kernel).all, Hist_Show_Decls, True);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Show_Types, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Show_Objects, True);
 
       Construct_Annotations_Pckg.Get_Annotation_Key
         (Get_Construct_Annotation_Key_Registry
