@@ -20,7 +20,9 @@
 with Elaboration_Cycles;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 
-package Tools_Output_Parsers.Elaboration_Circularities is
+with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+
+package Browsers.Elaborations.Cycle_Parser is
 
    type Circularity_Parser is new Tools_Output_Parser with private;
    --  This parser reads binder errors about elaboration circularities
@@ -34,17 +36,23 @@ package Tools_Output_Parsers.Elaboration_Circularities is
    --     * links, in case when reason Elab_All or Elab_All_Desirable
    --     * Elab_Body boolean flag
 
-   function Create_Elaboration_Circularity_Parser
-     (Target : String;
-      Child  : Tools_Output_Parser_Access := null)
-      return Tools_Output_Parser_Access;
-   --  Create new parser to get binder errors about elaboration circularities
-
    overriding procedure Parse_Standard_Output
      (Self : not null access Circularity_Parser;
       Item : String);
 
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access;
+   --  Create new parser to get binder errors about elaboration circularities
+
 private
+
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with null record;
 
    type State_Kinds is
      (New_Cycle, New_Dependency, New_Reason,
@@ -59,7 +67,6 @@ private
       Last_Before : Unbounded_String;
       Last_After  : Unbounded_String;
       State       : State_Kinds := New_Cycle;
-      Target      : Unbounded_String;
    end record;
 
-end Tools_Output_Parsers.Elaboration_Circularities;
+end Browsers.Elaborations.Cycle_Parser;
