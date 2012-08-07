@@ -1132,9 +1132,9 @@ package body Call_Graph_Views is
                      Node := Next (Node);
                   end loop;
                end if;
-            end if;
 
-            Recursive_Save (Iter, N);
+               Recursive_Save (Iter, N);
+            end if;
 
             Next (Model, Iter);
          end loop;
