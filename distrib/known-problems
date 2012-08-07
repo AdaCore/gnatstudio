@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L803-010: GPS: error when saving callgraph
+  Problem:    When saving the contents of the callgraph to an XML file (for
+              instance starting the debugger and switching perspective), an
+              internal error could occur. This prevents the actual switch of
+              perspective.
+  Workaround: close the callgraph before you start the debugger.
+
 - L720-022: GPS: text of exported messages includes Pango markup
   Problem:    When text of messages in Locations view is exported into the file
               it includes Pango markup in some conditions.
