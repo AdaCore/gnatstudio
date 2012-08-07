@@ -17,26 +17,39 @@
 
 --  Declare parser to write each output item to console.
 
+with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
 with Interactive_Consoles;
 
-package Tools_Output_Parsers.Console_Writers is
+package Build_Command_Manager.Console_Writers is
 
    type Console_Writer is new Tools_Output_Parser with private;
-
-   function Create_Console_Writer
-     (Console : Interactive_Consoles.Interactive_Console;
-      Child   : Tools_Output_Parser_Access := null)
-      return Tools_Output_Parser_Access;
-   --  Create new parser to write on given Console.
 
    overriding procedure Parse_Standard_Output
      (Self : not null access Console_Writer;
       Item : String);
 
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+
+   procedure Set_Console
+     (Self    : access Output_Parser_Fabric;
+      Console : Interactive_Consoles.Interactive_Console);
+
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access;
+   --  Create new parser to write on given Console.
+
 private
+
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
+      Console : Interactive_Consoles.Interactive_Console;
+   end record;
 
    type Console_Writer is new Tools_Output_Parser with record
       Console : Interactive_Consoles.Interactive_Console;
    end record;
 
-end Tools_Output_Parsers.Console_Writers;
+end Build_Command_Manager.Console_Writers;

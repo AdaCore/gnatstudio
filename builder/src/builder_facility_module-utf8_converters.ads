@@ -15,37 +15,43 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Declare parser to collect builder output.
+--  Declare parser to convert output to UTF-8 encoding.
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GPS.Kernel;
 
-package Tools_Output_Parsers.Build_Output_Collectors is
+with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
 
-   type Build_Output_Collector is new Tools_Output_Parser with private;
+package Builder_Facility_Module.UTF8_Converters is
 
-   function Create_Build_Output_Collector
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Target     : String;
-      Shadow     : Boolean;
-      Background : Boolean;
-      Child      : Tools_Output_Parser_Access := null)
-      return Tools_Output_Parser_Access;
-   --  Create new parser to collect builder output for Target.
-   --  Collected output is then available with function
-   --  Builder_Facility_Module.Get_Build_Output
+   type UTF8_Converter is new Tools_Output_Parser with private;
+   --  This parser converts output to UTF-8 encoding
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Build_Output_Collector;
+     (Self : not null access UTF8_Converter;
       Item : String);
+
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+
+   procedure Set
+     (Self   : access Output_Parser_Fabric;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access;
+   --  Create new parser to convert to UTF-8 encoding
 
 private
 
-   type Build_Output_Collector is new Tools_Output_Parser with record
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
       Kernel     : GPS.Kernel.Kernel_Handle;
-      Target     : Unbounded_String;
-      Shadow     : Boolean;
-      Background : Boolean;
    end record;
 
-end Tools_Output_Parsers.Build_Output_Collectors;
+   type UTF8_Converter is new Tools_Output_Parser with record
+      Kernel : GPS.Kernel.Kernel_Handle;
+   end record;
+
+end Builder_Facility_Module.UTF8_Converters;

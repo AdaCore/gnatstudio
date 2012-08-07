@@ -79,6 +79,12 @@ with XML_Utils;                 use XML_Utils;
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded.Hash;
 
+with GPS.Kernel.Tools_Output;   use GPS.Kernel.Tools_Output;
+
+with Builder_Facility_Module.Output_Choppers;
+with Builder_Facility_Module.Text_Splitters;
+with Builder_Facility_Module.UTF8_Converters;
+
 package body Builder_Facility_Module is
 
    Me          : constant Debug_Handle := Create ("Builder_Facility_Module");
@@ -90,6 +96,10 @@ package body Builder_Facility_Module is
 
    Mode_Property : constant String := "Build-Mode";
    --  History to store which mode is selected
+
+   Output_Chopper   : aliased Output_Choppers.Output_Parser_Fabric;
+   Text_Splitter    : aliased Text_Splitters.Output_Parser_Fabric;
+   UTF8_Converter   : aliased UTF8_Converters.Output_Parser_Fabric;
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
@@ -139,13 +149,6 @@ package body Builder_Facility_Module is
 
    package Files is new Ada.Containers.Hashed_Maps
      (Unbounded_String, Virtual_File, Ada.Strings.Unbounded.Hash, "=");
-
-   package Target_Cycles is new Ada.Containers.Hashed_Maps
-     (Unbounded_String,
-      Cycle_Vectors.Vector,
-      Ada.Strings.Unbounded.Hash,
-      Ada.Strings.Unbounded."=",
-      Cycle_Vectors."=");
 
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
@@ -201,9 +204,6 @@ package body Builder_Facility_Module is
 
       Last_Mains : Files.Map;
       --  The last launched main
-
-      Cycles : Target_Cycles.Map;
-      --  Collected elaboration dependency cycles for Target
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -719,8 +719,6 @@ package body Builder_Facility_Module is
       else
          Builder_Module_ID.Outputs (Normal_Output).Clear;
       end if;
-
-      Builder_Module_ID.Cycles.Clear;
    end Clear_Compilation_Output;
 
    --------------------
@@ -1964,6 +1962,11 @@ package body Builder_Facility_Module is
       Add_Hook (Kernel, GPS_Started_Hook,
                 Wrapper (On_GPS_Started'Access),
                 Name  => "builder_facility_module.gps_started");
+
+      Register_Output_Parser (Output_Chopper'Access, Reserved - 15);
+      Register_Output_Parser (UTF8_Converter'Access, Reserved - 5);
+      Register_Output_Parser (Text_Splitter'Access, Line_By_Line);
+      UTF8_Converter.Set (Kernel);
    end Register_Module;
 
    --------------
@@ -2078,75 +2081,6 @@ package body Builder_Facility_Module is
            (To_Unbounded_String (Target));
       end if;
    end Get_Build_Output;
-
-   ----------------------------------------
-   -- Append_To_Build_Elaboration_Cycles --
-   ----------------------------------------
-
-   procedure Append_To_Build_Elaboration_Cycles
-     (Target : String;
-      Cycle  : Elaboration_Cycles.Cycle)
-   is
-      Name : constant Unbounded_String := To_Unbounded_String (Target);
-      C : Target_Cycles.Cursor;
-      use Target_Cycles;
-   begin
-      if Builder_Module_ID /= null then
-         C := Builder_Module_ID.Cycles.Find (Name);
-
-         if C = Target_Cycles.No_Element then
-            Builder_Module_ID.Cycles.Insert
-              (Key       => Name,
-               New_Item  => Cycle_Vectors.To_Vector (Cycle, 1));
-         else
-            declare
-               procedure Local_Append
-                 (Key : Unbounded_String;
-                  E   : in out Cycle_Vectors.Vector);
-               --  Auxiliary subprogram to append to a cycle in place in
-               --  the container.
-
-               ------------------
-               -- Local_Append --
-               ------------------
-
-               procedure Local_Append
-                 (Key : Unbounded_String;
-                  E   : in out Cycle_Vectors.Vector)
-               is
-                  pragma Unreferenced (Key);
-               begin
-                  E.Append (Cycle);
-               end Local_Append;
-            begin
-               Builder_Module_ID.Cycles.Update_Element
-                 (C, Local_Append'Access);
-            end;
-         end if;
-      end if;
-   end Append_To_Build_Elaboration_Cycles;
-
-   ----------------------------------
-   -- Get_Build_Elaboration_Cycles --
-   ----------------------------------
-
-   function Get_Build_Elaboration_Cycles
-     (Target : String) return Cycle_Vectors.Vector
-   is
-      Name : constant Unbounded_String := To_Unbounded_String (Target);
-      C    : Target_Cycles.Cursor;
-      use Target_Cycles;
-   begin
-      if Builder_Module_ID /= null then
-         C := Builder_Module_ID.Cycles.Find (Name);
-
-         if Target_Cycles.Has_Element (C) then
-            return Target_Cycles.Element (C);
-         end if;
-      end if;
-
-      return Cycle_Vectors.Empty_Vector;
-   end Get_Build_Elaboration_Cycles;
 
    -----------------------
    -- Get_List_Of_Modes --

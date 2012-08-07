@@ -16,26 +16,25 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Regpat; use GNAT.Regpat;
-with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 
-package body Tools_Output_Parsers.Progress_Parsers is
+package body Commands.Builder.Progress_Parsers is
 
-   ----------------------------
-   -- Create_Progress_Parser --
-   ----------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_Progress_Parser
-     (Pattern : String;
-      Child   : Tools_Output_Parser_Access)
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access
    is
    begin
       return new Progress_Parser'
         (Child   => Child,
-         Command => null,
-         Matcher => new Pattern_Matcher'(Compile (Pattern, Single_Line)));
-   end Create_Progress_Parser;
+         Command => Self.Command,
+         Matcher => Self.Matcher);
+   end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
@@ -46,6 +45,7 @@ package body Tools_Output_Parsers.Progress_Parsers is
       Item : String)
    is
       use type Commands.Command_Access;
+      use type Tools_Output_Parser_Access;
       Start    : Integer := Item'First;
       Matched  : Match_Array (0 .. 3);
       Buffer   : Unbounded_String;
@@ -75,26 +75,26 @@ package body Tools_Output_Parsers.Progress_Parsers is
       end if;
    end Parse_Standard_Output;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Self : not null access Progress_Parser) is
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Pattern_Matcher, Pattern_Matcher_Access);
-   begin
-      Free (Self.Matcher);
-   end Destroy;
-
    -----------------
    -- Set_Command --
    -----------------
 
    procedure Set_Command
-     (Self    : access Progress_Parser'Class;
+     (Self    : access Output_Parser_Fabric;
       Command : Commands.Command_Access) is
    begin
       Self.Command := Command;
    end Set_Command;
 
-end Tools_Output_Parsers.Progress_Parsers;
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   procedure Set_Pattern
+     (Self    : access Output_Parser_Fabric;
+      Pattern : String) is
+   begin
+      Self.Matcher := new Pattern_Matcher'(Compile (Pattern, Single_Line));
+   end Set_Pattern;
+
+end Commands.Builder.Progress_Parsers;

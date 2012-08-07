@@ -17,48 +17,65 @@
 
 with Ada.Strings.Fixed;
 
-package body Tools_Output_Parsers.Text_Splitters is
+package body Builder_Facility_Module.Output_Choppers is
+   use type Tools_Output_Parser_Access;
 
    New_Line : constant String := (1 => ASCII.LF);
 
-   --------------------------
-   -- Create_Text_Splitter --
-   --------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_Text_Splitter
-     (Child : Tools_Output_Parser_Access)
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access
    is
+      pragma Unreferenced (Self);
    begin
-      return new Text_Splitter'(Child => Child);
-   end Create_Text_Splitter;
+      return new Output_Chopper'
+        (Child  => Child,
+         Buffer => Null_Unbounded_String);
+   end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Text_Splitter;
+     (Self : not null access Output_Chopper;
       Item : String)
    is
-      From : Positive := Item'First;
-      To   : Natural;
+      Last_EOL : Natural;
    begin
       if Self.Child = null then
          return;
       end if;
 
-      while From <= Item'Last loop
-         To := Ada.Strings.Fixed.Index (Item, New_Line, From => From);
+      Last_EOL := Ada.Strings.Fixed.Index
+        (Item, New_Line, Ada.Strings.Backward);
 
-         if To = 0 then
-            Self.Child.Parse_Standard_Output (Item (From .. Item'Last));
-            exit;
-         else
-            Self.Child.Parse_Standard_Output (Item (From .. To));
-            From := To + 1;
-         end if;
-      end loop;
+      if Last_EOL = 0 then
+         Append (Self.Buffer, Item);
+      else
+         Self.Child.Parse_Standard_Output
+           (To_String (Self.Buffer) & Item (Item'First .. Last_EOL));
+         Self.Buffer := To_Unbounded_String (Item (Last_EOL + 1 .. Item'Last));
+      end if;
    end Parse_Standard_Output;
 
-end Tools_Output_Parsers.Text_Splitters;
+   -------------------
+   -- End_Of_Stream --
+   -------------------
+
+   overriding procedure End_Of_Stream
+     (Self : not null access Output_Chopper) is
+   begin
+      if Self.Child = null or Self.Buffer = "" then
+         return;
+      end if;
+
+      Self.Child.Parse_Standard_Output (To_String (Self.Buffer) & New_Line);
+   end End_Of_Stream;
+
+end Builder_Facility_Module.Output_Choppers;

@@ -15,24 +15,39 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Declare parser to split text to lines and pass to child line by line.
+--  Declare parser to round output by line bounds.
 
-package Tools_Output_Parsers.Text_Splitters is
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
 
-   type Text_Splitter is new Tools_Output_Parser with private;
-   --  This parser splits text to lines
+package Builder_Facility_Module.Output_Choppers is
 
-   function Create_Text_Splitter
-     (Child : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access;
-   --  Create new parser to split text to lines
+   type Output_Chopper is new Tools_Output_Parser with private;
+   --  This parser rounds output by line bounds
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Text_Splitter;
+     (Self : not null access Output_Chopper;
       Item : String);
+
+   overriding
+   procedure End_Of_Stream (Self : not null access Output_Chopper);
+
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+
+   overriding function Create
+     (Self  : access Output_Parser_Fabric;
+      Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access;
+   --  Create new parser to round output by line bounds.
 
 private
 
-   type Text_Splitter is new Tools_Output_Parser with null record;
+   type Output_Parser_Fabric is
+     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with null record;
 
-end Tools_Output_Parsers.Text_Splitters;
+   type Output_Chopper is new Tools_Output_Parser with record
+      Buffer : Unbounded_String;
+   end record;
+
+end Builder_Facility_Module.Output_Choppers;

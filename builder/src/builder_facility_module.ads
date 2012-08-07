@@ -108,8 +108,6 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with Elaboration_Cycles;
-with Ada.Containers.Vectors;
 
 package Builder_Facility_Module is
 
@@ -133,19 +131,6 @@ package Builder_Facility_Module is
    --  Return the last build output.
    --  Shadow indicates whether to get the normal or the shadow output
    --  If Target is null, get all output in the category.
-
-   procedure Append_To_Build_Elaboration_Cycles
-     (Target : String;
-      Cycle  : Elaboration_Cycles.Cycle);
-   --  Append elaboration dependency cycle reported by gnatbind to
-   --  Target's cycle list.
-
-   package Cycle_Vectors is new Ada.Containers.Vectors
-       (Positive, Elaboration_Cycles.Cycle, Elaboration_Cycles."=");
-
-   function Get_Build_Elaboration_Cycles
-     (Target : String) return Cycle_Vectors.Vector;
-   --  Return collected elaboration dependency cycles for Target
 
    function Get_List_Of_Modes
      (Model : String) return GNAT.OS_Lib.Argument_List;
