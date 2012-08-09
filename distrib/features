@@ -267,9 +267,10 @@ NF-52-JA26-020 Improved indentation in parenthesized exprs (2012-02-20)
   expressions are better intended and in particular no longer generate an
   extra indentation on the next line.
 
-NF-52-IA30-015 GPS: add menu remove globals from outline view (2012-08-09)
+NF-52-IA30-015 GPS: new menu to hide globals from outline view (2012-08-09)
 
-  Visibility of global objects in Outline View is configurable by context menu.
+  Visibility of global objects in the Outline View is now configurable via
+  a contextual menu.
 
 NF-52-I527-048 GPS: multi-line option in MDI.input_dialog (2012-02-01)
 
