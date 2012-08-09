@@ -1969,7 +1969,7 @@ package body Src_Contexts is
          if Matches /= null then
             declare
                Buffer   : GNAT.Strings.String_Access;
-               Len      : Natural;
+               Last     : Positive := 1;
                Previously_Was_UTF8 : Boolean := True;
                Output_Buffer : Unbounded_String;
                Writable : Writable_File;
@@ -1997,13 +1997,7 @@ package body Src_Contexts is
                end;
 
                if Buffer /= null then
-                  Append
-                    (Output_Buffer,
-                     Buffer (1 .. Matches (Matches'First).Index - 1));
-
-                  Append (Output_Buffer, Replace_String);
-
-                  for M in Matches'First + 1 .. Matches'Last loop
+                  for M in Matches'Range loop
                      if Case_Preserving then
                         Current_Casing := Guess_Casing
                           (Buffer
@@ -2012,20 +2006,16 @@ package body Src_Contexts is
                               + Replace_String'Length - 1));
                      end if;
 
-                     Len := Matches (M - 1).Index
-                       + Matches (M - 1).Pattern_Length;
-
                      Append
-                       (Output_Buffer, Buffer (Len .. Matches (M).Index - 1));
+                       (Output_Buffer, Buffer (Last .. Matches (M).Index - 1));
                      Append
                        (Output_Buffer,
                         Casings (Current_Casing));
+
+                     Last := Matches (M).Index + Matches (M).Pattern_Length;
                   end loop;
 
-                  Len := Matches (Matches'Last).Index
-                    + Matches (Matches'Last).Pattern_Length;
-
-                  Append (Output_Buffer, Buffer (Len .. Buffer'Last));
+                  Append (Output_Buffer, Buffer (Last .. Buffer'Last));
 
                   if Previously_Was_UTF8 then
                      Writable := Write_File (File);
