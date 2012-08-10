@@ -18,6 +18,22 @@ spark_category="Examiner"
 recompute_project = False
 focus_file = ""
 
+def find_on_path(filename):
+  """
+  Looks through the system PATH to find the first directory containing
+  the given file. Returns the empty string if it cannot be found on
+  the PATH.
+  """
+  dirs = [x
+          for x in os.environ["PATH"].split(os.pathsep)
+          if os.path.isfile(os.path.join(x, filename))]
+  if len(dirs) > 0:
+    return dirs[0]
+  else:
+    return ""
+
+RIPOSTE_PATH = find_on_path("riposte.py")
+
 def on_execution_finished (hook, category, target_name, mode_name, status):
   global recompute_project, focus_file
 
@@ -138,6 +154,43 @@ def format_selection ():
   buffer.finish_undo_group ()
   os.unlink (name)
 
+def riposte_vc(numeric = False):
+  ctx = GPS.current_context()
+  buffer = GPS.EditorBuffer.get()
+
+  current_line = buffer.selection_start().line()
+
+  # Ok, lets work out which VC we're in. Thankfully the format is very
+  # very simple.
+  vc_id = 0
+  in_vc = False
+  for line_no, line in enumerate(x.strip() for x in buffer.get_chars().splitlines()):
+    if len(line) > 0 and " " not in line and line.endswith("."):
+      vc_id += 1
+      in_vc = True
+    if in_vc and len(line) == 0:
+      in_vc = False
+    if line_no + 1 == current_line:
+      break
+
+  if not in_vc or vc_id == 0:
+    GPS.Console("Messages").write("Error: I can't work out which VC you are in.\n")
+    return
+
+  try:
+     basic_options = ctx.project().get_tool_switches_as_string("Riposte")
+  except:
+     basic_options = GPS.Project.root().get_tool_switches_as_string("Riposte")
+
+  the_file = buffer.file().name()
+
+  extra_args = basic_options + " --vc=%u" % vc_id
+  if numeric:
+    extra_args += " --numeric"
+  extra_args = " ".join(extra_args.split())
+
+  GPS.BuildTarget("Riposte").execute(synchronous=False, extra_args=extra_args)
+
 def simplify_file (file):
   """Simplify current file through the SPARK simplifier. file is an instance
      of GPS.File"""
@@ -153,6 +206,17 @@ def victor_file (file):
 
   focus_file = file.name().replace(".vcg", ".vct").replace(".siv", ".vct")
   GPS.BuildTarget ("Victor").execute(synchronous=False)
+
+def riposte_file(file):
+  global focus_file
+
+  try:
+     basic_options = GPS.current_context().project().get_tool_switches_as_string("Riposte")
+  except:
+     basic_options = GPS.Project.root().get_tool_switches_as_string("Riposte")
+
+  focus_file = file.name().replace(".vcg", ".rsm").replace(".siv", ".rsm")
+  GPS.BuildTarget("Riposte").execute(synchronous=False, extra_args=basic_options)
 
 def zombiescope_file (file):
   """Run ZombieScope on file, where file is an instance of GPS.File"""
@@ -364,6 +428,16 @@ xml_spark = """<?xml version="1.0"?>
     <Spec_Suffix>.vlg</Spec_Suffix>
   </Language>
 
+  <Language>
+    <Name>RSM</Name>
+    <Spec_Suffix>.rsm</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>RCE</Name>
+    <Spec_Suffix>.rce</Spec_Suffix>
+  </Language>
+
   <!-- Index and Listing are just set up so that GPS can recognise them -->
 
   <Language>
@@ -458,11 +532,13 @@ xml_spark = """<?xml version="1.0"?>
       <check line="3" label="No Simplification" switch="-ns" />
       <title line="4">Victor (Currently available on GNU/Linux, Windows and OSX)</title>
       <check line="4" label="Prove with Victor" switch="-victor" />
-      <title line="5">ZombieScope</title>
-      <check line="5" label="No ZombieScope" switch="-nz" />
-      <title line="6">Process control</title>
-      <check line="6" label="Dry run" switch="-n" />
-      <spin line="6" label="Multiprocessing" switch="-p=" min="1" max="100" default="1"
+      <title line="5">Riposte (Currently available on GNU/Linux and Windows)</title>
+      <check line="5" label="Find counter-examples with Riposte" switch="-riposte" />
+      <title line="6">ZombieScope</title>
+      <check line="6" label="No ZombieScope" switch="-nz" />
+      <title line="7">Process control</title>
+      <check line="7" label="Dry run" switch="-n" />
+      <spin line="7" label="Multiprocessing" switch="-p=" min="1" max="100" default="1"
             tip="Use N processes to run the Simplifier/ZombieScope/Victor. On a multiprocessor machine analysis will occur in parallel" />
     </switches>
   </tool>
@@ -507,6 +583,36 @@ xml_spark = """<?xml version="1.0"?>
             tip="Timeout for each invocation of the prover. No timeout by default." />
       <spin line="2" label="Memory Limit (in megabytes) (GNU/Linux only)" switch="-m=" min="0" max="10000" default="0"
             tip="Memory limit for each invocation of the prover. No limit by default." />
+    </switches>
+  </tool>
+
+  <tool name="Riposte">
+    <language>Ada</language>
+    <switches lines="3" switch_char="--">
+      <title line="1">General behaviour and output</title>
+      <check line="1" label="Plain output (don't show line or version numbers)" switch="--reference" />
+      <check line="1" label="Brief output (don't show variables not in conclusions)" switch="--brief" />
+      <check line="1" label="Show rewrites" switch="--trace" />
+      <check line="1" label="Trust types (requires SPARK Pro >= 10.1 or GPL >= 2012)" switch="--trust-examiner-types" />
+      <spin line="2" label="Line-wrap" switch="--wrap=" min="0" max="200" default="0"
+            tip="Intelligently line-wrap hypotheses and conclusions. 0 means no line-wrap." />
+
+      <title line="2">Features</title>
+      <check line="2" label="Optimise counter-examples" switch="-o"
+             tip="This tries to find assignments as close to zero as possible. It does *not* make anything faster, on the contrary!" />
+      <check line="2" label="Use (some) user rules" switch="--user-rules" />
+      <field line="2" label="Use memcached server to cache results" switch="--memcached="
+             tip="Can be either just an ip/hostname or a host:port tuple" />
+
+      <title line="3">Search</title>
+      <check line="3" label="Do not search for dead paths" switch="--no-dpc" />
+      <check line="3" label="Do not search for dodgy specifications" switch="--no-dsc" />
+      <check line="3" label="Do not search for counter-examples" switch="--no-ce" />
+      <spin line="3" label="Step limit" switch="--steps=" min="0" max="2000000" default="320000"
+            tip="A deterministic (unlike timeouts) proof step limit. Zero means no limit." />
+      <spin line="3" label="Model limit" switch="--max_models=" min="0" max="5000" default="0"
+            tip="Limit the number of models generated during optimisation. Zero (the default) means no limit." />
+
     </switches>
   </tool>
 
@@ -648,6 +754,36 @@ xml_spark = """<?xml version="1.0"?>
      <shell lang="python">"""+spark_module+""".victor_file (GPS.File("%F"))</shell>
   </action>
 
+  <action name="Riposte entire file" category="Spark" output="none">
+     <filter language="VCG" />
+     <filter language="SIV" />
+     <shell lang="python">"""+spark_module+""".riposte_file (GPS.File("%F"))</shell>
+  </action>
+
+  <action name="Riposte this VC" output="none">
+     <filter_and>
+        <filter language="VCG" />
+        <filter id="Source editor" />
+     </filter_and>
+     <filter_and>
+        <filter language="SIV" />
+        <filter id="Source editor" />
+     </filter_and>
+     <shell lang="python">"""+spark_module+""".riposte_vc()</shell>
+  </action>
+
+  <action name="Riposte this VC (Numeric)" output="none">
+     <filter_and>
+        <filter language="VCG" />
+        <filter id="Source editor" />
+     </filter_and>
+     <filter_and>
+        <filter language="SIV" />
+        <filter id="Source editor" />
+     </filter_and>
+     <shell lang="python">"""+spark_module+""".riposte_vc(numeric=True)</shell>
+  </action>
+
   <action name="ZombieScope file" category="Spark" output="none">
     <filter language="DPC" />
      <shell lang="python">spark.zombiescope_file (GPS.File("%F"))</shell>
@@ -656,7 +792,6 @@ xml_spark = """<?xml version="1.0"?>
   <action name="SPARKFormat file" category="Spark" output="none">
      <filter_and>
         <filter language="Ada" />
-        <filter id="Source editor" />
      </filter_and>
      <shell lang="python">"""+spark_module+""".format_file ()</shell>
   </action>
@@ -704,6 +839,9 @@ xml_spark = """<?xml version="1.0"?>
       <menu action="Victor file">
         <Title>_Victor File</Title>
       </menu>
+      <menu action="Riposte entire file">
+        <Title>_Riposte File</Title>
+      </menu>
       <menu action="ZombieScope file">
         <Title>_ZombieScope File</Title>
       </menu>
@@ -740,6 +878,18 @@ xml_spark = """<?xml version="1.0"?>
 
   <contextual action="Victor file" >
     <Title>SPARK/Victor File</Title>
+  </contextual>
+
+  <contextual action="Riposte entire file" >
+    <Title>SPARK/Riposte File</Title>
+  </contextual>
+
+  <contextual action="Riposte this VC" >
+    <Title>Generate counter-example for VC (showing constants)</Title>
+  </contextual>
+
+  <contextual action="Riposte this VC (Numeric)" >
+    <Title>Generate counter-example for VC (showing numbers)</Title>
   </contextual>
 
   <contextual action="ZombieScope file" >
@@ -962,6 +1112,13 @@ b = """<?xml version="1.0"?>
      <descr>Victor Wrapper User Manual</descr>
      <category>Spark</category>
      <menu before="About">/Help/SPARK/Tools/Victor Wrapper User Manual</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>Riposte_UM.htm</name>
+     <descr>Riposte User Manual</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Tools/Riposte User Manual</menu>
   </documentation_file>
 
   <documentation_file>
@@ -1250,6 +1407,8 @@ b = """<?xml version="1.0"?>
               tip="Remove only the files generated by the Simplifier, ZombieScope and SPARKSimp (siv, sdp, slg, zlg, zsl, log), not other files" />
        <check label="Only delete Victor generated files" switch="-victor"
               tip="Remove only the files generated by Victor (vct, vsm, vlg), not other files" />
+       <check label="Only delete Riposte generated files" switch="-riposte"
+              tip="Remove only the files generated by Riposte (rsm, rce, rsv), not other files" />
        <check label="Only delete POGS generated files" switch="-pogs"
               tip="Remove only the files generated by POGS (sum), not other files" />
      </switches>
@@ -1345,6 +1504,20 @@ b = """<?xml version="1.0"?>
         <arg>simplifier</arg>
         <arg>-P%PP</arg>
         <arg>%X</arg>
+        <arg>%F</arg>
+     </command-line>
+  </target>
+
+  <target model="spark" category="SPARK" messages_category="SPARK"
+          name="Riposte">
+     <icon>gps-build-main</icon>
+     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+     <in-menu>FALSE</in-menu>
+     <read-only>TRUE</read-only>
+     <server>Tools_Server</server>
+     <command-line>
+        <arg>python</arg>
+        <arg>""" + os.path.join(RIPOSTE_PATH, "riposte.py") + """</arg>
         <arg>%F</arg>
      </command-line>
   </target>
