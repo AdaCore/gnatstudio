@@ -568,6 +568,8 @@ xml_spark = """<?xml version="1.0"?>
     <switches lines="2" switch_char="-">
       <title line="1">General behaviour</title>
       <check line="1" label="Plain output" switch="-plain" />
+      <check line="1" label="Keep SMT files" switch="-keep" />
+      <check line="1" label="Ignore Victor switch files" switch="-noswitch" />
       <check line="1" label="Ignore SIV files" switch="-v" />
       <check line="1" label="Do not use user rules" switch="-nouserrules" />
       <combo line="1" label="SMT solver used" switch="-solver" separator="=" noswitch="alt-ergo">
