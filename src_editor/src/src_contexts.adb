@@ -22,7 +22,6 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regexp;                use GNAT.Regexp;
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNAT.Strings;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
@@ -74,8 +73,6 @@ with UTF8_Utils;
 package body Src_Contexts is
 
    Me : constant Debug_Handle := Create ("Src_Contexts");
-
-   type Casing_Type is (Lower, Upper, Smart_Mixed, Unchanged);
 
    function Guess_Casing (S : String) return Casing_Type;
    --  Guess the casing which is used in S.
@@ -233,6 +230,12 @@ package body Src_Contexts is
 
    procedure Free (Result : in out Match_Result_Array_Access);
    --  Free Result and its components
+
+   procedure Free (Result : in out Replacement_Pattern);
+   --  Free cached Replacement_Pattern
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Regexp_Reference_Array, Regexp_Reference_Array_Access);
 
    procedure Initialize_Scope_Combo
      (Combo  : access Gtk_Combo_Box_Record'Class;
@@ -1135,22 +1138,34 @@ package body Src_Contexts is
       end if;
    end Free;
 
+   procedure Free (Result : in out Replacement_Pattern) is
+   begin
+      Free (Result.Replace_String);
+      Free (Result.References);
+      for Casing in Lower .. Smart_Mixed loop
+         Free (Result.Casings (Casing));
+      end loop;
+   end Free;
+
    overriding procedure Free (Context : in out Files_Context) is
    begin
       Directory_List.Free (Context.Dirs);
       Context.At_End := True;
+      Free (Context.Replacement);
       Free (Search_Context (Context));
    end Free;
 
    overriding procedure Free (Context : in out Files_Project_Context) is
    begin
       Unchecked_Free (Context.Files);
+      Free (Context.Replacement);
       Free (Search_Context (Context));
    end Free;
 
    overriding procedure Free (Context : in out Open_Files_Context) is
    begin
       Unchecked_Free (Context.Files);
+      Free (Context.Replacement);
       Free (Search_Context (Context));
    end Free;
 
@@ -1734,6 +1749,159 @@ package body Src_Contexts is
          return;
    end Search;
 
+   -----------------------------
+   -- Get_Replacement_Pattern --
+   -----------------------------
+
+   function Get_Replacement_Pattern
+     (Context         : access File_Search_Context;
+      Replace_String  : String;
+      Case_Preserving : Boolean) return Replacement_Pattern
+   is
+      procedure Fill_References (Result : in out Replacement_Pattern);
+
+      ---------------------
+      -- Fill_References --
+      ---------------------
+
+      procedure Fill_References (Result : in out Replacement_Pattern) is
+         Mask  : Boolean := False;
+         Count : Natural := 0;
+      begin
+         for J in Replace_String'First .. Replace_String'Last - 1 loop
+            if not Mask and Replace_String (J) = '\' then
+               if Replace_String (J + 1) in '0' .. '9' then
+                  Count := Count + 1;
+               elsif Replace_String (J + 1) = '\' then
+                  Mask := True;
+               end if;
+            else
+               Mask := False;
+            end if;
+         end loop;
+
+         if Count > Result.Last then
+            Free (Result.References);
+            Result.References := new Regexp_Reference_Array (1 .. Count);
+         end if;
+
+         Count := 0;
+         Mask := False;
+
+         for J in Replace_String'First .. Replace_String'Last - 1 loop
+            if not Mask and Replace_String (J) = '\' then
+               if Replace_String (J + 1) in '0' .. '9' then
+                  Count := Count + 1;
+                  Result.References (Count) :=
+                    (J, Natural'Value (Replace_String (J + 1 .. J + 1)));
+               elsif Replace_String (J + 1) = '\' then
+                  Mask := True;
+               end if;
+            else
+               Mask := False;
+            end if;
+         end loop;
+
+         Result.Last := Count;
+      end Fill_References;
+
+      Cached : Replacement_Pattern renames Context.Replacement;
+      Result : Replacement_Pattern;
+   begin
+      if Cached.Replace_String = null
+        or else Cached.Replace_String.all /= Replace_String
+      then
+         Free (Cached.Replace_String);
+         Cached.Replace_String := new String'(Replace_String);
+         Cached.Case_Preserving := False;
+         Cached.Casings (Unchanged) := Cached.Replace_String;
+
+         if Context.Get_Options.Regexp then
+            Fill_References (Cached);
+         end if;
+      end if;
+
+      if Case_Preserving and not Cached.Case_Preserving then
+         for Casing in Lower .. Smart_Mixed loop
+            Free (Cached.Casings (Casing));
+            Cached.Casings (Casing) :=
+              new String'(To_Casing (Replace_String, Casing));
+         end loop;
+
+         Cached.Case_Preserving := True;
+      end if;
+
+      Result := Cached;
+      Result.Case_Preserving := Case_Preserving;
+
+      return Result;
+   end Get_Replacement_Pattern;
+
+   ----------------------
+   -- Replacement_Text --
+   ----------------------
+
+   function Replacement_Text
+     (Context         : access File_Search_Context;
+      Pattern         : Replacement_Pattern;
+      Matched_Text    : String) return String
+   is
+      Current_Casing : Casing_Type := Unchanged;
+      Regexp_Result  : Unbounded_String;
+      Offset         : Integer;
+      From, To       : Natural;
+      Last           : Natural := 1;
+   begin
+      --  if there are some references to regexp subexpressions
+      --  and search in regexp mode
+      if Pattern.Last > 0 and then Context.Get_Options.Regexp then
+         --  Read offset of Matched_Text into Offset
+         Context.Matched_Subexpressoin
+           (Index => 0, First => Offset, Last => Last);
+         Offset := Offset - Matched_Text'First;
+         Last := 1;
+         for J in 1 .. Pattern.Last loop
+            declare
+               Ref : constant Regexp_Reference := Pattern.References (J);
+            begin
+               Append
+                 (Regexp_Result,
+                  Pattern.Replace_String (Last .. Ref.Offset - 1));
+
+               if Ref.Match = 0 then  --  Whole matched string
+                  Append (Regexp_Result, Matched_Text);
+               else
+                  Context.Matched_Subexpressoin
+                    (Index => Ref.Match, First => From, Last => To);
+                  Append (Regexp_Result,
+                          Matched_Text (From - Offset .. To - Offset));
+               end if;
+
+               Last := Ref.Offset + 2;
+            end;
+         end loop;
+
+         Append
+           (Regexp_Result,
+            Pattern.Replace_String (Last .. Pattern.Replace_String'Last));
+
+         if Pattern.Case_Preserving then
+            Current_Casing := Guess_Casing (Matched_Text);
+
+            return To_Casing
+              (UTF8_Strdown (To_String (Regexp_Result)), Current_Casing);
+         end if;
+
+         return To_String (Regexp_Result);
+      end if;
+
+      if Pattern.Case_Preserving then
+         Current_Casing := Guess_Casing (Matched_Text);
+      end if;
+
+      return Pattern.Casings (Current_Casing).all;
+   end Replacement_Text;
+
    -------------------------
    -- Replace_From_Editor --
    -------------------------
@@ -1750,21 +1918,9 @@ package body Src_Contexts is
       Editor          : Source_Editor_Box;
       Current_Matches : Boolean;
       Matches         : Match_Result_Array_Access;
-
-      type Casings_A is array (Casing_Type) of String (Replace_String'Range);
-
-      Casings : Casings_A;
-      Current_Casing : Casing_Type := Unchanged;
+      Replacement     : constant Replacement_Pattern
+        := Context.Get_Replacement_Pattern (Replace_String, Case_Preserving);
    begin
-      Casings (Unchanged) := Replace_String;
-
-      if Case_Preserving then
-         --  Pre-compute all casings of the string to replace
-         for Casing in Lower .. Smart_Mixed loop
-            Casings (Casing) := To_Casing (Replace_String, Casing);
-         end loop;
-      end if;
-
       Raise_Child (Child, Give_Focus);
       Editor := Get_Source_Box_From_MDI (Child);
 
@@ -1789,23 +1945,20 @@ package body Src_Contexts is
             declare
             begin
                for M in reverse Matches'Range loop
-                  if Case_Preserving then
-                     Current_Casing := Guess_Casing
-                       (Get_Text
-                          (Get_Buffer (Editor),
-                           Editable_Line_Type (Matches (M).Begin_Line),
-                           Matches (M).Begin_Column,
-                           Editable_Line_Type (Matches (M).End_Line),
-                           Matches (M).End_Column));
-                  end if;
-
                   Replace_Slice
                     (Get_Buffer (Editor),
                      Editable_Line_Type (Matches (M).Begin_Line),
                      Matches (M).Begin_Column,
                      Editable_Line_Type (Matches (M).End_Line),
                      Matches (M).End_Column,
-                     Casings (Current_Casing));
+                     Context.Replacement_Text
+                       (Replacement,
+                        Get_Text
+                          (Get_Buffer (Editor),
+                           Editable_Line_Type (Matches (M).Begin_Line),
+                           Matches (M).Begin_Column,
+                           Editable_Line_Type (Matches (M).End_Line),
+                           Matches (M).End_Column)));
                end loop;
             exception
                when others =>
@@ -1855,31 +2008,33 @@ package body Src_Contexts is
             end if;
 
             if Current_Matches then
-               if Case_Preserving then
-                  Current_Casing := Guess_Casing
-                    (Get_Text
-                       (Get_Buffer (Editor),
-                        Context.Begin_Line,
-                        Context.Begin_Column,
-                        Context.End_Line,
-                        Context.End_Column));
-               end if;
+               declare
+                  Text : constant String :=
+                    Context.Replacement_Text
+                      (Replacement,
+                       Get_Text
+                         (Get_Buffer (Editor),
+                          Context.Begin_Line,
+                          Context.Begin_Column,
+                          Context.End_Line,
+                          Context.End_Column));
+               begin
+                  Replace_Slice
+                    (Get_Buffer (Editor),
+                     Context.Begin_Line,
+                     Context.Begin_Column,
+                     Context.End_Line,
+                     Context.End_Column,
+                     Text);
 
-               Replace_Slice
-                 (Get_Buffer (Editor),
-                  Context.Begin_Line,
-                  Context.Begin_Column,
-                  Context.End_Line,
-                  Context.End_Column,
-                  Casings (Current_Casing));
-
-               Forward_Position
-                 (Get_Buffer (Editor),
-                  Context.Begin_Line,
-                  Context.Begin_Column,
-                  Casings (Current_Casing)'Length,
-                  Context.End_Line,
-                  Context.End_Column);
+                  Forward_Position
+                    (Get_Buffer (Editor),
+                     Context.Begin_Line,
+                     Context.Begin_Column,
+                     Text'Length,
+                     Context.End_Line,
+                     Context.End_Column);
+               end;
 
                Push_Current_Editor_Location_In_History (Kernel);
 
@@ -1921,11 +2076,6 @@ package body Src_Contexts is
    is
       Matches : Match_Result_Array_Access;
       Child   : MDI_Child;
-
-      type Casings_A is array (Casing_Type) of String (Replace_String'Range);
-
-      Casings : Casings_A;
-      Current_Casing : Casing_Type := Unchanged;
    begin
       --  If the file is loaded in an editor, do the replacement directly
       --  there.
@@ -1946,13 +2096,6 @@ package body Src_Contexts is
          --  file.
       else
          --  Pre-compute all casings of the string to replace
-         Casings (Unchanged) := Replace_String;
-
-         if Case_Preserving then
-            for Casing in Lower .. Smart_Mixed loop
-               Casings (Casing) := To_Casing (Replace_String, Casing);
-            end loop;
-         end if;
 
          --  ??? Could be more efficient, since we have already read the
          --  file to do the search
@@ -1973,7 +2116,9 @@ package body Src_Contexts is
                Previously_Was_UTF8 : Boolean := True;
                Output_Buffer : Unbounded_String;
                Writable : Writable_File;
-
+               Replacement : constant Replacement_Pattern
+                 := Context.Get_Replacement_Pattern
+                      (Replace_String, Case_Preserving);
             begin
                declare
                   UTF8  : Unchecked_String_Access;
@@ -1998,19 +2143,14 @@ package body Src_Contexts is
 
                if Buffer /= null then
                   for M in Matches'Range loop
-                     if Case_Preserving then
-                        Current_Casing := Guess_Casing
-                          (Buffer
-                             (Matches (M).Index
-                              .. Matches (M).Index
-                              + Replace_String'Length - 1));
-                     end if;
-
                      Append
                        (Output_Buffer, Buffer (Last .. Matches (M).Index - 1));
                      Append
                        (Output_Buffer,
-                        Casings (Current_Casing));
+                        Context.Replacement_Text
+                          (Replacement,
+                           Buffer (Matches (M).Index .. Matches (M).Index
+                                     + Replace_String'Length - 1)));
 
                      Last := Matches (M).Index + Matches (M).Pattern_Length;
                   end loop;

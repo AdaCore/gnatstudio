@@ -33,6 +33,7 @@ with Generic_List;
 with GPS.Kernel;
 with Language_Handlers;
 with Src_Editor_Buffer;             use Src_Editor_Buffer;
+with GNAT.Strings;
 
 package Src_Contexts is
 
@@ -328,6 +329,34 @@ private
 
    package Directory_List is new Generic_List (Dir_Data_Access);
 
+   type Casing_Type is (Lower, Upper, Smart_Mixed, Unchanged);
+   type Casings_Array is array (Casing_Type) of GNAT.Strings.String_Access;
+
+   type Regexp_Reference is record
+      Offset : Positive;
+      Match  : Natural;
+   end record;
+   --  Reference to one Regexp subexpression in Replace_String
+
+   type Regexp_Reference_Array is
+     array (Positive range <>) of Regexp_Reference;
+   type Regexp_Reference_Array_Access is access all Regexp_Reference_Array;
+   --  Array elements ordered by Offset field
+
+   --  Parsed Replace_String to speedup replacement
+   type Replacement_Pattern is record
+      Replace_String : GNAT.Strings.String_Access := null;
+      --  Cached Replace_String
+      Case_Preserving : Boolean := False;
+      --  Cached Case_Preserving option
+      Casings         : Casings_Array := (others => null);
+      --  Replace_String in each Casing_Type. Valid only if Case_Preserving
+      References : Regexp_Reference_Array_Access;
+      --  References to regexp subexpressions in Replace_String
+      Last       : Natural := 0;
+      --  Last valid element in References;
+   end record;
+
    type File_Search_Context is abstract new Search_Context with record
       Replace_Valid : Boolean := False;
       --  Whether the current search item that the context refers to
@@ -344,7 +373,22 @@ private
       --  The current scope when parsing the current file. This needs to be
       --  saved so that when we continue the search we restart in the proper
       --  state
+
+      Replacement     : Replacement_Pattern;
+      --  Cached replacement pattern
    end record;
+
+   function Get_Replacement_Pattern
+     (Context         : access File_Search_Context;
+      Replace_String  : String;
+      Case_Preserving : Boolean) return Replacement_Pattern;
+   --  Return replacement pattern based on Replace_String
+
+   function Replacement_Text
+     (Context         : access File_Search_Context;
+      Pattern         : Replacement_Pattern;
+      Matched_Text    : String) return String;
+   --  Return replacement text based on replacement pattern
 
    type Current_File_Context is new File_Search_Context with record
       Current_File : Ada.Strings.Unbounded.Unbounded_String;
