@@ -117,6 +117,27 @@ package body Find_Utils is
    end Match;
 
    ---------------------------
+   -- Matched_Subexpressoin --
+   ---------------------------
+
+   procedure Matched_Subexpressoin
+     (Context     : access Root_Search_Context;
+      Index       : Natural;
+      First       : out Natural;
+      Last        : out Natural) is
+   begin
+      if Context.Sub_Matches /= null
+        and then Index in Context.Sub_Matches'Range
+      then
+         First := Context.Sub_Matches (Index).First;
+         Last := Context.Sub_Matches (Index).Last;
+      else
+         First := 1;
+         Last := 0;
+      end if;
+   end Matched_Subexpressoin;
+
+   ---------------------------
    -- Get_Terminate_Message --
    ---------------------------
 
