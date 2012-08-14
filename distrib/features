@@ -44,6 +44,13 @@ NF-52-L716-044 ECL: makefiles can now use gprbuild (2012-07-16)
   builder name is passed as a macro.  In the past this builder name was
   always passed as "gnatmake" but it can now also be "gprbuild" instead.
 
+NF-52-L703-018 GB: GNAT & Ada reference manuals in GNATbench help (2012-08-02)
+
+  Add to GNATbench help content
+  - GNAT user guide & reference manual
+  - Ada language reference manuals
+  - GPRbuild user guide
+
 NF-52-L703-004 GB: Eclipse Juno (3.8) support (2012-07-10)
 
   Eclipse 3.8 is supported by GNATbench 2.7.0
