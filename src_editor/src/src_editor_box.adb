@@ -112,7 +112,7 @@ package body Src_Editor_Box is
       Setup       => Setup);
 
    package Entity_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Entities.Entity_Information);
+     (Glib.Object.GObject_Record, General_Entity);
 
    --------------------------
    -- Forward declarations --
@@ -183,12 +183,12 @@ package body Src_Editor_Box is
 
    procedure On_Goto_Declaration_Of
      (Kernel : access GObject_Record'Class;
-      Entity : Entity_Information);
+      Entity : General_Entity);
    --  Jump to the declaration of the given entity
 
    procedure On_Goto_Body_Of
      (Kernel : access GObject_Record'Class;
-      Entity : Entity_Information);
+      Entity : General_Entity);
    --  Jump to the body of the given entity
 
    procedure On_Toggle_Overwrite
@@ -1571,16 +1571,18 @@ package body Src_Editor_Box is
 
    procedure On_Goto_Declaration_Of
      (Kernel : access GObject_Record'Class;
-      Entity : Entity_Information)
+      Entity : General_Entity)
    is
-      Location : constant File_Location := Get_Declaration_Of (Entity);
+      K        : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Db       : constant General_Xref_Database := K.Databases;
+      Location : constant General_Location := Get_Declaration (Db, Entity);
    begin
       Go_To_Closest_Match
-        (Kernel_Handle (Kernel),
-         Filename => Get_Filename (Location.File),
+        (Kernel   => K,
+         Filename => Location.File,
          Line     => Convert (Location.Line),
          Column   => Location.Column,
-         Entity   => Entity);
+         Entity   => Entity.Old_Entity);
    end On_Goto_Declaration_Of;
 
    ---------------------
@@ -1589,19 +1591,19 @@ package body Src_Editor_Box is
 
    procedure On_Goto_Body_Of
      (Kernel : access GObject_Record'Class;
-      Entity : Entity_Information)
+      Entity : General_Entity)
    is
       Location : File_Location;
    begin
       Find_Next_Body
-        (Entity   => Entity,
+        (Entity   => Entity.Old_Entity,
          Location => Location);
       Go_To_Closest_Match
         (Kernel_Handle (Kernel),
          Filename => Get_Filename (Location.File),
          Line     => Convert (Location.Line),
          Column   => Location.Column,
-         Entity   => Entity);
+         Entity   => Entity.Old_Entity);
    end On_Goto_Body_Of;
 
    --------------------------------
@@ -1624,14 +1626,15 @@ package body Src_Editor_Box is
       Count  : Natural := 0;
       Db     : Entities.Entities_Database;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Xref_Db : constant General_Xref_Database := Kernel.Databases;
 
       function On_Callee
-        (Callee, Primitive_Of : Entity_Information) return Boolean;
+        (Callee, Primitive_Of : General_Entity) return Boolean;
 
       --  CP record is used to sort the menu entries by means of an ordered set
 
       type CP is record
-         Callee, Primitive_Of : Entity_Information;
+         Callee, Primitive_Of : General_Entity;
       end record;
 
       function "<" (Left, Right : CP) return Boolean;
@@ -1643,8 +1646,8 @@ package body Src_Editor_Box is
 
       function "<" (Left, Right : CP) return Boolean is
       begin
-         return Get (Get_Name (Left.Primitive_Of)).all
-           < Get (Get_Name (Right.Primitive_Of)).all;
+         return Get_Name (Xref_Db, Left.Primitive_Of)
+           < Get_Name (Xref_Db, Right.Primitive_Of);
       end "<";
 
       ---------
@@ -1653,8 +1656,8 @@ package body Src_Editor_Box is
 
       overriding function "=" (Left, Right : CP) return Boolean is
       begin
-         return Get (Get_Name (Left.Primitive_Of)).all
-           = Get (Get_Name (Right.Primitive_Of)).all;
+         return Get_Name (Xref_Db, Left.Primitive_Of)
+           = Get_Name (Xref_Db, Right.Primitive_Of);
       end "=";
 
       package CP_Set is new Ordered_Sets (CP);
@@ -1671,7 +1674,7 @@ package body Src_Editor_Box is
       begin
          Gtk_New (Label,
                   "Primitive of: "
-                  & Emphasize (Get (Get_Name (E.Primitive_Of)).all));
+                  & Emphasize (Get_Name (Xref_Db, E.Primitive_Of)));
          Set_Use_Markup (Label, True);
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
@@ -1690,34 +1693,114 @@ package body Src_Editor_Box is
       ---------------
 
       function On_Callee
-        (Callee, Primitive_Of : Entity_Information) return Boolean is
+        (Callee, Primitive_Of : General_Entity) return Boolean
+      is
+         New_Elem : constant CP := (Callee, Primitive_Of);
+
       begin
-         E_Set.Insert (CP'(Callee, Primitive_Of));
+         if not E_Set.Contains (New_Elem) then
+            E_Set.Insert (New_Elem);
+         end if;
+
          return True;
       end On_Callee;
 
+      procedure Old_Version;
+      --  Legacy implementation adapted to use General_Entity
+      --  This routine will be eventually removed???
+
+      procedure Old_Version is
+      begin
+         Trace (Me, "Computing Dispatch_Submenu: " & Default_Title);
+         Push_State (Kernel, Busy);
+
+         if Force_Freeze then
+            Db := Get_Database (Kernel);
+            pragma Assert (Frozen (Db) = Create_And_Update);
+            Freeze (Db);
+         end if;
+
+         if Pref = From_Memory then
+            Gtk_New (Label, -"<i>Partial information only</i>");
+            Set_Use_Markup (Label, True);
+            Set_Alignment (Label, 0.0, 0.5);
+            Gtk_New (Item);
+            Add (Item, Label);
+            Set_Sensitive (Item, False);
+            Add (Menu, Item);
+         end if;
+
+         Xref.For_Each_Dispatching_Call
+           (Dbase     => Xref_Db,
+            Entity    => Get_Entity (Context),
+            Ref       => Get_Closest_Ref (Context),
+            On_Callee => On_Callee'Access,
+            Filter    => Filter,
+            Policy    => Pref);
+
+         E_Set.Iterate (Fill_Menu'Access);
+
+         --  If we have not found any possible call, we must be missing some
+         --  .ALI file (for instance the one containing the declaration of the
+         --  tagged type). In that case we show the same info as we would have
+         --  for a non-dispatching call to be as helpful as possible
+
+         if Count = 0 and then Show_Default then
+            Gtk_New
+              (Label,
+               Default_Title
+               & Emphasize (Get (Get_Name (Get_Entity (Context))).all));
+            Set_Use_Markup (Label, True);
+            Set_Alignment (Label, 0.0, 0.5);
+            Gtk_New (Item);
+            Add (Item, Label);
+            Entity_Callback.Object_Connect
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               Callback, Kernel, Get_Entity (Context));
+            Add (Menu, Item);
+         end if;
+
+         if Force_Freeze then
+            Thaw (Db);
+            pragma Assert (Frozen (Db) = Create_And_Update);
+         end if;
+
+         Pop_State (Kernel);
+         Trace (Me, "Done computing Dispatch_Declaration_Submenu");
+
+      exception
+         when E : others =>
+            Trace (Me, E);
+
+            if Frozen (Db) /= Create_And_Update then
+               Thaw (Db);
+            end if;
+
+            Pop_State (Kernel);
+      end Old_Version;
+
+   --  Start of processing for Append_To_Dispatching_Menu
+
    begin
+      if not Active (Entities.SQLITE) then
+         Old_Version;
+         return;
+      end if;
+
       Trace (Me, "Computing Dispatch_Submenu: " & Default_Title);
       Push_State (Kernel, Busy);
 
-      if Force_Freeze then
-         Db := Get_Database (Kernel);
-         pragma Assert (Frozen (Db) = Create_And_Update);
-         Freeze (Db);
-      end if;
+      --  Before getting its entity we check if the LI handler has unresolved
+      --  imported references to force updating its references
 
-      if Pref = From_Memory then
-         Gtk_New (Label, -"<i>Partial information only</i>");
-         Set_Use_Markup (Label, True);
-         Set_Alignment (Label, 0.0, 0.5);
-         Gtk_New (Item);
-         Add (Item, Label);
-         Set_Sensitive (Item, False);
-         Add (Menu, Item);
-      end if;
+      Ensure_Context_Up_To_Date (Context);
 
-      For_Each_Dispatching_Call
-        (Entity    => Get_Entity (Context),
+      --  Warning: Force_Freeze and Pref are unused in the new implementation
+      --  and will be eventually removed as arguments???
+
+      Xref.For_Each_Dispatching_Call
+        (Dbase     => Xref_Db,
+         Entity    => Get_Entity (Context),
          Ref       => Get_Closest_Ref (Context),
          On_Callee => On_Callee'Access,
          Filter    => Filter,
@@ -1745,22 +1828,12 @@ package body Src_Editor_Box is
          Add (Menu, Item);
       end if;
 
-      if Force_Freeze then
-         Thaw (Db);
-         pragma Assert (Frozen (Db) = Create_And_Update);
-      end if;
-
       Pop_State (Kernel);
       Trace (Me, "Done computing Dispatch_Declaration_Submenu");
 
    exception
       when E : others =>
          Trace (Me, E);
-
-         if Frozen (Db) /= Create_And_Update then
-            Thaw (Db);
-         end if;
-
          Pop_State (Kernel);
    end Append_To_Dispatching_Menu;
 
@@ -1918,16 +1991,17 @@ package body Src_Editor_Box is
       pragma Unreferenced (Filter);
       Count  : Integer := 0;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Db     : constant General_Xref_Database := Kernel.Databases;
 
       function On_Callee
-        (Callee, Primitive_Of : Entity_Information) return Boolean;
+        (Callee, Primitive_Of : General_Entity) return Boolean;
 
       ---------------
       -- On_Callee --
       ---------------
 
       function On_Callee
-        (Callee, Primitive_Of : Entity_Information) return Boolean
+        (Callee, Primitive_Of : General_Entity) return Boolean
       is
          pragma Unreferenced (Callee, Primitive_Of);
       begin
@@ -1944,11 +2018,14 @@ package body Src_Editor_Box is
 
       if Is_Dispatching_Call (Context) = Indeterminate then
          Push_State (Kernel, Busy);
-         For_Each_Dispatching_Call
-           (Entity    => Get_Entity (Context),
+
+         Xref.For_Each_Dispatching_Call
+           (Dbase     => Db,
+            Entity    => Get_Entity (Context),
             Ref       => Get_Closest_Ref (Context),
             On_Callee => On_Callee'Access,
             Policy    => Submenu_For_Dispatching_Calls.Get_Pref);
+
          Pop_State (Get_Kernel (Context));
 
          --  See comment above to see why this code is commented out pragma
