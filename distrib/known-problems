@@ -348,3 +348,9 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Problem:    GPS does not properly compute the syntax coloring for comments
               which contain international characters in C sources.
   Workaround: No workaround.
+
+- L810-017: GPS: Minor display glitch in Locations View
+  Problem:    Category in Locations View doesn't correctly displayed as
+              result of 'Find All' search if pattern contains markup
+              characters.
+  Workaround: No workaround.
