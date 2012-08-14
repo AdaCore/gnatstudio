@@ -170,6 +170,15 @@ NF-52-L120-062 GB: set actual name of main in debug config (2012-05-16)
   Newly created debug configurations now set the default breakpoint to the
   procedure of the main executable rather than simply "main".
 
+NF-52-L118-005 ECL: Removal policy when fixing code (2012-08-14)
+
+    A "Removal policy when fixing code" preference setting is added to Ada
+    "General" preference page. It defines the way to fix code when parts have
+    to be removed.
+    - `Always_Remove` means that the code will be removed by GNATbench.
+    - `Always_Comment` means that the code will always be commented out.
+    - `Propose_Both_Choices` will propose a menu with both choices.
+
 NF-52-L109-019 GPS: goto next/previous bookmark (2012-01-23)
 
   Two new actions ("Goto Next Bookmark" and "Goto Previous Bookmark") are
