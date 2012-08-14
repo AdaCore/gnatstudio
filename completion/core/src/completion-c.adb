@@ -45,19 +45,22 @@ package body Completion.C is
       New_Context_All.Expression :=
         Parse_Expression_Backward (Context.Buffer, Context.Offset);
 
-      Prev_Tok :=
-        Token_List.Data (Token_List.Last (New_Context_All.Expression.Tokens));
+      if New_Context_All.Expression /= Null_Parsed_Expression then
+         Prev_Tok :=
+           Token_List.Data
+             (Token_List.Last (New_Context_All.Expression.Tokens));
 
-      It := First (Manager.Ordered_Resolvers);
-      while It /= Completion_Resolver_List_Pckg.No_Element loop
-         Get_Completion_Root
-           (Resolver => Element (It),
-            Offset   => Prev_Tok.Token_First - 1,
-            Context  => New_Context,
-            Result   => Result);
+         It := First (Manager.Ordered_Resolvers);
+         while It /= Completion_Resolver_List_Pckg.No_Element loop
+            Get_Completion_Root
+              (Resolver => Element (It),
+               Offset   => Prev_Tok.Token_First - 1,
+               Context  => New_Context,
+               Result   => Result);
 
-         It := Next (It);
-      end loop;
+            It := Next (It);
+         end loop;
+      end if;
 
       return Result;
    end Get_Initial_Completion_List;
