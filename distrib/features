@@ -73,6 +73,15 @@ NF-52-L514-028 GPS: Action tooltip in Locations view (2012-05-21)
   The Locations View now displays a tooltip for the action associated with a
   message.
 
+NF-52-L426-037 GB: remove trailing blanks when saving an ada file (2012-08-14)
+
+  When saving ada files, trailing blanks can be removed. This is done via the
+  new "Remove trailing spaces when saving" preference found in the Ada
+  "Editor" page.
+  The different capabilities are "Never", "Autodetect" and "Allways".
+  Autodetect means that removing trailing blanks occurs only if the file had
+  already saved trailing blanks.
+
 NF-52-L416-043 GB: Improved search results interaction (2012-04-16)
 
   When a non-nested entry is selected in the search results, the editor is now
