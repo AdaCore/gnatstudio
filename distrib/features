@@ -44,7 +44,7 @@ NF-52-L716-044 ECL: makefiles can now use gprbuild (2012-07-16)
   builder name is passed as a macro.  In the past this builder name was
   always passed as "gnatmake" but it can now also be "gprbuild" instead.
 
-NF-52-L703-004 GB: Eclipse Juno (3.8) support (2012-08-14)
+NF-52-L703-004 GB: Eclipse Juno (3.8) support (2012-07-10)
 
   Eclipse 3.8 is supported by GNATbench 2.7.0
   Note: Eclipse 3.8 requires a JRE 1.6 (Java Runtime Environment).
@@ -170,7 +170,7 @@ NF-52-L120-062 GB: set actual name of main in debug config (2012-05-16)
   Newly created debug configurations now set the default breakpoint to the
   procedure of the main executable rather than simply "main".
 
-NF-52-L118-005 ECL: Removal policy when fixing code (2012-08-14)
+NF-52-L118-005 ECL: Removal policy when fixing code (2012-01-24)
 
     A "Removal policy when fixing code" preference setting is added to Ada
     "General" preference page. It defines the way to fix code when parts have
@@ -242,7 +242,7 @@ NF-52-K907-014 GPS: Navigation from Ada to C++ (2011-10-26)
   GPS now incorporates support for navigating through Ada entities imported
   from C++.
 
-NF-52-K726-023 ECL: Specific "Build Main" menu for each Main file (2012-08-14)
+NF-52-K726-023 ECL: Specific "Build Main" menu for each Main file (2012-07-17)
 
   All units containing an application entry point appears in the Project's
   "Build Main" menu.
