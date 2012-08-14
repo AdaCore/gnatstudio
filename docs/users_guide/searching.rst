@@ -60,7 +60,9 @@ On this screen shot, you can see three entry fields:
 
   This field should contain the string that will replace the occurrences of the
   pattern defined above.  The combo box provides a history of previously used
-  replacement strings.
+  replacement strings. If regular expression is used for search, special
+  escapes \1, \2 .. \9 in this field refer to the corresponding matching
+  sub-expressions and \0 refers whole matched string.
 
 *Look in*
   .. index:: look in

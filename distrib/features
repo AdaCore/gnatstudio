@@ -293,6 +293,12 @@ NF-52-G917-017 GPS: Coverage Report accessible through Back button (2012-02-02)
   this location in an editor, and it is now possible to click the "Back" button
   in the toolbar to go back to the Code Coverage report.
 
+NF-52-G618-003 GPS: search/replace with regular expressions (2012-08-14)
+
+  The replacement may contain the special escapes \0 through \9 to refer
+  to the corresponding matching text and sub-expressions if search done
+  in regexp mode.
+
 NF-52-G507-003 GPS: automatic mode for "strip blanks" preference (2012-04-24)
 
   In new automatic mode GPS detects trailing blanks on open file and
