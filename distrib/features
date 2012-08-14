@@ -44,6 +44,11 @@ NF-52-L716-044 ECL: makefiles can now use gprbuild (2012-07-16)
   builder name is passed as a macro.  In the past this builder name was
   always passed as "gnatmake" but it can now also be "gprbuild" instead.
 
+NF-52-L703-004 GB: Eclipse Juno (3.8) support (2012-08-14)
+
+  Eclipse 3.8 is supported by GNATbench 2.7.0
+  Note: Eclipse 3.8 requires a JRE 1.6 (Java Runtime Environment).
+
 NF-52-L702-019 GPS: Clear locations action for key shortcuts (2012-07-04)
 
   GPS provides a new action to assign a key shortcut to the 'Clear locations'
