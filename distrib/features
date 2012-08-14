@@ -207,6 +207,11 @@ NF-52-KC07-036 GPS: doc converted to sphinx (2011-12-08)
   looking output. In particular, the new format provides an integrated
   search feature over all pages of the manual.
 
+NF-52-KB10-053 GB: outside workspace relative path support (2011-12-06)
+
+  Relative path for GNAT project file in the GNATbench properties can point to
+  a file located outside the workspace.
+
 NF-52-KA28-027 GPS: new Editor action "toggle wrapping" (2011-10-28)
 
   A new action "toggle wrapping" is defined in the plugin text_utils.py,
