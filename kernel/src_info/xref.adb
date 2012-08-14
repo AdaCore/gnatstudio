@@ -17,9 +17,9 @@
 
 pragma Ada_2012;
 
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Entities.Queries;          use Entities.Queries;
 with Glib.Convert;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -27,8 +27,20 @@ with GNAT.Strings;              use GNAT.Strings;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
+with Traces;
 
 package body Xref is
+
+   function To_General_Entity
+     (Db : General_Xref_Database;
+      E  : GNATCOLL.Xref.Entity_Information) return General_Entity;
+   --  Convert Xref.Entity_Information to General_Entity
+
+   function To_General_Entity
+     (Db : General_Xref_Database;
+      E  : Entities.Entity_Information) return General_Entity;
+   --  Convert Entities.Entity_Information to General_Entity. This routine is
+   --  provided to support to legacy code. It will be eventually removed???
 
    ---------------------------
    --  Note for development --
@@ -51,6 +63,154 @@ package body Xref is
       Ent         : out Entity_Access;
       Tree_Lang   : out Tree_Language_Access);
    --  Returns the constructs data for a given entity.
+
+   -------------------------------
+   -- For_Each_Dispatching_Call --
+   -------------------------------
+
+   procedure For_Each_Dispatching_Call
+     (Dbase     : General_Xref_Database;
+      Entity    : General_Entity;
+      Ref       : General_Entity_Reference;
+      On_Callee : access function
+                    (Callee, Primitive_Of : General_Entity) return Boolean;
+      Filter    : Entities.Reference_Kind_Filter := Entity_Has_Declaration;
+      Policy    : Dispatching_Menu_Policy)
+
+   is
+      use type Entities.Reference_Kind;
+
+      Prim_Ent  : General_Entity;
+      Typ_Ent   : General_Entity;
+
+   begin
+      --  Handle cases in which no action is needed
+
+      if Entity = No_General_Entity
+        or else Policy = Never
+      then
+         return;
+
+      elsif not Active (Entities.SQLITE)
+        and then Entities.Get_Kind (Ref.Old_Ref)
+                   /= Entities.Dispatching_Call
+      then
+         return;
+      end if;
+
+      --  New functionality
+
+      if Active (Entities.SQLITE) then
+         declare
+            function Tagged_Type (E : GNATCOLL.Xref.Entity_Information)
+               return GNATCOLL.Xref.Entity_Information;
+
+            function Tagged_Type (E : GNATCOLL.Xref.Entity_Information)
+               return GNATCOLL.Xref.Entity_Information is
+            begin
+               return Dbase.Xref.Declaration
+                        (Dbase.Xref.Method_Of (E)).Location.Entity;
+            end Tagged_Type;
+
+            Cursor : GNATCOLL.Xref.Recursive_Entities_Cursor;
+            Prim   : GNATCOLL.Xref.Entity_Information;
+
+         begin
+            Prim     := Entity.Entity;
+            Prim_Ent := To_General_Entity (Dbase, Prim);
+            Typ_Ent  := To_General_Entity (Dbase, Tagged_Type (Prim));
+
+            if On_Callee (Callee => Prim_Ent, Primitive_Of => Typ_Ent) then
+               Recursive
+                 (Self    => Dbase.Xref,
+                  Entity  => Entity.Entity,
+                  Compute => Overridden_By'Unrestricted_Access,
+                  Cursor  => Cursor);
+
+               while Cursor.Has_Element loop
+                  Prim     := Cursor.Element;
+                  Prim_Ent := To_General_Entity (Dbase, Prim);
+                  Typ_Ent  := To_General_Entity (Dbase, Tagged_Type (Prim));
+
+                  exit when not On_Callee
+                    (Callee => Prim_Ent,
+                     Primitive_Of => Typ_Ent);
+
+                  Cursor.Next;
+               end loop;
+            end if;
+
+         exception
+            when E : others =>
+               Trace (Traces.Exception_Handle, "Unexpected exception: "
+                      & Exception_Information (E));
+         end;
+
+      --  Legacy functionality
+
+      else
+         declare
+            Iter : Entities.Queries.Entity_Reference_Iterator;
+            Db   : Entities.Entities_Database;
+
+         begin
+            if Policy = From_Memory then
+               Db :=
+                 Entities.Get_Database
+                   (Entities.Get_File
+                        (Entities.Get_Declaration_Of (Entity.Old_Entity)));
+               Entities.Freeze (Db);
+            end if;
+
+            Entities.Queries.Find_All_References
+              (Iter                  => Iter,
+               Entity                => Entity.Old_Entity,
+               File_Has_No_LI_Report => null,
+               In_File               => null,
+               Filter                => Filter,
+               Include_Overriding    => True,
+               Include_Overridden    => False);
+
+            declare
+               E, Typ : Entities.Entity_Information;
+
+            begin
+               while not At_End (Iter) loop
+                  E := Get_Entity (Iter);
+
+                  if E /= null then
+                     Typ := Entities.Is_Primitive_Operation_Of (E);
+
+                     if Typ /= null then
+                        Prim_Ent := To_General_Entity (Dbase, E);
+                        Typ_Ent  := To_General_Entity (Dbase, Typ);
+
+                        exit when not On_Callee
+                          (Callee => Prim_Ent,
+                           Primitive_Of => Typ_Ent);
+                     end if;
+                  end if;
+
+                  Next (Iter);
+               end loop;
+            end;
+
+            Destroy (Iter);
+
+            if Policy = From_Memory then
+               Entities.Thaw (Db);
+            end if;
+
+         exception
+            when E : others =>
+               Trace (Traces.Exception_Handle, "Unexpected exception: "
+                      & Exception_Information (E));
+               if Policy = From_Memory then
+                  Entities.Thaw (Db);
+               end if;
+         end;
+      end if;
+   end For_Each_Dispatching_Call;
 
    ----------------
    -- Get_Entity --
@@ -272,6 +432,60 @@ package body Xref is
    begin
       Entities.Ref (Entity.Old_Entity);
    end Ref;
+
+   -----------------------
+   -- To_General_Entity --
+   -----------------------
+
+   function To_General_Entity
+     (Db : General_Xref_Database;
+      E  : GNATCOLL.Xref.Entity_Information) return General_Entity
+   is
+      Decl : constant GNATCOLL.Xref.Entity_Declaration :=
+               GNATCOLL.Xref.Declaration (Db.Xref.all, E);
+      Loc  : General_Location;
+
+   begin
+      pragma Assert (Active (Entities.SQLITE));
+
+      Loc :=
+        (File   => Decl.Location.File,
+         Line   => Decl.Location.Line,
+         Column => Visible_Column_Type (Decl.Location.Column));
+
+      return
+        Get_Entity
+          (Db   => Db,
+           Name => To_String (Decl.Name),
+           Loc  => Loc);
+   end To_General_Entity;
+
+   -----------------------
+   -- To_General_Entity --
+   -----------------------
+
+   function To_General_Entity
+     (Db : General_Xref_Database;
+      E  : Entities.Entity_Information) return General_Entity
+   is
+      Decl : Entities.File_Location;
+      Loc  : General_Location;
+
+   begin
+      pragma Assert (not Active (Entities.SQLITE));
+
+      Decl := Entities.Get_Declaration_Of (E);
+      Loc  :=
+        (File   => Entities.Get_Filename (Decl.File),
+         Line   => Decl.Line,
+         Column => Decl.Column);
+
+      return
+        Get_Entity
+          (Db   => Db,
+           Name => Get (Entities.Get_Name (E)).all,
+           Loc  => Loc);
+   end To_General_Entity;
 
    -----------
    -- Unref --

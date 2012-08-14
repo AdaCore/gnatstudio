@@ -23,6 +23,7 @@ with Basic_Types;   use Basic_Types;
 with GNATCOLL.VFS;  use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
 with Entities;
+with Entities.Queries; use Entities.Queries;
 with Language_Handlers;
 with Language.Tree.Database;
 
@@ -90,6 +91,34 @@ package Xref is
    --
    --  Some operations might even query using one back-end, then fall back
    --  on a less precise back-end if the first query is not precise enough.
+
+   procedure For_Each_Dispatching_Call
+     (Dbase     : General_Xref_Database;
+      Entity    : General_Entity;
+      Ref       : General_Entity_Reference;
+      On_Callee : access function
+                    (Callee, Primitive_Of : General_Entity) return Boolean;
+      Filter    : Entities.Reference_Kind_Filter := Entity_Has_Declaration;
+      Policy    : Entities.Queries.Dispatching_Menu_Policy);
+   --  If Ref references a dispatching call then call On_Callee with all the
+   --  overridding primitives (that is, all the primitives that might possibly
+   --  be called instead of Entity). For example, if you have:
+   --         procedure Dispatch (Self : Base'Class) is
+   --         begin
+   --            Proc (Self);
+   --         end Dispatch;
+   --  and call For_Each_Dispatching_Call on Proc, you will get the primitive
+   --  operation of Base and all the overriding primitive ops of its children.
+   --
+   --  Filter can be used to make sure the entity has some specific type of
+   --  reference. The most common use is to ensure that the entity does have
+   --  a body (ie is not abstract), in which case the filter is set to
+   --  Entity_Has_Body.
+   --
+   --  Search stops when On_Callee returns False
+   --
+   --  Nothing is done if Ref does not point to a dispatching call.
+   --  This procedure does not propagate any exception.
 
    function Get_Entity
      (Db   : General_Xref_Database;

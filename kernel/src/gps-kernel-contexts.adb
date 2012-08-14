@@ -19,7 +19,7 @@ with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 with Basic_Types;        use Basic_Types;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
@@ -862,6 +862,32 @@ package body GPS.Kernel.Contexts is
          return Context.Data.Data.Xref_Closest_Ref.Old_Ref;
       else
          return Entities.No_Entity_Reference;
+      end if;
+   end Get_Closest_Ref;
+
+   function Get_Closest_Ref
+     (Context : Selection_Context) return Xref.General_Entity_Reference
+   is
+   begin
+      --  Before getting its entity we check if the LI handler has unresolved
+      --  imported references to force updating its references. This code will
+      --  be eventually removed???
+
+      if not Active (Entities.SQLITE) then
+         declare
+            Entity : constant Entities.Entity_Information :=
+                       Get_Entity (Context, Ask_If_Overloaded => False);
+            pragma Unreferenced (Entity);
+
+         begin
+            null;
+         end;
+      end if;
+
+      if Context.Data.Data.Entity_Resolved = Success then
+         return Context.Data.Data.Xref_Closest_Ref;
+      else
+         return Xref.No_General_Entity_Reference;
       end if;
    end Get_Closest_Ref;
 
