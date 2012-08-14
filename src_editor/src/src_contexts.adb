@@ -720,7 +720,7 @@ package body Src_Contexts is
 
    function Locations_Category_Name (Look_For : String) return String is
    begin
-      return -"Search for: " & Look_For;
+      return -"Search for: " & Glib.Convert.Escape_Text (Look_For);
    end Locations_Category_Name;
 
    ----------------------
