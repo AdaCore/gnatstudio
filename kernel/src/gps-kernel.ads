@@ -987,7 +987,11 @@ private
    ----------
 
    type Hook_Function_Record is abstract tagged record
-      Ref_Count : Natural := 0;
+      Ref_Count    : Natural := 0;
+      Watch_Object : Glib.Object.GObject;
+      Watch_Data   : System.Address;
+      --  Watch_Object and Watch_Data are filled when hook is configured to
+      --  watching for Glib object.
    end record;
 
    type Hook_Description_Base is abstract tagged null record;

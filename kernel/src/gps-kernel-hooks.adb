@@ -299,6 +299,13 @@ package body GPS.Kernel.Hooks is
    --  Same as Add_Hook, but directly with the hook description. This saves a
    --  look up in a hash table.
 
+   procedure Reference (Hook : not null Hook_Function);
+   --  Increments internal reference counter.
+
+   procedure Unreference (Hook : in out Hook_Function);
+   --  Decrements internal reference counter and destroy object when reference
+   --  counter reachs zero.
+
    ------------------------
    -- Get_Or_Create_Hook --
    ------------------------
@@ -361,6 +368,45 @@ package body GPS.Kernel.Hooks is
          Free (Hook.Funcs);
       end if;
    end Free;
+
+   ----------------
+   --  Reference --
+   ----------------
+
+   procedure Reference (Hook : not null Hook_Function) is
+   begin
+      Hook.Ref_Count := Hook.Ref_Count + 1;
+   end Reference;
+
+   -----------------
+   -- Unreference --
+   -----------------
+
+   procedure Unreference (Hook : in out Hook_Function) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Hook_Function_Record'Class, Hook_Function);
+
+   begin
+      Hook.Ref_Count := Hook.Ref_Count - 1;
+
+      if Hook.Ref_Count = 0 then
+         if Hook.Watch_Object /= null then
+            --  Remove weak reference from Glib object to avoid dangling
+            --  pointers.
+
+            Glib.Object.Weak_Unref
+              (Hook.Watch_Object, Remove_Hook_Cb'Access, Hook.Watch_Data);
+            Hook.Watch_Object := null;
+            Hook.Watch_Data   := System.Null_Address;
+         end if;
+
+         Destroy (Hook.all);
+         Unchecked_Free (Hook);
+
+      else
+         Hook := null;
+      end if;
+   end Unreference;
 
    -----------------------------
    -- Register_Hook_Data_Type --
@@ -652,8 +698,7 @@ package body GPS.Kernel.Hooks is
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
       Name   : Hook_Name;
       Watch  : Glib.Object.GObject := null;
-      Last   : Boolean := False)
-   is
+      Last   : Boolean := False) is
    begin
       if Last then
          Append
@@ -664,16 +709,18 @@ package body GPS.Kernel.Hooks is
            (Info.Funcs,
             (Func => Hook_Function (Func), Name => new Hook_Name'(Name)));
       end if;
-      Func.Ref_Count := Func.Ref_Count + 1;
+
+      Reference (Func);
 
       if Watch /= null then
-         Func.Ref_Count := Func.Ref_Count + 1;
-         Weak_Ref
-           (Watch, Remove_Hook_Cb'Access,
+         Func.Watch_Object := Watch;
+         Func.Watch_Data :=
             Convert
               (new Hook_User_Data'(Kernel_Handle (Kernel),
                new Hook_Name'(Info.Name.all),
-               Hook_Function (Func))));
+               Hook_Function (Func)));
+         Reference (Func);
+         Weak_Ref (Func.Watch_Object, Remove_Hook_Cb'Access, Func.Watch_Data);
       end if;
 
       if Active (Me) then
@@ -1212,10 +1259,18 @@ package body GPS.Kernel.Hooks is
             for J in Arr'Range loop
                F := Arr (J);
 
+               Reference (F.Func);
+               --  Increment reference counter to prevent from deallocation
+               --  of hook inside the watch callback.
+
                Assert (Me, F.Func.all in Function_With_Args'Class,
                        "Hook expects arguments: " & String (Hook)
                        & " for function: " & String (F.Name.all));
                Execute (Function_With_Args_Access (F.Func).all, Kernel, Data);
+
+               Unreference (F.Func);
+               --  Decrement reference counter to release object, it is not
+               --  used anymore.
             end loop;
          end;
 
@@ -1467,8 +1522,17 @@ package body GPS.Kernel.Hooks is
         (Hook_User_Data, Hook_User_Data_Access);
       D : Hook_User_Data_Access := Convert (Data);
    begin
-      D.Func.Ref_Count := D.Func.Ref_Count - 1;
+      --  Reset reference to the Glib object, it was destroyed already.
+
+      D.Func.Watch_Object := null;
+      D.Func.Watch_Data   := System.Null_Address;
+
       Remove_Hook (D.Kernel, D.Name.all, D.Func);
+
+      --  Decrement reference counter, was obtained for this function.
+
+      Unreference (D.Func);
+
       Free (D.Name);
       Unchecked_Free (D);
    end Remove_Hook_Cb;
@@ -1478,20 +1542,13 @@ package body GPS.Kernel.Hooks is
    ----------
 
    procedure Free (F : in out Hook_Function_Description) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Hook_Function_Record'Class, Hook_Function);
    begin
-      F.Func.Ref_Count := F.Func.Ref_Count - 1;
-
       --  Always free the name, which is associated with a specific node in the
       --  list. If the same function hook is connected multiple times, it will
       --  have multiple names every times.
       Free (F.Name);
 
-      if F.Func.Ref_Count = 0 then
-         Destroy (F.Func.all);
-         Unchecked_Free (F.Func);
-      end if;
+      Unreference (F.Func);
    end Free;
 
    --------------------------
