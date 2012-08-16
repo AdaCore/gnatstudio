@@ -1252,16 +1252,15 @@ package body GPS.Kernel.Hooks is
             N := First (Info.Funcs);
             while N /= Null_Node loop
                Arr (Counter) := Hooks_List.Data (N);
+               Reference (Arr (Counter).Func);
+               --  Increment reference counter to prevent from deallocation
+               --  of hook inside the watch callback.
                Counter := Counter + 1;
                N := Next (N);
             end loop;
 
             for J in Arr'Range loop
                F := Arr (J);
-
-               Reference (F.Func);
-               --  Increment reference counter to prevent from deallocation
-               --  of hook inside the watch callback.
 
                Assert (Me, F.Func.all in Function_With_Args'Class,
                        "Hook expects arguments: " & String (Hook)
@@ -1543,10 +1542,12 @@ package body GPS.Kernel.Hooks is
 
    procedure Free (F : in out Hook_Function_Description) is
    begin
-      --  Always free the name, which is associated with a specific node in the
-      --  list. If the same function hook is connected multiple times, it will
-      --  have multiple names every times.
-      Free (F.Name);
+      if F.Func.Ref_Count = 1 then
+         --  Always free the name, which is associated with a specific node in
+         --  the list. If the same function hook is connected multiple times,
+         --  it will have multiple names every times.
+         Free (F.Name);
+      end if;
 
       Unreference (F.Func);
    end Free;
