@@ -1359,6 +1359,27 @@ package body Src_Contexts is
       return Context;
    end Files_From_Project_Factory;
 
+   -------------------------------------
+   -- Files_From_Root_Project_Factory --
+   -------------------------------------
+
+   function Files_From_Root_Project_Factory
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access
+   is
+      Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
+      Context : constant Files_Project_Context_Access :=
+                  new Files_Project_Context;
+   begin
+      Context.Scope      := Search_Scope'Val (Get_Active (Scope.Combo));
+      Context.All_Occurrences := All_Occurrences;
+      Context.Begin_Line      := 0;
+      Set_File_List (Context, Get_Project (Kernel).Source_Files (False));
+      return Search_Context_Access (Context);
+   end Files_From_Root_Project_Factory;
+
    ---------------------------
    -- Get_Terminate_Message --
    ---------------------------

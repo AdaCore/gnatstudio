@@ -32,6 +32,10 @@ NF-52-L730-016 GPS: display timestamps in File Selector dialog (2012-08-02)
 
   The dialog from /File/Open... now displays the timestamp for local files.
 
+NF-52-L726-020 GPS: search in root project only (2012-08-16)
+
+  New scope to search in root project files excluding subprojects.
+
 NF-52-L723-018 ECL: gprbuild use of cross compilers via makefiles (2012-07-23)
 
   GNATbench for Eclipse now directly supports use of makefiles and gprbuild to
