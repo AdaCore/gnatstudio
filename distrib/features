@@ -90,7 +90,7 @@ NF-52-L426-037 GB: remove trailing blanks when saving an ada file (2012-08-14)
   When saving ada files, trailing blanks can be removed. This is done via the
   new "Remove trailing spaces when saving" preference found in the Ada
   "Editor" page.
-  The different capabilities are "Never", "Autodetect" and "Allways".
+  The different capabilities are "Never", "Autodetect" and "Always".
   Autodetect means that removing trailing blanks occurs only if the file had
   already saved trailing blanks.
 
