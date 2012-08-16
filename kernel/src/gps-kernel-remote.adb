@@ -194,7 +194,7 @@ package body GPS.Kernel.Remote is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 11));
    begin
-      Set_Nth_Arg (D.all,  1, String (Hook));
+      Set_Nth_Arg (D.all,  1, To_String (Hook));
       Set_Nth_Arg (D.all,  2, Data.Tool_Name);
       Set_Nth_Arg (D.all,  3, Data.Host_Name);
       Set_Nth_Arg (D.all,  4, Data.To_Remote);
@@ -242,7 +242,7 @@ package body GPS.Kernel.Remote is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 3));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Distant_Server_Type'Image (Data.Server));
       Set_Nth_Arg (D.all, 3, Data.Nickname);
       return D;

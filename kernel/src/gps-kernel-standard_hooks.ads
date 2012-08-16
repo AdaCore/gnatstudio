@@ -33,7 +33,7 @@ package GPS.Kernel.Standard_Hooks is
    -- GPS Started --
    -----------------
 
-   GPS_Started_Hook : constant Hook_Name := "gps_started";
+   GPS_Started_Hook : constant Hook_Name := To_Hook_Name ("gps_started");
 
    -----------
    -- Hooks --
@@ -174,7 +174,8 @@ package GPS.Kernel.Standard_Hooks is
      File_Location_Hooks_Args'Class;
    --  These hooks contains a location inside a source editor
 
-   Location_Changed_Hook : constant Hook_Name := "location_changed";
+   Location_Changed_Hook : constant Hook_Name :=
+                             To_Hook_Name ("location_changed");
    --  Hook called when the location in the current editor has changed. Its
    --  arguments are of type File_Location_Hooks_Args'Class
 
@@ -216,9 +217,9 @@ package GPS.Kernel.Standard_Hooks is
 
    type Exit_Before_Action_Hooks_Args is new Hooks_Data with null record;
    Before_Exit_Action_Hook      : constant Hook_Name :=
-                                    "before_exit_action_hook";
+                                    To_Hook_Name ("before_exit_action_hook");
    Before_Exit_Action_Hook_Type : constant Hook_Type :=
-                                    Hook_Type (Before_Exit_Action_Hook);
+                                    "before_exit_action_hook";
    --  Hook functions return a boolean
 
    procedure Exit_GPS
@@ -232,7 +233,8 @@ package GPS.Kernel.Standard_Hooks is
    -- Macros --
    ------------
 
-   Stop_Macro_Action_Hook : constant Hook_Name := "stop_macro_action_hook";
+   Stop_Macro_Action_Hook : constant Hook_Name :=
+                              To_Hook_Name ("stop_macro_action_hook");
    --  Requests that the macro currently being replayed be stopped
 
    procedure Stop_Macro
@@ -271,7 +273,8 @@ package GPS.Kernel.Standard_Hooks is
    --  Focus indicates whether the MDI child containing the editor should be
    --  given the focus.
 
-   Open_File_Action_Hook : constant Hook_Name := "open_file_action_hook";
+   Open_File_Action_Hook : constant Hook_Name :=
+                             To_Hook_Name ("open_file_action_hook");
    --  This hook requests the opening of an editor. This could be either an
    --  internal editor or an external editor.
 
@@ -324,7 +327,8 @@ package GPS.Kernel.Standard_Hooks is
    --  If File is No_File, then the column will be created for all open files.
    --  If Normalize is True, the file name will be normalized.
 
-   File_Line_Action_Hook : constant Hook_Name := "file_line_action_hook";
+   File_Line_Action_Hook : constant Hook_Name :=
+                             To_Hook_Name ("file_line_action_hook");
    --  Requests dealing with the column on the side of the editors
 
    procedure Create_Line_Information_Column
@@ -413,7 +417,7 @@ package GPS.Kernel.Standard_Hooks is
       Anchor            : String (1 .. Anchor_Length);
    end record;
 
-   Html_Action_Hook : constant Hook_Name := "html_action_hook";
+   Html_Action_Hook : constant Hook_Name := To_Hook_Name ("html_action_hook");
 
    procedure Open_Html
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -438,7 +442,7 @@ package GPS.Kernel.Standard_Hooks is
       Title     : String (1 .. Length);
    end record;
 
-   Diff_Action_Hook : constant Hook_Name := "diff_action_hook";
+   Diff_Action_Hook : constant Hook_Name := To_Hook_Name ("diff_action_hook");
 
    procedure Display_Differences
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -462,7 +466,8 @@ package GPS.Kernel.Standard_Hooks is
    end record;
 
    File_Status_Changed_Action_Hook : constant Hook_Name :=
-                                       "file_status_changed_action_hook";
+                                       To_Hook_Name
+                                         ("file_status_changed_action_hook");
 
    procedure File_Status_Changed
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;

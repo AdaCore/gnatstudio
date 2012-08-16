@@ -468,7 +468,7 @@ package body GPS.Kernel.Console is
       Console_Module_Id.Child   := MDI_Child (Child);
       Console_Module_Id.Console := Console;
 
-      Add_Hook (Kernel, "preferences_changed",
+      Add_Hook (Kernel, To_Hook_Name ("preferences_changed"),
                 Wrapper (On_Preferences_Changed'Access),
                 Name => "console.preferences_changed",
                 Watch => GObject (Console));

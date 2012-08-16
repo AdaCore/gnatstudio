@@ -19,6 +19,7 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Finalization;
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with System;
 
@@ -747,76 +748,91 @@ package GPS.Kernel is
    --  The Category corresponds to the location/highlighting category that
    --  contains the compilation output.
 
-   type Hook_Name is new String;
+   type Hook_Name is new Ada.Strings.Unbounded.Unbounded_String;
    --  The name/key of the hook as registered into GPS
 
    type Hook_Type is new String;
    --  The hook data type
 
-   type Hook_Name_Access is access all Hook_Name;
-   type Hook_List is array (Positive range <>) of Hook_Name_Access;
+   type Hook_List is array (Positive range <>) of Hook_Name;
 
-   procedure Free is
-     new Ada.Unchecked_Deallocation (Hook_Name, Hook_Name_Access);
+   function To_Hook_Name (Item : String) return Hook_Name
+     renames To_Unbounded_String;
 
    --  Hooks with no arguments
-   Preferences_Changed_Hook      : constant Hook_Name := "preferences_changed";
-   Search_Reset_Hook             : constant Hook_Name := "search_reset";
+   Preferences_Changed_Hook      : constant Hook_Name :=
+                                     To_Hook_Name ("preferences_changed");
+   Search_Reset_Hook             : constant Hook_Name :=
+                                     To_Hook_Name ("search_reset");
    Search_Functions_Changed_Hook : constant Hook_Name :=
-                                     "search_functions_changed";
+                                     To_Hook_Name ("search_functions_changed");
    Search_Regexps_Changed_Hook   : constant Hook_Name :=
-                                     "search_regexps_changed";
-   Variable_Changed_Hook         : constant Hook_Name := "variable_changed";
+                                     To_Hook_Name ("search_regexps_changed");
+   Variable_Changed_Hook         : constant Hook_Name :=
+                                     To_Hook_Name ("variable_changed");
    Project_View_Changed_Hook     : constant Hook_Name :=
-                                     "project_view_changed";
-   Project_Changed_Hook          : constant Hook_Name := "project_changed";
-   Project_Editor_Hook           : constant Hook_Name := "project_editor";
+                                     To_Hook_Name ("project_view_changed");
+   Project_Changed_Hook          : constant Hook_Name :=
+                                     To_Hook_Name ("project_changed");
+   Project_Editor_Hook           : constant Hook_Name :=
+                                     To_Hook_Name ("project_editor");
    Contextual_Menu_Open_Hook     : constant Hook_Name :=
-                                     "contextual_menu_open";
+                                     To_Hook_Name ("contextual_menu_open");
    Contextual_Menu_Close_Hook    : constant Hook_Name :=
-                                     "contextual_menu_close";
+                                     To_Hook_Name ("contextual_menu_close");
 
    --  Hooks with File_Hooks_Args argument
-   Project_Changing_Hook         : constant Hook_Name := "project_changing";
-   File_Edited_Hook              : constant Hook_Name := "file_edited";
-   Before_File_Saved_Hook        : constant Hook_Name := "before_file_saved";
-   File_Saved_Hook               : constant Hook_Name := "file_saved";
-   File_Closed_Hook              : constant Hook_Name := "file_closed";
-   File_Deleted_Hook             : constant Hook_Name := "file_deleted";
-   File_Renamed_Hook             : constant Hook_Name := "file_renamed";
+   Project_Changing_Hook         : constant Hook_Name :=
+                                     To_Hook_Name ("project_changing");
+   File_Edited_Hook              : constant Hook_Name :=
+                                     To_Hook_Name ("file_edited");
+   Before_File_Saved_Hook        : constant Hook_Name :=
+                                     To_Hook_Name ("before_file_saved");
+   File_Saved_Hook               : constant Hook_Name :=
+                                     To_Hook_Name ("file_saved");
+   File_Closed_Hook              : constant Hook_Name :=
+                                     To_Hook_Name ("file_closed");
+   File_Deleted_Hook             : constant Hook_Name :=
+                                     To_Hook_Name ("file_deleted");
+   File_Renamed_Hook             : constant Hook_Name :=
+                                     To_Hook_Name ("file_renamed");
    File_Changed_Detected_Hook    : constant Hook_Name :=
-                                     "file_changed_detected";
+                                     To_Hook_Name ("file_changed_detected");
    File_Changed_On_Disk_Hook     : constant Hook_Name :=
-                                     "file_changed_on_disk";
+                                     To_Hook_Name ("file_changed_on_disk");
    Compilation_Finished_Hook     : constant Hook_Name :=
-                                     "compilation_finished";
+                                     To_Hook_Name ("compilation_finished");
    Compilation_Starting_Hook     : constant Hook_Name :=
-                                     "compilation_starting";
+                                     To_Hook_Name ("compilation_starting");
 
-   Buffer_Modified_Hook : constant Hook_Name := "buffer_edited";
+   Buffer_Modified_Hook : constant Hook_Name := To_Hook_Name ("buffer_edited");
    --  Hook called after a buffer has been edited.
 
    --  Hooks with Context_Hooks_Args argument
-   Context_Changed_Hook          : constant Hook_Name := "context_changed";
+   Context_Changed_Hook          : constant Hook_Name :=
+                                     To_Hook_Name ("context_changed");
 
    --  Hooks with Context_Hooks_Args argument (a File_Area_Context_Access)
    Source_Lines_Revealed_Hook    : constant Hook_Name :=
-                                     "source_lines_revealed";
+                                     To_Hook_Name ("source_lines_revealed");
 
    --  Hooks with Project_Hooks_Args argument
-   Project_Saved_Hook            : constant Hook_Name := "project_saved";
+   Project_Saved_Hook            : constant Hook_Name :=
+                                     To_Hook_Name ("project_saved");
 
    --  Hooks with Marker_Hooks_Args argument
    Marker_Added_In_History_Hook : constant Hook_Name :=
-                                    "marker_added_to_history";
+                                    To_Hook_Name ("marker_added_to_history");
    --  Called when a new marker has been added in the history. For now, this
    --  marker isn't exported to the shell
 
-   File_Status_Changed_Hook      : constant Hook_Name := "file_status_changed";
+   File_Status_Changed_Hook      : constant Hook_Name :=
+                                     To_Hook_Name ("file_status_changed");
    --  Called when the status of a file is changed : Modified, Unmodified...
 
    --  Hooks with String_Hooks_Args argument
-   Compute_Build_Targets_Hook : constant Hook_Name := "compute_build_targets";
+   Compute_Build_Targets_Hook : constant Hook_Name :=
+                                  To_Hook_Name ("compute_build_targets");
    --  Called when computing list of build targets, e.g. list of mains, or list
    --  of Makefile targets. The string parameter gives the kind of target to
    --  be computed (e.g. "main", "makefile").

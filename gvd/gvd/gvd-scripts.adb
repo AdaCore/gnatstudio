@@ -75,7 +75,7 @@ package body GVD.Scripts is
       Inst : constant Class_Instance :=
                Get_Or_Create_Instance (Script, Data.Debugger);
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Inst);
       return D;
    end Create_Callback_Data;
@@ -95,7 +95,7 @@ package body GVD.Scripts is
       Inst : constant Class_Instance :=
               Get_Or_Create_Instance (Script, Data.Debugger);
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Inst);
 
       case Data.New_State is
@@ -166,7 +166,7 @@ package body GVD.Scripts is
       Inst : constant Class_Instance :=
                Get_Or_Create_Instance (Script, Data.Debugger);
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Inst);
       Set_Nth_Arg (D.all, 3, Data.Command);
       return D;

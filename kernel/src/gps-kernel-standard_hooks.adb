@@ -674,7 +674,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
 
       --  At this point, Print_Refcount (Get_CIR (C)) returns refcount=2:
       --  one hold by local var C, the other as the parameter to Get_CIR
@@ -699,7 +699,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Value);
       return D;
    end Create_Callback_Data;
@@ -716,7 +716,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 3));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Value);
       Set_Nth_Arg (D.all, 3, Data.Bool);
       return D;
@@ -735,7 +735,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, P);
       return D;
    end Create_Callback_Data;
@@ -753,7 +753,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 4));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Value);
       Set_Nth_Arg (D.all, 3, Data.Quiet);
       Set_Nth_Arg (D.all, 4, Data.Shadow);
@@ -773,7 +773,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 5));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Category);
       Set_Nth_Arg (D.all, 3, Data.Target_Name);
       Set_Nth_Arg (D.all, 4, Data.Mode_Name);
@@ -795,7 +795,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       return D;
    end Create_Callback_Data;
@@ -814,7 +814,7 @@ package body GPS.Kernel.Standard_Hooks is
       D  : constant Callback_Data_Access :=
              new Callback_Data'Class'(Create (Script, 3));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, F2);
       return D;
@@ -833,7 +833,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 8));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, Data.Line);
       Set_Nth_Arg (D.all, 4, Natural (Data.Column));
@@ -889,7 +889,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 5));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Identifier);
       Set_Nth_Arg (D.all, 3, F);
       Set_Nth_Arg (D.all, 4, Data.Every_Line);
@@ -910,7 +910,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 7));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Identifier);
       Set_Nth_Arg (D.all, 3, Data.Category);
       Set_Nth_Arg (D.all, 4, F);
@@ -932,7 +932,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 4));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, Data.URL_Or_File);
       Set_Nth_Arg (D.all, 3, Data.Enable_Navigation);
       Set_Nth_Arg (D.all, 4, Data.Anchor);
@@ -952,7 +952,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 4));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, Data.Line);
       Set_Nth_Arg (D.all, 4, Data.Column);
@@ -975,7 +975,7 @@ package body GPS.Kernel.Standard_Hooks is
       D  : constant Callback_Data_Access :=
              new Callback_Data'Class'(Create (Script, 6));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, VF);
       Set_Nth_Arg (D.all, 3, F1);
       Set_Nth_Arg (D.all, 4, F2);
@@ -998,7 +998,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 1));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       return D;
    end Create_Callback_Data;
 
@@ -1014,7 +1014,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, To_String (Data.Marker));
       return D;
    end Create_Callback_Data;
@@ -1033,7 +1033,7 @@ package body GPS.Kernel.Standard_Hooks is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 3));
    begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, File_Status'Image (Data.Status));
       return D;

@@ -41,7 +41,7 @@ package Remote.Db is
    ------------------------------
 
    Server_List_Changed_Hook : constant GPS.Kernel.Hook_Name :=
-                                "server_list_hook";
+                                GPS.Kernel.To_Hook_Name ("server_list_hook");
    --  No data hook
 
    Invalid_Remote_Configuration : exception;
