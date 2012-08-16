@@ -219,6 +219,16 @@ NF-52-KC07-036 GPS: doc converted to sphinx (2011-12-08)
   looking output. In particular, the new format provides an integrated
   search feature over all pages of the manual.
 
+NF-52-KB30-016 ECL: improve builder support (2012-08-08)
+
+  Commands used when compiling/building/cleaning projects or files can be
+  customized editing the builder targets. (see Ada "Builder Targets"
+  preference page).
+  builder toobar buttons can be added enabling "GNATbench Build Toolbar Menus"
+  command group when customizing Ada perspective.
+  A build mode chooser (checks/debug/default/gcov/gprof/optimize) is also
+  available in the "GNATbench Build Toolbar Menus"
+
 NF-52-KB10-053 GB: outside workspace relative path support (2011-12-06)
 
   Relative path for GNAT project file in the GNATbench properties can point to
