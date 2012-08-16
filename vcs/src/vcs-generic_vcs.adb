@@ -169,9 +169,9 @@ package body VCS.Generic_VCS is
 
    --  Simple Hook command
 
-   type Run_Hook_Command_Type (Size : Positive) is new Root_Command with record
+   type Run_Hook_Command_Type is new Root_Command with record
       Kernel : Kernel_Handle;
-      Name   : Hook_Name (1 .. Size);
+      Name   : Hook_Name;
    end record;
 
    overriding function Execute
@@ -2209,9 +2209,7 @@ package body VCS.Generic_VCS is
       declare
          C : constant Command_Access :=
                new Run_Hook_Command_Type'
-                 (Root_Command with
-                  Log_Parsed_Hook'Length,
-                  Rep.Kernel, Log_Parsed_Hook);
+                 (Root_Command with Rep.Kernel, Log_Parsed_Hook);
       begin
          if Commands /= null then
             VCS.Branching_Commands.Add_Consequence_Action (Commands, C);
@@ -2289,9 +2287,7 @@ package body VCS.Generic_VCS is
       declare
          C : constant Command_Access :=
                new Run_Hook_Command_Type'
-                 (Root_Command with
-                  Revision_Parsed_Hook'Length,
-                  Rep.Kernel, Revision_Parsed_Hook);
+                 (Root_Command with Rep.Kernel, Revision_Parsed_Hook);
       begin
          if Commands /= null then
             VCS.Branching_Commands.Add_Consequence_Action (Commands, C);

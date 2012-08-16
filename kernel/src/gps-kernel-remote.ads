@@ -99,14 +99,16 @@ package GPS.Kernel.Remote is
    ---------------------
 
    Build_Server_Connected_Hook : constant Hook_Name :=
-                                   "build_server_connected_hook";
+                                   To_Hook_Name
+       ("build_server_connected_hook");
    --  No data hook
 
    --------------------------
    -- Synchronization Hook --
    --------------------------
 
-   Rsync_Action_Hook : constant Hook_Name := "rsync_action_hook";
+   Rsync_Action_Hook : constant Hook_Name :=
+                         To_Hook_Name ("rsync_action_hook");
 
    Rsync_Hook_Type : constant Hook_Type := "rsync_action_hook_t";
 
@@ -144,7 +146,8 @@ package GPS.Kernel.Remote is
    -- Server Config Changed Hook --
    --------------------------------
 
-   Server_Config_Changed_Hook : constant Hook_Name := "server_config_hook";
+   Server_Config_Changed_Hook : constant Hook_Name :=
+                                  To_Hook_Name ("server_config_hook");
 
    Server_Config_Changed_Hook_Type : constant Hook_Type :=
                                        "server_config_hook_t";

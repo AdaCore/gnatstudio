@@ -212,7 +212,7 @@ package body GPS.Kernel is
    function Hash (Hook : Hook_Name) return Hook_Htable_Num is
       function Internal is new String_Utils.Hash (Hook_Htable_Num);
    begin
-      return Internal (String (Hook));
+      return Internal (To_String (Hook));
    end Hash;
 
    --------------------------

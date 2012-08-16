@@ -93,13 +93,13 @@ package GVD.Scripts is
    --  All these hooks take a Debugger_Action_Hooks_Data in parameter
 
    Debugger_Command_Action_Hook : constant Hook_Name :=
-     "debugger_command_action_hook";
+     To_Hook_Name ("debugger_command_action_hook");
    --  Action hook called when the user has typed a command in the debugger
    --  console. This hooks gives a chance to scripts to implement their own
    --  debugger commands.
 
    Debugger_Question_Action_Hook : constant Hook_Name :=
-     "debugger_question_action_hook";
+     To_Hook_Name ("debugger_question_action_hook");
    --  Action hook called just before displaying an interactive dialog, when
    --  the underlying debugger is asking a question to the user. This hook
    --  can be used to disable the dialog (and send the reply directly to the

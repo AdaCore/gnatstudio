@@ -999,7 +999,7 @@ package body Remote.Config_Dialog is
                         Get_Hook_Func_List (Kernel, Rsync_Action_Hook);
       begin
          for J in Rsync_List'Range loop
-            Dialog.Remote_Sync_Combo.Append_Text (String (Rsync_List (J).all));
+            Dialog.Remote_Sync_Combo.Append_Text (To_String (Rsync_List (J)));
          end loop;
       end;
 
