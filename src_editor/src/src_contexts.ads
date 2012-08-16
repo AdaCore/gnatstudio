@@ -233,7 +233,7 @@ package Src_Contexts is
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
-   --  Factory for "Files From Project".
+   --  Factory for "Files From Project and Subprojects".
    --  The list of files is automatically set to the files of the root project
    --  and its imported projects
 
@@ -242,6 +242,15 @@ package Src_Contexts is
       All_Occurrences : Boolean) return Files_Project_Context_Access;
    --  Same as above, but suitable for use outside the GUI.
    --  No file is set, you need to call Set_File_List explicitely
+
+   function Files_From_Root_Project_Factory
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Factory for "Files From Project".
+   --  The list of files is automatically set to the files of the root project
+   --  without imported projects
 
    overriding
    function Get_Terminate_Message
