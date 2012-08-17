@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L803-018: GPS: busy state after terminating debug session
+  Problem:    When debug session is terminated GPS still in busy state
+              sometimes.
+  Workaround: Not needed.
+
 - L803-010: GPS: error when saving callgraph
   Problem:    When saving the contents of the callgraph to an XML file (for
               instance starting the debugger and switching perspective), an
