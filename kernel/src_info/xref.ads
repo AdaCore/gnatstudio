@@ -92,6 +92,21 @@ package Xref is
    --  Some operations might even query using one back-end, then fall back
    --  on a less precise back-end if the first query is not precise enough.
 
+   procedure Find_Next_Body
+     (Dbase                : General_Xref_Database;
+      Entity               : General_Entity;
+      Current_Location     : General_Location := No_Location;
+      Location             : out General_Location;
+      No_Location_If_First : Boolean := False);
+   --  Find the location for one of the bodies of the entities. If the
+   --  current location is not a body, the first body found is returned.
+   --  Otherwise, the first one different from Current_Location is returned.
+   --  Calling this subprogram multiple times will eventually return all the
+   --  bodies.
+   --  This also returns completion for incomplete types.
+   --  If No_Location_If_First is True, then this iterator will not loop
+   --  to the first body on reaching the last.
+
    procedure For_Each_Dispatching_Call
      (Dbase     : General_Xref_Database;
       Entity    : General_Entity;
@@ -147,6 +162,37 @@ package Xref is
      (Db     : General_Xref_Database;
       Entity : General_Entity) return General_Location;
    --  Return the location of the first body for this entity
+
+   function Get_Category
+     (Db     : General_Xref_Database;
+      Entity : General_Entity) return Entities.Entity_Category;
+   --  Compute the category of the entity
+
+   function Get_Kind
+     (Db     : General_Xref_Database;
+      Entity : General_Entity) return Entities.E_Kind;
+   --  Return the kind of the entity
+
+   function Get_Type_Of
+     (Db     : General_Xref_Database;
+      Entity : General_Entity) return General_Entity;
+   --  Return the type of the entity
+
+   function Is_Predefined_Entity
+     (Db : General_Xref_Database;
+      E  : General_Entity) return Boolean;
+   --  True if E is a predefined entity
+
+   function Pointed_Type
+     (Dbase  : General_Xref_Database;
+      Entity : General_Entity) return General_Entity;
+   --  Return the type pointed to by entity
+
+   function To_General_Entity
+     (Db : General_Xref_Database;
+      E  : Entities.Entity_Information) return General_Entity;
+   --  Convert Entities.Entity_Information to General_Entity. This routine is
+   --  provided to support to legacy code. It will be eventually removed???
 
    function Documentation
      (Self             : General_Xref_Database;

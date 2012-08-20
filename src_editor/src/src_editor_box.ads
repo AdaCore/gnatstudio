@@ -51,6 +51,7 @@ with Src_Editor_View;
 with GNATCOLL.VFS;
 with Entities;
 with Commands.Interactive;  use Commands, Commands.Interactive;
+with Xref;
 
 package Src_Editor_Box is
 
@@ -438,7 +439,7 @@ package Src_Editor_Box is
       Filename : GNATCOLL.VFS.Virtual_File;
       Line     : Editable_Line_Type;
       Column   : Visible_Column_Type;
-      Entity   : Entities.Entity_Information);
+      Entity   : Xref.General_Entity);
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity close by.
 

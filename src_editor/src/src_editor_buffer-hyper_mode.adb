@@ -28,6 +28,7 @@ with Src_Editor_Box;    use Src_Editor_Box;
 with String_Utils;      use String_Utils;
 with Language;          use Language;
 with Src_Editor_Module; use Src_Editor_Module;
+with Xref;
 
 package body Src_Editor_Buffer.Hyper_Mode is
 
@@ -405,7 +406,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
                Get_Filename (Get_File (Location)),
                Editable_Line_Type (Get_Line (Location)),
                Get_Column (Location),
-               Entity);
+               Xref.To_General_Entity (Buffer.Kernel.Databases, Entity));
       end case;
    end Hyper_Mode_Click_On;
 

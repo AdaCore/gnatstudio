@@ -386,10 +386,12 @@ package body Src_Editor_Box is
       Filename : Virtual_File;
       Line     : Editable_Line_Type;
       Column   : Visible_Column_Type;
-      Entity   : Entity_Information) is
+      Entity   : General_Entity)
+   is
+      Db : constant General_Xref_Database := Kernel.Databases;
    begin
       Go_To_Closest_Match
-        (Kernel, Filename, Line, Column, Get (Get_Name (Entity)).all);
+        (Kernel, Filename, Line, Column, Get_Name (Db, Entity));
    end Go_To_Closest_Match;
 
    -------------------------
@@ -1544,12 +1546,15 @@ package body Src_Editor_Box is
       Context : Selection_Context) return String
    is
       pragma Unreferenced (Creator);
-      Entity : Entity_Information;
+
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Db     : constant General_Xref_Database := Kernel.Databases;
+      Entity : constant General_Entity := Get_Entity (Context);
       Kind   : E_Kinds;
+
    begin
-      Entity := Get_Entity (Context);
-      if Entity /= null then
-         Kind := Get_Kind (Entity).Kind;
+      if Entity /= No_General_Entity then
+         Kind := Get_Kind (Db, Entity).Kind;
 
          if Is_Container (Kind)
            and then not Body_Is_Full_Declaration (Kind)
@@ -1582,7 +1587,7 @@ package body Src_Editor_Box is
          Filename => Location.File,
          Line     => Convert (Location.Line),
          Column   => Location.Column,
-         Entity   => Entity.Old_Entity);
+         Entity   => Entity);
    end On_Goto_Declaration_Of;
 
    ---------------------
@@ -1593,17 +1598,22 @@ package body Src_Editor_Box is
      (Kernel : access GObject_Record'Class;
       Entity : General_Entity)
    is
-      Location : File_Location;
+      K   : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Db  : constant General_Xref_Database := K.Databases;
+      Loc : General_Location;
+
    begin
       Find_Next_Body
-        (Entity   => Entity.Old_Entity,
-         Location => Location);
+        (Dbase    => Db,
+         Entity   => Entity,
+         Location => Loc);
+
       Go_To_Closest_Match
-        (Kernel_Handle (Kernel),
-         Filename => Get_Filename (Location.File),
-         Line     => Convert (Location.Line),
-         Column   => Location.Column,
-         Entity   => Entity.Old_Entity);
+        (Kernel   => K,
+         Filename => Loc.File,
+         Line     => Convert (Loc.Line),
+         Column   => Loc.Column,
+         Entity   => Entity);
    end On_Goto_Body_Of;
 
    --------------------------------
@@ -1890,10 +1900,13 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : Entity_Information;
+      Entity : constant General_Entity := Get_Entity (Context);
+      Kernel : constant Kernel_Handle  := Get_Kernel (Context);
+      Db     : constant General_Xref_Database := Kernel.Databases;
+
    begin
-      Entity := Get_Entity (Context);
-      return Entity /= null and then Get_Type_Of (Entity) /= null;
+      return Entity /= No_General_Entity
+        and then Get_Type_Of (Db, Entity) /= No_General_Entity;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1905,12 +1918,14 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : Entity_Information;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Db     : constant General_Xref_Database := Kernel.Databases;
+
+      Entity : constant General_Entity := Get_Entity (Context);
    begin
-      Entity := Get_Entity (Context);
-      return Entity /= null
-        and then Get_Category (Entity) = Type_Or_Subtype
-        and then Get_Kind (Entity).Kind = Access_Kind;
+      return Entity /= No_General_Entity
+        and then Get_Category (Db, Entity) = Type_Or_Subtype
+        and then Get_Kind (Db, Entity).Kind = Access_Kind;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1942,13 +1957,11 @@ package body Src_Editor_Box is
    --------------
 
    function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean is
-      Entity           : Entity_Information;
+      Entity           : constant General_Entity := Get_Entity (Context);
       Location         : Entities.File_Location;
       Current_Location : Entities.File_Location;
    begin
-      Entity := Get_Entity (Context);
-
-      if Entity /= null then
+      if Entity /= No_General_Entity then
          Current_Location :=
            (File   => Get_Or_Create
               (Db   => Get_Database (Get_Kernel (Context)),
@@ -1957,9 +1970,9 @@ package body Src_Editor_Box is
             Column => Entity_Column_Information (Context));
 
          Find_Next_Body
-           (Entity   => Entity,
+           (Entity           => Entity.Old_Entity,
             Current_Location => Current_Location,
-            Location => Location);
+            Location         => Location);
 
          return Location /= Entities.No_File_Location
            and then Location /= Current_Location;
@@ -2176,12 +2189,13 @@ package body Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Entity      : constant Entity_Information :=
-                      Get_Entity (Context.Context, Ask_If_Overloaded => True);
-      Entity_Type : Entity_Information;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Db      : constant General_Xref_Database := Kernel.Databases;
+      Entity  : constant General_Entity :=
+                  Get_Entity (Context.Context, Ask_If_Overloaded => True);
+
    begin
-      if Entity = null then
+      if Entity = No_General_Entity then
          --  Probably means that we either could not locate the ALI file,
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
@@ -2194,26 +2208,33 @@ package body Src_Editor_Box is
          return Commands.Failure;
 
       else
-         Entity_Type := Get_Type_Of (Entity);
+         declare
+            Entity_Type : General_Entity;
+            Location    : General_Location;
 
-         if Is_Predefined_Entity (Entity_Type) then
-            Console.Insert
-              (Kernel,
-               -Get (Get_Name (Entity)).all & " is of predefined type "
-               & Get (Get_Name (Entity_Type)).all);
-            return Commands.Failure;
+         begin
+            Entity_Type := Get_Type_Of (Db, Entity);
 
-         else
-            Go_To_Closest_Match
-              (Kernel,
-               Filename => Get_Filename
-                 (Get_File (Get_Declaration_Of (Entity_Type))),
-               Line     => Convert
-                 (Get_Line (Get_Declaration_Of (Entity_Type))),
-               Column   => Get_Column (Get_Declaration_Of (Entity_Type)),
-               Entity   => Entity_Type);
-            return Commands.Success;
-         end if;
+            if Is_Predefined_Entity (Db, Entity_Type) then
+               Console.Insert
+                 (Kernel,
+                  Get_Name (Db, Entity)
+                  & " is of predefined type "
+                  & Get_Name (Db, Entity_Type));
+               return Commands.Failure;
+
+            else
+               Location := Get_Declaration (Db, Entity);
+               Go_To_Closest_Match
+                 (Kernel,
+                  Filename => Location.File,
+                  Line     => Editable_Line_Type (Location.Line),
+                  Column   => Location.Column,
+                  Entity   => Entity_Type);
+
+               return Commands.Success;
+            end if;
+         end;
       end if;
    end Execute;
 
@@ -2228,12 +2249,13 @@ package body Src_Editor_Box is
       pragma Unreferenced (Command);
 
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Db     : constant General_Xref_Database := Kernel.Databases;
 
-      procedure Insert (Name : String; Entity : Entity_Information);
+      procedure Insert (Name : String; Entity : General_Entity);
       --  Add entry for Entity into the location view
 
       function Get_Type_Or_Ref
-        (Entity : Entity_Information) return Entity_Information;
+        (Entity : General_Entity) return General_Entity;
       pragma Inline (Get_Type_Or_Ref);
       --  Retruns the type of Entity (handle case where entity is an access
       --  type, in this case we returned the pointed entity).
@@ -2243,24 +2265,26 @@ package body Src_Editor_Box is
       ---------------------
 
       function Get_Type_Or_Ref
-        (Entity : Entity_Information) return Entity_Information
+        (Entity : General_Entity) return General_Entity
       is
-         E : Entity_Information;
+         E : General_Entity;
       begin
-         if Get_Category (Entity) = Type_Or_Subtype
-           and then Get_Kind (Entity).Kind = Access_Kind
+         if Get_Category (Db, Entity) = Type_Or_Subtype
+           and then Get_Kind (Db, Entity).Kind = Access_Kind
          then
-            E := Pointed_Type (Entity);
+            E := Xref.Pointed_Type (Db, Entity);
          else
-            E := Get_Type_Of (Entity);
+            E := Get_Type_Of (Db, Entity);
          end if;
 
          --  Update Xrefs if needed
 
-         if E /= null then
+         if not Active (Entities.SQLITE)
+           and then E /= No_General_Entity
+         then
             declare
                S_File : constant Source_File :=
-                          Get_File (Get_Declaration_Of (E));
+                          Get_File (Get_Declaration_Of (E.Old_Entity));
             begin
                if not Is_Up_To_Date (S_File) then
                   Update_Xref (S_File);
@@ -2275,28 +2299,29 @@ package body Src_Editor_Box is
       -- Insert --
       ------------
 
-      procedure Insert (Name : String; Entity : Entity_Information) is
-         Kind : constant String := Kind_To_String (Get_Kind (Entity));
-         Loc  : constant File_Location := Get_Declaration_Of (Entity);
+      procedure Insert (Name : String; Entity : General_Entity) is
+         Kind : constant String :=
+                  Kind_To_String (Get_Kind (Db, Entity));
+         Loc  : constant General_Location := Get_Declaration (Db, Entity);
       begin
          Create_Simple_Message
            (Get_Messages_Container (Kernel),
             -"Type Hierarchy for " & Name,
-            Get_Filename (Get_File (Loc)),
-            Get_Line (Loc),
-            Get_Column (Loc),
-            Get (Get_Name (Entity)).all & " (" & Kind & ')',
+            Loc.File,
+            Loc.Line,
+            Loc.Column,
+            Get_Name (Db, Entity) & " (" & Kind & ')',
             0,
             (Editor_Side => True,
              Locations   => True));
       end Insert;
 
-      Entity      : constant Entity_Information :=
+      Entity      : constant General_Entity :=
                       Get_Entity (Context.Context, Ask_If_Overloaded => True);
-      Entity_Type : Entity_Information;
+      Entity_Type : General_Entity;
 
    begin
-      if Entity = null then
+      if Entity = No_General_Entity then
          --  Probably means that we either could not locate the ALI file,
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
@@ -2311,23 +2336,24 @@ package body Src_Editor_Box is
       else
          Entity_Type := Get_Type_Or_Ref (Entity);
 
-         if Is_Predefined_Entity (Entity_Type) then
+         if Is_Predefined_Entity (Db, Entity_Type) then
             Console.Insert
               (Kernel,
-               Get (Get_Name (Entity)).all & (-" is of predefined type ")
-               & Get (Get_Name (Entity_Type)).all);
+               Get_Name (Db, Entity)
+                 & (-" is of predefined type ")
+                 & Get_Name (Db, Entity_Type));
             return Commands.Failure;
 
          else
-            if Get_Category (Entity) = Type_Or_Subtype then
-               Insert (Get (Get_Name (Entity)).all, Entity);
+            if Get_Category (Db, Entity) = Type_Or_Subtype then
+               Insert (Get_Name (Db, Entity), Entity);
             end if;
 
             loop
-               exit when Entity_Type = null
-                 or else Is_Predefined_Entity (Entity_Type);
+               exit when Entity_Type = No_General_Entity
+                 or else Is_Predefined_Entity (Db, Entity_Type);
 
-               Insert (Get (Get_Name (Entity)).all, Entity_Type);
+               Insert (Get_Name (Db, Entity), Entity_Type);
 
                Entity_Type := Get_Type_Or_Ref (Entity_Type);
             end loop;
