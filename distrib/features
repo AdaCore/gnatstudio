@@ -28,6 +28,13 @@ NF-52-L814-023 GB: add User's Guides PDF versions  (2012-08-14)
   The PDF versions (A4 or letter) can be downloaded from a top level PDF
   versions page located in the GNATbench help contents.
 
+NF-52-L807-027 GB: additional Pretty Printer output flexibility (2012-08-20)
+
+  The "Pretty Print" command now allows any output file settings, rather than
+  hardcoding a specific behavior.  If no output file settings are specified
+  in the project file the behavior is the default specified by the gnatpp tool
+  itself.
+
 NF-52-L730-016 GPS: display timestamps in File Selector dialog (2012-08-02)
 
   The dialog from /File/Open... now displays the timestamp for local files.
