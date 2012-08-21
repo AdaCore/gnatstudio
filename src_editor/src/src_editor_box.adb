@@ -63,8 +63,8 @@ with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Entities.Queries;           use Entities.Queries;
-with Entities;                   use Entities;
+with Entities.Queries;
+
 with Find_Utils;                 use Find_Utils;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
@@ -226,7 +226,7 @@ package body Src_Editor_Box is
       Context       : GPS.Kernel.Selection_Context;
       Force_Freeze  : Boolean;
       Default_Title : String;
-      Filter        : Reference_Kind_Filter;
+      Filter        : Entities.Reference_Kind_Filter;
       Show_Default  : Boolean;
       Callback      : Entity_Callback.Simple_Handler);
    --  Create the submenus for dispatching calls
@@ -1551,14 +1551,14 @@ package body Src_Editor_Box is
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Db     : constant General_Xref_Database := Kernel.Databases;
       Entity : constant General_Entity := Get_Entity (Context);
-      Kind   : E_Kinds;
+      Kind   : Entities.E_Kinds;
 
    begin
       if Entity /= No_General_Entity then
          Kind := Get_Kind (Db, Entity).Kind;
 
-         if Is_Container (Kind)
-           and then not Body_Is_Full_Declaration (Kind)
+         if Entities.Is_Container (Kind)
+           and then not Entities.Body_Is_Full_Declaration (Kind)
          then
             return -"Goto body of "
               & Emphasize (Entity_Name_Information (Context));
@@ -1626,16 +1626,15 @@ package body Src_Editor_Box is
       Context       : GPS.Kernel.Selection_Context;
       Force_Freeze  : Boolean;
       Default_Title : String;
-      Filter        : Reference_Kind_Filter;
+      Filter        : Entities.Reference_Kind_Filter;
       Show_Default  : Boolean;
       Callback      : Entity_Callback.Simple_Handler)
    is
       Item   : Gtk_Menu_Item;
       Label  : Gtk_Label;
-      Pref   : constant Dispatching_Menu_Policy :=
+      Pref   : constant Entities.Queries.Dispatching_Menu_Policy :=
                  Submenu_For_Dispatching_Calls.Get_Pref;
       Count  : Natural := 0;
-      Db     : Entities.Entities_Database;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Xref_Db : constant General_Xref_Database := Kernel.Databases;
 
@@ -1721,6 +1720,11 @@ package body Src_Editor_Box is
       --  This routine will be eventually removed???
 
       procedure Old_Version is
+         Db : Entities.Entities_Database;
+
+         use Entities;
+         use Entities.Queries;
+
       begin
          Trace (Me, "Computing Dispatch_Submenu: " & Default_Title);
          Push_State (Kernel, Busy);
@@ -1731,7 +1735,7 @@ package body Src_Editor_Box is
             Freeze (Db);
          end if;
 
-         if Pref = From_Memory then
+         if Pref = Queries.From_Memory then
             Gtk_New (Label, -"<i>Partial information only</i>");
             Set_Use_Markup (Label, True);
             Set_Alignment (Label, 0.0, 0.5);
@@ -1828,7 +1832,7 @@ package body Src_Editor_Box is
          Gtk_New
            (Label,
             Default_Title
-            & Emphasize (Get (Get_Name (Get_Entity (Context))).all));
+              & Emphasize (Entity_Name_Information (Context)));
          Set_Use_Markup (Label, True);
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
@@ -1865,7 +1869,7 @@ package body Src_Editor_Box is
          Context       => Context,
          Force_Freeze  => False,
          Default_Title => -"Declaration of ",
-         Filter        => Entity_Has_Declaration,
+         Filter        => Entities.Queries.Entity_Has_Declaration,
          Show_Default  => True,
          Callback      => On_Goto_Declaration_Of'Access);
    end Append_To_Menu;
@@ -1887,7 +1891,7 @@ package body Src_Editor_Box is
          Context       => Context,
          Force_Freeze  => True,
          Default_Title => -"Body of ",
-         Filter        => Entity_Has_Body,
+         Filter        => Entities.Queries.Entity_Has_Body,
          Show_Default  => Has_Body (Context),
          Callback      => On_Goto_Body_Of'Access);
    end Append_To_Menu;
@@ -1923,6 +1927,7 @@ package body Src_Editor_Box is
       Db     : constant General_Xref_Database := Kernel.Databases;
 
       Entity : constant General_Entity := Get_Entity (Context);
+      use Entities;
    begin
       return Entity /= No_General_Entity
         and then Get_Category (Db, Entity) = Type_Or_Subtype
@@ -1958,27 +1963,57 @@ package body Src_Editor_Box is
    --------------
 
    function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean is
-      Entity           : constant General_Entity := Get_Entity (Context);
-      Location         : Entities.File_Location;
-      Current_Location : Entities.File_Location;
+      Kernel : constant Kernel_Handle  := Get_Kernel (Context);
+      Entity : constant General_Entity := Get_Entity (Context);
+
    begin
-      if Entity /= No_General_Entity then
-         Current_Location :=
-           (File   => Get_Or_Create
-              (Db   => Get_Database (Get_Kernel (Context)),
-               File => File_Information (Context)),
-            Line   => Contexts.Line_Information (Context),
-            Column => Entity_Column_Information (Context));
+      if Entity = No_General_Entity then
+         return False;
 
-         Find_Next_Body
-           (Entity           => Entity.Old_Entity,
-            Current_Location => Current_Location,
-            Location         => Location);
+      elsif Active (Entities.SQLITE) then
+         declare
+            Db     : constant General_Xref_Database := Kernel.Databases;
+            Location         : General_Location;
+            Current_Location : General_Location;
 
-         return Location /= Entities.No_File_Location
-           and then Location /= Current_Location;
+         begin
+            Current_Location := Get_Declaration (Db, Entity);
+
+            Find_Next_Body
+              (Dbase            => Db,
+               Entity           => Entity,
+               Current_Location => Current_Location,
+               Location         => Location);
+
+            return Location /= No_Location
+              and then Location /= Current_Location;
+         end;
+
+      --  Legacy implementation
+
+      else
+         declare
+            Location         : Entities.File_Location;
+            Current_Location : Entities.File_Location;
+            use Entities;
+
+         begin
+            Current_Location :=
+              (File   => Get_Or_Create
+                 (Db   => Get_Database (Kernel),
+                  File => File_Information (Context)),
+               Line   => Contexts.Line_Information (Context),
+               Column => Entity_Column_Information (Context));
+
+            Queries.Find_Next_Body
+              (Entity           => Entity.Old_Entity,
+               Current_Location => Current_Location,
+               Location         => Location);
+
+            return Location /= Entities.No_File_Location
+              and then Location /= Current_Location;
+         end;
       end if;
-      return False;
    end Has_Body;
 
    ------------------------------
@@ -2269,6 +2304,8 @@ package body Src_Editor_Box is
         (Entity : General_Entity) return General_Entity
       is
          E : General_Entity;
+         use Entities;
+
       begin
          if Get_Category (Db, Entity) = Type_Or_Subtype
            and then Get_Kind (Db, Entity).Kind = Access_Kind
@@ -2302,7 +2339,7 @@ package body Src_Editor_Box is
 
       procedure Insert (Name : String; Entity : General_Entity) is
          Kind : constant String :=
-                  Kind_To_String (Get_Kind (Db, Entity));
+                  Entities.Kind_To_String (Get_Kind (Db, Entity));
          Loc  : constant General_Location := Get_Declaration (Db, Entity);
       begin
          Create_Simple_Message
@@ -2346,20 +2383,25 @@ package body Src_Editor_Box is
             return Commands.Failure;
 
          else
-            if Get_Category (Db, Entity) = Type_Or_Subtype then
-               Insert (Get_Name (Db, Entity), Entity);
-            end if;
+            declare
+               use Entities;
 
-            loop
-               exit when Entity_Type = No_General_Entity
-                 or else Is_Predefined_Entity (Db, Entity_Type);
+            begin
+               if Get_Category (Db, Entity) = Type_Or_Subtype then
+                  Insert (Get_Name (Db, Entity), Entity);
+               end if;
 
-               Insert (Get_Name (Db, Entity), Entity_Type);
+               loop
+                  exit when Entity_Type = No_General_Entity
+                    or else Is_Predefined_Entity (Db, Entity_Type);
 
-               Entity_Type := Get_Type_Or_Ref (Entity_Type);
-            end loop;
+                  Insert (Get_Name (Db, Entity), Entity_Type);
 
-            return Commands.Success;
+                  Entity_Type := Get_Type_Or_Ref (Entity_Type);
+               end loop;
+
+               return Commands.Success;
+            end;
          end if;
       end if;
    end Execute;
@@ -3050,14 +3092,29 @@ package body Src_Editor_Box is
    -- Get_Subprogram --
    --------------------
 
+   --  ??? This subprogram should be removed because it is not used by GPS.
+   --  Left here temporarily to ensure that its removal does not break
+   --  GNATBench.
+
    function Get_Subprogram
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type :=
-        Src_Editor_Buffer.Editable_Line_Type'Last) return Entity_Information
+        Src_Editor_Buffer.Editable_Line_Type'Last)
+      return Entities.Entity_Information;
+   --  Same as above, but returns a pointer to the declaration of the
+   --  subprogram.
+   pragma Unreferenced (Get_Subprogram);
+
+   function Get_Subprogram
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type :=
+                 Src_Editor_Buffer.Editable_Line_Type'Last)
+      return Entities.Entity_Information
    is
+      use Entities;
       Block           : Block_Record;
       Entity          : Entity_Information;
-      Status          : Find_Decl_Or_Body_Query_Status;
+      Status          : Queries.Find_Decl_Or_Body_Query_Status;
       L               : Buffer_Line_Type;
       Normalized_Line : Editable_Line_Type := Line;
       Ref             : Entity_Reference;
