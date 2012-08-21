@@ -318,6 +318,13 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               requires a version of GNAT more recent than 2012-02-08.
   Workaround: Ignore this extra information.
 
+- KB16-001: GB: toolchain errors have no information and cannot be removed
+  Problem:    Sometimes toolchains displayed from project's GNATbench
+              properties, or Ada -> Toolchains preferences page have spurious
+              errors reported. No extra information is available, and the
+              error is still present even after removing/scanning process.
+  Workaround: None.
+
 - KA27-009: GPS: unwanted scrolling when canceling interactive search
   Problem:    When using the interactive search (plugin isearch.py), if the
               cursor is outside of the visible area, clicking on the editor
