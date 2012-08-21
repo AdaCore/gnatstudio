@@ -52,6 +52,11 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               plugin disappears immediately after appearing.
   Workaround: Use the standard search dialog instead.
 
+- L615-035: ECL: quick fix at EOF applied at the beginning of the file
+  Problem:    If a quick fix is applied for a marker at the end of the file,
+              the quick fix is applied at the beginnig of the file.
+  Workaround: Add an empty line at the end of the file and compile the file.
+
 - L520-004: GPS: wrong smart mixed casing after parenthesis
   Problem:    The contextual menu Casing proposes an incorrect casing for
               smart mixed casing on selection if starting with a parenthesis.
