@@ -11,18 +11,20 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 - L807-027: GB: config file in project files ignored for pretty printer
   Problem:    When a gpr file specified a configuration pragmas file, 
               the file was not passed to the invocation of gnatpp.  This 
-			  could cause partial compilation involved with gnatpp to fail.
-			  In addition, the invocations of the stub generator, pretty 
-			  printer, style checker, and metrics analyzer did not include
-			  the values of scenario variables defined by the project.
+              could cause partial compilation involved with gnatpp to fail.
+              In addition, the invocations of the stub generator, pretty 
+              printer, style checker, and metrics analyzer did not include
+              the values of scenario variables defined by the project.
   Workaround: Copy the config file to the root of the project and name it
               "gnat.adc". For the scenario variables, assign their values
-			  outside of Eclipse, in the environment.
+              outside of Eclipse, in the environment.
 
-- L803-018: GPS: busy state after terminating debug session
-  Problem:    When debug session is terminated GPS still in busy state
-              sometimes.
-  Workaround: Not needed.
+- L803-018: GPS: busy state after terminating a debug session
+  Problem:    When running multiple debug sessions at the same time and
+              terminating these sessions from a python script via e.g.
+              GPS.execute_action ("/Debug/Terminate"), GPS may be left in
+              a busy state (spinner icon running).
+  Workaround: Ignore this visual glitch and restart GPS as soon as practical.
 
 - L803-010: GPS: error when saving callgraph
   Problem:    When saving the contents of the callgraph to an XML file (for
@@ -48,7 +50,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Problem:    Under some X servers, such as the Cygwin X11 server, the
               window for doing incremental searches in the isearch.py
               plugin disappears immediately after appearing.
-  Workaround: None known, use the standard search dialog instead.
+  Workaround: Use the standard search dialog instead.
 
 - L520-004: GPS: wrong smart mixed casing after parenthesis
   Problem:    The contextual menu Casing proposes an incorrect casing for
@@ -65,9 +67,8 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               is empty, the interactive console will keep showing the
               secondary prompt, and never return an error or the primary
               prompt.
-  Workaround: None known, GPS needs to be restarted. When writing multi-line
-              Python constructs, prefer a text editor to the interactive
-              console.
+  Workaround: Restart GPS. Also when writing multi-line Python constructs,
+              prefer a text editor to the interactive console.
 
 - L420-022: GPS: Crash when using the menu "Close all other editors".
   Problem:    When bringing up the contextual menu on notebook tabs and
@@ -90,9 +91,9 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               associated GNAT project file.
 
 - L404-018: GPS: Wrong color of line highlighting
-  Problem:    GPS use wrong color to highlight lines in source editor when
-              message is associated with this line.
-  Workaround: Not needed.
+  Problem:    GPS uses the wrong color to highlight lines in source editors
+              when a message is associated with this line.
+  Workaround: Ignore this visual glitch.
 
 - L417-023: GPS: Crash after creating a build target that contain underscores
   Problem:    When using the Target Configuration dialog to create a build
@@ -195,10 +196,11 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Perform the extra undo manually.
 
 - L321-019: Casing, Align actions on read-only buffer
-  Problem:    When using align or casing actions on a read-only buffer nothing
+  Problem:    When using align or casing actions on a read-only editor nothing
               happens without giving any clue except for a cryptic message
               in the message window.
-  Workaround: None
+  Workaround: None needed. You can make the source editor writable by clicking
+              on the read-only label in the status bar.
 
 - L314-011: GPS: Messages category blank in CodePeer report
   Problem:    Messages category filter panel is always empty for recent
@@ -297,7 +299,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               a package, the resulting box contains the parameters of the
               subprograms. The solution involves changes in GPS but also
               requires a version of GNAT more recent than 2012-02-08.
-  Workaround: None.
+  Workaround: Ignore this extra information.
 
 - KA27-009: GPS: unwanted scrolling when canceling interactive search
   Problem:    When using the interactive search (plugin isearch.py), if the
