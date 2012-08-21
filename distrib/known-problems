@@ -148,6 +148,12 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               the code is not compilable anymore.
   Workaround: Align manually.
 
+- L402-028: ECL: missing library refresh after build or clean.
+  Problem:    After building or cleaning a library, the library content is not
+              refreshed. This libray refresh problme occurs also after buiding
+              or cleaning a project that use it.
+  Workaround: Refresh manually the library project.
+
 - L330-007: ECL: Metrics view not always displayed.
   Problem:    At workspace creation, or after an Ada perspective reset, the
               Metrics view is not displayed and an exception is logged.
