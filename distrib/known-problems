@@ -351,6 +351,12 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               opened but not raised in front.
   Workaround: Raise the source editor window manually by clicking on its tab.
 
+- K718-016: GB: file with last modification time in the future corrupts GB cache
+  Problem:    When a file has its last modification time in the future, some
+              GB feature (metrics, construct database) are not functional
+              because its modifications are not taken into account.
+  Workaround: Touch the file and restart eclipse. 
+  
 - K325-019: GPS: autofix for lines containing only spaces
   Problem:    The autofix for blanks at end of line removes the whole line if
               the line is composed only by spaces.
