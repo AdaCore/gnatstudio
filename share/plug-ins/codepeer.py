@@ -419,8 +419,8 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
           <arg>-file</arg>
-          <arg>%X</arg>
           <arg>%F</arg>
+          <arg>%X</arg>
        </command-line>
     </target>
 
