@@ -23,17 +23,21 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L822-044 GB: additional Pretty Printer output flexibility (2012-08-22)
+
+  The "Pretty Print" command now allows any output file settings, rather than
+  unconditionally forcing a specific behavior.  The current default behavior is
+  unchanged, in that the input file is replaced with the formatted output, but
+  this is now under the control of a new preference.  If the preference is
+  disabled, the behavior regarding the output file is controlled by the
+  Pretty_Printer package in the project file. If that package is not defined in
+  the project file or output switches are not specified, the behavior is
+  the default specified by the pretty printer tool itself.
+
 NF-52-L814-023 GB: add User's Guides PDF versions  (2012-08-14)
 
   The PDF versions (A4 or letter) can be downloaded from a top level PDF
   versions page located in the GNATbench help contents.
-
-NF-52-L807-027 GB: additional Pretty Printer output flexibility (2012-08-20)
-
-  The "Pretty Print" command now allows any output file settings, rather than
-  hardcoding a specific behavior.  If no output file settings are specified
-  in the project file the behavior is the default specified by the gnatpp tool
-  itself.
 
 NF-52-L730-016 GPS: display timestamps in File Selector dialog (2012-08-02)
 
