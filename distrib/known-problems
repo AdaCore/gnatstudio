@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L807-027: GB: scenario variables not passed to some tools invocations
+  Problem:    The invocations of the stub generator, pretty printer, style
+              checker, and metrics analyzer did not include the values of
+              scenario variables defined by the project.
+  Workaround: Assign the scenario variables' values outside of Eclipse, in
+              the environment.
+
 - L803-018: GPS: busy state after terminating a debug session
   Problem:    When running multiple debug sessions at the same time and
               terminating these sessions from a python script via e.g.
