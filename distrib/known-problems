@@ -8,17 +8,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
-- L807-027: GB: config file in project files ignored for pretty printer
-  Problem:    When a gpr file specified a configuration pragmas file, 
-              the file was not passed to the invocation of gnatpp.  This 
-              could cause partial compilation involved with gnatpp to fail.
-              In addition, the invocations of the stub generator, pretty 
-              printer, style checker, and metrics analyzer did not include
-              the values of scenario variables defined by the project.
-  Workaround: Copy the config file to the root of the project and name it
-              "gnat.adc". For the scenario variables, assign their values
-              outside of Eclipse, in the environment.
-
 - L803-018: GPS: busy state after terminating a debug session
   Problem:    When running multiple debug sessions at the same time and
               terminating these sessions from a python script via e.g.
