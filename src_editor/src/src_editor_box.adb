@@ -1905,13 +1905,27 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : constant General_Entity := Get_Entity (Context);
-      Kernel : constant Kernel_Handle  := Get_Kernel (Context);
-      Db     : constant General_Xref_Database := Kernel.Databases;
 
    begin
-      return Entity /= No_General_Entity
-        and then Get_Type_Of (Db, Entity) /= No_General_Entity;
+      if Active (Entities.SQLITE) then
+         declare
+            Entity : constant General_Entity := Get_Entity (Context);
+            Kernel : constant Kernel_Handle  := Get_Kernel (Context);
+            Db     : constant General_Xref_Database := Kernel.Databases;
+         begin
+            return Entity /= No_General_Entity
+              and then Get_Type_Of (Db, Entity) /= No_General_Entity;
+         end;
+      else
+         declare
+            use Entities;
+            Entity : constant Entity_Information := Get_Entity (Context);
+
+         begin
+            return Entity /= null
+              and then Get_Type_Of (Entity) /= null;
+         end;
+      end if;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1923,15 +1937,32 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Db     : constant General_Xref_Database := Kernel.Databases;
 
-      Entity : constant General_Entity := Get_Entity (Context);
-      use Entities;
    begin
-      return Entity /= No_General_Entity
-        and then Get_Category (Db, Entity) = Type_Or_Subtype
-        and then Get_Kind (Db, Entity).Kind = Access_Kind;
+      if Active (Entities.SQLITE) then
+         declare
+            Entity : constant General_Entity := Get_Entity (Context);
+            Kernel : constant Kernel_Handle  := Get_Kernel (Context);
+            Db     : constant General_Xref_Database := Kernel.Databases;
+
+            use type Entities.Entity_Category;
+            use type Entities.E_Kinds;
+         begin
+            return Entity /= No_General_Entity
+              and then Get_Category (Db, Entity) = Entities.Type_Or_Subtype
+              and then Get_Kind (Db, Entity).Kind = Entities.Access_Kind;
+         end;
+      else
+         declare
+            use Entities;
+            Entity : constant Entity_Information := Get_Entity (Context);
+
+         begin
+            return Entity /= null
+              and then Get_Category (Entity) = Entities.Type_Or_Subtype
+              and then Get_Kind (Entity).Kind = Entities.Access_Kind;
+         end;
+      end if;
    end Filter_Matches_Primitive;
 
    ------------------------------
