@@ -451,8 +451,8 @@ package body Xref is
                      Typ := Entities.Is_Primitive_Operation_Of (E);
 
                      if Typ /= null then
-                        Prim_Ent := To_General_Entity (Dbase, E);
-                        Typ_Ent  := To_General_Entity (Dbase, Typ);
+                        Prim_Ent := To_General_Entity (E);
+                        Typ_Ent  := To_General_Entity (Typ);
 
                         exit when not On_Callee
                           (Callee => Prim_Ent,
@@ -536,7 +536,7 @@ package body Xref is
             Entity      => Old_Entity,
             Status      => Status);
 
-         return General_Entity'(Old_Entity => Old_Entity, others => <>);
+         return To_General_Entity (Old_Entity);
       end if;
    end Get_Entity;
 
@@ -953,7 +953,7 @@ package body Xref is
             E : constant Entities.Entity_Information :=
                   Entities.Get_Type_Of (Entity.Old_Entity);
          begin
-            return To_General_Entity (Db, E);
+            return To_General_Entity (E);
          end;
 
       else
@@ -1037,7 +1037,7 @@ package body Xref is
       Entity : General_Entity) return General_Entity is
    begin
       if not Active (Entities.SQLITE) then
-         return To_General_Entity (Dbase, Pointed_Type (Entity.Old_Entity));
+         return To_General_Entity (Pointed_Type (Entity.Old_Entity));
       else
          return Pointed_Type (Dbase, Entity);
       end if;
@@ -1102,33 +1102,14 @@ package body Xref is
    -----------------------
 
    function To_General_Entity
-     (Db : General_Xref_Database;
-      E  : Entities.Entity_Information) return General_Entity
-   is
-
+     (E  : Entities.Entity_Information) return General_Entity is
    begin
       pragma Assert (not Active (Entities.SQLITE));
 
       if E = null then
          return No_General_Entity;
-
       else
-         declare
-            Decl : Entities.File_Location;
-            Loc  : General_Location;
-         begin
-            Decl := Entities.Get_Declaration_Of (E);
-            Loc  :=
-              (File   => Entities.Get_Filename (Decl.File),
-               Line   => Decl.Line,
-               Column => Decl.Column);
-
-            return
-              Get_Entity
-                (Db   => Db,
-                 Name => Get (Entities.Get_Name (E)).all,
-                 Loc  => Loc);
-         end;
+         return General_Entity'(Old_Entity => E, others => <>);
       end if;
    end To_General_Entity;
 

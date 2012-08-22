@@ -189,8 +189,7 @@ package Xref is
    --  Return the type pointed to by entity
 
    function To_General_Entity
-     (Db : General_Xref_Database;
-      E  : Entities.Entity_Information) return General_Entity;
+     (E : Entities.Entity_Information) return General_Entity;
    --  Convert Entities.Entity_Information to General_Entity. This routine is
    --  provided to support to legacy code. It will be eventually removed???
 

@@ -406,7 +406,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
                Get_Filename (Get_File (Location)),
                Editable_Line_Type (Get_Line (Location)),
                Get_Column (Location),
-               Xref.To_General_Entity (Buffer.Kernel.Databases, Entity));
+               Xref.To_General_Entity (Entity));
       end case;
    end Hyper_Mode_Click_On;
 
