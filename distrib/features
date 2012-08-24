@@ -105,6 +105,12 @@ NF-52-L514-028 GPS: Action tooltip in Locations view (2012-05-21)
   The Locations View now displays a tooltip for the action associated with a
   message.
 
+NF-52-L503-002 GPS: improved support for C++ mangled names (2012-08-24)
+
+  GPS incorporates support to handle directly C++ mangled names. This improves
+  its response time navigating from Ada to C++ sources and removes the
+  dependency of GPS on the external tool c++filt.
+
 NF-52-L426-037 GB: remove trailing blanks when saving an ada file (2012-08-14)
 
   When saving ada files, trailing blanks can be removed. This is done via the
