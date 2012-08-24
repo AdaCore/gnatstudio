@@ -42,14 +42,6 @@ package ALI_Parser is
       Lang_Handler : Language_Handlers.Language_Handler;
       --  Field used to store the languages handler of the kernel; used to
       --  obtain the LI handler of entities imported from other languages
-
-      Unmangle_Pd     : access GNAT.Expect.TTY.TTY_Process_Descriptor;
-      --  Descriptor of process used to unmangle names; null if not required
-      --  or not available.
-
-      Launch_Unmangle_Subprocess : Boolean;
-      --  Flag used to avoid retrying launching the process used to unmangle
-      --  names when its associated program is not available in the system
    end record;
 
    type ALI_Handler is access all ALI_Handler_Record'Class;

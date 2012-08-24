@@ -659,6 +659,14 @@ package Entities is
    pragma Inline (Get_Name);
    --  Return the name of the entity
 
+   procedure Set_Mangled_Name
+     (Entity : Entity_Information; Mangled_Name : GNATCOLL.Symbols.Symbol);
+   --  Set the C++ mangled name of Entity
+
+   function Get_Mangled_Name
+     (Entity : Entity_Information) return GNATCOLL.Symbols.Symbol;
+   --  Get the C++ mangled name of Entity
+
    function Debug_Name (Entity : Entity_Information) return String;
    --  Return a string that can be displayed for debugging purposes
 
@@ -931,6 +939,12 @@ package Entities is
 
    subtype LI_Entities_Iterator is Entities_Search_Tries.Vector_Trie_Iterator;
 
+   procedure Entities_Search_Tries_Insert
+     (Name : GNATCOLL.Symbols.Symbol;
+      File : Source_File;
+      E    : Entity_Information);
+   --  Insert an C/C++ entity in the tries database.
+
    Null_LI_Entities_Iterator : LI_Entities_Iterator renames
      Entities_Search_Tries.Null_Vector_Trie_Iterator;
 
@@ -1170,7 +1184,8 @@ private
    ------------------------
 
    type Entity_Information_Record is tagged record
-      Name           : GNATCOLL.Symbols.Symbol;
+      Name         : GNATCOLL.Symbols.Symbol;
+      Mangled_Name : GNATCOLL.Symbols.Symbol;
       --  Name of the entity. This name contains the
       --  proper casing for the entity.
 

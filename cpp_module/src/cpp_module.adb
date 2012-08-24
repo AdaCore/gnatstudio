@@ -156,9 +156,7 @@ package body Cpp_Module is
                    (LI_Handler_Record with
                     Db => Db,
                     Registry => Project_Registry (Registry),
-                    Lang_Handler => Lang_Handler,
-                    Unmangle_Pd  => null,
-                    Launch_Unmangle_Subprocess => True);
+                    Lang_Handler => Lang_Handler);
    end Create_CPP_Handler;
 
    ----------------------------
