@@ -314,9 +314,7 @@ package body ALI_Parser is
                    (LI_Handler_Record with
                       Db => Db,
                       Registry => Project_Registry (Registry),
-                      Lang_Handler => Lang_Handler,
-                      Unmangle_Pd => null,
-                      Launch_Unmangle_Subprocess => False);
+                      Lang_Handler => Lang_Handler);
    end Create_ALI_Handler;
 
    --------------------
@@ -784,117 +782,6 @@ package body ALI_Parser is
                Current_Sfile         : in out Sdep_Id;
                First_Sect, Last_Sect : Nat)
             is
-               function CPP_Unmangled_Name
-                 (LI_Handler   : Entities.LI_Handler;
-                  Mangled_Name : String) return String;
-               --  Invoke the process executing c++filt and return the C++
-               --  unmangled name associated with Mangled_Name; if the process
-               --  is not available or its invocation fails then return
-               --  Mangled_Name.
-
-               function CPP_Unmangled_Name
-                 (LI_Handler   : Entities.LI_Handler;
-                  Mangled_Name : String) return String
-               is
-                  use GNAT.Expect.TTY;
-                  use GNAT.Expect;
-
-                  Cmd_Result     : Expect_Match;
-                  Launch_Process : Boolean renames
-                                     ALI_Handler
-                                       (LI_Handler).Launch_Unmangle_Subprocess;
-                  Unmangle_Pd    : access TTY_Process_Descriptor renames
-                                     ALI_Handler (LI_Handler).Unmangle_Pd;
-                  Pd             : TTY_Process_Descriptor;
-                  Pd_Arg         : aliased String := "-n";
-
-               begin
-                  --  Handle lazy creation of the subprocess
-
-                  if Unmangle_Pd = null then
-                     if not Launch_Process then
-                        return Mangled_Name;
-                     else
-                        Launch_Process := False;
-
-                        begin
-                           --  ??? hard coded c++filt here, should use the
-                           --  corresponding project property instead
-                           Non_Blocking_Spawn
-                             (Descriptor  => Pd,
-                              Command     => "c++filt",
-                              Args        => (1 => Pd_Arg'Unrestricted_Access),
-                              Buffer_Size => 0);
-
-                           --  Delay required to ensure that the first request
-                           --  to the c++filt program is properly processed.
-                           --  This is kludgy, why is this really needed???
-
-                           delay 0.1;
-                           Unmangle_Pd := new TTY_Process_Descriptor'(Pd);
-
-                        exception
-                           when Invalid_Process =>
-                              return Mangled_Name;
-                        end;
-                     end if;
-                  end if;
-
-                  Send (Unmangle_Pd.all, Mangled_Name);
-
-                  Expect
-                    (Descriptor => Unmangle_Pd.all,
-                     Result     => Cmd_Result,
-                     Regexp     => ".*",
-                     Timeout    => 1_000);
-
-                  if Cmd_Result /= 1 then
-                     return Mangled_Name;
-                  end if;
-
-                  declare
-                     Result : constant String := Expect_Out (Unmangle_Pd.all);
-                     J : Natural;
-                     K : Natural;
-
-                  begin
-                     Flush (Unmangle_Pd.all);
-
-                     --  This is the format of the c++filt output (this code
-                     --  returns the name of the function)
-
-                     --    Class_Name::Function_Name(Args)
-
-                     J := Result'First;
-                     while J < Result'Last
-                       and then Result (J) /= ':'
-                     loop
-                        J := J + 1;
-                     end loop;
-
-                     if J > Result'Last - 2
-                       or else Result (J + 1) /= ':'
-                     then
-                        return Mangled_Name;
-                     end if;
-
-                     K := J + 2;
-                     while K < Result'Last
-                       and then Result (K) /= '('
-                     loop
-                        K := K + 1;
-                     end loop;
-
-                     if K = Result'Last then
-                        return Mangled_Name;
-                     else
-                        return Result (J + 2 .. K - 1);
-                     end if;
-                  end;
-               end CPP_Unmangled_Name;
-
-               --  Local variables
-
                Kind : constant Reference_Kind :=
                         Char_To_R_Kind (Xref.Table (Current_Ref).Rtype);
 
@@ -1008,7 +895,36 @@ package body ALI_Parser is
                         Line   => Integer (Current_Xref.Line),
                         Column => Visible_Column_Type (Current_Xref.Col));
 
-                  --  Handle references of entities imported from C/C++
+                  --  Handle C++ reference containing the mangled name
+
+                  elsif Kind = Implicit
+                    and then Get_Name_String (Current_Xref.Imported_Lang)
+                               = "cpp"
+                  then
+                     declare
+                        Name         : constant String :=
+                          Get_Name_String (Current_Xref.Imported_Name);
+                        Mangled_Name : constant GNATCOLL.Symbols.Symbol :=
+                          Get_Symbols (Handler.Db).Find (Name);
+
+                     begin
+                        --  Save the mangled name in the entity and register
+                        --  it in the tries database
+
+                        Set_Mangled_Name (Entity, Mangled_Name);
+
+                        Entities_Search_Tries_Insert
+                          (Name => Mangled_Name,
+                           File => Sfiles (Current_Sfile).File,
+                           E    => Entity);
+
+                        Location :=
+                          (File   => Sfiles (Current_Sfile).File,
+                           Line   => Integer (Current_Xref.Line),
+                           Column => Visible_Column_Type (Current_Xref.Col));
+                     end;
+
+                  --  Handle other references of entities imported from C/C++
 
                   else
                      Set_Is_Imported (Entity);
@@ -1043,50 +959,18 @@ package body ALI_Parser is
                         --  the reference has not been loaded yet!
 
                         else
-                           --  We used to search the unmangled name in the trie
-                           --  tree (via
-                           --     CPP_Unmangled_Name
-                           --       (LI_Handler, Xref_Imported_Name)
-                           --  but this is never correct, since in C++ for
-                           --  instance there exists overriding (and
-                           --  constructors have the same name as their class).
-                           --
-                           --  We only do this when the external name is given
-                           --  as part of a 'b' reference, which is used for
-                           --  a pragma Import in Ada.
-                           --  ??? The proper solution would be to store the
-                           --  entity's mangled name in the database, and look
-                           --  that one up.
+                           Location :=
+                             (File   => Sfiles (Current_Sfile).File,
+                              Line   => Integer (Current_Xref.Line),
+                              Column => Visible_Column_Type
+                                          (Current_Xref.Col));
 
-                           if Get_Name_String (Current_Xref.Imported_Lang)
-                             = "cpp"
-                             and then Kind = Body_Entity
-                           then
-                              Iter :=
-                                Start
-                                  (Trie   => Get_Name_Index (LI_Handler),
-                                   Prefix => CPP_Unmangled_Name
-                                              (LI_Handler, Xref_Imported_Name),
-                                   Is_Partial => False);
-                           end if;
+                           --  Indicate that this ALI has unresolved entities
+                           --  imported from C. Done to force reloading the
+                           --  LI file if such entity is eventually needed
+                           --  for sources navigation.
 
-                           if not At_End (Iter) then
-                              Location := Get_Declaration_Of (Get (Iter));
-
-                           else
-                              Location :=
-                                (File   => Sfiles (Current_Sfile).File,
-                                 Line   => Integer (Current_Xref.Line),
-                                 Column => Visible_Column_Type
-                                             (Current_Xref.Col));
-
-                              --  Indicate that this ALI has unresolved
-                              --  entities imported from C. Done to force
-                              --  reloading the LI file if such entity is
-                              --  eventually needed for sources navigation.
-
-                              Set_Has_Unresolved_Imported_Refs (Handler);
-                           end if;
+                           Set_Has_Unresolved_Imported_Refs (Handler);
                         end if;
                      end;
                   end if;
@@ -1711,10 +1595,6 @@ package body ALI_Parser is
       pragma Unreferenced (Status);
    begin
       Destroy (Entities.LI_Handler_Record (Handler));
-
-      if Handler.Unmangle_Pd /= null then
-         Handler.Unmangle_Pd.Close (Status);
-      end if;
    end Destroy;
 
    -----------------------------

@@ -100,6 +100,7 @@ package body Entities.Construct_Assistant is
          New_Entity :=
            new Entity_Information_Record'
              (Name                         => Get_Construct (E).Name,
+              Mangled_Name                 => GNATCOLL.Symbols.No_Symbol,
               Kind                         => Unresolved_Entity_Kind,
               Attributes                   => (others => False),
               LI_Declaration               => Declaration,

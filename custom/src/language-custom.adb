@@ -473,9 +473,7 @@ package body Language.Custom is
                  Suffix => new String'(Suffix),
                  Db => Get_Database (Kernel),
                  Registry => Project_Registry (Get_Registry (Kernel).all),
-                 Lang_Handler => Language_Handler (Handler),
-                 Unmangle_Pd  => null,
-                 Launch_Unmangle_Subprocess => False);
+                 Lang_Handler => Language_Handler (Handler));
          end if;
       end Create_LI_Handler;
 

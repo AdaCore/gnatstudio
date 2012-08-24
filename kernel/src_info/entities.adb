@@ -310,6 +310,30 @@ package body Entities is
       end if;
    end Get_Name;
 
+   ----------------------
+   -- Set_Mangled_Name --
+   ----------------------
+
+   procedure Set_Mangled_Name
+     (Entity : Entity_Information; Mangled_Name : GNATCOLL.Symbols.Symbol) is
+   begin
+      Entity.Mangled_Name := Mangled_Name;
+   end Set_Mangled_Name;
+
+   ----------------------
+   -- Get_Mangled_Name --
+   ----------------------
+
+   function Get_Mangled_Name
+     (Entity : Entity_Information) return GNATCOLL.Symbols.Symbol is
+   begin
+      if Entity = null then
+         return No_Symbol;
+      else
+         return Entity.Mangled_Name;
+      end if;
+   end Get_Mangled_Name;
+
    ----------------
    -- Debug_Name --
    ----------------
@@ -2067,6 +2091,27 @@ package body Entities is
       return Entity.Returned_Type;
    end Get_Returned_Type;
 
+   ----------------------------------
+   -- Entities_Search_Tries_Insert --
+   ----------------------------------
+
+   procedure Entities_Search_Tries_Insert
+     (Name : GNATCOLL.Symbols.Symbol;
+      File : Source_File;
+      E    : Entity_Information) is
+   begin
+      if File.Db.Lang.Get_Language_From_File
+        (File.Name).Entities_Indexed
+      then
+         Entities_Search_Tries.Insert
+           (File.Handler.Name_Index'Access,
+            File.Db.Symbols,
+            E,
+            Get (Name).all,
+            E.Trie_Tree_Index);
+      end if;
+   end Entities_Search_Tries_Insert;
+
    -------------------
    -- Get_Or_Create --
    -------------------
@@ -2112,6 +2157,7 @@ package body Entities is
       if E = null and then Allow_Create then
          E := new Entity_Information_Record'
            (Name                         => Name,
+            Mangled_Name                 => No_Symbol,
             Kind                         => Unresolved_Entity_Kind,
             Attributes                   => (others => False),
             LI_Declaration               => (File, Line, Column),
