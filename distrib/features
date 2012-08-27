@@ -110,7 +110,7 @@ NF-52-L503-002 GPS: improved support for C++ mangled names (2012-08-24)
   GPS incorporates support to handle directly C++ mangled names. This improves
   its response time navigating from Ada to C++ sources and removes the
   dependency of GPS on the external tool c++filt. This new support requires
-  a version of the G++ compiler generated after 2012-07-24.
+  a version of the G++ compiler from the GNAT toolset later than 2012-06-23.
 
 NF-52-L426-037 GB: remove trailing blanks when saving an ada file (2012-08-14)
 
