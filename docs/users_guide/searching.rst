@@ -114,9 +114,9 @@ On this screen shot, you can see three entry fields:
 
   *Files From Current Project*
 
-    Search in all the files from the project, excluding files from project
-    dependencies. The *Scope* entry is described in the `Files...` section
-    above.
+    Search in all the files from the currently selected project, defaulting on
+    the root project if there is no project currently selected.
+    The *Scope* entry is described in the `Files...` section above.
 
   *Current File*
 
