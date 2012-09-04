@@ -108,13 +108,13 @@ On this screen shot, you can see three entry fields:
 
   *Files From Project*
 
-    Search in all the files from the project, excluding files from project
+    Search in all the files from the project, including files from project
     dependencies. The *Scope* entry is described in the `Files...` section
     above.
 
-  *Files From Project and Subprojects*
+  *Files From Current Project*
 
-    Search in all the files from the project, including files from project
+    Search in all the files from the project, excluding files from project
     dependencies. The *Scope* entry is described in the `Files...` section
     above.
 

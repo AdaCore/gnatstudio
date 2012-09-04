@@ -233,7 +233,7 @@ package Src_Contexts is
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
-   --  Factory for "Files From Project and Subprojects".
+   --  Factory for "Files From Project".
    --  The list of files is automatically set to the files of the root project
    --  and its imported projects
 
@@ -248,7 +248,7 @@ package Src_Contexts is
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
-   --  Factory for "Files From Project".
+   --  Factory for "Files From Current Project".
    --  The list of files is automatically set to the files of the root project
    --  without imported projects
 
