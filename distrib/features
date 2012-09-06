@@ -66,7 +66,8 @@ NF-52-L716-044 ECL: makefiles can now use gprbuild (2012-07-16)
 
 NF-52-L713-003 GPS: search in run-time files (2012-09-06)
 
-  New scope "Runtime" in the search dialog.
+  A new scope called "Files From Runtime" is available in the search dialog
+  which allows searching all spec files from the Ada run-time.
 
 NF-52-L703-018 GB: GNAT & Ada reference manuals in GNATbench help (2012-08-02)
 
