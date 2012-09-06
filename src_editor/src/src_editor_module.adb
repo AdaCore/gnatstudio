@@ -3207,8 +3207,8 @@ package body Src_Editor_Module is
 
       Register_Search_Function
         (Kernel            => Kernel,
-         Label             => -"Files From Project",
-         Factory           => Files_From_Project_Factory'Access,
+         Label             => -"Files From Runtime",
+         Factory           => Files_From_Runtime_Factory'Access,
          Extra_Information => Selector,
          Id                => Src_Editor_Module_Id,
          Mask              => All_Options and not Search_Backward);
@@ -3216,6 +3216,13 @@ package body Src_Editor_Module is
         (Kernel            => Kernel,
          Label             => -"Files From Current Project",
          Factory           => Files_From_Root_Project_Factory'Access,
+         Extra_Information => Selector,
+         Id                => Src_Editor_Module_Id,
+         Mask              => All_Options and not Search_Backward);
+      Register_Search_Function
+        (Kernel            => Kernel,
+         Label             => -"Files From Project",
+         Factory           => Files_From_Project_Factory'Access,
          Extra_Information => Selector,
          Id                => Src_Editor_Module_Id,
          Mask              => All_Options and not Search_Backward);

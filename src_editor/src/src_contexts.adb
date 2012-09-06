@@ -1392,6 +1392,38 @@ package body Src_Contexts is
       return Search_Context_Access (Context);
    end Files_From_Root_Project_Factory;
 
+   --------------------------------
+   -- Files_From_Runtime_Factory --
+   --------------------------------
+
+   function Files_From_Runtime_Factory
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access
+   is
+      Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
+      Files   : GNATCOLL.VFS.File_Array :=
+        Get_Registry (Kernel).Environment.Predefined_Source_Files;
+      Last    : Natural := Files'First - 1;
+      Context : constant Files_Project_Context_Access :=
+                  new Runtime_Files_Context;
+   begin
+      --  Collect specification files in the begining of Files array
+      for J in Files'Range loop
+         if Files (J).Has_Suffix (".ads") then
+            Last := Last + 1;
+            Files (Last) := Files (J);
+         end if;
+      end loop;
+
+      Context.Scope      := Search_Scope'Val (Get_Active (Scope.Combo));
+      Context.All_Occurrences := All_Occurrences;
+      Context.Begin_Line      := 0;
+      Set_File_List (Context, new File_Array'(Files (Files'First .. Last)));
+      return Search_Context_Access (Context);
+   end Files_From_Runtime_Factory;
+
    ---------------------------
    -- Get_Terminate_Message --
    ---------------------------
@@ -2938,6 +2970,18 @@ package body Src_Contexts is
      (Self : Current_File_Context) return String is
    begin
       return To_String (Self.Current_File);
+   end Context_Look_In;
+
+   ---------------------
+   -- Context_Look_In --
+   ---------------------
+
+   overriding function Context_Look_In
+     (Self : Runtime_Files_Context) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return -"any file in the runtime";
    end Context_Look_In;
 
    ------------------
