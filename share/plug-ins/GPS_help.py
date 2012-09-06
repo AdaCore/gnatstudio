@@ -1,4 +1,4 @@
-""" This script provides interactive help for the GPS API using the
+""" This plugin provides interactive help for the GPS API using the
     "help" command in the Python and Shell consoles.
 """
 import inspect
