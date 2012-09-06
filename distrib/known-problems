@@ -42,6 +42,13 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Kill the process outside of GPS before closing the console, or
               leave the console open.
 
+- L704-023: Excluded source files visible in project views
+  Problem:    When defining an extending project, files excluded from the
+              extending project using the Excluded_Source_Files or 
+              Excluded_Source_List_File attributes are still listed in the
+              project view.
+  Workaround: This display problem can be safely ignored.
+
 - L625-022: GPS: isearch.py window disappearing
   Problem:    Under some X servers, such as the Cygwin X11 server, the
               window for doing incremental searches in the isearch.py
