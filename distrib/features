@@ -64,6 +64,10 @@ NF-52-L716-044 ECL: makefiles can now use gprbuild (2012-07-16)
   builder name is passed as a macro.  In the past this builder name was
   always passed as "gnatmake" but it can now also be "gprbuild" instead.
 
+NF-52-L713-003 GPS: search in run-time files (2012-09-06)
+
+  New scope "Runtime" in the search dialog.
+
 NF-52-L703-018 GB: GNAT & Ada reference manuals in GNATbench help (2012-08-02)
 
   Add to GNATbench help content

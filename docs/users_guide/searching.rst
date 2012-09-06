@@ -118,6 +118,11 @@ On this screen shot, you can see three entry fields:
     the root project if there is no project currently selected.
     The *Scope* entry is described in the `Files...` section above.
 
+  *Files From Runtime*
+
+    Search in all specification files from GNAT runtime library.
+    The *Scope* entry is described in the `Files...` section above.
+
   *Current File*
 
     Search in the current source editor.  The *Scope* entry is described in the

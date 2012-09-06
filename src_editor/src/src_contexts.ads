@@ -257,6 +257,24 @@ package Src_Contexts is
      (Context : access Files_Project_Context;
       Kind    : Operation_Kind) return String;
 
+   ---------------------------
+   -- Runtime Files context --
+   ---------------------------
+
+   type Runtime_Files_Context is new Files_Project_Context with private;
+
+   overriding function Context_Look_In
+     (Self : Runtime_Files_Context) return String;
+
+   function Files_From_Runtime_Factory
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Factory for "Files From Runtime".
+   --  The list of files is automatically set to the *.ads files from
+   --  Predefined_Source_Path
+
    ------------------------
    -- Open Files context --
    ------------------------
@@ -491,5 +509,7 @@ private
    record
       Combo : Gtk.Combo_Box.Gtk_Combo_Box;
    end record;
+
+   type Runtime_Files_Context is new Files_Project_Context with null record;
 
 end Src_Contexts;
