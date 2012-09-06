@@ -164,6 +164,9 @@
     <menu action="Show not implemented tests">
       <title>Show not implemented tests</title>
     </menu>
+    <menu action="open harness">
+      <title>Open harness project</title>
+    </menu>
     <menu action="exit harness">
       <title>Exit from harness project</title>
     </menu>
@@ -174,7 +177,7 @@
   </contextual>
 
   <contextual action="run gnattest recursive" after="GNATtest">
-    <title>GNATtest/Generate unit test setup for %p and subprojects</title>
+    <title>GNATtest/Generate unit test setup for %p recursive</title>
   </contextual>
 
   <contextual action="open harness" after="GNATtest">
