@@ -547,21 +547,23 @@ When relevant (depending on the context), right-clicking with your mouse will
 show GNATtest-related contextual menu entries.
 
 Pointing to a source file containing the library package declaration, you
-have an option called *Generate unit test setup for <file>* that will generate
-the harness for this single package.
+have an option called *GNATtest/Generate unit test setup for <file>* that
+will generate the harness for this single package.
 
 From a project contextual menu (:ref:`The_Project_View`), you have an option
-*Generate unit test setup for <project>* that will generate the harness for
-the project. An option *Generate unit test setup for <project> and subprojects*
+*GNATtest/Generate unit test setup for <project>* that will generate the
+harness for the project.
+An option *GNATtest/Generate unit test setup for <project> recursive*
 will generate harness for whole hierarchy of projects. If harness project
-already exists, an option "Open harness project" will switch GPS to harness
-project.
+already exists, an option "GNATtest/Open harness project" will switch GPS
+to harness project.
 
 While harness project is opened it's easy to navigate from tested routine
 to test code and back. Pointing to name of tested routine provides
-options *Go to test case*, *Go to test setup* and *Go to test teardown*.
+options *GNATtest/Go to test case*, *GNATtest/Go to test setup* and
+*GNATtest/Go to test teardown*.
 From contextual menu for source file of test case or setup/teardown,
-you have an option called *Go to <routine>* to go to tested routine.
+you have an option called *GNATtest/Go to <routine>* to go to tested routine.
 
 Project Properties
 ------------------
