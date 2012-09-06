@@ -24,6 +24,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Impl;     use GNATCOLL.Scripts.Impl;
 with GNATCOLL.Scripts.Shell;    use GNATCOLL.Scripts.Shell;
+with GNATCOLL.Scripts.Python;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with XML_Utils;                 use XML_Utils;
@@ -280,8 +281,10 @@ package body Shell_Script is
                --  Can't call python's help(), since that would display the
                --  help in the Python console, not the GPS shell console
                N : constant String := Execute_Command
-                  (Lookup_Scripting_Language (Get_Scripts (Kernel), "python"),
-                   "import GPS_doc; GPS_doc." & Nth_Arg (Data, 1) & ".__doc__",
+                 (Lookup_Scripting_Language
+                    (Get_Scripts (Kernel),
+                     GNATCOLL.Scripts.Python.Python_Name),
+                   "GPS_help.helpdoc('" & Nth_Arg (Data, 1) & "')",
                    Errors => Error'Access);
             begin
                Insert_Text

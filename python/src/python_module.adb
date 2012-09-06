@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
+with GNATCOLL.Python;                use GNATCOLL.Python;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
@@ -108,9 +109,12 @@ package body Python_Module is
 
    function Create_Python_Console (Kernel : Kernel_Handle) return MDI_Child is
       Console : Interactive_Console;
+      Backend : Virtual_Console;
       Script  : constant Scripting_Language :=
                   Lookup_Scripting_Language
                     (Get_Scripts (Kernel), Python_Name);
+      Errors  : aliased Boolean;
+      Result  : PyObject;
    begin
       Console := Create_Interactive_Console
         (Kernel              => Kernel,
@@ -118,11 +122,27 @@ package body Python_Module is
          Module              => Abstract_Module_ID (Python_Module_Id),
          History             => History_Key'("python_console"),
          Create_If_Not_Exist => True);
-      Set_Default_Console
-        (Script, Get_Or_Create_Virtual_Console (Console));
+      Backend := Get_Or_Create_Virtual_Console (Console);
+      Set_Default_Console (Script, Backend);
       Set_Command_Handler
         (Console, Default_Command_Handler'Access, System.Null_Address);
 
+      --  After creating the Python console, import everything from
+      --  the plugin GPS_help, to override the default help function
+
+      Console.Enable_Prompt_Display (False);
+      Result := Run_Command
+        (Python_Scripting (Script),
+         "import GPS_help ; help = GPS_help.help",
+         Need_Output     => False,
+         Console         => Backend,
+         Show_Command    => False,
+         Hide_Output     => True,
+         Hide_Exceptions => True,
+         Errors          => Errors'Unchecked_Access);
+      Py_XDECREF (Result);
+      Console.Enable_Prompt_Display (True);
+      Console.Display_Prompt;
       return Find_MDI_Child (Get_MDI (Kernel), Console);
    end Create_Python_Console;
 
