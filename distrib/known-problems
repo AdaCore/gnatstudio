@@ -169,6 +169,12 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               locations of their instantiations.
   Workaround: Simply ignore the extra references.
 
+- L329-016: ECL: Finish button not enabled when creating new ada source file
+  Problem:    New Ada Source File menu when Project name is different from
+              Project unit name stored in gpr file is not working. The Finish
+              button is never enabled even if the source file name is valid.
+  Workaround: Use the standard New File wizard.
+
 - L329-027: GPS: Duplicate menu entries for build targets
   Problem:    When specifying a new build target through XML, if the target
               is using a "toplevel" category (ie, which starts and ends with
