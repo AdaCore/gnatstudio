@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L910-004: GPS: no warning when color depth is lower than 24 bits per pixel
+  Problem:    GPS does not detect that the display is lower than the minimal
+              24 bits per pixels, which can results in crashes.
+  Workaround: Check manually that the display depth is sufficient.
+
 - L807-027: GB: scenario variables not passed to some tools invocations
   Problem:    The invocations of the stub generator, pretty printer, style
               checker, and metrics analyzer did not include the values of
@@ -168,6 +173,12 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               references are listed in the Locations view, pointing to the
               locations of their instantiations.
   Workaround: Simply ignore the extra references.
+
+- L329-016: ECL: Finish button not enabled when creating new ada source file
+  Problem:    New Ada Source File menu when Project name is different from
+              Project unit name stored in gpr file is not working. The Finish
+              button is never enabled even if the source file name is valid.
+  Workaround: Use the standard New File wizard.
 
 - L329-027: GPS: Duplicate menu entries for build targets
   Problem:    When specifying a new build target through XML, if the target
