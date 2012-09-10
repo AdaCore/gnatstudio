@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L910-004: GPS: no warning when color depth is lower than 24 bits per pixel
+  Problem:    GPS does not detect that the display is lower than the minimal
+              24 bits per pixels, which can results in crashes.
+  Workaround: Check manually that the display depth is sufficient.
+
 - L807-027: GB: scenario variables not passed to some tools invocations
   Problem:    The invocations of the stub generator, pretty printer, style
               checker, and metrics analyzer did not include the values of
