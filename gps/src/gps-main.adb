@@ -35,6 +35,7 @@ with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
+with Glib;
 with Glib.Convert;                     use Glib.Convert;
 with Glib.Error;                       use Glib.Error;
 with Glib.Messages;                    use Glib.Messages;
@@ -42,6 +43,7 @@ with Glib.Object;                      use Glib.Object;
 with Glib.Properties;                  use Glib.Properties;
 
 with Gdk.Pixbuf;                       use Gdk.Pixbuf;
+with Gdk.Visual;
 
 with Gtk;                              use Gtk;
 with Gtk.Enums;                        use Gtk.Enums;
@@ -152,6 +154,7 @@ with Glib.Main;
 
 procedure GPS.Main is
    use GPS.Main_Window;
+   use type Glib.Gint;
 
    Me        : constant Debug_Handle := Create ("GPS");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
@@ -1572,6 +1575,16 @@ procedure GPS.Main is
          (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &
          "(c) 2001-2012 AdaCore" & ASCII.LF);
       Free (About_Contents);
+
+      if not Hide_GPS
+        and then Gdk.Visual.Get_Best_Depth < 24
+      then
+         Console.Insert
+           (GPS_Main.Kernel,
+            -("Warning, GPS requires a display with a minimal color depth"
+              & " of 24 bits per pixels."),
+            Mode => GPS.Kernel.Console.Error);
+      end if;
 
       --  Apply the preferences to the MDI. In particular, we want to set the
       --  default position for notebook tabs, since they can be overriden by
