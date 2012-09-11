@@ -237,4 +237,9 @@
    fun:SHA1_Update
 }
 
+{
+   in fontconfig (L910-063)
+   Memcheck:Addr4
+   obj:*libfontconfig*
+}
 
