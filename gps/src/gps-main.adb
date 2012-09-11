@@ -1577,6 +1577,7 @@ procedure GPS.Main is
       Free (About_Contents);
 
       if not Hide_GPS
+        and then (not Active (Testsuite_Handle))
         and then Gdk.Visual.Get_Best_Depth < 24
       then
          Console.Insert
