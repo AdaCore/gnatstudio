@@ -369,6 +369,11 @@ NF-52-HC11-001 GPS: add clear in messages contextual menu (2012-05-10)
   The contextual menu for messages window is customizable through plugins
   and has 'Clear messages' item.
 
+NF-52-H725-016 GPS: "at line" locations are recognized (2012-09-12)
+
+  Tools's messages that use "at line" format of locations are recognized now
+  and secondary message in Locations view is created for quick navigation.
+
 NF-52-G917-017 GPS: Coverage Report accessible through Back button (2012-02-02)
 
   When clicking on a file or subprogram in the Code Coverage report, GPS open
