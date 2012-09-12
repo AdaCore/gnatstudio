@@ -227,8 +227,8 @@ package body GPS.Kernel.Messages.Tools_Output is
          Loc.File := Create
            (+Message (Matched (SFF).First .. Matched (SFF).Last),
             Kernel);
-         Loc.First := Matched (0).First;
-         Loc.Last  := Matched (0).Last;
+         Loc.First := Matched (1).First;
+         Loc.Last  := Matched (1).Last;
 
          if Matched (SFL) /= No_Match then
             declare
