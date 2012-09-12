@@ -162,6 +162,8 @@ package GPS.Kernel.Preferences is
    Secondary_File_Pattern_Index   : Integer_Preference;
    Secondary_Line_Pattern_Index   : Integer_Preference;
    Secondary_Column_Pattern_Index : Integer_Preference;
+   Alternate_Secondary_Pattern    : String_Preference;
+   Alternate_Secondary_Line_Index : Integer_Preference;
    Message_Pattern_Index          : Integer_Preference;
    Style_Pattern_Index            : Integer_Preference;
    Warning_Pattern_Index          : Integer_Preference;

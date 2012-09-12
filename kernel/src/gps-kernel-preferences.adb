@@ -1119,6 +1119,26 @@ package body GPS.Kernel.Preferences is
          Label   => -"Secondary Column index",
          Page    => -"Messages");
 
+      Alternate_Secondary_Pattern := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Alternate-Secondary-Regpat",
+         Label   => -"Alternate secondary pattern",
+         Doc     =>
+           -"Pattern used to detect alternate secondary locations in messages",
+         Default => "(at line (\d+))",
+         Page    => -"Messages");
+
+      Alternate_Secondary_Line_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Alternate-Secondary-Line",
+         Label   => -"Alternate secondary line index",
+         Doc     =>
+           -"Index of secondary location line number in the alternate pattern",
+         Minimum => 1,
+         Maximum => 99,
+         Default => 2,
+         Page    => -"Messages");
+
       -- Project Editor --
 
       Default_Switches_Color := Create

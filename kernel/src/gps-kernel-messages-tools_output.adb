@@ -182,6 +182,15 @@ package body GPS.Kernel.Messages.Tools_Output is
 
          while Node /= Locations_List.Null_Node loop
             Loc := Data (Node);
+
+            if Loc.File = No_File then
+               --  Secondary locations extraction subprogram can set File to
+               --  No_File when reference to the same file as primary message
+               --  was found.
+
+               Loc.File := Primary.Get_File;
+            end if;
+
             Create_Hyperlink_Message
               (Primary,
                Loc.File,
@@ -213,12 +222,19 @@ package body GPS.Kernel.Messages.Tools_Output is
       SFF     : constant Natural := Secondary_File_Pattern_Index.Get_Pref;
       SFL     : constant Natural := Secondary_Line_Pattern_Index.Get_Pref;
       SFC     : constant Natural := Secondary_Column_Pattern_Index.Get_Pref;
+      ASFP    : constant Pattern_Matcher :=
+        Compile (Alternate_Secondary_Pattern.Get_Pref);
+      ASFL    : constant Natural := Alternate_Secondary_Line_Index.Get_Pref;
       Result  : Locations_List.List;
       Matched : Match_Array (0 .. 9);
       Loc     : Location;
-      Start   : Natural := Message'First;
+      Start   : Natural;
 
    begin
+      --  Lookup for primary format of secondary locations.
+
+      Start := Message'First;
+
       while Start <= Message'Last loop
          Match (SFP, Message (Start .. Message'Last), Matched);
 
@@ -261,6 +277,37 @@ package body GPS.Kernel.Messages.Tools_Output is
          Loc := (No_File, 1, 1, 1, 0);
          Start := Matched (1).Last + 1;
       end loop;
+
+      --  Lookup for secondary messages in alternate format
+
+      if Is_Empty (Result) then
+         Start := Message'First;
+
+         while Start <= Message'Last loop
+            Match (ASFP, Message (Start .. Message'Last), Matched);
+
+            exit when Matched (0) = No_Match;
+
+            Loc.First := Matched (1).First;
+            Loc.Last  := Matched (1).Last;
+
+            declare
+               Val : constant Integer := Safe_Value
+                 (Message (Matched (ASFL).First .. Matched (ASFL).Last), 1);
+
+            begin
+               if Val >= 1 then
+                  Loc.Line := Val;
+               else
+                  Loc.Line := 1;
+               end if;
+            end;
+
+            Append (Result, Loc);
+            Loc := (No_File, 1, 1, 1, 0);
+            Start := Matched (1).Last + 1;
+         end loop;
+      end if;
 
       return Result;
    end Extract_Locations;
