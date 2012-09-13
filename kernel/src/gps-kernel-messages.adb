@@ -1278,6 +1278,7 @@ package body GPS.Kernel.Messages is
 
       GPS.Kernel.Messages.View.Do_Not_Goto_First_Location (Kernel);
       Container.Project_File := Get_Project (Kernel).Project_Path;
+      Container.Clear;
       Container.Load;
    end On_Project_View_Changed_Hook;
 
