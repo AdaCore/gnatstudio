@@ -53,6 +53,7 @@ with CodePeer.Message_Review_Dialogs;
 with CodePeer.Messages_Reports;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
+with CodePeer.Module.Filters;
 with CodePeer.Shell_Commands;   use CodePeer.Shell_Commands;
 with Commands.CodePeer;
 with Code_Analysis_GUI;
@@ -2048,6 +2049,7 @@ package body CodePeer.Module is
       Executable      : constant Virtual_File :=
                           Locate_On_Path ("codepeer");
       Sep             : Gtk_Separator_Menu_Item;
+      Filter          : GPS.Kernel.Action_Filter;
 
    begin
       if Executable = No_File then
@@ -2082,12 +2084,17 @@ package body CodePeer.Module is
          Text        => -"Analyze _Root Project",
          Callback    => On_Analyze_Root'Access);
 
+      Filter := new Filters.Ada_Generic_Filter_Record;
+      --  Filter must be created using library level access type, overwise
+      --  accessibility level check will fail.
+
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"Analyze _File",
          Callback    => On_Analyze_File'Access,
          Filter      => Lookup_Filter (Kernel, "File")
+                          and not Filter
                           and Create (Language => "ada"));
 
       Register_Menu
