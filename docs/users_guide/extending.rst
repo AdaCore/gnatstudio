@@ -1178,6 +1178,42 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
 
     Index of the compiler info identifier in the file pattern.
 
+  *Secondary File pattern*
+    .. index:: file pattern
+    .. index:: location
+
+    Pattern used to detect additional file locations from the messages window.
+    This is a standard system V regular expression containing from two to three
+    parenthesized subexpressions corresponding to the file, line, and column
+    patterns.
+
+  *Secondary File index*
+    .. index:: file index
+
+    Index of filename in the file pattern.
+
+  *Secondary Line index*
+    .. index:: line index
+
+    Index of the line number in the file pattern.
+
+  *Secondary Column index*
+    .. index:: column index
+
+    Index of the column number in the file pattern.
+
+  *Alternate Secondary File pattern*
+    .. index:: location
+
+    Pattern used to detect additional file locations in alternate form from the
+    messages window.  This is a standard system V regular expression containing
+    one parenthesized subexpressions corresponding to the line patterns.
+
+  *Alternate Secondary Line index*
+    .. index:: line index
+
+    Index of the line number in the file pattern.
+
 * **Project**
 
   *Relative project paths*
