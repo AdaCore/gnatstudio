@@ -81,8 +81,6 @@ package body Navigation_Module is
       --  ??? This might be put elsewhere.
 
       Previous_Project : Virtual_File := No_File;
-      Markers_File     : Virtual_File := No_File;
-      --  File where history markers were loaded from
    end record;
    type Navigation_Module is access all Navigation_Module_Record'Class;
 
@@ -302,9 +300,10 @@ package body Navigation_Module is
      (Kernel      : access Kernel_Handle_Record'Class;
       Old_Project : Boolean := False)
    is
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "locations.xml");
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
-      Filename    : constant Virtual_File := M.Markers_File;
       File, Child, Project, Prev : Node_Ptr;
 
       Success     : Boolean;
@@ -313,17 +312,20 @@ package body Navigation_Module is
 
       Error             : GNAT.Strings.String_Access;
 
+      Module : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+
       Current_Project : constant Virtual_File :=
         Get_Registry (Kernel).Tree.Root_Project.Project_Path;
 
    begin
       if Old_Project then
-         Project_File := M.Previous_Project;
+         Project_File := Module.Previous_Project;
       else
          Project_File := Current_Project;
       end if;
 
-      if M.Markers /= null and Filename /= No_File then
+      if M.Markers /= null then
          Trace (Me, "Saving " & Filename.Display_Full_Name);
 
          if Filename.Is_Regular_File then
@@ -391,35 +393,17 @@ package body Navigation_Module is
    procedure Load_History_Markers
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      M            : constant Navigation_Module :=
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "locations.xml");
+      M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
-      Project_Tree : constant GNATCOLL.Projects.Project_Tree_Access :=
-        Get_Registry (Kernel).Tree;
-      Root_Project : constant Project_Type := Project_Tree.Root_Project;
-      Project_File : constant Virtual_File := Root_Project.Project_Path;
-      Directory    : Virtual_File;
-      Filename     : Virtual_File;
       File, Child, Project : Node_Ptr;
-      Marker       : Location_Marker;
-      Err          : String_Access;
+      Marker      : Location_Marker;
+      Err         : String_Access;
+
+      Project_File : constant Virtual_File :=
+        Get_Registry (Kernel).Tree.Root_Project.Project_Path;
    begin
-      --  Keep markers only for ordinary projects (not empty nor default)
-
-      if Get_Registry (Kernel).Tree.Status /= From_File then
-         M.Markers_File := No_File;
-         return;
-      end if;
-
-      Directory := Object_Dir (Root_Project);
-
-      if Directory = No_File then
-         Directory := Project_File.Dir;
-      end if;
-
-      Filename := Create_From_Dir
-        (Directory, Project_File.Base_Name (".gpr") & "-loc.xml");
-      M.Markers_File := Filename;
-
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
@@ -1195,7 +1179,7 @@ package body Navigation_Module is
 
       Add_Hook
         (Kernel  => Kernel,
-         Hook    => Project_View_Changed_Hook,
+         Hook    => Project_Changed_Hook,
          Func    => Wrapper (On_Project_Loaded_Hook'Access),
          Name    => "navigation_module.project_changed");
 
