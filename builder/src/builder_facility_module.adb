@@ -643,7 +643,9 @@ package body Builder_Facility_Module is
       N       : Node_Ptr;
       Success : Boolean;
    begin
-      N := Save_All_Targets_To_XML (Builder_Module_ID.Registry);
+      N := Save_All_Targets_To_XML
+        (Builder_Module_ID.Registry,
+         Save_Even_If_Equals_To_Original => True);
       Print (N, Get_Targets_File, Success);
 
       if not Success then
