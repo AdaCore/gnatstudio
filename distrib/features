@@ -110,6 +110,12 @@ NF-52-L514-028 GPS: Action tooltip in Locations view (2012-05-21)
   The Locations View now displays a tooltip for the action associated with a
   message.
 
+NF-52-L509-002 GB: Viewing variables declared in packages (2012-09-12)
+
+  When creating an expression in the debugger, the dialog is now filled with
+  the qualified Ada expression for the current text which can be used by
+  the underlying debugger backend.
+
 NF-52-L503-002 GPS: improved support for C++ mangled names (2012-08-24)
 
   GPS incorporates support to handle directly C++ mangled names. This improves
