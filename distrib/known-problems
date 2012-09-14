@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L913-019: GPS: Custom build targets lost after editing via the dialog
+  Problem:    When editibg build targets using the Target Configuration
+              dialog, GPS might remove any custom made target using the
+              "Custom" model.
+  Workaround: Save the targets by creating a GPS plugin from the
+              .gps/targets.xml file.
+
 - L910-004: GPS: no warning when color depth is lower than 24 bits per pixel
   Problem:    GPS does not detect that the display is lower than the minimal
               24 bits per pixels, which can results in crashes.
