@@ -15,10 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Display; use Gdk.Display;
 with Glib;        use Glib;
 with Glib.Object; use Glib.Object;
-with System;
 
 package body Gtk_Utils is
 
