@@ -1281,7 +1281,9 @@ package body Build_Configurations is
       --  At this point, the target data has been updated. If this target is
       --  not from the user configuration, copy it to the original targets.
 
-      Registry.Original_Targets.Append (Copy (Target));
+      if not From_User then
+         Registry.Original_Targets.Append (Copy (Target));
+      end if;
 
       return Target;
    end Load_Target_From_XML;
