@@ -1278,6 +1278,15 @@ package body Build_Configurations is
          Child := Child.Next;
       end loop;
 
+      --  If the target does not have an icon, but the model does have one,
+      --  set the target's icon to the model now, so that the target is
+      --  stored completely in Registry.Original_Targets
+      if Target.Properties.Icon = Null_Unbounded_String
+        and then Target.Model.Icon /= Null_Unbounded_String
+      then
+         Target.Properties.Icon := Target.Model.Icon;
+      end if;
+
       --  At this point, the target data has been updated. If this target is
       --  not from the user configuration, copy it to the original targets.
 
