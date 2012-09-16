@@ -32,14 +32,8 @@ NF-51-KC19-036 GPS: PowerPC/x86 Wind River Linux support (2011-12-23)
   GPS support for the powerpc-wrs-linux and i586-wrs-linux GNAT Pro
   toolchains have been added.
 
-New features in GPS 5.1.1 / GNATbench 2.6.1
--------------------------------------------
-
-NF-51-L502-025 GB: New preference to skip parsing Ada runtime (2012-06-25)
-
-  GNATbench now has a preference to exclude the parsing of the Ada runtime
-  for code assist functionality.  This greatly reduces the overall parsing
-  time required when the IDE is launched.
+New features in GPS 5.1.1
+-------------------------
 
 NF-51-KA19-011 GPS: Comments associated with bodies in tooltip (2011-10-25)
 
@@ -56,11 +50,6 @@ NF-51-KA12-012 GPS: Update of GNATCoverage integration (2011-10-20)
 
   GPS integration with GNATCoverage has been improved to support new targets
   and MCDC analysis in 'run' mode.
-
-NF-51-K227-005 GB: Put AdaCore icon on About Eclipse SDK panel (2012-01-05)
-
-  The AdaCore icon is now displayed on the about box and links to the
-  installed GNATbench features.
 
 NF-51-JA06-023 GPS: Support for SPARKClean (2011-11-18)
 
