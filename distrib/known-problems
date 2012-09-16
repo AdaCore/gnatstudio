@@ -346,6 +346,13 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               error is still present even after removing/scanning process.
   Workaround: None.
 
+- KB10-052: GB: GNAT project file using relative path must be in the workspace.
+  Problem:    Relative path for GNAT project file in the GNATbench properties
+              pointing to a file located outside the workspace generates file
+              not found problem errors.
+  Workaround: If possible import the file in the workspace, otherwise make the
+              path absolute.
+
 - KA27-009: GPS: unwanted scrolling when canceling interactive search
   Problem:    When using the interactive search (plugin isearch.py), if the
               cursor is outside of the visible area, clicking on the editor
