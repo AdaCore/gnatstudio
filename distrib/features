@@ -123,6 +123,12 @@ NF-52-L503-002 GPS: improved support for C++ mangled names (2012-08-24)
   dependency of GPS on the external tool c++filt. This new support requires
   a version of the G++ compiler from the GNAT toolset later than 2012-06-23.
 
+NF-52-L502-025 GB: New preference to skip parsing Ada runtime (2012-06-25)
+
+  GNATbench now has a preference to exclude the parsing of the Ada runtime
+  for code assist functionality.  This greatly reduces the overall parsing
+  time required when the IDE is launched.
+
 NF-52-L426-037 GB: remove trailing blanks when saving an ada file (2012-08-14)
 
   When saving ada files, trailing blanks can be removed. This is done via the
@@ -306,6 +312,11 @@ NF-52-K401-026 Quick fix alternative for unreferenced objects (2011-10-31)
 
   Two alternatives are now suggested to quick fix an unreferenced object:
   either remove the object declaration or add a pragma unreferenced.
+
+NF-52-K227-005 GB: Put AdaCore icon on About Eclipse SDK panel (2012-01-05)
+
+  The AdaCore icon is now displayed on the about box and links to the
+  installed GNATbench features.
 
 NF-52-K225-019 Improved indentation of comments within expressions (2012-02-20)
 
