@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
+- L915-005: GPS: Some "align" actions cancel the selection
+  Problem:    When using the interactive actions defined in the "align.py"
+              plugin, GPS might cancel the selection after the replace is
+              done, which makes it uneasy to chain such actions.
+  Workaround: Replace the selection manually, or install a more recent version
+              of the align.py plugin.
+
 - L913-019: GPS: Custom build targets lost after editing via the dialog
   Problem:    When editing build targets using the Target Configuration
               dialog, GPS might remove any custom made target using the
