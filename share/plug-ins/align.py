@@ -244,6 +244,8 @@ def align_comas ():
    buffer = GPS.EditorBuffer.get ()
    top    = buffer.selection_start ()
    bottom = buffer.selection_end ()
+   tmark  = top.create_mark ("top")
+   bmark  = bottom.create_mark ("bottom")
 
    if top == bottom:
       GPS.MDI.dialog ("You must first select the intended text")
@@ -286,6 +288,9 @@ def align_comas ():
 
       buffer.delete (top, bottom)
       buffer.insert (top, chars)
+      tloc = buffer.get_mark ("top").location ()
+      bloc = buffer.get_mark ("bottom").location ()
+      buffer.select (tloc, bloc)
    except:
       GPS.Console ().write (str (sys.exc_info ()) + "\n")
    finally:
@@ -355,6 +360,9 @@ def align_arrows ():
          top = buffer.get_mark ("top").location()
          bottom = buffer.get_mark ("bottom").location()
          range_align_on (top, bottom, sep="@>", replace_with=" => ")
+         top = buffer.get_mark ("top").location ()
+         bottom = buffer.get_mark ("bottom").location ()
+         buffer.select (top, bottom)
    except:
       GPS.Console ().write (str (sys.exc_info ()) + "\n")
    finally:
