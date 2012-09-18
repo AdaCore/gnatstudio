@@ -5986,12 +5986,16 @@ script that depends on that module will fail to load correctly. Instead, copy
 your script to one of the plug-ins directories, as documented above.
 
 If you are writing a set of python scripts that other people will use,
-you need to provide several things:
+you need to provide the python files themselves. This is a set of :file:`.py`
+files, which the user should install in the :file:`plug-ins` directory.
 
-* The python files themselves. This is a set of :file:`.py` files, which
-  the user should install in the :file:`plug-ins` directory.
+To make the Python function accessible through GPS, this can be done:
 
-* Optionally: an XML file with the format described in the customization
+* Either by exporting the APIs directly through Python, under the form of
+  Actions (see the `Action` class), Menus (see the `Contextual` and `Menu`
+  classes) or toolbar buttons (see the `ToolButton` and `Toolbar` classes);
+
+* Or by writing an XML file with the format described in the customization
   section of this documentation. This XML file should create a set of actions,
   through the `<action>` tag, exported to the user. This allows him to either
   create menus to execute these commands or to bind them to special key
@@ -6001,7 +6005,7 @@ you need to provide several things:
 
 The following example defines a python command that inserts a line full of
 dashes ('-') at the current cursor location. This command is associated with
-the key binding :kbd:`control-c n`, and can be distributed as a single XML
+the key binding :kbd:`control-c n`, and can be distributed as a single Python
 file::
 
   # This code can be stored in a file test.py in $HOME/.gps/plug-ins
