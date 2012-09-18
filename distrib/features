@@ -86,6 +86,15 @@ NF-52-L702-019 GPS: Clear locations action for key shortcuts (2012-07-04)
   GPS provides a new action to assign a key shortcut to the 'Clear locations'
   capability of the Locations View.
 
+NF-52-L614-012 GPS: Improvements to the GNATcoverage support (2012-07-24)
+
+  Several improvements have been made to the support of GNATcov
+   - No longer requires the modification of the Coverage preference
+   - A new Build Mode "gnatcov"
+   - Several new project attributes to control the behavior of tools launched
+     in the GNATcoverage development cycle
+   - Automatic reload of the Coverage View after an analysis
+
 NF-52-L614-009 GPS: Removal of ClearCase module preference (2012-06-21)
 
   This preference gave access to an old version of ClearCase support, replaced
