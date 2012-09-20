@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L919-056 GPS: Support for arm-eabi (2012-09-20)
+
+  GPS now supports building for the arm-eabi toolchain, needed for
+  the arm-elf architecture.
+
 NF-52-L822-044 GB: additional Pretty Printer output flexibility (2012-08-22)
 
   The "Pretty Print" command now allows any output file settings, rather than
