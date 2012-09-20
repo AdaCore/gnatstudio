@@ -11,7 +11,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 - L915-005: GPS: Some "align" actions cancel the selection
   Problem:    When using the interactive actions defined in the "align.py"
               plugin, GPS might cancel the selection after the replace is
-              done, which makes it uneasy to chain such actions.
+              done, which makes it difficult to chain such actions.
   Workaround: Replace the selection manually, or install a more recent version
               of the align.py plugin.
 
@@ -23,35 +23,37 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               .gps/targets.xml file.
 
 - L910-004: GPS: no warning when color depth is lower than 24 bits per pixel
-  Problem:    GPS does not detect that the display is lower than the minimal
-              24 bits per pixels, which can results in crashes.
-  Workaround: Check manually that the display depth is sufficient.
+  Problem:    GPS does not detect whether the display is capable of showing at
+              least 24 bits per pixel.  If the color depth is not sufficient,
+              crashes may result.
+  Workaround: Manually check that the display depth is sufficient.
 
-- L807-027: GB: scenario variables not passed to some tools invocations
+- L807-027: GB: scenario variables not passed to certain tool invocations
   Problem:    The invocations of the stub generator, pretty printer, style
-              checker, and metrics analyzer did not include the values of
+              checker, and metrics analyzer do not include the values of
               scenario variables defined by the project.
   Workaround: Assign the scenario variables' values outside of Eclipse, in
               the environment.
 
 - L803-018: GPS: busy state after terminating a debug session
-  Problem:    When running multiple debug sessions at the same time and
-              terminating these sessions from a python script via e.g.
-              GPS.execute_action ("/Debug/Terminate"), GPS may be left in
+  Problem:    When running multiple debug sessions simultaneously and
+              these sessions are terminated from a Python script, for instance
+              via GPS.execute_action ("/Debug/Terminate"), GPS may be left in
               a busy state (spinner icon running).
-  Workaround: Ignore this visual glitch and restart GPS as soon as practical.
+  Workaround: Ignore this visual glitch and restart GPS as soon as is
+              practical.
 
 - L803-010: GPS: error when saving callgraph
   Problem:    When saving the contents of the callgraph to an XML file (for
-              instance starting the debugger and switching perspective), an
-              internal error could occur. This prevents the actual switch of
-              perspective.
+              instance, this happens when starting the debugger and switching
+              perspectives), an internal error could occur.  This prevents the
+              perspective switch.
   Workaround: close the callgraph before you start the debugger.
 
 - L720-022: GPS: text of exported messages includes Pango markup
-  Problem:    When text of messages in Locations view is exported into the file
-              it includes Pango markup in some conditions.
-  Workaround: Remove markup by external text editor or command line tools.
+  Problem:    When Locations view messages are exported to a file, Pango markup
+              is included under certain conditions.
+  Workaround: Remove markup using external text editor or command line tools.
 
 - L713-004: GPS: crash when spawning a Run process and closing the console
   Problem:    When launching an external process that has its own interactive
@@ -61,32 +63,33 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Kill the process outside of GPS before closing the console, or
               leave the console open.
 
-- L704-023: Excluded source files visible in project views
+- L704-023: Excluded source files are visible in project views
   Problem:    When defining an extending project, files excluded from the
               extending project using the Excluded_Source_Files or 
               Excluded_Source_List_File attributes are still listed in the
               project view.
-  Workaround: This display problem can be safely ignored.
+  Workaround: This is a false indication display problem, and will not affect
+              anything other than the display.
 
-- L625-022: GPS: isearch.py window disappearing
-  Problem:    Under some X servers, such as the Cygwin X11 server, the
-              window for doing incremental searches in the isearch.py
-              plugin disappears immediately after appearing.
+- L625-022: GPS: isearch.py window disappears
+  Problem:    When using certain X servers such as Cygwin X11, the window for
+              doing incremental searches in the isearch.py plugin disappears
+              immediately after appearing.
   Workaround: Use the standard search dialog instead.
 
 - L615-035: ECL: quick fix at EOF applied at the beginning of the file
   Problem:    If a quick fix is applied for a marker at the end of the file,
-              the quick fix is applied at the beginnig of the file.
-  Workaround: Add an empty line at the end of the file and compile the file.
+              the quick fix is actually applied at the beginning of the file.
+  Workaround: Manually add an empty line at the end of the file and compile it.
 
-- L520-004: GPS: wrong smart mixed casing after parenthesis
-  Problem:    The contextual menu Casing proposes an incorrect casing for
+- L520-004: GPS: incorrect smart mixed casing after parenthesis
+  Problem:    The Casing contextual menu proposes an incorrect casing for
               smart mixed casing on selection if starting with a parenthesis.
-  Workaround: Do the proper casing manually.
+  Workaround: Alter the casing manually.
 
-- L510-043: GPS: rectangles.py off-by-one error in open and clear
+- L510-043: GPS: rectangles.py off-by-one bug in open and clear
   Problem:    The menus /Edit/Rectangles/Open and /Edit/Rectangles/Clear
-              are off-by-one.
+              operate on one fewer column than is input.
   Workaround: Select one more column than what you want to open or clear.
 
 - L425-025: GPS: Python console blocked on incorrect indentation
@@ -95,66 +98,67 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               secondary prompt, and never return an error or the primary
               prompt.
   Workaround: Restart GPS. Also when writing multi-line Python constructs,
-              prefer a text editor to the interactive console.
+              use a text editor rather than the interactive console.
 
-- L420-022: GPS: Crash when using the menu "Close all other editors".
-  Problem:    When bringing up the contextual menu on notebook tabs and
-              activating "Close all other editors", GPS might crash.
+- L420-022: GPS: Crash when using the menu item "Close all other editors".
+  Problem:    Using the notebook tab contextual menu, when activating "Close
+              all other editors", GPS might crash.
   Workaround: Use the global menu File->Close All Editors Except Current
               instead.
 
-- L412-018: GPS: Interactive consoles using a proportional font
+- L412-018: GPS: Interactive consoles use a proportional font
   Problem:    Interactive consoles, such as the GPS Shell or the Python
-              console, use a proportional font rather than a fixed font, which
-              is not natural for their use.
-  Workaround: Set the "Default font" preference to a fixed font.
+              console, use a proportional font rather than a fixed-width font,
+              which is not ideal for working with code.
+  Workaround: Set the "Default font" preference to any fixed-width font.
 
 - L404-042: GB: Null pointer exception on references request
   Problem:    When issuing a request for references to an entity declared in
-              a source file that has no corresponding GNAT project file (i.e.,
-              no gpr file), a dialog box is presented, indicating a null pointer
-              exception.
+              a source file that has no corresponding GNAT project (GPR) file,
+              a dialog box is presented indicating a null pointer exception.
   Workaround: Only request references on files in projects that have an
               associated GNAT project file.
 
-- L404-018: GPS: Wrong color of line highlighting
+- L404-018: GPS: Wrong line highlight color
   Problem:    GPS uses the wrong color to highlight lines in source editors
-              when a message is associated with this line.
+              when messages are associated with the lines.
   Workaround: Ignore this visual glitch.
 
-- L417-023: GPS: Crash after creating a build target that contain underscores
+- L417-023: GPS: Crash after creating a build target that contains underscores
   Problem:    When using the Target Configuration dialog to create a build
               target whose name contains an underscore, GPS might crash when
               refreshing the dialog.
-  Workaround: Give a placeholder name to the target, and give its real name
-              by modifying directly the file targets.xml in the .gps directory.
+  Workaround: Use a placeholder without underscores for the target name, then
+              manually modify the targets.xml file in the .gps directory with
+              the desired name.
 
 - L416-024: GPS: Crash when clearing call graphs while a computation is running
-  Problem:    GPS might crash if call graphs are cleared while a "calls" or a
+  Problem:    GPS may crash if call graphs are cleared while a "calls" or a
               "call by" operation is running.
   Workaround: Cancel the operation before clearing the call graph.
 
-- L416-005: GPS: long time to open the dialog to add main files to a project
+- L416-005: GPS: opening dialog to add main files to a project takes too long
   Problem:    In the "Main files" section of the Project Properties dialog,
-              when editing a project tree which contains a lot of source files,
-              clicking on the "Add" button may cause GPS to wait for a long
+              when editing a project tree which contains many source files,
+              clicking on the "Add" button may cause GPS to process for a long
               time before displaying a dialog.
   Workaround: Edit the project file manually.
 
-- L416-003: GPS: click causes jump after viewing a dialog under Windows
+- L416-003: GPS: after using a ctrl-key shortcut, click causes jump on Windows
   Problem:    Under Windows, when the focus is on an editor and a control-based
               shortcut is used to bring up a dialog (for instance ctrl-g for
-              the "Goto Line" dialog), GPS may jump to the declaration when
-              clicking on an entity in the editor.
-  Workaround: Press the control key after going back to the editor.
+              the "Goto Line" dialog), a subsequent click on an entity in the
+              editor may be interpreted as a ctrl-click and GPS may jump to the
+              declaration of that entity.
+  Workaround: Tap the control key after going back to the editor.
 
 - L413-013: GB: Unable to open Ada file from egit team provider
   Problem:    When opening an Ada file shared in the egit team provider
-              from the history view you will get a null pointer exception.
+              from the history view, you may get a null pointer exception.
   Workaround: None.
 
 - L411-050: GPS: Only one item at a time can be moved in graph views
-  Problem:    In the graph views, for instance the debugger data, or the
+  Problem:    In the graph views, for instance in the debugger data or the
               dependency graph, it is no longer possible to move all items
               in a selection.
   Workaround: Move items one by one.
@@ -166,15 +170,15 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: None.
 
 - L404-002: Align on arrows could clobber the sources
-  Problem:    When calling align action on a line containing multiple arrows
-              the code is not compilable anymore.
+  Problem:    When calling the align action on a line containing multiple
+              arrows, the source file is no longer compilable.
   Workaround: Align manually.
 
 - L402-028: ECL: missing library refresh after build or clean.
-  Problem:    After building or cleaning a library, the library content is not
-              refreshed. This libray refresh problme occurs also after buiding
-              or cleaning a project that use it.
-  Workaround: Refresh manually the library project.
+  Problem:    After building or cleaning a library, the library content display
+              is not refreshed.  This library refresh problem also occurs after
+              building or cleaning a project that uses the library.
+  Workaround: Manually refresh the library project.
 
 - L330-007: ECL: Metrics view not always displayed.
   Problem:    At workspace creation, or after an Ada perspective reset, the
@@ -188,15 +192,16 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               locations of their instantiations.
   Workaround: Simply ignore the extra references.
 
-- L329-016: ECL: Finish button not enabled when creating new ada source file
-  Problem:    New Ada Source File menu when Project name is different from
-              Project unit name stored in gpr file is not working. The Finish
-              button is never enabled even if the source file name is valid.
+- L329-016: ECL: Finish button not enabled when creating new Ada source file
+  Problem:    When the project name is different from the project unit name
+              stored in the gpr file, the New Ada Source File menu does not
+              function properly.  The Finish button is not enabled even if the
+              source file name is valid.
   Workaround: Use the standard New File wizard.
 
 - L329-027: GPS: Duplicate menu entries for build targets
   Problem:    When specifying a new build target through XML, if the target
-              is using a "toplevel" category (ie, which starts and ends with
+              is using a "toplevel" category (i.e., it starts and ends with
               an underscore), and if the target is set in a specific menu
               through the "menu" attribute, then this target will appear
               several times in the menu.
@@ -207,18 +212,18 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Problem:    If your project tree includes library projects, the IDE parses
               too many .ali files when you select /Build/Load Xref in Memory,
               by loading files both from the object_dir and the library_dir.
-  Workaround: Let the IDE load the files on demand, rather than force a full
+  Workaround: Let the IDE load the files on demand, rather than forcing a full
               load manually.
 
 - L328-003: GPS: The Entity View forgets the position of the separator
-  Problem:    When the Entity View is in horizontal layout (with the list and
+  Problem:    When the Entity View uses a horizontal layout (with the list and
               the documentation window side-by-side), the position of the
-              separator between windows is not remembered between sessions.
+              separator between windows is not persistent between sessions.
   Workaround: Position the separator manually.
 
 - L325-001: GPS: Refill requires an extra undo
   Problem:    After a Refill operation (menu Edit->Selection->Refill, shortcut
-              Ctrl+=), GPS requires two "Undo" to revert the refill.
+              Ctrl+=), GPS requires two "Undo"s to revert the refill.
   Workaround: Perform the extra undo manually.
 
 - L323-022: GPS: Scrolling occurs in Project View when reloading project
@@ -229,21 +234,21 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
 - L321-021: GPS: Refactoring read-only files shows dialog with duplicates
   Problem:    If you do a refactoring that involves a read-only file and
-              you haven't selected the "Make writable" option, a dialog
-              is displayed that indicates which file will not be modified.
-              But a file might be listed several times (for instance when
-              renaming an entity that has multiple references in the file)
+              you haven't selected the "Make writable" option, a dialog pops
+              up showing files that will not be modified.  Some files will
+              be listed multiple times (for instance when renaming an entity
+              that has multiple references in the file).
   Workaround: This is a visual glitch only.
 
 - L321-020: GPS: Refactoring "Name parameters" requires an extra undo
-  Problem:    After a refactoring "Name parameters" operation, GPS requires
-              two "Undo" to revert the refactoring.
+  Problem:    After a "Name parameters" refactoring operation, GPS requires
+              two "Undo"s to revert the refactoring.
   Workaround: Perform the extra undo manually.
 
 - L321-019: Casing, Align actions on read-only buffer
-  Problem:    When using align or casing actions on a read-only editor nothing
-              happens without giving any clue except for a cryptic message
-              in the message window.
+  Problem:    When invoking align or casing actions on a read-only editor,
+              nothing happens and no problem indication occurs except for a
+              cryptic message in the message window.
   Workaround: None needed. You can make the source editor writable by clicking
               on the read-only label in the status bar.
 
@@ -257,7 +262,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               project.
   Workaround: Ignore these messages.
 
-- L301-025: GPS: Current editor performing automatic undo after refactoring
+- L301-025: GPS: Current editor performs automatic undo after refactoring
   Problem:    When attempting a refactoring through the menu Refactoring ->
               Rename <name of entity>, if the entity information is not
               up-to-date, pressing "Undo" in the confirmation dialog risks
@@ -267,13 +272,13 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
 - L215-043: GPS: expanded code not working in remote mode
   Problem:    When configured with a remote build server, the "expanded code"
-              actions are still trying to use the local host's toolchain even
-              when it's not available.
+              actions expect to find and use a toolchain on the local host,
+              which is not necessarily present.
   Workaround: Manually generate the .dg file and copy it locally before
               executing the command, or install a local toolchain.
 
 - L215-011: GPS: navigating causes automatic reloads
-  Problem:    When using GPS to navigate through the code, for instance with
+  Problem:    When using GPS to navigate through code, for instance with
               the "Goto declaration of" menu, if the target editor is already
               open but has been modified outside of GPS, then it will be
               reloaded from disk without prompting the user first.
@@ -286,7 +291,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               the dialog, making it difficult to close.
   Workaround: Press ESC to close the dialog.
 
-- L213-003: GPS: emacs plugin's ctrl-o does not work
+- L213-003: GPS: Emacs plugin's ctrl-o does not work
   Problem:    When you load the Emacs plugin, it binds the key ctrl-o to
               "open line". The implementation for this function had a bug,
               and nothing was changed in the editor when pressing ctrl-o.
@@ -297,7 +302,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               overlap in the display of its contents.
   Workaround: Resize, move, or float the Breakpoints editor.
 
-- L131-031: GPS: jump to the current location when opening the search dialog
+- L131-031: GPS: jumps to the current location when opening the search dialog
   Problem:    When the cursor in an editor is outside of the visible area,
               opening the Search dialog will cause the editor to scroll to
               show the position of the cursor.
@@ -305,7 +310,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               search dialog.
 
 - L127-003: GPS: incorrect behavior of Locations filter
-  Problem:    In some cases Locations filter can hide unexpected messages.
+  Problem:    In some cases, the Locations filter can hide unexpected messages.
   Workaround: Export messages into text file and use another program to filter
               them.
 
@@ -316,16 +321,16 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
 - L123-032: GPS: Editing Library Interface in Project Properties
   Problem:    The project attribute Library_Interface must contain unit names.
-              However, GPS will set it using file names instead, and as a
-              result the compiler complains.
+              However, GPS will set this attribute using file names instead,
+              and as a result the compiler complains.
   Workaround: Edit the project manually (*.gpr).
 
 - L123-031: GPS: Project editor discards the Executable attribute
   Problem:    On Windows, when a project contains the "Executable" attribute
               to specify an explicit file name for the executable generated
-              from a main unit, and the casing in the index isn't lower cases,
+              from a main unit, and the casing in the index isn't lower cased,
               the attribute is discarded every time the project is edited.
-  Workaround: Fix the casing manually in the .gpr file to use lower cases
+  Workaround: Fix the casing manually in the .gpr file to use lower case
               only.
 
 - KC20-025: GPS: Removing a server makes some other servers unusable
@@ -347,17 +352,18 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Ignore this extra information.
 
 - KB16-001: GB: toolchain errors have no information and cannot be removed
-  Problem:    Sometimes toolchains displayed from project's GNATbench
-              properties, or Ada -> Toolchains preferences page have spurious
-              errors reported. No extra information is available, and the
-              error is still present even after removing/scanning process.
+  Problem:    Sometimes toolchains displayed from the project's GNATbench
+              properties or the Ada -> Toolchains preferences page have
+              spurious errors reported. No extra information is available,
+              and the error is still present even after a removing/scanning
+              process.
   Workaround: None.
 
-- KB10-052: GB: GNAT project file using relative path must be in the workspace.
-  Problem:    Relative path for GNAT project file in the GNATbench properties
-              pointing to a file located outside the workspace generates file
-              not found problem errors.
-  Workaround: If possible import the file in the workspace, otherwise make the
+- KB10-053: GB: GNAT project file using relative path must be in the workspace.
+  Problem:    In GNATbench properties, specifying a relative path to a GNAT
+              project file located outside the workspace generates "file not
+              found" errors.
+  Workaround: If possible import the file in the workspace; otherwise, make the
               path absolute.
 
 - KA27-009: GPS: unwanted scrolling when canceling interactive search
@@ -379,27 +385,27 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               Windows specific and rejected by the build server.
   Workaround: Edit the project manually to replace "\**" with "/**".
 
-- K930-009: GB: Search view double clicking on Ada references exceptions
+- K930-009: GB: double click on Ada references in Search View causes exceptions
   Problem:    In some cases, when double clicking on an Ada reference from the
-              Search view, the ada file is opened but the cursor is not moved
+              Search view, the Ada file is opened but the cursor is not moved
               to the reference.
   Workaround: Retry the Ada references search process.
 
 - K926-014: GB: GNATbench freezes when viewing/editing Ada files
-  Problem:    Randomly when using the GNATbench Ada editor for code edition
-              or program debug, GNATbench freezes. The only solution to get
-              rid of the lock is to kill GNATbench, and launch it back.
-  Workaround: - Run menu Window => Preferences
-              - Open Ada => Editor preferences page
-              - Disable the 3 following features
+  Problem:    When using the GNATbench Ada editor to edit code or debug
+              programs, GNATbench randomly freezes. Restarting GNATbench
+              is then necessary to remove the lock causing the freeze.
+  Workaround: - Invoke menu Window => Preferences.
+              - Open the Ada => Editor preferences page.
+              - Disable the following features:
                 1- Tooltips should be displayed automatically.
                 2- Enable Code Assist.
                 3- Enable Code Assist auto activation.
 
 - K804-029: GPS: cannot bind Tab key to menus and use it to navigate
   Problem:    When assigning the Tab key to a menu, for instance
-              /Edit/Format Selection, it is not possible to use the Tab key
-              to navigate in the non-modal dialogs such as the Search dialog.
+              /Edit/Format Selection, it is then not possible to use the Tab
+              key to navigate in non-modal dialogs such as the Search dialog.
   Workaround: Use another key shortcut, or bind the Tab key to the
               corresponding action if it exists (for instance the action
               "Format Selection" in the "Editor" section in the Key Shortcuts
@@ -407,24 +413,25 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
 - K726-011: GPS: Source editor is not raised on double click in CodePeer report
   Problem:    When double clicking in the CodePeer report, a source editor is
-              opened but not raised in front.
+              opened but not raised to the front.
   Workaround: Raise the source editor window manually by clicking on its tab.
 
-- K718-016: GB: file with last modification time in the future corrupts GB cache
+- K718-016: GB: file with last modification time in the future corrupts cache
   Problem:    When a file has its last modification time in the future, some
-              GB feature (metrics, construct database) are not functional
+              GB features (metrics, construct database) are not functional
               because its modifications are not taken into account.
-  Workaround: Touch the file and restart eclipse. 
+  Workaround: Fix the relevant OS's date/time as necessary, touch the file
+              and restart eclipse. 
   
 - K325-019: GPS: autofix for lines containing only spaces
-  Problem:    The autofix for blanks at end of line removes the whole line if
-              the line is composed only by spaces.
-  Workaround: Do not use autofix on such lines or replace manually the removed
-              line by an empty line.
+  Problem:    The autofix for blanks at the end of the line removes the whole
+              line, if the line is composed of only spaces.
+  Workaround: Do not use autofix on such lines or manually replace the removed
+              line with an empty line.
 
 - L113-025: GPS: cursor at wrong position after alias expansion
-  Problem:    When alias text contains multibyte UTF-8 characters cursor is
-              placed at wrong position after expansion.
+  Problem:    When alias text contains multibyte UTF-8 characters, the cursor
+              is placed at the wrong position after expansion.
   Workaround: Do not use multibyte UTF-8 characters in text of an alias.
 
 - F816-013: GPS: Highlighting for comments in C with international characters
@@ -432,8 +439,8 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
               which contain international characters in C sources.
   Workaround: No workaround.
 
-- L810-017: GPS: Minor display glitch in Locations View
-  Problem:    Category in Locations View doesn't correctly displayed as
-              result of 'Find All' search if pattern contains markup
-              characters.
+- L810-017: GPS: Display glitch in Locations View
+  Problem:    If 'Find All' is invoked with a search pattern containing Pango
+              markup characters, the results shown in the Locations View
+              display with an incorrect Category name.
   Workaround: No workaround.
