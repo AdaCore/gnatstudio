@@ -558,6 +558,10 @@ private
       Cleanup_Mode      : Boolean := False;
       --  When set to True, messages are removed even when listner requests
       --  to hide them.
+      Messages_Loaded   : Boolean := False;
+      --  Set to True when Project_Changed till Project_View_Changed hook
+      --  to read messages only one per project when project view became
+      --  ready.
    end record;
 
    procedure Register_Message_Class

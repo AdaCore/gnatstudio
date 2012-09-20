@@ -57,9 +57,11 @@ package body GPS.Kernel.Messages is
    use XML_Parsers;
    use XML_Utils;
 
-   Messages_File_Name : constant Filesystem_String := "messages.xml";
-
    procedure On_Project_Changed_Hook
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Reset Messages_Loaded flag
+
+   procedure On_Project_View_Changed_Hook
      (Kernel : access Kernel_Handle_Record'Class);
    --  Loads data for opened project.
 
@@ -156,6 +158,11 @@ package body GPS.Kernel.Messages is
    procedure Load (Self : not null access Messages_Container'Class);
    --  Loads all messages for the current project
 
+   function Get_Message_File
+     (Self : not null access Messages_Container'Class)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Return file where save messages for current project
+
    function To_Address is
      new Unchecked_Conversion (Messages_Container_Access, System.Address);
    function To_Messages_Container_Access is
@@ -212,6 +219,11 @@ package body GPS.Kernel.Messages is
          Project_Changed_Hook,
          Wrapper (On_Project_Changed_Hook'Access),
          "messages_container.project_changed");
+      Add_Hook
+        (Kernel,
+         Project_View_Changed_Hook,
+         Wrapper (On_Project_View_Changed_Hook'Access),
+         "messages_container.project_view_changed");
 
       Add_Hook
         (Kernel,
@@ -567,6 +579,27 @@ package body GPS.Kernel.Messages is
       return To_Messages_Container_Access (Kernel.Messages_Container);
    end Get_Messages_Container;
 
+   ----------------------
+   -- Get_Message_File --
+   ----------------------
+
+   function Get_Message_File
+     (Self : not null access Messages_Container'Class)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      Root_Project : constant GNATCOLL.Projects.Project_Type :=
+        Get_Registry (Self.Kernel).Tree.Root_Project;
+      Directory    : GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.Projects.Object_Dir (Root_Project);
+   begin
+      if Directory = No_File then
+         Directory := Root_Project.Project_Path.Dir;
+      end if;
+
+      return Create_From_Dir
+        (Directory, Root_Project.Project_Path.Base_Name (".gpr") & "-msg.xml");
+   end Get_Message_File;
+
    --------------
    -- Get_Note --
    --------------
@@ -916,9 +949,7 @@ package body GPS.Kernel.Messages is
             Flags);
       end Load_Message;
 
-      Messages_File     : constant Virtual_File :=
-                            Create_From_Dir
-                              (Self.Kernel.Home_Dir, Messages_File_Name);
+      Messages_File     : constant Virtual_File := Self.Get_Message_File;
       Project_File      : constant Virtual_File :=
                             Get_Project (Self.Kernel).Project_Path;
       Root_XML_Node     : Node_Ptr;
@@ -1250,14 +1281,31 @@ package body GPS.Kernel.Messages is
    is
       Container : constant Messages_Container_Access :=
                     Get_Messages_Container (Kernel);
+   begin
+      Container.Messages_Loaded := False;
+   end On_Project_Changed_Hook;
+
+   ----------------------------------
+   -- On_Project_View_Changed_Hook --
+   ----------------------------------
+
+   procedure On_Project_View_Changed_Hook
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Container : constant Messages_Container_Access :=
+                    Get_Messages_Container (Kernel);
 
    begin
-      --  Load messages for opened project
+      if not Container.Messages_Loaded then
+         --  Load messages for opened project
 
-      GPS.Kernel.Messages.View.Do_Not_Goto_First_Location (Kernel);
-      Container.Project_File := Get_Project (Kernel).Project_Path;
-      Container.Load;
-   end On_Project_Changed_Hook;
+         GPS.Kernel.Messages.View.Do_Not_Goto_First_Location (Kernel);
+         Container.Project_File := Get_Project (Kernel).Project_Path;
+
+         Container.Load;
+         Container.Messages_Loaded := True;
+      end if;
+   end On_Project_View_Changed_Hook;
 
    ------------------------------
    -- On_Project_Changing_Hook --
@@ -1630,7 +1678,7 @@ package body GPS.Kernel.Messages is
         = GNATCOLL.Projects.From_File
       then
          Self.Save
-           (Create_From_Dir (Self.Kernel.Home_Dir, Messages_File_Name),
+           (Self.Get_Message_File,
             (True, True),
             False);
       end if;
@@ -1796,6 +1844,13 @@ package body GPS.Kernel.Messages is
       Error            : GNAT.Strings.String_Access;
 
    begin
+      if File.Base_Name /= File.Full_Name and  --  If File has directory
+        not File.Get_Parent.Is_Directory       --  and directory doesn't exist
+      then
+         --  Don't try to write to unexisted directory
+         return;
+      end if;
+
       if Project_File /= No_File then
          if File.Is_Regular_File then
             Parse (File, Root_XML_Node, Error);
