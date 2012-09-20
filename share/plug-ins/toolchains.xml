@@ -91,6 +91,8 @@
 
   <toolchain name="arm-mentor-nucleus"/>
 
+  <toolchain name="arm-eabi"/>
+
   <toolchain name="avr">
     <cpp_filt/>
     <compiler lang="c++"></compiler>
