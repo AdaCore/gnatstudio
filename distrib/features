@@ -1,5 +1,5 @@
 ===========================================
-GPS 5.3 and GNATbench 2.8 NEW FEATURES LIST
+GPS 6.0 and GNATbench 2.8 NEW FEATURES LIST
 ===========================================
 
 Copyright (C) 2011-2012, AdaCore
@@ -20,6 +20,6 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-New features in GPS 5.3.0 / GNATbench 2.8.0
+New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
