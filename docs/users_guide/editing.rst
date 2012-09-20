@@ -1669,6 +1669,11 @@ Therefore, copy/paste between GPS and other X applications using the *primary
 clipboard* will still work, provided that there is some text currently
 selected. The *GPS clipboard*, when set, will override the *primary clipboard*.
 
+By default, GPS overrides the X mechanism. To prevent this, add the following
+line: `OVERRIDE_MIDDLE_CLICK_PASTE = no` to your `traces.cfg` file. Note,
+however, that the X mechanism pastes all attributes of text, including
+coloring and editability, which can be confusing.
+
 .. index:: url
 
 See `http://standards.freedesktop.org/clipboards-spec/clipboards-latest.txt
