@@ -15,7 +15,7 @@ Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
   Workaround: Replace the selection manually, or install a more recent version
               of the align.py plugin.
 
-- L913-019: GPS: Custom build targets lost after editing via the dialog
+- L913-039: GPS: Custom build targets lost after editing via the dialog
   Problem:    When editing build targets using the Target Configuration
               dialog, GPS might remove any custom made target using the
               "Custom" model.
