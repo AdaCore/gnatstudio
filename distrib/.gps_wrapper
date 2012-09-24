@@ -12,14 +12,6 @@ if [ $debug = debug ]; then
    shift;
 fi
 
-# On X11 systems, check that we have the render extensions or things might be
-# slow. When xdpyinfo is not available, the command fails and the if statement
-# does nothing.
-
-if xdpyinfo 2>/dev/null | grep RENDER >/dev/null 2>&1 ; then
-   echo "Warning: X RENDER extension is not detected, display will be slow"
-fi
-
 # Get absolute directory and strip 'bin' directory to retrieve real root
 root=`cd $root/..; pwd`
 
