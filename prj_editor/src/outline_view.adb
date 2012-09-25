@@ -90,6 +90,7 @@ package body Outline_View is
    Hist_Editor_Link       : constant History_Key := "outline-editor-link";
    Hist_Show_Decls        : constant History_Key := "outline-show-decls";
    Hist_Show_Types        : constant History_Key := "outline-show-types";
+   Hist_Show_Tasks        : constant History_Key := "outline-show-tasks";
    Hist_Show_Objects      : constant History_Key := "outline-show-objects";
 
    overriding procedure Default_Context_Factory
@@ -444,6 +445,12 @@ package body Outline_View is
          Widget_Callback.Object_Connect
            (Check, Signal_Toggled, Force_Refresh'Access, Outline);
 
+         Gtk_New (Check, Label => -"Show tasks");
+         Associate (Get_History (Kernel).all, Hist_Show_Tasks, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
+
          Gtk_New (Check, Label => -"Show specifications");
          Associate (Get_History (Kernel).all, Hist_Show_Decls, Check);
          Append (Submenu, Check);
@@ -481,6 +488,9 @@ package body Outline_View is
          Hide_Declarations => not Get_History
            (Get_History (Kernel).all,
             Hist_Show_Decls),
+         Hide_Tasks => not Get_History
+           (Get_History (Kernel).all,
+            Hist_Show_Tasks),
          Show_Profile => Get_History
            (Get_History (Kernel).all,
             Hist_Show_Profile));

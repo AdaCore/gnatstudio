@@ -52,6 +52,7 @@ private package Outline_View.Model is
       Hide_Types        : Boolean := False;
       Hide_Objects      : Boolean := False;
       Hide_Declarations : Boolean := False;
+      Hide_Tasks        : Boolean := False;
       Show_Profile      : Boolean := False;
    end record;
 
