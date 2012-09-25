@@ -445,7 +445,7 @@ package body Outline_View is
          Widget_Callback.Object_Connect
            (Check, Signal_Toggled, Force_Refresh'Access, Outline);
 
-         Gtk_New (Check, Label => -"Show tasks");
+         Gtk_New (Check, Label => -"Show tasks, entries, and protected types");
          Associate (Get_History (Kernel).all, Hist_Show_Tasks, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
