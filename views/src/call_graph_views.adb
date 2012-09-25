@@ -1312,7 +1312,8 @@ package body Call_Graph_Views is
                                 Kind_Column   => GType_Int),
          Column_Names       => Names,
          Show_Column_Titles => False,
-         Sortable_Columns   => True);
+         Sortable_Columns   => True,
+         Initial_Sort_On    => 1);
       Set_Name (View.Tree, "Call Graph Tree"); --  For test suite
       Gtk_New_Hpaned (View.Pane);
 
