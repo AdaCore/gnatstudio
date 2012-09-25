@@ -181,8 +181,7 @@ package body Outline_View.Model is
       --  No constructs ("loop", "if", ...)
 
       case Construct.Category is
-         when Subprogram_Explorer_Category
-            | Cat_Package .. Cat_Task
+         when Cat_Package .. Cat_Entry
             | Cat_Field | Cat_Variable
             | Type_Category =>
 
@@ -194,6 +193,13 @@ package body Outline_View.Model is
 
             if Filter.Hide_Objects
               and then Construct.Category in Data_Category
+            then
+               return False;
+            end if;
+
+            if Filter.Hide_Tasks
+              and then (Construct.Category = Cat_Task
+                          or Construct.Category = Cat_Protected)
             then
                return False;
             end if;
