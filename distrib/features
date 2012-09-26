@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L926-013 Ranking info for CodePeer warning messages (2012-09-26)
+
+  The ranking information (low/medium/high) is now prepended in front of
+  CodePeer warning messages in the locations view, to make it easier to
+  find messages of a particular ranking.
+
 NF-52-L919-056 GPS: Support for arm-eabi (2012-09-20)
 
   GPS now supports building for the arm-eabi toolchain, needed for
