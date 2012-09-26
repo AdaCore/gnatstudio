@@ -33,6 +33,8 @@ with Gdk.Main;                   use Gdk.Main;
 with Gdk.Pixbuf;                 use Gdk.Pixbuf;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Window;                 use Gdk.Window;
+with Gdk.Display;                use Gdk.Display;
+with Gdk.Screen;                 use Gdk.Screen;
 
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
@@ -1110,6 +1112,7 @@ package body Src_Editor_Box is
 
    function Check_Timestamp_Idle (Box : GObject) return Boolean is
       B : constant Source_Editor_Box := Source_Editor_Box (Box);
+      Is_Grabbed : Boolean := False;
    begin
       Check_Writable (B);
 
@@ -1120,6 +1123,29 @@ package body Src_Editor_Box is
       --  is checked after the button release.
 
       if Pointer_Is_Grabbed then
+         Is_Grabbed := True;
+      else
+         --  If the pointer is not grabbed, we might still have a button down,
+         --  for instance when dragging the window around. In this case,
+         --  do nothing until the button is released.
+         declare
+            State     : Gdk.Types.Gdk_Modifier_Type;
+            Ignored_X, Ignored_Y : Gint;
+            Display   : constant Gdk_Display := Get_Default;
+            Screen    : Gdk.Screen.Gdk_Screen;
+         begin
+            Get_Pointer (Display => Display,
+                         Screen  => Screen,
+                         X       => Ignored_X,
+                         Y       => Ignored_Y,
+                         Mask    => State);
+            if (State and Button1_Mask) /= 0 then
+               Is_Grabbed := True;
+            end if;
+         end;
+      end if;
+
+      if Is_Grabbed then
          --  No need to try again if the file is up-to-date. Otherwise, we'll
          --  need to try again. One issue here is that while displaying a
          --  contextual menu for an editor that didn't have the focus before,
