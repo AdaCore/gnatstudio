@@ -1794,20 +1794,20 @@ package body CodePeer.Module is
 
             function Probability_Image
               (Message : CodePeer.Message_Access) return String;
-            --  Returns an suitable Image correpsonding to Message's ranking
+            --  Return an suitable Image corresponding to Message's ranking
 
             function Image
               (Message : CodePeer.Message_Access) return String;
-            --  Returns complete text of the Message
+            --  Return complete text of the Message
 
             function Flags return GPS.Kernel.Messages.Message_Flags;
-            --  Returns set of flags depending from lifeage of the
+            --  Return set of flags depending from lifeage of the
             --  message. "Removed" messages are displayed only in
             --  locations view, others displayed in both locations view
             --  end editor.
 
             procedure Create_GPS_Message;
-            --  Creates GPS message
+            --  Create GPS message
 
             ------------------------
             -- Create_GPS_Message --
@@ -1914,12 +1914,12 @@ package body CodePeer.Module is
                  or else Message.Text (Message.Text'First) = ':'
                then
                   return
-                    Probability_Image (Message)
+                    Probability_Image (Message) & ": "
                     & Message.Category.Name.all
                     & Message.Text.all;
                else
                   return
-                    Probability_Image (Message)
+                    Probability_Image (Message) & ": "
                     & Message.Category.Name.all & " "
                     & Message.Text.all;
                end if;
@@ -1930,27 +1930,36 @@ package body CodePeer.Module is
             -----------------------
 
             function Probability_Image
-              (Message : CodePeer.Message_Access) return String is
-            begin
-               if not Message.Is_Check then
-                  return "warning: ";
-               end if;
+              (Message : CodePeer.Message_Access) return String
+            is
+               function Decorate (S : String) return String;
+               --  Append " warning" after S if Message is a warning
 
+               function Decorate (S : String) return String is
+               begin
+                  if Message.Is_Check then
+                     return S;
+                  else
+                     return S & " warning";
+                  end if;
+               end Decorate;
+
+            begin
                case Message.Current_Ranking is
                   when CodePeer.High =>
-                     return "high: ";
+                     return Decorate ("high");
 
                   when CodePeer.Medium =>
-                     return "medium: ";
+                     return Decorate ("medium");
 
                   when CodePeer.Low =>
-                     return "low: ";
+                     return Decorate ("low");
 
                   when CodePeer.Informational =>
-                     return "info: ";
+                     return "info";
 
                   when CodePeer.Suppressed =>
-                     return "suppressed: ";
+                     return "suppressed";
                end case;
             end Probability_Image;
 
