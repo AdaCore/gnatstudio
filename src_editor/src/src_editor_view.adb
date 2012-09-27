@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
+with Interfaces.C.Strings;
 
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -1697,8 +1698,7 @@ package body Src_Editor_View is
       pragma Unreferenced (Ignore);
    begin
       if View.Button_Pressed then
-         Set_Time (View.Button_Event, 0);
-
+         View.Button_Event.Button.Time := 0;
          Ignore := Return_Callback.Emit_By_Name
            (View, Signal_Button_Release_Event, View.Button_Event);
       end if;
@@ -1770,11 +1770,13 @@ package body Src_Editor_View is
       Event         : Gdk_Event;
       Line          : out Gint;
       Column        : out Gint;
-      Out_Of_Bounds : out Boolean) is
+      Out_Of_Bounds : out Boolean)
+   is
+      X, Y : Gdouble;
    begin
+      Get_Coords (Event, X, Y);
       Window_To_Buffer_Coords
-        (View, Gint (Get_X (Event)), Gint (Get_Y (Event)),
-         Line, Column, Out_Of_Bounds);
+        (View, Gint (X), Gint (Y), Line, Column, Out_Of_Bounds);
    end Event_To_Buffer_Coords;
 
    -------------------------------------
@@ -1791,6 +1793,7 @@ package body Src_Editor_View is
       Button_Y     : Gint;
       Lower, Upper : Gdouble;
       Adj          : Gtk_Adjustment;
+      X, Y         : Gdouble;
    begin
       if (Get_Event_Type (Event) = Button_Release
           and then Get_Button (Event) = 1)
@@ -1802,7 +1805,8 @@ package body Src_Editor_View is
             return False;
          end if;
 
-         Button_Y := Gint (Get_Y (Event));
+         Get_Coords (Event, X, Y);
+         Button_Y := Gint (Y);
 
          Get_Geometry
            (Get_Window (View.Area), Dummy_Gint, Dummy_Gint, W, H);
@@ -1922,8 +1926,8 @@ package body Src_Editor_View is
                   begin
                      --  Get the coordinates of the click
 
-                     Button_X := Gint (Get_X (Event));
-                     Button_Y := Gint (Get_Y (Event));
+                     Button_X := Gint (Event.Button.X);
+                     Button_Y := Gint (Event.Button.Y);
 
                      --  Find the line number
 
@@ -1942,7 +1946,7 @@ package body Src_Editor_View is
                else
                   if not View.Button_Pressed then
                      View.Button_Pressed := True;
-                     Deep_Copy (Event, View.Button_Event);
+                     View.Button_Event := Copy (Event);
                   end if;
                end if;
 
@@ -1977,7 +1981,7 @@ package body Src_Editor_View is
                   begin
                      Window_To_Buffer_Coords
                        (View, Text_Window_Text,
-                        Gint (Get_X (Event)), Gint (Get_Y (Event)), L, C);
+                        Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
                      Get_Iter_At_Location (View, Iter, L, C);
                      Grab_Focus (View);
                      Place_Cursor (Get_Buffer (View), Iter);
@@ -2047,12 +2051,17 @@ package body Src_Editor_View is
       end if;
 
       if not Get_Editable (View) then
-         if Get_String (Event)'Length >= 1 then
-            Insert
-              (View.Kernel,
-               -"Warning: attempting to edit a read-only editor.",
-               Mode => Error);
-         end if;
+         declare
+            Str : constant String := Interfaces.C.Strings.Value
+              (Event.Key.String);
+         begin
+            if Str'Length >= 1 then
+               Insert
+                 (View.Kernel,
+                  -"Warning: attempting to edit a read-only editor.",
+                  Mode => Error);
+            end if;
+         end;
          return False;
       end if;
 
@@ -2116,7 +2125,7 @@ package body Src_Editor_View is
             External_End_Action (Buffer);
 
          when GDK_BackSpace =>
-            if Get_Send_Event (Event) then
+            if Event.Key.Send_Event /= 0 then
                --  Handle BackSpace event mostly for test scripts purpose
                declare
                   Line   : Editable_Line_Type;
@@ -2142,7 +2151,8 @@ package body Src_Editor_View is
 
          when others =>
             declare
-               Key_Str : constant String := Get_String (Event);
+               Key_Str : constant String := Interfaces.C.Strings.Value
+                 (Event.Key.String);
             begin
                if Key_Str'Length = 1
                  and then

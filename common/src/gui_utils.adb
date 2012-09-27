@@ -919,8 +919,7 @@ package body GUI_Utils is
       if Event /= null
         and then Get_Event_Type (Event) in Button_Press .. Button_Release
       then
-         X := Get_X (Event);
-         Y := Get_Y (Event);
+         Get_Coords (Event, X, Y);
          --  Path := Gtk_New;
          Get_Path_At_Pos
            (Tree,
@@ -1113,7 +1112,7 @@ package body GUI_Utils is
                 Image (Get_Key_Val (Event), Get_State (Event));
    begin
       if Text /= Special_Key_Binding then
-         Deep_Copy (From => Event, To => Output.all);
+         Output.all := Copy (Event);
          Main_Quit;
       end if;
       return True;

@@ -678,7 +678,7 @@ package body Directory_Tree is
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          Get_Path_At_Pos
            (Selector.Directory.File_Tree,
-            Gint (Get_X (Event)), Gint (Get_Y (Event)),
+            Gint (Event.Button.X), Gint (Event.Button.Y),
             Path, Column, Cell_X, Cell_Y, Is_Valid);
       end if;
 
@@ -739,7 +739,7 @@ package body Directory_Tree is
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          Get_Path_At_Pos
            (Selector.List_Tree,
-            Gint (Get_X (Event)), Gint (Get_Y (Event)),
+            Gint (Event.Button.X), Gint (Event.Button.Y),
             Path, Column, Cell_X, Cell_Y, Is_Valid);
       end if;
 

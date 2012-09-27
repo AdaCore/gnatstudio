@@ -181,7 +181,8 @@ package body Browsers.Canvas is
    --  Remove all items except the one described in Data from the canvas
 
    procedure Close_Item
-     (Event : Gdk.Event.Gdk_Event; User  : access Browser_Item_Record'Class);
+     (Event : Gdk.Event.Gdk_Event_Button;
+      User  : access Browser_Item_Record'Class);
    --  Close an item when the user presses on the title bar button
 
    procedure Dump
@@ -201,9 +202,9 @@ package body Browsers.Canvas is
    --  Called when the preferences have changed
 
    procedure Compute_Parents
-     (Event : Gdk_Event; Item : access Browser_Item_Record'Class);
+     (Event : Gdk_Event_Button; Item : access Browser_Item_Record'Class);
    procedure Compute_Children
-     (Event : Gdk_Event; Item : access Browser_Item_Record'Class);
+     (Event : Gdk_Event_Button; Item : access Browser_Item_Record'Class);
    --  Callbacks for the title bar buttons of Arrow_item
 
    type Image_Canvas_Record is new
@@ -643,6 +644,7 @@ package body Browsers.Canvas is
       Export_Menu  : Gtk_Menu;
       Item         : Canvas_Item;
       Xr, Yr       : Gint;
+      Xroot, Yroot : Gdouble;
       Xsave, Ysave : Gdouble;
 
    begin
@@ -651,9 +653,9 @@ package body Browsers.Canvas is
          --  ??? Should we convert to world coordinates here ?
 
          Get_Origin (Get_Window (B.Canvas), Xr, Yr);
-         Set_X (Event, Get_X_Root (Event) - Gdouble (Xr));
-         Set_Y (Event, Get_Y_Root (Event) - Gdouble (Yr));
-
+         Get_Root_Coords (Event, Xroot, Yroot);
+         Event.Button.X := Xroot - Gdouble (Xr);
+         Event.Button.Y := Yroot - Gdouble (Yr);
          Item := Item_At_Coordinates (B.Canvas, Event);
       end if;
 
@@ -680,14 +682,13 @@ package body Browsers.Canvas is
            (Mitem, Gtk.Menu_Item.Signal_Activate, Set_Root'Access,
             (Browser => B, Item => Item, Zoom => 1.0, Keep_Selected => False));
 
-         Xsave := Get_X (Event);
-         Ysave := Get_Y (Event);
-         Set_X (Event, Get_X (Event) - Gdouble (Get_Coord (Item).X));
-         Set_Y (Event, Get_Y (Event) - Gdouble (Get_Coord (Item).Y));
+         Get_Coords (Event, Xsave, Ysave);
+         Event.Button.X := Xsave - Gdouble (Get_Coord (Item).X);
+         Event.Button.Y := Ysave - Gdouble (Get_Coord (Item).Y);
          Contextual_Factory
            (Browser_Item (Item), Context, B, Event, Menu);
-         Set_X (Event, Xsave);
-         Set_Y (Event, Ysave);
+         Event.Button.X := Xsave;
+         Event.Button.Y := Ysave;
       end if;
 
       if Item = null then
@@ -1252,7 +1253,7 @@ package body Browsers.Canvas is
    ----------------
 
    procedure Close_Item
-     (Event : Gdk.Event.Gdk_Event;
+     (Event : Gdk.Event.Gdk_Event_Button;
       User  : access Browser_Item_Record'Class)
    is
       B : constant General_Browser := Get_Browser (User);
@@ -1290,8 +1291,8 @@ package body Browsers.Canvas is
       end Reset_Item;
 
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
+      if Event.Button = 1
+        and then Event.The_Type = Button_Release
       then
          For_Each_Link
            (Get_Canvas (B), Reset_Item'Unrestricted_Access,
@@ -1775,7 +1776,7 @@ package body Browsers.Canvas is
 
    overriding function Call
      (Callback : Item_Active_Area_Callback;
-      Event    : Gdk.Event.Gdk_Event) return Boolean is
+      Event    : Gdk.Event.Gdk_Event_Button) return Boolean is
    begin
       Callback.Cb (Event, Callback.User_Data);
       return True;
@@ -1916,10 +1917,10 @@ package body Browsers.Canvas is
 
    function Activate
      (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event) return Boolean
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean
    is
-      X : constant Glib.Gint := Gint (Get_X (Event));
-      Y : constant Glib.Gint := Gint (Get_Y (Event));
+      X : constant Glib.Gint := Gint (Event.X);
+      Y : constant Glib.Gint := Gint (Event.Y);
 
       function Check_Area (Area : Active_Area_Tree) return Boolean;
       --  Return True if Area or one of its children was activated
@@ -2611,10 +2612,10 @@ package body Browsers.Canvas is
    ---------------------
 
    procedure Compute_Parents
-     (Event : Gdk_Event; Item : access Browser_Item_Record'Class) is
+     (Event : Gdk_Event_Button; Item : access Browser_Item_Record'Class) is
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
+      if Event.Button = 1
+        and then Event.The_Type = Button_Release
       then
          Arrow_Item (Item).Parents_Cb (Arrow_Item (Item));
       end if;
@@ -2625,10 +2626,10 @@ package body Browsers.Canvas is
    ----------------------
 
    procedure Compute_Children
-     (Event : Gdk_Event; Item : access Browser_Item_Record'Class) is
+     (Event : Gdk_Event_Button; Item : access Browser_Item_Record'Class) is
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
+      if Event.Button = 1
+        and then Event.The_Type = Button_Release
       then
          Arrow_Item (Item).Children_Cb (Arrow_Item (Item));
       end if;

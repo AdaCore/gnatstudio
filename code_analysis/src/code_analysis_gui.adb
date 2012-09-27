@@ -446,8 +446,7 @@ package body Code_Analysis_GUI is
       pragma Unreferenced (Event_Widget);
       use Project_Maps;
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      X         : constant Gdouble := Get_X (Event);
-      Y         : constant Gdouble := Get_Y (Event);
+      X, Y      : Gdouble;
       Path      : Gtk_Tree_Path;
       Prj_Node  : Code_Analysis.Project_Access;
       File_Node : Code_Analysis.File_Access;
@@ -460,7 +459,7 @@ package body Code_Analysis_GUI is
       Iter      : Gtk_Tree_Iter := Get_Iter_First (View.Model);
 
    begin
-
+      Get_Coords (Event, X, Y);
       Get_Path_At_Pos (View.Tree, Gint (X), Gint (Y), Path, Column,
                        Buffer_X, Buffer_Y, Row_Found);
 

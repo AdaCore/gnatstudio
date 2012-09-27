@@ -1017,11 +1017,9 @@ package body GPS.Kernel.Modules.UI is
       then
          Free (GPS_Window (User.Kernel.Main_Window).Last_Event_For_Contextual);
       end if;
-      Deep_Copy
-        (From => Event,
-         To   =>
-           GPS_Window
-             (User.Kernel.Main_Window).Last_Event_For_Contextual);
+
+      GPS_Window (User.Kernel.Main_Window).Last_Event_For_Contextual :=
+        Copy (Event);
 
       --  Override the previous value. No Ref is taken explicitly, so we do not
       --  need to Unref either. This field is automatically reset to null when

@@ -1060,7 +1060,8 @@ package body Aliases_Module is
                      --  handling of multiple views).
 
                      if not Had_Focus then
-                        Allocate (Event, Enter_Notify, Get_Window (W));
+                        Gdk_New (Event, Enter_Notify);
+                        Event.Crossing.Window := Get_Window (W);
                         Result := Return_Callback.Emit_By_Name
                           (W, Signal_Focus_In_Event, Event);
                         Free (Event);
@@ -1105,7 +1106,8 @@ package body Aliases_Module is
                      end if;
 
                      if not Had_Focus then
-                        Allocate (Event, Leave_Notify, Get_Window (W));
+                        Gdk_New (Event, Leave_Notify);
+                        Event.Crossing.Window := Get_Window (W);
                         Result := Return_Callback.Emit_By_Name
                           (W, Signal_Focus_Out_Event, Event);
                         Free (Event);

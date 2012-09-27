@@ -323,8 +323,8 @@ package body CodePeer.Messages_Reports is
       pragma Unreferenced (Menu, Event_Widget);
 
       Self       : constant Messages_Report := Messages_Report (Object);
-      X          : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
-      Y          : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
+      X          : constant Glib.Gint := Glib.Gint (Event.Button.X);
+      Y          : constant Glib.Gint := Glib.Gint (Event.Button.Y);
       Path       : Gtk.Tree_Model.Gtk_Tree_Path;
       Model_Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Cell_X     : Glib.Gint;
@@ -1027,8 +1027,8 @@ package body CodePeer.Messages_Reports is
 
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Sort_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-      X         : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
-      Y         : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
+      X         : constant Glib.Gint := Glib.Gint (Event.Button.X);
+      Y         : constant Glib.Gint := Glib.Gint (Event.Button.Y);
       Path      : Gtk.Tree_Model.Gtk_Tree_Path;
       Cell_X    : Glib.Gint;
       Cell_Y    : Glib.Gint;

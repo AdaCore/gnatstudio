@@ -1328,6 +1328,7 @@ package body Src_Editor_Box is
       end In_Selection;
 
       Cursor_Location : Gtk_Text_Iter;
+      Xevent, Yevent : Gdouble;
    begin
       if Location = Location_Event
         and then
@@ -1357,9 +1358,10 @@ package body Src_Editor_Box is
          when Location_Event =>
             if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
                --  Click in the line numbers area
+               Get_Coords (Event, Xevent, Yevent);
                Window_To_Buffer_Coords
                  (Editor.Source_View, Text_Window_Left,
-                  Gint (Get_X (Event)), Gint (Get_Y (Event)), X, Y);
+                  Gint (Xevent), Gint (Yevent), X, Y);
                Get_Iter_At_Location (Editor.Source_View, Start_Iter, X, Y);
                Line := Get_Line (Start_Iter);
                Place_Cursor (Editor.Source_Buffer, Start_Iter);

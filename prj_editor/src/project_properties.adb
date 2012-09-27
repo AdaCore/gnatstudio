@@ -4179,9 +4179,12 @@ package body Project_Properties is
       Ignore         : Gtk_Widget;
       pragma Unreferenced (Ignore);
       Typ            : Attribute_Type;
+      X, Y           : Gdouble;
    begin
+      Get_Coords (Event, X, Y);
+
       Get_Path_At_Pos
-        (Ed.View, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+        (Ed.View, Gint (X), Gint (Y),
          Path, Column, Cell_X, Cell_Y, Row_Found);
 
       if Row_Found

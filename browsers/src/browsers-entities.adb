@@ -274,7 +274,7 @@ package body Browsers.Entities is
 
    overriding function Call
      (Callback : Show_Entity_Callback;
-      Event    : Gdk.Event.Gdk_Event) return Boolean;
+      Event    : Gdk.Event.Gdk_Event_Button) return Boolean;
    overriding procedure Destroy (Callback : in out Show_Entity_Callback);
    --  See inherated doc
 
@@ -344,7 +344,7 @@ package body Browsers.Entities is
    --  Display the parent/child types for the item
 
    procedure Hide_Show_Inherited
-     (Event : Gdk_Event;
+     (Event : Gdk_Event_Button;
       Item  : access Browser_Item_Record'Class);
    --  Change the status of inherited primitive operations (shown or hidden)
 
@@ -411,10 +411,10 @@ package body Browsers.Entities is
 
    overriding function Call
      (Callback : Show_Entity_Callback;
-      Event    : Gdk.Event.Gdk_Event) return Boolean is
+      Event    : Gdk.Event.Gdk_Event_Button) return Boolean is
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
+      if Event.Button = 1
+        and then Event.The_Type = Button_Press
       then
          Add_Item_And_Link
            (Type_Item (Callback.Item), Callback.Entity,
@@ -1489,13 +1489,13 @@ package body Browsers.Entities is
    -------------------------
 
    procedure Hide_Show_Inherited
-     (Event : Gdk_Event;
+     (Event : Gdk_Event_Button;
       Item  : access Browser_Item_Record'Class)
    is
       It : constant Type_Item := Type_Item (Item);
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
+      if Event.Button = 1
+        and then Event.The_Type = Button_Release
       then
          It.Inherited_Primitives := not It.Inherited_Primitives;
          Trace (Me, "Hide_Show_Inherited => "

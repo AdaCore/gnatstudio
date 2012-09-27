@@ -201,8 +201,7 @@ package body Buffer_Views is
      (Tree  : Gtk_Tree_View;
       Event : Gdk_Event) return Gtk_Tree_Path
    is
-      X         : constant Gdouble := Get_X (Event);
-      Y         : constant Gdouble := Get_Y (Event);
+      X, Y      : Gdouble;
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
@@ -210,6 +209,8 @@ package body Buffer_Views is
       Column    : Gtk_Tree_View_Column := null;
 
    begin
+      Get_Coords (Event, X, Y);
+
       Path := Gtk_New;
       Get_Path_At_Pos
         (Tree, Gint (X), Gint (Y),

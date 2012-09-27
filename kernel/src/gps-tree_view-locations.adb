@@ -250,8 +250,8 @@ package body GPS.Tree_View.Locations is
      (Self  : access GPS_Locations_Tree_View_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Boolean
    is
-      X         : constant Gint := Gint (Get_X (Event));
-      Y         : constant Gint := Gint (Get_Y (Event));
+      X         : constant Gint := Gint (Event.Button.X);
+      Y         : constant Gint := Gint (Event.Button.Y);
       Path      : Gtk_Tree_Path;
       Column    : Gtk_Tree_View_Column;
       Buffer_X  : Gint;

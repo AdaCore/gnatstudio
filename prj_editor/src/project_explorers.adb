@@ -1772,14 +1772,13 @@ package body Project_Explorers is
          Parent := Get_Parent (Child);
          Get_Pointer (Parent, X, Y, Mask, Dummy_W);
          if Dummy_W = Child then
-            Allocate (Event      => Event,
-                      Event_Type => Motion_Notify,
-                      Window     => Get_Window (T.Tree));
+            Gdk_New (Event, Motion_Notify);
             Get_Position (Child, Child_X, Child_Y);
-            Set_Window (Event, Child);
-            Set_Time (Event, 0);
-            Set_X (Event, Gdouble (X - Child_X));
-            Set_Y (Event, Gdouble (Y - Child_Y));
+
+            Event.Motion.Window := Child;
+            Event.Motion.Time := 0;
+            Event.Motion.X := Gdouble (X - Child_X);
+            Event.Motion.Y := Gdouble (Y - Child_Y);
             Dummy := Return_Callback.Emit_By_Name
               (T.Tree, Signal_Motion_Notify_Event, Event);
          end if;

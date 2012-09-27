@@ -1478,7 +1478,8 @@ package body Gtkada.File_Selector is
 
    begin
       declare
-         S     : constant String := Get_String (Event);
+         S     : constant String := Interfaces.C.Strings.Value
+           (Event.Key.String);
       begin
          if S'Length /= 0
            and then (Is_Alphanumeric (S (S'First))
@@ -1566,7 +1567,8 @@ package body Gtkada.File_Selector is
                           File_Selector_Window_Access (Get_Toplevel (Object));
       Event           : constant Gdk_Event := To_Event (Params, 1);
       S               : constant UTF8_String := Get_Text (Win.Selection_Entry);
-      G               : constant String := Get_String (Event);
+      G               : constant String :=
+        Interfaces.C.Strings.Value (Event.Key.String);
 
       First_Match     : Gtk_Tree_Iter := Null_Iter;
       --  The first column that completely matches S

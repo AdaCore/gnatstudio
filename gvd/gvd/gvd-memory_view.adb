@@ -21,6 +21,7 @@ with Ada.Strings.Unbounded;
 with Ada.Strings.Maps;         use Ada.Strings.Maps;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+with Interfaces.C.Strings;
 
 with Gdk;                      use Gdk;
 with Gdk.Event;                use Gdk.Event;
@@ -1739,7 +1740,7 @@ package body GVD.Memory_View is
       if Proxy = null then
          return False;
       else
-         Arg1 := Gdk_Event (Proxy);
+         Arg1 := Get_Event (Nth (Params, 1));
       end if;
 
       if Arg1 = null
@@ -1768,20 +1769,26 @@ package body GVD.Memory_View is
             Gtk.Handlers.Emit_Stop_By_Name
               (View.Editor.View, "key_press_event");
 
-            if Get_String (Arg1)'Length /= 0 then
-               Insert (View, Get_String (Arg1));
-            end if;
+            begin
+               declare
+                  Str : constant String :=
+                    Interfaces.C.Strings.Value (Arg1.Key.String);
+               begin
+                  if Str'Length /= 0 then
+                     Insert (View, Str);
+                  end if;
+               end;
+            exception
+               when Constraint_Error =>
+                  --  On windows, it seems that pressing the control key
+                  --  generates an event for which Get_String is invalid
+                  null;
+            end;
       end case;
 
       return False;
 
    exception
-      --  On windows, it seems that pressing the control key generates
-      --  an event for which Get_String is invalid
-
-      when Invalid_Field =>
-         return False;
-
       when E : others => Trace (Exception_Handle, E);
          return False;
    end On_View_Key_Press_Event;

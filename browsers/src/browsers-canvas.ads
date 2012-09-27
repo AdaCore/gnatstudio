@@ -134,7 +134,7 @@ package Browsers.Canvas is
    type Active_Area_Callback is abstract tagged null record;
    type Active_Area_Cb is access all Active_Area_Callback'Class;
    function Call (Callback : Active_Area_Callback;
-                  Event    : Gdk.Event.Gdk_Event)
+                  Event    : Gdk.Event.Gdk_Event_Button)
      return Boolean is abstract;
    --  A callback for the active areas. Event is the mouse event that started
    --  the chain that lead to callback.
@@ -330,7 +330,7 @@ package Browsers.Canvas is
 
    function Activate
      (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event) return Boolean;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
    --  Calls the callback that is activated when the user clicks in the
    --  item. The coordinates returned by Get_X and Get_Y in Event should be
    --  relative to the top-left corner of the Item.
@@ -432,7 +432,7 @@ package Browsers.Canvas is
    ---------------
 
    type Item_Active_Callback is access
-     procedure (Event : Gdk.Event.Gdk_Event;
+     procedure (Event : Gdk.Event.Gdk_Event_Button;
                 User  : access Browser_Item_Record'Class);
    type Item_Active_Area_Callback is new Active_Area_Callback with private;
    --  A special instanciation of the callback for cases where the user data is
@@ -613,7 +613,7 @@ private
    end record;
    overriding function Call
      (Callback : Item_Active_Area_Callback;
-      Event    : Gdk.Event.Gdk_Event) return Boolean;
+      Event    : Gdk.Event.Gdk_Event_Button) return Boolean;
    --  See doc for inherited Call
 
    type Active_Area_Cb_Array_Access is access Active_Area_Cb_Array;

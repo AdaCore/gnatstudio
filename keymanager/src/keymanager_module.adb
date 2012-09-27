@@ -24,6 +24,7 @@ with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with Interfaces.C.Strings;
 
 with System.Assertions;       use System.Assertions;
 
@@ -121,15 +122,16 @@ package body KeyManager_Module is
       Next    : Event_Handler_Access;
    end record;
 
+   package Event_Handler_Kernel is new Handler_Set_User_Data
+     (Kernel_Handle);
+
    procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address);
+     (Event : Gdk_Event; Kernel : Kernel_Handle);
    --  General event handler for GPS
-   pragma Convention (C, General_Event_Handler);
 
    procedure Debug_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address);
+     (Event : Gdk_Event; Kernel : Kernel_Handle);
    --  General event handler used for event-level debugging
-   pragma Convention (C, Debug_Event_Handler);
 
    type Keymanager_Module_Record is new Module_ID_Record with record
       Handlers         : Event_Handler_Access;
@@ -417,7 +419,7 @@ package body KeyManager_Module is
    ---------------------------
 
    procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address)
+     (Event : Gdk_Event; Kernel : Kernel_Handle)
    is
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
 
@@ -433,7 +435,7 @@ package body KeyManager_Module is
          EH : Event_Handler_Access := Keymanager_Module.Handlers;
       begin
          while EH /= null
-           and then not EH.Handler (Event, Convert (Kernel))
+           and then not EH.Handler (Event, Kernel)
          loop
             EH := EH.Next;
          end loop;
@@ -452,7 +454,7 @@ package body KeyManager_Module is
             if Current = null
               or else not Get_Modal (Gtk_Window (Get_Toplevel (Current)))
             then
-               if Process_Event (Convert (Kernel), Event) then
+               if Process_Event (Kernel, Event) then
                   return;
                end if;
             end if;
@@ -492,7 +494,7 @@ package body KeyManager_Module is
    end Break_Me_State;
 
    procedure Debug_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address)
+     (Event : Gdk_Event; Kernel : Kernel_Handle)
    is
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
    begin
@@ -1089,8 +1091,9 @@ package body KeyManager_Module is
                      Keymanager_Module.Argument_Current :=
                        new String'(Tmp.all & Character'Val (Key));
                   else
-                     Keymanager_Module.Argument_Current :=
-                       new String'(Tmp.all & Get_String (Event));
+                     Keymanager_Module.Argument_Current := new String'
+                       (Tmp.all
+                        & Interfaces.C.Strings.Value (Event.Key.String));
                   end if;
                   Free (Tmp);
                end;
@@ -1222,9 +1225,8 @@ package body KeyManager_Module is
             --  editing actions into a single undo command anyway.
             for R in 2 .. Keymanager_Module.Repeat_Count loop
                declare
-                  Ev : Gdk_Event;
+                  Ev : constant Gdk_Event := Copy (Event);
                begin
-                  Deep_Copy (From => Event, To => Ev);
                   Put (Ev);
                end;
             end loop;
@@ -1684,13 +1686,15 @@ package body KeyManager_Module is
         (Keymanager_Module, Kernel, "keymanager");
 
       if Active (Event_Debug_Trace) then
-         Event_Handler_Set
+         Event_Handler_Kernel.Handler_Set
            (Debug_Event_Handler'Access,
-            Convert (Kernel_Handle (Kernel)));
+            Kernel_Handle (Kernel),
+            null);
       else
-         Event_Handler_Set
+         Event_Handler_Kernel.Handler_Set
            (General_Event_Handler'Access,
-            Convert (Kernel_Handle (Kernel)));
+            Kernel_Handle (Kernel),
+            null);
       end if;
 
       Register_Command

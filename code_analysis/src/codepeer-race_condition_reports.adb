@@ -150,8 +150,7 @@ package body CodePeer.Race_Condition_Reports is
       use type Gdk.Event.Gdk_Event_Type;
       use type Gtk.Tree_Model.Gtk_Tree_Path;
 
-      X      : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
-      Y      : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
+      X, Y   : Glib.Gint;
       Path   : Gtk.Tree_Model.Gtk_Tree_Path;
       Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cell_X : Glib.Gint;
@@ -164,6 +163,8 @@ package body CodePeer.Race_Condition_Reports is
       if Gdk.Event.Get_Button (Event) = 1
         and then Gdk.Event.Get_Event_Type (Event) = Gdk.Event.Button_Press
       then
+         X := Glib.Gint (Event.Button.X);
+         Y := Glib.Gint (Event.Button.Y);
          Self.Summary_View.Get_Path_At_Pos
            (X, Y, Path, Column, Cell_X, Cell_Y, Found);
 

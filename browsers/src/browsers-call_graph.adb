@@ -300,8 +300,9 @@ package body Browsers.Call_Graph is
    end record;
    type Show_Location_Callback_Access
      is access all Show_Location_Callback'Class;
-   overriding function Call (Callback : Show_Location_Callback;
-                             Event    : Gdk.Event.Gdk_Event) return Boolean;
+   overriding function Call
+     (Callback : Show_Location_Callback;
+      Event    : Gdk.Event.Gdk_Event_Button) return Boolean;
    --  See inherited doc
 
    --------------------
@@ -2537,8 +2538,9 @@ package body Browsers.Call_Graph is
    -- Call --
    ----------
 
-   overriding function Call (Callback : Show_Location_Callback;
-                             Event    : Gdk.Event.Gdk_Event) return Boolean
+   overriding function Call
+     (Callback : Show_Location_Callback;
+      Event    : Gdk.Event.Gdk_Event_Button) return Boolean
    is
       pragma Unreferenced (Event);
    begin
