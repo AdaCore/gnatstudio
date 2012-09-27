@@ -949,7 +949,7 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       Emit_By_Name
         (Get_Object (Buffer),
-         "side_column_configuration_changed" & ASCII.NUL);
+         Signal_Side_Column_Configuration_Changed & ASCII.NUL);
    end Side_Column_Configuration_Changed;
 
    --------------------
