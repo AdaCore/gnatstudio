@@ -1156,6 +1156,21 @@ private
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
 
+   type Highlighting_Data_Record is record
+      Enabled : Boolean_Array_Access;
+      --  This array corresponds to the categories in Source_Editor_Module_Id.
+      --  If an item is set to True, that means that line highlighting is
+      --  enabled for that categories.
+      --  For simplicity, the range of this array should match the range of
+      --  the array of categories in the cache.
+
+      Active  : Natural;
+      --  This is the category to use for highlighting
+   end record;
+
+   type Highlighting_Data_Array is
+     array (Highlight_Location) of Highlighting_Data_Record;
+
    type Line_Data_Record is record
       Side_Info_Data : Line_Info_Width_Array_Access;
       --  The array corresponding to information to be displayed in columns,
@@ -1168,28 +1183,12 @@ private
       --  The mark used for referencing special lines, for example.
       --  -1 if there is no marker for this line.
 
-      --  The following corresponds to line highlighting. This is the category
-      --  to use for highlighting. We cannot store the GC directly, since GPS
-      --  might not be realized when the line_data is created
-      Highlight_Category : Natural;
-
-      Enabled_Highlights : Boolean_Array_Access;
-      --  This array corresponds to the categories in Source_Editor_Module_Id.
-      --  If an item is set to True, that means that line highlighting is
-      --  enabled for that categories.
-      --  For simplicity, the range of this array should match the range of
-      --  the array of categories in the cache.
-
       File_Line          : File_Line_Type;
       --  The corresponding line in the file corresponding to Buffer.
       --  0 if the line is not in the file.
 
-      Highlight_In       : Highlight_Location_Array;
-      --  Where the highlighting should take place
-      --  ??? Should be part of the highlight category, since otherwise we do
-      --  not know for sure what category this applies to if the line is
-      --  associated with multiple categories. Might have conflict with the use
-      --  of Mark_In_Speedbar in the category, though.
+      Highlighting : Highlighting_Data_Array;
+      --  Highlighting information.
    end record;
 
    -----------------------
@@ -1209,7 +1208,7 @@ private
    --  Create blank Side_Info_Data
 
    New_Line_Data : constant Line_Data_Record :=
-     (null, 0, null, 0, null, 0, (others => False));
+     (null, 0, null, 0, (others => (null, 0)));
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;

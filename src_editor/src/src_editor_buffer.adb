@@ -1524,10 +1524,9 @@ package body Src_Editor_Buffer is
       end if;
 
       for J in Buffer.Line_Data'Range loop
-         if Buffer.Line_Data (J).Enabled_Highlights /= null then
-            Unchecked_Free (Buffer.Line_Data (J).Enabled_Highlights);
-            --  Block already freed by the call to Reset_Blocks_Info
-         end if;
+         for K in Highlight_Location loop
+            Unchecked_Free (Buffer.Line_Data (J).Highlighting (K).Enabled);
+         end loop;
 
          if Buffer.Line_Data (J).Side_Info_Data /= null then
             Free (Buffer.Line_Data (J).Side_Info_Data.all);
@@ -3212,9 +3211,9 @@ package body Src_Editor_Buffer is
          end if;
 
          for J in Buffer.Line_Data'Range loop
-            if Buffer.Line_Data (J).Enabled_Highlights /= null then
-               Unchecked_Free (Buffer.Line_Data (J).Enabled_Highlights);
-            end if;
+            for K in Highlight_Location loop
+               Unchecked_Free (Buffer.Line_Data (J).Highlighting (K).Enabled);
+            end loop;
          end loop;
 
          Unchecked_Free (Buffer.Line_Data);
@@ -5460,8 +5459,71 @@ package body Src_Editor_Buffer is
       Set          : Boolean;
       Highlight_In : Highlight_Location_Array)
    is
-      Category   : Natural;
-      Last_Index : Natural;
+      procedure Set_Highlighting
+        (Data     : in out Highlighting_Data_Record;
+         Category : Natural;
+         Enabled  : Boolean);
+      --  Sets highligting state and recompute activw highlighting.
+
+      ----------------------
+      -- Set_Highlighting --
+      ----------------------
+
+      procedure Set_Highlighting
+        (Data     : in out Highlighting_Data_Record;
+         Category : Natural;
+         Enabled  : Boolean)
+      is
+         Last_Index : constant Natural := Get_Last_Index;
+
+      begin
+         --  Reallocate data when necessary
+
+         if Data.Enabled = null then
+            --  If we are removing a highlight where no highlight is defined,
+            --  we can exit immediately.
+
+            if not Set then
+               return;
+            end if;
+
+            Data.Enabled := new Boolean_Array (1 .. Last_Index);
+            Data.Enabled.all := (others => False);
+
+         elsif Data.Enabled'Last < Last_Index then
+            declare
+               Aux : Boolean_Array_Access;
+
+            begin
+               Aux := new Boolean_Array (1 .. Last_Index);
+               Aux (1 .. Data.Enabled'Last) := Data.Enabled.all;
+               Aux (Data.Enabled'Last + 1 .. Last_Index) := (others => False);
+               Unchecked_Free (Data.Enabled);
+               Data.Enabled := Aux;
+            end;
+         end if;
+
+         --  Set new state of highlighting
+
+         Data.Enabled (Category) := Enabled;
+
+         --  Find out which category has priority for highlighting
+
+         for J in Data.Enabled'Range loop
+            if Data.Enabled (J) then
+               Data.Active := J;
+
+               return;
+            end if;
+         end loop;
+
+         --  If we reach this stage, no highlighting was found
+
+         Data.Active := 0;
+      end Set_Highlighting;
+
+      Category : Natural;
+
    begin
       if Line = 0 then
          return;
@@ -5483,67 +5545,12 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Last_Index := Get_Last_Index;
-
-      if Editor.Line_Data (Line).Enabled_Highlights = null then
-         --  If we are removing a highlight where no highlight is defined,
-         --  we can exit immediately.
-
-         if not Set then
-            return;
-         end if;
-
-         Editor.Line_Data (Line).Enabled_Highlights :=
-           new Boolean_Array (1 .. Last_Index);
-         Editor.Line_Data (Line).Enabled_Highlights.all := (others   => False);
-         Editor.Line_Data (Line).Highlight_In := Highlight_In;
-
-      elsif Editor.Line_Data (Line).Enabled_Highlights'Last < Last_Index then
-         declare
-            A : Boolean_Array_Access;
-         begin
-            A := new Boolean_Array (1 .. Last_Index);
-            A (1 .. Editor.Line_Data (Line).Enabled_Highlights'Last)
-              := Editor.Line_Data (Line).Enabled_Highlights.all;
-            A (Editor.Line_Data (Line).Enabled_Highlights'Last + 1
-                 .. Last_Index) := (others => False);
-            Unchecked_Free (Editor.Line_Data (Line).Enabled_Highlights);
-            Editor.Line_Data (Line).Enabled_Highlights := A;
-         end;
-      end if;
-
-      --  Do not change Highlight_In unless we are setting the highlighting
-      --  category, otherwise removing any category will unhighlight the whole
-      --  line.
-      if Set then
-         Editor.Line_Data (Line).Highlight_In := Highlight_In;
-      end if;
-
-      --  Sets highlighting enabled flag only when highlighting of the hole
-      --  line in the editor is requested.
-
-      if Highlight_In (Highlight_Editor) then
-         Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
-
-      --  But resets it always when hide of highlighting is requested.
-
-      elsif not Set then
-         Editor.Line_Data (Line).Enabled_Highlights (Category) := False;
-      end if;
-
-      --  Find out which category has priority for highlighting
-
-      for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
-         if Editor.Line_Data (Line).Enabled_Highlights (J) then
-            Editor.Line_Data (Line).Highlight_Category := J;
-            return;
+      for K in Highlight_Location loop
+         if Highlight_In (K) then
+            Set_Highlighting
+              (Editor.Line_Data (Line).Highlighting (K), Category, Set);
          end if;
       end loop;
-
-      --  If we reach this stage, no highlighting was found, therefore we
-      --  remove the current GC.
-
-      Editor.Line_Data (Line).Highlight_Category := 0;
    end Set_Line_Highlighting;
 
    --------------------------
@@ -5595,14 +5602,14 @@ package body Src_Editor_Buffer is
          Highlight_Range (Editor, Style, 0, 1, 1, True);
 
          for J in Editor.Line_Data'Range loop
-            Set_Line_Highlighting (Editor, J, Style, False, (others => False));
+            Set_Line_Highlighting (Editor, J, Style, False, (others => True));
          end loop;
       else
          The_Line := Get_Buffer_Line (Editor, Line);
 
          if The_Line /= 0 then
             Set_Line_Highlighting
-              (Editor, The_Line, Style, False, (others => False));
+              (Editor, The_Line, Style, False, (others => True));
          end if;
       end if;
 
@@ -5624,12 +5631,14 @@ package body Src_Editor_Buffer is
 
       if Editor.Line_Data /= null
         and then Line <= Editor.Line_Data'Last
-        and then Editor.Line_Data (Line).Highlight_In (Context)
+        and then Editor.Line_Data (Line).Highlighting (Context).Active /= 0
       then
-         return Get_Color (Editor.Line_Data (Line).Highlight_Category);
-      end if;
+         return
+           Get_Color (Editor.Line_Data (Line).Highlighting (Context).Active);
 
-      return Null_Color;
+      else
+         return Null_Color;
+      end if;
    end Get_Highlight_Color;
 
    ---------------

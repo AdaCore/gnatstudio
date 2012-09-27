@@ -1235,8 +1235,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       for J in Line .. Line + Buffer_Line_Type (Number) - 1 loop
          Buffer.Line_Data (J).Editable_Line := 0;
-         Buffer.Line_Data (J).Highlight_Category := Highlight_Category;
-         Buffer.Line_Data (J).Highlight_In := (True, True);
+         Buffer.Line_Data (J).Highlighting (Highlight_Editor).Active :=
+           Highlight_Category;
+         Buffer.Line_Data (J).Highlighting (Highlight_Speedbar).Active :=
+           Highlight_Category;
 
          Create_Side_Info (Buffer, J);
       end loop;
@@ -1774,7 +1776,20 @@ package body Src_Editor_Buffer.Line_Information is
 
          --  Remove highlighting for the topmost of moved lines
 
-         Buffer_Lines (Start + Number).Highlight_Category := 0;
+         for K in Highlight_Location loop
+            Buffer_Lines (Start + Number).Highlighting (K).Active := 0;
+
+            if Buffer_Lines (Start + Number).Highlighting (K).Enabled
+                 /= null
+            then
+               for J
+                in Buffer_Lines (Start + Number).Highlighting (K).Enabled'Range
+               loop
+                  Buffer_Lines (Start + Number).Highlighting (K).Enabled (J) :=
+                    False;
+               end loop;
+            end if;
+         end loop;
 
          --  Reset the newly inserted lines
 
