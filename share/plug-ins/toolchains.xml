@@ -46,6 +46,7 @@
   <toolchain name="powerpc-wrs-linux"/>
 
   <toolchain name="powerpc-sysgo-pikeos"/>
+  <toolchain name="i586-sysgo-pikeos"/>
 
   <toolchain name="powerpc-elf"/>
 
