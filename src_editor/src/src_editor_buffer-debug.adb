@@ -331,7 +331,10 @@ package body Src_Editor_Buffer.Debug is
            Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
          loop
             Set_Return_Value
-              (Data, Get_Name (Buffer.Line_Data (Line).Highlight_Category));
+              (Data,
+               Get_Name
+                 (Buffer.Line_Data (Line).Highlighting
+                    (Highlight_Editor).Active));
          end loop;
 
       elsif Command = "debug_dump_all_lines" then
