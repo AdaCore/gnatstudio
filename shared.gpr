@@ -32,7 +32,7 @@ project Shared is
          when "Debug" =>
             for Default_Switches ("Ada") use
               ("-g", "-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
-               "-gnatwaCJ", "-gnat2012", "-gnateE");
+               "-gnatwaCJe", "-gnat2012", "-gnateE");
 
             for Default_Switches ("C") use
               ("-g", "-O1", "-fdump-xref") & GnatColl_Shared.Gtk_Include;
