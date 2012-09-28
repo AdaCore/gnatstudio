@@ -84,6 +84,7 @@
   <toolchain name="powerpc-elf-lynxos"/>
 
   <toolchain name="powerpc-xcoff-lynxos"/>
+  <toolchain name="powerpc-xcoff-lynxos178"/>
 
   <toolchain name="erc32-elf"/>
 
