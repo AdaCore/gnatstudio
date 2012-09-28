@@ -23,6 +23,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.2.0 / GNATbench 2.7.0
 -------------------------------------------
 
+NF-52-L928-016 GPS: support for powerpc-xcoff-lynxos178 (2012-09-28)
+
+  GPS now supports building for powerpc-lynxos178.
+
 NF-52-L927-016 GPS: support for x86-pikeos (2012-09-27)
 
   GPS now supports building for the x86-pikeos architecture.
