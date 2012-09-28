@@ -425,6 +425,11 @@ NF-52-G917-017 GPS: Coverage Report accessible through Back button (2012-02-02)
   this location in an editor, and it is now possible to click the "Back" button
   in the toolbar to go back to the Code Coverage report.
 
+NF-52-G704-018 GPS: display of elaboration circuitries (2012-08-07)
+
+  GPS now displays as a graph the elaboration circuitries detected
+  by gnatbind at compile time.
+
 NF-52-G618-003 GPS: search/replace with regular expressions (2012-08-14)
 
   The replacement may contain the special escapes \0 through \9 to refer
