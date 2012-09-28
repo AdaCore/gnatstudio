@@ -1190,6 +1190,10 @@ private
       --  not know for sure what category this applies to if the line is
       --  associated with multiple categories. Might have conflict with the use
       --  of Mark_In_Speedbar in the category, though.
+
+      Highlight_Category_Speedbar : Natural;
+      --  Same as Highlight_Category, but concerns the color to be used in the
+      --  speed bar.
    end record;
 
    -----------------------
@@ -1209,7 +1213,7 @@ private
    --  Create blank Side_Info_Data
 
    New_Line_Data : constant Line_Data_Record :=
-     (null, 0, null, 0, null, 0, (others => False));
+     (null, 0, null, 0, null, 0, (others => False), 0);
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;

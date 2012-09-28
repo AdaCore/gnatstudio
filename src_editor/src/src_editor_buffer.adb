@@ -5476,6 +5476,14 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      if Highlight_In (Highlight_Speedbar) then
+         Editor.Line_Data (Line).Highlight_Category_Speedbar := Category;
+      end if;
+
+      if not Set then
+         Editor.Line_Data (Line).Highlight_Category_Speedbar := 0;
+      end if;
+
       if Line < Editor.Line_Data'First
         or else Line > Editor.Line_Data'Last
       then
@@ -5536,6 +5544,8 @@ package body Src_Editor_Buffer is
       for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
          if Editor.Line_Data (Line).Enabled_Highlights (J) then
             Editor.Line_Data (Line).Highlight_Category := J;
+            Editor.Line_Data (Line).Highlight_Category_Speedbar := J;
+
             return;
          end if;
       end loop;
@@ -5626,7 +5636,12 @@ package body Src_Editor_Buffer is
         and then Line <= Editor.Line_Data'Last
         and then Editor.Line_Data (Line).Highlight_In (Context)
       then
-         return Get_Color (Editor.Line_Data (Line).Highlight_Category);
+         if Context = Highlight_Speedbar then
+            return Get_Color
+              (Editor.Line_Data (Line).Highlight_Category_Speedbar);
+         else
+            return Get_Color (Editor.Line_Data (Line).Highlight_Category);
+         end if;
       end if;
 
       return Null_Color;
