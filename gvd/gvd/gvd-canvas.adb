@@ -1514,7 +1514,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Show Type");
+         Gtk_New (Radio, Get_Group (Radio), -"Show Type");
          Set_Active (Radio, Get_Display_Mode (Item) = Type_Only);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1529,7 +1529,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Show Value + Type");
+         Gtk_New (Radio, Get_Group (Radio), -"Show Value + Type");
          Set_Active (Radio, Get_Display_Mode (Item) = Type_Value);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1563,7 +1563,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Decimal");
+         Gtk_New (Radio, Get_Group (Radio), -"Decimal");
          Set_Active (Radio, Get_Format (Item) = Decimal);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1578,7 +1578,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Hexadecimal");
+         Gtk_New (Radio, Get_Group (Radio), -"Hexadecimal");
          Set_Active (Radio, Get_Format (Item) = Hexadecimal);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1593,7 +1593,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Octal");
+         Gtk_New (Radio, Get_Group (Radio), -"Octal");
          Set_Active (Radio, Get_Format (Item) = Octal);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1608,7 +1608,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Binary");
+         Gtk_New (Radio, Get_Group (Radio), -"Binary");
          Set_Active (Radio, Get_Format (Item) = Binary);
          Item_Handler.Connect
            (Radio, Signal_Activate,
