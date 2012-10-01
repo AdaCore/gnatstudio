@@ -372,7 +372,11 @@ try:
         event.time = int(time.time())
 
         # We cannot set event.string, because of a bug in pygobject, which tries
-        # to doubly deallocate the string later on
+        # to doubly deallocate the string later on.
+
+        # In gobject-introspection, the binding is not correct and the field
+        # "string" is not writable.
+
         # if keyval >= 32 and keyval <= 128:
         #   event.string = chr (keyval)
 
