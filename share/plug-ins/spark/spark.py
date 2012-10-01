@@ -215,7 +215,7 @@ def riposte_file(file):
   except:
      basic_options = GPS.Project.root().get_tool_switches_as_string("Riposte")
 
-  focus_file = file.name().replace(".vcg", ".rsm").replace(".siv", ".rsm")
+  focus_file = file.name().replace(".vcg", ".rce").replace(".siv", ".rce")
   GPS.BuildTarget("Riposte").execute(synchronous=False, extra_args=basic_options)
 
 def zombiescope_file (file):
@@ -299,7 +299,7 @@ def pogs_dpc_xref (context):
 def pogs_zlg_xref (context):
   do_pogs_xref (context, siv=False, dpc=True, zlg=True)
 
-def has_vc (context):
+def sum_file_current_line_has_vc (context):
   """Return TRUE if the current line of the POGS output references a VC"""
   try:
      # Avoid doing the work several times for all entries in the menu
@@ -313,10 +313,10 @@ def has_vc (context):
      editor = GPS.EditorBuffer.get()
      curs = editor.current_view().cursor()
      line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
-     context.has_vc = re.search ("\|   (S|U|E|I|X|P|C|R|F).   \|", line) != None
+     context.has_vc = re.search ("\|   [SUEIXPVRCMF].   \|", line) != None
      return context.has_vc
 
-def has_dpc (context):
+def sum_file_current_line_has_dpc (context):
   """Return TRUE if the current line of the POGS output references a DPC"""
   try:
      # Avoid doing the work several times for all entries in the menu
@@ -330,7 +330,7 @@ def has_dpc (context):
      editor = GPS.EditorBuffer.get()
      curs = editor.current_view().cursor()
      line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
-     context.has_dpc = re.search ("\|   .(S|U|D|L)   \|", line) != None
+     context.has_dpc = re.search ("\|   .[SUDL]   \|", line) != None
      return context.has_dpc
 
 xml_spark = """<?xml version="1.0"?>
@@ -579,7 +579,7 @@ xml_spark = """<?xml version="1.0"?>
         <combo-entry label="Z3" value="z3" />
       </combo>
       <title line="2">Limits</title>
-      <spin line="2" label="Proof step limit for Alt-Ergo" switch="-steps=" min="0" max="10000" default="5000"
+      <spin line="2" label="Proof step limit for Alt-Ergo or CVC3" switch="-steps=" min="0" max="10000" default="5000"
             tip="A deterministic (unlike timeouts) proof step limit. Zero means no limit." />
       <spin line="2" label="Timeout (in s) (GNU/Linux only)" switch="-t=" min="0" max="1000" default="0"
             tip="Timeout for each invocation of the prover. No timeout by default." />
@@ -590,30 +590,40 @@ xml_spark = """<?xml version="1.0"?>
 
   <tool name="Riposte">
     <language>Ada</language>
-    <switches lines="3" switch_char="--">
-      <title line="1">General behaviour and output</title>
-      <check line="1" label="Plain output (don't show line or version numbers)" switch="--reference" />
-      <check line="1" label="Brief output (don't show variables not in conclusions)" switch="--brief" />
-      <check line="1" label="Show rewrites" switch="--trace" />
-      <check line="1" label="Trust types (requires SPARK Pro >= 10.1 or GPL >= 2012)" switch="--trust-examiner-types" />
+    <switches lines="5" switch_char="--">
+      <title line="1">Input</title>
+      <check line="1" label="Use (some) user rules" switch="--user-rules"
+             tip="Please consult Riposte_UM about which user rules are supported."/>
+      <check line="1" label="Ignore .siv files" switch="--ignore-siv" />
+      <check line="1" label="Ignore .vct files" switch="--ignore-vct" />
+
+      <title line="2">Output</title>
+      <check line="2" label="Plain output (don't show line or version numbers)" switch="--reference" />
+      <check line="2" label="Brief output (don't show variables not in conclusions)" switch="--brief"
+             tip="Note that enabling this option may hide important information, so if a counter-example makes little sense try turning this off again."/>
+      <check line="2" label="Show rewrites" switch="--trace" />
       <spin line="2" label="Line-wrap" switch="--wrap=" min="0" max="200" default="0"
             tip="Intelligently line-wrap hypotheses and conclusions. 0 means no line-wrap." />
 
-      <title line="2">Features</title>
-      <check line="2" label="Optimise counter-examples" switch="-o"
-             tip="This tries to find assignments as close to zero as possible. It does *not* make anything faster, on the contrary!" />
-      <check line="2" label="Use (some) user rules" switch="--user-rules" />
-      <field line="2" label="Use memcached server to cache results" switch="--memcached="
-             tip="Can be either just an ip/hostname or a host:port tuple" />
+      <title line="3">Model</title>
+      <check line="3" label="Trust types (you must read the user manual before using this)" switch="--trust-examiner-types" />
+      <check line="3" label="Do not assert an exception free model" switch="--debug"
+             tip="Riposte contains a lot of internal consistency checks which can sometimes slow things down. This option can be used to enable these checks as they are turned off by default."/>
 
-      <title line="3">Search</title>
-      <check line="3" label="Do not search for dead paths" switch="--no-dpc" />
-      <check line="3" label="Do not search for dodgy specifications" switch="--no-dsc" />
-      <check line="3" label="Do not search for counter-examples" switch="--no-ce" />
-      <spin line="3" label="Step limit" switch="--steps=" min="0" max="2000000" default="320000"
+      <title line="4">Search</title>
+      <check line="4" label="Do not search for dead paths" switch="--no-dpc" />
+      <check line="4" label="Do not search for dodgy specifications" switch="--no-dsc" />
+      <check line="4" label="Do not search for counter-examples" switch="--no-ce" />
+      <check line="4" label="Optimise counter-examples" switch="-o"
+             tip="This tries to find assignments as close to zero as possible. It does *not* make anything faster, on the contrary!" />
+      <spin line="4" label="Step limit" switch="--steps=" min="0" max="2000000" default="320000"
             tip="A deterministic (unlike timeouts) proof step limit. Zero means no limit." />
-      <spin line="3" label="Model limit" switch="--max_models=" min="0" max="5000" default="0"
+      <spin line="4" label="Model limit" switch="--max_models=" min="0" max="5000" default="0"
             tip="Limit the number of models generated during optimisation. Zero (the default) means no limit." />
+
+      <title line="5">Caching</title>
+      <field line="5" label="Use memcached server to cache true results" switch="--memcached="
+             tip="Can be either just an ip/hostname or a host:port tuple. Please consult Riposte_UM for a detailed explanation of this option." />
 
     </switches>
   </tool>
@@ -1152,6 +1162,13 @@ b = """<?xml version="1.0"?>
   </documentation_file>
 
   <documentation_file>
+     <name>Release_Note_11p0p0.htm</name>
+     <descr>Release Note 11.0</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Release Notes/Release Note 11.0</menu>
+  </documentation_file>
+
+  <documentation_file>
      <name>Release_Note_10p1p0.htm</name>
      <descr>Release Note 10.1</descr>
      <category>Spark</category>
@@ -1599,15 +1616,19 @@ if spark != "":
   GPS.parse_xml(b)
   GPS.Hook ("compilation_finished").add (on_execution_finished)
 
-  GPS.Contextual ("SPARK/Show VC").create (
-     on_activate=pogs_xref,
-     filter=has_vc)
-  GPS.Contextual ("SPARK/Show Simplified VC").create (
-     on_activate=pogs_siv_xref,
-     filter=has_vc)
-  GPS.Contextual ("SPARK/Show DPC").create (
-     on_activate=pogs_dpc_xref,
-     filter=has_dpc)
-  GPS.Contextual ("SPARK/Show ZLG").create (
-     on_activate=pogs_zlg_xref,
-     filter=has_dpc)
+  GPS.Contextual("SPARK/Show VC").create(
+    on_activate = pogs_xref,
+    filter      = sum_file_current_line_has_vc)
+
+  GPS.Contextual("SPARK/Show Simplified VC").create(
+    on_activate = pogs_siv_xref,
+    filter      = sum_file_current_line_has_vc)
+
+  GPS.Contextual("SPARK/Show DPC").create(
+    on_activate = pogs_dpc_xref,
+    filter      = sum_file_current_line_has_dpc)
+
+  GPS.Contextual("SPARK/Show ZLG").create(
+    on_activate = pogs_zlg_xref,
+    filter      = sum_file_current_line_has_dpc)
+
