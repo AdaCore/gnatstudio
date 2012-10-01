@@ -2032,6 +2032,8 @@ package body Src_Editor_View is
       Ignore      : Boolean;
 
       Key         : Gdk_Key_Type;
+
+      use Interfaces.C.Strings;
    begin
       if View.Get_Realized
         and then not Get_Property
@@ -2150,22 +2152,25 @@ package body Src_Editor_View is
             end if;
 
          when others =>
-            declare
-               Key_Str : constant String := Interfaces.C.Strings.Value
-                 (Event.Key.String);
-            begin
-               if Key_Str'Length = 1
-                 and then
-                   not Is_In (Key_Str (Key_Str'First),
-                              Word_Character_Set (Get_Language (Buffer)))
-                 and then
-                   not Is_In (Key_Str (Key_Str'First), Constants.Control_Set)
-               then
-                  if not View.As_Is_Enabled then
-                     Word_Added (Buffer);
+            if Event.Key.String /= Null_Ptr then
+               declare
+                  Key_Str : constant String := Interfaces.C.Strings.Value
+                    (Event.Key.String);
+               begin
+                  if Key_Str'Length = 1
+                    and then
+                      not Is_In (Key_Str (Key_Str'First),
+                                 Word_Character_Set (Get_Language (Buffer)))
+                    and then
+                      not Is_In (Key_Str (Key_Str'First),
+                                 Constants.Control_Set)
+                  then
+                     if not View.As_Is_Enabled then
+                        Word_Added (Buffer);
+                     end if;
                   end if;
-               end if;
-            end;
+               end;
+            end if;
       end case;
 
       return False;
