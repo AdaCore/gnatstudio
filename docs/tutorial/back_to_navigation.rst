@@ -8,7 +8,7 @@ over entities: these entities now become clickable hyperlinks. Clicking on the
 first mouse button will go to the declaration of the entity highlighted (or the
 body if you are already on the declaration), and clicking on the middle mouse
 button will go to the body directly: move the mouse back to `Next` and click.
-Alternatively, you can use the the contextual menu and select `Goto body of
+Alternatively, you can use the contextual menu and select `Goto body of
 Next`; then scroll through the procedure `Next`, move the mouse on
 `Instructions.Read` at line 46, hold :kbd:`control` again and click with the
 middle mouse button (or from the contextual menu, select `Goto body of Read`).
