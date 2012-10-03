@@ -128,9 +128,6 @@ package body Src_Editor_Module is
    close_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, close_block_xpm, "close_block_xpm");
 
-   Cursor_Color        : Color_Preference;
-   Cursor_Aspect_Ratio : Integer_Preference;
-
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
    overriding function Get_Command_Queue
@@ -3271,27 +3268,6 @@ package body Src_Editor_Module is
       Remove_Blank_Lines_Pixbuf := Gdk_New_From_Xpm_Data (close_block_xpm);
       Hide_Block_Pixbuf   := Gdk_New_From_Xpm_Data (fold_block_xpm);
       Unhide_Block_Pixbuf := Gdk_New_From_Xpm_Data (unfold_block_xpm);
-
-      --  Register preferences
-
-      Cursor_Color := Create
-        (Get_Preferences (Kernel),
-         Name    => "Editor-Cursor-Color",
-         Default => "black",
-         Page    => -"Editor/Fonts & Colors",
-         Doc     => -"Color to use for the cursor in editors",
-         Label   => -"Cursor color");
-
-      Cursor_Aspect_Ratio := Create
-        (Get_Preferences (Kernel),
-         Name    => "Editor-Cursor-Aspect-Ratio",
-         Default => 10,
-         Minimum => 1,
-         Maximum => 100,
-         Page    => -"Editor/Fonts & Colors",
-         Label   => -"Cursor aspect ratio",
-         Doc     => -("Size of the cursor, proportionaly to one character. 100"
-                      & "means the same size as a character"));
 
       Completion_Module.Register_Module (Kernel);
 
