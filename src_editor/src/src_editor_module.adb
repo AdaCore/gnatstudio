@@ -3349,17 +3349,6 @@ package body Src_Editor_Module is
          Id.Show_Subprogram_Names := Pref_Display_Subprogram_Names;
       end if;
 
-      Parse_String ("style ""gps-style"" { " & ASCII.LF
-                    & "GtkTextView::cursor-color="""
-                    & Cursor_Color.Get_Pref
-                    & """" & ASCII.LF
-                    & "GtkTextView::cursor-aspect-ratio="
-                    & Float'Image
-                      (Float (Cursor_Aspect_Ratio.Get_Pref) / 100.0)
-                    & ASCII.LF
-                    & "}" & ASCII.LF
-                    & "class ""GtkTextView"" style ""gps-style""");
-
       if Pref_Display_Line_Numbers /= Id.Display_Line_Numbers then
          Id.Display_Line_Numbers := Pref_Display_Line_Numbers;
 
