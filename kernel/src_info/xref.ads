@@ -18,6 +18,9 @@
 --  This package provides high-level cross-reference operations.
 --  This should be the preferred entry point for accessing entity
 --  information from Ada/C/C++ code.
+--
+--  This package should be usable for other IDEs like GNATBench. GPS-specific
+--  features should go to GPS.Kernel.Xref.
 
 with Basic_Types;   use Basic_Types;
 with GNATCOLL.VFS;  use GNATCOLL.VFS;

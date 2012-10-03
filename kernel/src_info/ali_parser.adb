@@ -587,7 +587,10 @@ package body ALI_Parser is
                Part := Unit_Body;
             end if;
 
-            if Imported_Projects (Imported_Projects'First) /= No_Project then
+            if Imported_Projects'Length /= 0
+              and then Imported_Projects (Imported_Projects'First) /=
+                 No_Project
+            then
                for P in reverse Imported_Projects'Range loop
                   declare
                      N : constant Filesystem_String :=
