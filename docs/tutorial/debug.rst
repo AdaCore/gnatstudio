@@ -24,8 +24,8 @@ Now select the menu `Debug->Run...` and type `input.txt` in the text input
 field. Click on `OK`: the debugger should stop on an exception
 (`Constraint_Error` in the file :file:`stack.adb`, at line 49).
 
-Go up in the call stack by clicking on the `tokens.process` line (frame number
-6 or 7, depending on your GNAT version).
+Go up in the call stack by clicking on the `tokens.process` frame (frame number
+will vary, depending on your GNAT version and platform).
 
 If you move the mouse over the parameter `T` at line 64, a tool tip is
 displayed showing the value of `T`. You have probably noticed that tool tips,
@@ -52,7 +52,7 @@ for modified values; click on `Undo Changes` to cancel the modifications; then
 close the memory window by e.g. clicking on the `x` icon or pressing
 :kbd:`Ctrl-W`.
 
-In the call stack, go back to `stack.push` frame (num 4 or 5).  Move the mouse
+In the call stack, go back to the `stack.push` frame.  Move the mouse
 over `Last` and let the debugger display its value: 0.  From the contextual
 menu, select `Goto declaration of Last`: this will jump to the line 16 of
 :file:`stack.adb`, where you can see that `Last` is a `Natural`. Now click on
