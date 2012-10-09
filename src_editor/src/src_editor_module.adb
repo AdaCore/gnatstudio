@@ -42,7 +42,6 @@ with Gtk.GEntry;                        use Gtk.GEntry;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
-with Gtk.Rc;                            use Gtk.Rc;
 with Gtk.Size_Group;                    use Gtk.Size_Group;
 with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
