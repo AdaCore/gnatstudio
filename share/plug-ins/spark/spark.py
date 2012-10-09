@@ -530,7 +530,7 @@ xml_spark = """<?xml version="1.0"?>
       <check line="2" label="Echo Simplifier output" switch="-e" />
       <title line="3">Simplification</title>
       <check line="3" label="No Simplification" switch="-ns" />
-      <title line="4">Victor (Currently available on GNU/Linux, Windows and OSX)</title>
+      <title line="4">Victor</title>
       <check line="4" label="Prove with Victor" switch="-victor" />
       <title line="5">Riposte (Currently available on GNU/Linux and Windows)</title>
       <check line="5" label="Find counter-examples with Riposte" switch="-riposte" />
