@@ -1064,6 +1064,10 @@ package body Aliases_Module is
                         Event.Crossing.Window := Get_Window (W);
                         Result := Return_Callback.Emit_By_Name
                           (W, Signal_Focus_In_Event, Event);
+
+                        --  Avoid unreferencing window
+                        Event.Crossing.Window := null;
+
                         Free (Event);
                      end if;
 
@@ -1110,6 +1114,10 @@ package body Aliases_Module is
                         Event.Crossing.Window := Get_Window (W);
                         Result := Return_Callback.Emit_By_Name
                           (W, Signal_Focus_Out_Event, Event);
+
+                        --  Avoid unreferencing window
+                        Event.Crossing.Window := null;
+
                         Free (Event);
                      end if;
                   end if;
