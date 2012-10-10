@@ -641,7 +641,7 @@ package body CodePeer.Messages_Reports is
          CodePeer.Messages_Summary_Models.High_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
-         "cell_background_gdk",
+         "cell-background-rgba",
          CodePeer.Messages_Summary_Models.High_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
@@ -675,7 +675,7 @@ package body CodePeer.Messages_Reports is
          CodePeer.Messages_Summary_Models.Medium_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
-         "cell_background_gdk",
+         "cell-background-rgba",
          CodePeer.Messages_Summary_Models.Medium_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
@@ -709,7 +709,7 @@ package body CodePeer.Messages_Reports is
          CodePeer.Messages_Summary_Models.Low_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
-         "cell_background_gdk",
+         "cell-background-rgba",
          CodePeer.Messages_Summary_Models.Low_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
