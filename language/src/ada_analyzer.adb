@@ -1322,10 +1322,21 @@ package body Ada_Analyzer is
                Skip_Blanks (Buffer, Tmp_Index);
 
                if Look_For (Tmp_Index, "=>") then
-                  --  We have an aspects clause, e.g:
+                  --  We have an aspect clause, e.g:
                   --  procedure G with
                   --    Pre => F
 
+                  return True;
+               else
+                  return False;
+               end if;
+            elsif Token = Tok_With and then Top_Tok = Tok_Type then
+               Skip_Blanks (Buffer, Tmp_Index);
+
+               if not Look_For (Tmp_Index, "record") then
+                  --  We have an aspect clause, e.g:
+                  --  type T is new Integer
+                  --    with ...
                   return True;
                else
                   return False;
@@ -2252,7 +2263,7 @@ package body Ada_Analyzer is
          elsif Reserved = Tok_With then
             if not In_Generic then
                if Top_Token.Token = Tok_With
-                   or else Top_Token.Token = Tok_Use
+                 or else Top_Token.Token = Tok_Use
                then
                   --  Incomplete clause, pops to preserve tree balance
 
@@ -2262,9 +2273,15 @@ package body Ada_Analyzer is
                if Top_Token.Token = No_Token then
                   Do_Push := True;
 
-               elsif Top_Token.Token = Tok_Type then
-                  --  ??? is this correct for Ada 05 constructs:
+               elsif Top_Token.Token = Tok_Type
+                  and then Prev_Token /= Tok_Record
+               then
+                  --  ??? incorrect for Ada 05 constructs:
                   --  task type foo is new A with entry A; end task;
+                  --  ??? incorrect for Ada 2012 constructs:
+                  --  type T is new Integer with Size => 32;
+                  --  Comparison against Tok_End above handles:
+                  --  type R is record ... end record with Size => 32;
 
                   Top_Token.Attributes (Ada_Tagged_Attribute) := True;
                end if;
@@ -4432,7 +4449,9 @@ package body Ada_Analyzer is
                   (Top_Token.Token = Tok_For
                    and then Prev_Token = Tok_For)
                 or else Top_Token.Type_Declaration
-                or else Top_Token.Attributes (Ada_Record_Attribute)
+                or else (Top_Token.Attributes (Ada_Record_Attribute)
+                         and then (Top_Token.Token = Tok_Case
+                                   or else Prev_Token /= Tok_Arrow))
                 or else Is_Parameter
                 or else Is_Discriminant
                 or else
