@@ -8,3 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- LA11-013: Aspect clause on a record confuses indentation
+  Problem:    When using an Ada 2012 aspect clause at the end of a record,
+              the indentation engine may get confused and unindent an extra
+              level wrongly, e.g:
+                 type R is record
+                    X : Integer;
+                 end record with Size => 32;
+  Workaround: Use a 'for' clause instead to specify the aspect.
+
