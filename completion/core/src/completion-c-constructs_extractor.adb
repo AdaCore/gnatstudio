@@ -486,6 +486,40 @@ package body Completion.C.Constructs_Extractor is
                               when Array_Kind =>
                                  E := Array_Contents_Type (E);
 
+                              when Class       |
+                                   Record_Kind =>
+                                 E := Get_Type_Of (E);
+
+                                 --  Handle named typedef structs since the
+                                 --  compiler generates two entites in the
+                                 --  LI file with the same name. For example:
+                                 --
+                                 --     typedef struct {    // First_Entity
+                                 --       ...
+                                 --     } my_type;          // Second_Entity
+                                 --
+                                 --  When we declare an object of this type:
+                                 --
+                                 --     my_type obj;
+                                 --
+                                 --  The type of obj references Second_Entity,
+                                 --  whose (parent) type is First_Entity (which
+                                 --  is the entity needed for completion
+                                 --  purposes)
+
+                                 if Get_Type_Of (E) /= null then
+                                    declare
+                                       Parent : Entity_Information;
+
+                                    begin
+                                       Parent := Get_Type_Of (E);
+
+                                       if Get_Name (E) = Get_Name (Parent) then
+                                          E := Parent;
+                                       end if;
+                                    end;
+                                 end if;
+
                               when others =>
                                  E := Get_Type_Of (E);
                            end case;
