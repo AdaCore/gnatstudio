@@ -1055,6 +1055,8 @@ Classes
 
    .. automethod:: GPS.Logger.check
 
+   .. automethod:: GPS.Logger.get_active
+
    .. automethod:: GPS.Logger.log
 
    .. automethod:: GPS.Logger.set_active
