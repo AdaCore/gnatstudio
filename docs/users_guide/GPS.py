@@ -6532,6 +6532,14 @@ class Logger(object):
         """
         pass  # implemented in Ada
 
+    def get_active(self, active):
+        """
+        Whether this logging stream is active
+
+        :return: A boolean
+        """
+        pass  # implemented in Ada
+
     def set_active(self, active):
         """
         Activate or deactivate a logging stream. The default for a sttream
