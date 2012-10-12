@@ -17,6 +17,15 @@ Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.0
                  end record with Size => 32;
   Workaround: Use a 'for' clause instead to specify the aspect.
 
+- L814-016: GPS: Code completion of typedef struct types
+  Problem:    Completion of components in variables whose type is a C/C++
+              'typedef struct' type does not work.
+  Workaround: Instead of writing the name of the object as prefix, write
+              first the type of the object. After pressing "." or "->" GPS
+              offers the completions list of the type which allows to select
+              the desired component. Finally replace the prefix by the
+              variable name.
+
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
 - L915-005: GPS: Some "align" actions cancel the selection
