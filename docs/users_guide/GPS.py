@@ -6532,7 +6532,7 @@ class Logger(object):
         """
         pass  # implemented in Ada
 
-    def get_active(self, active):
+    def get_active(self):
         """
         Whether this logging stream is active
 
