@@ -462,14 +462,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Tip of the Day",
          Page    => -"General");
 
-      SQLITE_Db := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Internal-Use-Sqlite",
-         Label   => -"",
-         Doc     => -"",
-         Default => Active (Entities.SQLITE),
-         Page    => "");
-
       -- Source Editor --
 
       Strip_Blanks := Strip_Trailing_Blanks_Policy_Prefs.Create
