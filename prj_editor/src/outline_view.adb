@@ -393,6 +393,12 @@ package body Outline_View is
    begin
       Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
 
+      Set_File_Information
+        (Context => Context,
+         Project => No_Project,
+         Files   => (1 => Outline.File),
+         Line    => Line);
+
       if Iter /= Null_Iter then
          Path := Get_Path (Model, Iter);
          if not Path_Is_Selected (Get_Selection (Outline.Tree), Path) then
@@ -411,12 +417,6 @@ package body Outline_View is
 
          Line := Get_Construct (P_Entity).Sloc_Entity.Line;
       end if;
-
-      Set_File_Information
-        (Context => Context,
-         Project => No_Project,
-         Files   => (1 => Outline.File),
-         Line    => Line);
 
       if Menu /= null then
          Gtk_New (Item, Label => -"Outline");
