@@ -566,6 +566,8 @@ package body Xref is
                  or else Status = Fuzzy_Match;
             end;
          end if;
+
+         Entity.Is_Fuzzy := Fuzzy;
          return Entity;
       end Internal_No_Constructs;
 
@@ -644,6 +646,8 @@ package body Xref is
 
                      Entity := To_LI_Entity (Result);
                   end if;
+
+                  Entity.Is_Fuzzy := True;
                end if;
             end if;
          end;
@@ -2543,5 +2547,92 @@ package body Xref is
          end return;
       end if;
    end All_Real_Reference_Kinds;
+
+   --------------
+   -- Is_Fuzzy --
+   --------------
+
+   function Is_Fuzzy (Entity : General_Entity) return Boolean is
+   begin
+      return Entity.Is_Fuzzy;
+   end Is_Fuzzy;
+
+   ---------------------
+   -- From_Constructs --
+   ---------------------
+
+   function From_Constructs
+     (Entity : Language.Tree.Database.Entity_Access) return General_Entity is
+   begin
+      return (Node => Entity, others => <>);
+   end From_Constructs;
+
+   -----------------
+   -- Instance_Of --
+   -----------------
+
+   function Instance_Of
+      (Self   : access General_Xref_Database_Record;
+       Entity : General_Entity) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return From_New (Self.Xref.Instance_Of (Entity.Entity));
+      else
+         return From_Old
+           (Old_Entities.Queries.Is_Instantiation_Of (Entity.Old_Entity));
+      end if;
+   end Instance_Of;
+
+   --------------------
+   -- From_Instances --
+   --------------------
+
+   function From_Instances
+     (Self   : access General_Xref_Database_Record;
+      Ref    : General_Entity_Reference) return Entity_Array
+   is
+   begin
+      if Active (SQLITE) then
+         declare
+            R : constant GNATCOLL.Xref.Entity_Array :=
+              Self.Xref.From_Instances (Ref.Ref);
+            Result : Entity_Array (R'Range);
+         begin
+            for A in R'Range loop
+               Result (A) := From_New (R (A));
+            end loop;
+            return Result;
+         end;
+
+      else
+         declare
+            use Old_Entities;
+            Inst : constant Entity_Instantiation :=
+              Old_Entities.From_Instantiation_At (Ref.Old_Ref);
+            Current : Entity_Instantiation := Inst;
+            Count : Natural := 0;
+         begin
+            while Current /= No_Instantiation loop
+               Count := Count + 1;
+               Current := Generic_Parent (Current);
+            end loop;
+
+            declare
+               Result : Entity_Array (1 .. Count);
+            begin
+               Count := Result'First;
+               Current := Inst;
+               while Current /= No_Instantiation loop
+                  Result (Count) := From_Old (Get_Entity (Current));
+                  Count := Count + 1;
+                  Current := Generic_Parent (Current);
+               end loop;
+
+               return Result;
+            end;
+         end;
+      end if;
+   end From_Instances;
 
 end Xref;

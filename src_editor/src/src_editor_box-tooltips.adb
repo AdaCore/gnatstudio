@@ -530,7 +530,6 @@ package body Src_Editor_Box.Tooltips is
          Ref (Entity);
          Pix := Entities_Tooltips.Draw_Tooltip
            (Box.Kernel, Entity, Entity_Ref,
-            Box.Source_Buffer.Get_Language.Get_Language_Context.Accurate_Xref,
             Draw_Border => False);
 
          Pixmaps.Prepend (Pix);

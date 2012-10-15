@@ -29,7 +29,6 @@ package Entities_Tooltips is
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Xref.General_Entity;
       Ref           : Xref.General_Entity_Reference;
-      Accurate_Xref : Boolean;
       Draw_Border   : Boolean) return Cairo_Surface;
    --  Return a tooltip representing Entity.
 
