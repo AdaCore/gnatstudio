@@ -24,9 +24,9 @@ with Cairo.Image_Surface;       use Cairo.Image_Surface;
 
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Display;               use Gdk.Display;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Window;                use Gdk.Window;
 with Glib;                      use Glib;
@@ -255,7 +255,7 @@ package body Entities_Tooltips is
       Header_Layout, Doc_Layout : Pango_Layout;
 
       Width, Height, W1, H1, W2, H2 : Gint := 0;
-      Color  : Gtkada.Style.Cairo_Color;
+      Color  : Cairo_Color;
       Max_Height, Max_Width : Gint;
 
       H_Pad : constant := 4;
@@ -285,7 +285,7 @@ package body Entities_Tooltips is
 
       Width  := Gint'Max (W1 + Get_Width (Pixbuf) + H_Pad * 2, W2 + H_Pad * 2);
 
-      Color := To_Cairo (Tooltip_Color.Get_Pref);
+      Color := To_Cairo (Gdk_RGBA'(Tooltip_Color.Get_Pref));
 
       Max_Height := Get_Height (Get_Default_Screen (Gdk.Display.Get_Default));
       Height := Gint'Min (Height, Max_Height);
@@ -298,7 +298,7 @@ package body Entities_Tooltips is
       Set_Line_Width (Cr, 0.5);
       Draw_Rectangle (Cr, Color, True, 0, 0, Width, Height);
 
-      Color := To_Cairo (Gdk_Color'(Black (Get_Default_Colormap)));
+      Color := To_Cairo (Black_RGBA);
       if Draw_Border then
          Draw_Rectangle (Cr, Color, False, 0, 0, Width, Height);
       end if;
