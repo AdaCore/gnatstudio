@@ -8,3 +8,9 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- LA12-034: GPS: wrong menu for target with custom name in extending project
+  Problem:    When using an extending project which defines an executable name
+              for a main which is defined in the extended project, GPS does not
+              display the custom name in the "Run" menu, and the corresponding
+              target cannot be launched through the menu or the toolbar button.
+  Workaround: Use the Build->Run->Custom... menu

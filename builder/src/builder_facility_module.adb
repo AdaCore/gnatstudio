@@ -818,7 +818,7 @@ package body Builder_Facility_Module is
    begin
       if Kind = "main" then
          declare
-            Mains  : constant File_Array :=
+            Mains  : constant Project_And_Main_Array :=
                Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
 
             Result : Any_Type (List_Type, Mains'Length);
@@ -826,8 +826,8 @@ package body Builder_Facility_Module is
             for J in Mains'Range loop
                declare
                   Base         : constant String :=
-                                   Mains (J).Display_Base_Name;
-                  Full         : constant String := +Mains (J).Full_Name;
+                                   Mains (J).Main.Display_Base_Name;
+                  Full         : constant String := +Mains (J).Main.Full_Name;
                   Display_Name : constant Any_Type :=
                                    (String_Type,
                                     Base'Length,
@@ -848,20 +848,12 @@ package body Builder_Facility_Module is
 
       elsif Kind = "executable" then
          declare
-            Mains  : constant File_Array :=
+            Mains  : constant Project_And_Main_Array :=
                Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
             Result : Any_Type (List_Type, Mains'Length);
-            P      : Project_Type;
          begin
             for J in Mains'Range loop
-               --  ??? Not efficient: in Get_Mains, we started from the project
-               --  to get the list of mains, and now for each of those main we
-               --  are looking for the project.
-               P := Get_Registry (Kernel).Tree.Info
-                 (Get_Registry (Kernel).Tree.Create
-                  (Mains (J).Full_Name)).Project;
-
-               if P = No_Project then
+               if Mains (J).Project = No_Project then
                   --  This can happen when the project can not find the source
                   --  corresponding to the main file, for instance
                   --  badly-written user projects, or projects that are created
@@ -869,17 +861,22 @@ package body Builder_Facility_Module is
                   Trace
                     (Me,
                      (-"Could not find the project for """
-                      & Mains (J).Display_Full_Name & """"));
+                      & Mains (J).Main.Display_Full_Name & """"));
+
                   return Empty_Any_Type;
-               elsif Executables_Directory (P) = GNATCOLL.VFS.No_File then
-                  Log (-"Project """ & P.Name & """ has no exec_dir", Error);
+               elsif Executables_Directory (Mains (J).Project)
+                 = GNATCOLL.VFS.No_File
+               then
+                  Log (-"Project """ & Mains (J).Project.Name
+                       & """ has no exec_dir", Error);
                   return Empty_Any_Type;
                else
                   declare
                      Exec : constant Virtual_File :=
                        Create_From_Dir
-                         (Executables_Directory (P),
-                          P.Executable_Name (Mains (J).Full_Name));
+                         (Executables_Directory (Mains (J).Project),
+                          Mains (J).Project.Executable_Name
+                          (Mains (J).Main.Full_Name));
                      Base : constant String := String (Exec.Base_Name);
                      Full : constant String := String (Exec.Full_Name.all);
                      Display_Name : constant Any_Type :=
