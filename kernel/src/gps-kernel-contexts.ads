@@ -200,13 +200,11 @@ package GPS.Kernel.Contexts is
       Entity_Name     : String;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
       From_Expression : String := "");
-   pragma Precondition
-     (Entity_Name = "" or else Has_File_Information (Context));
    --  Set the information in the context.
    --  Entity_Column should be the column on which the entity starts, not the
    --  current location of the cursor.
    --  The line at which the entity starts is the line set in
-   --  Set_File_Information.
+   --  Set_File_Information, which must have been called first.
    --  From_Expression indicates the context of the entity. For instance, if
    --  the source code contains   A.Func (5).X, then the entity is "X", but
    --  From_Expression should be "A.Func (5).X". This expression is used when
