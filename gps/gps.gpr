@@ -71,7 +71,6 @@ project GPS is
          when "Windows_NT" =>
             for Default_Switches ("Ada") use ("obj/gps.res");
          when "unix" =>
-            --  for Default_Switches ("Ada") use ("-Wl,-no_pie");
             null;
       end case;
       --  for Default_Switches ("Ada") use ("-lgmem");
