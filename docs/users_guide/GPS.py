@@ -6578,6 +6578,9 @@ class Logger(object):
 
     count = None
 
+    active = True
+    """Whether this logging stream is active"""
+
     def log(self, message):
         """
         Logs a message in the GPS log file
@@ -6586,19 +6589,13 @@ class Logger(object):
         """
         pass  # implemented in Ada
 
-    def get_active(self):
-        """
-        Whether this logging stream is active
-
-        :return: A boolean
-        """
-        pass  # implemented in Ada
-
     def set_active(self, active):
         """
         Activate or deactivate a logging stream. The default for a sttream
         depends on the file $HOME/.gps/traces.cfg, and will generally be
         active. When a stream is inactive, no message is sent to the log file
+
+        Use self.active to test whether a log stream is active.
 
         :param active: A boolean
         """

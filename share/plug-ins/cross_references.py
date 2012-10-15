@@ -84,7 +84,7 @@ def on_gps_started (hook):
     GPS.Menu.create ("/Build/Recompute _Xref info",
          on_activate=lambda x : recompute_xref())
 
-if GPS.Logger("SQLITE").get_active():
+if GPS.Logger("SQLITE").active:
     GPS.parse_xml (xml)
     GPS.Hook("project_view_changed").add(on_project_view_changed)
     GPS.Hook("compilation_finished").add(on_compilation_finished)
