@@ -15,20 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Basic_Types;
 with GNATCOLL.VFS;
-with Interfaces.C;
 with Ada.Containers.Ordered_Sets;
 with Language_Handlers;
 with GNATCOLL.Projects;
 
-package Entities.Queries is
+package Old_Entities.Queries is
 
    -----------------------------
    --  Parsing LI information --
    -----------------------------
 
    type Recursive_LI_Information_Iterator
-     is new Entities.LI_Information_Iterator with private;
+     is new Old_Entities.LI_Information_Iterator with private;
    --  Will recursively load all xref information from projects. This is more
    --  efficient than iterating over source files and updating their xref info.
 
@@ -135,7 +135,7 @@ package Entities.Queries is
    procedure Find_All_Entities_In_File
      (Iter                  : out Entity_Iterator;
       File                  : Source_File;
-      File_Has_No_LI_Report : File_Error_Reporter := null;
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
       Name                  : String := "");
    --  Return all the entities referenced in File which have a name equal to
    --  Name (or all entities if Name is the empty string).
@@ -159,10 +159,13 @@ package Entities.Queries is
    type Entity_Reference_Iterator_Access is
      access all Entity_Reference_Iterator;
 
+   type Reference_Filter_Function is access function
+     (R : Entity_Reference) return Boolean;
+
    procedure Find_All_References
      (Iter                  : out Entity_Reference_Iterator;
       Entity                : Entity_Information;
-      File_Has_No_LI_Report : File_Error_Reporter := null;
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
       In_File               : Source_File := null;
       In_Scope              : Entity_Information := null;
       Filter                : Reference_Kind_Filter := Real_References_Filter;
@@ -239,7 +242,7 @@ package Entities.Queries is
 
    function Get_Subprogram_Parameters
      (Subprogram            : Entity_Information;
-      File_Has_No_LI_Report : File_Error_Reporter := null)
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null)
       return Subprogram_Iterator;
    --  Return an iterator that will get all the parameters associated with the
    --  subprogram.
@@ -279,7 +282,7 @@ package Entities.Queries is
 
    function Get_Generic_Parameters
      (Generic_Entity        : Entity_Information;
-      File_Has_No_LI_Report : File_Error_Reporter := null)
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null)
       return Generic_Iterator;
    --  Return an iterator that will get all the formal parameters associated
    --  with the Generic_Entity.
@@ -304,7 +307,7 @@ package Entities.Queries is
    procedure Find_Dependencies
      (Iter                  : out File_Dependency_Iterator;
       File                  : Source_File;
-      File_Has_No_LI_Report : File_Error_Reporter := null);
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null);
    --  Return the list of files that File depends on.
 
    function At_End (Iter : File_Dependency_Iterator) return Boolean;
@@ -331,7 +334,7 @@ package Entities.Queries is
    procedure Find_Ancestor_Dependencies
      (Iter                  : out Dependency_Iterator;
       File                  : Source_File;
-      File_Has_No_LI_Report : File_Error_Reporter := null;
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
       Include_Self          : Boolean := False;
       Single_Source_File    : Boolean := False);
    --  Return the list of files that depend on File. The rule is the following:
@@ -428,14 +431,6 @@ package Entities.Queries is
      (Discr, Entity : Entity_Information) return Boolean;
    --  Return True if Discr is a discriminant of Entity
 
-   type Dispatching_Menu_Policy is (Never, From_Memory, Accurate);
-   for Dispatching_Menu_Policy'Size use Interfaces.C.int'Size;
-   pragma Convention (C, Dispatching_Menu_Policy);
-   --  The list of possible behaviours for the contextual menu on dispatching
-   --  calls. From_Memory relies on information already parsed in memory, and
-   --  might not be accurate. Accurate will possibly load other LI files, but
-   --  might be much slower as a result
-
    Entity_Has_Declaration : constant Reference_Kind_Filter :=
      (Declaration => True, others => False);
    Entity_Has_Body        : constant Reference_Kind_Filter :=
@@ -446,8 +441,8 @@ package Entities.Queries is
       Ref       : Entity_Reference;
       On_Callee : access function
         (Callee, Primitive_Of : Entity_Information) return Boolean;
-      Filter    : Reference_Kind_Filter := Entity_Has_Declaration;
-      Policy    : Dispatching_Menu_Policy);
+      Filter    : Reference_Filter_Function := null;
+      Policy    : Basic_Types.Dispatching_Menu_Policy);
    --  If Ref is for a subprogram, this will call On_Callee with all the
    --  subprograms that might possibly be called instead of Entity.
    --  This is intended for use on dispatching calls (ie you have an
@@ -616,7 +611,7 @@ private
       Current_Progress      : Natural;
 
       Include_Self          : Boolean;
-      File_Has_No_LI_Report : File_Error_Reporter := null;
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
 
       Single_Source_File    : Boolean;
       --  If True, we only return File itself
@@ -704,10 +699,10 @@ private
    end record;
 
    type LI_Information_Iterator_Access
-     is access all Entities.LI_Information_Iterator'Class;
+     is access all Old_Entities.LI_Information_Iterator'Class;
 
    type Recursive_LI_Information_Iterator
-     is new Entities.LI_Information_Iterator with
+     is new Old_Entities.LI_Information_Iterator with
       record
          Handler      : Language_Handlers.Language_Handler;
 
@@ -737,4 +732,4 @@ private
       Info_For_Decl : Entity_Info_Array (1 .. Line_Max);
    end record;
 
-end Entities.Queries;
+end Old_Entities.Queries;

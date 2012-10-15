@@ -21,9 +21,9 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Bubble_Sort_G;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
+with GNATCOLL.Projects;
 
 with Case_Handling;             use Case_Handling;
-with Entities;                  use Entities;
 with GPS.Properties;            use GPS.Properties;
 with Language.Unknown;          use Language.Unknown;
 with Language;                  use Language;
@@ -45,8 +45,6 @@ package body Language_Handlers is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Language_Info_Array, Language_Info_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Handler_Info_Array, Handler_Info_Access);
 
    -------------
    -- Gtk_New --
@@ -161,6 +159,7 @@ package body Language_Handlers is
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return String
    is
+      use GNATCOLL.Projects;
       Prop  : String_Property;
       Found : Boolean := False;
    begin
@@ -192,24 +191,6 @@ package body Language_Handlers is
       end if;
    end Get_Language_By_Name;
 
-   ----------------------------
-   -- Get_LI_Handler_By_Name --
-   ----------------------------
-
-   function Get_LI_Handler_By_Name
-     (Handler : access Language_Handler_Record;
-      Name    : String) return LI_Handler is
-   begin
-      if Handler.Handlers /= null then
-         for H in Handler.Handlers'Range loop
-            if Get_Name (Handler.Handlers (H)) = Name then
-               return Handler.Handlers (H);
-            end if;
-         end loop;
-      end if;
-      return null;
-   end Get_LI_Handler_By_Name;
-
    -----------------------
    -- Register_Language --
    -----------------------
@@ -217,12 +198,10 @@ package body Language_Handlers is
    procedure Register_Language
      (Handler   : access Language_Handler_Record;
       Lang      : access Language.Language_Root'Class;
-      Tree_Lang : access Language.Tree.Database.Tree_Language'Class;
-      LI        : LI_Handler)
+      Tree_Lang : access Language.Tree.Database.Tree_Language'Class)
    is
       N     : constant String := To_Lower (Get_Name (Lang));
       Tmp   : Language_Info_Access;
-      Tmp2  : Handler_Info_Access;
       Index : Natural;
    begin
       if Handler.Languages /= null then
@@ -243,37 +222,8 @@ package body Language_Handlers is
       Set_Symbols (Lang, Handler.Symbols);
 
       Handler.Languages (Index) :=
-        (Handler   => LI,
-         Lang      => Language_Access (Lang),
+        (Lang      => Language_Access (Lang),
          Tree_Lang => Tree_Language_Access (Tree_Lang));
-
-      --  If the name is "", this is a dummy LI handler and we do not need to
-      --  register it explicitly
-      if LI /= null and then Get_Name (LI) /= "" then
-         if Handler.Handlers /= null then
-            Index := 0;
-            for H in Handler.Handlers'Range loop
-               if Handler.Handlers (H) = LI then
-                  Index := H;
-                  exit;
-               end if;
-            end loop;
-
-            if Index = 0 then
-               Tmp2 := new Handler_Info_Array
-                 (Handler.Handlers'First .. Handler.Handlers'Last + 1);
-               Tmp2 (Handler.Handlers'Range) := Handler.Handlers.all;
-               Unchecked_Free (Handler.Handlers);
-               Handler.Handlers := Tmp2;
-               Index := Handler.Handlers'Last;
-            end if;
-         else
-            Handler.Handlers := new Handler_Info_Array (1 .. 1);
-            Index := Handler.Handlers'Last;
-         end if;
-
-         Handler.Handlers (Index) := LI;
-      end if;
    end Register_Language;
 
    ---------------------
@@ -341,34 +291,6 @@ package body Language_Handlers is
       end if;
    end Known_Languages;
 
-   ------------------------------
-   -- Get_LI_Handler_From_File --
-   ------------------------------
-
-   function Get_LI_Handler_From_File
-     (Handler         : access Language_Handler_Record;
-      Source_Filename : GNATCOLL.VFS.Virtual_File) return LI_Handler
-   is
-      Lang  : constant String :=
-                Get_Language_From_File (Handler, Source_Filename);
-      Index : constant Natural := Get_Index_From_Language (Handler, Lang);
-   begin
-      if Index /= 0
-        and then Handler.Languages (Index).Handler /= null
-      then
-         return Handler.Languages (Index).Handler;
-
-      else
-         if Index /= 0 then
-            Trace (Me, "No LI_Handler for language "
-                   & Source_Filename.Display_Full_Name
-                   & " Index=" & Index'Img & " lang=" & Lang);
-         end if;
-
-         return null;
-      end if;
-   end Get_LI_Handler_From_File;
-
    ---------------------
    -- Languages_Count --
    ---------------------
@@ -382,37 +304,6 @@ package body Language_Handlers is
          return Handler.Languages'Length;
       end if;
    end Languages_Count;
-
-   -----------------------
-   -- LI_Handlers_Count --
-   -----------------------
-
-   function LI_Handlers_Count
-     (Handler : access Language_Handler_Record) return Natural is
-   begin
-      if Handler.Handlers = null then
-         return 0;
-      else
-         return Handler.Handlers'Length;
-      end if;
-   end LI_Handlers_Count;
-
-   ---------------------
-   -- Get_Nth_Handler --
-   ---------------------
-
-   function Get_Nth_Handler
-     (Handler : access Language_Handler_Record;
-      Num     : Positive) return LI_Handler is
-   begin
-      if Handler.Handlers = null
-        or else Num > Handler.Handlers'Length
-      then
-         return null;
-      else
-         return Handler.Handlers (Handler.Handlers'First + Num - 1);
-      end if;
-   end Get_Nth_Handler;
 
    ----------------------
    -- Get_Nth_Language --
@@ -446,14 +337,6 @@ package body Language_Handlers is
          end loop;
 
          Unchecked_Free (Handler.Languages);
-      end if;
-
-      if Handler.Handlers /= null then
-         for H in Handler.Handlers'Range loop
-            Destroy (Handler.Handlers (H));
-         end loop;
-
-         Unchecked_Free (Handler.Handlers);
       end if;
 
       Unchecked_Free (Handler);

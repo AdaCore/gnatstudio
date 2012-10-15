@@ -15,31 +15,33 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Entities;
+with Basic_Types;
+with Old_Entities;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with Projects;
 with Language.Tree.Database;
-with Language_Handlers;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;
 pragma Warnings (On);
 
 package ALI_Parser is
+   package Old renames Old_Entities;
 
    function Create_ALI_Handler
-     (Db           : Entities.Entities_Database;
+     (Db           : Old.Entities_Database;
       Registry     : Projects.Project_Registry'Class;
-      Lang_Handler : Language_Handlers.Language_Handler)
-      return Entities.LI_Handler;
+      Lang_Handler :
+         access Language.Tree.Database.Abstract_Language_Handler_Record'Class)
+      return Old_Entities.LI_Handler;
    --  Create a new ALI handler
 
-   type ALI_Handler_Record is new Entities.LI_Handler_Record with record
-      Db           : Entities.Entities_Database;
+   type ALI_Handler_Record is new Old.LI_Handler_Record with record
+      Db           : Old.Entities_Database;
       Registry     : Projects.Project_Registry;
 
-      Lang_Handler : Language_Handlers.Language_Handler;
+      Lang_Handler : Language.Tree.Database.Abstract_Language_Handler;
       --  Field used to store the languages handler of the kernel; used to
       --  obtain the LI handler of entities imported from other languages
    end record;
@@ -52,14 +54,12 @@ package ALI_Parser is
    overriding function Get_Source_Info
      (Handler               : access ALI_Handler_Record;
       Source_Filename       : GNATCOLL.VFS.Virtual_File;
-      File_Has_No_LI_Report : Entities.File_Error_Reporter := null)
-      return Entities.Source_File;
-   overriding function Case_Insensitive_Identifiers
-     (Handler : access ALI_Handler_Record) return Boolean;
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null)
+      return Old.Source_File;
    overriding function Parse_All_LI_Information
      (Handler   : access ALI_Handler_Record;
       Project   : GNATCOLL.Projects.Project_Type)
-      return Entities.LI_Information_Iterator'Class;
+      return Old.LI_Information_Iterator'Class;
    overriding function Generate_LI_For_Project
      (Handler      : access ALI_Handler_Record;
       Lang_Handler : access
@@ -67,7 +67,7 @@ package ALI_Parser is
       Project      : GNATCOLL.Projects.Project_Type;
       Errors       : GNATCOLL.Projects.Error_Report;
       Recursive    : Boolean := False)
-      return Entities.LI_Handler_Iterator'Class;
+      return Old.LI_Handler_Iterator'Class;
    --  See doc for inherited subprograms
 
    function Get_ALI_Ext
@@ -82,7 +82,7 @@ package ALI_Parser is
    --  Return the most likely candidate for an ALI file, given a source name
 
    type ALI_Information_Iterator
-     is new Entities.LI_Information_Iterator with private;
+     is new Old.LI_Information_Iterator with private;
    overriding procedure Free (Iter : in out ALI_Information_Iterator);
    overriding procedure Next
      (Iter  : in out ALI_Information_Iterator;
@@ -93,7 +93,7 @@ package ALI_Parser is
 
 private
    type ALI_Information_Iterator
-     is new Entities.LI_Information_Iterator with
+     is new Old.LI_Information_Iterator with
       record
          Handler : ALI_Handler;
          Files   : GNATCOLL.VFS.File_Array_Access;  --  in current dir

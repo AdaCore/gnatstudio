@@ -27,18 +27,18 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
+with GNATCOLL.Xref;
 with Basic_Types;                use Basic_Types;
-with Entities.Debug;             use Entities.Debug;
 with GPS.Intl;                   use GPS.Intl;
 with Language;                   use Language;
 with Language.Tree.Database;     use Language.Tree.Database;
-with Language_Handlers;          use Language_Handlers;
-with Language_Utils;             use Language_Utils;
 with Projects;                   use Projects;
 with String_Utils;
 with Remote;                     use Remote;
 
-package body Entities is
+package body Old_Entities is
+   use type GNATCOLL.Xref.Visible_Column;
+
    Assert_Me : constant Trace_Handle := Create ("Entities.Assert", Off);
 
    Ref_Me  : constant Trace_Handle := Create ("Entities.Ref", Off);
@@ -143,7 +143,6 @@ package body Entities is
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
       File          : GNATCOLL.VFS.Virtual_File;
-      Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
       Allow_Create  : Boolean := True) return Source_File;
    --  Internal version for Get_Or_Create
@@ -383,27 +382,26 @@ package body Entities is
    --------------
 
    function Get_Name (D : Entity_Informations) return Cased_String is
+      E : Entity_Information;
    begin
       if D = null then
          return Empty_Cased_String;
 
       else
+         E := D.List.Table (Entity_Information_Arrays.First);
+
          if Active (Assert_Me) then
             Assert
               (Assert_Me,
-               D.List.Table (Entity_Information_Arrays.First).Ref_Count /= 0,
+               E.Ref_Count /= 0,
                "Entity has been freed: "
-               & Debug_Name
-                 (D.List.Table (Entity_Information_Arrays.First)));
+               & Debug_Name (E));
          end if;
 
          return
-           (Str => D.List.Table
-              (Entity_Information_Arrays.First).Name,
-            Case_Sensitive => not Case_Insensitive_Identifiers
-              (D.List.Table
-                 (Entity_Information_Arrays.First).
-                  Live_Declaration.File.Handler));
+           (Str => E.Name,
+            Case_Sensitive =>
+              E.LI_Declaration.File.Case_Sensitive_Identifiers);
       end if;
    end Get_Name;
 
@@ -661,9 +659,6 @@ package body Entities is
    begin
       if Active (Assert_Me) then
          Trace (Assert_Me, "Reseting " & Display_Full_Name (File.Name));
-         if Equal (Base_Name (Get_Filename (File)), "atree.ads") then
-            Debug.Dump (File, Show_Entities => True, Full => True);
-         end if;
       end if;
 
       Mark_And_Isolate_Entities (File);
@@ -885,8 +880,8 @@ package body Entities is
    is
       Str : constant Cased_String :=
               (Str            => E.Name,
-               Case_Sensitive => not Case_Insensitive_Identifiers
-                 (E.LI_Declaration.File.Handler));
+               Case_Sensitive =>
+                 E.LI_Declaration.File.Case_Sensitive_Identifiers);
       UEI : constant Entity_Informations := Get (D, Str);
       EL  : Entity_Information_List_Access;
    begin
@@ -1014,7 +1009,7 @@ package body Entities is
               Entities_Search_Tries.Null_Vector_Trie_Index
             then
                Entities_Search_Tries.Delete
-                 (Entity.LI_Declaration.File.Handler.Name_Index,
+                 (Default_LI_Handler.Name_Index,
                   Entity.Trie_Tree_Index);
             end if;
 
@@ -1052,8 +1047,11 @@ package body Entities is
 
    function Get_Filename (File : Source_File) return Virtual_File is
    begin
-      Assert (Assert_Me, File /= null, "Null source file in Get_Filename");
-      return File.Name;
+      if File = null then
+         return No_File;
+      else
+         return File.Name;
+      end if;
    end Get_Filename;
 
    ---------------------
@@ -1117,7 +1115,7 @@ package body Entities is
    begin
       Db.Construct_Db_Locks := Db.Construct_Db_Locks + 1;
 
-      return (Ada.Finalization.Limited_Controlled with
+      return (Ada.Finalization.Controlled with
               Previous_Level => Db.Construct_Db_Locks - 1, Db => Db);
    end Lock_Construct_Heuristics;
 
@@ -1333,7 +1331,6 @@ package body Entities is
    procedure Reset (Db : Entities_Database) is
    begin
       Trace (Assert_Me, "Reset entities database");
-      Db.Predefined_File := null;
 
       --  Reset Lis first, since this will indirectly change a field in the
       --  source files (which are therefore better kept in memory in the
@@ -1389,7 +1386,6 @@ package body Entities is
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
       File          : GNATCOLL.VFS.Virtual_File;
-      Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
       Allow_Create  : Boolean := True) return Source_File
    is
@@ -1410,13 +1406,15 @@ package body Entities is
          F.Ref_Count    := 1;
          F.Name         := File;
 
+         F.Case_Sensitive_Identifiers :=
+           Db.Lang.Get_Language_From_File (File).Get_Language_Context
+           .Case_Sensitive;
+
          if LI /= null then
             Append (F.LI_Files, LI);
          end if;
 
          F.Ordered_Index := Get_Key (Db.FS_Optimizer, F.Name);
-
-         F.Handler := LI_Handler (Handler);
 
          S := new Source_File_Item_Record'(File => F, Next => null);
          Files_HTable.Set (Db.Files, S);
@@ -1440,8 +1438,6 @@ package body Entities is
             Append (S.File.LI_Files, LI);
             Append (LI.Files, S.File);
          end if;
-
-         S.File.Handler := LI_Handler (Handler);
       end if;
 
       if S = null then
@@ -1462,17 +1458,9 @@ package body Entities is
       LI           : LI_File := null;
       Allow_Create : Boolean := True) return Source_File
    is
-      H : LI_Handler := Handler;
+      pragma Unreferenced (Handler);
    begin
-      if H = null then
-         H := Get_LI_Handler (Db, File);
-      end if;
-
-      if H = null then
-         return null;
-      else
-         return Internal_Get_Or_Create (Db, File, H, LI, Allow_Create);
-      end if;
+      return Internal_Get_Or_Create (Db, File, LI, Allow_Create);
    end Get_Or_Create;
 
    -------------------
@@ -1486,11 +1474,12 @@ package body Entities is
       LI           : LI_File := null;
       Allow_Create : Boolean := True) return Source_File
    is
+      pragma Unreferenced (Handler);
       File : Virtual_File;
    begin
       if Is_Absolute_Path (Base_Name) then
          return Internal_Get_Or_Create
-           (Db, Create (Base_Name), Handler, LI, Allow_Create);
+           (Db, Create (Base_Name), LI, Allow_Create);
 
       else
          File := Db.Registry.Tree.Create
@@ -1501,8 +1490,7 @@ package body Entities is
             File := Create_From_Base (Base_Name);
          end if;
 
-         return Internal_Get_Or_Create
-           (Db, File, Handler, LI, Allow_Create);
+         return Internal_Get_Or_Create (Db, File, LI, Allow_Create);
       end if;
    end Get_Or_Create;
 
@@ -1726,8 +1714,8 @@ package body Entities is
       UEI : Entity_Informations;
       Str : constant Cased_String :=
               (Str => Entity.Name,
-               Case_Sensitive => not Case_Insensitive_Identifiers
-                 (Entity.LI_Declaration.File.Handler));
+               Case_Sensitive =>
+                 Entity.LI_Declaration.File.Case_Sensitive_Identifiers);
    begin
       UEI := Get (Entities, Str);
 
@@ -2104,7 +2092,7 @@ package body Entities is
         (File.Name).Entities_Indexed
       then
          Entities_Search_Tries.Insert
-           (File.Handler.Name_Index'Access,
+           (Default_LI_Handler.Name_Index'Access,
             File.Db.Symbols,
             E,
             Get (Name).all,
@@ -2128,8 +2116,7 @@ package body Entities is
       Must_Add_To_File : Boolean := False;
       Str              : constant Cased_String :=
                            (Str            => Name,
-                            Case_Sensitive =>
-                              not Case_Insensitive_Identifiers (File.Handler));
+                            Case_Sensitive => File.Case_Sensitive_Identifiers);
    begin
       Assert
         (Assert_Me, Name /= No_Symbol, "No name specified for Get_Or_Create");
@@ -2193,7 +2180,7 @@ package body Entities is
            (File.Name).Entities_Indexed
          then
             Entities_Search_Tries.Insert
-              (File.Handler.Name_Index'Access,
+              (Default_LI_Handler.Name_Index'Access,
                File.Db.Symbols,
                E,
                Get (Name).all,
@@ -2238,22 +2225,21 @@ package body Entities is
    -------------------------
 
    function Get_Predefined_File
-     (Db      : Entities_Database;
-      Handler : access LI_Handler_Record'Class) return Source_File
+     (Db : Entities_Database; Case_Sensitive : Boolean) return Source_File
    is
+      S : Source_File;
    begin
-      if Db.Predefined_File = null then
-         if Case_Insensitive_Identifiers (Handler) then
-            Db.Predefined_File := Get_Or_Create
-              (Db, Create_From_Base ("<case_insensitive_predefined>"),
-               LI_Handler (Handler), null);
-         else
-            Db.Predefined_File := Get_Or_Create
-              (Db, Create_From_Base ("<case_sensitive_predefined>"),
-               LI_Handler (Handler), null);
-         end if;
+      if Case_Sensitive then
+         S := Internal_Get_Or_Create
+           (Db, Create_From_Base ("<case_sensitive_predefined>"), null,
+            Allow_Create => True);
+      else
+         S := Internal_Get_Or_Create
+           (Db, Create_From_Base ("<case_insensitive_predefined>"), null,
+            Allow_Create => True);
       end if;
-      return Db.Predefined_File;
+      S.Case_Sensitive_Identifiers := Case_Sensitive;
+      return S;
    end Get_Predefined_File;
 
    -------------------
@@ -2331,18 +2317,6 @@ package body Entities is
       end if;
    end Get_LI;
 
-   --------------------
-   -- Get_LI_Handler --
-   --------------------
-
-   function Get_LI_Handler
-     (Db              : Entities_Database;
-      Source_Filename : GNATCOLL.VFS.Virtual_File) return LI_Handler is
-   begin
-      return Get_LI_Handler_From_File
-        (Language_Handler (Db.Lang), Source_Filename);
-   end Get_LI_Handler;
-
    -------------------
    -- Get_Timestamp --
    -------------------
@@ -2364,10 +2338,8 @@ package body Entities is
       pragma Unreferenced (F);
    begin
       if File /= null then
-         if File.Handler /= null then
-            F := Get_Source_Info
-              (File.Handler, File.Name, File_Has_No_LI_Report);
-         end if;
+         F := Get_Source_Info
+           (Default_LI_Handler, File.Name, File_Has_No_LI_Report);
       end if;
    end Update_Xref;
 
@@ -2572,7 +2544,8 @@ package body Entities is
         and then Entity.LI_Declaration.File =
           Get_Predefined_File
             (Entity.LI_Declaration.File.Db,
-             Entity.LI_Declaration.File.Handler);
+             Case_Sensitive =>
+               Entity.LI_Declaration.File.Case_Sensitive_Identifiers);
    end Is_Predefined_Entity;
 
    --------------
@@ -2862,27 +2835,6 @@ package body Entities is
    begin
       return Entity.Attributes;
    end Get_Attributes;
-
-   ---------------------------
-   -- Parse_File_Constructs --
-   ---------------------------
-
-   procedure Parse_File_Constructs
-     (Handler   : access LI_Handler_Record;
-      Languages : access Abstract_Language_Handler_Record'Class;
-      File_Name : GNATCOLL.VFS.Virtual_File;
-      Result    : out Language.Construct_List)
-   is
-      pragma Unreferenced (Handler);
-
-      Lang : constant Language.Language_Access :=
-        Get_Language_From_File (Language_Handler (Languages), File_Name);
-
-   begin
-      --  Call the language specific syntax analyzer
-
-      Parse_File_Constructs (Lang, File_Name, Result);
-   end Parse_File_Constructs;
 
    --------------------
    -- Get_Name_Index --
@@ -3184,4 +3136,74 @@ package body Entities is
       return Ref.Entity;
    end Get_Entity;
 
-end Entities;
+   --------------------
+   -- Set_LI_Handler --
+   --------------------
+
+   procedure Set_LI_Handler
+     (Self    : Entities_Database;
+      Handler : LI_Handler)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Default_LI_Handler := Handler;
+   end Set_LI_Handler;
+
+   --------------------
+   -- Get_LI_Handler --
+   --------------------
+
+   function Get_LI_Handler (Self : Entities_Database) return LI_Handler is
+      pragma Unreferenced (Self);
+   begin
+      return Default_LI_Handler;
+   end Get_LI_Handler;
+
+   -------------------------
+   -- Create_Dummy_Entity --
+   -------------------------
+
+   function Create_Dummy_Entity
+     (Name  : Symbol;
+      Decl  : File_Location;
+      Kind  : E_Kinds;
+      Is_Type : Boolean) return Entity_Information
+   is
+      E : Entity_Information;
+   begin
+      E := new Entity_Information_Record'
+        (Name                  => Name,
+         Mangled_Name          => GNATCOLL.Symbols.No_Symbol,
+         Kind                  => Unresolved_Entity_Kind,
+         Attributes            => (others => False),
+         LI_Declaration        => Decl,
+         Live_Declaration      => Decl,
+         Caller_At_Declaration => null,
+         End_Of_Scope          => No_E_Reference,
+         Parent_Types          => Null_Entity_Information_List,
+         Pointed_Type          => null,
+         Returned_Type         => null,
+         Primitive_Op_Of       => null,
+         Rename                => null,
+         Instantiation_Of      => null,
+         Called_Entities       => Null_Entity_Information_List,
+         Primitive_Subprograms => Null_Entity_Information_List,
+         Child_Types           => Null_Entity_Information_List,
+         References            => Entity_File_Maps.Empty_Map,
+         File_Timestamp_In_References => 0,
+         Is_Valid                     => False,
+         Ref_Count                    => 1,
+         Trie_Tree_Index              =>
+           Entities_Search_Tries.Null_Vector_Trie_Index,
+         Is_Dummy                     => True,
+         Is_Imported                  => False);
+
+      E.Kind.Kind := Kind;
+      E.Kind.Is_Type := Is_Type;
+
+      Ref (Decl.File);
+
+      return E;
+   end Create_Dummy_Entity;
+
+end Old_Entities;

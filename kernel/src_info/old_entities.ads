@@ -35,19 +35,13 @@ with Generic_Stack;
 with Vector_Tries;
 with Virtual_File_Indexes;
 
-with GNATCOLL.Traces;
-
 --  This package contains the list of all files and entities used in the
 --  current project.
 --  Some notes about reference counting: this structure provides reference
 --  counting for all the public structures. However, this reference counting is
 --  reserved for users of these structures and not used internally.
 
-package Entities is
-
-   SQLITE : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create ("Entities.SQLITE", GNATCOLL.Traces.Off);
-   --  Whether to use the sqlite-based cross-reference system
+package Old_Entities is
 
    type Source_File_Record is tagged private;
    type Source_File is access all Source_File_Record'Class;
@@ -61,13 +55,6 @@ package Entities is
    --  General type to handle and generate Library Information data (for
    --  cross-references, and the various queries for the browsers).
    --  Derived types should be created for all the languages supported.
-
-   type File_Error_Reporter_Record is abstract tagged null record;
-   type File_Error_Reporter is access all File_Error_Reporter_Record'Class;
-   procedure Error
-     (Report : in out File_Error_Reporter_Record; File : Source_File)
-     is abstract;
-   --  Used to report errors while parsing files
 
    -----------------------
    -- Entities_Database --
@@ -117,8 +104,9 @@ package Entities is
    --    up-to-date.
    --  - No_Create_Or_Update: no new LI file is created or updated
 
-   type Construct_Heuristics_Lock is limited
-   new Ada.Finalization.Limited_Controlled with private;
+   type Construct_Heuristics_Lock is
+     new Ada.Finalization.Controlled with private;
+   No_Lock : constant Construct_Heuristics_Lock;
 
    function Lock_Construct_Heuristics (Db : Entities_Database)
      return Construct_Heuristics_Lock;
@@ -145,17 +133,19 @@ package Entities is
    function Frozen (Db : Entities_Database) return Freeze_Type;
    --  Return the frozen state of the database
 
-   function Get_LI_Handler
-     (Db              : Entities_Database;
-      Source_Filename : GNATCOLL.VFS.Virtual_File) return LI_Handler;
-   --  Return the LI_Handler to use to get the cross-reference information for
-   --  that file.
-
    procedure Register_Language_Handler
      (Db   : Entities_Database;
       Lang : access
         Language.Tree.Database.Abstract_Language_Handler_Record'Class);
    --  Register a new language handler
+
+   procedure Set_LI_Handler
+     (Self    : Entities_Database;
+      Handler : LI_Handler);
+   function Get_LI_Handler (Self : Entities_Database) return LI_Handler;
+   --  Sets the .ali file parser. We no longer support any other kind of
+   --  parser. All other parsers should use the sqlite-based xref engine
+   --  instead.
 
    procedure Reset (Db : Entities_Database);
    --  Empty the contents of the database. Existing references to entities
@@ -500,14 +490,14 @@ package Entities is
    function Is_Up_To_Date (File : Source_File) return Boolean;
    --  Whether the cross-reference information is up-to-date for File.
    --  In the case of C/C++, this might return True although not all the
-   --  information is available. For instance, if we have only run
+   --  information is avareilable. For instance, if we have only run
    --  cbrowser, we only have the info for decls and bodies, not for
    --  references. However, Is_Up_To_Date will still return True in that case.
    --  For multi-unit files all the LI files must be up-to-date to return True.
 
    procedure Update_Xref
      (File                  : Source_File;
-      File_Has_No_LI_Report : File_Error_Reporter := null);
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null);
    --  Update the cross-reference information for File, if the information on
    --  the disk is more up-to-date
 
@@ -528,7 +518,7 @@ package Entities is
 
    function Get_Predefined_File
      (Db : Entities_Database;
-      Handler : access LI_Handler_Record'Class) return Source_File;
+      Case_Sensitive : Boolean) return Source_File;
    --  Returns a special source file, which should be used for all
    --  predefined entities of the languages handled by Handler.
 
@@ -712,6 +702,13 @@ package Entities is
    --  The following subprogram is used to create new entities and their
    --  properties.
 
+   function Create_Dummy_Entity
+     (Name  : GNATCOLL.Symbols.Symbol;
+      Decl  : File_Location;
+      Kind  : E_Kinds;
+      Is_Type : Boolean) return Entity_Information;
+   --  Return a dummy entry for entity
+
    procedure Set_Kind (Entity : Entity_Information; Kind : E_Kind);
    procedure Set_Attributes
      (Entity     : Entity_Information;
@@ -854,7 +851,7 @@ package Entities is
    function Get_Source_Info
      (Handler               : access LI_Handler_Record;
       Source_Filename       : GNATCOLL.VFS.Virtual_File;
-      File_Has_No_LI_Report : File_Error_Reporter := null)
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null)
       return Source_File is abstract;
    --  Return a handle to the source file structure corresponding to
    --  Source_Filename. If necessary, the LI file is parsed from the disk to
@@ -862,12 +859,6 @@ package Entities is
    --  though.
    --  If no cross-reference information was found, File_Has_No_LI_Report is
    --  called with the file in parameter
-
-   function Case_Insensitive_Identifiers
-     (Handler : access LI_Handler_Record) return Boolean is abstract;
-   --  Return True if the language associated with Handler is case-insensitive.
-   --  Note that for case insensitive languages, the identifier names must be
-   --  storer in lower cases in the LI structure.
 
    type LI_Information_Iterator is abstract tagged null record;
 
@@ -912,17 +903,6 @@ package Entities is
    --  will be called until all the files are processed.
    --  Note that only the database on the disk needs to be regenerated, not the
    --  LI structures themselves, which will be done by Get_Source_Info.
-
-   procedure Parse_File_Constructs
-     (Handler   : access LI_Handler_Record;
-      Languages : access
-        Language.Tree.Database.Abstract_Language_Handler_Record'Class;
-      File_Name : GNATCOLL.VFS.Virtual_File;
-      Result    : out Language.Construct_List);
-   --  Build a Construct_List, either using the src_info tools (like SN)
-   --  or a language parser. Any potential error should be ignored, and we
-   --  should return an empty Result instead.
-   --  Result should be freed.
 
    function Get_Name (LI : access LI_Handler_Record) return String is abstract;
    --  Return a displayable name for the handler.
@@ -1384,8 +1364,8 @@ private
       Scope_Tree_Computed : Boolean;
       --  Whether the scope tree was computed
 
-      Handler   : LI_Handler;
-      --  The handler used to compute xrefs for that file
+      Case_Sensitive_Identifiers : Boolean;
+      --  Whether identifiers are case sensitive
 
       LI_Files     : LI_File_List := Null_LI_File_List;
       --  The LI file used to parse the file. This might be left to null if
@@ -1497,6 +1477,11 @@ private
 
    package Freeze_Stack is new Generic_Stack (Freeze_Type);
 
+   Default_LI_Handler : LI_Handler;
+   --  The default (and only LI handler) we know about. This parses .ali
+   --  files.
+   --  ??? A global variable, but we will shortly remove this old LI database
+
    -----------------------
    -- Entities_Database --
    -----------------------
@@ -1505,7 +1490,6 @@ private
       Files           : Files_HTable.Instance;
       LIs             : LI_HTable.Instance;
 
-      Predefined_File : Source_File;
       Lang            : Language.Tree.Database.Abstract_Language_Handler;
       Registry        : Projects.Project_Registry_Access;
       Frozen          : Freeze_Type := Create_And_Update;
@@ -1526,11 +1510,16 @@ private
    end record;
    type Entities_Database is access Entities_Database_Record;
 
-   type Construct_Heuristics_Lock is limited
-   new Ada.Finalization.Limited_Controlled with record
+   type Construct_Heuristics_Lock is
+   new Ada.Finalization.Controlled with record
       Previous_Level : Integer;
       Db : Entities_Database;
    end record;
+
+   No_Lock : constant Construct_Heuristics_Lock :=
+     (Ada.Finalization.Controlled with
+        Previous_Level => 0,
+        Db             => null);
 
    type LI_Handler_Record is abstract tagged limited record
       Name_Index : aliased Entities_Search_Tries.Vector_Trie;
@@ -1581,4 +1570,4 @@ private
      (Modification                             => True,
       others                                   => False);
 
-end Entities;
+end Old_Entities;

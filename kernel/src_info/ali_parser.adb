@@ -30,8 +30,8 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Basic_Types;               use Basic_Types;
-with Entities.Queries;          use Entities.Queries;
-with Entities;                  use Entities;
+with Old_Entities.Queries;      use Old_Entities.Queries;
+with Old_Entities;              use Old_Entities;
 with Glib.Convert;              use Glib.Convert;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
@@ -256,16 +256,16 @@ package body ALI_Parser is
    --  Same as Get_Source_Info, but it is possible not to reset the internal
    --  GNAT tables first. This must be used when calling this recursively.
 
+   function Case_Insensitive_Identifiers (LI : LI_File) return Boolean;
+   --  Whether we want to use case-insensitive identifiers in this LI file.
+
    ----------------------------------
    -- Case_Insensitive_Identifiers --
    ----------------------------------
 
-   overriding function Case_Insensitive_Identifiers
-     (Handler : access ALI_Handler_Record) return Boolean
-   is
-      pragma Unreferenced (Handler);
+   function Case_Insensitive_Identifiers (LI : LI_File) return Boolean is
    begin
-      return True;
+      return Get_LI_Filename (LI).File_Extension /= ".gli";
    end Case_Insensitive_Identifiers;
 
    --------------------
@@ -305,16 +305,17 @@ package body ALI_Parser is
    ------------------------
 
    function Create_ALI_Handler
-     (Db           : Entities.Entities_Database;
+     (Db           : Entities_Database;
       Registry     : Project_Registry'Class;
-      Lang_Handler : Language_Handlers.Language_Handler)
-      return Entities.LI_Handler is
+      Lang_Handler :
+         access Language.Tree.Database.Abstract_Language_Handler_Record'Class)
+      return LI_Handler is
    begin
       return new ALI_Handler_Record'
-                   (LI_Handler_Record with
-                      Db => Db,
-                      Registry => Project_Registry (Registry),
-                      Lang_Handler => Lang_Handler);
+        (LI_Handler_Record with
+           Db => Db,
+         Registry => Project_Registry (Registry),
+         Lang_Handler => Abstract_Language_Handler (Lang_Handler));
    end Create_ALI_Handler;
 
    --------------------
@@ -813,13 +814,13 @@ package body ALI_Parser is
                                  Get_Name_String (Current_Xref.Name);
 
                      begin
-                        if Case_Insensitive_Identifiers (Handler) then
+                        if Case_Insensitive_Identifiers (LI) then
                            Primitive :=
                              Get_Or_Create
                                (Name => Get_Symbols (Handler.Db).Find
                                           (Locale_To_UTF8 (Capitalize (Name))),
                                 File => Get_Predefined_File
-                                          (Get_Database (LI), Handler),
+                                  (Get_Database (LI), Case_Sensitive => False),
                                 Line => Predefined_Line,
                                 Column => Predefined_Column);
                         else
@@ -828,7 +829,7 @@ package body ALI_Parser is
                                (Name => Get_Symbols (Handler.Db).Find
                                           (Locale_To_UTF8 (Name)),
                                 File => Get_Predefined_File
-                                          (Get_Database (LI), Handler),
+                                  (Get_Database (LI), Case_Sensitive => True),
                                 Line => Predefined_Line,
                                 Column => Predefined_Column);
                         end if;
@@ -939,11 +940,9 @@ package body ALI_Parser is
 
                      declare
                         use Entities_Search_Tries;
-                        use Language_Handlers;
 
-                        LI_Handler : constant Entities.LI_Handler :=
-                                       Get_LI_Handler_By_Name
-                                         (Handler.Lang_Handler, "GNU C/C++");
+                        LI_Handler : constant Old_Entities.LI_Handler :=
+                          Get_LI_Handler (Handler.Db);
                         Xref_Imported_Name : constant String :=
                                        Get_Name_String
                                          (Current_Xref.Imported_Name);
@@ -1182,13 +1181,13 @@ package body ALI_Parser is
                        Get_Name_String
                          (Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity);
                   begin
-                     if Case_Insensitive_Identifiers (Handler) then
+                     if Case_Insensitive_Identifiers (LI) then
                         Parent :=
                           Get_Or_Create
                             (Name   => Get_Symbols (Handler.Db).Find
                                          (Locale_To_UTF8 (Capitalize (Name))),
                              File   => Get_Predefined_File
-                                         (Get_Database (LI), Handler),
+                               (Get_Database (LI), Case_Sensitive => False),
                              Line   => Predefined_Line,
                              Column => Predefined_Column);
                      else
@@ -1197,7 +1196,7 @@ package body ALI_Parser is
                             (Name   => Get_Symbols (Handler.Db).Find
                                          (Locale_To_UTF8 (Name)),
                              File   => Get_Predefined_File
-                                         (Get_Database (LI), Handler),
+                               (Get_Database (LI), Case_Sensitive => True),
                              Line   => Predefined_Line,
                              Column => Predefined_Column);
                      end if;
@@ -1597,7 +1596,7 @@ package body ALI_Parser is
       Status : Integer;
       pragma Unreferenced (Status);
    begin
-      Destroy (Entities.LI_Handler_Record (Handler));
+      Destroy (Old_Entities.LI_Handler_Record (Handler));
    end Destroy;
 
    -----------------------------
@@ -2298,7 +2297,7 @@ package body ALI_Parser is
                      (Handler, Get_LI (Source), Reset_ALI => Reset_ALI)
               and then File_Has_No_LI_Report /= null
             then
-               Entities.Error (File_Has_No_LI_Report.all, Source);
+               File_Has_No_LI_Report.Error (Get_Filename (Source));
             end if;
 
             return Source;
@@ -2321,7 +2320,7 @@ package body ALI_Parser is
          end if;
 
          if File_Has_No_LI_Report /= null then
-            Entities.Error (File_Has_No_LI_Report.all, Source);
+            File_Has_No_LI_Report.Error (Get_Filename (Source));
          end if;
 
          return Source;
@@ -2345,7 +2344,7 @@ package body ALI_Parser is
           or else not Check_LI_And_Source (LI, Source_Filename))
         and then File_Has_No_LI_Report /= null
       then
-         Entities.Error (File_Has_No_LI_Report.all, Source);
+         File_Has_No_LI_Report.Error (Get_Filename (Source));
          LI := null;
       end if;
 
@@ -2444,7 +2443,7 @@ package body ALI_Parser is
              (Recursive           => False,
               Including_Libraries => True,
               Xrefs_Dirs          => True,
-              ALI_Ext             => Get_ALI_Ext (ALI_Handler (Handler)));
+              ALI_Ext => "^.*\.[ags]li$");
       end if;
 
       if Iter.Files /= null then
@@ -2619,7 +2618,7 @@ package body ALI_Parser is
       --  then required because entities imported from other languages may have
       --  been loaded after this LI file was previously processed.
 
-      if Entities.Update_Forced (Entities.LI_Handler (Handler)) then
+      if Old_Entities.Update_Forced (Old_Entities.LI_Handler (Handler)) then
          New_Timestamp   := File_Time_Stamp (Get_LI_Filename (LI));
          Reset_ALI_First := True;
          Do_Update       := True;
