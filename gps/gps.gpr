@@ -67,7 +67,7 @@ project GPS is
    package IDE renames Shared.IDE;
 
    package Linker is
-      case OS is
+      case Shared.OS is
          when "Windows_NT" =>
             for Default_Switches ("Ada") use ("obj/gps.res");
          when "unix" =>
