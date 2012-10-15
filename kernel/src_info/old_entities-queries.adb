@@ -2956,6 +2956,7 @@ package body Old_Entities.Queries is
             Entity                => Entity,
             File_Has_No_LI_Report => null,
             In_File               => null,
+            Filter                => Entity_Has_Declaration,
             Include_Overriding    => True,
             Include_Overridden    => False);
 

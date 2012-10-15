@@ -18,7 +18,6 @@
 pragma Ada_2012;
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Strings.Hash;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
 with ALI_Parser;
@@ -29,6 +28,7 @@ with GNAT.Strings;              use GNAT.Strings;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
+with String_Utils;
 with Traces;
 
 package body Xref is
@@ -46,6 +46,9 @@ package body Xref is
 
    use type Old_Entities.Entity_Information;
    use type Old_Entities.File_Location;
+
+   type Hash_Type is range 0 .. 2 ** 20 - 1;
+   function Hash is new String_Utils.Hash (Hash_Type);
 
    package Entity_Arrays is new Dynamic_Arrays (General_Entity);
    use Entity_Arrays;
@@ -2530,24 +2533,27 @@ package body Xref is
       if Active (SQLITE) then
          Decl := Self.Xref.Declaration (Entity.Entity);
          return Integer
-           (Ada.Strings.Hash (To_String (Decl.Name)
+           (Hash (To_String (Decl.Name)
             & Decl.Location.File.Display_Full_Name
             & Decl.Location.Line'Img
             & Decl.Location.Column'Img));
 
-      else
+      elsif Entity.Old_Entity /= null then
          declare
             use Old_Entities;
             Loc : constant File_Location :=
               Get_Declaration_Of (Entity.Old_Entity);
          begin
             return Integer
-              (Ada.Strings.Hash (Get (Get_Name (Entity.Old_Entity)).all
-               & (+Full_Name (Get_Filename (Get_File (Loc))))
-               & Get_Line (Loc)'Img
-               & Get_Column (Loc)'Img));
+              (Hash
+                 (Get (Get_Name (Entity.Old_Entity)).all
+                  & (+Full_Name (Get_Filename (Get_File (Loc))))
+                  & Get_Line (Loc)'Img
+                  & Get_Column (Loc)'Img));
          end;
       end if;
+
+      return 0;
    end Hash;
 
    ---------

@@ -488,7 +488,7 @@ package body GPS.Kernel.Xref is
                  Kernel.Databases.Get_Declaration (Called_E).Loc;
 
                if Get_All_Refs or Dispatching_Calls then
-                  --  No search for all references. This was either
+                  --  Now search for all references. This was either
                   --  requested explicitly or is needed to resolve
                   --  dispatching calls
 
