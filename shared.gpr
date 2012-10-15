@@ -51,4 +51,9 @@ project Shared is
       for Switches ("Ada") use ("-E");
    end Binder;
 
+   package Linker is
+      --  Used under Darwin???
+      --  for Default_Switches ("Ada") use ("-Wl,-no_pie");
+   end Linker;
+
 end Shared;
