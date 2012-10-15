@@ -44,8 +44,15 @@ package Build_Command_Utils is
       Mode       : String;
       Target     : Target_Access) return Server_Type;
 
-   function Get_Mains (Registry : Project_Registry_Access)
-   return GNATCOLL.VFS.File_Array;
+   type Project_And_Main is record
+      Project : Project_Type;
+      Main    : GNATCOLL.VFS.Virtual_File;
+   end record;
+   type Project_And_Main_Array is array (Positive range <>)
+     of Project_And_Main;
+
+   function Get_Mains
+     (Registry : Project_Registry_Access) return Project_And_Main_Array;
    --  Return the list of mains corresponding to the loaded project tree.
 
    function Get_Mode_Subdir

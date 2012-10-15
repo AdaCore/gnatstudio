@@ -215,12 +215,12 @@ package body Build_Command_Utils is
    -- Get_Mains --
    ---------------
 
-   function Get_Mains (Registry : Project_Registry_Access)
-      return GNATCOLL.VFS.File_Array
+   function Get_Mains
+     (Registry : Project_Registry_Access) return Project_And_Main_Array
    is
       Root_Project : constant Project_Type := Registry.Tree.Root_Project;
 
-      Result       : File_Array (1 .. Max_Number_Of_Mains);
+      Result       : Project_And_Main_Array (1 .. Max_Number_Of_Mains);
       Index        : Natural := Result'First;
       Projects     : Projects_Stack.Simple_Stack;
       The_Project  : Project_Type;
@@ -243,7 +243,7 @@ package body Build_Command_Utils is
       function Is_Already_In_Mains (F : Virtual_File) return Boolean is
       begin
          for J in Result'First .. Index - 1 loop
-            if Result (J) = F then
+            if Result (J).Main = F then
                return True;
             end if;
          end loop;
@@ -297,13 +297,16 @@ package body Build_Command_Utils is
          if Mains /= null then
             for J in Mains'Range loop
                if Mains (J)'Length > 0 then
-                  Result (Index) := To_Full_Path (Mains (J).all);
+                  Result (Index) :=
+                    (Project => The_Project,
+                     Main    => To_Full_Path (Mains (J).all));
 
-                  if not Is_Already_In_Mains (Result (Index)) then
+                  if not Is_Already_In_Mains (Result (Index).Main) then
                      Index := Index + 1;
                      exit when Index > Result'Last;
                   else
-                     Result (Index) := GNATCOLL.VFS.No_File;
+                     Result (Index) := (Project => The_Project,
+                                        Main    => GNATCOLL.VFS.No_File);
                   end if;
                end if;
             end loop;
