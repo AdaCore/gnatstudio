@@ -34,11 +34,11 @@ with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Type_Tree;    use Ada_Semantic_Tree.Type_Tree;
 with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
-with Entities;                       use Entities;
 with Language.Ada;                   use Language.Ada;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Language.Tree;                  use Language.Tree;
 with Language;                       use Language;
+with Old_Entities;
 with Projects;                       use Projects;
 with String_Utils;                   use String_Utils;
 
@@ -61,7 +61,6 @@ procedure Ada_Semantic_Tree.Test is
 
    Symbols      : constant Symbol_Table_Access := Allocate;
    Tree         : constant Project_Tree_Access := new Project_Tree;
-   New_Registry : constant Project_Registry_Access := Create (Tree);
    Construct_Db : constant Construct_Database_Access := new Construct_Database;
 
    Test_Trace : constant Trace_Handle := Create ("Ada_Semantic_Tree.Test");
@@ -815,18 +814,20 @@ procedure Ada_Semantic_Tree.Test is
       Put ("ada_semantic_tree: Error loading project: " & Msg);
    end Project_Error;
 
-   Db : constant Entities_Database := Create (New_Registry, Construct_Db);
+   New_Registry : constant Project_Registry_Access := Create (Tree);
+   Db : constant Old_Entities.Entities_Database :=
+     Old_Entities.Create (New_Registry, Construct_Db);
 begin
    Set_Symbols (Construct_Db, Symbols);
-   Set_Symbols (Db, Symbols);
+   Old_Entities.Set_Symbols (Db, Symbols);
    Set_Symbols (Ada_Lang, Symbols);
 
    Tree.Load
      (Root_Project_Path => Create_From_Dir (Get_Current_Dir, +Argument (1)),
       Errors            => Project_Error'Unrestricted_Access);
 
-   Initialize
-     (Construct_Db, new File_Buffer_Provider, new Ada_Language_Handler);
+   Initialize (Construct_Db, new Ada_Language_Handler);
+   Set_Provider (Construct_Db, new File_Buffer_Provider);
 
    Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
      (Construct_Db, GNATCOLL.VFS.No_File);
