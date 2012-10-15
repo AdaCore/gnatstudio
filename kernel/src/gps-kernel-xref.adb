@@ -723,7 +723,15 @@ package body GPS.Kernel.Xref is
    procedure Project_Changed (Self : General_Xref_Database) is
    begin
       if Active (SQLITE) then
-         null;
+         --  Create an initial empty database. It will never be filled, and
+         --  will be shortly replaced in Project_View_Changed, but it ensures
+         --  that GPS does not raise exceptions if some action is performed
+         --  while the project has not been computed (like loading of the
+         --  desktop for instance).
+         --  ??? We really should not be doing anything until the project has
+         --  been computed.
+         Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (":memory:"));
+
       else
          --  When loading a new project, we need to reset the cache containing
          --  LI information, otherwise this cache might contain dangling

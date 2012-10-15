@@ -2091,6 +2091,10 @@ whether the context is properly defined.
   clean`, or `gprclean`.  Note: this macro is only available in the commands
   defined in the Build Manager and the Build Launcher dialogs.
 
+*%GPS%
+  Replace by the home directory for GPS (ie the .gps directory in which GPS
+  stores its own configuration files).
+
 *%i*
   If the user clicked within the Project View, this is the name of the parent
   project, ie the one that is importing the one the user clicked on. Note that

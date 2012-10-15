@@ -21,6 +21,7 @@ class Sqlite_Cross_References(object):
       <arg>-d</arg>
       <arg>--exit</arg>
       <arg>--db=gnatinspect.db</arg>
+      <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
@@ -42,6 +43,7 @@ class Sqlite_Cross_References(object):
        <arg>-d</arg>
        <arg>--exit</arg>
        <arg>--db=gnatinspect.db</arg>
+       <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
     </command-line>
