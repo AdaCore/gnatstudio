@@ -212,7 +212,7 @@ package body Builder_Module is
       end if;
 
       if Builder_Module_ID.Build_Count = 0 then
-         Load_Xref_In_Memory
+         GPS.Kernel.Xref.Compilation_Finished
            (Kernel, C_Only => not Automatic_Xrefs_Load.Get_Pref);
       end if;
    end On_Compilation_Finished;

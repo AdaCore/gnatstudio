@@ -19,8 +19,11 @@ with GPS.Editors;            use GPS.Editors;
 with Language.Tree.Database; use Language.Tree.Database;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with GNATCOLL.Xref;
 
 package body Refactoring.Buffer_Helpers is
+   use type GNATCOLL.Xref.Visible_Column;
+
    Me : constant Trace_Handle := Create ("Refactoring");
 
    EOL_Str : constant String := (1 => ASCII.LF);
@@ -48,7 +51,7 @@ package body Refactoring.Buffer_Helpers is
       return Universal_Location
    is
       S_File : constant Structured_File_Access :=
-        Get_Or_Create (Context.Construct_Db, Location.Buffer.File);
+        Get_Or_Create (Context.Db.Constructs, Location.Buffer.File);
    begin
       return To_Location (S_File, Location.Line, Location.Column);
    end To_Location;

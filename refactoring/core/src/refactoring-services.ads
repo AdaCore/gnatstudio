@@ -62,7 +62,8 @@ package Refactoring.Services is
    --  This returns null for a "'Class".
 
    procedure Is_Parameter_Of
-     (Entity       : Xref.General_Entity;
+     (Db           : access Xref.General_Xref_Database_Record'Class;
+      Entity       : Xref.General_Entity;
       Is_Parameter : out Boolean;
       PType        : out GNATCOLL.Xref.Parameter_Kind);
    --  Whether Entity is a parameter for a subprogram, and if it is which type
@@ -225,14 +226,6 @@ package Refactoring.Services is
    function To_Line   (Self : Range_Of_Code) return Integer;
    --  Return the various components of the range
 
-   procedure Get_Parent
-     (Self   : in out Range_Of_Code;
-      Parent : out Xref.General_Entity);
-   --  Return the entity that contains the whole range of the code (in general
-   --  the subprogram that includes from From_Line..To_Line).
-   --  If both ends of the code are not contained within the same entity, an
-   --  error is reported to the context, and No_Entity_Information is returned.
-
    type Entity_References_Flag is
      (Flag_Modified,
       Flag_Read,
@@ -255,6 +248,7 @@ package Refactoring.Services is
 
    procedure For_All_Variable_In_Range
      (Self               : in out Range_Of_Code;
+      Db                 : access Xref.General_Xref_Database_Record'Class;
       Callback           : not null access procedure
         (Entity : Xref.General_Entity;
          Flags  : Entity_References_Flags);
@@ -346,6 +340,7 @@ private
    end record;
 
    type Entity_Declaration is tagged record
+      Db     : Xref.General_Xref_Database;
       File   : Language.Tree.Database.Structured_File_Access;
       Entity : Xref.General_Entity;
       Decl   : Ada.Strings.Unbounded.Unbounded_String;
@@ -363,6 +358,7 @@ private
 
    No_Entity_Declaration : constant Entity_Declaration :=
      (File      => null,
+      Db        => null,
       Entity    => Xref.No_General_Entity,
       Equal_Loc => -1,
       SFirst    => <>,
@@ -376,9 +372,8 @@ private
       File        : GNATCOLL.VFS.Virtual_File;
       From_Line   : Integer;
       To_Line     : Integer;
-      Parent      : Xref.General_Entity;
    end record;
 
    Empty_Range_Of_Code : constant Range_Of_Code :=
-     (null, GNATCOLL.VFS.No_File, -1, -1, Xref.No_General_Entity);
+     (null, GNATCOLL.VFS.No_File, -1, -1);
 end Refactoring.Services;

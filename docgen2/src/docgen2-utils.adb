@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Entities.Queries;                 use Entities.Queries;
 with Projects;                         use Projects;
 
 with Basic_Types;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
+with Xref;                             use Xref;
 
 package body Docgen2.Utils is
 
@@ -31,14 +31,13 @@ package body Docgen2.Utils is
 
    procedure Warning
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : Source_File;
-      Loc    : Source_Location;
+      Loc    : General_Location;
       Msg    : String)
    is
       Line : constant String := Natural'Image (Loc.Line);
-      Col  : constant String := Natural'Image (Loc.Column);
+      Col  : constant String := Natural'Image (Integer (Loc.Column));
       Err  : constant String :=
-               Get_Filename (File).Display_Base_Name & ":" &
+               Loc.File.Display_Base_Name & ":" &
                Line (Line'First + 1 .. Line'Last) & ":" &
                Col (Col'First + 1 .. Col'Last) & ": " & Msg;
    begin
@@ -65,50 +64,29 @@ package body Docgen2.Utils is
    function Get_Entity
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Construct : String;
-      Loc       : Source_Location;
-      File      : Source_File;
-      Lang      : Language_Access) return Entity_Information
+      Loc       : General_Location;
+      Lang      : Language_Access) return General_Entity
    is
-      Entity        : Entity_Information;
-      Current_Loc   : File_Location;
+      Entity        : General_Entity;
+      Current_Loc   : General_Location := Loc;
 
    begin
-      Current_Loc :=
-        (File   => File,
-         Line   => Loc.Line,
-         Column => Basic_Types.Visible_Column_Type (Loc.Column));
+      Entity := Kernel.Databases.Get_Entity
+        (Name => Construct,
+         Loc  => Loc);
 
-      Entity := Get_Or_Create
-        (Kernel.Symbols.Find (Construct),
-         File,
-         Current_Loc.Line,
-         Current_Loc.Column,
-         Allow_Create => False);
-
-      if Entity = null and then Construct (Construct'First) = '"' then
-         --  Handle "="-like subprograms, that are stored whithout the '"' in
-         --  the entities database
-         Entity := Get_Entity
-           (Kernel, Construct (Construct'First + 1 .. Construct'Last - 1),
-            Loc, File, Lang);
-      end if;
-
-      if Entity = null and then Get_Name (Lang) = "Ada" then
+      if Entity = No_General_Entity and then Get_Name (Lang) = "Ada" then
          for J in reverse Construct'Range loop
             --  ??? Ada Specific ... should use language service
             --  Need to define it !
             if Construct (J) = '.' then
                Current_Loc.Column :=
                  Basic_Types.Visible_Column_Type
-                   (Loc.Column + J + 1 - Construct'First);
+                   (Integer (Loc.Column) + J + 1 - Construct'First);
 
-               Entity := Get_Or_Create
-                 (Kernel.Symbols.Find (Construct (J + 1 .. Construct'Last)),
-                  File,
-                  Current_Loc.Line,
-                  Current_Loc.Column,
-                  Allow_Create => False);
-
+               Entity := Kernel.Databases.Get_Entity
+                 (Name => Construct (J + 1 .. Construct'Last),
+                  Loc  => Current_Loc);
                exit;
             end if;
          end loop;
@@ -123,59 +101,28 @@ package body Docgen2.Utils is
 
    function Get_Declaration_Entity
      (Construct : String;
-      Loc       : Source_Location;
-      File      : Source_File;
-      Db        : Entities_Database;
-      Lang      : Language_Access) return Entity_Information
+      Loc       : General_Location;
+      Db        : access Xref.General_Xref_Database_Record'Class;
+      Lang      : Language_Access) return General_Entity
    is
-      Entity        : Entity_Information;
-      Entity_Status : Find_Decl_Or_Body_Query_Status;
-      Current_Loc   : File_Location;
+      Entity        : General_Entity;
+      Current_Loc   : General_Location := Loc;
 
    begin
-      Current_Loc :=
-        (File   => File,
-         Line   => Loc.Line,
-         Column => Basic_Types.Visible_Column_Type (Loc.Column));
+      Entity := Db.Get_Entity (Construct, Loc);
 
-      Find_Declaration
-        (Db              => Db,
-         File_Name       => Get_Filename (File),
-         Entity_Name     => Construct,
-         Line            => Current_Loc.Line,
-         Column          => Current_Loc.Column,
-         Entity          => Entity,
-         Status          => Entity_Status,
-         Check_Decl_Only => False);
-
-      if Entity = null and then Construct (Construct'First) = '"' then
-         --  Handle "="-like subprograms, that are stored whithout the '"' in
-         --  the entities database
-         Entity := Get_Declaration_Entity
-           (Construct (Construct'First + 1 .. Construct'Last - 1),
-            Loc, File, Db, Lang);
-      end if;
-
-      if Entity = null and then Get_Name (Lang) = "Ada" then
+      if Entity = No_General_Entity and then Get_Name (Lang) = "Ada" then
          for J in Construct'Range loop
             --  ??? Ada Specific ... should use language service
             --  Need to define it !
             if Construct (J) = '.' then
                Current_Loc.Column :=
                  Basic_Types.Visible_Column_Type
-                   (Loc.Column + J + 1 - Construct'First);
+                   (Integer (Loc.Column) + J + 1 - Construct'First);
 
-               Find_Declaration
-                 (Db,
-                  File_Name       => Get_Filename (File),
-                  Entity_Name     => Construct (J + 1 .. Construct'Last),
-                  Line            => Current_Loc.Line,
-                  Column          => Current_Loc.Column,
-                  Entity          => Entity,
-                  Status          => Entity_Status,
-                  Check_Decl_Only => False);
-
-               exit when Entity /= null;
+               Entity := Db.Get_Entity
+                 (Construct (J + 1 .. Construct'Last), Current_Loc);
+               exit when Entity /= No_General_Entity;
             end if;
          end loop;
       end if;

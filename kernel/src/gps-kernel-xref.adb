@@ -778,6 +778,9 @@ package body GPS.Kernel.Xref is
 
          Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all));
 
+         --  ??? Now would be a good opportunity to update the cross-references
+         --  rather than wait for the next compilation.
+
       else
          --  The list of source or ALI files might have changed, so we need to
          --  reset the cache containing LI information, otherwise this cache
@@ -798,6 +801,27 @@ package body GPS.Kernel.Xref is
            (Self.Entities, Reset_File_If_External'Access);
       end if;
    end Project_View_Changed;
+
+   --------------------------
+   -- Compilation_Finished --
+   --------------------------
+
+   procedure Compilation_Finished
+     (Kernel : access Kernel_Handle_Record'Class;
+      C_Only : Boolean)
+   is
+   begin
+      if Active (SQLITE) then
+         --  Nothing to do: the plugin cross_references.py has a special
+         --  target that already takes care of re-running gnatinspect when a
+         --  compilation is finished.
+         null;
+
+      else
+         Load_Xref_In_Memory (Kernel, C_Only => C_Only);
+
+      end if;
+   end Compilation_Finished;
 
    ------------------------------
    -- Parse_All_LI_Information --

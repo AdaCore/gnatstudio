@@ -21,12 +21,14 @@ with GNAT.HTable;
 with GNAT.Strings;                use GNAT.Strings;
 
 with Basic_Types;
-with Entities.Queries;            use Entities.Queries;
 with Find_Utils;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GNATCOLL.Xref;
 with String_Utils;                use String_Utils;
+with Xref;                        use Xref;
 
 package body Docgen2.Entities is
+   use type GNATCOLL.Xref.Visible_Column;
 
    procedure Xref_Free (Xref : in out Cross_Ref);
    --  Free memory used by Xref
@@ -34,7 +36,7 @@ package body Docgen2.Entities is
    procedure EInfo_List_Free
      (EInfo : in out Entity_Info);
    procedure EInfo_Free
-     (Loc   : File_Location;
+     (Loc   : General_Location;
       EInfo : in out Entity_Info);
    --  Free memory used by Entity Info
 
@@ -62,7 +64,7 @@ package body Docgen2.Entities is
    ----------------
 
    procedure EInfo_Free
-     (Loc   : File_Location;
+     (Loc   : General_Location;
       EInfo : in out Entity_Info)
    is
       pragma Unreferenced (Loc);
@@ -309,24 +311,25 @@ package body Docgen2.Entities is
    -- Hash --
    ----------
 
-   function Hash (Key : File_Location) return Ada.Containers.Hash_Type is
+   function Hash (Key : General_Location) return Ada.Containers.Hash_Type is
       type Internal_Hash_Type is range 0 .. 2 ** 31 - 1;
       function Internal is new GNAT.HTable.Hash
         (Header_Num => Internal_Hash_Type);
    begin
       return Ada.Containers.Hash_Type
         (Internal
-           (+GNATCOLL.VFS.Full_Name (Get_Filename (Key.File)) &
-            Natural'Image (Key.Line) &
-            Basic_Types.Visible_Column_Type'Image (Key.Column)));
+           (+Key.File.Full_Name
+            & Natural'Image (Key.Line)
+            & Basic_Types.Visible_Column_Type'Image (Key.Column)));
    end Hash;
 
    ---------------------
    -- Equivalent_Keys --
    ---------------------
 
-   function Equivalent_Keys (Left, Right : File_Location)
-                             return Boolean is
+   function Equivalent_Keys
+     (Left, Right : General_Location) return Boolean
+   is
       use Basic_Types;
    begin
       return Left.File = Right.File
@@ -363,7 +366,8 @@ package body Docgen2.Entities is
 
    procedure Set_Pkg_Printout
      (Construct   : Simple_Construct_Information;
-      Entity      : Entity_Information;
+      Db          : access Xref.General_Xref_Database_Record'Class;
+      Entity      : General_Entity;
       File_Buffer : GNAT.Strings.String_Access;
       E_Info      : Entity_Info)
    is
@@ -400,8 +404,8 @@ package body Docgen2.Entities is
 
       --  If we have an instantiation or a renaming, then output the full
       --  printout
-      if Is_Instantiation_Of (Entity) /= null
-        or else Renaming_Of (Entity) /= null
+      if Db.Instance_Of (Entity) /= No_General_Entity
+        or else Db.Renaming_Of (Entity) /= No_General_Entity
       then
          End_Index := Construct.Sloc_End.Index;
 

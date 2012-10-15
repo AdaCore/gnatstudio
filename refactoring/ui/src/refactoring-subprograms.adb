@@ -654,7 +654,8 @@ package body Refactoring.Subprograms is
 
    begin
       Context.Code.For_All_Variable_In_Range
-        (Callback'Access, Omit_Library_Level => True, Success => Success);
+        (Db, Callback'Access,
+         Omit_Library_Level => True, Success => Success);
       if not Success then
          Context := Invalid_Context;
       end if;

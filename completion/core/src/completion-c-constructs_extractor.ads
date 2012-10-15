@@ -69,13 +69,17 @@ private
       (Proposal : C_Completion_Proposal) return Language_Category;
 
    overriding function Get_Completion
-     (Proposal : C_Completion_Proposal) return UTF8_String;
+     (Proposal : C_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
    --  Handle the completion of a single parameter of a subprogram call, the
    --  completion of all the parameters of a subprogram call, and also the
    --  completion of a single entity name.
 
    overriding function Get_Label
-     (Proposal : C_Completion_Proposal) return UTF8_String;
+     (Proposal : C_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
    --  Generate the label "<entity> without params" when the proposal requests
    --  the completion of the parameters of a subprogram call and the entity of
    --  the proposal has no parameters; generate the label "params of <entity>"
@@ -83,12 +87,16 @@ private
    --  of the proposal has parameters; otherwise generate the label "<entity>".
 
    overriding function Get_Location
-     (Proposal : C_Completion_Proposal) return File_Location;
+     (Proposal : C_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return File_Location;
 
    overriding function Get_Visibility
      (Proposal : C_Completion_Proposal) return Construct_Visibility;
 
    overriding function To_Completion_Id
-     (Proposal : C_Completion_Proposal) return Completion_Id;
+     (Proposal : C_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Id;
 
 end Completion.C.Constructs_Extractor;

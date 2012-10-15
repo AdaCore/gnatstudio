@@ -36,6 +36,7 @@ with Virtual_Lists;
 with Virtual_Lists.Extensive;
 
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with Xref;
 
 package Completion is
 
@@ -209,26 +210,39 @@ package Completion is
    --  Returns the resolver that have been used to create this proposal.
 
    function Get_Completion
-     (Proposal : Completion_Proposal) return UTF8_String is abstract;
+     (Proposal : Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String is abstract;
    --  Return the text that has to be used for the completion, may be different
    --  from the label.
 
-   function Get_Label (Proposal : Completion_Proposal) return UTF8_String;
+   function Get_Label
+     (Proposal : Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
    --  Return the label of the completion proposal. By defaut, return the
    --  completion
 
-   function Get_Id (Proposal : Completion_Proposal) return UTF8_String;
+   function Get_Id
+     (Proposal : Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
    --  Return the identifier of the entity referenced in the proposal. This
    --  identifier can be different from the completion propsed and the label.
    --  By default, return the completion.
 
    function Get_Caret_Offset
-     (Proposal : Completion_Proposal) return Basic_Types.Character_Offset_Type;
+     (Proposal : Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return Basic_Types.Character_Offset_Type;
    --  Return the offset where the editor caret is supposed to be after the
    --  completion. In the default implementation, it's always moved at the
    --  end of the inserted text.
 
-   function Get_Location (Proposal : Completion_Proposal) return File_Location;
+   function Get_Location
+     (Proposal : Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return File_Location;
    --  Return the location of the object pointed by the given proposal, null
    --  if none. By default, return Null_Location.
 
@@ -264,7 +278,9 @@ package Completion is
    --  search parameters given, false otherwise.
 
    function To_Completion_Id
-     (Proposal : Completion_Proposal) return Completion_Id is abstract;
+     (Proposal : Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Id is abstract;
    --  Creates a completion id able to retreive this completion proposal later
    --  on.
 
@@ -279,10 +295,15 @@ package Completion is
    --  This type is used to iterate over the various possibilities of a
    --  completion.
 
-   function First (This : Completion_List) return Completion_Iterator;
+   function First
+     (This : Completion_List;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Iterator;
    --  Return the first proposal of the completion list.
 
-   procedure Next (This : in out Completion_Iterator);
+   procedure Next
+     (This : in out Completion_Iterator;
+      Db   : access Xref.General_Xref_Database_Record'Class);
    --  Gets the next proposal of the completion list.
 
    function Get_Proposal
@@ -392,7 +413,8 @@ private
    end record;
 
    overriding function Get_Completion
-     (Proposal : Simple_Completion_Proposal) return UTF8_String;
+     (Proposal : Simple_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return UTF8_String;
    --  See inherited documentation
 
    overriding function Get_Category
@@ -410,7 +432,9 @@ private
    --  See inherited documentation
 
    overriding function To_Completion_Id
-     (Proposal : Simple_Completion_Proposal) return Completion_Id;
+     (Proposal : Simple_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Id;
    --  See inherited documentation
 
    overriding procedure Free (Proposal : in out Simple_Completion_Proposal);

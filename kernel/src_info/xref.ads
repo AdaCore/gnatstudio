@@ -79,6 +79,8 @@ package Xref is
       --  The type used to convert from file names to languages. This is used
       --  by the constructs database.
 
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
+
    end record;
    type General_Xref_Database is access all General_Xref_Database_Record'Class;
 
@@ -256,7 +258,9 @@ package Xref is
      (Db   : access General_Xref_Database_Record;
       Name : String;
       Loc  : General_Location) return General_Entity;
-   --  Retrieve the entity referenced at the given location
+   --  Retrieve the entity referenced at the given location.
+   --  This also works for operators, whether they are quoted ("=") or
+   --  not (=).
 
    procedure Find_Declaration_Or_Overloaded
      (Self              : access General_Xref_Database_Record;
@@ -272,6 +276,9 @@ package Xref is
    --  If Ask_If_Overloaded is True and there are several possible matches for
    --  the entity (for instance because the xref info is not up-to-date), an
    --  interactive dialog is opened.
+   --
+   --  This also works for operators, whether they are quoted ("=") or
+   --  not (=).
 
    function Get_Entity (Ref : General_Entity_Reference) return General_Entity;
    --  Return the entity the reference is pointing to
@@ -333,6 +340,21 @@ package Xref is
       Entity : General_Entity) return General_Entity;
    --  Return the type of the entity
 
+   function Returned_Type
+     (Db     : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity;
+   --  Return the type returned by a function.
+
+   function Parent_Package
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity;
+   --  Return the parent package (if Entity is a package itself)
+
+   function Pointed_Type
+     (Db     : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity;
+   --  The type pointed to by an access type.
+
    function Renaming_Of
      (Self   : access General_Xref_Database_Record;
       Entity : General_Entity) return General_Entity;
@@ -343,11 +365,21 @@ package Xref is
       Entity : General_Entity) return General_Entity;
    --  Returns the entity for which Entity is a method/primitive operation
 
+   function Has_Methods
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean;
+   --  True if the entity might have methods
+
    function Is_Access
      (Db : access General_Xref_Database_Record;
       E  : General_Entity) return Boolean;
    --  True if E is a type or a variable, and it points to some other type.
    --  This is an Ada access type, an Ada access variable, a C pointer,...
+
+   function Is_Abstract
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean;
+   --  Whether the entity is abstract (ie cannot be instantiated
 
    function Is_Array
      (Db : access General_Xref_Database_Record;
@@ -399,11 +431,6 @@ package Xref is
       E  : General_Entity) return Boolean;
    --  True if E is a predefined entity
 
-   function Pointed_Type
-     (Dbase  : access General_Xref_Database_Record;
-      Entity : General_Entity) return General_Entity;
-   --  Return the type pointed to by entity
-
    function Documentation
      (Self             : access General_Xref_Database_Record;
       Handler          : Language_Handlers.Language_Handler;
@@ -431,10 +458,67 @@ package Xref is
       Entity : General_Entity) return General_Entity;
    --  Return the subprogram for which entity is a parameter
 
+   function Overrides
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity;
+   --  The entity that Entity overrides.
+
    function Instance_Of
       (Self   : access General_Xref_Database_Record;
        Entity : General_Entity) return General_Entity;
    --  Return the generic entity instantiated by Entity
+
+   function Methods
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity;
+       Include_Inherited : Boolean) return Entity_Array;
+   --  The list of methods of an entity.
+
+   function Fields
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity) return Entity_Array;
+   --  The fields of an Ada record or C struct
+
+   function Literals
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity) return Entity_Array;
+   --  Return the literals of an enumeration
+
+   function Formal_Parameters
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity) return Entity_Array;
+   --  The formal parameters for a generic entity.
+
+   function Discriminant_Of
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity) return General_Entity;
+   --  Return the Ada record for which Entity is a discriminant
+
+   function Discriminants
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity) return Entity_Array;
+   --  Return the list of discriminants for the entity
+
+   function Component_Type
+      (Self   : access General_Xref_Database_Record;
+       Entity : General_Entity) return General_Entity;
+   function Index_Types
+      (Self   : access General_Xref_Database_Record;
+       Entity : General_Entity) return Entity_Array;
+   --  Index and components types for an array
+
+   function Child_Types
+      (Self      : access General_Xref_Database_Record;
+       Entity    : General_Entity;
+       Recursive : Boolean) return Entity_Array;
+   --  Return the list of types derived from Entity (in the type-extension
+   --  sense).
+
+   function Parent_Types
+      (Self      : access General_Xref_Database_Record;
+       Entity    : General_Entity;
+       Recursive : Boolean) return Entity_Array;
+   --  Return the list of types that Entity extends.
 
    function From_Instances
      (Self   : access General_Xref_Database_Record;

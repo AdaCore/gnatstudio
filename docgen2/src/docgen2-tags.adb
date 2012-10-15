@@ -24,6 +24,8 @@ with Docgen2.Scripts;            use Docgen2.Scripts;
 with Docgen2.Utils;              use Docgen2.Utils;
 with String_Utils;               use String_Utils;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 
 package body Docgen2.Tags is
 
@@ -371,7 +373,7 @@ package body Docgen2.Tags is
    procedure Analyse_Comment
      (Comment     : in out Comment_Type;
       Docgen      : Docgen_Object;
-      File        : Source_File;
+      File        : Virtual_File;
       Entity_Name : String;
       Href        : String)
    is
@@ -393,7 +395,11 @@ package body Docgen2.Tags is
 
       while N.Parent /= null loop
          Warning
-           (Get_Kernel (Docgen), File, Comment.Sloc_Stop,
+           (Get_Kernel (Docgen),
+            (File => File,
+             Line => Comment.Sloc_Stop.Line,
+             Column =>
+               GNATCOLL.Xref.Visible_Column (Comment.Sloc_Stop.Column)),
             "Tag " & To_String (N.Tag) &
             " is not closed");
          N := N.Parent;

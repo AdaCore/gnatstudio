@@ -16,10 +16,8 @@
 ------------------------------------------------------------------------------
 
 with ALI_Parser;       use ALI_Parser;
-with Entities;         use Entities;
-with Entities.Queries; use Entities.Queries;
-with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with Language.Cpp;     use Language.Cpp;
+with Xref;             use Xref;
 
 package body Completion.C.Constructs_Extractor is
    use Completion_List_Pckg;
@@ -28,7 +26,9 @@ package body Completion.C.Constructs_Extractor is
 
    Resolver_ID : constant String := "CNST_C  ";
 
-   function To_Language_Category (Kind : E_Kind) return Language_Category;
+   function To_Language_Category
+     (Db : access General_Xref_Database_Record'Class;
+      E   : General_Entity) return Language_Category;
    --  Make a simple association between entity categories and construct
    --  categories. This association is known to be inaccurate.
 
@@ -38,14 +38,14 @@ package body Completion.C.Constructs_Extractor is
 
    function New_C_Construct_Completion_Resolver
      (Kernel       : Kernel_Handle;
-      Current_File : Virtual_File) return Completion_Resolver_Access is
+      Current_File : Virtual_File) return Completion_Resolver_Access
+   is
+      pragma Unreferenced (Current_File);
    begin
       return
         new Construct_Completion_Resolver'
               (Manager     => null,
-               Kernel      => Kernel,
-               GLI_Handler => Get_LI_Handler
-                                (Get_Database (Kernel), Current_File));
+               Kernel      => Kernel);
    end New_C_Construct_Completion_Resolver;
 
    -------------------------
@@ -59,6 +59,9 @@ package body Completion.C.Constructs_Extractor is
       Result   : in out Completion_List)
    is
       pragma Unreferenced (Offset);
+
+      Db : constant General_Xref_Database := Resolver.Kernel.Databases;
+
       Doc_Threshold : constant Natural := 100;
       --  The documentation associated with each completion proposal is only
       --  generated when the number of completion proposals is smaller than
@@ -67,12 +70,12 @@ package body Completion.C.Constructs_Extractor is
 
       procedure Add_Proposal
         (To_List : in out Extensive_List_Pckg.List;
-         E       : Entity_Information);
+         E       : General_Entity);
       --  Append to the list To_List the proposal E
 
       procedure Add_Scope_Proposals
         (To_List      : in out Extensive_List_Pckg.List;
-         Scope        : Entity_Information;
+         Scope        : General_Entity;
          Prefix_Token : Token_Record);
       --  Append to To_List all the proposals defined in Scope which match
       --  the prefix available in Prefix_Token. If Prefix_Token is not an
@@ -85,16 +88,16 @@ package body Completion.C.Constructs_Extractor is
 
       procedure Add_Proposal
         (To_List : in out Extensive_List_Pckg.List;
-         E       : Entity_Information)
+         E       : General_Entity)
       is
-         Name     : aliased constant String := Get (Get_Name (E)).all;
+         Name     : aliased constant String := Db.Get_Name (E);
          Proposal : C_Completion_Proposal;
 
       begin
          Proposal :=
            (Resolver      => Resolver,
             Name          => new String'(Name),
-            Category      => To_Language_Category (Get_Kind (E)),
+            Category      => To_Language_Category (Db, E),
             Entity_Info   => E,
             With_Params   => False,
             Is_Param      => False);
@@ -104,7 +107,7 @@ package body Completion.C.Constructs_Extractor is
 
       procedure Add_Proposal_With_Params
         (To_List : in out Extensive_List_Pckg.List;
-         E       : Entity_Information);
+         E       : General_Entity);
       --  Append to the list To_List one proposal containing all the
       --  parameters needed to call E. In addition, in order to provide the
       --  same behavior of Ada completions, one proposal per parameter is
@@ -116,47 +119,41 @@ package body Completion.C.Constructs_Extractor is
 
       procedure Add_Proposal_With_Params
         (To_List : in out Extensive_List_Pckg.List;
-         E       : Entity_Information)
+         E       : General_Entity)
       is
-         Name     : aliased constant String := Get (Get_Name (E)).all;
+         Name     : aliased constant String := Db.Get_Name (E);
          Proposal : C_Completion_Proposal;
 
       begin
          Proposal :=
            (Resolver      => Resolver,
             Name          => new String'(Name),
-            Category      => To_Language_Category (Get_Kind (E)),
+            Category      => To_Language_Category (Db, E),
             Entity_Info   => E,
             With_Params   => True,
             Is_Param      => False);
          Append (To_List, Proposal);
 
          declare
-            It    : Subprogram_Iterator;
-            Param : Entity_Information;
+            Params : constant Xref.Parameter_Array := Db.Parameters (E);
+            Param : General_Entity;
 
          begin
-            It := Get_Subprogram_Parameters (E);
-            Get (It, Param);
-
-            while Param /= null loop
+            for P in Params'Range loop
+               Param := Params (P).Parameter;
                declare
-                  Name : aliased constant String :=
-                           Get (Get_Name (Param)).all;
+                  Name : aliased constant String := Db.Get_Name (Param);
                begin
                   Proposal :=
                     (Resolver      => Resolver,
                      Name          => new String'(Name),
-                     Category      => To_Language_Category (Get_Kind (Param)),
+                     Category      => To_Language_Category (Db, Param),
                      Entity_Info   => Param,
                      With_Params   => False,
                      Is_Param      => True);
 
                   Append (To_List, Proposal);
                end;
-
-               Next (It);
-               Get (It, Param);
             end loop;
          end;
       end Add_Proposal_With_Params;
@@ -167,37 +164,39 @@ package body Completion.C.Constructs_Extractor is
 
       procedure Add_Scope_Proposals
         (To_List      : in out Extensive_List_Pckg.List;
-         Scope        : Entity_Information;
+         Scope        : General_Entity;
          Prefix_Token : Token_Record)
       is
-         GLI_Extension : constant Filesystem_String :=
-                           Get_ALI_Ext (ALI_Handler (Resolver.GLI_Handler));
+--           GLI_Extension : constant Filesystem_String :=
+--                           Get_ALI_Ext (ALI_Handler (Resolver.GLI_Handler));
 
          Prefix_Text   : constant String :=
                            Context.Buffer
                              (Natural (Prefix_Token.Token_First)
                                 .. Natural (Prefix_Token.Token_Last));
          It : Calls_Iterator;
-         E  : Entity_Information;
-         LI : LI_File;
+         E  : General_Entity;
 
       begin
-         It := Get_All_Called_Entities (Scope);
+         It := Db.Get_All_Called_Entities (Scope);
          while not At_End (It) loop
             E  := Get (It);
-            LI := Get_LI (Get_Declaration_Of (E).File);
 
-            --  Skip entities associated with other languages
+--            Decl := Db.Get_Declaration (E);
 
-            if LI /= null
-              and then File_Extension (Get_LI_Filename (LI))
-                        /= GLI_Extension
-            then
-               null;
+--              LI := Get_LI (Decl.Loc.File);
+--
+--              --  Skip entities associated with other languages
+--
+--              if LI /= null
+--                and then File_Extension (Get_LI_Filename (LI))
+--                          /= GLI_Extension
+--              then
+--                 null;
 
             --  Do not suggest subprogram parameters
 
-            elsif Is_Parameter_Of (E) /= null then
+            if Db.Is_Parameter_Of (E) /= No_General_Entity then
                null;
 
             --  The last token is a delimiter (dot, scope or dereference)
@@ -210,7 +209,7 @@ package body Completion.C.Constructs_Extractor is
 
             else
                declare
-                  Nam : constant String := Get (Get_Name (E)).all;
+                  Nam : constant String := Db.Get_Name (E);
 
                begin
                   if Prefix_Text'Length <= Nam'Length
@@ -230,8 +229,6 @@ package body Completion.C.Constructs_Extractor is
       end Add_Scope_Proposals;
 
       --  Local variables
-
-      use Entities_Search_Tries;
 
       C_Context  : C_Completion_Context;
       Expression : Parsed_Expression;
@@ -386,7 +383,7 @@ package body Completion.C.Constructs_Extractor is
                                 Context.Buffer
                                   (Natural (Token.Token_First)
                                     .. Natural (Token.Token_Last));
-                     E      : Entity_Information;
+                     E      : General_Entity;
                      Iter   : Vector_Trie_Iterator;
 
                   begin
@@ -399,7 +396,7 @@ package body Completion.C.Constructs_Extractor is
                      while not At_End (Iter) loop
                         E := Get (Iter);
 
-                        if Is_Subprogram (E) then
+                        if Db.Is_Subprogram (E) then
                            Add_Proposal_With_Params
                              (To_List => E_List,
                               E       => E);
@@ -464,8 +461,7 @@ package body Completion.C.Constructs_Extractor is
                                   Context.Buffer
                                     (Natural (Token.Token_First)
                                       .. Natural (Token.Token_Last));
-                     E        : Entity_Information;
-                     Ent_Kind : E_Kind;
+                     E        : General_Entity;
                      Iter     : Vector_Trie_Iterator;
 
                   begin
@@ -478,59 +474,59 @@ package body Completion.C.Constructs_Extractor is
                      while not At_End (Iter) loop
                         E := Get (Iter);
 
-                        if Get_Category (E) = Object then
-                           case Get_Kind (E).Kind is
-                              when Access_Kind =>
-                                 E := Pointed_Type (E);
+                        if not Db.Is_Type (E) then
+                           if Db.Is_Access (E) then
+                              E := Db.Pointed_Type (E);
 
-                              when Array_Kind =>
-                                 E := Array_Contents_Type (E);
+                           elsif Db.Is_Array (E) then
+                              E := Db.Component_Type (E);
 
-                              when Class       |
-                                   Record_Kind =>
-                                 E := Get_Type_Of (E);
+                           --  Class or record
+                           elsif Db.Has_Methods (E) then
+                              E := Db.Get_Type_Of (E);
 
-                                 --  Handle named typedef structs since the
-                                 --  compiler generates two entites in the
-                                 --  LI file with the same name. For example:
-                                 --
-                                 --     typedef struct {    // First_Entity
-                                 --       ...
-                                 --     } my_type;          // Second_Entity
-                                 --
-                                 --  When we declare an object of this type:
-                                 --
-                                 --     my_type obj;
-                                 --
-                                 --  The type of obj references Second_Entity,
-                                 --  whose (parent) type is First_Entity (which
-                                 --  is the entity needed for completion
-                                 --  purposes)
+                              --  Handle named typedef structs since the
+                              --  compiler generates two entites in the LI
+                              --  file with the same name. For example:
+                              --
+                              --     typedef struct {    // First_Entity
+                              --       ...
+                              --     } my_type;          // Second_Entity
+                              --
+                              --  When we declare an object of this type:
+                              --
+                              --     my_type obj;
+                              --
+                              --  The type of obj references Second_Entity,
+                              --  whose (parent) type is First_Entity (which
+                              --  is the entity needed for completion purposes)
+                              --
+                              --  ??? Should this be handled by the LI parser
+                              --  instead.
 
-                                 if Get_Type_Of (E) /= null then
-                                    declare
-                                       Parent : Entity_Information;
+                              if Db.Get_Type_Of (E) /= No_General_Entity then
+                                 declare
+                                    Parent : General_Entity;
+                                 begin
+                                    Parent := Db.Get_Type_Of (E);
 
-                                    begin
-                                       Parent := Get_Type_Of (E);
+                                    if Db.Get_Name (E) =
+                                      Db.Get_Name (Parent)
+                                    then
+                                       E := Parent;
+                                    end if;
+                                 end;
+                              end if;
 
-                                       if Get_Name (E) = Get_Name (Parent) then
-                                          E := Parent;
-                                       end if;
-                                    end;
-                                 end if;
-
-                              when others =>
-                                 E := Get_Type_Of (E);
-                           end case;
+                           else
+                              E := Db.Get_Type_Of (E);
+                           end if;
                         end if;
 
-                        if E /= null then
-                           Ent_Kind := Get_Kind (E);
+                        if E /= No_General_Entity then
 
-                           if Ent_Kind.Kind = Class
-                             or else Ent_Kind.Kind = Record_Kind
-                           then
+                           --  Class or record
+                           if Db.Has_Methods (E) then
                               Add_Scope_Proposals
                                 (To_List      => E_List,
                                  Scope        => E,
@@ -584,19 +580,21 @@ package body Completion.C.Constructs_Extractor is
    ----------------------
 
    overriding function To_Completion_Id
-     (Proposal : C_Completion_Proposal) return Completion_Id
+     (Proposal : C_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Id
    is
       Id  : constant String := Proposal.Name.all;
-      Loc : constant Entities.File_Location :=
-                       Get_Declaration_Of (Proposal.Entity_Info);
+      Loc : constant General_Location :=
+                       Db.Get_Declaration (Proposal.Entity_Info).Loc;
 
    begin
       return (Id_Length   => Id'Length,
               Resolver_Id => Resolver_ID,
               Id          => Id,
-              File        => Get_Filename (Loc.File),
-              Line        => Get_Line (Loc),
-              Column      => Integer (Get_Column (Loc)));
+              File        => Loc.File,
+              Line        => Loc.Line,
+              Column      => Integer (Loc.Column));
    end To_Completion_Id;
 
    ------------------
@@ -614,11 +612,12 @@ package body Completion.C.Constructs_Extractor is
    -- Get_Completion --
    --------------------
 
-   overriding
-   function Get_Completion
-     (Proposal : C_Completion_Proposal) return UTF8_String
+   overriding function Get_Completion
+     (Proposal : C_Completion_Proposal;
+      Db       : access General_Xref_Database_Record'Class)
+      return UTF8_String
    is
-      function Single_Param_Text (Param : Entity_Information) return String;
+      function Single_Param_Text (Param : General_Entity) return String;
       --  Generate the named notation associated with Param as a C comment.
       --  For example: "/* Param */"
 
@@ -631,9 +630,9 @@ package body Completion.C.Constructs_Extractor is
       -- To_Named_Notation --
       -----------------------
 
-      function Single_Param_Text (Param : Entity_Information) return String is
+      function Single_Param_Text (Param : General_Entity) return String is
       begin
-         return "/* " & Get (Get_Name (Param)).all & " */";
+         return "/* " & Db.Get_Name (Param) & " */";
       end Single_Param_Text;
 
       --------------------
@@ -643,23 +642,24 @@ package body Completion.C.Constructs_Extractor is
       function All_Params_Text return String is
          Separator : constant String := "," & ASCII.LF;
          Spaces    : constant String := "  ";
-         It        : Subprogram_Iterator;
-         Param     : Entity_Information;
+         Params    : constant Xref.Parameter_Array :=
+           Db.Parameters (Proposal.Entity_Info);
+         Param     : General_Entity := No_General_Entity;
 
-         function Next_Params (Prev_Params : String) return String;
+         function Next_Params
+           (P : Integer; Prev_Params : String) return String;
          --  Prev_Params is used to accumulate the output.
 
-         function Next_Params (Prev_Params : String) return String is
+         function Next_Params
+           (P : Integer; Prev_Params : String) return String is
          begin
-            Next (It);
-            Get (It, Param);
-
-            if Param = null then
+            if P > Params'Last then
                return Prev_Params;
             else
                return
                  Next_Params
-                   (Prev_Params
+                   (P + 1,
+                    Prev_Params
                     & Separator
                     & Single_Param_Text (Param)
                     & Spaces);
@@ -669,14 +669,12 @@ package body Completion.C.Constructs_Extractor is
       --  Start of processing for All_Params_Text
 
       begin
-         It := Get_Subprogram_Parameters (Proposal.Entity_Info);
-         Get (It, Param);
-
-         if Param = null then
-            return "";
-         else
-            return Next_Params (Single_Param_Text (Param) & Spaces);
+         if Params'Length /= 0 then
+            Param := Params (Params'First).Parameter;
          end if;
+
+         return Next_Params
+           (Params'First + 1, Single_Param_Text (Param) & Spaces);
       end All_Params_Text;
 
    --  Start of processing for Get_Completion
@@ -697,21 +695,21 @@ package body Completion.C.Constructs_Extractor is
    -- Get_Label --
    ---------------
 
-   overriding
-   function Get_Label
-     (Proposal : C_Completion_Proposal)  return UTF8_String is
+   overriding function Get_Label
+     (Proposal : C_Completion_Proposal;
+      Db       : access General_Xref_Database_Record'Class)
+      return UTF8_String
+   is
    begin
       if not Proposal.With_Params then
          return Proposal.Name.all;
       else
          declare
-            It    : Subprogram_Iterator;
-            Param : Entity_Information;
+            Params : constant Parameter_Array :=
+              Db.Parameters (Proposal.Entity_Info);
+            Param : General_Entity;
          begin
-            It := Get_Subprogram_Parameters (Proposal.Entity_Info);
-            Get (It, Param);
-
-            if Param = null then
+            if Params'Length = 0 then
                return Proposal.Name.all & " without params";
             else
                return "params of " & Proposal.Name.all;
@@ -725,12 +723,14 @@ package body Completion.C.Constructs_Extractor is
    ------------------
 
    overriding function Get_Location
-     (Proposal : C_Completion_Proposal) return File_Location
+     (Proposal : C_Completion_Proposal;
+      Db       : access General_Xref_Database_Record'Class)
+      return File_Location
    is
-      Loc : constant Entities.File_Location :=
-              Get_Declaration_Of (Proposal.Entity_Info);
+      Loc : constant General_Location :=
+              Db.Get_Declaration (Proposal.Entity_Info).Loc;
    begin
-      return (Get_Filename (Get_File (Loc)), Get_Line (Loc), Get_Column (Loc));
+      return (Loc.File, Loc.Line, Loc.Column);
    end Get_Location;
 
    overriding function Get_Visibility
@@ -744,97 +744,30 @@ package body Completion.C.Constructs_Extractor is
    -- To_Language_Category --
    --------------------------
 
-   function To_Language_Category (Kind : E_Kind) return Language_Category is
+   function To_Language_Category
+     (Db : access General_Xref_Database_Record'Class;
+      E   : General_Entity) return Language_Category
+   is
    begin
-      case Kind.Kind is
-         when Access_Kind
-            | Array_Kind
-            | Boolean_Kind
-            | Decimal_Fixed_Point
-            | Enumeration_Kind
-            | Exception_Entity
-            | Floating_Point
-            | Modular_Integer
-            | Ordinary_Fixed_Point
-            | Private_Type
-            | Signed_Integer
-            | String_Kind
-            | Named_Number =>
-            return Cat_Variable;
+      if Db.Has_Methods (E) then
+         --  class or record
+         return Cat_Class;
+         --  return Cat_Structure;
 
-         when Class_Wide
-            | Class
-            | Interface_Kind =>
-            return Cat_Class;
+      elsif Db.Is_Subprogram (E) then
+         --  procedure or function
+         return Cat_Function;
+         --  return Cat_Procedure;
 
-         when Enumeration_Literal =>
-            return Cat_Literal;
+      elsif not Db.Is_Type (E) then
+         return Cat_Variable;
+      end if;
 
-         when Function_Or_Operator =>
-            return Cat_Function;
+      return Cat_Unknown;
 
-         when Include_File =>
-            return Cat_Include;
-
-         when Procedure_Kind =>
-            return Cat_Procedure;
-
-         when Record_Kind =>
-            return Cat_Structure;
-
-         when Union =>
-            return Cat_Union;
-
-         when Unresolved_Entity
-            | Function_Macro
-            | Macro
-            | Reference =>
-            return Cat_Unknown;
-
-         --  Kinds exlusive of Ada
-
-         when Overloaded_Entity
-            | Entry_Or_Entry_Family
-            | Label_On_Block
-            | Label_On_Loop
-            | Label_On_Statement
-            | Package_Kind
-            | Protected_Kind
-            | Private_Object
-            | Task_Kind =>
-            return Cat_Unknown;
-
-         --  Unused language categories:
-         --    Cat_Type
-         --    Cat_Subtype
-         --    Cat_Local_Variable
-         --    Cat_Parameter
-
-         --    Cat_Case_Inside_Record
-         --    Cat_Discriminant
-         --    Cat_Representation_Clause
-
-         --    Cat_Loop_Statement
-         --    Cat_If_Statement
-         --    Cat_Case_Statement
-         --    Cat_Select_Statement
-         --    Cat_Accept_Statement
-         --    Cat_Declare_Block
-         --    Cat_Return_Block
-         --    Cat_Simple_Block
-
-         --    Cat_Package
-         --    Cat_Task
-
-         --    Cat_Protected
-         --    Cat_Entry
-
-         --    Cat_Exception_Handler
-         --    Cat_Pragma
-
-         --    Cat_Custom
-
-      end case;
+--           when Enumeration_Literal => return Cat_Literal;
+--           when Include_File => return Cat_Include;
+--           when Union => return Cat_Union;
    end To_Language_Category;
 
 end Completion.C.Constructs_Extractor;

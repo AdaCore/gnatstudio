@@ -21,6 +21,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Hash;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
+with Dynamic_Arrays;
 with Glib.Convert;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNAT.Strings;              use GNAT.Strings;
@@ -44,6 +45,9 @@ package body Xref is
 
    use type Old_Entities.Entity_Information;
    use type Old_Entities.File_Location;
+
+   package Entity_Arrays is new Dynamic_Arrays (General_Entity);
+   use Entity_Arrays;
 
    function Get_Location
      (Ref : Entity_Reference) return General_Location;
@@ -75,6 +79,15 @@ package body Xref is
 
    function To_String (Location : General_Location) return String;
    --  For debugging purposes only
+
+   procedure Fill_Entity_Array
+     (Curs : in out Entities_Cursor'Class;
+      Arr  : in out Entity_Arrays.Instance);
+   --  Store all entities returned by the cursor into the array
+
+   function To_Entity_Array (Arr : Entity_Arrays.Instance) return Entity_Array;
+   --  Creates an entity array.
+   --  ??? This is not very efficient
 
    ----------------
    -- Assistants --
@@ -533,6 +546,7 @@ package body Xref is
          Entity : General_Entity;
       begin
          if Active (SQLITE) then
+            --  Already handles the operators
             Closest_Ref.Ref := Self.Xref.Get_Entity
               (Name   => Name,
                File   => Loc.File,
@@ -564,6 +578,20 @@ package body Xref is
 
                Fuzzy := Status = Overloaded_Entity_Found
                  or else Status = Fuzzy_Match;
+
+               if Status = Entity_Not_Found
+                 and then Name (Name'First) = '"'
+               then
+                  --  Try without the quotes
+                  Find_Declaration_Or_Overloaded
+                    (Self              => Self,
+                     Loc               => Loc,
+                     Entity_Name       => Entity_Name
+                       (Entity_Name'First + 1 .. Entity_Name'Last - 1),
+                     Ask_If_Overloaded => Ask_If_Overloaded,
+                     Entity            => Entity,
+                     Closest_Ref       => Closest_Ref);
+               end if;
             end;
          end if;
 
@@ -913,13 +941,27 @@ package body Xref is
             E : constant Old_Entities.Entity_Information :=
                   Old_Entities.Get_Type_Of (Entity.Old_Entity);
          begin
-            return To_General_Entity (E);
+            return From_Old (E);
          end;
-
       else
-         return To_General_Entity (Db, Type_Of (Db.Xref.all, Entity.Entity));
+         return From_New (Db.Xref.Type_Of (Entity.Entity));
       end if;
    end Get_Type_Of;
+
+   -------------------
+   -- Returned_Type --
+   -------------------
+
+   function Returned_Type
+     (Db     : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity is
+   begin
+      if Active (SQLITE) then
+         return From_New (Db.Xref.Type_Of (Entity.Entity));
+      else
+         return From_Old (Old_Entities.Get_Returned_Type (Entity.Old_Entity));
+      end if;
+   end Returned_Type;
 
    --------------------------
    -- Is_Predefined_Entity --
@@ -977,13 +1019,15 @@ package body Xref is
    ------------------
 
    function Pointed_Type
-     (Dbase  : access General_Xref_Database_Record;
-      Entity : General_Entity) return General_Entity is
+     (Db     : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity
+   is
    begin
-      if not Active (SQLITE) then
-         return To_General_Entity (Pointed_Type (Entity.Old_Entity));
+      if Active (SQLITE) then
+         return From_New (Db.Xref.Pointed_Type (Entity.Entity));
       else
-         return Pointed_Type (Dbase, Entity);
+         return From_Old
+           (Old_Entities.Queries.Pointed_Type (Entity.Old_Entity));
       end if;
    end Pointed_Type;
 
@@ -1786,6 +1830,34 @@ package body Xref is
       end if;
    end Is_Up_To_Date;
 
+   -----------------
+   -- Has_Methods --
+   -----------------
+
+   function Has_Methods
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean
+   is
+      use Old_Entities;
+      K  : Old_Entities.E_Kinds;
+   begin
+      if Active (SQLITE) then
+         if E.Entity /= No_Entity then
+            return Db.Xref.Declaration (E.Entity).Flags.Has_Methods;
+         end if;
+
+      else
+         if E.Old_Entity /= null then
+            K := Old_Entities.Get_Kind (E.Old_Entity).Kind;
+            return K = Old_Entities.Class
+              or else K = Old_Entities.Interface_Kind;
+         end if;
+      end if;
+
+      --  ??? Fallback on constructs
+      return False;
+   end Has_Methods;
+
    ---------------
    -- Is_Access --
    ---------------
@@ -1805,6 +1877,24 @@ package body Xref is
               Old_Entities.Access_Kind;
       end if;
    end Is_Access;
+
+   -----------------
+   -- Is_Abstract --
+   -----------------
+
+   function Is_Abstract
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean
+   is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Abstract;
+
+      else
+         return E.Old_Entity /= null
+           and then Old_Entities.Get_Kind (E.Old_Entity).Is_Abstract;
+      end if;
+   end Is_Abstract;
 
    --------------
    -- Is_Array --
@@ -2134,6 +2224,8 @@ package body Xref is
       Self.Constructs := new Language.Tree.Database.Construct_Database;
       Self.Lang_Handler := Lang_Handler;
       Set_Symbols (Self.Constructs, Symbols);
+
+      Self.Symbols := Symbols;
 
       Get_Annotation_Key
         (Get_Construct_Annotation_Key_Registry (Self.Constructs).all,
@@ -2634,5 +2726,470 @@ package body Xref is
          end;
       end if;
    end From_Instances;
+
+   -----------------------
+   -- Fill_Entity_Array --
+   -----------------------
+
+   procedure Fill_Entity_Array
+     (Curs : in out Entities_Cursor'Class;
+      Arr  : in out Entity_Arrays.Instance)
+   is
+   begin
+      while Curs.Has_Element loop
+         Append (Arr, From_New (Curs.Element));
+         Curs.Next;
+      end loop;
+   end Fill_Entity_Array;
+
+   ---------------------
+   -- To_Entity_Array --
+   ---------------------
+
+   function To_Entity_Array
+     (Arr : Entity_Arrays.Instance) return Entity_Array
+   is
+      Last : constant Integer := Integer (Entity_Arrays.Last (Arr));
+      Result : Entity_Array (Integer (Entity_Arrays.First) .. Last);
+   begin
+      for R in Result'Range loop
+         Result (R) := Arr.Table (Entity_Arrays.Index_Type (R));
+      end loop;
+      return Result;
+   end To_Entity_Array;
+
+   ---------------------
+   -- Discriminant_Of --
+   ---------------------
+
+   function Discriminant_Of
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return From_New (Self.Xref.Discriminant_Of (Entity.Entity));
+      else
+         --  ??? Not implemented.
+         --  Old_Entities.Queries.Is_Discriminant requires knowning the record
+         --  itself before we event start.
+
+         return No_General_Entity;
+      end if;
+   end Discriminant_Of;
+
+   -------------------
+   -- Discriminants --
+   -------------------
+
+   function Discriminants
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity) return Entity_Array
+   is
+      Arr : Entity_Arrays.Instance;
+   begin
+      if Active (SQLITE) then
+         declare
+            Curs : Entities_Cursor;
+         begin
+            Self.Xref.Discriminants (Entity.Entity, Cursor => Curs);
+            Fill_Entity_Array (Curs, Arr);
+         end;
+
+      else
+         declare
+            Iter  : Old_Entities.Queries.Entity_Reference_Iterator;
+            Discr : Old_Entities.Entity_Information;
+         begin
+            Old_Entities.Queries.Find_All_References
+              (Iter, Entity.Old_Entity,
+               Filter => (Old_Entities.Discriminant => True, others => False));
+
+            while not At_End (Iter) loop
+               Discr := Get_Entity (Iter);
+               if Discr /= null then
+                  Append (Arr, From_Old (Discr));
+               end if;
+
+               Next (Iter);
+            end loop;
+
+            Destroy (Iter);
+         end;
+      end if;
+
+      return R : constant Entity_Array := To_Entity_Array (Arr) do
+         Free (Arr);
+      end return;
+   end Discriminants;
+
+   -----------------------
+   -- Formal_Parameters --
+   -----------------------
+
+   function Formal_Parameters
+      (Self   : access General_Xref_Database_Record;
+       Entity : General_Entity) return Entity_Array
+   is
+      use Old_Entities;
+      Arr : Entity_Arrays.Instance;
+   begin
+      if Active (SQLITE) then
+         declare
+            Curs : Entities_Cursor;
+         begin
+            Self.Xref.Formal_Parameters (Entity.Entity, Cursor => Curs);
+            Fill_Entity_Array (Curs, Arr);
+         end;
+
+      else
+         declare
+            Param : Old_Entities.Entity_Information;
+            Iter  : Old_Entities.Queries.Generic_Iterator :=
+              Get_Generic_Parameters (Entity.Old_Entity);
+         begin
+            loop
+               Get (Iter, Param);
+               exit when Param = null;
+
+               Append (Arr, From_Old (Param));
+               Next (Iter);
+            end loop;
+         end;
+      end if;
+
+      return R : constant Entity_Array := To_Entity_Array (Arr) do
+         Free (Arr);
+      end return;
+   end Formal_Parameters;
+
+   --------------
+   -- Literals --
+   --------------
+
+   function Literals
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity) return Entity_Array
+   is
+      use Old_Entities;
+      Arr : Entity_Arrays.Instance;
+   begin
+      if Active (SQLITE) then
+         declare
+            Curs : Entities_Cursor;
+         begin
+            Self.Xref.Literals (Entity.Entity, Cursor => Curs);
+            Fill_Entity_Array (Curs, Arr);
+         end;
+
+      elsif Get_Kind (Entity.Old_Entity).Kind = Enumeration_Kind then
+         declare
+            Field : Old_Entities.Entity_Information;
+            Iter  : Old_Entities.Queries.Calls_Iterator :=
+              Get_All_Called_Entities (Entity.Old_Entity);
+         begin
+            while not At_End (Iter) loop
+               Field := Get (Iter);
+
+               if In_Range (Old_Entities.Get_Declaration_Of (Field),
+                            Entity.Old_Entity)
+                 and then not Is_Discriminant (Field, Entity.Old_Entity)
+                 and then not Old_Entities.Is_Subprogram (Entity.Old_Entity)
+                 and then Get_Category (Entity.Old_Entity) /= Type_Or_Subtype
+               then
+                  Append (Arr, From_Old (Field));
+               end if;
+            end loop;
+
+            Destroy (Iter);
+         end;
+      end if;
+
+      return R : constant Entity_Array := To_Entity_Array (Arr) do
+         Free (Arr);
+      end return;
+   end Literals;
+
+   -----------------
+   -- Child_Types --
+   -----------------
+
+   function Child_Types
+      (Self      : access General_Xref_Database_Record;
+       Entity    : General_Entity;
+       Recursive : Boolean) return Entity_Array
+   is
+      use Old_Entities;
+      Arr : Entity_Arrays.Instance;
+   begin
+      if Active (SQLITE) then
+         declare
+            Curs : Entities_Cursor;
+            Rec  : Recursive_Entities_Cursor;
+         begin
+            if Recursive then
+               Self.Xref.Recursive
+                 (Entity  => Entity.Entity,
+                  Compute => GNATCOLL.Xref.Child_Types'Access,
+                  Cursor  => Rec);
+               Fill_Entity_Array (Rec, Arr);
+            else
+               Self.Xref.Child_Types (Entity.Entity, Cursor => Curs);
+               Fill_Entity_Array (Curs, Arr);
+            end if;
+         end;
+
+      else
+         declare
+            Children : Children_Iterator :=
+              Get_Child_Types (Entity.Old_Entity, Recursive => Recursive);
+         begin
+            while not At_End (Children) loop
+               Append (Arr, From_Old (Get (Children)));
+               Next (Children);
+            end loop;
+            Destroy (Children);
+         end;
+      end if;
+
+      return R : constant Entity_Array := To_Entity_Array (Arr) do
+         Free (Arr);
+      end return;
+   end Child_Types;
+
+   ------------------
+   -- Parent_Types --
+   ------------------
+
+   function Parent_Types
+      (Self      : access General_Xref_Database_Record;
+       Entity    : General_Entity;
+       Recursive : Boolean) return Entity_Array
+   is
+      use Old_Entities;
+      Arr : Entity_Arrays.Instance;
+   begin
+      if Active (SQLITE) then
+         declare
+            Curs : Entities_Cursor;
+            Rec  : Recursive_Entities_Cursor;
+         begin
+            if Recursive then
+               Self.Xref.Recursive
+                 (Entity  => Entity.Entity,
+                  Compute => GNATCOLL.Xref.Parent_Types'Access,
+                  Cursor  => Rec);
+               Fill_Entity_Array (Rec, Arr);
+            else
+               Self.Xref.Parent_Types (Entity.Entity, Cursor => Curs);
+               Fill_Entity_Array (Curs, Arr);
+            end if;
+         end;
+
+      else
+         declare
+            Parents : constant Entity_Information_Array :=
+              Get_Parent_Types (Entity.Old_Entity, Recursive);
+         begin
+            for P in Parents'Range loop
+               Append (Arr, From_Old (Parents (P)));
+            end loop;
+         end;
+      end if;
+
+      return R : constant Entity_Array := To_Entity_Array (Arr) do
+         Free (Arr);
+      end return;
+   end Parent_Types;
+
+   ------------
+   -- Fields --
+   ------------
+
+   function Fields
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity) return Entity_Array
+   is
+      use Old_Entities;
+      Arr : Entity_Arrays.Instance;
+   begin
+      if Active (SQLITE) then
+         declare
+            Curs : Entities_Cursor;
+         begin
+            Self.Xref.Fields (Entity.Entity, Cursor => Curs);
+            Fill_Entity_Array (Curs, Arr);
+         end;
+
+      --  Ignore for enumerations
+      elsif Get_Kind (Entity.Old_Entity).Kind /= Enumeration_Kind then
+         declare
+            Field : Old_Entities.Entity_Information;
+            Iter  : Old_Entities.Queries.Calls_Iterator :=
+              Get_All_Called_Entities (Entity.Old_Entity);
+         begin
+            while not At_End (Iter) loop
+               Field := Get (Iter);
+
+               --  Hide discriminants and subprograms (would happen in C++,
+               --  but these are primitive operations in this case)
+
+               if In_Range (Old_Entities.Get_Declaration_Of (Field),
+                            Entity.Old_Entity)
+                 and then not Is_Discriminant (Field, Entity.Old_Entity)
+                 and then not Old_Entities.Is_Subprogram (Entity.Old_Entity)
+                 and then Get_Category (Entity.Old_Entity) /= Type_Or_Subtype
+               then
+                  Append (Arr, From_Old (Field));
+               end if;
+
+               Next (Iter);
+            end loop;
+
+            Destroy (Iter);
+         end;
+      end if;
+
+      return R : constant Entity_Array := To_Entity_Array (Arr) do
+         Free (Arr);
+      end return;
+   end Fields;
+
+   -------------
+   -- Methods --
+   -------------
+
+   function Methods
+      (Self              : access General_Xref_Database_Record;
+       Entity            : General_Entity;
+       Include_Inherited : Boolean) return Entity_Array
+   is
+      Result : Entity_Arrays.Instance;
+   begin
+      if Active (SQLITE) then
+         declare
+            Curs : Entities_Cursor;
+            Rec_Curs : Recursive_Entities_Cursor;
+         begin
+            if Include_Inherited then
+               Self.Xref.Recursive
+                 (Entity  => Entity.Entity,
+                  Compute => GNATCOLL.Xref.Methods'Unrestricted_Access,
+                  Cursor  => Rec_Curs);
+               Fill_Entity_Array (Rec_Curs, Result);
+            else
+               Self.Xref.Methods (Entity.Entity, Cursor => Curs);
+               Fill_Entity_Array (Curs, Result);
+            end if;
+         end;
+      else
+         declare
+            use Old_Entities;
+            Prim : Primitive_Operations_Iterator;
+         begin
+            Find_All_Primitive_Operations
+              (Iter              => Prim,
+               Entity            => Entity.Old_Entity,
+               Include_Inherited => Include_Inherited);
+
+            while not At_End (Prim) loop
+               Append (Result, From_Old (Get (Prim)));
+               Next (Prim);
+            end loop;
+
+            Destroy (Prim);
+         end;
+      end if;
+
+      return R : constant Entity_Array := To_Entity_Array (Result) do
+         Free (Result);
+      end return;
+   end Methods;
+
+   --------------------
+   -- Component_Type --
+   --------------------
+
+   function Component_Type
+      (Self   : access General_Xref_Database_Record;
+       Entity : General_Entity) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return From_New (Self.Xref.Component_Type (Entity.Entity));
+      else
+         return From_Old (Old_Entities.Queries.Array_Contents_Type
+                            (Entity.Old_Entity));
+      end if;
+   end Component_Type;
+
+   --------------------
+   -- Parent_Package --
+   --------------------
+
+   function Parent_Package
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return From_New (Self.Xref.Parent_Package (Entity.Entity));
+      else
+         return From_Old
+           (Old_Entities.Queries.Get_Parent_Package (Entity.Old_Entity));
+      end if;
+   end Parent_Package;
+
+   -----------------
+   -- Index_Types --
+   -----------------
+
+   function Index_Types
+      (Self   : access General_Xref_Database_Record;
+       Entity : General_Entity) return Entity_Array
+   is
+   begin
+      if Active (SQLITE) then
+         declare
+            Curs : Entities_Cursor;
+            Arr  : Entity_Arrays.Instance;
+         begin
+            Self.Xref.Index_Types (Entity.Entity, Cursor => Curs);
+            Fill_Entity_Array (Curs, Arr);
+
+            return R : constant Entity_Array := To_Entity_Array (Arr) do
+               Free (Arr);
+            end return;
+         end;
+      else
+         declare
+            Indexes : constant Old_Entities.Entity_Information_Array :=
+              Old_Entities.Queries.Array_Index_Types (Entity.Old_Entity);
+            Result : Entity_Array (Indexes'Range);
+         begin
+            for R in Result'Range loop
+               Result (R) := From_Old (Indexes (R));
+            end loop;
+            return Result;
+         end;
+      end if;
+   end Index_Types;
+
+   ---------------
+   -- Overrides --
+   ---------------
+
+   function Overrides
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return From_New (Self.Xref.Overrides (Entity.Entity));
+      else
+         return From_Old (Old_Entities.Queries.Overriden_Entity
+                          (Entity.Old_Entity));
+      end if;
+   end Overrides;
 
 end Xref;

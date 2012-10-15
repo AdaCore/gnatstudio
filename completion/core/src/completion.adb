@@ -272,19 +272,23 @@ package body Completion is
    ---------------
 
    function Get_Label
-     (Proposal : Completion_Proposal)  return UTF8_String is
+     (Proposal : Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String is
    begin
-      return Get_Completion (Completion_Proposal'Class (Proposal));
+      return Get_Completion (Completion_Proposal'Class (Proposal), Db);
    end Get_Label;
 
    ------------
    -- Get_Id --
    ------------
 
-   function Get_Id (Proposal : Completion_Proposal)
+   function Get_Id
+     (Proposal : Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String is
    begin
-      return Get_Completion (Completion_Proposal'Class (Proposal));
+      return Get_Completion (Completion_Proposal'Class (Proposal), Db);
    end Get_Id;
 
    ----------------------
@@ -292,22 +296,25 @@ package body Completion is
    ----------------------
 
    function Get_Caret_Offset
-     (Proposal : Completion_Proposal)
+     (Proposal : Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return Basic_Types.Character_Offset_Type is
    begin
       return
         Basic_Types.Character_Offset_Type
           (UTF8_Strlen
-               (Get_Completion (Completion_Proposal'Class (Proposal))));
+               (Get_Completion (Completion_Proposal'Class (Proposal), Db)));
    end Get_Caret_Offset;
 
    ------------------
    -- Get_Location --
    ------------------
 
-   function Get_Location (Proposal : Completion_Proposal) return File_Location
+   function Get_Location
+     (Proposal : Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return File_Location
    is
-      pragma Unreferenced (Proposal);
+      pragma Unreferenced (Db, Proposal);
    begin
       return Null_File_Location;
    end Get_Location;
@@ -336,20 +343,24 @@ package body Completion is
    -- First --
    -----------
 
-   function First (This : Completion_List) return Completion_Iterator is
+   function First
+     (This : Completion_List;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Iterator
+   is
       It : Completion_Iterator := (It => First (This.List), others => <>);
 
       Next_Done : Boolean := False;
    begin
       while not Is_Valid (It) loop
-         Next (It);
+         Next (It, Db);
 
          Next_Done := True;
       end loop;
 
       if not Next_Done and then not At_End (It) then
          Completion_Id_Set.Insert
-           (It.Already_Extracted, To_Completion_Id (Get_Proposal (It)));
+           (It.Already_Extracted, To_Completion_Id (Get_Proposal (It), Db));
       end if;
 
       return It;
@@ -359,7 +370,10 @@ package body Completion is
    -- Next --
    ----------
 
-   procedure Next (This : in out Completion_Iterator) is
+   procedure Next
+     (This : in out Completion_Iterator;
+      Db   : access Xref.General_Xref_Database_Record'Class)
+   is
    begin
       loop
          Next (This.It);
@@ -369,7 +383,7 @@ package body Completion is
          if Is_Valid (This) then
             declare
                Id : constant Completion_Id :=
-                 To_Completion_Id (Get_Proposal (This));
+                 To_Completion_Id (Get_Proposal (This), Db);
             begin
                if Completion_Id_Set.Find
                (This.Already_Extracted, Id) = Completion_Id_Set.No_Element
@@ -407,7 +421,11 @@ package body Completion is
    --------------------
 
    overriding function Get_Completion
-     (Proposal : Simple_Completion_Proposal) return UTF8_String is
+     (Proposal : Simple_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String
+   is
+      pragma Unreferenced (Db);
    begin
       return Proposal.Name.all;
    end Get_Completion;
@@ -490,7 +508,11 @@ package body Completion is
    ----------------------
 
    overriding function To_Completion_Id
-     (Proposal : Simple_Completion_Proposal) return Completion_Id is
+     (Proposal : Simple_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Id
+   is
+      pragma Unreferenced (Db);
    begin
       return (Proposal.Name'Length,
               "SIMPLE  ",

@@ -68,6 +68,14 @@ package GPS.Kernel.Xref is
    --  The view of the project has changed, we need to refresh the xref
    --  databases.
 
+   procedure Compilation_Finished
+     (Kernel : access Kernel_Handle_Record'Class;
+      C_Only : Boolean);
+   --  Called when some files have been recompiled, this will update the
+   --  cross-references as needed.
+   --  C_Only is specific to the old LI engine, and indicates whether we should
+   --  load all xref in memory, or only C/C++ related ones.
+
    ------------------------
    -- Background queries --
    ------------------------
