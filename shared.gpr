@@ -47,4 +47,20 @@ project Shared is
       end case;
    end Compiler;
 
+   package Binder is
+      for Switches ("Ada") use ("-E");
+   end Binder;
+
+   package Linker is
+      case OS is
+         when "Windows_NT" =>
+            for Default_Switches ("Ada") use ("obj/gps.res");
+         when "unix" =>
+            for Default_Switches ("Ada") use ("-Wl,-no_pie");
+            null;
+      end case;
+      --  for Default_Switches ("Ada") use ("-lgmem");
+      --  for Default_Switches ("Ada") use ("-pg");      
+  end Linker;
+
 end Shared;

@@ -307,14 +307,15 @@ package body ALI_Parser is
    function Create_ALI_Handler
      (Db           : Entities_Database;
       Registry     : Project_Registry'Class;
-      Lang_Handler : Language_Handlers.Language_Handler)
+      Lang_Handler :
+         access Language.Tree.Database.Abstract_Language_Handler_Record'Class)
       return LI_Handler is
    begin
       return new ALI_Handler_Record'
-                   (LI_Handler_Record with
-                      Db => Db,
-                      Registry => Project_Registry (Registry),
-                      Lang_Handler => Lang_Handler);
+        (LI_Handler_Record with
+           Db => Db,
+         Registry => Project_Registry (Registry),
+         Lang_Handler => Abstract_Language_Handler (Lang_Handler));
    end Create_ALI_Handler;
 
    --------------------
@@ -939,7 +940,6 @@ package body ALI_Parser is
 
                      declare
                         use Entities_Search_Tries;
-                        use Language_Handlers;
 
                         LI_Handler : constant Old_Entities.LI_Handler :=
                           Get_LI_Handler (Handler.Db);

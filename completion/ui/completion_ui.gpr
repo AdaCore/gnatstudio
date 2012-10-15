@@ -17,5 +17,7 @@ project Completion_UI is
    end Builder;
 
    package IDE renames Shared.IDE;
+   package Linker renames Shared.Linker;
+   package Binder renames Shared.Binder;
 
 end Completion_UI;

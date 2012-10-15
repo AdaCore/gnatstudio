@@ -21,7 +21,6 @@ with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with Projects;
 with Language.Tree.Database;
-with Language_Handlers;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;
@@ -33,7 +32,8 @@ package ALI_Parser is
    function Create_ALI_Handler
      (Db           : Old.Entities_Database;
       Registry     : Projects.Project_Registry'Class;
-      Lang_Handler : Language_Handlers.Language_Handler)
+      Lang_Handler :
+         access Language.Tree.Database.Abstract_Language_Handler_Record'Class)
       return Old_Entities.LI_Handler;
    --  Create a new ALI handler
 
@@ -41,7 +41,7 @@ package ALI_Parser is
       Db           : Old.Entities_Database;
       Registry     : Projects.Project_Registry;
 
-      Lang_Handler : Language_Handlers.Language_Handler;
+      Lang_Handler : Language.Tree.Database.Abstract_Language_Handler;
       --  Field used to store the languages handler of the kernel; used to
       --  obtain the LI handler of entities imported from other languages
    end record;

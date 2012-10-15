@@ -76,7 +76,7 @@ package Xref is
       Constructs : Language.Tree.Database.Construct_Database_Access;
       --  The constructs database
 
-      Lang_Handler : Language_Handlers.Language_Handler;
+      Lang_Handler : Language.Tree.Database.Abstract_Language_Handler;
       --  The type used to convert from file names to languages. This is used
       --  by the constructs database.
 
@@ -90,7 +90,8 @@ package Xref is
 
    procedure Initialize
      (Self         : access General_Xref_Database_Record;
-      Lang_Handler : Language_Handlers.Language_Handler;
+      Lang_Handler :
+         access Language.Tree.Database.Abstract_Language_Handler_Record'Class;
       Symbols      : GNATCOLL.Symbols.Symbol_Table_Access;
       Registry     : Projects.Project_Registry_Access;
       Subprogram_Ref_Is_Call : Boolean := False);

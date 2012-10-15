@@ -63,22 +63,9 @@ project GPS is
    end Builder;
 
    package Compiler renames Shared.Compiler;
-
-   package Binder is
-      for Default_Switches ("Ada") use ("-E");
-   end Binder;
-
-   package Linker is
-      case Shared.OS is
-         when "Windows_NT" =>
-            for Default_Switches ("Ada") use ("obj/gps.res");
-         when "unix" =>
-            for Default_Switches ("Ada") use ("-Wl,-no_pie");
-            null;
-      end case;
-      --  for Default_Switches ("Ada") use ("-lgmem");
-      --  for Default_Switches ("Ada") use ("-pg");
-   end Linker;
+   package Binder renames Shared.Binder;
+   package Linker renames Shared.Linker;
+   package IDE renames Shared.IDE;
 
    package Naming is
       case Shared.OS is
@@ -88,7 +75,5 @@ project GPS is
             for Implementation ("dde") use "dde__default.adb";
       end case;
    end Naming;
-
-   package IDE renames Shared.IDE;
 
 end GPS;

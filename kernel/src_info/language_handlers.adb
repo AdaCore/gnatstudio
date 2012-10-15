@@ -21,6 +21,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Bubble_Sort_G;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
+with GNATCOLL.Projects;
 
 with Case_Handling;             use Case_Handling;
 with GPS.Properties;            use GPS.Properties;
@@ -158,6 +159,7 @@ package body Language_Handlers is
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return String
    is
+      use GNATCOLL.Projects;
       Prop  : String_Property;
       Found : Boolean := False;
    begin

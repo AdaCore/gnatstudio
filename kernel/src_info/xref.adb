@@ -2306,7 +2306,8 @@ package body Xref is
 
    procedure Initialize
      (Self         : access General_Xref_Database_Record;
-      Lang_Handler : Language_Handlers.Language_Handler;
+      Lang_Handler :
+         access Language.Tree.Database.Abstract_Language_Handler_Record'Class;
       Symbols      : GNATCOLL.Symbols.Symbol_Table_Access;
       Registry     : Projects.Project_Registry_Access;
       Subprogram_Ref_Is_Call : Boolean := False)
@@ -2315,7 +2316,7 @@ package body Xref is
       LI_Entity_Key : Construct_Annotations_Pckg.Annotation_Key;
    begin
       Self.Constructs := new Language.Tree.Database.Construct_Database;
-      Self.Lang_Handler := Lang_Handler;
+      Self.Lang_Handler := Abstract_Language_Handler (Lang_Handler);
       Set_Symbols (Self.Constructs, Symbols);
 
       Self.Symbols := Symbols;

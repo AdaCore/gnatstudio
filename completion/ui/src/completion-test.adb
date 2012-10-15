@@ -35,20 +35,23 @@ with String_Utils;            use String_Utils;
 with Language.Ada;            use Language.Ada;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
+with Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree;       use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Projects;                use Projects;
-with Entities;                use Entities;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with Ada_Semantic_Tree.Lang;  use Ada_Semantic_Tree.Lang;
 with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
+with Xref;                    use Xref;
 
 procedure Completion.Test is
    use Standard.Ada;
    use Token_List;
 
-   Symbols : constant Symbol_Table_Access := Allocate;
+   Symbols      : constant Symbol_Table_Access := Allocate;
+   Db           : General_Xref_Database;
+   Tree         : constant Project_Tree_Access := new Project_Tree;
+   New_Registry : constant Project_Registry_Access := Create (Tree);
 
    procedure Next_Complete_Tag
      (Buffer      : String;
@@ -160,18 +163,18 @@ procedure Completion.Test is
    begin
       Put_Line (" *** " & Name & " *** ");
 
-      Iter := First (List);
+      Iter := First (List, Db);
 
       --  This loop displays the contents of the list.
 
       while not At_End (Iter) loop
-         Text_IO.Put (Get_Completion (Get_Proposal (Iter)) & " (");
+         Text_IO.Put (Get_Completion (Get_Proposal (Iter), Db) & " (");
          Text_IO.Put
            (Language_Category'Image
              (Get_Category (Get_Proposal (Iter))) & ")");
          New_Line;
 
-         Next (Iter);
+         Next (Iter, Db);
       end loop;
    end Display;
 
@@ -240,12 +243,6 @@ procedure Completion.Test is
    -- Get_New_Construct_Extractor --
    ---------------------------------
 
-   Tree         : constant Project_Tree_Access := new Project_Tree;
-   New_Registry : constant Project_Registry_Access := Create (Tree);
-   Construct_Db : Construct_Database_Access := new Construct_Database;
-   Db           : Entities_Database;
-   pragma Unreferenced (Db);
-
    function Get_New_Construct_Extractor
      (File : Virtual_File; Project : String) return Completion_Resolver_Access
    is
@@ -259,25 +256,20 @@ procedure Completion.Test is
       Current_File : Structured_File_Access;
 
    begin
-      Initialize
-        (Construct_Db, new File_Buffer_Provider, new Ada_Language_Handler);
-
       declare
          File : constant Virtual_File := GNATCOLL.VFS.Create
            ("../../../share/predefined_ada.xml");
       begin
          if File.Is_Regular_File then
             Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
-              (Construct_Db, File);
+              (Db.Constructs, File);
          else
             Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
-              (Construct_Db, No_File);
+              (Db.Constructs, No_File);
          end if;
       end;
 
       if Project /= "" then
-         Db := Create (New_Registry, Construct_Db);
-
          Tree.Load
            (Root_Project_Path  => Create_From_Dir (Get_Current_Dir, +Project),
             Errors             => Project_Error'Unrestricted_Access);
@@ -292,16 +284,16 @@ procedure Completion.Test is
                   pragma Unreferenced (Dummy_File_Node);
                begin
                   Dummy_File_Node := Get_Or_Create
-                    (Construct_Db, Files.all (J));
+                    (Db.Constructs, Files.all (J));
                end;
             end loop;
          end;
       end if;
 
-      Current_File := Get_Or_Create (Construct_Db, File);
+      Current_File := Get_Or_Create (Db.Constructs, File);
 
       return New_Construct_Completion_Resolver
-        (Construct_Db,
+        (Db.Constructs,
          File,
          Get_Buffer (Current_File));
    end Get_New_Construct_Extractor;
@@ -482,10 +474,10 @@ procedure Completion.Test is
             declare
                Iter : Completion_Iterator;
             begin
-               Iter := First (Result);
+               Iter := First (Result, Db);
 
                for J in 1 .. Apply_Number loop
-                  Next (Iter);
+                  Next (Iter, Db);
                end loop;
 
                if Get_Proposal (Iter) in Storable_Proposal'Class then
@@ -497,6 +489,7 @@ procedure Completion.Test is
    end Full_Test;
 
    Given_File : Virtual_File;
+   Handler : Abstract_Language_Handler;
 
 begin
    if Argument_Count < 2 then
@@ -504,10 +497,25 @@ begin
       return;
    end if;
 
-   Set_Symbols (Construct_Db, Symbols);
+   Handler := new Ada_Semantic_Tree.Lang.Ada_Language_Handler;
+--   Create_Handler (Handler, Symbols);
+--   Set_Registry (Handler, New_Registry);
+
+   Db := new General_Xref_Database_Record;
+   Db.Initialize
+     (Lang_Handler => Handler,
+      Symbols      => Symbols,
+      Registry     => New_Registry);
+   Set_Provider
+     (Db.Constructs,
+      new File_Buffer_Provider);
+
+--   Handler.Register_Language (Ada_Lang, null);
    Set_Symbols (Ada_Lang, Symbols);
 
    Given_File := Create_From_Base (+Argument (1));
+
+   Tree.Load_Empty_Project;
 
    if Argument (2) = "parse" then
       Parse_File (Given_File);
@@ -542,7 +550,7 @@ begin
 
    Flush;
 
-   Free (Construct_Db);
+   Destroy (Db);
 
 exception
    when E : others =>
