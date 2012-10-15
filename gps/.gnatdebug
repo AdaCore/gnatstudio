@@ -56,11 +56,8 @@ ENTITIES.FORCE_UNIQUE_REF         = yes
 ENTITIES.QUERIES_FILE_GRANULARITY = yes
 ENTITIES.ASSERT                   = no
 
---  Enable this to activate the use of sql-based entities
-ENTITIES.SQLITE                   = no
-
 --  Deactivate SQL traces by default
-SQL.*                             = yes
+SQL.*                             = no
 
 --  Projects. Unfortunately the traces from PROJECTS.GNAT go to stdout
 
@@ -80,6 +77,9 @@ ENTITIES.DEBUG=no
 ENTITIES.DUMP = no
 ENTITIES.REF  = no
 ENTITIES.QUERIES = no
+
+--  Enable this to activate the use of sql-based entities
+ENTITIES.SQLITE                   = no
 
 SCRIPTS.REF = no
 CONTEXTS.REF = no
