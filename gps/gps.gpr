@@ -63,10 +63,8 @@ project GPS is
    end Builder;
 
    package Compiler renames Shared.Compiler;
-
-   package Binder is
-      for Default_Switches ("Ada") use ("-E");
-   end Binder;
+   package Binder renames Shared.Binder;
+   package IDE renames Shared.IDE;
 
    package Linker is
       case Shared.OS is
@@ -87,7 +85,5 @@ project GPS is
             for Implementation ("dde") use "dde__default.adb";
       end case;
    end Naming;
-
-   package IDE renames Shared.IDE;
 
 end GPS;

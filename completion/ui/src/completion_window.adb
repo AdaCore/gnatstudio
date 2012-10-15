@@ -54,6 +54,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Language.Icons;            use Language.Icons;
+with Xref;
 
 package body Completion_Window is
 
@@ -157,7 +158,8 @@ package body Completion_Window is
    --  Return True if completion actually occurred.
 
    function To_Showable_String
-     (P : Root_Proposal'Class) return String;
+     (P : Root_Proposal'Class;
+      Db : access Xref.General_Xref_Database_Record'Class) return String;
    --  Return the string to display in the main window
 
    procedure Fill_Notes_Container
@@ -263,9 +265,10 @@ package body Completion_Window is
    ------------------------
 
    function To_Showable_String
-     (P : Root_Proposal'Class) return String is
+     (P : Root_Proposal'Class;
+      Db : access Xref.General_Xref_Database_Record'Class) return String is
    begin
-      return Escape_Text (Get_Label (P));
+      return Escape_Text (Get_Label (P, Db));
    end To_Showable_String;
 
    ------------------
@@ -453,14 +456,16 @@ package body Completion_Window is
          --  Since we don't know what happened before, we have to assume that
          --  the current iterator does not have a valid proposal anymore. In
          --  that case, we have to get the next element.
-         Next  (Explorer.Iter.all);
+         Next  (Explorer.Iter.all, Explorer.Kernel.Databases);
       end if;
 
       declare
          Proposal   : constant Root_Proposal'Class :=
            Get_Proposal (Explorer.Iter.all);
-         Showable   : constant String := To_Showable_String (Proposal);
-         Completion : constant String := Get_Completion (Proposal);
+         Showable   : constant String :=
+           To_Showable_String (Proposal, Explorer.Kernel.Databases);
+         Completion : constant String :=
+           Get_Completion (Proposal, Explorer.Kernel.Databases);
          List       : Proposals_List.List;
       begin
          --  Check whether the current iter contains the same completion
@@ -474,7 +479,7 @@ package body Completion_Window is
                new String'(Completion),
                Entity_Icons (False, Get_Visibility (Proposal))
                (Get_Category (Proposal)),
-               Get_Caret_Offset (Proposal),
+               Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
                List,
                True);
 
@@ -519,7 +524,7 @@ package body Completion_Window is
          end if;
       end;
 
-      Next (Explorer.Iter.all);
+      Next (Explorer.Iter.all, Explorer.Kernel.Databases);
 
       if Explorer.Shown >= Explorer.Number_To_Show then
          --  There is probably a "computing" iter: remove it

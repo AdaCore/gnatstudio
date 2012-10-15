@@ -16,8 +16,10 @@
 ------------------------------------------------------------------------------
 
 with String_Utils; use String_Utils;
+with GNATCOLL.Xref;
 
 package body Codefix.Error_Lists is
+   use type GNATCOLL.Xref.Visible_Column;
 
    procedure Internal_Add_Error
      (List : Error_Message_List; Error : Error_Message);

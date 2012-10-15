@@ -14,12 +14,13 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with Ada.Calendar;
 with Ada.Containers.Ordered_Maps;
+with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 
 with Commands.GNATTest;
 with Commands.Interactive;
-with Entities;
 with Glib.Object;                       use Glib.Object;
 
 with GNAT.Calendar.Time_IO;
@@ -27,7 +28,7 @@ with GNATCOLL.Projects;
 
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;
+with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
@@ -44,10 +45,9 @@ with Sax.Attributes;
 with Src_Editor_Box;
 with Src_Editor_Buffer;
 with Unicode.CES;
+with Xref;                              use Xref;
 
 package body GNATTest_Module is
-
-   use Ada.Strings.Unbounded;
 
    type GNATTest_Module_Record is new Module_ID_Record with null record;
    GNATTest_Module_ID   : Module_ID;
@@ -222,19 +222,18 @@ package body GNATTest_Module is
 
       Item : Gtk.Menu_Item.Gtk_Menu_Item;
 
-      Entity : constant Entities.Entity_Information :=
-        GPS.Kernel.Contexts.Get_Entity (Context);
+      Entity : constant General_Entity := Get_Entity (Context);
 
-      Declaration : constant Entities.File_Location :=
-           Entities.Get_Declaration_Of (Entity);
+      Declaration : constant General_Entity_Declaration :=
+        Get_Kernel (Context).Databases.Get_Declaration (Entity);
 
       Lookup : Source_Entity;
       Cursor : Source_Entity_Maps.Cursor;
    begin
       Lookup.Source_File := To_Unbounded_String
-        (String (Entities.Get_Filename (Declaration.File).Base_Name));
+        (Declaration.Loc.File.Display_Base_Name);
 
-      Lookup.Line := Declaration.Line;
+      Lookup.Line := Declaration.Loc.Line;
 
       Cursor := Map.Source_Map.Floor (Lookup);
 
@@ -376,13 +375,13 @@ package body GNATTest_Module is
    is
       pragma Unreferenced (Filter);
    begin
-      if not GPS.Kernel.Contexts.Has_Project_Information (Context) then
+      if not Has_Project_Information (Context) then
          return False;
       end if;
 
       declare
          Project : constant GNATCOLL.Projects.Project_Type
-            := GPS.Kernel.Contexts.Project_Information (Context);
+            := Project_Information (Context);
 
          Value : constant String := Get_Mapping_File (Project);
       begin
@@ -401,13 +400,13 @@ package body GNATTest_Module is
    is
       pragma Unreferenced (Filter);
    begin
-      if not GPS.Kernel.Contexts.Has_Project_Information (Context) then
+      if not Has_Project_Information (Context) then
          return False;
       end if;
 
       declare
          Project : constant GNATCOLL.Projects.Project_Type
-           := GPS.Kernel.Contexts.Project_Information (Context);
+           := Project_Information (Context);
       begin
          return Harness_Project_Exists (Project);
       end;
@@ -451,9 +450,9 @@ package body GNATTest_Module is
    is
       pragma Unreferenced (Filter);
    begin
-      if GPS.Kernel.Contexts.Has_File_Information (Context) then
+      if Has_File_Information (Context) then
          return Test_Entity_Maps.Has_Element
-             (Find_In_Map (GPS.Kernel.Contexts.File_Information (Context)));
+             (Find_In_Map (File_Information (Context)));
       else
          return False;
       end if;
@@ -472,8 +471,8 @@ package body GNATTest_Module is
       File : GNATCOLL.VFS.Virtual_File;
       Info : GNATCOLL.Projects.File_Info;
    begin
-      if GPS.Kernel.Contexts.Has_File_Information (Context) then
-         File := GPS.Kernel.Contexts.File_Information (Context);
+      if Has_File_Information (Context) then
+         File := File_Information (Context);
 
          if File.Is_Regular_File then
             Info := GPS.Kernel.Project.Get_Registry
@@ -808,7 +807,7 @@ package body GNATTest_Module is
      return String is
 
       Cursor : constant Test_Entity_Maps.Cursor :=
-        Find_In_Map (GPS.Kernel.Contexts.File_Information (Context));
+        Find_In_Map (File_Information (Context));
    begin
       if Test_Entity_Maps.Has_Element (Cursor) then
          return GPS.Kernel.Modules.UI.Emphasize

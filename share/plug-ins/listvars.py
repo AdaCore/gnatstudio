@@ -37,7 +37,7 @@ def list_vars (subprogram, global_only=False):
    # Editor.register_highlighting ("var refs", "light green")
 
    for e in locFile.entities(local=False):
-      if e.category() == "object":
+      if not e.is_type():
          found = False
          for r in e.references (include_implicit=True, in_file=locFile):
             if not found \
@@ -73,8 +73,7 @@ def list_vars (subprogram, global_only=False):
 
 def on_filter (context):
    return (isinstance (context, GPS.EntityContext) and
-     context.entity() and
-     (context.entity().category() == "subprogram"))
+     context.entity() and context.entity().is_subprogram())
 
 def on_label (context):
    entity = context.entity()

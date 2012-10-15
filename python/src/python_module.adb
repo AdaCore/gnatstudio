@@ -25,8 +25,8 @@ with GNATCOLL.Python;                use GNATCOLL.Python;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
-with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
+with GNATCOLL.Xref;
 
 with Basic_Types;
 
@@ -36,7 +36,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Commands.Custom;            use Commands.Custom;
-with Entities;                   use Entities;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
@@ -51,9 +50,11 @@ with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
 with System;
 with Traces;                     use Traces;
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with Xref;                       use Xref;
 
 package body Python_Module is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me  : constant Debug_Handle := Create ("Python_Module");
 
@@ -592,73 +593,33 @@ package body Python_Module is
    procedure Python_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Entity  : constant Entity_Information := Get_Data (Data, 1);
-      Entity2 : Entity_Information;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+      Entity  : constant General_Entity := Get_Data (Data, 1);
+      Entity2 : General_Entity;
+      Decl    : General_Entity_Declaration;
    begin
       if Command = "__str__"
         or else Command = "__repr__"
       then
-         if Is_Predefined_Entity (Entity) then
-            Set_Return_Value (Data, Get (Get_Name (Entity)).all);
+         if Kernel.Databases.Is_Predefined_Entity (Entity) then
+            Set_Return_Value (Data, Kernel.Databases.Get_Name (Entity));
          else
+            Decl := Kernel.Databases.Get_Declaration (Entity);
+
             Set_Return_Value
               (Data,
-               Get (Get_Name (Entity)).all & ':'
-               & (+Base_Name
-                 (Get_Filename
-                    (Get_File (Get_Declaration_Of (Entity)))))
-               & ':'
-               & Image (Get_Line (Get_Declaration_Of (Entity))) & ':'
-               & Image (Integer (Get_Column (Get_Declaration_Of (Entity)))));
+               Kernel.Databases.Get_Name (Entity) & ':'
+               & (+Decl.Loc.File.Base_Name) & ':'
+               & Image (Decl.Loc.Line) & ':'
+               & Image (Integer (Decl.Loc.Column)));
          end if;
 
       elsif Command = "__hash__" then
-         Set_Return_Value
-           (Data, Integer
-              (Hash (Get (Get_Name (Entity)).all
-                     & (+Full_Name (Get_Filename
-                       (Get_File (Get_Declaration_Of (Entity)))))
-                     & Image (Get_Line (Get_Declaration_Of (Entity)))
-                     & Image
-                       (Integer (Get_Column (Get_Declaration_Of (Entity)))))));
+         Set_Return_Value (Data, Kernel.Databases.Hash (Entity));
 
       elsif Command = "__cmp__" then
          Entity2 := Get_Data (Data, 2);
-         if Entity = null then
-            if Entity2 = null then
-               Set_Return_Value (Data, 0);
-            else
-               Set_Return_Value (Data, -1);
-            end if;
-         elsif Entity2 = null then
-            Set_Return_Value (Data, 1);
-         else
-            declare
-               Name1 : constant Cst_String_Access := Get (Get_Name (Entity));
-               Name2 : constant Cst_String_Access := Get (Get_Name (Entity2));
-            begin
-               if Name1.all < Name2.all then
-                  Set_Return_Value (Data, -1);
-               elsif Name1 = Name2 then
-                  declare
-                     File1 : constant Virtual_File := Get_Filename
-                       (Get_File (Get_Declaration_Of (Entity)));
-                     File2 : constant Virtual_File := Get_Filename
-                       (Get_File (Get_Declaration_Of (Entity)));
-                  begin
-                     if File1 < File2 then
-                        Set_Return_Value (Data, -1);
-                     elsif File1 = File2 then
-                        Set_Return_Value (Data, 0);
-                     else
-                        Set_Return_Value (Data, 1);
-                     end if;
-                  end;
-               else
-                  Set_Return_Value (Data, 1);
-               end if;
-            end;
-         end if;
+         Set_Return_Value (Data, Kernel.Databases.Cmp (Entity, Entity2));
       end if;
 
    exception

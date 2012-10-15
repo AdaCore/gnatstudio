@@ -30,7 +30,6 @@ with Src_Editor_Box;               use Src_Editor_Box;
 with Traces;                       use Traces;
 with Time_Utils;                   use Time_Utils;
 with UTF8_Utils;                   use UTF8_Utils;
-with Entities.Construct_Assistant;
 
 package body Ada_Semantic_Tree_Module is
 
@@ -135,16 +134,12 @@ package body Ada_Semantic_Tree_Module is
       Std_Entities_Files : Virtual_File)
    is
    begin
-      Initialize
+      Set_Provider
         (Get_Construct_Database (Kernel),
-         new GPS_Buffer_Provider'
-           (Buffer_Provider with Kernel => Kernel_Handle (Kernel)),
-         Abstract_Language_Handler (Kernel.Get_Language_Handler));
+         Provider => new GPS_Buffer_Provider'
+           (Buffer_Provider with Kernel => Kernel_Handle (Kernel)));
       Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
         (Get_Construct_Database (Kernel), Std_Entities_Files);
-      Entities.Construct_Assistant.Register_Assistant
-        (Kernel.Get_Construct_Database,
-         Kernel.Get_Database);
    exception
       when E : others =>
          Trace (Exception_Handle, E);

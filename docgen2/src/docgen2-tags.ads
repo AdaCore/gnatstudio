@@ -18,7 +18,6 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
-with Entities;               use Entities;
 with Language;               use Language;
 
 package Docgen2.Tags is
@@ -43,7 +42,7 @@ package Docgen2.Tags is
    procedure Analyse_Comment
      (Comment     : in out Comment_Type;
       Docgen      : Docgen_Object;
-      File        : Source_File;
+      File        : GNATCOLL.VFS.Virtual_File;
       Entity_Name : String;
       Href        : String);
    --  Parse the comments list for user tags.

@@ -125,7 +125,8 @@ package body Completion_Window.Entity_Views is
 
       if Has_Element (C) then
          declare
-            Loc : constant File_Location := Get_Location (Element (C).all);
+            Loc : constant File_Location :=
+              Get_Location (Element (C).all, View.Explorer.Kernel.Databases);
          begin
             Open_File_Editor
               (View.Explorer.Kernel,

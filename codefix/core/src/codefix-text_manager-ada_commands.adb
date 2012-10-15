@@ -17,16 +17,17 @@
 
 with Ada.Characters.Handling;       use Ada.Characters.Handling;
 with GNATCOLL.Symbols;              use GNATCOLL.Symbols;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;                use GNATCOLL.Utils;
+with GNATCOLL.Xref;
 with Case_Handling;                 use Case_Handling;
 with Codefix.Ada_Tools;             use Codefix.Ada_Tools;
 with String_Utils;                  use String_Utils;
 with Language.Ada;                  use Language.Ada;
 with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
-with Entities; use Entities;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Codefix.Text_Manager.Ada_Commands is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Trace_Handle := Create ("Codefix");
 
@@ -303,7 +304,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Instruction       : Ada_Statement;
 
       Location : constant Universal_Location := To_Location
-        (Get_Or_Create (Db   => Get_Context (Current_Text).Construct_Db,
+        (Get_Or_Create (Db   => Get_Context (Current_Text).Db.Constructs,
                         File => Start_Instruction.File),
          Start_Instruction.Line,
          Start_Instruction.Col);
@@ -396,8 +397,7 @@ package body Codefix.Text_Manager.Ada_Commands is
               (Extract_Temp,
                This.Mode,
                Find_Normalized
-                 (Get_Symbols
-                    (Get_Context (Current_Text).Entity_Db),
+                 (Get_Context (Current_Text).Db.Symbols,
                   Current_Cursor.String_Match.all));
          end;
 
@@ -512,7 +512,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             Get_Context (Current_Text),
             To_Location
               (Get_Or_Create
-                 (Get_Context (Current_Text).Construct_Db, Word.File),
+                 (Get_Context (Current_Text).Db.Constructs, Word.File),
                Word.Line,
                Word.Col));
 
@@ -523,7 +523,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             Get_Context (Current_Text),
             To_Location
               (Get_Or_Create
-                 (Get_Context (Current_Text).Construct_Db, Word.File),
+                 (Get_Context (Current_Text).Db.Constructs, Word.File),
                Word.Line,
                Word.Col));
 
@@ -565,7 +565,7 @@ package body Codefix.Text_Manager.Ada_Commands is
                   Get_Context (Current_Text),
                   To_Location
                     (Get_Or_Create
-                       (Get_Context (Current_Text).Construct_Db, Word.File),
+                       (Get_Context (Current_Text).Db.Constructs, Word.File),
                      Data (Clause_Node).Line,
                      Data (Clause_Node).Col));
 
@@ -574,7 +574,7 @@ package body Codefix.Text_Manager.Ada_Commands is
                   Mode => Erase,
                   Name => Find_Normalized
                     (Symbols =>
-                       Get_Symbols (Get_Context (Current_Text).Entity_Db),
+                       Get_Context (Current_Text).Db.Symbols,
                      Name    => Data (Clause_Node).Get_Word));
 
                Free (Use_Pck);
@@ -606,7 +606,7 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Self => Clauses_Pkg,
          Mode => Erase,
          Name => Find_Normalized
-           (Symbols => Get_Symbols (Get_Context (Current_Text).Entity_Db),
+           (Symbols => Get_Context (Current_Text).Db.Symbols,
             Name    => Word.Get_Word));
 
       if Last_With /= Null_File_Cursor then
@@ -1042,7 +1042,7 @@ package body Codefix.Text_Manager.Ada_Commands is
            (Work_Extract,
             New_Instr,
             Find_Normalized
-              (Get_Symbols (Get_Context (Current_Text).Entity_Db),
+              (Get_Context (Current_Text).Db.Symbols,
                This.Name.all));
 
          Col_Decl := New_Instr'First;
@@ -2389,7 +2389,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Pragma_Cursor.Set_File (Cursor.Get_File);
 
       Name := Find_Normalized
-        (Symbols => Get_Symbols (Get_Context (Current_Text).Entity_Db),
+        (Symbols => Get_Context (Current_Text).Db.Symbols,
          Name    => This.Element_Name.all);
 
       while It /= Null_Construct_Tree_Iterator loop

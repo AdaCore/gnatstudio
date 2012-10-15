@@ -16,12 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 with GNAT.Regexp;
 with GNAT.Strings;
 
 with Basic_Types;
-with Entities;
 with Input_Sources.File;
 with Glib.Object;
 with Gtk.Handlers;
@@ -32,15 +31,16 @@ with Gtk.Widget;
 with Gtkada.MDI;
 with GPS.Editors.Line_Information;
 with GPS.Intl;
-with GPS.Kernel.Console;
-with GPS.Kernel.Contexts;
+with GPS.Kernel.Console;            use GPS.Kernel;
+with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;
 with GNATCOLL.Projects;
-with Traces;
+with Traces;                        use Traces;
+with Xref;                          use Xref;
 
 with GNATStack.CI_Editors;
 with GNATStack.CI_Utilities;
@@ -50,7 +50,6 @@ with GNATStack.Shell_Commands;
 
 package body GNATStack.Module is
 
-   use Ada.Strings.Unbounded;
    use GPS.Editors.Line_Information;
    use GPS.Intl;
    use GPS.Kernel.Modules.UI;
@@ -60,7 +59,6 @@ package body GNATStack.Module is
    use GNATStack.Data_Model.Subprogram_Information_Sets;
    use GNATStack.Data_Model.Subprogram_Information_Vectors;
    use GNATStack.Data_Model.Subprogram_Location_Sets;
-   use Traces;
    use type GPS.Kernel.MDI.GPS_MDI_Child;
 
    Stack_Analysis_Name : constant String := "Stack Analysis";
@@ -229,15 +227,15 @@ package body GNATStack.Module is
       end Lookup;
 
       Item          : Gtk.Menu_Item.Gtk_Menu_Item;
-      File_Location : Entities.File_Location;
+      Decl          : General_Entity_Declaration;
 
    begin
       if not Self.Module.Loaded then
          return;
       end if;
 
-      if GPS.Kernel.Contexts.Has_File_Information (Context) then
-         Module.File := GPS.Kernel.Contexts.File_Information (Context);
+      if Has_File_Information (Context) then
+         Module.File := File_Information (Context);
          Gtk.Menu_Item.Gtk_New (Item, -"Show stack usage");
          Menu.Append (Item);
          Object_Callbacks.Connect
@@ -252,22 +250,18 @@ package body GNATStack.Module is
             Object_Callbacks.To_Marshaller (On_Hide_Stack_Usage'Access));
       end if;
 
-      if GPS.Kernel.Contexts.Has_Entity_Name_Information (Context)
-        and GPS.Kernel.Contexts.Has_Entity_Column_Information (Context)
+      if Has_Entity_Name_Information (Context)
+        and then Has_Entity_Column_Information (Context)
       then
-         File_Location :=
-           Entities.Get_Declaration_Of
-             (GPS.Kernel.Contexts.Get_Entity (Context));
+         Decl := Get_Kernel (Context).Databases.Get_Declaration
+           (Get_Entity (Context));
 
          Module.Subprogram :=
            Lookup
-             (Ada.Strings.Unbounded.To_Unbounded_String
-                (GPS.Kernel.Contexts.Entity_Name_Information (Context)),
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (String
-                   (Entities.Get_Filename (File_Location.File).Full_Name.all)),
-              File_Location.Line,
-              Positive (File_Location.Column));
+             (To_Unbounded_String (Entity_Name_Information (Context)),
+              To_Unbounded_String (Decl.Loc.File.Display_Full_Name),
+              Decl.Loc.Line,
+              Positive (Decl.Loc.Column));
 
          if Module.Subprogram /= null then
             Gtk.Menu_Item.Gtk_New
@@ -466,7 +460,7 @@ package body GNATStack.Module is
 
                      Module.Data.CIs.Append
                        (new GNATStack.Data_Model.CI_Information'
-                          (Ada.Strings.Unbounded.To_Unbounded_String
+                          (To_Unbounded_String
                              (String
                                 (GNATCOLL.VFS.Create_From_Dir
                                    (Project_Dir,

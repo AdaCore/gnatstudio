@@ -14,13 +14,14 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with GNATCOLL.Symbols;
 
+with GNATCOLL.Symbols;
 with Basic_Types;
-with Entities.Queries;
 with GPS.Kernel.Contexts;
 with Language;
-with Language_Handlers;
+with Language_Handlers;        use Language_Handlers;
+with Language_Utils;           use Language_Utils;
+with Xref;                     use Xref;
 
 package body CodePeer.Module.Filters is
 
@@ -34,8 +35,6 @@ package body CodePeer.Module.Filters is
    is
       pragma Unreferenced (Filter);
 
-      use type Entities.Entity_Information;
-      use type Entities.File_Location;
       use type Language.Language_Category;
       use type GNATCOLL.Symbols.Symbol;
       use type Language.Construct_Access;
@@ -46,19 +45,13 @@ package body CodePeer.Module.Filters is
         GPS.Kernel.Contexts.File_Information (Context);
       Languages  : constant Language_Handlers.Language_Handler :=
         GPS.Kernel.Get_Language_Handler (Kernel);
-      Database   : constant Entities.Entities_Database :=
-        GPS.Kernel.Get_Database (Kernel);
       Constructs : Language.Construct_List;
       Unit       : Language.Construct_Access;
-      Entity     : Entities.Entity_Information;
-      Status     : Entities.Queries.Find_Decl_Or_Body_Query_Status;
-      Location   : Entities.File_Location;
+      Entity     : General_Entity;
 
    begin
-      Entities.Parse_File_Constructs
-        (Language_Handlers.Get_LI_Handler_From_File
-           (Languages, File_Name),
-         Languages,
+      Parse_File_Constructs
+        (Get_Language_From_File (Languages, File_Name),
          File_Name,
          Constructs);
 
@@ -85,49 +78,19 @@ package body CodePeer.Module.Filters is
 
       --  Lookup for declaration of compilation unit.
 
-      Entities.Queries.Find_Declaration
-        (Db              => Database,
-         File_Name       => File_Name,
-         Entity_Name     => "",
-         Line            => Unit.Sloc_Entity.Line,
-         Column          => Basic_Types.Visible_Column_Type
-           (Unit.Sloc_Entity.Column
-            + GNATCOLL.Symbols.Get (Unit.Name)'Length - 1),
-         Entity          => Entity,
-         Status          => Status,
-         Check_Decl_Only => True);
+      Entity := Kernel.Databases.Get_Entity
+        (Name => "",
+         Loc  => (File   => File_Name,
+                  Line   => Unit.Sloc_Entity.Line,
+                  Column => Basic_Types.Visible_Column_Type
+                    (Unit.Sloc_Entity.Column
+                     + GNATCOLL.Symbols.Get (Unit.Name)'Length - 1)));
 
-      if Entity = null then
+      if Entity = No_General_Entity then
          return False;
       end if;
 
-      if Entities.Get_Kind (Entity).Is_Generic then
-         return True;
-      end if;
-
-      --  Lookup for declaration and check is it declaration of generic
-
-      Location := Entities.Get_Declaration_Of (Entity);
-
-      if Location = Entities.No_File_Location then
-         return False;
-      end if;
-
-      Entities.Queries.Find_Declaration
-        (Db              => Database,
-         File_Name       => Entities.Get_Filename (Location.File),
-         Entity_Name     => "",
-         Line            => Location.Line,
-         Column          => Location.Column,
-         Entity          => Entity,
-         Status          => Status,
-         Check_Decl_Only => True);
-
-      if Entity = null then
-         return False;
-      end if;
-
-      return Entities.Get_Kind (Entity).Is_Generic;
+      return Kernel.Databases.Is_Generic (Entity);
    end Filter_Matches_Primitive;
 
 end CodePeer.Module.Filters;

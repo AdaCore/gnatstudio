@@ -25,9 +25,12 @@ package body Engine_Wrappers is
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label (Proposal : Comp_Proposal) return String is
+   overriding function Get_Label
+     (Proposal : Comp_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return String
+   is
    begin
-      return Get_Label (Proposal.P.all);
+      return Get_Label (Proposal.P.all, Db);
    end Get_Label;
 
    --------------------
@@ -35,10 +38,11 @@ package body Engine_Wrappers is
    --------------------
 
    overriding function Get_Completion
-     (Proposal : Comp_Proposal)
+     (Proposal : Comp_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
       return String is
    begin
-      return Get_Completion (Proposal.P.all);
+      return Get_Completion (Proposal.P.all, Db);
    end Get_Completion;
 
    --------------------
@@ -68,10 +72,11 @@ package body Engine_Wrappers is
    ----------------------
 
    overriding function Get_Caret_Offset
-     (Proposal : Comp_Proposal)
+     (Proposal : Comp_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
       return Character_Offset_Type is
    begin
-      return Get_Caret_Offset (Proposal.P.all);
+      return Get_Caret_Offset (Proposal.P.all, Db);
    end Get_Caret_Offset;
 
    ------------------
@@ -79,10 +84,11 @@ package body Engine_Wrappers is
    ------------------
 
    overriding function Get_Location
-     (Proposal : Comp_Proposal)
+     (Proposal : Comp_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
       return File_Location is
    begin
-      return Get_Location (Proposal.P.all);
+      return Get_Location (Proposal.P.all, Db);
    end Get_Location;
 
    ----------
@@ -127,9 +133,11 @@ package body Engine_Wrappers is
    -- Next --
    ----------
 
-   overriding procedure Next (Iter : in out Comp_Iterator) is
+   overriding procedure Next
+     (Iter : in out Comp_Iterator;
+      Db : access Xref.General_Xref_Database_Record'Class) is
    begin
-      Next (Iter.I);
+      Next (Iter.I, Db);
    end Next;
 
    ------------------
@@ -147,7 +155,11 @@ package body Engine_Wrappers is
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label (Proposal : Entity_Proposal) return String is
+   overriding function Get_Label
+     (Proposal : Entity_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return String
+   is
+      pragma Unreferenced (Db);
    begin
       if Proposal.Construct.Name = No_Symbol then
          return "<no name>";
@@ -161,10 +173,11 @@ package body Engine_Wrappers is
    --------------------
 
    overriding function Get_Completion
-     (Proposal : Entity_Proposal)
+     (Proposal : Entity_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
       return String is
    begin
-      return Get_Label (Proposal);
+      return Get_Label (Proposal, Db);
    end Get_Completion;
 
    --------------------
@@ -194,10 +207,11 @@ package body Engine_Wrappers is
    ----------------------
 
    overriding function Get_Caret_Offset
-     (Proposal : Entity_Proposal)
+     (Proposal : Entity_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
       return Character_Offset_Type
    is
-      pragma Unreferenced (Proposal);
+      pragma Unreferenced (Proposal, Db);
    begin
       return 0;
    end Get_Caret_Offset;
@@ -207,9 +221,11 @@ package body Engine_Wrappers is
    ------------------
 
    overriding function Get_Location
-     (Proposal : Entity_Proposal)
+     (Proposal : Entity_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
       return File_Location
    is
+      pragma Unreferenced (Db);
    begin
       return
         (File_Path => Proposal.File,
@@ -240,7 +256,11 @@ package body Engine_Wrappers is
    -- Next --
    ----------
 
-   overriding procedure Next (Iter : in out Entity_Iterator) is
+   overriding procedure Next
+     (Iter : in out Entity_Iterator;
+      Db : access Xref.General_Xref_Database_Record'Class)
+   is
+      pragma Unreferenced (Db);
    begin
       Next (Iter.I);
 
@@ -306,7 +326,8 @@ package body Engine_Wrappers is
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
       return String
    is
-      Loc : constant Completion.File_Location := Proposal.Get_Location;
+      Loc : constant Completion.File_Location :=
+        Proposal.Get_Location (Kernel.Databases);
       Entity : General_Entity;
    begin
       if Proposal.P.Resolver.Get_Id = "Keywords" then
@@ -315,7 +336,7 @@ package body Engine_Wrappers is
 
       Entity := Xref.Get_Entity
         (Kernel.Databases,
-         Name  => Proposal.Get_Label,
+         Name  => Proposal.Get_Label (Kernel.Databases),
          Loc   => (File   => Loc.File_Path,
                    Line   => Loc.Line,
                    Column => Loc.Column));

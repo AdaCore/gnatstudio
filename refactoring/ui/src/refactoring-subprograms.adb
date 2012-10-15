@@ -19,10 +19,9 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Basic_Types;            use Basic_Types;
 with Commands.Interactive;   use Commands, Commands.Interactive;
-with Entities.Queries;       use Entities, Entities.Queries;
 with Glib;                   use Glib;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
-with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
+with GNATCOLL.Xref;          use GNATCOLL.Xref;
 with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
@@ -47,6 +46,7 @@ with Refactoring.Performers; use Refactoring.Performers;
 with Traces;                 use Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with Xref;                   use Xref;
 
 package body Refactoring.Subprograms is
 
@@ -60,8 +60,8 @@ package body Refactoring.Subprograms is
    --  Called for "Extract Method" menu
 
    type Extracted_Entity is record
-      Entity : Entity_Information;
-      Decl   : Entity_Declaration;
+      Entity : General_Entity;
+      Decl   : Refactoring.Services.Entity_Declaration;
       Flags  : Entity_References_Flags;
    end record;
    --  An entity found in the code to be extracted, and various information
@@ -74,10 +74,10 @@ package body Refactoring.Subprograms is
       Code     : Range_Of_Code;
       --  Which code do we want to extract ?
 
-      Source   : Source_File;
+      Source   : Virtual_File;
       --  The file in which the extracted code is at the start
 
-      Parent   : Entity_Information;
+      Parent   : General_Entity;
       --  The subprogram that contained the extracted code before the
       --  refactoring
 
@@ -85,13 +85,14 @@ package body Refactoring.Subprograms is
       --  The entities referenced in the extracted code
    end record;
    Invalid_Context : constant Extract_Context :=
-     (Empty_Range_Of_Code, null, null, Entities => <>);
+     (Empty_Range_Of_Code, No_File, No_General_Entity, Entities => <>);
 
    procedure Free (Context : in out Extract_Context);
    --  Free the memory used by the context
 
    procedure Compute_Context_Entities
-     (Context : in out Extract_Context);
+     (Context : in out Extract_Context;
+      Db      : General_Xref_Database);
    --  Compute all entities referenced in the context.
    --  Returns Invalid_Context if something prevents the refactoring (an error
    --  message has already been displayed in that case).
@@ -103,14 +104,14 @@ package body Refactoring.Subprograms is
    type Parameter_Description is record
       Parameter : Extracted_Entity;
       Is_Tagged : Boolean;
-      PType     : Parameter_Type;
+      PType     : Parameter_Kind;
    end record;
    package Parameter_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Parameter_Description);
 
    type Parameters is tagged record
       List           : Parameter_Lists.List;
-      Last_Out_Param : Entity_Information;
+      Last_Out_Param : General_Entity;
       Count          : Natural;
       Is_Function    : Boolean;
    end record;
@@ -127,7 +128,9 @@ package body Refactoring.Subprograms is
    --  the extracted subprogram
 
    function Generate_Method_Call
-     (Self : Parameters'Class; Name : String) return Unbounded_String;
+     (Self : Parameters'Class;
+      Name : String;
+      Db   : General_Xref_Database) return Unbounded_String;
    --  Generate the code to call the new method
 
    procedure Sort (Self : in out Parameters'Class);
@@ -144,11 +147,12 @@ package body Refactoring.Subprograms is
    --  From the list of entities in the context, compute those that should
    --  become parameters and those that should be local variables
 
-   use Parameter_Lists, Entity_Information_Arrays, Extracted_Entity_Lists;
+   use Parameter_Lists, Extracted_Entity_Lists;
 
    procedure Generate_Extracted_Method
      (Name        : String;
       Context     : Extract_Context;
+      Db          : General_Xref_Database;
       Local_Vars  : out Extracted_Entity_Lists.List;
       Method_Decl : out Unbounded_String;
       Method_Body : out Unbounded_String;
@@ -281,9 +285,9 @@ package body Refactoring.Subprograms is
       Params              : out Parameters'Class;
       Local_Vars          : out Extracted_Entity_Lists.List'Class)
    is
-      type Parameter_Count is array (Parameter_Type) of Natural;
+      type Parameter_Count is array (Parameter_Kind) of Natural;
       Count  : Parameter_Count := (others => 0);
-      Entity : Entity_Information;
+      Entity : General_Entity;
       Flags  : Entity_References_Flags;
       E      : Extracted_Entity;
       P      : Extracted_Entity_Lists.Cursor := Context.Entities.First;
@@ -291,11 +295,11 @@ package body Refactoring.Subprograms is
       Offset : String_Index_Type;
    begin
       Struct := Get_Or_Create
-        (Context.Code.Context.Construct_Db, File => Context.Code.File);
+        (Context.Code.Context.Db.Constructs, File => Context.Code.File);
       Offset := To_String_Index (Struct, Context.Code.From_Line, 1);
 
       Count := (others => 0);
-      Params.Last_Out_Param := null;
+      Params.Last_Out_Param := No_General_Entity;
 
       while Has_Element (P) loop
          E := Element (P);
@@ -390,7 +394,7 @@ package body Refactoring.Subprograms is
       else
          Params.Is_Function := False;
          Params.Count := Integer (Params.List.Length);
-         Params.Last_Out_Param := null;
+         Params.Last_Out_Param := No_General_Entity;
       end if;
    end Compute_Params_And_Vars;
 
@@ -445,14 +449,16 @@ package body Refactoring.Subprograms is
    --------------------------
 
    function Generate_Method_Call
-     (Self : Parameters'Class; Name : String) return Unbounded_String
+     (Self : Parameters'Class;
+      Name : String;
+      Db   : General_Xref_Database) return Unbounded_String
    is
       Param : Parameter_Lists.Cursor;
       Method_Call : Unbounded_String;
    begin
       if Self.Is_Function then
          Method_Call := To_Unbounded_String
-           (Get (Get_Name (Self.Last_Out_Param)).all & " := ");
+           (Db.Get_Name (Self.Last_Out_Param) & " := ");
       end if;
 
       Append (Method_Call, Name);
@@ -466,7 +472,7 @@ package body Refactoring.Subprograms is
               or else not Self.Is_Function
             then
                Append (Method_Call,
-                       Get (Get_Name (Element (Param).Parameter.Entity)).all);
+                       Db.Get_Name (Element (Param).Parameter.Entity));
 
                if Param /= Self.List.Last
                  and then Element (Next (Param)).Parameter.Entity /=
@@ -515,6 +521,7 @@ package body Refactoring.Subprograms is
    procedure Generate_Extracted_Method
      (Name        : String;
       Context     : Extract_Context;
+      Db          : General_Xref_Database;
       Local_Vars  : out Extracted_Entity_Lists.List;
       Method_Decl : out Unbounded_String;
       Method_Body : out Unbounded_String;
@@ -528,7 +535,7 @@ package body Refactoring.Subprograms is
            Editor.New_Location (Context.Code.To_Line, 1).End_Of_Line);
 
       Params               : Parameters;
-      Typ                  : Entity_Information;
+      Typ                  : General_Entity;
       Code_Start, Code_End : Integer;
       Comment_Start, Comment_End : Integer;
       PList, Local, Returns : Unbounded_String;
@@ -540,9 +547,8 @@ package body Refactoring.Subprograms is
       PList := Params.Generate (Context);
 
       if Params.Is_Function then
-         Typ := Get_Type_Of (Params.Last_Out_Param);
-         Returns := To_Unbounded_String
-           (" return " & Get (Get_Name (Typ)).all);
+         Typ := Db.Get_Type_Of (Params.Last_Out_Param);
+         Returns := To_Unbounded_String (" return " & Db.Get_Name (Typ));
       end if;
 
       if Params.Is_Function then
@@ -587,10 +593,10 @@ package body Refactoring.Subprograms is
       Append (Method_Body, Local);
 
       if Params.Is_Function then
-         Typ := Get_Type_Of (Params.Last_Out_Param);
+         Typ := Db.Get_Type_Of (Params.Last_Out_Param);
          Append (Method_Body,
-                 "   " & Get (Get_Name (Params.Last_Out_Param)).all
-                 & " : " & Get (Get_Name (Typ)).all & ";" & ASCII.LF);
+                 "   " & Db.Get_Name (Params.Last_Out_Param)
+                 & " : " & Db.Get_Name (Typ) & ";" & ASCII.LF);
       end if;
 
       Append (Method_Body, "begin" & ASCII.LF & "   ");
@@ -599,13 +605,12 @@ package body Refactoring.Subprograms is
 
       if Params.Is_Function then
          Append (Method_Body, "   return "
-                 & Get (Get_Name (Params.Last_Out_Param)).all
-                 & ";" & ASCII.LF);
+                 & Db.Get_Name (Params.Last_Out_Param) & ";" & ASCII.LF);
       end if;
 
       Append (Method_Body, "end " & Name & ";" & ASCII.LF);
 
-      Method_Call := Params.Generate_Method_Call (Name);
+      Method_Call := Params.Generate_Method_Call (Name, Db => Db);
    end Generate_Extracted_Method;
 
    ------------------------------
@@ -613,29 +618,28 @@ package body Refactoring.Subprograms is
    ------------------------------
 
    procedure Compute_Context_Entities
-     (Context : in out Extract_Context)
+     (Context : in out Extract_Context;
+      Db      : General_Xref_Database)
    is
       Editor  : constant Editor_Buffer'Class :=
         Context.Code.Context.Buffer_Factory.Get (Context.Code.File);
 
       procedure Callback
-        (Entity : Entity_Information; Flags : Entity_References_Flags);
+        (Entity : General_Entity; Flags : Entity_References_Flags);
       --  Called when an entity used in the range of text has been found
 
       procedure Callback
-        (Entity : Entity_Information;
+        (Entity : General_Entity;
          Flags  : Entity_References_Flags)
       is
-         Decl : Entity_Declaration;
+         Decl : Refactoring.Services.Entity_Declaration;
       begin
          Decl := Get_Declaration (Context.Code.Context, Entity);
 
          --  Marks are used to remove the declaration for the entity, which
          --  will not happen unless the entity is declared in the current
          --  file.
-         if Get_Filename (Get_Declaration_Of (Entity).File) =
-           Context.Code.File
-         then
+         if Db.Get_Declaration (Entity).Loc.File = Context.Code.File then
             Create_Marks (Decl, Editor);
          end if;
 
@@ -650,7 +654,8 @@ package body Refactoring.Subprograms is
 
    begin
       Context.Code.For_All_Variable_In_Range
-        (Callback'Access, Omit_Library_Level => True, Success => Success);
+        (Db, Callback'Access,
+         Omit_Library_Level => True, Success => Success);
       if not Success then
          Context := Invalid_Context;
       end if;
@@ -687,6 +692,7 @@ package body Refactoring.Subprograms is
          Generate_Extracted_Method
            (Name        => Method_Name,
             Context     => Context,
+            Db          => Kernel.Databases,
             Local_Vars  => Local_Vars,
             Method_Decl => Method_Decl,
             Method_Body => Method_Body,
@@ -707,7 +713,9 @@ package body Refactoring.Subprograms is
 
                while Has_Element (Iter) loop
                   E := Element (Iter);
-                  if Is_Parameter_Of (E.Entity) = null then
+                  if Kernel.Databases.Is_Parameter_Of (E.Entity) =
+                    No_General_Entity
+                  then
                      E.Decl.Remove;
                   end if;
                   Next (Iter);
@@ -802,10 +810,11 @@ package body Refactoring.Subprograms is
                    File    => File_Information (Context.Context),
                    From_Line => From_Line,
                    To_Line   => To_Line),
-                  Source         => null,
+                  Source         => No_File,
                   Parent         => <>,
                   Entities       => <>);
-      Compute_Context_Entities (Extract);
+      Compute_Context_Entities
+        (Extract, Db => Get_Kernel (Context.Context).Databases);
 
       if Extract = Invalid_Context then
          --  Nothing to do, and error message already printed
@@ -859,10 +868,10 @@ package body Refactoring.Subprograms is
                    File      => Create (Nth_Arg (Data, 1)),
                    From_Line => Nth_Arg (Data, 2),
                    To_Line   => Nth_Arg (Data, 3)),
-                  Source         => null,
+                  Source         => No_File,
                   Parent         => <>,
                   Entities       => <>);
-      Compute_Context_Entities (Context);
+      Compute_Context_Entities (Context, Db => Get_Kernel (Data).Databases);
 
       if Extract_Method
         (Kernel      => Get_Kernel (Data),

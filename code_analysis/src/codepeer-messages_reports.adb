@@ -320,7 +320,7 @@ package body CodePeer.Messages_Reports is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
    is
-      pragma Unreferenced (Menu, Event_Widget);
+      pragma Unreferenced (Menu, Event_Widget, Kernel);
 
       Self       : constant Messages_Report := Messages_Report (Object);
       X          : constant Glib.Gint := Glib.Gint (Event.Button.X);
@@ -356,7 +356,7 @@ package body CodePeer.Messages_Reports is
                Files   => (1 => File.Name));
             GPS.Kernel.Contexts.Set_Entity_Information
               (Context     => Context,
-               Entity_Name => Kernel.Symbols.Find (Subprogram.Name.all));
+               Entity_Name => Subprogram.Name.all);
 
          elsif File /= null then
             GPS.Kernel.Contexts.Set_File_Information

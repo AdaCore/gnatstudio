@@ -31,12 +31,10 @@ with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 
 with Ada_Semantic_Tree.Assistants;   use Ada_Semantic_Tree.Assistants;
 with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
-with Cpp_Module;                     use Cpp_Module;
-with Entities;                       use Entities;
-with Entities.Queries;               use Entities.Queries;
 with Language.C;                     use Language.C;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Language.Tree;                  use Language.Tree;
@@ -44,9 +42,10 @@ with Language;                       use Language;
 with Projects;                       use Projects;
 with Language_Handlers;              use Language_Handlers;
 with Language.Ada;                   use Language.Ada;
-with ALI_Parser;                     use ALI_Parser;
+with Xref;                           use Xref;
 
 procedure Ada_Semantic_Tree.Crash_Test is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Project_Name   : GNAT.Strings.String_Access;
    Unique_Project : Boolean := False;
@@ -72,8 +71,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
    Tree         : constant Project_Tree_Access := new Project_Tree;
    New_Registry : Project_Registry_Access := Create (Tree);
 
-   Entities_Db  : Entities_Database;
-   Construct_Db : constant Construct_Database_Access := new Construct_Database;
+   Db  : General_Xref_Database;
 
    procedure Read_Next_Word
      (Buffer     : access String;
@@ -165,61 +163,52 @@ procedure Ada_Semantic_Tree.Crash_Test is
       File_Node : Structured_File_Access;
       Index     : Integer := 1;
       Buffer    : GNAT.Strings.String_Access;
-      ALI_Entity  : Entity_Information;
+      ALI_Entity  : General_Entity;
 
       Construct_Entity : Entity_Access;
-      Status    : Find_Decl_Or_Body_Query_Status;
 
       Line   : Integer;
       Column : Visible_Column_Type;
 
       function Equals
-        (E_Location  : File_Location;
+        (E_Location  : General_Location;
          C_File      : Structured_File_Access;
          C_Construct : Simple_Construct_Information) return Boolean;
 
       procedure Test_Loc (Index : in out Integer);
 
       function Equals
-        (E_Location  : File_Location;
+        (E_Location  : General_Location;
          C_File      : Structured_File_Access;
          C_Construct : Simple_Construct_Information) return Boolean
       is
-         ALI_File : Source_File;
+         ALI_File : constant Virtual_File := E_Location.File;
       begin
-         ALI_File := Get_File (E_Location);
-
-         if ALI_File = null then
+         if ALI_File = No_File then
             return False;
          else
             return
-              Get_File_Path (C_File)
-              = Get_Filename (ALI_File)
-              and then C_Construct.Sloc_Entity.Line
-                = Get_Line (E_Location)
-              and then C_Construct.Sloc_Entity.Column
-                = Integer (Get_Column (E_Location));
+              Get_File_Path (C_File) = ALI_File
+              and then C_Construct.Sloc_Entity.Line = E_Location.Line
+              and then C_Construct.Sloc_Entity.Column =
+                Integer (E_Location.Column);
          end if;
       end Equals;
 
-      procedure Log_Entity (Decl : File_Location);
+      procedure Log_Entity (Decl : General_Location);
 
-      procedure Log_Entity (Decl : File_Location) is
-         ALI_File : Source_File;
+      procedure Log_Entity (Decl : General_Location) is
+         ALI_File : constant Virtual_File := Decl.File;
       begin
-         ALI_File := Get_File (Decl);
-
          Log ("E[");
 
-         if ALI_File /= null then
-            Log (String (Base_Name (Get_Filename (Get_File (Decl)))));
+         if ALI_File /= No_File then
+            Log (Decl.File.Display_Base_Name);
          else
             Log ("<null>");
          end if;
 
-         Log
-           (":" & Get_Line (Decl)'Img
-            & ":" & Get_Column (Decl)'Img & "]");
+         Log (":" & Decl.Line'Img & ":" & Decl.Column'Img & "]");
       end Log_Entity;
 
       procedure Test_Loc (Index : in out Integer) is
@@ -241,15 +230,9 @@ procedure Ada_Semantic_Tree.Crash_Test is
             Word_End := Buffer'Last;
          end if;
 
-         Find_Declaration
-           (Db              => Entities_Db,
-            File_Name       => File,
-            Entity_Name     => Buffer (Word_Begin .. Word_End),
-            Line            => Line,
-            Column          => Column,
-            Entity          => ALI_Entity,
-            Status          => Status,
-            Check_Decl_Only => False);
+         ALI_Entity := Db.Get_Entity
+           (Loc  => (File, Line, Column),
+            Name => Buffer (Word_Begin .. Word_End));
          Construct_Entity := Ada_Tree_Lang.Find_Declaration
            (File   => File_Node,
             Line   => Line,
@@ -261,12 +244,11 @@ procedure Ada_Semantic_Tree.Crash_Test is
             --  all keyword - doesn't correspond to anything in the ALI
 
             null;
-         elsif Status /= Entities.Queries.Success
+         elsif ALI_Entity /= No_General_Entity
            and then Construct_Entity = Null_Entity_Access
          then
             null;
-         elsif
-           Status /= Entities.Queries.Success
+         elsif ALI_Entity /= No_General_Entity
            and then Construct_Entity /= Null_Entity_Access
          then
             Local_Result.Phantom := Local_Result.Phantom + 1;
@@ -290,7 +272,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
               ("[" & Buffer (Word_Begin .. Word_End) & "] "
                & String (Base_Name (File)) & ":" & Line'Img & ":"
                & Column'Img & ":");
-            Log_Entity (Get_Declaration_Of (ALI_Entity));
+            Log_Entity (Db.Get_Declaration (ALI_Entity).Loc);
             Log (",C[null]");
             Log ((1 => ASCII.LF));
          else
@@ -303,8 +285,8 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
                C_Buffer : constant GNAT.Strings.String_Access :=
                  Get_Buffer (Get_File (Construct_Entity));
-               E_Location : constant File_Location :=
-                 Get_Declaration_Of (ALI_Entity);
+               E_Location : constant General_Location :=
+                 Db.Get_Declaration (ALI_Entity).Loc;
             begin
                --  The ALI database and the Construct database don't agree
                --  where names are starting for composite identifers, so
@@ -359,7 +341,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
       end Test_Loc;
 
    begin
-      File_Node := Get_Or_Create (Construct_Db, File);
+      File_Node := Get_Or_Create (Db.Constructs, File);
       Buffer := Get_Buffer (File_Node);
 
       if Line_To_Test = -1 then
@@ -469,19 +451,17 @@ begin
       end case;
    end loop;
 
-   Entities_Db := Create (New_Registry, Construct_Db);
-   Set_Symbols (Entities_Db, Symbols);
+   Language_Handlers.Create_Handler (Handler, Symbols);
+   Db := new General_Xref_Database_Record;
+   Db.Initialize
+     (Lang_Handler => Handler,
+      Symbols      => Symbols,
+      Registry     => New_Registry,
+      Subprogram_Ref_Is_Call => False);
 
-   declare
-      CPP_LI : LI_Handler;
-   begin
-      Language_Handlers.Create_Handler (Handler, Symbols);
-      Register_Language_Handler (Entities_Db, Handler);
-      CPP_LI := Create_CPP_Handler (Entities_Db, New_Registry.all, Handler);
-      Register_Language (Handler, C_Lang, null, CPP_LI);
-      New_Registry.Environment.Register_Default_Language_Extension
-         ("c", ".h", ".c");
-   end;
+   Register_Language (Handler, C_Lang, null);
+   New_Registry.Environment.Register_Default_Language_Extension
+     ("c", ".h", ".c");
 
    Compute_Predefined_Paths;
    New_Registry.Tree.Load
@@ -495,21 +475,13 @@ begin
 
    Set_Registry (Handler, New_Registry);
 
-   Initialize
-     (Construct_Db,
-      new File_Buffer_Provider,
-      Abstract_Language_Handler (Handler));
-   Set_Symbols (Construct_Db, Symbols);
-
    Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
-     (Construct_Db, GNATCOLL.VFS.No_File);
+     (Db.Constructs, GNATCOLL.VFS.No_File);
 
    Register_Language
      (Handler   => Handler,
       Lang      => Ada_Lang,
-      Tree_Lang => Ada_Tree_Lang,
-      LI        => ALI_Parser.Create_ALI_Handler
-        (Entities_Db, New_Registry.all, Handler));
+      Tree_Lang => Ada_Tree_Lang);
 
    if GNAT.Strings."/=" (Unique_File, null) then
       File_To_Analyze := New_Registry.Tree.Create (+Unique_File.all);
@@ -518,8 +490,6 @@ begin
    Ada.Text_IO.Create (Result_File, Out_File, "result.txt");
 
    declare
-      Lock : Construct_Heuristics_Lock :=
-        Lock_Construct_Heuristics (Entities_Db);
       Files     : constant GNATCOLL.VFS.File_Array_Access :=
         New_Registry.Tree.Root_Project.Source_Files (True);
       Files_To_Analyze : constant GNATCOLL.VFS.File_Array_Access :=
@@ -531,14 +501,14 @@ begin
       pragma Unreferenced (File_Node);
    begin
       --  First, generate the whole database
-      Clear (Construct_Db);
+      Clear (Db.Constructs);
 
       for J in Predef_File'Range loop
-         File_Node := Get_Or_Create (Construct_Db, Predef_File (J));
+         File_Node := Get_Or_Create (Db.Constructs, Predef_File (J));
       end loop;
 
       for J in Files.all'Range loop
-         File_Node := Get_Or_Create (Construct_Db, Files (J));
+         File_Node := Get_Or_Create (Db.Constructs, Files (J));
       end loop;
 
       if File_To_Analyze = No_File then
@@ -581,8 +551,6 @@ begin
 
          Analyze_File (File_To_Analyze);
       end if;
-
-      Lock.Unlock_Construct_Heuristics;
    end;
 
    if Verbose then
@@ -600,8 +568,7 @@ begin
       Put_Line (")");
    end if;
 
-   Destroy (Construct_Db);
-   Destroy (Entities_Db);
+   Destroy (Db.Constructs);
    Projects.Destroy (New_Registry);
    Close (Result_File);
 exception

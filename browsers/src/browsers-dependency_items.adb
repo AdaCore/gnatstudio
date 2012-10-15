@@ -38,8 +38,6 @@ with Gtkada.MDI;              use Gtkada.MDI;
 
 with Browsers.Canvas;         use Browsers.Canvas;
 with Commands.Interactive;    use Commands, Commands.Interactive;
-with Entities.Queries;        use Entities.Queries;
-with Entities;                use Entities;
 with Fname;                   use Fname;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
@@ -60,6 +58,7 @@ with Pango.Layout;            use Pango.Layout;
 with Projects;                use Projects;
 with Traces;                  use Traces;
 with XML_Utils;               use XML_Utils;
+with Xref;                    use Xref;
 
 package body Browsers.Dependency_Items is
 
@@ -125,33 +124,21 @@ package body Browsers.Dependency_Items is
 
    type File_Item_Record is new Browsers.Canvas.Arrow_Item_Record with
    record
-      Source : Source_File;
+      Source : Virtual_File;
    end record;
    type File_Item is access all File_Item_Record'Class;
 
    procedure Gtk_New
      (Item    : out File_Item;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      File    : Source_File);
+      File    : Virtual_File);
    --  Create a new dependency item that represents Dep
-
-   procedure Gtk_New
-     (Item            : out File_Item;
-      Browser         : access Browsers.Canvas.General_Browser_Record'Class;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Source_Filename : Virtual_File);
-   --  Create a new dependency item directly from a source filename
 
    procedure Initialize
      (Item    : access File_Item_Record'Class;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      File    : Source_File);
+      File    : Virtual_File);
    --  Internal initialization function
-
-   function Get_Source
-     (Item : access File_Item_Record'Class) return Source_File;
-   pragma Inline (Get_Source);
-   --  Return the source file associated with Item
 
    overriding procedure Destroy (Item : in out File_Item_Record);
    --  Free the memory associated with the item
@@ -194,7 +181,7 @@ package body Browsers.Dependency_Items is
    ----------
 
    type Examine_Dependencies_Idle_Data is record
-      Iter             : Dependency_Iterator_Access;
+      Iter             : File_Iterator_Access;
       Browser          : Dependency_Browser;
       Item             : File_Item;
       Recompute_Layout : Boolean;
@@ -234,7 +221,7 @@ package body Browsers.Dependency_Items is
    function Filter
      (Kernel   : access Kernel_Handle_Record'Class;
       Explicit : Boolean;
-      File     : Source_File) return Boolean;
+      File     : Virtual_File) return Boolean;
    --  A filter function that decides whether Dep should be displayed in the
    --  canvas. It should return false if Dep should not be displayed.
    --
@@ -242,7 +229,7 @@ package body Browsers.Dependency_Items is
    --
    --  ??? This obviously needs to be modifiable from the browser itself.
 
-   function Is_System_File (Source : Source_File) return Boolean;
+   function Is_System_File (Source : Virtual_File) return Boolean;
    --  Return True if Source is a system file (runtime file for Ada).
    --  ??? This should be moved to a more general location, and perhaps be
    --  implemented with support from the project files.
@@ -327,8 +314,6 @@ package body Browsers.Dependency_Items is
          Link   : access Canvas_Link_Record'Class) return Boolean;
       --  Check that Link is still valid
 
-      Source    : constant Source_File := Get_Source (Item);
-
       ---------------
       -- Check_Dep --
       ---------------
@@ -337,20 +322,18 @@ package body Browsers.Dependency_Items is
         (Canvas : access Interactive_Canvas_Record'Class;
          Link   : access Canvas_Link_Record'Class) return Boolean
       is
-         Iter        : File_Dependency_Iterator;
-         Target      : constant File_Item := File_Item (Get_Dest (Link));
-         Target_File : constant Source_File := Get_Source (Target);
+         Kernel : constant Kernel_Handle := Get_Kernel (Browser);
+         Target : constant Virtual_File := File_Item (Get_Dest (Link)).Source;
+         Iter   : File_Iterator := Kernel.Databases.Find_Dependencies (Target);
       begin
-         Find_Dependencies (Iter, Source);
-
-         while not At_End (Iter) loop
-            if Filter (Get_Kernel (Browser), Is_Explicit (Iter), Get (Iter))
-              and then Get (Iter) = Target_File
+         while Iter.Has_Element loop
+            if Filter (Kernel, Explicit => True, File => Iter.Element)
+              and then Iter.Element = Target
             then
                return True;
             end if;
 
-            Next (Iter);
+            Iter.Next;
          end loop;
 
          Remove_Link (Canvas, Link);
@@ -490,7 +473,7 @@ package body Browsers.Dependency_Items is
       Item : Canvas_Item;
    begin
       --  Remove all items from the browser, since they are pointing to invalid
-      --  Source_File anyway, and are no longer relevant for the new project
+      --  Virtual_File anyway, and are no longer relevant for the new project
 
       loop
          Item := Get (Iter);
@@ -561,11 +544,10 @@ package body Browsers.Dependency_Items is
       Child_Browser : MDI_Child;
       Item, Initial : File_Item;
       Link          : Dependency_Link;
-      Source        : Source_File;
-      Intern        : Source_File;
+      Intern        : Virtual_File;
       New_Item      : Boolean;
       Must_Add_Link : Boolean;
-      Iter          : File_Dependency_Iterator;
+      Iter          : File_Iterator;
       Cr            : Cairo_Context;
 
    begin
@@ -575,11 +557,10 @@ package body Browsers.Dependency_Items is
       Child_Browser := Open_Dependency_Browser (Kernel);
       Browser := Dependency_Browser (Get_Widget (Child_Browser));
 
-      Source := Get_Or_Create (Get_Database (Kernel), File);
       Initial := File_Item (Find_File (Browser, File));
 
       if Initial = null then
-         Gtk_New (Initial, Browser, Kernel, File);
+         Gtk_New (Initial, Browser, File);
          Put (Get_Canvas (Browser), Initial);
          Refresh (Initial);
       end if;
@@ -590,12 +571,12 @@ package body Browsers.Dependency_Items is
          Redraw_Title_Bar (Initial, Cr);
          Destroy (Cr);
 
-         Find_Dependencies (Iter => Iter, File => Source);
+         Iter := Kernel.Databases.Find_Dependencies (File);
 
-         while not At_End (Iter) loop
-            Intern := Get (Iter);
-            if Filter (Kernel, Is_Explicit (Iter), Intern) then
-               Item := File_Item (Find_File (Browser, Get_Filename (Intern)));
+         while Iter.Has_Element loop
+            Intern := Iter.Element;
+            if Filter (Kernel, Explicit => True, File => Intern) then
+               Item := File_Item (Find_File (Browser, Intern));
                New_Item := Item = null;
                Must_Add_Link := True;
 
@@ -610,7 +591,7 @@ package body Browsers.Dependency_Items is
                end if;
 
                if Must_Add_Link then
-                  Gtk_New (Link, Is_Explicit (Iter));
+                  Gtk_New (Link, Explicit => True);
                   Add_Link (Get_Canvas (Browser),
                             Link => Link,
                             Src  => Initial,
@@ -624,7 +605,7 @@ package body Browsers.Dependency_Items is
                Refresh (Item);
             end if;
 
-            Next (Iter);
+            Iter.Next;
          end loop;
 
          --  Center the initial item
@@ -689,45 +670,40 @@ package body Browsers.Dependency_Items is
    is
       Child : File_Item;
       Link  : Browser_Link;
-      Dep   : Source_File;
+      Dep   : Virtual_File;
    begin
-      if At_End (Data.Iter.all) then
+      if not Data.Iter.Has_Element then
          return False;
       else
-         Dep := Get (Data.Iter.all);
-         if Dep /= null
-           and then Filter
-             (Get_Kernel (Data.Browser), Is_Explicit (Data.Iter.all), Dep)
+         Dep := Data.Iter.Element;
+         if Filter
+           (Get_Kernel (Data.Browser), Explicit => True, File => Dep)
          then
-            declare
-               File : constant Virtual_File := Get_Filename (Dep);
-            begin
-               Child := File_Item (Find_File (Data.Browser, File));
-               if Child = null then
-                  Gtk_New (Child, Data.Browser,
-                           Get_Kernel (Data.Browser), File);
-                  Put (Get_Canvas (Data.Browser), Child);
-               end if;
+            Child := File_Item (Find_File (Data.Browser, Dep));
+            if Child = null then
+               Gtk_New (Child, Data.Browser, Dep);
+               Put (Get_Canvas (Data.Browser), Child);
+            end if;
 
-               if not Has_Link
-                 (Get_Canvas (Data.Browser), Child, Data.Item)
-               then
-                  Link := new Browser_Link_Record;
-                  Add_Link
-                    (Get_Canvas (Data.Browser), Link => Link,
-                     Src => Child, Dest => Data.Item);
-               end if;
+            if not Has_Link
+              (Get_Canvas (Data.Browser), Child, Data.Item)
+            then
+               Link := new Browser_Link_Record;
+               Add_Link
+                 (Get_Canvas (Data.Browser), Link => Link,
+                  Src => Child, Dest => Data.Item);
+            end if;
 
-               Refresh (Child);
-            end;
+            Refresh (Child);
          end if;
 
-         Next (Data.Iter.all);
+         Data.Iter.Next;
          return True;
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Exception_Handle, E);
          return False;
    end Examine_Ancestors_Idle;
 
@@ -758,7 +734,7 @@ package body Browsers.Dependency_Items is
       Item := File_Item (Find_File (Browser, File));
 
       if Item = null then
-         Gtk_New (Item, Browser, Kernel, File);
+         Gtk_New (Item, Browser, File);
          Put (Get_Canvas (Browser), Item);
          Refresh (Item);
       end if;
@@ -768,14 +744,11 @@ package body Browsers.Dependency_Items is
       Redraw_Title_Bar (Item, Cr);
       Destroy (Cr);
 
-      Data := (Iter             => new Dependency_Iterator,
-               Browser          => Browser,
-               Item             => Item,
+      Data := (Iter      => new File_Iterator'
+                 (Kernel.Databases.Find_Ancestor_Dependencies (File)),
+               Browser   => Browser,
+               Item      => Item,
                Recompute_Layout => Recompute_Layout);
-      Find_Ancestor_Dependencies
-        (Iter         => Data.Iter.all,
-         File         => Get_Or_Create (Get_Database (Kernel), File),
-         Include_Self => False);
 
       if Interactive then
          Browser.Idle_Id := Dependency_Idle.Idle_Add
@@ -806,8 +779,8 @@ package body Browsers.Dependency_Items is
    -- Is_System_File --
    --------------------
 
-   function Is_System_File (Source : Source_File) return Boolean is
-      Name : constant Filesystem_String := Base_Name (Get_Filename (Source));
+   function Is_System_File (Source : Virtual_File) return Boolean is
+      Name : constant Filesystem_String := Source.Base_Name;
    begin
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := +Name;
@@ -825,7 +798,7 @@ package body Browsers.Dependency_Items is
    function Filter
      (Kernel   : access Kernel_Handle_Record'Class;
       Explicit : Boolean;
-      File     : Source_File) return Boolean
+      File     : Virtual_File) return Boolean
    is
       Explicit_Dependency : Boolean;
       System_File         : Boolean;
@@ -858,7 +831,7 @@ package body Browsers.Dependency_Items is
       loop
          Item := Get (Iter);
          exit when Item = null
-           or else Get_Filename (Get_Source (File_Item (Item))) = Filename;
+           or else File_Item (Item).Source = Filename;
 
          Next (Iter);
       end loop;
@@ -993,33 +966,26 @@ package body Browsers.Dependency_Items is
          Name_Parameters (Data, (1 => Include_Implicit_Cst'Access,
                                  2 => Include_System_Cst'Access));
          declare
-            Iter       : File_Dependency_Iterator;
-            Dependency : Source_File;
-            Source     : Source_File;
+            Dependency : Virtual_File;
+
             Include_Implicit : constant Boolean := Nth_Arg (Data, 2, False);
+            pragma Unreferenced (Include_Implicit);
+
             Include_System   : constant Boolean := Nth_Arg (Data, 3, True);
+            Iter : File_Iterator := Kernel.Databases.Find_Dependencies (File);
          begin
             Set_Return_Value_As_List (Data);
-            Source := Get_Or_Create (Get_Database (Kernel), File);
-            Find_Dependencies
-              (Iter => Iter,
-               File => Source);
 
-            while not At_End (Iter) loop
-               Dependency := Get (Iter);
+            while Iter.Has_Element loop
+               Dependency := Iter.Element;
 
-               if Dependency /= null
-                 and then (Include_Implicit or else Is_Explicit (Iter))
-                 and then
-                   (Include_System or else not Is_System_File (Dependency))
-               then
+               if Include_System or else not Is_System_File (Dependency) then
                   Set_Return_Value
                     (Data,
-                     Create_File (Get_Script (Data),
-                       Get_Filename (Dependency)));
+                     Create_File (Get_Script (Data), Dependency));
                end if;
 
-               Next (Iter);
+               Iter.Next;
             end loop;
          end;
 
@@ -1027,34 +993,26 @@ package body Browsers.Dependency_Items is
          Name_Parameters (Data, (1 => Include_Implicit_Cst'Access,
                                  2 => Include_System_Cst'Access));
          declare
-            Iter       : Dependency_Iterator;
-            Dependency : Source_File;
-            Source     : Source_File;
+            Dependency : Virtual_File;
+
             Include_Implicit : constant Boolean := Nth_Arg (Data, 2, False);
+            pragma Unreferenced (Include_Implicit);
+
             Include_System   : constant Boolean := Nth_Arg (Data, 3, True);
+            Iter       : File_Iterator :=
+              Kernel.Databases.Find_Ancestor_Dependencies (File => File);
          begin
             Set_Return_Value_As_List (Data);
-            Source := Get_Or_Create (Get_Database (Kernel), File);
-            Find_Ancestor_Dependencies
-              (Iter         => Iter,
-               File         => Source,
-               Include_Self => False);
 
-            while not At_End (Iter) loop
-               Dependency := Get (Iter);
+            while Iter.Has_Element loop
+               Dependency := Iter.Element;
 
-               if Dependency /= null
-                 and then (Include_Implicit or else Is_Explicit (Iter))
-                 and then
-                   (Include_System or else not Is_System_File (Dependency))
-               then
+               if Include_System or else not Is_System_File (Dependency) then
                   Set_Return_Value
-                    (Data,
-                     Create_File
-                       (Get_Script (Data), Get_Filename (Dependency)));
+                    (Data, Create_File (Get_Script (Data), Dependency));
                end if;
 
-               Next (Iter);
+               Iter.Next;
             end loop;
          end;
       end if;
@@ -1140,25 +1098,10 @@ package body Browsers.Dependency_Items is
    procedure Gtk_New
      (Item    : out File_Item;
       Browser : access General_Browser_Record'Class;
-      File    : Source_File) is
+      File    : Virtual_File) is
    begin
       Item := new File_Item_Record;
       Initialize (Item, Browser, File);
-   end Gtk_New;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Item            : out File_Item;
-      Browser         : access General_Browser_Record'Class;
-      Kernel          : access Kernel_Handle_Record'Class;
-      Source_Filename : Virtual_File) is
-   begin
-      Item := new File_Item_Record;
-      Initialize (Item, Browser,
-                  Get_Or_Create (Get_Database (Kernel), Source_Filename));
    end Gtk_New;
 
    ----------------
@@ -1168,9 +1111,9 @@ package body Browsers.Dependency_Items is
    procedure Initialize
      (Item : access File_Item_Record'Class;
       Browser : access General_Browser_Record'Class;
-      File  : Source_File) is
+      File  : Virtual_File) is
    begin
-      Initialize (Item, Browser, Display_Base_Name (Get_Filename (File)),
+      Initialize (Item, Browser, File.Display_Base_Name,
                   Examine_From_Dependencies'Access,
                   Examine_Dependencies'Access);
       Item.Source := File;
@@ -1184,8 +1127,7 @@ package body Browsers.Dependency_Items is
      (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_From_Dependencies
-        (Get_Kernel (Get_Browser (Item)),
-         Get_Filename (File_Item (Item).Source));
+        (Get_Kernel (Get_Browser (Item)), File_Item (Item).Source);
    end Examine_From_Dependencies;
 
    --------------------------
@@ -1195,19 +1137,8 @@ package body Browsers.Dependency_Items is
    procedure Examine_Dependencies (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_Dependencies
-        (Get_Kernel (Get_Browser (Item)),
-         Get_Filename (File_Item (Item).Source));
+        (Get_Kernel (Get_Browser (Item)), File_Item (Item).Source);
    end Examine_Dependencies;
-
-   ----------------
-   -- Get_Source --
-   ----------------
-
-   function Get_Source (Item : access File_Item_Record'Class)
-      return Source_File is
-   begin
-      return Item.Source;
-   end Get_Source;
 
    -------------
    -- Gtk_New --
@@ -1237,7 +1168,7 @@ package body Browsers.Dependency_Items is
    function Project_Of
      (Item : access File_Item_Record'Class) return Project_Type
    is
-      File : constant Virtual_File := Get_Filename (Get_Source (Item));
+      File : constant Virtual_File := Item.Source;
       P    : Project_Type;
    begin
       P := Get_Registry
@@ -1272,7 +1203,7 @@ package body Browsers.Dependency_Items is
       if Other_File /= GNATCOLL.VFS.No_File then
          Item := File_Item (Find_File (B, Other_File));
          if Item = null then
-            Gtk_New (Item, B,  Get_Kernel (Context.Context), Other_File);
+            Gtk_New (Item, B,  Other_File);
             Put (Get_Canvas (B), Item);
             Refresh (Item);
 
@@ -1299,12 +1230,11 @@ package body Browsers.Dependency_Items is
       Menu    : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Browser, Menu, Event);
-      Src      : constant Source_File := Get_Source (Item);
-      Filename : constant Virtual_File := Get_Filename (Src);
+      Src      : constant Virtual_File := Item.Source;
    begin
       Set_File_Information
         (Context,
-         Files   => (1 => Filename),
+         Files   => (1 => Src),
          Project => Project_Of (Item));
    end Contextual_Factory;
 

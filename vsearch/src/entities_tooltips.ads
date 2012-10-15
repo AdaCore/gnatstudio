@@ -19,27 +19,21 @@
 --  informations.
 
 with Cairo;            use Cairo;
-
 with GPS.Kernel;       use GPS.Kernel;
-
-with Entities;         use Entities;
-with Entities.Queries; use Entities.Queries;
-
 with Language.Tree.Database; use Language.Tree.Database;
+with Xref;
 
-package Entities.Tooltips is
+package Entities_Tooltips is
 
    function Draw_Tooltip
      (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information;
-      Ref           : Entity_Reference;
-      Status        : Find_Decl_Or_Body_Query_Status;
-      Accurate_Xref : Boolean;
+      Entity        : Xref.General_Entity;
+      Ref           : Xref.General_Entity_Reference;
       Draw_Border   : Boolean) return Cairo_Surface;
    --  Return a tooltip representing Entity.
 
    function Draw_Tooltip
-     (Kernel       : access Kernel_Handle_Record'Class;
+     (Kernel      : access Kernel_Handle_Record'Class;
       Entity      : Entity_Access;
       Draw_Border : Boolean;
       Guess       : Boolean := False) return Cairo_Surface;
@@ -47,4 +41,4 @@ package Entities.Tooltips is
    --  entity information is a guess - may not be the actual one for the
    --  tooltip.
 
-end Entities.Tooltips;
+end Entities_Tooltips;

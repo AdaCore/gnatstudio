@@ -37,9 +37,7 @@ with Pango.Cairo;               use Pango.Cairo;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
-with Entities;                  use Entities;
-with Entities.Queries;          use Entities.Queries;
-with Entities.Tooltips;         use Entities.Tooltips;
+with Entities_Tooltips;         use Entities_Tooltips;
 with GPS.Kernel.Contexts;       use GPS.Kernel, GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -50,9 +48,12 @@ use Src_Editor_Buffer.Line_Information;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 with GPS.Editors;               use GPS.Editors;
+with Xref;                      use Xref;
 
 package body Src_Editor_Box.Tooltips is
+   use type GNATCOLL.Xref.Visible_Column;
 
    V_Padding : constant := 4;
    H_Padding : constant := 5;
@@ -89,9 +90,8 @@ package body Src_Editor_Box.Tooltips is
    procedure Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
       Context : Selection_Context;
-      Entity  : out Entity_Information;
-      Ref     : out Entity_Reference;
-      Status  : out Find_Decl_Or_Body_Query_Status);
+      Entity  : out General_Entity;
+      Ref     : out General_Entity_Reference);
    --  Perform a cross-reference to the declaration of the entity located at
    --  (Line, Column) in Editor. Fail silently when no declaration or no
    --  entity can be located, and set File_Decl to null.
@@ -119,15 +119,13 @@ package body Src_Editor_Box.Tooltips is
    procedure Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
       Context : Selection_Context;
-      Entity  : out Entity_Information;
-      Ref     : out Entity_Reference;
-      Status  : out Find_Decl_Or_Body_Query_Status)
+      Entity  : out General_Entity;
+      Ref     : out General_Entity_Reference)
    is
       Filename : constant Virtual_File := Get_Filename (Editor);
    begin
-      Ref := No_Entity_Reference;
-      Status := Entity_Not_Found;
-      Entity := null;
+      Ref := No_General_Entity_Reference;
+      Entity := No_General_Entity;
 
       if Filename = GNATCOLL.VFS.No_File then
          return;
@@ -135,17 +133,13 @@ package body Src_Editor_Box.Tooltips is
 
       Push_State (Editor.Kernel, Busy);
 
-      --  Don't use Find_Declaration_Or_Overloaded, since we don't want to
-      --  ask the user interactively for the tooltips.
-      Find_Declaration
-        (Db          => Get_Database (Editor.Kernel),
-         File_Name   => Get_Filename (Editor),
+      Editor.Kernel.Databases.Find_Declaration_Or_Overloaded
+        (Loc => (File   => Get_Filename (Editor),
+                 Line   => Contexts.Line_Information (Context),
+                 Column => Entity_Column_Information (Context)),
          Entity_Name => Entity_Name_Information (Context),
-         Line        => Contexts.Line_Information (Context),
-         Column      => Entity_Column_Information (Context),
          Entity      => Entity,
-         Closest_Ref => Ref,
-         Status      => Status);
+         Closest_Ref => Ref);
 
       Pop_State (Editor.Kernel);
 
@@ -445,9 +439,8 @@ package body Src_Editor_Box.Tooltips is
       end;
 
       declare
-         Entity     : Entity_Information;
-         Entity_Ref : Entity_Reference;
-         Status     : Find_Decl_Or_Body_Query_Status;
+         Entity     : General_Entity;
+         Entity_Ref : General_Entity_Reference;
          Context    : Selection_Context := New_Context;
 
          Pix        : Cairo.Cairo_Surface;
@@ -524,19 +517,17 @@ package body Src_Editor_Box.Tooltips is
          --  No module wants to handle this tooltip. Default to built-in
          --  tooltip, based on cross references.
 
-         Get_Declaration_Info
-           (Box, Context, Entity, Entity_Ref, Status);
+         Get_Declaration_Info (Box, Context, Entity, Entity_Ref);
 
-         if Entity = null then
+         if Entity = No_General_Entity then
             return;
          end if;
 
          --  Ref the entity, so that if Draw_Tooltip regenerates the xref info,
          --  we are sure to always have a valid entity reference.
          Ref (Entity);
-         Pix := Draw_Tooltip
-           (Box.Kernel, Entity, Entity_Ref, Status,
-            Box.Source_Buffer.Get_Language.Get_Language_Context.Accurate_Xref,
+         Pix := Entities_Tooltips.Draw_Tooltip
+           (Box.Kernel, Entity, Entity_Ref,
             Draw_Border => False);
 
          Pixmaps.Prepend (Pix);

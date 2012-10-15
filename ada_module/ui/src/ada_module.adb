@@ -21,8 +21,6 @@ with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Intl;                 use GPS.Intl;
-with ALI_Parser;               use ALI_Parser;
-with Entities;                 use Entities;
 with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Language.Ada;             use Language.Ada;
@@ -127,13 +125,8 @@ package body Ada_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
-      LI      : constant Entities.LI_Handler :=
-                  Create_ALI_Handler
-                    (Db => Get_Database (Kernel),
-                     Registry => Project_Registry (Get_Registry (Kernel).all),
-                     Lang_Handler => Handler);
    begin
-      Register_Language (Handler, Ada_Lang, Ada_Tree_Lang, LI => LI);
+      Register_Language (Handler, Ada_Lang, Ada_Tree_Lang);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).Environment.all,
          Language_Name       => "Ada",

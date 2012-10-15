@@ -68,7 +68,7 @@ def get_local_vars (subprogram):
 
       for e in locFile.entities (local=True):
           decl = e.declaration()
-          if e.category() == "object" \
+          if not e.is_type() \
              and decl.file() == locFile \
              and decl.line() >= locFrom \
              and decl.line() <= locTo:

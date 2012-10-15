@@ -22,9 +22,9 @@ WORDS_IN_ONE_BATCH=5
 TIMEOUT=50           # Interval (in milliseconds) between two batches
 
 default_colors =  {
-  "label"      : "lightblue",
-  "literal"    : "lightblue",
-  "object"     : "#ffbeee",
+    #"label"      : "lightblue",
+    #"literal"    : "lightblue",
+    #"object"     : "#ffbeee",
   "subprogram" : "#ffcf90",
   "package/namespace" : "lightgreen",
   "type"              : "lightgreen",
@@ -210,9 +210,12 @@ class LocationHighlighter:
             self.entity_name = entity.name().decode("utf8")
             self.declaration=self.entity.declaration()
 
-            cat = self.entity.category()
-            if cat in editor_location_styles:
-                self.style = editor_location_styles[cat]
+            if self.entity.is_subprogram():
+                self.style = editor_location_styles["subprogram"]
+            elif self.entity.is_container():
+                self.style = editor_location_styles["package/namespace"]
+            elif self.entity.is_type():
+                self.style = editor_location_styles["type"]
             else:
                 self.style = editor_location_styles["unknown"]
 

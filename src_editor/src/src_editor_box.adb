@@ -26,6 +26,7 @@ with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
 with GNATCOLL.Tribooleans;       use GNATCOLL.Tribooleans;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 
 with Gdk;                        use Gdk;
 with Gdk.Event;                  use Gdk.Event;
@@ -65,8 +66,6 @@ with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Entities.Queries;
-
 with Find_Utils;                 use Find_Utils;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
@@ -104,6 +103,7 @@ with Traces;                     use Traces;
 with Xref; use Xref;
 
 package body Src_Editor_Box is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Debug_Handle := Create ("Source_Editor");
 
@@ -226,9 +226,8 @@ package body Src_Editor_Box is
    procedure Append_To_Dispatching_Menu
      (Menu          : access Gtk.Menu.Gtk_Menu_Record'Class;
       Context       : GPS.Kernel.Selection_Context;
-      Force_Freeze  : Boolean;
       Default_Title : String;
-      Filter        : Entities.Reference_Kind_Filter;
+      Filter        : Reference_Kind_Filter;
       Show_Default  : Boolean;
       Callback      : Entity_Callback.Simple_Handler);
    --  Create the submenus for dispatching calls
@@ -312,7 +311,6 @@ package body Src_Editor_Box is
    is
       Entity   : General_Entity;
       Location : General_Location;
-      Db       : General_Xref_Database;
 
    begin
       if Get_Filename (Editor) = GNATCOLL.VFS.No_File then
@@ -321,8 +319,6 @@ package body Src_Editor_Box is
             Mode => Error);
          return;
       end if;
-
-      Db := Kernel.Databases;
 
       Push_State (Kernel_Handle (Kernel), Busy);
 
@@ -333,7 +329,7 @@ package body Src_Editor_Box is
 
       --  Query the entity
 
-      Entity := Get_Entity (Context, Ask_If_Overloaded => True);
+      Entity := Get_Entity (Context);
 
       if Entity = No_General_Entity then
          --  Probably means that we either could not locate the ALI file,
@@ -354,9 +350,9 @@ package body Src_Editor_Box is
       --  Get the declaration/body
 
       if To_Body then
-         Location := Get_Body (Db, Entity);
+         Location := Get_Body (Kernel.Databases, Entity);
       else
-         Location := Get_Declaration (Db, Entity);
+         Location := Kernel.Databases.Get_Declaration (Entity).Loc;
       end if;
 
       --  Open a file editor at the location found
@@ -367,7 +363,7 @@ package body Src_Editor_Box is
             Filename    => Location.File,
             Line        => Convert (Location.Line),
             Column      => Location.Column,
-            Entity_Name => Get_Name (Db, Entity));
+            Entity_Name => Kernel.Databases.Get_Name (Entity));
       end if;
 
       Unref (Entity);
@@ -1414,10 +1410,33 @@ package body Src_Editor_Box is
          Acquire_Focus (Editor.Source_View);
          Place_Cursor (Editor.Source_Buffer, Start_Iter);
 
+         --  Set basic context information about current file
+
+         Set_File_Information
+           (Context,
+            Files  => (1 => Filename),
+            Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+            Column => Expand_Tabs
+              (Get_Buffer (Editor),
+               Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
+               To_Box_Column (Column)));
+
       else
          Get_Iter_At_Line_Offset
            (Editor.Source_Buffer, Entity_Start, Line, Column);
          Copy (Source => Entity_Start, Dest => Cursor_Location);
+
+         --  Set basic context information about current file. Must be done
+         --  before we set the entity information.
+
+         Set_File_Information
+           (Context,
+            Files  => (1 => Filename),
+            Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+            Column => Expand_Tabs
+              (Get_Buffer (Editor),
+               Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
+               To_Box_Column (Column)));
 
          Click_In_Selection :=
            Has_Selection
@@ -1496,16 +1515,14 @@ package body Src_Editor_Box is
 
                      Set_Entity_Information
                        (Context,
-                        Entity_Name   => Kernel.Symbols.Find
-                          (Get_Text (Entity_Start, Entity_End)),
+                        Entity_Name   => Get_Text (Entity_Start, Entity_End),
                         Entity_Column => Expand_Tabs
                           (Editor.Source_Buffer, The_Line, The_Column));
 
                   else
                      Set_Entity_Information
                        (Context,
-                        Entity_Name   => Kernel.Symbols.Find
-                          (Get_Text (Entity_Start, Entity_End)),
+                        Entity_Name   => Get_Text (Entity_Start, Entity_End),
                         Entity_Column => Expand_Tabs
                           (Editor.Source_Buffer, The_Line, The_Column),
                         From_Expression =>
@@ -1519,8 +1536,7 @@ package body Src_Editor_Box is
                else
                   Set_Entity_Information
                     (Context,
-                     Entity_Name   => Kernel.Symbols.Find
-                       (Get_Text (Entity_Start, Entity_End)),
+                     Entity_Name   => Get_Text (Entity_Start, Entity_End),
                      Entity_Column => Expand_Tabs
                        (Editor.Source_Buffer, The_Line, The_Column));
                end if;
@@ -1552,17 +1568,6 @@ package body Src_Editor_Box is
             end if;
          end;
       end if;
-
-      --  Set basic context information about current file
-
-      Set_File_Information
-        (Context,
-         Files  => (1 => Filename),
-         Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-         Column => Expand_Tabs
-           (Get_Buffer (Editor),
-            Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
-            To_Box_Column (Column)));
    end Get_Contextual_Menu;
 
    ---------------
@@ -1576,21 +1581,18 @@ package body Src_Editor_Box is
       pragma Unreferenced (Creator);
 
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Db     : constant General_Xref_Database := Kernel.Databases;
       Entity : constant General_Entity := Get_Entity (Context);
-      Kind   : Entities.E_Kinds;
+      Decl   : General_Entity_Declaration;
 
    begin
       if Entity /= No_General_Entity then
-         Kind := Get_Kind (Db, Entity).Kind;
+         Decl := Kernel.Databases.Get_Declaration (Entity);
 
-         if Entities.Is_Container (Kind)
-           and then not Entities.Body_Is_Full_Declaration (Kind)
-         then
-            return -"Goto body of "
+         if Decl.Body_Is_Full_Declaration then
+            return -"Goto full declaration of "
               & Emphasize (Entity_Name_Information (Context));
          else
-            return -"Goto full declaration of "
+            return -"Goto body of "
               & Emphasize (Entity_Name_Information (Context));
          end if;
       end if;
@@ -1608,7 +1610,8 @@ package body Src_Editor_Box is
    is
       K        : constant Kernel_Handle := Kernel_Handle (Kernel);
       Db       : constant General_Xref_Database := K.Databases;
-      Location : constant General_Location := Get_Declaration (Db, Entity);
+      Location : constant General_Location :=
+        Get_Declaration (Db, Entity).Loc;
    begin
       Go_To_Closest_Match
         (Kernel   => K,
@@ -1651,15 +1654,14 @@ package body Src_Editor_Box is
    procedure Append_To_Dispatching_Menu
      (Menu          : access Gtk.Menu.Gtk_Menu_Record'Class;
       Context       : GPS.Kernel.Selection_Context;
-      Force_Freeze  : Boolean;
       Default_Title : String;
-      Filter        : Entities.Reference_Kind_Filter;
+      Filter        : Reference_Kind_Filter;
       Show_Default  : Boolean;
       Callback      : Entity_Callback.Simple_Handler)
    is
       Item   : Gtk_Menu_Item;
       Label  : Gtk_Label;
-      Pref   : constant Entities.Queries.Dispatching_Menu_Policy :=
+      Pref   : constant Dispatching_Menu_Policy :=
                  Submenu_For_Dispatching_Calls.Get_Pref;
       Count  : Natural := 0;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
@@ -1742,103 +1744,32 @@ package body Src_Editor_Box is
          return True;
       end On_Callee;
 
-      procedure Old_Version;
-      --  Legacy implementation adapted to use General_Entity
-      --  This routine will be eventually removed???
-
-      procedure Old_Version is
-         Db : Entities.Entities_Database;
-
-         use Entities;
-         use Entities.Queries;
-
-      begin
-         Trace (Me, "Computing Dispatch_Submenu: " & Default_Title);
-         Push_State (Kernel, Busy);
-
-         if Force_Freeze then
-            Db := Get_Database (Kernel);
-            pragma Assert (Frozen (Db) = Create_And_Update);
-            Freeze (Db);
-         end if;
-
-         if Pref = Queries.From_Memory then
-            Gtk_New (Label, -"<i>Partial information only</i>");
-            Set_Use_Markup (Label, True);
-            Set_Alignment (Label, 0.0, 0.5);
-            Gtk_New (Item);
-            Add (Item, Label);
-            Set_Sensitive (Item, False);
-            Add (Menu, Item);
-         end if;
-
-         Xref.For_Each_Dispatching_Call
-           (Dbase     => Xref_Db,
-            Entity    => Get_Entity (Context),
-            Ref       => Get_Closest_Ref (Context),
-            On_Callee => On_Callee'Access,
-            Filter    => Filter,
-            Policy    => Pref);
-
-         E_Set.Iterate (Fill_Menu'Access);
-
-         --  If we have not found any possible call, we must be missing some
-         --  .ALI file (for instance the one containing the declaration of the
-         --  tagged type). In that case we show the same info as we would have
-         --  for a non-dispatching call to be as helpful as possible
-
-         if Count = 0 and then Show_Default then
-            Gtk_New
-              (Label,
-               Default_Title
-               & Emphasize (Get (Get_Name (Get_Entity (Context))).all));
-            Set_Use_Markup (Label, True);
-            Set_Alignment (Label, 0.0, 0.5);
-            Gtk_New (Item);
-            Add (Item, Label);
-            Entity_Callback.Object_Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               Callback, Kernel, Get_Entity (Context));
-            Add (Menu, Item);
-         end if;
-
-         if Force_Freeze then
-            Thaw (Db);
-            pragma Assert (Frozen (Db) = Create_And_Update);
-         end if;
-
-         Pop_State (Kernel);
-         Trace (Me, "Done computing Dispatch_Declaration_Submenu");
-
-      exception
-         when E : others =>
-            Trace (Me, E);
-
-            if Frozen (Db) /= Create_And_Update then
-               Thaw (Db);
-            end if;
-
-            Pop_State (Kernel);
-      end Old_Version;
-
-   --  Start of processing for Append_To_Dispatching_Menu
+      --  Start of processing for Append_To_Dispatching_Menu
 
    begin
-      if not Active (Entities.SQLITE) then
-         Old_Version;
-         return;
-      end if;
-
       Trace (Me, "Computing Dispatch_Submenu: " & Default_Title);
       Push_State (Kernel, Busy);
 
       --  Before getting its entity we check if the LI handler has unresolved
       --  imported references to force updating its references
+      --  ??? Seems unneeded
 
       Ensure_Context_Up_To_Date (Context);
 
-      --  Warning: Force_Freeze and Pref are unused in the new implementation
-      --  and will be eventually removed as arguments???
+      --  ??? Should be removed when we get rid of the old LI engine.
+
+      if Pref = From_Memory then
+         Gtk_New (Label, -"<i>Partial information only</i>");
+         Set_Use_Markup (Label, True);
+         Set_Alignment (Label, 0.0, 0.5);
+         Gtk_New (Item);
+         Add (Item, Label);
+         Set_Sensitive (Item, False);
+         Add (Menu, Item);
+      end if;
+
+      --  Warning: Force_Freeze is unused in the new implementation
+      --  and will be eventually removed as argument???
 
       Xref.For_Each_Dispatching_Call
         (Dbase     => Xref_Db,
@@ -1894,9 +1825,8 @@ package body Src_Editor_Box is
       Append_To_Dispatching_Menu
         (Menu          => Menu,
          Context       => Context,
-         Force_Freeze  => False,
          Default_Title => -"Declaration of ",
-         Filter        => Entities.Queries.Entity_Has_Declaration,
+         Filter        => null,
          Show_Default  => True,
          Callback      => On_Goto_Declaration_Of'Access);
    end Append_To_Menu;
@@ -1916,9 +1846,8 @@ package body Src_Editor_Box is
       Append_To_Dispatching_Menu
         (Menu          => Menu,
          Context       => Context,
-         Force_Freeze  => True,
          Default_Title => -"Body of ",
-         Filter        => Entities.Queries.Entity_Has_Body,
+         Filter        => Entity_Has_Body'Access,
          Show_Default  => Has_Body (Context),
          Callback      => On_Goto_Body_Of'Access);
    end Append_To_Menu;
@@ -1932,27 +1861,11 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-
+      Entity : constant General_Entity := Get_Entity (Context);
+      Kernel : constant Kernel_Handle  := Get_Kernel (Context);
    begin
-      if Active (Entities.SQLITE) then
-         declare
-            Entity : constant General_Entity := Get_Entity (Context);
-            Kernel : constant Kernel_Handle  := Get_Kernel (Context);
-            Db     : constant General_Xref_Database := Kernel.Databases;
-         begin
-            return Entity /= No_General_Entity
-              and then Get_Type_Of (Db, Entity) /= No_General_Entity;
-         end;
-      else
-         declare
-            use Entities;
-            Entity : constant Entity_Information := Get_Entity (Context);
-
-         begin
-            return Entity /= null
-              and then Get_Type_Of (Entity) /= null;
-         end;
-      end if;
+      return Entity /= No_General_Entity
+        and then Kernel.Databases.Get_Type_Of (Entity) /= No_General_Entity;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1964,32 +1877,13 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
+      Entity : constant General_Entity := Get_Entity (Context);
+      Kernel : constant Kernel_Handle  := Get_Kernel (Context);
 
    begin
-      if Active (Entities.SQLITE) then
-         declare
-            Entity : constant General_Entity := Get_Entity (Context);
-            Kernel : constant Kernel_Handle  := Get_Kernel (Context);
-            Db     : constant General_Xref_Database := Kernel.Databases;
-
-            use type Entities.Entity_Category;
-            use type Entities.E_Kinds;
-         begin
-            return Entity /= No_General_Entity
-              and then Get_Category (Db, Entity) = Entities.Type_Or_Subtype
-              and then Get_Kind (Db, Entity).Kind = Entities.Access_Kind;
-         end;
-      else
-         declare
-            use Entities;
-            Entity : constant Entity_Information := Get_Entity (Context);
-
-         begin
-            return Entity /= null
-              and then Get_Category (Entity) = Entities.Type_Or_Subtype
-              and then Get_Kind (Entity).Kind = Entities.Access_Kind;
-         end;
-      end if;
+      return Entity /= No_General_Entity
+        and then Kernel.Databases.Is_Access (Entity)
+        and then Kernel.Databases.Is_Type (Entity);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -2023,55 +1917,24 @@ package body Src_Editor_Box is
    function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean is
       Kernel : constant Kernel_Handle  := Get_Kernel (Context);
       Entity : constant General_Entity := Get_Entity (Context);
-
+      Location         : General_Location;
+      Current_Location : General_Location;
    begin
       if Entity = No_General_Entity then
          return False;
-
-      elsif Active (Entities.SQLITE) then
-         declare
-            Db     : constant General_Xref_Database := Kernel.Databases;
-            Location         : General_Location;
-            Current_Location : General_Location;
-
-         begin
-            Current_Location := Get_Declaration (Db, Entity);
-
-            Find_Next_Body
-              (Dbase            => Db,
-               Entity           => Entity,
-               Current_Location => Current_Location,
-               Location         => Location);
-
-            return Location /= No_Location
-              and then Location /= Current_Location;
-         end;
-
-      --  Legacy implementation
-
-      else
-         declare
-            Location         : Entities.File_Location;
-            Current_Location : Entities.File_Location;
-            use Entities;
-
-         begin
-            Current_Location :=
-              (File   => Get_Or_Create
-                 (Db   => Get_Database (Kernel),
-                  File => File_Information (Context)),
-               Line   => Contexts.Line_Information (Context),
-               Column => Entity_Column_Information (Context));
-
-            Queries.Find_Next_Body
-              (Entity           => Entity.Old_Entity,
-               Current_Location => Current_Location,
-               Location         => Location);
-
-            return Location /= Entities.No_File_Location
-              and then Location /= Current_Location;
-         end;
       end if;
+
+      Current_Location :=
+        Kernel.Databases.Get_Declaration (Entity).Loc;
+
+      Find_Next_Body
+        (Dbase            => Kernel.Databases,
+         Entity           => Entity,
+         Current_Location => Current_Location,
+         Location         => Location);
+
+      return Location /= No_Location
+        and then Location /= Current_Location;
    end Has_Body;
 
    ------------------------------
@@ -2285,8 +2148,7 @@ package body Src_Editor_Box is
       pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Db      : constant General_Xref_Database := Kernel.Databases;
-      Entity  : constant General_Entity :=
-                  Get_Entity (Context.Context, Ask_If_Overloaded => True);
+      Entity  : constant General_Entity := Get_Entity (Context.Context);
 
    begin
       if Entity = No_General_Entity then
@@ -2318,7 +2180,7 @@ package body Src_Editor_Box is
                return Commands.Failure;
 
             else
-               Location := Get_Declaration (Db, Entity);
+               Location := Db.Get_Declaration (Entity).Loc;
                Go_To_Closest_Match
                  (Kernel,
                   Filename => Location.File,
@@ -2362,30 +2224,11 @@ package body Src_Editor_Box is
         (Entity : General_Entity) return General_Entity
       is
          E : General_Entity;
-         use Entities;
-
       begin
-         if Get_Category (Db, Entity) = Type_Or_Subtype
-           and then Get_Kind (Db, Entity).Kind = Access_Kind
-         then
+         if Db.Is_Access (Entity) then
             E := Xref.Pointed_Type (Db, Entity);
          else
             E := Get_Type_Of (Db, Entity);
-         end if;
-
-         --  Update Xrefs if needed
-
-         if not Active (Entities.SQLITE)
-           and then E /= No_General_Entity
-         then
-            declare
-               S_File : constant Source_File :=
-                          Get_File (Get_Declaration_Of (E.Old_Entity));
-            begin
-               if not Is_Up_To_Date (S_File) then
-                  Update_Xref (S_File);
-               end if;
-            end;
          end if;
 
          return E;
@@ -2396,9 +2239,9 @@ package body Src_Editor_Box is
       ------------
 
       procedure Insert (Name : String; Entity : General_Entity) is
-         Kind : constant String :=
-                  Entities.Kind_To_String (Get_Kind (Db, Entity));
-         Loc  : constant General_Location := Get_Declaration (Db, Entity);
+         Kind : constant String := Db.Get_Display_Kind (Entity);
+         Loc  : constant General_Location :=
+           Db.Get_Declaration (Entity).Loc;
       begin
          Create_Simple_Message
            (Get_Messages_Container (Kernel),
@@ -2412,8 +2255,7 @@ package body Src_Editor_Box is
              Locations   => True));
       end Insert;
 
-      Entity      : constant General_Entity :=
-                      Get_Entity (Context.Context, Ask_If_Overloaded => True);
+      Entity      : constant General_Entity := Get_Entity (Context.Context);
       Entity_Type : General_Entity;
 
    begin
@@ -2441,25 +2283,20 @@ package body Src_Editor_Box is
             return Commands.Failure;
 
          else
-            declare
-               use Entities;
+            if Db.Is_Type (Entity) then
+               Insert (Get_Name (Db, Entity), Entity);
+            end if;
 
-            begin
-               if Get_Category (Db, Entity) = Type_Or_Subtype then
-                  Insert (Get_Name (Db, Entity), Entity);
-               end if;
+            loop
+               exit when Entity_Type = No_General_Entity
+                 or else Db.Is_Predefined_Entity (Entity_Type);
 
-               loop
-                  exit when Entity_Type = No_General_Entity
-                    or else Is_Predefined_Entity (Db, Entity_Type);
+               Insert (Db.Get_Name (Entity), Entity_Type);
 
-                  Insert (Get_Name (Db, Entity), Entity_Type);
+               Entity_Type := Get_Type_Or_Ref (Entity_Type);
+            end loop;
 
-                  Entity_Type := Get_Type_Or_Ref (Entity_Type);
-               end loop;
-
-               return Commands.Success;
-            end;
+            return Commands.Success;
          end if;
       end if;
    end Execute;

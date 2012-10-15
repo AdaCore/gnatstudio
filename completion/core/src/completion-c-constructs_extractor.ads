@@ -22,8 +22,7 @@
 with GPS.Kernel;                 use GPS.Kernel;
 with Language.Tree;              use Language.Tree;
 with Language.Tree.Database;     use Language.Tree.Database;
-
-private with Entities;
+with Xref;
 
 package Completion.C.Constructs_Extractor is
 
@@ -50,15 +49,12 @@ package Completion.C.Constructs_Extractor is
    --  Free the data associated to a construct completion resolver
 
 private
-   use Entities;
-
    type Construct_Completion_Resolver is new Completion_Resolver with record
       Kernel      : Kernel_Handle;
-      GLI_Handler : LI_Handler;
    end record;
 
    type C_Completion_Proposal is new Simple_Completion_Proposal with record
-      Entity_Info : Entity_Information;
+      Entity_Info : Xref.General_Entity;
 
       With_Params : Boolean := False;
       --  Set to true if Entity_Info is a subprogram and we need to provide
@@ -73,13 +69,17 @@ private
       (Proposal : C_Completion_Proposal) return Language_Category;
 
    overriding function Get_Completion
-     (Proposal : C_Completion_Proposal) return UTF8_String;
+     (Proposal : C_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
    --  Handle the completion of a single parameter of a subprogram call, the
    --  completion of all the parameters of a subprogram call, and also the
    --  completion of a single entity name.
 
    overriding function Get_Label
-     (Proposal : C_Completion_Proposal) return UTF8_String;
+     (Proposal : C_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
    --  Generate the label "<entity> without params" when the proposal requests
    --  the completion of the parameters of a subprogram call and the entity of
    --  the proposal has no parameters; generate the label "params of <entity>"
@@ -87,12 +87,16 @@ private
    --  of the proposal has parameters; otherwise generate the label "<entity>".
 
    overriding function Get_Location
-     (Proposal : C_Completion_Proposal) return File_Location;
+     (Proposal : C_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return File_Location;
 
    overriding function Get_Visibility
      (Proposal : C_Completion_Proposal) return Construct_Visibility;
 
    overriding function To_Completion_Id
-     (Proposal : C_Completion_Proposal) return Completion_Id;
+     (Proposal : C_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Id;
 
 end Completion.C.Constructs_Extractor;

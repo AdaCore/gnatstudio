@@ -15,12 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
@@ -40,16 +38,14 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
 
-with Entities;                   use Entities;
-with Entities.Queries;           use Entities.Queries;
 with Build_Command_Manager;
 with Builder_Facility_Module;
 with Traces;                     use Traces;
-with Commands;                   use Commands;
+with Xref;                       use Xref;
 
 package body Builder_Module is
 
@@ -69,29 +65,6 @@ package body Builder_Module is
    procedure Interrupt_Xrefs_Loading
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Interrupts all xrefs loading
-
-   -------------------------
-   -- Load_Xref_In_Memory --
-   -------------------------
-
-   type All_LI_Information_Command is new Root_Command with record
-      Iter : Recursive_LI_Information_Iterator;
-      Count, Total : Natural := 0;
-      Chunk_Size   : Natural := 10;  --  ??? Should be configurable
-   end record;
-
-   overriding function Progress
-     (Command : access All_LI_Information_Command) return Progress_Record;
-   overriding function Execute
-     (Command : access All_LI_Information_Command) return Command_Return_Type;
-   overriding function Name
-     (Command : access All_LI_Information_Command) return String;
-
-   type C_LI_Information_Command is new All_LI_Information_Command
-     with null record;
-
-   overriding function Name
-     (Command : access C_LI_Information_Command) return String;
 
    --------------------
    -- Menu Callbacks --
@@ -114,16 +87,6 @@ package body Builder_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean;
    --  Called when the compilation is starting
-
-   procedure Load_Xref_In_Memory (Kernel : access Kernel_Handle_Record'Class);
-   --  Load the Xref info in memory, in a background task
-
-   function C_Filter (Lang : String) return Boolean;
-   --  Return true if Lang is C or C++ (case insensitive)
-
-   procedure Load_C_Xref_In_Memory
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Load the C/C++ Xref info in memory, in a background task
 
    procedure On_Tools_Interrupt
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -213,7 +176,7 @@ package body Builder_Module is
    is
       pragma Unreferenced (Object);
    begin
-      Load_Xref_In_Memory (Kernel);
+      GPS.Kernel.Xref.Load_Xref_In_Memory (Kernel, C_Only => False);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Load_Xref_In_Memory;
@@ -249,13 +212,8 @@ package body Builder_Module is
       end if;
 
       if Builder_Module_ID.Build_Count = 0 then
-         if Automatic_Xrefs_Load.Get_Pref then
-            Load_Xref_In_Memory (Kernel);
-         else
-            --  We need to load all C/C++ xref info so that source navigation
-            --  works properly
-            Load_C_Xref_In_Memory (Kernel);
-         end if;
+         GPS.Kernel.Xref.Compilation_Finished
+           (Kernel, C_Only => not Automatic_Xrefs_Load.Get_Pref);
       end if;
    end On_Compilation_Finished;
 
@@ -268,109 +226,6 @@ package body Builder_Module is
    begin
       Kill_File_Iteration (Kernel, Xrefs_Loading_Queue);
    end Interrupt_Xrefs_Loading;
-
-   ----------
-   -- Name --
-   ----------
-
-   overriding function Name
-     (Command : access All_LI_Information_Command) return String is
-      pragma Unreferenced (Command);
-   begin
-      return -"load xref info";
-   end Name;
-
-   overriding function Name
-     (Command : access C_LI_Information_Command) return String is
-      pragma Unreferenced (Command);
-   begin
-      return -"load C/C++ xref info";
-   end Name;
-
-   --------------
-   -- Progress --
-   --------------
-
-   overriding function Progress
-     (Command : access All_LI_Information_Command) return Progress_Record is
-   begin
-      return Progress_Record'
-        (Activity => Running,
-         Current  => Command.Count,
-         Total    => Command.Total);
-   end Progress;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access All_LI_Information_Command) return Command_Return_Type
-   is
-   begin
-      Next (Command.Iter, Steps => Command.Chunk_Size,
-            Count => Command.Count, Total => Command.Total);
-
-      if Command.Count >= Command.Total then
-         Free (Command.Iter);
-         return Success;
-      else
-         return Execute_Again;
-      end if;
-   end Execute;
-
-   --------------
-   -- C_Filter --
-   --------------
-
-   function C_Filter (Lang : String) return Boolean is
-      Str : constant String := To_Lower (Lang);
-   begin
-      return Str = "c" or else Str = "c++";
-   end C_Filter;
-
-   ---------------------------
-   -- Load_C_Xref_In_Memory --
-   ---------------------------
-
-   procedure Load_C_Xref_In_Memory
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      C : constant Command_Access := new C_LI_Information_Command;
-   begin
-      Start (C_LI_Information_Command (C.all).Iter,
-             Get_Language_Handler (Kernel),
-             Get_Project (Kernel).Start (Recursive => True),
-             C_Filter'Access);
-      Launch_Background_Command
-        (Kernel,
-         C,
-         Active     => True,
-         Show_Bar   => True,
-         Queue_Id   => "load C/C++ xrefs info",
-         Block_Exit => False);
-   end Load_C_Xref_In_Memory;
-
-   -------------------------
-   -- Load_Xref_In_Memory --
-   -------------------------
-
-   procedure Load_Xref_In_Memory
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      C : constant Command_Access := new All_LI_Information_Command;
-   begin
-      Start (All_LI_Information_Command (C.all).Iter,
-             Get_Language_Handler (Kernel),
-             Get_Project (Kernel).Start (Recursive => True));
-      Launch_Background_Command
-        (Kernel,
-         C,
-         Active     => True,
-         Show_Bar   => True,
-         Queue_Id   => "load xrefs info",
-         Block_Exit => False);
-   end Load_Xref_In_Memory;
 
    ------------------------
    -- On_Tools_Interrupt --
@@ -402,13 +257,8 @@ package body Builder_Module is
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      if Automatic_Xrefs_Load.Get_Pref then
-         Load_Xref_In_Memory (Kernel_Handle (Kernel));
-      else
-         --  We need to load all C/C++ xref info so that source navigation
-         --  works properly
-         Load_C_Xref_In_Memory (Kernel_Handle (Kernel));
-      end if;
+      GPS.Kernel.Xref.Load_Xref_In_Memory
+        (Kernel, C_Only => not Automatic_Xrefs_Load.Get_Pref);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_View_Changed;
@@ -437,7 +287,7 @@ package body Builder_Module is
       Gtk_New (Sep);
       Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
 
-      if not Active (Entities.SQLITE) then
+      if not Active (Xref.SQLITE) then
          Register_Menu
            (Kernel, Build_Menu, -"Recompute _Xref info", "",
             On_Compute_Xref'Access, Ref_Item => -"Settings");

@@ -19,6 +19,7 @@ with Ada.Numerics.Generic_Elementary_Functions;
 
 with GNAT.Heap_Sort_G;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Xref;             use GNATCOLL.Xref;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Cairo;                     use Cairo;
@@ -51,9 +52,8 @@ with Pango.Layout;              use Pango.Layout;
 with Basic_Types;
 
 with Browsers.Canvas;           use Browsers.Canvas;
-with Entities.Queries;          use Entities, Entities.Queries;
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
+with Dynamic_Arrays;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -68,11 +68,13 @@ with XML_Utils;                 use XML_Utils;
 with Xref;                      use Xref;
 
 package body Browsers.Entities is
-
    Me : constant Debug_Handle := Create ("Browser.Entities");
 
    package Num is new Ada.Numerics.Generic_Elementary_Functions (Gdouble);
    use Num;
+
+   package Entity_Arrays is new Dynamic_Arrays (General_Entity);
+   use Entity_Arrays;
 
    type Entity_Browser_Module_Record is new Module_ID_Record with null record;
    Entity_Browser_Module : Module_ID;
@@ -129,8 +131,9 @@ package body Browsers.Entities is
    ---------------
 
    type Type_Item_Record is new Browsers.Canvas.Arrow_Item_Record with record
-      Entity               : Entity_Information;
-      Inherited_Primitives : Boolean := False;
+      Entity                : General_Entity;
+      Might_Have_Primitives : Boolean := True;
+      Inherited_Primitives  : Boolean := False;
       General_Lines,
       Attr_Lines,
       Meth_Lines           : Xref_List;
@@ -140,14 +143,14 @@ package body Browsers.Entities is
    procedure Gtk_New
      (Item    : out Type_Item;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Entity_Information);
+      Entity  : General_Entity);
    --  Open a new item in the browser that represents Entity.
    --  A copy of Entity is made, thus the caller should free Entity.
 
    procedure Initialize
      (Item    : access Type_Item_Record'Class;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Entity_Information);
+      Entity  : General_Entity);
    --  Internal initialization function
 
    overriding procedure Destroy (Item : in out Type_Item_Record);
@@ -251,13 +254,13 @@ package body Browsers.Entities is
 
    function Add_Or_Select_Item
      (Browser : access Type_Browser_Record'Class;
-      Entity  : Entity_Information) return Type_Item;
+      Entity  : General_Entity) return Type_Item;
    --  Create (or return an existing) item displaying the information for
    --  Entity.
 
    procedure Add_Item_And_Link
      (Item         : access Type_Item_Record'Class;
-      Entity       : Entity_Information;
+      Entity       : General_Entity;
       Link_Name    : String;
       Parent_Link  : Boolean;
       Reverse_Link : Boolean := False);
@@ -268,7 +271,7 @@ package body Browsers.Entities is
 
    type Show_Entity_Callback is new Active_Area_Callback with record
       Item      : Browser_Item;
-      Entity    : Entity_Information;
+      Entity    : General_Entity;
       Link_Name : GNAT.Strings.String_Access;
    end record;
 
@@ -280,7 +283,7 @@ package body Browsers.Entities is
 
    function Build
      (Item      : access Browser_Item_Record'Class;
-      Entity    : Entity_Information;
+      Entity    : General_Entity;
       Link_Name : String := "") return Active_Area_Cb;
    --  Build a new callback to display entities
 
@@ -290,8 +293,9 @@ package body Browsers.Entities is
    --  Command handler for this module (in the shell window)
 
    procedure Add_Primitive_Operations
-     (List : in out Xref_List;
-      Item : access Type_Item_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : in out Xref_List;
+      Item   : access Type_Item_Record'Class);
    --  Add the sorted list of primitive operations for Entity at the end of
    --  Meth_Layout.
 
@@ -310,7 +314,8 @@ package body Browsers.Entities is
    --  type.
 
    procedure Add_Package_Contents
-     (General_List : in out Xref_List;
+     (Kernel       : access Kernel_Handle_Record'Class;
+      General_List : in out Xref_List;
       Attr_List    : in out Xref_List;
       Meth_List    : in out Xref_List;
       Item         : access Type_Item_Record'Class);
@@ -339,7 +344,7 @@ package body Browsers.Entities is
 
    procedure Find_Parent_Or_Child_Types
      (Item    : access Arrow_Item_Record'Class;
-      Members : Entity_Information_Array;
+      Members : Xref.Entity_Array;
       Parents : Boolean);
    --  Display the parent/child types for the item
 
@@ -351,7 +356,7 @@ package body Browsers.Entities is
    procedure Add_Type
      (List     : in out Xref_List;
       Item     : access Type_Item_Record'Class;
-      Entity   : Entity_Information;
+      Entity   : General_Entity;
       Prefix   : String);
    --  Add a new line in List, starting with prefix and followed by an
    --  hyper link for the type of Entity.
@@ -359,29 +364,34 @@ package body Browsers.Entities is
    procedure Add_Array_Type
      (List       : in out Xref_List;
       Item       : access Type_Item_Record'Class;
-      Entity     : Entity_Information;
+      Entity     : General_Entity;
       Info_Added : out Boolean);
    --  Add the information for an array type
 
    procedure Add_Access_Type
      (List       : in out Xref_List;
       Item       : access Type_Item_Record'Class;
-      Entity     : Entity_Information;
+      Entity     : General_Entity;
       Info_Added : out Boolean);
    --  Add the information for an access type
 
-   function Entity_As_Link (Ent : Entity_Information) return String;
+   function Entity_As_Link
+     (Kernel : access Kernel_Handle_Record'Class;
+      Ent    : General_Entity) return String;
    --  Return a string that contains the entity name, as an hyper link. If
    --  Entity is in fact a predefined entity, no link is setup.
 
    procedure Add_Subprogram
-     (List   : in out Xref_List;
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : in out Xref_List;
       Item   : access Type_Item_Record'Class;
-      Entity : Entity_Information);
+      Entity : General_Entity);
    --  Add a line that describes the subprogram Entity.
    --  Entity should not be freed by the caller
 
-   procedure Sort (Arr : in out Entity_Information_Arrays.Instance);
+   procedure Sort
+     (Db  : access General_Xref_Database_Record'Class;
+      Arr : in out Entity_Arrays.Instance);
    --  Sort the array alphabetically
 
    --------------
@@ -441,7 +451,7 @@ package body Browsers.Entities is
 
    function Build
      (Item      : access Browser_Item_Record'Class;
-      Entity    : Entity_Information;
+      Entity    : General_Entity;
       Link_Name : String := "") return Active_Area_Cb is
    begin
       Ref (Entity);
@@ -468,7 +478,7 @@ package body Browsers.Entities is
    begin
       Ignore := Add_Or_Select_Item
         (Browser => Type_Browser (Get_Widget (Child)),
-         Entity  => Get_Entity (Context.Context, Ask_If_Overloaded => True));
+         Entity  => Get_Entity (Context.Context));
       Layout (Type_Browser (Get_Widget (Child)), Force => False);
       return Commands.Success;
    end Execute;
@@ -567,13 +577,13 @@ package body Browsers.Entities is
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Entity : constant Entity_Information := Get_Data (Data, 1);
+      Entity : constant General_Entity := Get_Data (Data, 1);
       Child  : MDI_Child;
-      Result : Entity_Information;
+      Result : General_Entity;
       Ignore : Type_Item;
       pragma Unreferenced (Ignore);
    begin
-      if Entity /= null then
+      if Entity /= No_General_Entity then
          if Command = "show" then
             Child := Open_Type_Browser_Child (Kernel);
             Ignore := Add_Or_Select_Item
@@ -582,27 +592,15 @@ package body Browsers.Entities is
 
          elsif Command = "discriminants" then
             declare
-               Iter  : Entity_Reference_Iterator;
-               Discr : Entity_Information;
+               Discrs : constant Xref.Entity_Array :=
+                 Kernel.Databases.Discriminants (Entity);
             begin
-               Find_All_References
-                 (Iter   => Iter,
-                  Entity => Entity,
-                  Filter => (Discriminant => True, others => False));
-
                Set_Return_Value_As_List (Data);
 
-               while not At_End (Iter) loop
-                  Discr := Get_Entity (Iter);
-                  if Discr /= null then
-                     Set_Return_Value
-                       (Data, Create_Entity (Get_Script (Data), Discr));
-                  end if;
-
-                  Next (Iter);
+               for D in Discrs'Range loop
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Discrs (D)));
                end loop;
-
-               Destroy (Iter);
             end;
 
          elsif Command = "documentation" then
@@ -611,115 +609,92 @@ package body Browsers.Entities is
             begin
                Set_Return_Value
                  (Data,
-                  Documentation
-                    (Kernel.Databases,
-                     Kernel.Get_Language_Handler,
-                     Entity => General_Entity'
-                       (Old_Entity => Entity, others => <>),
+                  Kernel.Databases.Documentation
+                    (Kernel.Get_Language_Handler,
+                     Entity => Entity,
                      Raw_Format => not Extended));
             end;
 
          elsif Command = "parameters" then
             declare
-               Iter  : Subprogram_Iterator;
-               Param : Entity_Information;
+               Params : constant Parameter_Array :=
+                 Kernel.Databases.Parameters (Entity);
             begin
-               Iter := Get_Subprogram_Parameters
-                 (Subprogram            => Entity,
-                  File_Has_No_LI_Report => null);
-
                Set_Return_Value_As_List (Data);
-               loop
-                  Get (Iter, Param);
-                  exit when Param = null;
-
+               for P in Params'Range loop
                   Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Param));
-                  Next (Iter);
+                    (Data, Create_Entity
+                       (Get_Script (Data), Params (P).Parameter));
                end loop;
             end;
 
          elsif Command = "methods" then
             Name_Parameters (Data, Methods_Cmd_Parameters);
+
             declare
-               Iter : Primitive_Operations_Iterator;
+               Methods : constant Xref.Entity_Array :=
+                 Kernel.Databases.Methods
+                   (Entity, Include_Inherited => Nth_Arg (Data, 2, False));
             begin
-               Find_All_Primitive_Operations
-                 (Iter, Entity, Include_Inherited => Nth_Arg (Data, 2, False));
                Set_Return_Value_As_List (Data);
 
-               while not At_End (Iter) loop
+               for M in Methods'Range loop
                   Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Get (Iter)));
-                  Next (Iter);
+                    (Data, Create_Entity (Get_Script (Data), Methods (M)));
                end loop;
-               Destroy (Iter);
             end;
 
          elsif Command = "return_type" then
             Set_Return_Value
-              (Data,
-               Create_Entity (Get_Script (Data), Returned_Type (Entity)));
+              (Data, Create_Entity
+                 (Get_Script (Data), Kernel.Databases.Returned_Type (Entity)));
 
          elsif Command = "primitive_of" then
             Set_Return_Value
               (Data,
                Create_Entity
-                 (Get_Script (Data), Is_Primitive_Operation_Of (Entity)));
+                 (Get_Script (Data),
+                  Kernel.Databases.Is_Primitive_Of (Entity)));
 
          elsif Command = "pointed_type" then
-            Result := Pointed_Type (Entity);
-            if Result = null
-              and then Get_Type_Of (Entity) /= null
-            then
-               Result := Pointed_Type (Get_Type_Of (Entity));
+            Result := Kernel.Databases.Pointed_Type (Entity);
+            if Result = No_General_Entity then
+               Result := Kernel.Databases.Get_Type_Of (Entity);
+               if Result /= No_General_Entity then
+                  Result := Kernel.Databases.Pointed_Type (Result);
+               end if;
             end if;
             Set_Return_Value (Data, Create_Entity (Get_Script (Data), Result));
 
          elsif Command = "type" then
             Set_Return_Value
-              (Data, Create_Entity (Get_Script (Data), Get_Type_Of (Entity)));
+              (Data, Create_Entity
+                 (Get_Script (Data), Kernel.Databases.Get_Type_Of (Entity)));
 
          elsif Command = "fields" then
             declare
-               Iter  : Calls_Iterator;
-               Field : Entity_Information;
+               F : constant Xref.Entity_Array :=
+                 Kernel.Databases.Fields (Entity);
             begin
                Set_Return_Value_As_List (Data);
 
-               Iter := Get_All_Called_Entities (Entity);
-               while not At_End (Iter) loop
-                  Field := Get (Iter);
-
-                  if In_Range (Get_Declaration_Of (Field), Entity) then
-                     if not Is_Discriminant (Field, Entity) then
-                        Set_Return_Value
-                          (Data, Create_Entity (Get_Script (Data), Field));
-                     end if;
-                  end if;
-
-                  Next (Iter);
+               for F2 in F'Range loop
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), F (F2)));
                end loop;
-
-               Destroy (Iter);
             end;
 
          elsif Command = "derived_types" then
             declare
-               Children : Children_Iterator := Get_Child_Types (Entity);
-               Child    : Entity_Information;
+               Children : constant Xref.Entity_Array :=
+                 Kernel.Databases.Child_Types (Entity, Recursive => False);
             begin
                Set_Return_Value_As_List (Data);
 
-               while not At_End (Children) loop
-                  Child := Get (Children);
-                  if Child /= null then
-                     Set_Return_Value
-                       (Data, Create_Entity (Get_Script (Data), Child));
-                  end if;
-                  Next (Children);
+               for C in Children'Range loop
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Children (C)));
                end loop;
-               Destroy (Children);
             end;
          end if;
       end if;
@@ -804,7 +779,7 @@ package body Browsers.Entities is
    is
       Context : constant Selection_Context := Get_Current_Context (Kernel);
       Child   : MDI_Child;
-      Entity  : Entity_Information;
+      Entity  : General_Entity;
       Ignore   : Type_Item;
       pragma Unreferenced (Widget, Ignore);
 
@@ -812,8 +787,8 @@ package body Browsers.Entities is
       Child := Open_Type_Browser_Child (Kernel);
 
       if Context /= No_Context then
-         Entity := Get_Entity (Context, Ask_If_Overloaded => True);
-         if Entity /= null then
+         Entity := Get_Entity (Context);
+         if Entity /= No_General_Entity then
             Ignore := Add_Or_Select_Item
               (Browser => Type_Browser (Get_Widget (Child)),
                Entity  => Entity);
@@ -831,9 +806,9 @@ package body Browsers.Entities is
    procedure Gtk_New
      (Item    : out Type_Item;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Entity_Information) is
+      Entity  : General_Entity) is
    begin
-      if Get_Kind (Entity).Is_Generic then
+      if Get_Kernel (Browser).Databases.Is_Generic (Entity) then
          Item := new Generic_Item_Record;
       else
          Item := new Type_Item_Record;
@@ -848,16 +823,19 @@ package body Browsers.Entities is
    procedure Initialize
      (Item    : access Type_Item_Record'Class;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Entity_Information) is
+      Entity  : General_Entity)
+   is
+      Name : constant String :=
+        Get_Kernel (Browser).Databases.Qualified_Name (Entity);
    begin
-      if Get_Kind (Entity).Is_Abstract then
+      if Get_Kernel (Browser).Databases.Is_Abstract (Entity) then
          Initialize
            (Item, Browser,
-            Get_Full_Name (Entity) & ASCII.LF & "   " & UML_Abstract,
+            Name & ASCII.LF & "   " & UML_Abstract,
             Find_Parent_Types'Access, Find_Child_Types'Access);
       else
          Initialize
-           (Item, Browser, Get_Full_Name (Entity),
+           (Item, Browser, Name,
             Find_Parent_Types'Access, Find_Child_Types'Access);
       end if;
       Ref (Entity);
@@ -879,12 +857,16 @@ package body Browsers.Entities is
    -- Entity_As_Link --
    --------------------
 
-   function Entity_As_Link (Ent : Entity_Information) return String is
+   function Entity_As_Link
+     (Kernel : access Kernel_Handle_Record'Class;
+      Ent    : General_Entity) return String
+   is
+      Name : constant String := Kernel.Databases.Get_Name (Ent);
    begin
-      if Is_Predefined_Entity (Ent) then
-         return Get (Get_Name (Ent)).all;
+      if Kernel.Databases.Is_Predefined_Entity (Ent) then
+         return Name;
       else
-         return '@' & Get (Get_Name (Ent)).all & '@';
+         return '@' & Name & '@';
       end if;
    end Entity_As_Link;
 
@@ -892,16 +874,19 @@ package body Browsers.Entities is
    -- Sort --
    ----------
 
-   procedure Sort (Arr : in out Entity_Information_Arrays.Instance) is
-      use type Entity_Information_Arrays.Index_Type;
+   procedure Sort
+     (Db  : access General_Xref_Database_Record'Class;
+      Arr : in out Entity_Arrays.Instance)
+   is
+      use type Entity_Arrays.Index_Type;
       First : constant Integer :=
-                Integer (Entity_Information_Arrays.First) - 1;
+                Integer (Entity_Arrays.First) - 1;
 
       procedure Move (From, To : Natural);
       function Lt (Op1, Op2 : Natural) return Boolean;
       --  See GNAT.Heap_Sort_G
 
-      Tmp : Entity_Information;
+      Tmp : General_Entity;
 
       ----------
       -- Move --
@@ -910,14 +895,14 @@ package body Browsers.Entities is
       procedure Move (From, To : Natural) is
       begin
          if From = 0 then
-            Arr.Table (Entity_Information_Arrays.Index_Type (To + First)) :=
+            Arr.Table (Entity_Arrays.Index_Type (To + First)) :=
               Tmp;
          elsif To = 0 then
             Tmp :=
-              Arr.Table (Entity_Information_Arrays.Index_Type (From + First));
+              Arr.Table (Entity_Arrays.Index_Type (From + First));
          else
-            Arr.Table (Entity_Information_Arrays.Index_Type (To + First)) :=
-              Arr.Table (Entity_Information_Arrays.Index_Type (From + First));
+            Arr.Table (Entity_Arrays.Index_Type (To + First)) :=
+              Arr.Table (Entity_Arrays.Index_Type (From + First));
          end if;
       end Move;
 
@@ -928,23 +913,23 @@ package body Browsers.Entities is
       function Lt (Op1, Op2 : Natural) return Boolean is
       begin
          if Op1 = 0 then
-            return Tmp <
-              Arr.Table (Entity_Information_Arrays.Index_Type (Op2 + First));
+            return Db.Cmp
+              (Tmp, Arr.Table (Entity_Arrays.Index_Type (Op2 + First))) < 0;
          elsif Op2 = 0 then
-            return
-              Arr.Table (Entity_Information_Arrays.Index_Type (Op1 + First)) <
-              Tmp;
+            return Db.Cmp
+              (Arr.Table (Entity_Arrays.Index_Type (Op1 + First)),
+               Tmp) < 0;
          else
-            return
-              Arr.Table (Entity_Information_Arrays.Index_Type (Op1 + First)) <
-              Arr.Table (Entity_Information_Arrays.Index_Type (Op2 + First));
+            return Db.Cmp
+              (Arr.Table (Entity_Arrays.Index_Type (Op1 + First)),
+               Arr.Table (Entity_Arrays.Index_Type (Op2 + First))) < 0;
          end if;
       end Lt;
 
       package Entity_Sort is new GNAT.Heap_Sort_G (Move, Lt);
    begin
       Entity_Sort.Sort
-        (Integer (Entity_Information_Arrays.Last (Arr)) - First);
+        (Integer (Entity_Arrays.Last (Arr)) - First);
    end Sort;
 
    ------------------------------
@@ -952,32 +937,29 @@ package body Browsers.Entities is
    ------------------------------
 
    procedure Add_Primitive_Operations
-     (List : in out Xref_List;
-      Item : access Type_Item_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : in out Xref_List;
+      Item   : access Type_Item_Record'Class)
    is
-      use Entity_Information_Arrays;
-      Prim : Primitive_Operations_Iterator;
-      Arr  : Entity_Information_Arrays.Instance;
+      use Entity_Arrays;
+      Methods : constant Xref.Entity_Array :=
+        Kernel.Databases.Methods
+          (Item.Entity, Include_Inherited => Item.Inherited_Primitives);
+
+      Arr  : Entity_Arrays.Instance;
    begin
       Trace (Me, "Add_Primitive_Operations: Inherited_Primitives="
              & Item.Inherited_Primitives'Img);
 
-      Find_All_Primitive_Operations
-        (Iter              => Prim,
-         Entity            => Item.Entity,
-         Include_Inherited => Item.Inherited_Primitives);
-
       --  Store all primitive operations in an array, so that we can display
       --  them sorted, and possibly filter them out.
+      --  ??? Not very efficient, since we already have such an array.
 
-      while not At_End (Prim) loop
-         Append (Arr, Get (Prim));
-         Next (Prim);
+      for M in Methods'Range loop
+         Append (Arr, Methods (M));
       end loop;
 
-      Destroy (Prim);
-
-      Sort (Arr);
+      Sort (Kernel.Databases, Arr);
 
       if not Item.Inherited_Primitives then
          --  For each inherited operation, remove it from the list of
@@ -988,43 +970,38 @@ package body Browsers.Entities is
          --  This step isn't needed for C++.
 
          declare
-            Parents     : constant Entity_Information_Array :=
-                            Get_Parent_Types (Item.Entity);
-            Parent_Prim : Primitive_Operations_Iterator;
-            Op          : Entity_Information;
+            Parents     : constant Xref.Entity_Array :=
+              Kernel.Databases.Parent_Types (Item.Entity, Recursive => False);
+            Op          : General_Entity;
          begin
             for Parent in Parents'Range loop
-               Find_All_Primitive_Operations
-                 (Iter              => Parent_Prim,
-                  Entity            => Parents (Parent),
-                  Include_Inherited => False);
+               declare
+                  Parent_Methods : constant Xref.Entity_Array :=
+                    Kernel.Databases.Methods
+                      (Parents (Parent), Include_Inherited => False);
+               begin
+                  for M in Parent_Methods'Range loop
+                     Op := Parent_Methods (M);
 
-               while not At_End (Parent_Prim) loop
-                  Op := Get (Parent_Prim);
-
-                  for A in Entity_Information_Arrays.First .. Last (Arr) loop
-                     if Arr.Table (A) = Op then
-                        Arr.Table (A) := null;
-                        exit;
-                     end if;
+                     for A in Entity_Arrays.First .. Last (Arr) loop
+                        if Arr.Table (A) = Op then
+                           Arr.Table (A) := No_General_Entity;
+                           exit;
+                        end if;
+                     end loop;
                   end loop;
-
-                  Next (Parent_Prim);
-               end loop;
-
-               Destroy (Parent_Prim);
+               end;
             end loop;
          end;
       end if;
 
-      for A in Entity_Information_Arrays.First .. Last (Arr) loop
-         if Arr.Table (A) /= null then
-            Add_Subprogram (List, Item, Arr.Table (A));
+      for A in Entity_Arrays.First .. Last (Arr) loop
+         if Arr.Table (A) /= No_General_Entity then
+            Add_Subprogram (Kernel, List, Item, Arr.Table (A));
          end if;
       end loop;
 
       Free (Arr);
-      Destroy (Prim);
    end Add_Primitive_Operations;
 
    --------------------
@@ -1032,14 +1009,15 @@ package body Browsers.Entities is
    --------------------
 
    procedure Add_Subprogram
-     (List   : in out Xref_List;
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : in out Xref_List;
       Item   : access Type_Item_Record'Class;
-      Entity : Entity_Information) is
+      Entity : General_Entity) is
    begin
       Add_Line
         (List,
-         Entity_As_Link (Entity) & " ("
-         & (-Kind_To_String (Get_Kind (Entity))) & ')',
+         Entity_As_Link (Kernel, Entity) & " ("
+         & Kernel.Databases.Get_Display_Kind (Entity) & ')',
          Callback => (1 => Build (Item, Entity)));
       --  Do not free Entity, it's needed for callbacks
    end Add_Subprogram;
@@ -1052,46 +1030,50 @@ package body Browsers.Entities is
      (List : in out Xref_List;
       Item : access Type_Item_Record'Class)
    is
-      Subs           : Subprogram_Iterator;
-      Typ, Parameter : Entity_Information;
-      Returned    : constant Entity_Information := Returned_Type (Item.Entity);
-   begin
-      Subs := Get_Subprogram_Parameters (Item.Entity);
+      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
+      Params : constant Parameter_Array :=
+        Kernel.Databases.Parameters (Item.Entity);
 
-      loop
-         Get (Subs, Parameter);
-         exit when Parameter = null;
+      Typ, Parameter : General_Entity;
+      Returned    : constant General_Entity :=
+        Kernel.Databases.Returned_Type (Item.Entity);
+   begin
+      for P in Params'Range loop
+         Parameter := Params (P).Parameter;
 
          --  In some cases, access parameters reference their pointed type
          --  through Pointed_Type. However, if that access type is a renaming
          --  of another type, we'll need to try Get_Variable_Type if
          --  Pointed_Type didn't return anything.
 
-         if Get_Kind (Parameter).Kind = Access_Kind then
-            Typ := Pointed_Type (Parameter);
+         if Params (P).Kind = Access_Parameter then
+            Typ := Kernel.Databases.Pointed_Type (Parameter);
          else
-            Typ := null;
+            Typ := No_General_Entity;
          end if;
 
-         if Typ = null then
-            Typ := Get_Variable_Type (Parameter);
+         if Typ = No_General_Entity then
+            Typ := Kernel.Databases.Get_Type_Of (Parameter);
          end if;
 
-         Add_Line
-           (List,
-            Get (Get_Name (Parameter)).all & ": " &
-              Image (Get_Type (Subs)) & " " & Entity_As_Link (Typ),
-            Length1  => Get (Get_Name (Parameter)).all'Length + 1,
-            Callback => (1 => Build (Item, Typ)));
+         declare
+            Name : constant String := Kernel.Databases.Get_Name (Parameter);
+         begin
+            Add_Line
+              (List,
+               Name & ": " &
+                 Image (Params (P).Kind) & " " & Entity_As_Link (Kernel, Typ),
+               Length1  => Name'Length + 1,
+               Callback => (1 => Build (Item, Typ)));
+         end;
+
          --  Do not free Typ, it is needed for callbacks
-
-         Next (Subs);
       end loop;
 
-      if Returned /= null then
+      if Returned /= No_General_Entity then
          Add_Line
            (List,
-            "return " & Entity_As_Link (Returned),
+            "return " & Entity_As_Link (Kernel, Returned),
             Length1  => 7,
             Callback => (1 => Build (Item, Returned)));
          --  Do not free Returned, it is needed for callbacks
@@ -1103,73 +1085,71 @@ package body Browsers.Entities is
    --------------------------
 
    procedure Add_Package_Contents
-     (General_List : in out Xref_List;
+     (Kernel       : access Kernel_Handle_Record'Class;
+      General_List : in out Xref_List;
       Attr_List    : in out Xref_List;
       Meth_List    : in out Xref_List;
       Item         : access Type_Item_Record'Class)
    is
-      use Entity_Information_Arrays;
-      Parent : constant Entity_Information := Get_Parent_Package (Item.Entity);
+      use Entity_Arrays;
+      Parent : constant General_Entity :=
+        Kernel.Databases.Parent_Package (Item.Entity);
       Iter   : Calls_Iterator;
-      Arr    : Entity_Information_Arrays.Instance;
-      Called : Entity_Information;
+      Arr    : Entity_Arrays.Instance;
+      Called : General_Entity;
+      Subp   : General_Entity;
+      Current : General_Entity;
 
    begin
-      if Parent /= null then
-         Add_Line (General_List, "Parent: " & Entity_As_Link (Parent),
+      if Parent /= No_General_Entity then
+         Add_Line (General_List, "Parent: " & Entity_As_Link (Kernel, Parent),
                    Callback => (1 => Build (Item, Parent)));
          --  Do not destroy parent, needed for callbacks
       end if;
 
-      Iter := Get_All_Called_Entities (Item.Entity);
+      Iter := Kernel.Databases.Get_All_Called_Entities (Item.Entity);
       while not At_End (Iter) loop
          Called := Get (Iter);
 
-         if Called /= null then
-            if In_Range (Get_Declaration_Of (Called), Item.Entity) then
-               Append (Arr, Called);
-            end if;
+         if Called /= No_General_Entity then
+            Append (Arr, Called);
          end if;
 
          Next (Iter);
       end loop;
 
-      Sort (Arr);
+      Sort (Kernel.Databases, Arr);
 
-      for A in Entity_Information_Arrays.First .. Last (Arr) loop
-         if Is_Subprogram (Arr.Table (A)) then
-            Trace (Me, "Container: " & Debug_Name (Arr.Table (A)));
-            Add_Subprogram (Meth_List, Item, Arr.Table (A));
+      for A in Entity_Arrays.First .. Last (Arr) loop
+         Current := Arr.Table (A);
 
-         elsif Get_Kind (Arr.Table (A)).Is_Type then
-            Trace (Me, "Type: " & Debug_Name (Arr.Table (A)));
+         if Kernel.Databases.Is_Subprogram (Current) then
+            Add_Subprogram (Kernel, Meth_List, Item, Current);
+
+         elsif Kernel.Databases.Is_Type (Current) then
             declare
-               Name : constant String := Entity_As_Link (Arr.Table (A));
+               Name : constant String := Entity_As_Link (Kernel, Current);
             begin
-               if Is_Subtype (Arr.Table (A)) then
-                  Add_Line
-                    (Attr_List, Name & "(subtype)",
-                     Length1 => Name'Length,
-                     Callback => (1 => Build (Item, Arr.Table (A), "")));
-               else
-                  Add_Line
-                    (Attr_List, Name & "(type)",
-                     Length1 => Name'Length,
-                     Callback => (1 => Build (Item, Arr.Table (A), "")));
-               end if;
+               Add_Line
+                 (Attr_List, Name & "(type)",
+                  Length1 => Name'Length,
+                  Callback => (1 => Build (Item, Current, "")));
             end;
 
          --  We want to show variables declared in this package, but not the
          --  parameters to subprograms.
 
-         elsif Is_Parameter_Of (Arr.Table (A)) = null
-           and then Get_Caller (Declaration_As_Reference (Arr.Table (A))) =
-             Item.Entity
-         then
-            Trace (Me, "Variable: " & Debug_Name (Arr.Table (A)));
-            Add_Type
-              (Attr_List, Item, Arr.Table (A),
-               Get (Get_Name (Arr.Table (A))).all);
+         else
+            Subp := Kernel.Databases.Is_Parameter_Of (Current);
+
+            if Subp = No_General_Entity
+              and then Kernel.Databases.Caller_At_Declaration (Current) =
+              Item.Entity
+            then
+               Add_Type
+                 (Attr_List, Item, Current,
+                  Kernel.Databases.Get_Name (Current));
+            end if;
          end if;
       end loop;
 
@@ -1184,66 +1164,36 @@ package body Browsers.Entities is
      (List : in out Xref_List;
       Item : access Type_Item_Record'Class)
    is
-      use Entity_Information_Arrays;
-
-      Field         : Entity_Information;
-      Is_Enum       : constant Boolean :=
-                        Get_Kind (Item.Entity).Kind = Enumeration_Kind;
-      Discriminants : Entity_Reference_Iterator;
-      Iter          : Calls_Iterator;
-      Fields        : Entity_Information_List;
+      use Entity_Arrays;
+      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
+      Discrs : constant Xref.Entity_Array :=
+        Kernel.Databases.Discriminants (Item.Entity);
+      Field : constant Xref.Entity_Array :=
+        Kernel.Databases.Fields (Item.Entity);
+      Literals : constant Xref.Entity_Array :=
+        Kernel.Databases.Literals (Item.Entity);
+      Fields : Entity_Arrays.Instance;
 
    begin
-      Find_All_References
-        (Iter    => Discriminants,
-         Entity  => Item.Entity,
-         In_File => Get_File (Get_Declaration_Of (Item.Entity)),
-         Filter  => (Discriminant => True, others => False));
-
-      while not At_End (Discriminants) loop
-         Field := Get_Entity (Discriminants);
-         if Field /= null then
-            Add_Type (List, Item, Field,
-                      -"Discriminant: " & Get (Get_Name (Field)).all);
-         end if;
-
-         Next (Discriminants);
+      for D in Discrs'Range loop
+         Add_Type (List, Item, Discrs (D),
+                   -"Discriminant: " & Kernel.Databases.Get_Name (Discrs (D)));
       end loop;
 
-      Iter := Get_All_Called_Entities (Item.Entity);
-      while not At_End (Iter) loop
-         Field := Get (Iter);
-
-         if Field /= null then
-            --  Hide discriminants (already displayed) and subprograms
-            --  (would happen in C++, but these are primitive operations in
-            --  this case)
-
-            if not Get_Kind (Field).Is_Type   --  only variables
-              and then In_Range (Get_Declaration_Of (Field), Item.Entity)
-              and then not Is_Discriminant (Field, Item.Entity)
-              and then (Get_Kind (Field).Kind /= Function_Or_Operator
-                        and then Get_Kind (Field).Kind /= Procedure_Kind
-                        and then Get_Kind (Field).Kind /= Package_Kind)
-            then
-               Entity_Information_Arrays.Append (Fields, Field);
-            end if;
-         end if;
-
-         Next (Iter);
+      for F in Field'Range loop
+         Entity_Arrays.Append (Fields, Field (F));
       end loop;
 
-      Sort (Fields, Sort_By => Sort_Source_Order);
+      --  Sort (Fields, Sort_By => Sort_Source_Order);
 
-      for F in Entity_Information_Arrays.First .. Last (Fields) loop
-         if Is_Enum then
-            Add_Line (List, Get (Get_Name (Fields.Table (F))).all);
-         else
-            Add_Type (List, Item, Fields.Table (F),
-                      Get (Get_Name (Fields.Table (F))).all);
-         end if;
+      for F in Entity_Arrays.First .. Last (Fields) loop
+         Add_Type (List, Item, Fields.Table (F),
+                   Kernel.Databases.Get_Name (Fields.Table (F)));
       end loop;
 
+      for F in Literals'Range loop
+         Add_Line (List, Kernel.Databases.Get_Name (Literals (F)));
+      end loop;
    end Add_Fields;
 
    --------------
@@ -1253,18 +1203,19 @@ package body Browsers.Entities is
    procedure Add_Type
      (List   : in out Xref_List;
       Item   : access Type_Item_Record'Class;
-      Entity : Entity_Information;
+      Entity : General_Entity;
       Prefix : String)
    is
-      Typ        : constant Entity_Information := Get_Variable_Type (Entity);
+      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
+      Typ   : constant General_Entity := Kernel.Databases.Get_Type_Of (Entity);
       Info_Added : Boolean := False;
    begin
-      if Typ = null then
+      if Typ = No_General_Entity then
          --  Special handling for anonymous types, as generated by GNAT
 
-         if Get_Kind (Entity).Kind = Array_Kind then
+         if Kernel.Databases.Is_Array (Entity) then
             Add_Array_Type (List, Item, Entity, Info_Added);
-         elsif Get_Kind (Entity).Kind = Access_Kind then
+         elsif Kernel.Databases.Is_Access (Entity) then
             Add_Access_Type (List, Item, Entity, Info_Added);
          end if;
 
@@ -1278,7 +1229,7 @@ package body Browsers.Entities is
       else
          Add_Line
            (List,
-            Prefix & ": " & Entity_As_Link (Typ),
+            Prefix & ": " & Entity_As_Link (Kernel, Typ),
             Length1  => Prefix'Length + 2,
             Callback => (1 => Build (Item, Typ, Prefix)));
          --  Do not free Typ, needed for callbacks
@@ -1292,34 +1243,40 @@ package body Browsers.Entities is
    procedure Add_Array_Type
      (List       : in out Xref_List;
       Item       : access Type_Item_Record'Class;
-      Entity     : Entity_Information;
+      Entity     : General_Entity;
       Info_Added : out Boolean)
    is
-      Typ : constant Entity_Information := Array_Contents_Type (Entity);
-      Indexes : constant Entity_Information_Array :=
-        Array_Index_Types (Entity);
+      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
+      Typ : constant General_Entity :=
+        Kernel.Databases.Component_Type (Entity);
+      Indexes : constant Xref.Entity_Array :=
+        Kernel.Databases.Index_Types (Entity);
    begin
-      if Typ /= null then
+      if Typ /= No_General_Entity then
          Add_Line (List, "array ");
          for Ind in Indexes'Range loop
             if Ind = Indexes'First then
                if Ind = Indexes'Last then
-                  Add_Line (List, "  (" & Entity_As_Link (Indexes (Ind)) & ")",
+                  Add_Line (List, "  ("
+                            & Entity_As_Link (Kernel, Indexes (Ind)) & ")",
                             Callback => (1 => Build (Item, Indexes (Ind))));
                else
-                  Add_Line (List, "  (" & Entity_As_Link (Indexes (Ind)) & ",",
+                  Add_Line (List, "  ("
+                            & Entity_As_Link (Kernel, Indexes (Ind)) & ",",
                             Callback => (1 => Build (Item, Indexes (Ind))));
                end if;
             elsif Ind = Indexes'Last then
-               Add_Line (List, "   " & Entity_As_Link (Indexes (Ind)) & ")",
+               Add_Line (List, "   "
+                         & Entity_As_Link (Kernel, Indexes (Ind)) & ")",
                          Callback => (1 => Build (Item, Indexes (Ind))));
             else
-               Add_Line (List, "   " & Entity_As_Link (Indexes (Ind)) & ",",
+               Add_Line (List, "   "
+                         & Entity_As_Link (Kernel, Indexes (Ind)) & ",",
                          Callback => (1 => Build (Item, Indexes (Ind))));
             end if;
          end loop;
 
-         Add_Line (List, "of " & Entity_As_Link (Typ),
+         Add_Line (List, "of " & Entity_As_Link (Kernel, Typ),
                    Callback => (1 => Build (Item, Typ)));
          Info_Added := True;
       else
@@ -1334,14 +1291,15 @@ package body Browsers.Entities is
    procedure Add_Access_Type
      (List       : in out Xref_List;
       Item       : access Type_Item_Record'Class;
-      Entity     : Entity_Information;
+      Entity     : General_Entity;
       Info_Added : out Boolean)
    is
-      Typ : constant Entity_Information := Pointed_Type (Entity);
+      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
+      Typ : constant General_Entity := Kernel.Databases.Pointed_Type (Entity);
    begin
-      if Typ /= null then
+      if Typ /= No_General_Entity then
          Add_Line
-           (List, "access to " & Entity_As_Link (Typ),
+           (List, "access to " & Entity_As_Link (Kernel, Typ),
             Callback => (1 => Build (Item, Typ)));
          --  Do not destroy Typ, needed for callbacks
          Info_Added := True;
@@ -1356,7 +1314,7 @@ package body Browsers.Entities is
 
    procedure Add_Item_And_Link
      (Item         : access Type_Item_Record'Class;
-      Entity       : Entity_Information;
+      Entity       : General_Entity;
       Link_Name    : String;
       Parent_Link  : Boolean;
       Reverse_Link : Boolean := False)
@@ -1409,7 +1367,7 @@ package body Browsers.Entities is
 
    procedure Find_Parent_Or_Child_Types
      (Item    : access Arrow_Item_Record'Class;
-      Members : Entity_Information_Array;
+      Members : Xref.Entity_Array;
       Parents : Boolean)
    is
       It : constant Type_Item := Type_Item (Item);
@@ -1446,7 +1404,10 @@ package body Browsers.Entities is
    procedure Find_Parent_Types (Item  : access Arrow_Item_Record'Class) is
    begin
       Find_Parent_Or_Child_Types
-        (Item, Get_Parent_Types (Type_Item (Item).Entity), Parents => True);
+        (Item,
+         Get_Kernel (Get_Browser (Item)).Databases.Parent_Types
+           (Type_Item (Item).Entity, Recursive => False),
+         Parents => True);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Find_Parent_Types;
@@ -1456,22 +1417,17 @@ package body Browsers.Entities is
    ----------------------
 
    procedure Find_Child_Types (Item  : access Arrow_Item_Record'Class) is
-      Iter  : Children_Iterator := Get_Child_Types (Type_Item (Item).Entity);
-      Child : Entity_Information;
+      Children : constant Xref.Entity_Array :=
+        Get_Kernel (Get_Browser (Item)).Databases.Child_Types
+           (Type_Item (Item).Entity, Recursive => False);
       Cr    : Cairo_Context;
    begin
-      --  ??? Should be done in background
-      while not At_End (Iter) loop
-         Child := Get (Iter);
-         if Child /= null then
-            Add_Item_And_Link
-              (Type_Item (Item), Child, "",
-               Parent_Link => True,
-               Reverse_Link => True);
-         end if;
-         Next (Iter);
+      for C in Children'Range loop
+         Add_Item_And_Link
+           (Type_Item (Item), Children (C), "",
+            Parent_Link => True,
+            Reverse_Link => True);
       end loop;
-      Destroy (Iter);
 
       Set_Children_Shown (Type_Item (Item), True);
       Cr := Create (Item);
@@ -1518,6 +1474,7 @@ package body Browsers.Entities is
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class)
    is
+      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
       W, H                           : Gint;
       Layout_H, Layout_W1, Layout_W2 : Gint;
       Meth_Layout_W1, Meth_Layout_W2 : Gint;
@@ -1526,90 +1483,42 @@ package body Browsers.Entities is
       General_Lines                  : Xref_List;
       Attr_Lines                     : Xref_List;
       Meth_Lines                     : Xref_List;
-      Parent                         : Entity_Information;
       Added                          : Boolean;
       Style_Context                  : Gtk_Style_Context;
       Color                          : Gdk_RGBA;
       Border                         : Gtk.Style.Gtk_Border;
    begin
-      Trace (Me, "Resize_And_Draw: " & Get_Full_Name (Item.Entity));
-      Update_Xref (Get_File (Get_Declaration_Of (Item.Entity)));
+      Add_Line
+        (General_Lines, Kernel.Databases.Get_Display_Kind (Item.Entity));
 
-      Add_Line (General_Lines, -Kind_To_String (Get_Kind (Item.Entity)));
-
-      if not Get_Kind (Item.Entity).Is_Type then
+      if not Kernel.Databases.Is_Type (Item.Entity) then
          Add_Type (Attr_Lines, Item, Item.Entity, "of type");
 
-      elsif Is_Subtype (Item.Entity) then
-         Parent := Get_Variable_Type (Item.Entity);
-         Add_Line
-           (Attr_Lines, -"subtype of " & Entity_As_Link (Parent),
-            Callback => (1 => Build (Item, Parent)));
-         --  Do not destroy Parent, needed for callbacks
+      elsif Kernel.Databases.Is_Access (Item.Entity) then
+         Add_Access_Type (Attr_Lines, Item, Item.Entity, Added);
 
-      else
-         case Get_Kind (Item.Entity).Kind is
-            when Overloaded_Entity
-              | Unresolved_Entity
-              | Private_Type
-              | Private_Object
-              | Label_On_Block
-              | Label_On_Loop
-              | Label_On_Statement
-              =>
-               null;
+      elsif Kernel.Databases.Is_Array (Item.Entity) then
+         Add_Array_Type (Attr_Lines, Item, Item.Entity, Added);
 
-            when Boolean_Kind
-              | Decimal_Fixed_Point
-              | Enumeration_Literal
-              | Exception_Entity
-              | Floating_Point
-              | Include_File
-              | Macro
-              | Function_Macro
-              | Modular_Integer
-              | Named_Number
-              | Ordinary_Fixed_Point
-              | Reference
-              | Signed_Integer
-              | String_Kind =>
-               null;
+      elsif Kernel.Databases.Is_Subprogram (Item.Entity) then
+         Add_Parameters (Attr_Lines, Item);
+         Set_Children_Shown (Item, True);
 
-            when Enumeration_Kind =>
-               Add_Fields (Attr_Lines, Item);
+      elsif Kernel.Databases.Has_Methods (Item.Entity) then
+         Item.Might_Have_Primitives := True;
+         Add_Primitive_Operations (Kernel, Meth_Lines, Item);
+         Add_Fields (Attr_Lines, Item);
 
-            when Access_Kind =>
-               Add_Access_Type (Attr_Lines, Item, Item.Entity, Added);
-
-            when Array_Kind =>
-               Add_Array_Type (Attr_Lines, Item, Item.Entity, Added);
-
-            when Class_Wide
-              | Class
-              | Union
-              | Record_Kind
-              | Interface_Kind
-              | Protected_Kind
-              | Task_Kind =>
-               Add_Primitive_Operations (Meth_Lines, Item);
-               Add_Fields (Attr_Lines, Item);
-
-            when Entry_Or_Entry_Family
-              | Function_Or_Operator
-              | Procedure_Kind =>
-               Add_Parameters (Attr_Lines, Item);
-               Set_Children_Shown (Item, True);
-
-            when Package_Kind =>
-               Add_Package_Contents
-                 (General_Lines, Attr_Lines, Meth_Lines, Item);
-         end case;
+      elsif Kernel.Databases.Is_Container (Item.Entity) then
+         Add_Package_Contents
+           (Kernel, General_Lines, Attr_Lines, Meth_Lines, Item);
+         Add_Fields (Attr_Lines, Item);
       end if;
 
       if not Parents_Shown (Item) then
          declare
-            Parents : constant Entity_Information_Array :=
-                        Get_Parent_Types (Item.Entity);
+            Parents : constant Xref.Entity_Array :=
+              Kernel.Databases.Parent_Types (Item.Entity, Recursive => False);
          begin
             Set_Parents_Shown (Item, Parents'Length = 0);
          end;
@@ -1675,7 +1584,6 @@ package body Browsers.Entities is
       Item.General_Lines := General_Lines;
       Item.Attr_Lines    := Attr_Lines;
       Item.Meth_Lines    := Meth_Lines;
-
    end Resize_And_Draw;
 
    ----------------------
@@ -1686,28 +1594,20 @@ package body Browsers.Entities is
      (Item : access Type_Item_Record;
       Cr   : Cairo_Context)
    is
+      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
    begin
       Redraw_Title_Bar (Arrow_Item_Record (Item.all)'Access, Cr);
 
-      if Get_Kind (Item.Entity).Is_Type then
-         case Get_Kind (Item.Entity).Kind is
-            when Class_Wide
-              | Class
-              | Record_Kind
-              | Protected_Kind
-              | Task_Kind
-              =>
-               --  ??? Should use a different icon depending on
-               --  Item.Inherited_Primitives.
-               Draw_Title_Bar_Button
-                 (Item, Cr,
-                  Num    => Get_Last_Button_Number (Item),
-                  Pixbuf => Type_Browser (Get_Browser (Item)).Primitive_Button,
-                  Cb     => Build (Hide_Show_Inherited'Access, Item));
-
-            when others =>
-               null;
-         end case;
+      if Item.Might_Have_Primitives
+        and then Kernel.Databases.Is_Type (Item.Entity)
+      then
+         --  ??? Should use a different icon depending on
+         --  Item.Inherited_Primitives.
+         Draw_Title_Bar_Button
+           (Item, Cr,
+            Num    => Get_Last_Button_Number (Item),
+            Pixbuf => Type_Browser (Get_Browser (Item)).Primitive_Button,
+            Cb     => Build (Hide_Show_Inherited'Access, Item));
       end if;
    end Redraw_Title_Bar;
 
@@ -1717,7 +1617,7 @@ package body Browsers.Entities is
 
    function Add_Or_Select_Item
      (Browser : access Type_Browser_Record'Class;
-      Entity  : Entity_Information) return Type_Item
+      Entity  : General_Entity) return Type_Item
    is
       Found : Type_Item;
       Iter  : Item_Iterator := Start (Get_Canvas (Browser));
@@ -1730,7 +1630,7 @@ package body Browsers.Entities is
          Next (Iter);
       end loop;
 
-      if Found = null and then Entity /= null then
+      if Found = null and then Entity /= No_General_Entity then
          Gtk_New (Found, Browser, Entity);
          Put (Get_Canvas (Browser), Found);
          Refresh (Found);
@@ -1800,6 +1700,10 @@ package body Browsers.Entities is
    is
       B  : constant Type_Browser := Type_Browser (Browser);
       It : constant Type_Item    := Type_Item (Item);
+      Loc : constant General_Location :=
+        Get_Kernel (B).Databases.Get_Declaration (It.Entity).Loc;
+      Name : constant String :=
+        Get_Kernel (B).Databases.Get_Name (It.Entity);
 
       use Basic_Types;
    begin
@@ -1807,13 +1711,11 @@ package body Browsers.Entities is
 
       Open_File_Editor
         (Kernel     => Get_Kernel (B),
-         Filename   => Get_Filename
-           (Get_File (Get_Declaration_Of (It.Entity))),
-         Line       => Get_Line (Get_Declaration_Of (It.Entity)),
-         Column     => Get_Column (Get_Declaration_Of (It.Entity)),
-         Column_End => Get_Column (Get_Declaration_Of (It.Entity)) +
-           Basic_Types.Visible_Column_Type
-             (Get (Get_Name (It.Entity))'Length));
+         Filename   => Loc.File,
+         Line       => Loc.Line,
+         Column     => Loc.Column,
+         Column_End => Loc.Column + Basic_Types.Visible_Column_Type
+             (Name'Length));
    end On_Show_Source;
 
    ------------------------
@@ -1829,17 +1731,17 @@ package body Browsers.Entities is
    is
       pragma Unreferenced (Event);
       Mitem : Gtk_Menu_Item;
+      Loc   : constant General_Location :=
+        Get_Kernel (Browser).Databases.Get_Declaration (Item.Entity).Loc;
    begin
       Set_Entity_Information
         (Context       => Context,
-         Entity_Name   => Get_Name (Item.Entity),
-         Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
+         Entity        => Item.Entity);
       Set_File_Information
         (Context     => Context,
-         Files       =>
-           (1 => Get_Filename (Get_File (Get_Declaration_Of (Item.Entity)))),
-         Line        => Get_Line (Get_Declaration_Of (Item.Entity)),
-         Column      => Get_Column (Get_Declaration_Of (Item.Entity)));
+         Files       => (1 => Loc.File),
+         Line        => Loc.Line,
+         Column      => Loc.Column);
       --  We need to set the file information, even though it will also display
       --  some contextual menus (file dependencies,...), otherwise the call
       --  graph will not work.

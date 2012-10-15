@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -24,16 +24,16 @@ with Cairo.Image_Surface;       use Cairo.Image_Surface;
 
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
+with Gdk.Color;                 use Gdk.Color;
 with Gdk.Display;               use Gdk.Display;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Window;                use Gdk.Window;
 with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Style;              use Gtkada.Style;
 
-with Entities.Tooltips_Assistant; use Entities.Tooltips_Assistant;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Language;                  use Language;
@@ -42,12 +42,28 @@ with Language.Tree;             use Language.Tree;
 with String_Utils;              use String_Utils;
 with Xref;                      use Xref;
 
-package body Entities.Tooltips is
+package body Entities_Tooltips is
 
-   function Get_Instance (Entity_Ref : Entity_Reference) return String;
+   type Tooltip_Information is record
+      Is_Spec    : Boolean;
+      Visibility : Construct_Visibility;
+      Category   : Language_Category;
+   end record;
+
+   function Get_Tooltip_Information
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : General_Entity) return Tooltip_Information;
+   --  Return information to be able to display the right icon
+   --  depending on category and visibility.
+
+   function Get_Instance
+     (Db         : access General_Xref_Database_Record'Class;
+      Entity_Ref : General_Entity_Reference) return String;
    --  Return the text describing from what instance the entity is
 
-   function Get_Pixbuf (Entity : Entity_Information) return Gdk_Pixbuf;
+   function Get_Pixbuf
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : General_Entity) return Gdk_Pixbuf;
    --  Return the image associated to an entity
 
    function Draw_Tooltip
@@ -59,12 +75,58 @@ package body Entities.Tooltips is
       Guess       : Boolean := False) return Cairo.Cairo_Surface;
    --  Helper function, factorizing the tooltip widget creation
 
+   function Get_Tooltip_Header
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : General_Entity) return String;
+   --  Return the header of the tooltip
+
+   ------------------------
+   -- Get_Tooltip_Header --
+   ------------------------
+
+   function Get_Tooltip_Header
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : General_Entity) return String
+   is
+      Decl : General_Entity_Declaration;
+      Attrs : Unbounded_String;
+   begin
+      Decl := Kernel.Databases.Get_Declaration (Entity);
+
+--        if Get_Kind (Entity).Kind = Include_File then
+--           return  "<b>"
+--             & Escape_Text (Kernel.Databases.Get_Name (Entity))
+--             & "</b>" & ASCII.LF
+--             & Kernel.Databases.Get_Display_Kind (Entity) & ' '
+--             & Decl.Loc.File.Display_Full_Name;
+--        else
+         if Kernel.Databases.Is_Global (Entity) then
+            Append (Attrs, "global ");
+         elsif Kernel.Databases.Is_Static_Local (Entity) then
+            Append (Attrs, "static ");
+         end if;
+
+         return  "<b>"
+           & Escape_Text (Kernel.Databases.Qualified_Name (Entity))
+           & "</b>" & ASCII.LF
+           & To_String (Attrs)
+           & Kernel.Databases.Get_Display_Kind (Entity)
+           & (-" declared at ")
+           & Decl.Loc.File.Display_Base_Name & ':'
+           & Image (Decl.Loc.Line);
+--        end if;
+   end Get_Tooltip_Header;
+
    ----------------
    -- Get_Pixbuf --
    ----------------
 
-   function Get_Pixbuf (Entity : Entity_Information) return Gdk_Pixbuf is
-      Info : constant Tooltip_Information := Get_Tooltip_Information (Entity);
+   function Get_Pixbuf
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : General_Entity) return Gdk_Pixbuf
+   is
+      Info : constant Tooltip_Information :=
+        Get_Tooltip_Information (Kernel, Entity);
    begin
       return Entity_Icons (Info.Is_Spec, Info.Visibility) (Info.Category);
    end Get_Pixbuf;
@@ -73,43 +135,46 @@ package body Entities.Tooltips is
    -- Get_Instance --
    ------------------
 
-   function Get_Instance (Entity_Ref : Entity_Reference) return String is
+   function Get_Instance
+     (Db         : access General_Xref_Database_Record'Class;
+      Entity_Ref : General_Entity_Reference) return String
+   is
       use Ada.Strings.Unbounded;
       Result  : Unbounded_String;
-      Inst    : Entity_Instantiation;
-      Inst_E  : Entity_Information;
-      Inst_Of : Entity_Information;
+      Inst_E  : General_Entity;
+      Inst_Of : General_Entity;
+      Loc     : General_Location;
 
    begin
-      if Entity_Ref /= No_Entity_Reference then
-         Inst := From_Instantiation_At (Entity_Ref);
+      if Entity_Ref /= No_General_Entity_Reference then
+         declare
+            Insts : constant Xref.Entity_Array :=
+              Db.From_Instances (Entity_Ref);
+         begin
+            for Inst in Insts'Range loop
+               Inst_E := Insts (Inst);
+               Inst_Of := Db.Instance_Of (Inst_E);
 
-         while Inst /= No_Instantiation loop
-            Inst_E := Get_Entity (Inst);
-            Inst_Of := Is_Instantiation_Of (Inst_E);
+               if Inst_Of = No_General_Entity then
+                  Append (Result,  -"from instance at ");
+               else
+                  Loc := Db.Get_Declaration (Inst_Of).Loc;
+                  Append
+                    (Result,
+                     (-"from instance of ")
+                     & Db.Get_Name (Inst_Of) & ':'
+                     & Loc.File.Display_Base_Name & ':'
+                     & Image (Loc.Line) & ASCII.LF & "  at ");
+               end if;
 
-            if Inst_Of = null then
-               Result := Result
-                 & (-"from instance at ");
-            else
-               Result := Result
-                 & (-"from instance of ")
-                 & Get (Get_Name (Inst_Of)).all & ':'
-                 & Display_Base_Name (Get_Filename
-                     (Get_File (Get_Declaration_Of (Inst_Of)))) & ':'
-                 & Image (Get_Line (Get_Declaration_Of (Inst_Of)))
-                 & ASCII.LF & "  at ";
-            end if;
-
-            Result := Result
-              & Get (Get_Name (Inst_E)).all
-              & ':'
-              &  Display_Base_Name (Get_Filename
-                              (Get_File (Get_Declaration_Of (Inst_E)))) & ':'
-              & Image (Get_Line (Get_Declaration_Of (Inst_E)))
-              & ASCII.LF & ASCII.LF;
-            Inst := Generic_Parent (Inst);
-         end loop;
+               Loc := Db.Get_Declaration (Inst_E).Loc;
+               Append
+                 (Result,
+                  Db.Get_Name (Inst_E) & ':'
+                  & Loc.File.Display_Base_Name & ':'
+                  & Image (Loc.Line) & ASCII.LF & ASCII.LF);
+            end loop;
+         end;
       end if;
 
       return To_String (Result);
@@ -121,24 +186,21 @@ package body Entities.Tooltips is
 
    function Draw_Tooltip
      (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information;
-      Ref           : Entity_Reference;
-      Status        : Find_Decl_Or_Body_Query_Status;
-      Accurate_Xref : Boolean;
+      Entity        : General_Entity;
+      Ref           : General_Entity_Reference;
       Draw_Border   : Boolean) return Cairo.Cairo_Surface
    is
       Doc : constant String :=
-        Get_Instance (Ref)
-        & Documentation (Kernel.Databases,
-                         Handler => Kernel.Get_Language_Handler,
-                         Entity  => General_Entity'
-                           (Old_Entity => Entity, others => <>));
+        Get_Instance (Kernel.Databases, Ref)
+        & Kernel.Databases.Documentation
+           (Handler => Kernel.Get_Language_Handler,
+            Entity  => Entity);
    begin
       return Draw_Tooltip
         (Kernel      => Kernel,
-         Guess       => Is_Tooltip_Guess (Status, Accurate_Xref),
-         Header      => Get_Tooltip_Header (Entity),
-         Pixbuf      => Get_Pixbuf (Entity),
+         Guess       => Is_Fuzzy (Entity),
+         Header      => Get_Tooltip_Header (Kernel, Entity),
+         Pixbuf      => Get_Pixbuf (Kernel, Entity),
          Draw_Border => Draw_Border,
          Doc         => Doc);
    end Draw_Tooltip;
@@ -163,10 +225,9 @@ package body Entities.Tooltips is
          Guess  => False,
          Header => "<b>" & Get (Get_Construct (Entity).Name).all & "</b>",
          Draw_Border => Draw_Border,
-         Doc => Documentation
-           (Kernel.Databases,
-            Handler => Kernel.Get_Language_Handler,
-            Entity  => General_Entity'(Node => Entity, others => <>)),
+         Doc => Kernel.Databases.Documentation
+           (Handler => Kernel.Get_Language_Handler,
+            Entity  => From_Constructs (Entity)),
          Pixbuf => Entity_Icons
            (Construct.Is_Declaration, Construct.Visibility)
            (Construct.Category));
@@ -194,7 +255,7 @@ package body Entities.Tooltips is
       Header_Layout, Doc_Layout : Pango_Layout;
 
       Width, Height, W1, H1, W2, H2 : Gint := 0;
-      Color  : Gdk_RGBA;
+      Color  : Gtkada.Style.Cairo_Color;
       Max_Height, Max_Width : Gint;
 
       H_Pad : constant := 4;
@@ -205,7 +266,7 @@ package body Entities.Tooltips is
       if Guess then
          Set_Markup
            (Header_Layout, "<span foreground =""#555555"">" &
-              Get_Tooltip_Guess_Message & "</span>" & ASCII.LF & Header);
+              Tooltip_Guess_Message & "</span>" & ASCII.LF & Header);
       else
          Set_Markup (Header_Layout, Header);
       end if;
@@ -224,7 +285,7 @@ package body Entities.Tooltips is
 
       Width  := Gint'Max (W1 + Get_Width (Pixbuf) + H_Pad * 2, W2 + H_Pad * 2);
 
-      Color := Tooltip_Color.Get_Pref;
+      Color := To_Cairo (Tooltip_Color.Get_Pref);
 
       Max_Height := Get_Height (Get_Default_Screen (Gdk.Display.Get_Default));
       Height := Gint'Min (Height, Max_Height);
@@ -235,26 +296,22 @@ package body Entities.Tooltips is
       Pixmap := Create (Cairo_Format_ARGB32, Width, Height);
       Cr := Create (Pixmap);
       Set_Line_Width (Cr, 0.5);
-      Draw_Rectangle (Cr, To_Cairo (Color), True, 0, 0, Width, Height);
+      Draw_Rectangle (Cr, Color, True, 0, 0, Width, Height);
 
-      Color := Black_RGBA;
+      Color := To_Cairo (Gdk_Color'(Black (Get_Default_Colormap)));
       if Draw_Border then
-         Draw_Rectangle (Cr, To_Cairo (Color), False, 0, 0, Width, Height);
+         Draw_Rectangle (Cr, Color, False, 0, 0, Width, Height);
       end if;
 
       Draw_Pixbuf (Cr, Pixbuf, V_Pad, H_Pad);
 
       Draw_Layout
-        (Cr,
-         To_Cairo (Color), V_Pad + Get_Width (Pixbuf), H_Pad, Header_Layout);
+        (Cr, Color, V_Pad + Get_Width (Pixbuf), H_Pad, Header_Layout);
       Unref (Header_Layout);
 
       if Doc_Layout /= null then
-         Draw_Line
-           (Cr,
-            To_Cairo (Color), 0, H1 + V_Pad * 2, Width - 1, H1 + V_Pad * 2);
-         Draw_Layout
-           (Cr, To_Cairo (Color), H_Pad, H1 + 1 + V_Pad * 3, Doc_Layout);
+         Draw_Line (Cr, Color, 0, H1 + V_Pad * 2, Width - 1, H1 + V_Pad * 2);
+         Draw_Layout (Cr, Color, H_Pad, H1 + 1 + V_Pad * 3, Doc_Layout);
          Unref (Doc_Layout);
       end if;
 
@@ -263,4 +320,33 @@ package body Entities.Tooltips is
       return Pixmap;
    end Draw_Tooltip;
 
-end Entities.Tooltips;
+   -----------------------------
+   -- Get_Tooltip_Information --
+   -----------------------------
+
+   function Get_Tooltip_Information
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : General_Entity) return Tooltip_Information
+   is
+      Tooltip_Info : Tooltip_Information;
+
+   begin
+      Tooltip_Info.Visibility := Visibility_Public;
+      Tooltip_Info.Category := Cat_Variable;
+      Tooltip_Info.Is_Spec := False;
+
+      if Kernel.Databases.Is_Subprogram (Entity) then
+         Tooltip_Info.Category := Cat_Function;
+      elsif Kernel.Databases.Is_Type (Entity) then
+         Tooltip_Info.Category := Cat_Type;
+      elsif Kernel.Databases.Is_Container (Entity) then
+         Tooltip_Info.Category := Cat_Package;
+      end if;
+
+      --  When we were using SourceNavigator for the C++ xref, we used to know
+      --  about the private/protected/public visibility of entities, but this
+      --  is no longer the case with g++-based xref.
+      return Tooltip_Info;
+   end Get_Tooltip_Information;
+
+end Entities_Tooltips;

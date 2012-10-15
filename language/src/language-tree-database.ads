@@ -390,10 +390,13 @@ package Language.Tree.Database is
 
    procedure Initialize
      (Db         : Construct_Database_Access;
-      Provider   : Buffer_Provider_Access;
       Lg_Handler : Abstract_Language_Handler);
+   procedure Set_Provider
+     (Db         : Construct_Database_Access;
+      Provider   : Buffer_Provider_Access);
    --  This procedure has to be called before any other operation on the
-   --  database.
+   --  database. These are two separate procedures so that they can be called
+   --  at different points in time.
 
    procedure Set_Symbols
      (Self    : access Construct_Database;

@@ -34,9 +34,11 @@ with Projects;                          use Projects;
 with Traces;                            use Traces;
 with GNATCOLL.Symbols;                  use GNATCOLL.Symbols;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 with Refactoring.Services;              use Refactoring.Services;
 
 package body Codefix.Formal_Errors is
+   use type GNATCOLL.Xref.Visible_Column;
 
    ----------------
    -- Initialize --

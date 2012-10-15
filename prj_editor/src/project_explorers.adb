@@ -68,7 +68,6 @@ with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Entities;
 with Find_Utils;                use Find_Utils;
 with Histories;                 use Histories;
 with GPS.Kernel;                use GPS.Kernel;
@@ -80,10 +79,12 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
+with Language_Utils;            use Language_Utils;
 with Projects;                  use Projects;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Remote;                    use Remote;
@@ -1042,7 +1043,7 @@ package body Project_Explorers is
 
       Push_State (E.Kernel, Busy);
       Parse_All_LI_Information
-        (E.Kernel,
+        (Kernel  => E.Kernel,
          Project => Get_Project_From_Node
            (E.Tree.Model, E.Kernel, Node, False),
          Recursive => False);
@@ -2876,20 +2877,14 @@ package body Project_Explorers is
       --------------------
 
       function Check_Entities (File : Virtual_File) return Boolean is
-         use type Entities.LI_Handler;
          Languages  : constant Language_Handler :=
                         Get_Language_Handler (Kernel);
-         Handler    : constant Entities.LI_Handler :=
-                        Get_LI_Handler_From_File (Languages, File);
          Constructs : Construct_List;
          Status     : Boolean := False;
 
       begin
-         if Handler = null then
-            return False;
-         end if;
-
-         Entities.Parse_File_Constructs (Handler, Languages, File, Constructs);
+         Parse_File_Constructs
+           (Get_Language_From_File (Languages, File), File, Constructs);
 
          Constructs.Current := Constructs.First;
 

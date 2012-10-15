@@ -56,9 +56,6 @@ ENTITIES.FORCE_UNIQUE_REF         = yes
 ENTITIES.QUERIES_FILE_GRANULARITY = yes
 ENTITIES.ASSERT                   = no
 
---  Enable this to activate the use of sql-based entities
-ENTITIES.SQLITE                   = no
-
 --  Deactivate SQL traces by default
 SQL.*                             = no
 
@@ -69,13 +66,21 @@ PROJECTS.GNAT = no
 
 --  Debug handles related to the cross-references database
 
+XREF.* = yes
 ALI=no
+ALI.PARSING=yes
 ALI.Assert=yes
 CPP=no
+
+ENTITIES.*=yes
 ENTITIES.DEBUG=no
 ENTITIES.DUMP = no
 ENTITIES.REF  = no
 ENTITIES.QUERIES = no
+
+--  Enable this to activate the use of sql-based entities
+ENTITIES.SQLITE                   = no
+
 SCRIPTS.REF = no
 CONTEXTS.REF = no
 CONTEXTS.MEM = no

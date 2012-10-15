@@ -123,7 +123,7 @@ package body Completion_Utils is
             Doc      : constant String :=
               Element (C).Get_Documentation (Kernel);
             Location : constant File_Location :=
-                         Get_Location (Element (C).all);
+                         Get_Location (Element (C).all, Kernel.Databases);
          begin
             --  Create the label
             Gtk_New (Label);

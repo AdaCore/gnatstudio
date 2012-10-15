@@ -141,8 +141,12 @@ package body Completion.Ada.Constructs_Extractor is
    ----------------------
 
    overriding function To_Completion_Id
-     (Proposal : Construct_Completion_Proposal) return Completion_Id
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Id
    is
+      pragma Unreferenced (Db);
+
       Id_Length : Integer := 0;
 
       Entity : constant Entity_Access := Proposal.View.Get_Entity;
@@ -220,13 +224,15 @@ package body Completion.Ada.Constructs_Extractor is
    --------------------
 
    overriding function Get_Completion
-     (Proposal : Construct_Completion_Proposal) return UTF8_String
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String
    is
       Comma         : Boolean := False;
       Max_Size_Name : Integer := 0;
    begin
       if Proposal.Is_In_Call then
-         return Get_Label (Proposal) & " => ";
+         return Get_Label (Proposal, Db) & " => ";
       elsif Proposal.Actual_Params /= null then
          declare
             Missing_Formals : constant Formal_Parameter_Array :=
@@ -299,16 +305,16 @@ package body Completion.Ada.Constructs_Extractor is
 
          return "";
       elsif Proposal.From_Accept_Statement then
-         return Get_Label (Proposal)
+         return Get_Label (Proposal, Db)
            & " " & Ada_Tree_Lang.Get_Profile
            (Get_Entity (Proposal.View), Raw_Format => True)
            & " do"
            & ASCII.LF
            & "null;"
            & ASCII.LF
-           & "end " &  Get_Label (Proposal) & ";";
+           & "end " &  Get_Label (Proposal, Db) & ";";
       else
-         return Get_Label (Proposal);
+         return Get_Label (Proposal, Db);
       end if;
    end Get_Completion;
 
@@ -317,8 +323,10 @@ package body Completion.Ada.Constructs_Extractor is
    ---------------
 
    overriding function Get_Label
-     (Proposal : Construct_Completion_Proposal) return UTF8_String
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return UTF8_String
    is
+      pragma Unreferenced (Db);
       Construct : constant access Simple_Construct_Information :=
         Get_Construct (Proposal.View);
    begin
@@ -348,7 +356,8 @@ package body Completion.Ada.Constructs_Extractor is
    ----------------------
 
    overriding function Get_Caret_Offset
-     (Proposal : Construct_Completion_Proposal)
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
       return Basic_Types.Character_Offset_Type
    is
       Max_Param_Length     : Glong := 0;
@@ -383,7 +392,7 @@ package body Completion.Ada.Constructs_Extractor is
       else
          return Basic_Types.Character_Offset_Type
           (UTF8_Strlen
-               (Get_Completion (Completion_Proposal'Class (Proposal))));
+               (Get_Completion (Completion_Proposal'Class (Proposal), Db)));
       end if;
    end Get_Caret_Offset;
 
@@ -431,8 +440,11 @@ package body Completion.Ada.Constructs_Extractor is
    ------------------
 
    overriding function Get_Location
-     (Proposal : Construct_Completion_Proposal) return File_Location
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return File_Location
    is
+      pragma Unreferenced (Db);
       Construct : constant access Simple_Construct_Information :=
         Get_Construct (Proposal.View);
       Entity : constant Entity_Access := Proposal.View.Get_Entity;

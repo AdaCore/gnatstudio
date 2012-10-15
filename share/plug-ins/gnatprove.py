@@ -208,7 +208,7 @@ gnatprove = os_utils.locate_exec_on_path("gnatprove")
 def is_subp_decl_context(self):
     if isinstance (self, GPS.EntityContext) and \
        self.entity() and \
-       self.entity().category() == "subprogram" and \
+       self.entity().is_subprogram() and \
        self.entity().declaration() and \
        self.location().file() == self.entity().declaration().file() and \
        self.location().line() == self.entity().declaration().line():
@@ -221,7 +221,7 @@ def is_subp_decl_context(self):
 def is_subp_body_context(self):
     if isinstance (self, GPS.EntityContext) and \
        self.entity() and \
-       self.entity().category() == "subprogram" and \
+       self.entity().is_subprogram() and \
        self.entity().body() and \
        self.location().file() == self.entity().body().file() and \
        self.location().line() == self.entity().body().line():

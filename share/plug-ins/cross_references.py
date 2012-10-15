@@ -4,8 +4,14 @@
 import GPS
 import os.path
 
-xml = """<?xml version="1.0" ?><GPS>
+class Sqlite_Cross_References(object):
+    """
+    A python class to support the xref engine in GPS.
+    This class takes care of running gnatinspect as needed to refresh the
+    xref info.
+    """
 
+    xml = """<?xml version="1.0" ?><GPS>
 <!-- This is an XML model for launching gnatinspect, the cross-references parser -->
 <target-model name="gnatinspect" category="">
    <description>Launch cross-reference recompilation</description>
@@ -15,6 +21,7 @@ xml = """<?xml version="1.0" ?><GPS>
       <arg>-d</arg>
       <arg>--exit</arg>
       <arg>--db=gnatinspect.db</arg>
+      <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
@@ -22,7 +29,6 @@ xml = """<?xml version="1.0" ?><GPS>
    <switches command="">
    </switches>
 </target-model>
-
 
 <!-- Targets to launch cross-reference recompilation  -->
 <target model="gnatinspect" category="_Project" name="Recompute _Xref info">
@@ -37,55 +43,57 @@ xml = """<?xml version="1.0" ?><GPS>
        <arg>-d</arg>
        <arg>--exit</arg>
        <arg>--db=gnatinspect.db</arg>
+       <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
     </command-line>
 </target>
+</GPS>"""
 
-</GPS>
-"""
+    def __init__(self):
+        GPS.parse_xml(self.xml)
+        GPS.Hook("project_view_changed").add(self.on_project_view_changed)
+        GPS.Hook("compilation_finished").add(self.on_compilation_finished)
+        GPS.Hook("gps_started").add(self.on_gps_started)
 
-def recompute_xref():
-    """ Launch recompilation of the cross references """
+    def recompute_xref(self):
+        """ Launch recompilation of the cross references """
+    
+        # The project might not exist, for instance when GPS is loading the
+        # default project in a directory
+    
+        if not os.path.exists(GPS.Project.root().file().name()):
+            return
+    
+        # If we are already recomputing Xref info, do not launch another instance
+        # of gnatinspect
+    
+        if "Recompute Xref info" in [t.name() for t in GPS.Task.list()]:
+            return
+    
+        target = GPS.BuildTarget("Recompute Xref info")
+    
+        #  ??? should add <arg>--symlinks</arg> if preference "slow project loading"
+        #  is activated
+    
+        target.execute(synchronous=False, quiet=True)
+    
+    def on_compilation_finished(self, hook, category,
+        target_name="", mode_name="", status=""):
+    
+        if not status:
+            if (target_name in ["Compile File", "Build Main", "Build All",
+                   "Compile All Sources", "Build <current file>", "Custom Build..."]
+                or category in ["Makefile"]):
 
-    # The project might not exist, for instance when GPS is loading the
-    # default project in a directory
+                self.recompute_xref()
+    
+    def on_project_view_changed(self, hook):
+        self.recompute_xref()
+    
+    def on_gps_started(self, hook):
+        GPS.Menu.create("/Build/Recompute _Xref info",
+             on_activate=lambda x : recompute_xref())
 
-    if not os.path.exists(GPS.Project.root().file().name()):
-        return
-
-    # If we are already recomputing Xref info, do not launch another instance
-    # of gnatinspect
-
-    if "Recompute Xref info" in [t.name() for t in GPS.Task.list()]:
-        return
-
-    target = GPS.BuildTarget("Recompute Xref info")
-
-    #  ??? should add <arg>--symlinks</arg> if preference "slow project loading" is activated
-
-    target.execute(synchronous=False, quiet=True)
-
-def on_compilation_finished(hook, category,
-    target_name="", mode_name="", status=""):
-
-    if status:
-        return
-
-    if (target_name in ["Compile File", "Build Main", "Build All",
-           "Compile All Sources", "Build <current file>", "Custom Build..."]
-        or category in ["Makefile"]):
-        recompute_xref()
-
-def on_project_view_changed(hook):
-    recompute_xref()
-
-def on_gps_started (hook):
-    GPS.Menu.create ("/Build/Recompute _Xref info",
-         on_activate=lambda x : recompute_xref())
-
-if GPS.Logger("SQLITE").get_active():
-    GPS.parse_xml (xml)
-    GPS.Hook("project_view_changed").add(on_project_view_changed)
-    GPS.Hook("compilation_finished").add(on_compilation_finished)
-    GPS.Hook("gps_started").add(on_gps_started)
+if GPS.Logger("ENTITIES.SQLITE").active:
+    Sqlite_Cross_References()

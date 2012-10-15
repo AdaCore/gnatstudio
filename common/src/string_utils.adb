@@ -25,10 +25,12 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Scripts.Utils;     use GNATCOLL.Scripts.Utils;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Xref;
 
 with Glib.Unicode;               use Glib, Glib.Unicode;
 
 package body String_Utils is
+   use type GNATCOLL.Xref.Visible_Column;
 
    -----------------
    -- Lines_Count --

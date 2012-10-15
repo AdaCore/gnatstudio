@@ -16,37 +16,28 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Hashed_Sets;
-with Entities;
 with Dynamic_Arrays;
 with GPS.Kernel;
 with Gtk.Scrolled_Window;
 with Gtk.Stock;
-
-with Basic_Types; use Basic_Types;
+with Xref;
+with GNATCOLL.VFS;
 
 package Refactoring.UI is
 
-   type Location_Type is record
-      File   : Entities.Source_File;
-      Line   : Integer;
-      Column : Visible_Column_Type;
-   end record;
-   --  A location in a file. This is light-weight compared to E_Reference,
-   --  and can be used for declarations as well.
-
    package Location_Arrays is new Dynamic_Arrays
-     (Data                    => Location_Type,
+     (Data                    => Xref.General_Location,
+      "="                     => Xref."=",
       Table_Multiplier        => 2,
       Table_Minimum_Increment => 10,
       Table_Initial_Size      => 100);
    --  Handling of dynamic arrays
 
-   function Hash (File : Entities.Source_File) return Ada.Containers.Hash_Type;
    package Source_File_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => Entities.Source_File,
-      Hash                => Hash,
-      Equivalent_Elements => Entities."=",
-      "="                 => Entities."=");
+     (Element_Type        => GNATCOLL.VFS.Virtual_File,
+      Hash                => GNATCOLL.VFS.Full_Name_Hash,
+      Equivalent_Elements => GNATCOLL.VFS."=",
+      "="                 => GNATCOLL.VFS."=");
    subtype Source_File_Set is Source_File_Sets.Set;
 
    function Confirm_Files

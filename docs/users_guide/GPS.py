@@ -4473,7 +4473,7 @@ class Entity(object):
     def attributes(self):
         """
         Return various boolean attributes of the entity: is the entity global,
-        static, static for a class, protected,...
+        static,...
 
         :return: A htable
         """
@@ -4542,12 +4542,66 @@ class Entity(object):
 
     def category(self):
         """
+        Deprecated
+
         Return the category of a given entity. Possible values include: label,
         literal, object, subprogram, package/namespace, type, unknown.
+
+        See instead is_access, is_array, is_subprogram,...
 
         :return: A string
         """
         pass  # implemented in Ada
+
+    def is_subprogram(self):
+        """
+        Whether the entity is a subprogram, procedure or function.
+        :return: A boolean
+        """
+        pass
+
+    def is_generic(self):
+        """
+        Whether the entity is a generic.
+        :return: A boolean
+        """
+        pass
+
+    def is_global(self):
+        """
+        Whether self is a global entity.
+        :return: A boolean
+        """
+        pass
+
+    def is_access(self):
+        """
+        Whether self is a pointer or access (variable or type)
+        :return: A boolean
+        """
+        pass
+
+    def is_array(self):
+        """
+        Whether self is an array type or variable.
+        :return: A boolean
+        """
+        pass
+
+    def is_type(self):
+        """
+        Whether self is a type declaration (as opposed to a variable)
+        :return: A boolean
+        """
+        pass
+
+    def is_container(self):
+        """
+        Whether self contains other entities (like a package or a record
+        for instance).
+        :return: A boolean
+        """
+        pass
 
     def declaration(self):
         """
@@ -6524,6 +6578,9 @@ class Logger(object):
 
     count = None
 
+    active = True
+    """Whether this logging stream is active"""
+
     def log(self, message):
         """
         Logs a message in the GPS log file
@@ -6532,19 +6589,13 @@ class Logger(object):
         """
         pass  # implemented in Ada
 
-    def get_active(self):
-        """
-        Whether this logging stream is active
-
-        :return: A boolean
-        """
-        pass  # implemented in Ada
-
     def set_active(self, active):
         """
         Activate or deactivate a logging stream. The default for a sttream
         depends on the file $HOME/.gps/traces.cfg, and will generally be
         active. When a stream is inactive, no message is sent to the log file
+
+        Use self.active to test whether a log stream is active.
 
         :param active: A boolean
         """
@@ -9509,14 +9560,6 @@ def dump_file(text, filename):
     pass  # implemented in Ada
 
 
-def dump_xref_db():
-    """
-    Dump in the file $HOME/.gps/db_dump the current contents of the
-    cross-references database. This is intended for debugging purposes only
-    """
-    pass  # implemented in Ada
-
-
 def echo(*args):
     """
     Display a line of text. This command is specific to the GPS shell.
@@ -9958,17 +10001,6 @@ def repeat_next(count):
     This action will execute the next one <count> times.
 
     :param count: An integer
-    """
-    pass  # implemented in Ada
-
-
-def reset_xref_db():
-    """
-    Reset the internal cross-reference database that GPS is using for most of
-    its navigation facilities. You shouldn't have to call that yourself, since
-    in general GPS should know by itself when it is necessary to refresh its
-    database. However, this might be used as a workaround if you think you have
-    troubles with the cross-reference information which isn't accurate.
     """
     pass  # implemented in Ada
 
