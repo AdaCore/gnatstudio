@@ -374,7 +374,7 @@ package body Language.Tree.Database is
       Tmp2    : Unchecked_String_Access;
       Len     : Natural;
       Success : Boolean;
-      pragma Unreferenced (Provider, Success);
+      pragma Unreferenced (Provider);
    begin
       --  Ensure result is UTF8 encoded
 
@@ -385,6 +385,10 @@ package body Language.Tree.Database is
          Free (Tmp);
          Tmp := new String'(Tmp2 (1 .. Len));
          Free (Tmp2);
+
+      elsif not Success then
+         --  the string is not valid utf-8
+         Free (Tmp);
       end if;
 
       return Tmp;
