@@ -593,16 +593,18 @@ package body GPS.Kernel.Contexts is
          Context.Data.Data.Entity_Name := new String'(Entity_Name);
          Context.Data.Data.Entity_Column   := Entity_Column;
 
-         Db.Find_Declaration_Or_Overloaded
-           (Loc  => (File   => Context.Data.Data.Files
-                     (Context.Data.Data.Files'First),
-                     Line   => Context.Data.Data.Line,
-                     Column => Entity_Column),
-            Entity_Name => Entity_Name,
-            Entity      => Context.Data.Data.Xref_Entity,
-            Closest_Ref => Context.Data.Data.Xref_Closest_Ref);
+         if Has_File_Information (Context) then
+            Db.Find_Declaration_Or_Overloaded
+              (Loc  => (File   => Context.Data.Data.Files
+                        (Context.Data.Data.Files'First),
+                        Line   => Context.Data.Data.Line,
+                        Column => Entity_Column),
+               Entity_Name => Entity_Name,
+               Entity      => Context.Data.Data.Xref_Entity,
+               Closest_Ref => Context.Data.Data.Xref_Closest_Ref);
 
-         Ref (Context.Data.Data.Xref_Entity);
+            Ref (Context.Data.Data.Xref_Entity);
+         end if;
       end if;
 
       if From_Expression /= "" then
