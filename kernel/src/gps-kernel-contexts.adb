@@ -605,6 +605,8 @@ package body GPS.Kernel.Contexts is
          Entity      => Context.Data.Data.Xref_Entity,
          Closest_Ref => Context.Data.Data.Xref_Closest_Ref);
 
+      Ref (Context.Data.Data.Xref_Entity);
+
       if From_Expression /= "" then
          Context.Data.Data.Expression := new String'(From_Expression);
       end if;

@@ -686,6 +686,9 @@ package body GPS.Kernel.Xref is
            Kernel_Handle (Kernel);
       end if;
 
+      Kernel.Database.Initialize_Constructs
+        (Kernel.Lang_Handler, Kernel.Symbols);
+
       if Active (SQLITE) then
          if Kernel.Database.Xref = null then
             Kernel.Database.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
@@ -711,9 +714,6 @@ package body GPS.Kernel.Xref is
                Registry     => Kernel.Registry.all,
                Lang_Handler => Kernel.Lang_Handler));
       end if;
-
-      Kernel.Database.Initialize_Constructs
-        (Kernel.Lang_Handler, Kernel.Symbols);
    end Create_Database;
 
    ---------------------

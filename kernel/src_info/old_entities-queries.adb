@@ -3080,7 +3080,8 @@ package body Old_Entities.Queries is
    begin
       Update_Xref (File, File_Has_No_LI_Report);
 
-      Iter.Case_Sensitive := not Case_Insensitive_Identifiers (File.Handler);
+      Iter.Case_Sensitive := not Case_Insensitive_Identifiers
+        (Default_LI_Handler);   --   ??? was File.Handler
 
       if Name = "" then
          Get_First (File.Entities, Iter.SIter);

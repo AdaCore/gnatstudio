@@ -22,7 +22,6 @@ Functions
 .. autofunction:: dir_name
 .. autofunction:: dump
 .. autofunction:: dump_file
-.. autofunction:: dump_xref_db
 .. autofunction:: exec_in_console
 .. autofunction:: execute_action
 .. autofunction:: execute_asynchronous_action
@@ -44,7 +43,6 @@ Functions
 .. autofunction:: parse_xml
 .. autofunction:: pwd
 .. autofunction:: repeat_next
-.. autofunction:: reset_xref_db
 .. autofunction:: save_persistent_properties
 .. autofunction:: set_build_mode
 .. autofunction:: set_busy
@@ -819,6 +817,20 @@ Classes
 
    .. automethod:: GPS.Entity.full_name
 
+   .. automethod:: GPS.Entity.is_access
+
+   .. automethod:: GPS.Entity.is_array
+
+   .. automethod:: GPS.Entity.is_container
+
+   .. automethod:: GPS.Entity.is_generic
+
+   .. automethod:: GPS.Entity.is_global
+
+   .. automethod:: GPS.Entity.is_subprogram
+
+   .. automethod:: GPS.Entity.is_type
+
    .. automethod:: GPS.Entity.methods
 
    .. automethod:: GPS.Entity.name
@@ -1046,6 +1058,10 @@ Classes
 .. autoclass:: Logger
 
    
+
+
+   .. autoattribute:: GPS.Logger.active
+
 
 
    .. autoattribute:: GPS.Logger.count

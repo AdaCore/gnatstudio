@@ -1933,6 +1933,7 @@ package body Xref is
          if E.Old_Entity /= null then
             K := Old_Entities.Get_Kind (E.Old_Entity).Kind;
             return K = Old_Entities.Class
+              or else K = Record_Kind
               or else K = Old_Entities.Interface_Kind;
          end if;
       end if;
@@ -3122,9 +3123,9 @@ package body Xref is
 
                if In_Range (Old_Entities.Get_Declaration_Of (Field),
                             Entity.Old_Entity)
-                 and then not Is_Discriminant (Field, Entity.Old_Entity)
-                 and then not Old_Entities.Is_Subprogram (Entity.Old_Entity)
-                 and then Get_Category (Entity.Old_Entity) /= Type_Or_Subtype
+                 and then not Is_Discriminant (Field, Field)
+                 and then not Old_Entities.Is_Subprogram (Field)
+                 and then Get_Category (Field) /= Type_Or_Subtype
                then
                   Append (Arr, From_Old (Field));
                end if;

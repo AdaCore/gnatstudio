@@ -1415,7 +1415,11 @@ package body Old_Entities is
 
          F.Ordered_Index := Get_Key (Db.FS_Optimizer, F.Name);
 
-         F.Handler := LI_Handler (Handler);
+         if Handler /= null then
+            F.Handler := LI_Handler (Handler);
+         else
+            F.Handler := Default_LI_Handler;
+         end if;
 
          S := new Source_File_Item_Record'(File => F, Next => null);
          Files_HTable.Set (Db.Files, S);
