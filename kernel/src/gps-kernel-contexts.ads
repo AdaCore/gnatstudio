@@ -199,9 +199,9 @@ package GPS.Kernel.Contexts is
      (Context         : in out Selection_Context;
       Entity_Name     : String;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
-      From_Expression : String := "")
-   with Pre => Has_File_Information (Context)
-     and then Has_Line_Information (Context);
+      From_Expression : String := "");
+   pragma Precondition
+     (Entity_Name = "" or else Has_File_Information (Context));
    --  Set the information in the context.
    --  Entity_Column should be the column on which the entity starts, not the
    --  current location of the cursor.

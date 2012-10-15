@@ -73,6 +73,8 @@ project GPS is
          when "unix" =>
             null;
       end case;
+      for Default_Switches ("Ada") use Linker'Default_Switches ("Ada")
+         & Shared.Linker'Default_Switches ("Ada");
       --  for Default_Switches ("Ada") use ("-lgmem");
       --  for Default_Switches ("Ada") use ("-pg");
    end Linker;
