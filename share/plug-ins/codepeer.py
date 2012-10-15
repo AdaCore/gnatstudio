@@ -291,7 +291,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <description>Review code with codepeer</description>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
@@ -379,7 +378,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
@@ -396,7 +394,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-root-only</arg>
@@ -414,7 +411,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
@@ -434,7 +430,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <command-line>
           <arg>codepeer</arg>
           <arg>-quick</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
@@ -451,7 +446,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-output-only</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
