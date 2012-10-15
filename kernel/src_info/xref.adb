@@ -738,20 +738,25 @@ package body Xref is
    function Get_Location
      (Ref : General_Entity_Reference) return General_Location is
    begin
-      if Active (SQLITE)
-        and then Ref.Ref /= No_Entity_Reference
-      then
-         return Get_Location (Ref.Ref);
-      end if;
+      if Active (SQLITE) then
+         if Ref.Ref /= No_Entity_Reference then
+            return Get_Location (Ref.Ref);
+         end if;
 
-      declare
-         Loc : constant Old_Entities.File_Location :=
-           Old_Entities.Get_Location (Ref.Old_Ref);
-      begin
-         return (File => Old_Entities.Get_Filename (Loc.File),
-                 Line => Loc.Line,
-                 Column => Loc.Column);
-      end;
+      else
+         declare
+            use Old_Entities;
+            Loc : constant Old_Entities.File_Location :=
+              Old_Entities.Get_Location (Ref.Old_Ref);
+         begin
+            if Loc.File /= null then
+               return (File => Old_Entities.Get_Filename (Loc.File),
+                       Line => Loc.Line,
+                       Column => Loc.Column);
+            end if;
+         end;
+      end if;
+      return No_Location;
    end Get_Location;
 
    ------------------
@@ -1253,6 +1258,7 @@ package body Xref is
    ----------
 
    procedure Next (Iter : in out Entity_Reference_Iterator) is
+      use Old_Entities;
    begin
       if Active (SQLITE) then
          Next (Iter.Iter);
@@ -1268,6 +1274,11 @@ package body Xref is
 
       else
          Next (Iter.Old_Iter);
+         while Get (Iter.Old_Iter) = Old_Entities.No_Entity_Reference
+           and then not At_End (Iter.Old_Iter)
+         loop
+            Next (Iter.Old_Iter);
+         end loop;
       end if;
    end Next;
 

@@ -1047,8 +1047,11 @@ package body Old_Entities is
 
    function Get_Filename (File : Source_File) return Virtual_File is
    begin
-      Assert (Assert_Me, File /= null, "Null source file in Get_Filename");
-      return File.Name;
+      if File = null then
+         return No_File;
+      else
+         return File.Name;
+      end if;
    end Get_Filename;
 
    ---------------------
