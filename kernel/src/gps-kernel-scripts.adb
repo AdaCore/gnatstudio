@@ -25,7 +25,6 @@ with GNAT.Regpat;             use GNAT.Regpat;
 with GNATCOLL.Memory;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -47,7 +46,6 @@ with Pango.Layout;            use Pango.Layout;
 
 with Basic_Types;             use Basic_Types;
 with Commands.Interactive;    use Commands, Commands.Interactive;
-with Entities.Queries;        use Entities, Entities.Queries;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -62,6 +60,7 @@ with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
 with Language_Handlers;       use Language_Handlers;
@@ -70,6 +69,7 @@ with Remote;                  use Remote;
 with String_List_Utils;
 with Traces;
 with OS_Utils;                use OS_Utils;
+with Xref;                    use Xref;
 
 package body GPS.Kernel.Scripts is
 
@@ -100,7 +100,7 @@ package body GPS.Kernel.Scripts is
          when Contexts =>
             Context : Selection_Context := No_Context;
          when Entities =>
-            Entity  : Standard.Entities.Entity_Information;
+            Entity  : General_Entity;
          when Projects =>
             Project : Project_Type;
          when File_Locations =>
@@ -319,7 +319,7 @@ package body GPS.Kernel.Scripts is
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Entity : Standard.Entities.Entity_Information) is
+      Entity   : General_Entity) is
    begin
       if not Is_Subclass (Instance, Entity_Class_Name) then
          raise Invalid_Data;
@@ -355,7 +355,7 @@ package body GPS.Kernel.Scripts is
 
    function Get_Data
      (Data : Callback_Data'Class;
-      N    : Positive) return Standard.Entities.Entity_Information
+      N    : Positive) return General_Entity
    is
       Class : constant Class_Type := Get_Entity_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance := Nth_Arg
@@ -363,12 +363,12 @@ package body GPS.Kernel.Scripts is
       Props : Instance_Property;
    begin
       if Inst = No_Class_Instance then
-         return null;
+         return No_General_Entity;
       end if;
 
       Props := Get_Data (Inst, Entity_Class_Name);
       if Props = null then
-         return null;
+         return No_General_Entity;
       else
          return GPS_Properties (Props).Entity;
       end if;
@@ -719,10 +719,20 @@ package body GPS.Kernel.Scripts is
          end;
 
       elsif Command = "freeze_xref" then
-         Freeze (Get_Database (Kernel));
+         declare
+            Lock : Database_Lock;
+            pragma Unreferenced (Lock);
+         begin
+            Lock := Kernel.Databases.Freeze;
+            --  will release the constructs lock too
+         end;
 
       elsif Command = "thaw_xref" then
-         Thaw (Get_Database (Kernel));
+         declare
+            Lock : Database_Lock := No_Lock;
+         begin
+            Kernel.Databases.Thaw (Lock);
+         end;
       end if;
    end Default_Command_Handler;
 
@@ -779,8 +789,8 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Entity : Standard.Entities.Entity_Information;
-      Ref    : Standard.Entities.Entity_Reference;
+      Entity : General_Entity;
+      Ref    : General_Entity_Reference;
 
    begin
       if Command = Constructor_Method then
@@ -795,43 +805,28 @@ package body GPS.Kernel.Scripts is
             L      : Integer := Nth_Arg (Data, 4, Default => 1);
             C      : Visible_Column_Type :=
               Visible_Column_Type (Nth_Arg (Data, 5, Default => 1));
-            Status : Find_Decl_Or_Body_Query_Status;
             F      : Virtual_File;
-            Source : Source_File;
-            Fuzzy_Expected : Boolean;
 
          begin
-            Fuzzy_Expected := Number_Of_Arguments (Data) < 5;
-
             if File = No_Class_Instance then
-               --  ??? Don't know what Handler to pass here, since we do
-               --  not have enough information to recognize the context.
-               Source := Get_Predefined_File
-                 (Get_Database (Kernel),
-                  Get_LI_Handler_By_Name
-                    (Get_Language_Handler (Kernel), "Ada"));
-               L      := Predefined_Line;
-               C      := Predefined_Column;
+               --  Looking for a predefined entity
+               F := Create ("/");
+               L := -1;
+               C := -1;
             else
                F := Get_Data (File);
-               Source := Get_Or_Create
-                 (Get_Database (Kernel), F,
-                  Get_LI_Handler (Get_Database (Kernel), F));
             end if;
 
-            Find_Declaration_Or_Overloaded
-              (Kernel            => Kernel,
-               File              => Source,
+            Kernel.Databases.Find_Declaration_Or_Overloaded
+              (Loc               => (File   => F,
+                                     Line   => L,
+                                     Column => C),
                Entity_Name       => Name,
-               Line              => L,
-               Column            => C,
                Ask_If_Overloaded => False,
-               Closest_Ref       => Ref,
                Entity            => Entity,
-               Status            => Status,
-               Fuzzy_Expected    => Fuzzy_Expected);
+               Closest_Ref       => Ref);
 
-            if Status /= Success and then Status /= Fuzzy_Match then
+            if Entity = No_General_Entity then
                Set_Error_Msg (Data, -"Entity not found");
             else
                declare
@@ -845,55 +840,50 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "full_name" then
          Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Full_Name (Entity));
+         Set_Return_Value
+           (Data, Kernel.Databases.Qualified_Name (Entity));
 
       elsif Command = "name" then
          Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get (Get_Name (Entity)).all);
+         Set_Return_Value (Data, Kernel.Databases.Get_Name (Entity));
 
       elsif Command = "declaration" then
          declare
-            Location : File_Location;
+            Location : General_Location;
          begin
             Entity := Get_Data (Data, 1);
-            Location := Get_Declaration_Of (Entity);
+            Location := Kernel.Databases.Get_Declaration (Entity).Loc;
 
             Set_Return_Value
               (Data, Create_File_Location
                  (Get_Script (Data),
-                  File   => Create_File
-                    (Get_Script (Data), Get_Filename (Get_File (Location))),
-                  Line   => Get_Line (Location),
-                  Column => Get_Column (Location)));
+                  File   => Create_File (Get_Script (Data), Location.File),
+                  Line   => Location.Line,
+                  Column => Location.Column));
          end;
 
       elsif Command = "body" then
          Name_Parameters (Data, Body_Cmd_Parameters);
          declare
-            Location     : File_Location := Standard.Entities.No_File_Location;
-            Cur_Location : File_Location := Standard.Entities.No_File_Location;
+            Location     : General_Location := No_Location;
+            Cur_Location : General_Location := No_Location;
             Count        : Integer := Nth_Arg (Data, 2, 1);
          begin
             Entity := Get_Data (Data, 1);
             while Count > 0 loop
-               Find_Next_Body
-                 (Entity,
-                  Current_Location     => Cur_Location,
-                  Location             => Location,
-                  No_Location_If_First => True);
+               Location := Kernel.Databases.Get_Body
+                 (Entity, After => Cur_Location);
                Count := Count - 1;
-
                Cur_Location := Location;
             end loop;
 
-            if Location /= Standard.Entities.No_File_Location then
+            if Location /= No_Location then
                Set_Return_Value
                  (Data, Create_File_Location
                     (Get_Script (Data),
-                     File   => Create_File
-                       (Get_Script (Data), Get_Filename (Get_File (Location))),
-                     Line   => Get_Line (Location),
-                     Column => Get_Column (Location)));
+                     File   => Create_File (Get_Script (Data), Location.File),
+                     Line   => Location.Line,
+                     Column => Location.Column));
 
             else
                Set_Error_Msg (Data, -"Body not found for the entity");
@@ -901,37 +891,61 @@ package body GPS.Kernel.Scripts is
          end;
 
       elsif Command = "attributes" then
+         --  ??? Should be made obsolete and replaced by separate functions.
          Entity := Get_Data (Data, 1);
-         declare
-            Attr : constant Entity_Attributes := Get_Attributes (Entity);
-         begin
-            for A in Attr'Range loop
-               Set_Return_Value (Data, Attr (A));
-               Set_Return_Value_Key (Data, Image (A));
-            end loop;
-         end;
+
+         Set_Return_Value (Data, Kernel.Databases.Is_Global (Entity));
+         Set_Return_Value_Key (Data, "global");
+
+         Set_Return_Value (Data, Kernel.Databases.Is_Static_Local (Entity));
+         Set_Return_Value_Key (Data, "static_local");
+
+      elsif Command = "is_subprogram" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Subprogram (Entity));
+
+      elsif Command = "is_generic" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Generic (Entity));
+
+      elsif Command = "is_global" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Global (Entity));
+
+      elsif Command = "is_access" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Access (Entity));
+
+      elsif Command = "is_array" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Array (Entity));
+
+      elsif Command = "is_type" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Type (Entity));
+
+      elsif Command = "is_container" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Type (Entity));
 
       elsif Command = "category" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Category_To_String (Get_Category (Entity)));
+         raise Program_Error
+           with "GPS.Entity.category has been deprecated, see is_*";
+--       Set_Return_Value (Data, Category_To_String (Get_Category (Entity)));
 
       elsif Command = "end_of_scope" then
          declare
-            Location : File_Location := Standard.Entities.No_File_Location;
-            Kind     : Reference_Kind;
+            Location : General_Location := No_Location;
          begin
             Entity := Get_Data (Data, 1);
-            Get_End_Of_Scope (Entity, Location, Kind);
-
-            if Location /= Standard.Entities.No_File_Location then
+            Location := Kernel.Databases.End_Of_Scope (Entity);
+            if Location /= No_Location then
                Set_Return_Value
                  (Data, Create_File_Location
                     (Get_Script (Data),
-                     File   => Create_File
-                       (Get_Script (Data), Get_Filename (Get_File (Location))),
-                     Line   => Get_Line (Location),
-                     Column => Get_Column (Location)));
-
+                     File   => Create_File (Get_Script (Data), Location.File),
+                     Line   => Location.Line,
+                     Column => Location.Column));
             else
                Set_Error_Msg (Data, -"end-of-scope not found for the entity");
             end if;
@@ -1056,35 +1070,25 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, File_Entities_Parameters);
          Info := Nth_Arg (Data, 1);
          declare
-            Iter   : Entity_Iterator;
+            Iter   : Entities_In_File_Cursor;
             Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
-            Ent    : Standard.Entities.Entity_Information;
-            Source : Source_File;
+            Ent    : General_Entity;
          begin
             Set_Return_Value_As_List (Data);
-            Source := Get_Or_Create
-              (Db            => Get_Database (Kernel),
-               File          => Info,
-               Allow_Create  => True);
+            Iter := Kernel.Databases.Entities_In_File
+              (File => Info,
+               Name => "");
 
-            if Source /= null then
-               Find_All_Entities_In_File
-                 (Iter  => Iter,
-                  File  => Source,
-                  Name  => "");
-
-               while not At_End (Iter) loop
-                  Ent := Get (Iter);
-                  if not Defined_In_File
-                    or else Get_Filename (Get_File (Get_Declaration_Of (Ent)))
-                    = Info
-                  then
-                     Set_Return_Value
-                       (Data, Create_Entity (Get_Script (Data), Ent));
-                  end if;
-                  Next (Iter);
-               end loop;
-            end if;
+            while not At_End (Iter) loop
+               Ent := Get (Iter);
+               if not Defined_In_File
+                 or else Kernel.Databases.Get_Declaration (Ent).Loc.File = Info
+               then
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Ent));
+               end if;
+               Next (Iter);
+            end loop;
          end;
 
       end if;
@@ -2101,6 +2105,35 @@ package body GPS.Kernel.Scripts is
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
+        (Kernel, "is_subprogram",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_generic",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_global",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_access",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_array",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_type",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_container",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+
+      Register_Command
         (Kernel, "end_of_scope",
          Minimum_Args => 0,
          Maximum_Args => 1,
@@ -2388,11 +2421,11 @@ package body GPS.Kernel.Scripts is
 
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
-      Entity : Standard.Entities.Entity_Information) return Class_Instance
+      Entity : General_Entity) return Class_Instance
    is
       Instance : Class_Instance;
    begin
-      if Entity = null then
+      if Entity = No_General_Entity then
          return No_Class_Instance;
       else
          Instance := New_Instance

@@ -38,8 +38,6 @@ with Gtk.Window;
 with Basic_Types;
 with Basic_Mapper;
 with Commands;
-with Entities;
-with Entities.Queries;
 with Generic_List;
 with HTables;
 with Language_Handlers;
@@ -279,24 +277,6 @@ package GPS.Kernel is
    -- Queries --
    -------------
 
-   procedure Parse_All_LI_Information
-     (Kernel    : access Kernel_Handle_Record;
-      Project   : GNATCOLL.Projects.Project_Type;
-      Recursive : Boolean);
-   --  Parse all the LI information in Project, for all the supported
-   --  languages. This can be used in cases where there is no obvious way to
-   --  find the LI file matching a given source file (for instance, with a
-   --  separate krunched file in Ada).
-
-   function Get_Database
-     (Kernel : access Kernel_Handle_Record) return Entities.Entities_Database;
-   --  Return the database used for cross-references
-
-   function Get_Xref_Database
-     (Kernel : access Kernel_Handle_Record)
-      return GNATCOLL.Xref.Xref_Database_Access;
-   --  Return the database used for cross-references
-
    function Get_Construct_Database
      (Kernel : access Kernel_Handle_Record)
       return Language.Tree.Database.Construct_Database_Access;
@@ -312,25 +292,6 @@ package GPS.Kernel is
       return GNATCOLL.Symbols.Symbol_Table_Access;
    --  Return the symbol table used to store various shared strings, in
    --  particular storing the name of all entities found in the source files
-
-   procedure Find_Declaration_Or_Overloaded
-     (Kernel            : access Kernel_Handle_Record;
-      File              : Entities.Source_File;
-      Entity_Name       : String;
-      Line              : Natural;
-      Column            : Basic_Types.Visible_Column_Type;
-      Ask_If_Overloaded : Boolean;
-      Entity            : out Entities.Entity_Information;
-      Closest_Ref       : out Entities.Entity_Reference;
-      Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status;
-      Fuzzy_Expected    : Boolean := False);
-   --  Find the declaration of the given entity in the file.
-   --  If Ask_If_Overloaded is True and there are several possible matches for
-   --  the entity (for instance because the xref info is not up-to-date), an
-   --  interactive dialog is opened.
-   --  If Fast is True, get the entity information only from the
-   --  constructs database, do not attempt to refine the search using the ALI
-   --  database. ??? There is no Fast parameter
 
    --------------
    -- Contexts --
@@ -906,7 +867,7 @@ private
       --  When several lines are selected in a file. The selection starts
       --  at Line. Text is the current selection.
 
-      Entity_Name   : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Entity_Name   : GNAT.Strings.String_Access;
       Entity_Column : Basic_Types.Visible_Column_Type := 0;
 
       Expression    : GNAT.Strings.String_Access := null;
@@ -930,18 +891,17 @@ private
       --  Whether we clicked on a dispatching call.
 
       Xref_Entity : Xref.General_Entity := Xref.No_General_Entity;
-      --  The Entity in the GNATCOLL-based world
+      --  The Entity for xref purposes. This is computed when the context
+      --  is created. When the source location only results in a possible
+      --  candidate (overloaded entities and not up-to-date ALI files), the
+      --  xref engines are responsible for making a best guess, or setting
+      --  this to null.
 
       Xref_Closest_Ref  : Xref.General_Entity_Reference :=
         Xref.No_General_Entity_Reference;
-      --  The entity on which the user has clicked
-
-      Entity_Resolved : Entities.Queries.Find_Decl_Or_Body_Query_Status :=
-        Entities.Queries.Entity_Not_Found;
-      --  Set to True when we have called Get_Entity at least once. This is
-      --  used to differentiate cases where Entity is null because we have
-      --  never tested and cases where it is null because there is none to be
-      --  found.
+      --  The reference on which the user has clicked. This is slightly
+      --  redundant with the location above, but since this was computed at the
+      --  same time as the entity anyway, we might as well store it.
    end record;
 
    type Selection_Context_Data is access all Selection_Context_Data_Record;
@@ -1048,14 +1008,8 @@ private
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
-      Database : Entities.Entities_Database;
+      Database : Xref.General_Xref_Database;
       --  The cross-reference information
-
-      Xref_Db : GNATCOLL.Xref.Xref_Database_Access;
-      --  The database-based cross-reference information
-
-      Construct_Database : Language.Tree.Database.Construct_Database_Access;
-      --  The construct information
 
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
       --  The symbol used to store common strings read from sources

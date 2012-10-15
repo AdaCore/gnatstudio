@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Basic_Types;              use Basic_Types;
 with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums;
-with Entities.Queries;
 with Language;
 with GPS_Preferences_Types; use GPS_Preferences_Types;
 
@@ -110,7 +110,7 @@ package GPS.Kernel.Preferences is
 
    package Dispatching_Menu_Policy_Prefs is new
      Default_Preferences.Enums.Generics
-       (Entities.Queries.Dispatching_Menu_Policy);
+       (Dispatching_Menu_Policy);
 
    type Strip_Trailing_Blanks_Policy is (Never, Autodetect, Always);
    package Strip_Trailing_Blanks_Policy_Prefs is new

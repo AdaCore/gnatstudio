@@ -27,7 +27,6 @@ with Ada.Unchecked_Deallocation;
 
 with Projects;                         use Projects;
 with Basic_Types;
-with Entities;
 with XML_Utils;                        use XML_Utils;
 with Remote;                           use Remote;
 with Traces;                           use Traces;
@@ -149,22 +148,6 @@ package body GPS.Kernel.Project is
      (Self   : in out GPS_Project_Tree;
       Errors : Error_Report := null)
    is
-      procedure Reset_File_If_External (S : in out Entities.Source_File);
-      --  Reset the xref info for a source file that no longer belongs to the
-      --  project.
-
-      ----------------------------
-      -- Reset_File_If_External --
-      ----------------------------
-
-      procedure Reset_File_If_External (S : in out Entities.Source_File) is
-         Info : constant File_Info := Self.Info (Entities.Get_Filename (S));
-      begin
-         if Info.Project = No_Project then
-            Entities.Reset (S);
-         end if;
-      end Reset_File_If_External;
-
    begin
       Push_State (Self.Handle, Busy);
 
@@ -181,40 +164,12 @@ package body GPS.Kernel.Project is
          return;
       end if;
 
-      --  The list of source or ALI files might have changed, so we need to
-      --  reset the cache containing LI information, otherwise this cache might
-      --  contain dangling references to projects that have been freed. We used
-      --  to do this only when loading a new project, but in fact that is not
-      --  sufficient: when we look up xref info for a source file, if we
-      --  haven't reset the cache we might get a reply pointing to a source
-      --  file in a directory that is no longer part of the project in the new
-      --  scenario.
-      --
-      --  In fact, we only reset the info for those source files that are no
-      --  longer part of the project. This might take longer than dropping the
-      --  whole database since in the former case we need to properly handle
-      --  refcounting whereas Reset takes a shortcut. It is still probably
-      --  cleaner to only reset what's needed.
-
-      Entities.Foreach_Source_File
-        (Get_Database (Self.Handle), Reset_File_If_External'Access);
+      --  ??? Could be run as part of the hook itself, which would give control
+      --  to the user as to whether we want to run it or not.
+      GPS.Kernel.Xref.Project_View_Changed
+        (Self.Handle.Database, Self.Handle);
 
       Run_Hook (Self.Handle, Project_View_Changed_Hook);
-
-      --  The view has changed: recompute the cross-reference database
-
-      if Active (Entities.SQLITE) then
-         if Self.Handle.Xref_Db = null then
-            Self.Handle.Xref_Db := new
-              GPS.Kernel.Xref.GPS_Xref_Database;
-         else
-            Self.Handle.Xref_Db.Free;
-         end if;
-
-         GPS.Kernel.Xref.Setup
-           (GPS.Kernel.Xref.GPS_Xref_Database_Access
-              (Self.Handle.Xref_Db), Self.Handle);
-      end if;
 
       Pop_State (Self.Handle);
    end Recompute_View;
@@ -606,13 +561,11 @@ package body GPS.Kernel.Project is
       Close_All_Children (Kernel);
       Ignore := Load_Desktop (Kernel);
 
-      Entities.Reset (Get_Database (Kernel));
-
       Kernel.Registry.Tree.Load_Empty_Project
         (Kernel.Registry.Environment, Recompute_View => False);
 
       Run_Hook (Kernel, Project_Changed_Hook);
-      Recompute_View (Kernel);
+      Recompute_View (Kernel);   --  also resets the xref database.
    end Load_Empty_Project;
 
    ------------------------------
@@ -789,14 +742,7 @@ package body GPS.Kernel.Project is
 
          Change_Dir (Dir (Local_Project));
 
-         --  When loading a new project, we need to reset the cache containing
-         --  LI information, otherwise this cache might contain dangling
-         --  references to projects that have been freed. Recompute_View does
-         --  something similar but tries to limit the files that are reset, so
-         --  the calls below will just speed up the processing in
-         --  Recompute_View when a new project is loaded.
-
-         Entities.Reset (Get_Database (Kernel));
+         GPS.Kernel.Xref.Project_Changed (Kernel.Database);
 
          --  Reload the desktop, in case there is a project-specific setup
          --  already. We need to do this before doing the actual loading (in
@@ -913,6 +859,18 @@ package body GPS.Kernel.Project is
    begin
       return Handle.Registry.Tree.Root_Project;
    end Get_Project;
+
+   ----------------------
+   -- Get_Project_Tree --
+   ----------------------
+
+   function Get_Project_Tree
+     (Handle : access Kernel_Handle_Record'Class)
+      return GNATCOLL.Projects.Project_Tree_Access
+   is
+   begin
+      return Handle.Registry.Tree;
+   end Get_Project_Tree;
 
    ---------------------------------
    -- Scenario_Variables_Cmd_Line --

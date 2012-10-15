@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Entities;                use Entities;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Shared_Macros; use GPS.Kernel.Shared_Macros;
@@ -23,6 +22,7 @@ with String_Utils;            use String_Utils;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.Templates;      use GNATCOLL.Templates;
+with Xref;                    use Xref;
 
 package body GPS.Kernel.Macros is
 
@@ -129,7 +129,7 @@ package body GPS.Kernel.Macros is
       Server    : Server_Type := GPS_Server;
       For_Shell : Boolean := False) return String
    is
-      Entity                           : Entities.Entity_Information;
+      Entity : General_Entity;
 
       --  In this routine it is important to *not* quote backslahes on paths.
       --  This is important because on Windows a backslash is the directory
@@ -159,14 +159,14 @@ package body GPS.Kernel.Macros is
 
       elsif Param = "e" then
          Entity := Get_Entity (Context);
-         if Entity /= null then
+         if Entity /= No_General_Entity then
             --  Get the name from the context, to have the proper casing
             return Entity_Name_Information (Context);
          end if;
 
       elsif Param = "ek" then
          Entity := Get_Entity (Context);
-         if Entity /= null then
+         if Entity /= No_General_Entity then
             --  Get the name from the context, to have the proper casing
             return Krunch (Entity_Name_Information (Context));
          end if;
@@ -181,6 +181,9 @@ package body GPS.Kernel.Macros is
          if Has_Category_Information (Context) then
             return Category_Information (Context);
          end if;
+
+      elsif Param = "GPS" then
+         return Get_Kernel (Context).Get_Home_Dir.Display_Full_Name;
 
       elsif Param = "s" then
          if Has_Entity_Name_Information (Context) then
@@ -261,7 +264,7 @@ package body GPS.Kernel.Macros is
                             Has_Entity_Name_Information (Context);
       Is_Area_Context   : constant Boolean := Has_Area_Information (Context);
       Project           : Project_Type;
-      Entity            : Entities.Entity_Information;
+      Entity            : General_Entity;
       Start, Last       : Integer;
    begin
       if Filter.Requires.Project = 'p'
@@ -304,7 +307,7 @@ package body GPS.Kernel.Macros is
 
          --  Avoid cases where we click on a keyword
          Entity := Get_Entity (Context);
-         if Entity = null then
+         if Entity = No_General_Entity then
             return False;
          end if;
       end if;

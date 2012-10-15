@@ -16,18 +16,14 @@
 ------------------------------------------------------------------------------
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
-with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 with Basic_Types;        use Basic_Types;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 
-with Entities;           use Entities;
-with Entities.Queries;   use Entities.Queries;
-with Language_Handlers;  use Language_Handlers;
 with Projects;           use Projects;
+with Xref;               use Xref;
 
 package body GPS.Kernel.Contexts is
 
@@ -586,18 +582,28 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_Entity_Information
      (Context         : in out Selection_Context;
-      Entity_Name     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Entity_Name     : String;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
-      From_Expression : String := "") is
+      From_Expression : String := "")
+   is
+      Db : constant General_Xref_Database :=
+        Context.Data.Data.Kernel.Databases;
    begin
-      if Entity_Name = Empty_String then
-         Context.Data.Data.Entity_Name := No_Symbol;
-      else
-         Context.Data.Data.Entity_Name     := Entity_Name;
-      end if;
+      if Entity_Name /= "" then
+         Context.Data.Data.Entity_Name := new String'(Entity_Name);
+         Context.Data.Data.Entity_Column   := Entity_Column;
 
-      Context.Data.Data.Entity_Column   := Entity_Column;
-      Context.Data.Data.Entity_Resolved := Entity_Not_Found;
+         Db.Find_Declaration_Or_Overloaded
+           (Loc  => (File   => Context.Data.Data.Files
+                     (Context.Data.Data.Files'First),
+                     Line   => Context.Data.Data.Line,
+                     Column => Entity_Column),
+            Entity_Name => Entity_Name,
+            Entity      => Context.Data.Data.Xref_Entity,
+            Closest_Ref => Context.Data.Data.Xref_Closest_Ref);
+
+         Ref (Context.Data.Data.Xref_Entity);
+      end if;
 
       if From_Expression /= "" then
          Context.Data.Data.Expression := new String'(From_Expression);
@@ -610,18 +616,18 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_Entity_Information
      (Context : in out Selection_Context;
-      Entity  : access Entities.Entity_Information_Record'Class;
-      From_Expression : String := "") is
+      Entity  : Xref.General_Entity;
+      From_Expression : String := "")
+   is
+      Kernel : constant Kernel_Handle := Context.Data.Data.Kernel;
+      Decl : constant General_Location :=
+        Kernel.Databases.Get_Declaration (Entity).Loc;
    begin
-      Ref (Entities.Entity_Information (Entity));
-      Context.Data.Data.Entity_Name := Get_Name
-        (Entities.Entity_Information (Entity));
-      Context.Data.Data.Entity_Column   :=
-        Get_Column (Get_Declaration_Of
-                    (Entities.Entity_Information (Entity)));
-      Context.Data.Data.Xref_Entity.Old_Entity :=
-        Entities.Entity_Information (Entity);
-      Context.Data.Data.Entity_Resolved := Success;
+      Ref (Entity);
+      Context.Data.Data.Entity_Name   := new String'
+        (Kernel.Databases.Get_Name (Entity));
+      Context.Data.Data.Entity_Column := Decl.Column;
+      Context.Data.Data.Xref_Entity   := Entity;
 
       if From_Expression /= "" then
          Context.Data.Data.Expression := new String'(From_Expression);
@@ -661,7 +667,7 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Entity_Name /= No_Symbol;
+        and then Context.Data.Data.Xref_Entity /= No_General_Entity;
    end Has_Entity_Name_Information;
 
    -----------------------------
@@ -671,10 +677,10 @@ package body GPS.Kernel.Contexts is
    function Entity_Name_Information
      (Context : Selection_Context) return String is
    begin
-      if Context.Data.Data.Entity_Name = No_Symbol then
+      if Context.Data.Data.Entity_Name = null then
          return "";
       else
-         return Get (Context.Data.Data.Entity_Name).all;
+         return Context.Data.Data.Entity_Name.all;
       end if;
    end Entity_Name_Information;
 
@@ -744,105 +750,10 @@ package body GPS.Kernel.Contexts is
    ----------------
 
    function Get_Entity
-     (Context           : Selection_Context;
-      Ask_If_Overloaded : Boolean := False) return Entities.Entity_Information
-   is
-      E : constant Xref.General_Entity := Get_Entity
-        (Context, Ask_If_Overloaded);
-   begin
-      return E.Old_Entity;
-   end Get_Entity;
-
-   ----------------
-   -- Get_Entity --
-   ----------------
-
-   function Get_Entity
-     (Context           : Selection_Context;
-      Ask_If_Overloaded : Boolean := False)
+     (Context           : Selection_Context)
       return Xref.General_Entity
    is
-      Never_Examined : constant Boolean :=
-                         Context.Data.Data.Entity_Resolved = Entity_Not_Found
-                         or else (Context.Data.Data.Entity_Resolved =
-                                                     Overloaded_Entity_Found
-                                  and then Ask_If_Overloaded);
-      File           : Source_File;
-
    begin
-      if Context.Data.Data.Entity_Resolved = Overloaded_Entity_Found
-        and then not Ask_If_Overloaded
-      then
-         return Context.Data.Data.Xref_Entity;
-
-      elsif Never_Examined
-        and then Has_Entity_Name_Information (Context)
-        and then Has_Line_Information (Context)
-        and then Has_File_Information (Context)
-      then
-         --  Query the entity in the new system
-
-         if GNATCOLL.Traces.Active (Entities.SQLITE) then
-            Context.Data.Data.Xref_Closest_Ref.Ref :=
-              Get_Kernel (Context).Databases.Xref.Get_Entity
-                (Name => Entity_Name_Information (Context),
-                 File => File_Information (Context),
-                 Line => Line_Information (Context),
-                 Column =>
-                   Visible_Column (Entity_Column_Information (Context)));
-
-            Context.Data.Data.Xref_Entity.Entity :=
-               Context.Data.Data.Xref_Closest_Ref.Ref.Entity;
-
-            if Context.Data.Data.Xref_Entity.Entity = No_Entity then
-               Context.Data.Data.Entity_Resolved := Success;
-            end if;
-         end if;
-
-         --  Query the entity in the old system
-
-         File := Get_Or_Create
-           (Db      => Get_Database (Get_Kernel (Context)),
-            File    => File_Information (Context),
-            Handler => Get_LI_Handler_From_File
-              (Get_Language_Handler (Get_Kernel (Context)),
-               File_Information (Context)));
-
-         if File = null then
-            Context.Data.Data.Entity_Resolved := Success;
-            return Context.Data.Data.Xref_Entity;
-         end if;
-
-         Find_Declaration_Or_Overloaded
-           (Kernel            => Get_Kernel (Context),
-            File              => File,
-            Entity_Name       => Entity_Name_Information (Context),
-            Line              => Line_Information (Context),
-            Column            => Entity_Column_Information (Context),
-            Ask_If_Overloaded => Ask_If_Overloaded,
-            Entity            => Context.Data.Data.Xref_Entity.Old_Entity,
-            Closest_Ref       => Context.Data.Data.Xref_Closest_Ref.Old_Ref,
-            Status            => Context.Data.Data.Entity_Resolved);
-
-         if Context.Data.Data.Entity_Resolved = Fuzzy_Match
-           or else Context.Data.Data.Entity_Resolved = Overloaded_Entity_Found
-         then
-            if Ask_If_Overloaded then
-               Context.Data.Data.Entity_Resolved := Success;
-            end if;
-
-         elsif Context.Data.Data.Entity_Resolved /= Success then
-            Context.Data.Data.Xref_Entity.Old_Entity := null;
-            Context.Data.Data.Xref_Closest_Ref.Old_Ref :=
-              Entities.No_Entity_Reference;
-            Context.Data.Data.Entity_Resolved := Success;
-         end if;
-
-         Ref (Context.Data.Data.Xref_Entity.Old_Entity);
-      else
-         Context.Data.Data.Entity_Resolved := Success;
-      end if;
-
       return Context.Data.Data.Xref_Entity;
    end Get_Entity;
 
@@ -851,44 +762,10 @@ package body GPS.Kernel.Contexts is
    ---------------------
 
    function Get_Closest_Ref
-     (Context : Selection_Context) return Entities.Entity_Reference
-   is
-      --  Make sure the info is computed
-      Entity : constant Entities.Entity_Information :=
-                 Get_Entity (Context, Ask_If_Overloaded => False);
-      pragma Unreferenced (Entity);
-   begin
-      if Context.Data.Data.Entity_Resolved = Success then
-         return Context.Data.Data.Xref_Closest_Ref.Old_Ref;
-      else
-         return Entities.No_Entity_Reference;
-      end if;
-   end Get_Closest_Ref;
-
-   function Get_Closest_Ref
-     (Context : Selection_Context) return Xref.General_Entity_Reference
+     (Context : Selection_Context) return General_Entity_Reference
    is
    begin
-      --  Before getting its entity we check if the LI handler has unresolved
-      --  imported references to force updating its references. This code will
-      --  be eventually removed???
-
-      if not Active (Entities.SQLITE) then
-         declare
-            Entity : constant Entities.Entity_Information :=
-                       Get_Entity (Context, Ask_If_Overloaded => False);
-            pragma Unreferenced (Entity);
-
-         begin
-            null;
-         end;
-      end if;
-
-      if Context.Data.Data.Entity_Resolved = Success then
-         return Context.Data.Data.Xref_Closest_Ref;
-      else
-         return Xref.No_General_Entity_Reference;
-      end if;
+      return Context.Data.Data.Xref_Closest_Ref;
    end Get_Closest_Ref;
 
    ------------------------------

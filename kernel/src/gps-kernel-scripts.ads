@@ -19,9 +19,9 @@
 --  external scripting languages in GPS.
 
 with Basic_Types;
-with Entities;
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with Xref;
 
 package GPS.Kernel.Scripts is
 
@@ -98,17 +98,17 @@ package GPS.Kernel.Scripts is
    --  Entity_Information.
 
    procedure Set_Data
-     (Instance : Class_Instance; Entity : Entities.Entity_Information);
+     (Instance : Class_Instance; Entity : Xref.General_Entity);
    function Get_Data
      (Data : Callback_Data'Class; N : Positive)
-      return Entities.Entity_Information;
+      return Xref.General_Entity;
    --  The Entity class stores some Entity_Information data in Instance
    --  You should destroy the entity passed to Set_Data, but not the value
    --  returned by Get_Data
 
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
-      Entity : Entities.Entity_Information) return Class_Instance;
+      Entity : Xref.General_Entity) return Class_Instance;
    --  Return a new entity. Entity parameter should be freed by the caller
 
    ----------------

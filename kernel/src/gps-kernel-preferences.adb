@@ -21,11 +21,10 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNAT.Strings;              use GNAT.Strings;
 
-with XML_Utils;              use XML_Utils;
+with XML_Utils;                 use XML_Utils;
 
 with Config;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
-with Entities.Queries;          use Entities.Queries;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
