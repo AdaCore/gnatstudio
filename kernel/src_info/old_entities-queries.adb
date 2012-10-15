@@ -357,8 +357,7 @@ package body Old_Entities.Queries is
       Closest_Ref            : out Entity_Reference;
       Status                 : out Find_Decl_Or_Body_Query_Status)
    is
-      Case_Sensitive : constant Boolean :=
-                         not Case_Insensitive_Identifiers (Source.Handler);
+      Case_Sensitive : constant Boolean := Source.Case_Sensitive_Identifiers;
       Distance       : Integer := Integer'Last;
       Closest        : Entity_Information;
       UEI            : Entity_Informations;
@@ -559,7 +558,9 @@ package body Old_Entities.Queries is
          return;
       end if;
 
-      if Source = Get_Predefined_File (Db, Source.Handler) then
+      if Source =
+        Get_Predefined_File (Db, Source.Case_Sensitive_Identifiers)
+      then
          Entity := Get_Or_Create
            (Name         => S_Entity_Name,
             File         => Source,
@@ -3080,8 +3081,7 @@ package body Old_Entities.Queries is
    begin
       Update_Xref (File, File_Has_No_LI_Report);
 
-      Iter.Case_Sensitive := not Case_Insensitive_Identifiers
-        (Default_LI_Handler);   --   ??? was File.Handler
+      Iter.Case_Sensitive := File.Case_Sensitive_Identifiers;
 
       if Name = "" then
          Get_First (File.Entities, Iter.SIter);

@@ -404,7 +404,7 @@ package body Outline_View is
 
          Set_Entity_Information
            (Context       => Context,
-            Entity_Name   => Get_Construct (P_Entity).Name,
+            Entity_Name   => Get (Get_Construct (P_Entity).Name).all,
             Entity_Column =>
               Visible_Column_Type
                 (Get_Construct (P_Entity).Sloc_Entity.Column));

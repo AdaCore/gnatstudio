@@ -197,7 +197,7 @@ package GPS.Kernel.Contexts is
 
    procedure Set_Entity_Information
      (Context         : in out Selection_Context;
-      Entity_Name     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Entity_Name     : String;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
       From_Expression : String := "")
    with Pre => Has_File_Information (Context)

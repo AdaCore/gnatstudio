@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with ALI_Parser;
 with Commands.Generic_Asynchronous;  use Commands;
 with Commands;                       use Commands;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
@@ -686,34 +685,21 @@ package body GPS.Kernel.Xref is
            Kernel_Handle (Kernel);
       end if;
 
-      Kernel.Database.Initialize_Constructs
-        (Kernel.Lang_Handler, Kernel.Symbols);
-
       if Active (SQLITE) then
          if Kernel.Database.Xref = null then
             Kernel.Database.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
             GPS_Xref_Database (Kernel.Database.Xref.all).Kernel :=
               Kernel_Handle (Kernel);
          end if;
+      end if;
 
-      else
-         Kernel.Database.Entities := Old_Entities.Create
-           (Kernel.Registry,
-            Kernel.Get_Construct_Database,
-            Normal_Ref_In_Call_Graph =>
+      Kernel.Database.Initialize
+        (Lang_Handler => Kernel.Lang_Handler,
+         Symbols      => Kernel.Symbols,
+         Registry     => Kernel.Registry,
+         Subprogram_Ref_Is_Call =>
             not Require_GNAT_Date
               (Kernel, Old_Entities.Advanced_Ref_In_Call_Graph_Date));
-
-         Old_Entities.Set_Symbols
-           (Kernel.Database.Entities, Kernel.Symbols);
-         Old_Entities.Register_Language_Handler
-           (Kernel.Database.Entities, Kernel.Lang_Handler);
-         Old_Entities.Set_LI_Handler
-           (Kernel.Database.Entities, ALI_Parser.Create_ALI_Handler
-              (Db           => Kernel.Database.Entities,
-               Registry     => Kernel.Registry.all,
-               Lang_Handler => Kernel.Lang_Handler));
-      end if;
    end Create_Database;
 
    ---------------------

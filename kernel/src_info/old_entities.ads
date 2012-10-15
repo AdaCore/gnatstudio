@@ -518,7 +518,7 @@ package Old_Entities is
 
    function Get_Predefined_File
      (Db : Entities_Database;
-      Handler : access LI_Handler_Record'Class) return Source_File;
+      Case_Sensitive : Boolean) return Source_File;
    --  Returns a special source file, which should be used for all
    --  predefined entities of the languages handled by Handler.
 
@@ -859,12 +859,6 @@ package Old_Entities is
    --  though.
    --  If no cross-reference information was found, File_Has_No_LI_Report is
    --  called with the file in parameter
-
-   function Case_Insensitive_Identifiers
-     (Handler : access LI_Handler_Record) return Boolean is abstract;
-   --  Return True if the language associated with Handler is case-insensitive.
-   --  Note that for case insensitive languages, the identifier names must be
-   --  storer in lower cases in the LI structure.
 
    type LI_Information_Iterator is abstract tagged null record;
 
@@ -1370,8 +1364,8 @@ private
       Scope_Tree_Computed : Boolean;
       --  Whether the scope tree was computed
 
-      Handler   : LI_Handler;
-      --  The handler used to compute xrefs for that file
+      Case_Sensitive_Identifiers : Boolean;
+      --  Whether identifiers are case sensitive
 
       LI_Files     : LI_File_List := Null_LI_File_List;
       --  The LI file used to parse the file. This might be left to null if
@@ -1496,7 +1490,6 @@ private
       Files           : Files_HTable.Instance;
       LIs             : LI_HTable.Instance;
 
-      Predefined_File : Source_File;
       Lang            : Language.Tree.Database.Abstract_Language_Handler;
       Registry        : Projects.Project_Registry_Access;
       Frozen          : Freeze_Type := Create_And_Update;

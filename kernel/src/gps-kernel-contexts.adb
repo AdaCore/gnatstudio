@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
@@ -583,29 +582,28 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_Entity_Information
      (Context         : in out Selection_Context;
-      Entity_Name     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Entity_Name     : String;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
       From_Expression : String := "")
    is
       Db : constant General_Xref_Database :=
         Context.Data.Data.Kernel.Databases;
    begin
-      if Entity_Name /= No_Symbol then
-         Context.Data.Data.Entity_Name := new String'(Get (Entity_Name).all);
-      end if;
+      if Entity_Name /= "" then
+         Context.Data.Data.Entity_Name := new String'(Entity_Name);
+         Context.Data.Data.Entity_Column   := Entity_Column;
 
-      Context.Data.Data.Entity_Column   := Entity_Column;
-
-      Db.Find_Declaration_Or_Overloaded
-        (Loc  => (File   => Context.Data.Data.Files
+         Db.Find_Declaration_Or_Overloaded
+           (Loc  => (File   => Context.Data.Data.Files
                      (Context.Data.Data.Files'First),
-                  Line   => Context.Data.Data.Line,
-                  Column => Entity_Column),
-         Entity_Name => Context.Data.Data.Entity_Name.all,
-         Entity      => Context.Data.Data.Xref_Entity,
-         Closest_Ref => Context.Data.Data.Xref_Closest_Ref);
+                     Line   => Context.Data.Data.Line,
+                     Column => Entity_Column),
+            Entity_Name => Entity_Name,
+            Entity      => Context.Data.Data.Xref_Entity,
+            Closest_Ref => Context.Data.Data.Xref_Closest_Ref);
 
-      Ref (Context.Data.Data.Xref_Entity);
+         Ref (Context.Data.Data.Xref_Entity);
+      end if;
 
       if From_Expression /= "" then
          Context.Data.Data.Expression := new String'(From_Expression);

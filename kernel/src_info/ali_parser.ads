@@ -56,8 +56,6 @@ package ALI_Parser is
       Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null)
       return Old.Source_File;
-   overriding function Case_Insensitive_Identifiers
-     (Handler : access ALI_Handler_Record) return Boolean;
    overriding function Parse_All_LI_Information
      (Handler   : access ALI_Handler_Record;
       Project   : GNATCOLL.Projects.Project_Type)

@@ -256,16 +256,16 @@ package body ALI_Parser is
    --  Same as Get_Source_Info, but it is possible not to reset the internal
    --  GNAT tables first. This must be used when calling this recursively.
 
+   function Case_Insensitive_Identifiers (LI : LI_File) return Boolean;
+   --  Whether we want to use case-insensitive identifiers in this LI file.
+
    ----------------------------------
    -- Case_Insensitive_Identifiers --
    ----------------------------------
 
-   overriding function Case_Insensitive_Identifiers
-     (Handler : access ALI_Handler_Record) return Boolean
-   is
-      pragma Unreferenced (Handler);
+   function Case_Insensitive_Identifiers (LI : LI_File) return Boolean is
    begin
-      return True;
+      return Get_LI_Filename (LI).File_Extension /= ".gli";
    end Case_Insensitive_Identifiers;
 
    --------------------
@@ -813,13 +813,13 @@ package body ALI_Parser is
                                  Get_Name_String (Current_Xref.Name);
 
                      begin
-                        if Case_Insensitive_Identifiers (Handler) then
+                        if Case_Insensitive_Identifiers (LI) then
                            Primitive :=
                              Get_Or_Create
                                (Name => Get_Symbols (Handler.Db).Find
                                           (Locale_To_UTF8 (Capitalize (Name))),
                                 File => Get_Predefined_File
-                                          (Get_Database (LI), Handler),
+                                  (Get_Database (LI), Case_Sensitive => False),
                                 Line => Predefined_Line,
                                 Column => Predefined_Column);
                         else
@@ -828,7 +828,7 @@ package body ALI_Parser is
                                (Name => Get_Symbols (Handler.Db).Find
                                           (Locale_To_UTF8 (Name)),
                                 File => Get_Predefined_File
-                                          (Get_Database (LI), Handler),
+                                  (Get_Database (LI), Case_Sensitive => True),
                                 Line => Predefined_Line,
                                 Column => Predefined_Column);
                         end if;
@@ -1181,13 +1181,13 @@ package body ALI_Parser is
                        Get_Name_String
                          (Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity);
                   begin
-                     if Case_Insensitive_Identifiers (Handler) then
+                     if Case_Insensitive_Identifiers (LI) then
                         Parent :=
                           Get_Or_Create
                             (Name   => Get_Symbols (Handler.Db).Find
                                          (Locale_To_UTF8 (Capitalize (Name))),
                              File   => Get_Predefined_File
-                                         (Get_Database (LI), Handler),
+                               (Get_Database (LI), Case_Sensitive => False),
                              Line   => Predefined_Line,
                              Column => Predefined_Column);
                      else
@@ -1196,7 +1196,7 @@ package body ALI_Parser is
                             (Name   => Get_Symbols (Handler.Db).Find
                                          (Locale_To_UTF8 (Name)),
                              File   => Get_Predefined_File
-                                         (Get_Database (LI), Handler),
+                               (Get_Database (LI), Case_Sensitive => True),
                              Line   => Predefined_Line,
                              Column => Predefined_Column);
                      end if;
@@ -2443,7 +2443,7 @@ package body ALI_Parser is
              (Recursive           => False,
               Including_Libraries => True,
               Xrefs_Dirs          => True,
-              ALI_Ext             => Get_ALI_Ext (ALI_Handler (Handler)));
+              ALI_Ext => "^.*\.[ags]li$");
       end if;
 
       if Iter.Files /= null then

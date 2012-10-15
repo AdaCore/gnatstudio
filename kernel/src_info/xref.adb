@@ -21,6 +21,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Hash;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
+with ALI_Parser;
 with Dynamic_Arrays;
 with Glib.Convert;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
@@ -191,21 +192,23 @@ package body Xref is
          Loc    : Old_Entities.File_Location;
          Result : Unbounded_String;
       begin
-         if Entity.Entity /= No_Entity then
-            Append
-              (Result,
-               Glib.Convert.Escape_Text
-                 (Self.Xref.Comment (Entity.Entity, Context.Syntax, Form))
-               & ASCII.LF
-               & Self.Xref.Text_Declaration (Entity.Entity, Form)
-               & ASCII.LF);
-
-            return To_String
-              (Ada.Strings.Unbounded.Trim
+         if Active (SQLITE) then
+            if Entity.Entity /= No_Entity then
+               Append
                  (Result,
-                  Left => Ada.Strings.Maps.Null_Set,
-                  Right => Ada.Strings.Maps.To_Set
-                    (' ' & ASCII.HT & ASCII.LF & ASCII.CR)));
+                  Glib.Convert.Escape_Text
+                    (Self.Xref.Comment (Entity.Entity, Context.Syntax, Form))
+                  & ASCII.LF
+                  & Self.Xref.Text_Declaration (Entity.Entity, Form)
+                  & ASCII.LF);
+
+               return To_String
+                 (Ada.Strings.Unbounded.Trim
+                    (Result,
+                     Left => Ada.Strings.Maps.Null_Set,
+                     Right => Ada.Strings.Maps.To_Set
+                       (' ' & ASCII.HT & ASCII.LF & ASCII.CR)));
+            end if;
          else
             Buffer := Decl.File.Read_File;
 
@@ -244,6 +247,8 @@ package body Xref is
             Free (Buffer);
             return To_String (Result);
          end if;
+
+         return "";
       end Doc_From_LI;
 
    --  Start of processing for Documentation
@@ -1575,6 +1580,7 @@ package body Xref is
       Name   : String := "") return Entities_In_File_Cursor
    is
       Result : Entities_In_File_Cursor;
+      F      : Old_Entities.Source_File;
    begin
       if Active (SQLITE) then
          if Name = "" then
@@ -1584,10 +1590,11 @@ package body Xref is
          end if;
 
       else
+         F := Old_Entities.Get_Or_Create
+           (Self.Entities, File, Allow_Create => True);
          Old_Entities.Queries.Find_All_Entities_In_File
            (Iter        => Result.Old_Iter,
-            File        => Old_Entities.Get_Or_Create
-              (Self.Entities, File, Allow_Create => False),
+            File        => F,
             Name        => Name);
       end if;
       return Result;
@@ -2293,14 +2300,16 @@ package body Xref is
       return No_Location;
    end End_Of_Scope;
 
-   ---------------------------
-   -- Initialize_Constructs --
-   ---------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Initialize_Constructs
+   procedure Initialize
      (Self         : access General_Xref_Database_Record;
-      Lang_Handler : Language_Handler;
-      Symbols      : GNATCOLL.Symbols.Symbol_Table_Access)
+      Lang_Handler : Language_Handlers.Language_Handler;
+      Symbols      : GNATCOLL.Symbols.Symbol_Table_Access;
+      Registry     : Projects.Project_Registry_Access;
+      Subprogram_Ref_Is_Call : Boolean := False)
    is
       use Construct_Annotations_Pckg;
       LI_Entity_Key : Construct_Annotations_Pckg.Annotation_Key;
@@ -2325,7 +2334,27 @@ package body Xref is
            (Database_Assistant with
             LI_Key => LI_Entity_Key,
             Db     => General_Xref_Database (Self)));
-   end Initialize_Constructs;
+
+      if Active (SQLITE) then
+         if Self.Xref = null then
+            Self.Xref := new Extended_Xref_Database;
+         end if;
+
+      else
+         Self.Entities := Old_Entities.Create
+           (Registry,
+            Self.Constructs,
+            Normal_Ref_In_Call_Graph => Subprogram_Ref_Is_Call);
+
+         Old_Entities.Set_Symbols (Self.Entities, Symbols);
+         Old_Entities.Register_Language_Handler (Self.Entities, Lang_Handler);
+         Old_Entities.Set_LI_Handler
+           (Self.Entities, ALI_Parser.Create_ALI_Handler
+              (Db           => Self.Entities,
+               Registry     => Registry.all,
+               Lang_Handler => Lang_Handler));
+      end if;
+   end Initialize;
 
    ------------------
    -- To_LI_Entity --
@@ -3278,5 +3307,19 @@ package body Xref is
                           (Entity.Old_Entity));
       end if;
    end Overrides;
+
+   -------------------------------
+   -- Select_Entity_Declaration --
+   -------------------------------
+
+   function Select_Entity_Declaration
+     (Self   : access General_Xref_Database_Record;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Entity : General_Entity) return General_Entity
+   is
+      pragma Unreferenced (Self, File);
+   begin
+      return Entity;
+   end Select_Entity_Declaration;
 
 end Xref;

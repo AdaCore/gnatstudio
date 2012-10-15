@@ -31,6 +31,7 @@ with GNATCOLL.Xref;          use GNATCOLL.Xref;
 with GNAT.Strings;
 with Old_Entities;
 with Old_Entities.Queries;   use Old_Entities.Queries;
+with Projects;
 with Language_Handlers;
 with Language.Tree.Database;
 
@@ -65,7 +66,7 @@ package Xref is
    --  The set of all databases
    ---------------------
 
-   type General_Xref_Database_Record is abstract tagged record
+   type General_Xref_Database_Record is tagged record
       Entities   : Old_Entities.Entities_Database;
       --  The "legacy" LI database
 
@@ -87,17 +88,24 @@ package Xref is
    procedure Destroy (Self : in out General_Xref_Database);
    --  Destroy the xref database (in memory)
 
-   procedure Initialize_Constructs
+   procedure Initialize
      (Self         : access General_Xref_Database_Record;
       Lang_Handler : Language_Handlers.Language_Handler;
-      Symbols      : GNATCOLL.Symbols.Symbol_Table_Access);
+      Symbols      : GNATCOLL.Symbols.Symbol_Table_Access;
+      Registry     : Projects.Project_Registry_Access;
+      Subprogram_Ref_Is_Call : Boolean := False);
    --  Initialize various internal fields for the constructs. It is assumed
    --  that the xref and LI databases have already been initialized.
+   --  It is possible to pre-allocate Xref and/or Entities database if you want
+   --  specific instances to be used, instead of the default ones.
+   --
+   --  Subprogram_Ref_Is_Call should be True for old GNAT versions, which were
+   --  using 'r' for subprogram calls, instead of 's' in more recent versions.
 
    function Select_Entity_Declaration
      (Self   : access General_Xref_Database_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Entity : General_Entity) return General_Entity is abstract;
+      Entity : General_Entity) return General_Entity;
    --  The user has requested a xref, but the information is not up-to-date and
    --  there is an ambiguity. This function is responsible for asking the user
    --  to chose among all the homonym entities in File.
