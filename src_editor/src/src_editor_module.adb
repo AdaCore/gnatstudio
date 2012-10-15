@@ -23,6 +23,7 @@ with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
+with GNATCOLL.Xref;
 
 with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Types;                         use Gdk.Types;
@@ -106,6 +107,7 @@ with Traces;                            use Traces;
 with Vsearch;                           use Vsearch;
 
 package body Src_Editor_Module is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Debug_Handle := Create ("Src_Editor_Module");
 

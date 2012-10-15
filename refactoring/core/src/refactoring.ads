@@ -16,10 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Basic_Types;
-with Entities;
 with Language.Tree.Database;
 with GNATCOLL.VFS;
 with GPS.Editors;
+with Xref;
 
 package Refactoring is
 
@@ -76,8 +76,7 @@ package Refactoring is
 
    type Factory_Context_Record is tagged record
       Buffer_Factory : GPS.Editors.Editor_Buffer_Factory_Access;
-      Entity_Db      : aliased Entities.Entities_Database;
-      Construct_Db   : Language.Tree.Database.Construct_Database_Access;
+      Db             : Xref.General_Xref_Database;
 
       Add_Subprogram_Box : Boolean := True;
       --  Whether creating a subprogram body should first insert a subprogram

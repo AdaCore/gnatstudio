@@ -34,7 +34,6 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Object;
 
 with Basic_Types;               use Basic_Types;
-with Entities;                  use Entities;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -43,6 +42,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Language.Unknown;          use Language.Unknown;
 with Language.Icons;            use Language.Icons;
 with Language_Handlers;         use Language_Handlers;
+with Language_Utils;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
@@ -400,8 +400,6 @@ package body Project_Explorers_Common is
       use Iter_Map;
 
       Categories : Iter_Map.Map;
-      Handler    : LI_Handler;
-
       Node_Appended : Boolean := False;
 
    begin
@@ -420,18 +418,14 @@ package body Project_Explorers_Common is
          Remove (Model, N2);
       end loop;
 
-      Handler := Get_LI_Handler_From_File (Languages, File_Name);
-
-      if Handler = null then
-         return;
-      end if;
-
       Push_State (Kernel, Busy);
 
       Lang := Get_Language_From_File (Languages, File_Name);
 
       if Lang /= null then
-         Parse_File_Constructs (Handler, Languages, File_Name, Constructs);
+         Language_Utils.Parse_File_Constructs
+           (Get_Language_From_File
+              (Languages, File_Name), File_Name, Constructs);
 
          Constructs.Current := Constructs.First;
 

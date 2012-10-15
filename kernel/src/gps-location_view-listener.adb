@@ -15,38 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 with System.Address_To_Access_Conversions;
 
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Glib.Object;
-with Glib;
+with Glib;                      use Glib;
 with Gtk.Enums;
 with Gtk.Tree_Model.Utils;
-with Gtk.Widget;
+with Gtk.Widget;                use Gtk.Widget;
 
-with Basic_Types;
 with Commands;
-with GNATCOLL.VFS.GtkAda;
-with GPS.Editors.GtkAda;
-with String_Utils;
-with Traces;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS;
+with GNATCOLL.Xref;
+with GPS.Editors.GtkAda;        use GPS.Editors, GPS.Editors.GtkAda;
+with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
 
 package body GPS.Location_View.Listener is
-
-   use Ada.Strings.Fixed;
-   use Gdk.Color;
-   use Gdk.Pixbuf;
-   use Glib;
-   use Gtk.Widget;
-   use GNATCOLL.VFS;
-   use GPS.Editors;
-   use GPS.Editors.GtkAda;
    use Node_Vectors;
-   use String_Utils;
-   use Traces;
+   use type GNATCOLL.Xref.Visible_Column;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Node_Record'Class, Node_Access);
@@ -586,7 +578,6 @@ package body GPS.Location_View.Listener is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      use Basic_Types;
       use Glib.Values;
       use type GNAT.Strings.String_Access;
 

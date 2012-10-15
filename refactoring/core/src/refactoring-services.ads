@@ -25,12 +25,13 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
 with Basic_Types;
-with Entities.Queries;
 with GNATCOLL.VFS;
+with GNATCOLL.Xref;
 with GNAT.Strings;
 with Language;
 with Language.Tree;
 with Language.Tree.Database;
+with Xref;
 
 package Refactoring.Services is
 
@@ -42,7 +43,7 @@ package Refactoring.Services is
 
    function Get_Entity_Access
      (Context : not null access Factory_Context_Record'Class;
-      Entity  : Entities.Entity_Information)
+      Entity  : Xref.General_Entity)
       return Language.Tree.Database.Entity_Access;
    --  Return a pointer to the declaration of Entity. This pointer can be used
    --  to retrieve additional data about the entity (read directly from the
@@ -55,15 +56,15 @@ package Refactoring.Services is
 
    function Accepts_Primitive_Ops
      (Context        : not null access Factory_Context_Record'Class;
-      Entity         : Entities.Entity_Information;
+      Entity         : Xref.General_Entity;
       Current_Offset : Basic_Types.String_Index_Type) return Boolean;
    --  Whether the entity is an instance of a class or interface.
    --  This returns null for a "'Class".
 
    procedure Is_Parameter_Of
-     (Entity       : Entities.Entity_Information;
+     (Entity       : Xref.General_Entity;
       Is_Parameter : out Boolean;
-      PType        : out Entities.Queries.Parameter_Type);
+      PType        : out GNATCOLL.Xref.Parameter_Kind);
    --  Whether Entity is a parameter for a subprogram, and if it is which type
 
    ----------------
@@ -167,7 +168,7 @@ package Refactoring.Services is
 
    function Get_Declaration
      (Context : not null access Factory_Context_Record'Class;
-      Entity  : Entities.Entity_Information) return Entity_Declaration;
+      Entity  : Xref.General_Entity) return Entity_Declaration;
    --  Return the declaration of the entity. From this, one can extract the
    --  initial value,  the type (as set by the user, whether it is a constant,
    --  and other attributes).
@@ -185,7 +186,7 @@ package Refactoring.Services is
    function Display_As_Parameter
      (Self    : Entity_Declaration;
       Context : not null access Factory_Context_Record'Class;
-      PType   : Entities.Queries.Parameter_Type) return String;
+      PType   : GNATCOLL.Xref.Parameter_Kind) return String;
    --  Return the declaration of the entity as it should be displayed in a
    --  parameter list. This includes the name of the variable.
 
@@ -226,7 +227,7 @@ package Refactoring.Services is
 
    procedure Get_Parent
      (Self   : in out Range_Of_Code;
-      Parent : out Entities.Entity_Information);
+      Parent : out Xref.General_Entity);
    --  Return the entity that contains the whole range of the code (in general
    --  the subprogram that includes from From_Line..To_Line).
    --  If both ends of the code are not contained within the same entity, an
@@ -255,7 +256,7 @@ package Refactoring.Services is
    procedure For_All_Variable_In_Range
      (Self               : in out Range_Of_Code;
       Callback           : not null access procedure
-        (Entity : Entities.Entity_Information;
+        (Entity : Xref.General_Entity;
          Flags  : Entity_References_Flags);
       Success            : out Boolean;
       Omit_Library_Level : Boolean := False);
@@ -346,7 +347,7 @@ private
 
    type Entity_Declaration is tagged record
       File   : Language.Tree.Database.Structured_File_Access;
-      Entity : Entities.Entity_Information;
+      Entity : Xref.General_Entity;
       Decl   : Ada.Strings.Unbounded.Unbounded_String;
 
       SFirst, SLast : Language.Source_Location;
@@ -362,7 +363,7 @@ private
 
    No_Entity_Declaration : constant Entity_Declaration :=
      (File      => null,
-      Entity    => null,
+      Entity    => Xref.No_General_Entity,
       Equal_Loc => -1,
       SFirst    => <>,
       SLast     => <>,
@@ -373,12 +374,11 @@ private
 
    type Range_Of_Code is new With_Factory with record
       File        : GNATCOLL.VFS.Virtual_File;
-      Source      : Entities.Source_File;
       From_Line   : Integer;
       To_Line     : Integer;
-      Parent      : Entities.Entity_Information;
+      Parent      : Xref.General_Entity;
    end record;
 
    Empty_Range_Of_Code : constant Range_Of_Code :=
-     (null, GNATCOLL.VFS.No_File, null, -1, -1, null);
+     (null, GNATCOLL.VFS.No_File, -1, -1, Xref.No_General_Entity);
 end Refactoring.Services;

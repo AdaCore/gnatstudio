@@ -51,7 +51,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Entities.Tooltips;         use Entities.Tooltips;
+with Entities_Tooltips;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -270,7 +270,7 @@ package body Outline_View is
             Entity := Get_Declaration
               (Get_Tree_Language (Get_File (Entity)), Entity);
 
-            Pixmap := Entities.Tooltips.Draw_Tooltip
+            Pixmap := Entities_Tooltips.Draw_Tooltip
               (Kernel      => Tooltip.Outline.Kernel,
                Draw_Border => True,
                Entity      => Entity);

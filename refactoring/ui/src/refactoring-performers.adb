@@ -19,8 +19,6 @@ with Ada.Unchecked_Deallocation;
 
 with Commands.Generic_Asynchronous;
 with Commands;                use Commands;
-with Entities.Queries;        use Entities.Queries;
-with Entities;                use Entities;
 with GPS.Editors;             use GPS.Editors;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
@@ -39,7 +37,7 @@ package body Refactoring.Performers is
       end record;
    type Renaming_Error is access all Renaming_Error_Record'Class;
    overriding procedure Error
-     (Report : in out Renaming_Error_Record; File : Source_File);
+     (Report : in out Renaming_Error_Record; File : Virtual_File);
 
    type Get_Locations_Data is record
       Refs                : Location_Arrays.Instance;
@@ -47,14 +45,14 @@ package body Refactoring.Performers is
       Read_Only_Files     : Source_File_Set;
       On_Completion       : Refactor_Performer;
       Kernel              : Kernel_Handle;
-      Entity              : Entity_Information;
-      Iter                : Entity_Reference_Iterator_Access;
+      Entity              : General_Entity;
+      Iter                : Entity_Reference_Iterator;
       Errors              : Renaming_Error;
 
-      Extra_Entities       : Entity_Information_Arrays.Instance :=
-        Entity_Information_Arrays.Empty_Instance;
-      Extra_Entities_Index : Entity_Information_Arrays.Index_Type :=
-        Entity_Information_Arrays.First;
+--        Extra_Entities       : Entity_Information_Arrays.Instance :=
+--          Entity_Information_Arrays.Empty_Instance;
+--        Extra_Entities_Index : Entity_Information_Arrays.Index_Type :=
+--          Entity_Information_Arrays.First;
       Make_Writable        : Boolean;
    end record;
    --  Extra_Entities is the list of entities that are also impacted by the
@@ -113,7 +111,7 @@ package body Refactoring.Performers is
    -----------
 
    overriding procedure Error
-     (Report : in out Renaming_Error_Record; File : Entities.Source_File) is
+     (Report : in out Renaming_Error_Record; File : Virtual_File) is
    begin
       Report.No_LI_List.Include (File);
    end Error;
@@ -124,7 +122,7 @@ package body Refactoring.Performers is
 
    procedure Get_All_Locations
      (Kernel          : access Kernel_Handle_Record'Class;
-      Entity          : Entity_Information;
+      Entity          : General_Entity;
       On_Completion   : access Refactor_Performer_Record'Class;
       Auto_Compile    : Boolean := False;
       Overridden      : Boolean := True;
@@ -138,14 +136,13 @@ package body Refactoring.Performers is
    begin
       Data.On_Completion := Refactor_Performer (On_Completion);
       Data.Kernel        := Kernel_Handle (Kernel);
-      Data.Iter          := new Entity_Reference_Iterator;
       Data.Errors        := new Renaming_Error_Record;
       Data.Make_Writable := Make_Writable;
 
       Push_State (Data.Kernel, Busy);
       Data.Entity            := Entity;
-      Find_All_References
-        (Iter                  => Data.Iter.all,
+      Kernel.Databases.Find_All_References
+        (Iter                  => Data.Iter,
          Entity                => Entity,
          File_Has_No_LI_Report => File_Error_Reporter (Data.Errors),
          Include_Overriding    => Overridden,
@@ -155,8 +152,8 @@ package body Refactoring.Performers is
       Set_Progress
         (Command_Access (C),
          (Running,
-          Get_Current_Progress (Data.Iter.all),
-          Get_Total_Progress   (Data.Iter.all)));
+          Get_Current_Progress (Data.Iter),
+          Get_Total_Progress   (Data.Iter)));
 
       if Background_Mode then
          Launch_Background_Command
@@ -207,8 +204,7 @@ package body Refactoring.Performers is
             C := Data.Read_Only_Files.First;
             while Has_Element (C) loop
                Get_Buffer_Factory (Data.Kernel)
-                 .Get (Get_Filename (Element (C))).
-                 Open.Set_Read_Only (False);
+                 .Get (Element (C)).Open.Set_Read_Only (False);
                Next (C);
             end loop;
          end if;
@@ -233,46 +229,46 @@ package body Refactoring.Performers is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
-      use Entity_Information_Arrays;
-      Ref    : constant Entity_Reference := Get (Data.Iter.all);
-      Source : Source_File;
+      Ref    : constant General_Entity_Reference := Get (Data.Iter);
+      Loc    : General_Location;
    begin
-      if At_End (Data.Iter.all) then
+      if At_End (Data.Iter) then
          On_End_Of_Search (Data);
          Result := Success;
 
-      elsif Ref /= No_Entity_Reference then
-         Source := Get_File (Get_Location (Ref));
-         if Is_Up_To_Date (Source) then
+      elsif Ref /= No_General_Entity_Reference then
+         Loc := Get_Location (Ref);
+
+         if Data.Kernel.Databases.Is_Up_To_Date (Loc.File) then
             Append (Data.Refs,
-                    (File   => Source,
-                     Line   => Get_Line (Get_Location (Ref)),
-                     Column => Get_Column (Get_Location (Ref))));
+                    (File   => Loc.File,
+                     Line   => Loc.Line,
+                     Column => Loc.Column));
 
          --  If we have duplicates, they will always come one after the
          --  other. So we just have to check the previous one.
          else
             Append (Data.Refs,
-                    (File   => Source,
-                     Line   => Get_Line (Get_Location (Ref)),
-                     Column => Get_Column (Get_Location (Ref))));
-            Data.Stale_LI_List.Include (Source);
+                    (File   => Loc.File,
+                     Line   => Loc.Line,
+                     Column => Loc.Column));
+            Data.Stale_LI_List.Include (Loc.File);
          end if;
 
-         if not Is_Writable (Get_Filename (Source)) then
-            Data.Read_Only_Files.Include (Source);
+         if not Loc.File.Is_Writable then
+            Data.Read_Only_Files.Include (Loc.File);
          end if;
 
-         Next (Data.Iter.all);
+         Next (Data.Iter);
 
          Set_Progress (Command,
                        (Running,
-                        Get_Current_Progress (Data.Iter.all),
-                        Get_Total_Progress (Data.Iter.all)));
+                        Get_Current_Progress (Data.Iter),
+                        Get_Total_Progress (Data.Iter)));
          Result := Execute_Again;
 
       else
-         Next (Data.Iter.all);
+         Next (Data.Iter);
          Result := Execute_Again;
       end if;
    end Find_Next_Location;

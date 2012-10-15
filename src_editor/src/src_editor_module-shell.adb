@@ -24,6 +24,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Xref;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -71,6 +72,8 @@ with Traces;                    use Traces;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Src_Editor_Module.Shell is
+   use type GNATCOLL.Xref.Visible_Column;
+
    Me : constant Debug_Handle := Create ("Editor.Shell");
 
    Editor_Location_Class_Name : constant String := "EditorLocation";

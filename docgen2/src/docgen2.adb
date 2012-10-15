@@ -27,8 +27,6 @@ with Glib.Unicode;              use Glib.Unicode;
 
 with Basic_Types;
 with Commands;                  use Commands;
-with Entities;                  use Entities;
-with Entities.Queries;          use Entities.Queries;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Intl;                  use GPS.Intl;

@@ -4473,7 +4473,7 @@ class Entity(object):
     def attributes(self):
         """
         Return various boolean attributes of the entity: is the entity global,
-        static, static for a class, protected,...
+        static,...
 
         :return: A htable
         """
@@ -9511,14 +9511,6 @@ def dump_file(text, filename):
     pass  # implemented in Ada
 
 
-def dump_xref_db():
-    """
-    Dump in the file $HOME/.gps/db_dump the current contents of the
-    cross-references database. This is intended for debugging purposes only
-    """
-    pass  # implemented in Ada
-
-
 def echo(*args):
     """
     Display a line of text. This command is specific to the GPS shell.
@@ -9960,17 +9952,6 @@ def repeat_next(count):
     This action will execute the next one <count> times.
 
     :param count: An integer
-    """
-    pass  # implemented in Ada
-
-
-def reset_xref_db():
-    """
-    Reset the internal cross-reference database that GPS is using for most of
-    its navigation facilities. You shouldn't have to call that yourself, since
-    in general GPS should know by itself when it is necessary to refresh its
-    database. However, this might be used as a workaround if you think you have
-    troubles with the cross-reference information which isn't accurate.
     """
     pass  # implemented in Ada
 

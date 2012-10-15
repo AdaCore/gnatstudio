@@ -17,20 +17,20 @@
 
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNATCOLL.Xref;
 
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
 
-with Entities;          use Entities;
-with Entities.Queries;  use Entities.Queries;
 with GPS.Kernel;        use GPS.Kernel;
 with GUI_Utils;         use GUI_Utils;
 with Src_Editor_Box;    use Src_Editor_Box;
 with String_Utils;      use String_Utils;
 with Language;          use Language;
 with Src_Editor_Module; use Src_Editor_Module;
-with Xref;
+with Xref;              use Xref;
 
 package body Src_Editor_Buffer.Hyper_Mode is
+   use type GNATCOLL.Xref.Visible_Column;
 
    -----------------------------
    -- Hyper_Mode_Highlight_On --
@@ -281,12 +281,12 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Line           : Editable_Line_Type;
       Column         : Visible_Column_Type;
 
-      Entity         : Entity_Information;
-      Closest        : Entity_Reference;
-      Status         : Find_Decl_Or_Body_Query_Status;
+      Entity         : General_Entity;
+      Closest        : General_Entity_Reference;
 
-      Location       : File_Location;
-      Current        : File_Location;
+      Location       : General_Location;
+      Decl           : General_Entity_Declaration;
+      Current        : General_Location;
 
       use type GNATCOLL.VFS.Virtual_File;
       use List_Of_Highlighters;
@@ -339,75 +339,42 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
       Get_Iter_Position (Buffer, Entity_Start, Line, Column);
 
-      --  Before searching for its entity we check if the LI handler has
-      --  unresolved imported references to force reloading and parsing its
-      --  corresponding LI file to update those references.
+      Buffer.Kernel.Databases.Find_Declaration_Or_Overloaded
+        (Loc         => (File   => Buffer.Filename,
+                         Line   => Integer (Line),
+                         Column => Column),
+         Entity_Name => Get_Slice (Buffer, Entity_Start, Entity_End),
+         Ask_If_Overloaded => False,
+         Entity            => Entity,
+         Closest_Ref       => Closest);
 
-      declare
-         File : Entities.Source_File;
-         H    : LI_Handler;
+      if Entity = No_General_Entity then
+         return;
+      end if;
 
-      begin
-         File :=
-           Get_Or_Create
-             (Db   => Get_Database (Buffer.Kernel),
-              File => Buffer.Filename);
+      Decl := Buffer.Kernel.Databases.Get_Declaration (Entity);
+      Location := Decl.Loc;
 
-         H :=
-           Get_LI_Handler
-             (Get_Database (Buffer.Kernel),
-              Get_Filename (File));
-
-         if Has_Unresolved_Imported_Refs (H) then
-            Set_Update_Forced (H);
-            Update_Xref (File);
+      if Alternate
+        or else
+          (Location.Line = Natural (Line)
+           and then Location.Column = Column
+           and then Location.File = Buffer.Filename)
+      then
+         --  We asked for the alternate behavior, or we are already on
+         --  the spec: in this case, go to the body
+         Current := Location;
+         Location := Buffer.Kernel.Databases.Get_Body (Entity);
+         if Location = No_Location then
+            Location := Current;
          end if;
+      end if;
 
-         Find_Declaration_Or_Overloaded
-           (Kernel            => Buffer.Kernel,
-            File              => File,
-            Entity_Name       => Get_Slice (Buffer, Entity_Start, Entity_End),
-            Line              => Integer (Line),
-            Column            => Column,
-            Ask_If_Overloaded => False,
-            Entity            => Entity,
-            Closest_Ref       => Closest,
-            Status            => Status);
-      end;
-
-      case Status is
-         when Entity_Not_Found | Internal_Error =>
-            return;
-
-         when Fuzzy_Match
-            | Success
-            | No_Body_Entity_Found
-            | Overloaded_Entity_Found =>
-
-            Location := Get_Declaration_Of (Entity);
-
-            if Alternate
-              or else
-                (Get_Line (Location) = Natural (Line)
-                 and then Get_Column (Location) = Column
-                 and then Get_Filename (Get_File (Location)) = Buffer.Filename)
-            then
-               --  We asked for the alternate behavior, or we are already on
-               --  the spec: in this case, go to the body
-               Current := Location;
-               Find_Next_Body (Entity, Current, Location);
-               if Location = No_File_Location then
-                  Location := Current;
-               end if;
-            end if;
-
-            Go_To_Closest_Match
-              (Buffer.Kernel,
-               Get_Filename (Get_File (Location)),
-               Editable_Line_Type (Get_Line (Location)),
-               Get_Column (Location),
-               Xref.To_General_Entity (Entity));
-      end case;
+      Go_To_Closest_Match
+        (Buffer.Kernel,
+         Location.File,
+         Editable_Line_Type (Location.Line),
+         Location.Column, Entity);
    end Hyper_Mode_Click_On;
 
    ----------------------

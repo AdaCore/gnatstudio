@@ -25,12 +25,14 @@ with Codefix.Formal_Errors;          use Codefix.Formal_Errors;
 with GNAT.Regpat;                    use GNAT.Regpat;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 with Language;                       use Language;
 with Language.Tree;                  use Language.Tree;
 with Language.Tree.Database;         use Language.Tree.Database;
 
 package body Codefix.GNAT_Parser is
    use Cursor_Lists;
+   use type GNATCOLL.Xref.Visible_Column;
 
    ---------------------------
    -- Parsers for GNATCHECK --

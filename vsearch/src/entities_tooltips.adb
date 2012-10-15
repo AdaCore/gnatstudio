@@ -33,7 +33,6 @@ with Glib;                      use Glib;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Style;              use Gtkada.Style;
 
-with Entities.Tooltips_Assistant; use Entities.Tooltips_Assistant;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Language;                  use Language;
@@ -42,12 +41,12 @@ with Language.Tree;             use Language.Tree;
 with String_Utils;              use String_Utils;
 with Xref;                      use Xref;
 
-package body Entities.Tooltips is
+package body Entities_Tooltips is
 
-   function Get_Instance (Entity_Ref : Entity_Reference) return String;
+   function Get_Instance (Entity_Ref : General_Entity_Reference) return String;
    --  Return the text describing from what instance the entity is
 
-   function Get_Pixbuf (Entity : Entity_Information) return Gdk_Pixbuf;
+   function Get_Pixbuf (Entity : General_Entity) return Gdk_Pixbuf;
    --  Return the image associated to an entity
 
    function Draw_Tooltip
@@ -63,7 +62,7 @@ package body Entities.Tooltips is
    -- Get_Pixbuf --
    ----------------
 
-   function Get_Pixbuf (Entity : Entity_Information) return Gdk_Pixbuf is
+   function Get_Pixbuf (Entity : General_Entity) return Gdk_Pixbuf is
       Info : constant Tooltip_Information := Get_Tooltip_Information (Entity);
    begin
       return Entity_Icons (Info.Is_Spec, Info.Visibility) (Info.Category);
@@ -73,7 +72,9 @@ package body Entities.Tooltips is
    -- Get_Instance --
    ------------------
 
-   function Get_Instance (Entity_Ref : Entity_Reference) return String is
+   function Get_Instance
+     (Entity_Ref : General_Entity_Reference) return String
+   is
       use Ada.Strings.Unbounded;
       Result  : Unbounded_String;
       Inst    : Entity_Instantiation;
@@ -81,7 +82,7 @@ package body Entities.Tooltips is
       Inst_Of : Entity_Information;
 
    begin
-      if Entity_Ref /= No_Entity_Reference then
+      if Entity_Ref /= No_General_Entity_Reference then
          Inst := From_Instantiation_At (Entity_Ref);
 
          while Inst /= No_Instantiation loop
@@ -121,9 +122,8 @@ package body Entities.Tooltips is
 
    function Draw_Tooltip
      (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information;
-      Ref           : Entity_Reference;
-      Status        : Find_Decl_Or_Body_Query_Status;
+      Entity        : General_Entity;
+      Ref           : General_Entity_Reference;
       Accurate_Xref : Boolean;
       Draw_Border   : Boolean) return Cairo.Cairo_Surface
    is
@@ -259,4 +259,4 @@ package body Entities.Tooltips is
       return Pixmap;
    end Draw_Tooltip;
 
-end Entities.Tooltips;
+end Entities_Tooltips;

@@ -36,6 +36,7 @@ with GNATCOLL.Symbols;                    use GNATCOLL.Symbols;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 
 with Gdk.Color;                           use Gdk.Color;
 
@@ -103,6 +104,7 @@ package body Src_Editor_Buffer is
 
    use type System.Address;
    use type GNAT.Strings.String_Access;
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me                   : constant Trace_Handle :=
                             Create ("Source_Editor_Buffer");

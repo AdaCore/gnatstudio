@@ -22,8 +22,7 @@
 with GPS.Kernel;                 use GPS.Kernel;
 with Language.Tree;              use Language.Tree;
 with Language.Tree.Database;     use Language.Tree.Database;
-
-private with Entities;
+with Xref;
 
 package Completion.C.Constructs_Extractor is
 
@@ -50,15 +49,12 @@ package Completion.C.Constructs_Extractor is
    --  Free the data associated to a construct completion resolver
 
 private
-   use Entities;
-
    type Construct_Completion_Resolver is new Completion_Resolver with record
       Kernel      : Kernel_Handle;
-      GLI_Handler : LI_Handler;
    end record;
 
    type C_Completion_Proposal is new Simple_Completion_Proposal with record
-      Entity_Info : Entity_Information;
+      Entity_Info : Xref.General_Entity;
 
       With_Params : Boolean := False;
       --  Set to true if Entity_Info is a subprogram and we need to provide

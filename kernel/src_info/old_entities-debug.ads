@@ -1,6 +1,6 @@
 with GNAT.IO;
 
-package Entities.Debug is
+package Old_Entities.Debug is
 
    type Output_Proc is access procedure (Str : String);
    Output_Line : Output_Proc := GNAT.IO.Put_Line'Access;
@@ -29,4 +29,4 @@ package Entities.Debug is
    --  This should be set to False for the testsuites to get consistent
    --  results.
 
-end Entities.Debug;
+end Old_Entities.Debug;

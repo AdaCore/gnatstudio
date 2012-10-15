@@ -21,6 +21,7 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Finalization; use Ada.Finalization;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.Xref;    use GNATCOLL.Xref;
 
 with Basic_Types;      use Basic_Types;
 with Language;         use Language;

@@ -19,7 +19,8 @@ with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Unicode;              use Glib.Unicode;
-with GNATCOLL.Boyer_Moore;          use GNATCOLL.Boyer_Moore;
+with GNATCOLL.Boyer_Moore;      use GNATCOLL.Boyer_Moore;
+with GNATCOLL.Xref;
 with GPS.Kernel;                use GPS.Kernel;
 with Traces;                    use Traces;
 with GNAT.Regpat;               use GNAT.Regpat;
@@ -31,6 +32,7 @@ with GPS.Intl;                  use GPS.Intl;
 with UTF8_Utils;                use UTF8_Utils;
 
 package body Find_Utils is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Debug_Handle := Create ("Find_Utils");
 

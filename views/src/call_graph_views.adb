@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System;
 
 with GNAT.Strings;                use GNAT.Strings;
-with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Xref;               use GNATCOLL.Xref;
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
@@ -48,9 +49,6 @@ with Gtkada.Handlers;             use Gtkada.Handlers;
 
 with Basic_Types;                 use Basic_Types;
 with Commands.Interactive;        use Commands, Commands.Interactive;
-with Entities.Commands;           use Entities.Commands;
-with Entities;                    use Entities;
-with Entities.Values;             use Entities.Values;
 with Generic_Views;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
@@ -59,12 +57,14 @@ with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Xref;             use GPS.Kernel.Xref;
 with GPS.Intl;                    use GPS.Intl;
 with GUI_Utils;                   use GUI_Utils;
 with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
 with XML_Utils;                   use XML_Utils;
+with Xref;                        use Xref;
 
 with Generic_List;
 
@@ -149,7 +149,7 @@ package body Call_Graph_Views is
    --  Get the locations list associated with Iter. Create it if necessary
 
    function To_Record
-     (Ref                 : Entity_Reference;
+     (Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean) return Reference_Record;
    --  Extract the relevant information from Ref
 
@@ -195,18 +195,18 @@ package body Call_Graph_Views is
      (Data : in out Ancestors_User_Data; Cancelled : Boolean);
    overriding function On_Entity_Found
      (Data                : access Ancestors_User_Data;
-      Entity              : Entities.Entity_Information;
-      Parent              : Entities.Entity_Information;
-      Ref                 : Entities.Entity_Reference;
+      Entity              : General_Entity;
+      Parent              : General_Entity;
+      Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean;
    --  See inherited documentation
 
    function Insert_Entity
      (View                : access Callgraph_View_Record'Class;
-      Parent              : Entity_Information;
-      Entity              : Entity_Information;
-      Ref                 : Entity_Reference;
+      Parent              : General_Entity;
+      Entity              : General_Entity;
+      Ref                 : General_Entity_Reference;
       Suffix              : String := "";
       Kind                : View_Type;
       Through_Dispatching : Boolean;
@@ -289,12 +289,12 @@ package body Call_Graph_Views is
    ---------------
 
    function To_Record
-     (Ref                 : Entity_Reference;
+     (Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean) return Reference_Record is
    begin
-      return (Get_Line (Get_Location (Ref)),
-              Get_Column (Get_Location (Ref)),
-              Get_Filename (Get_File (Get_Location (Ref))),
+      return (Get_Location (Ref).Line,
+              Get_Location (Ref).Column,
+              Get_Location (Ref).File,
               Through_Dispatching);
    end To_Record;
 
@@ -319,7 +319,7 @@ package body Call_Graph_Views is
       Model  : Gtk_Tree_Model;
       File   : GNATCOLL.VFS.Virtual_File;
       Value  : GValue;
-      Entity : Entity_Information;
+      Entity : General_Entity;
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
 
@@ -355,7 +355,7 @@ package body Call_Graph_Views is
                     (Get_Int (Model, Iter, Location_Column_Column)),
                   Column_End => Visible_Column_Type
                     (Get_Int (Model, Iter, Location_Column_Column))
-                  + Get (Get_Name (Entity))'Length,
+                    + View.Kernel.Databases.Get_Name (Entity)'Length,
                   New_File   => False,
                   Focus      => False);
             end if;
@@ -589,8 +589,8 @@ package body Call_Graph_Views is
       Model : Gtk_Tree_Model;
 
       Value  : GValue;
-      Entity : Entity_Information;
-      Loc    : File_Location;
+      Entity : General_Entity;
+      Decl   : General_Entity_Declaration;
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
 
@@ -599,15 +599,16 @@ package body Call_Graph_Views is
          Entity := From_GValue (Value);
          Unset (Value);
 
-         Loc := Get_Declaration_Of (Entity);
+         Decl := View.Kernel.Databases.Get_Declaration (Entity);
 
          Open_File_Editor
            (View.Kernel,
-            Filename   => Get_Filename (Get_File (Loc)),
-            Line       => Get_Line (Loc),
-            Column     => Get_Column (Loc),
-            Column_End => Get_Column (Loc) + Get (Get_Name (Entity))'Length,
-            Focus => False);
+            Filename   => Decl.Loc.File,
+            Line       => Decl.Loc.Line,
+            Column     => Decl.Loc.Column,
+            Column_End => Decl.Loc.Column
+               + Visible_Column_Type (Length (Decl.Name)),
+            Focus      => False);
       end if;
    end Open_Selected_Value;
 
@@ -674,8 +675,8 @@ package body Call_Graph_Views is
       L             : List_Access;
       Iter          : Gtk_Tree_Iter;
       Model         : Gtk_Tree_Model;
-      Entity        : Entity_Information;
-      Decl          : File_Location;
+      Entity        : General_Entity;
+      Decl          : General_Entity_Declaration;
 
       Value, Value2 : GValue;
       N             : List_Node;
@@ -701,24 +702,23 @@ package body Call_Graph_Views is
          Get_Value (Model, Iter, Entity_Column, Value2);
          Entity := From_GValue (Value2);
 
-         if Entity = null then
+         if Entity = No_General_Entity then
             return;
          end if;
 
-         Decl := Get_Declaration_Of (Entity);
+         Decl := V.Kernel.Databases.Get_Declaration (Entity);
 
          Append (V.Locations_Model, T);
          Appended := True;
          Set (V.Locations_Model, T, Location_Line_Column,
-              Gint (Get_Line (Decl)));
+              Gint (Decl.Loc.Line));
          Set (V.Locations_Model, T, Location_Column_Column,
-              Gint (Get_Column (Decl)));
+              Gint (Decl.Loc.Column));
          Set (V.Locations_Model, T, Location_Character_Column, ":");
          Set (V.Locations_Model, T, Location_File_Column,
-              Display_Full_Name (Get_Filename (Get_File (Decl))));
+              Decl.Loc.File.Display_Full_Name);
          Set (V.Locations_Model, T, Location_String_Column,
-              Display_Base_Name (Get_Filename (Get_File (Decl)))
-              & " (declaration)");
+              Decl.Loc.File.Display_Base_Name & " (declaration)");
 
          --  Then an entry for each call
 
@@ -787,7 +787,7 @@ package body Call_Graph_Views is
       Child  : Gtk_Tree_Iter := Null_Iter;
       Dummy  : Gtk_Tree_Iter;
       Value  : GValue;
-      Entity : Entity_Information;
+      Entity : General_Entity;
       Column : Gint;
       Data   : Ancestors_User_Data_Access;
       Computing_Iter : Gtk_Tree_Iter := Null_Iter;
@@ -804,7 +804,7 @@ package body Call_Graph_Views is
       Unset (Value);
 
       --  If we have the locations node, do nothing
-      if Entity = null then
+      if Entity = No_General_Entity then
          return;
       end if;
 
@@ -926,7 +926,7 @@ package body Call_Graph_Views is
                  Callgraph_View_Access (Object);
       Model  : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter   : Gtk_Tree_Iter;
-      Entity : Entity_Information;
+      Entity : General_Entity;
       Value  : GValue;
       Mitem  : Gtk_Menu_Item;
       Sep    : Gtk_Separator_Menu_Item;
@@ -941,7 +941,7 @@ package body Call_Graph_Views is
          Entity := From_GValue (Value);
          Unset (Value);
 
-         if Entity /= null then
+         if Entity /= No_General_Entity then
             Set_File_Information   (Context, Files  => Empty_File_Array);
             Set_Entity_Information (Context, Entity => Entity);
          end if;
@@ -1066,11 +1066,11 @@ package body Call_Graph_Views is
       is
          Iter   : Gtk_Tree_Iter;
          N      : Node_Ptr;
-         Entity : Entity_Information;
+         Entity : General_Entity;
          Value  : GValue;
          L      : List_Access;
          Node   : List_Node;
-         Decl   : File_Location;
+         Decl   : General_Entity_Declaration;
          Path   : Gtk_Tree_Path;
 
       begin
@@ -1085,7 +1085,7 @@ package body Call_Graph_Views is
             Entity := From_GValue (Value);
             Unset (Value);
 
-            if Entity /= null then
+            if Entity /= No_General_Entity then
                N := new XML_Utils.Node;
                N.Tag := new String'("entity");
                Add_Child (Parent, N, Append => True);
@@ -1106,20 +1106,20 @@ package body Call_Graph_Views is
                   View_Type'Image
                     (View_Type'Val (Get_Int (Model, Iter, Kind_Column))));
 
-               Decl := Get_Declaration_Of (Entity);
+               Decl := View.Kernel.Databases.Get_Declaration (Entity);
                N.Tag := new String'("entity");
                Set_Attribute
-                 (N, "entity_name", Get (Get_Name (Entity)).all);
+                 (N, "entity_name",
+                  View.Kernel.Databases.Get_Name (Entity));
                --  ??? This is potentially not UTF8, should not be in an
                --  attribute
                Set_Attribute
-                 (N, "entity_decl",
-                  Display_Full_Name (Get_Filename (Get_File (Decl))));
+                 (N, "entity_decl", Decl.Loc.File.Display_Full_Name);
                --  ??? This is potentially not UTF8, should not be in an
                --  attribute
-               Set_Attribute (N, "entity_line", Image (Get_Line (Decl)));
+               Set_Attribute (N, "entity_line", Image (Decl.Loc.Line));
                Set_Attribute
-                 (N, "entity_column", Image (Integer (Get_Column (Decl))));
+                 (N, "entity_column", Image (Integer (Decl.Loc.Column)));
 
                L := Get_Locations_List (View, Iter, False);
 
@@ -1182,11 +1182,10 @@ package body Call_Graph_Views is
          Node          : Node_Ptr;
          Expand_Parent : Boolean)
       is
-         Entity : Entity_Information;
+         Entity : General_Entity;
          File   : Virtual_File;
          Iter   : Gtk_Tree_Iter := Null_Iter;
          Dummy  : Gtk_Tree_Iter;
-         Source : Source_File;
          N      : Node_Ptr := Node;
          L      : List_Access;
          Tmp    : Boolean;
@@ -1229,21 +1228,13 @@ package body Call_Graph_Views is
 
                File := Create
                  (Full_Filename => +Get_Attribute (N, "entity_decl"));
-               Source := Get_Or_Create
-                 (Db   => Get_Database (View.Kernel),
-                  File => File);
-
-               if Source /= null then
-                  Entity := Get_Or_Create
-                    (Name   => View.Kernel.Symbols.Find
-                       (Get_Attribute (N, "entity_name")),
-                     File   => Source,
+               Entity := View.Kernel.Databases.Get_Entity
+                 (Name => Get_Attribute (N, "entity_name"),
+                  Loc  =>
+                    (File   => File,
                      Line   => Safe_Value (Get_Attribute (N, "entity_line")),
                      Column => Basic_Types.Visible_Column_Type
-                       (Safe_Value (Get_Attribute (N, "entity_column"))));
-               else
-                  Entity := null;
-               end if;
+                       (Safe_Value (Get_Attribute (N, "entity_column")))));
 
                Set_Value (Model, Iter, Entity_Column, To_GValue (Entity));
             end if;
@@ -1430,9 +1421,9 @@ package body Call_Graph_Views is
 
    function Insert_Entity
      (View                : access Callgraph_View_Record'Class;
-      Parent              : Entity_Information;
-      Entity              : Entity_Information;
-      Ref                 : Entity_Reference;
+      Parent              : General_Entity;
+      Entity              : General_Entity;
+      Ref                 : General_Entity_Reference;
       Suffix              : String := "";
       Kind                : View_Type;
       Through_Dispatching : Boolean;
@@ -1441,11 +1432,12 @@ package body Call_Graph_Views is
       pragma Unreferenced (Parent);
       Model     : constant Gtk_Tree_Store :=
                     Gtk_Tree_Store (Get_Model (View.Tree));
-      Decl      : constant File_Location := Get_Declaration_Of (Entity);
+      Decl      : constant General_Entity_Declaration :=
+        View.Kernel.Databases.Get_Declaration (Entity);
       Iter      : Gtk_Tree_Iter;
       Locations : Gtk_Tree_Iter := Null_Iter;
       Value     : GValue;
-      Ent       : Entity_Information;
+      Ent       : General_Entity;
    begin
       if Parent_Iter = Null_Iter then
          Iter := Get_Iter_First (Model);
@@ -1471,11 +1463,11 @@ package body Call_Graph_Views is
 
          Prepend (Model, Iter, Parent_Iter);
 
-         Set (Model, Iter, Name_Column, Get (Get_Name (Entity)).all & Suffix);
+         Set (Model, Iter, Name_Column, To_String (Decl.Name) & Suffix);
          Set (Model, Iter, Decl_Column,
-              Display_Base_Name (Get_Filename (Get_File (Decl)))
-              & ':' & Image (Get_Line (Decl))
-              & ':' & Image (Integer (Get_Column (Decl))));
+              Decl.Loc.File.Display_Base_Name
+              & ':' & Image (Decl.Loc.Line)
+              & ':' & Image (Integer (Decl.Loc.Column)));
          Set_Value (Model, Iter, Entity_Column, To_GValue (Entity));
          Set (Model, Iter, Kind_Column, View_Type'Pos (Kind));
 
@@ -1485,7 +1477,7 @@ package body Call_Graph_Views is
          Set (Model, Locations, Name_Column, Computing_Label);
       end if;
 
-      if Ref /= No_Entity_Reference then
+      if Ref /= No_General_Entity_Reference then
          declare
             L       : List_Access;
             Value   : GValue;
@@ -1577,9 +1569,9 @@ package body Call_Graph_Views is
 
    overriding function On_Entity_Found
      (Data                : access Ancestors_User_Data;
-      Entity              : Entities.Entity_Information;
-      Parent              : Entities.Entity_Information;
-      Ref                 : Entities.Entity_Reference;
+      Entity              : General_Entity;
+      Parent              : General_Entity;
+      Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean
    is
@@ -1634,22 +1626,21 @@ package body Call_Graph_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Entity : constant Entity_Information :=
-                 Get_Entity
-                   (Context.Context, Ask_If_Overloaded => True);
+      Entity : constant General_Entity :=
+                 Get_Entity (Context.Context);
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
       R      : Gtk_Requisition;
    begin
-      if Entity /= null then
+      if Entity /= No_General_Entity then
          View := Generic_View.Get_Or_Create_View
            (Kernel, Group => GPS.Kernel.MDI.Group_Consoles);
          Expand_Row
            (View.Tree,
             Insert_Entity
-              (View, null, Entity,
-               No_Entity_Reference, -" calls ",
+              (View, No_General_Entity, Entity,
+               No_General_Entity_Reference, -" calls ",
               Kind                => View_Calls,
               Through_Dispatching => False));
 
@@ -1670,22 +1661,20 @@ package body Call_Graph_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Entity : constant Entity_Information :=
-                 Get_Entity
-                   (Context.Context, Ask_If_Overloaded => True);
+      Entity : constant General_Entity := Get_Entity (Context.Context);
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
       R      : Gtk_Requisition;
    begin
-      if Entity /= null then
+      if Entity /= No_General_Entity then
          View := Generic_View.Get_Or_Create_View
            (Kernel, Group => GPS.Kernel.MDI.Group_Consoles);
          Expand_Row
            (View.Tree,
             Insert_Entity
-              (View, null, Entity,
-               No_Entity_Reference, -" is called by ",
+              (View, No_General_Entity, Entity,
+               No_General_Entity_Reference, -" is called by ",
                Kind                => View_Called_By,
                Through_Dispatching => False));
 

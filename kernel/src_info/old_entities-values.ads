@@ -19,7 +19,7 @@ with Glib.Values;
 
 --  This package contains utilities to store and load Entities to/from GValues.
 
-package Entities.Values is
+package Old_Entities.Values is
 
    --  The following subprograms can be used to store an entity in a GValue,
    --  for instance to store it in a tree view
@@ -36,4 +36,4 @@ package Entities.Values is
    --  Return the type associated with an entity. This is the type that should
    --  be used when creating the tree model.
 
-end Entities.Values;
+end Old_Entities.Values;

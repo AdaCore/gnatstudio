@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2004-2012, AdaCore                     --
+--                     Copyright (C) 2006-2012, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,11 +15,31 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Entities;
+--  This package provides functions for drawing tooltips representing entity
+--  informations.
 
-package Dummy_Parser is
+with Cairo;            use Cairo;
+with GPS.Kernel;       use GPS.Kernel;
+with Language.Tree.Database; use Language.Tree.Database;
+with Xref;
 
-   function Create_Dummy_LI_Handler return Entities.LI_Handler;
-   --  Create a new LI handler
+package Entities_Tooltips is
 
-end Dummy_Parser;
+   function Draw_Tooltip
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : Xref.General_Entity;
+      Ref           : Xref.General_Entity_Reference;
+      Accurate_Xref : Boolean;
+      Draw_Border   : Boolean) return Cairo_Surface;
+   --  Return a tooltip representing Entity.
+
+   function Draw_Tooltip
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Entity      : Entity_Access;
+      Draw_Border : Boolean;
+      Guess       : Boolean := False) return Cairo_Surface;
+   --  Same as above, based on an entity access. If guess is true then the
+   --  entity information is a guess - may not be the actual one for the
+   --  tooltip.
+
+end Entities_Tooltips;

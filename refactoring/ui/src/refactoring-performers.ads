@@ -19,6 +19,7 @@ with Basic_Types;               use Basic_Types;
 with GNATCOLL.VFS;
 with GPS.Kernel;
 with Refactoring.UI;            use Refactoring.UI;
+with Xref;                      use Xref;
 
 package Refactoring.Performers is
 
@@ -28,7 +29,7 @@ package Refactoring.Performers is
    procedure Execute
      (Factory       : access Refactor_Performer_Record;
       Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity        : Entities.Entity_Information;
+      Entity        : General_Entity;
       Refs          : Location_Arrays.Instance;
       No_LI_List    : Source_File_Set;
       Stale_LI_List : Source_File_Set) is abstract;
@@ -47,7 +48,7 @@ package Refactoring.Performers is
 
    procedure Get_All_Locations
      (Kernel                : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity                : Entities.Entity_Information;
+      Entity                : General_Entity;
       On_Completion         : access Refactor_Performer_Record'Class;
       Auto_Compile          : Boolean := False;
       Overridden            : Boolean := True;

@@ -22,6 +22,7 @@ with System;
 with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
 with GNATCOLL.Traces;
+with GNATCOLL.Xref;
 
 with Gdk.Color;                 use Gdk.Color;
 with Glib.Object;               use Glib.Object;
@@ -54,6 +55,7 @@ with Traces;                    use Traces;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Src_Editor_Module.Editors is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Debug_Handle :=
           Create ("Editor.Buffer", Default => GNATCOLL.Traces.Off);

@@ -42,27 +42,16 @@ with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with XML_Utils;                 use XML_Utils;
 
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Basic_Mapper;              use Basic_Mapper;
 with Basic_Types;               use Basic_Types;
 with Default_Preferences;       use Default_Preferences;
-with Entities.Queries;          use Entities.Queries;
-with Entities;                  use Entities;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
@@ -82,7 +71,7 @@ with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-with GPS.Kernel.Xref;
+with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
@@ -97,6 +86,7 @@ with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
 with Traces;                    use Traces;
+with Xref;                      use Xref;
 
 package body GPS.Kernel is
 
@@ -117,26 +107,9 @@ package body GPS.Kernel is
    function Process_Anim (Data : Process_Data) return Boolean;
    --  Process_Timeout callback to handle image animations
 
-   procedure Row_Activated (Widget : access Gtk_Widget_Record'Class);
-   --  Called when a specific entity declaration has been selected in the
-   --  overloaded entities dialog.
-
    procedure Free (Tool : in out Tool_Properties_Record);
    procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class);
    --  Free the list of registered tools
-
-   procedure Select_Entity_Declaration
-     (Kernel      : access Kernel_Handle_Record'Class;
-      File        : Source_File;
-      Entity_Name : String;
-      Decl        : in out Entities.Entity_Information;
-      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
-   --  Open a dialog to ask the user to select among multiple declaration for
-   --  the entity with name Entity_Name.
-   --  Decl is set to No_Entity_Information and Status to Entity_Not_Found if
-   --  the user didn't select any declaration. When calling this procedure,
-   --  Decl should be put to the closest entity match given line and column
-   --  numbers.
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -352,14 +325,7 @@ package body GPS.Kernel is
       --  is more efficient in case the current directory has lots of source
       --  files.
 
-      Handle.Database := Create
-        (Handle.Registry, Handle.Get_Construct_Database,
-         Normal_Ref_In_Call_Graph =>
-            not Require_GNAT_Date
-              (Handle, Entities.Advanced_Ref_In_Call_Graph_Date));
-      Set_Symbols (Handle.Database, Handle.Symbols);
-      Set_Symbols (Handle.Get_Construct_Database, Handle.Symbols);
-      Register_Language_Handler (Handle.Database, Handler);
+      GPS.Kernel.Xref.Create_Database (Handle.Database, Handle);
 
       --  Initialize the preferences. We load the file now, even though it
       --  will also be reloaded after the customization files, so that themes
@@ -420,32 +386,6 @@ package body GPS.Kernel is
         (GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
    end On_Preferences_Changed;
 
-   ------------------
-   -- Get_Database --
-   ------------------
-
-   function Get_Database
-     (Kernel : access Kernel_Handle_Record) return Entities_Database is
-   begin
-      return Kernel.Database;
-   end Get_Database;
-
-   -----------------------
-   -- Get_Xref_Database --
-   -----------------------
-
-   function Get_Xref_Database
-     (Kernel : access Kernel_Handle_Record)
-      return GNATCOLL.Xref.Xref_Database_Access
-   is
-   begin
-      if Kernel.Xref_Db = null then
-         Kernel.Xref_Db := new GPS.Kernel.Xref.GPS_Xref_Database;
-      end if;
-
-      return Kernel.Xref_Db;
-   end Get_Xref_Database;
-
    ----------------------------
    -- Get_Construct_Database --
    ----------------------------
@@ -454,11 +394,7 @@ package body GPS.Kernel is
      (Kernel : access Kernel_Handle_Record)
       return Language.Tree.Database.Construct_Database_Access is
    begin
-      if Kernel.Construct_Database = null then
-         Kernel.Construct_Database := new Construct_Database;
-      end if;
-
-      return Kernel.Construct_Database;
+      return Kernel.Database.Constructs;
    end Get_Construct_Database;
 
    ---------------
@@ -470,9 +406,7 @@ package body GPS.Kernel is
       return Standard.Xref.General_Xref_Database
    is
    begin
-      return (Entities   => Get_Database (Kernel),
-              Xref       => Get_Xref_Database (Kernel),
-              Constructs => Get_Construct_Database (Kernel));
+      return Kernel.Database;
    end Databases;
 
    ----------------------
@@ -847,13 +781,14 @@ package body GPS.Kernel is
          Free (Data.Message);
          Free (Data.Text);
          Free (Data.Expression);
+         Free (Data.Entity_Name);
 
          --  Do not unref the entity stored in the context if the kernel is in
          --  destruction or as already been destroyed since the entity has
          --  already been freed as part of the kernel destruction.
 
          if Data.Kernel /= null and then not Data.Kernel.Is_In_Destruction then
-            Unref (Data.Xref_Entity.Old_Entity);
+            Unref (Data.Xref_Entity);
 
             --   ??? problem of double deallocation at shutdown time, ideally
             --   the following call should be outside of the conditional.
@@ -1153,226 +1088,6 @@ package body GPS.Kernel is
       Handle.Logs_Mapper := Mapper;
    end Set_Logs_Mapper;
 
-   ------------------------------
-   -- Parse_All_LI_Information --
-   ------------------------------
-
-   procedure Parse_All_LI_Information
-     (Kernel    : access Kernel_Handle_Record;
-      Project   : Project_Type;
-      Recursive : Boolean)
-   is
-      Iter : Recursive_LI_Information_Iterator;
-      Count, Total : Natural;
-   begin
-      Start (Iter, Get_Language_Handler (Kernel),
-             Project => Project.Start (Recursive => Recursive));
-
-      loop
-         Next (Iter, Steps => Natural'Last,  --  As much as possible
-               Count => Count, Total => Total);
-         exit when Count >= Total;
-      end loop;
-
-      Free (Iter);
-   end Parse_All_LI_Information;
-
-   -------------------
-   -- Row_Activated --
-   -------------------
-
-   procedure Row_Activated (Widget : access Gtk_Widget_Record'Class) is
-   begin
-      Response (Gtk_Dialog (Widget), Gtk_Response_OK);
-   end Row_Activated;
-
-   -------------------------------
-   -- Select_Entity_Declaration --
-   -------------------------------
-
-   procedure Select_Entity_Declaration
-     (Kernel      : access Kernel_Handle_Record'Class;
-      File        : Source_File;
-      Entity_Name : String;
-      Decl        : in out Entities.Entity_Information;
-      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
-   is
-      procedure Set
-        (Tree : System.Address;
-         Iter : Gtk_Tree_Iter;
-         Col1 : Gint; Value1 : String;
-         Col2 : Gint; Value2 : Gint;
-         Col3 : Gint; Value3 : Gint);
-      pragma Import (C, Set, "ada_gtk_tree_store_set_ptr_int_int");
-
-      procedure Set2
-        (Tree : System.Address;
-         Iter : Gtk_Tree_Iter;
-         Col1 : Gint; Value1 : String;
-         Col2 : Gint; Value2 : System.Address);
-      pragma Import (C, Set2, "ada_gtk_tree_store_set_ptr_ptr");
-
-      pragma Warnings (Off);
-      --  This UC is safe aliasing-wise, so kill warning
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Entities.Entity_Information);
-      pragma Warnings (On);
-
-      Column_Types : constant GType_Array :=
-        (0 => GType_String,
-         1 => GType_Int,
-         2 => GType_Int,
-         3 => GType_String,
-         4 => GType_Pointer);
-      Column_Names : GNAT.Strings.String_List :=
-        (1 => new String'("File"),
-         2 => new String'("Line"),
-         3 => new String'("Column"),
-         4 => new String'("Name"));
-
-      Iter      : Entity_Iterator;
-      Candidate : Entities.Entity_Information;
-      Button    : Gtk_Widget;
-      OK_Button : Gtk_Widget;
-      Count     : Natural := 0;
-      Label     : Gtk_Label;
-      Model     : Gtk_Tree_Store;
-      Dialog    : Gtk_Dialog;
-      It        : Gtk_Tree_Iter;
-      Scrolled  : Gtk_Scrolled_Window;
-      View      : Gtk_Tree_View;
-      Col_Num   : Gint;
-      pragma Unreferenced (Button, Col_Num);
-
-   begin
-      Find_All_Entities_In_File
-        (Iter        => Iter,
-         File        => File,
-         Name        => Entity_Name);
-
-      while not At_End (Iter) loop
-         Count := Count + 1;
-         Candidate := Get (Iter);
-
-         if Count = 1 then
-            Gtk_New (Dialog,
-                     Title  => -"Select the declaration",
-                     Parent => Get_Main_Window (Kernel),
-                     Flags  => Modal or Destroy_With_Parent);
-            Set_Default_Size (Dialog, 500, 500);
-
-            Gtk_New (Label, -"This entity is overloaded.");
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
-
-            Gtk_New (Label, -"Please select the appropriate declaration.");
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
-
-            Gtk_New (Scrolled);
-            Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-            Pack_Start (Get_Vbox (Dialog), Scrolled);
-
-            OK_Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-            View := Create_Tree_View
-              (Column_Types       => Column_Types,
-               Column_Names       => Column_Names,
-               Initial_Sort_On    => 1);
-            Add (Scrolled, View);
-            Model := Gtk_Tree_Store (Get_Model (View));
-
-            Widget_Callback.Object_Connect
-              (View, Signal_Row_Activated, Row_Activated'Access, Dialog);
-         end if;
-
-         Append (Model, It, Null_Iter);
-         Set (Get_Object (Model), It,
-              0, (+Base_Name
-                (Get_Filename (Get_File (Get_Declaration_Of (Candidate)))))
-              & ASCII.NUL,
-              1, Gint (Get_Line (Get_Declaration_Of (Candidate))),
-              2, Gint (Get_Column (Get_Declaration_Of (Candidate))));
-         Set2 (Get_Object (Model),
-               It, 3, Entity_Name & ASCII.NUL,
-               4, Candidate.all'Address);
-
-         if Candidate = Decl then
-            Select_Iter (Get_Selection (View), It);
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      Decl := null;
-      Status := Entity_Not_Found;
-
-      if Count > 0 then
-         Grab_Default (OK_Button);
-         Grab_Focus (OK_Button);
-         Show_All (Dialog);
-
-         if Run (Dialog) = Gtk_Response_OK then
-            Status := Success;
-            Get_Selected (Get_Selection (View), Gtk_Tree_Model (Model), It);
-            Decl := Convert (Get_Address (Model, It, 4));
-         end if;
-
-         Destroy (Dialog);
-      end if;
-
-      Free (Column_Names);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-
-         if Dialog /= null then
-            Destroy (Dialog);
-         end if;
-
-         raise;
-   end Select_Entity_Declaration;
-
-   ------------------------------------
-   -- Find_Declaration_Or_Overloaded --
-   ------------------------------------
-
-   procedure Find_Declaration_Or_Overloaded
-     (Kernel            : access Kernel_Handle_Record;
-      File              : Entities.Source_File;
-      Entity_Name       : String;
-      Line              : Natural;
-      Column            : Basic_Types.Visible_Column_Type;
-      Ask_If_Overloaded : Boolean;
-      Entity            : out Entities.Entity_Information;
-      Closest_Ref       : out Entities.Entity_Reference;
-      Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status;
-      Fuzzy_Expected    : Boolean := False)
-   is
-   begin
-      Find_Declaration
-        (Db             => Kernel.Database,
-         Source         => File,
-         Entity_Name    => Entity_Name,
-         Line           => Line,
-         Column         => Column,
-         Entity         => Entity,
-         Closest_Ref    => Closest_Ref,
-         Status         => Status,
-         Fuzzy_Expected => Fuzzy_Expected);
-
-      --  ??? Should have the preference for the handling of fuzzy matches:
-      --   - consider it as a no match: set Status to Entity_Not_Found;
-      --   - consider it as overloaded entity: same as below;
-      --   - use the closest match: nothing to do.
-
-      if Status = Overloaded_Entity_Found then
-         if Ask_If_Overloaded then
-            Select_Entity_Declaration
-              (Kernel, File, Entity_Name, Entity, Status);
-         end if;
-      end if;
-   end Find_Declaration_Or_Overloaded;
-
    -------------
    -- Destroy --
    -------------
@@ -1453,7 +1168,7 @@ package body GPS.Kernel is
          --  scripting languages, in case some class instances were still
          --  owning references to entities
 
-         Destroy (Handle.Database);
+         Standard.Xref.Destroy (Handle.Database);
       end if;
 
       --  Remove the language handlers (used for xref). This needs to be done
@@ -1468,7 +1183,6 @@ package body GPS.Kernel is
       Free (Handle.Gnatls_Cache);
       Free (Handle.Gnatls_Server);
       Free (Handle.GNAT_Version);
-      Free (Handle.Construct_Database);
 
       --  Handle.Symbols.Display_Stats;
       GNATCOLL.Symbols.Free (Handle.Symbols);
@@ -2229,8 +1943,7 @@ package body GPS.Kernel is
          Kernel.Refactoring := new GPS_Refactoring_Factory_Context'
            (Kernel                 => Kernel_Handle (Kernel),
             Buffer_Factory         => Get_Buffer_Factory (Kernel),
-            Entity_Db              => Get_Database (Kernel),
-            Construct_Db           => Get_Construct_Database (Kernel),
+            Db                     => Kernel.Database,
             Add_Subprogram_Box     => False,
             Add_In_Keyword         => False,
             Create_Subprogram_Decl => False);

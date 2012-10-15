@@ -21,7 +21,6 @@
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with Basic_Types;
-with Entities;
 with String_List_Utils;
 
 package GPS.Kernel.Contexts is
@@ -200,7 +199,9 @@ package GPS.Kernel.Contexts is
      (Context         : in out Selection_Context;
       Entity_Name     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
-      From_Expression : String := "");
+      From_Expression : String := "")
+   with Pre => Has_File_Information (Context)
+     and then Has_Line_Information (Context);
    --  Set the information in the context.
    --  Entity_Column should be the column on which the entity starts, not the
    --  current location of the cursor.
@@ -214,7 +215,7 @@ package GPS.Kernel.Contexts is
 
    procedure Set_Entity_Information
      (Context         : in out Selection_Context;
-      Entity          : access Entities.Entity_Information_Record'Class;
+      Entity          : Xref.General_Entity;
       From_Expression : String := "");
    --  Same as above, but we provide directly the entity itself. This is more
    --  efficient when you already know the entity.
@@ -246,27 +247,10 @@ package GPS.Kernel.Contexts is
    --  column on which the cursor currently is.
 
    function Get_Entity
-     (Context           : Selection_Context;
-      Ask_If_Overloaded : Boolean := False) return Entities.Entity_Information;
-   function Get_Entity
-     (Context           : Selection_Context;
-      Ask_If_Overloaded : Boolean := False) return Xref.General_Entity;
-   --  Return the location of the declaration for the entity in Context.
-   --  This information is automatically cached in the context, in case several
-   --  modules need to compute it; However, if you first do a call with
-   --  Ask_If_Overloaded set to False, then one set to True, the latter will
-   --  override the former if we have more precise information.
-   --  No_Entity_Information is returned if the information could not be found.
-   --  Note also that in most cases you should set the busy cursor before
-   --  calling this function, since it might take some time.
-   --  You do not need to free the memory, since it will automatically be freed
-   --  when the context is destroyed.
-   --  If Ask_If_Overloaded is true and there are several possible matches for
-   --  the entity, an interactive dialog is opened for the user. Otherwise, the
-   --  closest matching entity is returned
+     (Context           : Selection_Context)
+      return Xref.General_Entity;
+   --  Return the xref entity stored in the context.
 
-   function Get_Closest_Ref
-     (Context : Selection_Context) return Entities.Entity_Reference;
    function Get_Closest_Ref
      (Context : Selection_Context) return Xref.General_Entity_Reference;
    --  Return the entity reference corresponding to the current context. You

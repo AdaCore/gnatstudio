@@ -16,8 +16,10 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 
 package body Codefix.Errors_Manager is
+   use type GNATCOLL.Xref.Visible_Column;
 
    ----------------------------------------------------------------------------
    --  type Correction_Manager

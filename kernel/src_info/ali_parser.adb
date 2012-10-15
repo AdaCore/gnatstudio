@@ -30,8 +30,8 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Basic_Types;               use Basic_Types;
-with Entities.Queries;          use Entities.Queries;
-with Entities;                  use Entities;
+with Old_Entities.Queries;      use Old_Entities.Queries;
+with Old_Entities;              use Old_Entities;
 with Glib.Convert;              use Glib.Convert;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
@@ -305,10 +305,10 @@ package body ALI_Parser is
    ------------------------
 
    function Create_ALI_Handler
-     (Db           : Entities.Entities_Database;
+     (Db           : Entities_Database;
       Registry     : Project_Registry'Class;
       Lang_Handler : Language_Handlers.Language_Handler)
-      return Entities.LI_Handler is
+      return LI_Handler is
    begin
       return new ALI_Handler_Record'
                    (LI_Handler_Record with
@@ -941,9 +941,8 @@ package body ALI_Parser is
                         use Entities_Search_Tries;
                         use Language_Handlers;
 
-                        LI_Handler : constant Entities.LI_Handler :=
-                                       Get_LI_Handler_By_Name
-                                         (Handler.Lang_Handler, "GNU C/C++");
+                        LI_Handler : constant Old_Entities.LI_Handler :=
+                          Get_LI_Handler (Handler.Db);
                         Xref_Imported_Name : constant String :=
                                        Get_Name_String
                                          (Current_Xref.Imported_Name);
@@ -1597,7 +1596,7 @@ package body ALI_Parser is
       Status : Integer;
       pragma Unreferenced (Status);
    begin
-      Destroy (Entities.LI_Handler_Record (Handler));
+      Destroy (Old_Entities.LI_Handler_Record (Handler));
    end Destroy;
 
    -----------------------------
@@ -2298,7 +2297,7 @@ package body ALI_Parser is
                      (Handler, Get_LI (Source), Reset_ALI => Reset_ALI)
               and then File_Has_No_LI_Report /= null
             then
-               Entities.Error (File_Has_No_LI_Report.all, Source);
+               File_Has_No_LI_Report.Error (Get_Filename (Source));
             end if;
 
             return Source;
@@ -2321,7 +2320,7 @@ package body ALI_Parser is
          end if;
 
          if File_Has_No_LI_Report /= null then
-            Entities.Error (File_Has_No_LI_Report.all, Source);
+            File_Has_No_LI_Report.Error (Get_Filename (Source));
          end if;
 
          return Source;
@@ -2345,7 +2344,7 @@ package body ALI_Parser is
           or else not Check_LI_And_Source (LI, Source_Filename))
         and then File_Has_No_LI_Report /= null
       then
-         Entities.Error (File_Has_No_LI_Report.all, Source);
+         File_Has_No_LI_Report.Error (Get_Filename (Source));
          LI := null;
       end if;
 
@@ -2619,7 +2618,7 @@ package body ALI_Parser is
       --  then required because entities imported from other languages may have
       --  been loaded after this LI file was previously processed.
 
-      if Entities.Update_Forced (Entities.LI_Handler (Handler)) then
+      if Old_Entities.Update_Forced (Old_Entities.LI_Handler (Handler)) then
          New_Timestamp   := File_Time_Stamp (Get_LI_Filename (LI));
          Reset_ALI_First := True;
          Do_Update       := True;

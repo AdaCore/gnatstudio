@@ -24,9 +24,6 @@ with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Commands.Interactive;  use Commands, Commands.Interactive;
-with Entities;              use Entities;
-with Entities.Queries;      use Entities.Queries;
-with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with String_Utils;          use String_Utils;
@@ -42,6 +39,7 @@ with Language.Ada;           use Language.Ada;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 with Ada_Semantic_Tree;      use Ada_Semantic_Tree;
+with Xref;                   use Xref;
 
 package body Refactoring.Parameters is
    Me : constant Debug_Handle := Create ("Refactor.Params");
@@ -67,7 +65,7 @@ package body Refactoring.Parameters is
    function Name_Parameters
      (Context : not null access Factory_Context_Record'Class;
       Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information;
+      Entity : General_Entity;
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer;
       Column : Visible_Column_Type) return Command_Return_Type;
@@ -82,10 +80,10 @@ package body Refactoring.Parameters is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : Entity_Information;
+      Entity : constant General_Entity := Get_Entity (Context);
    begin
-      Entity := Get_Entity (Context);
-      return Entity /= null and then Is_Subprogram (Entity);
+      return Entity /= No_General_Entity
+        and then Get_Kernel (Context).Databases.Is_Subprogram (Entity);
    end Filter_Matches_Primitive;
 
    ---------------------
@@ -95,7 +93,7 @@ package body Refactoring.Parameters is
    function Name_Parameters
      (Context : not null access Factory_Context_Record'Class;
       Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information;
+      Entity : General_Entity;
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer;
       Column : Visible_Column_Type) return Command_Return_Type
@@ -107,11 +105,13 @@ package body Refactoring.Parameters is
 
       Chars : constant String := Get_Text
         (Kernel, File, Line, Column, 1_000);
-      Param : Entity_Information;
       First, Last : Integer := Chars'First;
       Nest_Count  : Integer := 1;
       Result : Unbounded_String;
-      Iter : Subprogram_Iterator := Get_Subprogram_Parameters (Entity);
+
+      Params : constant Parameter_Array :=
+        Kernel.Databases.Parameters (Entity);
+      Iter   : Integer := Params'First;
 
       procedure Add_Parameter_Name;
       --  Add the name of the parameter in Result, skipping any space currently
@@ -143,7 +143,7 @@ package body Refactoring.Parameters is
          if Tmp + 1 <= Chars'Last and then Chars (Tmp .. Tmp + 1) = "=>" then
             --  No need to replace any more: There won't be any unnamed
             --  parameter afterward
-            Param := null;
+            Iter := Integer'Last;
 
          else
             Result := Result & Chars (Last .. First - 1);
@@ -153,10 +153,11 @@ package body Refactoring.Parameters is
                First := First - 1;
             end if;
 
-            Append (Result, Get (Get_Name (Param)).all & " => ");
+            Append (Result,
+                    Kernel.Databases.Get_Name (Params (Iter).Parameter)
+                    & " => ");
 
-            Next (Iter);
-            Get (Iter, Param);
+            Iter := Iter + 1;
          end if;
       end Add_Parameter_Name;
 
@@ -177,8 +178,7 @@ package body Refactoring.Parameters is
              (Buffer       => Get_Buffer (S_File),
               Start_Offset => Offset);
 
-         Entity_Before : Entity_Information;
-         Status : Find_Decl_Or_Body_Query_Status;
+         Entity_Before : General_Entity;
          Entity_Token : Token_Record;
 
          Tok_Line   : Integer;
@@ -216,18 +216,15 @@ package body Refactoring.Parameters is
             return False;
          end if;
 
-         if Is_Primitive_Operation_Of (Entity) /= null then
+         if Kernel.Databases.Is_Primitive_Of (Entity) /= No_General_Entity then
             To_Line_Column
               (S_File, Entity_Token.Token_First, Tok_Line, Tok_Column);
 
-            Find_Declaration
-              (Db          => Get_Database (Kernel),
-               File_Name   => File,
-               Entity_Name => Get_Name (Expression, Entity_Token),
-               Line        => Tok_Line,
-               Column      => Tok_Column,
-               Entity      => Entity_Before,
-               Status      => Status);
+            Entity_Before := Kernel.Databases.Get_Entity
+              (Name => Get_Name (Expression, Entity_Token),
+               Loc  => (File   => File,
+                        Line   => Tok_Line,
+                        Column => Tok_Column));
 
             --  The following will not handle correctly where the primitive
             --  operation is declared inside a subprogram, and we use the fully
@@ -238,8 +235,8 @@ package body Refactoring.Parameters is
             --  that return an access type and we use the dotted notation to
             --  call a primitive op on the result.
 
-            if Entity_Before /= null
-              and then Get_Kind (Entity_Before).Kind /= Package_Kind
+            if Entity_Before /= No_General_Entity
+              and then Kernel.Databases.Is_Subprogram (Entity_Before)
             then
                Free (Expression);
                return True;
@@ -260,17 +257,15 @@ package body Refactoring.Parameters is
          return Failure;
       end if;
 
-      Get (Iter, Param);
-      if Param = null then
+      if Params'Length = 0 then
          Trace (Me, "No parameter for this subprogram");
          return Failure;
       end if;
 
       if Is_Dotted_Notation then
          Trace (Me, "Rename parameters: detected dotted notation");
-         Next (Iter);
-         Get (Iter, Param);
-         if Param = null then
+         Iter := Iter + 1;
+         if Params'Length = 1 then
             return Success;
          end if;
       end if;
@@ -280,7 +275,7 @@ package body Refactoring.Parameters is
 
       Add_Parameter_Name;
 
-      while Param /= null and then First <= Chars'Last loop
+      while Iter <= Params'Last and then First <= Chars'Last loop
          if Chars (First) = '(' then
             Nest_Count := Nest_Count + 1;
          elsif Chars (First) = ')' then
@@ -319,7 +314,7 @@ package body Refactoring.Parameters is
       return Name_Parameters
         (Kernel  => Get_Kernel (Context.Context),
          Context => Get_Kernel (Context.Context).Refactoring_Context,
-         Entity => Get_Entity (Context.Context, Ask_If_Overloaded => True),
+         Entity => Get_Entity (Context.Context),
          File   => File_Information (Context.Context),
          Line   => Line_Information (Context.Context),
          Column => Column_Information (Context.Context));
@@ -335,7 +330,7 @@ package body Refactoring.Parameters is
       if Command = "name_parameters" then
          Name_Parameters (Data, (1 => Location_Cst'Access));
          declare
-            Entity   : constant Entity_Information := Get_Data (Data, 1);
+            Entity   : constant General_Entity := Get_Data (Data, 1);
             Location : constant File_Location_Info := Get_Data (Data, 2);
             File     : constant Virtual_File := Get_Data (Get_File (Location));
          begin

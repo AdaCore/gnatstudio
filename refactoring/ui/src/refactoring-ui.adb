@@ -18,7 +18,6 @@
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Intl;             use GPS.Intl;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
-with Entities;             use Entities;
 
 with Glib;                  use Glib;
 with Gtk.Box;               use Gtk.Box;
@@ -170,28 +169,16 @@ package body Refactoring.UI is
       C := List.First;
       while Has_Element (C) loop
          declare
-            F : constant Source_File := Element (C);
-            Name : constant Virtual_File := Get_Filename (F);
+            F : constant Virtual_File := Element (C);
          begin
             Append (Model, Iter, Null_Iter);
-            Model.Set (Iter, 0, Name.Display_Base_Name);
-            Model.Set (Iter, 1, Name.Display_Dir_Name);
+            Model.Set (Iter, 0, F.Display_Base_Name);
+            Model.Set (Iter, 1, F.Display_Dir_Name);
          end;
          Next (C);
       end loop;
 
       return Scrolled;
    end Create_File_List;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash
-     (File : Entities.Source_File) return Ada.Containers.Hash_Type
-   is
-   begin
-      return GNATCOLL.VFS.Full_Name_Hash (Get_Filename (File));
-   end Hash;
 
 end Refactoring.UI;

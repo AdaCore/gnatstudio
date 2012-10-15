@@ -21,11 +21,11 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Hash;
 with GNAT.Strings;
 
-with Entities;     use Entities;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with Language;     use Language;
 with Docgen2.Tags;
+with Xref;
 
 package Docgen2.Entities is
 
@@ -53,21 +53,21 @@ package Docgen2.Entities is
    --  is filled during analysis, then used to generate the documentation.
 
    type Location_Type is record
-      Spec_Loc : File_Location;
-      Body_Loc : File_Location;
+      Spec_Loc : Xref.General_Location;
+      Body_Loc : Xref.General_Location;
       Pkg_Nb   : Natural;
    end record;
 
    Null_Location : constant Location_Type :=
-                     (Spec_Loc => No_File_Location,
-                      Body_Loc => No_File_Location,
+                     (Spec_Loc => Xref.No_Location,
+                      Body_Loc => Xref.No_Location,
                       Pkg_Nb   => 0);
 
    type Cross_Ref_Record;
    type Cross_Ref is access all Cross_Ref_Record;
 
    type Cross_Ref_Record is record
-      Location      : File_Location;
+      Location      : Xref.General_Location;
       Name          : GNAT.Strings.String_Access;
       Xref          : Entity_Info := null;
       Inherited     : Boolean := False; -- Primitive operation cross-ref
@@ -81,7 +81,9 @@ package Docgen2.Entities is
      (Index_Type => Natural, Element_Type => Entity_Info);
 
    package Entity_Ref_List is new Ada.Containers.Vectors
-     (Index_Type => Natural, Element_Type => Entity_Reference);
+     (Index_Type   => Natural,
+      Element_Type => Xref.General_Entity_Reference,
+      "="          => Xref."=");
 
    package Files_List is new Ada.Containers.Vectors
      (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
@@ -207,11 +209,11 @@ package Docgen2.Entities is
          end case;
       end record;
 
-   function Hash (Key : File_Location) return Ada.Containers.Hash_Type;
-   function Equivalent_Keys (Left, Right : File_Location)
+   function Hash (Key : Xref.General_Location) return Ada.Containers.Hash_Type;
+   function Equivalent_Keys (Left, Right : Xref.General_Location)
                              return Boolean;
    package Entity_Info_Map is new Ada.Containers.Indefinite_Hashed_Maps
-     (File_Location, Entity_Info, Hash, Equivalent_Keys);
+     (Xref.General_Location, Entity_Info, Hash, Equivalent_Keys);
    --  A hashed set of nodes, identified by their 'loc' attribute
 
    package Entity_Info_Vector is new Ada.Containers.Indefinite_Vectors
@@ -242,7 +244,7 @@ package Docgen2.Entities is
 
    procedure Set_Pkg_Printout
      (Construct   : Simple_Construct_Information;
-      Entity      : Entity_Information;
+      Entity      : Xref.General_Entity;
       File_Buffer : GNAT.Strings.String_Access;
       E_Info      : Entity_Info);
    --  Retrieve the Source extract representing the header of the package, or

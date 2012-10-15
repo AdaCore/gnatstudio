@@ -18,11 +18,11 @@
 pragma Ada_2012;
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Hash;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 with Glib.Convert;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNAT.Strings;              use GNAT.Strings;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree;             use Language.Tree;
@@ -30,33 +30,27 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Traces;
 
 package body Xref is
-   Me : constant Trace_Handle := Create ("Xref", Off);
+   Me                    : constant Trace_Handle := Create ("Xref", Off);
+   Constructs_Heuristics : constant Trace_Handle :=
+     Create ("Entities.Constructs", On);
 
    ---------------------------
    --  Note for development --
    ---------------------------
 
-   --  A lot of functions defined here are first attempting to use the
-   --  new system (GNATCOLL.Xref) and fallback on the legacy database
-   --  (Entities.*).
-   --
-   --  The plan is to transition all user calls to Entities made in GPS
-   --  to use this API, and then to get rid of the legacy database.
+   --  A lot of functions defined here use either the new system
+   --  (GNATCOLL.Xref) or the legacy database (Entities.*), and
+   --  sometimes fallback on the constructs database.
 
-   use type Entities.Entity_Information;
-   use type Entities.File_Location;
+   use type Old_Entities.Entity_Information;
+   use type Old_Entities.File_Location;
 
    function Get_Location
      (Ref : Entity_Reference) return General_Location;
    --  Return the General Location of a GNATCOLL reference
 
-   function Is_Type_Declaration
-     (Db : General_Xref_Database;
-      E  : Entity_Information) return Boolean;
-   --  True if E is a type declaration
-
    procedure Node_From_Entity
-     (Self        : General_Xref_Database;
+     (Self        : access General_Xref_Database_Record'Class;
       Handler     : Language_Handlers.Language_Handler;
       Decl        : General_Location;
       Ent         : out Entity_Access;
@@ -64,28 +58,55 @@ package body Xref is
    --  Returns the constructs data for a given entity.
 
    function To_File_Location
-     (Db  : General_Xref_Database;
-      Loc : General_Location) return Entities.File_Location;
+     (Db  : access General_Xref_Database_Record'Class;
+      Loc : General_Location) return Old_Entities.File_Location;
    --  Convert General_Location to File_Location
 
    function To_General_Entity
-     (Db : General_Xref_Database;
+     (E : Old_Entities.Entity_Information) return General_Entity;
+   function To_General_Entity
+     (Db : access General_Xref_Database_Record'Class;
       E  : Entity_Information) return General_Entity;
    --  Convert Xref.Entity_Information to General_Entity
 
    function To_General_Location
-     (Loc : Entities.File_Location) return General_Location;
+     (Loc : Old_Entities.File_Location) return General_Location;
    --  Convert File_Location to General_Location
 
    function To_String (Location : General_Location) return String;
    --  For debugging purposes only
+
+   ----------------
+   -- Assistants --
+   ----------------
+   --  These types are used for the constructs database.
+
+   LI_Assistant_Id : constant String := "LI_ASSISTANT";
+
+   type LI_Db_Assistant is new Database_Assistant with record
+      LI_Key : Construct_Annotations_Pckg.Annotation_Key;
+      Db     : General_Xref_Database;
+   end record;
+
+   type LI_Db_Assistant_Access is access all LI_Db_Assistant'Class;
+
+   type LI_Annotation is new
+     Construct_Annotations_Pckg.General_Annotation_Record
+   with record
+      Entity : General_Entity;
+   end record;
+
+   overriding procedure Free (Obj : in out LI_Annotation);
+
+   function To_LI_Entity (E : Entity_Access) return General_Entity;
+   --  Return an LI entity based on a construct entity. Create one if none.
 
    -------------------
    -- Documentation --
    -------------------
 
    function Documentation
-     (Self             : General_Xref_Database;
+     (Self             : access General_Xref_Database_Record;
       Handler          : Language_Handlers.Language_Handler;
       Entity           : General_Entity;
       Raw_Format       : Boolean := False;
@@ -94,7 +115,8 @@ package body Xref is
       function Doc_From_Constructs return String;
       function Doc_From_LI return String;
 
-      Decl : constant General_Location := Get_Declaration (Self, Entity);
+      Decl : constant General_Location :=
+        Get_Declaration (Self, Entity).Loc;
       Context : constant Language.Language_Context_Access :=
         Language.Get_Language_Context
           (Get_Language_From_File (Handler, Source_Filename => Decl.File));
@@ -153,7 +175,7 @@ package body Xref is
 
       function Doc_From_LI return String is
          Buffer : GNAT.Strings.String_Access;
-         Loc    : Entities.File_Location;
+         Loc    : Old_Entities.File_Location;
          Result : Unbounded_String;
       begin
          if Entity.Entity /= No_Entity then
@@ -193,9 +215,9 @@ package body Xref is
                   Location => Loc,
                   No_Location_If_First => True);
 
-               if Loc /= Entities.No_File_Location then
+               if Loc /= Old_Entities.No_File_Location then
                   Free (Buffer);
-                  Buffer := Entities.Get_Filename (Loc.File).Read_File;
+                  Buffer := Old_Entities.Get_Filename (Loc.File).Read_File;
                   Result := To_Unbounded_String
                     (Extract_Comment
                        (Buffer            => Buffer.all,
@@ -238,7 +260,7 @@ package body Xref is
    --------------------
 
    procedure Find_Next_Body
-     (Dbase                : General_Xref_Database;
+     (Dbase                : access General_Xref_Database_Record;
       Entity               : General_Entity;
       Current_Location     : General_Location := No_Location;
       Location             : out General_Location;
@@ -247,11 +269,11 @@ package body Xref is
    begin
       --  Legacy functionality
 
-      if not Active (Entities.SQLITE) then
+      if not Active (SQLITE) then
          declare
-            Loc : Entities.File_Location;
+            Loc : Old_Entities.File_Location;
          begin
-            Entities.Queries.Find_Next_Body
+            Old_Entities.Queries.Find_Next_Body
               (Entity               => Entity.Old_Entity,
                Current_Location     => To_File_Location (Dbase,
                                          Current_Location),
@@ -333,16 +355,16 @@ package body Xref is
    -------------------------------
 
    procedure For_Each_Dispatching_Call
-     (Dbase     : General_Xref_Database;
+     (Dbase     : access General_Xref_Database_Record;
       Entity    : General_Entity;
       Ref       : General_Entity_Reference;
       On_Callee : access function
-                    (Callee, Primitive_Of : General_Entity) return Boolean;
-      Filter    : Entities.Reference_Kind_Filter := Entity_Has_Declaration;
+        (Callee, Primitive_Of : General_Entity) return Boolean;
+      Filter    : Reference_Kind_Filter := null;
       Policy    : Dispatching_Menu_Policy)
 
    is
-      use type Entities.Reference_Kind;
+      use type Old_Entities.Reference_Kind;
 
       Prim_Ent  : General_Entity;
       Typ_Ent   : General_Entity;
@@ -352,24 +374,14 @@ package body Xref is
 
       if Entity = No_General_Entity
         or else Policy = Never
-      then
-         return;
-
-      elsif not Active (Entities.SQLITE)
-        and then Entities.Get_Kind (Ref.Old_Ref)
-                   /= Entities.Dispatching_Call
-      then
-         return;
-
-      elsif Active (Entities.SQLITE)
-        and then Ref.Ref.Kind /= "dispatching call"
+          or else not Dbase.Is_Dispatching_Call (Ref)
       then
          return;
       end if;
 
       --  New functionality
 
-      if Active (Entities.SQLITE) then
+      if Active (SQLITE) then
          declare
             function Tagged_Type (E : Entity_Information)
                return Entity_Information;
@@ -378,11 +390,13 @@ package body Xref is
                return Entity_Information is
             begin
                return Dbase.Xref.Declaration
-                        (Dbase.Xref.Method_Of (E)).Location.Entity;
+                 (Dbase.Xref.Method_Of (E)).Location.Entity;
             end Tagged_Type;
 
             Cursor : Recursive_Entities_Cursor;
             Prim   : Entity_Information;
+            Show   : Boolean;
+            R      : References_Cursor;
 
          begin
             Prim     := Entity.Entity;
@@ -401,8 +415,19 @@ package body Xref is
                   Prim_Ent := To_General_Entity (Dbase, Prim);
                   Typ_Ent  := To_General_Entity (Dbase, Tagged_Type (Prim));
 
-                  exit when not On_Callee
-                    (Callee => Prim_Ent,
+                  Show := Filter = null;
+                  if not Show then
+                     Dbase.Xref.References (Typ_Ent.Entity, R);
+                     while R.Has_Element loop
+                        Show := Filter
+                          (Dbase, (Ref => R.Element, others => <>));
+                        exit when Show;
+                        R.Next;
+                     end loop;
+                  end if;
+
+                  exit when Show and then not On_Callee
+                    (Callee       => Prim_Ent,
                      Primitive_Of => Typ_Ent);
 
                   Cursor.Next;
@@ -419,64 +444,21 @@ package body Xref is
 
       else
          declare
-            Iter : Entities.Queries.Entity_Reference_Iterator;
-            Db   : Entities.Entities_Database;
-
-         begin
-            if Policy = From_Memory then
-               Db :=
-                 Entities.Get_Database
-                   (Entities.Get_File
-                        (Entities.Get_Declaration_Of (Entity.Old_Entity)));
-               Entities.Freeze (Db);
-            end if;
-
-            Entities.Queries.Find_All_References
-              (Iter                  => Iter,
-               Entity                => Entity.Old_Entity,
-               File_Has_No_LI_Report => null,
-               In_File               => null,
-               Filter                => Filter,
-               Include_Overriding    => True,
-               Include_Overridden    => False);
-
-            declare
-               E, Typ : Entities.Entity_Information;
-
+            function Proxy
+              (Callee, Primitive_Of : Old_Entities.Entity_Information)
+               return Boolean;
+            function Proxy
+              (Callee, Primitive_Of : Old_Entities.Entity_Information)
+               return Boolean is
             begin
-               while not At_End (Iter) loop
-                  E := Get_Entity (Iter);
-
-                  if E /= null then
-                     Typ := Entities.Is_Primitive_Operation_Of (E);
-
-                     if Typ /= null then
-                        Prim_Ent := To_General_Entity (E);
-                        Typ_Ent  := To_General_Entity (Typ);
-
-                        exit when not On_Callee
-                          (Callee => Prim_Ent,
-                           Primitive_Of => Typ_Ent);
-                     end if;
-                  end if;
-
-                  Next (Iter);
-               end loop;
-            end;
-
-            Destroy (Iter);
-
-            if Policy = From_Memory then
-               Entities.Thaw (Db);
-            end if;
-
-         exception
-            when E : others =>
-               Trace (Traces.Exception_Handle, "Unexpected exception: "
-                      & Exception_Information (E));
-               if Policy = From_Memory then
-                  Entities.Thaw (Db);
-               end if;
+               return On_Callee (From_Old (Callee), From_Old (Primitive_Of));
+            end Proxy;
+         begin
+            Old_Entities.Queries.For_Each_Dispatching_Call
+              (Entity    => Entity.Old_Entity,
+               Ref       => Ref.Old_Ref,
+               On_Callee => Proxy'Access,
+               Policy    => Policy);
          end;
       end if;
    end For_Each_Dispatching_Call;
@@ -492,7 +474,7 @@ package body Xref is
    begin
       --  Attempt to use the sqlite system
 
-      if Active (Entities.SQLITE)
+      if Active (SQLITE)
         and then Ref.Ref /= No_Entity_Reference
       then
          E.Entity := Ref.Ref.Entity;
@@ -500,7 +482,7 @@ package body Xref is
 
       --  Fall back on the old system
 
-      E.Old_Entity := Entities.Get_Entity (Ref.Old_Ref);
+      E.Old_Entity := Old_Entities.Get_Entity (Ref.Old_Ref);
 
       return E;
    end Get_Entity;
@@ -510,57 +492,207 @@ package body Xref is
    ----------------
 
    function Get_Entity
-     (Db   : General_Xref_Database;
+     (Db   : access General_Xref_Database_Record;
       Name : String;
       Loc  : General_Location) return General_Entity
    is
-      use Entities;
-      Old_Entity : Entities.Entity_Information;
-      Status     : Find_Decl_Or_Body_Query_Status;
+      Entity : General_Entity;
+      Ref    : General_Entity_Reference;
    begin
-      if Active (Entities.SQLITE) then
-         return General_Entity'
-           (Entity => Db.Xref.Get_Entity
-              (Name => Name,
-               File => Loc.File,
-               Line => Loc.Line,
-               Column => Visible_Column (Loc.Column)).Entity,
-            others => <>);
-      else
-         Find_Declaration
-           (Db          => Db.Entities,
-            File_Name   => Loc.File,
-            Entity_Name => Name,
-            Line        => Loc.Line,
-            Column      => Loc.Column,
-            Entity      => Old_Entity,
-            Status      => Status);
-
-         return To_General_Entity (Old_Entity);
-      end if;
+      Find_Declaration_Or_Overloaded
+        (General_Xref_Database (Db),
+         Loc               => Loc,
+         Entity_Name       => Name,
+         Ask_If_Overloaded => False,
+         Entity            => Entity,
+         Closest_Ref       => Ref);
+      return Entity;
    end Get_Entity;
+
+   ------------------------------------
+   -- Find_Declaration_Or_Overloaded --
+   ------------------------------------
+
+   procedure Find_Declaration_Or_Overloaded
+     (Self              : access General_Xref_Database_Record;
+      Loc               : General_Location;
+      Entity_Name       : String;
+      Ask_If_Overloaded : Boolean := False;
+      Entity            : out General_Entity;
+      Closest_Ref       : out General_Entity_Reference)
+   is
+      Fuzzy : Boolean;
+
+      function Internal_No_Constructs
+        (Name : String; Loc : General_Location) return General_Entity;
+      --  Search for the entity, without a fallback to the constructs db
+
+      function Internal_No_Constructs
+        (Name : String; Loc : General_Location) return General_Entity
+      is
+         Entity : General_Entity;
+      begin
+         if Active (SQLITE) then
+            Closest_Ref.Ref := Self.Xref.Get_Entity
+              (Name   => Name,
+               File   => Loc.File,
+               Line   => Loc.Line,
+               Column => Loc.Column);
+            Entity.Entity := Closest_Ref.Ref.Entity;
+
+            Fuzzy := Entity.Entity /= No_Entity
+              and then Is_Fuzzy_Match (Entity.Entity);
+
+         else
+            declare
+               Status : Find_Decl_Or_Body_Query_Status;
+            begin
+               --  ??? Should have a pref for the handling of fuzzy matches:
+               --  - consider it as a no match: set Status to Entity_Not_Found
+               --  - consider it as overloaded entity: same as below;
+               --  - use the closest match: nothing to do.
+
+               Find_Declaration
+                 (Db             => Self.Entities,
+                  File_Name      => Loc.File,
+                  Entity_Name    => Name,
+                  Line           => Loc.Line,
+                  Column         => Loc.Column,
+                  Entity         => Entity.Old_Entity,
+                  Closest_Ref    => Closest_Ref.Old_Ref,
+                  Status         => Status);
+
+               Fuzzy := Status = Overloaded_Entity_Found
+                 or else Status = Fuzzy_Match;
+            end;
+         end if;
+         return Entity;
+      end Internal_No_Constructs;
+
+   begin
+      Entity := Internal_No_Constructs (Entity_Name, Loc);  --  also sets Fuzzy
+
+      if Fuzzy and then Ask_If_Overloaded then
+         Entity := Select_Entity_Declaration
+           (Self   => General_Xref_Database_Record'Class (Self.all)'Access,
+            File   => Loc.File,
+            Entity => Entity);
+         return;
+      end if;
+
+      --  Fallback on constructs
+
+      if (Entity = No_General_Entity or else Fuzzy)
+        and then Active (Constructs_Heuristics)
+      then
+         declare
+            Tree_Lang : constant Tree_Language_Access :=
+                         Get_Tree_Language_From_File
+                           (Self.Lang_Handler, Loc.File);
+            S_File : constant Structured_File_Access :=
+              Get_Or_Create
+                (Db   => Self.Constructs,
+                 File => Loc.File);
+
+            Result       : Entity_Access;
+            New_Location : General_Location;
+            New_Entity   : General_Entity;
+
+         begin
+            if not Is_Null (S_File) then
+               --  In some cases, the references are extracted from a place
+               --  where there is still an ALI file, but no more source file.
+               --  This will issue a null Structured_File_Access, which is why
+               --  we're protecting the following code with the above condition
+
+               Update_Contents (S_File);
+
+               Result := Tree_Lang.Find_Declaration
+                 (S_File, Loc.Line,
+                  To_Line_String_Index (S_File, Loc.Line, Loc.Column));
+
+               if Result /= Null_Entity_Access then
+                  --  First, try to see if there's already a similar entity in
+                  --  the database. If that's the case, it's better to use it
+                  --  than the dummy one created from the construct.
+
+                  New_Location :=
+                    (File     => Get_File_Path (Get_File (Result)),
+                     Line   => Get_Construct (Result).Sloc_Entity.Line,
+                     Column => To_Visible_Column
+                       (Get_File (Result),
+                        Get_Construct (Result).Sloc_Entity.Line,
+                        String_Index_Type
+                          (Get_Construct (Result).Sloc_Entity.Column)));
+
+                  New_Entity := Internal_No_Constructs
+                    (Name  => Get (Get_Construct (Result).Name).all,
+                     Loc   => (File   => New_Location.File,
+                               Line   => New_Location.Line,
+                               Column => New_Location.Column));
+
+                  if New_Entity /= No_General_Entity then
+                     --  If we found an updated ALI entity, use it.
+                     Entity := New_Entity;
+
+                  elsif Entity /= No_General_Entity then
+                     null;
+
+                  else
+                     --  If we have no entity to connect to, then create one
+                     --  from the construct database.
+
+                     Entity := To_LI_Entity (Result);
+                  end if;
+               end if;
+            end if;
+         end;
+      end if;
+   end Find_Declaration_Or_Overloaded;
 
    --------------
    -- Get_Name --
    --------------
 
    function Get_Name
-     (Db     : General_Xref_Database;
+     (Db     : access General_Xref_Database_Record;
       Entity : General_Entity) return String is
    begin
-      if Active (Entities.SQLITE)
-        and then Entity.Entity /= No_Entity
-      then
-         return To_String
-           (Declaration (Db.Xref.all, Entity.Entity).Name);
-      end if;
-
-      if Entity.Old_Entity /= null then
-         return Get (Entities.Get_Name (Entity.Old_Entity)).all;
+      if Active (SQLITE) then
+         if Entity.Entity /= No_Entity then
+            return To_String
+              (Declaration (Db.Xref.all, Entity.Entity).Name);
+         end if;
+      else
+         if Entity.Old_Entity /= null then
+            return Get (Old_Entities.Get_Name (Entity.Old_Entity)).all;
+         end if;
       end if;
 
       return "";
    end Get_Name;
+
+   --------------------
+   -- Qualified_Name --
+   --------------------
+
+   function Qualified_Name
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return String
+   is
+   begin
+      if Active (SQLITE) then
+         if Entity.Entity /= No_Entity then
+            return Self.Xref.Qualified_Name (Entity.Entity);
+         end if;
+      else
+         if Entity.Old_Entity /= null then
+            return Old_Entities.Queries.Get_Full_Name (Entity.Old_Entity);
+         end if;
+      end if;
+
+      return "";
+   end Qualified_Name;
 
    ------------------
    -- Get_Location --
@@ -569,17 +701,17 @@ package body Xref is
    function Get_Location
      (Ref : General_Entity_Reference) return General_Location is
    begin
-      if Active (Entities.SQLITE)
+      if Active (SQLITE)
         and then Ref.Ref /= No_Entity_Reference
       then
          return Get_Location (Ref.Ref);
       end if;
 
       declare
-         Loc : constant Entities.File_Location :=
-           Entities.Get_Location (Ref.Old_Ref);
+         Loc : constant Old_Entities.File_Location :=
+           Old_Entities.Get_Location (Ref.Old_Ref);
       begin
-         return (File => Entities.Get_Filename (Loc.File),
+         return (File => Old_Entities.Get_Filename (Loc.File),
                  Line => Loc.Line,
                  Column => Loc.Column);
       end;
@@ -602,38 +734,69 @@ package body Xref is
       end if;
    end Get_Location;
 
+   ---------------------------
+   -- Caller_At_Declaration --
+   ---------------------------
+
+   function Caller_At_Declaration
+     (Db     : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return (Entity => Db.Xref.Declaration (Entity.Entity).Location.Scope,
+                 others => <>);
+      else
+         return (Old_Entity =>
+                   Old_Entities.Queries.Get_Caller
+                     (Old_Entities.Declaration_As_Reference
+                          (Entity.Old_Entity)),
+                 others => <>);
+      end if;
+   end Caller_At_Declaration;
+
    ---------------------
    -- Get_Declaration --
    ---------------------
 
    function Get_Declaration
-     (Db     : General_Xref_Database;
-      Entity : General_Entity) return General_Location is
+     (Db     : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity_Declaration is
    begin
-      if Active (Entities.SQLITE)
-        and then Entity.Entity /= No_Entity
-      then
-         declare
-            Ref : constant Entity_Reference :=
-              Db.Xref.Declaration (Entity.Entity).Location;
-         begin
-            if Ref /= No_Entity_Reference then
-               return (File   => Ref.File,
-                       Line   => Ref.Line,
-                       Column => Visible_Column_Type (Ref.Column));
-            end if;
-         end;
-      end if;
+      if Active (SQLITE) then
+         if Entity.Entity /= No_Entity then
+            declare
+               Ref : constant Entity_Declaration :=
+                 Db.Xref.Declaration (Entity.Entity);
+            begin
+               if Ref /= No_Entity_Declaration then
+                  return (Loc    => (File => Ref.Location.File,
+                                     Line => Ref.Location.Line,
+                                     Column => Ref.Location.Column),
+                          Body_Is_Full_Declaration =>
+                            Ref.Flags.Body_Is_Full_Declaration,
+                          Name   => Ref.Name);
+               end if;
+            end;
+         end if;
 
-      if Entity.Old_Entity /= null then
-         declare
-            Loc : constant Entities.File_Location :=
-              Entities.Get_Declaration_Of (Entity.Old_Entity);
-         begin
-            return (File   => Entities.Get_Filename (Loc.File),
-                    Line   => Loc.Line,
-                    Column => Loc.Column);
-         end;
+      else
+         if Entity.Old_Entity /= null then
+            declare
+               Loc : constant Old_Entities.File_Location :=
+                 Old_Entities.Get_Declaration_Of (Entity.Old_Entity);
+            begin
+               return (Loc => (File   => Old_Entities.Get_Filename (Loc.File),
+                               Line   => Loc.Line,
+                               Column => Loc.Column),
+                       Body_Is_Full_Declaration =>
+                         Old_Entities.Body_Is_Full_Declaration
+                           (Old_Entities.Get_Kind (Entity.Old_Entity).Kind),
+                       Name => To_Unbounded_String
+                         (Get
+                            (Old_Entities.Get_Name (Entity.Old_Entity)).all));
+            end;
+         end if;
       end if;
 
       if Entity.Node /= Null_Entity_Access then
@@ -646,14 +809,16 @@ package body Xref is
               To_Construct_Tree_Iterator (Decl);
 
          begin
-            return (File   => Get_File_Path (Get_File (Decl)),
-                    Line   => Get_Construct (Node).Sloc_Start.Line,
-                    Column => Visible_Column_Type
-                      (Get_Construct (Node).Sloc_Start.Column));
+            return (Loc => (File   => Get_File_Path (Get_File (Decl)),
+                            Line   => Get_Construct (Node).Sloc_Start.Line,
+                            Column => Visible_Column_Type
+                              (Get_Construct (Node).Sloc_Start.Column)),
+                    Body_Is_Full_Declaration => False,
+                    Name => Null_Unbounded_String); --  ??? How to get the name
          end;
       end if;
 
-      return No_Location;
+      return No_General_Entity_Declaration;
    end Get_Declaration;
 
    --------------
@@ -661,44 +826,66 @@ package body Xref is
    --------------
 
    function Get_Body
-     (Db     : General_Xref_Database;
-      Entity : General_Entity) return General_Location is
+     (Db     : access General_Xref_Database_Record;
+      Entity : General_Entity;
+      After  : General_Location := No_Location) return General_Location
+   is
    begin
-      if Active (Entities.SQLITE)
+      if Active (SQLITE)
         and then Entity.Entity /= No_Entity
       then
          declare
             C   : References_Cursor;
             Ref : Entity_Reference;
+            Matches : Boolean := After = No_Location;
          begin
             Bodies (Db.Xref.all, Entity.Entity, Cursor => C);
-            if Has_Element (C) then
+            while Has_Element (C) loop
                Ref := Element (C);
 
                if Ref /= No_Entity_Reference then
-                  return (File => Ref.File,
-                          Line => Ref.Line,
-                          Column => Visible_Column_Type (Ref.Column));
+                  if Matches then
+                     return (File => Ref.File,
+                             Line => Ref.Line,
+                             Column => Visible_Column_Type (Ref.Column));
+                  else
+                     Matches := Ref.Line = After.Line
+                       and then Ref.Column = After.Column
+                       and then Ref.File = After.File;
+                  end if;
                end if;
-            end if;
+
+               Next (C);
+            end loop;
          end;
       end if;
 
       if Entity.Old_Entity /= null then
          declare
-            Loc : Entities.File_Location;
+            Loc : Old_Entities.File_Location;
          begin
-            Find_Next_Body
-              (Entity           => Entity.Old_Entity,
-               Current_Location => Entities.No_File_Location,
-               Location         => Loc);
-
-            if Loc = Entities.No_File_Location then
-               Loc := Entities.Get_Declaration_Of (Entity.Old_Entity);
+            if After /= No_Location then
+               Find_Next_Body
+                 (Entity           => Entity.Old_Entity,
+                  Current_Location =>
+                    (File   => Old_Entities.Get_Or_Create
+                       (Db.Entities, After.File, Allow_Create => False),
+                     Line   => After.Line,
+                     Column => After.Column),
+                  Location         => Loc);
+            else
+               Find_Next_Body
+                 (Entity           => Entity.Old_Entity,
+                  Current_Location => Old_Entities.No_File_Location,
+                  Location         => Loc);
             end if;
 
-            if Loc /= Entities.No_File_Location then
-               return (File => Entities.Get_Filename (Loc.File),
+            if Loc = Old_Entities.No_File_Location then
+               Loc := Old_Entities.Get_Declaration_Of (Entity.Old_Entity);
+            end if;
+
+            if Loc /= Old_Entities.No_File_Location then
+               return (File => Old_Entities.Get_Filename (Loc.File),
                        Line => Loc.Line,
                        Column => Loc.Column);
             end if;
@@ -708,250 +895,19 @@ package body Xref is
       return No_Location;
    end Get_Body;
 
-   ------------------
-   -- Get_Category --
-   ------------------
-
-   function Get_Category
-     (Db     : General_Xref_Database;
-      Entity : General_Entity) return Entities.Entity_Category
-   is
-      K : constant Entities.E_Kind := Get_Kind (Db, Entity);
-      use Entities;
-
-   begin
-      case K.Kind is
-         when Overloaded_Entity | Unresolved_Entity | Macro =>
-            return Unknown;
-
-         when Procedure_Kind | Function_Or_Operator |
-              Entry_Or_Entry_Family | Function_Macro =>
-            return Subprogram;
-
-         when Package_Kind =>
-            return Package_Or_Namespace;
-
-         when Label_On_Block | Label_On_Loop | Label_On_Statement =>
-            return Label;
-
-         when Enumeration_Literal | Named_Number =>
-            return Literal;
-
-         when others =>
-            if K.Is_Type then
-               return Type_Or_Subtype;
-            else
-               return Object;
-            end if;
-      end case;
-   end Get_Category;
-
-   --------------
-   -- Get_Kind --
-   --------------
-
-   function Get_Kind
-     (Db     : General_Xref_Database;
-      Entity : General_Entity) return Entities.E_Kind
-   is
-   begin
-      if not Active (Entities.SQLITE) then
-         return Entities.Get_Kind (Entity.Old_Entity);
-      else
-         declare
-            use Entities;
-
-            Decl   : constant Entity_Declaration :=
-                       Declaration (Db.Xref.all, Entity.Entity);
-            Kind   : constant String := To_String (Decl.Kind);
-            Last   : Natural := Kind'Last;
-            Result : Entities.E_Kind :=
-                       (Kind => Unresolved_Entity,
-                        Is_Generic  => False,
-                        Is_Type     => False,
-                        Is_Abstract => False);
-         begin
-            if Is_Type_Declaration (Db, Entity.Entity) then
-               Result.Is_Type := True;
-               Last := Last - 5;
-            end if;
-
-            --  Source: gnatlib/src/generated/gnatcoll-xref-database.adb
-
-            declare
-               K : constant String := Kind (Kind'First .. Last);
-
-            begin
-               if K = "pointer"
-                 or else K = "access"
-                 or else K = "access parameter"
-               then
-                  Result.Kind := Access_Kind;
-
-               elsif K = "array" then
-                  Result.Kind := Array_Kind;
-
-               elsif K = "boolean" then
-                  Result.Kind := Boolean_Kind;
-
-               elsif K = "class wide" then
-                  Result.Kind := Class_Wide;
-
-               elsif K = "class"
-                 or else K = "class instance"
-               then
-                  Result.Kind := Class;
-
-               elsif K = "decimal fixed point" then
-                  Result.Kind := Decimal_Fixed_Point;
-
-               elsif K = "entry" then
-                  Result.Kind := Entry_Or_Entry_Family;
-
-               elsif K = "enumeration literal" then
-                  Result.Kind := Enumeration_Literal;
-
-               elsif K = "enumeration" then
-                  Result.Kind := Enumeration_Kind;
-
-               elsif K = "exception" then
-                  Result.Kind := Exception_Entity;
-
-               elsif K = "floating point" then
-                  Result.Kind := Floating_Point;
-
-               elsif K = "function macro" then
-                  Result.Kind := Function_Macro;
-
-               elsif K = "include file" then
-                  Result.Kind := Include_File;
-
-               elsif K = "interface" then
-                  Result.Kind := Interface_Kind;
-
-               elsif K = "statement label" then
-                  Result.Kind := Label_On_Statement;
-
-               elsif K = "block label" then
-                  Result.Kind := Label_On_Block;
-
-               elsif K = "loop label" then
-                  Result.Kind := Label_On_Loop;
-
-               elsif K = "macro" then
-                  Result.Kind := Macro;
-
-               --  Modular_Integer missing???
-
-               elsif K = "named number" then
-                  Result.Kind := Named_Number;
-
-               elsif K = "function" then
-                  Result.Kind := Function_Or_Operator;
-
-               elsif K = "abstract function" then
-                  Result.Kind := Function_Or_Operator;
-                  Result.Is_Abstract := True;
-
-               elsif K = "generic function" then
-                  Result.Kind := Function_Or_Operator;
-                  Result.Is_Generic := True;
-
-               elsif K = "generic package" then
-                  Result.Kind := Package_Kind;
-                  Result.Is_Generic := True;
-
-               elsif K = "package" then
-                  Result.Kind := Package_Kind;
-
-               elsif K = "parent package" then
-                  Result.Kind := Package_Kind;
-
-               elsif K = "procedure" then
-                  Result.Kind := Procedure_Kind;
-
-               elsif K = "abstract procedure" then
-                  Result.Kind := Procedure_Kind;
-                  Result.Is_Abstract := True;
-
-               elsif K = "generic procedure" then
-                  Result.Kind := Procedure_Kind;
-                  Result.Is_Generic := True;
-
-               elsif K = "fixed point" then
-                  Result.Kind := Ordinary_Fixed_Point;
-
-               --  Private_Type missing???
-
-               elsif K = "private object" then
-                  Result.Kind := Private_Object;
-
-               elsif K = "protected object"
-                 or else K = "protected"
-               then
-                  Result.Kind := Protected_Kind;
-
-               --  Reference,    --  C++'s & operator (untested???)
-
-               elsif K = "record" then
-                  Result.Kind := Record_Kind;
-                  --  Is_Abstract (not available in record types???)
-
-               elsif K = "integer"
-                 or else K = "short_integer"
-                 or else K = "short_short_integer"
-                 or else K = "long_integer"
-                 or else K = "long_long_integer"
-               then
-                  Result.Kind := Signed_Integer;
-
-               elsif K = "string" then
-                  Result.Kind := String_Kind;
-
-               elsif K = "task" then
-                  Result.Kind := Task_Kind;
-
-               --  Union missing???
-
-               else
-                  if K = "generic formal"
-                    or else K = "formal generic parameter"
-                  then
-                     Result.Is_Generic := True;
-
-                  elsif K = "abstract" then
-                     Result.Is_Abstract := True;
-
-                  --  Unsupported???
-                  else
-                     raise Program_Error;
-                  end if;
-               end if;
-
-               return Result;
-            exception
-               when E : others =>
-                  Trace (Traces.Exception_Handle, "Unexpected exception: "
-                         & Exception_Information (E));
-                  return Result;
-            end;
-         end;
-      end if;
-   end Get_Kind;
-
    -----------------
    -- Get_Type_Of --
    -----------------
 
    function Get_Type_Of
-     (Db     : General_Xref_Database;
+     (Db     : access General_Xref_Database_Record;
       Entity : General_Entity) return General_Entity
    is
    begin
-      if not Active (Entities.SQLITE) then
+      if not Active (SQLITE) then
          declare
-            E : constant Entities.Entity_Information :=
-                  Entities.Get_Type_Of (Entity.Old_Entity);
+            E : constant Old_Entities.Entity_Information :=
+                  Old_Entities.Get_Type_Of (Entity.Old_Entity);
          begin
             return To_General_Entity (E);
          end;
@@ -966,38 +922,22 @@ package body Xref is
    --------------------------
 
    function Is_Predefined_Entity
-     (Db : General_Xref_Database;
+     (Db : access General_Xref_Database_Record;
       E  : General_Entity) return Boolean is
    begin
-      if not Active (Entities.SQLITE) then
-         return Entities.Is_Predefined_Entity (E.Old_Entity);
+      if not Active (SQLITE) then
+         return Old_Entities.Is_Predefined_Entity (E.Old_Entity);
       else
          return Is_Predefined_Entity (Declaration (Db.Xref.all, E.Entity));
       end if;
    end Is_Predefined_Entity;
-
-   -------------------------
-   -- Is_Type_Declaration --
-   -------------------------
-
-   function Is_Type_Declaration
-     (Db : General_Xref_Database;
-      E  : Entity_Information) return Boolean
-   is
-      Decl : constant Entity_Declaration := Declaration (Db.Xref.all, E);
-      Kind : constant String := To_String (Decl.Kind);
-
-   begin
-      return Kind'Length > 4
-         and then Kind (Kind'Last - 4 .. Kind'Last) = " type";
-   end Is_Type_Declaration;
 
    ----------------------
    -- Node_From_Entity --
    ----------------------
 
    procedure Node_From_Entity
-     (Self        : General_Xref_Database;
+     (Self        : access General_Xref_Database_Record'Class;
       Handler     : Language_Handlers.Language_Handler;
       Decl        : General_Location;
       Ent         : out Entity_Access;
@@ -1033,10 +973,10 @@ package body Xref is
    ------------------
 
    function Pointed_Type
-     (Dbase  : General_Xref_Database;
+     (Dbase  : access General_Xref_Database_Record;
       Entity : General_Entity) return General_Entity is
    begin
-      if not Active (Entities.SQLITE) then
+      if not Active (SQLITE) then
          return To_General_Entity (Pointed_Type (Entity.Old_Entity));
       else
          return Pointed_Type (Dbase, Entity);
@@ -1049,7 +989,7 @@ package body Xref is
 
    procedure Ref (Entity : General_Entity) is
    begin
-      Entities.Ref (Entity.Old_Entity);
+      Old_Entities.Ref (Entity.Old_Entity);
    end Ref;
 
    ----------------------
@@ -1057,15 +997,15 @@ package body Xref is
    ----------------------
 
    function To_File_Location
-     (Db  : General_Xref_Database;
-      Loc : General_Location) return Entities.File_Location
+     (Db  : access General_Xref_Database_Record'Class;
+      Loc : General_Location) return Old_Entities.File_Location
    is
    begin
       if Loc = No_Location then
-         return Entities.No_File_Location;
+         return Old_Entities.No_File_Location;
       else
          return
-           (File   => Entities.Get_Or_Create (Db.Entities, Loc.File),
+           (File   => Old_Entities.Get_Or_Create (Db.Entities, Loc.File),
             Line   => Loc.Line,
             Column => Loc.Column);
       end if;
@@ -1076,25 +1016,24 @@ package body Xref is
    -----------------------
 
    function To_General_Entity
-     (Db : General_Xref_Database;
+     (Db : access General_Xref_Database_Record'Class;
       E  : Entity_Information) return General_Entity
    is
       Decl : constant Entity_Declaration := Declaration (Db.Xref.all, E);
       Loc  : General_Location;
 
    begin
-      pragma Assert (Active (Entities.SQLITE));
+      pragma Assert (Active (SQLITE));
 
       Loc :=
         (File   => Decl.Location.File,
          Line   => Decl.Location.Line,
          Column => Visible_Column_Type (Decl.Location.Column));
 
-      return
-        Get_Entity
-          (Db   => Db,
-           Name => To_String (Decl.Name),
-           Loc  => Loc);
+      return Get_Entity
+        (Db   => Db,
+         Name => To_String (Decl.Name),
+         Loc  => Loc);
    end To_General_Entity;
 
    -----------------------
@@ -1102,9 +1041,9 @@ package body Xref is
    -----------------------
 
    function To_General_Entity
-     (E  : Entities.Entity_Information) return General_Entity is
+     (E  : Old_Entities.Entity_Information) return General_Entity is
    begin
-      pragma Assert (not Active (Entities.SQLITE));
+      pragma Assert (not Active (SQLITE));
 
       if E = null then
          return No_General_Entity;
@@ -1118,10 +1057,10 @@ package body Xref is
    -------------------------
 
    function To_General_Location
-     (Loc : Entities.File_Location) return General_Location is
+     (Loc : Old_Entities.File_Location) return General_Location is
    begin
       return
-        (File   => Entities.Get_Filename (Loc.File),
+        (File   => Old_Entities.Get_Filename (Loc.File),
          Line   => Loc.Line,
          Column => Loc.Column);
    end To_General_Location;
@@ -1147,7 +1086,1462 @@ package body Xref is
 
    procedure Unref (Entity : in out General_Entity) is
    begin
-      Entities.Unref (Entity.Old_Entity);
+      Old_Entities.Unref (Entity.Old_Entity);
    end Unref;
+
+   -----------------
+   -- Renaming_Of --
+   -----------------
+
+   function Renaming_Of
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return (Entity => Self.Xref.Renaming_Of (Entity.Entity),
+                 others => <>);
+      else
+         return (Old_Entity =>
+                   Old_Entities.Queries.Renaming_Of (Entity.Old_Entity),
+                 others     => <>);
+      end if;
+   end Renaming_Of;
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "="
+     (Ref1, Ref2 : General_Entity_Reference) return Boolean
+   is
+      use Old_Entities;
+   begin
+      if Active (SQLITE)
+        and then Ref1.Ref = Ref2.Ref
+        and then Ref1.Ref /= GNATCOLL.Xref.No_Entity_Reference
+      then
+         return True;
+      end if;
+
+      return Ref1.Old_Ref = Ref2.Old_Ref
+        and then Ref1.Old_Ref /= Old_Entities.No_Entity_Reference;
+   end "=";
+
+   -------------------------
+   -- Find_All_References --
+   -------------------------
+
+   procedure Find_All_References
+     (Self                  : access General_Xref_Database_Record;
+      Iter                  : out Entity_Reference_Iterator;
+      Entity                : General_Entity;
+      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
+      In_File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      In_Scope              : General_Entity := No_General_Entity;
+      Include_Overriding    : Boolean := False;
+      Include_Overridden    : Boolean := False)
+   is
+      F      : Old_Entities.Source_File;
+   begin
+      if Active (SQLITE) then
+         --  File_Has_No_LI_Report voluntarily ignored.
+
+         Self.Xref.Recursive
+           (Entity          => Entity.Entity,
+            Compute         => GNATCOLL.Xref.References'Access,
+            Cursor          => Iter.Iter,
+            From_Overriding => Include_Overriding,
+            From_Overridden => Include_Overridden,
+            From_Renames    => True);
+         Iter.In_File  := In_File;
+         Iter.In_Scope := In_Scope;
+
+         while Has_Element (Iter.Iter)
+           and then (Iter.In_File = No_File
+                     or else Iter.Iter.Element.File /= Iter.In_File)
+           and then (Iter.In_Scope = No_General_Entity
+                     or else Iter.Iter.Element.Scope /= Iter.In_Scope.Entity)
+         loop
+            Iter.Iter.Next;
+         end loop;
+
+      else
+         if In_File /= No_File then
+            F := Old_Entities.Get_Or_Create
+              (Db    => Self.Entities,
+               File  => In_File,
+               Allow_Create => False);
+         end if;
+
+         Old_Entities.Queries.Find_All_References
+           (Iter.Old_Iter, Entity.Old_Entity,
+            File_Has_No_LI_Report, F, In_Scope.Old_Entity,
+            Include_Overriding => Include_Overriding,
+            Include_Overridden => Include_Overridden);
+      end if;
+   end Find_All_References;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Entity_Reference_Iterator) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return not Has_Element (Iter.Iter);
+      else
+         return At_End (Iter.Old_Iter);
+      end if;
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Entity_Reference_Iterator) is
+   begin
+      if Active (SQLITE) then
+         Next (Iter.Iter);
+
+         while Has_Element (Iter.Iter)
+           and then (Iter.In_File = No_File
+                     or else Iter.Iter.Element.File /= Iter.In_File)
+           and then (Iter.In_Scope = No_General_Entity
+                     or else Iter.Iter.Element.Scope /= Iter.In_Scope.Entity)
+         loop
+            Iter.Iter.Next;
+         end loop;
+
+      else
+         Next (Iter.Old_Iter);
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Iter : Entity_Reference_Iterator) return General_Entity_Reference
+   is
+   begin
+      if Active (SQLITE) then
+         return (Old_Ref => Old_Entities.No_Entity_Reference,
+                 Ref     => Iter.Iter.Element);
+      else
+         return (Old_Ref => Get (Iter.Old_Iter),
+                 Ref     => No_Entity_Reference);
+      end if;
+   end Get;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity
+     (Iter : Entity_Reference_Iterator) return General_Entity is
+   begin
+      if Active (SQLITE) then
+         return (Entity     => Iter.Iter.Element.Entity,
+                 others     => <>);
+      else
+         return To_General_Entity (Get_Entity (Iter.Old_Iter));
+      end if;
+   end Get_Entity;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Entity_Reference_Iterator) is
+   begin
+      if Active (SQLITE) then
+         null;
+      else
+         Destroy (Iter.Old_Iter);
+      end if;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Entity_Reference_Iterator_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Entity_Reference_Iterator,
+         Entity_Reference_Iterator_Access);
+   begin
+      if Iter /= null then
+         Destroy (Iter.all);
+         Unchecked_Free (Iter);
+      end if;
+   end Destroy;
+
+   --------------------------
+   -- Get_Current_Progress --
+   --------------------------
+
+   function Get_Current_Progress
+     (Iter : Entity_Reference_Iterator) return Integer is
+   begin
+      if Active (SQLITE) then
+         return 1;
+      else
+         return Get_Current_Progress (Iter.Old_Iter);
+      end if;
+   end Get_Current_Progress;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   function Get_Total_Progress
+     (Iter : Entity_Reference_Iterator) return Integer is
+   begin
+      if Active (SQLITE) then
+         --  precomputing the number of references is expensive (basically
+         --  requires doing the query twice), and won't be needed anymore when
+         --  we get rid of the asynchronous iterators.
+         return 1;
+      else
+         return Get_Total_Progress (Iter.Old_Iter);
+      end if;
+   end Get_Total_Progress;
+
+   -----------------------
+   -- Show_In_Callgraph --
+   -----------------------
+
+   function Show_In_Callgraph
+     (Db  : access General_Xref_Database_Record;
+      Ref : General_Entity_Reference) return Boolean
+   is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Show_In_Callgraph (Ref.Ref);
+      else
+         return Old_Entities.Show_In_Call_Graph
+           (Db.Entities, Old_Entities.Get_Kind (Ref.Old_Ref));
+      end if;
+   end Show_In_Callgraph;
+
+   ----------------
+   -- Get_Caller --
+   ----------------
+
+   function Get_Caller
+     (Ref : General_Entity_Reference) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return (Entity => Ref.Ref.Scope, others => <>);
+      else
+         return (Old_Entity => Old_Entities.Queries.Get_Caller (Ref.Old_Ref),
+                 others => <>);
+      end if;
+   end Get_Caller;
+
+   -------------------
+   -- Is_Subprogram --
+   -------------------
+
+   function Is_Subprogram
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean
+   is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Subprogram;
+      else
+         return Old_Entities.Is_Subprogram (E.Old_Entity);
+      end if;
+   end Is_Subprogram;
+
+   ------------------
+   -- Is_Container --
+   ------------------
+
+   function Is_Container
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean
+   is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Container;
+      else
+         return Old_Entities.Is_Container
+           (Old_Entities.Get_Kind (E.Old_Entity).Kind);
+      end if;
+   end Is_Container;
+
+   ----------------
+   -- Is_Generic --
+   ----------------
+
+   function Is_Generic
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean
+   is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Generic;
+      else
+         return Old_Entities.Get_Kind (E.Old_Entity).Is_Generic;
+      end if;
+   end Is_Generic;
+
+   ---------------
+   -- Is_Global --
+   ---------------
+
+   function Is_Global
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Global;
+      else
+         return Old_Entities.Get_Attributes
+           (E.Old_Entity)(Old_Entities.Global);
+      end if;
+   end Is_Global;
+
+   ---------------------
+   -- Is_Static_Local --
+   ---------------------
+
+   function Is_Static_Local
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Static_Local;
+      else
+         return Old_Entities.Get_Attributes
+           (E.Old_Entity)(Old_Entities.Static_Local);
+      end if;
+   end Is_Static_Local;
+
+   -------------
+   -- Is_Type --
+   -------------
+
+   function Is_Type
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean
+   is
+      use Old_Entities;
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Type;
+      else
+         return Old_Entities.Get_Category (E.Old_Entity) =
+           Old_Entities.Type_Or_Subtype;
+      end if;
+   end Is_Type;
+
+   -------------------------
+   -- Is_Dispatching_Call --
+   -------------------------
+
+   function Is_Dispatching_Call
+     (Db  : access General_Xref_Database_Record;
+      Ref : General_Entity_Reference) return Boolean
+   is
+      use Old_Entities;
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Is_Dispatching_Call (Ref.Ref);
+      else
+         return Old_Entities.Get_Kind (Ref.Old_Ref) =
+           Old_Entities.Dispatching_Call;
+      end if;
+   end Is_Dispatching_Call;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Base_Entities_Cursor) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return not Has_Element (Iter.Iter);
+      else
+         raise Program_Error;
+      end if;
+   end At_End;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Base_Entities_Cursor) return General_Entity is
+   begin
+      if Active (SQLITE) then
+         return (Entity => Element (Iter.Iter), others => <>);
+      else
+         raise Program_Error;
+      end if;
+   end Get;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Base_Entities_Cursor) is
+   begin
+      if Active (SQLITE) then
+         Next (Iter.Iter);
+      else
+         raise Program_Error;
+      end if;
+   end Next;
+
+   -----------------------------
+   -- Get_All_Called_Entities --
+   -----------------------------
+
+   function Get_All_Called_Entities
+     (Self   : access General_Xref_Database_Record'Class;
+      Entity : General_Entity) return Calls_Iterator
+   is
+      Result : Calls_Iterator;
+   begin
+      if Active (SQLITE) then
+         Self.Xref.Calls (Entity.Entity, Result.Iter);
+      else
+         Result.Old_Iter := Old_Entities.Queries.Get_All_Called_Entities
+           (Entity.Old_Entity);
+      end if;
+      return Result;
+   end Get_All_Called_Entities;
+
+   ----------------------
+   -- Entities_In_File --
+   ----------------------
+
+   function Entities_In_File
+     (Self   : access General_Xref_Database_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Name   : String := "") return Entities_In_File_Cursor
+   is
+      Result : Entities_In_File_Cursor;
+   begin
+      if Active (SQLITE) then
+         if Name = "" then
+            Self.Xref.Referenced_In (File, Cursor => Result.Iter);
+         else
+            Self.Xref.Referenced_In (File, Name, Cursor => Result.Iter);
+         end if;
+
+      else
+         Old_Entities.Queries.Find_All_Entities_In_File
+           (Iter        => Result.Old_Iter,
+            File        => Old_Entities.Get_Or_Create
+              (Self.Entities, File, Allow_Create => False),
+            Name        => Name);
+      end if;
+      return Result;
+   end Entities_In_File;
+
+   ------------
+   -- At_End --
+   ------------
+
+   overriding function At_End
+     (Iter : Entities_In_File_Cursor) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return At_End (Base_Entities_Cursor (Iter));
+      else
+         return At_End (Iter.Old_Iter);
+      end if;
+   end At_End;
+
+   ---------
+   -- Get --
+   ---------
+
+   overriding function Get
+     (Iter : Entities_In_File_Cursor) return General_Entity is
+   begin
+      if Active (SQLITE) then
+         return Get (Base_Entities_Cursor (Iter));
+      else
+         return (Old_Entity => Get (Iter.Old_Iter), others => <>);
+      end if;
+   end Get;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Iter : in out Entities_In_File_Cursor) is
+   begin
+      if Active (SQLITE) then
+         Next (Base_Entities_Cursor (Iter));
+      else
+         Next (Iter.Old_Iter);
+      end if;
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   overriding function At_End (Iter : Calls_Iterator) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return At_End (Base_Entities_Cursor (Iter));
+      else
+         return At_End (Iter.Old_Iter);
+      end if;
+   end At_End;
+
+   ---------
+   -- Get --
+   ---------
+
+   overriding function Get (Iter : Calls_Iterator) return General_Entity is
+   begin
+      if Active (SQLITE) then
+         return Get (Base_Entities_Cursor (Iter));
+      else
+         return (Old_Entity => Get (Iter.Old_Iter), others => <>);
+      end if;
+   end Get;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next (Iter : in out Calls_Iterator) is
+   begin
+      if Active (SQLITE) then
+         Next (Base_Entities_Cursor (Iter));
+      else
+         Next (Iter.Old_Iter);
+      end if;
+   end Next;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Calls_Iterator) is
+   begin
+      if not Active (SQLITE) then
+         Destroy (Iter.Old_Iter);
+      end if;
+   end Destroy;
+
+   ------------
+   -- To_Old --
+   ------------
+
+   function To_Old
+     (Entity : General_Entity) return Old_Entities.Entity_Information is
+   begin
+      return Entity.Old_Entity;
+   end To_Old;
+
+   function From_Old
+     (Entity : Old_Entities.Entity_Information) return General_Entity is
+   begin
+      return (Old_Entity => Entity, others => <>);
+   end From_Old;
+
+   ------------
+   -- To_New --
+   ------------
+
+   function To_New
+     (Entity : General_Entity) return GNATCOLL.Xref.Entity_Information is
+   begin
+      return Entity.Entity;
+   end To_New;
+
+   --------------
+   -- From_New --
+   --------------
+
+   function From_New
+     (Entity : GNATCOLL.Xref.Entity_Information) return General_Entity is
+   begin
+      return (Entity => Entity, others => <>);
+   end From_New;
+
+   ----------------
+   -- Parameters --
+   ----------------
+
+   function Parameters
+     (Dbase  : access General_Xref_Database_Record;
+      Entity : General_Entity) return Parameter_Array
+   is
+      All_Params : Parameter_Array (1 .. 100);
+      Count      : Integer := All_Params'First - 1;
+   begin
+      if Active (SQLITE) then
+         declare
+            Curs : Parameters_Cursor := Dbase.Xref.Parameters (Entity.Entity);
+         begin
+            while Curs.Has_Element loop
+               Count := Count + 1;
+               All_Params (Count) :=
+                 (Kind => Curs.Element.Kind,
+                  Parameter => From_New (Curs.Element.Parameter));
+               Curs.Next;
+            end loop;
+         end;
+
+      else
+         declare
+            Iter : Old_Entities.Queries.Subprogram_Iterator :=
+              Old_Entities.Queries.Get_Subprogram_Parameters
+                (Entity.Old_Entity);
+            E    : Old_Entities.Entity_Information;
+         begin
+            loop
+               Old_Entities.Queries.Get (Iter, E);
+               exit when E = null;
+
+               Count := Count + 1;
+               All_Params (Count).Parameter := From_Old (E);
+               case Old_Entities.Queries.Get_Type (Iter) is
+                  when Old_Entities.Queries.In_Parameter =>
+                     All_Params (Count).Kind := In_Parameter;
+                  when Old_Entities.Queries.Out_Parameter =>
+                     All_Params (Count).Kind := Out_Parameter;
+                  when Old_Entities.Queries.In_Out_Parameter =>
+                     All_Params (Count).Kind := In_Out_Parameter;
+                  when Old_Entities.Queries.Access_Parameter =>
+                     All_Params (Count).Kind := Access_Parameter;
+               end case;
+
+               Old_Entities.Queries.Next (Iter);
+            end loop;
+         end;
+      end if;
+
+      return All_Params (All_Params'First .. Count);
+   end Parameters;
+
+   ---------------------
+   -- Is_Parameter_Of --
+   ---------------------
+
+   function Is_Parameter_Of
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return From_New (Self.Xref.Parameter_Of (Entity.Entity));
+      else
+         return From_Old
+           (Old_Entities.Queries.Is_Parameter_Of (Entity.Old_Entity));
+      end if;
+   end Is_Parameter_Of;
+
+   ---------------------
+   -- Is_Primitive_Of --
+   ---------------------
+
+   function Is_Primitive_Of
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Entity
+   is
+   begin
+      if Active (SQLITE) then
+         return From_New (Self.Xref.Method_Of (Entity.Entity));
+      else
+         return From_Old
+           (Old_Entities.Is_Primitive_Operation_Of (Entity.Old_Entity));
+      end if;
+   end Is_Primitive_Of;
+
+   -------------------
+   -- Is_Up_To_Date --
+   -------------------
+
+   function Is_Up_To_Date
+     (Self : access General_Xref_Database_Record;
+      File : Virtual_File) return Boolean
+   is
+      Source : Old_Entities.Source_File;
+   begin
+      if Active (SQLITE) then
+         return Self.Xref.Is_Up_To_Date (File);
+      else
+         Source := Old_Entities.Get_Or_Create
+           (Self.Entities, File, Allow_Create => False);
+         return Old_Entities.Is_Up_To_Date (Source);
+      end if;
+   end Is_Up_To_Date;
+
+   ---------------
+   -- Is_Access --
+   ---------------
+
+   function Is_Access
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean
+   is
+      use Old_Entities;
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Access;
+
+      else
+         return E.Old_Entity /= null
+           and then Old_Entities.Get_Kind (E.Old_Entity).Kind =
+              Old_Entities.Access_Kind;
+      end if;
+   end Is_Access;
+
+   --------------
+   -- Is_Array --
+   --------------
+
+   function Is_Array
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean
+   is
+      use Old_Entities;
+      Is_Array_E : constant array (E_Kinds) of Boolean :=
+        (Overloaded_Entity => True,
+         Unresolved_Entity => True,
+         Array_Kind        => True,
+         String_Kind       => True,
+         others            => False);
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Array;
+
+      else
+         return E.Old_Entity /= null
+           and then Is_Array_E (Old_Entities.Get_Kind (E.Old_Entity).Kind);
+      end if;
+   end Is_Array;
+
+   ------------------------------
+   -- Is_Printable_In_Debugger --
+   ------------------------------
+
+   function Is_Printable_In_Debugger
+     (Db : access General_Xref_Database_Record;
+      E  : General_Entity) return Boolean
+   is
+      use Old_Entities;
+      Is_Printable_Entity : constant array (E_Kinds) of Boolean :=
+        (Overloaded_Entity    => True,
+         Unresolved_Entity    => True,
+         Access_Kind          => True,
+         Array_Kind           => True,
+         Boolean_Kind         => True,
+         Class_Wide           => True,
+         Class                => True,
+         Decimal_Fixed_Point  => True,
+         Enumeration_Literal  => True,
+         Enumeration_Kind     => True,
+         Exception_Entity     => True,
+         Floating_Point       => True,
+         Modular_Integer      => True,
+         Named_Number         => True,
+         Ordinary_Fixed_Point => True,
+         Record_Kind          => True,
+         Signed_Integer       => True,
+         String_Kind          => True,
+         others               => False);
+
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Declaration (E.Entity).Flags.Is_Printable_In_Gdb;
+
+      else
+         return E.Old_Entity /= null
+           and then Is_Printable_Entity
+             (Old_Entities.Get_Kind (E.Old_Entity).Kind);
+      end if;
+   end Is_Printable_In_Debugger;
+
+   ----------------------
+   -- Get_Display_Kind --
+   ----------------------
+
+   function Get_Display_Kind
+     (Db     : access General_Xref_Database_Record;
+      Entity : General_Entity) return String
+   is
+   begin
+      if Active (SQLITE) then
+         return To_String (Db.Xref.Declaration (Entity.Entity).Kind);
+      else
+         return Old_Entities.Kind_To_String
+           (Old_Entities.Get_Kind (Entity.Old_Entity));
+      end if;
+   end Get_Display_Kind;
+
+   ---------------------
+   -- Entity_Has_Body --
+   ---------------------
+
+   function Entity_Has_Body
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean
+   is
+      pragma Unreferenced (Db);
+   begin
+      if Active (SQLITE) then
+         return Ref.Ref.Kind = "body";
+      else
+         return Old_Entities.Queries.Entity_Has_Body
+           (Old_Entities.Get_Kind (Ref.Old_Ref));
+      end if;
+   end Entity_Has_Body;
+
+   -----------------------
+   -- Is_Read_Reference --
+   -----------------------
+
+   function Is_Read_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Is_Read_Reference (Ref.Ref);
+      else
+         return Old_Entities.Is_Read_Reference
+           (Old_Entities.Get_Kind (Ref.Old_Ref));
+      end if;
+   end Is_Read_Reference;
+
+   --------------------------------------------
+   -- Is_Or_Read_Write_Or_Implicit_Reference --
+   --------------------------------------------
+
+   function Is_Read_Or_Write_Or_Implicit_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean
+   is
+   begin
+      return Is_Read_Or_Write_Reference (Db, Ref)
+        or else Is_Implicit_Reference (Db, Ref);
+   end Is_Read_Or_Write_Or_Implicit_Reference;
+
+   -----------------------------------
+   -- Is_Read_Or_Implicit_Reference --
+   -----------------------------------
+
+   function Is_Read_Or_Implicit_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean
+   is
+   begin
+      return Is_Read_Reference (Db, Ref)
+        or else Is_Implicit_Reference (Db, Ref);
+   end Is_Read_Or_Implicit_Reference;
+
+   ---------------------------
+   -- Is_Implicit_Reference --
+   ---------------------------
+
+   function Is_Implicit_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean
+   is
+      use Old_Entities;
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Is_Implicit_Reference (Ref.Ref);
+      else
+         return Old_Entities.Get_Kind (Ref.Old_Ref) = Old_Entities.Implicit;
+      end if;
+   end Is_Implicit_Reference;
+
+   -----------------------
+   -- Is_Real_Reference --
+   -----------------------
+
+   function Is_Real_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Is_Real_Reference (Ref.Ref);
+      else
+         return Old_Entities.Is_Real_Reference
+           (Old_Entities.Get_Kind (Ref.Old_Ref));
+      end if;
+   end Is_Real_Reference;
+
+   -----------------------------------
+   -- Is_Real_Or_Implicit_Reference --
+   -----------------------------------
+
+   function Is_Real_Or_Implicit_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean is
+   begin
+      return Is_Real_Reference (Db, Ref)
+        or else Is_Implicit_Reference (Db, Ref);
+   end Is_Real_Or_Implicit_Reference;
+
+   ------------------------
+   -- Is_Write_Reference --
+   ------------------------
+
+   function Is_Write_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Is_Write_Reference (Ref.Ref);
+      else
+         return Old_Entities.Is_Write_Reference
+           (Old_Entities.Get_Kind (Ref.Old_Ref));
+      end if;
+   end Is_Write_Reference;
+
+   --------------------------------
+   -- Is_Read_Or_Write_Reference --
+   --------------------------------
+
+   function Is_Read_Or_Write_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.Is_Read_Or_Write_Reference (Ref.Ref);
+      else
+         return Old_Entities.Is_Write_Reference
+           (Old_Entities.Get_Kind (Ref.Old_Ref))
+           or else Old_Entities.Is_Read_Reference
+             (Old_Entities.Get_Kind (Ref.Old_Ref));
+      end if;
+   end Is_Read_Or_Write_Reference;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Self : in out General_Xref_Database) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (General_Xref_Database_Record'Class, General_Xref_Database);
+   begin
+      if Active (SQLITE) then
+         Self.Xref.Free;
+         Self.Xref := null;
+      else
+         Old_Entities.Destroy (Self.Entities);
+      end if;
+
+      Free (Self.Constructs);
+
+      Unchecked_Free (Self);
+   end Destroy;
+
+   ------------
+   -- Freeze --
+   ------------
+
+   function Freeze
+     (Self : access General_Xref_Database_Record) return Database_Lock is
+   begin
+      if not Active (SQLITE) then
+         Old_Entities.Freeze (Self.Entities);
+      end if;
+
+      return (Constructs =>
+                Old_Entities.Lock_Construct_Heuristics (Self.Entities));
+   end Freeze;
+
+   ----------
+   -- Thaw --
+   ----------
+
+   procedure Thaw
+     (Self : access General_Xref_Database_Record;
+      Lock : in out Database_Lock) is
+   begin
+      if not Active (SQLITE) then
+         Old_Entities.Thaw (Self.Entities);
+      end if;
+
+      Old_Entities.Unlock_Construct_Heuristics (Lock.Constructs);
+   end Thaw;
+
+   ------------------
+   -- End_Of_Scope --
+   ------------------
+
+   function End_Of_Scope
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return General_Location
+   is
+      Iter : References_Cursor;
+      Ref  : Entity_Reference;
+   begin
+      if Active (SQLITE) then
+         Self.Xref.References (Entity.Entity, Cursor => Iter);
+         while Has_Element (Iter) loop
+            Ref := Element (Iter);
+            if Ref.Is_End_Of_Scope then
+               return (File   => Ref.File,
+                       Line   => Ref.Line,
+                       Column => Ref.Column);
+            end if;
+
+            Next (Iter);
+         end loop;
+
+      else
+         declare
+            use Old_Entities;
+            Kind  : Old_Entities.Reference_Kind;
+            Loc   : Old_Entities.File_Location;
+         begin
+            Old_Entities.Get_End_Of_Scope (Entity.Old_Entity, Loc, Kind);
+            if Loc /= Old_Entities.No_File_Location then
+               return (File => Get_Filename (Loc.File),
+                       Line => Get_Line (Loc),
+                       Column => Get_Column (Loc));
+            end if;
+         end;
+      end if;
+      return No_Location;
+   end End_Of_Scope;
+
+   ---------------------------
+   -- Initialize_Constructs --
+   ---------------------------
+
+   procedure Initialize_Constructs
+     (Self         : access General_Xref_Database_Record;
+      Lang_Handler : Language_Handler;
+      Symbols      : GNATCOLL.Symbols.Symbol_Table_Access)
+   is
+      use Construct_Annotations_Pckg;
+      LI_Entity_Key : Construct_Annotations_Pckg.Annotation_Key;
+   begin
+      Self.Constructs := new Language.Tree.Database.Construct_Database;
+      Self.Lang_Handler := Lang_Handler;
+      Set_Symbols (Self.Constructs, Symbols);
+
+      Get_Annotation_Key
+        (Get_Construct_Annotation_Key_Registry (Self.Constructs).all,
+         LI_Entity_Key);
+
+      Register_Assistant
+        (Self.Constructs,
+         LI_Assistant_Id,
+         new LI_Db_Assistant'
+           (Database_Assistant with
+            LI_Key => LI_Entity_Key,
+            Db     => General_Xref_Database (Self)));
+   end Initialize_Constructs;
+
+   ------------------
+   -- To_LI_Entity --
+   ------------------
+
+   function To_LI_Entity (E : Entity_Access) return General_Entity is
+      use Construct_Annotations_Pckg;
+
+      Assistant : constant LI_Db_Assistant_Access := LI_Db_Assistant_Access
+        (Get_Assistant (Get_Database (Get_File (E)), LI_Assistant_Id));
+
+      Construct_Annotation : Construct_Annotations_Pckg.Annotation;
+   begin
+      Get_Annotation
+        (Get_Annotation_Container
+           (Get_Tree (Get_File (E)), To_Construct_Tree_Iterator (E)).all,
+         Assistant.LI_Key,
+         Construct_Annotation);
+
+      if Construct_Annotation = Construct_Annotations_Pckg.Null_Annotation then
+         --  Create a new LI entity
+
+         Construct_Annotation := (Other_Kind, Other_Val => new LI_Annotation);
+
+         if not Active (SQLITE) then
+            declare
+               use Old_Entities, Language;
+               New_Entity  : Old_Entities.Entity_Information;
+               Declaration : Old_Entities.File_Location;
+               K           : E_Kinds;
+               Is_Type     : Boolean := False;
+            begin
+               Declaration :=
+                 (Get_Or_Create
+                    (Db    => Assistant.Db.Entities,
+                     File  => Get_File_Path (Get_File (E))),
+                  Get_Construct (E).Sloc_Entity.Line,
+                  To_Visible_Column
+                    (Get_File (E),
+                     Get_Construct (E).Sloc_Entity.Line,
+                     String_Index_Type
+                       (Get_Construct (E).Sloc_Entity.Column)));
+
+               --  Make a simple association between construct categories
+               --  and entity categories. This association is known to be
+               --  inaccurate, but is helpful when trying to categorize
+               --  entities.
+
+               case Get_Construct (E).Category is
+               when Cat_Package | Cat_Namespace => K := Package_Kind;
+               when Cat_Task
+                  | Cat_Procedure
+                  | Cat_Function
+                  | Cat_Method
+                  | Cat_Constructor
+                  | Cat_Destructor
+                  | Cat_Protected
+                  | Cat_Entry =>
+
+                  K := Procedure_Kind;
+
+               when Cat_Class
+                  | Cat_Structure
+                  | Cat_Case_Inside_Record
+                  | Cat_Union
+                  | Cat_Type
+                  | Cat_Subtype =>
+
+                  K := Class;
+                  Is_Type := True;
+
+               when Cat_Variable
+                  | Cat_Local_Variable
+                  | Cat_Parameter
+                  | Cat_Discriminant
+                  | Cat_Field =>
+
+                  K := Signed_Integer;
+
+               when Cat_Literal =>
+
+                  K := Enumeration_Literal;
+
+               when Cat_With
+                  | Cat_Use
+                  | Cat_Include =>
+
+                  K := Include_File;
+
+               when Cat_Unknown
+                  | Cat_Representation_Clause
+                  | Cat_Loop_Statement
+                  | Cat_If_Statement
+                  | Cat_Case_Statement
+                  | Cat_Select_Statement
+                  | Cat_Accept_Statement
+                  | Cat_Declare_Block
+                  | Cat_Return_Block
+                  | Cat_Simple_Block
+                  | Cat_Exception_Handler
+                  | Cat_Pragma
+                  | Cat_Custom =>
+
+                  K := Unresolved_Entity;
+               end case;
+
+               New_Entity := Old_Entities.Create_Dummy_Entity
+                 (Name    => Get_Construct (E).Name,
+                  Decl    => Declaration,
+                  Kind    => K,
+                  Is_Type => Is_Type);
+
+               LI_Annotation (Construct_Annotation.Other_Val.all).Entity :=
+                 From_Old (New_Entity);
+               Set_Annotation
+                 (Get_Annotation_Container
+                    (Get_Tree
+                       (Get_File (E)), To_Construct_Tree_Iterator (E)).all,
+                  Assistant.LI_Key,
+                  Construct_Annotation);
+            end;
+         end if;
+
+      else
+         --  Update the entity in case it has moved
+         null;
+
+--           LI_Annotation (Construct_Annotation.Other_Val.all).
+--             LI_Entity.Live_Declaration.Line :=
+--               Get_Construct (E).Sloc_Entity.Line;
+--           LI_Annotation (Construct_Annotation.Other_Val.all).
+--             LI_Entity.Live_Declaration.Column := To_Visible_Column
+--               (Get_File (E),
+--                Get_Construct (E).Sloc_Entity.Line,
+--                String_Index_Type (Get_Construct (E).Sloc_Entity.Column));
+      end if;
+
+      return LI_Annotation (Construct_Annotation.Other_Val.all).Entity;
+   end To_LI_Entity;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Obj : in out LI_Annotation) is
+   begin
+      Unref (Obj.Entity);
+   end Free;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash
+     (Self   : access General_Xref_Database_Record;
+      Entity : General_Entity) return Integer
+   is
+
+      Decl : Entity_Declaration;
+   begin
+      if Active (SQLITE) then
+         Decl := Self.Xref.Declaration (Entity.Entity);
+         return Integer
+           (Ada.Strings.Hash (To_String (Decl.Name)
+            & Decl.Location.File.Display_Full_Name
+            & Decl.Location.Line'Img
+            & Decl.Location.Column'Img));
+
+      else
+         declare
+            use Old_Entities;
+            Loc : constant File_Location :=
+              Get_Declaration_Of (Entity.Old_Entity);
+         begin
+            return Integer
+              (Ada.Strings.Hash (Get (Get_Name (Entity.Old_Entity)).all
+               & (+Full_Name (Get_Filename (Get_File (Loc))))
+               & Get_Line (Loc)'Img
+               & Get_Column (Loc)'Img));
+         end;
+      end if;
+   end Hash;
+
+   ---------
+   -- Cmp --
+   ---------
+
+   function Cmp
+     (Self   : access General_Xref_Database_Record;
+      Entity1, Entity2 : General_Entity) return Integer
+   is
+   begin
+      if Entity1 = No_General_Entity then
+         if Entity2 = No_General_Entity then
+            return 0;
+         else
+            return -1;
+         end if;
+
+      elsif Entity2 = No_General_Entity then
+         return 1;
+
+      else
+         declare
+            Name1 : constant String := Self.Get_Name (Entity1);
+            Name2 : constant String := Self.Get_Name (Entity2);
+         begin
+            if Name1 < Name2 then
+               return -1;
+
+            elsif Name1 = Name2 then
+               declare
+                  File1 : constant Virtual_File :=
+                    Self.Get_Declaration (Entity1).Loc.File;
+                  File2 : constant Virtual_File :=
+                    Self.Get_Declaration (Entity2).Loc.File;
+               begin
+                  if File1 < File2 then
+                     return -1;
+                  elsif File1 = File2 then
+                     return 0;
+                  else
+                     return 1;
+                  end if;
+               end;
+
+            else
+               return 1;
+            end if;
+         end;
+      end if;
+   end Cmp;
+
+   -----------------
+   -- Has_Element --
+   -----------------
+
+   function Has_Element (Iter : File_Iterator) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return Has_Element (Iter.Iter);
+      else
+         if Iter.Is_Ancestor then
+            return not Old_Entities.Queries.At_End (Iter.Old_Ancestor_Iter);
+         else
+            return not Old_Entities.Queries.At_End (Iter.Old_Iter);
+         end if;
+      end if;
+   end Has_Element;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out File_Iterator) is
+   begin
+      if Active (SQLITE) then
+         Next (Iter.Iter);
+      else
+         if Iter.Is_Ancestor then
+            Old_Entities.Queries.Next (Iter.Old_Ancestor_Iter);
+         else
+            Old_Entities.Queries.Next (Iter.Old_Iter);
+         end if;
+      end if;
+   end Next;
+
+   -------------
+   -- Element --
+   -------------
+
+   function Element (Iter : File_Iterator) return Virtual_File is
+   begin
+      if Active (SQLITE) then
+         return Element (Iter.Iter);
+      else
+         if Iter.Is_Ancestor then
+            return Old_Entities.Get_Filename
+              (Old_Entities.Queries.Get (Iter.Old_Ancestor_Iter));
+         else
+            return Old_Entities.Get_Filename
+              (Old_Entities.Queries.Get (Iter.Old_Iter));
+         end if;
+      end if;
+   end Element;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out File_Iterator) is
+   begin
+      if not Active (SQLITE) then
+         if Iter.Is_Ancestor then
+            Old_Entities.Queries.Destroy (Iter.Old_Ancestor_Iter);
+         end if;
+      end if;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out File_Iterator_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (File_Iterator'Class, File_Iterator_Access);
+   begin
+      if Iter /= null then
+         Destroy (Iter.all);
+         Unchecked_Free (Iter);
+      end if;
+   end Destroy;
+
+   -----------------------
+   -- Find_Dependencies --
+   -----------------------
+
+   function Find_Dependencies
+     (Self : access General_Xref_Database_Record'Class;
+      File : GNATCOLL.VFS.Virtual_File) return File_Iterator
+   is
+      Iter : File_Iterator;
+   begin
+      Iter.Is_Ancestor := False;
+
+      if Active (SQLITE) then
+         Iter.Iter := Self.Xref.Imports (File);
+      else
+         Old_Entities.Queries.Find_Dependencies
+           (Iter => Iter.Old_Iter,
+            File => Old_Entities.Get_Or_Create
+              (Self.Entities, File, Allow_Create => False));
+      end if;
+      return Iter;
+   end Find_Dependencies;
+
+   --------------------------------
+   -- Find_Ancestor_Dependencies --
+   --------------------------------
+
+   function Find_Ancestor_Dependencies
+     (Self                  : access General_Xref_Database_Record'Class;
+      File                  : GNATCOLL.VFS.Virtual_File) return File_Iterator
+   is
+      Iter : File_Iterator;
+   begin
+      Iter.Is_Ancestor := True;
+
+      if Active (SQLITE) then
+         Iter.Iter := Self.Xref.Imported_By (File);
+      else
+         Old_Entities.Queries.Find_Ancestor_Dependencies
+           (Iter               => Iter.Old_Ancestor_Iter,
+            File               => Old_Entities.Get_Or_Create
+              (Self.Entities, File, Allow_Create => False),
+            Include_Self       => False,
+            Single_Source_File => False);
+      end if;
+      return Iter;
+   end Find_Ancestor_Dependencies;
+
+   ----------------------
+   -- Get_Display_Kind --
+   ----------------------
+
+   function Get_Display_Kind
+     (Ref  : General_Entity_Reference) return String is
+   begin
+      if Active (SQLITE) then
+         return Ada.Strings.Unbounded.To_String (Ref.Ref.Kind);
+      else
+         return Old_Entities.Kind_To_String
+           (Old_Entities.Get_Kind (Ref.Old_Ref));
+      end if;
+   end Get_Display_Kind;
+
+   ------------------------------
+   -- All_Real_Reference_Kinds --
+   ------------------------------
+
+   function All_Real_Reference_Kinds
+     (Db  : access General_Xref_Database_Record)
+      return GNAT.Strings.String_List
+   is
+      use Old_Entities;
+   begin
+      if Active (SQLITE) then
+         return Db.Xref.All_Real_Reference_Kinds;
+      else
+         return Result : String_List
+           (Reference_Kind'Pos (Reference_Kind'First) + 1 ..
+              Reference_Kind'Pos (Reference_Kind'Last) + 1)
+         do
+            for R in Reference_Kind'Range loop
+               Result (Reference_Kind'Pos (R) + 1) :=
+                 new String'(Kind_To_String (R));
+            end loop;
+         end return;
+      end if;
+   end All_Real_Reference_Kinds;
 
 end Xref;

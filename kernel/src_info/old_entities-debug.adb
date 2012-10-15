@@ -25,7 +25,7 @@ with GNAT.Heap_Sort;    use GNAT.Heap_Sort;
 
 with Basic_Types; use Basic_Types;
 
-package body Entities.Debug is
+package body Old_Entities.Debug is
 
    Dump_Full_File_Names : constant Boolean := False;
    Show_Timestamps      : Boolean := True;
@@ -687,4 +687,4 @@ package body Entities.Debug is
       Output_Line := GNAT.IO.Put_Line'Access;
    end Set_Default_Output;
 
-end Entities.Debug;
+end Old_Entities.Debug;

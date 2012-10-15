@@ -15,17 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Entities;         use Entities;
 with GNATCOLL.VFS;
 with GPS.Kernel;
 with Language;         use Language;
+with Xref;
 
 package Docgen2.Utils is
 
    procedure Warning
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : Source_File;
-      Loc    : Source_Location;
+      Loc    : Xref.General_Location;
       Msg    : String);
    --  Prints a warning
 
@@ -37,19 +36,17 @@ package Docgen2.Utils is
    function Get_Entity
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Construct : String;
-      Loc       : Source_Location;
-      File      : Source_File;
+      Loc       : Xref.General_Location;
       Lang      : Language.Language_Access)
-      return Entity_Information;
+      return Xref.General_Entity;
    --  Retrieve the entity corresponding to construct at location Loc/File.
 
    function Get_Declaration_Entity
      (Construct : String;
-      Loc       : Source_Location;
-      File      : Source_File;
-      Db        : Entities_Database;
+      Loc       : Xref.General_Location;
+      Db        : access Xref.General_Xref_Database_Record'Class;
       Lang      : Language.Language_Access)
-      return Entity_Information;
+      return Xref.General_Entity;
    --  Retrieve the entity declaration corresponding to construct.
 
 end Docgen2.Utils;

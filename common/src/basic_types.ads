@@ -23,6 +23,8 @@ with GNAT.OS_Lib;
 with GNAT.Expect;
 with GNAT.Regpat;
 with GNAT.Strings;
+with GNATCOLL.VFS;
+with GNATCOLL.Xref;
 with Ada.Calendar;
 
 package Basic_Types is
@@ -87,11 +89,30 @@ package Basic_Types is
    function ">" (Left, Right : Date_Type) return Boolean;
    function ">=" (Left, Right : Date_Type) return Boolean;
 
+   --------------
+   -- Entities --
+   --------------
+
+   type Dispatching_Menu_Policy is (Never, From_Memory, Accurate);
+   for Dispatching_Menu_Policy'Size use Interfaces.C.int'Size;
+   pragma Convention (C, Dispatching_Menu_Policy);
+   --  The list of possible behaviours for the contextual menu on dispatching
+   --  calls. From_Memory relies on information already parsed in memory, and
+   --  might not be accurate. Accurate will possibly load other LI files, but
+   --  might be much slower as a result
+
+   type File_Error_Reporter_Record is abstract tagged null record;
+   type File_Error_Reporter is access all File_Error_Reporter_Record'Class;
+   procedure Error
+     (Report : in out File_Error_Reporter_Record;
+      File   : GNATCOLL.VFS.Virtual_File) is abstract;
+   --  Used to report errors while parsing files
+
    ------------------
    -- Column types --
    ------------------
 
-   type Visible_Column_Type is new Integer;
+   subtype Visible_Column_Type is GNATCOLL.Xref.Visible_Column;
    --  Visible_Column_Type correspond to user perception of the columns, ie,
    --  after TAB expansion. The first character in the line has a value of 1.
    --  Columns are counted in terms of UT8 characters.

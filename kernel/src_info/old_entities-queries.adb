@@ -25,6 +25,7 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
@@ -35,9 +36,8 @@ with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Traces;
 
-with Entities.Construct_Assistant; use Entities.Construct_Assistant;
-
-package body Entities.Queries is
+package body Old_Entities.Queries is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me     : constant Trace_Handle := Create ("Entities.Queries", Off);
    Callers_Me : constant Trace_Handle := Create ("Entities.Callers", Off);
@@ -482,7 +482,7 @@ package body Entities.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False)
    is
-      Handler : constant LI_Handler := Get_LI_Handler (Db, File_Name);
+      Handler : constant LI_Handler := Default_LI_Handler;
       Source  : Source_File;
    begin
       Status := Entity_Not_Found;
@@ -528,11 +528,11 @@ package body Entities.Queries is
       Handler         : LI_Handler := null;
       Fuzzy_Expected  : Boolean := False)
    is
+      pragma Unreferenced (Fuzzy_Expected);
+
       S_Entity_Name : Symbol := No_Symbol;
       H       : LI_Handler := Handler;
       Updated : Source_File;
-      New_Entity : Entity_Information;
-      New_Location : File_Location;
    begin
       if Entity_Name /= "" then
          S_Entity_Name := Db.Symbols.Find (Entity_Name);
@@ -572,7 +572,7 @@ package body Entities.Queries is
       end if;
 
       if H = null then
-         H := Get_LI_Handler (Db, Get_Filename (Source));
+         H := Default_LI_Handler;
       end if;
 
       Status := Entity_Not_Found;
@@ -594,87 +594,7 @@ package body Entities.Queries is
          Trace (Me, "Entity not found");
       end if;
 
-      if Active (Constructs_Heuristics)
-        and then Db.Construct_Db_Locks = 0
-        and then
-          (Status = Entity_Not_Found
-           or else
-             ((Status = Fuzzy_Match
-               or else Status = Overloaded_Entity_Found)
-              and then not Fuzzy_Expected))
-      then
-         declare
-            Tree_Lang : constant Tree_Language_Access :=
-                         Get_Tree_Language_From_File
-                           (Language_Handler (Db.Lang), Source.Name);
-            S_File : constant Structured_File_Access :=
-              Get_Or_Create
-                (Db   => Db.Construct_Db,
-                 File => Source.Name);
-
-            Result    : Entity_Access;
-         begin
-            if not Is_Null (S_File) then
-               --  In some cases, the references are extracted from a place
-               --  where there is still an ALI file, but no more source file.
-               --  This will issue a null Structured_File_Access, which is what
-               --  we're protecting the following code by the above condition.
-
-               Update_Contents (S_File);
-
-               Result := Tree_Lang.Find_Declaration
-                 (S_File, Line, To_Line_String_Index (S_File, Line, Column));
-
-               if Result /= Null_Entity_Access then
-                  --  First, try to see if there's already a similar entity in
-                  --  the database. If that's the case, it's better to use it
-                  --  than the dummy one created from the construct.
-
-                  New_Location :=
-                    (File     => Get_Or_Create
-                       (Db    => Db,
-                        File  => Get_File_Path (Get_File (Result))),
-                     Line   => Get_Construct (Result).Sloc_Entity.Line,
-                     Column => To_Visible_Column
-                       (Get_File (Result),
-                        Get_Construct (Result).Sloc_Entity.Line,
-                        String_Index_Type
-                          (Get_Construct (Result).Sloc_Entity.Column)));
-
-                  New_Entity := Get_Or_Create
-                    (Name         => Get_Construct (Result).Name,
-                     File         => New_Location.File,
-                     Line         => New_Location.Line,
-                     Column       => New_Location.Column,
-                     Allow_Create => False);
-
-                  if New_Entity /= null then
-                     --  If we found an updated ALI entity, use it.
-
-                     Entity := New_Entity;
-                  elsif Entity /= null then
-                     --  Else, if we had a fuzzy entity, use it to initalize
-                     --  the LI entity from the construct database.
-
-                     Entity.Live_Declaration := New_Location;
-                  else
-                     --  If we have no entity to connect to, then create one
-                     --  from the construct database.
-
-                     Entity := To_LI_Entity (Result);
-                  end if;
-
-                  Status := Fuzzy_Match;
-               end if;
-            end if;
-         end;
-      elsif Entity /= null then
-         --  If we found an accurate match without the construct database, it
-         --  means that the LI declaration is the accurate live declaration.
-         --  Update it accordingly, in case it has been moved previously.
-
-         Entity.Live_Declaration := Entity.LI_Declaration;
-      end if;
+      --  Fallback to constructs is implemented in xref.adb now
    end Find_Declaration;
 
    --------------------
@@ -1796,9 +1716,7 @@ package body Entities.Queries is
                   Include_Self          => Include_Self,
                   File_Has_No_LI_Report => File_Has_No_LI_Report,
                   Single_Source_File    => False,
-                  Handler               => Get_LI_Handler_From_File
-                    (Language_Handler (File.Db.Lang),
-                     Get_Filename (File)),
+                  Handler               => Default_LI_Handler,
                   Total_Progress        => 1,
                   Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
@@ -3016,7 +2934,7 @@ package body Entities.Queries is
       Ref       : Entity_Reference;
       On_Callee : access function
         (Callee, Primitive_Of : Entity_Information) return Boolean;
-      Filter    : Reference_Kind_Filter := Entity_Has_Declaration;
+      Filter    : Reference_Filter_Function := null;
       Policy    : Dispatching_Menu_Policy)
    is
       Db    : Entities_Database;
@@ -3037,16 +2955,19 @@ package body Entities.Queries is
             Entity                => Entity,
             File_Has_No_LI_Report => null,
             In_File               => null,
-            Filter                => Filter,
             Include_Overriding    => True,
             Include_Overridden    => False);
 
          while not At_End (Iter) loop
-            E := Get_Entity (Iter);
-            if E /= null then
-               E2 := Is_Primitive_Operation_Of (E);
-               if E2 /= null then
-                  exit when not On_Callee (Callee => E, Primitive_Of => E2);
+            if Filter = null
+              or else Filter (Get (Iter))
+            then
+               E := Get_Entity (Iter);
+               if E /= null then
+                  E2 := Is_Primitive_Operation_Of (E);
+                  if E2 /= null then
+                     exit when not On_Callee (Callee => E, Primitive_Of => E2);
+                  end if;
                end if;
             end if;
 
@@ -3754,7 +3675,7 @@ package body Entities.Queries is
    begin
       Iter.Project := Project;
       Iter.Handler      := Language_Handler (Handler);
-      Iter.Lang_Count   := LI_Handlers_Count (Iter.Handler);
+      Iter.Lang_Count   := 1;   --  only one LI handler is known
       Iter.Filter       := Filter;
       Iter.Current_Lang := 1;
       Iter.Count        := 0;
@@ -3843,7 +3764,11 @@ package body Entities.Queries is
                           and then Has_Language (P, "C++")))
                  and then (Iter.Filter = null or else Iter.Filter (Lang))
                then
-                  LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
+
+                  --  ??? We now have a single LI_Handler for all languages
+                  LI := Default_LI_Handler;
+--                  LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
+
                   if LI /= null then
                      Iter.LI := new LI_Information_Iterator'Class'
                        (Parse_All_LI_Information (LI, P));
@@ -3891,4 +3816,4 @@ package body Entities.Queries is
       end if;
    end Free;
 
-end Entities.Queries;
+end Old_Entities.Queries;

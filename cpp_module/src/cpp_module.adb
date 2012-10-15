@@ -22,10 +22,8 @@ pragma Warnings (On);
 with GNAT.Expect;                use GNAT.Expect;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
-with ALI_Parser;                 use ALI_Parser;
 with Case_Handling;              use Case_Handling;
 with Default_Preferences;        use Default_Preferences;
-with Entities;                   use Entities;
 with Foreign_Naming_Editors;     use Foreign_Naming_Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -49,80 +47,6 @@ package body Cpp_Module is
    C_Indent_Extra          : Boolean_Preference;
    C_Indent_Comments       : Boolean_Preference;
 
-   ---------------------
-   --  GCC LI Handler --
-   ---------------------
-
-   package GLI_Handler_Record_Pkg is
-      type GLI_Handler_Record is new ALI_Handler_Record with null record;
-
-      overriding function Get_Name
-        (LI : access GLI_Handler_Record) return String;
-
-      overriding function Case_Insensitive_Identifiers
-        (Handler : access GLI_Handler_Record) return Boolean;
-
-      overriding function Get_ALI_Ext
-        (LI : access GLI_Handler_Record) return Filesystem_String;
-
-      overriding function Get_ALI_Filename
-        (Handler   : access GLI_Handler_Record;
-         Base_Name : Filesystem_String) return Filesystem_String;
-      --  See doc for inherited subprograms
-
-   end GLI_Handler_Record_Pkg;
-
-   package body GLI_Handler_Record_Pkg is
-
-      --------------
-      -- Get_Name --
-      --------------
-
-      overriding function Get_Name
-        (LI : access GLI_Handler_Record) return String
-      is
-         pragma Unreferenced (LI);
-      begin
-         return "GNU C/C++";
-      end Get_Name;
-
-      ----------------------------------
-      -- Case_Insensitive_Identifiers --
-      ----------------------------------
-
-      overriding function Case_Insensitive_Identifiers
-        (Handler : access GLI_Handler_Record) return Boolean
-      is
-         pragma Unreferenced (Handler);
-      begin
-         return False;
-      end Case_Insensitive_Identifiers;
-
-      -----------------
-      -- Get_ALI_Ext --
-      -----------------
-
-      overriding function Get_ALI_Ext
-        (LI : access GLI_Handler_Record) return Filesystem_String
-      is
-         pragma Unreferenced (LI);
-      begin
-         return ".gli";
-      end Get_ALI_Ext;
-
-      ----------------------
-      -- Get_ALI_Filename --
-      ----------------------
-
-      overriding function Get_ALI_Filename
-        (Handler   : access GLI_Handler_Record;
-         Base_Name : Filesystem_String) return Filesystem_String is
-      begin
-         return Base_Name & Get_ALI_Ext (Handler);
-      end Get_ALI_Filename;
-
-   end GLI_Handler_Record_Pkg;
-
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -139,25 +63,6 @@ package body Cpp_Module is
    --  Called when the preferences have changed. Subsidiary of Register_Module
    --  but must be defined at library level because it is invoked from the
    --  gps kernel.
-
-   ------------------------
-   -- Create_CPP_Handler --
-   ------------------------
-
-   function Create_CPP_Handler
-     (Db           : Entities.Entities_Database;
-      Registry     : Projects.Project_Registry'Class;
-      Lang_Handler : Language_Handlers.Language_Handler)
-      return Entities.LI_Handler
-   is
-      use GLI_Handler_Record_Pkg;
-   begin
-      return new GLI_Handler_Record'
-                   (LI_Handler_Record with
-                    Db => Db,
-                    Registry => Project_Registry (Registry),
-                    Lang_Handler => Lang_Handler);
-   end Create_CPP_Handler;
 
    ----------------------------
    -- C_Naming_Scheme_Editor --
@@ -214,20 +119,14 @@ package body Cpp_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
-      LI      : constant LI_Handler :=
-                 Create_CPP_Handler
-                   (Db => Get_Database (Kernel),
-                    Registry => Project_Registry (Get_Registry (Kernel).all),
-                    Lang_Handler => Handler);
-
    begin
-      Register_Language (Handler, C_Lang, null, LI => LI);
+      Register_Language (Handler, C_Lang, null);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
         (Language_Name       => "c",
          Default_Spec_Suffix => ".h",
          Default_Body_Suffix => ".c");
 
-      Register_Language (Handler, Cpp_Lang, null, LI => LI);
+      Register_Language (Handler, Cpp_Lang, null);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
         (Language_Name       => "c++",
          Default_Spec_Suffix => ".hh",

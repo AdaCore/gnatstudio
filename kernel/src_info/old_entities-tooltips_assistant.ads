@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2006-2012, AdaCore                     --
+--                     Copyright (C) 2010-2012, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,36 +15,34 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides functions for drawing tooltips representing entity
---  informations.
-
-with Cairo;            use Cairo;
-
-with GPS.Kernel;       use GPS.Kernel;
-
-with Entities;         use Entities;
-with Entities.Queries; use Entities.Queries;
-
+with Language; use Language;
 with Language.Tree.Database; use Language.Tree.Database;
+with Old_Entities.Queries; use Old_Entities.Queries;
 
-package Entities.Tooltips is
+package Old_Entities.Tooltips_Assistant is
 
-   function Draw_Tooltip
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information;
-      Ref           : Entity_Reference;
-      Status        : Find_Decl_Or_Body_Query_Status;
-      Accurate_Xref : Boolean;
-      Draw_Border   : Boolean) return Cairo_Surface;
-   --  Return a tooltip representing Entity.
+   type Tooltip_Information is record
+      Is_Spec    : Boolean;
+      Visibility : Construct_Visibility;
+      Category   : Language_Category;
+   end record;
 
-   function Draw_Tooltip
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Entity      : Entity_Access;
-      Draw_Border : Boolean;
-      Guess       : Boolean := False) return Cairo_Surface;
-   --  Same as above, based on an entity access. If guess is true then the
-   --  entity information is a guess - may not be the actual one for the
+   function Is_Tooltip_Guess
+     (Status        : Find_Decl_Or_Body_Query_Status;
+      Accurate_Xref : Boolean) return Boolean;
+   --  return if the tooltip is a guess
+
+   function Get_Tooltip_Guess_Message return String;
+   --  return the message to add on top of the tooltip when guess is true
+
+   function Get_Tooltip_Header
+      (Entity : Entity_Information) return String;
+   --  Return a string in pango markup format to represent the header of a
    --  tooltip.
 
-end Entities.Tooltips;
+   function Get_Tooltip_Information
+      (Entity : Entity_Information) return Tooltip_Information;
+   --  Return information to be able to display the right icon
+   --  depending on category and visibility.
+
+end Old_Entities.Tooltips_Assistant;

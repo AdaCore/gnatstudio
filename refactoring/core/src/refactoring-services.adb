@@ -23,8 +23,6 @@ with Refactoring.Buffer_Helpers; use Refactoring.Buffer_Helpers;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Basic_Types;             use Basic_Types;
-with Entities;                use Entities;
-with Entities.Queries;        use Entities.Queries;
 with GNAT.Strings;            use GNAT.Strings;
 with GPS.Editors;             use GPS.Editors;
 with Language;                use Language;

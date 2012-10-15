@@ -55,7 +55,6 @@ with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with Debugger;                  use Debugger;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
-with Entities;                  use Entities;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -95,8 +94,9 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GPS.Editors; use GPS.Editors;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with Xref;                      use Xref;
 
 package body GVD_Module is
    Me : constant Debug_Handle := Create ("GVD_MODULE");
@@ -342,41 +342,6 @@ package body GVD_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
    --  Hook for "debugger_executable_changed"
-
-   --------------------
-   -- GVD_Contextual --
-   --------------------
-
-   Is_Printable_Entity : constant array (E_Kinds) of Boolean :=
-                           (Overloaded_Entity    => True,
-                            Unresolved_Entity    => True,
-                            Access_Kind          => True,
-                            Array_Kind           => True,
-                            Boolean_Kind         => True,
-                            Class_Wide           => True,
-                            Class                => True,
-                            Decimal_Fixed_Point  => True,
-                            Enumeration_Literal  => True,
-                            Enumeration_Kind     => True,
-                            Exception_Entity     => True,
-                            Floating_Point       => True,
-                            Modular_Integer      => True,
-                            Named_Number         => True,
-                            Ordinary_Fixed_Point => True,
-                            Record_Kind          => True,
-                            Signed_Integer       => True,
-                            String_Kind          => True,
-                            others               => False);
-   --  Set of printable entities
-
-   Is_Access_Entity : constant array (E_Kinds) of Boolean :=
-                        (Overloaded_Entity => True,
-                         Unresolved_Entity => True,
-                         Access_Kind       => True,
-                         Array_Kind        => True,
-                         String_Kind       => True,
-                         others            => False);
-   --  Set of potentially dereferenceable entities
 
    ----------------
    -- Contextual --
@@ -1605,11 +1570,12 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : Entity_Information;
+      Entity : General_Entity;
    begin
       if Has_Entity_Name_Information (Context) then
          Entity := Get_Entity (Context);
-         return Entity = null or else Is_Subprogram (Entity);
+         return Entity = No_General_Entity
+           or else Get_Kernel (Context).Databases.Is_Subprogram (Entity);
       end if;
       return False;
    end Filter_Matches_Primitive;
@@ -1623,14 +1589,14 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : Entity_Information;
+      Entity : General_Entity;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Has_Entity_Name_Information (Context) then
          Entity := Get_Entity (Context);
 
-         return Entity = null
-           or else (not Get_Kind (Entity).Is_Type
-                    and then Is_Printable_Entity (Get_Kind (Entity).Kind));
+         return Entity = No_General_Entity
+           or else Kernel.Databases.Is_Printable_In_Debugger (Entity);
 
       elsif Has_Area_Information (Context) then
          --  We assume the user knows best
@@ -1648,13 +1614,16 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : Entity_Information;
+      Entity : General_Entity;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Has_Entity_Name_Information (Context) then
          Entity := Get_Entity (Context);
-         return Entity = null
-           or else (not Get_Kind (Entity).Is_Type
-                    and then Is_Access_Entity (Get_Kind (Entity).Kind));
+         return Entity = No_General_Entity
+
+           --  ??? Should also include array variables
+           or else (not Kernel.Databases.Is_Type (Entity)
+                    and then Kernel.Databases.Is_Access (Entity));
 
       elsif Has_Area_Information (Context) then
          return True;

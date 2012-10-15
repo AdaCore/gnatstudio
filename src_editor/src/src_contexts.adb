@@ -22,6 +22,7 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regexp;                use GNAT.Regexp;
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Xref;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
@@ -72,6 +73,7 @@ with Vsearch;                    use Vsearch;
 with UTF8_Utils;
 
 package body Src_Contexts is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Debug_Handle := Create ("Src_Contexts");
 

@@ -25,6 +25,7 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 
+with GNATCOLL.Xref;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Src_Editor_Box;            use Src_Editor_Box;
@@ -34,6 +35,7 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
 package body Src_Editor_Module.Markers is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Debug_Handle := Create ("Markers");
 

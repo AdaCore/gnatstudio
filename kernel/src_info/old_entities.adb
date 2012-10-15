@@ -27,18 +27,19 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
+with GNATCOLL.Xref;
 with Basic_Types;                use Basic_Types;
-with Entities.Debug;             use Entities.Debug;
+with Old_Entities.Debug;             use Old_Entities.Debug;
 with GPS.Intl;                   use GPS.Intl;
 with Language;                   use Language;
 with Language.Tree.Database;     use Language.Tree.Database;
-with Language_Handlers;          use Language_Handlers;
-with Language_Utils;             use Language_Utils;
 with Projects;                   use Projects;
 with String_Utils;
 with Remote;                     use Remote;
 
-package body Entities is
+package body Old_Entities is
+   use type GNATCOLL.Xref.Visible_Column;
+
    Assert_Me : constant Trace_Handle := Create ("Entities.Assert", Off);
 
    Ref_Me  : constant Trace_Handle := Create ("Entities.Ref", Off);
@@ -1117,7 +1118,7 @@ package body Entities is
    begin
       Db.Construct_Db_Locks := Db.Construct_Db_Locks + 1;
 
-      return (Ada.Finalization.Limited_Controlled with
+      return (Ada.Finalization.Controlled with
               Previous_Level => Db.Construct_Db_Locks - 1, Db => Db);
    end Lock_Construct_Heuristics;
 
@@ -1465,7 +1466,7 @@ package body Entities is
       H : LI_Handler := Handler;
    begin
       if H = null then
-         H := Get_LI_Handler (Db, File);
+         H := Default_LI_Handler;
       end if;
 
       if H = null then
@@ -2331,18 +2332,6 @@ package body Entities is
       end if;
    end Get_LI;
 
-   --------------------
-   -- Get_LI_Handler --
-   --------------------
-
-   function Get_LI_Handler
-     (Db              : Entities_Database;
-      Source_Filename : GNATCOLL.VFS.Virtual_File) return LI_Handler is
-   begin
-      return Get_LI_Handler_From_File
-        (Language_Handler (Db.Lang), Source_Filename);
-   end Get_LI_Handler;
-
    -------------------
    -- Get_Timestamp --
    -------------------
@@ -2863,27 +2852,6 @@ package body Entities is
       return Entity.Attributes;
    end Get_Attributes;
 
-   ---------------------------
-   -- Parse_File_Constructs --
-   ---------------------------
-
-   procedure Parse_File_Constructs
-     (Handler   : access LI_Handler_Record;
-      Languages : access Abstract_Language_Handler_Record'Class;
-      File_Name : GNATCOLL.VFS.Virtual_File;
-      Result    : out Language.Construct_List)
-   is
-      pragma Unreferenced (Handler);
-
-      Lang : constant Language.Language_Access :=
-        Get_Language_From_File (Language_Handler (Languages), File_Name);
-
-   begin
-      --  Call the language specific syntax analyzer
-
-      Parse_File_Constructs (Lang, File_Name, Result);
-   end Parse_File_Constructs;
-
    --------------------
    -- Get_Name_Index --
    --------------------
@@ -3184,4 +3152,74 @@ package body Entities is
       return Ref.Entity;
    end Get_Entity;
 
-end Entities;
+   --------------------
+   -- Set_LI_Handler --
+   --------------------
+
+   procedure Set_LI_Handler
+     (Self    : Entities_Database;
+      Handler : LI_Handler)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Default_LI_Handler := Handler;
+   end Set_LI_Handler;
+
+   --------------------
+   -- Get_LI_Handler --
+   --------------------
+
+   function Get_LI_Handler (Self : Entities_Database) return LI_Handler is
+      pragma Unreferenced (Self);
+   begin
+      return Default_LI_Handler;
+   end Get_LI_Handler;
+
+   -------------------------
+   -- Create_Dummy_Entity --
+   -------------------------
+
+   function Create_Dummy_Entity
+     (Name  : Symbol;
+      Decl  : File_Location;
+      Kind  : E_Kinds;
+      Is_Type : Boolean) return Entity_Information
+   is
+      E : Entity_Information;
+   begin
+      E := new Entity_Information_Record'
+        (Name                  => Name,
+         Mangled_Name          => GNATCOLL.Symbols.No_Symbol,
+         Kind                  => Unresolved_Entity_Kind,
+         Attributes            => (others => False),
+         LI_Declaration        => Decl,
+         Live_Declaration      => Decl,
+         Caller_At_Declaration => null,
+         End_Of_Scope          => No_E_Reference,
+         Parent_Types          => Null_Entity_Information_List,
+         Pointed_Type          => null,
+         Returned_Type         => null,
+         Primitive_Op_Of       => null,
+         Rename                => null,
+         Instantiation_Of      => null,
+         Called_Entities       => Null_Entity_Information_List,
+         Primitive_Subprograms => Null_Entity_Information_List,
+         Child_Types           => Null_Entity_Information_List,
+         References            => Entity_File_Maps.Empty_Map,
+         File_Timestamp_In_References => 0,
+         Is_Valid                     => False,
+         Ref_Count                    => 1,
+         Trie_Tree_Index              =>
+           Entities_Search_Tries.Null_Vector_Trie_Index,
+         Is_Dummy                     => True,
+         Is_Imported                  => False);
+
+      E.Kind.Kind := Kind;
+      E.Kind.Is_Type := Is_Type;
+
+      Ref (Decl.File);
+
+      return E;
+   end Create_Dummy_Entity;
+
+end Old_Entities;

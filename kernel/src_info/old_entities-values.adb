@@ -19,7 +19,7 @@ with Ada.Unchecked_Conversion;
 with Glib.Values;                use Glib, Glib.Values;
 with System;                     use System;
 
-package body Entities.Values is
+package body Old_Entities.Values is
 
    Entity_Information_Type : Glib.GType := Glib.GType_None;
 
@@ -105,4 +105,4 @@ package body Entities.Values is
       return Entity;
    end From_GValue;
 
-end Entities.Values;
+end Old_Entities.Values;

@@ -25,7 +25,7 @@ with GPS.Intl;            use GPS.Intl;
 with Language.Tree;       use Language.Tree;
 with String_Utils;        use String_Utils;
 
-package body Entities.Tooltips_Assistant is
+package body Old_Entities.Tooltips_Assistant is
 
    ------------------------
    -- Get_Tooltip_Header --
@@ -109,4 +109,4 @@ package body Entities.Tooltips_Assistant is
         or else (Accurate_Xref and then Status = Fuzzy_Match);
    end Is_Tooltip_Guess;
 
-end Entities.Tooltips_Assistant;
+end Old_Entities.Tooltips_Assistant;

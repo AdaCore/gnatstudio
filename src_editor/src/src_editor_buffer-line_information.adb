@@ -34,6 +34,7 @@ with Pango.Cairo;              use Pango.Cairo;
 with Pango.Enums;              use Pango.Enums;
 
 with Commands.Editor;          use Commands.Editor;
+with GNATCOLL.Xref;
 with GPS.Editors;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel;               use GPS.Kernel;
@@ -46,6 +47,7 @@ with Traces;                   use Traces;
 with Language.Ada;             use Language.Ada;
 
 package body Src_Editor_Buffer.Line_Information is
+   use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Debug_Handle := Create ("Src_Editor_Buffer.Line_Information");
 
