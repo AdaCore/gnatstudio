@@ -1081,7 +1081,7 @@ package body Completion_Module is
                --  If the completion list is empty, return without showing the
                --  completions window.
 
-               if At_End (First (Data.Result)) then
+               if At_End (First (Data.Result, Kernel.Databases)) then
                   Trace (Me_Adv, "No completions found");
                   On_Completion_Destroy (View, Data);
                   Kernel.Pop_State;
@@ -1119,8 +1119,10 @@ package body Completion_Module is
                   To_Marshaller (On_Completion_Destroy'Access),
                   View, Data, After => True);
 
-               Set_Iterator (Win, new Comp_Iterator'
-                               (Comp_Iterator'(I => First (Data.Result))));
+               Set_Iterator
+                 (Win, new Comp_Iterator'
+                    (Comp_Iterator'
+                       (I => First (Data.Result, Kernel.Databases))));
 
                Set_History (Win, Completion_Module.Completion_History);
 
@@ -1346,7 +1348,7 @@ package body Completion_Module is
                Callback       => Load_One_File_Constructs'Access,
                Chunk_Size     => 1,
                Queue_Name     => Db_Loading_Queue,
-               Operation_Name => "load entity db",
+               Operation_Name => "load constructs db",
                Files          => Added_Files);
 
             Unchecked_Free (Project_Files);

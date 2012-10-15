@@ -54,6 +54,8 @@ with Traces;
 package body GPS.Kernel.Xref is
    use Xref;
 
+   Me : constant Trace_Handle := Create ("Xref");
+
    type All_LI_Information_Command (Name_Len : Natural)
    is new Root_Command with record
       Iter         : Old_Entities.Queries.Recursive_LI_Information_Iterator;
@@ -675,41 +677,43 @@ package body GPS.Kernel.Xref is
    ---------------------
 
    procedure Create_Database
-     (Self   : in out General_Xref_Database;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
    begin
-      if Self = null then
-         Self := new GPS_General_Xref_Database_Record;
-         GPS_General_Xref_Database_Record (Self.all).Kernel :=
+      if Kernel.Databases = null then
+         Kernel.Database := new GPS_General_Xref_Database_Record;
+         GPS_General_Xref_Database_Record (Kernel.Database.all).Kernel :=
            Kernel_Handle (Kernel);
       end if;
 
       if Active (SQLITE) then
-         if Self.Xref = null then
-            Self.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
-            GPS_Xref_Database (Self.Xref.all).Kernel := Kernel_Handle (Kernel);
+         if Kernel.Database.Xref = null then
+            Kernel.Database.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
+            GPS_Xref_Database (Kernel.Database.Xref.all).Kernel :=
+              Kernel_Handle (Kernel);
          end if;
 
       else
-         Self.Entities := Old_Entities.Create
+         Kernel.Database.Entities := Old_Entities.Create
            (Kernel.Registry,
             Kernel.Get_Construct_Database,
             Normal_Ref_In_Call_Graph =>
             not Require_GNAT_Date
               (Kernel, Old_Entities.Advanced_Ref_In_Call_Graph_Date));
 
-         Old_Entities.Set_Symbols (Self.Entities, Kernel.Symbols);
+         Old_Entities.Set_Symbols
+           (Kernel.Database.Entities, Kernel.Symbols);
          Old_Entities.Register_Language_Handler
-           (Self.Entities, Kernel.Lang_Handler);
+           (Kernel.Database.Entities, Kernel.Lang_Handler);
          Old_Entities.Set_LI_Handler
-           (Self.Entities, ALI_Parser.Create_ALI_Handler
-              (Db           => Self.Entities,
+           (Kernel.Database.Entities, ALI_Parser.Create_ALI_Handler
+              (Db           => Kernel.Database.Entities,
                Registry     => Kernel.Registry.all,
                Lang_Handler => Kernel.Lang_Handler));
       end if;
 
-      Self.Initialize_Constructs (Kernel.Lang_Handler, Kernel.Symbols);
+      Kernel.Database.Initialize_Constructs
+        (Kernel.Lang_Handler, Kernel.Symbols);
    end Create_Database;
 
    ---------------------
@@ -776,6 +780,7 @@ package body GPS.Kernel.Xref is
            (Dir       => Dir,
             Base_Name => "gnatinspect.db");
 
+         Trace (Me, "Set up xref database: " & File.Display_Full_Name);
          Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all));
 
          --  ??? Now would be a good opportunity to update the cross-references

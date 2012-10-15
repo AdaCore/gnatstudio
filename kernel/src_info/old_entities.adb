@@ -402,9 +402,7 @@ package body Old_Entities is
            (Str => D.List.Table
               (Entity_Information_Arrays.First).Name,
             Case_Sensitive => not Case_Insensitive_Identifiers
-              (D.List.Table
-                 (Entity_Information_Arrays.First).
-                  Live_Declaration.File.Handler));
+              (Default_LI_Handler));
       end if;
    end Get_Name;
 

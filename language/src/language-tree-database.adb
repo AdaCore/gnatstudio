@@ -984,7 +984,6 @@ package body Language.Tree.Database is
 
    procedure Initialize
      (Db         : Construct_Database_Access;
-      Provider   : Buffer_Provider_Access;
       Lg_Handler : Abstract_Language_Handler)
    is
    begin
@@ -993,10 +992,21 @@ package body Language.Tree.Database is
         Construct_Annotations_Pckg.Create_Annotation_Key_Registry;
       Construct_Annotations_Pckg.Get_Annotation_Key
         (Db.Construct_Registry, Db.Persistent_Entity_Key);
-      Db.Provider := Provider;
       Db.Null_Structured_File.Db := Db;
       Db.Lg_Handler := Lg_Handler;
    end Initialize;
+
+   ------------------
+   -- Set_Provider --
+   ------------------
+
+   procedure Set_Provider
+     (Db         : Construct_Database_Access;
+      Provider   : Buffer_Provider_Access)
+   is
+   begin
+      Db.Provider := Provider;
+   end Set_Provider;
 
    -------------------
    -- Get_Or_Create --

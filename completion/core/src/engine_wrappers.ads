@@ -31,6 +31,7 @@ with Basic_Types;            use Basic_Types;
 with Completion;             use Completion;
 with Ada_Semantic_Tree;      use Ada_Semantic_Tree;
 with GPS.Kernel;
+with Xref;
 
 package Engine_Wrappers is
 
@@ -42,17 +43,26 @@ package Engine_Wrappers is
 
    type Root_Proposal_Access is access all Root_Proposal'Class;
 
-   function Get_Label (Proposal : Root_Proposal) return String is abstract;
+   function Get_Label
+     (Proposal : Root_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return String is abstract;
    function Get_Completion
-     (Proposal : Root_Proposal) return String is abstract;
+     (Proposal : Root_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return String
+      is abstract;
    function Get_Visibility
      (Proposal : Root_Proposal) return Construct_Visibility is abstract;
    function Get_Category
      (Proposal : Root_Proposal) return Language_Category is abstract;
    function Get_Caret_Offset
-     (Proposal : Root_Proposal) return Character_Offset_Type is abstract;
+     (Proposal : Root_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Character_Offset_Type is abstract;
    function Get_Location
-     (Proposal : Root_Proposal) return File_Location is abstract;
+     (Proposal : Root_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return File_Location is abstract;
 
    function Get_Documentation
      (Proposal : Root_Proposal;
@@ -78,7 +88,9 @@ package Engine_Wrappers is
 
    function At_End (Iter : Root_Iterator) return Boolean is abstract;
    function Is_Valid (Iter : Root_Iterator) return Boolean is abstract;
-   procedure Next (Iter : in out Root_Iterator) is abstract;
+   procedure Next
+     (Iter : in out Root_Iterator;
+      Db : access Xref.General_Xref_Database_Record'Class) is abstract;
    function Get_Proposal
      (Iter    : Root_Iterator) return Root_Proposal'Class is abstract;
 
@@ -93,17 +105,24 @@ package Engine_Wrappers is
 
    type Comp_Proposal is new Root_Proposal with private;
 
-   overriding function Get_Label (Proposal : Comp_Proposal) return String;
+   overriding function Get_Label
+     (Proposal : Comp_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return String;
    overriding function Get_Completion
-     (Proposal : Comp_Proposal) return String;
+     (Proposal : Comp_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return String;
    overriding function Get_Visibility
      (Proposal : Comp_Proposal) return Construct_Visibility;
    overriding function Get_Category
      (Proposal : Comp_Proposal) return Language_Category;
    overriding function Get_Caret_Offset
-     (Proposal : Comp_Proposal) return Character_Offset_Type;
+     (Proposal : Comp_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Character_Offset_Type;
    overriding function Get_Location
-     (Proposal : Comp_Proposal) return File_Location;
+     (Proposal : Comp_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return File_Location;
    overriding function Get_Documentation
      (Proposal : Comp_Proposal;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
@@ -127,7 +146,9 @@ package Engine_Wrappers is
 
    overriding function At_End (Iter : Comp_Iterator) return Boolean;
    overriding function Is_Valid (Iter : Comp_Iterator) return Boolean;
-   overriding procedure Next (Iter : in out Comp_Iterator);
+   overriding procedure Next
+     (Iter : in out Comp_Iterator;
+      Db   : access Xref.General_Xref_Database_Record'Class);
    overriding function Get_Proposal
      (Iter    : Comp_Iterator) return Root_Proposal'Class;
 
@@ -139,17 +160,24 @@ package Engine_Wrappers is
 
    type Entity_Proposal is new Root_Proposal with private;
 
-   overriding function Get_Label (Proposal : Entity_Proposal) return String;
+   overriding function Get_Label
+     (Proposal : Entity_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return String;
    overriding function Get_Completion
-     (Proposal : Entity_Proposal) return String;
+     (Proposal : Entity_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return String;
    overriding function Get_Visibility
      (Proposal : Entity_Proposal) return Construct_Visibility;
    overriding function Get_Category
      (Proposal : Entity_Proposal) return Language_Category;
    overriding function Get_Caret_Offset
-     (Proposal : Entity_Proposal) return Character_Offset_Type;
+     (Proposal : Entity_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Character_Offset_Type;
    overriding function Get_Location
-     (Proposal : Entity_Proposal) return File_Location;
+     (Proposal : Entity_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return File_Location;
    overriding function Get_Documentation
      (Proposal : Entity_Proposal;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
@@ -163,7 +191,9 @@ package Engine_Wrappers is
 
    overriding function At_End (Iter : Entity_Iterator) return Boolean;
    overriding function Is_Valid (Iter : Entity_Iterator) return Boolean;
-   overriding procedure Next (Iter : in out Entity_Iterator);
+   overriding procedure Next
+     (Iter : in out Entity_Iterator;
+      Db : access Xref.General_Xref_Database_Record'Class);
    overriding function Get_Proposal
      (Iter    : Entity_Iterator) return Root_Proposal'Class;
 

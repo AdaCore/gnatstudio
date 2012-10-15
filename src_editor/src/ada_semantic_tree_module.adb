@@ -134,11 +134,10 @@ package body Ada_Semantic_Tree_Module is
       Std_Entities_Files : Virtual_File)
    is
    begin
-      Initialize
+      Set_Provider
         (Get_Construct_Database (Kernel),
-         new GPS_Buffer_Provider'
-           (Buffer_Provider with Kernel => Kernel_Handle (Kernel)),
-         Abstract_Language_Handler (Kernel.Get_Language_Handler));
+         Provider => new GPS_Buffer_Provider'
+           (Buffer_Provider with Kernel => Kernel_Handle (Kernel)));
       Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
         (Get_Construct_Database (Kernel), Std_Entities_Files);
    exception

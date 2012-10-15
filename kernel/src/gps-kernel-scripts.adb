@@ -900,10 +900,37 @@ package body GPS.Kernel.Scripts is
          Set_Return_Value (Data, Kernel.Databases.Is_Static_Local (Entity));
          Set_Return_Value_Key (Data, "static_local");
 
+      elsif Command = "is_subprogram" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Subprogram (Entity));
+
+      elsif Command = "is_generic" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Generic (Entity));
+
+      elsif Command = "is_global" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Global (Entity));
+
+      elsif Command = "is_access" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Access (Entity));
+
+      elsif Command = "is_array" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Array (Entity));
+
+      elsif Command = "is_type" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Type (Entity));
+
+      elsif Command = "is_container" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Is_Type (Entity));
+
       elsif Command = "category" then
          raise Program_Error
-           with "GPS.Entity.category has been deprecated";
---       Entity := Get_Data (Data, 1);
+           with "GPS.Entity.category has been deprecated, see is_*";
 --       Set_Return_Value (Data, Category_To_String (Get_Category (Entity)));
 
       elsif Command = "end_of_scope" then
@@ -2077,6 +2104,35 @@ package body GPS.Kernel.Scripts is
         (Kernel, "category",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_subprogram",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_generic",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_global",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_access",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_array",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_type",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_container",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+
       Register_Command
         (Kernel, "end_of_scope",
          Minimum_Args => 0,

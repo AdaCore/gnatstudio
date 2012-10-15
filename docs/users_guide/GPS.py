@@ -4542,12 +4542,66 @@ class Entity(object):
 
     def category(self):
         """
+        Deprecated
+
         Return the category of a given entity. Possible values include: label,
         literal, object, subprogram, package/namespace, type, unknown.
+
+        See instead is_access, is_array, is_subprogram,...
 
         :return: A string
         """
         pass  # implemented in Ada
+
+    def is_subprogram(self):
+        """
+        Whether the entity is a subprogram, procedure or function.
+        :return: A boolean
+        """
+        pass
+
+    def is_generic(self):
+        """
+        Whether the entity is a generic.
+        :return: A boolean
+        """
+        pass
+
+    def is_global(self):
+        """
+        Whether self is a global entity.
+        :return: A boolean
+        """
+        pass
+
+    def is_access(self):
+        """
+        Whether self is a pointer or access (variable or type)
+        :return: A boolean
+        """
+        pass
+
+    def is_array(self):
+        """
+        Whether self is an array type or variable.
+        :return: A boolean
+        """
+        pass
+
+    def is_type(self):
+        """
+        Whether self is a type declaration (as opposed to a variable)
+        :return: A boolean
+        """
+        pass
+
+    def is_container(self):
+        """
+        Whether self contains other entities (like a package or a record
+        for instance).
+        :return: A boolean
+        """
+        pass
 
     def declaration(self):
         """

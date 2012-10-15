@@ -52,8 +52,7 @@ package GPS.Kernel.Xref is
    --  see inherited documentation
 
    procedure Create_Database
-     (Self   : in out General_Xref_Database;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create and initialize the xref databases
 
    procedure Project_Changed (Self : General_Xref_Database);

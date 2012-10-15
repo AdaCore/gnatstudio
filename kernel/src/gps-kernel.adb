@@ -325,7 +325,7 @@ package body GPS.Kernel is
       --  is more efficient in case the current directory has lots of source
       --  files.
 
-      GPS.Kernel.Xref.Create_Database (Handle.Database, Handle);
+      GPS.Kernel.Xref.Create_Database (Handle);
 
       --  Initialize the preferences. We load the file now, even though it
       --  will also be reloaded after the customization files, so that themes

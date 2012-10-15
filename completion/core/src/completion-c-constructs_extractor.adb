@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with ALI_Parser;       use ALI_Parser;
 with Language.Cpp;     use Language.Cpp;
 with Xref;             use Xref;
 
@@ -61,12 +60,6 @@ package body Completion.C.Constructs_Extractor is
       pragma Unreferenced (Offset);
 
       Db : constant General_Xref_Database := Resolver.Kernel.Databases;
-
-      Doc_Threshold : constant Natural := 100;
-      --  The documentation associated with each completion proposal is only
-      --  generated when the number of completion proposals is smaller than
-      --  this value. This threshold is required to allow the use of Dynamic
-      --  Smart Completion in projects composed of many C/C++ files.
 
       procedure Add_Proposal
         (To_List : in out Extensive_List_Pckg.List;
@@ -233,7 +226,7 @@ package body Completion.C.Constructs_Extractor is
       C_Context  : C_Completion_Context;
       Expression : Parsed_Expression;
       E_List     : Extensive_List_Pckg.List;
-      Iter       : Vector_Trie_Iterator;
+      Iter       : Entities_In_Project_Cursor;
       Token      : Token_Record;
 
    --  Start of processing for Get_Completion_Root
@@ -270,36 +263,15 @@ package body Completion.C.Constructs_Extractor is
                           Context.Buffer
                             (Natural (Token.Token_First)
                                .. Natural (Token.Token_Last));
-               Count  : Natural := 0;
 
             begin
-               --  Check if we are under Doc_Threshold
-
-               Iter :=
-                 Start (Trie       => Get_Name_Index (Resolver.GLI_Handler),
-                        Prefix     => Prefix,
-                        Is_Partial => True);
-               while not At_End (Iter) loop
-                  Count := Count + 1;
-
-                  if Count > Doc_Threshold then
-                     --  We don't need to count the exact number of proposals
-                     --  that we have
-
-                     exit;
-                  end if;
-
-                  Next (Iter);
-               end loop;
-
-               Iter :=
-                 Start (Trie       => Get_Name_Index (Resolver.GLI_Handler),
-                        Prefix     => Prefix,
-                        Is_Partial => True);
+               Iter := Db.All_Entities_From_Prefix
+                 (Prefix => Prefix, Is_Partial => True);
                while not At_End (Iter) loop
                   Add_Proposal (E_List, Get (Iter));
                   Next (Iter);
                end loop;
+               Destroy (Iter);
 
                Append
                  (Result.List,
@@ -384,15 +356,11 @@ package body Completion.C.Constructs_Extractor is
                                   (Natural (Token.Token_First)
                                     .. Natural (Token.Token_Last));
                      E      : General_Entity;
-                     Iter   : Vector_Trie_Iterator;
+                     Iter   : Entities_In_Project_Cursor :=
+                       Db.All_Entities_From_Prefix
+                         (Prefix => Prefix, Is_Partial => False);
 
                   begin
-                     Iter :=
-                       Start
-                         (Trie       => Get_Name_Index (Resolver.GLI_Handler),
-                          Prefix     => Prefix,
-                          Is_Partial => False);
-
                      while not At_End (Iter) loop
                         E := Get (Iter);
 
@@ -405,7 +373,7 @@ package body Completion.C.Constructs_Extractor is
                         Next (Iter);
                      end loop;
 
-                     Free (Iter);
+                     Destroy (Iter);
 
                      Completion_List_Pckg.Append
                        (Result.List,
@@ -462,15 +430,11 @@ package body Completion.C.Constructs_Extractor is
                                     (Natural (Token.Token_First)
                                       .. Natural (Token.Token_Last));
                      E        : General_Entity;
-                     Iter     : Vector_Trie_Iterator;
+                     Iter     : Entities_In_Project_Cursor :=
+                       Db.All_Entities_From_Prefix
+                         (Prefix => Prefix, Is_Partial => False);
 
                   begin
-                     Iter :=
-                       Start
-                         (Trie       => Get_Name_Index (Resolver.GLI_Handler),
-                          Prefix     => Prefix,
-                          Is_Partial => False);
-
                      while not At_End (Iter) loop
                         E := Get (Iter);
 
@@ -537,7 +501,7 @@ package body Completion.C.Constructs_Extractor is
                         Next (Iter);
                      end loop;
 
-                     Free (Iter);
+                     Destroy (Iter);
 
                      Completion_List_Pckg.Append
                        (Result.List,
@@ -707,7 +671,6 @@ package body Completion.C.Constructs_Extractor is
          declare
             Params : constant Parameter_Array :=
               Db.Parameters (Proposal.Entity_Info);
-            Param : General_Entity;
          begin
             if Params'Length = 0 then
                return Proposal.Name.all & " without params";

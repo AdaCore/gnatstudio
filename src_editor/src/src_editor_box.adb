@@ -1409,10 +1409,33 @@ package body Src_Editor_Box is
          Acquire_Focus (Editor.Source_View);
          Place_Cursor (Editor.Source_Buffer, Start_Iter);
 
+         --  Set basic context information about current file
+
+         Set_File_Information
+           (Context,
+            Files  => (1 => Filename),
+            Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+            Column => Expand_Tabs
+              (Get_Buffer (Editor),
+               Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
+               To_Box_Column (Column)));
+
       else
          Get_Iter_At_Line_Offset
            (Editor.Source_Buffer, Entity_Start, Line, Column);
          Copy (Source => Entity_Start, Dest => Cursor_Location);
+
+         --  Set basic context information about current file. Must be done
+         --  before we set the entity information.
+
+         Set_File_Information
+           (Context,
+            Files  => (1 => Filename),
+            Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+            Column => Expand_Tabs
+              (Get_Buffer (Editor),
+               Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
+               To_Box_Column (Column)));
 
          Click_In_Selection :=
            Has_Selection
@@ -1547,17 +1570,6 @@ package body Src_Editor_Box is
             end if;
          end;
       end if;
-
-      --  Set basic context information about current file
-
-      Set_File_Information
-        (Context,
-         Files  => (1 => Filename),
-         Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-         Column => Expand_Tabs
-           (Get_Buffer (Editor),
-            Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
-            To_Box_Column (Column)));
    end Get_Contextual_Menu;
 
    ---------------

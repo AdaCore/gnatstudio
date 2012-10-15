@@ -1635,6 +1635,89 @@ package body Xref is
       end if;
    end Next;
 
+   ------------------------------
+   -- All_Entities_From_Prefix --
+   ------------------------------
+
+   function All_Entities_From_Prefix
+     (Self       : access General_Xref_Database_Record'Class;
+      Prefix     : String;
+      Is_Partial : Boolean := True) return Entities_In_Project_Cursor
+   is
+      use Old_Entities.Entities_Search_Tries;
+      Result : Entities_In_Project_Cursor;
+   begin
+      if Active (SQLITE) then
+         null;
+      else
+         Result.Old_Iter :=
+           Start (Trie     => Old_Entities.Get_Name_Index
+                     (Old_Entities.Get_LI_Handler (Self.Entities)),
+                  Prefix   => Prefix,
+                  Is_Partial => Is_Partial);
+      end if;
+      return Result;
+   end All_Entities_From_Prefix;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Entities_In_Project_Cursor) is
+   begin
+      if Active (SQLITE) then
+         null;
+      else
+         Old_Entities.Entities_Search_Tries.Free (Iter.Old_Iter);
+      end if;
+   end Destroy;
+
+   ------------
+   -- At_End --
+   ------------
+
+   overriding function At_End
+     (Iter : Entities_In_Project_Cursor) return Boolean
+   is
+      use Old_Entities.Entities_Search_Tries;
+   begin
+      if Active (SQLITE) then
+         return True;
+      else
+         return At_End (Iter.Old_Iter);
+      end if;
+   end At_End;
+
+   ---------
+   -- Get --
+   ---------
+
+   overriding function Get
+     (Iter : Entities_In_Project_Cursor) return General_Entity
+   is
+      use Old_Entities.Entities_Search_Tries;
+   begin
+      if Active (SQLITE) then
+         return No_General_Entity;
+      else
+         return From_Old (Get (Iter.Old_Iter));
+      end if;
+   end Get;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next (Iter : in out Entities_In_Project_Cursor) is
+      use Old_Entities.Entities_Search_Tries;
+   begin
+      if Active (SQLITE) then
+         null;
+      else
+         Next (Iter.Old_Iter);
+      end if;
+   end Next;
+
    ------------
    -- At_End --
    ------------
@@ -2227,6 +2310,9 @@ package body Xref is
 
       Self.Symbols := Symbols;
 
+      Language.Tree.Database.Initialize
+        (Db         => Self.Constructs,
+         Lg_Handler => Abstract_Language_Handler (Lang_Handler));
       Get_Annotation_Key
         (Get_Construct_Annotation_Key_Registry (Self.Constructs).all,
          LI_Entity_Key);

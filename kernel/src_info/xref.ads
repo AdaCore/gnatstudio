@@ -605,6 +605,24 @@ package Xref is
      (Iter : Entities_In_File_Cursor) return General_Entity;
    overriding procedure Next (Iter : in out Entities_In_File_Cursor);
 
+   type Entities_In_Project_Cursor is new Base_Entities_Cursor with private;
+
+   function All_Entities_From_Prefix
+     (Self       : access General_Xref_Database_Record'Class;
+      Prefix     : String;
+      Is_Partial : Boolean := True) return Entities_In_Project_Cursor;
+   --  Returns all entities in the project whose name starts with Prefix (if
+   --  Is_Partial is True) or whose name is exactly Prefix (if Is_Partial is
+   --  False).
+
+   overriding function At_End
+     (Iter : Entities_In_Project_Cursor) return Boolean;
+   overriding function Get
+     (Iter : Entities_In_Project_Cursor) return General_Entity;
+   overriding procedure Next (Iter : in out Entities_In_Project_Cursor);
+
+   procedure Destroy (Iter : in out Entities_In_Project_Cursor);
+
    --------------
    -- Tooltips --
    --------------
@@ -792,6 +810,10 @@ private
 
    type Entities_In_File_Cursor is new Base_Entities_Cursor with record
       Old_Iter : Old_Entities.Queries.Entity_Iterator;
+   end record;
+
+   type Entities_In_Project_Cursor is new Base_Entities_Cursor with record
+      Old_Iter : Old_Entities.Entities_Search_Tries.Vector_Trie_Iterator;
    end record;
 
    type File_Iterator is tagged record

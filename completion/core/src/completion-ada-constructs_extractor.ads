@@ -117,22 +117,27 @@ private
 
    overriding
    function To_Completion_Id
-     (Proposal : Construct_Completion_Proposal) return Completion_Id;
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return Completion_Id;
    --  See inherited documentation
 
    overriding
    function Get_Completion
-     (Proposal : Construct_Completion_Proposal) return UTF8_String;
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return UTF8_String;
    --  See inherited documentation
 
    overriding
    function Get_Label
-     (Proposal : Construct_Completion_Proposal) return UTF8_String;
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class) return UTF8_String;
    --  See inherited documentation
 
    overriding
    function Get_Caret_Offset
-     (Proposal : Construct_Completion_Proposal)
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
       return Basic_Types.Character_Offset_Type;
    --  See inherited documentation
 
@@ -148,7 +153,9 @@ private
 
    overriding
    function Get_Location
-     (Proposal : Construct_Completion_Proposal) return File_Location;
+     (Proposal : Construct_Completion_Proposal;
+      Db : access Xref.General_Xref_Database_Record'Class)
+      return File_Location;
    --  See inherited documentation
 
    overriding
