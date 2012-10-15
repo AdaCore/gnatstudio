@@ -918,14 +918,14 @@ package body GPS.Kernel.Xref is
             Set_Default_Size (Dialog, 500, 500);
 
             Gtk_New (Label, -"This entity is overloaded.");
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+            Pack_Start (Dialog.Get_Action_Area, Label, Expand => False);
 
             Gtk_New (Label, -"Please select the appropriate declaration.");
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+            Pack_Start (Dialog.Get_Action_Area, Label, Expand => False);
 
             Gtk_New (Scrolled);
             Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-            Pack_Start (Get_Vbox (Dialog), Scrolled);
+            Pack_Start (Dialog.Get_Action_Area, Scrolled);
 
             OK_Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
