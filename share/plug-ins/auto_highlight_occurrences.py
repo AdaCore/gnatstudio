@@ -24,7 +24,7 @@ TIMEOUT=50           # Interval (in milliseconds) between two batches
 default_colors =  {
     #"label"      : "lightblue",
     #"literal"    : "lightblue",
-    #"object"     : "#ffbeee",
+  "object"     : "#ffbeee",
   "subprogram" : "#ffcf90",
   "package/namespace" : "lightgreen",
   "type"              : "lightgreen",
@@ -217,7 +217,7 @@ class LocationHighlighter:
             elif self.entity.is_type():
                 self.style = editor_location_styles["type"]
             else:
-                self.style = editor_location_styles["unknown"]
+                self.style = editor_location_styles["object"]
 
         else:
             self.style = editor_location_styles["unknown"]
