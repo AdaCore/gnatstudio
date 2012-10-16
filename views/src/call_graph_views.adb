@@ -20,7 +20,7 @@ with Ada.Unchecked_Conversion;
 with System;
 
 with GNAT.Strings;                use GNAT.Strings;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
@@ -70,7 +70,6 @@ with Xref;                        use Xref;
 with Generic_List;
 
 package body Call_Graph_Views is
-   Me : constant Trace_Handle := Create ("CALLGRAPH");
 
    ---------------
    -- Constants --
