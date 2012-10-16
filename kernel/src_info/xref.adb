@@ -1051,6 +1051,19 @@ package body Xref is
       end if;
    end "=";
 
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "=" (E1, E2 : General_Entity) return Boolean is
+   begin
+      if Active (SQLITE) then
+         return E1.Entity = E2.Entity;
+      else
+         return E1.Old_Entity = E2.Old_Entity;
+      end if;
+   end "=";
+
    -------------------------
    -- Find_All_References --
    -------------------------

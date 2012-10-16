@@ -48,6 +48,9 @@ package Xref is
    type General_Entity is private;
    No_General_Entity : constant General_Entity;
 
+   overriding function "=" (E1, E2 : General_Entity) return Boolean;
+   --  Whether the two entities are the same
+
    type Entity_Array is array (Natural range <>) of General_Entity;
 
    -----------
