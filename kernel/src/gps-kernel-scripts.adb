@@ -18,7 +18,6 @@
 with Ada.Unchecked_Conversion;
 with System;                  use System;
 with System.Address_Image;
-
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
 

@@ -32,6 +32,7 @@ with String_Utils;
 with Traces;
 
 package body Xref is
+   Me : constant Trace_Handle := Create ("Xref");
    Constructs_Heuristics : constant Trace_Handle :=
      Create ("Entities.Constructs", On);
 
@@ -500,6 +501,7 @@ package body Xref is
       end Internal_No_Constructs;
 
    begin
+      Trace (Me, "Find_Declaration of " & Entity_Name);
       Entity := Internal_No_Constructs (Entity_Name, Loc);  --  also sets Fuzzy
 
       if Fuzzy and then Ask_If_Overloaded then
@@ -530,6 +532,8 @@ package body Xref is
 
          begin
             if not Is_Null (S_File) then
+               Trace (Me, "Find_Declaration: fallback on constructs");
+
                --  In some cases, the references are extracted from a place
                --  where there is still an ALI file, but no more source file.
                --  This will issue a null Structured_File_Access, which is why
@@ -541,7 +545,11 @@ package body Xref is
                  (S_File, Loc.Line,
                   To_Line_String_Index (S_File, Loc.Line, Loc.Column));
 
-               if Result /= Null_Entity_Access then
+               if Result /= Null_Entity_Access
+                 and then
+                   (Entity_Name = "" or else
+                    Get (Get_Construct (Result).Name).all = Entity_Name)
+               then
                   --  First, try to see if there's already a similar entity in
                   --  the database. If that's the case, it's better to use it
                   --  than the dummy one created from the construct.
