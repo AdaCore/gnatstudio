@@ -16,11 +16,17 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with System.Memory; use System.Memory;
 
 package body Dynamic_Arrays is
 
    pragma Suppress (All_Checks);
+
+   type Small_Table_Ptr is access all Table_Type;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Table_Type, Small_Table_Ptr);
 
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
@@ -28,6 +34,10 @@ package body Dynamic_Arrays is
      (System.Address, Table_Ptr);
    function Convert is new Ada.Unchecked_Conversion
      (Table_Ptr, System.Address);
+   function Convert is new Ada.Unchecked_Conversion
+     (Table_Ptr, Small_Table_Ptr);
+   function Convert is new Ada.Unchecked_Conversion
+     (Small_Table_Ptr, Table_Ptr);
    pragma Warnings (On);
 
    Component_Size : constant size_t :=
@@ -58,21 +68,42 @@ package body Dynamic_Arrays is
    procedure Append (T : in out Instance; Item : Data) is
       New_Size : Index_Type;
       Old_Size : Index_Type;
+      Tmp      : Small_Table_Ptr;
    begin
       if T.Table = null then
-         T := (Table => Convert
-                 (Alloc (size_t (Table_Initial_Size) * Component_Size)),
-               P     => (Next_To_Last   => First,
-                         Last_Allocated => Index_Type'Pred
-                           (First + Index_Type (Table_Initial_Size))));
+         if Needs_Controlled then
+            Tmp := new Table_Type
+              (First .. First + Index_Type (Table_Initial_Size));
+            T := (Table => Convert (Tmp),
+                  P     => (Next_To_Last   => First,
+                            Last_Allocated => Index_Type'Pred
+                              (First + Index_Type (Table_Initial_Size))));
+         else
+            T := (Table => Convert
+                  (Alloc (size_t (Table_Initial_Size) * Component_Size)),
+                  P     => (Next_To_Last   => First,
+                            Last_Allocated => Index_Type'Pred
+                              (First + Index_Type (Table_Initial_Size))));
+         end if;
 
       elsif T.P.Next_To_Last > T.P.Last_Allocated then
          Old_Size := T.P.Last_Allocated - First + 1;
          New_Size := Index_Type'Max
            (Old_Size + Index_Type (Table_Minimum_Increment),
             Old_Size * Index_Type (Table_Multiplier));
-         T.Table := Convert
-           (Realloc (Convert (T.Table), size_t (New_Size) * Component_Size));
+
+         if Needs_Controlled then
+            Tmp := Convert (T.Table);
+            T.Table := new Table_Type (First .. First + New_Size);
+            T.Table (First .. First + Old_Size) :=
+              Tmp (First .. First + Old_Size);
+            Unchecked_Free (Tmp);
+         else
+            T.Table := Convert
+              (Realloc (Convert (T.Table),
+               size_t (New_Size) * Component_Size));
+         end if;
+
          T.P.Last_Allocated := New_Size + First - 1;
       end if;
 
@@ -150,9 +181,16 @@ package body Dynamic_Arrays is
    ----------
 
    procedure Free (T : in out Instance) is
+      Tmp : Small_Table_Ptr;
    begin
       if T.Table /= null then
-         Free (Convert (T.Table));
+         if Needs_Controlled then
+            Tmp := Convert (T.Table);
+            Unchecked_Free (Tmp);
+         else
+            Free (Convert (T.Table));
+         end if;
+
          T.Table := null;
          T.P.Next_To_Last := First;
       end if;

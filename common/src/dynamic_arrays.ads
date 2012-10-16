@@ -26,6 +26,7 @@ generic
    Table_Multiplier        : Positive := 2;
    Table_Minimum_Increment : Positive := 10;
    Table_Initial_Size      : Positive := 1;
+   Needs_Controlled        : Boolean := False;
    with function "=" (D1, D2 : Data) return Boolean is <>;
 
 package Dynamic_Arrays is
@@ -39,6 +40,10 @@ package Dynamic_Arrays is
    --  efficient than doubling the size every time, but this saves memory.
    --  Table_Initial_Size specifies the size that should be allocated initially
    --  for the table.
+   --
+   --  If Needs_Controlled is True, a slower algorithm will be used, which
+   --  ensure proper processing for controlled types rather than using low-
+   --  level system calls.
 
    type Index_Type is new Integer range 0 .. Integer'Last;
 

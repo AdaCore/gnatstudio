@@ -28,6 +28,7 @@ package Refactoring.UI is
    package Location_Arrays is new Dynamic_Arrays
      (Data                    => Xref.General_Location,
       "="                     => Xref."=",
+      Needs_Controlled        => True,
       Table_Multiplier        => 2,
       Table_Minimum_Increment => 10,
       Table_Initial_Size      => 100);
