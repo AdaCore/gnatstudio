@@ -4668,10 +4668,22 @@ class Entity(object):
         Return the list of fields for entity. This is a list of entities. This
         applies to Ada record and tagged types, or C structs for instance.
 
+        In older versions of GPS, this used to return the literals for
+        enumeration types, but these should now be queried through
+        self.literals() instead.
+
         :return: List of instances of :class:`GPS.Entity`
 
         """
         pass  # implemented in Ada
+
+    def literals(self):
+        """
+        Return the list of literals for an enumeration type.
+
+        :return: List of instances of :class:`GPS.Entity`
+        """
+        pass
 
     def find_all_refs(self, include_implicit=False):
         """
