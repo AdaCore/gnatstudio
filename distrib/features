@@ -23,3 +23,8 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.3.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-53-L921-032 GPS: Show protected objects in Outline view (2012-10-16)
+
+  Protected and task types/objects and their entries are now visible in
+  Outline View. New filter in Outline View "Show tasks, entries, and protected
+  types" is used to show/hide these items.
