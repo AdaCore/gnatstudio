@@ -831,6 +831,8 @@ Classes
 
    .. automethod:: GPS.Entity.is_type
 
+   .. automethod:: GPS.Entity.literals
+
    .. automethod:: GPS.Entity.methods
 
    .. automethod:: GPS.Entity.name
@@ -1070,8 +1072,6 @@ Classes
    .. automethod:: GPS.Logger.__init__
 
    .. automethod:: GPS.Logger.check
-
-   .. automethod:: GPS.Logger.get_active
 
    .. automethod:: GPS.Logger.log
 
