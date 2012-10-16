@@ -20,6 +20,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -44,10 +45,11 @@ with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
 
 with Build_Command_Manager;
 with Builder_Facility_Module;
-with Traces;                     use Traces;
+with Traces;
 with Xref;                       use Xref;
 
 package body Builder_Module is
+   Me : constant Trace_Handle := Create ("Builder");
 
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
@@ -164,7 +166,8 @@ package body Builder_Module is
          Main        => GNATCOLL.VFS.No_File);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end On_Compute_Xref;
 
    ----------------------------
@@ -178,7 +181,8 @@ package body Builder_Module is
    begin
       GPS.Kernel.Xref.Load_Xref_In_Memory (Kernel, C_Only => False);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end On_Load_Xref_In_Memory;
 
    -----------------------------
@@ -248,7 +252,8 @@ package body Builder_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end On_Tools_Interrupt;
 
    ---------------------
@@ -257,10 +262,12 @@ package body Builder_Module is
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
    begin
+      Trace (Me, "Project view changed, loading xref in memory");
       GPS.Kernel.Xref.Load_Xref_In_Memory
         (Kernel, C_Only => not Automatic_Xrefs_Load.Get_Pref);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end On_View_Changed;
 
    ---------------------

@@ -27,7 +27,6 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Basic_Types;               use Basic_Types;
 with Old_Entities.Queries;      use Old_Entities.Queries;
@@ -1616,43 +1615,6 @@ package body ALI_Parser is
       return Iterator;
    end Generate_LI_For_Project;
 
-   -----------------
-   -- Get_ALI_Ext --
-   -----------------
-
-   function Get_ALI_Ext
-     (LI : access ALI_Handler_Record) return Filesystem_String is
-      pragma Unreferenced (LI);
-   begin
-      return ".ali";
-   end Get_ALI_Ext;
-
-   ----------------------
-   -- Get_ALI_Filename --
-   ----------------------
-
-   function Get_ALI_Filename
-     (Handler   : access ALI_Handler_Record;
-      Base_Name : Filesystem_String) return Filesystem_String
-   is
-      Last_Dot : Natural := Base_Name'Last;
-   begin
-      --  Search the last dot in the filename
-
-      while Last_Dot >= Base_Name'First  loop
-         exit when Base_Name (Last_Dot) = '.';
-         Last_Dot := Last_Dot - 1;
-      end loop;
-
-      if Last_Dot < Base_Name'First then
-         --  No dot found, just append the ALI extension
-         Last_Dot := Base_Name'Last + 1;
-      end if;
-
-      return Base_Name (Base_Name'First .. Last_Dot - 1)
-              & Get_ALI_Ext (Handler);
-   end Get_ALI_Filename;
-
    --------------
    -- Get_Name --
    --------------
@@ -1691,8 +1653,7 @@ package body ALI_Parser is
       Reset_ALI             : Boolean) return Source_File
    is
       procedure Locate_ALI
-        (Handler            : access ALI_Handler_Record'Class;
-         Short_ALI_Filename : Filesystem_String;
+        (Source_Basename    : Filesystem_String;
          Source_Filename    : GNATCOLL.VFS.Virtual_File;
          Project            : Project_Type;
          LI_Filename        : out Virtual_File;
@@ -1719,17 +1680,65 @@ package body ALI_Parser is
       ----------------
 
       procedure Locate_ALI
-        (Handler            : access ALI_Handler_Record'Class;
-         Short_ALI_Filename : Filesystem_String;
+        (Source_Basename    : Filesystem_String;
          Source_Filename    : GNATCOLL.VFS.Virtual_File;
          Project            : Project_Type;
          LI_Filename        : out Virtual_File;
          Predefined         : out Boolean)
       is
+         function Get_ALI_Filename
+           (Base_Name : GNATCOLL.VFS.Filesystem_String)
+            return GNATCOLL.VFS.Filesystem_String;
+         --  Return the most likely candidate for an ALI file, given a source
+         --  name, without extension
+
          procedure Next_Candidate
            (Last : in out Integer; Dot : Filesystem_String);
          --  Move Last so that Short_ALI_Filename (1 .. Last) is the name of
          --  the next file to test. This might be the parent unit
+
+         Search_Parents : Boolean := True;
+         --  Whether we should search "parent" LI files (for languages with
+         --  child units)
+
+         ----------------------
+         -- Get_ALI_Filename --
+         ----------------------
+
+         function Get_ALI_Filename
+           (Base_Name : Filesystem_String) return Filesystem_String
+         is
+            Last_Dot : Natural := Base_Name'Last;
+         begin
+            if Handler.Lang_Handler.Get_Language_From_File
+              (Source_Filename).Get_Language_Context.Case_Sensitive
+            then
+               --  Assume it is C or C++ for now
+
+               Search_Parents := False;
+               return Base_Name;
+
+            else
+               --  Assume it is Ada or derived from it
+
+               --  Search the last dot in the filename
+
+               while Last_Dot >= Base_Name'First  loop
+                  exit when Base_Name (Last_Dot) = '.';
+                  Last_Dot := Last_Dot - 1;
+               end loop;
+
+               if Last_Dot < Base_Name'First then
+                  --  No dot found, just append the ALI extension
+                  Last_Dot := Base_Name'Last + 1;
+               end if;
+
+               return Base_Name (Base_Name'First .. Last_Dot - 1);
+            end if;
+         end Get_ALI_Filename;
+
+         ALI_Filename_No_Ext : constant Filesystem_String :=
+           Get_ALI_Filename (Source_Basename);
 
          --------------------
          -- Next_Candidate --
@@ -1738,60 +1747,53 @@ package body ALI_Parser is
          procedure Next_Candidate
            (Last : in out Integer; Dot : Filesystem_String) is
          begin
-            while Last > Short_ALI_Filename'First loop
+            while Last > ALI_Filename_No_Ext'First loop
                Last := Last - 1;
-               exit when (Last + Dot'Length - 1 <= Short_ALI_Filename'Last
+               exit when (Last + Dot'Length - 1 <= ALI_Filename_No_Ext'Last
                             and then
                           Equal
-                            (Short_ALI_Filename
+                            (ALI_Filename_No_Ext
                                (Last .. Last + Dot'Length - 1),
                              Dot))
 
                   --  Special case when there might be a confusion with the
                   --  GNAT runtime files.
-                 or else (+Dot = "-" and then Short_ALI_Filename (Last) = '~');
+                 or else
+                   (+Dot = "-" and then ALI_Filename_No_Ext (Last) = '~');
             end loop;
 
             Last := Last - 1;
          end Next_Candidate;
 
-         --  Local variables
-
-         Extension    : constant Filesystem_String :=
-                          File_Extension (Short_ALI_Filename);
-
          P            : Project_Type := Project;
          Is_Parent_LI : Boolean := False;
-
-         --  Start of processing for Locate_ALI
-
       begin
          Predefined := False;
          LI_Filename := GNATCOLL.VFS.No_File;
 
          if P /= No_Project then
-            --  Start searching in the extending projects, in case the file was
-            --  recompiled in their context
+            --  Start searching in the extending projects, in case the file
+            --  was recompiled in their context
 
             while Extending_Project (P) /= No_Project loop
                P := Extending_Project (P);
             end loop;
 
-            --  Compute the search path. If the objects path of the project is
-            --  not null, then prepend it to the total search path.
+            --  Compute the search path. If the objects path of the project
+            --  is not null, then prepend it to the total search path.
 
             while LI_Filename = GNATCOLL.VFS.No_File
               and then P /= No_Project
             loop
                declare
-                  Last : Integer := Short_ALI_Filename'Last - Extension'Length;
+                  Last : Integer := ALI_Filename_No_Ext'Last;
                   Dot_Replacement : constant Filesystem_String :=
-                                      +P.Attribute_Value
-                                        (Dot_Replacement_Attribute,
-                                         Default => "-");
+                    +P.Attribute_Value
+                    (Dot_Replacement_Attribute,
+                     Default => "-");
                begin
                   while LI_Filename = GNATCOLL.VFS.No_File
-                    and then Last >= Short_ALI_Filename'First
+                    and then Last >= ALI_Filename_No_Ext'First
                   loop
                      declare
                         Path : constant File_Array := Object_Path
@@ -1800,18 +1802,44 @@ package body ALI_Parser is
                            Including_Libraries => True,
                            Xrefs_Dirs          => True);
                         File : constant Filesystem_String :=
-                                 (Short_ALI_Filename
-                                   (Short_ALI_Filename'First .. Last)
-                                  & Extension);
+                          ALI_Filename_No_Ext
+                            (ALI_Filename_No_Ext'First .. Last);
                      begin
                         if Path'Length /= 0 then
-                           LI_Filename := Locate_Regular_File (File, Path);
+                           if Search_Parents then
+                              --  Assume Ada or SPARK
+
+                              LI_Filename :=
+                                Locate_Regular_File (File & ".ali", Path);
+                              if LI_Filename = GNATCOLL.VFS.No_File then
+                                 LI_Filename :=
+                                   Locate_Regular_File (File & ".sli", Path);
+                              end if;
+
+                           else
+                              --  Assume C or C++
+
+                              if LI_Filename = GNATCOLL.VFS.No_File then
+                                 LI_Filename :=
+                                   Locate_Regular_File (File & ".gli", Path);
+                              end if;
+                           end if;
+
+                           if Active (Me)
+                             and then LI_Filename /= GNATCOLL.VFS.No_File
+                           then
+                              Trace
+                                (Me, " => " & LI_Filename.Display_Full_Name);
+                           end if;
                         end if;
                      end;
 
-                     Is_Parent_LI :=
-                       Last /= Short_ALI_Filename'Last - Extension'Length;
-                     Next_Candidate (Last, Dot_Replacement);
+                     if Search_Parents then
+                        Is_Parent_LI := Last /= ALI_Filename_No_Ext'Last;
+                        Next_Candidate (Last, Dot_Replacement);
+                     else
+                        Last := 0;
+                     end if;
                   end loop;
                end;
 
@@ -1823,76 +1851,58 @@ package body ALI_Parser is
             end loop;
          end if;
 
-         --  Still not found ? Check in the predefined object path We used to
-         --  search in the current directory as well, but for ALI files that
-         --  is irrelevant: they must be in one of the projects' object_dir
+         --  Still not found ? Check in the predefined object path We used
+         --  to search in the current directory as well, but for ALI files
+         --  that is irrelevant: they must be in one of the projects'
+         --  object_dir
 
          if LI_Filename = GNATCOLL.VFS.No_File then
             declare
                Predefined_Object_Path : constant File_Array :=
                  Handler.Registry.Environment.Predefined_Object_Path;
-               Last : Integer := Short_ALI_Filename'Last - Extension'Length;
+               Last : Integer := ALI_Filename_No_Ext'Last;
             begin
                Predefined := True;
 
                while LI_Filename = GNATCOLL.VFS.No_File
-                 and then Last >= Short_ALI_Filename'First
+                 and then Last >= ALI_Filename_No_Ext'First
                loop
                   LI_Filename := Locate_Regular_File
-                    (Short_ALI_Filename
-                       (Short_ALI_Filename'First .. Last) & Extension,
+                    (ALI_Filename_No_Ext
+                       (ALI_Filename_No_Ext'First .. Last) & ".ali",
                      Predefined_Object_Path);
                   Next_Candidate (Last, ".");
                end loop;
             end;
          end if;
 
-         if LI_Filename = GNATCOLL.VFS.No_File then
-            if Active (SLI_Support)
-              and then
-                Short_ALI_Filename
-                  (Short_ALI_Filename'Last - 3 .. Short_ALI_Filename'Last)
-                  = ".ali"
-            then
-               Locate_ALI
-                 (Handler,
-                  Short_ALI_Filename
-                    (Short_ALI_Filename'First .. Short_ALI_Filename'Last - 3)
-                    & "sli",
-                  Source_Filename,
-                  Project,
-                  LI_Filename,
-                  Predefined);
-            end if;
-         else
-            declare
-               LI : LI_File;
-            begin
-               if Is_Parent_LI then
-                  --  Check whether the ALI file contains the information for
-                  --  the file itself
+         declare
+            LI : LI_File;
+         begin
+            if Is_Parent_LI then
+               --  Check whether the ALI file contains the information for
+               --  the file itself
 
-                  LI := Get_Or_Create
-                    (Db        => Handler.Db,
-                     File      => LI_Filename,
-                     Project   => Project);
+               LI := Get_Or_Create
+                 (Db        => Handler.Db,
+                  File      => LI_Filename,
+                  Project   => Project);
 
-                  if LI = null then
-                     LI_Filename := GNATCOLL.VFS.No_File;
+               if LI = null then
+                  LI_Filename := GNATCOLL.VFS.No_File;
 
                   --  Do not reset ALI below, since we are in the process of
                   --  parsing an ALI file, and need to parse a second one.
                   --  We still need to keep the data for the first in memory,
                   --  though
 
-                  elsif not Update_ALI (Handler, LI, Reset_ALI => False)
-                    or else not Check_LI_And_Source (LI, Source_Filename)
-                  then
-                     LI_Filename := GNATCOLL.VFS.No_File;
-                  end if;
+               elsif not Update_ALI (Handler, LI, Reset_ALI => False)
+                 or else not Check_LI_And_Source (LI, Source_Filename)
+               then
+                  LI_Filename := GNATCOLL.VFS.No_File;
                end if;
-            end;
-         end if;
+            end if;
+         end;
       end Locate_ALI;
 
       -----------------------------
@@ -1928,7 +1938,7 @@ package body ALI_Parser is
             --  cases, '~' on VMS).
             Char     : constant Character :=
                           Multi_Unit_Index_Char (Build_Server);
-            ALI_Ext  : constant Filesystem_String := Get_ALI_Ext (Handler);
+            ALI_Ext  : constant Filesystem_String := ".ali";
             Src_Base : constant Filesystem_String :=
                          Base_Name
                            (Source_Filename,
@@ -2101,9 +2111,8 @@ package body ALI_Parser is
          when Unit_Body | Unit_Separate =>
             --  Check the most likely ALI file (<file>.ali)
             Locate_ALI
-              (Handler,
-               Get_ALI_Filename (Handler, Base_Name (Source_Filename)),
-               Source_Filename, Project, LI, Predefined);
+              (Source_Filename.Base_Name, Source_Filename,
+               Project, LI, Predefined);
 
             if LI /= GNATCOLL.VFS.No_File then
                return;
@@ -2143,12 +2152,9 @@ package body ALI_Parser is
                   --  we also check for ALI file from the parent unit.
 
                   Locate_ALI
-                    (Handler,
-                     Get_ALI_Filename
-                       (Handler,
-                        Project.File_From_Unit
-                          (Unit (Unit'First .. Last - 1), Unit_Body,
-                           Language => "ada")),
+                    (Project.File_From_Unit
+                       (Unit (Unit'First .. Last - 1), Unit_Body,
+                        Language => "ada"),
                      Source_Filename,
                      Project,
                      LI,
@@ -2172,11 +2178,7 @@ package body ALI_Parser is
             --  for the spec will do.
 
             Locate_ALI
-              (Handler,
-               Get_ALI_Filename
-                 (Handler,
-                  Handler.Registry.Tree.Other_File
-                    (Source_Filename).Base_Name),
+              (Handler.Registry.Tree.Other_File (Source_Filename).Base_Name,
                Source_Filename,
                Project, LI, Predefined);
 
@@ -2203,8 +2205,7 @@ package body ALI_Parser is
             --  No ALI for the body ? Use the one for the spec as a fallback
 
             Locate_ALI
-              (Handler,
-               Get_ALI_Filename (Handler, Base_Name (Source_Filename)),
+              (Source_Filename.Base_Name,
                Source_Filename, Project, LI, Predefined);
 
             if LI /= GNATCOLL.VFS.No_File then

@@ -70,17 +70,6 @@ package ALI_Parser is
       return Old.LI_Handler_Iterator'Class;
    --  See doc for inherited subprograms
 
-   function Get_ALI_Ext
-     (LI : access ALI_Handler_Record)
-      return GNATCOLL.VFS.Filesystem_String;
-   --  Return the ali file extension (e.g. ".ali") for the given handler
-
-   function Get_ALI_Filename
-     (Handler   : access ALI_Handler_Record;
-      Base_Name : GNATCOLL.VFS.Filesystem_String)
-      return GNATCOLL.VFS.Filesystem_String;
-   --  Return the most likely candidate for an ALI file, given a source name
-
    type ALI_Information_Iterator
      is new Old.LI_Information_Iterator with private;
    overriding procedure Free (Iter : in out ALI_Information_Iterator);
