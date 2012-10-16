@@ -119,7 +119,7 @@ package Xref is
    -----------------------
 
    type General_Location is record
-      File   : Virtual_File;
+      File   : Virtual_File := No_File;
       Line   : Integer := 0;
       Column : Visible_Column_Type := 0;
    end record;
