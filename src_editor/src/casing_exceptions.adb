@@ -36,7 +36,6 @@ with String_Utils;            use String_Utils;
 with UTF8_Utils;              use UTF8_Utils;
 
 package body Casing_Exceptions is
-
    Case_Exceptions_Filename : constant Filesystem_String :=
                                 "case_exceptions.xml";
 
@@ -413,7 +412,7 @@ package body Casing_Exceptions is
    begin
       if Has_Entity_Name_Information (Context) then
          --  This is an entity, not a substring
-         return  False;
+         return False;
 
       elsif Has_Area_Information (Context) then
          declare

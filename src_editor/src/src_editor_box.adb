@@ -1402,6 +1402,8 @@ package body Src_Editor_Box is
         (Editor.Source_Buffer, Start_Iter, End_Iter, Has_Selection);
 
       if Out_Of_Bounds and then not Has_Selection then
+         Trace (Me, "Get_Context_Menu: no current selection");
+
          --  The position we are looking at is outside the text, and there is
          --  no current selection. We move the cursor to a valid location, but
          --  there is no additional info to set in the context.
@@ -1426,21 +1428,16 @@ package body Src_Editor_Box is
            (Editor.Source_Buffer, Entity_Start, Line, Column);
          Copy (Source => Entity_Start, Dest => Cursor_Location);
 
-         --  Set basic context information about current file. Must be done
-         --  before we set the entity information.
-
-         Set_File_Information
-           (Context,
-            Files  => (1 => Filename),
-            Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-            Column => Expand_Tabs
-              (Get_Buffer (Editor),
-               Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
-               To_Box_Column (Column)));
-
          Click_In_Selection :=
            Has_Selection
            and then In_Range (Entity_Start, Start_Iter, End_Iter);
+
+         if Active (Me) then
+            Trace (Me,
+                   "Get_Context_Menu: line="
+                   & To_Box_Line (Editor.Source_Buffer, Line)'Img
+                   & " click in selection? " & Click_In_Selection'Img);
+         end if;
 
          declare
             Str        : Src_String :=
@@ -1494,12 +1491,36 @@ package body Src_Editor_Box is
 
                Column := Get_Line_Offset (Start_Iter);
 
+               Set_File_Information
+                 (Context,
+                  Files  => (1 => Filename),
+                  Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+                  Column => Expand_Tabs
+                    (Get_Buffer (Editor),
+                     Editable_Line_Type
+                       (To_Box_Line (Editor.Source_Buffer, Line)),
+                     To_Box_Column (Column)));
+
+               Trace (Me, "Set_Area_Information");
                Set_Area_Information
                  (Context,
                   Get_Text (Start_Iter, End_Iter),
                   Start_Line, End_Line);
 
             else
+               --  Set basic context information about current file. Must be
+               --  done before we set the entity information.
+
+               Set_File_Information
+                 (Context,
+                  Files  => (1 => Filename),
+                  Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+                  Column => Expand_Tabs
+                    (Get_Buffer (Editor),
+                     Editable_Line_Type
+                       (To_Box_Line (Editor.Source_Buffer, Line)),
+                     To_Box_Column (Column)));
+
                --  Expand the tabs
 
                Get_Iter_Position
@@ -1515,7 +1536,7 @@ package body Src_Editor_Box is
 
                      Set_Entity_Information
                        (Context,
-                        Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                        Entity_Name => Get_Text (Entity_Start, Entity_End),
                         Entity_Column => Expand_Tabs
                           (Editor.Source_Buffer, The_Line, The_Column));
 
