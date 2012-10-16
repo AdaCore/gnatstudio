@@ -413,7 +413,7 @@ package body Casing_Exceptions is
    begin
       if Has_Entity_Name_Information (Context) then
          --  This is an entity, not a substring
-         return  False;
+         return False;
 
       elsif Has_Area_Information (Context) then
          declare

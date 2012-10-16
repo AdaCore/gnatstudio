@@ -1514,7 +1514,7 @@ package body Src_Editor_Box is
 
                      Set_Entity_Information
                        (Context,
-                        Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                        Entity_Name => Get_Text (Entity_Start, Entity_End),
                         Entity_Column => Expand_Tabs
                           (Editor.Source_Buffer, The_Line, The_Column));
 

@@ -669,7 +669,7 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Xref_Entity /= No_General_Entity;
+        and then Context.Data.Data.Entity_Name /= null;
    end Has_Entity_Name_Information;
 
    -----------------------------
