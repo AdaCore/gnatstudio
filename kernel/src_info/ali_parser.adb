@@ -971,7 +971,7 @@ package body ALI_Parser is
                            --  LI file if such entity is eventually needed
                            --  for sources navigation.
 
-                           Set_Has_Unresolved_Imported_Refs (Handler);
+                           Set_Has_Unresolved_Imported_Refs (LI);
                         end if;
                      end;
                   end if;
@@ -1426,7 +1426,7 @@ package body ALI_Parser is
       --  unresolved imported references.
 
       if Update_Forced (Handler) then
-         Set_Has_Unresolved_Imported_Refs (Handler, False);
+         Set_Has_Unresolved_Imported_Refs (LI, False);
          Set_Update_Forced (Handler, False);
       end if;
 
@@ -2293,7 +2293,9 @@ package body ALI_Parser is
          --  If we are still using the same LI file, update its contents now.
          --  Otherwise, we'll have to find the new LI file
 
-         if Is_Up_To_Date then
+         if Is_Up_To_Date
+           or else Has_Unresolved_Imported_Refs (LI)
+         then
             if not Update_ALI
                      (Handler, Get_LI (Source), Reset_ALI => Reset_ALI)
               and then File_Has_No_LI_Report /= null
