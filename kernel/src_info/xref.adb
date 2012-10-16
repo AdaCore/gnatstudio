@@ -501,7 +501,10 @@ package body Xref is
       end Internal_No_Constructs;
 
    begin
-      Trace (Me, "Find_Declaration of " & Entity_Name);
+      if Active (Me) then
+         Increase_Indent (Me, "Find_Declaration of " & Entity_Name);
+      end if;
+
       Entity := Internal_No_Constructs (Entity_Name, Loc);  --  also sets Fuzzy
 
       if Fuzzy and then Ask_If_Overloaded then
@@ -509,6 +512,10 @@ package body Xref is
            (Self   => General_Xref_Database_Record'Class (Self.all)'Access,
             File   => Loc.File,
             Entity => Entity);
+
+         if Active (Me) then
+            Decrease_Indent (Me);
+         end if;
          return;
       end if;
 
@@ -587,6 +594,10 @@ package body Xref is
                end if;
             end if;
          end;
+      end if;
+
+      if Active (Me) then
+         Decrease_Indent (Me);
       end if;
    end Find_Declaration_Or_Overloaded;
 
@@ -2862,6 +2873,11 @@ package body Xref is
       use Old_Entities;
       Arr : Entity_Arrays.Instance;
    begin
+      if Active (Me) then
+         Increase_Indent
+           (Me, "Retrieving literals of " & Self.Get_Name (Entity));
+      end if;
+
       if Active (SQLITE) then
          declare
             Curs : Entities_Cursor;
@@ -2879,18 +2895,32 @@ package body Xref is
             while not At_End (Iter) loop
                Field := Get (Iter);
 
+               if Active (Me) then
+                  Trace
+                    (Me, "Old: candidate: "
+                     & Self.Get_Name (From_Old (Field))
+                     & " range="
+                     & In_Range (Old_Entities.Get_Declaration_Of (Field),
+                       Entity.Old_Entity)'Img
+                     & " cat=" & Get_Category (Field)'Img);
+               end if;
+
                if In_Range (Old_Entities.Get_Declaration_Of (Field),
                             Entity.Old_Entity)
-                 and then not Is_Discriminant (Field, Entity.Old_Entity)
-                 and then not Old_Entities.Is_Subprogram (Entity.Old_Entity)
-                 and then Get_Category (Entity.Old_Entity) /= Type_Or_Subtype
+                 and then Get_Category (Field) = Literal
                then
                   Append (Arr, From_Old (Field));
                end if;
+
+               Next (Iter);
             end loop;
 
             Destroy (Iter);
          end;
+      end if;
+
+      if Active (Me) then
+         Decrease_Indent (Me);
       end if;
 
       return R : constant Entity_Array := To_Entity_Array (Arr) do

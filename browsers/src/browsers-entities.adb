@@ -531,6 +531,10 @@ package body Browsers.Entities is
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
+        (Kernel, "literals",
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
+      Register_Command
         (Kernel, "parameters",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
@@ -675,6 +679,19 @@ package body Browsers.Entities is
             declare
                F : constant Xref.Entity_Array :=
                  Kernel.Databases.Fields (Entity);
+            begin
+               Set_Return_Value_As_List (Data);
+
+               for F2 in F'Range loop
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), F (F2)));
+               end loop;
+            end;
+
+         elsif Command = "literals" then
+            declare
+               F : constant Xref.Entity_Array :=
+                 Kernel.Databases.Literals (Entity);
             begin
                Set_Return_Value_As_List (Data);
 
