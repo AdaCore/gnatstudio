@@ -481,6 +481,7 @@ package body Xref is
                  or else Status = Fuzzy_Match;
 
                if Status = Entity_Not_Found
+                 and then Name /= ""
                  and then Name (Name'First) = '"'
                then
                   --  Try without the quotes
