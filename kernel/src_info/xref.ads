@@ -184,21 +184,6 @@ package Xref is
    --  Some operations might even query using one back-end, then fall back
    --  on a less precise back-end if the first query is not precise enough.
 
-   procedure Find_Next_Body
-     (Dbase                : access General_Xref_Database_Record;
-      Entity               : General_Entity;
-      Current_Location     : General_Location := No_Location;
-      Location             : out General_Location;
-      No_Location_If_First : Boolean := False);
-   --  Find the location for one of the bodies of the entities. If the
-   --  current location is not a body, the first body found is returned.
-   --  Otherwise, the first one different from Current_Location is returned.
-   --  Calling this subprogram multiple times will eventually return all the
-   --  bodies.
-   --  This also returns completion for incomplete types.
-   --  If No_Location_If_First is True, then this iterator will not loop
-   --  to the first body on reaching the last.
-
    type Reference_Kind_Filter is access function
      (Db  : access General_Xref_Database_Record'Class;
       Ref : General_Entity_Reference) return Boolean;

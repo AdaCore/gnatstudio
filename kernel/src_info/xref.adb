@@ -32,7 +32,6 @@ with String_Utils;
 with Traces;
 
 package body Xref is
-   Me                    : constant Trace_Handle := Create ("Xref", Off);
    Constructs_Heuristics : constant Trace_Handle :=
      Create ("Entities.Constructs", On);
 
@@ -65,24 +64,12 @@ package body Xref is
       Tree_Lang   : out Tree_Language_Access);
    --  Returns the constructs data for a given entity.
 
-   function To_File_Location
-     (Db  : access General_Xref_Database_Record'Class;
-      Loc : General_Location) return Old_Entities.File_Location;
-   --  Convert General_Location to File_Location
-
    function To_General_Entity
      (E : Old_Entities.Entity_Information) return General_Entity;
    function To_General_Entity
      (Db : access General_Xref_Database_Record'Class;
       E  : Entity_Information) return General_Entity;
    --  Convert Xref.Entity_Information to General_Entity
-
-   function To_General_Location
-     (Loc : Old_Entities.File_Location) return General_Location;
-   --  Convert File_Location to General_Location
-
-   function To_String (Location : General_Location) return String;
-   --  For debugging purposes only
 
    procedure Fill_Entity_Array
      (Curs : in out Entities_Cursor'Class;
@@ -275,101 +262,6 @@ package body Xref is
       --  and when we don't have a separate spec the "declaration" is the
       --  location of the body.
    end Documentation;
-
-   --------------------
-   -- Find_Next_Body --
-   --------------------
-
-   procedure Find_Next_Body
-     (Dbase                : access General_Xref_Database_Record;
-      Entity               : General_Entity;
-      Current_Location     : General_Location := No_Location;
-      Location             : out General_Location;
-      No_Location_If_First : Boolean := False)
-   is
-   begin
-      --  Legacy functionality
-
-      if not Active (SQLITE) then
-         declare
-            Loc : Old_Entities.File_Location;
-         begin
-            Old_Entities.Queries.Find_Next_Body
-              (Entity               => Entity.Old_Entity,
-               Current_Location     => To_File_Location (Dbase,
-                                         Current_Location),
-               Location             => Loc,
-               No_Location_If_First => No_Location_If_First);
-            Location := To_General_Location (Loc);
-            return;
-         end;
-      end if;
-
-      --  New functionality
-
-      if Entity = No_General_Entity then
-         Location := No_Location;
-         return;
-      end if;
-
-      if Active (Me) then
-         Trace (Me, "Find_Next_Body for "
-                & Get_Name (Dbase, Entity)
-                & " current=" & To_String (Current_Location));
-      end if;
-
-      declare
-         Cursor        : References_Cursor;
-         Return_Next   : Boolean := Current_Location = No_Location;
-         First_Ref_Loc : General_Location := No_Location;
-
-      begin
-         References
-           (Self    => Dbase.Xref.all,
-            Entity  => Entity.Entity,
-            Cursor  => Cursor);
-
-         while Cursor.Has_Element loop
-            declare
-               Ref  : constant Entity_Reference := Cursor.Element;
-               Kind : constant String := To_String (Ref.Kind);
-               Loc  : constant General_Location := Get_Location (Ref);
-
-            begin
-               if First_Ref_Loc = No_Location then
-                  First_Ref_Loc := Loc;
-               end if;
-
-               if Kind = "body"
-                 or else Kind = "full declaration"
-               then
-                  --  Missing support for Is_Imported???
-
-                  if Return_Next then
-                     Location := Loc;
-                     return;
-                  end if;
-               end if;
-
-               if Loc = Current_Location then
-                  Return_Next := True;
-               end if;
-            end;
-
-            Cursor.Next;
-         end loop;
-
-         --  If we don't have any more information to extract from the
-         --  construct database, then return the first entity if allowed by
-         --  the flags, or null.
-
-         if No_Location_If_First then
-            Location := No_Location;
-         else
-            Location := First_Ref_Loc;
-         end if;
-      end;
-   end Find_Next_Body;
 
    -------------------------------
    -- For_Each_Dispatching_Call --
@@ -876,65 +768,66 @@ package body Xref is
       After  : General_Location := No_Location) return General_Location
    is
    begin
-      if Active (SQLITE)
-        and then Entity.Entity /= No_Entity
-      then
-         declare
-            C   : References_Cursor;
-            Ref : Entity_Reference;
-            Matches : Boolean := After = No_Location;
-         begin
-            Bodies (Db.Xref.all, Entity.Entity, Cursor => C);
-            while Has_Element (C) loop
-               Ref := Element (C);
+      if Active (SQLITE) then
+         if Entity.Entity /= No_Entity then
+            declare
+               C   : References_Cursor;
+               Ref : Entity_Reference;
+               Matches : Boolean := After = No_Location;
+            begin
+               Bodies (Db.Xref.all, Entity.Entity, Cursor => C);
+               while Has_Element (C) loop
+                  Ref := Element (C);
 
-               if Ref /= No_Entity_Reference then
-                  if Matches then
-                     return (File => Ref.File,
-                             Line => Ref.Line,
-                             Column => Visible_Column_Type (Ref.Column));
-                  else
-                     Matches := Ref.Line = After.Line
-                       and then Ref.Column = After.Column
-                       and then Ref.File = After.File;
+                  if Ref /= No_Entity_Reference then
+                     if Matches then
+                        return (File => Ref.File,
+                                Line => Ref.Line,
+                                Column => Visible_Column_Type (Ref.Column));
+                     else
+                        Matches := Ref.Line = After.Line
+                          and then Ref.Column = After.Column
+                          and then Ref.File = After.File;
+                     end if;
                   end if;
+
+                  Next (C);
+               end loop;
+            end;
+         end if;
+
+      else
+         if Entity.Old_Entity /= null then
+            declare
+               Loc : Old_Entities.File_Location;
+            begin
+               if After /= No_Location then
+                  Find_Next_Body
+                    (Entity           => Entity.Old_Entity,
+                     Current_Location =>
+                       (File   => Old_Entities.Get_Or_Create
+                          (Db.Entities, After.File, Allow_Create => False),
+                        Line   => After.Line,
+                        Column => After.Column),
+                     Location         => Loc);
+               else
+                  Find_Next_Body
+                    (Entity           => Entity.Old_Entity,
+                     Current_Location => Old_Entities.No_File_Location,
+                     Location         => Loc);
                end if;
 
-               Next (C);
-            end loop;
-         end;
-      end if;
+               if Loc = Old_Entities.No_File_Location then
+                  Loc := Old_Entities.Get_Declaration_Of (Entity.Old_Entity);
+               end if;
 
-      if Entity.Old_Entity /= null then
-         declare
-            Loc : Old_Entities.File_Location;
-         begin
-            if After /= No_Location then
-               Find_Next_Body
-                 (Entity           => Entity.Old_Entity,
-                  Current_Location =>
-                    (File   => Old_Entities.Get_Or_Create
-                       (Db.Entities, After.File, Allow_Create => False),
-                     Line   => After.Line,
-                     Column => After.Column),
-                  Location         => Loc);
-            else
-               Find_Next_Body
-                 (Entity           => Entity.Old_Entity,
-                  Current_Location => Old_Entities.No_File_Location,
-                  Location         => Loc);
-            end if;
-
-            if Loc = Old_Entities.No_File_Location then
-               Loc := Old_Entities.Get_Declaration_Of (Entity.Old_Entity);
-            end if;
-
-            if Loc /= Old_Entities.No_File_Location then
-               return (File => Old_Entities.Get_Filename (Loc.File),
-                       Line => Loc.Line,
-                       Column => Loc.Column);
-            end if;
-         end;
+               if Loc /= Old_Entities.No_File_Location then
+                  return (File => Old_Entities.Get_Filename (Loc.File),
+                          Line => Loc.Line,
+                          Column => Loc.Column);
+               end if;
+            end;
+         end if;
       end if;
 
       return No_Location;
@@ -1053,25 +946,6 @@ package body Xref is
       Old_Entities.Ref (Entity.Old_Entity);
    end Ref;
 
-   ----------------------
-   -- To_File_Location --
-   ----------------------
-
-   function To_File_Location
-     (Db  : access General_Xref_Database_Record'Class;
-      Loc : General_Location) return Old_Entities.File_Location
-   is
-   begin
-      if Loc = No_Location then
-         return Old_Entities.No_File_Location;
-      else
-         return
-           (File   => Old_Entities.Get_Or_Create (Db.Entities, Loc.File),
-            Line   => Loc.Line,
-            Column => Loc.Column);
-      end if;
-   end To_File_Location;
-
    -----------------------
    -- To_General_Entity --
    -----------------------
@@ -1112,34 +986,6 @@ package body Xref is
          return General_Entity'(Old_Entity => E, others => <>);
       end if;
    end To_General_Entity;
-
-   -------------------------
-   -- To_General_Location --
-   -------------------------
-
-   function To_General_Location
-     (Loc : Old_Entities.File_Location) return General_Location is
-   begin
-      return
-        (File   => Old_Entities.Get_Filename (Loc.File),
-         Line   => Loc.Line,
-         Column => Loc.Column);
-   end To_General_Location;
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   function To_String (Location : General_Location) return String is
-   begin
-      if Location = No_Location then
-         return "<no loc>";
-      else
-         return (Display_Full_Name (Location.File))
-           & ':' & Location.Line'Img
-           & ':' & Location.Column'Img;
-      end if;
-   end To_String;
 
    -----------
    -- Unref --
@@ -3079,7 +2925,9 @@ package body Xref is
               Get_Child_Types (Entity.Old_Entity, Recursive => Recursive);
          begin
             while not At_End (Children) loop
-               Append (Arr, From_Old (Get (Children)));
+               if Get (Children) /= null then
+                  Append (Arr, From_Old (Get (Children)));
+               end if;
                Next (Children);
             end loop;
             Destroy (Children);
