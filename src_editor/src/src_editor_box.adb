@@ -1634,11 +1634,7 @@ package body Src_Editor_Box is
       Loc : General_Location;
 
    begin
-      Find_Next_Body
-        (Dbase    => Db,
-         Entity   => Entity,
-         Location => Loc);
-
+      Loc := Db.Get_Body (Entity);
       Go_To_Closest_Match
         (Kernel   => K,
          Filename => Loc.File,
@@ -1927,11 +1923,7 @@ package body Src_Editor_Box is
       Current_Location :=
         Kernel.Databases.Get_Declaration (Entity).Loc;
 
-      Find_Next_Body
-        (Dbase            => Kernel.Databases,
-         Entity           => Entity,
-         Current_Location => Current_Location,
-         Location         => Location);
+      Location := Kernel.Databases.Get_Body (Entity, Current_Location);
 
       return Location /= No_Location
         and then Location /= Current_Location;
