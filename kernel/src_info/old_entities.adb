@@ -1769,6 +1769,7 @@ package body Old_Entities is
                Timestamp => No_Time,
                Project   => Project,
                Files     => Null_Source_File_List,
+               Has_Unresolved_Imported_Refs => False,
                Ref_Count => 1),
             Next => null);
          LI_HTable.Set (Db.LIs, L);
@@ -3085,21 +3086,20 @@ package body Old_Entities is
    -- Has_Unresolved_Imported_Refs --
    ----------------------------------
 
-   function Has_Unresolved_Imported_Refs
-     (Handler : access LI_Handler_Record'Class) return Boolean is
+   function Has_Unresolved_Imported_Refs (LI : LI_File) return Boolean is
    begin
-      if Handler /= null then
-         return Handler.Has_Unresolved_Imported_Refs;
+      if LI /= null then
+         return LI.Has_Unresolved_Imported_Refs;
       else
          return False;
       end if;
    end Has_Unresolved_Imported_Refs;
 
    procedure Set_Has_Unresolved_Imported_Refs
-     (Handler : access LI_Handler_Record'Class;
-      Value   : Boolean := True) is
+     (LI    : LI_File;
+      Value : Boolean := True) is
    begin
-      Handler.Has_Unresolved_Imported_Refs := Value;
+      LI.Has_Unresolved_Imported_Refs := Value;
    end Set_Has_Unresolved_Imported_Refs;
 
    ------------------------

@@ -199,7 +199,9 @@ package body GPS.Kernel.Xref is
             Handler := Old_Entities.Get_LI_Handler
               (Kernel.Databases.Entities);
 
-            if Old_Entities.Has_Unresolved_Imported_Refs (Handler) then
+            if Old_Entities.Has_Unresolved_Imported_Refs
+              (Old_Entities.Get_LI (File))
+            then
                Old_Entities.Set_Update_Forced (Handler);
                Old_Entities.Update_Xref (File);
             end if;

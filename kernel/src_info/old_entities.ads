@@ -939,9 +939,9 @@ package Old_Entities is
    ----------------------------------
 
    function Has_Unresolved_Imported_Refs
-     (Handler : access LI_Handler_Record'Class) return Boolean;
+     (LI : LI_File) return Boolean;
    procedure Set_Has_Unresolved_Imported_Refs
-     (Handler : access LI_Handler_Record'Class; Value : Boolean := True);
+     (LI : LI_File; Value : Boolean := True);
 
    function Update_Forced
      (Handler : access LI_Handler_Record'Class) return Boolean;
@@ -1441,6 +1441,10 @@ private
       Files     : Source_File_List;
       --  All the files for which xref is provided by this LI_File
 
+      Has_Unresolved_Imported_Refs : Boolean := False;
+      --  Flag set when the contents associated with this LI file have
+      --  unresolved references imported from other languages.
+
       Ref_Count : Natural := 1;
       --  The reference counter
    end record;
@@ -1524,10 +1528,6 @@ private
    type LI_Handler_Record is abstract tagged limited record
       Name_Index : aliased Entities_Search_Tries.Vector_Trie;
       --  Entities defined in C/C++
-
-      Has_Unresolved_Imported_Refs : Boolean := False;
-      --  Flag set when the contents associated with this LI handler have
-      --  unresolved references imported from other languages.
 
       Update_Forced                : Boolean := False;
       --  Flag set when the contents associated with this LI handler must be
