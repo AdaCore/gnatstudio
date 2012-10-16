@@ -527,10 +527,9 @@ package body Old_Entities.Queries is
       Handler         : LI_Handler := null;
       Fuzzy_Expected  : Boolean := False)
    is
-      pragma Unreferenced (Fuzzy_Expected);
+      pragma Unreferenced (Fuzzy_Expected, Handler);
 
       S_Entity_Name : Symbol := No_Symbol;
-      H       : LI_Handler := Handler;
       Updated : Source_File;
    begin
       if Entity_Name /= "" then
@@ -572,28 +571,17 @@ package body Old_Entities.Queries is
          return;
       end if;
 
-      if H = null then
-         H := Default_LI_Handler;
-      end if;
-
       Status := Entity_Not_Found;
       Entity := null;
 
-      if H /= null then
-         --  Updates LI information
-         Updated := Get_Source_Info (H, Get_Filename (Source));
-
-         if Updated /= null then
-            Find (Source, S_Entity_Name, Line, Column, Check_Decl_Only,
-                  Entity, Closest_Ref, Status);
-         end if;
-
-         Trace (Me, "Result=" & Status'Img);
-      else
-         Status := Entity_Not_Found;
-         Entity := null;
-         Trace (Me, "Entity not found");
+      --  Updates LI information
+      Updated := Get_Source_Info (Default_LI_Handler, Get_Filename (Source));
+      if Updated /= null then
+         Find (Source, S_Entity_Name, Line, Column, Check_Decl_Only,
+               Entity, Closest_Ref, Status);
       end if;
+
+      Trace (Me, "Result=" & Status'Img);
 
       --  Fallback to constructs is implemented in xref.adb now
    end Find_Declaration;
