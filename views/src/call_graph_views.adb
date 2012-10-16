@@ -83,6 +83,7 @@ package body Call_Graph_Views is
    Column_Column  : constant := 5;
    List_Column    : constant := 6;
    Kind_Column    : constant := 7;
+   Sort_Column    : constant := 8;
 
    Location_Line_Column      : constant := 0;
    Location_Column_Column    : constant := 1;
@@ -1211,6 +1212,9 @@ package body Call_Graph_Views is
 
                Set (Model, Iter, Name_Column, Get_Attribute (N, "name"));
                Set (Model, Iter, Decl_Column, Get_Attribute (N, "decl"));
+               Set (Model, Iter, Sort_Column,
+                    Get_Attribute (N, "name") & " "
+                    & Get_Attribute (N, "decl"));
 
                --  We want to be compatible with previous version not having
                --  the type node. We then get information from top type node in
@@ -1304,13 +1308,17 @@ package body Call_Graph_Views is
                                 Line_Column   => GType_Int,
                                 Column_Column => GType_Int,
                                 List_Column   => GType_Pointer,
-                                Kind_Column   => GType_Int),
+                                Kind_Column   => GType_Int,
+                                Sort_Column   => GType_String),
          Column_Names       => Names,
          Show_Column_Titles => False,
-         Sortable_Columns   => True,
-         Initial_Sort_On    => 1);
+         Sortable_Columns   => True);
       Set_Name (View.Tree, "Call Graph Tree"); --  For test suite
       Gtk_New_Hpaned (View.Pane);
+
+      --  Set custom order by column: Name & Decl
+      View.Tree.Get_Column (0).Set_Sort_Column_Id (Sort_Column);
+      View.Tree.Get_Column (0).Clicked;
 
       Gtk_New (Scroll);
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
@@ -1474,6 +1482,9 @@ package body Call_Graph_Views is
               & ':' & Image (Integer (Decl.Loc.Column)));
          Set_Value (Model, Iter, Entity_Column, To_GValue (Entity));
          Set (Model, Iter, Kind_Column, View_Type'Pos (Kind));
+         Set (Model, Iter, Sort_Column,
+              Get_String (Model, Iter, Name_Column) & " "
+              & Get_String (Model, Iter, Decl_Column));
 
          --  Append a dummy child, so that the parent can be expanded to
          --  show its called entities.
