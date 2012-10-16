@@ -3725,7 +3725,6 @@ package body Old_Entities.Queries is
       end Process;
 
       P  : Project_Type := Current (Iter.Project);
-      LI : LI_Handler;
    begin
       --  If we are already processing a list of files, continue
 
@@ -3736,53 +3735,17 @@ package body Old_Entities.Queries is
       --  Move to next project or language
 
       while P /= No_Project loop
-         while Iter.Current_Lang <= Iter.Lang_Count loop
-            declare
-               Lang : constant String :=
-                        Get_Nth_Language (Iter.Handler, Iter.Current_Lang);
-            begin
-               --  Nothing to do if the language is not used for the project
-               --  or we don't want to include this language.
+         Trace (Me, "Parse all LI information: project is " & P.Name);
 
-               if (Has_Language (P, Lang)
-                     --  Given that C and C++ share the LI handler (see
-                     --  CPP_Module.Register_Module), we must take care
-                     --  of C++ specifically.
+         Iter.LI := new LI_Information_Iterator'Class'
+           (Parse_All_LI_Information (Default_LI_Handler, P));
 
-                     or else
-                       (Lang = "c"
-                          and then Has_Language (P, "C++")))
-                 and then (Iter.Filter = null or else Iter.Filter (Lang))
-               then
+         if Process then
+            return;
+         end if;
 
-                  --  ??? We now have a single LI_Handler for all languages
-                  LI := Default_LI_Handler;
---                  LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
-
-                  if LI /= null then
-                     Iter.LI := new LI_Information_Iterator'Class'
-                       (Parse_All_LI_Information (LI, P));
-
-                     if Process then
-                        return;
-                     end if;
-                  end if;
-               else
-                  Iter.Current_Lang := Iter.Current_Lang + 1;
-               end if;
-            end;
-         end loop;
-
-         --  We finished all languages for this project, move to next project
-
-         Iter.Current_Lang := 1;
          Next (Iter.Project);
          P := Current (Iter.Project);
-
-         if P /= No_Project then
-            Trace (Me, "Parse all LI information: switching to project "
-                   & P.Name);
-         end if;
       end loop;
 
       --  Nothing else to process

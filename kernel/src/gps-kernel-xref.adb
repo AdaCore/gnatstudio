@@ -335,6 +335,7 @@ package body GPS.Kernel.Xref is
 
          if Ref /= No_General_Entity_Reference then
             Parent := Get_Caller (Ref);
+
             if Parent /= No_General_Entity
               and then Data.Kernel.Databases.Show_In_Callgraph (Ref)
             then

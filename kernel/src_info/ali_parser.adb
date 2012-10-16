@@ -1819,10 +1819,8 @@ package body ALI_Parser is
                            else
                               --  Assume C or C++
 
-                              if LI_Filename = GNATCOLL.VFS.No_File then
-                                 LI_Filename :=
-                                   Locate_Regular_File (File & ".gli", Path);
-                              end if;
+                              LI_Filename :=
+                                Locate_Regular_File (File & ".gli", Path);
                            end if;
 
                            if Active (Me)
