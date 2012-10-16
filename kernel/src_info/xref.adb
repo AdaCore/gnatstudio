@@ -1043,15 +1043,11 @@ package body Xref is
    is
       use Old_Entities;
    begin
-      if Active (SQLITE)
-        and then Ref1.Ref = Ref2.Ref
-        and then Ref1.Ref /= GNATCOLL.Xref.No_Entity_Reference
-      then
-         return True;
+      if Active (SQLITE) then
+         return Ref1.Ref = Ref2.Ref;
+      else
+         return Ref1.Old_Ref = Ref2.Old_Ref;
       end if;
-
-      return Ref1.Old_Ref = Ref2.Old_Ref
-        and then Ref1.Old_Ref /= Old_Entities.No_Entity_Reference;
    end "=";
 
    -------------------------
@@ -1093,18 +1089,29 @@ package body Xref is
          end loop;
 
       else
-         if In_File /= No_File then
-            F := Old_Entities.Get_Or_Create
-              (Db    => Self.Entities,
-               File  => In_File,
-               Allow_Create => False);
-         end if;
+         declare
+            use Old_Entities;
+         begin
+            if In_File /= No_File then
+               F := Old_Entities.Get_Or_Create
+                 (Db    => Self.Entities,
+                  File  => In_File,
+                  Allow_Create => False);
+            end if;
 
-         Old_Entities.Queries.Find_All_References
-           (Iter.Old_Iter, Entity.Old_Entity,
-            File_Has_No_LI_Report, F, In_Scope.Old_Entity,
-            Include_Overriding => Include_Overriding,
-            Include_Overridden => Include_Overridden);
+            Old_Entities.Queries.Find_All_References
+              (Iter.Old_Iter, Entity.Old_Entity,
+               File_Has_No_LI_Report, F, In_Scope.Old_Entity,
+               Include_Overriding => Include_Overriding,
+               Include_Overridden => Include_Overridden);
+
+            --  Skip cases where No_Entity_Reference is returned.
+            while Get (Iter.Old_Iter) = Old_Entities.No_Entity_Reference
+              and then not At_End (Iter.Old_Iter)
+            loop
+               Next (Iter.Old_Iter);
+            end loop;
+         end;
       end if;
    end Find_All_References;
 

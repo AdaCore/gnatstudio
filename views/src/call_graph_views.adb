@@ -20,6 +20,7 @@ with Ada.Unchecked_Conversion;
 with System;
 
 with GNAT.Strings;                use GNAT.Strings;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
@@ -62,13 +63,14 @@ with GPS.Intl;                    use GPS.Intl;
 with GUI_Utils;                   use GUI_Utils;
 with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
-with Traces;                      use Traces;
+with Traces;
 with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
 
 with Generic_List;
 
 package body Call_Graph_Views is
+   Me : constant Trace_Handle := Create ("CALLGRAPH");
 
    ---------------
    -- Constants --
@@ -574,7 +576,7 @@ package body Call_Graph_Views is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end On_Key_Press;
 
@@ -631,7 +633,7 @@ package body Call_Graph_Views is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Button_Press;
 
@@ -661,7 +663,7 @@ package body Call_Graph_Views is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Button_Press_On_List;
 
@@ -766,7 +768,7 @@ package body Call_Graph_Views is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
    end On_Selection_Changed;
 
    ---------------------
@@ -863,7 +865,7 @@ package body Call_Graph_Views is
       Thaw_Sort (M, Column);
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          Thaw_Sort (M, Column);
    end On_Row_Expanded;
 
@@ -881,7 +883,8 @@ package body Call_Graph_Views is
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
       Remove (Gtk_Tree_Store (Model), Iter);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Remove_Entity;
 
    ----------------
@@ -895,7 +898,8 @@ package body Call_Graph_Views is
    begin
       Clear (Model);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Clear_View;
 
    ------------------
@@ -906,7 +910,8 @@ package body Call_Graph_Views is
    begin
       Gtk.Tree_View.Collapse_All (Callgraph_View_Access (Object).Tree);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Collapse_All;
 
    --------------------------
