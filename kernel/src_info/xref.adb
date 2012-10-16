@@ -1106,8 +1106,8 @@ package body Xref is
                Include_Overridden => Include_Overridden);
 
             --  Skip cases where No_Entity_Reference is returned.
-            while Get (Iter.Old_Iter) = Old_Entities.No_Entity_Reference
-              and then not At_End (Iter.Old_Iter)
+            while not At_End (Iter.Old_Iter)
+              and then Get (Iter.Old_Iter) = Old_Entities.No_Entity_Reference
             loop
                Next (Iter.Old_Iter);
             end loop;
@@ -1149,8 +1149,8 @@ package body Xref is
 
       else
          Next (Iter.Old_Iter);
-         while Get (Iter.Old_Iter) = Old_Entities.No_Entity_Reference
-           and then not At_End (Iter.Old_Iter)
+         while not At_End (Iter.Old_Iter)
+           and then Get (Iter.Old_Iter) = Old_Entities.No_Entity_Reference
          loop
             Next (Iter.Old_Iter);
          end loop;
@@ -2508,6 +2508,11 @@ package body Xref is
             Old_Entities.Queries.Next (Iter.Old_Ancestor_Iter);
          else
             Old_Entities.Queries.Next (Iter.Old_Iter);
+            while not Old_Entities.Queries.At_End (Iter.Old_Iter)
+              and then not Old_Entities.Queries.Is_Explicit (Iter.Old_Iter)
+            loop
+               Old_Entities.Queries.Next (Iter.Old_Iter);
+            end loop;
          end if;
       end if;
    end Next;
@@ -2576,7 +2581,13 @@ package body Xref is
          Old_Entities.Queries.Find_Dependencies
            (Iter => Iter.Old_Iter,
             File => Old_Entities.Get_Or_Create
-              (Self.Entities, File, Allow_Create => False));
+              (Self.Entities, File, Allow_Create => True));
+
+         while not Old_Entities.Queries.At_End (Iter.Old_Iter)
+           and then not Old_Entities.Queries.Is_Explicit (Iter.Old_Iter)
+         loop
+            Old_Entities.Queries.Next (Iter.Old_Iter);
+         end loop;
       end if;
       return Iter;
    end Find_Dependencies;
@@ -2599,9 +2610,15 @@ package body Xref is
          Old_Entities.Queries.Find_Ancestor_Dependencies
            (Iter               => Iter.Old_Ancestor_Iter,
             File               => Old_Entities.Get_Or_Create
-              (Self.Entities, File, Allow_Create => False),
+              (Self.Entities, File, Allow_Create => True),
             Include_Self       => False,
             Single_Source_File => False);
+
+         while not Old_Entities.Queries.At_End (Iter.Old_Iter)
+           and then not Old_Entities.Queries.Is_Explicit (Iter.Old_Iter)
+         loop
+            Old_Entities.Queries.Next (Iter.Old_Iter);
+         end loop;
       end if;
       return Iter;
    end Find_Ancestor_Dependencies;
