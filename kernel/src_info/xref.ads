@@ -347,7 +347,7 @@ package Xref is
    function Pointed_Type
      (Db     : access General_Xref_Database_Record;
       Entity : General_Entity) return General_Entity;
-   --  The type pointed to by an access type.
+   --  The type pointed to by an access type. Returns null for a variable.
 
    function Renaming_Of
      (Self   : access General_Xref_Database_Record;

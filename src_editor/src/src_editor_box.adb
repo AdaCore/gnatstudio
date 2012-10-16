@@ -2213,17 +2213,13 @@ package body Src_Editor_Box is
       ---------------------
 
       function Get_Type_Or_Ref
-        (Entity : General_Entity) return General_Entity
-      is
-         E : General_Entity;
+        (Entity : General_Entity) return General_Entity is
       begin
          if Db.Is_Access (Entity) then
-            E := Xref.Pointed_Type (Db, Entity);
+            return Db.Pointed_Type (Entity);
          else
-            E := Get_Type_Of (Db, Entity);
+            return Get_Type_Of (Db, Entity);
          end if;
-
-         return E;
       end Get_Type_Or_Ref;
 
       ------------
@@ -2264,32 +2260,34 @@ package body Src_Editor_Box is
          return Commands.Failure;
 
       else
-         Entity_Type := Get_Type_Or_Ref (Entity);
-
-         if Is_Predefined_Entity (Db, Entity_Type) then
-            Console.Insert
-              (Kernel,
-               Get_Name (Db, Entity)
-                 & (-" is of predefined type ")
-                 & Get_Name (Db, Entity_Type));
-            return Commands.Failure;
-
-         else
+         declare
+            Name : constant String := Db.Get_Name (Entity);
+         begin
             if Db.Is_Type (Entity) then
-               Insert (Get_Name (Db, Entity), Entity);
+               Insert (Name, Entity);
+               Entity_Type := Get_Type_Or_Ref (Entity);
+            else
+               Entity_Type := Db.Get_Type_Of (Entity);
+            end if;
+
+            if Is_Predefined_Entity (Db, Entity_Type) then
+               Console.Insert
+                 (Kernel,
+                  Name & (-" is of predefined type ")
+                  & Get_Name (Db, Entity_Type));
+               return Commands.Failure;
             end if;
 
             loop
                exit when Entity_Type = No_General_Entity
                  or else Db.Is_Predefined_Entity (Entity_Type);
 
-               Insert (Db.Get_Name (Entity), Entity_Type);
-
+               Insert (Name, Entity_Type);
                Entity_Type := Get_Type_Or_Ref (Entity_Type);
             end loop;
+         end;
 
-            return Commands.Success;
-         end if;
+         return Commands.Success;
       end if;
    end Execute;
 
