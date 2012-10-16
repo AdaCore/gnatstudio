@@ -3191,11 +3191,6 @@ The following tags are available in a `Language` section:
   can choose to easily go from one file to the other.
   This tag must be unique.
 
-*LI_Suffix*
-  A string describing the suffix of library information files for this language.
-  If the language does not support library information files, you can omit this
-  value.
-
 *Extension*
   A string describing one of the valid extensions for this language. There can
   be several such children. The extension must start with a '.' character
