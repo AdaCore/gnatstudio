@@ -146,9 +146,15 @@ package body GPS.Kernel.Xref is
             Count => Command.Count, Total => Command.Total);
 
       if Command.Count >= Command.Total then
+         Trace (Me, "Finished loading xref in memory");
          Old_Entities.Queries.Free (Command.Iter);
          return Success;
       else
+         if Active (Me) then
+            Trace (Me, "Load xref in memory, count="
+                   & Command.Count'Img & " total="
+                   & Command.Total'Img);
+         end if;
          return Execute_Again;
       end if;
    end Execute;
@@ -221,10 +227,14 @@ package body GPS.Kernel.Xref is
    is
       use Old_Entities;
       C : Command_Access;
-      C_Name : constant String := "load c/c++ xref";
+      C_Name : constant String := "load C/C++ xref";
       All_Name : constant String := "load xref";
 
    begin
+      if Active (Me) then
+         Trace (Me, "Load xref in memory, c only ? " & C_Only'Img);
+      end if;
+
       if C_Only then
          C := new All_LI_Information_Command
            (Name_Len => C_Name'Length);
@@ -810,6 +820,7 @@ package body GPS.Kernel.Xref is
       C_Only : Boolean)
    is
    begin
+      Trace (Me, "Compilation finished, loading xref");
       if Active (SQLITE) then
          --  Nothing to do: the plugin cross_references.py has a special
          --  target that already takes care of re-running gnatinspect when a
