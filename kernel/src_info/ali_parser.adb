@@ -611,7 +611,9 @@ package body ALI_Parser is
             --  We end up here for the runtime files, so we just try to append
             --  the standard GNAT extensions.
 
-            if File_To_Compile = Namet.No_File then
+            if File_To_Compile = Namet.No_File
+              or else Imported_Projects'Length = 0
+            then
                Name_Len := 0;
                return Name_Find;
             else
