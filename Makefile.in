@@ -20,9 +20,8 @@ default:
 
 codepeer:
 	$(MAKE) -C gps scil
-	codepeer -all -lib gps.library -quiet -background -baseline \
-	  -no-race-conditions -method-timeout 20 -dbg-partition-limit 500 \
-	  -jobs $(PROCS)
+	codepeer -all -lib gps.library -quiet -baseline \
+	  -quick -jobs $(PROCS) $(CODEPEER_FLAGS)
 
 clean:
 	$(MAKE) -C gps $@
