@@ -5087,7 +5087,9 @@ class File(object):
         then implicit dependencies are also returned. If include_system is
         true, then system files from the compiler runtime are also returned.
 
-        :param include_implicit: A boolean
+        :param include_implicit: A boolean.
+             This is now ignored, and only explicit dependencies corresponding
+             to actual 'with' or '#include' lines will be returned.
         :param include_system: A boolean
         :return: A list of files
 

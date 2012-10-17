@@ -826,7 +826,7 @@ package body Xref is
                     (Entity           => Entity.Old_Entity,
                      Current_Location =>
                        (File   => Old_Entities.Get_Or_Create
-                          (Db.Entities, After.File, Allow_Create => False),
+                          (Db.Entities, After.File, Allow_Create => True),
                         Line   => After.Line,
                         Column => After.Column),
                      Location         => Loc);
@@ -1110,7 +1110,7 @@ package body Xref is
                F := Old_Entities.Get_Or_Create
                  (Db    => Self.Entities,
                   File  => In_File,
-                  Allow_Create => False);
+                  Allow_Create => True);
             end if;
 
             Old_Entities.Queries.Find_All_References
@@ -1815,7 +1815,7 @@ package body Xref is
          return Self.Xref.Is_Up_To_Date (File);
       else
          Source := Old_Entities.Get_Or_Create
-           (Self.Entities, File, Allow_Create => False);
+           (Self.Entities, File, Allow_Create => True);
          return Old_Entities.Is_Up_To_Date (Source);
       end if;
    end Is_Up_To_Date;
@@ -2514,6 +2514,7 @@ package body Xref is
    ----------
 
    procedure Next (Iter : in out File_Iterator) is
+      use Old_Entities;
    begin
       if Active (SQLITE) then
          Next (Iter.Iter);
@@ -2523,7 +2524,9 @@ package body Xref is
          else
             Old_Entities.Queries.Next (Iter.Old_Iter);
             while not Old_Entities.Queries.At_End (Iter.Old_Iter)
-              and then not Old_Entities.Queries.Is_Explicit (Iter.Old_Iter)
+              and then
+                (Get (Iter.Old_Iter) = null
+                 or else not Old_Entities.Queries.Is_Explicit (Iter.Old_Iter))
             loop
                Old_Entities.Queries.Next (Iter.Old_Iter);
             end loop;
@@ -2585,6 +2588,7 @@ package body Xref is
      (Self : access General_Xref_Database_Record'Class;
       File : GNATCOLL.VFS.Virtual_File) return File_Iterator
    is
+      use Old_Entities;
       Iter : File_Iterator;
    begin
       Iter.Is_Ancestor := False;
@@ -2598,7 +2602,9 @@ package body Xref is
               (Self.Entities, File, Allow_Create => True));
 
          while not Old_Entities.Queries.At_End (Iter.Old_Iter)
-           and then not Old_Entities.Queries.Is_Explicit (Iter.Old_Iter)
+           and then
+             (Get (Iter.Old_Iter) = null
+              or else not Old_Entities.Queries.Is_Explicit (Iter.Old_Iter))
          loop
             Old_Entities.Queries.Next (Iter.Old_Iter);
          end loop;
@@ -2614,6 +2620,7 @@ package body Xref is
      (Self                  : access General_Xref_Database_Record'Class;
       File                  : GNATCOLL.VFS.Virtual_File) return File_Iterator
    is
+      use Old_Entities;
       Iter : File_Iterator;
    begin
       Iter.Is_Ancestor := True;
@@ -2628,10 +2635,13 @@ package body Xref is
             Include_Self       => False,
             Single_Source_File => False);
 
-         while not Old_Entities.Queries.At_End (Iter.Old_Iter)
-           and then not Old_Entities.Queries.Is_Explicit (Iter.Old_Iter)
+         while not Old_Entities.Queries.At_End (Iter.Old_Ancestor_Iter)
+           and then
+             (Get (Iter.Old_Ancestor_Iter) = null
+              or else
+                not Old_Entities.Queries.Is_Explicit (Iter.Old_Ancestor_Iter))
          loop
-            Old_Entities.Queries.Next (Iter.Old_Iter);
+            Old_Entities.Queries.Next (Iter.Old_Ancestor_Iter);
          end loop;
       end if;
       return Iter;

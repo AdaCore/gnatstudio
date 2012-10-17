@@ -1762,6 +1762,15 @@ package body Old_Entities.Queries is
          --  Iterate over File.Depended_On
          Iter.Dep_Index := Iter.Dep_Index + 1;
 
+         --  Skip all implicit dependencies, which are improperly specified in
+         --  the ALI file anyway and not returned by
+         --  xref.adb::Find_Ancestor_Dependencies.
+         while Iter.Dep_Index <= Last (Iter.File.Depended_On)
+           and then not Iter.File.Depended_On.Table (Iter.Dep_Index).Explicit
+         loop
+            Iter.Dep_Index := Iter.Dep_Index + 1;
+         end loop;
+
       else
          --  Keep parsing all LI information from disk.
          --  We never enter here if Iter.Single_Source_File
