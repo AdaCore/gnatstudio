@@ -276,6 +276,8 @@ package Xref is
    --
    --  This also works for operators, whether they are quoted ("=") or
    --  not (=).
+   --
+   --  Passing No_Location for Loc will search for predefined entities.
 
    function Get_Entity (Ref : General_Entity_Reference) return General_Entity;
    --  Return the entity the reference is pointing to

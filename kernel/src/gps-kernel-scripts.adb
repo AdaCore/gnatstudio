@@ -801,25 +801,21 @@ package body GPS.Kernel.Scripts is
                        Nth_Arg (Data, 3, Get_File_Class (Kernel),
                                 Default    => No_Class_Instance,
                                 Allow_Null => True);
-            L      : Integer := Nth_Arg (Data, 4, Default => 1);
-            C      : Visible_Column_Type :=
-              Visible_Column_Type (Nth_Arg (Data, 5, Default => 1));
-            F      : Virtual_File;
+            Loc    : General_Location;
 
          begin
             if File = No_Class_Instance then
                --  Looking for a predefined entity
-               F := Create ("/");
-               L := -1;
-               C := -1;
+               Loc := No_Location;
             else
-               F := Get_Data (File);
+               Loc := (File => Get_Data (File),
+                       Line => Nth_Arg (Data, 4, Default => 1),
+                       Column => Visible_Column_Type
+                         (Nth_Arg (Data, 5, Default => 1)));
             end if;
 
             Kernel.Databases.Find_Declaration_Or_Overloaded
-              (Loc               => (File   => F,
-                                     Line   => L,
-                                     Column => C),
+              (Loc               => Loc,
                Entity_Name       => Name,
                Ask_If_Overloaded => False,
                Entity            => Entity,
