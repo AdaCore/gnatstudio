@@ -2761,7 +2761,7 @@ package body Src_Editor_Module is
       Register_Contextual_Menu
         (Kernel, "Goto declaration of entity",
          Action => Command,
-         Label  => -"Goto declaration of %e",
+         Label  => -"Goto declaration of %ef",
          Filter => (not Is_Dispatching)
             and ((not Line_Numbers_Area_Filter
               and Create (Module => Src_Editor_Module_Name))
@@ -2770,7 +2770,7 @@ package body Src_Editor_Module is
       Submenu := new Goto_Dispatch_Declaration_Submenu;
       Register_Contextual_Submenu
         (Kernel, "Goto dispatching declaration of entity",
-         Label   => -"Goto declarations of %e",
+         Label   => -"Goto declarations of %ef",
          Submenu => Submenu,
          Filter  => Is_Dispatching
             and ((not Line_Numbers_Area_Filter
@@ -2789,7 +2789,7 @@ package body Src_Editor_Module is
       Submenu := new Goto_Dispatch_Body_Submenu;
       Register_Contextual_Submenu
         (Kernel, "Goto dispatching bodies of entity",
-         Label   => "Goto bodies of %e",
+         Label   => "Goto bodies of %ef",
          Submenu => Submenu,
          Filter  => Is_Dispatching);
 
