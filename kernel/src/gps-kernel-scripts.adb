@@ -516,6 +516,9 @@ package body GPS.Kernel.Scripts is
       elsif Command = "get_home_dir" then
          Set_Return_Value (Data, +Get_Home_Dir (Kernel).Full_Name);
 
+      elsif Command = "reset_xref_db" then
+         Kernel.Databases.Reset;
+
       elsif Command = "debug_memory_usage" then
          GNATCOLL.Memory.Dump
            (Size   => Nth_Arg (Data, 1, 3),
@@ -1943,6 +1946,9 @@ package body GPS.Kernel.Scripts is
          Handler => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "get_home_dir",
+         Handler => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "reset_xref_db",
          Handler => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "insmod",

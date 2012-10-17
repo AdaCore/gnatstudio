@@ -10092,6 +10092,14 @@ def supported_languages():
     pass  # implemented in Ada
 
 
+def reset_xref_db():
+    """
+    Empties the internal xref database for GPS. This is rarely useful,
+    unless you want to force GPS to reload everything.
+    """
+    pass
+
+
 def thaw_xref():
     """
     See GPS.freeze_xref for more information
