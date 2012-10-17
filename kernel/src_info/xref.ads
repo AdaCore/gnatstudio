@@ -194,6 +194,9 @@ package Xref is
    function Reference_Is_Body
      (Db  : access General_Xref_Database_Record'Class;
       Ref : General_Entity_Reference) return Boolean;
+   function Reference_Is_Declaration
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
    function Is_Real_Reference
      (Db  : access General_Xref_Database_Record'Class;
       Ref : General_Entity_Reference) return Boolean;

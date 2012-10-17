@@ -1477,8 +1477,6 @@ package body Old_Entities.Queries is
          --  prior files or parsing them in memory).
 
          while Iter.Entity_It /= Entities_In_File_Sets.No_Element loop
-            Trace (Me, "MANU Candidate = "
-                     & Element (Iter.Entity_It).Kind'Img);
             if Iter.Filter (Element (Iter.Entity_It).Kind)
               and then In_Range
                 (Element (Iter.Entity_It).Location,
@@ -2953,6 +2951,7 @@ package body Old_Entities.Queries is
       On_Callee : access function
         (Callee, Primitive_Of : Entity_Information) return Boolean;
       Filter    : Reference_Filter_Function := null;
+      Need_Bodies : Boolean := False;
       Policy    : Dispatching_Menu_Policy)
    is
       Db    : Entities_Database;
@@ -2972,12 +2971,11 @@ package body Old_Entities.Queries is
          F := Real_References_Filter;
 
          --  If we are interested in the body:
-         --  ??? We can't know that now that the filter is a function, but we
-         --  used to know when the filter was an array on reference kinds.
-         --  Since this API is going away, it seems we can work with the
-         --  below:
-         F (Body_Entity) := True;
-         F (Declaration) := False;
+
+         if Need_Bodies then
+            F (Body_Entity) := True;
+            F (Declaration) := False;
+         end if;
 
          Find_All_References
            (Iter                  => Iter,

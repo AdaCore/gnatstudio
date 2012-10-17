@@ -17,6 +17,7 @@
 
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.Xref;
 with GNAT.Strings;                  use GNAT.Strings;
@@ -74,7 +75,7 @@ with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with XML_Utils;                     use XML_Utils;
 with Std_Dialogs;                   use Std_Dialogs;
-with Traces;                        use Traces;
+with Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with Generic_List;
 with Xref;                          use Xref;
@@ -839,7 +840,8 @@ package body Browsers.Call_Graph is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Examine_Entity_Call_Graph;
 
    -------------
@@ -1020,7 +1022,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          Pop_State (Kernel_Handle (Kernel));
    end Examine_Ancestors_Call_Graph;
 
@@ -1317,13 +1319,14 @@ package body Browsers.Call_Graph is
 
          exception
             when E : others =>
-               Trace (Exception_Handle, E);
+               Trace (Traces.Exception_Handle, E);
                Destroy (Data.Iter);
          end;
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Find_All_References_Internal;
 
    ----------------------------------
@@ -1377,7 +1380,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
    end Contextual_Factory;
 
    -------------------
@@ -1403,7 +1406,8 @@ package body Browsers.Call_Graph is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end On_Call_Graph;
 
    ----------------------------
@@ -1444,7 +1448,8 @@ package body Browsers.Call_Graph is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end On_Find_All_References;
 
    -----------------------------
@@ -1666,7 +1671,8 @@ package body Browsers.Call_Graph is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Call_Graph_Command_Handler;
 
    --------------------------------
@@ -1787,7 +1793,7 @@ package body Browsers.Call_Graph is
                  -"Internal error when creating the call graph for "
                  & Entity_Name_Information (Context.Context),
                  Mode => Error);
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
@@ -1886,7 +1892,7 @@ package body Browsers.Call_Graph is
                        -"Internal error when creating the call graph for "
                        & Entity_Name_Information (Context.Context),
                        Mode => Error);
-               Trace (Exception_Handle, E);
+               Trace (Traces.Exception_Handle, E);
                Pop_State (Get_Kernel (Context.Context));
                return Commands.Failure;
          end;
@@ -1902,7 +1908,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
@@ -1936,7 +1942,7 @@ package body Browsers.Call_Graph is
                  -"Internal error when creating the call graph for "
                  & Entity_Name_Information (Context.Context),
                  Mode => Error);
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
