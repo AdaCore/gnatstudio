@@ -389,6 +389,7 @@ package body Language.Tree.Database is
       elsif not Success then
          --  the string is not valid utf-8
          Free (Tmp);
+         Tmp := new String'("");
       end if;
 
       return Tmp;
