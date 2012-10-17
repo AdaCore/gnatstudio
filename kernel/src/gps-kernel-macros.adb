@@ -164,6 +164,18 @@ package body GPS.Kernel.Macros is
             return Entity_Name_Information (Context);
          end if;
 
+      elsif Param = "ef" then
+         Entity := Get_Entity (Context);
+         if Entity /= No_General_Entity then
+            --  Get the name from the context, to have the proper casing
+            if Xref.Is_Fuzzy (Entity) then
+               return Entity_Name_Information (Context)
+                 & " (best guess)";
+            else
+               return Entity_Name_Information (Context);
+            end if;
+         end if;
+
       elsif Param = "ek" then
          Entity := Get_Entity (Context);
          if Entity /= No_General_Entity then

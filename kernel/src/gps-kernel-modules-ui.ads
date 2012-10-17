@@ -130,7 +130,7 @@ package GPS.Kernel.Modules.UI is
    --       menu (selected file, ....)
    --     - it then asks each of the registered modules whether it wants to
    --       add new items to the menu, and let it do so (through the
-   --       Contextual_Menu_Handler provided in Register_Module)
+   --       Contextual_Menu_Handler provided in Register_Module)s
    --     - it then displays the menu
    --     - it finally cleans up the memory when the menu is hidden
 
@@ -147,6 +147,14 @@ package GPS.Kernel.Modules.UI is
      (Context : Selection_Context) return String;
    --  Provide the custom expansion for %C when expanding a label. If the
    --  empty string is returned, the contextual entry will not be displayed.
+
+   function Substitute_Label
+     (Text    : String;
+      Context : Selection_Context;
+      Custom  : Custom_Expansion := null) return String;
+   --  Substitute patterns like %e, %p,.. in Text.
+   --  If some of the patterns could not be substituted, this function returns
+   --  an empty string (so that the associated contextual menu does not appear)
 
    Default_Contextual_Group : constant := 0;
    procedure Register_Contextual_Menu

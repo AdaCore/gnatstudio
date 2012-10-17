@@ -1612,11 +1612,10 @@ package body Src_Editor_Box is
          Decl := Kernel.Databases.Get_Declaration (Entity);
 
          if Decl.Body_Is_Full_Declaration then
-            return -"Goto full declaration of "
-              & Emphasize (Entity_Name_Information (Context));
+            return Substitute_Label
+              (-"Goto full declaration of %ef", Context);
          else
-            return -"Goto body of "
-              & Emphasize (Entity_Name_Information (Context));
+            return Substitute_Label (-"Goto body of %ef", Context);
          end if;
       end if;
 

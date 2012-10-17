@@ -446,13 +446,14 @@ package body GPS.Kernel.Modules.UI is
       return "<b>" & Glib.Convert.Escape_Text (Name) & "</b>";
    end Emphasize;
 
-   ---------------
-   -- Get_Label --
-   ---------------
+   ----------------------
+   -- Substitute_Label --
+   ----------------------
 
-   overriding function Get_Label
-     (Creator : access Contextual_Label_Parameters;
-      Context : Selection_Context) return String
+   function Substitute_Label
+     (Text    : String;
+      Context : Selection_Context;
+      Custom  : Custom_Expansion := null) return String
    is
       Has_Error : Boolean := False;
 
@@ -466,9 +467,9 @@ package body GPS.Kernel.Modules.UI is
       function Substitution (Param : String; Quoted : Boolean) return String is
       begin
          if Param = "C" then
-            if Creator.Custom /= null then
+            if Custom /= null then
                declare
-                  Result : constant String := Creator.Custom (Context);
+                  Result : constant String := Custom (Context);
                begin
                   if Result = "" then
                      Has_Error := True;
@@ -496,21 +497,30 @@ package body GPS.Kernel.Modules.UI is
          return "";
       end Substitution;
 
+      Tmp : constant String := Substitute
+        (XML_Utils.Protect (Text),
+         Delimiter => GPS.Kernel.Macros.Special_Character,
+         Callback  => Substitution'Unrestricted_Access,
+         Recursive => False);
+
+   begin
+      if Has_Error then
+         return "";
+      else
+         return Tmp;
+      end if;
+   end Substitute_Label;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   overriding function Get_Label
+     (Creator : access Contextual_Label_Parameters;
+      Context : Selection_Context) return String is
    begin
       if Filter_Matches (Action_Filter (Creator.Filter), Context) then
-         declare
-            Tmp : constant String := Substitute
-              (XML_Utils.Protect (Creator.Label.all),
-               Delimiter => GPS.Kernel.Macros.Special_Character,
-               Callback  => Substitution'Unrestricted_Access,
-               Recursive => False);
-         begin
-            if Has_Error then
-               return "";
-            else
-               return Tmp;
-            end if;
-         end;
+         return Substitute_Label (Creator.Label.all, Context, Creator.Custom);
       else
          return "";
       end if;

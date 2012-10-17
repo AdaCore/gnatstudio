@@ -2036,6 +2036,11 @@ whether the context is properly defined.
 
     GPS.current_context().entity().name()
 
+*%ef*
+  Name of the entity the user clicked on, possibly followed by "(best guess)"
+  if there is an ambiguity on which entity it really, for instance because the
+  cross-reference information is not up-to-date.
+
 *%E*
   The full path to the executable name corresponding to the target.
 
