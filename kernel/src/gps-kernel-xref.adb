@@ -531,6 +531,7 @@ package body GPS.Kernel.Xref is
                            if not Dispatching_Calls
                              or else not Through_Dispatching
                            then
+                              Trace (Me, "MANU On_Entity_Found, not dispatch");
                               if not On_Entity_Found
                                 (User_Data,
                                  Entity              => Get_Entity (Refs),
@@ -553,7 +554,7 @@ package body GPS.Kernel.Xref is
                             (Ref)
                         then
                            Is_First := False;
-
+                           Trace (Me, "MANU On_Entity_Found, first time");
                            if not On_Entity_Found
                              (User_Data,
                               Entity            => Get_Entity (Refs),
@@ -601,11 +602,16 @@ package body GPS.Kernel.Xref is
                               --  the call graph, since, as opposed to the
                               --  contextual menu, we have more time to do
                               --  the computation
+                              Increase_Indent
+                                (Me, "Searching for all dispatch calls at "
+                                 & Get_Location (Ref).Line'Img);
                               Kernel.Databases.For_Each_Dispatching_Call
                                 (Entity    => Get_Entity (Refs),
                                  Ref       => Ref,
+                                 Filter    => Reference_Is_Declaration'Access,
                                  On_Callee => On_Callee'Access,
                                  Policy    => Basic_Types.Accurate);
+                              Decrease_Indent (Me);
                               exit For_Each_Entity when Stop;
                            end;
                         end if;

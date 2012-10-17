@@ -293,8 +293,6 @@ package body Xref is
          return;
       end if;
 
-      --  New functionality
-
       if Active (SQLITE) then
          declare
             function Tagged_Type (E : Entity_Information)
@@ -378,8 +376,11 @@ package body Xref is
             end Proxy_Filter;
 
             P : Old_Entities.Queries.Reference_Filter_Function := null;
+            Need_Bodies : constant Boolean :=
+              Filter = Reference_Is_Body'Access;
 
          begin
+
             if Filter /= null then
                P := Proxy_Filter'Unrestricted_Access;
             end if;
@@ -389,6 +390,7 @@ package body Xref is
                Ref       => Ref.Old_Ref,
                On_Callee => Proxy'Access,
                Filter    => P,
+               Need_Bodies => Need_Bodies,
                Policy    => Policy);
          end;
       end if;
@@ -2017,9 +2019,27 @@ package body Xref is
       end if;
    end Get_Display_Kind;
 
-   ---------------------
-   -- Entity_Has_Body --
-   ---------------------
+   ------------------------------
+   -- Reference_Is_Declaration --
+   ------------------------------
+
+   function Reference_Is_Declaration
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean
+   is
+      pragma Unreferenced (Db);
+   begin
+      if Active (SQLITE) then
+         return Ref.Ref.Kind_Id = Kind_Id_Declaration;
+      else
+         return Old_Entities.Queries.Reference_Is_Declaration
+           (Old_Entities.Get_Kind (Ref.Old_Ref));
+      end if;
+   end Reference_Is_Declaration;
+
+   -----------------------
+   -- Reference_Is_Body --
+   -----------------------
 
    function Reference_Is_Body
      (Db  : access General_Xref_Database_Record'Class;

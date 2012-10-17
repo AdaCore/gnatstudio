@@ -443,6 +443,7 @@ package Old_Entities.Queries is
       On_Callee : access function
         (Callee, Primitive_Of : Entity_Information) return Boolean;
       Filter    : Reference_Filter_Function := null;
+      Need_Bodies : Boolean := False;
       Policy    : Basic_Types.Dispatching_Menu_Policy);
    --  If Ref is for a subprogram, this will call On_Callee with all the
    --  subprograms that might possibly be called instead of Entity.
