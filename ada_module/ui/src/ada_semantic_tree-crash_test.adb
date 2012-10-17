@@ -458,6 +458,9 @@ begin
       Symbols      => Symbols,
       Registry     => New_Registry,
       Subprogram_Ref_Is_Call => False);
+   Set_Provider
+     (Db.Constructs,
+      new File_Buffer_Provider);
 
    Register_Language (Handler, C_Lang, null);
    New_Registry.Environment.Register_Default_Language_Extension
