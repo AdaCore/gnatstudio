@@ -3151,7 +3151,7 @@ package body Xref is
 
                if In_Range (Old_Entities.Get_Declaration_Of (Field),
                             Entity.Old_Entity)
-                 and then not Is_Discriminant (Field, Field)
+                 and then not Is_Discriminant (Field, Entity.Old_Entity)
                  and then not Old_Entities.Is_Subprogram (Field)
                  and then Get_Category (Field) /= Type_Or_Subtype
                then
