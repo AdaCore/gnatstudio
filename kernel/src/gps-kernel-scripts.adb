@@ -897,7 +897,7 @@ package body GPS.Kernel.Scripts is
          Set_Return_Value_Key (Data, "global");
 
          Set_Return_Value (Data, Kernel.Databases.Is_Static_Local (Entity));
-         Set_Return_Value_Key (Data, "static_local");
+         Set_Return_Value_Key (Data, "static");
 
       elsif Command = "is_subprogram" then
          Entity := Get_Data (Data, 1);

@@ -431,9 +431,9 @@ package Old_Entities.Queries is
      (Discr, Entity : Entity_Information) return Boolean;
    --  Return True if Discr is a discriminant of Entity
 
-   Entity_Has_Declaration : constant Reference_Kind_Filter :=
+   Reference_Is_Declaration : constant Reference_Kind_Filter :=
      (Declaration => True, others => False);
-   Entity_Has_Body        : constant Reference_Kind_Filter :=
+   Reference_Is_Body        : constant Reference_Kind_Filter :=
      (Body_Entity => True, others => False);
 
    procedure For_Each_Dispatching_Call

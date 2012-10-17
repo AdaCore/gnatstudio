@@ -23,6 +23,7 @@ with GNAT.Strings;
 
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;       use GNATCOLL.Tribooleans;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -98,14 +99,14 @@ with Src_Editor_View;            use Src_Editor_View;
 with Std_Dialogs;                use Std_Dialogs;
 with String_Utils;               use String_Utils;
 with Tooltips;                   use Tooltips;
-with Traces;                     use Traces;
+with Traces;
 
 with Xref; use Xref;
 
 package body Src_Editor_Box is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Source_Editor");
+   Me : constant Trace_Handle := Create ("Source_Editor");
 
    procedure Setup (Data : Source_Editor_Box; Id : Handler_Id);
    package Box_Callback is new Gtk.Handlers.User_Callback_With_Setup
@@ -371,7 +372,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          Pop_State (Kernel_Handle (Kernel));
    end Goto_Declaration_Or_Body;
 
@@ -643,7 +644,8 @@ package body Src_Editor_Box is
          Get_Filename (Box.Source_Buffer),
          Get_Status (Box.Source_Buffer));
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Status_Changed_Handler;
 
    ------------------------------
@@ -664,7 +666,8 @@ package body Src_Editor_Box is
          Box.Source_Buffer.Get_Filename.Display_Full_Name,
          Box.Source_Buffer.Get_Filename.Display_Base_Name);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Filename_Changed_Handler;
 
    --------------------------------
@@ -763,7 +766,8 @@ package body Src_Editor_Box is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Cursor_Position_Changed_Handler;
 
    -------------------------
@@ -807,7 +811,8 @@ package body Src_Editor_Box is
          Idle_Remove (Box.Check_Timestamp_Id);
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end On_Box_Destroy;
 
    -------------------------
@@ -830,7 +835,8 @@ package body Src_Editor_Box is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end On_Toggle_Overwrite;
 
    ----------------
@@ -1077,8 +1083,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
-
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Key_Press;
 
@@ -1098,8 +1103,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
-
+         Trace (Traces.Exception_Handle, E);
          return False;
    end On_Read_Only_Pressed;
 
@@ -1173,8 +1177,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
-
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Check_Timestamp_Idle;
 
@@ -1219,7 +1222,7 @@ package body Src_Editor_Box is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Focus_Out;
 
@@ -1763,7 +1766,7 @@ package body Src_Editor_Box is
       --  Start of processing for Append_To_Dispatching_Menu
 
    begin
-      Trace (Me, "Computing Dispatch_Submenu: " & Default_Title);
+      Increase_Indent (Me, "Computing Dispatch_Submenu: " & Default_Title);
       Push_State (Kernel, Busy);
 
       --  Before getting its entity we check if the LI handler has unresolved
@@ -1818,7 +1821,7 @@ package body Src_Editor_Box is
       end if;
 
       Pop_State (Kernel);
-      Trace (Me, "Done computing Dispatch_Declaration_Submenu");
+      Decrease_Indent (Me, "Done computing Dispatch_Declaration_Submenu");
 
    exception
       when E : others =>
@@ -1863,7 +1866,7 @@ package body Src_Editor_Box is
         (Menu          => Menu,
          Context       => Context,
          Default_Title => -"Body of ",
-         Filter        => Entity_Has_Body'Access,
+         Filter        => Reference_Is_Body'Access,
          Show_Default  => Has_Body (Context),
          Callback      => On_Goto_Body_Of'Access);
    end Append_To_Menu;
@@ -2336,7 +2339,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Delete_Callback;
 

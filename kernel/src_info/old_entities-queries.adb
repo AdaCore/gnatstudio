@@ -2938,6 +2938,7 @@ package body Old_Entities.Queries is
       Db    : Entities_Database;
       Iter  : Entity_Reference_Iterator;
       E, E2 : Entity_Information;
+      F     : Reference_Kind_Filter;
    begin
       if Entity /= null
         and then Policy /= Never
@@ -2948,16 +2949,28 @@ package body Old_Entities.Queries is
             Freeze (Db);
          end if;
 
+         F := Real_References_Filter;
+
+         --  If we are interested in the body:
+         --  ??? We can't know that now that the filter is a function, but we
+         --  used to know when the filter was an array on reference kinds.
+         --  Since this API is going away, it seems we can work with the
+         --  below:
+         F (Body_Entity) := True;
+         F (Declaration) := False;
+
          Find_All_References
            (Iter                  => Iter,
             Entity                => Entity,
             File_Has_No_LI_Report => null,
             In_File               => null,
-            Filter                => Entity_Has_Declaration,
+            Filter                => F,
             Include_Overriding    => True,
             Include_Overridden    => False);
 
          while not At_End (Iter) loop
+            E := Get_Entity (Iter);
+
             if Filter = null
               or else Filter (Get (Iter))
             then
