@@ -593,7 +593,9 @@ package body GPS.Kernel.Contexts is
          Context.Data.Data.Entity_Name := new String'(Entity_Name);
          Context.Data.Data.Entity_Column   := Entity_Column;
 
-         if Has_File_Information (Context) then
+         if Has_File_Information (Context)
+           and then Has_Line_Information (Context)
+         then
             Db.Find_Declaration_Or_Overloaded
               (Loc  => (File   => Context.Data.Data.Files
                         (Context.Data.Data.Files'First),
