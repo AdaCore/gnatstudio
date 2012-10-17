@@ -91,6 +91,9 @@ package Xref is
    procedure Destroy (Self : in out General_Xref_Database);
    --  Destroy the xref database (in memory)
 
+   procedure Reset (Self : access General_Xref_Database_Record);
+   --  Empty the contents of the xref database.
+
    procedure Initialize
      (Self         : access General_Xref_Database_Record;
       Lang_Handler :

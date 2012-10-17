@@ -43,6 +43,7 @@ Functions
 .. autofunction:: parse_xml
 .. autofunction:: pwd
 .. autofunction:: repeat_next
+.. autofunction:: reset_xref_db
 .. autofunction:: save_persistent_properties
 .. autofunction:: set_build_mode
 .. autofunction:: set_busy

@@ -3341,4 +3341,15 @@ package body Xref is
       return Entity;
    end Select_Entity_Declaration;
 
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Self : access General_Xref_Database_Record) is
+   begin
+      if not Active (SQLITE) then
+         Old_Entities.Reset (Self.Entities);
+      end if;
+   end Reset;
+
 end Xref;

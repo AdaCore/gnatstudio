@@ -307,6 +307,14 @@ package body Refactoring.Subprograms is
          Entity := E.Entity;
          Flags  := E.Flags;
 
+         Trace (Me, "Compute Params: Entity="
+                & Context.Code.Context.Db.Get_Name (Entity)
+                & " Flags: read=" & Flags (Flag_Read)'Img
+                & " modified=" & Flags (Flag_Modified)'Img
+                & " modified_before=" & Flags (Flag_Modified_Before)'Img
+                & " ref_outside_parent="
+                & Flags (Flag_Ref_Outside_Parent)'Img);
+
          if Flags (Flag_Read) and then not Flags (Flag_Modified) then
             if Flags (Flag_Modified_Before)
               or else Flags (Flag_Ref_Outside_Parent)
