@@ -361,17 +361,34 @@ package body Xref is
             function Proxy
               (Callee, Primitive_Of : Old_Entities.Entity_Information)
                return Boolean;
+            function Proxy_Filter
+              (R : Old_Entities.Entity_Reference) return Boolean;
+
             function Proxy
               (Callee, Primitive_Of : Old_Entities.Entity_Information)
                return Boolean is
             begin
                return On_Callee (From_Old (Callee), From_Old (Primitive_Of));
             end Proxy;
+
+            function Proxy_Filter
+              (R : Old_Entities.Entity_Reference) return Boolean is
+            begin
+               return Filter (Dbase, (Old_Ref => R, others => <>));
+            end Proxy_Filter;
+
+            P : Old_Entities.Queries.Reference_Filter_Function := null;
+
          begin
+            if Filter /= null then
+               P := Proxy_Filter'Unrestricted_Access;
+            end if;
+
             Old_Entities.Queries.For_Each_Dispatching_Call
               (Entity    => Entity.Old_Entity,
                Ref       => Ref.Old_Ref,
                On_Callee => Proxy'Access,
+               Filter    => P,
                Policy    => Policy);
          end;
       end if;
@@ -1981,7 +1998,7 @@ package body Xref is
    -- Entity_Has_Body --
    ---------------------
 
-   function Entity_Has_Body
+   function Reference_Is_Body
      (Db  : access General_Xref_Database_Record'Class;
       Ref : General_Entity_Reference) return Boolean
    is
@@ -1990,10 +2007,10 @@ package body Xref is
       if Active (SQLITE) then
          return Ref.Ref.Kind = "body";
       else
-         return Old_Entities.Queries.Entity_Has_Body
+         return Old_Entities.Queries.Reference_Is_Body
            (Old_Entities.Get_Kind (Ref.Old_Ref));
       end if;
-   end Entity_Has_Body;
+   end Reference_Is_Body;
 
    -----------------------
    -- Is_Read_Reference --

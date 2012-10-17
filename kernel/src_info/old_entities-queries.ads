@@ -336,7 +336,8 @@ package Old_Entities.Queries is
       File                  : Source_File;
       File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
       Include_Self          : Boolean := False;
-      Single_Source_File    : Boolean := False);
+      Single_Source_File    : Boolean := False;
+      Explicit_Only         : Boolean := True);
    --  Return the list of files that depend on File. The rule is the following:
    --    - bodies, specs and separates always depend on each other
    --
@@ -431,9 +432,9 @@ package Old_Entities.Queries is
      (Discr, Entity : Entity_Information) return Boolean;
    --  Return True if Discr is a discriminant of Entity
 
-   Entity_Has_Declaration : constant Reference_Kind_Filter :=
+   Reference_Is_Declaration : constant Reference_Kind_Filter :=
      (Declaration => True, others => False);
-   Entity_Has_Body        : constant Reference_Kind_Filter :=
+   Reference_Is_Body        : constant Reference_Kind_Filter :=
      (Body_Entity => True, others => False);
 
    procedure For_Each_Dispatching_Call
@@ -609,6 +610,8 @@ private
 
       Total_Progress        : Natural;
       Current_Progress      : Natural;
+
+      Explicit_Only         : Boolean;
 
       Include_Self          : Boolean;
       File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;

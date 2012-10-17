@@ -956,12 +956,14 @@ package body Old_Entities.Queries is
            (Deps,
             File                  => Get_File (Get_Declaration_Of (Entity)),
             File_Has_No_LI_Report => File_Has_No_LI_Report,
+            Explicit_Only         => False,
             Include_Self          => True);
       else
          Find_Ancestor_Dependencies
            (Deps,
             File                  => Iter.In_File,
             File_Has_No_LI_Report => File_Has_No_LI_Report,
+            Explicit_Only         => False,
             Include_Self          => True,
             Single_Source_File    => True);
       end if;
@@ -1307,6 +1309,7 @@ package body Old_Entities.Queries is
             --  the GPS API for a while.
             Find_Ancestor_Dependencies
               (Iter => Deps,
+               Explicit_Only         => False,
                File => Get_Declaration_Of (Entity).File);
             while not At_End (Deps) loop
                Next (Deps);
@@ -1474,6 +1477,8 @@ package body Old_Entities.Queries is
          --  prior files or parsing them in memory).
 
          while Iter.Entity_It /= Entities_In_File_Sets.No_Element loop
+            Trace (Me, "MANU Candidate = "
+                     & Element (Iter.Entity_It).Kind'Img);
             if Iter.Filter (Element (Iter.Entity_It).Kind)
               and then In_Range
                 (Element (Iter.Entity_It).Location,
@@ -1631,7 +1636,8 @@ package body Old_Entities.Queries is
       File                  : Source_File;
       File_Has_No_LI_Report : File_Error_Reporter := null;
       Include_Self          : Boolean := False;
-      Single_Source_File    : Boolean := False)
+      Single_Source_File    : Boolean := False;
+      Explicit_Only         : Boolean := True)
    is
       Importing : Project_Iterator;
       Project   : Project_Type;
@@ -1673,6 +1679,7 @@ package body Old_Entities.Queries is
                   Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
                   Source_File_Index     => 0,
+                  Explicit_Only         => Explicit_Only,
                   File                  => File);
 
       else
@@ -1710,6 +1717,7 @@ package body Old_Entities.Queries is
                   Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
                   Source_File_Index     => 0,
+                  Explicit_Only         => Explicit_Only,
                   File                  => File);
 
          Start (Iter.LI_Iter,
@@ -1765,11 +1773,14 @@ package body Old_Entities.Queries is
          --  Skip all implicit dependencies, which are improperly specified in
          --  the ALI file anyway and not returned by
          --  xref.adb::Find_Ancestor_Dependencies.
-         while Iter.Dep_Index <= Last (Iter.File.Depended_On)
-           and then not Iter.File.Depended_On.Table (Iter.Dep_Index).Explicit
-         loop
-            Iter.Dep_Index := Iter.Dep_Index + 1;
-         end loop;
+         if Iter.Explicit_Only then
+            while Iter.Dep_Index <= Last (Iter.File.Depended_On)
+              and then
+                not Iter.File.Depended_On.Table (Iter.Dep_Index).Explicit
+            loop
+               Iter.Dep_Index := Iter.Dep_Index + 1;
+            end loop;
+         end if;
 
       else
          --  Keep parsing all LI information from disk.
@@ -1786,6 +1797,15 @@ package body Old_Entities.Queries is
 
             Free (Iter.LI_Iter);
             Iter.Handler := null;
+
+            if Iter.Explicit_Only then
+               while Iter.Dep_Index <= Last (Iter.File.Depended_On)
+                 and then
+                   not Iter.File.Depended_On.Table (Iter.Dep_Index).Explicit
+               loop
+                  Iter.Dep_Index := Iter.Dep_Index + 1;
+               end loop;
+            end if;
          end if;
       end if;
    end Next;
@@ -2938,6 +2958,7 @@ package body Old_Entities.Queries is
       Db    : Entities_Database;
       Iter  : Entity_Reference_Iterator;
       E, E2 : Entity_Information;
+      F     : Reference_Kind_Filter;
    begin
       if Entity /= null
         and then Policy /= Never
@@ -2948,16 +2969,28 @@ package body Old_Entities.Queries is
             Freeze (Db);
          end if;
 
+         F := Real_References_Filter;
+
+         --  If we are interested in the body:
+         --  ??? We can't know that now that the filter is a function, but we
+         --  used to know when the filter was an array on reference kinds.
+         --  Since this API is going away, it seems we can work with the
+         --  below:
+         F (Body_Entity) := True;
+         F (Declaration) := False;
+
          Find_All_References
            (Iter                  => Iter,
             Entity                => Entity,
             File_Has_No_LI_Report => null,
             In_File               => null,
-            Filter                => Entity_Has_Declaration,
+            Filter                => F,
             Include_Overriding    => True,
             Include_Overridden    => False);
 
          while not At_End (Iter) loop
+            E := Get_Entity (Iter);
+
             if Filter = null
               or else Filter (Get (Iter))
             then
@@ -3520,6 +3553,7 @@ package body Old_Entities.Queries is
          Find_Ancestor_Dependencies
            (Deps,
             File         => Get_File (Get_Declaration_Of (Entity)),
+            Explicit_Only => False,
             Include_Self => True);
       end if;
 
@@ -3611,6 +3645,7 @@ package body Old_Entities.Queries is
                Find_Ancestor_Dependencies
                  (Iter.Deps,
                   File         => Get_File (Get_Declaration_Of (Iter.Entity)),
+                  Explicit_Only => False,
                   Include_Self => True);
 
             else
