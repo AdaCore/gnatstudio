@@ -502,6 +502,13 @@ package body Xref is
       end Internal_No_Constructs;
 
    begin
+      Closest_Ref := No_General_Entity_Reference;
+
+      if Loc = No_Location then
+         Entity := No_General_Entity;
+         return;
+      end if;
+
       if Active (Me) then
          Increase_Indent (Me, "Find_Declaration of " & Entity_Name);
       end if;
