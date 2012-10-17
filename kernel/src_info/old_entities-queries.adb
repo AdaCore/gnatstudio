@@ -3709,7 +3709,6 @@ package body Old_Entities.Queries is
       Iter.Handler      := Language_Handler (Handler);
       Iter.Lang_Count   := 1;   --  only one LI handler is known
       Iter.Filter       := Filter;
-      Iter.Current_Lang := 1;
       Iter.Count        := 0;
       Iter.Total        := 0;
       Iter.LI_Count     := 0;
@@ -3756,11 +3755,6 @@ package body Old_Entities.Queries is
 
             Free (Iter.LI.all);
             Unchecked_Free (Iter.LI);
-
-            --  We finished iterating for this project and language.
-            --  Move to next language
-
-            Iter.Current_Lang := Iter.Current_Lang + 1;
          end if;
 
          return False;
@@ -3774,9 +3768,14 @@ package body Old_Entities.Queries is
          return;
       end if;
 
-      --  Move to next project or language
+      --  Move to next project
 
-      while P /= No_Project loop
+      loop
+         Next (Iter.Project);
+         P := Current (Iter.Project);
+
+         exit when P = No_Project;
+
          Trace (Me, "Parse all LI information: project is " & P.Name);
 
          Iter.LI := new LI_Information_Iterator'Class'
@@ -3785,12 +3784,10 @@ package body Old_Entities.Queries is
          if Process then
             return;
          end if;
-
-         Next (Iter.Project);
-         P := Current (Iter.Project);
       end loop;
 
       --  Nothing else to process
+
       Trace (Me, "Parsed" & Iter.Count'Img & " LI files in "
              & Duration'Image (Ada.Calendar.Clock - Iter.Start) & " seconds");
 
