@@ -464,35 +464,62 @@ package body Xref is
          Entity : General_Entity;
       begin
          if Active (SQLITE) then
-            --  Already handles the operators
-            Closest_Ref.Ref := Self.Xref.Get_Entity
-              (Name   => Name,
-               File   => Loc.File,
-               Line   => Loc.Line,
-               Column => Loc.Column);
-            Entity.Entity := Closest_Ref.Ref.Entity;
+            if Loc = No_Location then
+               --  predefined entities
+               Closest_Ref.Ref := Self.Xref.Get_Entity
+                 (Name   => Name,
+                  File   => No_File);
 
+            else
+               --  Already handles the operators
+               Closest_Ref.Ref := Self.Xref.Get_Entity
+                 (Name   => Name,
+                  File   => Loc.File,
+                  Line   => Loc.Line,
+                  Column => Loc.Column);
+            end if;
+
+            Entity.Entity := Closest_Ref.Ref.Entity;
             Fuzzy := Entity.Entity /= No_Entity
               and then Is_Fuzzy_Match (Entity.Entity);
 
          else
             declare
                Status : Find_Decl_Or_Body_Query_Status;
+               Source : Old_Entities.Source_File;
             begin
                --  ??? Should have a pref for the handling of fuzzy matches:
                --  - consider it as a no match: set Status to Entity_Not_Found
                --  - consider it as overloaded entity: same as below;
                --  - use the closest match: nothing to do.
 
-               Find_Declaration
-                 (Db             => Self.Entities,
-                  File_Name      => Loc.File,
-                  Entity_Name    => Name,
-                  Line           => Loc.Line,
-                  Column         => Loc.Column,
-                  Entity         => Entity.Old_Entity,
-                  Closest_Ref    => Closest_Ref.Old_Ref,
-                  Status         => Status);
+               if Loc = No_Location then
+                  --  A predefined entity
+                  --  ??? Should not hard-code False here
+
+                  Source := Old_Entities.Get_Predefined_File
+                    (Self.Entities, Case_Sensitive => False);
+                  Find_Declaration
+                    (Db             => Self.Entities,
+                     Source         => Source,
+                     Entity_Name    => Name,
+                     Line           => Loc.Line,  --  irrelevant
+                     Column         => Loc.Column,  --  irrelevant
+                     Entity         => Entity.Old_Entity,
+                     Closest_Ref    => Closest_Ref.Old_Ref,
+                     Status         => Status);
+
+               else
+                  Find_Declaration
+                    (Db             => Self.Entities,
+                     File_Name      => Loc.File,
+                     Entity_Name    => Name,
+                     Line           => Loc.Line,
+                     Column         => Loc.Column,
+                     Entity         => Entity.Old_Entity,
+                     Closest_Ref    => Closest_Ref.Old_Ref,
+                     Status         => Status);
+               end if;
 
                Fuzzy := Status = Overloaded_Entity_Found
                  or else Status = Fuzzy_Match;
@@ -521,11 +548,6 @@ package body Xref is
    begin
       Closest_Ref := No_General_Entity_Reference;
 
-      if Loc = No_Location then
-         Entity := No_General_Entity;
-         return;
-      end if;
-
       if Active (Me) then
          Increase_Indent (Me, "Find_Declaration of " & Entity_Name);
       end if;
@@ -548,6 +570,7 @@ package body Xref is
 
       if (Entity = No_General_Entity or else Fuzzy)
         and then Active (Constructs_Heuristics)
+        and then Loc /= No_Location   --  Nothing for predefined entities
       then
          declare
             Tree_Lang : constant Tree_Language_Access :=
