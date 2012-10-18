@@ -3507,7 +3507,6 @@ package body Old_Entities.Queries is
    begin
       Iter.Project := Project;
       Iter.Handler      := Language_Handler (Handler);
-      Iter.Lang_Count   := 1;   --  only one LI handler is known
       Iter.Filter       := Filter;
       Iter.Current_Lang := 1;
       Iter.Count        := 0;
