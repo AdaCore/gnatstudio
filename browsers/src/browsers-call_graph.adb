@@ -1586,7 +1586,7 @@ package body Browsers.Call_Graph is
                In_File := Get_Data (Inst_In_File);
             end if;
 
-            if Only_If_Kind = ",," then
+            if Only_If_Kind = "" then
                if Implicit then
                   Ref_Command.Filter.Filter :=
                     Is_Real_Or_Implicit_Reference'Access;
@@ -1594,7 +1594,8 @@ package body Browsers.Call_Graph is
                   Ref_Command.Filter.Filter := Is_Real_Reference'Access;
                end if;
             else
-               Filter.Ref_Kinds := GNATCOLL.Utils.Split (Only_If_Kind, ',');
+               Ref_Command.Filter.Ref_Kinds :=
+                 GNATCOLL.Utils.Split (Only_If_Kind, ',');
             end if;
 
             Kernel.Databases.Find_All_References
@@ -2177,10 +2178,10 @@ package body Browsers.Call_Graph is
             Kind : constant String := Get_Display_Kind (Ref);
          begin
             for R in Self.Ref_Kinds'Range loop
-               if Self.Ref_Kinds (R) /= null then
-                  if Kind = Self.Ref_Kinds (R).all then
-                     return True;
-                  end if;
+               if Self.Ref_Kinds (R) /= null
+                 and then Kind = Self.Ref_Kinds (R).all
+               then
+                  return True;
                end if;
             end loop;
          end;
