@@ -42,8 +42,6 @@ package body Old_Entities.Queries is
    Me     : constant Trace_Handle := Create ("Entities.Queries", Off);
    Callers_Me : constant Trace_Handle := Create ("Entities.Callers", Off);
    Ref_Me : constant Trace_Handle := Create ("Entities.Ref", Off);
-   Constructs_Heuristics : constant Trace_Handle :=
-     Create ("Entities.Constructs", On);
 
    Num_Columns_Per_Line : constant := 250;
    --  The number of columns in each line, when computing the proximity of a
@@ -596,163 +594,6 @@ package body Old_Entities.Queries is
       Location             : out File_Location;
       No_Location_If_First : Boolean := False)
    is
-
-      function Is_Expected_Construct
-        (Location : File_Location) return Boolean;
-      --  Return true if the location given in parameter indeed corresponds to
-      --  a declaration construct, false otherwise, typically when the file has
-      --  been modified and the ali retreived is not up to date.
-      --  Note that if the construct database is deactivated, this will always
-      --  return true (we're always on the expected construct, we don't expect
-      --  anything in particular).
-
-      function Extract_Next_By_Heuristics return File_Location;
-      --  Return the next location using the construct heuristics
-
-      function Get_Entity_At_Location
-        (Loc : File_Location) return Entity_Access;
-      --  Return the construct entity found at the location given in parameter.
-
-      --------------------------------
-      -- Extract_Next_By_Heuristics --
-      --------------------------------
-
-      function Extract_Next_By_Heuristics return File_Location is
-         Result : File_Location;
-
-         C_Entity, New_Entity : Entity_Access := Null_Entity_Access;
-         Db : constant Entities_Database :=
-           Entity.Live_Declaration.File.Db;
-
-      begin
-         --  In order to locate the reference to look from, we check if there
-         --  is a file associated to the input location. In certain cases, this
-         --  location is computed from a context that does not have file
-         --  information, so for safety purpose, we check that the file exist
-         --  (there's nothing we can do at the completion level without a
-         --  file). If there's no file, then the context has been partially
-         --  provided (or not at all) so we start from the declaration of the
-         --  Entity.
-
-         if Active (Constructs_Heuristics)
-           and then Db.Construct_Db_Locks = 0
-         then
-            if Current_Location.File /= null then
-               C_Entity := Get_Entity_At_Location (Current_Location);
-            end if;
-
-            if C_Entity = Null_Entity_Access then
-               C_Entity := Get_Entity_At_Location (Entity.Live_Declaration);
-            end if;
-
-            if C_Entity /= Null_Entity_Access then
-               declare
-                  S_File : constant Structured_File_Access :=
-                    Get_File (C_Entity);
-
-                  Tree_Lang : constant Tree_Language_Access :=
-                    Get_Tree_Language_From_File
-                      (Language_Handler (Db.Lang), Get_File_Path (S_File));
-               begin
-                  New_Entity := Tree_Lang.Find_Next_Part (C_Entity);
-
-                  --  If we're initializing a loop, e.g. the current location
-                  --  is no location, then return the result. Otherwise, don't
-                  --  return it if we got back to the initial body and the
-                  --  caller doesn't want to loop back.
-
-                  if Current_Location /= No_File_Location
-                    and then No_Location_If_First
-                    and then C_Entity = Tree_Lang.Find_First_Part (C_Entity)
-                  then
-                     return No_File_Location;
-                  end if;
-
-                  if New_Entity /= C_Entity then
-                     Result.File :=
-                       Get_Or_Create
-                         (Db           => Db,
-                          File         =>
-                            Get_File_Path (Get_File (New_Entity)));
-                     Result.Line :=
-                       Get_Construct (New_Entity).Sloc_Entity.Line;
-
-                     Result.Column := To_Visible_Column
-                       (Get_File (New_Entity),
-                        Get_Construct (New_Entity).Sloc_Entity.Line,
-                        String_Index_Type
-                          (Get_Construct (New_Entity).Sloc_Entity.Column));
-
-                     return Result;
-                  end if;
-               end;
-            end if;
-         end if;
-
-         return No_File_Location;
-      end Extract_Next_By_Heuristics;
-
-      ---------------------------
-      -- Is_Expected_Construct --
-      ---------------------------
-
-      function Is_Expected_Construct
-        (Location : File_Location) return Boolean
-      is
-         C_Entity : Entity_Access;
-         Db       : constant Entities_Database  := Location.File.Db;
-      begin
-         if Active (Constructs_Heuristics)
-           and then Location.File.Db.Construct_Db_Locks = 0
-         then
-            C_Entity := Get_Entity_At_Location (Location);
-
-            --  Return true if we found a construct here and if it's of the
-            --  appropriate name.
-
-            return C_Entity /= Null_Entity_Access
-              and then Get_Identifier (C_Entity) = Find_Normalized
-              (Get_Symbols (Db), Get (Entity.Name).all);
-         end if;
-
-         return True;
-      end Is_Expected_Construct;
-
-      ----------------------------
-      -- Get_Entity_At_Location --
-      ----------------------------
-
-      function Get_Entity_At_Location
-        (Loc : File_Location)
-            return Entity_Access
-      is
-         Db : constant Entities_Database := Loc.File.Db;
-         S_File : constant Structured_File_Access :=
-           Get_Or_Create
-             (Db   => Db.Construct_Db,
-              File => Loc.File.Name);
-         Construct : Construct_Tree_Iterator;
-      begin
-         Update_Contents (S_File);
-
-         Construct :=
-           Get_Iterator_At
-             (Tree      => Get_Tree (S_File),
-              Location  => To_Location
-                (Loc.Line,
-                 To_Line_String_Index
-                   (S_File,
-                    Loc.Line,
-                    Loc.Column)),
-              From_Type => Start_Name);
-
-         if Construct /= Null_Construct_Tree_Iterator then
-            return To_Entity_Access (S_File, Construct);
-         else
-            return Null_Entity_Access;
-         end if;
-      end Get_Entity_At_Location;
-
       Ref          : E_Reference;
       First_Entity : Entity_Reference_Cursor :=
                        Null_Entity_Reference_Cursor;
@@ -760,7 +601,6 @@ package body Old_Entities.Queries is
       It           : Entity_Reference_Cursor;
 
       Bodies_Found : Integer := 0;
-      H_Loc : File_Location;
 
    begin
       if Entity = null then
@@ -794,15 +634,6 @@ package body Old_Entities.Queries is
 
             elsif Return_Next then
                Location := Ref.Location;
-
-               if not Is_Expected_Construct (Location) then
-                  H_Loc := Extract_Next_By_Heuristics;
-
-                  if H_Loc /= No_File_Location then
-                     Location := H_Loc;
-                  end if;
-               end if;
-
                return;
             end if;
 
@@ -817,37 +648,6 @@ package body Old_Entities.Queries is
 
          It := Next (It);
       end loop;
-
-      --  If no next body has been found at this stage, try to see what we can
-      --  do using the construct database.
-
-      H_Loc := Extract_Next_By_Heuristics;
-
-      if H_Loc /= No_File_Location then
-         if First_Entity = Null_Entity_Reference_Cursor then
-            --  Case 1, we didn't found anything at all, so just use the
-            --  information coming from the construct database
-
-            Location := H_Loc;
-            return;
-         else
-            --  Case 2, we did find 'First_Entity'. Check if it's at the
-            --  expected location and that it's OK to return the first entity.
-
-            if not No_Location_If_First
-              and then not Is_Expected_Construct
-                (Element (First_Entity).Location)
-            then
-
-               Location := H_Loc;
-               return;
-            end if;
-         end if;
-      end if;
-
-      --  If we don't have any more information to extract from the construct
-      --  database, then return the first entity if allowed by the flags, or
-      --  null.
 
       if No_Location_If_First
         or else First_Entity = Null_Entity_Reference_Cursor
