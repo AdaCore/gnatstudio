@@ -217,6 +217,8 @@ package body Refactoring.Parameters is
          end if;
 
          if Kernel.Databases.Is_Primitive_Of (Entity) /= No_General_Entity then
+            Trace (Me, "MANU Entity is a primitive "
+                   & Kernel.Databases.Get_Name (Entity));
             To_Line_Column
               (S_File, Entity_Token.Token_First, Tok_Line, Tok_Column);
 
@@ -225,6 +227,8 @@ package body Refactoring.Parameters is
                Loc  => (File   => File,
                         Line   => Tok_Line,
                         Column => Tok_Column));
+            Trace (Me, "MANU entity before is "
+                   & Kernel.Databases.Get_Name (Entity_Before));
 
             --  The following will not handle correctly where the primitive
             --  operation is declared inside a subprogram, and we use the fully
@@ -236,7 +240,11 @@ package body Refactoring.Parameters is
             --  call a primitive op on the result.
 
             if Entity_Before /= No_General_Entity
-              and then Kernel.Databases.Is_Subprogram (Entity_Before)
+              and then
+                (Kernel.Databases.Has_Methods (Entity_Before)
+
+                 --  A subprogram that returns a primitive
+                 or else Kernel.Databases.Is_Subprogram (Entity_Before))
             then
                Free (Expression);
                return True;
