@@ -468,7 +468,7 @@ package body Xref is
       function Internal_No_Constructs
         (Name : String; Loc : General_Location) return General_Entity
       is
-         Entity : General_Entity;
+         Entity : General_Entity := No_General_Entity;
       begin
          if Active (SQLITE) then
             if Loc = No_Location then
@@ -599,8 +599,6 @@ package body Xref is
 
          begin
             if not Is_Null (S_File) then
-               Trace (Me, "Find_Declaration: fallback on constructs");
-
                --  In some cases, the references are extracted from a place
                --  where there is still an ALI file, but no more source file.
                --  This will issue a null Structured_File_Access, which is why
