@@ -3102,31 +3102,6 @@ package body Old_Entities is
       LI.Has_Unresolved_Imported_Refs := Value;
    end Set_Has_Unresolved_Imported_Refs;
 
-   ------------------------
-   -- Is_Update_Required --
-   ------------------------
-
-   function Update_Forced
-     (Handler : access LI_Handler_Record'Class) return Boolean is
-   begin
-      if Handler /= null then
-         return Handler.Update_Forced;
-      else
-         return False;
-      end if;
-   end Update_Forced;
-
-   -----------------------
-   -- Set_Update_Forced --
-   -----------------------
-
-   procedure Set_Update_Forced
-     (Handler : access LI_Handler_Record'Class;
-      Value   : Boolean := True) is
-   begin
-      Handler.Update_Forced := Value;
-   end Set_Update_Forced;
-
    ----------------
    -- Get_Entity --
    ----------------

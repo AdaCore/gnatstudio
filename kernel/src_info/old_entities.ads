@@ -943,11 +943,6 @@ package Old_Entities is
    procedure Set_Has_Unresolved_Imported_Refs
      (LI : LI_File; Value : Boolean := True);
 
-   function Update_Forced
-     (Handler : access LI_Handler_Record'Class) return Boolean;
-   procedure Set_Update_Forced
-     (Handler : access LI_Handler_Record'Class; Value : Boolean := True);
-
 private
 
    ----------------
@@ -1528,11 +1523,6 @@ private
    type LI_Handler_Record is abstract tagged limited record
       Name_Index : aliased Entities_Search_Tries.Vector_Trie;
       --  Entities defined in C/C++
-
-      Update_Forced                : Boolean := False;
-      --  Flag set when the contents associated with this LI handler must be
-      --  updated even if the timestamp of its associated file has not changed
-      --  since it was loaded.
    end record;
 
    Real_References_Filter : aliased constant Reference_Kind_Filter :=
