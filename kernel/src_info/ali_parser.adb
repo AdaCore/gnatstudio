@@ -973,6 +973,13 @@ package body ALI_Parser is
                            --  LI file if such entity is eventually needed
                            --  for sources navigation.
 
+                           if Active (Me)
+                             and then not Has_Unresolved_Imported_Refs (LI)
+                           then
+                              Trace (Me, "File has unresolved imported refs: "
+                                     & Get_LI_Filename (LI).Display_Full_Name);
+                           end if;
+
                            Set_Has_Unresolved_Imported_Refs (LI);
                         end if;
                      end;
@@ -1427,10 +1434,7 @@ package body ALI_Parser is
       --  In case of forced update reset the flags associated with update of
       --  unresolved imported references.
 
-      if Update_Forced (Handler) then
-         Set_Has_Unresolved_Imported_Refs (LI, False);
-         Set_Update_Forced (Handler, False);
-      end if;
+      Set_Has_Unresolved_Imported_Refs (LI, False);
 
       Get_Imported_Projects (Project, Imported_Projects);
 
@@ -2621,7 +2625,7 @@ package body ALI_Parser is
       --  then required because entities imported from other languages may have
       --  been loaded after this LI file was previously processed.
 
-      if Old_Entities.Update_Forced (Old_Entities.LI_Handler (Handler)) then
+      if Has_Unresolved_Imported_Refs (LI) then
          New_Timestamp   := File_Time_Stamp (Get_LI_Filename (LI));
          Reset_ALI_First := True;
          Do_Update       := True;

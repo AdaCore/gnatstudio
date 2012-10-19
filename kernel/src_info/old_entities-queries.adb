@@ -366,7 +366,7 @@ package body Old_Entities.Queries is
          Trace (Me, "Find name=" & Get (Normalized_Entity_Name, True).all
                 & " Source=" & Display_Full_Name (Get_Filename (Source))
                 & " line=" & Line'Img & " column=" & Column'Img
-                & " check_decl=" & Check_Decl_Only'Img);
+                & " check_decl_only=" & Check_Decl_Only'Img);
       end if;
 
       Closest_Ref := No_Entity_Reference;
@@ -485,7 +485,7 @@ package body Old_Entities.Queries is
       Status := Entity_Not_Found;
       Entity := null;
 
-      if Handler /= null then
+      if Default_LI_Handler /= null then
          --  Get a Source_File, but do not update its LI information, since
          --  that will be done in the call to Find_Declaration below. Therefore
          --  use Get_Or_Create instead of Get_Source_Info
@@ -551,7 +551,7 @@ package body Old_Entities.Queries is
       if Source = null then
          Status := Entity_Not_Found;
          Entity := null;
-         Trace (Me, "Entity not found");
+         Trace (Me, "Source not found");
          return;
       end if;
 

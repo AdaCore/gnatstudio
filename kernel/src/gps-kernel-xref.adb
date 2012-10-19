@@ -187,24 +187,12 @@ package body GPS.Kernel.Xref is
         and then Has_File_Information (Context)
       then
          declare
-            Handler : Old_Entities.LI_Handler;
-            File    : Old_Entities.Source_File;
-
-         begin
-            File :=
+            File : constant Old_Entities.Source_File :=
               Old_Entities.Get_Or_Create
                 (Db   => Kernel.Databases.Entities,
                  File => File_Information (Context));
-
-            Handler := Old_Entities.Get_LI_Handler
-              (Kernel.Databases.Entities);
-
-            if Old_Entities.Has_Unresolved_Imported_Refs
-              (Old_Entities.Get_LI (File))
-            then
-               Old_Entities.Set_Update_Forced (Handler);
-               Old_Entities.Update_Xref (File);
-            end if;
+         begin
+            Old_Entities.Update_Xref (File);
          end;
       end if;
    end Ensure_Context_Up_To_Date;
