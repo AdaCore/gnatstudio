@@ -2611,7 +2611,7 @@ package body ALI_Parser is
       First_Sect, Last_Sect : Nat;
       Do_Update             : Boolean;
       Dummy                 : Boolean;
-      Reset_ALI_First       : Boolean := Reset_ALI;
+      Reset_ALI_First       : constant Boolean := Reset_ALI;
       pragma Unreferenced (Dummy);
 
    --  Start of processing for Update_ALI
@@ -2625,27 +2625,23 @@ package body ALI_Parser is
       --  then required because entities imported from other languages may have
       --  been loaded after this LI file was previously processed.
 
-      if Has_Unresolved_Imported_Refs (LI) then
-         New_Timestamp   := File_Time_Stamp (Get_LI_Filename (LI));
-         Reset_ALI_First := True;
-         Do_Update       := True;
+      case Frozen (Handler.Db) is
+         when No_Create_Or_Update =>
+            Do_Update := Force_Check;
 
-      else
-         case Frozen (Handler.Db) is
-            when No_Create_Or_Update =>
-               Do_Update := Force_Check;
+         when Create_Only =>
+            Do_Update := Force_Check or Get_Timestamp (LI) = No_Time;
 
-            when Create_Only =>
-               Do_Update := Force_Check or Get_Timestamp (LI) = No_Time;
+         when Create_And_Update =>
+            Do_Update := True;
+      end case;
 
-            when Create_And_Update =>
-               Do_Update := True;
-         end case;
+      Do_Update :=
+        Do_Update or else Has_Unresolved_Imported_Refs (LI);
 
-         if Do_Update then
-            New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
-            Do_Update := Get_Timestamp (LI) /= New_Timestamp;
-         end if;
+      if Do_Update then
+         New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
+         Do_Update := Get_Timestamp (LI) /= New_Timestamp;
       end if;
 
       if Do_Update then
