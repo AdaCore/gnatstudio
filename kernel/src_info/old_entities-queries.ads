@@ -715,7 +715,6 @@ private
 
          Current_Lang : Natural;  --  Current lang in current project
          LI           : LI_Information_Iterator_Access;
-         Lang_Count   : Natural;
 
          Count        : Natural; --  total processed so far, not including LI
          Total        : Natural; --  total to process, not including LI

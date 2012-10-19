@@ -81,6 +81,11 @@ package body Xref is
    --  Creates an entity array.
    --  ??? This is not very efficient
 
+   function Get_Entity_At_Location
+     (Db  : access General_Xref_Database_Record'Class;
+      Loc : General_Location) return Entity_Access;
+   --  Return the construct entity found at the location given in parameter.
+
    ----------------
    -- Assistants --
    ----------------
@@ -463,7 +468,7 @@ package body Xref is
       function Internal_No_Constructs
         (Name : String; Loc : General_Location) return General_Entity
       is
-         Entity : General_Entity;
+         Entity : General_Entity := No_General_Entity;
       begin
          if Active (SQLITE) then
             if Loc = No_Location then
@@ -482,8 +487,10 @@ package body Xref is
             end if;
 
             Entity.Entity := Closest_Ref.Ref.Entity;
-            Fuzzy := Entity.Entity /= No_Entity
-              and then Is_Fuzzy_Match (Entity.Entity);
+            Fuzzy := Entity.Entity /= No_Entity and then
+              (Is_Fuzzy_Match (Entity.Entity)
+                  --  or else not Self.Xref.Is_Up_To_Date (Loc.File)
+              );
 
          else
             declare
@@ -512,9 +519,11 @@ package body Xref is
                      Status         => Status);
 
                else
+                  Source := Old_Entities.Get_Or_Create
+                    (Self.Entities, Loc.File, Allow_Create => True);
                   Find_Declaration
                     (Db             => Self.Entities,
-                     File_Name      => Loc.File,
+                     Source         => Source,
                      Entity_Name    => Name,
                      Line           => Loc.Line,
                      Column         => Loc.Column,
@@ -525,6 +534,7 @@ package body Xref is
 
                Fuzzy := Status = Overloaded_Entity_Found
                  or else Status = Fuzzy_Match;
+               --  or else not Old_Entities.Is_Up_To_Date (Source);
 
                if Status = Entity_Not_Found
                  and then Name /= ""
@@ -589,8 +599,6 @@ package body Xref is
 
          begin
             if not Is_Null (S_File) then
-               Trace (Me, "Find_Declaration: fallback on constructs");
-
                --  In some cases, the references are extracted from a place
                --  where there is still an ALI file, but no more source file.
                --  This will issue a null Structured_File_Access, which is why
@@ -612,7 +620,7 @@ package body Xref is
                   --  than the dummy one created from the construct.
 
                   New_Location :=
-                    (File     => Get_File_Path (Get_File (Result)),
+                    (File   => Get_File_Path (Get_File (Result)),
                      Line   => Get_Construct (Result).Sloc_Entity.Line,
                      Column => To_Visible_Column
                        (Get_File (Result),
@@ -629,6 +637,7 @@ package body Xref is
                   if New_Entity /= No_General_Entity then
                      --  If we found an updated ALI entity, use it.
                      Entity := New_Entity;
+                     Entity.Node := Result;
 
                   elsif Entity /= No_General_Entity then
                      null;
@@ -827,6 +836,40 @@ package body Xref is
       return No_General_Entity_Declaration;
    end Get_Declaration;
 
+   ----------------------------
+   -- Get_Entity_At_Location --
+   ----------------------------
+
+   function Get_Entity_At_Location
+     (Db     : access General_Xref_Database_Record'Class;
+      Loc : General_Location) return Entity_Access
+   is
+      S_File : constant Structured_File_Access :=
+        Get_Or_Create
+          (Db   => Db.Constructs,
+           File => Loc.File);
+      Construct : Construct_Tree_Iterator;
+   begin
+      Update_Contents (S_File);
+
+      Construct :=
+        Get_Iterator_At
+          (Tree      => Get_Tree (S_File),
+           Location  => To_Location
+             (Loc.Line,
+              To_Line_String_Index
+                (S_File,
+                 Loc.Line,
+                 Loc.Column)),
+           From_Type => Start_Name);
+
+      if Construct /= Null_Construct_Tree_Iterator then
+         return To_Entity_Access (S_File, Construct);
+      else
+         return Null_Entity_Access;
+      end if;
+   end Get_Entity_At_Location;
+
    --------------
    -- Get_Body --
    --------------
@@ -836,7 +879,129 @@ package body Xref is
       Entity : General_Entity;
       After  : General_Location := No_Location) return General_Location
    is
+      No_Location_If_First : constant Boolean := False;
+
+      function Extract_Next_By_Heuristics return General_Location;
+      --  Return the next body location using the construct heuristics
+
+      function Is_Location_For_Entity
+        (Location : General_Location) return Boolean;
+      --  Return true if the location given in parameter indeed corresponds to
+      --  a declaration construct, false otherwise, typically when the file has
+      --  been modified and the ali retreived is not up to date.
+      --  Note that if the construct database is deactivated, this will always
+      --  return true (we're always on the expected construct, we don't expect
+      --  anything in particular).
+
+      ----------------------------
+      -- Is_Location_For_Entity --
+      ----------------------------
+
+      function Is_Location_For_Entity
+        (Location : General_Location) return Boolean
+      is
+         C_Entity : Entity_Access;
+      begin
+         if Active (Constructs_Heuristics) then
+            C_Entity := Get_Entity_At_Location (Db, Location);
+
+            --  Return true if we found a construct here and if it's of the
+            --  appropriate name.
+
+            return C_Entity /= Null_Entity_Access
+              and then Get (Get_Identifier (C_Entity)).all =
+              Db.Get_Name (Entity);
+         end if;
+
+         return True;
+      end Is_Location_For_Entity;
+
+      --------------------------------
+      -- Extract_Next_By_Heuristics --
+      --------------------------------
+
+      function Extract_Next_By_Heuristics return General_Location is
+         C_Entity, New_Entity : Entity_Access := Null_Entity_Access;
+         Loc : General_Location;
+
+      begin
+         --  In order to locate the reference to look from, we check if there
+         --  is a file associated to the input location. In certain cases, this
+         --  location is computed from a context that does not have file
+         --  information, so for safety purpose, we check that the file exist
+         --  (there's nothing we can do at the completion level without a
+         --  file). If there's no file, then the context has been partially
+         --  provided (or not at all) so we start from the declaration of the
+         --  Entity.
+
+         if Active (Constructs_Heuristics) then
+            if After /= No_Location then
+               C_Entity := Get_Entity_At_Location (Db, After);
+            end if;
+
+            if C_Entity = Null_Entity_Access then
+               if Entity.Node /= Null_Entity_Access then
+                  C_Entity := Entity.Node;
+
+               else
+                  Loc :=  Db.Get_Declaration (Entity).Loc;
+                  if Loc /= No_Location then
+                     C_Entity := Get_Entity_At_Location (Db, Loc);
+                  end if;
+               end if;
+            end if;
+
+            if C_Entity /= Null_Entity_Access then
+               declare
+                  S_File : constant Structured_File_Access :=
+                    Get_File (C_Entity);
+
+                  Tree_Lang : constant Tree_Language_Access :=
+                    Get_Tree_Language_From_File
+                      (Db.Lang_Handler, Get_File_Path (S_File));
+               begin
+                  New_Entity := Tree_Lang.Find_Next_Part (C_Entity);
+
+                  --  If we're initializing a loop, e.g. the current location
+                  --  is no location, then return the result. Otherwise, don't
+                  --  return it if we got back to the initial body and the
+                  --  caller doesn't want to loop back.
+
+                  if After /= No_Location
+                    and then No_Location_If_First
+                    and then C_Entity = Tree_Lang.Find_First_Part (C_Entity)
+                  then
+                     return No_Location;
+                  end if;
+
+                  if New_Entity /= C_Entity then
+                     return
+                       (File   => Get_File_Path (Get_File (New_Entity)),
+                        Line   => Get_Construct (New_Entity).Sloc_Entity.Line,
+                        Column =>
+                          To_Visible_Column
+                            (Get_File (New_Entity),
+                             Get_Construct (New_Entity).Sloc_Entity.Line,
+                             String_Index_Type
+                               (Get_Construct (New_Entity).Sloc_Entity.Column
+                               )));
+                  end if;
+               end;
+            end if;
+         end if;
+
+         return No_Location;
+      end Extract_Next_By_Heuristics;
+
+      Candidate : General_Location := No_Location;
+
    begin
+      if Active (Me) then
+         Increase_Indent (Me, "Get_Body of "
+                          & Db.Get_Name (Entity)
+                          & " fuzzy=" & Is_Fuzzy (Entity)'Img);
+      end if;
+
       if Active (SQLITE) then
          if Entity.Entity /= No_Entity then
             declare
@@ -850,9 +1015,11 @@ package body Xref is
 
                   if Ref /= No_Entity_Reference then
                      if Matches then
-                        return (File => Ref.File,
-                                Line => Ref.Line,
-                                Column => Visible_Column_Type (Ref.Column));
+                        Candidate :=
+                          (File => Ref.File,
+                           Line => Ref.Line,
+                           Column => Visible_Column_Type (Ref.Column));
+                        exit;
                      else
                         Matches := Ref.Line = After.Line
                           and then Ref.Column = After.Column
@@ -891,15 +1058,48 @@ package body Xref is
                end if;
 
                if Loc /= Old_Entities.No_File_Location then
-                  return (File => Old_Entities.Get_Filename (Loc.File),
-                          Line => Loc.Line,
-                          Column => Loc.Column);
+                  Candidate :=
+                    (File => Old_Entities.Get_Filename (Loc.File),
+                     Line => Loc.Line,
+                     Column => Loc.Column);
                end if;
             end;
          end if;
       end if;
 
-      return No_Location;
+      --  If no next body has been found at this stage, try to see what we can
+      --  do using the construct database.
+
+      declare
+         H_Loc : constant General_Location := Extract_Next_By_Heuristics;
+      begin
+         if H_Loc /= No_Location and then
+            --  If we found nothing, use the information from the constructs.
+             (Candidate = No_Location
+
+              --  else if the candidate is at the expected location and if it's
+              --  OK to return the first entity.
+              or else (not No_Location_If_First
+                       and then not Is_Location_For_Entity (Candidate)))
+
+         then
+            Trace (Me, "Body computed from constructs");
+            Candidate := H_Loc;
+
+         --  If we don't have any more information to extract from the
+         --  construct database, then return the first entity if allowed by
+         --  the flags, or null.
+
+         elsif No_Location_If_First then
+            Candidate := No_Location;
+         end if;
+      end;
+
+      if Active (Me) then
+         Decrease_Indent (Me);
+      end if;
+
+      return Candidate;
    end Get_Body;
 
    -----------------
@@ -1107,9 +1307,25 @@ package body Xref is
    overriding function "=" (E1, E2 : General_Entity) return Boolean is
    begin
       if Active (SQLITE) then
-         return E1.Entity = E2.Entity;
+         if E1.Entity = No_Entity then
+            return E2.Entity = No_Entity
+              and then E2.Node = Null_Entity_Access;
+         elsif E2.Entity = No_Entity then
+            return E1.Entity = No_Entity
+              and then E1.Node = Null_Entity_Access;
+         else
+            return E1.Entity = E2.Entity;
+         end if;
       else
-         return E1.Old_Entity = E2.Old_Entity;
+         if E1.Old_Entity = null then
+            return E2.Old_Entity = null
+              and then E2.Node = Null_Entity_Access;
+         elsif E2.Old_Entity = null then
+            return E1.Old_Entity = null
+              and then E1.Node = Null_Entity_Access;
+         else
+            return E1.Old_Entity = E2.Old_Entity;
+         end if;
       end if;
    end "=";
 

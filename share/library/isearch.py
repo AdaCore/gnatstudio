@@ -96,17 +96,14 @@ try:
 except:
     has_pygtk = 0
 
-
-def on_gps_started(hook_name):
-    parse_xml("""
-  <action name='"""
-  + isearch_action_name
-  + """' category="Editor" output="none">
-     <description>This action provides an incremental search facility:
-once activated, each character you type is added to the search pattern, and GPS
-jumps to the next occurrence of the pattern</description>
+def on_gps_started (hook_name):
+  # When executing the action, store the result of Isearch() in a variable so
+  # that we do not get the instance displayed in the GPS console
+  parse_xml ("""
+  <action name='""" + isearch_action_name + """' category="Editor" output="none">
+     <description>This action provides an incremental search facility: once activated, each character you type is added to the search pattern, and GPS jumps to the next occurrence of the pattern</description>
      <filter id="Source editor" />
-     <shell lang="python">isearch.Isearch()</shell>
+     <shell lang="python">i=isearch.Isearch()</shell>
   </action>
   <action name='"""
   + isearch_backward_action_name
@@ -116,7 +113,7 @@ jumps to the next occurrence of the pattern</description>
 once activated, each character you type is added to the search pattern, and GPS
 jumps to the stack occurrence of the pattern</description>
      <filter id="Source editor" />
-     <shell lang="python">isearch.Isearch (backward=1)</shell>
+     <shell lang="python">i=isearch.Isearch (backward=1)</shell>
   </action>
 
  <menu action='"""

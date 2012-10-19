@@ -70,6 +70,7 @@ with Xref;                        use Xref;
 with Generic_List;
 
 package body Call_Graph_Views is
+   Me : constant Trace_Handle := Create ("CALLGRAPH");
 
    ---------------
    -- Constants --
@@ -1090,6 +1091,10 @@ package body Call_Graph_Views is
             Entity := From_GValue (Value);
             Unset (Value);
 
+            Trace (Me, "MANU Save desktop, got entity="
+                   & View.Kernel.Databases.Get_Name (Entity)
+                   & " " & Boolean'Image (Entity = No_General_Entity));
+
             if Entity /= No_General_Entity then
                N := new XML_Utils.Node;
                N.Tag := new String'("entity");
@@ -1197,6 +1202,7 @@ package body Call_Graph_Views is
          pragma Unreferenced (Tmp);
       begin
          while N /= null loop
+            Trace (Me, "MANU Load desktop, tag=" & N.Tag.all);
             if N.Tag.all = "loc" then
                L := Get_Locations_List (View, Parent_Iter, True);
                Append (L.all, From_XML (N));
@@ -1243,6 +1249,11 @@ package body Call_Graph_Views is
                      Line   => Safe_Value (Get_Attribute (N, "entity_line")),
                      Column => Basic_Types.Visible_Column_Type
                        (Safe_Value (Get_Attribute (N, "entity_column")))));
+
+               Trace (Me, "MANU Loading desktop, got entity = "
+                      & View.Kernel.Databases.Get_Name (Entity)
+                      & " null?"
+                      & Boolean'Image (Entity = No_General_Entity));
 
                Set_Value (Model, Iter, Entity_Column, To_GValue (Entity));
             end if;
