@@ -24,6 +24,7 @@ with ALI_Parser;
 with Dynamic_Arrays;
 with Glib.Convert;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.Strings;              use GNAT.Strings;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree;             use Language.Tree;
@@ -64,6 +65,9 @@ package body Xref is
       Ent         : out Entity_Access;
       Tree_Lang   : out Tree_Language_Access);
    --  Returns the constructs data for a given entity.
+
+   function To_String (Loc : General_Location) return String;
+   --  Display Loc
 
    function To_General_Entity
      (E : Old_Entities.Entity_Information) return General_Entity;
@@ -110,6 +114,21 @@ package body Xref is
 
    function To_LI_Entity (E : Entity_Access) return General_Entity;
    --  Return an LI entity based on a construct entity. Create one if none.
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Loc : General_Location) return String is
+   begin
+      if Loc = No_Location then
+         return "<no_loc>";
+      else
+         return Loc.File.Display_Base_Name & ':'
+           & Image (Loc.Line, Min_Width => 1) & ':'
+           & Image (Integer (Loc.Column), Min_Width => 1);
+      end if;
+   end To_String;
 
    -------------------
    -- Documentation --
@@ -1054,10 +1073,15 @@ package body Xref is
                end if;
 
                if Loc = Old_Entities.No_File_Location then
+                  Trace (Me, "No body found, fallback to the declaration");
                   Loc := Old_Entities.Get_Declaration_Of (Entity.Old_Entity);
                end if;
 
                if Loc /= Old_Entities.No_File_Location then
+                  if Active (Me) then
+                     Trace (Me, "Found " & Old_Entities.To_String (Loc));
+                  end if;
+
                   Candidate :=
                     (File => Old_Entities.Get_Filename (Loc.File),
                      Line => Loc.Line,
@@ -1068,32 +1092,39 @@ package body Xref is
       end if;
 
       --  If no next body has been found at this stage, try to see what we can
-      --  do using the construct database.
+      --  do using the construct database. The constructs database only knows
+      --  about one body though, so we skip it when asking for other bodies.
 
-      declare
-         H_Loc : constant General_Location := Extract_Next_By_Heuristics;
-      begin
-         if H_Loc /= No_Location and then
+      if After = No_Location then
+         declare
+            H_Loc : constant General_Location := Extract_Next_By_Heuristics;
+         begin
+            if H_Loc /= No_Location and then
             --  If we found nothing, use the information from the constructs.
-             (Candidate = No_Location
+              (Candidate = No_Location
 
-              --  else if the candidate is at the expected location and if it's
-              --  OK to return the first entity.
-              or else (not No_Location_If_First
-                       and then not Is_Location_For_Entity (Candidate)))
+               --  else if the candidate is at the expected location and if
+               --  it's OK to return the first entity.
+               or else (not No_Location_If_First
+                        and then not Is_Location_For_Entity (Candidate)))
 
-         then
-            Trace (Me, "Body computed from constructs");
-            Candidate := H_Loc;
+            then
+               Candidate := H_Loc;
 
-         --  If we don't have any more information to extract from the
-         --  construct database, then return the first entity if allowed by
-         --  the flags, or null.
+               if Active (Me) then
+                  Trace (Me, "Body computed from constructs at "
+                         & To_String (Candidate));
+               end if;
 
-         elsif No_Location_If_First then
-            Candidate := No_Location;
-         end if;
-      end;
+               --  If we don't have any more information to extract from the
+               --  construct database, then return the first entity if allowed
+               --  by the flags, or null.
+
+            elsif No_Location_If_First then
+               Candidate := No_Location;
+            end if;
+         end;
+      end if;
 
       if Active (Me) then
          Decrease_Indent (Me);
