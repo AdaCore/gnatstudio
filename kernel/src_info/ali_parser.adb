@@ -1879,7 +1879,7 @@ package body ALI_Parser is
          declare
             LI : LI_File;
          begin
-            if Is_Parent_LI then
+            if LI_Filename /= GNATCOLL.VFS.No_File and then Is_Parent_LI then
                --  Check whether the ALI file contains the information for
                --  the file itself
 
