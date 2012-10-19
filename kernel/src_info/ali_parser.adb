@@ -2625,7 +2625,12 @@ package body ALI_Parser is
       --  then required because entities imported from other languages may have
       --  been loaded after this LI file was previously processed.
 
-      case Frozen (Handler.Db) is
+      if Has_Unresolved_Imported_Refs (LI) then
+         Do_Update := True;
+         New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
+
+      else
+         case Frozen (Handler.Db) is
          when No_Create_Or_Update =>
             Do_Update := Force_Check;
 
@@ -2634,14 +2639,12 @@ package body ALI_Parser is
 
          when Create_And_Update =>
             Do_Update := True;
-      end case;
+         end case;
 
-      Do_Update :=
-        Do_Update or else Has_Unresolved_Imported_Refs (LI);
-
-      if Do_Update then
-         New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
-         Do_Update := Get_Timestamp (LI) /= New_Timestamp;
+         if Do_Update then
+            New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
+            Do_Update := Get_Timestamp (LI) /= New_Timestamp;
+         end if;
       end if;
 
       if Do_Update then
