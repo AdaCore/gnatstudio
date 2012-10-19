@@ -47,6 +47,10 @@ with Xref;                           use Xref;
 procedure Ada_Semantic_Tree.Crash_Test is
    use type GNATCOLL.Xref.Visible_Column;
 
+   Constructs_Heuristics : constant Trace_Handle :=
+     Create ("Entities.Constructs", On);
+   --  Must match name in xref.adb
+
    Project_Name   : GNAT.Strings.String_Access;
    Unique_Project : Boolean := False;
    Unique_File    : GNAT.Strings.String_Access;
@@ -202,13 +206,17 @@ procedure Ada_Semantic_Tree.Crash_Test is
       begin
          Log ("E[");
 
-         if ALI_File /= No_File then
-            Log (Decl.File.Display_Base_Name);
+         if Decl = No_Location then
+            Log ("<no_location>");
          else
-            Log ("<null>");
-         end if;
+            if ALI_File /= No_File then
+               Log (Decl.File.Display_Base_Name);
+            else
+               Log ("<predefined>");
+            end if;
 
-         Log (":" & Decl.Line'Img & ":" & Decl.Column'Img & "]");
+            Log (":" & Decl.Line'Img & ":" & Decl.Column'Img & "]");
+         end if;
       end Log_Entity;
 
       procedure Test_Loc (Index : in out Integer) is
@@ -230,9 +238,14 @@ procedure Ada_Semantic_Tree.Crash_Test is
             Word_End := Buffer'Last;
          end if;
 
+         --  Disable constructs temporarily to make sure the information is
+         --  from the ALI files
+         Set_Active (Constructs_Heuristics, False);
          ALI_Entity := Db.Get_Entity
            (Loc  => (File, Line, Column),
             Name => Buffer (Word_Begin .. Word_End));
+         Set_Active (Constructs_Heuristics, True);
+
          Construct_Entity := Ada_Tree_Lang.Find_Declaration
            (File   => File_Node,
             Line   => Line,
@@ -244,11 +257,11 @@ procedure Ada_Semantic_Tree.Crash_Test is
             --  all keyword - doesn't correspond to anything in the ALI
 
             null;
-         elsif ALI_Entity /= No_General_Entity
+         elsif ALI_Entity = No_General_Entity
            and then Construct_Entity = Null_Entity_Access
          then
             null;
-         elsif ALI_Entity /= No_General_Entity
+         elsif ALI_Entity = No_General_Entity
            and then Construct_Entity /= Null_Entity_Access
          then
             Local_Result.Phantom := Local_Result.Phantom + 1;
@@ -451,6 +464,16 @@ begin
       end case;
    end loop;
 
+   Compute_Predefined_Paths;
+   New_Registry.Tree.Load
+     (Root_Project_Path  =>
+        Create (+Normalize_Pathname
+           (Project_Name.all, GNAT.Directory_Operations.Get_Current_Dir)),
+      Env                => New_Registry.Environment,
+      Errors             => Project_Error'Unrestricted_Access);
+
+   New_Registry.Tree.Recompute_View (Project_Error'Unrestricted_Access);
+
    Language_Handlers.Create_Handler (Handler, Symbols);
    Db := new General_Xref_Database_Record;
    Db.Initialize
@@ -465,16 +488,6 @@ begin
    Register_Language (Handler, C_Lang, null);
    New_Registry.Environment.Register_Default_Language_Extension
      ("c", ".h", ".c");
-
-   Compute_Predefined_Paths;
-   New_Registry.Tree.Load
-     (Root_Project_Path  =>
-        Create (+Normalize_Pathname
-           (Project_Name.all, GNAT.Directory_Operations.Get_Current_Dir)),
-      Env                => New_Registry.Environment,
-      Errors             => Project_Error'Unrestricted_Access);
-
-   New_Registry.Tree.Recompute_View (Project_Error'Unrestricted_Access);
 
    Set_Registry (Handler, New_Registry);
 
@@ -494,9 +507,10 @@ begin
 
    declare
       Files     : constant GNATCOLL.VFS.File_Array_Access :=
-        New_Registry.Tree.Root_Project.Source_Files (True);
+        New_Registry.Tree.Root_Project.Source_Files (Recursive => True);
       Files_To_Analyze : constant GNATCOLL.VFS.File_Array_Access :=
-        New_Registry.Tree.Root_Project.Source_Files (not Unique_Project);
+        New_Registry.Tree.Root_Project.Source_Files
+          (Recursive => not Unique_Project);
       Predef_File : constant GNATCOLL.VFS.File_Array :=
         New_Registry.Environment.Predefined_Source_Files;
       File_Node : Structured_File_Access;
@@ -557,6 +571,7 @@ begin
    end;
 
    if Verbose then
+      New_Line;
       Put ("GLOBAL: ");
       Print (Global_Result, True);
       New_Line;
