@@ -22,7 +22,7 @@ project Standalone is
    end Binder;
 
    package Linker is
-      for Default_Switches ("Ada") use ("-shared-libgcc");
+      for Default_Switches ("Ada") use ("-shared-libgcc") & Shared.Linker'Default_Switches ("Ada");
    end Linker;
 
 end Standalone;
