@@ -3533,6 +3533,7 @@ package body Old_Entities.Queries is
          Tmp : Natural;
       begin
          if Iter.LI /= null then
+            --  Need to use Iter.Filter here
             Next (Iter.LI.all, Steps => Steps,
                       Count => Iter.LI_Count,
                       Total => Iter.LI_Total);

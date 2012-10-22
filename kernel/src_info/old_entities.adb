@@ -39,6 +39,7 @@ with Remote;                     use Remote;
 package body Old_Entities is
    use type GNATCOLL.Xref.Visible_Column;
 
+   Me : constant Trace_Handle := Create ("ALI");
    Assert_Me : constant Trace_Handle := Create ("Entities.Assert", Off);
 
    Ref_Me  : constant Trace_Handle := Create ("Entities.Ref", Off);
@@ -487,6 +488,8 @@ package body Old_Entities is
       for F in Source_File_Arrays.First .. Last (LI.Files) loop
          Reset (LI.Files.Table (F));
       end loop;
+
+      Set_Has_Unresolved_Imported_Refs (LI, False);
    end Reset;
 
    ------------
@@ -3099,6 +3102,14 @@ package body Old_Entities is
      (LI    : LI_File;
       Value : Boolean := True) is
    begin
+      if Active (Me)
+        and then LI.Has_Unresolved_Imported_Refs /= Value
+      then
+         Trace (Me, "Set file has unresolved imported refs: "
+                & Get_LI_Filename (LI).Display_Full_Name
+                & " ? " & Value'Img);
+      end if;
+
       LI.Has_Unresolved_Imported_Refs := Value;
    end Set_Has_Unresolved_Imported_Refs;
 
