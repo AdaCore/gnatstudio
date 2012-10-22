@@ -68,7 +68,7 @@ with Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Item;
-with Gtk.Selection;
+with Gtk.Target_List;
 with Gtk.Widget;
 with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
@@ -462,9 +462,9 @@ package GPS.Kernel.Modules.UI is
    -------------------------
 
    My_Target_Url    : constant Guint := 0;
-   Target_Table_Url : constant Gtk.Selection.Target_Entry_Array :=
+   Target_Table_Url : constant Gtk.Target_List.Target_Entry_Array :=
      (1 => (Interfaces.C.Strings.New_String ("text/uri-list"),
-            Gtk.Selection.Target_No_Constraint, My_Target_Url));
+            0, My_Target_Url));
 
    procedure Drag_Data_Received
      (Object : access Glib.Object.GObject_Record'Class;

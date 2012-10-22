@@ -49,7 +49,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Selection;             use Gtk.Selection;
+with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -1673,8 +1673,8 @@ package body GPS.Kernel.Modules.UI is
 
       Context : constant Drag_Context :=
                   Drag_Context (Get_Object (Nth (Args, 1)));
-      Data    : constant Selection_Data :=
-                  Selection_Data (Get_Proxy (Nth (Args, 4)));
+      Data    : constant Gtk_Selection_Data :=
+                  From_Object (Get_Address (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
       File    : Virtual_File;
    begin

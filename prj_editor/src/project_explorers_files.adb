@@ -38,7 +38,7 @@ with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Menu;                   use Gtk.Menu;
-with Gtk.Selection;              use Gtk.Selection;
+with Gtk.Selection_Data;         use Gtk.Selection_Data;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
@@ -309,8 +309,8 @@ package body Project_Explorers_Files is
       Iter  : Gtk_Tree_Iter;
       Kind  : Node_Types;
       File  : Virtual_File;
-      Data  : constant Gtk.Selection.Selection_Data :=
-        Gtk.Selection.Selection_Data (Get_Proxy (Nth (Args, 2)));
+      Data  : constant Gtk.Selection_Data.Gtk_Selection_Data :=
+        From_Object (Get_Address (Nth (Args, 2)));
    begin
       Get_Selected (Get_Selection (Tree), Model, Iter);
 
@@ -329,8 +329,8 @@ package body Project_Explorers_Files is
             return;
       end case;
 
-      Gtk.Selection.Selection_Data_Set
-        (Data, Gtk.Selection.Get_Target (Data), 8,
+      Gtk.Selection_Data.Selection_Data_Set
+        (Data, Gtk.Selection_Data.Get_Target (Data), 8,
          "file:///" & File.Display_Full_Name);
    end Drag_Data_Get;
 
@@ -349,8 +349,8 @@ package body Project_Explorers_Files is
                   Drag_Context (Get_Object (Nth (Args, 1)));
       X       : constant Gint := Get_Int (Nth (Args, 2));
       Y       : constant Gint := Get_Int (Nth (Args, 3));
-      Data    : constant Selection_Data :=
-                  Selection_Data (Get_Proxy (Nth (Args, 4)));
+      Data    : constant Gtk_Selection_Data :=
+                  From_Object (Get_Address (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
       Action  : constant Drag_Action := Get_Actions (Context);
       Iter    : Gtk_Tree_Iter;

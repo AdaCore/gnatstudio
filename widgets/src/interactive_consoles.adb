@@ -51,7 +51,7 @@ with Gtk.Text_Tag;        use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;  use Gtk.Text_Tag_Table;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Selection;       use Gtk.Selection;
+with Gtk.Selection_Data;  use Gtk.Selection_Data;
 with Gtk.Arguments;       use Gtk.Arguments;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.Terminal;     use Gtkada.Terminal;
@@ -929,7 +929,8 @@ package body Interactive_Consoles is
    is
       Console : constant Interactive_Console := Interactive_Console (Widget);
       Args : constant Gtk_Args := Gtk_Args (Params);
-      Data : constant Selection_Data := Selection_Data (To_C_Proxy (Args, 1));
+      Data : constant Gtk_Selection_Data := From_Object
+        (Get_Address (Nth (Args, 1)));
       Tmp  : Boolean := False;
    begin
       if Get_Length (Data) > 0 then

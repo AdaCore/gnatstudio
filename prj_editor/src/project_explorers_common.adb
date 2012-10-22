@@ -46,8 +46,9 @@ with Language_Utils;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with Gtk.Selection;
+with Gtk.Target_List;
 with Gtk.Dnd;
+with System;                    use System;
 
 package body Project_Explorers_Common is
 
@@ -641,13 +642,13 @@ package body Project_Explorers_Common is
                   elsif Get_Event_Type (Event) = Button_Press then
 
                      declare
-                        use type Gtk.Selection.Target_List;
-                        X : constant Gtk.Selection.Target_List
+                        use type Gtk.Target_List.Gtk_Target_List;
+                        X : constant Gtk.Target_List.Gtk_Target_List
                           := Gtk.Dnd.Source_Get_Target_List (Tree);
                      begin
                         --  If Tree provides drag&drop source, then use it
                         --  instead of MDI drag&drop
-                        if X /= null then
+                        if X.Ptr /= System.Null_Address then
                            Cancel_Child_Drag (Child);
                            return False;
                         end if;

@@ -42,7 +42,7 @@ with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Selection;             use Gtk.Selection;
+with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
