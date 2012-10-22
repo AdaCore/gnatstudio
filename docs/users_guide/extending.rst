@@ -2097,7 +2097,7 @@ whether the context is properly defined.
   defined in the Build Manager and the Build Launcher dialogs.
 
 *%GPS*
-  Replace by the home directory for GPS (ie the .gps directory in which GPS
+  Replaced by the home directory for GPS (ie the .gps directory in which GPS
   stores its own configuration files).
 
 *%i*
