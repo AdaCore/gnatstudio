@@ -74,10 +74,10 @@ package ALI_Parser is
      is new Old.LI_Information_Iterator with private;
    overriding procedure Free (Iter : in out ALI_Information_Iterator);
    overriding procedure Next
-     (Iter  : in out ALI_Information_Iterator;
-      Steps : Natural := Natural'Last;
-      Count : out Natural;
-      Total : out Natural);
+     (Iter   : in out ALI_Information_Iterator;
+      Steps  : Natural := Natural'Last;
+      Count  : out Natural;
+      Total  : out Natural);
    --  See doc for inherited subprograms
 
 private

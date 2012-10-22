@@ -860,7 +860,14 @@ package Old_Entities is
    --  If no cross-reference information was found, File_Has_No_LI_Report is
    --  called with the file in parameter
 
-   type LI_Information_Iterator is abstract tagged null record;
+   type LI_Filter is access function
+     (Ext : GNATCOLL.VFS.Filesystem_String) return Boolean;
+   --  Callback used by Recursive_LI_Information_Iterator to choose which
+   --  ALI file extension to iterate on.
+
+   type LI_Information_Iterator is abstract tagged record
+      Filter : LI_Filter := null;
+   end record;
 
    function Parse_All_LI_Information
      (Handler : access LI_Handler_Record;
@@ -875,10 +882,10 @@ package Old_Entities is
    --  A version that does all the iteration automatically
 
    procedure Next
-     (Iter  : in out LI_Information_Iterator;
-      Steps : Natural := Natural'Last;
-      Count : out Natural;
-      Total : out Natural) is abstract;
+     (Iter   : in out LI_Information_Iterator;
+      Steps  : Natural := Natural'Last;
+      Count  : out Natural;
+      Total  : out Natural) is abstract;
    --  Parse the next Steps LI files.
    --  Return the number of files to be parsed (although none might have been
    --  parsed yet), and the number of files parsed so far. These counts are
