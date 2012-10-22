@@ -2096,7 +2096,7 @@ whether the context is properly defined.
   clean`, or `gprclean`.  Note: this macro is only available in the commands
   defined in the Build Manager and the Build Launcher dialogs.
 
-*%GPS%
+*%GPS*
   Replace by the home directory for GPS (ie the .gps directory in which GPS
   stores its own configuration files).
 
