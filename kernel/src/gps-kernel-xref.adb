@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Commands.Generic_Asynchronous;  use Commands;
@@ -70,7 +69,7 @@ package body GPS.Kernel.Xref is
    overriding function Name
      (Command : access All_LI_Information_Command) return String;
 
-   function C_Filter (Lang : String) return Boolean;
+   function C_Filter (Ext : Filesystem_String) return Boolean;
    --  Return true if Lang is C or C++ (case insensitive)
 
    type Examine_Callback is record
@@ -201,10 +200,9 @@ package body GPS.Kernel.Xref is
    -- C_Filter --
    --------------
 
-   function C_Filter (Lang : String) return Boolean is
-      Str : constant String := To_Lower (Lang);
+   function C_Filter (Ext : Filesystem_String) return Boolean is
    begin
-      return Str = "c" or else Str = "c++";
+      return Ext = ".gli";
    end C_Filter;
 
    -------------------------

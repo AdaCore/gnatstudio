@@ -2383,10 +2383,10 @@ package body ALI_Parser is
    ----------
 
    overriding procedure Next
-     (Iter  : in out ALI_Information_Iterator;
-      Steps : Natural := Natural'Last;
-      Count : out Natural;
-      Total : out Natural)
+     (Iter   : in out ALI_Information_Iterator;
+      Steps  : Natural := Natural'Last;
+      Count  : out Natural;
+      Total  : out Natural)
    is
       LI         : LI_File;
       Steps_Done : Natural := 0;
@@ -2401,25 +2401,29 @@ package body ALI_Parser is
       while Iter.Current <= Iter.Files'Last
         and then Steps_Done <= Steps
       loop
-         LI := Get_Or_Create
-                 (Db      => Iter.Handler.Db,
-                  File    => Iter.Files (Iter.Current),
-                  Project => Iter.Project);
-
-         --  We force the update of this ALI if the database is in
-         --  'Create_Only' mode. In this mode, this will not force the
-         --  update of dependent ALIs (which will be parsed later anyway).
-
-         if not Update_ALI
-                  (Iter.Handler, LI,
-                   Reset_ALI => True,
-                   Force_Check => Frozen (Iter.Handler.Db) = Create_Only)
+         if Iter.Filter = null
+           or else Iter.Filter (Iter.Files (Iter.Current).File_Extension)
          then
-            if Active (Me) then
-               Trace
-                 (Me,
-                  "Couldn't parse " &
-                  Iter.Files (Iter.Current).Display_Full_Name);
+            LI := Get_Or_Create
+              (Db      => Iter.Handler.Db,
+               File    => Iter.Files (Iter.Current),
+               Project => Iter.Project);
+
+            --  We force the update of this ALI if the database is in
+            --  'Create_Only' mode. In this mode, this will not force the
+            --  update of dependent ALIs (which will be parsed later anyway).
+
+            if not Update_ALI
+              (Iter.Handler, LI,
+               Reset_ALI => True,
+               Force_Check => Frozen (Iter.Handler.Db) = Create_Only)
+            then
+               if Active (Me) then
+                  Trace
+                    (Me,
+                     "Couldn't parse " &
+                       Iter.Files (Iter.Current).Display_Full_Name);
+               end if;
             end if;
          end if;
 

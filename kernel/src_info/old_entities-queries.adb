@@ -3503,7 +3503,7 @@ package body Old_Entities.Queries is
      (Iter      : out Recursive_LI_Information_Iterator;
       Handler   : access Language_Handlers.Language_Handler_Record'Class;
       Project   : GNATCOLL.Projects.Project_Iterator;
-      Filter    : Language_Filter := null) is
+      Filter    : LI_Filter := null) is
    begin
       Iter.Project := Project;
       Iter.Handler      := Language_Handler (Handler);
@@ -3533,10 +3533,9 @@ package body Old_Entities.Queries is
          Tmp : Natural;
       begin
          if Iter.LI /= null then
-            --  Need to use Iter.Filter here
             Next (Iter.LI.all, Steps => Steps,
-                      Count => Iter.LI_Count,
-                      Total => Iter.LI_Total);
+                  Count => Iter.LI_Count,
+                  Total => Iter.LI_Total);
             if Iter.LI_Count < Iter.LI_Total then
                --  Will keep processing next time
                Count := Iter.Count + Iter.LI_Count;
@@ -3576,6 +3575,7 @@ package body Old_Entities.Queries is
 
          Iter.LI := new LI_Information_Iterator'Class'
            (Parse_All_LI_Information (Default_LI_Handler, P));
+         Iter.LI.Filter := Iter.Filter;
 
          if Process then
             Next (Iter.Project);
