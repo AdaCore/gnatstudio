@@ -327,13 +327,6 @@ package body ALI_Parser is
       New_ALI               : ALIs_Record;
       First_Sect, Last_Sect : Nat)
    is
-      Unresolved_Refs : Boolean := False;
-      --  Whether there are unresolved imported refs in this LI file. We need
-      --  to use a temporary variable for this (because calling
-      --  Set_Has_Unresolved_Imported_Refs, so that calls to Get_Source_Info
-      --  while processing the 'W' lines do not result in an infinite update
-      --  of the LI file.
-
       type Unit_To_Sfile_Table is array (Unit_Id range <>) of Source_File;
 
       procedure Get_Imported_Projects
@@ -980,7 +973,7 @@ package body ALI_Parser is
                            --  LI file if such entity is eventually needed
                            --  for sources navigation.
 
-                           Unresolved_Refs := True;
+                           Set_Has_Unresolved_Imported_Refs (LI);
                         end if;
                      end;
                   end if;
@@ -1430,15 +1423,14 @@ package body ALI_Parser is
 
    --  Start of processing for Create_New_ALI
 
-      Had_Unresolved_Imported_Refs : constant Boolean :=
-        LI /= null and then Has_Unresolved_Imported_Refs (LI);
-
    begin
-      Increase_Indent (Me, "Create_New_ALI");
       --  In case of forced update reset the flags associated with update of
       --  unresolved imported references.
 
-      Set_Has_Unresolved_Imported_Refs (LI, False);
+      if Update_Forced (Handler) then
+         Set_Has_Unresolved_Imported_Refs (LI, False);
+         Set_Update_Forced (Handler, False);
+      end if;
 
       Get_Imported_Projects (Project, Imported_Projects);
 
@@ -1466,14 +1458,6 @@ package body ALI_Parser is
          Process_Withs (Sunits, Sfiles, Imported_Projects);
          Process_Xrefs (Handler, LI, Sfiles, First_Sect, Last_Sect);
       end if;
-
-      if not Had_Unresolved_Imported_Refs
-        and then Unresolved_Refs
-      then
-         Set_Has_Unresolved_Imported_Refs (LI);
-      end if;
-
-      Decrease_Indent (Me);
    end Create_New_ALI;
 
    ------------------------
@@ -2627,9 +2611,8 @@ package body ALI_Parser is
       First_Sect, Last_Sect : Nat;
       Do_Update             : Boolean;
       Dummy                 : Boolean;
-      Reset_ALI_First       : constant Boolean := Reset_ALI;
-      Had_Unresolved        : constant Boolean :=
-        Has_Unresolved_Imported_Refs (LI);
+      Reset_ALI_First       : Boolean := Reset_ALI;
+      pragma Unreferenced (Dummy);
 
    --  Start of processing for Update_ALI
 
@@ -2642,20 +2625,21 @@ package body ALI_Parser is
       --  then required because entities imported from other languages may have
       --  been loaded after this LI file was previously processed.
 
-      if Had_Unresolved then
-         Do_Update := True;
-         New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
+      if Old_Entities.Update_Forced (Old_Entities.LI_Handler (Handler)) then
+         New_Timestamp   := File_Time_Stamp (Get_LI_Filename (LI));
+         Reset_ALI_First := True;
+         Do_Update       := True;
 
       else
          case Frozen (Handler.Db) is
-         when No_Create_Or_Update =>
-            Do_Update := Force_Check;
+            when No_Create_Or_Update =>
+               Do_Update := Force_Check;
 
-         when Create_Only =>
-            Do_Update := Force_Check or Get_Timestamp (LI) = No_Time;
+            when Create_Only =>
+               Do_Update := Force_Check or Get_Timestamp (LI) = No_Time;
 
-         when Create_And_Update =>
-            Do_Update := True;
+            when Create_And_Update =>
+               Do_Update := True;
          end case;
 
          if Do_Update then
@@ -2665,17 +2649,13 @@ package body ALI_Parser is
       end if;
 
       if Do_Update then
-         Set_Has_Unresolved_Imported_Refs (LI, False);
-
          if Active (Assert_Me) then
             Trace (Assert_Me, "Load_And_Scan_ALI: "
                    & Display_Full_Name (Get_LI_Filename (LI))
                    & " since timestamp incorrect: old="
                    & Local_Timestamp_Image (Get_Timestamp (LI))
                    & " new="
-                   & Local_Timestamp_Image (New_Timestamp)
-                   & " has unresolved imports: "
-                   & Had_Unresolved'Img);
+                   & Local_Timestamp_Image (New_Timestamp));
          else
             Trace (Me, "Load_And_Scan_ALI: "
                    & Display_Full_Name (Get_LI_Filename (LI)));
@@ -2701,29 +2681,12 @@ package body ALI_Parser is
                          First_Sect, Last_Sect);
 
          if Active (SLI_Support) and then Is_ALI_File (LI) then
-            Trace (Me, "Special handling for .sli files");
             Dummy := Update_ALI
                        (Handler, Get_SLI_From_ALI (LI), Reset_ALI => False);
          end if;
 
-         if Had_Unresolved then
-            --  Even if there remains more unresolved entities, there is
-            --  nothing else we can do, they likely do not exist in the sources
-            Set_Has_Unresolved_Imported_Refs (LI, False);
-         end if;
-
       elsif Active (SLI_Support) and then Is_ALI_File (LI) then
-         Set_Has_Unresolved_Imported_Refs (LI, False);
-
-         Dummy := Update_ALI (Handler, Get_SLI_From_ALI (LI), Reset_ALI);
-
-         if Had_Unresolved then
-            --  Even if there remains more unresolved entities, there is
-            --  nothing else we can do, they likely do not exist in the sources
-            Set_Has_Unresolved_Imported_Refs (LI, False);
-         end if;
-
-         return Dummy;
+         return Update_ALI (Handler, Get_SLI_From_ALI (LI), Reset_ALI);
       end if;
 
       return True;
@@ -2733,7 +2696,6 @@ package body ALI_Parser is
          Trace (Traces.Exception_Handle, "Unexpected error while parsing "
                 & Display_Full_Name (Get_LI_Filename (LI)) & ": "
                 & Exception_Information (E));
-         Set_Has_Unresolved_Imported_Refs (LI, False);
          return False;
    end Update_ALI;
 
