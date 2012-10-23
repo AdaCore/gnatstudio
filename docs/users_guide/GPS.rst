@@ -1449,6 +1449,17 @@ Classes
 
    .. automethod:: GPS.Toolbar.insert
 
+:class:`GPS.ToolsOutputHandler`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ToolsOutputHandler
+
+   
+
+   .. automethod:: GPS.ToolsOutputHandler.__init__
+
+   .. automethod:: GPS.ToolsOutputHandler.register_tools_output_handler
+
 :class:`GPS.Unexpected_Exception`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

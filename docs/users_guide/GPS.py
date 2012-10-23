@@ -9313,6 +9313,46 @@ column.
         """
         pass  # implemented in Ada
 
+###########################################################
+# ToolsOutputHandler
+###########################################################
+
+class ToolsOutputHandler(object):
+    """
+    This class is used to handle user-defined tools output parsers.
+    Parsers are organized in chain. Output on one parser is passed as
+    input to next one.
+    """
+
+    def __init__(self, on_parse_stdout=None, on_eof_stdout=None,
+                 on_parse_stderr=None, on_eof_stderr=None):
+    """
+        Create a new GPS.ToolsOutputHandler instance. You
+        need to register it afterwards using register_tools_output_handler.
+
+``on_parse_stdout`` is a callback that is called each time a portion of
+tool output is ready to parse. It takes the portion of output as parameter
+and returns filtered portion as result.
+
+``on_eof_stdout`` is a callback that is called when all output is parsed.
+It takes no parameters and returns last piece of filtered output if any.
+
+``on_parse_stderr`` is like on_parse_stdout but concern error stream.
+
+``on_eof_stderr`` is like on_eof_stdout but concern error stream.
+
+    """
+        pass  # implemented in Ada
+
+    def register_tools_output_handler (priority):
+    """
+        Add handler to chain with given priority.
+        Parser with lower priority will be executed first.
+        Priorities 0 .. 20 reserved for internal use.
+        Parser with priority 500 or more will receive input line by line,
+        (each line as dedicated on_parse_stdout call).
+    """
+        pass  # implemented in Ada
 
 ###########################################################
 # Globals
