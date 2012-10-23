@@ -4687,8 +4687,8 @@ package body Ada_Analyzer is
          Next_Word (Prec, Line_Count, Terminated, End_Reached);
 
          exit Main_Loop when
-           (End_Reached and then Buffer (Buffer_Last) /= ASCII.LF)
-           or else Terminated;
+           Terminated
+           or else (End_Reached and then Buffer (Buffer_Last) /= ASCII.LF);
 
          Current := End_Of_Word (Prec);
       end loop Main_Loop;
