@@ -1351,34 +1351,26 @@ package body Ada_Analyzer is
                      and then Prev_Token not in Token_Class_No_Cont
                      and then
                        (Prev_Token /= Tok_Arrow
-                        or else (Top_Tok /= Tok_Case
-                                 and then not Top (Tokens).In_Declaration
-                                 and then Top_Tok /= Tok_When
-                                 and then Top_Tok /= Tok_Select
-                                 and then Top_Tok /= Tok_Exception)))
+                        or else (not Top (Tokens).In_Declaration
+                                 and then Top_Tok not in
+                                   Tok_Case | Tok_When | Tok_Select
+                                   | Tok_Exception)))
                     or else (Prev_Token = Tok_Is
-                             and then (Token = Tok_New
-                                       or else Token = Tok_Access
-                                       or else Token = Tok_Separate
-                                       or else Token = Tok_Abstract
+                             and then (Token in Tok_New | Tok_Access
+                                         | Tok_Separate | Tok_Abstract
                                        or else
                                          (Top_Tok = Tok_Subtype
                                           and then Token /= Tok_Subtype)))
-                    or else Token = Tok_Array
-                    or else Token = Tok_Of
+                    or else Token in Tok_Array | Tok_Of
                     or else (Token = Tok_Not
-                             and then (Prev_Token = Tok_And
-                                       or else Prev_Token = Tok_Or
-                                       or else Prev_Token = Tok_Then
-                                       or else Prev_Token = Tok_Else))
+                             and then (Prev_Token in Tok_And | Tok_Or
+                                         | Tok_Then | Tok_Else))
                     or else (Prev_Token = Tok_With
                              and then (Token = Tok_String_Literal
                                        or else Token = Tok_Private
                                        or else Top_Tok = Tok_Procedure
                                        or else Top_Tok = Tok_Function))
-                    or else Prev_Token = Tok_Colon_Equal
-                    or else Prev_Token = Tok_Access
-                    or else Prev_Token = Tok_Of
+                    or else Prev_Token in Tok_Colon_Equal | Tok_Access | Tok_Of
                     or else (Prev_Token = Tok_Exit and then Token = Tok_When)
                     or else (Prev_Token = Tok_Null and then Token = Tok_Record)
                     or else (Prev_Prev_Token = Tok_And
@@ -2613,12 +2605,8 @@ package body Ada_Analyzer is
                Syntax_Error := True;
             end if;
 
-         elsif Reserved = Tok_Function
-           or else Reserved = Tok_Procedure
-           or else Reserved = Tok_Package
-           or else Reserved = Tok_Task
-           or else Reserved = Tok_Protected
-           or else Reserved = Tok_Entry
+         elsif Reserved in Tok_Function | Tok_Procedure | Tok_Protected
+           | Tok_Package | Tok_Task | Tok_Entry
          then
             if In_Generic and then Prev_Token /= Tok_With then
                --  unindent after a generic declaration, e.g:
@@ -2698,9 +2686,7 @@ package body Ada_Analyzer is
          elsif    (Reserved = Tok_Is
                    and then Num_Parens = 0
                    and then not In_Generic)
-           or else Reserved = Tok_Declare
-           or else Reserved = Tok_Begin
-           or else Reserved = Tok_Do
+           or else Reserved in Tok_Declare | Tok_Begin | Tok_Do
            or else (Prev_Token /= Tok_Or
                     and then Reserved = Tok_Else
                     and then Num_Parens = 0)
