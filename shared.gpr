@@ -52,9 +52,7 @@ project Shared is
    end Binder;
 
    package Linker is
-      --  On Darwin, we need special linker switches to use "atos -o" to
-      --  convert backtraces to symbolic.
-      --  for Default_Switches ("Ada") use ("-Wl,-no_pie");
+      for Default_Switches ("Ada") use Gnatcoll_Shared.System_Linker_Flags;
    end Linker;
 
 end Shared;
