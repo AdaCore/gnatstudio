@@ -8,7 +8,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
-- LA23-019: Bad indentation of access procedure in generic declaration
+- LA23-019: Bad indentation of access procedure type in generic declaration
   Problem:    When indenting code of the form:
               generic
                  type T is access procedure;
