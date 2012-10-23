@@ -48,6 +48,7 @@ with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with Custom_Combos;             use Custom_Combos;
 with Custom_Timeout;            use Custom_Timeout;
+with Custom_Tools_Output;       use Custom_Tools_Output;
 with Expect_Interface;          use Expect_Interface;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -1963,6 +1964,7 @@ package body Custom_Module is
       Custom_Combos.Register_Commands (Kernel);
       Custom_Timeout.Register_Commands (Kernel);
       XML_Viewer.Register_Commands (Kernel);
+      Custom_Tools_Output.Register_Commands (Kernel);
 
       Register_Command
         (Kernel, Constructor_Method,
