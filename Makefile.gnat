@@ -3,8 +3,7 @@ GNAT_SOURCES= \
   prj-pars.ads \
   prj-pars.adb \
   impunit.ads \
-  impunit.adb \
-  gnat_style.css
+  impunit.adb
 
 list-sources:
 	@echo $(GNAT_SOURCES)
