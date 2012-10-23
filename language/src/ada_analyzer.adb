@@ -1371,6 +1371,8 @@ package body Ada_Analyzer is
                                        or else Top_Tok = Tok_Procedure
                                        or else Top_Tok = Tok_Function))
                     or else Prev_Token in Tok_Colon_Equal | Tok_Access | Tok_Of
+                    or else (Prev_Token = Tok_Protected
+                             and then Prev_Prev_Token = Tok_Access)
                     or else (Prev_Token = Tok_Exit and then Token = Tok_When)
                     or else (Prev_Token = Tok_Null and then Token = Tok_Record)
                     or else (Prev_Prev_Token = Tok_And
@@ -2605,8 +2607,9 @@ package body Ada_Analyzer is
                Syntax_Error := True;
             end if;
 
-         elsif Reserved in Tok_Function | Tok_Procedure | Tok_Protected
-           | Tok_Package | Tok_Task | Tok_Entry
+         elsif (Reserved in Tok_Function | Tok_Procedure | Tok_Protected
+                and then Top_Token.Token /= Tok_Type)
+           or else Reserved in Tok_Package | Tok_Task | Tok_Entry
          then
             if In_Generic and then Prev_Token /= Tok_With then
                --  unindent after a generic declaration, e.g:
@@ -4613,11 +4616,9 @@ package body Ada_Analyzer is
                then
                   In_Generic := True;
                elsif In_Generic
-                 and then Prev_Token /= Tok_With
-                 and then
-                   (Token = Tok_Function
-                    or else Token = Tok_Procedure
-                    or else Token = Tok_Package)
+                 and then Prev_Token
+                   not in Tok_With | Tok_Access | Tok_Protected
+                 and then Token in Tok_Function | Tok_Procedure | Tok_Package
                then
                   In_Generic := False;
                end if;
