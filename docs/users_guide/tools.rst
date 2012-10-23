@@ -89,6 +89,9 @@ The list of active items includes:
   *Dependency*
     :ref:`Dependency_Browser`.
 
+  *Elaboration Cycles*
+    :ref:`Elaboration_Cycles_Browser`.
+
   *Entity*
     :ref:`Entity_Browser`.
 

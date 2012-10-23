@@ -12,9 +12,10 @@ General Issues
 ==============
 
 GPS contains several kinds of browsers, that have a common set of basic
-functionalities. There are currently four such browsers: the project browser
+functionalities. There are currently five such browsers: the project browser
 (:ref:`The_Project_Browser`), the call graph (:ref:`Call_Graph`), the
-dependency browser (:ref:`Dependency_Browser`) and the entity browser
+dependency browser (:ref:`Dependency_Browser`), the elaboration cycles
+browser (:ref:`Elaboration_Cycles_Browser`) and the entity browser
 (:ref:`Entity_Browser`).
 
 All these browsers are interactive viewers. They contain a number of items,
@@ -300,6 +301,25 @@ number of entries:
   .. index:: show files depending on file
 
   These play the same role as in the project view contextual menu
+
+.. _Elaboration_Cycles_Browser:
+
+Elaboration Cycles Browser
+==========================
+
+If the binder cannot find an acceptable order of elaboration of program units,
+GPS outputs detailed diagnostics into Messages View and constructs visual
+representation of elaboration dependencies in Elaboration Cycles Browser.
+
+Such visual representation has program units as items in the browser.
+Direct dependencies between program units are displayed as links.
+But dependency caused by pragma Elaborate_All (explicit or implicit one)
+involves chain of several program units. Such dependencies are represented
+as items themselves and contain information about each unit involved in the
+dependency.
+
+.. index:: screen shot
+.. image:: elaboration-graph.jpg
 
 .. _Entity_Browser:
 
