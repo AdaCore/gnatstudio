@@ -16,7 +16,7 @@ project Language is
    package Compiler is
       for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
 
-      No_Checks := ("-g", "-O2", "-gnat05", "-gnatpn");
+      No_Checks := ("-g", "-O2", "-gnat12", "-gnatpn");
 
       case Shared.Build is
           when "Production" =>
