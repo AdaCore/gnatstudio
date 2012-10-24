@@ -15,9 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-
-with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Cairo.Image_Surface;       use Cairo.Image_Surface;
@@ -30,16 +27,13 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Window;                use Gdk.Window;
 with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Style;              use Gtkada.Style;
 
-with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Language;                  use Language;
 with Language.Icons;            use Language.Icons;
 with Language.Tree;             use Language.Tree;
-with String_Utils;              use String_Utils;
 with Xref;                      use Xref;
 
 with Entities_Tooltips_Utility; use Entities_Tooltips_Utility;

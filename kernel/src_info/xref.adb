@@ -3606,7 +3606,7 @@ package body Xref is
    function Get_Entity_Reference
      (Old_Ref : Old_Entities.Entity_Reference) return General_Entity_Reference
    is
-      GER : General_Entity_Reference :=
+      GER : constant General_Entity_Reference :=
         (Old_Ref => Old_Ref,
          Ref => No_Entity_Reference);
    begin
