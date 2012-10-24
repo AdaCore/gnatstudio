@@ -327,7 +327,7 @@ package body Build_Command_Utils is
    function Get_Mains_Files_Only (Registry : Project_Registry_Access)
       return GNATCOLL.VFS.File_Array
    is
-      Mains        : Project_And_Main_Array := Get_Mains (Registry);
+      Mains        : constant Project_And_Main_Array := Get_Mains (Registry);
       Result       : GNATCOLL.VFS.File_Array (Mains'First .. Mains'Last);
    begin
       for J in Mains'First .. Mains'Last loop

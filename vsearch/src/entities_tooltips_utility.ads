@@ -63,7 +63,7 @@ package Entities_Tooltips_Utility is
    --  Return the documentation of the tooltip
 
    function Is_Guess
-     (Entity : General_Entity) return boolean;
+     (Entity : General_Entity) return Boolean;
    --  return true if entity information is a guess
 
    function Tooltip_Guess_Message return String;

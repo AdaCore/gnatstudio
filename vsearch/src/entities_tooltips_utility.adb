@@ -25,10 +25,8 @@ with Glib.Convert;              use Glib.Convert;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Language;                  use Language;
 with Language.Tree;             use Language.Tree;
 with String_Utils;              use String_Utils;
-with Xref;                      use Xref;
 
 package body Entities_Tooltips_Utility is
 
@@ -208,7 +206,7 @@ package body Entities_Tooltips_Utility is
    --------------
 
    function Is_Guess
-     (Entity : General_Entity) return boolean
+     (Entity : General_Entity) return Boolean
    is
    begin
       return Is_Fuzzy (Entity);
