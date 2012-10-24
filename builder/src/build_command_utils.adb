@@ -320,6 +320,22 @@ package body Build_Command_Utils is
       return Result (1 .. Index - 1);
    end Get_Mains;
 
+   --------------------------
+   -- Get_Mains_Files_Only --
+   --------------------------
+
+   function Get_Mains_Files_Only (Registry : Project_Registry_Access)
+      return GNATCOLL.VFS.File_Array
+   is
+      Mains        : Project_And_Main_Array := Get_Mains (Registry);
+      Result       : GNATCOLL.VFS.File_Array (Mains'First .. Mains'Last);
+   begin
+      for J in Mains'First .. Mains'Last loop
+         Result (J) := Mains (J).Main;
+      end loop;
+      return Result;
+   end Get_Mains_Files_Only;
+
    ----------------
    -- Initialize --
    ----------------

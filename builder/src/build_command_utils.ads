@@ -55,6 +55,10 @@ package Build_Command_Utils is
      (Registry : Project_Registry_Access) return Project_And_Main_Array;
    --  Return the list of mains corresponding to the loaded project tree.
 
+   function Get_Mains_Files_Only (Registry : Project_Registry_Access)
+   return GNATCOLL.VFS.File_Array;
+   --  Return the list of mains corresponding to the loaded project tree.
+
    function Get_Mode_Subdir
      (Registry : Build_Config_Registry_Access;
       Mode : String) return Filesystem_String;
