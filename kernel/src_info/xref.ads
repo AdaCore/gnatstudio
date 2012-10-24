@@ -70,8 +70,9 @@ package Xref is
    ---------------------
 
    type General_Xref_Database_Record is tagged record
-      Entities   : Old_Entities.Entities_Database;
+      Entities   : aliased Old_Entities.Entities_Database;
       --  The "legacy" LI database
+      --  aliased is added to let AJIS make this field accessible to GNATbench
 
       Xref       : Extended_Xref_Database_Access;
       --  The "new" LI database
@@ -125,7 +126,8 @@ package Xref is
    -----------------------
 
    type General_Location is record
-      File   : Virtual_File := No_File;
+      File   : aliased Virtual_File := No_File;
+      --  aliased is added to let AJIS make this field accessible to GNATbench
       Line   : Integer := 0;
       Column : Visible_Column_Type := 0;
    end record;
@@ -628,14 +630,6 @@ package Xref is
 
    procedure Destroy (Iter : in out Entities_In_Project_Cursor);
 
-   --------------
-   -- Tooltips --
-   --------------
-
-   Tooltip_Guess_Message : constant String :=
-     "<i>(Cross-references info not up-to-date, this is a guess)</i>";
-   --  Message to display in tooltips when an entity is not up-to-date
-
    ---------------
    -- Callgraph --
    ---------------
@@ -761,6 +755,10 @@ package Xref is
 
    function From_Constructs
      (Entity : Language.Tree.Database.Entity_Access) return General_Entity;
+
+   function Get_Entity_Reference
+     (Old_Ref : Old_Entities.Entity_Reference) return General_Entity_Reference;
+   --  Return the associated general entity reference
 
 private
    type Extended_Xref_Database is new GNATCOLL.Xref.Xref_Database with

@@ -3599,4 +3599,18 @@ package body Xref is
       end if;
    end Reset;
 
+   --------------------------
+   -- Get_Entity_Reference --
+   --------------------------
+
+   function Get_Entity_Reference
+     (Old_Ref : Old_Entities.Entity_Reference) return General_Entity_Reference
+   is
+      GER : General_Entity_Reference :=
+        (Old_Ref => Old_Ref,
+         Ref => No_Entity_Reference);
+   begin
+      return GER;
+   end Get_Entity_Reference;
+
 end Xref;
