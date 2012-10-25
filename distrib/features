@@ -42,6 +42,12 @@ NF-52-L919-056 GPS: Support for arm-eabi (2012-09-20)
   GPS now supports building for the arm-eabi toolchain, needed for
   the arm-elf architecture.
 
+NF-52-L912-039 GB: add AdaCore manuals to GNATbench Help Contents (2012-09-18)
+
+  GNAT, Gprbuild, GNATcheck, GDB, AJIS, GNATCOLL, XMLAda, AWS, GTKAda, ASIS
+  User's guides or Reference manual are available (if installed) through
+  GNATbench Help menu at GNATbench Additional Guides Contents.
+
 NF-52-L822-044 GB: additional Pretty Printer output flexibility (2012-08-22)
 
   The "Pretty Print" command now allows a variety of output file settings,
