@@ -882,11 +882,6 @@ package body Ada_Analyzer is
       --  - Tok_Arrow
       --  - Tok_Colon_Equal (not supported yet)
 
-      function Find_Multi_Line_Paren (P : Natural) return Natural;
-      --  Return the location of the first left parenthesis which is not
-      --  closed on the same line.
-      --  If a right parenthesis is found before, return 0.
-
       function Find_Arrow (P : Natural) return Natural;
       --  Return the location of the first '=>' token on the current line,
       --  0 if none.
@@ -1077,83 +1072,6 @@ package body Ada_Analyzer is
 
          return 0;
       end Find_Arrow;
-
-      ---------------------------
-      -- Find_Multi_Line_Paren --
-      ---------------------------
-
-      function Find_Multi_Line_Paren (P : Natural) return Natural is
-         Found            : Natural;
-         J                : Natural := P;
-         Local_Num_Parens : Natural := 0;
-
-      begin
-         Main_Loop :
-         loop
-            exit Main_Loop when J >= Buffer'Last;
-
-            case Buffer (J) is
-               when '"' =>
-                  if Buffer (J - 1) /= ''' then
-                     J := J + 1;
-                     Skip_To_Char (Buffer, J, '"');
-                  end if;
-
-               when '-' =>
-                  if Buffer (J + 1) = '-' then
-                     if Local_Num_Parens > 0 then
-                        return Found;
-                     end if;
-
-                     --  Skip comment
-
-                     J := Next_Line (Buffer, J) - 1;
-                  end if;
-
-               when '(' =>
-                  if Buffer (J - 1) /= '''
-                    or else Buffer (J + 1) /= '''
-                  then
-                     Local_Num_Parens := Local_Num_Parens + 1;
-                     Found := J;
-                  end if;
-
-               when ')' =>
-                  if Buffer (J - 1) /= ''' then
-                     if Local_Num_Parens = 0 then
-                        return 0;
-                     end if;
-
-                     Local_Num_Parens := Local_Num_Parens - 1;
-                  end if;
-
-               when ';' =>
-                  if Buffer (J - 1) /= ''' then
-                     return 0;
-                  end if;
-
-               when ASCII.LF =>
-                  if Local_Num_Parens > 0 then
-                     return Found;
-                  end if;
-
-               when others =>
-                  null;
-            end case;
-
-            J := J + 1;
-         end loop Main_Loop;
-
-         if Local_Num_Parens > 0 then
-            if J >= Buffer'Last and then Local_Num_Parens = 1 then
-               return 0;
-            end if;
-
-            return Found;
-         else
-            return 0;
-         end if;
-      end Find_Multi_Line_Paren;
 
       -----------------------
       -- Compute_Alignment --
@@ -3811,10 +3729,9 @@ package body Ada_Analyzer is
                      elsif In_Declaration = Subprogram_Decl
                        or else Top (Paren_Stack).all = Type_Declaration
                        or else Prev_Prev_Token = Tok_Arrow
-                       or else (Format
-                                and then Num_Parens = 1
-                                and then Find_Multi_Line_Paren (P + 1) = 0)
-                       or else (Format and then Find_Arrow (P + 1) /= 0)
+                       or else (Format and then
+                                (Num_Parens = 1
+                                 or else Find_Arrow (P + 1) /= 0))
                      then
                         Level := P - Start_Of_Line + Padding + 1;
                      else
