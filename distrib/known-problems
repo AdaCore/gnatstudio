@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.0
 
+- LA24-013: Bad indentation of some lines in function calls
+  Problem:    When indenting a single line in the middle of a complex function
+              call containing several parentheses, the indentation engine may
+              get confused and badly indent the line.
+  Workaround: Select the whole function call and then indent it as a whole.
+
 - LA11-013: Aspect clause on a record confuses indentation
   Problem:    When using an Ada 2012 aspect clause at the end of a record,
               the indentation engine may get confused and unindent an extra
