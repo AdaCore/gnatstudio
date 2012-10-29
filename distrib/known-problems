@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- LA24-013: Bad indentation of some lines in function calls
+  Problem:    When indenting a single line in the middle of a complex function
+              call containing several parentheses, the indentation engine may
+              get confused and badly indent the line.
+  Workaround: Select the whole function call and then indent it as a whole.
+
 - LA23-019: Bad indentation of access procedure type in generic declaration
   Problem:    When indenting code of the form:
               generic
