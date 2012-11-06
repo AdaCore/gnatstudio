@@ -45,6 +45,14 @@ package Creation_Wizard is
 
    Invalid_Project_Page : exception;
 
+   procedure Project_Saved
+     (Page               : access Project_Wizard_Page_Record;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project            : Project_Type) is null;
+   --  Callback to notify each page when project is stored on disk but
+   --  before GPS read it. Used by tools like gnatname to customize project
+   --  and unit list files.
+
    type Project_Wizard_Record is
       new Wizards.Wizard_Record with private;
    type Project_Wizard is access all Project_Wizard_Record'Class;
