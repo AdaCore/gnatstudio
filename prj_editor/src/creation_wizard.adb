@@ -403,6 +403,13 @@ package body Creation_Wizard is
 
       if Wiz.Auto_Save_On_Exit then
          Tmp := Save_Single_Project (Get_Kernel (Wiz), Wiz.Project);
+
+         for P in Pages'Range loop
+            Project_Saved
+              (Project_Wizard_Page (Pages (P)),
+               Get_Kernel (Wiz),
+               Wiz.Project);
+         end loop;
       end if;
 
       Pop_State (Get_Kernel (Wiz));
