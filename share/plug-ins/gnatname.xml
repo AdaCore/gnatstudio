@@ -11,6 +11,7 @@
       <arg>%attr(ide'gnat,gnat)</arg>
       <arg>name</arg>
     </command-line>
+    <switches/>
   </target-model>
 
   <target model="gnatname" category="_Project_" name="gnatname">
