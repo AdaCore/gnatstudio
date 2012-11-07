@@ -139,7 +139,7 @@ package body Creation_Wizard.GNATname is
                Flags  => Modal or Destroy_With_Parent);
       Gtk_New (Ent);
       Set_Activates_Default (Ent, True);
-      Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
+      Pack_Start (Dialog.Get_Action_Area, Ent, Expand => True, Fill => True);
 
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Grab_Default (Button);
@@ -428,7 +428,7 @@ package body Creation_Wizard.GNATname is
 
    procedure Toggle_Enabled (Widget : access Gtk_Widget_Record'Class) is
    begin
-      Widget.Set_Sensitive ((Widget.Flags and Sensitive) = 0);
+      Widget.Set_Sensitive (not Widget.Is_Sensitive);
    end Toggle_Enabled;
 
 end Creation_Wizard.GNATname;
