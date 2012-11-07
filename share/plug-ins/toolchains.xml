@@ -81,6 +81,12 @@
 
   <toolchain name="e500v2-wrs-linux"/>
 
+  <toolchain name="sparc-wrs-vxworks">
+    <cpp_filt>c++filtsparc</cpp_filt>
+    <compiler lang="c">ccsparc</compiler>
+    <compiler lang="c++">c++sparc</compiler>
+  </toolchain>
+
   <toolchain name="powerpc-elf-lynxos"/>
 
   <toolchain name="powerpc-xcoff-lynxos"/>
