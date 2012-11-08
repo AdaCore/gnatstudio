@@ -836,6 +836,8 @@ team.
 
 If left blank, no program will be run.
 
+.. _Source_Directories_Selection:
+
 Source Directories Selection
 ----------------------------
 
@@ -923,6 +925,19 @@ elaboration by itself, instead of relying on its caller to elaborate it as is
 standard in Ada. You also have more control over what files make up the public
 interface to the library, and what files are private to the library and
 invisible from the outside.
+
+GNATname
+--------
+.. index:: GNATname
+
+This page allows you to add Ada units stored in files with irregular or
+arbitrary naming conventions into you project.
+To take advantage of this ability you need to specify file name patterns.
+GPS will use these patterns to search for Ada units in each of source
+directories specified in :ref:`Source_Directories_Selection` page.
+Then GPS utilises gnatname tool to generate the required pragmas for a set
+of files. Files with arbitrary naming convention are not compatible with
+naming scheme customization, so next page will be skipped.
 
 Naming Scheme
 -------------
