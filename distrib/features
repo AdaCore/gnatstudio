@@ -31,5 +31,5 @@ NF-53-L921-032 GPS: Show protected objects in Outline view (2012-10-16)
 
 NF-53-J728-022 GPS: integrate gnatname (2012-11-08)
 
-  Project wizard now utilizes gnatmake to search Ada units in files with
-  irregular or naming conventions.
+  The project wizard now optionally uses gnatname to search Ada units in files
+  with non standard naming conventions.
