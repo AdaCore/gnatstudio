@@ -22,3 +22,10 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               display the custom name in the "Run" menu, and the corresponding
               target cannot be launched through the menu or the toolbar button.
   Workaround: Use the Build->Run->Custom... menu
+
+- LA11-003: No xref from separate units compiled explicitly
+  Problem:    If you use separate Ada units, and compile them explicitly from
+              the editor (for instance /Build/Compile File), then no
+              cross-reference is available anymore for that file.
+  Workaround: force the loading of all xref in memory, through
+              /Build/Load Xref In Memory.
