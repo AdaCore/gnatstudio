@@ -23,7 +23,6 @@ with Ada.Strings.Hash;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
-with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -101,9 +100,6 @@ package body Project_Explorers is
    type Explorer_Module_Record is new Module_ID_Record with null record;
    Explorer_Module_ID : Module_ID := null;
    --  Id for the explorer module
-
-   Explorers_Tooltips  : constant Debug_Handle :=
-                          Create ("Explorers.Tooltips", GNATCOLL.Traces.Off);
 
    Show_Absolute_Paths : constant History_Key :=
                            "explorer-show-absolute-paths";
@@ -1388,10 +1384,6 @@ package body Project_Explorers is
    begin
       Pixmap := Null_Surface;
       Area   := (0, 0, 0, 0);
-
-      if not Active (Explorers_Tooltips) then
-         return;
-      end if;
 
       Window := Get_Bin_Window (Tooltip.Explorer.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);
