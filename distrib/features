@@ -28,3 +28,8 @@ NF-53-L921-032 GPS: Show protected objects in Outline view (2012-10-16)
   Protected and task types/objects and their entries are now visible in
   Outline View. New filter in Outline View "Show tasks, entries, and protected
   types" is used to show/hide these items.
+
+NF-53-J728-022 GPS: integrate gnatname (2012-11-08)
+
+  Project wizard now utilizes gnatmake to search Ada units in files with
+  irregular or naming conventions.
