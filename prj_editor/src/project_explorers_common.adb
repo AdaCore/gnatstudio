@@ -48,7 +48,6 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Gtk.Target_List;
 with Gtk.Dnd;
-with System;                    use System;
 
 package body Project_Explorers_Common is
 
@@ -648,7 +647,7 @@ package body Project_Explorers_Common is
                      begin
                         --  If Tree provides drag&drop source, then use it
                         --  instead of MDI drag&drop
-                        if X.Get_Object /= System.Null_Address then
+                        if not X.Is_Null then
                            Cancel_Child_Drag (Child);
                            return False;
                         end if;
