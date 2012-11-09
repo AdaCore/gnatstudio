@@ -15,9 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with System;
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
-
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
@@ -327,10 +324,8 @@ package body Vsearch is
    --  On_Search_Replace.
 
    procedure Receive_Text
-     (Clipboard : Gtk_Clipboard;
-      Text      : Interfaces.C.Strings.chars_ptr;
-      Data      : System.Address);
-   pragma Convention (C, Receive_Text);
+     (Clipboard : not null access Gtk_Clipboard_Record'Class;
+      Text      : Glib.UTF8_String);
    --  Used to paste the contents of the clibboard in the search pattern entry,
    --  when no selection can be found
 
@@ -1889,24 +1884,15 @@ package body Vsearch is
    ------------------
 
    procedure Receive_Text
-     (Clipboard : Gtk_Clipboard;
-      Text      : Interfaces.C.Strings.chars_ptr;
-      Data      : System.Address)
+     (Clipboard : not null access Gtk_Clipboard_Record'Class;
+      Text      : Glib.UTF8_String)
    is
-      pragma Unreferenced (Clipboard, Data);
+      pragma Unreferenced (Clipboard);
    begin
-      if Text /= Interfaces.C.Strings.Null_Ptr then
-         declare
-            Ada_Text : constant String := Interfaces.C.Strings.Value (Text);
-         begin
-            if Ada_Text /= ""
-              and then Ada_Text'Length < 128
-              and then Index (Ada_Text, (1 => ASCII.LF)) = 0
-            then
-               Set_Active_Text
-                 (Vsearch_Module_Id.Search.Pattern_Combo, Ada_Text);
-            end if;
-         end;
+      if Text /= ""
+        and then Text'Length < 128
+      then
+         Set_Active_Text (Vsearch_Module_Id.Search.Pattern_Combo, Text);
       end if;
 
    exception
@@ -2036,8 +2022,7 @@ package body Vsearch is
       else
          Request_Text
            (Gtk.Clipboard.Get (Selection_Primary),
-            Receive_Text'Access,
-            System.Null_Address);
+            Receive_Text'Access);
       end if;
 
       if Raise_Widget then
