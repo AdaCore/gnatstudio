@@ -648,7 +648,7 @@ package body Project_Explorers_Common is
                      begin
                         --  If Tree provides drag&drop source, then use it
                         --  instead of MDI drag&drop
-                        if X.Ptr /= System.Null_Address then
+                        if X.Get_Object /= System.Null_Address then
                            Cancel_Child_Drag (Child);
                            return False;
                         end if;
