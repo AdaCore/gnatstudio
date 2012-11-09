@@ -1527,7 +1527,7 @@ package body Src_Editor_View is
       Layout : Pango_Layout;
       Color  : Gdk_Color;
       Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
-      Ink_Rect, Logical_Rect : Gdk_Rectangle;
+      Ink_Rect, Logical_Rect : Pango.Pango_Rectangle;
       Tmp    : HSV_Color;
    begin
       --  Recompute the width of one character

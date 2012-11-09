@@ -86,6 +86,7 @@ with Gtkada.Style;              use Gtkada.Style;
 with Pango.Context;             use Pango.Context;
 with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
+with Pango.Font_Metrics;        use Pango.Font_Metrics;
 with Pango.Layout;              use Pango.Layout;
 
 with Config;                    use Config;
@@ -768,11 +769,11 @@ package body GUI_Utils is
       Font_Rec := Load_Font (Get_Pango_Context (Widget), Font);
       Font_Metrics := Get_Metrics (Font_Rec);
 
-      Line_Height := (Pango.Font.Get_Ascent (Font_Metrics) +
-                        Pango.Font.Get_Descent (Font_Metrics)) / 1024;
+      Line_Height :=
+         (Font_Metrics.Get_Ascent + Font_Metrics.Get_Descent) / 1024;
       --  ??? 1024 is PANGO_SCALE. We should retrieve it from C macro
 
-      Pango.Font.Unref (Font_Metrics);
+      Font_Metrics.Unref;
       Unref (Font_Rec);
 
       --  We retrieve the screen's height
