@@ -17,6 +17,9 @@
 
 with Ada.Unchecked_Deallocation; use Ada;
 
+with Cairo;                     use Cairo;
+
+with GNAT.Strings;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
@@ -28,6 +31,7 @@ with Glib.Values;                use Glib.Values;
 with Gdk.Dnd;                    use Gdk.Dnd;
 with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
 with Gdk.Event;                  use Gdk.Event;
+with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
 with Gtk.Handlers;               use Gtk.Handlers;
@@ -52,6 +56,7 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -59,6 +64,7 @@ with GPS.Intl;                   use GPS.Intl;
 with Projects;                   use Projects;
 with File_Utils;
 with GUI_Utils;                  use GUI_Utils;
+with Tooltips;                   use Tooltips;
 with Traces;                     use Traces;
 with Histories;                  use Histories;
 with Project_Explorers_Common;   use Project_Explorers_Common;
@@ -265,6 +271,20 @@ package body Project_Explorers_Files is
       Args   : Glib.Values.GValues;
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Accept drag&drop data in File View's Tree
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type Explorer_Tooltips is new Tooltips.Pixmap_Tooltips with record
+      Explorer : Project_Explorer_Files;
+   end record;
+   type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
+   overriding procedure Draw
+     (Tooltip : access Explorer_Tooltips;
+      Pixmap  : out Cairo_Surface;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   --  See inherited documentatoin
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -781,6 +801,7 @@ package body Project_Explorers_Files is
       Saved_Hook   : File_Saved_Hook;
       Renamed_Hook : File_Renamed_Hook;
       Project_Hook : Project_View_Changed_Hook;
+      Tooltip      : Explorer_Tooltips_Access;
    begin
       Gtk.Scrolled_Window.Initialize (Explorer);
       Set_Policy (Explorer, Policy_Automatic, Policy_Automatic);
@@ -894,6 +915,12 @@ package body Project_Explorers_Files is
                 Project_Hook,
                 Name => "project_explorers_files.project_view_changed",
                 Watch => GObject (Explorer));
+
+      --  Initialize tooltips
+
+      Tooltip := new Explorer_Tooltips;
+      Tooltip.Explorer := Project_Explorer_Files (Explorer);
+      Set_Tooltip (Tooltip, Explorer.File_Tree, 250);
    end Initialize;
 
    ------------------------------
@@ -1430,6 +1457,45 @@ package body Project_Explorers_Files is
          end if;
       end loop;
    end Add_File;
+
+   ----------
+   -- Draw --
+   ----------
+
+   overriding procedure Draw
+     (Tooltip : access Explorer_Tooltips;
+      Pixmap  : out Cairo_Surface;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   is
+      Tree : constant Gtk.Tree_View.Gtk_Tree_View :=
+        Tooltip.Explorer.File_Tree;
+      Iter : Gtk_Tree_Iter;
+      Text : GNAT.Strings.String_Access;
+
+   begin
+      Pixmap := Null_Surface;
+      Initialize_Tooltips (Tree, Area, Iter);
+
+      if Iter /= Null_Iter then
+         declare
+            File : constant Virtual_File :=
+              Get_File (Get_Model (Tree), Iter, File_Column);
+            Dir  : constant Virtual_File := Get_Parent (File);
+         begin
+            Text := new String'
+              (File.Display_Base_Dir_Name & ASCII.LF & "in "
+               & Dir.Display_Full_Name);
+         end;
+
+         Create_Pixmap_From_Text
+           (Text.all,
+            Default_Font.Get_Pref_Font,
+            Tooltip_Color.Get_Pref,
+            Tree,
+            Pixmap);
+         GNAT.Strings.Free (Text);
+      end if;
+   end Draw;
 
    -------------
    -- Execute --
