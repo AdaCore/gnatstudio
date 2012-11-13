@@ -15,10 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Cairo;                  use Cairo;
+
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Gdk.Event;              use Gdk.Event;
 with Gdk.Pixbuf;             use Gdk.Pixbuf;
+with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Types;              use Gdk.Types;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
@@ -41,11 +44,14 @@ with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with Histories;              use Histories;
 with GUI_Utils;              use GUI_Utils;
 with Src_Editor_Module;      use Src_Editor_Module;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNAT.Strings;           use GNAT.Strings;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with Tooltips;               use Tooltips;
 with Traces;                 use Traces;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 
@@ -122,6 +128,59 @@ package body Buffer_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Context factory when creating contextual menus
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type Buffer_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
+      Buffer_View : Buffer_View_Access;
+   end record;
+   type Buffer_View_Tooltips_Access is
+     access all Buffer_View_Tooltips'Class;
+   overriding procedure Draw
+     (Tooltip : access Buffer_View_Tooltips;
+      Pixmap  : out Cairo_Surface;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+
+   ----------
+   -- Draw --
+   ----------
+
+   overriding procedure Draw
+     (Tooltip : access Buffer_View_Tooltips;
+      Pixmap  : out Cairo_Surface;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   is
+      Model : constant Gtk_Tree_Model :=
+                Get_Model (Tooltip.Buffer_View.Tree);
+      Iter  : Gtk_Tree_Iter;
+      Text  : GNAT.Strings.String_Access;
+
+   begin
+      Pixmap := Null_Surface;
+      Initialize_Tooltips (Tooltip.Buffer_View.Tree, Area, Iter);
+
+      if Iter /= Null_Iter then
+         declare
+            Name : constant String :=
+              Get_String (Model, Iter, Name_Column);
+            Title : constant String :=
+              Get_String (Model, Iter, Data_Column);
+         begin
+            Text := new String'
+              ("Name: " & Name & ASCII.LF & "Title: " & Title);
+         end;
+
+         Create_Pixmap_From_Text
+           (Text.all,
+            Default_Font.Get_Pref_Font,
+            Tooltip_Color.Get_Pref,
+            Tooltip.Buffer_View.Tree,
+            Pixmap);
+         Free (Text);
+      end if;
+   end Draw;
 
    -------------
    -- Execute --
@@ -521,6 +580,7 @@ package body Buffer_Views is
      (View   : access Buffer_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
+      Tooltip   : Buffer_View_Tooltips_Access;
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (View);
@@ -576,6 +636,12 @@ package body Buffer_Views is
                 Wrapper (Preferences_Changed'Access),
                 Name => "windows view.preferences_changed",
                 Watch => GObject (View));
+
+      --  Initialize tooltips
+
+      Tooltip := new Buffer_View_Tooltips;
+      Tooltip.Buffer_View := Buffer_View_Access (View);
+      Set_Tooltip (Tooltip, View.Tree, 250);
 
       Refresh (View);
 
