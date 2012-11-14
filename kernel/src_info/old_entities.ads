@@ -1488,11 +1488,6 @@ private
 
    package Freeze_Stack is new Generic_Stack (Freeze_Type);
 
-   Default_LI_Handler : LI_Handler;
-   --  The default (and only LI handler) we know about. This parses .ali
-   --  files.
-   --  ??? A global variable, but we will shortly remove this old LI database
-
    -----------------------
    -- Entities_Database --
    -----------------------

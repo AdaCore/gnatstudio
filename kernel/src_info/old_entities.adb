@@ -3145,10 +3145,7 @@ package body Old_Entities is
       Handler : LI_Handler)
    is
    begin
-      Default_LI_Handler := Handler;
-      if Self /= null then
-         Self.Handler := Handler;
-      end if;
+      Self.Handler := Handler;
    end Set_LI_Handler;
 
    --------------------
@@ -3157,10 +3154,7 @@ package body Old_Entities is
 
    function Get_LI_Handler (Self : Entities_Database) return LI_Handler is
    begin
-      if Self /= null and then Self.Handler /= null then
-         Default_LI_Handler := Self.Handler;
-      end if;
-      return Default_LI_Handler;
+      return Self.Handler;
    end Get_LI_Handler;
 
    -------------------------

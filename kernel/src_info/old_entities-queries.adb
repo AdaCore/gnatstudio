@@ -1519,6 +1519,7 @@ package body Old_Entities.Queries is
                   File                  => File);
 
          Start (Iter.LI_Iter,
+                Db        => File.Db,
                 Handler   => Language_Handler (File.Db.Lang),
                 Project   => Importing);
       end if;
@@ -3501,6 +3502,7 @@ package body Old_Entities.Queries is
 
    procedure Start
      (Iter      : out Recursive_LI_Information_Iterator;
+      Db        : Entities_Database;
       Handler   : access Language_Handlers.Language_Handler_Record'Class;
       Project   : GNATCOLL.Projects.Project_Iterator;
       Filter    : LI_Filter := null) is
@@ -3514,6 +3516,7 @@ package body Old_Entities.Queries is
       Iter.LI_Count     := 0;
       Iter.LI_Total     := 0;
       Iter.Start        := Ada.Calendar.Clock;
+      Iter.Default_LI_Handler := Get_LI_Handler (Db);
    end Start;
 
    ----------
@@ -3574,7 +3577,7 @@ package body Old_Entities.Queries is
          Trace (Me, "Parse all LI information: project is " & P.Name);
 
          Iter.LI := new LI_Information_Iterator'Class'
-           (Parse_All_LI_Information (Default_LI_Handler, P));
+           (Parse_All_LI_Information (Iter.Default_LI_Handler, P));
          Iter.LI.Filter := Iter.Filter;
 
          if Process then
