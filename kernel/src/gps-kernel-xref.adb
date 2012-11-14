@@ -231,6 +231,11 @@ package body GPS.Kernel.Xref is
       All_Name : constant String := "load xref";
 
    begin
+      if Active (Standard.Xref.SQLITE) then
+         --  Nothing to do
+         return;
+      end if;
+
       if Active (Me) then
          Trace (Me, "Load xref in memory, c only ? " & C_Only'Img);
       end if;
