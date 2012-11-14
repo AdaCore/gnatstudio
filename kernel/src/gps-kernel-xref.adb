@@ -242,6 +242,7 @@ package body GPS.Kernel.Xref is
 
          Old_Entities.Queries.Start
            (All_LI_Information_Command (C.all).Iter,
+            Kernel.Database.Entities,
             Get_Language_Handler (Kernel),
             Get_Project (Kernel).Start (Recursive => True),
             C_Filter'Access);
@@ -251,6 +252,7 @@ package body GPS.Kernel.Xref is
          All_LI_Information_Command (C.all).Lang_Name := All_Name;
          Old_Entities.Queries.Start
            (All_LI_Information_Command (C.all).Iter,
+            Kernel.Database.Entities,
             Get_Language_Handler (Kernel),
             Get_Project (Kernel).Start (Recursive => True));
       end if;
@@ -856,7 +858,9 @@ package body GPS.Kernel.Xref is
             Iter : Recursive_LI_Information_Iterator;
             Count, Total : Natural;
          begin
-            Start (Iter, Get_Language_Handler (Kernel),
+            Start (Iter,
+                   Kernel.Database.Entities,
+                   Get_Language_Handler (Kernel),
                    Project => Project.Start (Recursive => Recursive));
 
             loop

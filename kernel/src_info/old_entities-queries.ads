@@ -34,6 +34,7 @@ package Old_Entities.Queries is
 
    procedure Start
      (Iter      : out Recursive_LI_Information_Iterator;
+      Db        : Entities_Database;
       Handler   : access Language_Handlers.Language_Handler_Record'Class;
       Project   : GNATCOLL.Projects.Project_Iterator;
       Filter    : LI_Filter := null);
@@ -704,6 +705,9 @@ private
    type Recursive_LI_Information_Iterator
      is new Old_Entities.LI_Information_Iterator with
       record
+         Default_LI_Handler : LI_Handler;
+         --  used to parse all LI files
+
          Handler      : Language_Handlers.Language_Handler;
 
          Project      : GNATCOLL.Projects.Project_Iterator; --  Current project
