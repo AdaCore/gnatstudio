@@ -479,7 +479,7 @@ package body Old_Entities.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False)
    is
-      Handler : constant LI_Handler := Default_LI_Handler;
+      Handler : constant LI_Handler := Get_LI_Handler (Db);
       Source  : Source_File;
    begin
       Status := Entity_Not_Found;
@@ -573,7 +573,7 @@ package body Old_Entities.Queries is
       Entity := null;
 
       --  Updates LI information
-      Updated := Get_Source_Info (Default_LI_Handler, Get_Filename (Source));
+      Updated := Get_Source_Info (Get_LI_Handler (Db), Get_Filename (Source));
       if Updated /= null then
          Find (Source, S_Entity_Name, Line, Column, Check_Decl_Only,
                Entity, Closest_Ref, Status);
@@ -1510,7 +1510,7 @@ package body Old_Entities.Queries is
                   Include_Self          => Include_Self,
                   File_Has_No_LI_Report => File_Has_No_LI_Report,
                   Single_Source_File    => False,
-                  Handler               => Default_LI_Handler,
+                  Handler               => Get_LI_Handler (File.Db),
                   Total_Progress        => 1,
                   Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
