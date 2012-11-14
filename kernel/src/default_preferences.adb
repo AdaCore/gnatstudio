@@ -1882,7 +1882,7 @@ package body Default_Preferences is
       Default     : constant String :=
                       Glib.Properties.Get_Property
                         (Gtk.Settings.Get_Default,
-                         Gtk.Settings.Gtk_Theme_Name);
+                         Gtk.Settings.Gtk_Theme_Name_Property);
       Dir         : GNATCOLL.VFS.Virtual_File;
       Gtk_Default : Natural := 0;
       Win_Default : Natural := 0;
