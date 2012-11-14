@@ -1660,12 +1660,18 @@ package body ALI_Parser is
          Info               : File_Info;
          Project            : Project_Type;
          LI_Filename        : out Virtual_File;
-         Predefined         : out Boolean);
+         Predefined         : out Boolean;
+         Might_Be_Separate  : Boolean := True);
       --  Search for the full name of the ALI file. We also search the parent
       --  unit's ALi file, in case the file is a separate. Predefined is set
       --  to True if the project was found in the predefined path (ie does not
       --  belong to any project). Project might be No_Project on input if we
       --  know in advance the file does not belong to a project.
+      --
+      --  Might_Be_Separate should be True if Source_Basename might be the name
+      --  of the source for Info itself, and Info might be a separate. This is
+      --  used to ignore some ALI files when they correspond to an Ada
+      --  separate.
 
       procedure LI_Filename_From_Source
         (Project         : Project_Type;
@@ -1689,7 +1695,8 @@ package body ALI_Parser is
          Info               : File_Info;
          Project            : Project_Type;
          LI_Filename        : out Virtual_File;
-         Predefined         : out Boolean)
+         Predefined         : out Boolean;
+         Might_Be_Separate  : Boolean := True)
       is
          function Get_ALI_Filename
            (Base_Name : GNATCOLL.VFS.Filesystem_String)
@@ -1734,7 +1741,7 @@ package body ALI_Parser is
                end loop;
 
                if Last_Dot < Base_Name'First then
-                  --  No dot found, just append the ALI extension
+                  --  No dots found, just append the ALI extension
                   Last_Dot := Base_Name'Last + 1;
                end if;
 
@@ -1809,6 +1816,7 @@ package body ALI_Parser is
                      --  ignore that specific ALI file anyway.
 
                      if Info.Unit_Part /= Unit_Separate
+                       or else not Might_Be_Separate
                        or else Last /= ALI_Filename_No_Ext'Last
                      then
                         declare
@@ -2161,7 +2169,8 @@ package body ALI_Parser is
                     (Project.File_From_Unit
                        (Unit (Unit'First .. Last - 1), Unit_Body,
                         Language => "ada"),
-                     Info, Project, LI, Predefined);
+                     Info, Project, LI, Predefined,
+                     Might_Be_Separate => False);
 
                else
                   --  We might have a multi-unit source file, in which case we
