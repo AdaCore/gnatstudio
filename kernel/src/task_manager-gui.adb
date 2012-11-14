@@ -499,6 +499,7 @@ package body Task_Manager.GUI is
       Progress_Rend : Gtk_Cell_Renderer_Progress;
       Dummy         : Gint;
       W, H          : Gint;
+      Result        : Boolean;
       pragma Unreferenced (Dummy);
 
    begin
@@ -506,7 +507,7 @@ package body Task_Manager.GUI is
 
       Gtk.Icon_Factory.Icon_Size_Lookup_For_Settings
         (Gtk.Settings.Get_Default, Icon_Size_Menu,
-         W, H);
+         W, H, Result);
 
       Gtk_New (View.Quit_Button_Col);
       Gtk_New (Pixbuf_Rend);

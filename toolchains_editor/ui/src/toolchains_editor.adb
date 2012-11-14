@@ -31,7 +31,6 @@ pragma Warnings (On);
 with GNAT.OS_Lib;
 
 with Glib;                     use Glib;
-with Glib.G_Icon;              use Glib.G_Icon;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Gdk.Event;
@@ -45,6 +44,7 @@ with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
+with Gtk.Icon_Set;             use Gtk.Icon_Set;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;                 use Gtk.Main;
@@ -899,7 +899,7 @@ package body Toolchains_Editor is
          end if;
 
       else
-         Set (Icon, Null_G_Icon, Icon_Size_Button);
+         Set (Icon, Null_Gtk_Icon_Set, Icon_Size_Button);
          Label.Set_Has_Tooltip (False);
          GEntry.Set_Has_Tooltip (False);
          Icon.Set_Has_Tooltip (False);

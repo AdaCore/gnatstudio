@@ -422,7 +422,7 @@ package body GPS.Main_Window is
       Theme : constant String :=
                 Glib.Properties.Get_Property
                   (Gtk.Settings.Get_Default,
-                   Gtk.Settings.Gtk_Theme_Name);
+                   Gtk.Settings.Gtk_Theme_Name_Property);
       Dead   : Boolean;
       pragma Unreferenced (Dead);
 
@@ -430,7 +430,7 @@ package body GPS.Main_Window is
       if Theme /= Get_Pref (Gtk_Theme) then
          Glib.Properties.Set_Property
            (Gtk.Settings.Get_Default,
-            Gtk.Settings.Gtk_Theme_Name,
+            Gtk.Settings.Gtk_Theme_Name_Property,
             Get_Pref (Gtk_Theme));
       end if;
 

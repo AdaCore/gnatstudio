@@ -271,8 +271,7 @@ package body KeyManager_Module.GUI is
    procedure Save_Editor (Editor : access Keys_Editor_Record'Class) is
 
       procedure Process_Menu_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
+        (Accel_Path : String;
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean);
@@ -283,8 +282,7 @@ package body KeyManager_Module.GUI is
       --------------------------
 
       procedure Process_Menu_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
+        (Accel_Path : String;
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean)
@@ -294,7 +292,7 @@ package body KeyManager_Module.GUI is
          Binding : Key_Description_List;
          Found   : Boolean := False;
          Ignore  : Boolean;
-         pragma Unreferenced (Data, Changed, Accel_Key, Accel_Mods, Ignore);
+         pragma Unreferenced (Changed, Accel_Key, Accel_Mods, Ignore);
 
       begin
          while First <= Accel_Path'Last
@@ -362,7 +360,7 @@ package body KeyManager_Module.GUI is
 
       --  Update the gtk+ accelerators for the menus to reflect the keybindings
       Gtk.Accel_Map.Foreach_Unfiltered
-        (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
+        (Process_Menu_Binding'Unrestricted_Access);
 
       Save_Custom_Keys (Editor.Kernel);
    end Save_Editor;

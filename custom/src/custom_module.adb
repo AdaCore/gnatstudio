@@ -31,6 +31,8 @@ with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Icon_Set;              use Gtk.Icon_Set;
+with Gtk.Icon_Source;           use Gtk.Icon_Source;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
@@ -1187,7 +1189,7 @@ package body Custom_Module is
                         end if;
 
                         if Is_Regular_File (Pic_File) then
-                           Source := Gtk_New;
+                           Gtk_New (Source);
                            Set_Filename (Source, +Full_Name (Pic_File, True));
 
                            declare
@@ -1267,9 +1269,9 @@ package body Custom_Module is
                      end if;
 
                      if Is_Regular_File (Pic_File) then
-                        Set    := Gtk_New;
+                        Gtk_New (Set);
 
-                        Source := Gtk_New;
+                        Gtk_New (Source);
                         Set_Filename (Source, +Full_Name (Pic_File, True));
                         Add_Source (Set, Source);
                         Free (Source);

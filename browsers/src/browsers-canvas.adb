@@ -1318,9 +1318,9 @@ package body Browsers.Canvas is
    is
       Style_Context : constant Gtk_Style_Context :=
         Get_Style_Context (Get_Browser (Item));
-      Border        : Gtk.Style.Gtk_Border_Record;
+      Border        : Gtk.Style.Gtk_Border;
       The_Border    : Gtk.Style.Gtk_Border;
-      Thick         : Gint;
+      Thick         : Gint16;
       Button_Width  : Gint;
       Button_Height : Gint;
       X, Y, W, H    : Gint;
@@ -1330,15 +1330,14 @@ package body Browsers.Canvas is
 
    begin
       Style_Context.Get_Border (Gtk_State_Flag_Normal, The_Border);
-      if The_Border /= null then
-         Border := The_Border.all;
-      end if;
+      Border := The_Border;
 
       Thick         := Border.Bottom;
       Button_Width  := Get_Width  (Item.Browser.Close_Pixmap);
       Button_Height := Get_Height (Item.Browser.Close_Pixmap);
-      X             := Item.Title_Coord.X + Item.Title_Coord.Width + Thick -
-                         (Num + 1) * (Margin + Button_Width);
+      X             := Item.Title_Coord.X +
+        Item.Title_Coord.Width + Gint (Thick) -
+        (Num + 1) * (Margin + Button_Width);
 
       --  No title ? Don't draw any button
       if Item.Title_Layout = null
@@ -1386,10 +1385,10 @@ package body Browsers.Canvas is
         (Cr            => Cr,
          Widget        => Get_Browser (Item),
          Shadow_Type   => Shadow_Out,
-         X             => X - Border.Left,
-         Y             => Y - Border.Top,
-         Width         => Button_Width + Border.Left + Border.Right,
-         Height        => Button_Height + Border.Top + Border.Bottom,
+         X             => X - Gint (Border.Left),
+         Y             => Y - Gint (Border.Top),
+         Width         => Button_Width + Gint (Border.Left + Border.Right),
+         Height        => Button_Height + Gint (Border.Top + Border.Bottom),
          Corner_Radius => 2.0);
 
       --  The icon
@@ -1425,7 +1424,7 @@ package body Browsers.Canvas is
 --        Style    : constant Gtk_Style := Get_Item_Style (Item);
       Style_Context : constant Gtk_Style_Context :=
         Get_Style_Context (Get_Browser (Item));
-      Border        : Gtk.Style.Gtk_Border_Record;
+      Border        : Gtk.Style.Gtk_Border;
       The_Border    : Gtk.Style.Gtk_Border;
       W_L, H_L : Gint;
       Ptrn     : Cairo_Pattern;
@@ -1470,14 +1469,12 @@ package body Browsers.Canvas is
       --  The title string
       Get_Pixel_Size (Item.Title_Layout, W_L, H_L);
       Style_Context.Get_Border (Gtk_State_Flag_Normal, The_Border);
-      if The_Border /= null then
-         Border := The_Border.all;
-      end if;
+      Border := The_Border;
 
       Draw_Layout
         (Cr     => Cr,
          Color  => To_Cairo (Black_RGBA),
-         X      => Margin + Item.Title_Coord.X - Border.Left,
+         X      => Margin + Item.Title_Coord.X - Gint (Border.Left),
          Y      => Item.Title_Coord.Y + (Item.Title_Coord.Height - H_L) / 2,
          Layout => Item.Title_Layout);
 --        Draw_Layout
@@ -1586,7 +1583,7 @@ package body Browsers.Canvas is
 
       Style_Context : constant Gtk_Style_Context :=
         Get_Style_Context (Get_Browser (Item));
-      Border        : Gtk.Style.Gtk_Border_Record;
+      Border        : Gtk.Style.Gtk_Border;
       The_Border    : Gtk.Style.Gtk_Border;
 
       use Gdk;
@@ -1594,9 +1591,7 @@ package body Browsers.Canvas is
    begin
       Reset_Active_Areas (Item.all, Title_Bar_Areas => False);
       Style_Context.Get_Border (Gtk_State_Flag_Normal, The_Border);
-      if The_Border /= null then
-         Border := The_Border.all;
-      end if;
+      Border := The_Border;
 
       if Item.Title_Layout /= null then
          Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
@@ -1605,16 +1600,16 @@ package body Browsers.Canvas is
               Num_Buttons * (Margin + Button_Width),
             Width);
          Item.Title_Coord :=
-           (X      => Xoffset + Border.Right,
-            Y      => Yoffset + Border.Bottom,
-            Width  => W - (Border.Left + Border.Right),
+           (X      => Xoffset + Gint (Border.Right),
+            Y      => Yoffset + Gint (Border.Bottom),
+            Width  => W - Gint (Border.Left + Border.Right),
             Height =>
               Gint'Max
                 (Layout_H,
-                 Button_Height + Border.Top + Border.Bottom));
+                 Button_Height + Gint (Border.Top + Border.Bottom)));
 
          H := Item.Title_Coord.Height + 1 + Height +
-           Border.Top + Border.Bottom;
+           Gint (Border.Top + Border.Bottom);
 --           Item.Title_Coord :=
 --             (X      => Xoffset + X_Thickness (Style),
 --              Y      => Yoffset + Y_Thickness (Style),

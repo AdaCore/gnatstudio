@@ -54,6 +54,7 @@ with Gtkada.Style;               use Gtkada.Style;
 with Gtkada.Text_Buffer;         use Gtkada.Text_Buffer;
 
 with Pango.Layout;               use Pango.Layout;
+with Pango.Attributes;           use Pango.Attributes;
 
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;   use Src_Editor_Buffer.Blocks;
@@ -1533,7 +1534,7 @@ package body Src_Editor_View is
       --  Recompute the width of one character
 
       Layout := Create_Pango_Layout (Source);
-      Set_Attributes (Layout, null);
+      Set_Attributes (Layout, Null_Pango_Attr_List);
       Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
       Set_Text (Layout, (1 .. 256 => '0'));
       Get_Pixel_Extents (Layout, Ink_Rect, Logical_Rect);

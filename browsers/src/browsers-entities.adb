@@ -1584,9 +1584,9 @@ package body Browsers.Entities is
          Draw_Line
            (Cr,
             Color    => To_Cairo (Color),
-            X1       => Border.Bottom,
+            X1       => Gint (Border.Bottom),
             Y1       => Y,
-            X2       => Get_Coord (Item).Width - Border.Bottom - 1,
+            X2       => Get_Coord (Item).Width - Gint (Border.Bottom) - 1,
             Y2       => Y);
          Y := Y + 1;
       end if;

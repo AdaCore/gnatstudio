@@ -1279,8 +1279,7 @@ package body GUI_Utils is
       File : File_Type;
 
       procedure Save_Dynamic_Key
-        (Data       : System.Address;
-         Accel_Path : String;
+        (Accel_Path : String;
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean);
@@ -1291,13 +1290,11 @@ package body GUI_Utils is
       ----------------------
 
       procedure Save_Dynamic_Key
-        (Data       : System.Address;
-         Accel_Path : String;
+        (Accel_Path : String;
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean)
       is
-         pragma Unreferenced (Data);
       begin
          if Changed and then Accel_Key /= GDK_VoidSymbol then
             Put_Line (File, "(gtk_accel_path """
@@ -1311,7 +1308,7 @@ package body GUI_Utils is
    begin
       Create (File, Out_File, Filename);
       Gtk.Accel_Map.Foreach
-        (System.Null_Address, Save_Dynamic_Key'Unrestricted_Access);
+        (Save_Dynamic_Key'Unrestricted_Access);
       Close (File);
    end Save_Accel_Map;
 
