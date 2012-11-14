@@ -1009,7 +1009,7 @@ package body Old_Entities is
               Entities_Search_Tries.Null_Vector_Trie_Index
             then
                Entities_Search_Tries.Delete
-                 (Default_LI_Handler.Name_Index,
+                 (Get_LI_Handler (Entity.LI_Declaration.File.Db).Name_Index,
                   Entity.Trie_Tree_Index);
             end if;
 
@@ -2093,7 +2093,7 @@ package body Old_Entities is
         (File.Name).Entities_Indexed
       then
          Entities_Search_Tries.Insert
-           (Default_LI_Handler.Name_Index'Access,
+           (Get_LI_Handler (File.Db).Name_Index'Access,
             File.Db.Symbols,
             E,
             Get (Name).all,
@@ -2181,7 +2181,7 @@ package body Old_Entities is
            (File.Name).Entities_Indexed
          then
             Entities_Search_Tries.Insert
-              (Default_LI_Handler.Name_Index'Access,
+              (Get_LI_Handler (File.Db).Name_Index'Access,
                File.Db.Symbols,
                E,
                Get (Name).all,
@@ -2340,7 +2340,7 @@ package body Old_Entities is
    begin
       if File /= null then
          F := Get_Source_Info
-           (Default_LI_Handler, File.Name, File_Has_No_LI_Report);
+           (Get_LI_Handler (File.Db), File.Name, File_Has_No_LI_Report);
       end if;
    end Update_Xref;
 
@@ -3144,9 +3144,11 @@ package body Old_Entities is
      (Self    : Entities_Database;
       Handler : LI_Handler)
    is
-      pragma Unreferenced (Self);
    begin
       Default_LI_Handler := Handler;
+      if Self /= null then
+         Self.Handler := Handler;
+      end if;
    end Set_LI_Handler;
 
    --------------------
@@ -3154,8 +3156,10 @@ package body Old_Entities is
    --------------------
 
    function Get_LI_Handler (Self : Entities_Database) return LI_Handler is
-      pragma Unreferenced (Self);
    begin
+      if Self /= null and then Self.Handler /= null then
+         Default_LI_Handler := Self.Handler;
+      end if;
       return Default_LI_Handler;
    end Get_LI_Handler;
 

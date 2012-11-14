@@ -1501,6 +1501,7 @@ private
       Files           : Files_HTable.Instance;
       LIs             : LI_HTable.Instance;
 
+      Handler         : LI_Handler;
       Lang            : Language.Tree.Database.Abstract_Language_Handler;
       Registry        : Projects.Project_Registry_Access;
       Frozen          : Freeze_Type := Create_And_Update;
