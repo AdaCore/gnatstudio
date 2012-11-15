@@ -1072,11 +1072,6 @@ package body Xref is
                      Location         => Loc);
                end if;
 
-               if Loc = Old_Entities.No_File_Location then
-                  Trace (Me, "No body found, fallback to the declaration");
-                  Loc := Old_Entities.Get_Declaration_Of (Entity.Old_Entity);
-               end if;
-
                if Loc /= Old_Entities.No_File_Location then
                   if Active (Me) then
                      Trace (Me, "Found " & Old_Entities.To_String (Loc));
@@ -1086,6 +1081,8 @@ package body Xref is
                     (File => Old_Entities.Get_Filename (Loc.File),
                      Line => Loc.Line,
                      Column => Loc.Column);
+               else
+                  Trace (Me, "No body found");
                end if;
             end;
          end if;
@@ -1099,11 +1096,15 @@ package body Xref is
          declare
             H_Loc : constant General_Location := Extract_Next_By_Heuristics;
          begin
+            if Active (Me) then
+               Trace (Me, "Body computed from constructs at "
+                      & To_String (H_Loc));
+            end if;
+
             if H_Loc /= No_Location and then
             --  If we found nothing, use the information from the constructs.
               (Candidate = No_Location
 
-               --  else if the candidate is at the expected location and if
                --  it's OK to return the first entity.
                or else (not No_Location_If_First
                         and then not Is_Location_For_Entity (Candidate)))
@@ -1111,9 +1112,9 @@ package body Xref is
             then
                Candidate := H_Loc;
 
+               --  else if the candidate is at the expected location and if
                if Active (Me) then
-                  Trace (Me, "Body computed from constructs at "
-                         & To_String (Candidate));
+                  Trace (Me, "Use body from constructs");
                end if;
 
                --  If we don't have any more information to extract from the
