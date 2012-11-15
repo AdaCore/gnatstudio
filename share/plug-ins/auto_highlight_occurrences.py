@@ -74,67 +74,59 @@ for k in default_colors:
           default_colors[k])
 
 # The main class
-class LocationHighlighter:
+class LocationHighlighter(object):
     """ Class to handle the highlighting of local occurrences. """
 
-    def process_one_line (self, line):
+    def process_one_line(self, line):
         """ Look at one line, and highlight results if necessary
         """
 
         # Get the string on the line
-        beg_loc = GPS.EditorLocation (self.buffer, line, 1)
+        beg_loc = GPS.EditorLocation(self.buffer, line, 1)
         end_loc = beg_loc.end_of_line()
 
-        s = self.buffer.get_chars (beg_loc, end_loc).decode("utf8")
+        s = self.buffer.get_chars(beg_loc, end_loc).decode("utf8")
         s_len = len(s)
 
-        if self.word:
-            the_word = self.word
-        else:
-            the_word = self.entity_name
-
-        l = len(the_word)
-
+        l = len(self.pattern)
         # Find name and expand tabs at the same time
 
         index = 0
         tab_expanded_index = 0
 
         while index + l < s_len:
-            if s[index:index+l] == the_word:
+            # ??? This is a naive search (character-by-character)
+            if s[index:index + l] == self.pattern:
                 # Cet the entity at this match if we are trying to highlight
                 # entities
 
                 if self.entity:
                     # GPS.Entity might raise an exception: catch it
                     try:
-                        e=GPS.Entity("", self.file, line, tab_expanded_index+1)
+                        e = GPS.Entity(
+                            self.pattern, self.file, line, tab_expanded_index + 1)
                     except:
-                        e=None
+                        e = None
 
-                    if e:
-                        # We have found an entity: verify whether it is the
-                        # same as the one we are interested in.
-
-                        if e.declaration()==self.declaration:
-                            # It is the same entity: create a message
-                            msg = GPS.Message (
-                                "dynamic occurrences",
-                                self.file,
-                                line,
-                                tab_expanded_index+1,
-                                "",
-                                2)
-                            msg.set_style(self.style, l)
-
-                            self.messages += [msg]
+                    # Verify whether the entity is the
+                    # same as the one we are interested in.
+                    if (e is not None and e.declaration() == self.declaration):
+                        msg = GPS.Message(
+                            "dynamic occurrences",
+                            self.file,
+                            line,
+                            tab_expanded_index + 1,
+                            "",
+                            2)
+                        msg.set_style(self.style, l)
+                        self.messages.append(msg)
                 else:
                     # we are highlighting a word
-                    msg = GPS.Message (
+                    msg = GPS.Message(
                         "dynamic occurrences",
                         self.file,
                         line,
-                        tab_expanded_index+1,
+                        tab_expanded_index + 1,
                         "",
                         2)
                     msg.set_style(self.style, l)
@@ -147,11 +139,9 @@ class LocationHighlighter:
             else:
                 index += 1
 
-            if s[index-1]=='\t':
+            if s[index - 1] == '\t':
                 # snap to the next multiple of 8
-                prev=tab_expanded_index
                 tab_expanded_index += 8 - (tab_expanded_index) % 8
-
             else:
                 tab_expanded_index += 1
 
@@ -185,16 +175,16 @@ class LocationHighlighter:
         # If we have found something during the last pass, return True
         return counter == 0 and found
 
-    def on_timeout (self, timeout):
+    def on_timeout(self, timeout):
         try:
             if not self.process_one_batch():
                 self.timeout.remove()
-                self.timeout=None
+                self.timeout = None
         except:
             timeout.remove()
-            self.timeout=None
+            self.timeout = None
 
-    def __init__ (self, context, buffer, entity=None, word=None):
+    def __init__(self, context, buffer, entity=None, word=None):
         # Get the current buffer
 
         self.buffer = buffer
@@ -203,12 +193,14 @@ class LocationHighlighter:
         self.declaration = None
         self.entity_name = None
         self.timeout = None
-        self.file=self.buffer.file()
+        self.file = self.buffer.file()
         self.word = word  # The original word
+
+        self.entity_name = ""
 
         if self.entity:
             self.entity_name = entity.name().decode("utf8")
-            self.declaration=self.entity.declaration()
+            self.declaration = self.entity.declaration()
 
             if self.entity.is_subprogram():
                 self.style = editor_location_styles["subprogram"]
@@ -222,7 +214,16 @@ class LocationHighlighter:
         else:
             self.style = editor_location_styles["unknown"]
 
-        line=context.location().line()
+        if self.word:
+            self.pattern = self.word
+        else:
+            self.pattern = self.entity_name
+
+        if len(self.pattern) == 0:
+            # Nothing to do
+            return
+
+        line = context.location().line()
 
         self.current_line_going_up = line - 1
         self.current_line_going_down = line
