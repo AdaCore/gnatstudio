@@ -9,6 +9,7 @@
 ############################################################################
 
 import GPS
+import gtk, pygtk
 from gps_utils import *
 
 # Constants
@@ -200,6 +201,11 @@ class LocationHighlighter(object):
 
         if self.entity:
             self.entity_name = entity.name().decode("utf8")
+
+            # Safeguard against looking for an empty entity
+            if self.entity_name.strip() == "":
+                return
+
             self.declaration = self.entity.declaration()
 
             if self.entity.is_subprogram():
@@ -240,8 +246,13 @@ class LocationHighlighter(object):
         # We have registered a timeout which depends on the buffer: kill this
         # when the buffer is destroyed
 
-        self.buffer.current_view().pywidget().connect (
-            "destroy", self.cb_destroy)
+        try:
+            self.buffer.current_view().pywidget().connect (
+                "destroy", self.cb_destroy)
+        except:
+            # This can happen if pywidget() is not found: rather than leave
+            # GPS open to crashing, deactivate highlighting
+            self.destroy()
 
     def cb_destroy(self, event):
         """ Callback on the destroy event on the view. """
@@ -375,8 +386,7 @@ def re_highlight():
 
         # Highlight the current entity
         if not current_highlighter:
-            current_highlighter=LocationHighlighter(
-                context, buffer, entity)
+            current_highlighter = LocationHighlighter(context, buffer, entity)
 
         return
 
@@ -391,7 +401,7 @@ def re_highlight():
 
         # Highlight the current word
         if not current_highlighter:
-            current_highlighter=LocationHighlighter(
+            current_highlighter = LocationHighlighter(
                 context, buffer, word=word)
 
         return
