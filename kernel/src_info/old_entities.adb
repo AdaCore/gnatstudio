@@ -31,6 +31,8 @@ with GNATCOLL.Xref;
 with Basic_Types;                use Basic_Types;
 with GPS.Intl;                   use GPS.Intl;
 with Language;                   use Language;
+with Language.C;
+with Language.Cpp;
 with Language.Tree.Database;     use Language.Tree.Database;
 with Projects;                   use Projects;
 with String_Utils;
@@ -2344,6 +2346,19 @@ package body Old_Entities is
       end if;
    end Update_Xref;
 
+   -----------------------------
+   -- Is_C_Or_CPP_Source_File --
+   -----------------------------
+
+   function Is_C_Or_CPP_Source_File (File : Source_File) return Boolean is
+      Db   : constant Entities_Database := Get_Database (File);
+      Lang : constant Language.Language_Access :=
+               Get_Language_From_File (Db.Lang, Get_Filename (File));
+   begin
+      return Lang = Language.C.C_Lang
+        or Lang = Language.Cpp.Cpp_Lang;
+   end Is_C_Or_CPP_Source_File;
+
    -------------------
    -- Is_Up_To_Date --
    -------------------
@@ -2533,6 +2548,16 @@ package body Old_Entities is
          return No_File_Location;
       end if;
    end Get_Location;
+
+   ------------------------
+   -- Is_C_Or_CPP_Entity --
+   ------------------------
+
+   function Is_C_Or_CPP_Entity (Entity : Entity_Information) return Boolean is
+      Loc  : constant File_Location := Get_Declaration_Of (Entity);
+   begin
+      return Is_C_Or_CPP_Source_File (Loc.File);
+   end Is_C_Or_CPP_Entity;
 
    --------------------------
    -- Is_Predefined_Entity --

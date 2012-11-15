@@ -487,6 +487,9 @@ package Old_Entities is
       Allow_Create : Boolean := True) return Source_File;
    --  Same as above, but the file name is specified through a string
 
+   function Is_C_Or_CPP_Source_File (File : Source_File) return Boolean;
+   --  Whether File is a C/C++ file
+
    function Is_Up_To_Date (File : Source_File) return Boolean;
    --  Whether the cross-reference information is up-to-date for File.
    --  In the case of C/C++, this might return True although not all the
@@ -682,6 +685,9 @@ package Old_Entities is
    function Get_Type_Of
      (Entity : Entity_Information) return Entity_Information;
    --  Return the type of the entity
+
+   function Is_C_Or_CPP_Entity (Entity : Entity_Information) return Boolean;
+   --  Whether the Entity is defined in a C/C++ file
 
    function Is_Predefined_Entity (Entity : Entity_Information) return Boolean;
    --  Whether the Entity is a predefined entity

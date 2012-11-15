@@ -756,12 +756,10 @@ package body ALI_Parser is
             --  Process the renaming information in the file
 
             procedure Process_Type_Ref
-              (Handler               : access ALI_Handler_Record'Class;
-               LI                    : LI_File;
-               Entity                : Entity_Information;
-               Xref_Ent              : Nat;
-               Sfiles                : Sdep_To_Sfile_Table;
-               First_Sect, Last_Sect : Nat);
+              (Xref_Ent   : Nat;
+               Entity     : Entity_Information;
+               Parent     : Entity_Information;
+               Is_Subtype : Boolean);
             --  Process the parent type of an entity declared in Xref_Ent
 
             procedure Process_Xref_Entity
@@ -980,27 +978,41 @@ package body ALI_Parser is
 
                   if Is_End_Reference (Kind) then
 
-                     --  Only insert the end-of-scope is we are parsing the
-                     --  ALI file for the file that contains this end-of-scope.
-                     --  Otherwise, we get duplicate references.
+                     if not Is_C_Or_CPP_Entity (Entity) then
 
-                     if Get_LI (Location.File) = LI then
-                        Set_End_Of_Scope (Entity, Location, Kind);
+                        --  Only insert the end-of-scope is we are parsing
+                        --  the ALI file for the file that contains this
+                        --  end-of-scope. Otherwise, we get duplicate
+                        --  references.
 
-                     --  Handle end of scope of C++ classes
+                        if Get_LI (Location.File) = LI then
+                           Set_End_Of_Scope (Entity, Location, Kind);
+                        end if;
 
-                     elsif Get_Kind (Entity).Kind = Class then
-                        declare
-                           Loc : File_Location;
-                           K   : Reference_Kind;
+                     else
+                        --  End of scope of entities defined in this ALI file
 
-                        begin
-                           Get_End_Of_Scope (Entity, Loc, K);
+                        if Get_LI (Location.File) = LI then
+                           Set_End_Of_Scope (Entity, Location, Kind);
 
-                           if Loc = No_File_Location then
-                              Set_End_Of_Scope (Entity, Location, Kind);
-                           end if;
-                        end;
+                        --  End of scope of C structs and C++ classes defined
+                        --  in header files
+
+                        elsif Get_Kind (Entity).Kind = Class
+                          or else Get_Kind (Entity).Kind = Record_Kind
+                        then
+                           declare
+                              Loc : File_Location;
+                              K   : Reference_Kind;
+
+                           begin
+                              Get_End_Of_Scope (Entity, Loc, K);
+
+                              if Loc = No_File_Location then
+                                 Set_End_Of_Scope (Entity, Location, Kind);
+                              end if;
+                           end;
+                        end if;
                      end if;
 
                   elsif Kind = Primitive_Operation
@@ -1153,19 +1165,26 @@ package body ALI_Parser is
                end if;
             end Process_Renaming_Ref;
 
-            ----------------------
-            -- Process_Type_Ref --
-            ----------------------
+            ----------------
+            -- Get_Parent --
+            ----------------
 
-            procedure Process_Type_Ref
+            function Get_Parent
               (Handler               : access ALI_Handler_Record'Class;
                LI                    : LI_File;
-               Entity                : Entity_Information;
                Xref_Ent              : Nat;
                Sfiles                : Sdep_To_Sfile_Table;
-               First_Sect, Last_Sect : Nat)
+               First_Sect, Last_Sect : Nat) return Entity_Information;
+
+            function Get_Parent
+              (Handler               : access ALI_Handler_Record'Class;
+               LI                    : LI_File;
+               Xref_Ent              : Nat;
+               Sfiles                : Sdep_To_Sfile_Table;
+               First_Sect, Last_Sect : Nat) return Entity_Information
             is
                Parent : Entity_Information;
+
             begin
                if Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity
                  /= No_Name
@@ -1215,36 +1234,51 @@ package body ALI_Parser is
                       Last_Sect  => Last_Sect);
                end if;
 
-               if Parent = null then
-                  if Active (Assert_Me) then
-                     Trace (Assert_Me,
-                            "Parent type not found in ALI file: "
-                            & Display_Full_Name (Get_LI_Filename (LI))
-                            & Xref_Entity.Table (Xref_Ent).Tref_File_Num'Img
-                            & Xref_Entity.Table (Xref_Ent).Tref_Line'Img
-                            & Xref_Entity.Table (Xref_Ent).Tref_Col'Img);
-                  end if;
-
-                  return;
-               else
-                  case Xref_Entity.Table (Xref_Ent).Tref is
-                     when Tref_None =>
-                        null;
-
-                     when Tref_Access =>
-                        Set_Pointed_Type (Entity, Parent);
-
-                     when Tref_Derived =>
-                        Set_Type_Of (Entity, Parent, Is_Subtype => True);
-
-                     when Tref_Type =>
-                        if Is_Subprogram (Entity) then
-                           Set_Returned_Type (Entity, Parent);
-                        else
-                           Set_Type_Of (Entity, Parent);
-                        end if;
-                  end case;
+               if Parent = null
+                 and then Active (Assert_Me)
+               then
+                  Trace (Assert_Me,
+                         "Parent type not found in ALI file: "
+                         & Display_Full_Name (Get_LI_Filename (LI))
+                         & Xref_Entity.Table (Xref_Ent).Tref_File_Num'Img
+                         & Xref_Entity.Table (Xref_Ent).Tref_Line'Img
+                         & Xref_Entity.Table (Xref_Ent).Tref_Col'Img);
                end if;
+
+               return Parent;
+            end Get_Parent;
+
+            ----------------------
+            -- Process_Type_Ref --
+            ----------------------
+
+            procedure Process_Type_Ref
+              (Xref_Ent   : Nat;
+               Entity     : Entity_Information;
+               Parent     : Entity_Information;
+               Is_Subtype : Boolean) is
+            begin
+               if Parent = null then
+                  return;
+               end if;
+
+               case Xref_Entity.Table (Xref_Ent).Tref is
+                  when Tref_None =>
+                     null;
+
+                  when Tref_Access =>
+                     Set_Pointed_Type (Entity, Parent);
+
+                  when Tref_Derived =>
+                     Set_Type_Of (Entity, Parent, Is_Subtype => True);
+
+                  when Tref_Type =>
+                     if Is_Subprogram (Entity) then
+                        Set_Returned_Type (Entity, Parent);
+                     else
+                        Set_Type_Of (Entity, Parent, Is_Subtype);
+                     end if;
+               end case;
             end Process_Type_Ref;
 
             -------------------------
@@ -1263,12 +1297,19 @@ package body ALI_Parser is
                             Xref_Section.Table (Xref_Sect).File_Num;
                Kind     : constant E_Kind :=
                            Char_To_E_Kind (Xref_Entity.Table (Xref_Ent).Etype);
+               Line     : constant Integer :=
+                           Integer (Xref_Entity.Table (Xref_Ent).Line);
+               Column   : constant Visible_Column_Type :=
+                           Visible_Column_Type
+                             (Xref_Entity.Table (Xref_Ent).Col);
 
                Entity           : Entity_Information;
                Instantiation_Of : Entity_Information;
                Current_Sfile    : Sdep_Id;
                Has_Completion   : Boolean := False;
                Attributes       : Entity_Attributes := (others => False);
+               Parent           : Entity_Information;
+               Is_Duplicate     : Boolean := False;
 
             begin
                Get_Name_String (Xref_Entity.Table (Xref_Ent).Entity);
@@ -1288,9 +1329,8 @@ package body ALI_Parser is
                       (Name   => Get_Symbols (Handler.Db).Find
                                    (Name_Buffer (First .. Last)),
                        File   => Sfiles (File_Num).File,
-                       Line   => Integer (Xref_Entity.Table (Xref_Ent).Line),
-                       Column => Visible_Column_Type
-                                   (Xref_Entity.Table (Xref_Ent).Col));
+                       Line   => Line,
+                       Column => Column);
                end;
 
                Set_Kind (Entity, Kind);
@@ -1311,11 +1351,45 @@ package body ALI_Parser is
                --  ALI file, and this will require us to parse too many files
                --  immediately
 
-               if Get_LI (Sfiles (File_Num).File) = LI then
+               if not Is_C_Or_CPP_Entity (Entity)
+                 and then Get_LI (Sfiles (File_Num).File) /= LI
+               then
+                  null;
+
+               else
                   if Xref_Entity.Table (Xref_Ent).Tref /= Tref_None then
-                     Process_Type_Ref
-                       (Handler, LI, Entity, Xref_Ent, Sfiles,
-                        First_Sect, Last_Sect);
+                     Parent :=
+                       Get_Parent
+                         (Handler, LI, Xref_Ent, Sfiles,
+                          First_Sect, Last_Sect);
+
+                     --  Handle named typedef structs since the
+                     --  compiler generates two entites in the LI
+                     --  file with the same name. For example:
+                     --
+                     --     typedef struct {    // First_Entity
+                     --       ...
+                     --     } my_type;          // Second_Entity
+                     --
+                     --  When we declare an object of this type:
+                     --
+                     --     my_type obj;
+                     --
+                     --  The type of obj references Second_Entity,
+                     --  whose (parent) type is First_Entity (which
+                     --  is the entity needed for completion purposes)
+
+                     Is_Duplicate :=
+                       Is_C_Or_CPP_Entity (Entity)
+                         and then Parent /= null
+                         and then
+                           Xref_Entity.Table (Xref_Ent).Tref = Tref_Type
+                         and then
+                           Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity
+                             = No_Name
+                         and then Get_Name (Parent) = Get_Name (Entity);
+
+                     Process_Type_Ref (Xref_Ent, Entity, Parent, Is_Duplicate);
                   end if;
 
                   if Xref_Entity.Table (Xref_Ent).Rref_Line /= 0 then
@@ -1365,9 +1439,19 @@ package body ALI_Parser is
                      Has_Completion := True;
                   end if;
 
-                  Process_Entity_Ref
-                    (Handler, LI, Entity, Sfiles, Xref_Ent, Xref_Id,
-                     Current_Sfile, First_Sect, Last_Sect);
+                  --  If this is a duplicate entity then we complete the
+                  --  decoration of the first one
+
+                  if Is_Duplicate then
+                     Process_Entity_Ref
+                       (Handler, LI, Parent, Sfiles, Xref_Ent, Xref_Id,
+                        Current_Sfile, First_Sect, Last_Sect);
+
+                  else
+                     Process_Entity_Ref
+                       (Handler, LI, Entity, Sfiles, Xref_Ent, Xref_Id,
+                        Current_Sfile, First_Sect, Last_Sect);
+                  end if;
                end loop;
 
                --  Work around a bug (?) in GNAT, where an incomplete entity
@@ -1388,7 +1472,7 @@ package body ALI_Parser is
                end if;
             end Process_Xref_Entity;
 
-            --  Start of processing for Process_Xref_Section
+         --  Start of processing for Process_Xref_Section
 
          begin
             for E in Xref_Section.Table (Xref_Sect).First_Entity

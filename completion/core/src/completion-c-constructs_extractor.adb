@@ -106,6 +106,10 @@ package body Completion.C.Constructs_Extractor is
       --  same behavior of Ada completions, one proposal per parameter is
       --  added to To_List.
 
+      function Is_Self_Referenced_Type
+        (E : General_Entity) return Boolean;
+      --  Return true if the type of E is itself
+
       ------------------------------
       -- Add_Proposal_With_Params --
       ------------------------------
@@ -187,9 +191,25 @@ package body Completion.C.Constructs_Extractor is
 --              then
 --                 null;
 
+            --  Do not suggest types found in the scope of other types. Done to
+            --  avoid suggesting in C/C++ types used in declaration of struct
+            --  components. For example:
+            --
+            --        typedef struct {
+            --           my_type_1 c1;
+            --           my_type_2 c2;
+            --        } my_type_3;
+            --
+            --  This ensures that we only suggest c1 and c2 for completion.
+
+            if Db.Is_Type (Scope)
+              and then Db.Is_Type (E)
+            then
+               null;
+
             --  Do not suggest subprogram parameters
 
-            if Db.Is_Parameter_Of (E) /= No_General_Entity then
+            elsif Db.Is_Parameter_Of (E) /= No_General_Entity then
                null;
 
             --  The last token is a delimiter (dot, scope or dereference)
@@ -220,6 +240,20 @@ package body Completion.C.Constructs_Extractor is
 
          Destroy (It);
       end Add_Scope_Proposals;
+
+      ------------------------
+      -- Is_Self_Referenced --
+      ------------------------
+
+      function Is_Self_Referenced_Type
+        (E : General_Entity) return Boolean is
+      begin
+         return
+           E /= No_General_Entity
+             and then Db.Is_Type (E)
+             and then Db.Get_Type_Of (E) /= No_General_Entity
+             and then Db.Get_Type_Of (E) = Db.Caller_At_Declaration (E);
+      end Is_Self_Referenced_Type;
 
       --  Local variables
 
@@ -468,18 +502,8 @@ package body Completion.C.Constructs_Extractor is
                               --  ??? Should this be handled by the LI parser
                               --  instead.
 
-                              if Db.Get_Type_Of (E) /= No_General_Entity then
-                                 declare
-                                    Parent : General_Entity;
-                                 begin
-                                    Parent := Db.Get_Type_Of (E);
-
-                                    if Db.Get_Name (E) =
-                                      Db.Get_Name (Parent)
-                                    then
-                                       E := Parent;
-                                    end if;
-                                 end;
+                              if Is_Self_Referenced_Type (E) then
+                                 E := Db.Get_Type_Of (E);
                               end if;
 
                            else

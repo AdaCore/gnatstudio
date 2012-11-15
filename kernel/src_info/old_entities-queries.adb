@@ -2570,14 +2570,20 @@ package body Old_Entities.Queries is
          return;
       end if;
 
-      if File.LI_Files = Null_LI_File_List then
-         --  If there is no LI known, we should not compute the call tree:
-         --  otherwise, Scope_Tree_Computed is set to True. When the ALI file
-         --  is finally parsed later on (perhaps it now exists on the disk)
-         --  it will not reset the source file (not associated with it yet)
-         --  and as a result it will not reset Scope_Tree_Computed. Thus it
-         --  will not compute the actual call tree.
+      --  In general, if there is no LI known, we should not compute the call
+      --  tree: otherwise, Scope_Tree_Computed is set to True. When the ALI
+      --  file is finally parsed later on (perhaps it now exists on the disk)
+      --  it will not reset the source file (not associated with it yet) and
+      --  as a result it will not reset Scope_Tree_Computed. Thus it will not
+      --  compute the actual call tree.
 
+      --  An exception to this general rule are C/C++ sources because included
+      --  files have no associated LI file (and hence following the above rule
+      --  they are never processed).
+
+      if File.LI_Files = Null_LI_File_List
+        and then not Is_C_Or_CPP_Source_File (File)
+      then
          Trace (Me, "Compute_Callers_And_Called: nothing to do, no LI for "
                 & File.Name.Display_Full_Name);
          return;
