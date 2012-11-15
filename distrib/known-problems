@@ -23,6 +23,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               target cannot be launched through the menu or the toolbar button.
   Workaround: Use the Build->Run->Custom... menu
 
+- LA11-026: GPS: C/C++ completion of entities defined in header files
+  Problem:    GPS does not propose a list of entities for completion when the
+              type of the prefix is defined in a header file.
+  Workaround: Include manually the file in your C/C++ file.
+
 - LA11-003: No xref from separate units compiled explicitly
   Problem:    If you use separate Ada units, and compile them explicitly from
               the editor (for instance /Build/Compile File), then no
