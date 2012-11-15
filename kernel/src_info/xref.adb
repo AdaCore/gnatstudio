@@ -555,7 +555,6 @@ package body Xref is
 
                Fuzzy := Status = Overloaded_Entity_Found
                  or else Status = Fuzzy_Match;
-               --  or else not Old_Entities.Is_Up_To_Date (Source);
 
                if Status = Entity_Not_Found
                  and then Name /= ""
@@ -659,11 +658,15 @@ package body Xref is
                                Line   => New_Location.Line,
                                Column => New_Location.Column));
 
-                  if New_Entity /= No_General_Entity then
+                  if New_Entity /= No_General_Entity
+                    and then not Is_Fuzzy (New_Entity)
+                  then
                      --  If we found an updated ALI entity, use it.
                      Entity := New_Entity;
 
-                  elsif Entity /= No_General_Entity then
+                  elsif Entity /= No_General_Entity
+                    and then not Is_Fuzzy (Entity)
+                  then
                      null;
 
                   else
@@ -964,11 +967,14 @@ package body Xref is
             end if;
 
             if C_Entity = Null_Entity_Access then
+               --  Do not reuse the Node information from the Entity, in case
+               --  it is no longer up-to-date
+
                if Entity.Node /= Null_Entity_Access then
                   C_Entity := Entity.Node;
 
                else
-                  Loc :=  Db.Get_Declaration (Entity).Loc;
+                  Loc := Db.Get_Declaration (Entity).Loc;
                   if Loc /= No_Location then
                      C_Entity := Get_Entity_At_Location (Db, Loc);
                   end if;
