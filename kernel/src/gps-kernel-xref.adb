@@ -181,7 +181,8 @@ package body GPS.Kernel.Xref is
       use Old_Entities;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      if Has_Entity_Name_Information (Context)
+      if not Active (Standard.Xref.SQLITE)
+        and then Has_Entity_Name_Information (Context)
         and then Has_Line_Information (Context)
         and then Has_File_Information (Context)
       then

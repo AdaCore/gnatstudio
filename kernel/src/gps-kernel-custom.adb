@@ -173,7 +173,6 @@ package body GPS.Kernel.Custom is
                F     : Virtual_File renames Files (J);
                Error : String_Access;
             begin
-               Trace (Me, "Should we load " & F.Display_Full_Name);
                if File_Extension (F) = XML_Extension
                  and then Is_Regular_File (F)
                then

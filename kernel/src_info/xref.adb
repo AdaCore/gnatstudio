@@ -112,7 +112,9 @@ package body Xref is
 
    overriding procedure Free (Obj : in out LI_Annotation);
 
-   function To_LI_Entity (E : Entity_Access) return General_Entity;
+   function To_LI_Entity
+     (Self : access General_Xref_Database_Record'Class;
+      E    : Entity_Access) return General_Entity;
    --  Return an LI entity based on a construct entity. Create one if none.
 
    ---------------
@@ -580,7 +582,10 @@ package body Xref is
       Closest_Ref := No_General_Entity_Reference;
 
       if Active (Me) then
-         Increase_Indent (Me, "Find_Declaration of " & Entity_Name);
+         Increase_Indent (Me, "Find_Declaration of " & Entity_Name
+                          & " file=" & Loc.File.Display_Base_Name
+                          & " line=" & Loc.Line'Img
+                          & " col=" & Loc.Column'Img);
       end if;
 
       Entity := Internal_No_Constructs (Entity_Name, Loc);  --  also sets Fuzzy
@@ -617,6 +622,7 @@ package body Xref is
             New_Entity   : General_Entity;
 
          begin
+            Trace (Me, "Searching entity declaration in constructs");
             if not Is_Null (S_File) then
                --  In some cases, the references are extracted from a place
                --  where there is still an ALI file, but no more source file.
@@ -656,7 +662,6 @@ package body Xref is
                   if New_Entity /= No_General_Entity then
                      --  If we found an updated ALI entity, use it.
                      Entity := New_Entity;
-                     Entity.Node := Result;
 
                   elsif Entity /= No_General_Entity then
                      null;
@@ -665,7 +670,7 @@ package body Xref is
                      --  If we have no entity to connect to, then create one
                      --  from the construct database.
 
-                     Entity := To_LI_Entity (Result);
+                     Entity := To_LI_Entity (Self, Result);
                   end if;
 
                   Entity.Is_Fuzzy := True;
@@ -1339,14 +1344,34 @@ package body Xref is
    overriding function "=" (E1, E2 : General_Entity) return Boolean is
    begin
       if Active (SQLITE) then
-         if E1.Entity = No_Entity then
-            return E2.Entity = No_Entity
-              and then E2.Node = Null_Entity_Access;
-         elsif E2.Entity = No_Entity then
-            return E1.Entity = No_Entity
-              and then E1.Node = Null_Entity_Access;
+         --  Entities are equal if:
+         --    - their Entity field is set for both, and they are equal
+         --    - or their Node fields are set for both and equal, and the two
+         --      Entity fields do not indicate they are different
+         --    - or both fields are null for both entities
+
+         if E1.Entity = E2.Entity
+           and then E1.Entity /= No_Entity
+         then
+            return True;
+
+         elsif E1.Node = E2.Node
+           and then E1.Node /= Null_Entity_Access
+           and then (E1.Entity = E1.Entity
+                     or else E1.Entity = No_Entity
+                     or else E2.Entity = No_Entity)
+         then
+            return True;
+
+         elsif E1.Entity = No_Entity
+           and then E2.Entity = No_Entity
+           and then E1.Node = Null_Entity_Access
+           and then E2.Node = Null_Entity_Access
+         then
+            return True;
+
          else
-            return E1.Entity = E2.Entity;
+            return False;
          end if;
       else
          if E1.Old_Entity = null then
@@ -2576,11 +2601,15 @@ package body Xref is
    -- To_LI_Entity --
    ------------------
 
-   function To_LI_Entity (E : Entity_Access) return General_Entity is
+   function To_LI_Entity
+     (Self : access General_Xref_Database_Record'Class;
+      E    : Entity_Access) return General_Entity
+   is
       use Construct_Annotations_Pckg;
+      Entity : General_Entity;
 
       Assistant : constant LI_Db_Assistant_Access := LI_Db_Assistant_Access
-        (Get_Assistant (Get_Database (Get_File (E)), LI_Assistant_Id));
+        (Get_Assistant (Self.Constructs, LI_Assistant_Id));
 
       Construct_Annotation : Construct_Annotations_Pckg.Annotation;
    begin
@@ -2592,8 +2621,6 @@ package body Xref is
 
       if Construct_Annotation = Construct_Annotations_Pckg.Null_Annotation then
          --  Create a new LI entity
-
-         Construct_Annotation := (Other_Kind, Other_Val => new LI_Annotation);
 
          if not Active (SQLITE) then
             declare
@@ -2683,29 +2710,35 @@ package body Xref is
                   Kind    => K,
                   Is_Type => Is_Type);
 
-               LI_Annotation (Construct_Annotation.Other_Val.all).Entity :=
-                 From_Old (New_Entity);
-               Set_Annotation
-                 (Get_Annotation_Container
-                    (Get_Tree
-                       (Get_File (E)), To_Construct_Tree_Iterator (E)).all,
-                  Assistant.LI_Key,
-                  Construct_Annotation);
+               Entity := From_Old (New_Entity);
             end;
+
+         else
+            --  sqlite backend
+
+            Entity := From_New
+              (Self.Xref.Add_Entity
+                 (Name => Get (Get_Construct (E).Name).all,
+                  Kind => "procedure",
+                  Decl_File => Get_File_Path (Get_File (E)),
+                  Decl_Line => Get_Construct (E).Sloc_Entity.Line,
+                  Decl_Column => Integer (To_Visible_Column
+                    (Get_File (E),
+                     Get_Construct (E).Sloc_Entity.Line,
+                     String_Index_Type
+                       (Get_Construct (E).Sloc_Entity.Column)))));
          end if;
 
+         Entity.Node := E;
+         Construct_Annotation := (Other_Kind, Other_Val => new LI_Annotation);
+         LI_Annotation (Construct_Annotation.Other_Val.all).Entity := Entity;
+         Set_Annotation
+           (Get_Annotation_Container
+              (Get_Tree (Get_File (E)), To_Construct_Tree_Iterator (E)).all,
+            Assistant.LI_Key,
+            Construct_Annotation);
       else
-         --  Update the entity in case it has moved
          null;
-
---           LI_Annotation (Construct_Annotation.Other_Val.all).
---             LI_Entity.Live_Declaration.Line :=
---               Get_Construct (E).Sloc_Entity.Line;
---           LI_Annotation (Construct_Annotation.Other_Val.all).
---             LI_Entity.Live_Declaration.Column := To_Visible_Column
---               (Get_File (E),
---                Get_Construct (E).Sloc_Entity.Line,
---                String_Index_Type (Get_Construct (E).Sloc_Entity.Column));
       end if;
 
       return LI_Annotation (Construct_Annotation.Other_Val.all).Entity;
