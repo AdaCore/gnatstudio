@@ -1052,6 +1052,7 @@ package body KeyManager_Module is
          end if;
       end Undo_Group;
 
+      State : Gdk_Modifier_Type;
    begin
       --  We could test Modif /= 0 if we allowed only key shortcuts with a
       --  modifier (control, alt, ...). However, this would prevent assigning
@@ -1060,9 +1061,21 @@ package body KeyManager_Module is
       if Keymanager_Module.Active
         and then Get_Event_Type (Event) = Key_Press
       then
+         State := Get_State (Event);
+
          --  Remove any num-lock and caps-lock modifiers
-         Modif := Get_State (Event) and Get_Default_Mod_Mask;
+         Modif := State and Get_Default_Mod_Mask;
          Key   := Get_Key_Val (Event);
+
+         --  If Caps lock in on, and the key is an upper-case character,
+         --  lower-case it.
+
+         if (State and Lock_Mask) > 0
+           and then Key >= GDK_A
+           and then Key <= GDK_Z
+         then
+            Key := Key + GDK_LC_a - GDK_A;
+         end if;
 
          Trace (Me, "Key=" & Key'Img & " Modif=" & Modif'Img);
 
