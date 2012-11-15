@@ -172,6 +172,10 @@ package body Xref is
             Tree_Lang := Get_Tree_Language (Get_File (Ent));
          end if;
 
+         if Ent = Null_Entity_Access then
+            return "";
+         end if;
+
          Buffer := Get_Buffer (Get_File (Ent));
          Node   := To_Construct_Tree_Iterator (Ent);
 
