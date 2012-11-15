@@ -9,7 +9,6 @@
 ############################################################################
 
 import GPS
-import gtk, pygtk
 from gps_utils import *
 
 # Constants
