@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- LB14-054: GPS: keyboard shortcuts not functional when Caps Lock is active
+  Problem:    When Caps Lock is active, letter-based keyboard shortcuts for
+              GPS actions do not work.
+  Workaround: Create a wrapper action, bound to the capitalized version of the
+              letter.
+
 - LA23-019: Bad indentation of access procedure type in generic declaration
   Problem:    When indenting code of the form:
               generic
