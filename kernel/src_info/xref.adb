@@ -664,10 +664,10 @@ package body Xref is
                      --  If we found an updated ALI entity, use it.
                      Entity := New_Entity;
 
-                  elsif Entity /= No_General_Entity
-                    and then not Is_Fuzzy (Entity)
-                  then
-                     null;
+                  elsif Entity /= No_General_Entity then
+                     --  Reuse the ALI entity, since that gives us a change to
+                     --  query its references as well.
+                     Entity.Node := Result;
 
                   else
                      --  If we have no entity to connect to, then create one
