@@ -1937,19 +1937,18 @@ package body Src_Editor_Box is
       Kernel : constant Kernel_Handle  := Get_Kernel (Context);
       Entity : constant General_Entity := Get_Entity (Context);
       Location         : General_Location;
-      Current_Location : General_Location;
+      Spec_Location : General_Location;
    begin
       if Entity = No_General_Entity then
          return False;
       end if;
 
-      Current_Location :=
-        Kernel.Databases.Get_Declaration (Entity).Loc;
+      Spec_Location := Kernel.Databases.Get_Declaration (Entity).Loc;
 
-      Location := Kernel.Databases.Get_Body (Entity, Current_Location);
+      Location := Kernel.Databases.Get_Body (Entity);
 
       return Location /= No_Location
-        and then Location /= Current_Location;
+        and then Location /= Spec_Location;
    end Has_Body;
 
    ------------------------------
