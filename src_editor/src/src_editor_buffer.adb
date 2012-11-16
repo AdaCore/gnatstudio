@@ -4609,6 +4609,7 @@ package body Src_Editor_Buffer is
       Iter                     : Gtk_Text_Iter;
       End_Iter                 : Gtk_Text_Iter;
       Result                   : Boolean;
+      pragma Unreferenced (Result);
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
