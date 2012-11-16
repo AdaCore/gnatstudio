@@ -1878,104 +1878,120 @@ package body Default_Preferences is
       return Theme_Preference
    is
       Ret         : constant Theme_Preference := new Theme_Preference_Record;
-      Search_Path : constant Filesystem_String := +Gtk.Rc.Get_Theme_Dir;
+      Search_Path : constant Filesystem_String :=
+         (Get_Home_Directory.Full_Name.all & Directory_Separator & ".themes")
+         & Path_Separator
+         & (+Gtk.Rc.Get_Theme_Dir);
+
       Default     : constant String :=
                       Glib.Properties.Get_Property
                         (Gtk.Settings.Get_Default,
                          Gtk.Settings.Gtk_Theme_Name_Property);
-      Dir         : GNATCOLL.VFS.Virtual_File;
       Gtk_Default : Natural := 0;
       Win_Default : Natural := 0;
       Unx_Default : Natural := 0;
       N_Themes    : Natural := 0;
       Num         : Positive;
 
+      Dirs : constant File_Array := From_Path (Search_Path);
+      Dir  : GNATCOLL.VFS.Virtual_File;
+      Subdirs : File_Array_Access;
+      Rc_File : Virtual_File;
+
    begin
-      if Search_Path'Length > 0 then
-         if Active (Me) then
-            Trace (Me, "Theme search path is " & (+Search_Path));
-            Trace (Me, "Active theme is " & Default);
+      if Active (Me) then
+         Trace (Me, "Theme search path is " & (+Search_Path));
+         Trace (Me, "Active theme is " & Default);
+      end if;
+
+      for D in Dirs'Range loop
+         Dir := Dirs (D);
+
+         if Dir.Is_Directory then
+            Subdirs := Dir.Read_Dir (Dirs_Only);
+         else
+            Subdirs := new File_Array (1 .. 0);
+            if Active (Me) then
+               Trace (Me, "Theme search path not found on disk: "
+                      & Dir.Display_Full_Name);
+            end if;
          end if;
 
-         Dir := Create (Search_Path);
+         --  Count the total number of available themes
+         for J in Subdirs'Range loop
+            Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtk.css");
 
-         declare
-            Subdirs : File_Array_Access;
-            Rc_File : Virtual_File;
-
-         begin
-            if Dir.Is_Directory then
-               Subdirs := Dir.Read_Dir (Dirs_Only);
-            else
-               Subdirs := new File_Array (1 .. 0);
-               if Active (Me) then
-                  Trace (Me, "Theme search path not found on disk.");
-               end if;
+            if Rc_File.Is_Regular_File then
+               N_Themes := N_Themes + 1;
             end if;
+         end loop;
 
-            --  Count the total number of available themes
-            for J in Subdirs'Range loop
-               Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtk.css");
+         Unchecked_Free (Subdirs);
+      end loop;
 
-               if Rc_File.Is_Regular_File then
-                  N_Themes := N_Themes + 1;
-               end if;
-            end loop;
+      Ret.Themes := new GNAT.Strings.String_List (1 .. N_Themes);
+      Ret.Current := 0;
 
-            Ret.Themes := new GNAT.Strings.String_List (1 .. N_Themes);
-            Ret.Current := 0;
+      --  Fill the list of themes
+      Num := Ret.Themes'First;
 
-            --  Fill the list of themes
-            Num := Ret.Themes'First;
+      for D in Dirs'Range loop
+         Dir := Dirs (D);
+         if Dir.Is_Directory then
+            Subdirs := Dir.Read_Dir (Dirs_Only);
+         else
+            Subdirs := new File_Array (1 .. 0);
+         end if;
 
-            for J in Subdirs'Range loop
-               Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtk.css");
+         for J in Subdirs'Range loop
+            Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtk.css");
 
-               if Rc_File.Is_Regular_File then
-                  declare
-                     Theme : constant String := +Base_Dir_Name (Subdirs (J));
-                  begin
-                     Ret.Themes (Num) := new String'(Theme);
+            if Rc_File.Is_Regular_File then
+               declare
+                  Theme : constant String :=
+                     +Base_Dir_Name (Subdirs (J));
+               begin
+                  Ret.Themes (Num) := new String'(Theme);
 
-                     if Theme = "bubble" then
-                        --  Fallback in case the active theme cannot be
-                        --  determined
-                        Gtk_Default := Num;
+                  if Theme = "bubble" then
+                     --  Fallback in case the active theme cannot be
+                     --  determined
+                     Gtk_Default := Num;
 
-                     elsif Theme = "MS-Windows" then
-                        --  Fallback in the windows case
-                        Win_Default := Num;
+                  elsif Theme = "MS-Windows" then
+                     --  Fallback in the windows case
+                     Win_Default := Num;
 
-                     elsif Theme = "Clearlooks" then
-                        --  Fallback in the unix case
-                        Unx_Default := Num;
+                  elsif Theme = "Clearlooks" then
+                     --  Fallback in the unix case
+                     Unx_Default := Num;
 
-                     elsif Theme = Default then
-                        --  We found the active theme, and it's not a default.
-                        --  This must then come from user-specified gtkrc file.
-                        --  Let's keep this value.
-                        Ret.Current := Num;
+                  elsif Theme = Default then
+                     --  We found the active theme, and it's not a
+                     --  default.  This must then come from
+                     --  user-specified gtkrc file.  Let's keep this
+                     --  value.
+                     Ret.Current := Num;
 
-                     end if;
+                  end if;
 
-                     Num := Num + 1;
-                  end;
-               end if;
-            end loop;
-
-            if Ret.Current = 0 then
-               if Win_Default > 0 then
-                  Ret.Current := Win_Default;
-               elsif Unx_Default > 0 then
-                  Ret.Current := Unx_Default;
-               elsif Gtk_Default > 0 then
-                  Ret.Current := Gtk_Default;
-               end if;
+                  Num := Num + 1;
+               end;
             end if;
+         end loop;
 
-            Unchecked_Free (Subdirs);
-         end;
-      end if;
+         if Ret.Current = 0 then
+            if Win_Default > 0 then
+               Ret.Current := Win_Default;
+            elsif Unx_Default > 0 then
+               Ret.Current := Unx_Default;
+            elsif Gtk_Default > 0 then
+               Ret.Current := Gtk_Default;
+            end if;
+         end if;
+
+         Unchecked_Free (Subdirs);
+      end loop;
 
       Register (Manager, Name, Label, Page, Doc, Ret);
 
