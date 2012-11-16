@@ -31,6 +31,7 @@ with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Scrollable;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
@@ -1186,7 +1187,7 @@ package body Completion_Window is
          end if;
 
          Adj := Gtk_Adjustment (Glib.Properties.Get_Property
-           (Window.Explorer.View, Gtk.Tree_View.Vadjustment_Property));
+           (Window.Explorer.View, Gtk.Scrollable.Vadjustment_Property));
          Page_Increment := Get_Page_Increment (Adj);
          Page_Size := Get_Page_Size (Adj);
 
@@ -1201,7 +1202,7 @@ package body Completion_Window is
          end if;
 
          Glib.Properties.Set_Property
-           (Window.Explorer.View, Gtk.Tree_View.Vadjustment_Property,
+           (Window.Explorer.View, Gtk.Scrollable.Vadjustment_Property,
             Adj);
 
          Get_Visible_Range (Window.Explorer.View, Path, End_Path, Success);
