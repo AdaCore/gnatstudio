@@ -465,7 +465,7 @@ package body Src_Printing.Win32_Printer is
    ----------------
 
    function Text_Width (Input : String; Printer : HDC) return INT is
-      Output : SIZE;
+      Output : Win32_Printing_Defs.SIZE;
       Result : BOOL;
       pragma Unreferenced (Result);
 
