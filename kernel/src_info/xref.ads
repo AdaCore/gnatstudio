@@ -135,7 +135,8 @@ package Xref is
    --  ??? Should we also cache the Old_Entities.Source_File ?
 
    type General_Entity_Declaration is record
-      Loc  : General_Location;
+      Loc  : aliased General_Location;
+      --  aliased is added to let AJIS make this field accessible to GNATbench
       Name : Ada.Strings.Unbounded.Unbounded_String;
       Body_Is_Full_Declaration : Boolean;
    end record;
