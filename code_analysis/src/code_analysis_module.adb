@@ -80,6 +80,9 @@ package body Code_Analysis_Module is
    --  Constant String that represents a name of Analysis_Instance in parameter
    --  of the GPS.CodeAnalysis.get command.
 
+   Style : Virtual_File;
+   --  XSL file name to include in coverage XML dump
+
    package Kernel_Return_Cb is new User_Return_Callback
      (Gtk.Widget.Gtk_Widget_Record, Boolean, Kernel_Handle);
 
@@ -1936,12 +1939,15 @@ package body Code_Analysis_Module is
       File     : GNATCOLL.VFS.Virtual_File)
    is
       Root : Node_Ptr;
+      Success : Boolean;
+      pragma Unreferenced (Success);
    begin
       Root     := new XML_Utils.Node;
       Root.Tag := new String'("Code_Analysis_Tree");
       Set_Attribute (Root, "name", Analysis.Name.all);
       Dump_Full_XML (Analysis.Projects, Root);
-      Print (Root, File);
+      Print (Root, File, Success, Style.Display_Base_Name);
+      Style.Copy (File.Dir_Name, Success);
       Free (Root);
    end Dump_To_File;
 
@@ -2206,6 +2212,9 @@ package body Code_Analysis_Module is
         (Kernel, "clear",
          Class         => Code_Analysis_Class,
          Handler       => Destroy_All_Analyzes_From_Shell'Access);
+
+      Style := Create_From_Dir
+        (Get_System_Dir (Kernel), "share/gps/show_coverage.xsl");
 
       Coverage_GUI.Register_Module (Kernel);
    end Register_Module;

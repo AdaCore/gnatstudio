@@ -78,8 +78,10 @@ package XML_Utils is
    procedure Print
      (N       : Node_Ptr;
       File    : Virtual_File;
-      Success : out Boolean);
-   --  Same as above, with Success reporting the success of the operation
+      Success : out Boolean;
+      Style   : String := "");
+   --  Same as above, with Success reporting the success of the operation.
+   --  If style specified, write corresponding XML process instruction
 
    function Protect (S : String; Ignore_LF : Boolean := False) return String;
    --  Return a copy of S modified so that it is a valid XML value
