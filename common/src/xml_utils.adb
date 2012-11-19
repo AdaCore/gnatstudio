@@ -417,9 +417,9 @@ package body XML_Utils is
       Index.all := Index.all + 1;
       Get_Buf (Buf, Index.all, '>', N.Tag);
 
-      --  Check to see whether it is a comment, !DOCTYPE, or the like:
+      --  Check to see whether it is a comment, PI, !DOCTYPE, or the like:
 
-      if N.Tag (N.Tag'First) = '!' then
+      if N.Tag (N.Tag'First) = '!' or N.Tag (N.Tag'First) = '?' then
          return Get_Node (Buf, Index);
       else
          --  Here we have to deal with the attributes of the form
@@ -547,7 +547,8 @@ package body XML_Utils is
    procedure Print
      (N       : Node_Ptr;
       File    : Virtual_File;
-      Success : out Boolean)
+      Success : out Boolean;
+      Style   : String := "")
    is
       Writable : Writable_File;
 
@@ -671,6 +672,11 @@ package body XML_Utils is
       Writable := Write_File (File);
 
       Put_Line ("<?xml version=""1.0""?>");
+
+      if Style /= "" then
+         Put_Line ("<?xml-stylesheet href='" & Style & "' type='text/xsl'?>");
+      end if;
+
       Print_Node (N, 0);
 
       Close (Writable);
