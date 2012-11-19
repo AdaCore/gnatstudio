@@ -14,6 +14,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: Create a wrapper action, bound to the capitalized version of the
               letter.
 
+- LB13-012: GPS: The contextual menu to close other editors has been removed
+  Problem:    The contextual menu appearing on notebook tabs to close other
+              editors has been removed.
+  Workaround: Use the menu File -> Close All Editors Except Current instead.
+
 - LA23-019: Bad indentation of access procedure type in generic declaration
   Problem:    When indenting code of the form:
               generic
