@@ -42,6 +42,7 @@ with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.GEntry;                        use Gtk.GEntry;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
+with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Size_Group;                    use Gtk.Size_Group;
 with Gtk.Stock;                         use Gtk.Stock;
@@ -78,6 +79,7 @@ with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -131,6 +133,9 @@ package body Src_Editor_Module is
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
+   overriding procedure Tab_Contextual
+     (Child : access Editor_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding function Get_Command_Queue
      (Child : access Editor_Child_Record) return Commands.Command_Queue;
    overriding function Dnd_Data
@@ -289,9 +294,11 @@ package body Src_Editor_Module is
    --  See doc for inherited subprogram
    --  Edit the properties of a file (from a contextual menu)
 
+   type Close_Command_Mode is (Close_One, Close_All, Close_All_Except_Current);
+
    type Close_Command is new Interactive_Command with record
       Kernel    : Kernel_Handle;
-      Close_All : Boolean;
+      Mode      : Close_Command_Mode;
    end record;
    overriding function Execute
      (Command : access Close_Command;
@@ -374,6 +381,10 @@ package body Src_Editor_Module is
    procedure Create_Files_Pixbufs_If_Needed
      (Handle : access Kernel_Handle_Record'Class);
    --  Create File_Pixbuf and File_Modified_Pixbuf if needed
+
+   procedure Register_Editor_Close
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Register an idle callback to close all editors except current
 
    -----------------------
    -- On_Editor_Destroy --
@@ -707,12 +718,11 @@ package body Src_Editor_Module is
       Src         : Source_Editor_Box;
       F           : Virtual_File;
       Str         : XML_Utils.String_Ptr;
-      Id          : Glib.Main.G_Source_Id;
       Line        : Editable_Line_Type := 1;
       Column      : Visible_Column_Type := 1;
       Real_Column : Character_Offset_Type;
       Child       : MDI_Child;
-      pragma Unreferenced (Id, MDI);
+      pragma Unreferenced (MDI);
 
       Dummy  : Boolean;
       pragma Unreferenced (Dummy);
@@ -1755,20 +1765,40 @@ package body Src_Editor_Module is
       pragma Unreferenced (Context);
       MDI   : MDI_Window;
       Child : MDI_Child;
-
    begin
-      if Command.Close_All then
-         if Save_MDI_Children (Command.Kernel) then
-            Close_All_Children (Command.Kernel);
-         end if;
-      else
-         MDI := Get_MDI (Command.Kernel);
-         Child := Get_Focus_Child (MDI);
+      case Command.Mode is
+         when Close_All =>
+            if Save_MDI_Children (Command.Kernel) then
+               Close_All_Children (Command.Kernel);
+            end if;
 
-         if Child /= null then
-            Close (MDI, Get_Widget (Child));
-         end if;
-      end if;
+         when Close_One =>
+            MDI := Get_MDI (Command.Kernel);
+            Child := Get_Focus_Child (MDI);
+
+            if Child /= null then
+               Close (MDI, Get_Widget (Child));
+            end if;
+         when Close_All_Except_Current =>
+            declare
+               Buffer : constant Editor_Buffer'Class :=
+                 GPS.Editors.Get
+                   (This        => Get_Buffer_Factory (Command.Kernel).all,
+                    File        => No_File,
+                    Force       => False,
+                    Open_Buffer => False,
+                    Open_View   => False);
+               List : Buffer_Lists.List :=
+                 Buffers (Get_Buffer_Factory (Command.Kernel).all);
+
+            begin
+               for Editor of List loop
+                  if Editor /= Buffer then
+                     Editor.Close;
+                  end if;
+               end loop;
+            end;
+      end case;
 
       return Commands.Success;
    end Execute;
@@ -2938,7 +2968,7 @@ package body Src_Editor_Module is
 
       Command := new Close_Command;
       Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Close_Command (Command.all).Close_All := False;
+      Close_Command (Command.all).Mode := Close_One;
       Register_Action
         (Kernel, "Close current window", Command,
          -"Close the currently selected window",
@@ -2957,7 +2987,7 @@ package body Src_Editor_Module is
 
       Command := new Close_Command;
       Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Close_Command (Command.all).Close_All := True;
+      Close_Command (Command.all).Mode := Close_All;
       Register_Action
         (Kernel, "Close all windows", Command,
          -"Close all open windows, asking for confirmation when relevant",
@@ -2971,6 +3001,15 @@ package body Src_Editor_Module is
          Callback    => null,
          Command     => Command,
          Add_Before  => False);
+
+      Command := new Close_Command;
+      Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Close_Command (Command.all).Mode := Close_All_Except_Current;
+      Register_Action
+        (Kernel, "Close all windows except current", Command,
+         -("Close all editors except the current one, asking for confirmation"
+           & " when relevant"),
+         Category => "MDI");
 
       Gtk_New (Sep);
       Register_Menu (Kernel, File, Sep, Ref_Item => -"Exit");
@@ -3656,6 +3695,28 @@ package body Src_Editor_Module is
       end if;
    end Line_Number_Character_Width;
 
+   --------------------
+   -- Tab_Contextual --
+   --------------------
+
+   overriding procedure Tab_Contextual
+     (Child : access Editor_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Child);
+      Item : Gtk_Menu_Item;
+      Id : constant Source_Editor_Module :=
+             Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      Gtk_New (Item, "Close all other editors");
+
+      Kernel_Callback.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Register_Editor_Close'Access,
+         Get_Kernel (Id.all));
+      Append (Menu, Item);
+   end Tab_Contextual;
+
    -----------------------
    -- Get_Command_Queue --
    -----------------------
@@ -3735,5 +3796,27 @@ package body Src_Editor_Module is
       Free (Self.Alternate);
       Unchecked_Free (Self.Pattern);
    end Free;
+
+   ---------------------------
+   -- Register_Editor_Close --
+   ---------------------------
+
+   procedure Register_Editor_Close
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Command : Interactive_Command_Access;
+   begin
+      Command := new Close_Command;
+      Close_Command (Command.all).Kernel := Kernel;
+      Close_Command (Command.all).Mode := Close_All_Except_Current;
+
+      Launch_Background_Command (Kernel          => Kernel,
+                                 Command         => Command,
+                                 Active          => True,
+                                 Show_Bar        => False,
+                                 Destroy_On_Exit => True,
+                                 Block_Exit      => False);
+   end Register_Editor_Close;
 
 end Src_Editor_Module;
