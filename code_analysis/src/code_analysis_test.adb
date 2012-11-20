@@ -334,7 +334,7 @@ procedure Code_Analysis_Test is
       --  2 text columns to display the coverage info
 
       Gtk_New (Tree_Store, Types_Array);
-      Gtk_New (Tree_View, Gtk_Tree_Model (Tree_Store));
+      Gtk_New (Tree_View, Tree_Store);
 
       -----------------
       -- Node column --
