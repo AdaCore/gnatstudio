@@ -77,7 +77,9 @@ ENTITIES.DUMP = no
 ENTITIES.REF  = no
 ENTITIES.QUERIES = no
 
---  Enable this to activate the use of sql-based entities
+--  Enable this to activate the use of sql-based entities.
+--  This cannot be set from the command line, since the kernel and the xref
+--  database has already been created by the type --traceon is seen.
 ENTITIES.SQLITE                   = no
 
 SCRIPTS.REF = no
