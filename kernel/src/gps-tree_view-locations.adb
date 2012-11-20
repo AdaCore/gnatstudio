@@ -439,7 +439,9 @@ package body GPS.Tree_View.Locations is
 
       --  Cleanup
 
-      Gtk.Tree_Model.Path_Free (Path);
+      if Success then
+         Gtk.Tree_Model.Path_Free (Path);
+      end if;
 
       return Column /= Glib.Gint'Last;
    end On_Query_Tooltip;
