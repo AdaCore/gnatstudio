@@ -29,7 +29,6 @@ with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Types;                         use Gdk.Types;
 with Gdk;                               use Gdk;
 
-with Glib.Main;
 with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;                       use Glib.Values;
