@@ -1887,7 +1887,17 @@ package body Xref is
       Result : Entities_In_Project_Cursor;
    begin
       if Active (SQLITE) then
-         null;
+         if Active (Me) then
+            Increase_Indent (Me, "All_Entities from Prefix '" & Prefix
+                             & "' partial=" & Is_Partial'Img);
+         end if;
+
+         Self.Xref.From_Prefix
+           (Prefix     => Prefix,
+            Is_Partial => Is_Partial,
+            Cursor     => Result.Iter);
+
+         Decrease_Indent (Me);
       else
          Result.Old_Iter :=
            Start (Trie     => Old_Entities.Get_Name_Index
@@ -1921,7 +1931,7 @@ package body Xref is
       use Old_Entities.Entities_Search_Tries;
    begin
       if Active (SQLITE) then
-         return True;
+         return not Has_Element (Iter.Iter);
       else
          return At_End (Iter.Old_Iter);
       end if;
@@ -1937,7 +1947,7 @@ package body Xref is
       use Old_Entities.Entities_Search_Tries;
    begin
       if Active (SQLITE) then
-         return No_General_Entity;
+         return From_New (Element (Iter.Iter));
       else
          return From_Old (Get (Iter.Old_Iter));
       end if;
@@ -1951,7 +1961,7 @@ package body Xref is
       use Old_Entities.Entities_Search_Tries;
    begin
       if Active (SQLITE) then
-         null;
+         Next (Iter.Iter);
       else
          Next (Iter.Old_Iter);
       end if;
