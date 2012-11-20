@@ -315,7 +315,7 @@ package body Revision_Views is
      (View : Revision_View; Log_1, Log_2 : Log_Data)
    is
       Model : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
-      Store : constant Gtk_Tree_Store := -Get_Model (Model);
+      Store : constant Gtk_Tree_Model := Get_Model (Model);
 
       procedure Move (From : in out Gtk_Tree_Iter; To : Gtk_Tree_Iter);
       --  Move line pointed by From into To
@@ -328,7 +328,7 @@ package body Revision_Views is
          Line : constant Line_Data := Get_Data_From_Iter (View, From);
       begin
          Fill_Info (View, To, Line);
-         Remove (Store, From);
+         Remove (-Store, From);
       end Move;
 
       Rev_1 : Gtk_Tree_Iter := Find_Revision (View, Log_1);
@@ -354,7 +354,7 @@ package body Revision_Views is
                Path := Get_Path (Store, Rev_1);
 
                loop
-                  Append (Store, Iter, Parent);
+                  Append (-Store, Iter, Parent);
 
                   if Parent = Rev_2 then
                      --  The first node becomes the parent of the next
@@ -384,11 +384,11 @@ package body Revision_Views is
                --  Check if we need to reparent Rev_1 under Rev_2
 
                if To_String (Log_1.Revision) /= To_String (View.Prev2) then
-                  Append (Store, Iter, Rev_2);
+                  Append (-Store, Iter, Rev_2);
                   Move (Rev_1, Iter);
                   View.Parent := Rev_2;
                else
-                  Set (Store, Rev_2, Link_Column, True);
+                  Set (-Store, Rev_2, Link_Column, True);
                end if;
             end if;
       end case;
@@ -506,7 +506,7 @@ package body Revision_Views is
       --  Return the revision for Iter's parent
 
       V     : constant Revision_View := Revision_View (Object);
-      Model : constant Gtk_Tree_Store := -Get_Model (V.Tree);
+      Model : constant Gtk_Tree_Model := Get_Model (V.Tree);
 
       ------------------------------
       -- Get_Parent_Revision_Node --
@@ -618,7 +618,7 @@ package body Revision_Views is
       Line : Line_Data)
    is
       Model : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
-      Store : constant Gtk_Tree_Store := -Get_Model (Model);
+      Store : constant Gtk_Tree_Model := Get_Model (Model);
 
       function To_Proxy is new
         Ada.Unchecked_Conversion (System.Address, C_Proxy);
@@ -627,20 +627,20 @@ package body Revision_Views is
       Info  : Unbounded_String;
       --  The info column contains the date plus tags/branches
    begin
-      Set (Store, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
-      Set (Store, Iter, Revision_Column, To_String (Line.Log.Revision));
-      Set (Store, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
-      Set (Store, Iter, Author_Column, To_String (Line.Log.Author));
-      Set (Store, Iter, Date_Column, To_String (Line.Log.Date));
-      Set (Store, Iter, Log_Column, To_String (Line.Log.Log));
-      Set (Store, Iter, Link_Column, Line.Link);
+      Set (-Store, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
+      Set (-Store, Iter, Revision_Column, To_String (Line.Log.Revision));
+      Set (-Store, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
+      Set (-Store, Iter, Author_Column, To_String (Line.Log.Author));
+      Set (-Store, Iter, Date_Column, To_String (Line.Log.Date));
+      Set (-Store, Iter, Log_Column, To_String (Line.Log.Log));
+      Set (-Store, Iter, Link_Column, Line.Link);
       Info := Line.Log.Date;
 
       --  Create log entry
 
-      Append (Store, Child, Iter);
-      Set (Store, Child, Color_Column, C_Proxy'(null));
-      Set (Store, Child, Info_Column, To_String (Line.Log.Log));
+      Append (-Store, Child, Iter);
+      Set (-Store, Child, Color_Column, C_Proxy'(null));
+      Set (-Store, Child, Info_Column, To_String (Line.Log.Log));
 
       --  Tags & Branches
 
@@ -660,9 +660,9 @@ package body Revision_Views is
             Node := SL.First (List);
 
             while Node /= SL.Null_Node loop
-               Append (Store, Child, Iter);
-               Set (Store, Child, Info_Column, "tag: " & SL.Data (Node));
-               Set (Store, Child, Rev_Info_Column, SL.Data (Node));
+               Append (-Store, Child, Iter);
+               Set (-Store, Child, Info_Column, "tag: " & SL.Data (Node));
+               Set (-Store, Child, Rev_Info_Column, SL.Data (Node));
                if First then
                   Append (Info, SL.Data (Node));
                   First := False;
@@ -676,7 +676,7 @@ package body Revision_Views is
          end if;
       end;
 
-      Set (Store, Iter, Info_Column, To_String (Info));
+      Set (-Store, Iter, Info_Column, To_String (Info));
    end Fill_Info;
 
    ------------------------
@@ -688,7 +688,7 @@ package body Revision_Views is
       Iter : Gtk_Tree_Iter) return Line_Data
    is
       Model : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
-      Store : constant Gtk_Tree_Store := -Get_Model (Model);
+      Store : constant Gtk_Tree_Model := Get_Model (Model);
       Log   : Log_Data;
    begin
       Log.Revision := +Get_String (Store, Iter, Rev_Info_Column);
@@ -973,7 +973,7 @@ package body Revision_Views is
       Log  : Log_Data) return Gtk_Tree_Iter
    is
       Model  : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
-      Store  : constant Gtk_Tree_Store := -Get_Model (Model);
+      Store  : constant Gtk_Tree_Model := Get_Model (Model);
       Rev    : constant String := To_String (Log.Revision);
       Result : Gtk_Tree_Iter := Null_Iter;
 
