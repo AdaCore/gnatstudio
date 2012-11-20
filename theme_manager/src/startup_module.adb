@@ -156,10 +156,10 @@ package body Startup_Module is
          Set_Property (Bold, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
 
          Insert_With_Tags (Ed.Description, Text_Iter, -"File: ", Bold);
-         if Get_File (Model, Iter, Column_File) = No_File then
+         if Get_File (Ed.Model, Iter, Column_File) = No_File then
             Insert (Ed.Description, Text_Iter, -"<not found>" & ASCII.LF);
          else
-            File := Get_File (Model, Iter, Column_File);
+            File := Get_File (Ed.Model, Iter, Column_File);
             Insert (Ed.Description, Text_Iter,
                     +Full_Name (File) & ASCII.LF);
             --  ??? What if the filesystem path is non-UTF8?
@@ -409,7 +409,7 @@ package body Startup_Module is
         (Get_Selection (Editor.Tree), Gtk.Tree_Selection.Signal_Changed,
          On_Selection_Changed'Access, Editor);
 
-      Editor.Model := Gtk_Tree_Store (Get_Model (Editor.Tree));
+      Editor.Model := -Get_Model (Editor.Tree);
       Get_First_Startup_Script (Kernel, Script_Iter);
       while not At_End (Script_Iter) loop
          Script := Get (Script_Iter);

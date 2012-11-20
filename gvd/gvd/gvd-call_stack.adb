@@ -350,7 +350,7 @@ package body GVD.Call_Stack is
             1 + Params_Column          => Name_Params'Unchecked_Access,
             1 + File_Location_Column   => Name_Loc'Unchecked_Access),
          Sortable_Columns => False);
-      Widget.Model := Gtk_Tree_Store (Get_Model (Widget.Tree));
+      Widget.Model := -Get_Model (Widget.Tree);
 
       Add (Widget, Widget.Tree);
 
@@ -393,7 +393,7 @@ package body GVD.Call_Stack is
 
          if Frame_Info = Location_Found then
             S.Block := True;
-            Path := Gtk_New (Process.Current_Output (First .. Last));
+            Gtk_New (Path, Process.Current_Output (First .. Last));
             Select_Path (Get_Selection (S.Tree), Path);
             Path_Free (Path);
             S.Block := False;

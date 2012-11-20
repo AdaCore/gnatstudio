@@ -426,7 +426,7 @@ package body Histories is
       Prepend     : Boolean := False;
       Col         : Gint := 0)
    is
-      List  : constant Gtk_List_Store := Gtk_List_Store (Get_Model (Combo));
+      List  : constant Gtk_List_Store := -Get_Model (Combo);
       Value : constant String_List_Access := Get_History (Hist, Key);
       Iter  : Gtk_Tree_Iter;
 

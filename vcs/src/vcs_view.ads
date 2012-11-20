@@ -245,6 +245,6 @@ private
    --  See inherited documentation
 
    package Explorer_Selection_Foreach is
-     new Selection_Foreach (VCS_View_Access);
+     new Gtk.Tree_Selection.Selected_Foreach_User_Data (VCS_View_Access);
 
 end VCS_View;

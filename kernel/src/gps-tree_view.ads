@@ -20,13 +20,13 @@
 --
 --  Application must define derived type to provide implementation of two
 --  abstract subprograms to convert iterator from view's source model to
---  lowerst model and backward.
+--  Lowest model and backward.
 --
 --  To properly initialize view, call to Initialize must be done first and
---  reference to lowerst model passed to it; after when stack of intermediate
+--  reference to Lowest model passed to it; after when stack of intermediate
 --  models can be sreated and view's source model must be setted by call to
 --  Set_Source_Model. Stack of source models can't be changed during view's
---  life. Rationale: callbacks to lowerst model must be set before it is
+--  life. Rationale: callbacks to Lowest model must be set before it is
 --  connected to intermediate model; but standard intermediate models allows
 --  to set its source model only at creation time.
 
@@ -48,19 +48,20 @@ package GPS.Tree_View is
    type GPS_Tree_View is access all GPS_Tree_View_Record'Class;
 
    procedure Initialize
-     (Self          : not null access GPS_Tree_View_Record'Class;
-      Lowerst_Model : not null Gtk.Tree_Model.Gtk_Tree_Model);
+     (Self         : not null access GPS_Tree_View_Record'Class;
+      Lowest_Model : Gtk.Tree_Model.Gtk_Tree_Model);
 
    procedure Set_Source_Model
      (Self         : access GPS_Tree_View_Record;
-      Source_Model : Gtk.Tree_Model.Gtk_Tree_Model);
+      Source_Model : not null
+         access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
    --  Set source model. The stack of models must never be changed.
 
-   function To_Lowerst_Model_Iter
+   function To_Lowest_Model_Iter
      (Self : not null access GPS_Tree_View_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter is abstract;
-   --  Converts iterator from the view's source model to lowerst model.
+   --  Converts iterator from the view's source model to Lowest model.
 
 private
 
@@ -85,8 +86,8 @@ private
 
    type GPS_Tree_View_Record is
      abstract new Gtk.Tree_View.Gtk_Tree_View_Record with record
-      Lowerst_Model : Gtk.Tree_Model.Gtk_Tree_Model;
-      --  Lowerst model.
+      Lowest_Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      --  Lowest model.
 
       Root          : Node_Access;
       --  Root node. The tree reflects underling model, not the model directly
@@ -99,12 +100,12 @@ private
       --  The currently registered idle callback.
    end record;
 
-   procedure On_Lowerst_Model_Row_Inserted
+   procedure On_Lowest_Model_Row_Inserted
      (Self : not null access GPS_Tree_View_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       Node : not null Node_Access) is null;
-   --  Called when new row is inserted into the lowerst model. Node is
+   --  Called when new row is inserted into the Lowest model. Node is
    --  initialized and inserted internal node.
 
    procedure On_Row_Expanded

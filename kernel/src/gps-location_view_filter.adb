@@ -21,6 +21,7 @@ with GNAT.Regpat;
 with Basic_Types;
 with GNATCOLL.Utils;
 with GPS.Location_View.Listener;
+with Gtk.Tree_Model;              use Gtk.Tree_Model;
 
 package body GPS.Location_View_Filter is
 
@@ -58,8 +59,9 @@ package body GPS.Location_View_Filter is
                Text        : constant String := Glib.Values.Get_String (Value);
                Total       : constant Natural :=
                  Natural
-                   (Self.Get_Source_Model.Get_Int
-                      (Source_Iter,
+                   (Get_Int
+                      (Self.Get_Source_Model,
+                       Source_Iter,
                        GPS.Location_View.Listener.Number_Of_Children_Column));
                Total_Image : constant String :=
                  GNATCOLL.Utils.Image (Total, 1);
@@ -164,7 +166,7 @@ package body GPS.Location_View_Filter is
             Found      : Boolean := False;
 
          begin
-            Child_Iter := Self.Get_Source_Model.Children (Source_Iter);
+            Child_Iter := Children (Self.Get_Source_Model, Source_Iter);
             Child_Path := Gtk.Tree_Model.Copy (Source_Path);
             Gtk.Tree_Model.Down (Child_Path);
 
@@ -175,7 +177,7 @@ package body GPS.Location_View_Filter is
                   exit;
                end if;
 
-               Self.Get_Source_Model.Next (Child_Iter);
+               Next (Self.Get_Source_Model, Child_Iter);
                Gtk.Tree_Model.Next (Child_Path);
             end loop;
 
@@ -189,8 +191,8 @@ package body GPS.Location_View_Filter is
 
          declare
             Text  : constant String :=
-              Self.Get_Source_Model.Get_String
-                (Source_Iter, GPS.Location_View.Listener.Text_Column);
+              Get_String (Self.Get_Source_Model,
+                Source_Iter, GPS.Location_View.Listener.Text_Column);
             Found : Boolean := False;
 
          begin

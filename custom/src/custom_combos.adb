@@ -170,7 +170,7 @@ package body Custom_Combos is
       Label : String)
    is
       Iter : Gtk_Tree_Iter;
-      List : constant Gtk_List_Store := Gtk_List_Store (Combo.Combo.Get_Model);
+      List : constant Gtk_List_Store := -Combo.Combo.Get_Model;
 
    begin
       Iter := List.Get_Iter_First;
@@ -508,8 +508,7 @@ package body Custom_Combos is
       elsif Command = "clear" then
          Name_Parameters (Data, Simple_Args);
          Clear
-           (Gtk_List_Store
-              (Get_Model (Custom_Combo (GObject'(Get_Data (Inst))).Combo)));
+           (-Get_Model (Custom_Combo (GObject'(Get_Data (Inst))).Combo));
 
       elsif Command = "get_text" then
          Name_Parameters (Data, Simple_Args);

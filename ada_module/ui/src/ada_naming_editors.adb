@@ -127,7 +127,7 @@ package body Ada_Naming_Editors is
 
       Reset_Exception_Fields (Editor.GUI);
 
-      Gtk_List_Store (Editor.GUI.Casing.Get_Model).Clear;
+      Gtk_List_Store'(-(Editor.GUI.Casing.Get_Model)).Clear;
 
       for Casing in Casing_Type loop
          if Casing /= Unknown then

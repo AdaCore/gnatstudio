@@ -125,13 +125,14 @@ package body GPS.Editors.GtkAda is
    --------------
 
    function Get_Mark
-     (Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model  : not null
+          access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint) return Editor_Mark'Class
    is
       Value : GValue;
    begin
-      Get_Value (Model, Iter, Column, Value);
+      Get_Value (To_Interface (Model), Iter, Column, Value);
       declare
          Mark : constant Editor_Mark'Class := Get_Mark (Value);
       begin

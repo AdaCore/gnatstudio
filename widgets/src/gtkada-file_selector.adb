@@ -259,7 +259,7 @@ package body Gtkada.File_Selector is
       if Iter = Null_Iter then
          return "";
       else
-         return Combo.Get_Model.Get_String (Iter, 0);
+         return Get_String (Combo.Get_Model, Iter, 0);
       end if;
    end Get_Selected;
 
@@ -1277,9 +1277,9 @@ package body Gtkada.File_Selector is
          if Is_Local (Win.Current_Directory) then
             --  local host is always the first iter
             Win.Hosts_Combo.Set_Active_Iter
-              (Win.Hosts_Combo.Get_Model.Get_Iter_First);
+              (Get_Iter_First (Win.Hosts_Combo.Get_Model));
          else
-            List := Gtk_Tree_Store (Win.Hosts_Combo.Get_Model);
+            List := -Win.Hosts_Combo.Get_Model;
             Iter := List.Get_Iter_First;
             while Iter /= Null_Iter loop
                if List.Get_String (Iter, 0) =

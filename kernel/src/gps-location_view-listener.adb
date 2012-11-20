@@ -343,10 +343,12 @@ package body GPS.Location_View.Listener is
       Node : not null Node_Access) return Gtk_Tree_Path
    is
       Aux    : Node_Access := Node;
-      Result : constant Gtk_Tree_Path := Gtk_New;
+      Result : Gtk_Tree_Path;
       Index  : Natural;
 
    begin
+      Gtk_New (Result);
+
       while Aux /= null loop
          if Aux.Parent = null then
             Index := Self.Categories.Find_Index (Aux);
@@ -381,12 +383,13 @@ package body GPS.Location_View.Listener is
       --  Find the index of the file node
 
       Append_Index (Path, Gint (Index) - 1);
-      Self.Model.Row_Deleted (Path);
+      Row_Deleted (To_Interface (Self.Model), Path);
 
       if Cat_Node.Children.Is_Empty then
          Dummy := Up (Path);
-         Self.Model.Row_Has_Child_Toggled
-           (Path, Self.Model.Create_Iter (Cat_Node));
+         Row_Has_Child_Toggled
+           (To_Interface (Self.Model),
+            Path, Self.Model.Create_Iter (Cat_Node));
       end if;
 
       File_Node := Cat_Node.Children.Element (Index);
@@ -403,7 +406,7 @@ package body GPS.Location_View.Listener is
            (Self.Model.Categories.Find_Index (Cat_Node));
 
          Recursive_Free (Cat_Node);
-         Self.Model.Row_Deleted (Path);
+         Row_Deleted (To_Interface (Self.Model), Path);
 
          --  Note: after the call to Row_Deleted above, the locations view
          --  might have been destroyed (if the preference "Auto close Locations
@@ -1046,11 +1049,11 @@ package body GPS.Location_View.Listener is
 
          Iter := Self.Model.Create_Iter (Node.Parent);
          Path := Self.Model.Create_Path (Node.Parent);
-         Self.Model.Row_Changed (Path, Iter);
+         Row_Changed (To_Interface (Self.Model), Path, Iter);
 
          Iter := Self.Model.Parent (Iter);
          Dummy := Up (Path);
-         Self.Model.Row_Changed (Path, Iter);
+         Row_Changed (To_Interface (Self.Model), Path, Iter);
          Path_Free (Path);
 
       else
@@ -1080,9 +1083,9 @@ package body GPS.Location_View.Listener is
         Find_Node (Self, Message_Access (Message));
    begin
       Self.Model.Stamp := Self.Model.Stamp + 1;
-      Iter := Self.Model.Create_Iter (Node);
-      Path := Self.Model.Create_Path (Node);
-      Self.Model.Row_Changed (Path, Iter);
+      Iter := Create_Iter (Self.Model, Node);
+      Path := Create_Path (Self.Model, Node);
+      Row_Changed (To_Interface (Self.Model), Path, Iter);
       Path_Free (Path);
    end Message_Property_Changed;
 
@@ -1103,7 +1106,7 @@ package body GPS.Location_View.Listener is
    begin
       Node.Parent.Children.Delete (Node.Parent.Children.Find_Index (Node));
 
-      Self.Model.Row_Deleted (Path);
+      Row_Deleted (To_Interface (Self.Model), Path);
 
       Dummy := Up (Path);
       Iter := Self.Model.Create_Iter (Node.Parent);
@@ -1114,19 +1117,19 @@ package body GPS.Location_View.Listener is
            Node.Parent.Parent.Message_Count - 1;
 
          if Node.Parent.Children.Is_Empty then
-            Self.Model.Row_Has_Child_Toggled (Path, Iter);
+            Row_Has_Child_Toggled (To_Interface (Self.Model), Path, Iter);
          end if;
 
          --  Notify view about changes in category and file nodes.
 
-         Self.Model.Row_Changed (Path, Iter);
+         Row_Changed (To_Interface (Self.Model), Path, Iter);
 
          Iter := Self.Model.Parent (Iter);
          Dummy := Up (Path);
-         Self.Model.Row_Changed (Path, Iter);
+         Row_Changed (To_Interface (Self.Model), Path, Iter);
 
       elsif Node.Parent.Children.Is_Empty then
-         Self.Model.Row_Has_Child_Toggled (Path, Iter);
+         Row_Has_Child_Toggled (To_Interface (Self.Model), Path, Iter);
       end if;
 
       Recursive_Free (Node);
@@ -1211,7 +1214,7 @@ package body GPS.Location_View.Listener is
 
       Self.Stamp := Self.Stamp + 1;
       Iter := Self.Create_Iter (Node);
-      Self.Row_Inserted (Path, Iter);
+      Row_Inserted (To_Interface (Self), Path, Iter);
 
       Dummy := Up (Path);
       Iter := Self.Parent (Iter);
@@ -1219,7 +1222,7 @@ package body GPS.Location_View.Listener is
       if Node.Parent /= null
         and then Node.Parent.Children.Length = 1
       then
-         Self.Row_Has_Child_Toggled (Path, Iter);
+         Row_Has_Child_Toggled (To_Interface (Self), Path, Iter);
       end if;
 
       --  J326-003: when new row at message level is inserted weight of the
@@ -1227,7 +1230,7 @@ package body GPS.Location_View.Listener is
       --  about such change.
 
       if Get_Depth (Path) = 2 then
-         Self.Row_Changed (Path, Iter);
+         Row_Changed (To_Interface (Self), Path, Iter);
       end if;
 
       Path_Free (Path);
@@ -1338,7 +1341,7 @@ package body GPS.Location_View.Listener is
      (L : Locations_Listener_Access)
       return Gtk.Tree_Model.Gtk_Tree_Model is
    begin
-      return Gtk_Tree_Model (L.Model);
+      return To_Interface (L.Model);
    end Get_Model;
 
 end GPS.Location_View.Listener;

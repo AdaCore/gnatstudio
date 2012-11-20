@@ -1772,8 +1772,7 @@ package body Commands.Custom is
      (Editor   : access Custom_Command_Editor_Record'Class;
       Selected : Integer := -1)
    is
-      Model         : constant Gtk_Tree_Store :=
-                        Gtk_Tree_Store (Get_Model (Editor.Tree));
+      Model         : constant Gtk_Tree_Store := -Get_Model (Editor.Tree);
       Parent        : Gtk_Tree_Iter;
       Iter          : Gtk_Tree_Iter;
       First, Last   : Gtk_Text_Iter;
@@ -1822,10 +1821,7 @@ package body Commands.Custom is
                    Editor.Components (C + 1).On_Failure_For
                  or else Editor.Components (C + 1).On_Failure_For = -1)
             then
-               Parent := Gtk.Tree_Model.Parent
-                 (Gtk_Tree_Model (Model),
-                  Gtk.Tree_Model.Parent
-                    (Gtk_Tree_Model (Model), Parent));
+               Parent := Model.Parent (Model.Parent (Parent));
             end if;
          end if;
       end loop;
@@ -1949,8 +1945,7 @@ package body Commands.Custom is
          Component := Custom_Component_Editor (Get_Child2 (Ed.Pane));
          Get_Start_Iter (Component.Command, First);
          Get_End_Iter   (Component.Command, Last);
-         Set (Gtk_Tree_Store (Model), Iter, 0,
-              Get_Text (Component.Command, First, Last));
+         Set (-Model, Iter, 0, Get_Text (Component.Command, First, Last));
       end if;
    end On_Command_Changed;
 

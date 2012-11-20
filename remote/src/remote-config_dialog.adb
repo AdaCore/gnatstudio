@@ -118,6 +118,24 @@ package body Remote.Config_Dialog is
    function Convert is new Ada.Unchecked_Conversion (System.Address, Path_Row);
    function Convert is new Ada.Unchecked_Conversion (Path_Row, System.Address);
 
+   type For_Each_Data (Nickname_Length : Natural) is record
+      Nickname : String (1 .. Nickname_Length);
+      The_Iter : Gtk_Tree_Iter;
+      Found    : Boolean;
+   end record;
+   type For_Each_Data_Access is access all For_Each_Data;
+
+   function For_Each
+     (Model     : Gtk_Tree_Model;
+      Path      : Gtk_Tree_Path;
+      Iter      : Gtk_Tree_Iter;
+      User_Data : For_Each_Data_Access) return Boolean;
+   --  CB function for Gtk.Tree_Model.Foreach, searching for the iter
+   --  corresponding to the previously selected machine.
+
+   package Foreach is new Gtk.Tree_Model.Foreach_User_Data
+     (For_Each_Data_Access);
+
    package Path_Row_List is new Glib.Glist.Generic_List (Path_Row);
 
    type Paths_Widget_Record is new Gtk_Frame_Record with record
@@ -511,17 +529,17 @@ package body Remote.Config_Dialog is
 
       declare
          List : Gtk_Tree_Model renames Row.Sync_Combo.Get_Model;
-         Iter : Gtk_Tree_Iter := List.Get_Iter_First;
+         Iter : Gtk_Tree_Iter := Get_Iter_First (List);
       begin
          while Iter /= Null_Iter loop
-            if List.Get_String (Iter, 0) =
+            if Get_String (List, Iter, 0) =
               Synchronisation_String (Synchro).all
             then
                Row.Sync_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
 
-            List.Next (Iter);
+            Next (List, Iter);
          end loop;
       end;
 
@@ -635,7 +653,7 @@ package body Remote.Config_Dialog is
       declare
          Model    : Gtk_Tree_Model renames Row.Sync_Combo.Get_Model;
          Sync_Str : constant String :=
-                      Model.Get_String (Row.Sync_Combo.Get_Active_Iter, 0);
+                      Get_String (Model, Row.Sync_Combo.Get_Active_Iter, 0);
       begin
          for J in Synchronisation_Type'Range loop
             if Sync_Str = Synchronisation_String (J).all then
@@ -1184,7 +1202,7 @@ package body Remote.Config_Dialog is
 
       --  Fill the tree with already configured machines
 
-      Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
+      Model := -Get_Model (Dialog.Machine_Tree);
       Iter := Null_Iter;
 
       for J in Machines'Range loop
@@ -1239,49 +1257,49 @@ package body Remote.Config_Dialog is
          Iter  : Gtk_Tree_Iter;
       begin
          Model := Dialog.Remote_Access_Combo.Get_Model;
-         Iter  := Model.Get_Iter_First;
+         Iter  := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Model.Get_String (Iter, 0) = Machine.Access_Tool then
+            if Get_String (Model, Iter, 0) = Machine.Access_Tool then
                Dialog.Remote_Access_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          Model := Dialog.Remote_Shell_Combo.Get_Model;
-         Iter  := Model.Get_Iter_First;
+         Iter  := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Model.Get_String (Iter, 0) = Machine.Shell then
+            if Get_String (Model, Iter, 0) = Machine.Shell then
                Dialog.Remote_Shell_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          Model := Dialog.Remote_Sync_Combo.Get_Model;
-         Iter  := Model.Get_Iter_First;
+         Iter  := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Model.Get_String (Iter, 0) = Machine.Rsync_Func then
+            if Get_String (Model, Iter, 0) = Machine.Rsync_Func then
                Dialog.Remote_Sync_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          Model := Dialog.Cr_Lf_Combo.Get_Model;
-         Iter  := Model.Get_Iter_First;
+         Iter  := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Model.Get_String (Iter, 0) =
+            if Get_String (Model, Iter, 0) =
               Ada.Characters.Handling.To_Lower (Machine.Cr_Lf'Img)
             then
                Dialog.Cr_Lf_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
       end;
 
@@ -1309,41 +1327,22 @@ package body Remote.Config_Dialog is
       Dialog.Modified := False;
    end Set_Machine;
 
-   function For_Each
-     (Model     : access Gtk_Tree_Model_Record'Class;
-      Path      : Gtk_Tree_Path;
-      Iter      : Gtk_Tree_Iter;
-      User_Data : System.Address) return Boolean;
-   --  CB function for Gtk.Tree_Model.Foreach, searching for the iter
-   --  corresponding to the previously selected machine.
-
-   type For_Each_Data (Nickname_Length : Natural) is record
-      Nickname : String (1 .. Nickname_Length);
-      The_Iter : Gtk_Tree_Iter;
-      Found    : Boolean;
-   end record;
-   type For_Each_Data_Access is access all For_Each_Data;
-
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, For_Each_Data_Access);
-
    --------------
    -- For_Each --
    --------------
 
    function For_Each
-     (Model     : access Gtk_Tree_Model_Record'Class;
+     (Model     : Gtk_Tree_Model;
       Path      : Gtk_Tree_Path;
       Iter      : Gtk_Tree_Iter;
-      User_Data : System.Address) return Boolean
+      User_Data : For_Each_Data_Access) return Boolean
    is
       pragma Unreferenced (Path);
-      Data : constant For_Each_Data_Access := Convert (User_Data);
    begin
-      Data.The_Iter := Iter;
-      Data.Found    :=
-        Get_String (Model, Iter, Name_Col) = Data.Nickname;
-      return Data.Found;
+      User_Data.The_Iter := Iter;
+      User_Data.Found    :=
+        Get_String (Model, Iter, Name_Col) = User_Data.Nickname;
+      return User_Data.Found;
    end For_Each;
 
    -----------------
@@ -1371,8 +1370,7 @@ package body Remote.Config_Dialog is
                         The_Iter        => Gtk.Tree_Model.Null_Iter,
                         Found           => False);
       begin
-         Gtk.Tree_Model.Foreach (Model, For_Each'Access, Data'Address);
-
+         Foreach.Foreach (Model, For_Each'Access, Data'Unchecked_Access);
          if Data.Found then
             Dialog.Select_Back := True;
             Select_Iter (Get_Selection (Dialog.Machine_Tree), Data.The_Iter);
@@ -1413,10 +1411,10 @@ package body Remote.Config_Dialog is
                         The_Iter        => Gtk.Tree_Model.Null_Iter,
                         Found           => False);
       begin
-         Gtk.Tree_Model.Foreach (Model, For_Each'Access, Data'Address);
+         Foreach.Foreach (Model, For_Each'Access, Data'Unchecked_Access);
 
          if Data.Found then
-            Remove (Gtk_Tree_Store (Model), Data.The_Iter);
+            Remove (Gtk_Tree_Store'(-Model), Data.The_Iter);
          end if;
       end;
 
@@ -1664,7 +1662,8 @@ package body Remote.Config_Dialog is
 
    procedure On_Selection_Changed (W : access Gtk_Widget_Record'Class) is
       Dialog    : constant Server_List_Editor :=
-                    Server_List_Editor (W);
+        Server_List_Editor (W);
+      M         : Gtk_Tree_Model;
       Model     : Gtk.Tree_Store.Gtk_Tree_Store;
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
 
@@ -1688,8 +1687,8 @@ package body Remote.Config_Dialog is
 
       --  Now reinit the dialog values
 
-      Get_Selected
-        (Get_Selection (Dialog.Machine_Tree), Gtk_Tree_Model (Model), Iter);
+      Get_Selected (Get_Selection (Dialog.Machine_Tree), M, Iter);
+      Model := -M;
 
       if Iter /= Null_Iter then
          declare
@@ -1778,7 +1777,7 @@ package body Remote.Config_Dialog is
 
             Set_Child_Visible (Dialog.Right_Table, True);
 
-            Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
+            Model := -Get_Model (Dialog.Machine_Tree);
             Append (Model, Iter, Null_Iter);
             Set (Model, Iter, Name_Col, Nickname);
 

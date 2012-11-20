@@ -480,7 +480,7 @@ package body Project_Viewers is
       if Get_Event_Type (Event) = Gdk_2button_Press
         and then Get_Button (Event) = 1
       then
-         Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
+         Iter := Find_Iter_For_Event (V.Tree, Event);
          if Iter /= Null_Iter then
             if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then
                Unselect_All (Get_Selection (V.Tree));
@@ -780,14 +780,16 @@ package body Project_Viewers is
 
       Sorted := Freeze_Sort (Viewer.Model);
       Ref (Viewer.Model);
-      Set_Model (Viewer.Tree, null);  --  Do not refresh while adding files
+
+      --  Do not refresh while adding files
+      Set_Model (Viewer.Tree, Null_Gtk_Tree_Model);
 
       for F in Files'Range loop
          Append_Line (Viewer, Files (F), Directory_Filter);
       end loop;
 
       Thaw_Sort (Viewer.Model, Sorted);
-      Set_Model (Viewer.Tree, Gtk_Tree_Model (Viewer.Model));
+      Set_Model (Viewer.Tree, +Viewer.Model);
       Unref (Viewer.Model);
 
       Unchecked_Free (Files);
@@ -937,7 +939,7 @@ package body Project_Viewers is
 
    begin
       --  ??? Should call Project_Editor_Contextual
-      Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
+      Iter := Find_Iter_For_Event (V.Tree, Event);
 
       if Iter = Null_Iter then
          Set_File_Information (Context, Project => V.Current_Project);

@@ -311,16 +311,16 @@ package body Scenario_Views is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model renames Combo.Get_Model;
    begin
-      Iter := Model.Get_Iter_First;
+      Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
-         if Model.Get_String (Iter, 0) = Value then
+         if Get_String (Model, Iter, 0) = Value then
             Combo.Set_Active_Iter (Iter);
 
             return;
          end if;
 
-         Model.Next (Iter);
+         Next (Model, Iter);
       end loop;
    end Select_Value;
 

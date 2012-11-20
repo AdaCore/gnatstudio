@@ -68,10 +68,10 @@ PROJECTS.GNAT = no
 XREF.* = yes
 ALI=no
 ALI.PARSING=yes
-ALI.Assert=yes
+ALI.Assert=no
 CPP=no
 
-ENTITIES.*=yes
+--  ENTITIES.*=yes
 ENTITIES.DEBUG=no
 ENTITIES.DUMP = no
 ENTITIES.REF  = no

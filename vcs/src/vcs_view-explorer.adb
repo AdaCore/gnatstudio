@@ -66,7 +66,7 @@ package body VCS_View.Explorer is
      (GObject_Record, Natural);
 
    function Status_Sort
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
    --  Used to sort on status in the explorer, this special sort routine is
@@ -644,7 +644,7 @@ package body VCS_View.Explorer is
    -----------------
 
    function Status_Sort
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
    is
@@ -857,8 +857,7 @@ package body VCS_View.Explorer is
    begin
       --  If there is no selection, select the item under the cursor
 
-      Iter := Find_Iter_For_Event
-        (Explorer.Tree, Get_Model (Explorer.Tree), Event);
+      Iter := Find_Iter_For_Event (Explorer.Tree, Event);
 
       if Iter /= Null_Iter then
          Path := Get_Path (Get_Model (Explorer.Tree), Iter);

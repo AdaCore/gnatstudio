@@ -23,13 +23,14 @@ private with Gtkada.Abstract_Tree_Model;
 package GPS.Sort_Model is
 
    type GPS_Sort_Model_Record is
-     new Gtk.Tree_Model.Gtk_Tree_Model_Record with private;
+     new Gtk.Tree_Model.Gtk_Root_Tree_Model_Record with private;
 
    type GPS_Sort_Model is access all GPS_Sort_Model_Record'Class;
 
    procedure Initialize
      (Self   : not null access GPS_Sort_Model_Record'Class;
-      Source : not null Gtk.Tree_Model.Gtk_Tree_Model);
+      Source : not null access
+          Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
 
    procedure Invalidate (Self : not null access GPS_Sort_Model_Record'Class);
 

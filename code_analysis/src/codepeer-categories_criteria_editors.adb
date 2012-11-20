@@ -265,8 +265,9 @@ package body CodePeer.Categories_Criteria_Editors is
       use type Histories.History_Key;
 
       Iter  : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-                         Self.Model.Get_Iter_From_String
-                           (Interfaces.C.Strings.Value (Path));
+        Gtk.Tree_Model.Get_Iter_From_String
+          (Gtk.Tree_Model.To_Interface (Self.Model),
+           Interfaces.C.Strings.Value (Path));
 
    begin
       if Object.Get_Active then

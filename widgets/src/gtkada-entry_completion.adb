@@ -124,7 +124,7 @@ package body Gtkada.Entry_Completion is
       Gtk_New (The_Entry.List, (0 => GType_String,
                                 1 => GType_Int,
                                 2 => GType_String));
-      Set_Model (The_Entry.View, Gtk_Tree_Model (The_Entry.List));
+      Set_Model (The_Entry.View, +The_Entry.List);
       Return_Callback.Object_Connect
         (The_Entry.View, Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (On_Button_Press'Access), The_Entry);

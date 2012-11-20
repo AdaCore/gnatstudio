@@ -133,10 +133,10 @@ package body KeyManager_Module.GUI is
      (Editor : access Gtk_Widget_Record'Class);
    --  Called when the user toggles "View only actions with shortcuts"
 
-   package Keys_Editor_Visible_Funcs is new Gtk.Tree_Model_Filter.Visible_Funcs
-     (Keys_Editor);
+   package Keys_Editor_Visible_Funcs is new
+     Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Keys_Editor);
    function Action_Is_Visible
-     (Model : access Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
       Data  : Keys_Editor) return Boolean;
    --  Selects whether a given row should be visible in the key shortcuts
@@ -508,7 +508,7 @@ package body KeyManager_Module.GUI is
    -----------------------
 
    function Action_Is_Visible
-     (Model : access Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
       Data  : Keys_Editor) return Boolean
    is
@@ -540,7 +540,7 @@ package body KeyManager_Module.GUI is
          It           : Gtk_Tree_Iter;
          User_Changed : aliased Boolean;
       begin
-         Iter_Copy (Source => Iter, Dest => It);
+         It := Iter;
          while It /= Null_Iter loop
             if Children (Editor.Model, It) /= Null_Iter then
                Refresh_Iter (Children (Editor.Model, It));
@@ -892,12 +892,12 @@ package body KeyManager_Module.GUI is
           Key_Column        => GType_String));
 
       --  A filter model on top of it, so that we can filter out some rows
-      Gtk_New (Editor.Filter, Editor.Model);
+      Gtk_New (Editor.Filter, +Editor.Model);
       Keys_Editor_Visible_Funcs.Set_Visible_Func
         (Editor.Filter, Action_Is_Visible'Access, Editor);
 
       --  A sort model on top of the filter, so that rows can be sorted
-      Gtk_New_With_Model (Editor.Sort, Editor.Filter);
+      Gtk_New_With_Model (Editor.Sort, +Editor.Filter);
 
       Gtk_New (Editor.View, Editor.Sort);
       Set_Name (Editor.View, "Key shortcuts tree"); --  for testsuite

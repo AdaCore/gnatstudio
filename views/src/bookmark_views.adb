@@ -108,7 +108,7 @@ package body Bookmark_Views is
    type Bookmark_View is access all Bookmark_View_Record'Class;
 
    package Bookmarks_Selection_Foreach is new
-     Selection_Foreach (Bookmark_View_Record);
+     Gtk.Tree_Selection.Selected_Foreach_User_Data (Bookmark_View_Record);
    use Bookmarks_Selection_Foreach;
 
    function Initialize
@@ -345,7 +345,7 @@ package body Bookmark_Views is
       pragma Unreferenced (Command);
       View  : constant Bookmark_View_Access :=
                 Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Model : constant Gtk_Tree_Model := Get_Model (View.Tree);
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Data  : Bookmark_Data_Access;
       Iter  : Gtk_Tree_Iter;
    begin
@@ -358,7 +358,7 @@ package body Bookmark_Views is
 
             if Data /= null then
                Delete_Bookmark (Get_Kernel (Context.Context), Data.all);
-               Remove (Gtk_Tree_Store (Model), Iter);
+               Remove (Model, Iter);
                Iter := Get_Iter_First (Model);
             else
                Next (Model, Iter);
@@ -381,8 +381,7 @@ package body Bookmark_Views is
       procedure Edit_Selected
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Data_Type_Access);
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);
       --  Foreach callback on a selection
 
       -------------------
@@ -392,9 +391,8 @@ package body Bookmark_Views is
       procedure Edit_Selected
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Data_Type_Access) is
-         pragma Unreferenced (Model, Data);
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) is
+         pragma Unreferenced (Model);
       begin
          if Iter /= Null_Iter then
             Set_Cursor
@@ -408,9 +406,8 @@ package body Bookmark_Views is
       end Edit_Selected;
 
    begin
-      Selected_Foreach
-        (Get_Selection (View.Tree), Edit_Selected'Unrestricted_Access,
-         Data_Type_Access (View));
+      View.Tree.Get_Selection.Selected_Foreach
+        (Edit_Selected'Unrestricted_Access);
       return False;
 
    exception
@@ -429,15 +426,13 @@ package body Bookmark_Views is
    is
       View  : constant Bookmark_View_Access :=
                 Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
       Iter  : Gtk_Tree_Iter;
 
       Ignore : G_Source_Id;
       pragma Unreferenced (Command, Ignore);
    begin
       if Context.Event /= null then
-         Iter := Find_Iter_For_Event (View.Tree, Model, Context.Event);
+         Iter := Find_Iter_For_Event (View.Tree, Context.Event);
          if Iter /= Null_Iter then
             Unselect_All (Get_Selection (View.Tree));
             Select_Iter (Get_Selection (View.Tree), Iter);
@@ -528,10 +523,9 @@ package body Bookmark_Views is
       --  Nothing special in the context, just the module itself so that people
       --  can still add information if needed
       V     : constant Bookmark_View_Access := Bookmark_View_Access (Object);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter  : Gtk_Tree_Iter;
    begin
-      Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (V.Tree, Event);
 
       if Iter /= Null_Iter then
          Select_Iter (Get_Selection (V.Tree), Iter);
@@ -548,8 +542,7 @@ package body Bookmark_Views is
    is
       View   : constant Bookmark_View_Access := Bookmark_View_Access (Clip);
       Path   : Gtk_Tree_Path;
-      Model  : constant Gtk_Tree_Store :=
-                 Gtk_Tree_Store (Get_Model (View.Tree));
+      Model  : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Iter   : Gtk_Tree_Iter;
       Marker : Bookmark_Data_Access;
       Ignore : Boolean;
@@ -562,7 +555,7 @@ package body Bookmark_Views is
          Grab_Focus (View.Tree);
 
       elsif Get_Button (Event) = 1 then
-         Iter := Find_Iter_For_Event (View.Tree, Model, Event);
+         Iter := Find_Iter_For_Event (View.Tree, Event);
 
          if Iter /= Null_Iter then
             --  Select the row that was clicked
@@ -626,7 +619,7 @@ package body Bookmark_Views is
             View := Bookmark_View_Access (Get_Widget (Child));
          end if;
 
-         Model := Gtk_Tree_Store (Get_Model (View.Tree));
+         Model := -Get_Model (View.Tree);
          Refresh (View);
          Run_String_Hook (Kernel, Bookmark_Added_Hook, To_String (Mark));
 
@@ -659,8 +652,7 @@ package body Bookmark_Views is
    -------------
 
    procedure Refresh (View : access Bookmark_View_Record'Class) is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       List  : Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
       Iter  : Gtk_Tree_Iter;
    begin
@@ -689,8 +681,7 @@ package body Bookmark_Views is
       Params : Glib.Values.GValues)
    is
       View        : constant Gtk_Tree_View := Gtk_Tree_View (V);
-      M           : constant Gtk_Tree_Store :=
-                      Gtk_Tree_Store (Get_Model (View));
+      M           : constant Gtk_Tree_Store := -Get_Model (View);
       Path_String : constant String := Get_String (Nth (Params, 1));
       Text_Value  : constant GValue := Nth (Params, 2);
       Iter        : Gtk_Tree_Iter;

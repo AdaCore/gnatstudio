@@ -20,6 +20,7 @@ with Ada.Unchecked_Deallocation;
 with System.Address_To_Access_Conversions;
 
 with Glib.Object;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;
 
 package body GNATStack.Call_Tree_Models is
@@ -171,10 +172,10 @@ package body GNATStack.Call_Tree_Models is
 
    begin
       if Iter = Gtk.Tree_Model.Null_Iter then
-         return null;
+         return Null_Gtk_Tree_Path;
       end if;
 
-      Path := Gtk.Tree_Model.Gtk_New;
+      Gtk.Tree_Model.Gtk_New (Path);
 
       while Node /= Self.Root'Access loop
          Gtk.Tree_Model.Prepend_Index

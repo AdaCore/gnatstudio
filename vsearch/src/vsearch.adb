@@ -777,7 +777,7 @@ package body Vsearch is
       if Get_Active_Iter (Vsearch.Pattern_Combo) = Null_Iter then
          Iter := Add_Unique_Combo_Entry
            (Vsearch.Pattern_Combo, Pattern, Prepend => True);
-         List := Gtk_List_Store (Get_Model (Vsearch.Pattern_Combo));
+         List := -Get_Model (Vsearch.Pattern_Combo);
          List.Set (Iter, Column_Pattern, Pattern);
          List.Set (Iter, Column_Case_Sensitive, Options.Case_Sensitive);
          List.Set (Iter, Column_Is_Regexp, Options.Regexp);
@@ -1429,10 +1429,10 @@ package body Vsearch is
    begin
       if Get_Active_Iter (Search.Pattern_Combo) /= Null_Iter then
          Iter := Get_Active_Iter (Search.Pattern_Combo);
-         Case_Sensitive := Search.Pattern_Combo.Get_Model.Get_Boolean
-           (Iter, Column_Case_Sensitive);
-         Is_Regexp := Search.Pattern_Combo.Get_Model.Get_Boolean
-           (Iter, Column_Is_Regexp);
+         Case_Sensitive := Get_Boolean
+           (Search.Pattern_Combo.Get_Model, Iter, Column_Case_Sensitive);
+         Is_Regexp := Get_Boolean
+           (Search.Pattern_Combo.Get_Model, Iter, Column_Is_Regexp);
 
          Set_Active (Search.Case_Check, Case_Sensitive);
          Set_Active (Search.Regexp_Check, Is_Regexp);
@@ -1470,7 +1470,7 @@ package body Vsearch is
             Case_Sensitive => Case_Sensitive,
             Is_Regexp => Is_Regexp);
 
-         List := Gtk_List_Store (Get_Model (Search.Pattern_Combo));
+         List := -Get_Model (Search.Pattern_Combo);
          List.Set (Item, Column_Pattern, Get_Nth_Search_Regexp (Kernel, S));
          List.Set (Item, Column_Case_Sensitive, Case_Sensitive);
          List.Set (Item, Column_Is_Regexp, Is_Regexp);
@@ -1574,7 +1574,7 @@ package body Vsearch is
 
       Gtk.List_Store.Gtk_New (Model, (0 .. 0 => GType_String));
 
-      Gtk_New_With_Model_And_Entry (Vsearch.Replace_Combo, Model);
+      Gtk_New_With_Model_And_Entry (Vsearch.Replace_Combo, +Model);
       Vsearch.Replace_Combo.Set_Entry_Text_Column (0);
       Attach
         (Vsearch.Table, Vsearch.Replace_Combo, 1, 2, 1, 2,
@@ -1589,7 +1589,7 @@ package body Vsearch is
           Guint (Column_Pattern)        => GType_String,
           Guint (Column_Case_Sensitive) => GType_Boolean,
           Guint (Column_Is_Regexp)      => GType_Boolean));
-      Gtk_New_With_Model_And_Entry (Vsearch.Pattern_Combo, Model);
+      Gtk_New_With_Model_And_Entry (Vsearch.Pattern_Combo, +Model);
       Vsearch.Pattern_Combo.Set_Entry_Text_Column (Column_Pattern);
       Attach
         (Vsearch.Table, Vsearch.Pattern_Combo, 1, 2, 0, 1,
@@ -1815,7 +1815,7 @@ package body Vsearch is
         (Get_History (Handle).all, Replace_Hist_Key, Vsearch.Replace_Combo,
          Clear_Combo => False, Prepend => True);
 
-      Model := Gtk_List_Store (Get_Model (Vsearch.Pattern_Combo));
+      Model := -Get_Model (Vsearch.Pattern_Combo);
       Value := Get_History (Get_History (Handle).all, Pattern_Hist_Key);
 
       if Value /= null then

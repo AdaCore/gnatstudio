@@ -2872,7 +2872,7 @@ package body Project_Properties is
                Show_Column_Titles => False,
                Initial_Sort_On    => 2);
             Add (Scrolled, Tree);
-            Model := Gtk_Tree_Store (Get_Model (Tree));
+            Model := -Get_Model (Tree);
 
             case Filter is
                when Filter_From_Project =>
@@ -3163,7 +3163,7 @@ package body Project_Properties is
             Recurse  : constant Boolean := Get_Boolean (Ed.Model, Iter, 1);
             Relative : constant String := Get_String (Ed.Model, Iter, 2);
          begin
-            Iter_Copy (Iter, Dest => Iter2);
+            Iter2 := Iter;
             Next (Ed.Model, Iter);
 
             if Iter /= Null_Iter then
@@ -3536,7 +3536,7 @@ package body Project_Properties is
                Selection_Mode  => Gtk.Enums.Selection_Multiple,
                Initial_Sort_On => 1);
             Scrolled.Add (View);
-            Model := Gtk_Tree_Store (View.Get_Model);
+            Model := -View.Get_Model;
             Selection := View.Get_Selection;
 
             declare

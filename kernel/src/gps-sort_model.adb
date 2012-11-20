@@ -174,10 +174,11 @@ package body GPS.Sort_Model is
       pragma Unreferenced (Self);
 
       Aux   : Node_Access := Node;
-      Path  : constant Gtk_Tree_Path := Gtk_New;
+      Path  : Gtk_Tree_Path;
       Index : Gint;
 
    begin
+      Gtk_New (Path);
       while Aux.Parent /= null loop
          Index := Aux.Parent.From_Proxy.Find_Index (Aux);
          Prepend_Index (Path, Index);
@@ -198,10 +199,11 @@ package body GPS.Sort_Model is
       pragma Unreferenced (Self);
 
       Aux   : Node_Access := Node;
-      Path  : constant Gtk_Tree_Path := Gtk_New;
+      Path  : Gtk_Tree_Path;
       Index : Gint;
 
    begin
+      Gtk_New (Path);
       while Aux.Parent /= null loop
          Index := Aux.Parent.From_Source.Find_Index (Aux);
          Prepend_Index (Path, Index);
@@ -237,7 +239,7 @@ package body GPS.Sort_Model is
      (Self  : access GPS_Sort_Model_Record;
       Index : Glib.Gint) return Glib.GType is
    begin
-      return Self.Source.Get_Column_Type (Index);
+      return Get_Column_Type (+Self.Source, Index);
    end Get_Column_Type;
 
    --------------
@@ -296,7 +298,7 @@ package body GPS.Sort_Model is
      (Self : access GPS_Sort_Model_Record)
       return Glib.Gint is
    begin
-      return Self.Source.Get_N_Columns;
+      return Get_N_Columns (+Self.Source);
    end Get_N_Columns;
 
    --------------
@@ -321,7 +323,7 @@ package body GPS.Sort_Model is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue) is
    begin
-      Self.Source.Get_Value (Self.Map_To_Source (Iter), Column, Value);
+      Get_Value (+Self.Source, Self.Map_To_Source (Iter), Column, Value);
    end Get_Value;
 
    ---------------
@@ -341,7 +343,7 @@ package body GPS.Sort_Model is
 
    procedure Initialize
      (Self   : not null access GPS_Sort_Model_Record'Class;
-      Source : not null Gtk.Tree_Model.Gtk_Tree_Model)
+      Source : not null access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class)
    is
       procedure Populate
         (Parent_Iter : Gtk_Tree_Iter;
@@ -355,7 +357,7 @@ package body GPS.Sort_Model is
         (Parent_Iter : Gtk_Tree_Iter;
          Parent_Node : Node_Access)
       is
-         Iter : Gtk_Tree_Iter := Self.Source.Children (Parent_Iter);
+         Iter : Gtk_Tree_Iter := Children (Self.Source, Parent_Iter);
          Node : Node_Access;
 
       begin
@@ -369,7 +371,7 @@ package body GPS.Sort_Model is
             Parent_Node.From_Proxy.Append (Node);
             Populate (Iter, Node);
 
-            Self.Source.Next (Iter);
+            Next (Self.Source, Iter);
          end loop;
       end Populate;
 
@@ -377,34 +379,34 @@ package body GPS.Sort_Model is
       Gtkada.Abstract_Tree_Model.Initialize (Self);
 
       Self.Root   := new Node_Record;
-      Self.Source := Source;
+      Self.Source := To_Interface (Source);
       Self.Stamp  := 0;
 
       --  Attach callbacks to source model
 
       GPS_Proxy_Model_Callbacks.Object_Connect
-        (Self.Source,
+        (Source,
          Gtk.Tree_Model.Signal_Row_Changed,
          GPS_Proxy_Model_Callbacks.To_Marshaller (On_Row_Changed'Access),
          Self);
       GPS_Proxy_Model_Callbacks.Object_Connect
-        (Self.Source,
+        (Source,
          Gtk.Tree_Model.Signal_Row_Inserted,
          GPS_Proxy_Model_Callbacks.To_Marshaller (On_Row_Inserted'Access),
          Self);
       GPS_Proxy_Model_Callbacks.Object_Connect
-        (Self.Source,
+        (Source,
          Gtk.Tree_Model.Signal_Row_Deleted,
          GPS_Proxy_Model_Callbacks.To_Marshaller (On_Row_Deleted'Access),
          Self);
       GPS_Proxy_Model_Callbacks.Object_Connect
-        (Self.Source,
+        (Source,
          Gtk.Tree_Model.Signal_Row_Has_Child_Toggled,
          GPS_Proxy_Model_Callbacks.To_Marshaller
            (On_Row_Has_Child_Toggled'Access),
          Self);
       GPS_Proxy_Model_Callbacks.Object_Connect
-        (Self.Source,
+        (Source,
          Gtk.Tree_Model.Signal_Rows_Reordered,
          On_Rows_Reordered'Access,
          Self);
@@ -414,7 +416,7 @@ package body GPS.Sort_Model is
       Self.Weak_Ref (On_Destroy'Access, To_Address (GPS_Sort_Model (Self)));
 
       declare
-         Iter : Gtk_Tree_Iter := Self.Source.Get_Iter_First;
+         Iter : Gtk_Tree_Iter := Get_Iter_First (Self.Source);
          Node : Node_Access;
 
       begin
@@ -428,7 +430,7 @@ package body GPS.Sort_Model is
             Self.Root.From_Proxy.Append (Node);
             Populate (Iter, Node);
 
-            Self.Source.Next (Iter);
+            Next (Self.Source, Iter);
          end loop;
       end;
 
@@ -472,7 +474,7 @@ package body GPS.Sort_Model is
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Source_Path    : constant Gtk_Tree_Path :=
-                         Self.Source.Get_Path (Source_Iter);
+        Get_Path (Self.Source, Source_Iter);
       Source_Indices : constant Gint_Array := Get_Indices (Source_Path);
       Node           : Node_Access := Self.Root;
 
@@ -499,7 +501,7 @@ package body GPS.Sort_Model is
                       Self.Get_Node (Proxy_Iter);
       Source_Path : constant Gtk_Tree_Path := Self.Create_Source_Path (Node);
       Source_Iter : constant Gtk_Tree_Iter :=
-                      Self.Source.Get_Iter (Source_Path);
+                      Get_Iter (Self.Source, Source_Path);
 
    begin
       Path_Free (Source_Path);
@@ -627,7 +629,7 @@ package body GPS.Sort_Model is
       Proxy_Iter := Self.Create_Iter (Node);
       Proxy_Path := Self.Create_Proxy_Path (Node);
 
-      Self.Row_Changed (Proxy_Path, Proxy_Iter);
+      Row_Changed (To_Interface (Self), Proxy_Path, Proxy_Iter);
       Path_Free (Proxy_Path);
    end On_Row_Changed;
 
@@ -655,7 +657,7 @@ package body GPS.Sort_Model is
         (Node.Parent.From_Source.Find_Index (Node));
       Free (Node);
 
-      Self.Row_Deleted (Proxy_Path);
+      Row_Deleted (To_Interface (Self), Proxy_Path);
       Path_Free (Proxy_Path);
    end On_Row_Deleted;
 
@@ -682,7 +684,7 @@ package body GPS.Sort_Model is
 
       Proxy_Iter := Self.Create_Iter (Node);
       Proxy_Path := Self.Create_Proxy_Path (Node);
-      Self.Row_Has_Child_Toggled (Proxy_Path, Proxy_Iter);
+      Row_Has_Child_Toggled (To_Interface (Self), Proxy_Path, Proxy_Iter);
       Path_Free (Proxy_Path);
    end On_Row_Has_Child_Toggled;
 
@@ -734,7 +736,7 @@ package body GPS.Sort_Model is
          Append_Index
            (Path,
             Parent.From_Source.Find_Index (Parent.From_Proxy.Element (J)));
-         Iter := Self.Source.Get_Iter (Path);
+         Iter := Get_Iter (Self.Source, Path);
 
          if not Self.Less_Than (Source_Iter, Iter) then
             Index := J + 1;
@@ -751,7 +753,7 @@ package body GPS.Sort_Model is
 
       Iter := Self.Create_Iter (Node);
       Path := Self.Create_Proxy_Path (Node);
-      Self.Row_Inserted (Path, Iter);
+      Row_Inserted (To_Interface (Self), Path, Iter);
       Path_Free (Path);
    end On_Row_Inserted;
 
@@ -858,7 +860,7 @@ package body GPS.Sort_Model is
                Aux (J) := New_Order.Element (Gint (J));
             end loop;
 
-            Self.Rows_Reordered (Path, Iter, Aux.all);
+            Rows_Reordered (To_Interface (Self), Path, Iter, Aux.all);
 
             Path_Free (Path);
             Free (Aux);

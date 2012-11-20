@@ -1175,7 +1175,7 @@ package body Directory_Tree is
 
                      Expanding : constant Boolean := D.Explorer.Expanding;
                   begin
-                     if D.Explorer.Path /= null then
+                     if D.Explorer.Path /= Null_Gtk_Tree_Path then
                         Path_Free (D.Explorer.Path);
                      end if;
 
@@ -1427,7 +1427,7 @@ package body Directory_Tree is
       pragma Unreferenced (Params);
       E : constant Dir_Tree := Dir_Tree (Explorer);
    begin
-      if E.Path /= null then
+      if E.Path /= Null_Gtk_Tree_Path then
          Path_Free (E.Path);
       end if;
 
@@ -1564,7 +1564,7 @@ package body Directory_Tree is
    is
       Iter         : Gtk_Tree_Iter;
    begin
-      Iter := Find_Iter_For_Event (Tree, Model, Event);
+      Iter := Find_Iter_For_Event (Tree, Event);
 
       if Iter /= Null_Iter then
          if Get_Event_Type (Event) = Gdk_2button_Press then

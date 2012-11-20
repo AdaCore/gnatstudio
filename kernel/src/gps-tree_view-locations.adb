@@ -204,7 +204,7 @@ package body GPS.Tree_View.Locations is
 
    procedure Gtk_New
      (Object : in out GPS_Locations_Tree_View;
-      Model  : not null Gtk.Tree_Model.Gtk_Tree_Model) is
+      Model  : Gtk_Tree_Model) is
    begin
       Object := new GPS_Locations_Tree_View_Record;
       GPS.Tree_View.Locations.Initialize (Object, Model);
@@ -216,16 +216,16 @@ package body GPS.Tree_View.Locations is
 
    procedure Initialize
      (Self  : not null access GPS_Locations_Tree_View_Record'Class;
-      Model : not null Gtk.Tree_Model.Gtk_Tree_Model)
+      Model : Gtk.Tree_Model.Gtk_Tree_Model)
    is
 
    begin
       GPS.Tree_View.Initialize (Self, Model);
       Class_Initialize (Self);
-      Gtk_New (Self.Sort, Model);
+      Gtk_New (Self.Sort, -Model);
       GPS.Location_View_Filter.Gtk_New (Self.Filter);
       Self.Filter.Set_Source_Model (Self.Sort);
-      Self.Set_Source_Model (Gtk_Tree_Model (Self.Filter));
+      Self.Set_Source_Model (Self.Filter);
    end Initialize;
 
    ----------------------
@@ -283,7 +283,7 @@ package body GPS.Tree_View.Locations is
             end if;
          end if;
 
-         if Path /= null then
+         if Path /= Null_Gtk_Tree_Path then
             if Get_Depth (Path) < 3 then
                Path_Free (Path);
 
@@ -293,10 +293,11 @@ package body GPS.Tree_View.Locations is
                Self.Get_Selection.Select_Path (Path);
 
                if Column = Self.Action_Column then
-                  Self.Action_Clicked (Path, Self.Get_Model.Get_Iter (Path));
+                  Self.Action_Clicked (Path, Get_Iter (Self.Get_Model, Path));
 
                else
-                  Self.Location_Clicked (Path, Self.Get_Model.Get_Iter (Path));
+                  Self.Location_Clicked
+                    (Path, Get_Iter (Self.Get_Model, Path));
                end if;
             end if;
 
@@ -313,7 +314,7 @@ package body GPS.Tree_View.Locations is
          Self.Get_Path_At_Pos
            (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
 
-         if Path /= null then
+         if Path /= Null_Gtk_Tree_Path then
             if not Self.Get_Selection.Path_Is_Selected (Path) then
                Self.Get_Selection.Unselect_All;
                Self.Get_Selection.Select_Path (Path);
@@ -336,7 +337,7 @@ package body GPS.Tree_View.Locations is
    -- On_Lowerst_Model_Row_Inserted --
    -----------------------------------
 
-   overriding procedure On_Lowerst_Model_Row_Inserted
+   overriding procedure On_Lowest_Model_Row_Inserted
      (Self : not null access GPS_Locations_Tree_View_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -356,7 +357,7 @@ package body GPS.Tree_View.Locations is
       --  because different proxy models can have different filtering
       --  behavior.
       --  XXX Not implemented yet.
-   end On_Lowerst_Model_Row_Inserted;
+   end On_Lowest_Model_Row_Inserted;
 
    ----------------------
    -- On_Query_Tooltip --
@@ -432,7 +433,7 @@ package body GPS.Tree_View.Locations is
       --  Set tooltip's markup
 
       if Column /= Glib.Gint'Last then
-         Tooltip.Set_Markup (Model.Get_String (Iter, Column));
+         Tooltip.Set_Markup (Get_String (Model, Iter, Column));
          Self.Set_Tooltip_Row (Tooltip, Path);
       end if;
 
@@ -477,7 +478,7 @@ package body GPS.Tree_View.Locations is
    is
       Model      : Gtk_Tree_Model renames Self.Get_Model;
       Path       : Gtk_Tree_Path renames Self.On_Row_Expanded_Path;
-      Iter       : Gtk_Tree_Iter := Model.Get_Iter (Path);
+      Iter       : Gtk_Tree_Iter := Get_Iter (Model, Path);
       --  Iterator can't be stored and must be getted from the model because
       --  it expires each time filter model is changed.
       Start_Path : Gtk_Tree_Path;
@@ -488,16 +489,16 @@ package body GPS.Tree_View.Locations is
       Self.Get_Visible_Range (Start_Path, End_Path, Success);
 
       if Success
-        and then Model.Has_Child (Iter)
+        and then Has_Child (Model, Iter)
       then
          --  Go down till not expanded node or node leaf node is found
 
          loop
             Down (Path);
-            Iter := Model.Children (Iter);
+            Iter := Children (Model, Iter);
 
             exit when not Self.Row_Expanded (Path)
-              or else not Model.Has_Child (Iter);
+              or else not Has_Child (Model, Iter);
          end loop;
 
          if Compare (Path, End_Path) >= 0 then
@@ -509,7 +510,7 @@ package body GPS.Tree_View.Locations is
       Path_Free (End_Path);
       Path_Free (Path);
 
-      Self.On_Row_Expanded_Path := null;
+      Self.On_Row_Expanded_Path := Null_Gtk_Tree_Path;
       Self.On_Row_Expanded_Handler := No_Source_Id;
 
       return False;
@@ -557,12 +558,12 @@ package body GPS.Tree_View.Locations is
    -- To_Lowerst_Model_Iter --
    ---------------------------
 
-   overriding function To_Lowerst_Model_Iter
+   overriding function To_Lowest_Model_Iter
      (Self : not null access GPS_Locations_Tree_View_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter is
    begin
       return Self.Sort.Map_To_Source (Self.Filter.Map_To_Source (Iter));
-   end To_Lowerst_Model_Iter;
+   end To_Lowest_Model_Iter;
 
 end GPS.Tree_View.Locations;

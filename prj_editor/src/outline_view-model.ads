@@ -37,7 +37,8 @@ private package Outline_View.Model is
    Display_Name_Column : constant := 1;
 
    type Outline_Model_Record
-     is new Gtk_Abstract_Tree_Model_Record with private;
+     is new Gtkada.Abstract_Tree_Model.Gtk_Abstract_Tree_Model_Record
+       with private;
    --  This model represents a structured tree. It contains instances of
    --  Entity_Persisent_Access. Using the update listener callback, we ensure
    --  that these entities are never referenced if they don't exist - so we

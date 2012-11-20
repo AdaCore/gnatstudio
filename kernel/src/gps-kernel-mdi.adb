@@ -558,7 +558,7 @@ package body GPS.Kernel.MDI is
          Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
          Pack_Start (Get_Content_Area (Dialog), Scrolled, Padding => 10);
 
-         Gtk_New (View, Gtk_Tree_Model (Model));
+         Gtk_New (View, Model);
          Unref (Model);
 
          Set_Mode (Get_Selection (View), Selection_Single);
@@ -706,8 +706,7 @@ package body GPS.Kernel.MDI is
    -------------------------
 
    procedure Select_All_Children (View : access Gtk_Widget_Record'Class) is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
+      Model : constant Gtk_Tree_Store := -Get_Model (Gtk_Tree_View (View));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Value : Boolean;
 
@@ -730,8 +729,7 @@ package body GPS.Kernel.MDI is
      (View   : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Model       : constant Gtk_Tree_Store :=
-                      Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
+      Model : constant Gtk_Tree_Store := -Get_Model (Gtk_Tree_View (View));
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : constant Gtk_Tree_Iter :=
                       Get_Iter_From_String (Model, Path_String);

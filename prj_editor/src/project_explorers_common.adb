@@ -584,7 +584,7 @@ package body Project_Explorers_Common is
       Line, Column : Gint;
    begin
       if Get_Button (Event) = 1 then
-         Iter := Find_Iter_For_Event (Tree, Model, Event);
+         Iter := Find_Iter_For_Event (Tree, Event);
 
          if Iter /= Null_Iter then
             if Get_Event_Type (Event) /= Button_Release then
@@ -723,7 +723,7 @@ package body Project_Explorers_Common is
          when File_Node =>
             Open_File_Editor
               (Kernel,
-               Get_File (Model, Iter, File_Column),
+               Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column),
                Line   => 0,
                Column => 0);
 
@@ -733,7 +733,7 @@ package body Project_Explorers_Common is
 
             Open_File_Editor
               (Kernel,
-               Get_File (Model, Iter, File_Column),
+               Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column),
                Line   => Natural (Line),
                Column => Visible_Column_Type (Column));
 
@@ -977,7 +977,7 @@ package body Project_Explorers_Common is
       end Entity_Base;
 
       Iter      : constant Gtk_Tree_Iter :=
-                    Find_Iter_For_Event (Tree, Model, Event);
+                    Find_Iter_For_Event (Tree, Event);
       Node_Type : Node_Types;
       L         : Integer := 0;
 

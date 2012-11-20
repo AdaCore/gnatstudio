@@ -116,8 +116,8 @@ package body Outline_View.Model is
 
       --  Now unlink & destroy this node
 
-      if Path /= null then
-         Row_Deleted (Obj.Model, Path);
+      if Path /= Null_Gtk_Tree_Path then
+         Row_Deleted (+Obj.Model, Path);
          Path_Free (Path);
       end if;
 
@@ -596,9 +596,10 @@ package body Outline_View.Model is
      (Self : access Outline_Model_Record'Class;
       Node : Sorted_Node_Access) return Gtk.Tree_Model.Gtk_Tree_Path
    is
-      Path : constant Gtk_Tree_Path := Gtk_New;
+      Path : Gtk_Tree_Path;
       Cur  : Sorted_Node_Access := Node;
    begin
+      Gtk_New (Path);
       while Cur /= null and then Cur /= Self.Phantom_Root'Access loop
          Prepend_Index (Path, Gint (Cur.Index_In_Siblings));
 
@@ -612,13 +613,15 @@ package body Outline_View.Model is
      (Self : access Outline_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
+      Path : Gtk_Tree_Path;
    begin
       return Get_Path (Self, Get_Sorted_Node (Iter));
 
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         return Gtk_New ("");
+         Gtk_New (Path, "");
+         return Path;
    end Get_Path;
 
    ---------------
@@ -1000,7 +1003,7 @@ package body Outline_View.Model is
          --  Notify the model of the change
 
          Path := Get_Path (Model, Child_Node);
-         Row_Inserted (Model, Path, New_Iter (Child_Node));
+         Row_Inserted (+Model, Path, New_Iter (Child_Node));
          Path_Free (Path);
 
          --  Get the first level children and add them to the model
@@ -1012,7 +1015,7 @@ package body Outline_View.Model is
          begin
             while Tmp_Node /= null loop
                Path := Get_Path (Model, Tmp_Node);
-               Row_Inserted (Model, Path, New_Iter (Tmp_Node));
+               Row_Inserted (+Model, Path, New_Iter (Tmp_Node));
                Path_Free (Path);
 
                Tmp_Node := Tmp_Node.Next;
@@ -1158,9 +1161,12 @@ package body Outline_View.Model is
          end if;
       end Open_Node;
 
+      Path : Gtk_Tree_Path;
+
    begin
       if Model.File = null then
-         return Gtk_New;
+         Gtk_New (Path);
+         return Path;
       end if;
 
       Open_Node
@@ -1172,7 +1178,8 @@ package body Outline_View.Model is
             Position => Enclosing));
 
       if Last_Node = null then
-         return Gtk_New;
+         Gtk_New (Path);
+         return Path;
       else
          return Get_Path (Model, Last_Node);
       end if;

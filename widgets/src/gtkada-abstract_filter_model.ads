@@ -45,7 +45,7 @@ package Gtkada.Abstract_Filter_Model is
 
    procedure Set_Source_Model
      (Self  : not null access Gtk_Abstract_Filter_Model_Record;
-      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class);
+      Model : access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
    --  Sets source model.
 
    function Get_Source_Model
@@ -129,6 +129,9 @@ package Gtkada.Abstract_Filter_Model is
       return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Returns iter of Parent of the specified Child.
 
+   function "+" (Self : access Gtk_Abstract_Filter_Model_Record)
+      return Gtk.Tree_Model.Gtk_Tree_Model;
+
 private
 
    type Visibility_Kinds is (Visible, Invisible, Unknown);
@@ -148,7 +151,8 @@ private
    type Gtk_Abstract_Filter_Model_Record is
      new Gtkada.Abstract_Tree_Model.Gtk_Abstract_Tree_Model_Record
    with record
-      Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Model : Gtk.Tree_Model.Gtk_Tree_Model :=
+        Gtk.Tree_Model.Null_Gtk_Tree_Model;
       Stamp : Glib.Gint;
       Root  : Node_Access;
    end record;

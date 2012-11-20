@@ -75,7 +75,7 @@ package body CodePeer.Messages_Reports is
            Messages_Report);
 
    package Compare_Functions is
-     new Gtk.Tree_Sortable.Compare_Funcs (Messages_Report);
+     new Gtk.Tree_Sortable.Set_Default_Sort_Func_User_Data (Messages_Report);
 
    procedure On_Destroy (Self : access Messages_Report_Record'Class);
 
@@ -138,14 +138,14 @@ package body CodePeer.Messages_Reports is
    --  selection on mouse press, and activation on double-press/release events.
 
    function Compare
-     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model     : Gtk_Tree_Model;
       A         : Gtk.Tree_Model.Gtk_Tree_Iter;
       B         : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self      : Messages_Report) return Glib.Gint;
    --  Compare two rows in the model.
 
    function Is_Messages_Category_Visible
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self  : Messages_Report) return Boolean;
    --  Returns True when specified item in the Entity's Messages Summary
@@ -153,7 +153,7 @@ package body CodePeer.Messages_Reports is
    --  Entity_Messages_Model has.
 
    package Summary_Report_Visible_Funcs is
-     new Gtk.Tree_Model_Filter.Visible_Funcs (Messages_Report);
+     new Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Messages_Report);
 
    package Message_Category_Conversions is
      new System.Address_To_Access_Conversions (Message_Category);
@@ -195,7 +195,7 @@ package body CodePeer.Messages_Reports is
    -------------
 
    function Compare
-     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model     : Gtk_Tree_Model;
       A         : Gtk.Tree_Model.Gtk_Tree_Iter;
       B         : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self      : Messages_Report) return Glib.Gint
@@ -235,7 +235,7 @@ package body CodePeer.Messages_Reports is
          Value : Glib.Values.GValue;
 
       begin
-         Model.Get_Value (Iter, Column, Value);
+         Get_Value (Model, Iter, Column, Value);
 
          declare
             Image : constant String := Glib.Values.Get_String (Value);
@@ -289,7 +289,7 @@ package body CodePeer.Messages_Reports is
       end Get;
 
    begin
-      if Model.Parent (A) = Gtk.Tree_Model.Null_Iter then
+      if Parent (Model, A) = Gtk.Tree_Model.Null_Iter then
          return 0;
       end if;
 
@@ -340,7 +340,7 @@ package body CodePeer.Messages_Reports is
       Self.Analysis_View.Get_Path_At_Pos
         (X, Y, Path, Column, Cell_X, Cell_Y, Found);
 
-      if Path /= null then
+      if Path /= Null_Gtk_Tree_Path then
          Self.Analysis_View.Get_Selection.Select_Path (Path);
          Model_Path :=
            Self.Analysis_Sort_Model.Convert_Path_To_Child_Path (Path);
@@ -575,12 +575,11 @@ package body CodePeer.Messages_Reports is
          File_Icon,
          Subprogram_Icon);
       Gtk.Tree_Model_Sort.Gtk_New_With_Model
-        (Self.Analysis_Sort_Model, Self.Analysis_Model);
+        (Self.Analysis_Sort_Model, To_Interface (Self.Analysis_Model));
       Compare_Functions.Set_Default_Sort_Func
         (+Self.Analysis_Sort_Model, Compare'Access, Messages_Report (Self));
       Gtk.Tree_View.Gtk_New
-        (Self.Analysis_View,
-         Gtk.Tree_Model.Gtk_Tree_Model (Self.Analysis_Sort_Model));
+        (Self.Analysis_View, +Self.Analysis_Sort_Model);
       Scrolled.Add (Self.Analysis_View);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -747,7 +746,7 @@ package body CodePeer.Messages_Reports is
       CodePeer.Entity_Messages_Models.Gtk_New
         (Self.Messages_Model, Project_Data.Message_Categories);
       Gtk.Tree_Model_Filter.Gtk_New
-        (Self.Messages_Filter, Self.Messages_Model);
+        (Self.Messages_Filter, To_Interface (Self.Messages_Model));
       Summary_Report_Visible_Funcs.Set_Visible_Func
         (Self.Messages_Filter,
          Is_Messages_Category_Visible'Access,
@@ -968,7 +967,7 @@ package body CodePeer.Messages_Reports is
    ----------------------------------
 
    function Is_Messages_Category_Visible
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self  : Messages_Report) return Boolean
    is
@@ -979,8 +978,8 @@ package body CodePeer.Messages_Reports is
       Visible  : Boolean := False;
 
    begin
-      Model.Get_Value
-        (Iter,
+      Get_Value
+        (Model, Iter,
          CodePeer.Entity_Messages_Models.Message_Category_Column,
          Value);
       Category :=
@@ -1003,12 +1002,15 @@ package body CodePeer.Messages_Reports is
       return
         Visible
         and then
-          (Model.Get_String
-               (Iter, CodePeer.Entity_Messages_Models.Low_Count_Column) /= ""
-           or else Model.Get_String
-             (Iter, CodePeer.Entity_Messages_Models.Medium_Count_Column) /= ""
-           or else Model.Get_String
-             (Iter, CodePeer.Entity_Messages_Models.High_Count_Column) /= "");
+          (Get_String
+             (Model, Iter, CodePeer.Entity_Messages_Models.Low_Count_Column) /=
+             ""
+           or else Get_String
+             (Model, Iter, CodePeer.Entity_Messages_Models.Medium_Count_Column)
+             /= ""
+           or else Get_String
+             (Model, Iter, CodePeer.Entity_Messages_Models.High_Count_Column)
+             /= "");
    end Is_Messages_Category_Visible;
 
    -----------------------
@@ -1049,7 +1051,7 @@ package body CodePeer.Messages_Reports is
          Self.Analysis_View.Get_Path_At_Pos
            (X, Y, Path, Column, Cell_X, Cell_Y, Found);
 
-         if Path /= null then
+         if Path /= Null_Gtk_Tree_Path then
             Self.Analysis_View.Get_Selection.Select_Path (Path);
             Sort_Iter := Self.Analysis_Sort_Model.Get_Iter (Path);
             Self.Analysis_Sort_Model.Convert_Iter_To_Child_Iter

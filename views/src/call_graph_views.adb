@@ -44,6 +44,7 @@ with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.List_Store;              use Gtk.List_Store;
+with Gtk.Tree_Row_Reference;      use Gtk.Tree_Row_Reference;
 with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
@@ -412,7 +413,7 @@ package body Call_Graph_Views is
          Get_Selected (Get_Selection (V.Tree), Model, Selected);
 
          if Selected /= Null_Iter then
-            Iter_Copy (Selected, New_Iter);
+            New_Iter := Selected;
 
             Path := Get_Path (Model, New_Iter);
 
@@ -652,8 +653,7 @@ package body Call_Graph_Views is
       View := Callgraph_View_Access (Widget);
 
       if Get_Event_Type (Event) = Button_Press then
-         Iter := Find_Iter_For_Event
-           (View.Locations_Tree, View.Locations_Model, Event);
+         Iter := Find_Iter_For_Event (View.Locations_Tree, Event);
 
          if Iter /= Null_Iter then
             Select_Iter (Get_Selection (View.Locations_Tree), Iter);
@@ -785,8 +785,7 @@ package body Call_Graph_Views is
 
       V      : constant Callgraph_View_Access :=
                  Callgraph_View_Access (View);
-      M      : constant Gtk_Tree_Store :=
-                 Gtk_Tree_Store (Get_Model (V.Tree));
+      M      : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Child  : Gtk_Tree_Iter := Null_Iter;
       Dummy  : Gtk_Tree_Iter;
       Value  : GValue;
@@ -797,6 +796,7 @@ package body Call_Graph_Views is
 
       Local_Path  : Gtk_Tree_Path;
       Model : constant Gtk_Tree_Model := V.Tree.Get_Model;
+      Row : Gtk_Tree_Row_Reference;
    begin
       if V.Block_On_Expanded then
          return;
@@ -821,25 +821,26 @@ package body Call_Graph_Views is
       --  by gtk+.
 
       Local_Path := Get_Path (Model, Iter);
+      Gtk_New (Row, Model, Local_Path);
       Data := new Ancestors_User_Data'
         (Commands_User_Data_Record with
            View        => V,
-         Computing_Ref => null,
-         Entity_Ref    => Gtk_New (Model, Local_Path));
+         Computing_Ref => Null_Gtk_Tree_Row_Reference,
+         Entity_Ref    => Row);
       Path_Free (Local_Path);
 
       Prepend (M, Computing_Iter, Iter);
       Set (M, Computing_Iter, Name_Column, Computing_Label);
 
-      Iter_Copy (Computing_Iter, Child);
+      Child := Computing_Iter;
       Next (M, Child);
 
       Local_Path := Get_Path (Model, Computing_Iter);
-      Data.Computing_Ref := Gtk_New (Model, Local_Path);
+      Gtk_New (Data.Computing_Ref, Model, Local_Path);
       Path_Free (Local_Path);
 
       while Child /= Null_Iter loop
-         Iter_Copy (Child, Dummy);
+         Dummy := Child;
          Next (M, Child);
          Remove (M, Dummy);
       end loop;
@@ -882,7 +883,7 @@ package body Call_Graph_Views is
 
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      Remove (Gtk_Tree_Store (Model), Iter);
+      Remove (Gtk_Tree_Store'(-Model), Iter);
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
@@ -894,8 +895,7 @@ package body Call_Graph_Views is
 
    procedure Clear_View (Object : access Gtk_Widget_Record'Class) is
       Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store
-                  (Get_Model (Callgraph_View_Access (Object).Tree));
+                -Get_Model (Callgraph_View_Access (Object).Tree);
    begin
       Clear (Model);
    exception
@@ -930,7 +930,7 @@ package body Call_Graph_Views is
       pragma Unreferenced (Event_Widget, Kernel);
       V      : constant Callgraph_View_Access :=
                  Callgraph_View_Access (Object);
-      Model  : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Model  : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Iter   : Gtk_Tree_Iter;
       Entity : General_Entity;
       Value  : GValue;
@@ -938,7 +938,7 @@ package body Call_Graph_Views is
       Sep    : Gtk_Separator_Menu_Item;
 
    begin
-      Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (V.Tree, Event);
 
       if Iter /= Null_Iter then
          Select_Iter (Get_Selection (V.Tree), Iter);
@@ -1039,7 +1039,7 @@ package body Call_Graph_Views is
          Init (L_Value, GType_Pointer);
          Set_Address (L_Value, Addr);
          Set_Value
-           (Gtk_Tree_Store (Get_Model (View.Tree)),
+           (Gtk_Tree_Store'(-Get_Model (View.Tree)),
             Iter, List_Column, L_Value);
 
          return L;
@@ -1055,8 +1055,7 @@ package body Call_Graph_Views is
    overriding function Save_To_XML
      (View : access Callgraph_View_Record) return XML_Utils.Node_Ptr
    is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Root  : Node_Ptr;
 
       procedure Recursive_Save
@@ -1166,8 +1165,7 @@ package body Call_Graph_Views is
    overriding procedure Load_From_XML
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr)
    is
-      Model    : constant Gtk_Tree_Store :=
-                   Gtk_Tree_Store (Get_Model (View.Tree));
+      Model    : constant Gtk_Tree_Store := -Get_Model (View.Tree);
 
       Is_Calls : Boolean := True;
       --  For upward compatibility
@@ -1249,11 +1247,6 @@ package body Call_Graph_Views is
                      Line   => Safe_Value (Get_Attribute (N, "entity_line")),
                      Column => Basic_Types.Visible_Column_Type
                        (Safe_Value (Get_Attribute (N, "entity_column")))));
-
-               Trace (Me, "MANU Loading desktop, got entity = "
-                      & View.Kernel.Databases.Get_Name (Entity)
-                      & " null?"
-                      & Boolean'Image (Entity = No_General_Entity));
 
                Set_Value (Model, Iter, Entity_Column, To_GValue (Entity));
             end if;
@@ -1453,8 +1446,7 @@ package body Call_Graph_Views is
       Parent_Iter         : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter
    is
       pragma Unreferenced (Parent);
-      Model     : constant Gtk_Tree_Store :=
-                    Gtk_Tree_Store (Get_Model (View.Tree));
+      Model     : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Decl      : constant General_Entity_Declaration :=
         View.Kernel.Databases.Get_Declaration (Entity);
       Iter      : Gtk_Tree_Iter;
@@ -1573,20 +1565,19 @@ package body Call_Graph_Views is
         and then Valid (Data.Computing_Ref)
       then
          Path := Get_Path (Data.Computing_Ref);
-         Model := Gtk_Tree_Store (Get_Model (Data.View.Tree));
+         Model := -Get_Model (Data.View.Tree);
          Iter := Get_Iter (Model, Path);
          Remove (Model, Iter);
          Path_Free (Path);
       end if;
 
-      if Data.Computing_Ref /= null then
-         Row_Reference_Free (Data.Computing_Ref);
+      if Data.Computing_Ref /= Null_Gtk_Tree_Row_Reference then
+         Free (Data.Computing_Ref);
       end if;
 
-      if Data.Entity_Ref /= null then
-         Row_Reference_Free (Data.Entity_Ref);
+      if Data.Entity_Ref /= Null_Gtk_Tree_Row_Reference then
+         Free (Data.Entity_Ref);
       end if;
-
    end Destroy;
 
    ---------------------

@@ -158,7 +158,7 @@ package body Variable_Editors is
       --  Create the model that contains the data to show in the tree
 
       Gtk_New (Editor.Model, Column_Types);
-      Set_Model (Editor.Values_List, Gtk_Tree_Model (Editor.Model));
+      Set_Model (Editor.Values_List, +Editor.Model);
 
       --  Create the cell renderers that are needed to display the tree view
 
@@ -278,9 +278,11 @@ package body Variable_Editors is
       Selection : constant Gtk_Tree_Selection :=
                     Get_Selection (E.Values_List);
       Iter      : Gtk_Tree_Iter;
+      M         : Gtk_Tree_Model;
 
    begin
-      Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
+      Get_Selected (Selection, M, Iter);
+      E.Model := -M;
 
       if Iter /= Null_Iter then
          Set_Cursor
@@ -300,9 +302,11 @@ package body Variable_Editors is
       Selection : constant Gtk_Tree_Selection :=
                     Get_Selection (E.Values_List);
       Iter      : Gtk_Tree_Iter;
+      M         : Gtk_Tree_Model;
 
    begin
-      Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
+      Get_Selected (Selection, M, Iter);
+      E.Model := -M;
 
       if Iter /= Null_Iter then
          Remove (E.Model, Iter);

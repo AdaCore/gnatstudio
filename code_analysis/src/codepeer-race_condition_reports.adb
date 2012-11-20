@@ -21,7 +21,7 @@ with Gtk.Cell_Renderer_Text;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Scrolled_Window;
-with Gtk.Tree_Model;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
@@ -168,7 +168,7 @@ package body CodePeer.Race_Condition_Reports is
          Self.Summary_View.Get_Path_At_Pos
            (X, Y, Path, Column, Cell_X, Cell_Y, Found);
 
-         if Path /= null then
+         if Path /= Null_Gtk_Tree_Path then
             Self.Summary_View.Get_Selection.Select_Path (Path);
             Iter := Self.Summary_Model.Get_Iter (Path);
             Self.Details_Model.Set

@@ -351,7 +351,7 @@ package body XML_Viewer is
       if Get_Event_Type (Event) = Gdk_2button_Press
         or else Get_Event_Type (Event) = Button_Press
       then
-         Iter := Find_Iter_For_Event (View.Tree, View.Tree.Model, Event);
+         Iter := Find_Iter_For_Event (View.Tree, Event);
          if Iter /= Null_Iter then
             N :=
               Convert (Get_Address (View.Tree.Model, Iter, View.XML_Column));

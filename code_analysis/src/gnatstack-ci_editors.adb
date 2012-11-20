@@ -158,16 +158,18 @@ package body GNATStack.CI_Editors is
      (Self   : access CI_Editor_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Path       : constant Gtk.Tree_Model.Gtk_Tree_Path :=
-        Gtk.Tree_Model.Gtk_New
-          (Glib.Values.Get_String (Glib.Values.Nth (Params, 1)));
+      Path       : Gtk.Tree_Model.Gtk_Tree_Path;
       Value      : constant String :=
         Glib.Values.Get_String (Glib.Values.Nth (Params, 2));
       Size       : Integer;
-      Subprogram : constant Data_Model.Subprogram_Information_Access :=
-         Self.CI_Model.Subprogram_At (Self.CI_Model.Get_Iter (Path));
+      Subprogram : Data_Model.Subprogram_Information_Access;
 
    begin
+      Gtk.Tree_Model.Gtk_New
+        (Path, Glib.Values.Get_String (Glib.Values.Nth (Params, 1)));
+      Subprogram :=
+        Self.CI_Model.Subprogram_At (Self.CI_Model.Get_Iter (Path));
+
       begin
          Size := Integer'Value (Value);
 
@@ -202,17 +204,19 @@ package body GNATStack.CI_Editors is
      (Self   : access CI_Editor_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Path       : constant Gtk.Tree_Model.Gtk_Tree_Path :=
-        Gtk.Tree_Model.Gtk_New
-          (Glib.Values.Get_String (Glib.Values.Nth (Params, 1)));
+      Path       : Gtk.Tree_Model.Gtk_Tree_Path;
       Value      : constant String :=
         Glib.Values.Get_String (Glib.Values.Nth (Params, 2));
       Size       : Integer;
-      Subprogram : constant Data_Model.Subprogram_Information_Access :=
+      Subprogram : Data_Model.Subprogram_Information_Access;
+
+   begin
+      Gtk.Tree_Model.Gtk_New
+        (Path, Glib.Values.Get_String (Glib.Values.Nth (Params, 1)));
+      Subprogram :=
         Self.Unassigned_Model.Subprogram_At
           (Self.Unassigned_Model.Get_Iter (Path));
 
-   begin
       begin
          Size := Integer'Value (Value);
 

@@ -27,11 +27,13 @@ package GPS.Sort_Model.Locations is
 
    procedure Gtk_New
      (Model  : in out Locations_Proxy_Model;
-      Source : not null Gtk.Tree_Model.Gtk_Tree_Model);
+      Source : not null
+         access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
 
    procedure Initialize
      (Self   : not null access Locations_Proxy_Model_Record'Class;
-      Source : not null Gtk.Tree_Model.Gtk_Tree_Model);
+      Source : not null
+         access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
 
    procedure Set_Locations_Order
      (Self : not null access Locations_Proxy_Model_Record'Class);
@@ -45,7 +47,7 @@ private
 
    type Compare_Function is
      access function
-       (Self : not null access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+       (Self : Gtk.Tree_Model.Gtk_Tree_Model;
         A    : Gtk.Tree_Model.Gtk_Tree_Iter;
         B    : Gtk.Tree_Model.Gtk_Tree_Iter) return Glib.Gint;
 

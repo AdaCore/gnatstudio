@@ -325,7 +325,8 @@ package body Project_Explorers_Files is
       pragma Unreferenced (Kernel);
 
       Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Object);
-      Model : Gtk_Tree_Model := Tree.Get_Model;
+      Model : Gtk_Tree_Model;
+      M     : constant Gtk_Tree_Store := -Tree.Get_Model;
       Iter  : Gtk_Tree_Iter;
       Kind  : Node_Types;
       File  : Virtual_File;
@@ -338,12 +339,12 @@ package body Project_Explorers_Files is
          return;
       end if;
 
-      Kind := Node_Types'Val (Get_Int (Model, Iter, Node_Type_Column));
+      Kind := Node_Types'Val (Get_Int (M, Iter, Node_Type_Column));
 
       case Kind is
 
          when File_Node | Directory_Node =>
-            File := Get_File (Model, Iter, File_Column);
+            File := Get_File (M, Iter, File_Column);
 
          when others =>
             return;
@@ -364,7 +365,7 @@ package body Project_Explorers_Files is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       Tree    : constant Gtk_Tree_View := Gtk_Tree_View (Object);
-      Model   : constant Gtk_Tree_Model := Tree.Get_Model;
+      Model   : constant Gtk_Tree_Store := -Tree.Get_Model;
       Context : constant Drag_Context :=
                   Drag_Context (Get_Object (Nth (Args, 1)));
       X       : constant Gint := Get_Int (Nth (Args, 2));
@@ -390,7 +391,7 @@ package body Project_Explorers_Files is
             Buffer_Y,
             Success);
 
-         if not Success or Path = null then
+         if not Success or Path = Null_Gtk_Tree_Path then
             Iter := Null_Iter;
          else
             Iter := Get_Iter (Model, Path);
@@ -940,7 +941,7 @@ package body Project_Explorers_Files is
       T         : constant Project_Explorer_Files :=
                     Project_Explorer_Files (Object);
       Iter      : constant Gtk_Tree_Iter :=
-                    Find_Iter_For_Event (T.File_Tree, T.File_Model, Event);
+                    Find_Iter_For_Event (T.File_Tree, Event);
       Path      : Gtk_Tree_Path;
       File      : Virtual_File;
       Node_Type : Node_Types;
@@ -1469,6 +1470,7 @@ package body Project_Explorers_Files is
    is
       Tree : constant Gtk.Tree_View.Gtk_Tree_View :=
         Tooltip.Explorer.File_Tree;
+      Model : constant Gtk_Tree_Store := -Get_Model (Tree);
       Iter : Gtk_Tree_Iter;
       Text : GNAT.Strings.String_Access;
 
@@ -1479,7 +1481,7 @@ package body Project_Explorers_Files is
       if Iter /= Null_Iter then
          declare
             File : constant Virtual_File :=
-              Get_File (Get_Model (Tree), Iter, File_Column);
+              Get_File (Model, Iter, File_Column);
             Dir  : constant Virtual_File := Get_Parent (File);
          begin
             Text := new String'

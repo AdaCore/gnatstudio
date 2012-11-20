@@ -17,7 +17,7 @@
 
 with Ada.Strings.Unbounded;
 with System.Address_To_Access_Conversions;
-
+with Gtk.Tree_Model;                        use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;
 
 package body GNATStack.CI_Models is
@@ -147,14 +147,13 @@ package body GNATStack.CI_Models is
 
    begin
       if Subprogram /= null then
-         Path := Gtk.Tree_Model.Gtk_New;
+         Gtk.Tree_Model.Gtk_New (Path);
          Gtk.Tree_Model.Append_Index
            (Path, Glib.Gint (Self.Map.Find_Index (Subprogram) - 1));
-
          return Path;
       end if;
 
-      return null;
+      return Null_Gtk_Tree_Path;
    end Get_Path;
 
    ---------------
@@ -268,7 +267,7 @@ package body GNATStack.CI_Models is
 
       Iter := Create_Iter (Self, Subprogram);
       Path := Self.Get_Path (Iter);
-      Self.Row_Inserted (Path, Iter);
+      Row_Inserted (To_Interface (Self), Path, Iter);
       Gtk.Tree_Model.Path_Free (Path);
    end Inserted;
 
@@ -352,13 +351,14 @@ package body GNATStack.CI_Models is
       Subprogram : GNATStack.Data_Model.Subprogram_Information_Access)
    is
       Index : constant Natural := Self.Map.Find_Index (Subprogram);
-      Path  : constant Gtk.Tree_Model.Gtk_Tree_Path := Gtk.Tree_Model.Gtk_New;
+      Path  : Gtk.Tree_Model.Gtk_Tree_Path;
 
    begin
+      Gtk_New (Path);
       Self.Stamp := Self.Stamp + 1;
       Self.Map.Delete (Index);
       Gtk.Tree_Model.Append_Index (Path, Glib.Gint (Index - 1));
-      Self.Row_Deleted (Path);
+      Row_Deleted (To_Interface (Self), Path);
       Gtk.Tree_Model.Path_Free (Path);
    end Removed;
 

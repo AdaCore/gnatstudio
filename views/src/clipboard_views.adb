@@ -227,11 +227,10 @@ package body Clipboard_Views is
      (View  : access Clipboard_View_Record'Class;
       Event : Gdk_Event) return Integer
    is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Iter : Gtk_Tree_Iter;
    begin
-      Iter := Find_Iter_For_Event (View.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (View.Tree, Event);
       if Iter /= Null_Iter then
          return Integer (Get_Int (Model, Iter, 2));
       else
@@ -332,8 +331,7 @@ package body Clipboard_Views is
    -------------
 
    procedure Refresh (View : access Clipboard_View_Record'Class) is
-      Model           : constant Gtk_Tree_Store :=
-                          Gtk_Tree_Store (Get_Model (View.Tree));
+      Model           : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Selection       : constant Selection_List :=
                           Get_Content (Get_Clipboard (View.Kernel));
       Iter            : Gtk_Tree_Iter;

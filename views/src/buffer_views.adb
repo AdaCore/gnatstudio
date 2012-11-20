@@ -197,8 +197,7 @@ package body Buffer_Views is
                         (Get_Widget
                            (Find_MDI_Child_By_Tag
                               (Get_MDI (Kernel), Buffer_View_Record'Tag)));
-      Model       : constant Gtk_Tree_Store :=
-                      Gtk_Tree_Store (Get_Model (View.Tree));
+      Model       : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Child       : MDI_Child;
       Iter, Iter2 : Gtk_Tree_Iter;
       Count       : Natural := 0;
@@ -270,7 +269,7 @@ package body Buffer_Views is
    begin
       Get_Coords (Event, X, Y);
 
-      Path := Gtk_New;
+      Gtk_New (Path);
       Get_Path_At_Pos
         (Tree, Gint (X), Gint (Y),
          Path, Column, Buffer_X, Buffer_Y, Row_Found);
@@ -288,8 +287,7 @@ package body Buffer_Views is
    is
       Explorer : constant Buffer_View_Access := Buffer_View_Access (View);
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
-      Model    : constant Gtk_Tree_Store :=
-                   Gtk_Tree_Store (Get_Model (Explorer.Tree));
+      Model    : constant Gtk_Tree_Store := -Get_Model (Explorer.Tree);
       Path     : constant Gtk_Tree_Path :=
                    Get_Path_At_Event (Explorer.Tree, Event);
       Iter     : Gtk_Tree_Iter;
@@ -301,7 +299,7 @@ package body Buffer_Views is
          --  multiple selection as expected.
          Grab_Focus (Explorer.Tree);
 
-      elsif Path /= null then
+      elsif Path /= Null_Gtk_Tree_Path then
          Iter := Get_Iter (Model, Path);
          Path_Free (Path);
 
@@ -341,7 +339,7 @@ package body Buffer_Views is
 
    procedure Child_Selected (View : access Gtk_Widget_Record'Class) is
       V     : constant Buffer_View_Access := Buffer_View_Access (View);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Model : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Iter2 : Gtk_Tree_Iter;
@@ -392,7 +390,7 @@ package body Buffer_Views is
 
    procedure Refresh (View : access Gtk_Widget_Record'Class) is
       V       : constant Buffer_View_Access := Buffer_View_Access (View);
-      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Model   : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Editors_Only   : constant Boolean := Get_History
         (Get_History (V.Kernel).all, History_Editors_Only);
       Show_Notebooks : constant Boolean := Get_History
@@ -478,9 +476,9 @@ package body Buffer_Views is
       Clear (Model);
 
       if Show_Notebooks then
-         Column := Freeze_Sort (Gtk_Tree_Store (Get_Model (V.Tree)));
+         Column := Freeze_Sort (-Get_Model (V.Tree));
       else
-         Thaw_Sort (Gtk_Tree_Store (Get_Model (V.Tree)), 1);
+         Thaw_Sort (-Get_Model (V.Tree), 1);
       end if;
 
       I_Child := First_Child
@@ -534,7 +532,6 @@ package body Buffer_Views is
    is
       pragma Unreferenced (Event_Widget, Context);
       V       : constant Buffer_View_Access := Buffer_View_Access (Object);
-      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter    : Gtk_Tree_Iter;
       Check   : Gtk_Check_Menu_Item;
    begin
@@ -546,7 +543,7 @@ package body Buffer_Views is
         (Find_MDI_Child (Get_MDI (V.Kernel), V), Give_Focus => True);
       Handler_Unblock (Get_MDI (V.Kernel), V.Child_Selected_Id);
 
-      Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (V.Tree, Event);
 
       if Iter /= Null_Iter then
          --  Nothing special in the context, just the module itself so that

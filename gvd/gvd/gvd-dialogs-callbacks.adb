@@ -137,7 +137,7 @@ package body GVD.Dialogs.Callbacks is
                  Gtk_Tree_Path_List.Get_Data (Tmp);
                Iter : Gtk_Tree_Iter;
             begin
-               Iter := M.Get_Iter (Path);
+               Iter := Get_Iter (M, Path);
                Append (S, Get_String (M, Iter, 0));
             end;
             Tmp := Gtk_Tree_Path_List.Next (Tmp);

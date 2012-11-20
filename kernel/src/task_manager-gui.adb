@@ -83,58 +83,6 @@ package body Task_Manager.GUI is
       Index : Integer;
    end record;
 
-   ----------------
-   -- Tree Model --
-   ----------------
-
-   type Task_Manager_Model_Record is new Gtk_Abstract_List_Model_Record with
-      record
-         GUI : Task_Manager_Interface;
-         --  This can not be null
-      end record;
-
-   type Task_Manager_Model is access all Task_Manager_Model_Record'Class;
-
-   --  GtkTreeModel subprograms
-
-   overriding function Get_Iter
-     (Self : access Task_Manager_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
-
-   overriding function Get_Path
-     (Self : access Task_Manager_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path;
-
-   overriding procedure Next
-     (Self : access Task_Manager_Model_Record;
-      Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter);
-
-   overriding function N_Children
-     (Self : access Task_Manager_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
-      return Glib.Gint;
-
-   overriding function Nth_Child
-     (Self   : access Task_Manager_Model_Record;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
-      N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
-
-   overriding function Get_N_Columns
-     (Self : access Task_Manager_Model_Record)
-      return Glib.Gint;
-
-   overriding function Get_Column_Type
-     (Self  : access Task_Manager_Model_Record;
-      Index : Glib.Gint) return Glib.GType;
-
-   overriding procedure Get_Value
-     (Self   : access Task_Manager_Model_Record;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      Value  : out Glib.Values.GValue);
-
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -339,7 +287,7 @@ package body Task_Manager.GUI is
 
    begin
       Model := Get_Model (Iface.Tree);
-      Coordinates_For_Event (Iface.Tree, Model, Event, Iter, Col);
+      Coordinates_For_Event (Iface.Tree, Event, Iter, Col);
 
       if Iter /= Null_Iter then
          Path := Get_Path (Model, Iter);
@@ -631,7 +579,7 @@ package body Task_Manager.GUI is
 
       View.Kernel  := Kernel;
       View.Manager := Task_Manager_UI_Access (Manager);
-      View.Model   := Gtk_Tree_Model (Model);
+      View.Model   := Model;
       View.Reference_Widget := Widget;
 
       View.Manager.GUI := Task_Manager_Interface (View);
@@ -678,26 +626,39 @@ package body Task_Manager.GUI is
      (Self : access Task_Manager_Model_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Indices : constant Glib.Gint_Array := Gtk.Tree_Model.Get_Indices (Path);
-      Index_1 : constant Integer_Address := Integer_Address
-        (Indices (Indices'First));
    begin
-      if Self.GUI.Manager.Queues = null
-        or else Index_1 >= Self.GUI.Manager.Queues'Length
-      then
+      if Path = Null_Gtk_Tree_Path then
          return Null_Iter;
-
-      else
-         return Init_Tree_Iter
-           (Stamp       => 1,
-            User_Data_1 => To_Address (Index_1 + 1),
-            User_Data_2 => System.Null_Address,
-            User_Data_3 => System.Null_Address);
       end if;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return Null_Iter;
+
+      declare
+         Indices : constant Glib.Gint_Array :=
+            Gtk.Tree_Model.Get_Indices (Path);
+            Index_1 : Integer_Address;
+      begin
+         if Indices'Length = 0 then
+            return Null_Iter;
+         end if;
+
+         Index_1 := Integer_Address (Indices (Indices'First));
+
+         if Self.GUI.Manager.Queues = null
+           or else Index_1 >= Self.GUI.Manager.Queues'Length
+         then
+            return Null_Iter;
+
+         else
+            return Init_Tree_Iter
+              (Stamp       => 1,
+               User_Data_1 => To_Address (Index_1 + 1),
+               User_Data_2 => System.Null_Address,
+               User_Data_3 => System.Null_Address);
+         end if;
+      exception
+         when E : others =>
+            Trace (Exception_Handle, E);
+            return Null_Iter;
+      end;
    end Get_Iter;
 
    --------------
@@ -712,13 +673,19 @@ package body Task_Manager.GUI is
       Result : Gtk_Tree_Path;
 
    begin
-      Result := Gtk_New;
+      if Iter = Null_Iter then
+         raise Program_Error with "Get_Path with null iter";
+      end if;
+
+      Gtk_New (Result);
       Append_Index (Result, Gint (To_Integer (Get_User_Data_1 (Iter)) - 1));
       return Result;
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         return Gtk_New ("");
+         Path_Free (Result);
+         Gtk_New (Result, "");
+         return Result;
    end Get_Path;
 
    ----------
@@ -910,6 +877,14 @@ package body Task_Manager.GUI is
       Length     : Integer;
       Command    : Command_Access;
    begin
+      if Iter = Null_Iter then
+         raise Program_Error with "Null iter";
+      end if;
+
+      if Index = 0 then
+         raise Program_Error with "Null index";
+      end if;
+
       if Self.GUI.Manager.Queues = null
         or else Index > Self.GUI.Manager.Queues'Length
       then
@@ -996,14 +971,13 @@ package body Task_Manager.GUI is
       Index   : Integer)
    is
       GUI  : constant Task_Manager_Interface := Manager.GUI;
-      M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
       Iter : constant Gtk_Tree_Iter :=
-               Nth_Child (M, Null_Iter, Gint (Index - 1));
-      Path : constant Gtk_Tree_Path := Get_Path (M, Iter);
+               Nth_Child (GUI.Model, Null_Iter, Gint (Index - 1));
+      Path : constant Gtk_Tree_Path := Get_Path (GUI.Model, Iter);
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
    begin
-      Row_Inserted (M, Path, Iter);
+      Row_Inserted (+GUI.Model, Path, Iter);
       Path_Free (Path);
       Refresh (GUI);
 
@@ -1023,12 +997,12 @@ package body Task_Manager.GUI is
       Index   : Integer)
    is
       GUI  : constant Task_Manager_Interface := Manager.GUI;
-      M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
-      Path : constant Gtk_Tree_Path := Gtk_New_First;
+      Path : Gtk_Tree_Path;
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
    begin
-      Row_Deleted (M, Path);
+      Gtk_New_First (Path);
+      Row_Deleted (+GUI.Model, Path);
       Path_Free (Path);
       Refresh (GUI);
 
@@ -1047,12 +1021,11 @@ package body Task_Manager.GUI is
      (GUI   : Task_Manager_Interface;
       Index : Integer)
    is
-      M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
       Iter : constant Gtk_Tree_Iter :=
-               Nth_Child (M, Null_Iter, Gint (Index - 1));
-      Path : constant Gtk_Tree_Path := Get_Path (M, Iter);
+               Nth_Child (GUI.Model, Null_Iter, Gint (Index - 1));
+      Path : constant Gtk_Tree_Path := Get_Path (GUI.Model, Iter);
    begin
-      Row_Changed (M, Path, Iter);
+      Row_Changed (+GUI.Model, Path, Iter);
       Path_Free (Path);
    end Refresh_One_Index;
 

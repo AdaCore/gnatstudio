@@ -224,7 +224,6 @@ package GUI_Utils is
 
    function Find_Iter_For_Event
      (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Get the iter in the tree view under the cursor corresponding to Event,
    --  if any.
@@ -232,7 +231,6 @@ package GUI_Utils is
 
    procedure Coordinates_For_Event
      (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Event  : Gdk.Event.Gdk_Event;
       Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column);

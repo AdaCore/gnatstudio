@@ -918,6 +918,7 @@ package body GPS.Kernel.Xref is
       Count     : Natural := 0;
       Label     : Gtk_Label;
       Model     : Gtk_Tree_Store;
+      M         : Gtk_Tree_Model;
       Dialog    : Gtk_Dialog;
       It        : Gtk_Tree_Iter;
       Scrolled  : Gtk_Scrolled_Window;
@@ -963,7 +964,7 @@ package body GPS.Kernel.Xref is
                Column_Names       => Column_Names,
                Initial_Sort_On    => 1);
             Add (Scrolled, View);
-            Model := Gtk_Tree_Store (Get_Model (View));
+            Model := -Get_Model (View);
 
             Widget_Callback.Object_Connect
               (View, Signal_Row_Activated, Row_Activated'Access, Dialog);
@@ -992,8 +993,8 @@ package body GPS.Kernel.Xref is
          Show_All (Dialog);
 
          if Run (Dialog) = Gtk_Response_OK then
-            Get_Selected (Get_Selection (View), Gtk_Tree_Model (Model), It);
-            Get_Value (Model, It, 4, Val);
+            Get_Selected (Get_Selection (View), M, It);
+            Get_Value (M, It, 4, Val);
             Result := From_GValue (Val);
          end if;
 

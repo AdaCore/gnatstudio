@@ -93,14 +93,14 @@ package body VCS_View is
          Quit : Boolean := False;
          I, K : Gtk_Tree_Iter;
       begin
-         Iter_Copy (Iter, I);
+         I := Iter;
 
          while not Quit and then I /= Null_Iter loop
             if Has_Child (Explorer.Model, I) and then not Root_Only then
                Iterate (Children (Explorer.Model, I), Root => False);
             end if;
 
-            Iter_Copy (I, K);
+            K := I;
             Next (Explorer.Model, I);
             --  We copy and compute the next iterator now to support Action
             --  that deletes nodes.
@@ -223,8 +223,7 @@ package body VCS_View is
 
    begin
       if Get_Event_Type (Event) = Gdk_2button_Press then
-         Iter := Find_Iter_For_Event
-           (Explorer.Tree, Get_Model (Explorer.Tree), Event);
+         Iter := Find_Iter_For_Event (Explorer.Tree, Event);
 
          if Iter /= Null_Iter then
             Path := Get_Path (Get_Model (Explorer.Tree), Iter);
@@ -533,8 +532,7 @@ package body VCS_View is
       procedure Add_Selected_Item
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access);
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);
       --  Add an item to Result
 
       -----------------------
@@ -544,10 +542,9 @@ package body VCS_View is
       procedure Add_Selected_Item
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access)
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
       is
-         pragma Unreferenced (Model, Path, Data);
+         pragma Unreferenced (Model, Path);
       begin
          if not (Parent (Explorer.Model, Iter) = Null_Iter) then
             --  Do not take root nodes, those are the activity name or the VCS
@@ -559,18 +556,13 @@ package body VCS_View is
          end if;
       end Add_Selected_Item;
 
-      E  : aliased VCS_View_Access := Explorer;
-      EA : constant Explorer_Selection_Foreach.Data_Type_Access :=
-             E'Unchecked_Access;
-
    begin
       if Explorer = null then
          return Result;
       end if;
 
-      Explorer_Selection_Foreach.Selected_Foreach
-        (Get_Selection (Explorer.Tree),
-         Add_Selected_Item'Unrestricted_Access, EA);
+      Explorer.Tree.Get_Selection.Selected_Foreach
+        (Add_Selected_Item'Unrestricted_Access);
 
       return Result;
    end Get_Selected_Files;

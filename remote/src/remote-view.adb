@@ -195,7 +195,7 @@ package body Remote.View is
       if Iter = Null_Iter then
          return "<none>";
       else
-         return Get_Model (Combo).Get_String (Iter, 0);
+         return Get_String (Combo.Get_Model, Iter, 0);
       end if;
    end Get_Selected;
 
@@ -264,7 +264,7 @@ package body Remote.View is
 
       for S in Config_Servers'Range loop
          Gtk_New (List, (1 => Glib.GType_String));
-         Gtk_New_With_Model (View.Servers_Combo (S), List);
+         Gtk_New_With_Model (View.Servers_Combo (S), +List);
          Gtk_New (Cell);
          View.Servers_Combo (S).Pack_Start (Cell, True);
          View.Servers_Combo (S).Add_Attribute (Cell, "text", 0);
@@ -574,7 +574,7 @@ package body Remote.View is
          --  Set server for full view
          declare
             List       : constant Gtk_List_Store :=
-                           Gtk_List_Store (Get_Model (View.Servers_Combo (S)));
+                           -Get_Model (View.Servers_Combo (S));
             Iter       : Gtk_Tree_Iter :=
                            View.Servers_Combo (S).Get_Active_Iter;
 
@@ -584,8 +584,6 @@ package body Remote.View is
 
          begin
             List.Clear;
-            Iter := Null_Iter;
-
             List.Append (Iter);
             List.Set (Iter, 0, Display_Local_Nickname);
 
@@ -681,8 +679,7 @@ package body Remote.View is
 
       --  Selecting this value means only one thing: nothing has changed, so
       --  we can safely return in this specific case.
-      List :=
-        Gtk_List_Store (Get_Model (User.View.Servers_Combo (GPS_Server)));
+      List := -Get_Model (User.View.Servers_Combo (GPS_Server));
 
       if List.Get_Iter_First /= Null_Iter
         and then List.Get_String (List.Get_Iter_First, 0) = Adv_Str
@@ -701,7 +698,7 @@ package body Remote.View is
 
       if User.Server = GPS_Server then
          for S in Distant_Server_Type'Range loop
-            List := Gtk_List_Store (Get_Model (User.View.Servers_Combo (S)));
+            List := -Get_Model (User.View.Servers_Combo (S));
             Iter := List.Get_Iter_First;
 
             while Iter /= Null_Iter loop
@@ -729,9 +726,7 @@ package body Remote.View is
                  and then Get_Selected (User.View.Servers_Combo (S1)) /=
                  Get_Selected (User.View.Servers_Combo (S2))
                then
-                  List :=
-                    Gtk_List_Store
-                      (User.View.Servers_Combo (GPS_Server).Get_Model);
+                  List := -User.View.Servers_Combo (GPS_Server).Get_Model;
                   Iter := List.Get_Iter_First;
                   Prepend (List, Iter);
                   List.Set (Iter, 0, Adv_Str);

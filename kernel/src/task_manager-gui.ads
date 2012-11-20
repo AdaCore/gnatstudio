@@ -18,6 +18,7 @@
 --  This package handles the GUI part of the task manager
 
 with Glib; use Glib;
+private with Glib.Values;
 
 with Gtk.Image;                use Gtk.Image;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
@@ -28,6 +29,7 @@ with Gtk.Box;                  use Gtk.Box;
 with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+private with Gtkada.Abstract_List_Model;
 
 with Ada.Unchecked_Deallocation;
 with Gtk.Tree_View; use Gtk.Tree_View;
@@ -147,9 +149,50 @@ private
    --  been changed. If Immediate_Refresh is True, reflect the changes in the
    --  GUI immediately, otherwise do it in a timeout callback.
 
+   type Task_Manager_Model_Record is new
+     Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with
+      record
+         GUI : Task_Manager_Interface;
+         --  This can not be null
+      end record;
+   type Task_Manager_Model is access all Task_Manager_Model_Record'Class;
+   --  GtkTreeModel subprograms
+
+   overriding function Get_Iter
+     (Self : access Task_Manager_Model_Record;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path)
+      return Gtk.Tree_Model.Gtk_Tree_Iter;
+   overriding function Get_Path
+     (Self : access Task_Manager_Model_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Path;
+   overriding procedure Next
+     (Self : access Task_Manager_Model_Record;
+      Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter);
+   overriding function N_Children
+     (Self : access Task_Manager_Model_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
+      return Glib.Gint;
+   overriding function Nth_Child
+     (Self   : access Task_Manager_Model_Record;
+      Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
+      N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
+   overriding function Get_N_Columns
+     (Self : access Task_Manager_Model_Record)
+      return Glib.Gint;
+   overriding function Get_Column_Type
+     (Self  : access Task_Manager_Model_Record;
+      Index : Glib.Gint) return Glib.GType;
+   overriding procedure Get_Value
+     (Self   : access Task_Manager_Model_Record;
+      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Column : Glib.Gint;
+      Value  : out Glib.Values.GValue);
+   --  See inherited documentation
+
    type Task_Manager_Interface_Record is new Gtk_Hbox_Record with record
       Kernel                 : Kernel_Handle;
-      Model                  : Gtk_Tree_Model;
+      Model                  : Task_Manager_Model;
       Manager                : Task_Manager_UI_Access;
 
       Progress_Bar_Button    : Gtk_Button;

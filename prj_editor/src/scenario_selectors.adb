@@ -166,7 +166,7 @@ package body Scenario_Selectors is
       Add (Scrolled, View);
 
       Gtk_New (Selector.Model, Project_Column_Types);
-      Set_Model (View, Gtk_Tree_Model (Selector.Model));
+      Set_Model (View, +Selector.Model);
 
       Gtk_New (Col);
       Set_Clickable (Col, True);
@@ -435,7 +435,7 @@ package body Scenario_Selectors is
       Add (Selector, View);
 
       Gtk_New (Selector.Model, Var_Column_Types);
-      Set_Model (View, Gtk_Tree_Model (Selector.Model));
+      Set_Model (View, +Selector.Model);
 
       Gtk_New (Col);
       Set_Clickable (Col, True);

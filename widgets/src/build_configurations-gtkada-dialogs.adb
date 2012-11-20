@@ -151,7 +151,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Gtk_New_With_Entry (Combo);
       Gtk_New (Model, Columns);
 
-      Set_Model (Combo, Gtk_Tree_Model (Model));
+      Set_Model (Combo, +Model);
 
       Set_Entry_Text_Column (Combo, Name_Column);
       Col := +Combo;

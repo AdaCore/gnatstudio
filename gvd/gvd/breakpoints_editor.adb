@@ -251,8 +251,8 @@ package body Breakpoints_Editor is
       Br           : Breakpoint_Data;
       Size         : Gint;
       pragma Unreferenced (Size);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (View.Editor.Breakpoint_List));
+      Model : constant Gtk_Tree_Store :=
+        -Get_Model (View.Editor.Breakpoint_List);
       Iter          : Gtk_Tree_Iter;
       Selected_Iter : Gtk_Tree_Iter := Null_Iter;
 
@@ -324,6 +324,7 @@ package body Breakpoints_Editor is
 
    overriding procedure Update (View   : access Breakpoint_Editor_Record) is
       Process  : Process_Proxy_Access;
+      M        : Gtk_List_Store;
    begin
       if Get_Process (View) /= null then
          Process := Get_Process (Get_Process (View).Debugger);
@@ -345,7 +346,8 @@ package body Breakpoints_Editor is
 
       --  Clear the contents of the exceptions combo (its contents is in fact
       --  cached in gdb, so it is fast enough to call "info exceptions" again)
-      Gtk_List_Store (View.Editor.Exception_Name.Get_Model).Clear;
+      M := -View.Editor.Exception_Name.Get_Model;
+      M.Clear;
       Add_Unique_Combo_Entry
         (View.Editor.Exception_Name, -"All exceptions");
       Add_Unique_Combo_Entry
@@ -381,8 +383,8 @@ package body Breakpoints_Editor is
    overriding procedure On_Process_Terminated
      (View : access Breakpoint_Editor_Record)
    is
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (View.Editor.Breakpoint_List));
+      Model : constant Gtk_Tree_Store :=
+        -Get_Model (View.Editor.Breakpoint_List);
    begin
       Clear (Model);
    end On_Process_Terminated;
@@ -610,15 +612,14 @@ package body Breakpoints_Editor is
       View  : constant Breakpoint_Editor := Breakpoint_Editor (Widget);
       Iter  : Gtk_Tree_Iter;
       Col   : Gtk_Tree_View_Column;
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (View.Editor.Breakpoint_List));
+      Model : constant Gtk_Tree_Store :=
+        -Get_Model (View.Editor.Breakpoint_List);
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Press
       then
          Coordinates_For_Event
            (View.Editor.Breakpoint_List,
-            Get_Model (View.Editor.Breakpoint_List),
             Event, Iter, Col);
 
          if Col = Get_Column (View.Editor.Breakpoint_List, Col_Enb) then
@@ -1086,8 +1087,8 @@ package body Breakpoints_Editor is
    is
       View      : constant Breakpoint_Editor := Breakpoint_Editor (Object);
       Process   : constant Visual_Debugger := Get_Process (View);
-      Model     : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (View.Editor.Breakpoint_List));
+      Model     : constant Gtk_Tree_Store :=
+        -Get_Model (View.Editor.Breakpoint_List);
       Selection : constant Integer := Get_Selection_Index (View);
 
    begin

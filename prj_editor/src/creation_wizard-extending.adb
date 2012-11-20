@@ -174,7 +174,7 @@ package body Creation_Wizard.Extending is
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
          Initial_Sort_On    => 2);
-      Model := Gtk_Tree_Store (Get_Model (Page.Files));
+      Model := -Get_Model (Page.Files);
       Add (Scrolled, Page.Files);
 
       Page.Projects_Count := 0;
@@ -301,7 +301,7 @@ package body Creation_Wizard.Extending is
 
       --  Find the list of source files that are modified
 
-      Model := Gtk_Tree_Store (Get_Model (Page.Files));
+      Model := -Get_Model (Page.Files);
       PIter := Get_Iter_First (Model);
       while PIter /= Null_Iter loop
          Prj := Get_Registry (Kernel).Tree.Project_From_Name

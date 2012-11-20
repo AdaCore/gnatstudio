@@ -239,7 +239,7 @@ package body Project_Explorers is
    --  Called when the preferences have changed
 
    function Sort_Func
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
    --  Used to sort nodes in the explorer
@@ -820,16 +820,17 @@ package body Project_Explorers is
    ---------------
 
    function Sort_Func
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
    is
       A_Before_B : Gint := -1;
       B_Before_A : Gint := 1;
+      M          : constant Gtk_Tree_Store := -Model;
       A_Type     : constant Node_Types :=
-                     Get_Node_Type (Gtk_Tree_Store (Model), A);
+                     Get_Node_Type (M, A);
       B_Type     : constant Node_Types :=
-                     Get_Node_Type (Gtk_Tree_Store (Model), B);
+                     Get_Node_Type (M, B);
       Order      : Gtk_Sort_Type;
       Column     : Gint;
 
@@ -853,7 +854,7 @@ package body Project_Explorers is
       end Alphabetical;
 
    begin
-      Get_Sort_Column_Id (+Gtk_Tree_Store (Model), Column, Order);
+      Get_Sort_Column_Id (M, Column, Order);
       if Order = Sort_Descending then
          A_Before_B := 1;
          B_Before_A := -1;
@@ -1070,7 +1071,7 @@ package body Project_Explorers is
       T         : constant Project_Explorer :=
                     Get_Or_Create_Project_View (Kernel, Raise_Window => False);
       Iter      : constant Gtk_Tree_Iter :=
-                    Find_Iter_For_Event (T.Tree, T.Tree.Model, Event);
+                    Find_Iter_For_Event (T.Tree, Event);
       Item      : Gtk_Menu_Item;
       Sep       : Gtk_Separator_Menu_Item;
       Check     : Gtk_Check_Menu_Item;
@@ -1937,7 +1938,7 @@ package body Project_Explorers is
       N := Children (Explorer.Tree.Model, Node);
 
       while N /= Null_Iter loop
-         Iter_Copy (Source => N, Dest => N2);
+         N2 := N;
          Next (Explorer.Tree.Model, N2);
 
          case Get_Node_Type (Explorer.Tree.Model, N) is
@@ -1991,7 +1992,7 @@ package body Project_Explorers is
 
          end case;
 
-         Iter_Copy (Source => N2, Dest => N);
+         N := N2;
       end loop;
 
       --  Now add each file (and missing source dirs when needed). The
@@ -2094,7 +2095,7 @@ package body Project_Explorers is
 
       N := Children (Explorer.Tree.Model, Node);
       while N /= Null_Iter loop
-         Iter_Copy (Source => N, Dest => N2);
+         N2 := N;
          Next (Explorer.Tree.Model, N);
 
          if Get_Node_Type (Explorer.Tree.Model, N2) = Directory_Node then
@@ -2277,7 +2278,7 @@ package body Project_Explorers is
          end;
 
          if not Found then
-            Iter_Copy (Source => Iter2, Dest => Iter3);
+            Iter3 := Iter2;
             Next (Explorer.Tree.Model, Iter2);
             Remove (Explorer.Tree.Model, Iter3);
          else

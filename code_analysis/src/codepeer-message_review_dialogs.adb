@@ -33,7 +33,7 @@ with Gtk.Table;
 with Gtk.Text_Iter;
 with Gtk.Text_View;
 with Gtk.Tree_Model;
-with Gtk.Tree_Store;
+with Gtk.Tree_Store;   use Gtk.Tree_Store;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
@@ -223,7 +223,7 @@ package body CodePeer.Message_Review_Dialogs is
 
       Gtk.Tree_Store.Gtk_New (Store, Probability_Model_Types);
 
-      Gtk.Combo_Box.Gtk_New_With_Model (Self.New_Probability, Store);
+      Gtk.Combo_Box.Gtk_New_With_Model (Self.New_Probability, +Store);
       Table.Attach (Self.New_Probability, 1, 2, 2, 3);
 
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
@@ -377,8 +377,7 @@ package body CodePeer.Message_Review_Dialogs is
       use type Glib.Signal_Name;
 
       Model               : constant Gtk.Tree_Store.Gtk_Tree_Store :=
-                              Gtk.Tree_Store.Gtk_Tree_Store
-                                (Self.New_Probability.Get_Model);
+                              -(Self.New_Probability.Get_Model);
       Iter                : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
                               Self.New_Probability.Get_Active_Iter;
       Probability_Changed : constant Boolean :=

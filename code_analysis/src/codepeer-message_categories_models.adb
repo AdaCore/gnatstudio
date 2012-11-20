@@ -126,13 +126,13 @@ package body CodePeer.Message_Categories_Models is
      (Self : access Message_Categories_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
-      Result  : constant Gtk.Tree_Model.Gtk_Tree_Path :=
-                  Gtk.Tree_Model.Gtk_New;
+      Result  : Gtk.Tree_Model.Gtk_Tree_Path;
       Index   : Natural := 0;
       Current : Message_Category_Ordered_Sets.Cursor :=
                   Self.Categories.Find (Self.Category_At (Iter));
 
    begin
+      Gtk.Tree_Model.Gtk_New (Result);
       Current := Message_Category_Ordered_Sets.Previous (Current);
 
       while Message_Category_Ordered_Sets.Has_Element (Current) loop
@@ -255,7 +255,7 @@ package body CodePeer.Message_Categories_Models is
       Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
 
    begin
-      Self.Row_Changed (Path, Iter);
+      Row_Changed (To_Interface (Self), Path, Iter);
       Gtk.Tree_Model.Path_Free (Path);
    end Row_Changed;
 

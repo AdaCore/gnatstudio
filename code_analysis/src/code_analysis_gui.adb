@@ -88,7 +88,7 @@ package body Code_Analysis_GUI is
            Cov_Sort    => GType_Int,
            Cov_Bar_Txt => GType_String,
            Cov_Bar_Val => GType_Int));
-      Gtk_New (View.Tree, Gtk_Tree_Model (View.Model));
+      Gtk_New (View.Tree, View.Model);
       --  Ideally, we should have used Set_Name on the view itself, but for
       --  historical reasons we set it on View.Tree. This name can be retrieved
       --  using the Name function below.
@@ -340,6 +340,7 @@ package body Code_Analysis_GUI is
       Tree  : constant Gtk_Tree_View := View.Tree;
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
+      M     : Gtk_Tree_Store;
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
@@ -347,9 +348,10 @@ package body Code_Analysis_GUI is
          Get_Selected (Get_Selection (Tree), Model, Iter);
 
          if Iter /= Null_Iter then
+            M := -Model;
             declare
                Node : constant Node_Access := Code_Analysis.Node_Access
-                 (Node_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+                 (Node_Set.Get (M, Iter, Node_Col));
             begin
                if Node.all in Code_Analysis.Project'Class then
                   --  So we are on a project node
@@ -503,11 +505,11 @@ package body Code_Analysis_GUI is
       --  Set up context information  --
       ----------------------------------
 
-      if Path /= null then
+      if Path /= Null_Gtk_Tree_Path then
          Gtk_New (Sep);
          Append (Menu, Sep);
          Select_Path (Get_Selection (View.Tree), Path);
-         Iter := Get_Iter (Gtk_Tree_Model (View.Model), Path);
+         Iter := Get_Iter (View.Model, Path);
 
          declare
             Node : constant Node_Access := Code_Analysis.Node_Access

@@ -1653,7 +1653,7 @@ package body Builder_Facility_Module is
             Builder_Module_ID.Browsing_For_Mode := To_Unbounded_String (Mode);
 
             for J in reverse 0 ..
-              Builder_Module_ID.Modes_Combo.Get_Model.N_Children - 1
+              N_Children (Builder_Module_ID.Modes_Combo.Get_Model) - 1
             loop
                Builder_Module_ID.Modes_Combo.Set_Active (J);
 
@@ -2200,7 +2200,7 @@ package body Builder_Facility_Module is
 
       Model := Builder_Module_ID.Modes_Combo.Get_Model;
 
-      Iter := Model.Get_Iter_First;
+      Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
          if Get_String (Model, Iter, 0) = Mode then

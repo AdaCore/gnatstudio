@@ -312,8 +312,9 @@ package body Outline_View is
          if Get_Depth (Path) > 1 then
             declare
                Indices     : constant Glib.Gint_Array := Get_Indices (Path);
-               Parent_Path : constant Gtk_Tree_Path := Gtk_New;
+               Parent_Path : Gtk_Tree_Path;
             begin
+               Gtk_New (Parent_Path);
                for J in Indices'First .. Indices'Last - 1 loop
                   Append_Index (Parent_Path, Indices (J));
                end loop;
@@ -381,7 +382,8 @@ package body Outline_View is
    is
       pragma Unreferenced (Event_Widget);
       Outline  : constant Outline_View_Access := Outline_View_Access (Object);
-      Model    : constant Gtk_Tree_Model := Get_Model (Outline.Tree);
+      Model    : constant Outline_Model :=
+        Outline_Model (-Get_Model (Outline.Tree));
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Line     : Integer := 1;
@@ -391,7 +393,7 @@ package body Outline_View is
       Submenu  : Gtk_Menu;
       P_Entity : Entity_Persistent_Access;
    begin
-      Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (Outline.Tree, Event);
 
       Set_File_Information
         (Context => Context,
@@ -542,7 +544,7 @@ package body Outline_View is
    is
       View                : constant Outline_View_Access :=
                               Outline_View_Access (Outline);
-      Model               : constant Gtk_Tree_Model := Get_Model (View.Tree);
+      Model : constant Outline_Model := Outline_Model (-Get_Model (View.Tree));
       Entity              : Entity_Persistent_Access;
       Iter                : Gtk_Tree_Iter;
       Path                : Gtk_Tree_Path;
@@ -555,7 +557,7 @@ package body Outline_View is
             return False;
          end if;
 
-         Iter := Find_Iter_For_Event (View.Tree, Model, Event);
+         Iter := Find_Iter_For_Event (View.Tree, Event);
 
          if Iter /= Null_Iter then
             Path := Get_Path (Model, Iter);
@@ -1120,10 +1122,8 @@ package body Outline_View is
          declare
             Path : Gtk_Tree_Path;
          begin
-            Path := Gtk_New;
-
+            Gtk_New (Path);
             Append_Index (Path, 0);
-
             Expand_To_Path (Outline.Tree, Path);
             Path_Free (Path);
          end;
@@ -1137,10 +1137,9 @@ package body Outline_View is
    function Get_Outline_Model
      (View : Outline_View_Access) return Outline_Model
    is
-      Model : Gtk_Tree_Model;
+      Model : constant Gtk_Root_Tree_Model :=
+        -Get_Model (View.Tree);
    begin
-      Model := Get_Model (View.Tree);
-
       if Model = null then
          return null;
       elsif Model.all in Outline_Model_Record'Class then
@@ -1157,7 +1156,7 @@ package body Outline_View is
    procedure Set_Outline_Model
      (View : access Outline_View_Record'Class; Model : Outline_Model) is
    begin
-      Set_Model (View.Tree, Gtk_Tree_Model (Model));
+      Set_Model (View.Tree, To_Interface (Model));
    end Set_Outline_Model;
 
    ------------------------

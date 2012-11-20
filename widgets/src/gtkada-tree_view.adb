@@ -55,7 +55,7 @@ package body Gtkada.Tree_View is
          Self.Filter.Convert_Child_Iter_To_Iter (Filter_Iter, Store_Iter);
 
       else
-         Gtk.Tree_Model.Iter_Copy (Store_Iter, Filter_Iter);
+         Filter_Iter := Store_Iter;
       end if;
    end Convert_To_Filter_Iter;
 
@@ -72,7 +72,7 @@ package body Gtkada.Tree_View is
          Self.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
 
       else
-         Gtk.Tree_Model.Iter_Copy (Filter_Iter, Store_Iter);
+         Store_Iter := Filter_Iter;
       end if;
    end Convert_To_Store_Iter;
 
@@ -247,12 +247,12 @@ package body Gtkada.Tree_View is
 
       if Filtered then
          Gtk_New (Widget.Model, Real_Column_Types);
-         Gtk_New (Widget.Filter, Widget.Model);
-         Initialize (Gtk_Tree_View (Widget), Widget.Filter);
+         Gtk_New (Widget.Filter, +Widget.Model);
+         Initialize (Gtk_Tree_View (Widget), +Widget.Filter);
 
       else
          Gtk_New (Widget.Model, Real_Column_Types);
-         Initialize (Gtk_Tree_View (Widget), Widget.Model);
+         Initialize (Gtk_Tree_View (Widget), +Widget.Model);
       end if;
 
       Gtkada.Handlers.Object_Callback.Object_Connect

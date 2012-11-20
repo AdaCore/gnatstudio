@@ -20,6 +20,7 @@ with Ada.Unchecked_Deallocation;
 with System.Address_To_Access_Conversions;
 
 with Gtk.Handlers;
+with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;
 
 package body Gtkada.Abstract_Filter_Model is
@@ -141,6 +142,17 @@ package body Gtkada.Abstract_Filter_Model is
       return Gtk.Tree_Model.Null_Iter;
    end Children;
 
+   ---------
+   -- "+" --
+   ---------
+
+   function "+" (Self : access Gtk_Abstract_Filter_Model_Record)
+                 return Gtk.Tree_Model.Gtk_Tree_Model
+   is
+   begin
+      return Gtk.Tree_Model.To_Interface (Self);
+   end "+";
+
    --------------------
    -- Construct_Tree --
    --------------------
@@ -204,12 +216,13 @@ package body Gtkada.Abstract_Filter_Model is
                     Gtk.Tree_Model.Get_Indices (Parent_Path);
 
                begin
-                  Self.Row_Inserted (Parent_Path, Parent_Iter);
+                  Row_Inserted (To_Interface (Self), Parent_Path, Parent_Iter);
 
                   if Indices (Indices'Last) = 0 then
                      --  Notify about change of children status.
 
-                     Self.Row_Has_Child_Toggled (Parent_Path, Parent_Iter);
+                     Row_Has_Child_Toggled
+                       (To_Interface (Self), Parent_Path, Parent_Iter);
                   end if;
 
                   Gtk.Tree_Model.Path_Free (Parent_Path);
@@ -218,23 +231,24 @@ package body Gtkada.Abstract_Filter_Model is
 
             --  Process children if any.
 
-            if Self.Model.Has_Child (Source_Iter) then
-               Source_Child := Self.Model.Children (Source_Iter);
+            if Has_Child (Self.Model, Source_Iter) then
+               Source_Child := Children (Self.Model, Source_Iter);
                Gtk.Tree_Model.Down (Source_Path);
                Construct (Node, Source_Path, Source_Child);
                Dummy := Gtk.Tree_Model.Up (Source_Path);
             end if;
 
-            Self.Model.Next (Source_Iter);
+            Next (Self.Model, Source_Iter);
             Gtk.Tree_Model.Next (Source_Path);
          end loop;
       end Construct;
 
-      Source_Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Self.Model.Get_Iter_First;
-      Source_Path : constant Gtk.Tree_Model.Gtk_Tree_Path :=
-        Gtk.Tree_Model.Gtk_New_First;
+      Source_Iter : Gtk.Tree_Model.Gtk_Tree_Iter :=
+        Get_Iter_First (Self.Model);
+      Source_Path : Gtk.Tree_Model.Gtk_Tree_Path;
 
    begin
+      Gtk_New_First (Source_Path);
       Construct (Self.Root, Source_Path, Source_Iter);
       Gtk.Tree_Model.Path_Free (Source_Path);
    end Construct_Tree;
@@ -293,10 +307,10 @@ package body Gtkada.Abstract_Filter_Model is
       --  specified node is invisible.
 
       if Node.Parent = null or else Node.Visibility /= Visible then
-         return null;
+         return Null_Gtk_Tree_Path;
       end if;
 
-      Path := Gtk.Tree_Model.Gtk_New;
+      Gtk.Tree_Model.Gtk_New (Path);
 
       while Current.Parent /= null loop
          --  Return invalid path when parent node is invisible (visibility of
@@ -306,7 +320,7 @@ package body Gtkada.Abstract_Filter_Model is
          if Current.Parent.Visibility /= Visible then
             Gtk.Tree_Model.Path_Free (Path);
 
-            return null;
+            return Null_Gtk_Tree_Path;
          end if;
 
          Index := 0;
@@ -364,11 +378,11 @@ package body Gtkada.Abstract_Filter_Model is
      (Self  : access Gtk_Abstract_Filter_Model_Record;
       Index : Glib.Gint) return Glib.GType is
    begin
-      if Self.Model = null then
+      if Self.Model = Null_Gtk_Tree_Model then
          return Glib.GType_Invalid;
 
       else
-         return Self.Model.Get_Column_Type (Index);
+         return Get_Column_Type (Self.Model, Index);
       end if;
    end Get_Column_Type;
 
@@ -400,11 +414,11 @@ package body Gtkada.Abstract_Filter_Model is
      (Self : access Gtk_Abstract_Filter_Model_Record)
       return Glib.Gint is
    begin
-      if Self.Model = null then
+      if Self.Model = Null_Gtk_Tree_Model then
          return 0;
 
       else
-         return Self.Model.Get_N_Columns;
+         return Get_N_Columns (Self.Model);
       end if;
    end Get_N_Columns;
 
@@ -418,8 +432,8 @@ package body Gtkada.Abstract_Filter_Model is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue) is
    begin
-      if Self.Model /= null then
-         Self.Model.Get_Value (Self.Map_To_Source (Iter), Column, Value);
+      if Self.Model /= Null_Gtk_Tree_Model then
+         Get_Value (Self.Model, Self.Map_To_Source (Iter), Column, Value);
       end if;
    end Get_Value;
 
@@ -510,7 +524,7 @@ package body Gtkada.Abstract_Filter_Model is
    is
       use type Gtk.Tree_Model.Gtk_Tree_Path;
 
-      Proxy_Path       : Gtk.Tree_Model.Gtk_Tree_Path := null;
+      Proxy_Path       : Gtk.Tree_Model.Gtk_Tree_Path := Null_Gtk_Tree_Path;
       Position         : Node_Vectors.Cursor := Node.Children.First;
       Had_Visible_Rows : constant Boolean :=
         Node.Parent /= null and then Self.Has_Visible_Child (Node.Parent);
@@ -529,8 +543,8 @@ package body Gtkada.Abstract_Filter_Model is
 
       Proxy_Path := Self.Create_Path (Node);
 
-      if Proxy_Path = null then
-         Proxy_Path := Gtk.Tree_Model.Gtk_New_First;
+      if Proxy_Path = Null_Gtk_Tree_Path then
+         Gtk.Tree_Model.Gtk_New_First (Proxy_Path);
 
       else
          Gtk.Tree_Model.Down (Proxy_Path);
@@ -554,7 +568,7 @@ package body Gtkada.Abstract_Filter_Model is
          --  Notify remove of the row.
 
          Dummy := Gtk.Tree_Model.Up (Proxy_Path);
-         Self.Row_Deleted (Proxy_Path);
+         Row_Deleted (+Self, Proxy_Path);
 
          --  Notify change of status of Has_Children of parent node.
 
@@ -564,8 +578,8 @@ package body Gtkada.Abstract_Filter_Model is
             Dummy := Gtk.Tree_Model.Up (Proxy_Path);
 
             if Gtk.Tree_Model.Get_Depth (Proxy_Path) /= 0 then
-               Self.Row_Has_Child_Toggled
-                 (Proxy_Path, Self.Create_Iter (Node.Parent));
+               Row_Has_Child_Toggled
+                 (+Self, Proxy_Path, Self.Create_Iter (Node.Parent));
             end if;
          end if;
       end if;
@@ -587,7 +601,7 @@ package body Gtkada.Abstract_Filter_Model is
    begin
       Gtkada.Abstract_Tree_Model.Initialize (Self);
 
-      Self.Model := null;
+      Self.Model := Null_Gtk_Tree_Model;
       Self.Stamp := 1;
       Self.Root  := new Node_Record;
       Self.Root.Visibility := Visible;
@@ -603,11 +617,11 @@ package body Gtkada.Abstract_Filter_Model is
    not overriding procedure Invalidate
      (Self : not null access Gtk_Abstract_Filter_Model_Record)
    is
-      Path : constant Gtk.Tree_Model.Gtk_Tree_Path :=
-        Gtk.Tree_Model.Gtk_New_First;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Self.Model.Get_Iter_First;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Get_Iter_First (Self.Model);
 
    begin
+      Gtk_New_First (Path);
       Self.Hide (Self.Root);
       Self.Show_Visible (Self.Root, Path, Iter);
       Gtk.Tree_Model.Path_Free (Path);
@@ -676,7 +690,7 @@ package body Gtkada.Abstract_Filter_Model is
 
       --  Construct path in source model space.
 
-      Path := Gtk.Tree_Model.Gtk_New;
+      Gtk.Tree_Model.Gtk_New (Path);
 
       while Node.Parent /= null loop
          Gtk.Tree_Model.Prepend_Index
@@ -687,7 +701,7 @@ package body Gtkada.Abstract_Filter_Model is
 
       --  Obtain source model's iter for constructed path.
 
-      Result := Self.Model.Get_Iter (Path);
+      Result := Get_Iter (Self.Model, Path);
 
       --  Cleanup.
 
@@ -837,14 +851,14 @@ package body Gtkada.Abstract_Filter_Model is
                   pragma Unreferenced (Dummy);
 
                begin
-                  Self.Row_Inserted (Node_Path, Node_Iter);
+                  Row_Inserted (+Self, Node_Path, Node_Iter);
 
                   if not Has_Rows and Node.Parent.Parent /= null then
                      --  Notify about change of children status.
 
                      Dummy := Gtk.Tree_Model.Up (Node_Path);
                      Node_Iter := Self.Parent (Node_Iter);
-                     Self.Row_Has_Child_Toggled (Node_Path, Node_Iter);
+                     Row_Has_Child_Toggled (+Self, Node_Path, Node_Iter);
                   end if;
 
                   Gtk.Tree_Model.Path_Free (Node_Path);
@@ -858,7 +872,7 @@ package body Gtkada.Abstract_Filter_Model is
                        Gtk.Tree_Model.Gtk_Tree_Path :=
                          Gtk.Tree_Model.Copy (Source_Path);
                      Child_Source_Iter : Gtk.Tree_Model.Gtk_Tree_Iter :=
-                       Self.Model.Children (Source_Iter);
+                       Children (Self.Model, Source_Iter);
 
                   begin
                      Gtk.Tree_Model.Down (Child_Source_Path);
@@ -886,7 +900,7 @@ package body Gtkada.Abstract_Filter_Model is
                     Self.Create_Iter (Node);
 
             begin
-               Self.Row_Changed (Node_Path, Node_Iter);
+               Row_Changed (+Self, Node_Path, Node_Iter);
                Gtk.Tree_Model.Path_Free (Node_Path);
             end;
          end if;
@@ -983,7 +997,7 @@ package body Gtkada.Abstract_Filter_Model is
             pragma Unreferenced (Dummy);
 
          begin
-            Self.Row_Inserted (Node_Path, Node_Iter);
+            Row_Inserted (+Self, Node_Path, Node_Iter);
 
             Dummy := Gtk.Tree_Model.Up (Node_Path);
             Node_Iter := Self.Parent (Node_Iter);
@@ -992,7 +1006,7 @@ package body Gtkada.Abstract_Filter_Model is
                --  Notify about change of children status.
 
                if Node_Iter /= Gtk.Tree_Model.Null_Iter then
-                  Self.Row_Has_Child_Toggled (Node_Path, Node_Iter);
+                  Row_Has_Child_Toggled (+Self, Node_Path, Node_Iter);
                end if;
             end if;
 
@@ -1016,7 +1030,7 @@ package body Gtkada.Abstract_Filter_Model is
       Address        : constant System.Address :=
         Glib.Values.Get_Address (Glib.Values.Nth (Params, 3));
       Length         : constant Natural :=
-        Natural (Self.Get_Source_Model.N_Children (Source_Iter));
+        Natural (N_Children (Self.Get_Source_Model, Source_Iter));
 
       subtype New_Order_Array is Glib.Gint_Array (0 .. Length - 1);
       New_Source_Order : New_Order_Array;
@@ -1118,7 +1132,7 @@ package body Gtkada.Abstract_Filter_Model is
               Self.Get_Path (Proxy_Iter);
 
          begin
-            Self.Rows_Reordered (Proxy_Path, Proxy_Iter, New_Order);
+            Rows_Reordered (+Self, Proxy_Path, Proxy_Iter, New_Order);
             Gtk.Tree_Model.Path_Free (Proxy_Path);
          end;
       end if;
@@ -1145,29 +1159,29 @@ package body Gtkada.Abstract_Filter_Model is
 
    not overriding procedure Set_Source_Model
      (Self  : not null access Gtk_Abstract_Filter_Model_Record;
-      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class) is
+      Model : access Gtk_Root_Tree_Model_Record'Class) is
    begin
-      Self.Model := Gtk.Tree_Model.Gtk_Tree_Model (Model);
+      Self.Model := To_Interface (Model);
       Gtk_Abstract_Filter_Model_Callbacks.Object_Connect
-        (Self.Model,
+        (Model,
          Gtk.Tree_Model.Signal_Row_Changed,
          Gtk_Abstract_Filter_Model_Callbacks.To_Marshaller
            (On_Row_Changed'Access),
          Self);
       Gtk_Abstract_Filter_Model_Callbacks.Object_Connect
-        (Self.Model,
+        (Model,
          Gtk.Tree_Model.Signal_Row_Inserted,
          Gtk_Abstract_Filter_Model_Callbacks.To_Marshaller
            (On_Row_Inserted_Callback'Access),
          Self);
       Gtk_Abstract_Filter_Model_Callbacks.Object_Connect
-        (Self.Model,
+        (Model,
          Gtk.Tree_Model.Signal_Row_Deleted,
          Gtk_Abstract_Filter_Model_Callbacks.To_Marshaller
            (On_Row_Deleted_Callback'Access),
          Self);
       Gtk_Abstract_Filter_Model_Callbacks.Object_Connect
-        (Self.Model,
+        (Model,
          Gtk.Tree_Model.Signal_Rows_Reordered,
          On_Rows_Reordered'Access,
          Self);
@@ -1218,14 +1232,14 @@ package body Gtkada.Abstract_Filter_Model is
                pragma Unreferenced (Dummy);
 
             begin
-               Self.Row_Inserted (Node_Path, Node_Iter);
+               Row_Inserted (+Self, Node_Path, Node_Iter);
 
                if not Has_Row and Parent_Node.Parent /= null then
                   --  Notify about change of children status.
 
                   Dummy := Gtk.Tree_Model.Up (Node_Path);
                   Node_Iter := Self.Parent (Node_Iter);
-                  Self.Row_Has_Child_Toggled (Node_Path, Node_Iter);
+                  Row_Has_Child_Toggled (+Self, Node_Path, Node_Iter);
                   Has_Row := True;
                end if;
 
@@ -1240,7 +1254,7 @@ package body Gtkada.Abstract_Filter_Model is
                     Gtk.Tree_Model.Gtk_Tree_Path :=
                       Gtk.Tree_Model.Copy (Source_Path);
                   Child_Source_Iter : Gtk.Tree_Model.Gtk_Tree_Iter :=
-                    Self.Model.Children (Source_Iter);
+                    Children (Self.Model, Source_Iter);
 
                begin
                   Gtk.Tree_Model.Down (Child_Source_Path);
@@ -1254,7 +1268,7 @@ package body Gtkada.Abstract_Filter_Model is
          end if;
 
          Gtk.Tree_Model.Next (Source_Path);
-         Self.Model.Next (Source_Iter);
+         Next (Self.Model, Source_Iter);
          Node_Vectors.Next (Position);
       end loop;
    end Show_Visible;

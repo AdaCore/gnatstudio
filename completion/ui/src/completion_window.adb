@@ -656,7 +656,7 @@ package body Completion_Window is
             Set (Window.Explorer.Model, Curr, Index_Column, Gint (J));
 
             if J = Previously_Selected then
-               Iter_Copy (Curr, Prev);
+               Prev := Curr;
             end if;
          end if;
       end loop;

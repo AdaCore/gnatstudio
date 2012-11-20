@@ -222,9 +222,8 @@ package body GUI_Utils is
       Case_Sensitive : Boolean := True) return Gtk_Tree_Iter
    is
       Iter  : Gtk_Tree_Iter;
-      Model : Gtk_List_Store;
+      Model : constant Gtk_List_Store := -Gtk.Combo_Box.Get_Model (Combo);
    begin
-      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
@@ -267,9 +266,8 @@ package body GUI_Utils is
       Case_Sensitive : Boolean := True)
    is
       Iter  : Gtk_Tree_Iter;
-      Model : Gtk_List_Store;
+      Model : constant Gtk_List_Store := -Combo.Get_Model;
    begin
-      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
@@ -886,13 +884,12 @@ package body GUI_Utils is
 
    function Find_Iter_For_Event
      (Tree  : access Gtk_Tree_View_Record'Class;
-      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Event : Gdk_Event) return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter;
       Col  : Gtk_Tree_View_Column;
    begin
-      Coordinates_For_Event (Tree, Model, Event, Iter, Col);
+      Coordinates_For_Event (Tree, Event, Iter, Col);
       return Iter;
    end Find_Iter_For_Event;
 
@@ -902,7 +899,6 @@ package body GUI_Utils is
 
    procedure Coordinates_For_Event
      (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Event  : Gdk.Event.Gdk_Event;
       Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column)
@@ -932,12 +928,12 @@ package body GUI_Utils is
             Buffer_Y,
             Row_Found);
 
-         if Path = null then
+         if Path = Null_Gtk_Tree_Path then
             Iter := Null_Iter;
             return;
          end if;
 
-         Iter := Get_Iter (Model, Path);
+         Iter := Get_Iter (Get_Model (Tree), Path);
          Path_Free (Path);
       else
          Get_Selected (Get_Selection (Tree), N_Model, Iter);
@@ -1737,7 +1733,7 @@ package body GUI_Utils is
             Tree_Column_Callback.Connect
               (Toggle_Render, Signal_Toggled,
                Toggle_Callback'Access,
-               User_Data => (Gtk_Tree_Model (Model), Gint (N)));
+               User_Data => (+Model, Gint (N)));
 
             if Integer (ColNum) in Editable_Columns'Range
               and then Editable_Columns (Integer (ColNum)) >= 0
@@ -1818,6 +1814,7 @@ package body GUI_Utils is
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : Gtk_Tree_Iter;
       Activatable : Boolean;
+      M           : Gtk_Tree_Store;
    begin
       Iter := Get_Iter_From_String (Data.Model, Path_String);
 
@@ -1828,9 +1825,9 @@ package body GUI_Utils is
            Get_Property (R, Property_Boolean (Glib.Build ("activatable")));
 
          if Activatable then
-            Set (Gtk_Tree_Store (Data.Model), Iter, Data.Column,
-                 not Get_Boolean (Gtk_Tree_Store (Data.Model),
-                                  Iter, Data.Column));
+            M := -Data.Model;
+            Set (M, Iter, Data.Column,
+                 not Get_Boolean (M, Iter, Data.Column));
          end if;
       end if;
    end Toggle_Callback;

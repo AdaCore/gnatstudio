@@ -125,8 +125,7 @@ package body Creation_Wizard.GNATname is
 
    procedure Add_Pattern (Widget : access Gtk_Widget_Record'Class) is
       Tree_View  : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
-      Tree_Store : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Tree_View.Get_Model);
+      Tree_Store : constant Gtk_Tree_Store := -Tree_View.Get_Model;
       Dialog : Gtk_Dialog;
       Ent    : Gtk_Entry;
       Button : Gtk_Widget;
@@ -226,6 +225,7 @@ package body Creation_Wizard.GNATname is
       Vbox         : Gtk_Vbox;
       Scrolled     : Gtk_Scrolled_Window;
       Button       : Gtk_Button;
+      Model        : Gtk_Tree_Store;
       Names  : constant GNAT.Strings.String_List :=
         (1 => new String'(-"File pattern"));
    begin
@@ -251,6 +251,7 @@ package body Creation_Wizard.GNATname is
       Page.Tree_View := GUI_Utils.Create_Tree_View
         (Column_Types => (0 => GType_String),
          Column_Names => Names);
+      Model := -Page.Tree_View.Get_Model;
 
       Gtk_New (Scrolled);
       Pack_Start (Page.Hbox, Scrolled, Expand => True, Fill => True);
@@ -284,13 +285,13 @@ package body Creation_Wizard.GNATname is
          Wiz);
 
       Widget_Callback.Object_Connect
-        (Page.Tree_View.Get_Model,
+        (Model,
          Signal_Row_Inserted,
          Update_Buttons_Sensitivity'Access,
          Wiz);
 
       Widget_Callback.Object_Connect
-        (Page.Tree_View.Get_Model,
+        (Model,
          Signal_Row_Deleted,
          Update_Buttons_Sensitivity'Access,
          Wiz);
@@ -319,11 +320,12 @@ package body Creation_Wizard.GNATname is
    -----------------
 
    overriding function Is_Complete
-     (Page : access GNATname_Page_Record) return String is
+     (Page : access GNATname_Page_Record) return String
+   is
    begin
       if Page.Check_Button = null
         or else Page.Check_Button.Get_Active
-        or else Page.Tree_View.Get_Model.Get_Iter_First /= Null_Iter
+        or else Get_Iter_First (Page.Tree_View.Get_Model) /= Null_Iter
       then
          return "";
       else
@@ -385,12 +387,12 @@ package body Creation_Wizard.GNATname is
          end loop;
       end;
 
-      Iter := Model.Get_Iter_First;
+      Iter := Get_Iter_First (Model);
 
       --  Append search file patterns
       while Iter /= Null_Iter loop
-         Append (Extra, " " & Model.Get_String (Iter, 0));
-         Model.Next (Iter);
+         Append (Extra, " " & Get_String (Model, Iter, 0));
+         Next (Model, Iter);
       end loop;
 
       declare
@@ -410,8 +412,7 @@ package body Creation_Wizard.GNATname is
 
    procedure Remove_Pattern (Widget : access Gtk_Widget_Record'Class) is
       Tree_View  : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
-      Tree_Store : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Tree_View.Get_Model);
+      Tree_Store : constant Gtk_Tree_Store := -Tree_View.Get_Model;
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
    begin
