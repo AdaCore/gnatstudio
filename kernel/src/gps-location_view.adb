@@ -337,7 +337,7 @@ package body GPS.Location_View is
    -----------------
 
    function Idle_Expand (Self : Location_View) return Boolean is
-      Model : constant Gtk_Tree_Store := -Self.View.Get_Model;
+      Model : constant Gtk_Tree_Model := Self.View.Get_Model;
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
       Dummy : Boolean;
@@ -345,13 +345,13 @@ package body GPS.Location_View is
 
    begin
       Requests : while not Self.Requests.Is_Empty loop
-         Iter := Model.Get_Iter_First;
+         Iter := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            exit Requests when Model.Get_String (Iter, Category_Column)
+            exit Requests when Get_String (Model, Iter, Category_Column)
               = Self.Requests.First_Element.Category;
 
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          Self.Requests.Delete_First;
@@ -374,24 +374,24 @@ package body GPS.Location_View is
 
          --  Expand category node
 
-         Path := Model.Get_Path (Iter);
+         Path := Get_Path (Model, Iter);
          Dummy := Self.View.Expand_Row (Path, False);
 
          --  Expand file node
 
-         Iter := Model.Children (Iter);
+         Iter := Children (Model, Iter);
 
          while Iter /= Null_Iter loop
             exit when
               GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column)
                 = Self.Requests.First_Element.File;
 
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          if Iter /= Null_Iter then
             Gtk.Tree_Model.Path_Free (Path);
-            Path := Model.Get_Path (Iter);
+            Path := Get_Path (Model, Iter);
 
          else
             Down (Path);
