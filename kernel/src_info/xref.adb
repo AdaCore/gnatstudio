@@ -179,29 +179,34 @@ package body Xref is
          Buffer := Get_Buffer (Get_File (Ent));
          Node   := To_Construct_Tree_Iterator (Ent);
 
-         declare
-            Comment : constant String :=
-              Extract_Comment
-                (Buffer            => Buffer.all,
-                 Decl_Start_Index  => Get_Construct (Node).Sloc_Start.Index,
-                 Decl_End_Index    => Get_Construct (Node).Sloc_End.Index,
-                 Language          => Context.Syntax,
-                 Format            => Form);
-            Profile : constant String :=
-              Get_Profile (Tree_Lang, Ent, Raw_Format => Raw_Format);
+         --  If the constructs have been properly loaded
+         if Get_Construct (Node).Sloc_Start.Index /= 0 then
+            declare
+               Comment : constant String :=
+                 Extract_Comment
+                   (Buffer            => Buffer.all,
+                    Decl_Start_Index  => Get_Construct (Node).Sloc_Start.Index,
+                    Decl_End_Index    => Get_Construct (Node).Sloc_End.Index,
+                    Language          => Context.Syntax,
+                    Format            => Form);
+               Profile : constant String :=
+                 Get_Profile (Tree_Lang, Ent, Raw_Format => Raw_Format);
 
-         begin
-            if Comment /= "" then
-               if Profile /= "" then
-                  return Glib.Convert.Escape_Text (Comment)
-                    & ASCII.LF & ASCII.LF & Profile;
+            begin
+               if Comment /= "" then
+                  if Profile /= "" then
+                     return Glib.Convert.Escape_Text (Comment)
+                       & ASCII.LF & ASCII.LF & Profile;
+                  else
+                     return Glib.Convert.Escape_Text (Comment);
+                  end if;
                else
-                  return Glib.Convert.Escape_Text (Comment);
+                  return Profile;
                end if;
-            else
-               return Profile;
-            end if;
-         end;
+            end;
+         else
+            return "";
+         end if;
       end Doc_From_Constructs;
 
       -----------------
