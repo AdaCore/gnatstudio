@@ -8,6 +8,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- LB21-021: GPS: Navigation problem in goto type declaration
+  Problem:    The functionality of "Goto type declaration" moves the cursor
+              to the location of the object declaration instead of moving
+              it to the location of the type declaration.
+
+  Workaround: Use "Goto type declaration" twice: the first one to move the
+              cursor to the location of the object declaration and repeat it
+              to move the cursor to the declaration of the corresponding type.
+
 - LB14-054: GPS: keyboard shortcuts not functional when Caps Lock is active
   Problem:    When Caps Lock is active, letter-based keyboard shortcuts for
               GPS actions do not work.
@@ -36,11 +45,7 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
 - LA11-026: GPS: C/C++ completion of entities defined in header files
   Problem:    GPS does not propose a list of entities for completion when the
-              type of the prefix is defined in a header file. In addition,
-              a regression in the functionality of "Goto type declaration"
-              was found and fixed (GPS was erroneously moving the cursor
-              to the location of the object declaration instead of moving
-              it to the location of the type declaration).
+              type of the prefix is defined in a header file.
 
   Workaround: Include manually the file.
 
