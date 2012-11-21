@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.3.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-53-LB20-022 GPS: Key shortcuts dialog display improved (2012-11-21)
+
+  The display of the key shortcuts in this dialog now matches what is
+  done for the toplevel menus, using symbols like up arrow for the shift
+  key, a caret sign for the control key, and the special symbols for
+  Mac keyboards.
+
 NF-53-L926-027 GPS: Project, Files and Windows views pop-ups (2012-11-13)
 
   Tooltips added to views to help navigation when windows are narrow.
