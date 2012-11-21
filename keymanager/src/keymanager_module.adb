@@ -92,7 +92,7 @@ package body KeyManager_Module is
      (Keymap_Record, Keymap_Access);
 
    procedure Get_Normalized_Key
-     (Event    : Gdk.Event.Gdk_Event_Key;
+     (Event    : Gdk.Event.Gdk_Event;
       Key      : out Gdk_Key_Type;
       Modifier : out Gdk_Modifier_Type);
    --  Read the key typed by the user. This procedure takes care of normalizing
@@ -994,7 +994,7 @@ package body KeyManager_Module is
    ------------------------
 
    procedure Get_Normalized_Key
-     (Event    : Gdk.Event.Gdk_Event_Key;
+     (Event    : Gdk.Event.Gdk_Event;
       Key      : out Gdk_Key_Type;
       Modifier : out Gdk_Modifier_Type)
    is
