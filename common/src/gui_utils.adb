@@ -1016,7 +1016,8 @@ package body GUI_Utils is
       Meta    : constant String := "alt-";
       Control : constant String := "control-";
       Cmd     : constant String := "cmd-";
-      Max : constant Natural := Shift'Length + Control'Length + Meta'Length;
+      Max : constant Natural := Shift'Length + Control'Length + Meta'Length
+       + Cmd'Length;
       Buffer   : String (1 .. Max);
       Current : Natural := Buffer'First;
 
