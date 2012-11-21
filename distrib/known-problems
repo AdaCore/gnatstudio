@@ -36,7 +36,12 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
 - LA11-026: GPS: C/C++ completion of entities defined in header files
   Problem:    GPS does not propose a list of entities for completion when the
-              type of the prefix is defined in a header file.
+              type of the prefix is defined in a header file. In addition,
+              a regression in the functionality of "Goto type declaration"
+              was found and fixed (GPS was erroneously moving the cursor
+              to the location of the object declaration instead of moving
+              it to the location of the type declaration).
+
   Workaround: Include manually the file.
 
 - LA11-003: No xref from separate units compiled explicitly
