@@ -90,6 +90,14 @@ package body KeyManager_Module is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Keymap_Record, Keymap_Access);
 
+   procedure Get_Normalized_Key
+     (Event    : Gdk.Event.Gdk_Event_Key;
+      Key      : out Gdk_Key_Type;
+      Modifier : out Gdk_Modifier_Type);
+   --  Read the key typed by the user. This procedure takes care of normalizing
+   --  the shortcut, for instance when Caps Lock was pressed, or taking
+   --  keyboard-specific shortcuts into account.
+
    function Is_Numeric_Key
      (Key      : Gdk_Key_Type;
       Modifier : Gdk_Modifier_Type) return Boolean;
@@ -976,6 +984,52 @@ package body KeyManager_Module is
       end if;
    end Get_Secondary_Keymap;
 
+   ------------------------
+   -- Get_Normalized_Key --
+   ------------------------
+
+   procedure Get_Normalized_Key
+     (Event    : Gdk.Event.Gdk_Event_Key;
+      Key      : out Gdk_Key_Type;
+      Modifier : out Gdk_Modifier_Type)
+   is
+      State : constant Gdk_Modifier_Type := Get_State (Event);
+   begin
+      --  Remove any num-lock and caps-lock modifiers
+      Modifier := State and Get_Default_Mod_Mask;
+      Key := Get_Key_Val (Event);
+
+      --  If Caps lock in on, and the key is an upper-case character,
+      --  lower-case it.
+
+      if (State and Lock_Mask) > 0
+        and then Key >= GDK_A
+        and then Key <= GDK_Z
+      then
+         Key := Key + GDK_LC_a - GDK_A;
+      end if;
+
+      if Active (Me) then
+         Trace (Me, "Key=" & Key'Img & " Modif=" & Modifier'Img
+                & " => " & Image (Key, Modifier)
+                & " / "
+                & Gtk.Accel_Group.Accelerator_Get_Label (Key, Modifier)
+                & " / "
+                & Gtk.Accel_Group.Accelerator_Name (Key, Modifier));
+      end if;
+
+      --  Quartz backend maps the following:
+      --       alphaLock  => GDK_LOCK_MASK
+      --       shiftKey   => GDK_SHIFT_MASK
+      --       controlKey => GDK_CONTROL_MASK
+      --       optionKey  => GDK_MOD1_MASK
+      --       cmdKey     => GDK_MOD2_MASK
+
+      --  Win2 backend maps the followin:
+      --       altgr      => GDK_MOD2_MASK
+      --       left-menu  => GDK_MOD1_MASK
+   end Get_Normalized_Key;
+
    -------------------
    -- Process_Event --
    -------------------
@@ -1047,7 +1101,6 @@ package body KeyManager_Module is
          end if;
       end Undo_Group;
 
-      State : Gdk_Modifier_Type;
    begin
       --  We could test Modif /= 0 if we allowed only key shortcuts with a
       --  modifier (control, alt, ...). However, this would prevent assigning
@@ -1056,23 +1109,7 @@ package body KeyManager_Module is
       if Keymanager_Module.Active
         and then Get_Event_Type (Event) = Key_Press
       then
-         State := Get_State (Event);
-
-         --  Remove any num-lock and caps-lock modifiers
-         Modif := State and Get_Default_Mod_Mask;
-         Key   := Get_Key_Val (Event);
-
-         --  If Caps lock in on, and the key is an upper-case character,
-         --  lower-case it.
-
-         if (State and Lock_Mask) > 0
-           and then Key >= GDK_A
-           and then Key <= GDK_Z
-         then
-            Key := Key + GDK_LC_a - GDK_A;
-         end if;
-
-         Trace (Me, "Key=" & Key'Img & " Modif=" & Modif'Img);
+         Get_Normalized_Key (Event, Key, Modif);
 
          --  If we are pressing down CTRL, enter Hyper Mode
 
