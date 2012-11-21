@@ -251,6 +251,7 @@ package body KeyManager_Module.GUI is
                   Key     => Lookup_Key_From_Action
                     (Editor.Bindings,
                      Name,
+                     Use_Markup => False,
                      Is_User_Changed => User_Changed'Unchecked_Access,
                      Default => -Disabled_String));
             end;
@@ -551,6 +552,7 @@ package body KeyManager_Module.GUI is
                     (Editor.Bindings,
                      Action => Get_String (Editor.Model, It, Action_Column),
                      Default => "",
+                     Use_Markup => False,
                      Is_User_Changed => User_Changed'Unchecked_Access));
             end if;
 
@@ -979,7 +981,7 @@ package body KeyManager_Module.GUI is
       Ignore := Append_Column (Editor.View, Col);
       Set_Title (Col, -"Shortcut");
       Pack_Start (Col, Render, False);
-      Add_Attribute (Col, Render, "markup", Key_Column);
+      Add_Attribute (Col, Render, "text", Key_Column);
       Set_Clickable (Col, True);
       Set_Resizable (Col, True);
       Set_Sort_Column_Id (Col, Key_Column);
