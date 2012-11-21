@@ -1408,7 +1408,8 @@ package body KeyManager_Module is
                      Process_Table
                        (Binding.Keymap.Table,
                         Prefix
-                        & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier)
+                        & Gtk.Accel_Group.Accelerator_Get_Label
+                          (Get_Key (Iter).Key, Get_Key (Iter).Modifier)
                         & ' ');
                   end if;
 
@@ -1429,9 +1430,11 @@ package body KeyManager_Module is
 
                      Is_User_Changed.all :=
                        Is_User_Changed.all or Binding.Changed;
-                     Result := Result
-                       & Prefix
-                       & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier);
+                     Append
+                       (Result,
+                        Prefix
+                        & Gtk.Accel_Group.Accelerator_Get_Label
+                          (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
 
                   elsif Prefix = "" then
                      --  When returning a single key binding, give priority to
@@ -1440,7 +1443,8 @@ package body KeyManager_Module is
                      Is_User_Changed.all :=
                        Is_User_Changed.all or Binding.Changed;
                      Result := To_Unbounded_String
-                       (Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
+                       (Gtk.Accel_Group.Accelerator_Get_Label
+                          (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
                   end if;
                end if;
 
