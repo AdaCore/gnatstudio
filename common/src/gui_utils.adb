@@ -1038,7 +1038,9 @@ package body GUI_Utils is
       Shift   : constant String := "shift-";
       Meta    : constant String := "alt-";
       Control : constant String := "control-";
-      Max : constant Natural := Shift'Length + Control'Length + Meta'Length;
+      Cmd     : constant String := "cmd-";
+      Max : constant Natural := Shift'Length + Control'Length + Meta'Length
+       + Cmd'Length;
       Buffer   : String (1 .. Max);
       Current : Natural := Buffer'First;
 
@@ -1077,6 +1079,11 @@ package body GUI_Utils is
                Current := Current + Meta'Length;
             end if;
 
+            if (Mods and Meta_Mask) /= 0 then
+               Buffer (Current .. Current + Cmd'Length - 1) := Cmd;
+               Current := Current + Cmd'Length;
+            end if;
+
             return
               Buffer (Buffer'First .. Current - 1) & Gdk.Keyval.Name (Key);
       end case;
@@ -1102,6 +1109,8 @@ package body GUI_Utils is
                Mods := Mods or Control_Mask;
             elsif From (Start .. D) = "alt-" then
                Mods := Mods or Mod1_Mask;
+            elsif From (Start .. D) = "cmd-" then
+               Mods := Mods or Meta_Mask;
             end if;
             Start := D + 1;
          end if;
