@@ -161,7 +161,7 @@ package body Gtkada.Terminal is
    type FSM_Transition is array (Escape_Chars) of FSM_State;
 
    type GtkAda_Terminal_Class is record
-      C_Class : GObject_Class := Uninitialized_Class;
+      C_Class : Ada_GObject_Class := Uninitialized_Class;
       Default_Insert_Callback : Insert_Callback := null;
    end record;
    Class : GtkAda_Terminal_Class;
@@ -1428,7 +1428,7 @@ package body Gtkada.Terminal is
 
       if Class.Default_Insert_Callback = null then
          Class.Default_Insert_Callback := Replace_Insert_Text
-           (Class.C_Class, On_Insert_Text'Access);
+           (Class.C_Class.C_Class, On_Insert_Text'Access);
 
          --  Initialize charset tables
          for C in Alternate_Charset'Range loop

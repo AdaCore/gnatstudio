@@ -32,7 +32,8 @@ package body GPS.Location_View_Filter_Panel is
 
    use type GNAT.Strings.String_Access;
 
-   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+   Class_Record : Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array (1 .. 3) :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Apply_Filter)),

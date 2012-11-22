@@ -103,7 +103,7 @@ package body Default_Preferences is
 
    type Preferences_Editor_Record is new Gtk_Dialog_Record with null record;
    type Preferences_Editor is access all Preferences_Editor_Record'Class;
-   Preferences_Editor_Class_Record : Glib.Object.GObject_Class :=
+   Preferences_Editor_Class_Record : Glib.Object.Ada_GObject_Class :=
      Glib.Object.Uninitialized_Class;
    Preferences_Editor_Signals : constant chars_ptr_array :=
                        (1 => New_String (String (Signal_Preferences_Changed)));

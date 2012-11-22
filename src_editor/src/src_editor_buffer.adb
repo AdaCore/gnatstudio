@@ -156,7 +156,7 @@ package body Src_Editor_Buffer is
    -- Signal Support --
    --------------------
 
-   Class_Record : GObject_Class := Uninitialized_Class;
+   Class_Record : Ada_GObject_Class := Uninitialized_Class;
    --  A pointer to the 'class record'
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=

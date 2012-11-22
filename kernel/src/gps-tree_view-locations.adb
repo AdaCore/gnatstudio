@@ -97,7 +97,8 @@ package body GPS.Tree_View.Locations is
    package GPS_Locations_Tree_View_Callbacks is
      new Gtk.Handlers.Callback (GPS_Locations_Tree_View_Record);
 
-   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+   Class_Record : Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array (1 .. 2) :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Action_Clicked)),

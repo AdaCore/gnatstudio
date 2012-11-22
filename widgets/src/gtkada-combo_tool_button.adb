@@ -40,7 +40,7 @@ package body Gtkada.Combo_Tool_Button is
    -- Class definition --
    ----------------------
 
-   Class_Record : GObject_Class := Uninitialized_Class;
+   Class_Record : Ada_GObject_Class := Uninitialized_Class;
    Signals : constant chars_ptr_array :=
                (1 => New_String (String (Signal_Clicked)),
                 2 => New_String (String (Signal_Selection_Changed)));

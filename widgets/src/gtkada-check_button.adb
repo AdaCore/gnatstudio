@@ -47,7 +47,7 @@ package body Gtkada.Check_Button is
    -- Initialize --
    ----------------
 
-   Class_Record : GObject_Class := Uninitialized_Class;
+   Class_Record : Ada_GObject_Class := Uninitialized_Class;
 
    procedure Initialize
      (Check : access Gtkada_Check_Button_Record'Class;

@@ -180,7 +180,8 @@ package body CodePeer.Messages_Reports is
    Ranking_High_History          : constant Histories.History_Key :=
      "codepeer-summary_report-ranking-high";
 
-   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+   Class_Record : Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Activated)),

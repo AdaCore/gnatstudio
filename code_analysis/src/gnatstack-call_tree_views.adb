@@ -42,7 +42,8 @@ package body GNATStack.Call_Tree_Views is
    package Call_Tree_View_Boolean_Callbacks is
      new Gtk.Handlers.Return_Callback (Call_Tree_View_Record, Boolean);
 
-   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+   Class_Record : Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array (1 .. 1) :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Double_Clicked)));
