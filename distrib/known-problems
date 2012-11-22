@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- LB21-035: GPS: wrong &lt char in locations
+  Problem:    In Location View text created through scripting API has
+              escaped markup characters.
+  Workaround: None.
+
 - LB21-021: GPS: Navigation problem in goto type declaration
   Problem:    The functionality of "Goto type declaration" moves the cursor
               to the location of the object declaration instead of moving
