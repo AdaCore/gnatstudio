@@ -1585,7 +1585,7 @@ package body GPS.Location_View is
                     File,
                     Nth_Arg (Data, 3),
                     Visible_Column_Type (Nth_Arg (Data, 4, Default => 1)),
-                    Glib.Convert.Escape_Text (Nth_Arg (Data, 5)),
+                    Nth_Arg (Data, 5),
                     0,
                     Get_Or_Create_Style
                       (Get_Kernel (Data), Nth_Arg (Data, 6, ""), False),
