@@ -13,11 +13,17 @@ Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
               escaped markup characters.
   Workaround: None.
 
+- LB21-033: GPS: Wrong fix of expanded names in redundant conversions
+  Problem:    Fixing automatically warnings on redundant type conversions
+              fail if the target type is an expanded name (that is, when
+              the target type has a prefix like "x.y.t").
+  Workaround: Avoid automatically fixing the error when the warning is reported
+              in an expanded name.
+
 - LB21-021: GPS: Navigation problem in goto type declaration
   Problem:    The functionality of "Goto type declaration" moves the cursor
               to the location of the object declaration instead of moving
               it to the location of the type declaration.
-
   Workaround: Use "Goto type declaration" twice: the first one to move the
               cursor to the location of the object declaration and repeat it
               to move the cursor to the declaration of the corresponding type.
