@@ -1970,6 +1970,8 @@ package body GPS.Kernel.Messages is
          Self.Previous := Message.Tail;
          Message.Tail := Self'Unchecked_Access;
       end if;
+
+      Self.Message := Message;
    end Set;
 
    ----------------
