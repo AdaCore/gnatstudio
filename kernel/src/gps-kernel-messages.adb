@@ -177,6 +177,23 @@ package body GPS.Kernel.Messages is
    procedure Free is
      new Ada.Unchecked_Deallocation (Abstract_Note'Class, Note_Access);
 
+   ------------
+   -- Adjust --
+   ------------
+
+   overriding procedure Adjust (Self : in out Abstract_Reference) is
+      Message : constant Message_Access := Self.Message;
+
+   begin
+      Self.Message := null;
+      Self.Previous := null;
+      Self.Next := null;
+
+      if Message /= null then
+         Self.Set (Message);
+      end if;
+   end Adjust;
+
    -----------
    -- Clear --
    -----------
@@ -247,6 +264,12 @@ package body GPS.Kernel.Messages is
       Aux      : Note_Access;
 
    begin
+      --  Unset references.
+
+      while Self.Head /= null loop
+         Self.Head.Unset;
+      end loop;
+
       --  Destroy notes.
 
       while not Self.Notes.Is_Empty loop
@@ -271,6 +294,15 @@ package body GPS.Kernel.Messages is
       end if;
 
       Free (Self.Action);
+   end Finalize;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : in out Abstract_Reference) is
+   begin
+      Self.Unset;
    end Finalize;
 
    -----------------------------
@@ -1919,6 +1951,27 @@ package body GPS.Kernel.Messages is
       end if;
    end Save;
 
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Self    : in out Abstract_Reference;
+      Message : not null Message_Access) is
+   begin
+      Self.Unset;
+
+      if Message.Head = null then
+         Message.Head := Self'Unchecked_Access;
+         Message.Tail := Self'Unchecked_Access;
+
+      else
+         Message.Tail.Next := Self'Unchecked_Access;
+         Self.Previous := Message.Tail;
+         Message.Tail := Self'Unchecked_Access;
+      end if;
+   end Set;
+
    ----------------
    -- Set_Action --
    ----------------
@@ -2091,6 +2144,35 @@ package body GPS.Kernel.Messages is
          Self.Listeners.Delete (Listener_Position);
       end if;
    end Unregister_Listener;
+
+   -----------
+   -- Unset --
+   -----------
+
+   procedure Unset (Self : in out Abstract_Reference) is
+   begin
+      if Self.Message /= null then
+         if Self.Previous /= null then
+            Self.Previous.Next := Self.Next;
+         end if;
+
+         if Self.Next /= null then
+            Self.Next.Previous := Self.Previous;
+         end if;
+
+         if Self.Message.Head = Self'Unchecked_Access then
+            Self.Message.Head := Self.Next;
+         end if;
+
+         if Self.Message.Tail = Self'Unchecked_Access then
+            Self.Message.Tail := Self.Previous;
+         end if;
+
+         Self.Message := null;
+         Self.Previous := null;
+         Self.Next := null;
+      end if;
+   end Unset;
 
    ------------
    -- To_Int --
