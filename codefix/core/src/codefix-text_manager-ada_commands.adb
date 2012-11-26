@@ -31,6 +31,14 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    Me : constant Trace_Handle := Create ("Codefix");
 
+   function Get_Beginning_Of_Name
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) return File_Cursor;
+   --  Cursor points to any character inside the single name or expanded name
+   --  of an entity. For single names return the location of the beginning of
+   --  the name located at Cursor. For expanded names return the location of
+   --  the beginning of the full expanded name.
+
    function Get_Closing_Paren
      (Current_Text : Text_Navigator_Abstr'Class;
       Open_Cursor  : File_Cursor'Class) return File_Cursor;
@@ -99,6 +107,77 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       return Close_Cursor;
    end Get_Closing_Paren;
+
+   ---------------------------
+   -- Get_Beginning_Of_Name --
+   ---------------------------
+
+   function Get_Beginning_Of_Name
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) return File_Cursor
+   is
+      Begin_Cursor : File_Cursor := Null_File_Cursor;
+
+      procedure Scan_Backward_Callback
+        (Buffer : String;
+         Token  : Language.Token_Record;
+         Stop   : in out Boolean);
+      --  Scan backward the expanded name. Updates Loc to reference the
+      --  beginning of the expression.
+
+      -----------------------------
+      --  Scan_Backward_Callback --
+      -----------------------------
+
+      Last_Index : String_Index_Type := 0;
+
+      procedure Scan_Backward_Callback
+        (Buffer : String;
+         Token  : Language.Token_Record;
+         Stop   : in out Boolean)
+      is
+         pragma Unreferenced (Buffer);
+
+      begin
+         case Token.Tok_Type is
+            when Tok_Blank =>
+               null;
+
+            when Tok_Dot | Tok_Identifier =>
+               Last_Index := Token.Token_First;
+
+            when others =>
+               declare
+                  Line   : Integer;
+                  Column : Visible_Column_Type;
+               begin
+                  To_Line_Column
+                    (File                 =>
+                       Current_Text.Get_Structured_File (Cursor.File),
+                     Absolute_Byte_Offset => Last_Index,
+                     Line                 => Line,
+                     Column               => Column);
+
+                  Begin_Cursor.Set_File (Cursor.Get_File);
+                  Begin_Cursor.Set_Line (Line);
+                  Begin_Cursor.Set_Column (Column);
+
+                  Stop := True;
+               end;
+         end case;
+      end Scan_Backward_Callback;
+
+   --  Start of Get_Beginning_Of_Name
+
+   begin
+      Parse_Entities_Backwards
+        (Lang     => Ada_Lang,
+         This     => Current_Text,
+         Callback => Scan_Backward_Callback'Access,
+         Start    => Cursor);
+
+      return Begin_Cursor;
+   end Get_Beginning_Of_Name;
 
    --------------------------------
    -- Get_End_Of_Preceding_Token --
@@ -1126,6 +1205,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       Open_Paren : File_Cursor'Class :=
         Current_Text.Search_Token (Cursor, Open_Paren_Tok);
       Close_Paren : File_Cursor;
+      From_Cursor : File_Cursor;
+
    begin
       Text := Current_Text.Get_File (Cursor.File);
 
@@ -1133,7 +1214,9 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Current_Text.Replace (Close_Paren, 1, "");
 
-      Text.Erase (Cursor, Current_Text.Search_Token (Cursor, Open_Paren_Tok));
+      From_Cursor := Get_Beginning_Of_Name (Current_Text, Cursor);
+      Text.Erase
+        (From_Cursor, Current_Text.Search_Token (Cursor, Open_Paren_Tok));
 
       Free (Open_Paren);
       Free (Close_Paren);
