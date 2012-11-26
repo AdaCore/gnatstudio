@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Containers.Doubly_Linked_Lists;
 
 with Gtk.Enums;  use Gtk.Enums;
 with Gtk.Widget; use Gtk.Widget;
@@ -33,8 +32,9 @@ with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 with Commands.Interactive;
 
-with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
-with GPS.Kernel.Styles.Shell;    use GPS.Kernel.Styles.Shell;
+with GPS.Kernel.Messages.Markup;     use GPS.Kernel.Messages.Markup;
+with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
+with GPS.Kernel.Styles.Shell;        use GPS.Kernel.Styles.Shell;
 
 package body GPS.Kernel.Messages.Shell is
 
@@ -54,7 +54,7 @@ package body GPS.Kernel.Messages.Shell is
    Hint_Cst       : aliased constant String := "hint";
 
    type Message_Property_Record is new Instance_Property_Record with record
-      Message : Message_Access;
+      Message : Message_Reference;
    end record;
    type Message_Property_Access is access all Message_Property_Record'Class;
 
@@ -112,46 +112,17 @@ package body GPS.Kernel.Messages.Shell is
    end Execute;
 
    --------------
-   -- Finalize --
-   --------------
-
-   overriding procedure Finalize (Self : not null access Shell_Note_Record) is
-      Position : Instance_Linked_List.Cursor := Self.Instances.First;
-
-   begin
-      while Has_Element (Position) loop
-         Set_Data (Element (Position), Message_Access'(null));
-         Next (Position);
-      end loop;
-
-      Self.Instances.Clear;
-   end Finalize;
-
-   --------------
    -- Set_Data --
    --------------
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Message  : Message_Access)
-   is
-      Note : Shell_Note;
+      Message  : Message_Access) is
    begin
-      Set_Data (Instance, Class, Message_Property_Record'(Message => Message));
-
-      --  We are creating an instance containing Message: add Instance to the
-      --  note in message
-
-      if Message /= null then
-         if Message.Has_Note (Shell_Note_Record'Tag) then
-            Note := Shell_Note (Message.Get_Note (Shell_Note_Record'Tag));
-         else
-            Note := new Shell_Note_Record;
-            Message.Set_Note (Note_Access (Note));
-         end if;
-
-         Note.Instances.Append (Instance);
-      end if;
+      Set_Data
+        (Instance,
+         Class,
+         Message_Property_Record'(Message => Create (Message)));
    end Set_Data;
 
    -----------------
@@ -166,7 +137,7 @@ package body GPS.Kernel.Messages.Shell is
            (Instance_Property'(Get_Data (Instance, Class)));
 
          if Prop /= null then
-            return Prop.Message;
+            return Prop.Message.Message;
          end if;
       end if;
 
@@ -182,27 +153,12 @@ package body GPS.Kernel.Messages.Shell is
    is
       Inst    : constant Class_Instance := Nth_Arg (Data, 1, Message_Class);
       Message : constant Message_Access := Get_Message (Inst);
-      Note    : Shell_Note;
-      C       : Instance_Linked_List.Cursor;
    begin
       if Message = null then
          return;
       end if;
 
-      if Command = Destructor_Method then
-         --  Remove the message instance from the list of instances stored in
-         --  the message note
-
-         if Message.Has_Note (Shell_Note_Record'Tag) then
-            Note := Shell_Note (Message.Get_Note (Shell_Note_Record'Tag));
-            C := Note.Instances.Find (Inst);
-
-            if C /= No_Element then
-               Note.Instances.Delete (C);
-            end if;
-         end if;
-
-      elsif Command = "get_line" then
+      if Command = "get_line" then
          Set_Return_Value (Data, Message.Get_Line);
 
       elsif Command = "get_column" then
