@@ -411,6 +411,9 @@ package GPS.Kernel.Messages is
 
 private
 
+   type Abstract_Reference is tagged;
+   type Reference_Access is access all Abstract_Reference'Class;
+
    type Abstract_Listener is abstract tagged limited record
       Flags : Message_Flags;
    end record;
@@ -483,6 +486,10 @@ private
    type Abstract_Message (Level : Message_Levels) is
      abstract new Node_Record (Node_Message)
    with record
+      Head : Reference_Access;
+      Tail : Reference_Access;
+      --  Chain of references to this message
+
       case Level is
          when Primary =>
             Weight : Natural;
@@ -575,5 +582,28 @@ private
    function Match (A, B : Message_Flags) return Boolean;
    pragma Inline (Match);
    --  Return True if A and B have one "True" field in common
+
+   ------------------------
+   -- Abstract_Reference --
+   ------------------------
+
+   type Abstract_Reference is
+     abstract new Ada.Finalization.Controlled with record
+      Message  : Message_Access;
+      Previous : Reference_Access;
+      Next     : Reference_Access;
+   end record;
+
+   overriding procedure Adjust (Self : in out Abstract_Reference);
+
+   overriding procedure Finalize (Self : in out Abstract_Reference);
+
+   procedure Set
+     (Self    : in out Abstract_Reference;
+      Message : not null Message_Access);
+   --  Sets reference to the given message.
+
+   procedure Unset (Self : in out Abstract_Reference);
+   --  Unsets reference.
 
 end GPS.Kernel.Messages;
