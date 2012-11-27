@@ -509,10 +509,12 @@ package body GPS.Tree_View.Locations is
          end if;
       end if;
 
-      Path_Free (Start_Path);
-      Path_Free (End_Path);
-      Path_Free (Path);
+      if Success then
+         Path_Free (Start_Path);
+         Path_Free (End_Path);
+      end if;
 
+      Path_Free (Self.On_Row_Expanded_Path);
       Self.On_Row_Expanded_Path := Null_Gtk_Tree_Path;
       Self.On_Row_Expanded_Handler := No_Source_Id;
 
