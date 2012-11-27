@@ -139,7 +139,10 @@ package body GNATTest_Module is
      (Key_Type     => Unbounded_String,
       Element_Type => Source_Entity);
 
+   type Modes is (Monolith, Separates);
+
    type Mapping_File is new Sax.Readers.Reader with record
+      Mode         : Modes;
       Last_Source  : Source_Entity;
       Source_Map   : Source_Entity_Maps.Map;
       Test_Map     : Test_Entity_Maps.Map;
@@ -684,6 +687,9 @@ package body GNATTest_Module is
 
       function To_Integer (Name : String) return Integer;
       function To_Time (Name : String) return Ada.Calendar.Time;
+      function Get_Attribute (Name : String) return String;
+      --  Return value of attribute with given Name or empty string if no such
+
       procedure Add_Setup_Teardown;
 
       procedure Add_Setup_Teardown is
@@ -701,6 +707,16 @@ package body GNATTest_Module is
          end if;
       end Add_Setup_Teardown;
 
+      function Get_Attribute (Name : String) return String is
+         Index : constant Integer := Atts.Get_Index (Name);
+      begin
+         if Index < 0 then
+            return "";
+         else
+            return Atts.Get_Value (Index);
+         end if;
+      end Get_Attribute;
+
       function To_Integer (Name : String) return Integer is
       begin
          return Integer'Value (Atts.Get_Value (Name));
@@ -712,16 +728,22 @@ package body GNATTest_Module is
          Day     => Ada.Calendar.Day_Number'First);
 
       function To_Time (Name : String) return Ada.Calendar.Time is
-         Image : constant String := Atts.Get_Value (Name);
+         Image : constant String := Get_Attribute (Name);
       begin
-         if Image /= "modified" then
+         if Image /= "" and Image /= "modified" then
             return GNAT.Calendar.Time_IO.Value (Image);
          end if;
 
          return Null_Time;
       end To_Time;
    begin
-      if Local_Name = "unit" then
+      if Local_Name = "tests_mapping" then
+         if Get_Attribute ("mode") = "monolith" then
+            Self.Mode := Monolith;
+         else
+            Self.Mode := Separates;
+         end if;
+      elsif Local_Name = "unit" then
          Self.Last_Source.Source_File :=
            To_Unbounded_String (Atts.Get_Value ("source_file"));
 
