@@ -15,6 +15,7 @@ DEBUG.COUNT=no
 --  Always show unexpected exceptions, no matter what other traces are active
 
 UNEXPECTED_EXCEPTIONS=yes
+*.EXCEPTIONS=yes
 
 --  Should we override the X11 server's default handling of middle mouse
 --  button to paste the selection (and thus do not paste text highlight)
