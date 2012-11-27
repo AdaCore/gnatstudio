@@ -2474,11 +2474,7 @@ package body ALI_Parser is
       end if;
 
       --  Otherwise we have to compute the name of the LI file from scratch.
-      if Source /= null then
-         return Update_Source (Source);
-      else
-         return null;
-      end if;
+      return Update_Source (Source);
    end Get_Source_Info_Internal;
 
    ----------
