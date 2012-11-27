@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.0
 
+- LB27-003: Infinite loop when clicking on C++ enum type
+  Problem:    When right-clicking on a C++ enum variable, it is possible
+              that GPS locks. It is trying to compute cross-reference
+              information for the enum type.
+  Workaround: This requires an update of GPS.
+
 - LB21-021: GPS: Navigation problem in goto type declaration
   Problem:    The functionality of "Goto type declaration" moves the cursor
               to the location of the object declaration instead of moving

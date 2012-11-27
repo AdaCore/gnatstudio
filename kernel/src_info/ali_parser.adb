@@ -1200,6 +1200,21 @@ package body ALI_Parser is
                      end if;
                   end;
                else
+                  --  Do not allow fuzzy matching here, this could result in
+                  --  infinite loops in the case of C files. For instance, for
+                  --  an enum type we have:
+                  --     typedef enum {none       --  line 185
+                  --          } t_weapon_class;
+                  --  and the .gli file contains
+                  --       185n15*none{186E24}
+                  --       190E24*t_weapon_class{185E14}
+                  --
+                  --  on the second line, the "parent" class would be
+                  --  approximated to "none" (which is not the type of
+                  --  t_weapon_class), resulting in an infinite loop while
+                  --  querying the parents of "none" (-> t_weapon_class -> none
+                  --  -> ...)
+
                   Parent :=
                     Find_Entity_In_ALI
                      (Handler    => Handler,
@@ -1209,7 +1224,8 @@ package body ALI_Parser is
                       Line       => Xref_Entity.Table (Xref_Ent).Tref_Line,
                       Column     => Xref_Entity.Table (Xref_Ent).Tref_Col,
                       First_Sect => First_Sect,
-                      Last_Sect  => Last_Sect);
+                      Last_Sect  => Last_Sect,
+                      Allow_Fuzzy => False);
                end if;
 
                if Parent = null then
