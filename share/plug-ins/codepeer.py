@@ -262,6 +262,8 @@ xml_codepeer = """<?xml version="1.0"?>
                 tip="Display a progress bar with information about how many files are left to be compiled" />
          <check label="Ignore representation clauses" switch="-gnatI" column="1"
                 tip="Ignore all representation clauses, useful for generating SCIL for another architecture" />
+         <check label="Unconstrained float overflow" switch="-gnateF" column="1"
+                tip="Check for overflow on unconstrained floating point types" />
          <check label="GNAT warnings" switch="-gnatwna" column="1"
                 tip="Enable GNAT warnings during SCIL generation" />
        </switches>
