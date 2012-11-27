@@ -20,14 +20,6 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: Avoid automatically fixing the code when the warning is reported
               in an expanded name.
 
-- LB21-021: GPS: Navigation problem in goto type declaration
-  Problem:    The functionality of "Goto type declaration" moves the cursor
-              to the location of the object declaration instead of moving
-              it to the location of the type declaration.
-  Workaround: Use "Goto type declaration" twice: the first one to move the
-              cursor to the location of the object declaration and repeat it
-              to move the cursor to the declaration of the corresponding type.
-
 - LB14-054: GPS: keyboard shortcuts not functional when Caps Lock is active
   Problem:    When Caps Lock is active, letter-based keyboard shortcuts for
               GPS actions do not work.
