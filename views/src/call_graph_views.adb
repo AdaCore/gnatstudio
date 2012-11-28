@@ -1648,7 +1648,6 @@ package body Call_Graph_Views is
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
-      Width, Height : Gint;
    begin
       if Entity /= No_General_Entity then
          View := Generic_View.Get_Or_Create_View
@@ -1661,8 +1660,7 @@ package body Call_Graph_Views is
               Kind                => View_Calls,
               Through_Dispatching => False));
 
-         View.Tree.Get_Size_Request (Width, Height);
-         Set_Position (View.Pane, (Width * 3) / 2);
+         View.Pane.Set_Position (View.Get_Allocated_Width / 3);
       end if;
 
       return Commands.Success;
@@ -1681,7 +1679,6 @@ package body Call_Graph_Views is
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
-      Width, Height : Gint;
    begin
       if Entity /= No_General_Entity then
          View := Generic_View.Get_Or_Create_View
@@ -1694,8 +1691,11 @@ package body Call_Graph_Views is
                Kind                => View_Called_By,
                Through_Dispatching => False));
 
-         View.Tree.Get_Size_Request (Width, Height);
-         Set_Position (View.Pane, (Width * 3) / 2);
+         --  ??? Should we be changing the position here ? It should be kept
+         --  as it. Unfortunately, it is not computed properly if we never
+         --  call Set_Position, and we can't call it from Initialize because
+         --  we don't know yet the size that View will be allocated.
+         View.Pane.Set_Position (View.Get_Allocated_Width / 3);
       end if;
 
       return Commands.Success;
