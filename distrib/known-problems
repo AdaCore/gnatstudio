@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- LB26-008: GPS: Smart completion of C/C++ parameters
+  Problem:    When a function/method has several parameters, we press the
+              open parenthesis, and we choose smart completion of all the
+              parameters at once, then the number of added parameters added
+              by GPS is correct but their names (shown as comments) is wrong.
+  Workaround: Fix the name of the parameters manually.
+
 - LB21-035: GPS: wrong &lt char in locations
   Problem:    In Location View text created through scripting API has
               escaped markup characters.
