@@ -165,10 +165,10 @@ package body Xref is
          Buffer    : GNAT.Strings.String_Access;
          Node      : Construct_Tree_Iterator;
       begin
-         if Entity.Node = Null_Entity_Access then
+         if not Exists (Entity.Node) then
             Node_From_Entity (Self, Handler, Decl, Ent, Tree_Lang);
          else
-            Ent := Entity.Node;
+            Ent := To_Entity_Access (Entity.Node);
             Tree_Lang := Get_Tree_Language (Get_File (Ent));
          end if;
 
@@ -676,7 +676,7 @@ package body Xref is
                   elsif Entity /= No_General_Entity then
                      --  Reuse the ALI entity, since that gives us a change to
                      --  query its references as well.
-                     Entity.Node := Result;
+                     Entity.Node := To_Entity_Persistent_Access (Result);
 
                   else
                      --  If we have no entity to connect to, then create one
@@ -850,12 +850,12 @@ package body Xref is
          end if;
       end if;
 
-      if Entity.Node /= Null_Entity_Access then
+      if Exists (Entity.Node) then
          declare
             Decl : constant Entity_Access :=
               Get_Declaration
                 (Get_Tree_Language (Get_File (Entity.Node)),
-                 Entity.Node);
+                 To_Entity_Access (Entity.Node));
             Node : constant Construct_Tree_Iterator :=
               To_Construct_Tree_Iterator (Decl);
 
@@ -979,8 +979,8 @@ package body Xref is
                --  Do not reuse the Node information from the Entity, in case
                --  it is no longer up-to-date
 
-               if Entity.Node /= Null_Entity_Access then
-                  C_Entity := Entity.Node;
+               if Exists (Entity.Node) then
+                  C_Entity := To_Entity_Access (Entity.Node);
 
                else
                   Loc := Db.Get_Declaration (Entity).Loc;
@@ -1315,6 +1315,7 @@ package body Xref is
    procedure Unref (Entity : in out General_Entity) is
    begin
       Old_Entities.Unref (Entity.Old_Entity);
+      Unref (Entity.Node);
    end Unref;
 
    -----------------
@@ -1371,7 +1372,7 @@ package body Xref is
             return True;
 
          elsif E1.Node = E2.Node
-           and then E1.Node /= Null_Entity_Access
+           and then Exists (E1.Node)
            and then (E1.Entity = E1.Entity
                      or else E1.Entity = No_Entity
                      or else E2.Entity = No_Entity)
@@ -1380,8 +1381,8 @@ package body Xref is
 
          elsif E1.Entity = No_Entity
            and then E2.Entity = No_Entity
-           and then E1.Node = Null_Entity_Access
-           and then E2.Node = Null_Entity_Access
+           and then not Exists (E1.Node)
+           and then not Exists (E2.Node)
          then
             return True;
 
@@ -1391,10 +1392,10 @@ package body Xref is
       else
          if E1.Old_Entity = null then
             return E2.Old_Entity = null
-              and then E2.Node = Null_Entity_Access;
+              and then not Exists (E2.Node);
          elsif E2.Old_Entity = null then
             return E1.Old_Entity = null
-              and then E1.Node = Null_Entity_Access;
+              and then not Exists (E1.Node);
          else
             return E1.Old_Entity = E2.Old_Entity;
          end if;
@@ -2754,7 +2755,7 @@ package body Xref is
                        (Get_Construct (E).Sloc_Entity.Column)))));
          end if;
 
-         Entity.Node := E;
+         Entity.Node := To_Entity_Persistent_Access (E);
          Construct_Annotation := (Other_Kind, Other_Val => new LI_Annotation);
          LI_Annotation (Construct_Annotation.Other_Val.all).Entity := Entity;
          Set_Annotation
@@ -3076,7 +3077,7 @@ package body Xref is
    function From_Constructs
      (Entity : Language.Tree.Database.Entity_Access) return General_Entity is
    begin
-      return (Node => Entity, others => <>);
+      return (Node => To_Entity_Persistent_Access (Entity), others => <>);
    end From_Constructs;
 
    -----------------
