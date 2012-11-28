@@ -771,8 +771,8 @@ private
 
       Entity     : GNATCOLL.Xref.Entity_Information := No_Entity;
 
-      Node       : Language.Tree.Database.Entity_Access :=
-        Language.Tree.Database.Null_Entity_Access;
+      Node       : Language.Tree.Database.Entity_Persistent_Access :=
+        Language.Tree.Database.Null_Entity_Persistent_Access;
       --  The corresponding node in the constructs database. This can be
       --  computed from the other two fields.
    end record;
@@ -780,7 +780,7 @@ private
      (Old_Entity => null,
       Is_Fuzzy   => False,
       Entity     => No_Entity,
-      Node       => Language.Tree.Database.Null_Entity_Access);
+      Node       => Language.Tree.Database.Null_Entity_Persistent_Access);
 
    type General_Entity_Reference is record
       Old_Ref : Old_Entities.Entity_Reference :=
