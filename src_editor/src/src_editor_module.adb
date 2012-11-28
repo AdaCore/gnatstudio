@@ -1784,7 +1784,7 @@ package body Src_Editor_Module is
                     Force       => False,
                     Open_Buffer => False,
                     Open_View   => False);
-               List : Buffer_Lists.List :=
+               List : constant Buffer_Lists.List :=
                  Buffers (Get_Buffer_Factory (Command.Kernel).all);
 
             begin
