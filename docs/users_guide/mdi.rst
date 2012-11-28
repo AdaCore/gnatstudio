@@ -205,9 +205,11 @@ anywhere in GPS. That's to distinguish between the mode where you want to
 reorder tabs and the mode where you want to move windows.
 
 While you keep the mouse button pressed, and move the mouse around, the
-selected drop area is highlighted with a dashed border. This shows precisely
+target area is highlighted. This shows precisely
 where the window would be put if you were to release the mouse button at that
-point.
+point. The background color of the highlight indicates whether the window
+will be preserved (if the color is the same as the title bar) or not when
+changing perspectives (for instance when starting a debug session).
 
 If you move your mouse all the way to the side of the desktop, and then drop
 the window, that window will occupy the full width (resp. height) of the
@@ -279,7 +281,8 @@ will be hidden. There is a central area where all preserved windows are found.
 Typically, it only contains editors (including if you have split them side by
 side for instance). If you drag and drop another window on top or to the sides
 of an editor, that window will be preserved when changing perspectives, unless
-it was already found elsewhere in the new perspective.  The small tooltip that
+it was already found elsewhere in the new perspective.  The color of the
+highlight that
 appears on the screen while you drag and drop will tell you whether the window
 (if dropped at the current location) will be visible in other perspectives or
 not.
