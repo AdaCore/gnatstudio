@@ -38,6 +38,7 @@ package Language.Tree.Database is
    --  This type points to a precise entity in the database. It's not suitable
    --  for persistent storage: its data are not valid anymore after a refresh
    --  on the file where the entity is located.
+   --  See also Entity_Persistent_Access for longer term storage.
 
    type Construct_Database is tagged private;
    --  A construct database is a data structure containing a file index and a
