@@ -649,7 +649,7 @@ package body Completion.C.Constructs_Extractor is
                    (P + 1,
                     Prev_Params
                     & Separator
-                    & Single_Param_Text (Param)
+                    & Single_Param_Text (Params (P).Parameter)
                     & Spaces);
             end if;
          end Next_Params;
