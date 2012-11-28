@@ -1580,11 +1580,20 @@ procedure GPS.Main is
         and then (not Active (Testsuite_Handle))
         and then Gdk.Visual.Get_Best_Depth < 24
       then
-         Console.Insert
-           (GPS_Main.Kernel,
-            -("Warning, GPS requires a display with a minimal color depth"
-              & " of 24 bits per pixels."),
-            Mode => GPS.Kernel.Console.Error);
+         declare
+            Ignored : Message_Dialog_Buttons;
+            pragma Unreferenced (Ignored);
+         begin
+            Ignored := Gtkada.Dialogs.Message_Dialog
+              (Msg            =>
+                 "GPS requires a display with a minimal color depth"
+               & " of 24 bits per pixels.",
+               Dialog_Type    => Error,
+               Buttons        => Button_OK,
+               Default_Button => Button_OK,
+               Title          => "Incompatible display");
+            Gtk.Main.Main_Quit;
+         end;
       end if;
 
       --  Apply the preferences to the MDI. In particular, we want to set the
