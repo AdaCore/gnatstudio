@@ -1348,7 +1348,7 @@ package body Completion_Module is
                Callback       => Load_One_File_Constructs'Access,
                Chunk_Size     => 1,
                Queue_Name     => Db_Loading_Queue,
-               Operation_Name => "load constructs db",
+               Operation_Name => "load constructs",
                Files          => Added_Files);
 
             Unchecked_Free (Project_Files);

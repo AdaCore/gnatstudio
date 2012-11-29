@@ -363,30 +363,25 @@ package body Task_Manager.GUI is
       Pixbuf : Gdk_Pixbuf;
       Image  : Gtk_Image;
    begin
-      if GUI.Label = null then
-         --  Create the GUI elements
-         Gtk_New (GUI.Label, "");
-
-         Pack_Start (GUI, GUI.Label, Expand => True, Fill => True);
-
+      if GUI.Progress_Bar_Button = null then
          Gtk_New (GUI.Progress_Bar_Button);
          Pixbuf := Render_Icon
            (GUI.Progress_Bar_Button, Stock_Close, Icon_Size_Menu);
          Gtk_New (Image, Pixbuf);
-         Add (GUI.Progress_Bar_Button, Image);
-         Set_Relief (GUI.Progress_Bar_Button, Relief_None);
-         Pack_Start (GUI, GUI.Progress_Bar_Button, Expand => False);
+         GUI.Progress_Bar_Button.Add (Image);
+         GUI.Progress_Bar_Button.Set_Relief (Relief_None);
+         GUI.Pack_Start (GUI.Progress_Bar_Button, Expand => False);
 
          Gtk_New (GUI.Main_Progress_Bar);
-         Pack_Start (GUI,
-                     GUI.Main_Progress_Bar,
-                     Expand  => False,
-                     Fill    => False,
-                     Padding => 0);
+         GUI.Pack_Start
+           (GUI.Main_Progress_Bar,
+            Expand  => False,
+            Fill    => False,
+            Padding => 0);
+         GUI.Main_Progress_Bar.Set_Show_Text (True);
 
-         Pack_End
-           (GUI.Manager.Progress_Area,
-            GUI,
+         GUI.Manager.Progress_Area.Pack_End
+           (GUI,
             Expand  => False,
             Fill    => True,
             Padding => 0);
@@ -412,22 +407,22 @@ package body Task_Manager.GUI is
       --  manager.
 
       if GUI.Manager.Queues = null then
-         Hide (GUI);
+         GUI.Hide;
       else
          declare
             Pd : constant Progress_Data :=
                    Get_Progress_Text (GUI.Manager, False);
          begin
             if Pd = Null_Progress_Data then
-               Hide (GUI);
+               GUI.Hide;
 
             else
-               Set_Fraction (GUI.Main_Progress_Bar, Pd.Fraction);
-               Set_Text (GUI.Main_Progress_Bar, Pd.Text);
-               Show_All (GUI);
+               GUI.Main_Progress_Bar.Set_Fraction (Pd.Fraction);
+               GUI.Main_Progress_Bar.Set_Text (Pd.Text);
+               GUI.Show_All;
 
                if Pd.Multiple_Queues then
-                  Hide (GUI.Progress_Bar_Button);
+                  GUI.Progress_Bar_Button.Hide;
                end if;
             end if;
          end;

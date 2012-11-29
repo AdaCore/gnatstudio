@@ -23,7 +23,6 @@ private with Glib.Values;
 with Gtk.Image;                use Gtk.Image;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 
-with Gtk.Label;                use Gtk.Label;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
@@ -198,7 +197,6 @@ private
       Progress_Bar_Button    : Gtk_Button;
 
       Button_Image           : Gtk_Image;
-      Label                  : Gtk_Label;
 
       Reference_Widget       : Gtk_Widget;
       --  A reference widget to create the graphical contexts
