@@ -264,8 +264,7 @@ package body GPS.Kernel.Task_Manager is
      (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access is
    begin
       if Kernel.Tasks = No_Task_Manager then
-         Kernel.Tasks := Create
-           (Kernel_Handle (Kernel), Gtk_Widget (Get_Main_Window (Kernel)));
+         Kernel.Tasks := Create (Kernel_Handle (Kernel));
       end if;
 
       return Kernel.Tasks;
@@ -545,7 +544,7 @@ package body GPS.Kernel.Task_Manager is
 
       Set_Progress_Area
         (Get_Task_Manager (Kernel),
-         GPS_Window (Get_Main_Window (Kernel)).Statusbar);
+         GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box);
 
       Script := Lookup_Scripting_Language
         (Get_Scripts (Kernel), GPS_Shell_Name);

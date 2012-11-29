@@ -1821,8 +1821,6 @@ procedure GPS.Main is
       --  Since the call to destroy below will free the animation at some
       --  point, we no longer want to access/update it past this point.
 
-      GPS_Main.Animation_Image := null;
-
       Destroy (GPS_Main);
 
       Free_Modules (Kernel);

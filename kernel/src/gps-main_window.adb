@@ -17,13 +17,11 @@
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
 
 with Glib;                      use Glib;
-with Glib.Error;                use Glib.Error;
 with Glib.Object;
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
@@ -39,12 +37,10 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
-with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
 with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Settings;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -68,15 +64,12 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;
 with Remote;                    use Remote;
-with Traces;                    use Traces;
 with User_Interface_Tools;
 with Gtk.Text_View;
 with Gtk.Text_Buffer;
 with Gtk.Scrolled_Window;
 
 package body GPS.Main_Window is
-
-   Me : constant Debug_Handle := Create ("GPS.Main_Window");
 
    Signals : constant Gtkada.Types.Chars_Ptr_Array :=
      (1 => New_String ("preferences_changed"));
@@ -129,7 +122,6 @@ package body GPS.Main_Window is
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
 
    Pref_Toolbar_Style  : Toolbar_Icons_Size_Preferences.Preference;
-   Pref_Show_Statusbar : Boolean_Preference;
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -171,9 +163,6 @@ package body GPS.Main_Window is
       Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  Act on the layout of windows
-
-   procedure Put_Animation (Main_Window : access GPS_Window_Record'Class);
-   --  Add the animated icon in the main window
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project is changed
@@ -292,39 +281,6 @@ package body GPS.Main_Window is
    end Execute;
 
    -------------
-   -- Anim_Cb --
-   -------------
-
-   function Anim_Cb (Kernel : Kernel_Handle) return Boolean is
-      Window : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-   begin
-      if Window.Animation_Iter = null then
-         return False;
-
-      elsif Advance (Window.Animation_Iter) then
-         if Window.Animation_Image /= null then
-            Set (Window.Animation_Image, Get_Pixbuf (Window.Animation_Iter));
-         end if;
-      end if;
-
-      return True;
-   end Anim_Cb;
-
-   ---------------------------
-   -- Display_Default_Image --
-   ---------------------------
-
-   procedure Display_Default_Image (Kernel : GPS.Kernel.Kernel_Handle) is
-      Window : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-   begin
-      if Window.Static_Image /= null then
-         Set (Window.Animation_Image, Window.Static_Image);
-      end if;
-   end Display_Default_Image;
-
-   -------------
    -- Gtk_New --
    -------------
 
@@ -375,42 +331,6 @@ package body GPS.Main_Window is
    begin
       Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
    end On_Project_Changed;
-
-   -------------------
-   -- Put_Animation --
-   -------------------
-
-   procedure Put_Animation (Main_Window : access GPS_Window_Record'Class) is
-      GPS_Dir  : constant Virtual_File :=
-                   Create_From_Dir
-                     (Get_System_Dir (Main_Window.Kernel), "/share/gps/");
-      Throbber : constant Filesystem_String :=
-                   Normalize_Pathname ("gps-animation.gif", GPS_Dir.Full_Name);
-      Image    : constant Filesystem_String :=
-                   Normalize_Pathname ("gps-animation.png", GPS_Dir.Full_Name);
-      Error    : GError;
-
-   begin
-      if Is_Regular_File (Image) then
-         Trace (Me, "loading gps-animation.png");
-         Gdk_New_From_File (Main_Window.Static_Image, +Image, Error);
-         Gtk_New (Main_Window.Animation_Image, Main_Window.Static_Image);
-         Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
-      else
-         Trace (Me, "gps-animation.png not found");
-         return;
-      end if;
-
-      if Is_Regular_File (Throbber) then
-         Trace (Me, "loading gps-animation.gif");
-         Gdk_New_From_File (Main_Window.Animation, +Throbber, Error);
-         Main_Window.Animation_Iter := Get_Iter (Main_Window.Animation);
-      else
-         Trace (Me, "gps-animation.gif not found");
-      end if;
-
-      Show_All (Main_Window.Animation_Image);
-   end Put_Animation;
 
    -------------------------
    -- Preferences_Changed --
@@ -469,16 +389,6 @@ package body GPS.Main_Window is
          Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
       end if;
 
-      if Pref_Show_Statusbar.Get_Pref then
-         Show (Win.Statusbar);
-         Set_Child_Visible (Win.Statusbar, True);
-         Set_Size_Request (Win.Statusbar, 0, -1);
-      else
-         Hide (Win.Statusbar);
-         Set_Child_Visible (Win.Statusbar, False);
-         Set_Size_Request (Win.Statusbar, 0, 0);
-      end if;
-
       Configure_MDI (Kernel);
    end Preferences_Changed;
 
@@ -492,11 +402,9 @@ package body GPS.Main_Window is
       Prefix_Directory : Virtual_File)
    is
       Vbox      : Gtk_Vbox;
-      Progress  : Gtk.Progress_Bar.Gtk_Progress_Bar;
       Menu      : Gtk_Menu;
       Menu_Item : Gtk_Menu_Item;
       Anim_Tb   : Gtk_Toolbar;
-      Anim_Item : Gtk_Tool_Item;
 
    begin
       --  Initialize the window first, so that it can be used while creating
@@ -520,18 +428,6 @@ package body GPS.Main_Window is
          Doc     => -("Indicates how the tool bar should be displayed"),
          Default => Large_Icons);
 
-      Pref_Show_Statusbar := Create
-        (Get_Preferences (Main_Window.Kernel),
-         Name  => "Window-Show-Status-Bar",
-         Label => -"Show status bar",
-         Page  => -"General",
-         Doc   => -("Whether the area at the bottom of the GPS window"
-                       & " should be displayed. This area contains the"
-                       & " progress bars while actions are taking place. The"
-                       & " same information is available from the Task"
-                       & " Manager"),
-         Default => True);
-
       --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many
       --  window managers as "top-left" corner, which may cause issues with
       --  taskbars.
@@ -550,30 +446,6 @@ package body GPS.Main_Window is
 
       Gtk_New_Vbox (Vbox, False, 0);
       Add (Main_Window, Vbox);
-
-      Gtk_New_Hbox
-        (Main_Window.Statusbar, Homogeneous => False, Spacing => 4);
-      Set_Size_Request (Main_Window.Statusbar, 0, -1);
-
-      --  Avoid resizing the main window whenever a label is changed
-      Set_Resize_Mode (Main_Window.Statusbar, Resize_Queue);
-
-      Gtk_New (Progress);
-      Set_Text (Progress, " ");
-      --  ??? This is a tweak : it seems that the gtk progress bar doesn't
-      --  have a size that is the same when it has text than when it does not,
-      --  but we do want to insert and remove text from this bar, without
-      --  the annoying change in size, so we make sure there is always some
-      --  text displayed.
-
-      Pack_Start (Main_Window.Statusbar, Progress, False, False, 0);
-
-      --  ??? We set the default width to 0 so that the progress bar appears
-      --  only as a vertical separator.
-      --  This should be removed when another way to keep the size of the
-      --  status bar acceptable is found.
-      Set_Size_Request (Progress, 0, -1);
-      Pack_End (Vbox, Main_Window.Statusbar, False, False, 0);
 
       Gtk_New (Main_Window.Menu_Bar);
       Pack_Start (Vbox, Main_Window.Menu_Bar, False);
@@ -636,14 +508,6 @@ package body GPS.Main_Window is
       Set_Orientation (Anim_Tb, Orientation_Horizontal);
       Set_Style (Anim_Tb, Toolbar_Icons);
       Pack_End (Main_Window.Toolbar_Box, Anim_Tb, False);
-
-      Gtk_New (Main_Window.Animation_Frame);
-      Main_Window.Animation_Frame.Set_Border_Width (0);
-      Main_Window.Animation_Frame.Set_Shadow_Type (Shadow_None);
-      Gtk_New (Anim_Item);
-      Anim_Item.Add (Main_Window.Animation_Frame);
-      Anim_Tb.Insert (Anim_Item, Pos => 0);
-      Put_Animation (Main_Window);
 
       Add (Vbox, Main_Window.MDI);
 
@@ -1406,20 +1270,8 @@ package body GPS.Main_Window is
    ----------------
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class) is
-      Win : constant GPS_Window := GPS_Window (Main_Window);
+      pragma Unreferenced (Main_Window);
    begin
-      if Win.Animation /= null then
-         Unref (Win.Animation);
-      end if;
-
-      if Win.Animation_Iter /= null then
-         Unref (Win.Animation_Iter);
-      end if;
-
-      if Win.Static_Image /= null then
-         Unref (Win.Static_Image);
-      end if;
-
       if Main_Level > 0 then
          Main_Quit;
       end if;

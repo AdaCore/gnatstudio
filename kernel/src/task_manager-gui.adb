@@ -29,6 +29,7 @@ with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Icon_Factory;
+with Gtk.Image;                  use Gtk.Image;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Settings;
 with Gtk.Stock;                  use Gtk.Stock;
@@ -546,11 +547,10 @@ package body Task_Manager.GUI is
    procedure Gtk_New
      (View    : out Task_Manager_Interface;
       Kernel  : Kernel_Handle;
-      Manager : Task_Manager_Access;
-      Widget  : Gtk_Widget) is
+      Manager : Task_Manager_Access) is
    begin
       View := new Task_Manager_Interface_Record;
-      Initialize (View, Kernel, Manager, Widget);
+      Initialize (View, Kernel, Manager);
    end Gtk_New;
 
    ----------------
@@ -560,8 +560,7 @@ package body Task_Manager.GUI is
    procedure Initialize
      (View    : access Task_Manager_Interface_Record'Class;
       Kernel  : Kernel_Handle;
-      Manager : Task_Manager_Access;
-      Widget  : Gtk_Widget)
+      Manager : Task_Manager_Access)
    is
       Model : constant Task_Manager_Model := new Task_Manager_Model_Record;
    begin
@@ -575,7 +574,6 @@ package body Task_Manager.GUI is
       View.Kernel  := Kernel;
       View.Manager := Task_Manager_UI_Access (Manager);
       View.Model   := Model;
-      View.Reference_Widget := Widget;
 
       View.Manager.GUI := Task_Manager_Interface (View);
 
@@ -1281,14 +1279,11 @@ package body Task_Manager.GUI is
    -- Create --
    ------------
 
-   function Create
-     (Kernel : Kernel_Handle;
-      Widget : Gtk_Widget) return Task_Manager_Access
-   is
+   function Create (Kernel : Kernel_Handle) return Task_Manager_Access is
       R : Task_Manager_Access;
    begin
       R := new Task_Manager_UI_Record;
-      Gtk_New (Task_Manager_UI_Access (R).GUI, Kernel, R, Widget);
+      Gtk_New (Task_Manager_UI_Access (R).GUI, Kernel, R);
       return R;
    end Create;
 

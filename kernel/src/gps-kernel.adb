@@ -35,10 +35,8 @@ with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
 
-with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with XML_Utils;                 use XML_Utils;
 
@@ -70,7 +68,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
@@ -103,9 +100,6 @@ package body GPS.Kernel is
 
    function To_Address is new Ada.Unchecked_Conversion
      (Selection_Context_Data, System.Address);
-
-   function Process_Anim (Data : Process_Data) return Boolean;
-   --  Process_Timeout callback to handle image animations
 
    procedure Free (Tool : in out Tool_Properties_Record);
    procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class);
@@ -939,22 +933,6 @@ package body GPS.Kernel is
       return Handle.Main_Window;
    end Get_Main_Window;
 
-   ------------------
-   -- Process_Anim --
-   ------------------
-
-   function Process_Anim (Data : Process_Data) return Boolean is
-      Window : constant GPS_Window := GPS_Window (Data.Kernel.Main_Window);
-   begin
-      if Anim_Cb (Data.Kernel) then
-         Window.Animation_Timeout := Process_Timeout.Timeout_Add
-           (Guint (Get_Delay_Time (Window.Animation_Iter)),
-            Process_Anim'Access, Data);
-      end if;
-
-      return False;
-   end Process_Anim;
-
    --------------
    -- Get_Busy --
    --------------
@@ -990,16 +968,6 @@ package body GPS.Kernel is
          Window.Busy_Level := Window.Busy_Level + 1;
       end if;
 
-      if Window.State_Level = 0
-        and then Window.Animation_Timeout = 0
-        and then Window.Animation_Iter /= null
-      then
-         Window.Animation_Timeout := Process_Timeout.Timeout_Add
-           (Guint (Get_Delay_Time (Window.Animation_Iter)),
-            Process_Anim'Access,
-            (Kernel_Handle (Handle), null, null, null, null, null, False));
-      end if;
-
       Window.State_Level := Window.State_Level + 1;
    end Push_State;
 
@@ -1029,15 +997,6 @@ package body GPS.Kernel is
             if Window.Busy_Level = 0 then
                Set_Busy_Cursor (Get_Window (Window), False, False);
             end if;
-         end if;
-
-         if Window.State_Level = 0
-           and then not In_Destruction (Get_Main_Window (Handle))
-           and then Window.Animation_Timeout /= 0
-         then
-            Glib.Main.Remove (Window.Animation_Timeout);
-            Window.Animation_Timeout := 0;
-            Display_Default_Image (Kernel_Handle (Handle));
          end if;
       end if;
    end Pop_State;

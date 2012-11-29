@@ -20,7 +20,6 @@
 with Glib; use Glib;
 private with Glib.Values;
 
-with Gtk.Image;                use Gtk.Image;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 
 with Gtk.Button;               use Gtk.Button;
@@ -40,9 +39,7 @@ with Glib.Main;
 
 package Task_Manager.GUI is
 
-   function Create
-     (Kernel : Kernel_Handle;
-      Widget : Gtk_Widget) return Task_Manager_Access;
+   function Create (Kernel : Kernel_Handle) return Task_Manager_Access;
    --  ??? Missing documentation
 
    function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget;
@@ -73,15 +70,13 @@ package Task_Manager.GUI is
    procedure Gtk_New
      (View    : out Task_Manager_Interface;
       Kernel  : Kernel_Handle;
-      Manager : Task_Manager_Access;
-      Widget  : Gtk_Widget);
+      Manager : Task_Manager_Access);
    --  Create a new Task_Manager_Interface
 
    procedure Initialize
      (View    : access Task_Manager_Interface_Record'Class;
       Kernel  : Kernel_Handle;
-      Manager : Task_Manager_Access;
-      Widget  : Gtk_Widget);
+      Manager : Task_Manager_Access);
    --  Internal initialization procedure
 
    procedure Interrupt_Command
@@ -195,11 +190,6 @@ private
       Manager                : Task_Manager_UI_Access;
 
       Progress_Bar_Button    : Gtk_Button;
-
-      Button_Image           : Gtk_Image;
-
-      Reference_Widget       : Gtk_Widget;
-      --  A reference widget to create the graphical contexts
 
       Close_Button_Pixbuf    : Gdk_Pixbuf;
       Pause_Button_Pixbuf    : Gdk_Pixbuf;
