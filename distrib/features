@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-LB29-021 GPS: remove status bar (2012-11-29)
+
+  The status bar has been removed. It was only used to display the current
+  tasks in progress, and the corresponding progress bars were moved to the
+  right of the toolbar, replacing the throbber.
+
 NF-60-LB29-006 GPS: use ellipsis in window titles (2012-11-28)
 
   The text in the title bars and in the notebook tabs will now use ellipsis
