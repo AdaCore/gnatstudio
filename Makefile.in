@@ -18,8 +18,8 @@ default:
 
 codepeer:
 	$(MAKE) -C gps scil
-	codepeer -all -lib gps.library -quiet -baseline \
-	  -quick -jobs 0 $(CODEPEER_FLAGS)
+	codepeer -all -lib gps.library -quiet -baseline -level 1 \
+	  -jobs 0 $(CODEPEER_FLAGS)
 
 clean:
 	$(MAKE) -C gps $@
