@@ -112,10 +112,10 @@ package body Xref is
          Buffer    : GNAT.Strings.String_Access;
          Node      : Construct_Tree_Iterator;
       begin
-         if Entity.Node = Null_Entity_Access then
+         if not Exists (Entity.Node) then
             Node_From_Entity (Self, Handler, Decl, Ent, Tree_Lang);
          else
-            Ent := Entity.Node;
+            Ent := To_Entity_Access (Entity.Node);
             Tree_Lang := Get_Tree_Language (Get_File (Ent));
          end if;
 
@@ -636,12 +636,12 @@ package body Xref is
          end;
       end if;
 
-      if Entity.Node /= Null_Entity_Access then
+      if Exists (Entity.Node) then
          declare
             Decl : constant Entity_Access :=
               Get_Declaration
-                (Get_Tree_Language (Get_File (Entity.Node)),
-                 Entity.Node);
+                (Get_Tree_Language (Get_File (To_Entity_Access (Entity.Node))),
+                 To_Entity_Access (Entity.Node));
             Node : constant Construct_Tree_Iterator :=
               To_Construct_Tree_Iterator (Decl);
 

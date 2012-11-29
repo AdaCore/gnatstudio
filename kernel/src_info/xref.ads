@@ -67,8 +67,8 @@ package Xref is
       Old_Entity : Entities.Entity_Information := null;
       Entity     : GNATCOLL.Xref.Entity_Information := No_Entity;
 
-      Node       : Language.Tree.Database.Entity_Access :=
-        Language.Tree.Database.Null_Entity_Access;
+      Node       : Language.Tree.Database.Entity_Persistent_Access :=
+        Language.Tree.Database.Null_Entity_Persistent_Access;
       --  The corresponding node in the constructs database. This can be
       --  computed from the other two fields.
    end record;
