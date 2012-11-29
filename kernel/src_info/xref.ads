@@ -221,7 +221,7 @@ private
    No_General_Entity : constant General_Entity :=
      (Old_Entity => null,
       Entity     => No_Entity,
-      Node       => Language.Tree.Database.Null_Entity_Access);
+      Node       => Language.Tree.Database.Null_Entity_Persistent_Access);
 
    No_General_Entity_Reference : constant General_Entity_Reference :=
      (Old_Ref => Entities.No_Entity_Reference,

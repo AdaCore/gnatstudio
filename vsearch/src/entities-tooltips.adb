@@ -166,7 +166,9 @@ package body Entities.Tooltips is
          Doc => Documentation
            (Kernel.Databases,
             Handler => Kernel.Get_Language_Handler,
-            Entity  => General_Entity'(Node => Entity, others => <>)),
+            Entity  =>
+              General_Entity'(Node => To_Entity_Persistent_Access (Entity),
+                              others => <>)),
          Pixbuf => Entity_Icons
            (Construct.Is_Declaration, Construct.Visibility)
            (Construct.Category));

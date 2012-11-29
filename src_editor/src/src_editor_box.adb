@@ -2317,7 +2317,7 @@ package body Src_Editor_Box is
                return Commands.Failure;
 
             else
-               Location := Db.Get_Declaration (Entity_Type).Loc;
+               Location := Get_Declaration (Db, Entity_Type);
                Go_To_Closest_Match
                  (Kernel,
                   Filename => Location.File,
