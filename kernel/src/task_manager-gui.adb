@@ -28,6 +28,7 @@ with Glib.Values;                use Glib.Values;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Handlers;
 with Gtk.Icon_Factory;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
@@ -426,6 +427,10 @@ package body Task_Manager.GUI is
                GUI.Task_Label.Set_Text (Pd.Text);
                GUI.Main_Progress_Bar.Set_Text (Pd.Progress_Text);
                GUI.Progress_Bar_Button.Set_Sensitive (not Pd.Multiple_Queues);
+
+               GUI.Main_Progress_Bar.Set_Tooltip_Markup
+                 (Pd.Text & " (" & Pd.Progress_Text & ")" & ASCII.LF
+                  & (-"<i>Double-click to open the Task Manager</i>"));
             end if;
          end;
       end if;
@@ -570,8 +575,9 @@ package body Task_Manager.GUI is
         Create_From_Dir (GPS_Dir, "gps_32.png");
       Image   : Gtk_Image;
       Box     : Gtk_Box;
-      Pixbuf : Gdk_Pixbuf;
-      VBox   : Gtk_Box;
+      Pixbuf  : Gdk_Pixbuf;
+      VBox    : Gtk_Box;
+      Event   : Gtk_Event_Box;
    begin
       Initialize_Hbox (View, Homogeneous => False);
       Get_Style_Context (View).Add_Class ("gps-task-manager");
@@ -595,9 +601,13 @@ package body Task_Manager.GUI is
       Gtk_New_Hbox (Box);
       VBox.Pack_Start (Box, Expand => False);
 
+      Gtk_New (Event);
+      Event.Set_Has_Window (False);
+      Box.Pack_Start (Event, Expand => True);
+
       Gtk_New (View.Main_Progress_Bar);
       View.Main_Progress_Bar.Set_Show_Text (True);
-      Box.Pack_Start (View.Main_Progress_Bar, Expand => True);
+      Event.Add (View.Main_Progress_Bar);
 
       Gtk_New (View.Progress_Bar_Button);
       Pixbuf := Render_Icon_Pixbuf
@@ -613,11 +623,9 @@ package body Task_Manager.GUI is
          On_Progress_Bar_Button_Clicked'Access,
          User_Data => (Task_Manager_Interface (View), 0));
 
-      Set_Events (View.Main_Progress_Bar,
-                  Get_Events (View.Main_Progress_Bar)
-                  or Button_Press_Mask);
+      Set_Events (Event, Get_Events (Event) or Button_Press_Mask);
       Return_Callback.Object_Connect
-        (View.Main_Progress_Bar,
+        (Event,
          Signal_Button_Press_Event,
          Return_Callback.To_Marshaller
            (On_Main_Progress_Button_Press_Event'Access),
