@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with System;                     use System;
 with System.Storage_Elements;    use System.Storage_Elements;
 
@@ -29,9 +30,9 @@ with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Icon_Factory;
-with Gtk.Image;                  use Gtk.Image;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Settings;
+with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Stock;                  use Gtk.Stock;
 
 with Gtkada.Abstract_List_Model; use Gtkada.Abstract_List_Model;
@@ -45,6 +46,7 @@ with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
+with GNAT.IO; use GNAT.IO;
 
 package body Task_Manager.GUI is
 
@@ -52,11 +54,12 @@ package body Task_Manager.GUI is
    -- Local constants --
    ---------------------
 
-   Progress_Bar_Length : constant := 200;
-   --  The length of the progress bar, in number of pixels
-
    Refresh_Timeout     : constant := 200;
    --  The timeout to refresh the GUI, in milliseconds
+
+   Progress_Bar_Length : constant := 200;
+   --  The length of the progress bar, in number of pixels
+   --  ??? This hard-codes the size of the tree column.
 
    function Columns_Types return GType_Array;
    --  Returns the types for the columns in the Model.
@@ -115,6 +118,11 @@ package body Task_Manager.GUI is
       Manager : Manager_Index_Record);
    --  Callback for the destruction of the GUI
 
+   procedure Set_Mode
+     (View : access Task_Manager_Interface_Record'Class;
+      Idle : Boolean);
+   --  Hide or show the proper widgets
+
    procedure On_Progress_Bar_Destroy
      (Object  : access GObject_Record'Class;
       Manager : Manager_Index_Record);
@@ -128,13 +136,19 @@ package body Task_Manager.GUI is
      (GUI : access Task_Manager_Interface_Record'Class);
    --  Initialize the graphic elements needed to render the tree view
 
-   type Progress_Data (L : Integer) is record
+   type Progress_Data (L, P : Integer) is record
       Fraction        : Gdouble;
+
       Text            : String (1 .. L);
+      --  What action are we performing ?
+
+      Progress_Text   : String (1 .. P);
+      --  How far along are we (either as a "n/m" or a "n%")
+
       Multiple_Queues : Boolean;
    end record;
 
-   Null_Progress_Data : constant Progress_Data := (0, 0.0, "", False);
+   Null_Progress_Data : constant Progress_Data := (0, 0, 0.0, "", "", False);
 
    function Get_Progress_Text
      (Manager                : access Task_Manager_Record'Class;
@@ -258,6 +272,7 @@ package body Task_Manager.GUI is
       GUI : constant Task_Manager_Interface :=
         Task_Manager_Interface (Object);
    begin
+      Put_Line ("MANU On_Main_Progress_Button_Press_Event");
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
@@ -356,75 +371,61 @@ package body Task_Manager.GUI is
          Trace (Exception_Handle, E);
    end On_Progress_Bar_Button_Clicked;
 
+   --------------
+   -- Set_Mode --
+   --------------
+
+   procedure Set_Mode
+     (View : access Task_Manager_Interface_Record'Class;
+      Idle : Boolean)
+   is
+   begin
+      if Idle then
+         View.Logo.Set_Child_Visible (True);
+         View.Logo.Show_All;
+
+         View.Main_Progress_Bar.Set_Child_Visible (False);
+         View.Progress_Bar_Button.Set_Child_Visible (False);
+         View.Task_Label.Set_Child_Visible (False);
+         View.Main_Progress_Bar.Hide;
+         View.Progress_Bar_Button.Hide;
+         View.Task_Label.Hide;
+
+      else
+         View.Logo.Set_Child_Visible (False);
+         View.Logo.Hide;
+
+         View.Main_Progress_Bar.Set_Child_Visible (True);
+         View.Progress_Bar_Button.Set_Child_Visible (True);
+         View.Task_Label.Set_Child_Visible (True);
+         View.Main_Progress_Bar.Show_All;
+         View.Progress_Bar_Button.Show_All;
+         View.Task_Label.Show_All;
+      end if;
+   end Set_Mode;
+
    -------------
    -- Refresh --
    -------------
 
    procedure Refresh (GUI : Task_Manager_Interface) is
-      Pixbuf : Gdk_Pixbuf;
-      Image  : Gtk_Image;
    begin
-      if GUI.Progress_Bar_Button = null then
-         Gtk_New (GUI.Progress_Bar_Button);
-         Pixbuf := Render_Icon
-           (GUI.Progress_Bar_Button, Stock_Close, Icon_Size_Menu);
-         Gtk_New (Image, Pixbuf);
-         GUI.Progress_Bar_Button.Add (Image);
-         GUI.Progress_Bar_Button.Set_Relief (Relief_None);
-         GUI.Pack_Start (GUI.Progress_Bar_Button, Expand => False);
-
-         Gtk_New (GUI.Main_Progress_Bar);
-         GUI.Pack_Start
-           (GUI.Main_Progress_Bar,
-            Expand  => False,
-            Fill    => False,
-            Padding => 0);
-         GUI.Main_Progress_Bar.Set_Show_Text (True);
-
-         GUI.Manager.Progress_Area.Pack_End
-           (GUI,
-            Expand  => False,
-            Fill    => True,
-            Padding => 0);
-
-         Task_Manager_Handler.Connect
-           (GUI.Progress_Bar_Button, Gtk.Button.Signal_Clicked,
-            On_Progress_Bar_Button_Clicked'Access,
-            User_Data => (GUI, 0));
-
-         Set_Events (GUI.Main_Progress_Bar,
-                     Get_Events (GUI.Main_Progress_Bar)
-                     or Button_Press_Mask);
-         Return_Callback.Object_Connect
-           (GUI.Main_Progress_Bar,
-            Signal_Button_Press_Event,
-            Return_Callback.To_Marshaller
-              (On_Main_Progress_Button_Press_Event'Access),
-            GUI,
-            After => False);
-      end if;
-
-      --  Now update the graphical elements with the contents of the task
-      --  manager.
-
       if GUI.Manager.Queues = null then
-         GUI.Hide;
+         GUI.Set_Mode (Idle => True);
       else
          declare
             Pd : constant Progress_Data :=
                    Get_Progress_Text (GUI.Manager, False);
          begin
             if Pd = Null_Progress_Data then
-               GUI.Hide;
+               GUI.Set_Mode (Idle => True);
 
             else
+               GUI.Set_Mode (Idle => False);
                GUI.Main_Progress_Bar.Set_Fraction (Pd.Fraction);
-               GUI.Main_Progress_Bar.Set_Text (Pd.Text);
-               GUI.Show_All;
-
-               if Pd.Multiple_Queues then
-                  GUI.Progress_Bar_Button.Hide;
-               end if;
+               GUI.Task_Label.Set_Text (Pd.Text);
+               GUI.Main_Progress_Bar.Set_Text (Pd.Progress_Text);
+               GUI.Progress_Bar_Button.Set_Sensitive (not Pd.Multiple_Queues);
             end if;
          end;
       end if;
@@ -563,10 +564,64 @@ package body Task_Manager.GUI is
       Manager : Task_Manager_Access)
    is
       Model : constant Task_Manager_Model := new Task_Manager_Model_Record;
+      GPS_Dir  : constant Virtual_File := Create_From_Dir
+        (Kernel.Get_System_Dir, "/share/gps/icons/32px");
+      Image_File : constant Virtual_File :=
+        Create_From_Dir (GPS_Dir, "gps_32.png");
+      Image   : Gtk_Image;
+      Box     : Gtk_Box;
+      Pixbuf : Gdk_Pixbuf;
+      VBox   : Gtk_Box;
    begin
-      --  Initialize the GUI
+      Initialize_Hbox (View, Homogeneous => False);
+      Get_Style_Context (View).Add_Class ("gps-task-manager");
 
-      Initialize_Hbox (View);
+      --  The logo goes to the left of everything, so that when it is hidden
+      --  it doesn't matter if it is part of the size computation for the
+      --  task manager
+
+      Gtk_New (View.Logo, Filename => +Image_File.Full_Name.all);
+      View.Pack_Start (View.Logo, Expand => False);
+
+      --  The progress bar area
+
+      Gtk_New_Vbox (VBox);
+      View.Pack_Start (VBox, Expand => True);
+
+      Gtk_New (View.Task_Label, "");
+      View.Task_Label.Set_Alignment (0.0, 0.5);
+      VBox.Pack_Start (View.Task_Label, Expand => False);
+
+      Gtk_New_Hbox (Box);
+      VBox.Pack_Start (Box, Expand => False);
+
+      Gtk_New (View.Main_Progress_Bar);
+      View.Main_Progress_Bar.Set_Show_Text (True);
+      Box.Pack_Start (View.Main_Progress_Bar, Expand => True);
+
+      Gtk_New (View.Progress_Bar_Button);
+      Pixbuf := Render_Icon_Pixbuf
+        (View.Progress_Bar_Button, Stock_Close, Icon_Size_Menu);
+      Gtk_New (Image, Pixbuf);
+      Unref (Pixbuf);
+      View.Progress_Bar_Button.Add (Image);
+      View.Progress_Bar_Button.Set_Relief (Relief_None);
+      Box.Pack_Start (View.Progress_Bar_Button, Expand => False);
+
+      Task_Manager_Handler.Connect
+        (View.Progress_Bar_Button, Gtk.Button.Signal_Clicked,
+         On_Progress_Bar_Button_Clicked'Access,
+         User_Data => (Task_Manager_Interface (View), 0));
+
+      Set_Events (View.Main_Progress_Bar,
+                  Get_Events (View.Main_Progress_Bar)
+                  or Button_Press_Mask);
+      Return_Callback.Object_Connect
+        (View.Main_Progress_Bar,
+         Signal_Button_Press_Event,
+         Return_Callback.To_Marshaller
+           (On_Main_Progress_Button_Press_Event'Access),
+         View);
 
       Gtkada.Abstract_List_Model.Initialize (Model);
       Model.GUI := Task_Manager_Interface (View);
@@ -574,7 +629,6 @@ package body Task_Manager.GUI is
       View.Kernel  := Kernel;
       View.Manager := Task_Manager_UI_Access (Manager);
       View.Model   := Model;
-
       View.Manager.GUI := Task_Manager_Interface (View);
 
       Task_Manager_Handler.Connect
@@ -1142,17 +1196,20 @@ package body Task_Manager.GUI is
       As_Percent             : Boolean;
       With_Name_And_Fraction : Boolean) return Progress_Data
    is
-      Fraction        : constant Gdouble := Get_Fraction (Manager, Index);
-      Task_Queue      : Task_Queue_Access;
-      Length          : Integer;
-      Command         : Command_Access;
-      Progress        : Progress_Record;
-      Progress_String : GNAT.Strings.String_Access;
+      Fraction   : constant Gdouble := Get_Fraction (Manager, Index);
+      Task_Queue : Task_Queue_Access;
+      Length     : Integer;
+      Command    : Command_Access;
+      Progress   : Progress_Record;
 
       function Progress_Indicator return String;
       pragma Inline (Progress_Indicator);
       --  Return the progress indicator in xxx/yyy or in xx% format, depending
       --  on the value of As_Percent.
+
+      function Descr return String;
+      pragma Inline (Descr);
+      --  Return the description of the task
 
       ------------------------
       -- Progress_Indicator --
@@ -1161,17 +1218,34 @@ package body Task_Manager.GUI is
       function Progress_Indicator return String is
       begin
          if As_Percent then
-            return "(" & Image (Integer (Fraction * 100.0)) & "%)";
+            return Image (Integer (Fraction * 100.0)) & "%";
 
          else
             if Progress.Total <= 1 then
                return "";
             else
                return
-                 (Image (Progress.Current) & "/" & Image (Progress.Total));
+                 (GNATCOLL.Utils.Image (Progress.Current, Min_Width => 0)
+                  & "/"
+                  & GNATCOLL.Utils.Image (Progress.Total, Min_Width => 0));
             end if;
          end if;
       end Progress_Indicator;
+
+      -----------
+      -- Descr --
+      -----------
+
+      function Descr return String is
+      begin
+         if With_Name_And_Fraction then
+            return Commands.Name (Command);
+         elsif Length > 1 then
+            return Image (Length) & (-" queued");
+         else
+            return "";
+         end if;
+      end Descr;
 
    begin
       if Manager.Queues = null
@@ -1188,38 +1262,14 @@ package body Task_Manager.GUI is
          Command := Task_Queue.Queue.First_Element;
          Progress := Commands.Progress (Command);
 
-         --  Compute text
-
-         if With_Name_And_Fraction then
-            Progress_String := new String'
-              (Krunch (Commands.Name (Command), Progress_Bar_Length - 4)
-               & " " & Progress_Indicator);
-
-         else
-            Progress_String := new String'(Progress_Indicator);
-
-            if Length > 1 then
-               declare
-                  New_String : constant String :=
-                                 Progress_String.all
-                                   & " (" & Image (Length) & (-" queued)");
-               begin
-                  GNAT.Strings.Free (Progress_String);
-                  Progress_String := new String'(New_String);
-               end;
-            end if;
-         end if;
-
          --  Assemble output
 
          declare
-            Result : Progress_Data (Progress_String'Length);
+            D : constant String := Descr;
+            Progress : constant String := Progress_Indicator;
          begin
-            Result.Fraction := Fraction;
-            Result.Text := Progress_String.all;
-            Result.Multiple_Queues := False;
-            GNAT.Strings.Free (Progress_String);
-            return Result;
+            return (D'Length, Progress'Length,
+                    Fraction, D, Progress, Multiple_Queues => False);
          end;
 
       else
@@ -1266,10 +1316,10 @@ package body Task_Manager.GUI is
             declare
                F : constant Gdouble := Fraction / Gdouble (Count);
                S : constant String :=
-                     Count'Img & " tasks ("
-                       & Image (Integer (F * 100.0)) & "%)";
+                 GNATCOLL.Utils.Image (Count, Min_Width => 0) & " tasks";
+               P : constant String := Image (Integer (F * 100.0)) & "%";
             begin
-               return (S'Length, F, S, True);
+               return (S'Length, P'Length, F, S, P, Multiple_Queues => True);
             end;
          end if;
       end if;
@@ -1323,7 +1373,7 @@ package body Task_Manager.GUI is
      (Manager : Task_Manager_Access;
       Area    : Gtk.Box.Gtk_Hbox) is
    begin
-      Task_Manager_UI_Access (Manager).Progress_Area := Area;
+      Area.Pack_End (Task_Manager_UI_Access (Manager).GUI, Expand => False);
    end Set_Progress_Area;
 
 end Task_Manager.GUI;

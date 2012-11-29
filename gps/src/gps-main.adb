@@ -1681,7 +1681,8 @@ procedure GPS.Main is
       Run_Hook (GPS_Main.Kernel, Preferences_Changed_Hook);
 
       if not Hide_GPS then
-         Show (GPS_Main);
+         --  Show (GPS_Main);
+         GPS_Main.Present;
       end if;
 
       if Program_Args /= null then

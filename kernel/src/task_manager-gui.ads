@@ -24,6 +24,8 @@ with Gdk.Pixbuf;               use Gdk.Pixbuf;
 
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Box;                  use Gtk.Box;
+with Gtk.Image;                use Gtk.Image;
+with Gtk.Label;                use Gtk.Label;
 with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
@@ -57,7 +59,7 @@ package Task_Manager.GUI is
    type Task_Manager_Widget_Access is access all
      Task_Manager_Widget_Record'Class;
 
-   type Task_Manager_Interface_Record is new Gtk_Hbox_Record with private;
+   type Task_Manager_Interface_Record is new Gtk_Box_Record with private;
    type Task_Manager_Interface is access all
      Task_Manager_Interface_Record'Class;
 
@@ -121,7 +123,6 @@ private
 
    type Task_Manager_UI_Record is new Task_Manager_Record with record
       GUI           : Task_Manager_Interface := null;
-      Progress_Area : Gtk.Box.Gtk_Hbox := null;
    end record;
    type Task_Manager_UI_Access is access all Task_Manager_UI_Record'Class;
 
@@ -184,12 +185,23 @@ private
       Value  : out Glib.Values.GValue);
    --  See inherited documentation
 
-   type Task_Manager_Interface_Record is new Gtk_Hbox_Record with record
+   type Task_Manager_Interface_Record is new Gtk_Box_Record with record
       Kernel                 : Kernel_Handle;
       Model                  : Task_Manager_Model;
       Manager                : Task_Manager_UI_Access;
 
+      Main_Progress_Bar      : Gtk_Progress_Bar;
+      --  The main progress bar (in the toolbar) that summarizes all current
+      --  tasks.
+
       Progress_Bar_Button    : Gtk_Button;
+      --  The pause/play button in the main progress bar
+
+      Task_Label         : Gtk_Label;
+      --  What action are we performing ?
+
+      Logo : Gtk_Image;
+      --  The logo displayed when GPS is idle.
 
       Close_Button_Pixbuf    : Gdk_Pixbuf;
       Pause_Button_Pixbuf    : Gdk_Pixbuf;
@@ -199,8 +211,6 @@ private
 
       Timeout_Cb             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  The registered refresh timeout callback
-
-      Main_Progress_Bar      : Gtk_Progress_Bar;
    end record;
 
    procedure Push_State (Manager : access Task_Manager_Record'Class);
