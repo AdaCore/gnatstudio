@@ -23,24 +23,31 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
-NF-53-LB20-022 GPS: Key shortcuts dialog display improved (2012-11-21)
+NF-60-LB29-006 GPS: use ellipsis in window titles (2012-11-28)
+
+  The text in the title bars and in the notebook tabs will now use ellipsis
+  ("...") when the window is too small to accomodate the whole text. The size
+  of notebook tabs is also limited so that we do not end up with a single tab
+   using most of the notebook widths, thus hidding the others.
+
+NF-60-LB20-022 GPS: Key shortcuts dialog display improved (2012-11-21)
 
   The display of the key shortcuts in this dialog now matches what is
   done for the toplevel menus, using symbols like up arrow for the shift
   key, a caret sign for the control key, and the special symbols for
   Mac keyboards.
 
-NF-53-L926-027 GPS: Project, Files and Windows views pop-ups (2012-11-13)
+NF-60-L926-027 GPS: Project, Files and Windows views pop-ups (2012-11-13)
 
   Tooltips added to views to help navigation when windows are narrow.
 
-NF-53-L921-032 GPS: Show protected objects in Outline view (2012-10-16)
+NF-60-L921-032 GPS: Show protected objects in Outline view (2012-10-16)
 
   Protected and task types/objects and their entries are now visible in
   Outline View. New filter in Outline View "Show tasks, entries, and protected
   types" is used to show/hide these items.
 
-NF-53-J728-022 GPS: the Project Wizard takes advantage of gnatname (2012-11-08)
+NF-60-J728-022 GPS: the Project Wizard takes advantage of gnatname (2012-11-08)
 
   The project wizard now optionally uses gnatname to search for Ada units in
   files with non-standard naming conventions.
