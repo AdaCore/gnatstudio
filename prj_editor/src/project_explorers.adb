@@ -47,6 +47,7 @@ with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
+with Gtk.Handlers;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -68,6 +69,7 @@ with Pango.Layout;              use Pango.Layout;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Find_Utils;                use Find_Utils;
+with Generic_Views;
 with Histories;                 use Histories;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -91,7 +93,6 @@ with String_Hash;
 with String_Utils;              use String_Utils;
 with Tooltips;
 with Traces;                    use Traces;
-with XML_Utils;                 use XML_Utils;
 with Vsearch;                   use Vsearch;
 
 package body Project_Explorers is
@@ -112,6 +113,38 @@ package body Project_Explorers is
    Projects_Before_Directories : constant Boolean := False;
    --  <preference> True if the projects should be displayed, when sorted,
    --  before the directories in the project view.
+
+   ---------------------------------
+   -- The project explorer widget --
+   ---------------------------------
+
+   type Project_Explorer_Record is new Generic_Views.View_Record with record
+      Tree      : Gtkada.Tree_View.Tree_View;
+
+      Kernel    : GPS.Kernel.Kernel_Handle;
+      Expand_Id : Gtk.Handlers.Handler_Id;
+      --  The signal for the expansion of nodes in the project view
+
+      Expanding : Boolean := False;
+   end record;
+
+   function Initialize
+     (Explorer : access Project_Explorer_Record'Class;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget;
+   --  Create a new explorer, and return the focus widget.
+
+   package Explorer_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Project_Explorer_Project",
+      View_Name          => "Project",
+      Formal_View_Record => Project_Explorer_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize);
+   subtype Project_Explorer is Explorer_Views.View_Access;
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
 
    function Hash (Key : Filesystem_String) return Ada.Containers.Hash_Type;
    pragma Inline (Hash);
@@ -249,7 +282,7 @@ package body Project_Explorers is
    --------------
 
    type Explorer_Tooltips is new Tooltips.Pixmap_Tooltips with record
-      Explorer : Project_Explorer_Access;
+      Explorer : Project_Explorer;
    end record;
    type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
    overriding procedure Draw
@@ -439,27 +472,10 @@ package body Project_Explorers is
    --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
    --  event or a null menu.
 
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
-   --  Save the status of the project explorer to an XML tree
-
    procedure On_Open_Explorer
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Raise the existing explorer, or open a new one
-
-   function Get_Or_Create_Project_View
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Raise_Window : Boolean) return Project_Explorer;
-   --  Make sure a project view exists, and raise it if Raise_Window is True
 
    procedure Child_Selected
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
@@ -621,18 +637,6 @@ package body Project_Explorers is
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Explorer : out Project_Explorer;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Explorer := new Project_Explorer_Record;
-      Initialize (Explorer, Kernel);
-   end Gtk_New;
-
    ------------------
    -- Button_Press --
    ------------------
@@ -695,22 +699,18 @@ package body Project_Explorers is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (Explorer : access Project_Explorer_Record'Class;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget
    is
-      Scrolled : Gtk_Scrolled_Window;
       H1       : Refresh_Hook;
       H2       : Project_Hook;
       Tooltip  : Explorer_Tooltips_Access;
-
    begin
-      Initialize_Vbox (Explorer, Homogeneous => False);
+      Gtk.Scrolled_Window.Initialize (Explorer);
+      Explorer.Set_Policy (Policy_Automatic, Policy_Automatic);
       Explorer.Kernel := Kernel_Handle (Kernel);
-
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Pack_Start (Explorer, Scrolled, Fill => True, Expand => True);
 
       Init_Graphics (Gtk_Widget (Explorer));
       Gtk_New (Explorer.Tree, Columns_Types);
@@ -719,7 +719,7 @@ package body Project_Explorers is
 
       Set_Name (Explorer.Tree, "Project Explorer Tree");  --  For testsuite
 
-      Add (Scrolled, Explorer.Tree);
+      Explorer.Add (Explorer.Tree);
       Set_Font_And_Colors (Explorer.Tree, Fixed_Font => True);
 
       Register_Contextual_Menu
@@ -811,8 +811,12 @@ package body Project_Explorers is
       --  Initialize tooltips
 
       Tooltip := new Explorer_Tooltips;
-      Tooltip.Explorer := Project_Explorer_Access (Explorer);
+      Tooltip.Explorer := Project_Explorer (Explorer);
       Set_Tooltip (Tooltip, Explorer.Tree, 250);
+
+      Refresh (Explorer);
+
+      return Gtk.Widget.Gtk_Widget (Explorer.Tree);
    end Initialize;
 
    ---------------
@@ -949,10 +953,10 @@ package body Project_Explorers is
       Child    : constant MDI_Child :=
                    Find_MDI_Child_By_Tag
                      (Get_MDI (Kernel), Project_Explorer_Record'Tag);
-      Explorer : Project_Explorer_Access;
+      Explorer : Project_Explorer;
    begin
       if Child /= null then
-         Explorer := Project_Explorer_Access (Get_Widget (Child));
+         Explorer := Project_Explorer (Get_Widget (Child));
          Set_Font_And_Colors (Explorer.Tree, Fixed_Font => True);
       end if;
    end Preferences_Changed;
@@ -984,47 +988,6 @@ package body Project_Explorers is
          Unselect_All (Get_Selection (E.Tree));
       end if;
    end Child_Selected;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-      Explorer : Project_Explorer;
-   begin
-      if Node.Tag.all = "Project_Explorer_Project" then
-         Explorer := Get_Or_Create_Project_View (User, Raise_Window => False);
-         return Find_MDI_Child (Get_MDI (User), Explorer);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Project_Explorer_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Project_Explorer_Project");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
 
    -------------------
    -- On_Parse_Xref --
@@ -1069,7 +1032,7 @@ package body Project_Explorers is
       --  "Object" is also the explorer, but this way we make sure the current
       --  context is that of the explorer (since it will have the MDI focus)
       T         : constant Project_Explorer :=
-                    Get_Or_Create_Project_View (Kernel, Raise_Window => False);
+        Explorer_Views.Get_Or_Create_View (Kernel, Focus => False);
       Iter      : constant Gtk_Tree_Iter :=
                     Find_Iter_For_Event (T.Tree, Event);
       Item      : Gtk_Menu_Item;
@@ -2395,49 +2358,6 @@ package body Project_Explorers is
       when E : others => Trace (Exception_Handle, E);
    end Refresh;
 
-   --------------------------------
-   -- Get_Or_Create_Project_View --
-   --------------------------------
-
-   function Get_Or_Create_Project_View
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Raise_Window : Boolean) return Project_Explorer
-   is
-      Explorer : Project_Explorer;
-      Child    : MDI_Child;
-      C2       : MDI_Explorer_Child;
-   begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Explorer_Record'Tag);
-
-      if Child = null then
-         Gtk_New (Explorer, Kernel);
-         Refresh (Explorer);
-
-         C2 := new MDI_Explorer_Child_Record;
-         Initialize (C2, Explorer,
-                     Default_Width  => 215,
-                     Default_Height => 600,
-                     Focus_Widget   => Gtk_Widget (Explorer.Tree),
-                     Group          => Group_View,
-                     Module         => Explorer_Module_ID);
-         Set_Title (C2, -"Project",  -"Project");
-         Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
-
-         Set_Focus_Child (C2);
-         Raise_Child (C2);
-         return Explorer;
-
-      else
-         if Raise_Window then
-            Raise_Child (Child);
-         end if;
-
-         Set_Focus_Child (Get_MDI (Kernel), Child);
-         return Project_Explorer (Get_Widget (Child));
-      end if;
-   end Get_Or_Create_Project_View;
-
    ----------------------
    -- On_Open_Explorer --
    ----------------------
@@ -2449,10 +2369,7 @@ package body Project_Explorers is
       pragma Unreferenced (Widget, Explorer);
 
    begin
-      Explorer := Get_Or_Create_Project_View (Kernel, Raise_Window => True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
+      Explorer := Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
    end On_Open_Explorer;
 
    -----------------------------
@@ -2562,7 +2479,7 @@ package body Project_Explorers is
       C        : constant Explorer_Search_Context_Access :=
                    Explorer_Search_Context_Access (Context);
       Explorer : constant Project_Explorer :=
-                   Get_Or_Create_Project_View (Kernel, Raise_Window => True);
+        Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
 
       Full_Name_For_Dirs : constant Boolean := Get_History
         (Get_History (Explorer.Kernel).all, Show_Absolute_Paths);
@@ -3221,7 +3138,6 @@ package body Project_Explorers is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
-      Tools   : constant String := '/' & (-"Tools") & '/' & (-"Views");
       Extra   : Explorer_Search_Extra;
       Box     : Gtk_Box;
 
@@ -3245,8 +3161,6 @@ package body Project_Explorers is
          Module_Name => Explorer_Module_Name,
          Priority    => GPS.Kernel.Modules.Default_Priority);
 
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-
       Command := new Locate_File_In_Explorer_Command;
       Register_Contextual_Menu
         (Kernel, "Locate file in explorer",
@@ -3265,9 +3179,10 @@ package body Project_Explorers is
 
       Register_Menu
         (Kernel, Project, -"Project _View", "", On_Open_Explorer'Access);
-      Register_Menu
-        (Kernel, Tools, -"_Project", "", On_Open_Explorer'Access,
-         Ref_Item => -"Remote");
+
+      Explorer_Views.Register_Module
+        (Kernel => Kernel,
+         ID     => Explorer_Module_ID);
 
       Extra := new Explorer_Search_Extra_Record;
       Gtk.Box.Initialize_Vbox (Extra);

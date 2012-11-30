@@ -88,6 +88,9 @@ package body Generic_Views is
                Child := GPS_MDI_Child
                  (Find_MDI_Child_By_Tag
                     (Get_MDI (User), Formal_View_Record'Tag));
+               if Child /= null then
+                  return MDI_Child (Child);
+               end if;
             end if;
 
             if Child = null then

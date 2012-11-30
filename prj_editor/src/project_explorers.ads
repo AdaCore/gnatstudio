@@ -22,51 +22,11 @@
 --  a previously saved configuration.
 
 with GPS.Kernel;
-with Gtk.Handlers;
-with Gtk.Box;
-with Gtkada.Tree_View;
 
 package Project_Explorers is
-
-   type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with private;
-   type Project_Explorer is access all Project_Explorer_Record'Class;
-
-   procedure Gtk_New
-     (Explorer : out Project_Explorer;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Create a new explorer.
-   --  On each update, and since the list of withed projects can not changed,
-   --  the open/close status of all the project nodes is kept.
-
-   procedure Initialize
-     (Explorer : access Project_Explorer_Record'Class;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Internal initialization procedure.
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
-
-   -------------
-   -- Signals --
-   -------------
-
-   --  <signals>
-   --  You should connect to the "context_changed" signal in the kernel to get
-   --  report on selection changes.
-   --  </signals>
-
-private
-   type Project_Explorer_Access is access all Project_Explorer_Record;
-
-   type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
-      Tree      : Gtkada.Tree_View.Tree_View;
-
-      Kernel    : GPS.Kernel.Kernel_Handle;
-      Expand_Id : Gtk.Handlers.Handler_Id;
-      --  The signal for the expansion of nodes in the project view
-
-      Expanding : Boolean := False;
-   end record;
 
 end Project_Explorers;
