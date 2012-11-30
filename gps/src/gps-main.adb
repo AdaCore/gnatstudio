@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Text_IO;               use Ada.Text_IO;
 with ALI;
@@ -305,6 +306,21 @@ procedure GPS.Main is
    --  Execute a batch command (either loading the file Batch if As_File is
    --  true, or as a standard command otherwise).
 
+   procedure Default_Gtk_Exception_Handler
+     (Occurrence : Ada.Exceptions.Exception_Occurrence);
+   --  Called when an Ada callback raises an exception, to log it.
+
+   -----------------------------------
+   -- Default_Gtk_Exception_Handler --
+   -----------------------------------
+
+   procedure Default_Gtk_Exception_Handler
+     (Occurrence : Ada.Exceptions.Exception_Occurrence)
+   is
+   begin
+      Traces.Trace (Traces.Exception_Handle, Occurrence);
+   end Default_Gtk_Exception_Handler;
+
    ---------------------
    -- Clean_Parameter --
    ---------------------
@@ -397,6 +413,9 @@ procedure GPS.Main is
       pragma Unreferenced (Ignored);
 
    begin
+      Gtk.Handlers.Set_On_Exception
+        (Default_Gtk_Exception_Handler'Unrestricted_Access);
+
       Tmp  := Getenv ("GPS_MEMORY_MONITOR");
       Tmp2 := Getenv ("GPS_MEMORY_CHECK");
 

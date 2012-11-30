@@ -21,16 +21,16 @@ with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with Glib.Object;              use Glib.Object;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Window;               use Gdk.Window;
+with Gtk.Arrow;                use Gtk.Arrow;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Menu_Shell;           use Gtk.Menu_Shell;
+with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Tool_Item;            use Gtk.Tool_Item;
 with Gtk.Widget;               use Gtk.Widget;
-
-with Traces;
 
 package body Gtkada.Combo_Tool_Button is
 
@@ -205,18 +205,15 @@ package body Gtkada.Combo_Tool_Button is
      (Button : access Gtk_Button_Record'Class;
       Widget : Gtkada_Combo_Tool_Button)
    is
-      State : constant Gtk_State_Type := Widget.Icon_Button.Get_State;
-      pragma Unreferenced (Button);
+      State : constant Gtk_State_Type := Button.Get_State;
    begin
       if State = State_Active then
          Set_State (Widget.Menu_Button, State_Prelight);
+         Set_State (Widget.Icon_Button, State_Prelight);
       else
          Set_State (Widget.Menu_Button, State);
+         Set_State (Widget.Icon_Button, State);
       end if;
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
    end On_State;
 
    ------------------------
@@ -230,10 +227,6 @@ package body Gtkada.Combo_Tool_Button is
       pragma Unreferenced (Menu);
    begin
       Widget.Menu_Button.Set_Active (False);
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
    end On_Menu_Deactivate;
 
    ---------------
@@ -261,11 +254,6 @@ package body Gtkada.Combo_Tool_Button is
       end if;
 
       return False;
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
-         return False;
    end On_Button_Press;
 
    ---------------
@@ -289,10 +277,6 @@ package body Gtkada.Combo_Tool_Button is
             0, 0);
          Widget.Menu.Select_Item (Widget.Menu.Get_Active);
       end if;
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
    end On_Toggle;
 
    -------------------
@@ -308,10 +292,6 @@ package body Gtkada.Combo_Tool_Button is
    begin
       Gtkada_Combo_Tool_Button
         (Get_User_Data (Attach_Widget, Stub)).Menu := null;
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
    end Menu_Detacher;
 
    -------------------
@@ -340,10 +320,6 @@ package body Gtkada.Combo_Tool_Button is
       if Allo.Width > Menu_Req.Width then
          X := X + Allo.Width - Menu_Req.Width;
       end if;
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
    end Menu_Position;
 
    ----------------------------
@@ -357,10 +333,6 @@ package body Gtkada.Combo_Tool_Button is
       pragma Unreferenced (Button);
    begin
       Tool_Button_Callback.Emit_By_Name (Widget, Signal_Clicked);
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
    end On_Icon_Widget_Clicked;
 
    ----------------------------
@@ -385,10 +357,7 @@ package body Gtkada.Combo_Tool_Button is
       Size   : Gtk_Icon_Size)
    is
       Icon  : Gtk_Image;
-      Req   : Gtk_Requisition;
-      A_Req : Gtk_Requisition;
       Item  : constant Menu_Item := Menu_Item (Button.Menu.Get_Active);
-
    begin
       if Item /= null then
          Gtk_New (Icon, To_String (Item.Stock_Id), Size);
@@ -396,20 +365,8 @@ package body Gtkada.Combo_Tool_Button is
          Gtk_New (Icon, To_String (Button.Stock_Id), Size);
       end if;
 
-      Button.Arrow.Size_Request (A_Req);
-
       Set_Image (Button.Icon_Button, Icon);
-      Size_Request (Button.Icon_Button, Req);
-      Set_Size_Request
-        (Button.Menu_Button,
-         Req.Width + A_Req.Width,
-         Req.Height);
-      Button.Fixed.Move
-        (Button.Arrow, Req.Width, (Req.Height - A_Req.Height) / 2);
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
+      Icon.Set_Alignment (0.5, 0.5);
    end Set_Icon_Size;
 
    -----------------------------
@@ -421,10 +378,6 @@ package body Gtkada.Combo_Tool_Button is
    is
    begin
       Set_Icon_Size (Button, Button.Get_Icon_Size);
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
    end On_Toolbar_Reconfigured;
 
    -------------
@@ -450,8 +403,8 @@ package body Gtkada.Combo_Tool_Button is
       Stock_Id     : String;
       Default_Size : Gtk_Icon_Size := Icon_Size_Large_Toolbar)
    is
-      Hbox   : Gtk_Hbox;
-
+      Arrow       : Gtk_Arrow;
+      Box : Gtk_Box;
    begin
       Gtk.Tool_Item.Initialize (Button);
       Initialize_Class_Record
@@ -461,26 +414,26 @@ package body Gtkada.Combo_Tool_Button is
          Type_Name    => "GtkadaComboToolButton",
          Parameters   => Signal_Parameters);
 
+      Get_Style_Context (Button).Add_Class ("gps-combo-tool-button");
+
       Set_Homogeneous (Button, False);
       Button.Items    := Empty_Vector;
       Button.Selected := No_Index;
       Button.Stock_Id := To_Unbounded_String (Stock_Id);
 
-      Gtk_New (Button.Fixed);
-      Button.Add (Button.Fixed);
-
-      Gtk_New (Button.Menu_Button);
-      Button.Menu_Button.Set_Relief (Relief_None);
-      Gtk_New_Hbox (Hbox);
-      Add (Button.Menu_Button, Hbox);
-      Button.Fixed.Put (Button.Menu_Button, 0, 0);
-
-      Gtk.Arrow.Gtk_New (Button.Arrow, Arrow_Down, Shadow_None);
-      Button.Fixed.Put (Button.Arrow, 0, 0); --  will be moved later
+      Gtk_New_Hbox (Box, Homogeneous => False, Spacing => 0);
+      Button.Add (Box);
 
       Gtk_New (Button.Icon_Button);
       Button.Icon_Button.Set_Relief (Relief_None);
-      Button.Fixed.Put (Button.Icon_Button, 0, 0);
+      Box.Pack_Start (Button.Icon_Button, Expand => True, Fill => True);
+
+      Gtk_New (Button.Menu_Button);
+      Button.Menu_Button.Set_Relief (Relief_None);
+      Box.Pack_Start (Button.Menu_Button, Expand => True, Fill => True);
+
+      Gtk_New (Arrow, Arrow_Down, Shadow_None);
+      Button.Menu_Button.Add (Arrow);
 
       --  Create a default menu widget.
       Clear_Items (Button);
@@ -505,6 +458,10 @@ package body Gtkada.Combo_Tool_Button is
       --  Keep appearance of toggle button synchronized with icon button
       Button_Callback.Connect
         (Button.Icon_Button, Signal_State_Changed,
+         On_State'Access,
+         Gtkada_Combo_Tool_Button (Button));
+      Button_Callback.Connect
+        (Button.Menu_Button, Signal_State_Changed,
          On_State'Access,
          Gtkada_Combo_Tool_Button (Button));
       --  Handle single click on icon button
