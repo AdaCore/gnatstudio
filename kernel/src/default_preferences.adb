@@ -921,6 +921,19 @@ package body Default_Preferences is
    end Set_Pref;
 
    procedure Set_Pref
+     (Pref         : Font_Preference;
+      Manager      : access Preferences_Manager_Record'Class;
+      Font         : Pango_Font_Description) is
+   begin
+      Free (Pref.Descr);
+      Free (Pref.Font_Value);
+
+      Pref.Font_Value := new String'(Pango.Font.To_String (Font));
+      Pref.Descr := Copy (Font);
+      Emit_Pref_Changed (Manager);
+   end Set_Pref;
+
+   procedure Set_Pref
      (Pref         : Variant_Preference;
       Manager      : access Preferences_Manager_Record'Class;
       Variant      : Variant_Enum;

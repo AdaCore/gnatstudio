@@ -43,6 +43,7 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
@@ -570,12 +571,13 @@ package body Task_Manager.GUI is
    is
       Model : constant Task_Manager_Model := new Task_Manager_Model_Record;
       GPS_Dir  : constant Virtual_File := Create_From_Dir
-        (Kernel.Get_System_Dir, "/share/gps/icons/32px");
+        (Kernel.Get_System_Dir, "/share/gps/icons");
       Image_File : constant Virtual_File :=
-        Create_From_Dir (GPS_Dir, "gps_32.png");
+        Create_From_Dir (GPS_Dir, "24px/gps_24.png");
+      Image_Close : constant Virtual_File :=
+        Create_From_Dir (GPS_Dir, "9px/close_8.png");
       Image   : Gtk_Image;
       Box     : Gtk_Box;
-      Pixbuf  : Gdk_Pixbuf;
       VBox    : Gtk_Box;
       Event   : Gtk_Event_Box;
    begin
@@ -596,6 +598,7 @@ package body Task_Manager.GUI is
 
       Gtk_New (View.Task_Label, "");
       View.Task_Label.Set_Alignment (0.0, 0.5);
+      View.Task_Label.Override_Font (Small_Font.Get_Pref);
       VBox.Pack_Start (View.Task_Label, Expand => False);
 
       Gtk_New_Hbox (Box);
@@ -606,14 +609,12 @@ package body Task_Manager.GUI is
       Box.Pack_Start (Event, Expand => True);
 
       Gtk_New (View.Main_Progress_Bar);
+      View.Main_Progress_Bar.Override_Font (Small_Font.Get_Pref);
       View.Main_Progress_Bar.Set_Show_Text (True);
       Event.Add (View.Main_Progress_Bar);
 
       Gtk_New (View.Progress_Bar_Button);
-      Pixbuf := Render_Icon_Pixbuf
-        (View.Progress_Bar_Button, Stock_Close, Icon_Size_Menu);
-      Gtk_New (Image, Pixbuf);
-      Unref (Pixbuf);
+      Gtk_New (Image, +Image_Close.Full_Name.all);
       View.Progress_Bar_Button.Add (Image);
       View.Progress_Bar_Button.Set_Relief (Relief_None);
       Box.Pack_Start (View.Progress_Bar_Button, Expand => False);

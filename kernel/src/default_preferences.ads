@@ -315,6 +315,10 @@ package Default_Preferences is
       Manager      : access Preferences_Manager_Record'Class;
       Font, Fg, Bg : String);
    procedure Set_Pref
+     (Pref         : Font_Preference;
+      Manager      : access Preferences_Manager_Record'Class;
+      Font         : Pango.Font.Pango_Font_Description);
+   procedure Set_Pref
      (Pref         : Variant_Preference;
       Manager      : access Preferences_Manager_Record'Class;
       Variant      : Variant_Enum;

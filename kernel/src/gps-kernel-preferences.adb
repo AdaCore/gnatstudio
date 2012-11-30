@@ -23,6 +23,8 @@ with GNAT.Strings;              use GNAT.Strings;
 
 with XML_Utils;                 use XML_Utils;
 
+with Pango.Font;                use Pango.Font;
+
 with Config;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                  use GPS.Intl;
@@ -275,6 +277,15 @@ package body GPS.Kernel.Preferences is
            & " editors check the Editor/Colors preference page)."),
          Page    => -"General",
          Label   => -"Default font");
+
+      Small_Font := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Small-Font",
+         Default => Config.Default_Font,
+         Doc     => -("The font used by GPS to display less important"
+           & " information"),
+         Page    => -"",
+         Label   => -"Small font");
 
       View_Fixed_Font := Create
         (Manager => Kernel.Preferences,
@@ -1587,8 +1598,11 @@ package body GPS.Kernel.Preferences is
       procedure On_Changed
         (Manager : access Preferences_Manager_Record'Class)
       is
-         pragma Unreferenced (Manager);
+         Font : Pango_Font_Description := Copy (Default_Font.Get_Pref_Font);
       begin
+         Set_Size (Font, Gint (Float (Get_Size (Font)) * 0.8));
+         Default_Preferences.Set_Pref (Small_Font, Manager, Font);
+         Free (Font);
          Run_Hook (Kernel, Preferences_Changed_Hook);
       end On_Changed;
 

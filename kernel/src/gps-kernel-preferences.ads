@@ -126,8 +126,11 @@ package GPS.Kernel.Preferences is
 
    -- General --
    Gtk_Theme              : Theme_Preference;
+
    Default_Font           : Style_Preference;
    View_Fixed_Font        : Font_Preference;
+   Small_Font             : Font_Preference;
+
    Use_Native_Dialogs     : Boolean_Preference;
    Default_Widget_Width   : Integer_Preference;
    Default_Widget_Height  : Integer_Preference;
