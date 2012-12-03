@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-LC03-011 GPS: local toolbars for views (2012-12-03)
+
+  A number of views now have a local toolbar. They also display their
+  configuration settings in a local menu rather than in the Preferences
+  dialog or the contextual menu.
+
 NF-60-LB29-021 GPS: remove status bar (2012-11-29)
 
   The status bar has been removed. It was only used to display the current

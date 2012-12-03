@@ -48,7 +48,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;
-with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -1071,12 +1070,8 @@ package body Project_Explorers is
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
       Button : Gtk_Tool_Button;
-      Size   : Gtk_Size_Group;
    begin
-      Gtk_New (Size);
-
       Gtk_New_From_Stock (Button, Stock_Refresh);
-      Size.Add_Widget (Button);
       Button.Set_Tooltip_Text (-"Reload project");
       Widget_Callback.Object_Connect
         (Button, Gtk.Tool_Button.Signal_Clicked,

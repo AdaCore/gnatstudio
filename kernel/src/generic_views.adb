@@ -83,6 +83,12 @@ package body Generic_Views is
          View         : out View_Access);
       --  Create or reuse a view.
 
+      procedure Find
+        (Kernel       : access Kernel_Handle_Record'Class;
+         Child        : out GPS_MDI_Child;
+         View         : out View_Access);
+      --  Find any existing view
+
       -----------------------------
       -- On_Display_Local_Config --
       -----------------------------
@@ -120,6 +126,48 @@ package body Generic_Views is
       end Child_From_View;
 
       ----------------------
+      -- View_From_Widget --
+      ----------------------
+
+      function View_From_Widget
+        (Widget : not null access Glib.Object.GObject_Record'Class)
+         return View_Access
+      is
+      begin
+         if Local_Toolbar or else Local_Config then
+            return Toplevel_Box (Widget.all).Initial;
+         else
+            return View_Access (Widget);
+         end if;
+      end View_From_Widget;
+
+      ----------
+      -- Find --
+      ----------
+
+      procedure Find
+        (Kernel       : access Kernel_Handle_Record'Class;
+         Child        : out GPS_MDI_Child;
+         View         : out View_Access) is
+      begin
+         if Local_Toolbar or else Local_Config then
+            Child := GPS_MDI_Child
+              (Find_MDI_Child_By_Tag
+                 (Get_MDI (Kernel), Toplevel_Box'Tag));
+         else
+            Child := GPS_MDI_Child
+              (Find_MDI_Child_By_Tag
+                 (Get_MDI (Kernel), Formal_View_Record'Tag));
+         end if;
+
+         if Child /= null then
+            View := View_From_Widget (Child.Get_Widget);
+         else
+            View := null;
+         end if;
+      end Find;
+
+      ----------------------
       -- Create_If_Needed --
       ----------------------
 
@@ -137,23 +185,8 @@ package body Generic_Views is
 
       begin
          if Reuse_If_Exist then
-            if Local_Toolbar or else Local_Config then
-               Child := GPS_MDI_Child
-                 (Find_MDI_Child_By_Tag
-                    (Get_MDI (Kernel), Toplevel_Box'Tag));
-            else
-               Child := GPS_MDI_Child
-                 (Find_MDI_Child_By_Tag
-                    (Get_MDI (Kernel), Formal_View_Record'Tag));
-            end if;
-
-            if Child /= null then
-               if Local_Toolbar or else Local_Config then
-                  View := Toplevel_Box
-                    (Child.Get_Widget.all).Initial;
-               else
-                  View := View_Access (Get_Widget (Child));
-               end if;
+            Find (Kernel, Child, View);
+            if View /= null then
                return;
             end if;
          end if;
@@ -286,6 +319,21 @@ package body Generic_Views is
       begin
          Ignore := Get_Or_Create_View (Kernel);
       end On_Open_View;
+
+      -------------------
+      -- Retrieve_View --
+      -------------------
+
+      function Retrieve_View
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+         return View_Access
+      is
+         Child        : GPS_MDI_Child;
+         View         : View_Access;
+      begin
+         Find (Kernel, Child, View);
+         return View;
+      end Retrieve_View;
 
       ------------------------
       -- Get_Or_Create_View --

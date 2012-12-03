@@ -144,6 +144,18 @@ package Generic_Views is
       --  Reuse_If_Exist is False).
       --  The view gets the focus automatically if Focus is True.
 
+      function Retrieve_View
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+         return View_Access;
+      --  Retrieve any of the existing views.
+
+      function View_From_Widget
+        (Widget : not null access Glib.Object.GObject_Record'Class)
+         return View_Access;
+      --  WHen using a local toolbar, the actual widget stored in the child is
+      --  not the formal view itself. This function can be used in all cases
+      --  to convert from a Child.Get_Widget to a Formal_View
+
       function Child_From_View
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
          View   : not null access Formal_View_Record'Class)

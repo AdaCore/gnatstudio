@@ -26,12 +26,14 @@ with Glib.Object;               use Glib.Object;
 
 with Cairo;                     use Cairo;
 
-with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -50,8 +52,8 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Basic_Types;               use Basic_Types;
-with Commands.Interactive;      use Commands, Commands.Interactive;
 with Entities_Tooltips;
+with Generic_Views;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -67,7 +69,6 @@ with Language;                  use Language;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
-with XML_Utils;                 use XML_Utils;
 
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -75,8 +76,6 @@ with Language.Tree.Database; use Language.Tree.Database;
 with Outline_View.Model; use Outline_View.Model;
 
 package body Outline_View is
-
-   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
 
    type Outline_View_Module_Record is new Module_ID_Record with record
       Construct_Annotation_Key : Construct_Annotations_Pckg.Annotation_Key;
@@ -104,19 +103,10 @@ package body Outline_View is
       Data   : access Hooks_Data'Class);
    --  Called when the context has changed
 
-   function Open_Outline
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
-   --  Open the outline view, or return a handle to it if it already exists
-
-   procedure On_Open_Outline
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Raise the existing explorer, or open a new one
-
    type Outline_Db_Listener;
    type Outline_Db_Listener_Access is access all Outline_Db_Listener'Class;
 
-   type Outline_View_Record is new Gtk.Box.Gtk_Box_Record with record
+   type Outline_View_Record is new Generic_Views.View_Record with record
       Kernel      : Kernel_Handle;
       Tree        : Gtk_Tree_View;
       File        : GNATCOLL.VFS.Virtual_File;
@@ -124,7 +114,31 @@ package body Outline_View is
       File_Icon   : Gdk_Pixbuf;
       Db_Listener : Outline_Db_Listener_Access;
    end record;
-   type Outline_View_Access is access all Outline_View_Record'Class;
+   overriding procedure Create_Toolbar
+     (View    : not null access Outline_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access Outline_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+
+   function Initialize
+     (Outline : access Outline_View_Record'Class;
+      Kernel  : access Kernel_Handle_Record'Class)
+     return Gtk.Widget.Gtk_Widget;
+   --  Create a new outline view, and return the focus widget.
+
+   package Outline_Views is new Generic_Views.Simple_Views
+     (Module_Name        => Outline_View_Module_Name,
+      View_Name          => "Outline",
+      Formal_View_Record => Outline_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Local_Toolbar      => True,
+      Local_Config       => True,
+      Position           => Position_Left,
+      Initialize         => Initialize);
+   use Outline_Views;
+   subtype Outline_View_Access is Outline_Views.View_Access;
 
    type Outline_Db_Listener is new Database_Listener with record
       Outline : Outline_View_Access;
@@ -143,17 +157,6 @@ package body Outline_View is
    procedure Free is new Ada.Unchecked_Deallocation
      (Outline_Db_Listener'Class, Outline_Db_Listener_Access);
 
-   procedure Gtk_New
-     (Outline : out Outline_View_Access;
-      Kernel  : access Kernel_Handle_Record'Class);
-   --  Create a new outline view
-
-   type Refresh_Outline_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Refresh_Outline_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  See inherited documentation
-
    procedure Refresh (View : access Gtk_Widget_Record'Class);
    --  Recompute the information for Outline.File, and redisplay it.
    --  If the constructs are up-to-date, do nothing.
@@ -165,15 +168,6 @@ package body Outline_View is
      (Outline : access Gtk_Widget_Record'Class;
       Event   : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Handling of desktops
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -200,6 +194,11 @@ package body Outline_View is
    procedure On_Destroy
      (Outline : access Gtk_Widget_Record'Class);
    --  Called when the outline is destroyed
+
+   procedure On_Refresh (View : access Gtk_Widget_Record'Class);
+   --  Refresh the view
+
+   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
 
    procedure File_Saved
      (Kernel : access Kernel_Handle_Record'Class;
@@ -286,18 +285,15 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      Child   : constant MDI_Child :=
-                  Find_MDI_Child_By_Tag
-                    (Get_MDI (Kernel), Outline_View_Record'Tag);
-      Outline : Outline_View_Access;
+      Outline : constant Outline_View_Access :=
+        Outline_Views.Retrieve_View (Kernel);
       Model   : Outline_Model;
       Path    : Gtk_Tree_Path;
       Loc     : File_Location_Hooks_Args_Access;
    begin
       if Get_History (Get_History (Kernel).all, Hist_Editor_Link)
-        and then Child /= null
+        and then Outline /= null
       then
-         Outline := Outline_View_Access (Get_Widget (Child));
          Model   := Get_Outline_Model (Outline);
          Unselect_All (Get_Selection (Outline.Tree));
 
@@ -337,13 +333,10 @@ package body Outline_View is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Child   : constant MDI_Child :=
-                  Find_MDI_Child_By_Tag
-                    (Get_MDI (Kernel), Outline_View_Record'Tag);
-      Outline : Outline_View_Access;
+      Outline : constant Outline_View_Access :=
+        Outline_Views.Retrieve_View (Kernel);
    begin
-      if Child /= null then
-         Outline := Outline_View_Access (Get_Widget (Child));
+      if Outline /= null then
          Set_Font_And_Colors (Outline.Tree, Fixed_Font => True);
       end if;
    end Preferences_Changed;
@@ -357,7 +350,8 @@ package body Outline_View is
       Context : in out Selection_Context;
       Child   : Glib.Object.GObject)
    is
-      Outline : constant Outline_View_Access := Outline_View_Access (Child);
+      Outline : constant Outline_View_Access :=
+        Outline_Views.View_From_Widget (Child);
    begin
       Outline_Context_Factory
         (Context      => Context,
@@ -380,17 +374,13 @@ package body Outline_View is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget);
+      pragma Unreferenced (Event_Widget, Menu, Kernel);
       Outline  : constant Outline_View_Access := Outline_View_Access (Object);
       Model    : constant Outline_Model :=
         Outline_Model (-Get_Model (Outline.Tree));
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Line     : Integer := 1;
-      Check    : Gtk_Check_Menu_Item;
-      Item     : Gtk_Menu_Item;
-      Sep      : Gtk_Menu_Item;
-      Submenu  : Gtk_Menu;
       P_Entity : Entity_Persistent_Access;
    begin
       Iter := Find_Iter_For_Event (Outline.Tree, Event);
@@ -419,59 +409,85 @@ package body Outline_View is
 
          Line := Get_Construct (P_Entity).Sloc_Entity.Line;
       end if;
-
-      if Menu /= null then
-         Gtk_New (Item, Label => -"Outline");
-         Append (Menu, Item);
-         Gtk_New (Sep);
-         Append (Menu, Sep);
-
-         Gtk_New (Submenu);
-         Set_Submenu (Item, Submenu);
-
-         Gtk_New (Check, Label => -"Show profiles");
-         Associate (Get_History (Kernel).all, Hist_Show_Profile, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
-
-         Gtk_New (Check, Label => -"Show types");
-         Associate (Get_History (Kernel).all, Hist_Show_Types, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
-
-         Gtk_New (Check, Label => -"Show objects");
-         Associate (Get_History (Kernel).all, Hist_Show_Objects, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
-
-         Gtk_New (Check, Label => -"Show tasks, entries, and protected types");
-         Associate (Get_History (Kernel).all, Hist_Show_Tasks, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
-
-         Gtk_New (Check, Label => -"Show specifications");
-         Associate (Get_History (Kernel).all, Hist_Show_Decls, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
-
-         Gtk_New (Check, Label => -"Sort alphabetically");
-         Associate (Get_History (Kernel).all, Hist_Sort_Alphabetical, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
-
-         Gtk_New (Check, Label => -"Dynamic link with editor");
-         Associate (Get_History (Kernel).all, Hist_Editor_Link, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
-      end if;
    end Outline_Context_Factory;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Outline_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+      Button : Gtk_Tool_Button;
+   begin
+      Gtk_New_From_Stock (Button, Stock_Refresh);
+      Button.Set_Tooltip_Text (-"Refresh outline");
+      Widget_Callback.Object_Connect
+        (Button, Gtk.Tool_Button.Signal_Clicked,
+         On_Refresh'Access, View);
+      Toolbar.Insert (Button);
+   end Create_Toolbar;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Outline_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Check    : Gtk_Check_Menu_Item;
+      Sep      : Gtk_Menu_Item;
+   begin
+      Gtk_New (Check, Label => -"Show profiles");
+      Associate (Get_History (View.Kernel).all, Hist_Show_Profile, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+
+      Gtk_New (Check, Label => -"Show types");
+      Associate (Get_History (View.Kernel).all, Hist_Show_Types, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+
+      Gtk_New (Check, Label => -"Show objects");
+      Associate (Get_History (View.Kernel).all, Hist_Show_Objects, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+
+      Gtk_New (Check, Label => -"Show tasks, entries, and protected types");
+      Associate (Get_History (View.Kernel).all, Hist_Show_Tasks, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+
+      Gtk_New (Check, Label => -"Show specifications");
+      Associate (Get_History (View.Kernel).all, Hist_Show_Decls, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+
+      Gtk_New (Sep);
+      Menu.Append (Sep);
+
+      Gtk_New (Check, Label => -"Sort alphabetically");
+      Associate (Get_History (View.Kernel).all, Hist_Sort_Alphabetical, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+
+      Gtk_New (Sep);
+      Menu.Append (Sep);
+
+      Gtk_New (Check, Label => -"Dynamic link with editor");
+      Associate (Get_History (View.Kernel).all, Hist_Editor_Link, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+   end Create_Menu;
 
    -----------------------
    -- Get_Filter_Record --
@@ -497,42 +513,6 @@ package body Outline_View is
            (Get_History (Kernel).all,
             Hist_Show_Profile));
    end Get_Filter_Record;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Outline_View_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Outline_View");
-         return N;
-      end if;
-      return null;
-   end Save_Desktop;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Outline_View" then
-         return Open_Outline (User);
-      end if;
-      return null;
-   end Load_Desktop;
 
    ------------------
    -- Button_Press --
@@ -655,36 +635,32 @@ package body Outline_View is
       end if;
    end Before_Clear_Db;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Gtk_New
-     (Outline : out Outline_View_Access;
+   function Initialize
+     (Outline : access Outline_View_Record'Class;
       Kernel  : access Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget
    is
-      Scrolled      : Gtk_Scrolled_Window;
-
       Col           : Gtk_Tree_View_Column;
       Col_Number    : Gint;
       Text_Render   : Gtk_Cell_Renderer_Text;
       Pixbuf_Render : Gtk_Cell_Renderer_Pixbuf;
       Tooltip       : Outline_View_Tooltips_Access;
       Model         : Outline_Model;
+      Data          : aliased Context_Hooks_Args;
 
       pragma Unreferenced (Col_Number);
       Out_Model : Outline_Model;
    begin
-      Outline := new Outline_View_Record;
       Outline.Kernel := Kernel_Handle (Kernel);
 
       Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
 
-      Initialize_Vbox (Outline, Homogeneous => False);
-
-      Gtk_New (Scrolled);
-      Pack_Start (Outline, Scrolled, Expand => True);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Gtk.Scrolled_Window.Initialize (Outline);
+      Set_Policy (Outline, Policy_Automatic, Policy_Automatic);
 
       --  Create the tree view using the sorting model
 
@@ -720,7 +696,7 @@ package body Outline_View is
         (Col, Text_Render, "markup", Outline_View.Model.Display_Name_Column);
       Clicked (Col);
 
-      Add (Scrolled, Outline.Tree);
+      Outline.Add (Outline.Tree);
 
       Outline.Icon := Render_Icon
         (Get_Main_Window (Kernel), "gps-box", Icon_Size_Menu);
@@ -753,7 +729,47 @@ package body Outline_View is
       Model := null;
 
       Set_Outline_Model (Outline, Model);
-   end Gtk_New;
+
+      Data := Context_Hooks_Args'
+        (Hooks_Data with Context => Get_Current_Context (Kernel));
+
+      On_Context_Changed (Kernel, Data'Unchecked_Access);
+
+      Add_Hook (Kernel, Context_Changed_Hook,
+                Wrapper (On_Context_Changed'Access),
+                Name => "outline.context_changed",
+                Watch => GObject (Outline));
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "outline.preferences_changed",
+                Watch => GObject (Outline));
+      Add_Hook (Kernel, Location_Changed_Hook,
+                Wrapper (Location_Changed'Access),
+                Name  => "outline.location_changed",
+                Watch => GObject (Outline));
+      Add_Hook (Kernel, File_Saved_Hook,
+                Wrapper (File_Saved'Access),
+                Name  => "outline.file_saved",
+                Watch => GObject (Outline));
+      Add_Hook (Kernel, File_Closed_Hook,
+                Wrapper (File_Closed'Access),
+                Name  => "outline.file_closed",
+                Watch => GObject (Outline));
+      Add_Hook (Kernel, File_Edited_Hook,
+                Wrapper (File_Edited'Access),
+                Name  => "outline.file_edited",
+                Watch => GObject (Outline));
+      Add_Hook (Kernel, Buffer_Modified_Hook,
+                Wrapper (File_Saved'Access),
+                Name  => "outline.file_modified",
+                Watch => GObject (Outline));
+      Add_Hook (Kernel, Project_View_Changed_Hook,
+                Wrapper (On_Project_Changed'Access),
+                Name => "outline.projet_changed",
+                Watch => GObject (Outline));
+
+      return Gtk_Widget (Outline.Tree);
+   end Initialize;
 
    ----------------
    -- On_Destroy --
@@ -779,28 +795,14 @@ package body Outline_View is
       Unref (O.File_Icon);
    end On_Destroy;
 
-   -------------
-   -- Execute --
-   -------------
+   ----------------
+   -- On_Refresh --
+   ----------------
 
-   overriding function Execute
-     (Command : access Refresh_Outline_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Child   : constant MDI_Child :=
-                  Find_MDI_Child_By_Tag
-                    (Get_MDI (Get_Kernel (Context.Context)),
-                     Outline_View_Record'Tag);
-      Outline : Outline_View_Access;
+   procedure On_Refresh (View : access Gtk_Widget_Record'Class) is
    begin
-      if Child /= null then
-         Outline := Outline_View_Access (Get_Widget (Child));
-         Refresh (Outline);
-         return Success;
-      end if;
-      return Failure;
-   end Execute;
+      Refresh (Outline_View_Access (View));
+   end On_Refresh;
 
    -------------
    -- Refresh --
@@ -827,86 +829,6 @@ package body Outline_View is
       end if;
    end Force_Refresh;
 
-   ---------------------
-   -- On_Open_Outline --
-   ---------------------
-
-   procedure On_Open_Outline
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Outline : MDI_Child;
-   begin
-      Outline := Open_Outline (Kernel);
-
-      Raise_Child (Outline);
-      Set_Focus_Child (Get_MDI (Kernel), Outline);
-   end On_Open_Outline;
-
-   ------------------
-   -- Open_Outline --
-   ------------------
-
-   function Open_Outline
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
-   is
-      Child   : GPS_MDI_Child;
-      Outline : Outline_View_Access;
-      Data    : aliased Context_Hooks_Args;
-   begin
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Outline_View_Record'Tag));
-
-      if Child = null then
-         Gtk_New (Outline, Kernel);
-         Gtk_New (Child, Outline,
-                  Default_Width  => 215,
-                  Default_Height => 600,
-                  Focus_Widget   => Gtk_Widget (Outline.Tree),
-                  Group          => Group_View,
-                  Module         => Outline_View_Module);
-         Set_Title (Child, -"Outline", -"Outline");
-         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
-
-         Data := Context_Hooks_Args'
-           (Hooks_Data with Context => Get_Current_Context (Kernel));
-
-         On_Context_Changed (Kernel, Data'Unchecked_Access);
-
-         Add_Hook (Kernel, Context_Changed_Hook,
-                   Wrapper (On_Context_Changed'Access),
-                   Name => "outline.context_changed",
-                   Watch => GObject (Outline));
-         Add_Hook (Kernel, Preferences_Changed_Hook,
-                   Wrapper (Preferences_Changed'Access),
-                   Name => "outline.preferences_changed",
-                   Watch => GObject (Outline));
-         Add_Hook (Kernel, Location_Changed_Hook,
-                   Wrapper (Location_Changed'Access),
-                   Name  => "outline.location_changed",
-                   Watch => GObject (Outline));
-         Add_Hook (Kernel, File_Saved_Hook,
-                   Wrapper (File_Saved'Access),
-                   Name  => "outline.file_saved",
-                   Watch => GObject (Outline));
-         Add_Hook (Kernel, File_Closed_Hook,
-                   Wrapper (File_Closed'Access),
-                   Name  => "outline.file_closed",
-                   Watch => GObject (Outline));
-         Add_Hook (Kernel, File_Edited_Hook,
-                   Wrapper (File_Edited'Access),
-                   Name  => "outline.file_edited",
-                   Watch => GObject (Outline));
-         Add_Hook (Kernel, Buffer_Modified_Hook,
-                   Wrapper (File_Saved'Access),
-                   Name  => "outline.file_modified",
-                   Watch => GObject (Outline));
-      end if;
-
-      return MDI_Child (Child);
-   end Open_Outline;
-
    ----------------
    -- File_Saved --
    ----------------
@@ -916,18 +838,11 @@ package body Outline_View is
       Data   : access Hooks_Data'Class)
    is
       D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Outline : Outline_View_Access;
-      Child   : MDI_Child;
+      Outline : constant Outline_View_Access :=
+        Outline_Views.Retrieve_View (Kernel);
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Outline_View_Record'Tag);
-
-      if Child /= null then
-         Outline := Outline_View_Access (Get_Widget (Child));
-
-         if Outline.File = D.File then
-            Refresh (Outline);
-         end if;
+      if Outline /= null and then Outline.File = D.File then
+         Refresh (Outline);
       end if;
    end File_Saved;
 
@@ -940,19 +855,12 @@ package body Outline_View is
       Data   : access Hooks_Data'Class)
    is
       D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Outline : Outline_View_Access;
-      Child   : MDI_Child;
+      Outline : constant Outline_View_Access :=
+        Outline_Views.Retrieve_View (Kernel);
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Outline_View_Record'Tag);
-
-      if Child /= null then
-         Outline := Outline_View_Access (Get_Widget (Child));
-
-         if Outline.File = D.File then
-            Outline.Set_File (GNATCOLL.VFS.No_File);
-            Refresh (Outline);
-         end if;
+      if Outline /= null and then Outline.File = D.File then
+         Outline.Set_File (GNATCOLL.VFS.No_File);
+         Refresh (Outline);
       end if;
    end File_Closed;
 
@@ -965,15 +873,10 @@ package body Outline_View is
       Data   : access Hooks_Data'Class)
    is
       D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Outline : Outline_View_Access;
-      Child   : MDI_Child;
+      Outline : constant Outline_View_Access :=
+        Outline_Views.Retrieve_View (Kernel);
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Outline_View_Record'Tag);
-
-      if Child /= null then
-         Outline := Outline_View_Access (Get_Widget (Child));
-
+      if Outline /= null then
          if Outline.File = GNATCOLL.VFS.No_File then
             Outline.Set_File (D.File);
          end if;
@@ -993,33 +896,27 @@ package body Outline_View is
       type Context_Args is access all Context_Hooks_Args'Class;
       D       : constant Context_Args := Context_Args (Data);
       Module  : constant Module_ID := Module_ID (Get_Creator (D.Context));
-      Outline : Outline_View_Access;
+      Outline : constant Outline_View_Access :=
+        Outline_Views.Retrieve_View (Kernel);
       File    : Virtual_File;
-      Child   : MDI_Child;
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Outline_View_Record'Tag);
+      if Outline /= null
+        and then Module /= null
+        and then
+          (Get_Name (Module) = "Source_Editor"
+           or else Get_Name (Module) = Outline_View_Module_Name)
+      then
+         if Has_File_Information (D.Context) then
+            File := File_Information (D.Context);
+         else
+            File := GNATCOLL.VFS.No_File;
+         end if;
 
-      if Child /= null then
-         Outline := Outline_View_Access (Get_Widget (Child));
-
-         if Module /= null
-           and then
-             (Get_Name (Module) = "Source_Editor"
-              or else Get_Name (Module) = Outline_View_Module_Name)
-         then
-            if Has_File_Information (D.Context) then
-               File := File_Information (D.Context);
-            else
-               File := GNATCOLL.VFS.No_File;
-            end if;
-
-            if File /= Outline.File then
-               Outline.Set_File (File);
-               Refresh (Outline);
-            elsif Outline.File = GNATCOLL.VFS.No_File then
-               Refresh (Outline);
-            end if;
+         if File /= Outline.File then
+            Outline.Set_File (File);
+            Refresh (Outline);
+         elsif Outline.File = GNATCOLL.VFS.No_File then
+            Refresh (Outline);
          end if;
       end if;
    end On_Context_Changed;
@@ -1031,27 +928,12 @@ package body Outline_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools   : constant String := '/' & (-"Tools") & '/' & (-"Views");
-      Command : Interactive_Command_Access;
    begin
       Outline_View_Module := new Outline_View_Module_Record;
-      Register_Module
-        (Module      => Outline_View_Module,
-         Module_Name => Outline_View_Module_Name,
-         Kernel      => Kernel);
-
-      Register_Menu
-        (Kernel, Tools, -"_Outline", "", On_Open_Outline'Access,
-         Ref_Item => -"Messages", Add_Before => False);
-
-      Command := new Refresh_Outline_Command;
-      Register_Contextual_Menu
-        (Kernel, "Outline View Refresh",
-         Action => Command,
-         Filter => Create (Module => Outline_View_Module_Name),
-         Label  => -"Refresh");
-
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
+      Outline_Views.Register_Module
+        (Kernel, Outline_View_Module,
+         Menu_Name   => -"_Outline",
+         Before_Menu => -"Messages");
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Show_Profile, True);
@@ -1071,10 +953,6 @@ package body Outline_View is
            (Get_Construct_Database (Kernel)).all,
          Outline_View_Module_Record (Outline_View_Module.all).
            Construct_Annotation_Key);
-
-      Add_Hook (Kernel, Project_View_Changed_Hook,
-                Wrapper (On_Project_Changed'Access),
-                Name => "outline.projet_changed");
    end Register_Module;
 
    --------------
@@ -1164,23 +1042,15 @@ package body Outline_View is
    ------------------------
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
-      Child      : constant MDI_Child :=
-                     Find_MDI_Child_By_Tag
-                       (Get_MDI (Kernel), Outline_View_Record'Tag);
-      Outline    : Outline_View_Access;
-      Dummy_File : Structured_File_Access;
-      pragma Unreferenced (Dummy_File);
+      Outline : constant Outline_View_Access :=
+        Outline_Views.Retrieve_View (Kernel);
    begin
-      if Child /= null then
-         Outline := Outline_View_Access (Get_Widget (Child));
+      if Outline /= null and then Outline.File /= No_File then
+         --  We need to force the set of the file here. In certain cases,
+         --  the outline is computed to early and work on an unknown
+         --  language, which is then set when the project is loaded.
 
-         if Outline.File /= No_File then
-            --  We need to force the set of the file here. In certain cases,
-            --  the outline is computed to early and work on an unknown
-            --  language, which is then set when the project is loaded.
-
-            Set_File (Outline, Outline.File);
-         end if;
+         Set_File (Outline, Outline.File);
       end if;
    end On_Project_Changed;
 
