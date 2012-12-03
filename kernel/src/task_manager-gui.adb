@@ -45,10 +45,10 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with GPS.Stock_Icons;            use GPS.Stock_Icons;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
-with GNAT.IO; use GNAT.IO;
 
 package body Task_Manager.GUI is
 
@@ -274,7 +274,6 @@ package body Task_Manager.GUI is
       GUI : constant Task_Manager_Interface :=
         Task_Manager_Interface (Object);
    begin
-      Put_Line ("MANU On_Main_Progress_Button_Press_Event");
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
@@ -570,12 +569,6 @@ package body Task_Manager.GUI is
       Manager : Task_Manager_Access)
    is
       Model : constant Task_Manager_Model := new Task_Manager_Model_Record;
-      GPS_Dir  : constant Virtual_File := Create_From_Dir
-        (Kernel.Get_System_Dir, "/share/gps/icons");
-      Image_File : constant Virtual_File :=
-        Create_From_Dir (GPS_Dir, "24px/gps_24.png");
-      Image_Close : constant Virtual_File :=
-        Create_From_Dir (GPS_Dir, "9px/close_8.png");
       Image   : Gtk_Image;
       Box     : Gtk_Box;
       VBox    : Gtk_Box;
@@ -588,7 +581,7 @@ package body Task_Manager.GUI is
       --  it doesn't matter if it is part of the size computation for the
       --  task manager
 
-      Gtk_New (View.Logo, Filename => +Image_File.Full_Name.all);
+      Gtk_New (View.Logo, GPS_Logo, Icon_Size_Small_Toolbar);
       View.Pack_Start (View.Logo, Expand => False);
 
       --  The progress bar area
@@ -614,7 +607,7 @@ package body Task_Manager.GUI is
       Event.Add (View.Main_Progress_Bar);
 
       Gtk_New (View.Progress_Bar_Button);
-      Gtk_New (Image, +Image_Close.Full_Name.all);
+      Gtk_New (Image, GPS_Stop_Task, Icon_Size_Action_Button);
       View.Progress_Bar_Button.Add (Image);
       View.Progress_Bar_Button.Set_Relief (Relief_None);
       Box.Pack_Start (View.Progress_Bar_Button, Expand => False);

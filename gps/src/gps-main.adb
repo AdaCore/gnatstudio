@@ -82,6 +82,7 @@ with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles.Shell;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
+with GPS.Stock_Icons;                  use GPS.Stock_Icons;
 with GPS.Main_Window;
 with GPS.Menu;
 with OS_Utils;                         use OS_Utils;
@@ -654,6 +655,7 @@ procedure GPS.Main is
              & String_Utils.Image (Gtk_Minor_Version) & '.'
              & String_Utils.Image (Gtk_Micro_Version));
 
+      GPS.Stock_Icons.Register_Stock_Icons (Prefix_Dir);
       Gtk_New (GPS_Main, GPS_Home_Dir, Prefix_Dir);
 
       About_Contents := Create_From_Dir

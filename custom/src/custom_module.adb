@@ -1193,14 +1193,27 @@ package body Custom_Module is
                            Set_Filename (Source, +Full_Name (Pic_File, True));
 
                            declare
+                              use Gtk.Enums;
                               Size : Gtk.Enums.Gtk_Icon_Size;
+                              S : constant String :=
+                                 Get_Attribute (Files, "size");
                            begin
-                              Size := Gtk.Enums.Gtk_Icon_Size'Value
-                                (Get_Attribute (Files, "size"));
+                              if S = "Icon_Size_Menu" then
+                                 Size := Icon_Size_Menu;
+                              elsif S = "Icon_Size_Small_Toolbar" then
+                                 Size := Icon_Size_Small_Toolbar;
+                              elsif S = "Icon_Size_Large_Toolbar" then
+                                 Size := Icon_Size_Large_Toolbar;
+                              else
+                                 Insert (Kernel, "Invalid icon size: " & S,
+                                         Mode => Error);
+                              end if;
+
                               Set_Size (Source, Size);
                               Set_Size_Wildcarded (Source, False);
                            exception
-                              when Constraint_Error =>
+                              when E : Constraint_Error =>
+                                 Trace (Me, E);
                                  Insert
                                    (Kernel,
                                     -("No valid size specified for alternate"
