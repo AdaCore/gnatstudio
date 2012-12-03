@@ -31,6 +31,7 @@ with Gtk.List_Store;      use Gtk.List_Store;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
+with Gtk.Toggle_Tool_Button; use Gtk.Toggle_Tool_Button;
 with Gtk.Tree_Model;      use Gtk.Tree_Model;
 with Gtk.Widget;          use Gtk.Widget;
 
@@ -60,6 +61,9 @@ package body Histories is
      (Gtk_Widget_Record, Changed_Notifier);
 
    procedure Update_History
+     (Button : access Gtk_Widget_Record'Class;
+      Value  : History_Key_Access);
+   procedure Update_History_Tool_Button
      (Button : access Gtk_Widget_Record'Class;
       Value  : History_Key_Access);
    procedure Update_History_Item
@@ -571,6 +575,17 @@ package body Histories is
       Value.Value := Get_Active (Gtk_Toggle_Button (Button));
    end Update_History;
 
+   --------------------------------
+   -- Update_History_Tool_Button --
+   --------------------------------
+
+   procedure Update_History_Tool_Button
+     (Button : access Gtk_Widget_Record'Class;
+      Value  : History_Key_Access) is
+   begin
+      Value.Value := Get_Active (Gtk_Toggle_Tool_Button (Button));
+   end Update_History_Tool_Button;
+
    -------------------------
    -- Update_History_Item --
    -------------------------
@@ -598,6 +613,27 @@ package body Histories is
       Value_Callback.Connect
         (Button, Gtk.Toggle_Button.Signal_Toggled,
          Update_History'Access, User_Data => Val);
+   end Associate;
+
+   ---------------
+   -- Associate --
+   ---------------
+
+   procedure Associate
+     (Hist   : in out History_Record;
+      Key    : History_Key;
+      Button : not null access
+        Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button_Record'Class;
+      Default : Boolean := True)
+   is
+      Val : History_Key_Access;
+   begin
+      Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
+      Val := Create_New_Key_If_Necessary (Hist, Key, Booleans);
+      Button.Set_Active (Val.Value);
+      Value_Callback.Connect
+        (Button, Gtk.Toggle_Tool_Button.Signal_Toggled,
+         Update_History_Tool_Button'Access, User_Data => Val);
    end Associate;
 
    ---------------

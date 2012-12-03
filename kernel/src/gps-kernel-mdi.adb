@@ -174,7 +174,8 @@ package body GPS.Kernel.MDI is
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
       Module              : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False) is
+      Desktop_Independent : Boolean := False)
+   is
    begin
       Gtkada.MDI.Initialize (Child, Widget, Flags, Group, Focus_Widget);
 

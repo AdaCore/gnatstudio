@@ -46,8 +46,8 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;
+with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -58,7 +58,9 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
+with Gtk.Toggle_Button;
+with Gtk.Toggle_Tool_Button;    use Gtk.Toggle_Tool_Button;
+with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -127,6 +129,9 @@ package body Project_Explorers is
 
       Expanding : Boolean := False;
    end record;
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Explorer_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    function Initialize
      (Explorer : access Project_Explorer_Record'Class;
@@ -135,10 +140,12 @@ package body Project_Explorers is
    --  Create a new explorer, and return the focus widget.
 
    package Explorer_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Project_Explorer_Project",
+     (Module_Name        => Explorer_Module_Name,
       View_Name          => "Project",
       Formal_View_Record => Project_Explorer_Record,
       Reuse_If_Exist     => True,
+      Local_Toolbar      => True,
+      Position           => Position_Left,
       Initialize         => Initialize);
    subtype Project_Explorer is Explorer_Views.View_Access;
 
@@ -471,11 +478,6 @@ package body Project_Explorers is
    --  It is also used to return the context for
    --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
    --  event or a null menu.
-
-   procedure On_Open_Explorer
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Raise the existing explorer, or open a new one
 
    procedure Child_Selected
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
@@ -1015,6 +1017,53 @@ package body Project_Explorers is
          Pop_State (E.Kernel);
    end On_Parse_Xref;
 
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Explorer_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+      Check  : Gtk_Toggle_Tool_Button;
+      Size   : Gtk_Size_Group;
+   begin
+      Gtk_New (Size);
+
+      Gtk_New (Check);
+      Size.Add_Widget (Check);
+      Check.Set_Tooltip_Text (-"Show absolute paths");
+      Check.Set_Label (GNAT.OS_Lib.Directory_Separator & "");
+      Associate (Get_History (View.Kernel).all, Show_Absolute_Paths, Check,
+                 Default => False);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Toggle_Tool_Button.Signal_Toggled,
+         Update_Absolute_Paths'Access, View);
+      Toolbar.Insert (Check);
+
+      Gtk_New (Check);
+      Size.Add_Widget (Check);
+      Check.Set_Tooltip_Text (-"Show flat view");
+      Check.Set_Label (-"F");
+      Associate (Get_History (View.Kernel).all, Show_Flat_View, Check,
+                 Default => False);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Toggle_Tool_Button.Signal_Toggled,
+         Update_View'Access, View);
+      Toolbar.Insert (Check);
+
+      Gtk_New (Check);
+      Size.Add_Widget (Check);
+      Check.Set_Tooltip_Text (-"Show hidden directories");
+      Check.Set_Label (-"H");
+      Associate (Get_History (View.Kernel).all, Show_Hidden_Dirs, Check,
+                Default => True);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Toggle_Tool_Button.Signal_Toggled, Update_View'Access,
+         View);
+      Toolbar.Insert (Check);
+   end Create_Toolbar;
+
    ------------------------------
    -- Explorer_Context_Factory --
    ------------------------------
@@ -1036,8 +1085,6 @@ package body Project_Explorers is
       Iter      : constant Gtk_Tree_Iter :=
                     Find_Iter_For_Event (T.Tree, Event);
       Item      : Gtk_Menu_Item;
-      Sep       : Gtk_Separator_Menu_Item;
-      Check     : Gtk_Check_Menu_Item;
       Path      : Gtk_Tree_Path;
       Node_Type : Node_Types;
    begin
@@ -1054,36 +1101,6 @@ package body Project_Explorers is
 
       Project_Explorers_Common.Context_Factory
         (Context, Kernel_Handle (Kernel), T.Tree, T.Tree.Model, Event, Menu);
-
-      if Menu /= null then
-         Gtk_New (Check, Label => -"Show absolute paths");
-         Associate (Get_History (Kernel).all, Show_Absolute_Paths, Check);
-         Append (Menu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Update_Absolute_Paths'Access,
-            Slot_Object => T);
-
-         Gtk_New (Check, Label => -"Show flat view");
-         Associate (Get_History (Kernel).all, Show_Flat_View, Check);
-         Append (Menu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Update_View'Access,
-            Slot_Object => T);
-
-         Gtk_New (Check, Label => -"Show hidden directories");
-         Create_New_Boolean_Key_If_Necessary
-           (Get_History (Kernel).all,
-            Key           => Show_Hidden_Dirs,
-            Default_Value => True);
-         Associate (Get_History (Kernel).all, Show_Hidden_Dirs, Check);
-         Append (Menu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Update_View'Access,
-            Slot_Object => T);
-
-         Gtk_New (Sep);
-         Append (Menu, Sep);
-      end if;
 
       if Node_Type in Project_Node_Types
         and then Menu /= null
@@ -2358,20 +2375,6 @@ package body Project_Explorers is
       when E : others => Trace (Exception_Handle, E);
    end Refresh;
 
-   ----------------------
-   -- On_Open_Explorer --
-   ----------------------
-
-   procedure On_Open_Explorer
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Explorer : Project_Explorer;
-      pragma Unreferenced (Widget, Explorer);
-
-   begin
-      Explorer := Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
-   end On_Open_Explorer;
-
    -----------------------------
    -- Default_Context_Factory --
    -----------------------------
@@ -3155,11 +3158,10 @@ package body Project_Explorers is
 
    begin
       Explorer_Module_ID := new Explorer_Module_Record;
-      Register_Module
-        (Module      => Explorer_Module_ID,
-         Kernel      => Kernel,
-         Module_Name => Explorer_Module_Name,
-         Priority    => GPS.Kernel.Modules.Default_Priority);
+      Explorer_Views.Register_Module
+        (Kernel => Kernel,
+         ID     => Explorer_Module_ID);
+      Explorer_Views.Register_Open_Menu (Kernel, Project, -"Project _View");
 
       Command := new Locate_File_In_Explorer_Command;
       Register_Contextual_Menu
@@ -3177,13 +3179,6 @@ package body Project_Explorers is
                      and not Create (Module => Explorer_Module_Name),
          Label  => "Locate in Project View: %p");
 
-      Register_Menu
-        (Kernel, Project, -"Project _View", "", On_Open_Explorer'Access);
-
-      Explorer_Views.Register_Module
-        (Kernel => Kernel,
-         ID     => Explorer_Module_ID);
-
       Extra := new Explorer_Search_Extra_Record;
       Gtk.Box.Initialize_Vbox (Extra);
 
@@ -3194,28 +3189,28 @@ package body Project_Explorers is
       Pack_Start (Box, Extra.Include_Projects);
       Set_Active (Extra.Include_Projects, True);
       Kernel_Callback.Connect
-        (Extra.Include_Projects, Signal_Toggled,
+        (Extra.Include_Projects, Gtk.Toggle_Button.Signal_Toggled,
          Reset_Search'Access, Kernel_Handle (Kernel));
 
       Gtk_New (Extra.Include_Directories, -"Directories");
       Pack_Start (Box, Extra.Include_Directories);
       Set_Active (Extra.Include_Directories, True);
       Kernel_Callback.Connect
-        (Extra.Include_Directories, Signal_Toggled,
+        (Extra.Include_Directories, Gtk.Toggle_Button.Signal_Toggled,
          Reset_Search'Access, Kernel_Handle (Kernel));
 
       Gtk_New (Extra.Include_Files, -"Files");
       Pack_Start (Box, Extra.Include_Files);
       Set_Active (Extra.Include_Files, True);
       Kernel_Callback.Connect
-        (Extra.Include_Files, Signal_Toggled,
+        (Extra.Include_Files, Gtk.Toggle_Button.Signal_Toggled,
          Reset_Search'Access, Kernel_Handle (Kernel));
 
       Gtk_New (Extra.Include_Entities, -"Entities (might be slow)");
       Pack_Start (Box, Extra.Include_Entities);
       Set_Active (Extra.Include_Entities, False);
       Kernel_Callback.Connect
-        (Extra.Include_Entities, Signal_Toggled,
+        (Extra.Include_Entities, Gtk.Toggle_Button.Signal_Toggled,
          Reset_Search'Access, Kernel_Handle (Kernel));
 
       Register_Filter

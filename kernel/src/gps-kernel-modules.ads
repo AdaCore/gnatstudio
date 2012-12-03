@@ -78,12 +78,14 @@ with XML_Utils;
 
 package GPS.Kernel.Modules is
 
-   Explorer_Module_Name           : constant String := "Explorer";
+   Explorer_Module_Name        : constant String := "Project_Explorer_Project";
    Project_Editor_Module_Name     : constant String := "Project_Editor";
    Dependency_Browser_Module_Name : constant String := "Dependency_Browser";
    Project_Browser_Module_Name    : constant String := "Project_Browser";
    Revision_View_Module_Name      : constant String := "Revision_Views";
-   --  Names for the internal modules
+   --  Names for the internal modules.
+   --  Changing these might also impact the contents of the saved perspectives
+   --  files.
 
    ------------------
    -- Module types --

@@ -17,6 +17,8 @@
 
 with Glib.Object;           use Glib.Object;
 with XML_Utils;             use XML_Utils;
+with Gtk.Box;               use Gtk.Box;
+with Gtk.Toolbar;           use Gtk.Toolbar;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.MDI;            use Gtkada.MDI;
 
@@ -60,6 +62,87 @@ package body Generic_Views is
 
       Module : Module_ID;
 
+      type Toplevel_Box is new Gtk_Box_Record with record
+         Initial : View_Access;
+      end record;
+      --  When using a local toolbar, the contents of the widget as set by the
+      --  application is nested inside a box. We use a dedicated tagged type so
+      --  that we can more easily find the child in the desktop by tag.
+
+      procedure Create_If_Needed
+        (Kernel       : access Kernel_Handle_Record'Class;
+         Child        : out GPS_MDI_Child;
+         View         : out View_Access);
+      --  Create or reuse a view.
+
+      ----------------------
+      -- Create_If_Needed --
+      ----------------------
+
+      procedure Create_If_Needed
+        (Kernel       : access Kernel_Handle_Record'Class;
+         Child        : out GPS_MDI_Child;
+         View         : out View_Access)
+      is
+         Focus_Widget : Gtk_Widget;
+         Toolbar      : Gtk_Toolbar;
+         Box          : Gtk_Box;
+         W            : Gtk_Widget;
+      begin
+         if Reuse_If_Exist then
+            if Local_Toolbar then
+               Child := GPS_MDI_Child
+                 (Find_MDI_Child_By_Tag
+                    (Get_MDI (Kernel), Toplevel_Box'Tag));
+            else
+               Child := GPS_MDI_Child
+                 (Find_MDI_Child_By_Tag
+                    (Get_MDI (Kernel), Formal_View_Record'Tag));
+            end if;
+
+            if Child /= null then
+               if Local_Toolbar then
+                  View := Toplevel_Box
+                    (Child.Get_Widget.all).Initial;
+               else
+                  View := View_Access (Get_Widget (Child));
+               end if;
+               return;
+            end if;
+         end if;
+
+         View := new Formal_View_Record;
+         Focus_Widget := Initialize (View, Kernel);
+         if Focus_Widget = null then
+            Focus_Widget := Get_Child (View);
+         end if;
+
+         if Local_Toolbar then
+            Box := new Toplevel_Box;
+            Initialize_Vbox (Box);
+            Toplevel_Box (Box.all).Initial := View;
+            Gtk_New (Toolbar);
+            Get_Style_Context (Toolbar).Add_Class ("gps_local_toolbar");
+            Box.Pack_Start (Toolbar, Expand => False, Fill => False);
+            Box.Pack_Start (View, Expand => True, Fill => True);
+            W := Gtk_Widget (Box);
+            View.Create_Toolbar (Toolbar);
+            Toolbar.Show_All;
+         else
+            W := Gtk_Widget (View);
+         end if;
+
+         --  Child does not exist yet, create it
+         Gtk_New (Child, W,
+                  Default_Width  => 215,
+                  Default_Height => 600,
+                  Focus_Widget   => Focus_Widget,
+                  Module         => Module,
+                  Group          => Group);
+         Set_Title (Child, View_Name, View_Name);
+         Put (Get_MDI (Kernel), Child, Initial_Position => Position);
+      end Create_If_Needed;
+
       ----------------
       -- Get_Module --
       ----------------
@@ -81,46 +164,14 @@ package body Generic_Views is
          pragma Unreferenced (MDI);
          View         : View_Access;
          Child        : GPS_MDI_Child;
-         Focus_Widget : Gtk_Widget;
       begin
          if Node.Tag.all = Module_Name then
-            if Reuse_If_Exist then
-               Child := GPS_MDI_Child
-                 (Find_MDI_Child_By_Tag
-                    (Get_MDI (User), Formal_View_Record'Tag));
-               if Child /= null then
-                  return MDI_Child (Child);
-               end if;
-            end if;
-
-            if Child = null then
-               View := new Formal_View_Record;
-            else
-               View := View_Access (Get_Widget (Child));
-            end if;
-
-            Focus_Widget := Initialize (View, User);
+            Create_If_Needed (User, Child, View);
 
             if Node.Child /= null then
                Load_From_XML (View, Node.Child);
             end if;
 
-            if Focus_Widget = null then
-               Focus_Widget := Get_Child (View);
-            end if;
-
-            if Child = null then
-               --  Child does not exist yet, create it
-               Gtk_New (Child, View,
-                        Default_Width  => 215,
-                        Default_Height => 600,
-                        Focus_Widget   => Focus_Widget,
-                        Module         => Module,
-                        Group          => Group_View);
-               Set_Title (Child, View_Name, View_Name);
-            end if;
-
-            Put (Get_MDI (User), Child, Initial_Position => Position_Left);
             return MDI_Child (Child);
          end if;
          return null;
@@ -137,7 +188,15 @@ package body Generic_Views is
          pragma Unreferenced (User);
          N : Node_Ptr;
       begin
-         if Widget.all in Formal_View_Record'Class then
+         if Local_Toolbar and then Widget.all in Toplevel_Box'Class then
+            N := new Node;
+            N.Tag := new String'(Module_Name);
+            N.Child := Save_To_XML (Toplevel_Box (Widget.all).Initial);
+            return N;
+
+         elsif not Local_Toolbar
+           and then Widget.all in Formal_View_Record'Class
+         then
             N := new Node;
             N.Tag := new String'(Module_Name);
             N.Child := Save_To_XML (View_Access (Widget));
@@ -166,38 +225,13 @@ package body Generic_Views is
 
       function Get_Or_Create_View
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Focus  : Boolean := True;
-         Group  : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View)
+         Focus  : Boolean := True)
          return View_Access
       is
          Child        : GPS_MDI_Child;
          View         : View_Access;
-         Focus_Widget : Gtk_Widget;
       begin
-         if Reuse_If_Exist then
-            Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-              (Get_MDI (Kernel), Formal_View_Record'Tag));
-         end if;
-
-         if Child = null then
-            View := new Formal_View_Record;
-            Focus_Widget := Initialize (View, Kernel);
-
-            if Focus_Widget = null then
-               --  Fallback on using the child of the scrolled window, better
-               --  than not providing any Focus_Widget.
-               Focus_Widget := Get_Child (View);
-            end if;
-
-            Gtk_New (Child, View,
-                     Default_Width  => 215,
-                     Default_Height => 600,
-                     Focus_Widget   => Focus_Widget,
-                     Group          => Group,
-                     Module         => Module);
-            Set_Title (Child, View_Name, View_Name);
-            Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-         end if;
+         Create_If_Needed (Kernel, Child, View);
 
          if Focus then
             Raise_Child (Child);
@@ -207,9 +241,24 @@ package body Generic_Views is
          if Child = null then
             return null;
          else
-            return View_Access (Get_Widget (Child));
+            return View;
          end if;
       end Get_Or_Create_View;
+
+      ------------------------
+      -- Register_Open_Menu --
+      ------------------------
+
+      procedure Register_Open_Menu
+        (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Menu_Name : String;
+         Item_Name : String;
+         Before    : String := "") is
+      begin
+         Register_Menu
+           (Kernel, Menu_Name, Item_Name, "", On_Open_View_Access,
+            Ref_Item => Before);
+      end Register_Open_Menu;
 
       ---------------------
       -- Register_Module --
@@ -233,11 +282,9 @@ package body Generic_Views is
             Module_Name => Module_Name,
             Priority    => GPS.Kernel.Modules.Default_Priority);
          Register_Desktop_Functions (Save_Desktop_Access, Load_Desktop_Access);
-
-         Register_Menu
+         Register_Open_Menu
            (Kernel, '/' & (-"Tools") & '/' & (-"_Views"),
-            Menu_Name, "", On_Open_View_Access,
-            Ref_Item => Before_Menu);
+            Menu_Name, Before => Before_Menu);
       end Register_Module;
 
    end Simple_Views;

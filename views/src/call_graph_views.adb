@@ -174,6 +174,7 @@ package body Call_Graph_Views is
      (Module_Name        => "Callgraph_View",
       View_Name          => "Call Trees",
       Reuse_If_Exist     => True,
+      Group              => GPS.Kernel.MDI.Group_Consoles,
       Formal_View_Record => Callgraph_View_Record);
    subtype Callgraph_View_Access is Generic_View.View_Access;
 
@@ -1650,8 +1651,7 @@ package body Call_Graph_Views is
       View   : Callgraph_View_Access;
    begin
       if Entity /= No_General_Entity then
-         View := Generic_View.Get_Or_Create_View
-           (Kernel, Group => GPS.Kernel.MDI.Group_Consoles);
+         View := Generic_View.Get_Or_Create_View (Kernel);
          Expand_Row
            (View.Tree,
             Insert_Entity
@@ -1681,8 +1681,7 @@ package body Call_Graph_Views is
       View   : Callgraph_View_Access;
    begin
       if Entity /= No_General_Entity then
-         View := Generic_View.Get_Or_Create_View
-           (Kernel, Group => GPS.Kernel.MDI.Group_Consoles);
+         View := Generic_View.Get_Or_Create_View (Kernel);
          Expand_Row
            (View.Tree,
             Insert_Entity
