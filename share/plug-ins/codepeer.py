@@ -262,6 +262,8 @@ xml_codepeer = """<?xml version="1.0"?>
                 tip="Display a progress bar with information about how many files are left to be compiled" />
          <check label="Ignore representation clauses" switch="-gnatI" column="1"
                 tip="Ignore all representation clauses, useful for generating SCIL for another architecture" />
+         <check label="Unconstrained float overflow" switch="-gnateF" column="1"
+                tip="Check for overflow on unconstrained floating point types" />
          <check label="GNAT warnings" switch="-gnatwna" column="1"
                 tip="Enable GNAT warnings during SCIL generation" />
        </switches>
@@ -291,7 +293,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <description>Review code with codepeer</description>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
@@ -299,8 +300,9 @@ xml_codepeer = """<?xml version="1.0"?>
        </command-line>
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s" columns="3" lines="5">
-         <check label="Global analysis" switch="-global" column="1"
-                tip="Do not split analysis in partitions" />
+         <spin label="Analysis level" switch="-level" min="0" max="4"
+               default="3" separator=" " column="1"
+               tip="Set the accuracy and speed of the analysis. Use 0 or 1 for local and quick analysis, 2 for an intermediate analysis, 3 for a relatively global analysis (within the memory constraints), and 4 to force a global analysis. See CodePeer documentation for more details." />
          <check label="Baseline run" switch="-baseline" column="2"
           tip="this run is a baseline run and prior run becomes default cutoff"
          />
@@ -313,9 +315,9 @@ xml_codepeer = """<?xml version="1.0"?>
                min="10" max="100000" default="3000"
                separator=" " column="2"
                tip="Size of each partition to analyze (ignored with -global)" />
-         <spin label="Multiprocessing" switch="-jobs" min="1" max="100"
+         <spin label="Multiprocessing" switch="-jobs" min="0" max="100"
                default="1" separator=" " column="3"
-               tip="Use N processes to carry out the analysis." />
+               tip="Use N processes to carry out the analysis (0 means use as many cores as available on the machine)." />
          <check label="No race condition" switch="-no-race-conditions"
                 column="1" tip="Do not perform race conditions analysis" />
          <combo label="Messages" switch="-messages" noswitch="normal"
@@ -379,7 +381,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
@@ -396,7 +397,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-root-only</arg>
@@ -414,7 +414,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
@@ -434,7 +433,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <command-line>
           <arg>codepeer</arg>
           <arg>-quick</arg>
-          <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
@@ -451,7 +449,6 @@ xml_codepeer = """<?xml version="1.0"?>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
-          <arg>-background</arg>
           <arg>-output-only</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
