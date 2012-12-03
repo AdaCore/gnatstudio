@@ -72,6 +72,7 @@ package body Clipboard_Views is
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Clipboard_View",
       View_Name          => "Clipboard",
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,
       Formal_View_Record => Clipboard_View_Record);
    subtype Clipboard_View_Access is Generic_View.View_Access;

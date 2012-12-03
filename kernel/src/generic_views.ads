@@ -24,6 +24,8 @@ with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;
 with Glib.Object;
 with XML_Utils;
+with Gtkada.Handlers;
+with Gtk.Menu;
 with Gtk.Scrolled_Window;
 with Gtk.Toolbar;
 with Gtk.Widget;
@@ -57,6 +59,16 @@ package Generic_Views is
    --  If the view needs a local toolbar, this function is called when the
    --  toolbar needs to be filled. It is not called if Local_Toolbar is set to
    --  null in the instantiation of the generic below.
+   --  This toolbar should contain operations that apply to the current view,
+   --  but not settings or preferences for that view (use Create_Menu for the
+   --  latter).
+
+   procedure Create_Menu
+     (View    : not null access View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is null;
+   --  Fill the menu created by the local configuration menu (see Local_Config
+   --  in the generic formal parameters below).
+   --  This menu should contain entries that configure the current view.
 
    ------------------
    -- Simple_Views --
@@ -73,6 +85,11 @@ package Generic_Views is
       type Formal_View_Record is new View_Record with private;
       --  Type of the widget representing the view
 
+      type Formal_MDI_Child is new GPS.Kernel.MDI.GPS_MDI_Child_Record
+        with private;
+      --  The type of MDI child, in case the view needs to use a specialized
+      --  type, for instance to add drag-and-drop capabilities
+
       Reuse_If_Exist : Boolean;
       --  If True a single MDI child will be created and shared
 
@@ -88,6 +105,10 @@ package Generic_Views is
       --  Whether the view should contain a local toolbar. If it does, the
       --  toolbar will be filled by calling the Create_Toolbar primitive
       --  operation on the view.
+
+      Local_Config : Boolean := False;
+      --  If true, a button will be displayed to show the configuration menu
+      --  for the view. If true, this also forces the use of a local toolbar.
 
       Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Bottom;
       --  The preferred position for newly created views.
@@ -123,6 +144,12 @@ package Generic_Views is
       --  Reuse_If_Exist is False).
       --  The view gets the focus automatically if Focus is True.
 
+      function Child_From_View
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         View   : not null access Formal_View_Record'Class)
+         return Gtkada.MDI.MDI_Child;
+      --  Return the MDI Child containing view.
+
       procedure Register_Open_Menu
         (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
          Menu_Name : String;
@@ -156,6 +183,14 @@ package Generic_Views is
       Save_Desktop_Access : constant
         GPS.Kernel.MDI.Save_Desktop_Function := Save_Desktop'Access;
       --  Support functions for the MDI
+
+      procedure On_Display_Local_Config
+        (View : access Gtk.Widget.Gtk_Widget_Record'Class);
+      On_Display_Local_Config_Access : constant
+        Gtkada.Handlers.Widget_Callback.Simple_Handler :=
+          On_Display_Local_Config'Access;
+      --  Called to display the local config menu
+
    end Simple_Views;
 
 end Generic_Views;

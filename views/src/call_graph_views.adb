@@ -175,6 +175,7 @@ package body Call_Graph_Views is
       View_Name          => "Call Trees",
       Reuse_If_Exist     => True,
       Group              => GPS.Kernel.MDI.Group_Consoles,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Callgraph_View_Record);
    subtype Callgraph_View_Access is Generic_View.View_Access;
 

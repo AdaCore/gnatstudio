@@ -203,7 +203,8 @@ package Histories is
    procedure Associate
      (Hist : in out History_Record;
       Key  : History_Key;
-      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class);
+      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class;
+      Default : Boolean := True);
    --  Same as above
 
 private

@@ -643,11 +643,13 @@ package body Histories is
    procedure Associate
      (Hist : in out History_Record;
       Key  : History_Key;
-      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class)
+      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class;
+      Default : Boolean := True)
    is
-      Val : constant History_Key_Access :=
-              Create_New_Key_If_Necessary (Hist, Key, Booleans);
+      Val : History_Key_Access;
    begin
+      Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
+      Val := Create_New_Key_If_Necessary (Hist, Key, Booleans);
       Set_Active (Item, Val.Value);
       Value_Callback.Connect
         (Item, Gtk.Toggle_Button.Signal_Toggled,

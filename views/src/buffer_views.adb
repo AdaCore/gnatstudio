@@ -90,6 +90,7 @@ package body Buffer_Views is
      (Module_Name        => Module_Name,
       View_Name          => "Windows",
       Reuse_If_Exist     => True,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Buffer_View_Record);
    subtype Buffer_View_Access is Generic_View.View_Access;
 

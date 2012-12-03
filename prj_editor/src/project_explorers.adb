@@ -46,8 +46,11 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;
 with Gtk.Size_Group;            use Gtk.Size_Group;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -59,7 +62,6 @@ with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Toggle_Button;
-with Gtk.Toggle_Tool_Button;    use Gtk.Toggle_Tool_Button;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -132,6 +134,9 @@ package body Project_Explorers is
    overriding procedure Create_Toolbar
      (View    : not null access Project_Explorer_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access Project_Explorer_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
      (Explorer : access Project_Explorer_Record'Class;
@@ -143,8 +148,10 @@ package body Project_Explorers is
      (Module_Name        => Explorer_Module_Name,
       View_Name          => "Project",
       Formal_View_Record => Project_Explorer_Record,
+      Formal_MDI_Child   => MDI_Explorer_Child_Record,
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
+      Local_Config       => True,
       Position           => Position_Left,
       Initialize         => Initialize);
    subtype Project_Explorer is Explorer_Views.View_Access;
@@ -304,6 +311,9 @@ package body Project_Explorers is
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
    --  Sets the types of columns to be displayed in the tree_view
+
+   procedure On_Reload_Project (View : access Gtk_Widget_Record'Class);
+   --  Callback for the "reload project" action button
 
    ------------------
    -- Adding nodes --
@@ -656,7 +666,8 @@ package body Project_Explorers is
       else
          return On_Button_Press
            (T.Kernel,
-            MDI_Explorer_Child (Find_MDI_Child (Get_MDI (T.Kernel), T)),
+            MDI_Explorer_Child
+              (Explorer_Views.Child_From_View (T.Kernel, T)),
             T.Tree, T.Tree.Model, Event, False);
       end if;
    exception
@@ -1017,6 +1028,40 @@ package body Project_Explorers is
          Pop_State (E.Kernel);
    end On_Parse_Xref;
 
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Project_Explorer_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Check : Gtk_Check_Menu_Item;
+   begin
+      Gtk_New (Check, -"Show absolute paths");
+      Associate (Get_History (View.Kernel).all, Show_Absolute_Paths, Check,
+                 Default => False);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+         Update_Absolute_Paths'Access, View);
+      Menu.Add (Check);
+
+      Gtk_New (Check, -"Show flat view");
+      Associate (Get_History (View.Kernel).all, Show_Flat_View, Check,
+                 Default => False);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+         Update_View'Access, View);
+      Menu.Add (Check);
+
+      Gtk_New (Check, -"Show hidden directories");
+      Associate (Get_History (View.Kernel).all, Show_Hidden_Dirs, Check,
+                Default => True);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
+      Menu.Add (Check);
+   end Create_Menu;
+
    --------------------
    -- Create_Toolbar --
    --------------------
@@ -1025,44 +1070,31 @@ package body Project_Explorers is
      (View    : not null access Project_Explorer_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
-      Check  : Gtk_Toggle_Tool_Button;
+      Button : Gtk_Tool_Button;
       Size   : Gtk_Size_Group;
    begin
       Gtk_New (Size);
 
-      Gtk_New (Check);
-      Size.Add_Widget (Check);
-      Check.Set_Tooltip_Text (-"Show absolute paths");
-      Check.Set_Label (GNAT.OS_Lib.Directory_Separator & "");
-      Associate (Get_History (View.Kernel).all, Show_Absolute_Paths, Check,
-                 Default => False);
+      Gtk_New_From_Stock (Button, Stock_Refresh);
+      Size.Add_Widget (Button);
+      Button.Set_Tooltip_Text (-"Reload project");
       Widget_Callback.Object_Connect
-        (Check, Gtk.Toggle_Tool_Button.Signal_Toggled,
-         Update_Absolute_Paths'Access, View);
-      Toolbar.Insert (Check);
-
-      Gtk_New (Check);
-      Size.Add_Widget (Check);
-      Check.Set_Tooltip_Text (-"Show flat view");
-      Check.Set_Label (-"F");
-      Associate (Get_History (View.Kernel).all, Show_Flat_View, Check,
-                 Default => False);
-      Widget_Callback.Object_Connect
-        (Check, Gtk.Toggle_Tool_Button.Signal_Toggled,
-         Update_View'Access, View);
-      Toolbar.Insert (Check);
-
-      Gtk_New (Check);
-      Size.Add_Widget (Check);
-      Check.Set_Tooltip_Text (-"Show hidden directories");
-      Check.Set_Label (-"H");
-      Associate (Get_History (View.Kernel).all, Show_Hidden_Dirs, Check,
-                Default => True);
-      Widget_Callback.Object_Connect
-        (Check, Gtk.Toggle_Tool_Button.Signal_Toggled, Update_View'Access,
-         View);
-      Toolbar.Insert (Check);
+        (Button, Gtk.Tool_Button.Signal_Clicked,
+         On_Reload_Project'Access, View);
+      Toolbar.Insert (Button);
    end Create_Toolbar;
+
+   -----------------------
+   -- On_Reload_Project --
+   -----------------------
+
+   procedure On_Reload_Project
+     (View : access Gtk_Widget_Record'Class)
+   is
+      V : constant Project_Explorer := Project_Explorer (View);
+   begin
+      Reload_Project_If_Needed (V.Kernel);
+   end On_Reload_Project;
 
    ------------------------------
    -- Explorer_Context_Factory --

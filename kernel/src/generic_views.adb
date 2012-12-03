@@ -15,18 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Object;           use Glib.Object;
-with XML_Utils;             use XML_Utils;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Toolbar;           use Gtk.Toolbar;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtkada.MDI;            use Gtkada.MDI;
+with Glib.Object;             use Glib, Glib.Object;
+with XML_Utils;               use XML_Utils;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Enums;               use Gtk.Enums;
+with Gtk.Menu;                use Gtk.Menu;
+with Gtk.Style_Context;       use Gtk.Style_Context;
+with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
+with Gtk.Tool_Button;         use Gtk.Tool_Button;
+with Gtk.Toolbar;             use Gtk.Toolbar;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.MDI;              use Gtkada.MDI;
 
-with GPS.Kernel;            use GPS.Kernel;
-with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
-with GPS.Intl;              use GPS.Intl;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Stock_Icons;         use GPS.Stock_Icons;
 
 package body Generic_Views is
 
@@ -75,6 +83,42 @@ package body Generic_Views is
          View         : out View_Access);
       --  Create or reuse a view.
 
+      -----------------------------
+      -- On_Display_Local_Config --
+      -----------------------------
+
+      procedure On_Display_Local_Config
+        (View : access Gtk_Widget_Record'Class)
+      is
+         V : constant View_Access := View_Access (View);
+         Menu : Gtk_Menu;
+      begin
+         Gtk_New (Menu);
+         V.Create_Menu (Menu);
+         Menu.Show_All;
+
+         Menu.Popup; --   (Func => Position_Local_Config'Access);
+      end On_Display_Local_Config;
+
+      ---------------------
+      -- Child_From_View --
+      ---------------------
+
+      function Child_From_View
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         View   : not null access Formal_View_Record'Class)
+         return MDI_Child
+      is
+      begin
+         if Local_Config or else Local_Toolbar then
+            return Find_MDI_Child
+              (Get_MDI (Kernel),
+               View.Get_Parent);  --  the box
+         else
+            return Find_MDI_Child (Get_MDI (Kernel), View);
+         end if;
+      end Child_From_View;
+
       ----------------------
       -- Create_If_Needed --
       ----------------------
@@ -88,9 +132,12 @@ package body Generic_Views is
          Toolbar      : Gtk_Toolbar;
          Box          : Gtk_Box;
          W            : Gtk_Widget;
+         Button       : Gtk_Tool_Button;
+         Sep          : Gtk_Separator_Tool_Item;
+
       begin
          if Reuse_If_Exist then
-            if Local_Toolbar then
+            if Local_Toolbar or else Local_Config then
                Child := GPS_MDI_Child
                  (Find_MDI_Child_By_Tag
                     (Get_MDI (Kernel), Toplevel_Box'Tag));
@@ -101,7 +148,7 @@ package body Generic_Views is
             end if;
 
             if Child /= null then
-               if Local_Toolbar then
+               if Local_Toolbar or else Local_Config then
                   View := Toplevel_Box
                     (Child.Get_Widget.all).Initial;
                else
@@ -117,13 +164,17 @@ package body Generic_Views is
             Focus_Widget := Get_Child (View);
          end if;
 
-         if Local_Toolbar then
+         if Local_Toolbar or else Local_Config then
             Box := new Toplevel_Box;
             Initialize_Vbox (Box);
             Toplevel_Box (Box.all).Initial := View;
+
             Gtk_New (Toolbar);
-            Get_Style_Context (Toolbar).Add_Class ("gps_local_toolbar");
+            Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
+            Toolbar.Set_Style (Toolbar_Icons);
+            Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
             Box.Pack_Start (Toolbar, Expand => False, Fill => False);
+
             Box.Pack_Start (View, Expand => True, Fill => True);
             W := Gtk_Widget (Box);
             View.Create_Toolbar (Toolbar);
@@ -132,13 +183,29 @@ package body Generic_Views is
             W := Gtk_Widget (View);
          end if;
 
+         if Local_Config then
+            Gtk_New (Sep);
+            Sep.Set_Draw (False);
+            Sep.Set_Expand (True);
+            Toolbar.Insert (Sep);
+
+            Gtk_New_From_Stock (Button, GPS_Stock_Config_Menu);
+            Button.Set_Homogeneous (False);
+            Button.Set_Tooltip_Text (-"Configure this panel");
+            Toolbar.Insert (Button);
+            Gtkada.Handlers.Widget_Callback.Object_Connect
+              (Button, Gtk.Tool_Button.Signal_Clicked,
+               On_Display_Local_Config_Access, View);
+         end if;
+
          --  Child does not exist yet, create it
-         Gtk_New (Child, W,
-                  Default_Width  => 215,
-                  Default_Height => 600,
-                  Focus_Widget   => Focus_Widget,
-                  Module         => Module,
-                  Group          => Group);
+         Child := new Formal_MDI_Child;
+         Initialize (Child, W,
+                     Default_Width  => 215,
+                     Default_Height => 600,
+                     Focus_Widget   => Focus_Widget,
+                     Module         => Module,
+                     Group          => Group);
          Set_Title (Child, View_Name, View_Name);
          Put (Get_MDI (Kernel), Child, Initial_Position => Position);
       end Create_If_Needed;
@@ -187,14 +254,15 @@ package body Generic_Views is
       is
          pragma Unreferenced (User);
          N : Node_Ptr;
+         Tb : constant Boolean := Local_Toolbar or else Local_Config;
       begin
-         if Local_Toolbar and then Widget.all in Toplevel_Box'Class then
+         if Tb and then Widget.all in Toplevel_Box'Class then
             N := new Node;
             N.Tag := new String'(Module_Name);
             N.Child := Save_To_XML (Toplevel_Box (Widget.all).Initial);
             return N;
 
-         elsif not Local_Toolbar
+         elsif not Tb
            and then Widget.all in Formal_View_Record'Class
          then
             N := new Node;
