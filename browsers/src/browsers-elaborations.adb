@@ -19,6 +19,7 @@ with Ada.Containers;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Cairo;                     use Cairo;
+with Default_Preferences;       use Default_Preferences;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with GPS.Kernel;                use GPS.Kernel;
@@ -55,6 +56,9 @@ package body Browsers.Elaborations is
 
    Last_Elaboration_Cycle : Elaboration_Cycles.Cycle;
    --  Last elaboration cycle reported by gnatbind
+
+   Auto_Show_Preference : Boolean_Preference;
+   --  Allow auto-display found elaboration cycles after each compilation
 
    --  Browser type
    type Elaboration_Browser_Record is
@@ -486,8 +490,13 @@ package body Browsers.Elaborations is
           GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args (Data.all);
 
       Cycle   : Elaboration_Cycles.Cycle renames Last_Elaboration_Cycle;
+
+      Show : constant Boolean := Get_Pref (Auto_Show_Preference);
    begin
-      if Hook_Data.Status = 0 or else Dependencies_Count (Cycle) = 0 then
+      if not Show
+        or else Hook_Data.Status = 0
+        or else Dependencies_Count (Cycle) = 0
+      then
          return;
       end if;
 
@@ -533,6 +542,14 @@ package body Browsers.Elaborations is
          Name => "gnatstack.compilation_finished");
 
       Register_Output_Parser (Output_Parser'Access, Line_By_Line + 20);
+
+      Auto_Show_Preference := Create
+        (Get_Preferences (Kernel),
+         Name    => "Auto-Show-Elaboration-Cycles",
+         Label   => -"Show elaboration cycles",
+         Page    => -"Browsers",
+         Doc     => -"Display elaboration cycles in browser after compilation",
+         Default => True);
    end Register_Module;
 
    ---------------------------
