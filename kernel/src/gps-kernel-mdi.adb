@@ -373,7 +373,9 @@ package body GPS.Kernel.MDI is
          Focus_Title_Color         => MDI_Focus_Title_Color.Get_Pref,
          Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
          Show_Tabs_Policy          => Policy,
-         Tabs_Position             => Pos);
+         Tabs_Position             => Pos,
+         Homogeneous_Tabs          => True,
+         Hardcode_Theme            => False);
 
       Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
 

@@ -7,7 +7,8 @@
  * of predefined named colors and shades of them. For instance:
  */
 
-/* @define-color base_color black;
+/*
+   @define-color base_color black;
    @define-color bg_color #fff;
    @define-color theme_bg_color green;
 */
@@ -20,8 +21,17 @@
 }
 
 .mdi {
-   /*background: #999;*/
-   background: shade(@theme_bg_color, 0.7);
+   background: shade(@theme_bg_color, 0.95);
+}
+
+.mdifocused { /* The notebook that current has the focus */
+   background-color: #729fcf;
+}
+.mdifocused tab:active {
+   background-image: -gtk-gradient(linear,
+                                   left top, left bottom,
+                                   from(#729cfc),
+                                   to(shade(#829cfc, 0.9)));
 }
 
 * {
