@@ -317,6 +317,9 @@ All units involved in dependency caused by pragma Elaborate_All (explicit or
 implicit one) are also presented in the browser and connected by links with
 labels "it's body" and "withed".
 
+Preference `Browsers/Show elaboration cycles` controls the automatic
+arising of the browser when an elaboration cycle found.
+
 .. index:: screen shot
 .. image:: elaboration-graph.jpg
 
