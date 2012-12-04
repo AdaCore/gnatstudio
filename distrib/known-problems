@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- LC04-026: GPS: tooltips are blurry on Retina displays
+  Problem:    GPS draws its tooltips (for instance in editors) by using
+              pixmaps. This results in blurry text on high-dpi screens.
+  Workaround: The text is readable even if a bit blurry.
+
 - LB26-008: GPS: Smart completion of C/C++ parameters
   Problem:    When a function/method has several parameters, we press the
               open parenthesis, and we choose smart completion of all the
