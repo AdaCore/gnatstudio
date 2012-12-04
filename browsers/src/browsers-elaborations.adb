@@ -99,38 +99,6 @@ package body Browsers.Elaborations is
       Layout           : access Pango.Layout.Pango_Layout_Record'Class);
    --  See doc for inherited subprograms
 
-   --  Node to represent Elaborate_All dependency in browser
-   type Dependency_Item_Record is new Browsers.Canvas.Browser_Item_Record
-   with record
-      Lines  : Xref_List;
-   end record;
-   type Dependency_Item is access all Dependency_Item_Record'Class;
-
-   procedure Gtk_New
-     (Item    : out Dependency_Item;
-      Dep     : Dependency;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class);
-   --  Open a new item in the browser that represents Elaborate_All dependency
-
-   procedure Initialize
-     (Item    : access Dependency_Item_Record'Class;
-      Dep     : Dependency;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class);
-   --  Internal initialization function
-
-   overriding procedure Resize_And_Draw
-     (Item             : access Dependency_Item_Record;
-      Cr               : in out Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
-   --  See doc for inherited subprograms
-
-   overriding procedure Destroy (Item : in out Dependency_Item_Record);
-   --  See doc for inherited subprograms
-
    function Open_Elaboration_Browser_Child
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child;
@@ -163,6 +131,12 @@ package body Browsers.Elaborations is
      (Browser   : Elaboration_Browser;
       Unit_Name : String) return Unit_Item;
    --  Find or create unit in Browser
+
+   procedure Fill_Elaborate_All
+     (Browser       : Elaboration_Browser;
+      Item_After    : Unit_Item;
+      Elaborate_All : Dependency);
+   --  Put all units of Elaborate_All dependency in browser
 
    --------------
    -- Get_Unit --
@@ -224,61 +198,6 @@ package body Browsers.Elaborations is
       Set_Title (Item, Name);
    end Initialize;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Item    : out Dependency_Item;
-      Dep     : Dependency;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class) is
-   begin
-      Item := new Dependency_Item_Record;
-      Elaborations.Initialize (Item, Dep, Browser);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Item    : access Dependency_Item_Record'Class;
-      Dep     : Dependency;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class) is
-   begin
-      Add_Line (Item.Lines, After_Unit_Name (Dep));
-      for J in reverse 1 .. Links_Count (Dep) loop
-         declare
-            Next : constant Link := Element (Dep, J);
-         begin
-            case Kind (Next) is
-               when Withed =>
-                  Add_Line (Item.Lines, "  withes:");
-               when Body_With_Specification =>
-                  Add_Line (Item.Lines, "  its body:");
-            end case;
-            Add_Line (Item.Lines, Unit_Name (Next));
-         end;
-      end loop;
-
-      Initialize (Item, Browser);
-
-      if Reason (Dep) = Elaborate_All_Desirable then
-         Set_Title (Item, "implicit Elaborate All");
-      else
-         Set_Title (Item, "Elaborate All");
-      end if;
-   end Initialize;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Item : in out Dependency_Item_Record) is
-   begin
-      Free (Item.Lines);
-   end Destroy;
-
    ---------------------
    -- Resize_And_Draw --
    ---------------------
@@ -297,42 +216,6 @@ package body Browsers.Elaborations is
          Width, Height,
          Width_Offset,
          Height_Offset, Xoffset, Yoffset, Layout);
-   end Resize_And_Draw;
-
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
-
-   overriding procedure Resize_And_Draw
-     (Item             : access Dependency_Item_Record;
-      Cr               : in out Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
-   is
-      W, H, Y                        : Gint;
-      Layout_H, Layout_W1, Layout_W2 : Gint;
-   begin
-      Get_Pixel_Size
-        (Get_Browser (Item),
-         Item.Lines,
-         Layout_W1,
-         Layout_W2,
-         Layout_H,
-         Layout);
-
-      W := Gint'Max (Width, Layout_W1 + Layout_W2);
-      H := Height + Layout_H;
-
-      Resize_And_Draw
-        (Browser_Item_Record (Item.all)'Access, Cr, W, H,
-         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
-
-      Y := Margin + Yoffset;
-
-      Display_Lines (Item, Cr, Item.Lines, Margin + Xoffset, Y, 0, Layout);
    end Resize_And_Draw;
 
    ------------------------------
@@ -397,6 +280,55 @@ package body Browsers.Elaborations is
       return MDI_Child (Child);
    end Open_Elaboration_Browser_Child;
 
+   ------------------------
+   -- Fill_Elaborate_All --
+   ------------------------
+
+   procedure Fill_Elaborate_All
+     (Browser       : Elaboration_Browser;
+      Item_After    : Unit_Item;
+      Elaborate_All : Dependency)
+   is
+      function Kind_Image (Kind : Link_Kind) return String;
+
+      ----------------
+      -- Kind_Image --
+      ----------------
+
+      function Kind_Image (Kind : Link_Kind) return String is
+      begin
+         case Kind is
+            when Withed =>
+               return "withes";
+            when Body_With_Specification =>
+               return "it's body";
+         end case;
+      end Kind_Image;
+
+      Prev_Unit : Unit_Item := Item_After;
+   begin
+      for J in reverse 1 .. Links_Count (Elaborate_All) loop
+         declare
+            Next      : constant Link := Element (Elaborate_All, J);
+            Next_Unit : constant Unit_Item
+              := Get_Unit (Browser, "Unit: " & Unit_Name (Next));
+            Link      : constant Browser_Link := new Browser_Link_Record;
+         begin
+            Add_Link
+              (Get_Canvas (Browser),
+               Link,
+               Prev_Unit,
+               Next_Unit,
+               Descr => Kind_Image (Kind (Next)));
+            Refresh (Next_Unit);
+            Prev_Unit := Next_Unit;
+         end;
+      end loop;
+
+      Refresh (Item_After);
+
+   end Fill_Elaborate_All;
+
    ------------------
    -- Fill_Browser --
    ------------------
@@ -427,28 +359,7 @@ package body Browsers.Elaborations is
             if Reason (Dep) in
               Pragma_Elaborate_All .. Elaborate_All_Desirable
             then
-               declare
-                  Link_A : constant Browser_Link := new Browser_Link_Record;
-                  Link_B : constant Browser_Link := new Browser_Link_Record;
-                  Over   : Dependency_Item;
-               begin
-                  Gtk_New (Over, Dep, Browser);
-                  Put (Get_Canvas (Browser), Over);
-
-                  Add_Link
-                    (Get_Canvas (Browser),
-                     Link_A,
-                     Item_A,
-                     Over);
-
-                  Add_Link
-                    (Get_Canvas (Browser),
-                     Link_B,
-                     Over,
-                     Item_B);
-
-                  Refresh (Over);
-               end;
+               Fill_Elaborate_All (Browser, Item_A, Dep);
             else
                declare
                   Link   : constant Browser_Link := new Browser_Link_Record;
