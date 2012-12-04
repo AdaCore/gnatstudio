@@ -307,18 +307,18 @@ number of entries:
 Elaboration Cycles Browser
 ==========================
 
-If the binder cannot find an acceptable order of elaboration of program units,
-GPS outputs detailed diagnostics into Messages View and constructs visual
-representation of elaboration dependencies in Elaboration Cycles Browser.
+GPS can detect elaboration cycles reported by build processes, and
+construct a visual representation of elaboration dependencies, in an 
+Elaboration Cycles Browser.
 
-Such visual representation has program units as items in the browser.
-Direct dependencies between program units are displayed as links.
-All units involved in dependency caused by pragma Elaborate_All (explicit or
-implicit one) are also presented in the browser and connected by links with
-labels "it's body" and "withed".
+This visual representation represents program units as items in the browsers,
+and direct dependencies between program units as links.
+All units involved in a dependency cycle caused by the presence of a
+pragma Elaborate_All (whether explicit or implicit) are also presented
+in the browser and connected by links with labels "body" and "with".
 
-Preference `Browsers/Show elaboration cycles` controls the automatic
-arising of the browser when an elaboration cycle found.
+The preference `Browsers/Show elaboration cycles` controls whether to
+automatically create a graph from cycles listed in build output.
 
 .. index:: screen shot
 .. image:: elaboration-graph.jpg
