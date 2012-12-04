@@ -982,6 +982,12 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
       horizontal (*False*). This setting applies to most browsers (call graph
       for instance), but does not apply to the entities browsers.
 
+    *Show elaboration cycles*
+      .. index:: show elaboration cycles
+
+      Whether GPS should raise elaboration cycles browser after each
+      compilation caused an elaboration cycle.
+
 * **VCS**
   .. index:: vcs
 
