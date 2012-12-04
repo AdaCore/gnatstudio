@@ -1833,7 +1833,7 @@ package body Project_Viewers is
         (Kernel, "Add configuration variable",
          Action => Command,
          Label  => "Project/Add configuration variable",
-         Filter => (Create (Module => "Explorer") and Filter2)
+         Filter => (Create (Module => Explorer_Module_Name) and Filter2)
                    or Create (Module => "Scenario_View"));
 
       Filter := Lookup_Filter (Kernel, "Project and file");

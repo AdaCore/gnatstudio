@@ -1108,7 +1108,7 @@ package body Project_Explorers is
       --  "Object" is also the explorer, but this way we make sure the current
       --  context is that of the explorer (since it will have the MDI focus)
       T         : constant Project_Explorer :=
-        Explorer_Views.Get_Or_Create_View (Kernel, Focus => False);
+        Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
       Iter      : constant Gtk_Tree_Iter :=
                     Find_Iter_For_Event (T.Tree, Event);
       Item      : Gtk_Menu_Item;
