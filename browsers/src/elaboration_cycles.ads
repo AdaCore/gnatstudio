@@ -60,6 +60,9 @@ package Elaboration_Cycles is
       Elaborate_Desirable,
       Specification_First);
 
+   function Image (Reason : Dependency_Reason) return String;
+   --  Return a string suitable for display to users corresponding to Reason
+
    function Reason (Self : Dependency) return Dependency_Reason;
    --  The reason of dependency
 

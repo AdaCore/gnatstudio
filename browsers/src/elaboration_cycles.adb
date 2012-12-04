@@ -17,9 +17,9 @@
 
 package body Elaboration_Cycles is
 
-   ------------
-   -- Length --
-   ------------
+   ------------------------
+   -- Dependencies_Count --
+   ------------------------
 
    function Dependencies_Count (Self : Cycle) return Natural is
    begin
@@ -61,6 +61,22 @@ package body Elaboration_Cycles is
    begin
       return To_String (Self.After_Unit);
    end After_Unit_Name;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Reason : Dependency_Reason) return String is
+   begin
+      case Reason is
+         when Withed                  => return "withed";
+         when Pragma_Elaborate        => return "pragma Elaborate";
+         when Pragma_Elaborate_All    => return "pragma Elaborate_All";
+         when Elaborate_All_Desirable => return "Elaborate_All desirable";
+         when Elaborate_Desirable     => return "Elaborate desirable";
+         when Specification_First     => return "pragma Elaborate";
+      end case;
+   end Image;
 
    ------------
    -- Reason --

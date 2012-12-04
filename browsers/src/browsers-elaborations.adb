@@ -362,14 +362,14 @@ package body Browsers.Elaborations is
                Fill_Elaborate_All (Browser, Item_A, Dep);
             else
                declare
-                  Link   : constant Browser_Link := new Browser_Link_Record;
+                  Link : constant Browser_Link := new Browser_Link_Record;
                begin
                   Add_Link
                     (Get_Canvas (Browser),
                      Link,
                      Item_A,
                      Item_B,
-                     Descr => (Reason (Dep)'Img));
+                     Descr => Image (Reason (Dep)));
                end;
             end if;
 
