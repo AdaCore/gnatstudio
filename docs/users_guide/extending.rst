@@ -985,8 +985,8 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
     *Show elaboration cycles*
       .. index:: show elaboration cycles
 
-      Whether GPS should raise elaboration cycles browser after each
-      compilation caused an elaboration cycle.
+      Whether GPS should display an elaboration graph after each compilation
+      showing an elaboration cycle.
 
 * **VCS**
   .. index:: vcs
