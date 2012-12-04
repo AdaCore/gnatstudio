@@ -23,6 +23,8 @@ with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
 with Gtk.Icon_Set;      use Gtk.Icon_Set;
 with Gtk.Icon_Source;   use Gtk.Icon_Source;
+with GPS.Intl;          use GPS.Intl;
+with Gtk.Stock;         use Gtk.Stock;
 
 package body GPS.Stock_Icons is
    Me : constant Trace_Handle := Create ("STOCK");
@@ -38,14 +40,14 @@ package body GPS.Stock_Icons is
       Result  : Boolean;
       Factory : Gtk_Icon_Factory;
 
-      procedure Icon (Stock : String; Path : Filesystem_String;
+      procedure Icon (Stock, Label : String; Path : Filesystem_String;
                       Wildcarded : Boolean := True;
                       Size : Gtk_Icon_Size := Icon_Size_Small_Toolbar);
       --  Register a single icon.
       --  If Wildcarded is false, then the icon cannot be used at other sizes,
       --  although it is set to be best for Size.
 
-      procedure Icon (Stock : String; Path : Filesystem_String;
+      procedure Icon (Stock, Label : String; Path : Filesystem_String;
                       Wildcarded : Boolean := True;
                       Size : Gtk_Icon_Size := Icon_Size_Small_Toolbar)
       is
@@ -54,6 +56,7 @@ package body GPS.Stock_Icons is
          Source  : Gtk_Icon_Source;
          Pixbuf  : Gdk_Pixbuf;
          Error   : GError;
+         Item    : Gtk_Stock_Item;
       begin
          if not Wildcarded then
             Gtk_New (Source);
@@ -77,6 +80,10 @@ package body GPS.Stock_Icons is
          end if;
 
          Factory.Add (Stock, Set);
+
+         Gtk_New (Item, Stock_Id => Stock, Label => Label,
+                  Modifier => 0, Keyval => 0, Translation_Domain => "");
+         Add (Item);
       end Icon;
 
    begin
@@ -100,10 +107,9 @@ package body GPS.Stock_Icons is
       Gtk_New (Factory);
       Add_Default (Factory);
 
-      Icon (GPS_Stock_Config_Menu, "20px/menu_20.png");
-      Icon (GPS_Stop_Task, "9px/close_8.png",
-            Wildcarded => True, Size => Icon_Size_Menu);
-      Icon (GPS_Logo, "24px/gps_24.png");
+      Icon (GPS_Stock_Config_Menu, -"Configuration", "20px/menu_20.png");
+      Icon (GPS_Stop_Task, -"Close", "9px/close_8.png");
+      Icon (GPS_Logo, -"Logo", "24px/gps_24.png");
    end Register_Stock_Icons;
 
 end GPS.Stock_Icons;
