@@ -26,8 +26,6 @@ with Glib.Object;
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
-with Pango.Font;                use Pango.Font;
-
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -37,7 +35,6 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
-with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Settings;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -46,7 +43,10 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Style;
 with Gtkada.Types;
+
+with Pango.Font;                use Pango.Font;
 
 with Config;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -355,15 +355,8 @@ package body GPS.Main_Window is
             Get_Pref (Gtk_Theme));
       end if;
 
-      Gtk.Rc.Parse_String
-        ("gtk-font-name="""
-         & To_String (Default_Font.Get_Pref_Font) & '"' & ASCII.LF);
-
-      Gtk.Rc.Parse_String
-        ("style ""gtk-default-tooltips-style""  {" & ASCII.LF
-         & "  bg[NORMAL] = """
-         & Tooltip_Color.Get_Pref & """" & ASCII.LF
-         & "}");
+      Gtkada.Style.Load_Css_String
+        ("* { font: " & To_String (Default_Font.Get_Pref_Font) & "}");
 
       case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Hide_Toolbar =>

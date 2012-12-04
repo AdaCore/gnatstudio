@@ -456,14 +456,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Hyper links",
          Page    => -"General");
 
-      Tooltip_Color := Create
-        (Manager => Kernel.Preferences,
-         Name    => "General-Tooltip-Color",
-         Default => "#FFFFEE",
-         Doc     => -"Color to use for the tooltips background",
-         Label   => -"Tooltip color",
-         Page    => "");
-
       Tip_Of_The_Day := Create
         (Manager => Kernel.Preferences,
          Name    => "General/Display-Tip-Of-The-Day",

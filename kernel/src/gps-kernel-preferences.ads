@@ -143,7 +143,6 @@ package GPS.Kernel.Preferences is
    Multi_Language_Builder : Multi_Language_Builder_Policy_Prefs.Preference;
    Auto_Jump_To_First     : Boolean_Preference;
    Hyper_Mode             : Boolean_Preference;
-   Tooltip_Color          : Color_Preference;
    Tip_Of_The_Day         : Boolean_Preference;
 
    -- Messages --

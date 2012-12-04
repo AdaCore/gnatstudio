@@ -51,9 +51,7 @@ with Ada.Unchecked_Deallocation;
 
 with Traces;                    use Traces;
 
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Language.Icons;            use Language.Icons;
 with Xref;
 
@@ -1430,7 +1428,7 @@ package body Completion_Window is
       Explorer.Index := 1;
 
       Gtk_New (Viewport);
-      Modify_Bg (Viewport, State_Normal, Tooltip_Color.Get_Pref);
+      Get_Style_Context (Viewport).Add_Class ("tooltip");
 
       Set_Shadow_Type (Viewport, Shadow_None);
       Explorer.Notes_Container := Gtk_Bin (Viewport);
@@ -1484,7 +1482,7 @@ package body Completion_Window is
       --  Create the Notes window
 
       Gtk_New (Window.Notes_Window, Window_Popup);
-      Modify_Bg (Window.Notes_Window, State_Normal, Tooltip_Color.Get_Pref);
+      Get_Style_Context (Window.Notes_Window).Add_Class ("tooltip");
 
       Gtk_New (Frame);
 

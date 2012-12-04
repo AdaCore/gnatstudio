@@ -22,6 +22,7 @@ with Gdk.Window;                use Gdk.Window;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.Separator;             use Gtk.Separator;
 with Gtk.Widget;                use Gtk.Widget;
 
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -120,6 +121,7 @@ package body Entities_Tooltips is
       Header_Label, Doc_Label : Gtk_Label;
       Box, Hbox : Gtk_Box;
       Image : Gtk_Image;
+      Sep : Gtk_Separator;
 
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
@@ -146,6 +148,9 @@ package body Entities_Tooltips is
       end if;
 
       if Doc /= "" then
+         Gtk_New_Hseparator (Sep);
+         Box.Pack_Start (Sep, Expand => False, Fill => False);
+
          Gtk_New (Doc_Label);
          Doc_Label.Set_Alignment (0.0, 0.5);
          Box.Pack_Start (Doc_Label, Expand => True, Fill => True);
