@@ -74,7 +74,7 @@ package body Elaboration_Cycles is
          when Pragma_Elaborate_All    => return "pragma Elaborate_All";
          when Elaborate_All_Desirable => return "Elaborate_All desirable";
          when Elaborate_Desirable     => return "Elaborate desirable";
-         when Specification_First     => return "pragma Elaborate";
+         when Specification_First     => return "specification first";
       end case;
    end Image;
 
