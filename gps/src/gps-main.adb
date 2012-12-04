@@ -58,6 +58,7 @@ with Gtk_Utils;                        use Gtk_Utils;
 with Gtkada.Dialogs;                   use Gtkada.Dialogs;
 with Gtkada.Intl;
 with Gtkada.MDI;                       use Gtkada.MDI;
+with Gtkada.Style;
 
 with Config;                           use Config;
 with DDE;
@@ -82,7 +83,7 @@ with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles.Shell;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
-with GPS.Stock_Icons;                  use GPS.Stock_Icons;
+with GPS.Stock_Icons;
 with GPS.Main_Window;
 with GPS.Menu;
 with OS_Utils;                         use OS_Utils;
@@ -656,6 +657,26 @@ procedure GPS.Main is
              & String_Utils.Image (Gtk_Micro_Version));
 
       GPS.Stock_Icons.Register_Stock_Icons (Prefix_Dir);
+
+      declare
+         Global : constant Virtual_File :=
+           Prefix_Dir.Create_From_Dir ("share/gps/gps.css");
+         Local  : constant Virtual_File :=
+           GPS_Home_Dir.Create_From_Dir ("gps.css");
+      begin
+         if Global.Is_Regular_File then
+            Trace (Me, "Loading " & Global.Display_Full_Name);
+            Gtkada.Style.Load_Css_File
+              (Global.Display_Full_Name, Put_Line'Access);
+         end if;
+
+         if Local.Is_Regular_File then
+            Trace (Me, "Loading " & Local.Display_Full_Name);
+            Gtkada.Style.Load_Css_File
+              (Local.Display_Full_Name, Put_Line'Access);
+         end if;
+      end;
+
       Gtk_New (GPS_Main, GPS_Home_Dir, Prefix_Dir);
 
       About_Contents := Create_From_Dir

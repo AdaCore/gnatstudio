@@ -204,23 +204,16 @@ Files
   custom files. This only contains the key bindings overridden through the
   key shortcuts editor (see :ref:`The_Key_Manager_Dialog`).
 
-*$HOME/.gps/gtkrc*
+*$HOME/.gps/gps.css*
   .. index:: Dynamic Key Binding
 
-  .. index:: gtkrc
+  .. index:: CSS
 
-  Configuration and theme file for gtkrc. This file can be edited to activate
-  gtk+ specific aspects, or change the look of GPS in some measure. Mostly,
-  everything can be done through the standard GPS preferences, but this file
-  can be used to get access to the old GPS preference "Dynamic Key Binding".
-  This preference activated a gtk+ behavior were key shortcuts for menu can be
-  changed by simply pressing the appropriate key combination when the mouse is
-  over that menu. It has various dangereous aspects and is not fully supported
-  by GPS, so was removed as a preference, but you can add the following line in
-  :file:`gtkrc` to get this back::
+  Configuration and theme file for gtk. This file can be change specific
+  aspects of the look of GPS. Its contents overrides any other style
+  information set by your default gtk+ theme (as selected in the Preferences
+  dialog) and GPS's :file:`prefix/share/gps/gps.css` file.
 
-     gtk-can-change-accels=1
-    
 *$HOME/.gps/actions.xml*
   Contains the definition of all the actions that were defined through the
   graphical interface. This is loaded last, and overrides all actions defined

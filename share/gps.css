@@ -1,0 +1,30 @@
+/*
+ * Custom styling for GPS.
+ */
+
+/* You can override the default theme colors. Most gtk+ themes are
+ * carefully setup so that they do not hard-code colors, but use a number
+ * of predefined named colors and shades of them. For instance:
+ */
+
+/* @define-color base_color black;
+   @define-color bg_color #fff;
+   @define-color theme_bg_color green;
+*/
+
+.gps-task-manager .progressbar {
+}
+
+.gps-local-toolbar {  /* local toolbar in the panes/views */
+   background: shade(@theme_bg_color, 0.9);
+}
+
+.mdi {
+   /*background: #999;*/
+   background: shade(@theme_bg_color, 0.7);
+}
+
+* {
+   /* Size of handle to resize windows */
+   -GtkAdaMultiPaned-handle-size: 2;
+}
