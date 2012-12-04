@@ -691,7 +691,8 @@ package body Task_Manager.GUI is
 
          Index_1 := Integer_Address (Indices (Indices'First));
 
-         if Self.GUI.Manager.Queues = null
+         if Self.GUI.Manager = null
+           or else Self.GUI.Manager.Queues = null
            or else Index_1 >= Self.GUI.Manager.Queues'Length
          then
             return Null_Iter;
@@ -748,7 +749,8 @@ package body Task_Manager.GUI is
       Old_Index : constant Integer_Address :=
                     To_Integer (Get_User_Data_1 (Iter));
    begin
-      if Self.GUI.Manager.Queues = null
+      if Self.GUI.Manager = null
+        or else Self.GUI.Manager.Queues = null
         or else Old_Index >= Self.GUI.Manager.Queues'Length
       then
          Iter := Null_Iter;
@@ -776,6 +778,7 @@ package body Task_Manager.GUI is
       return Glib.Gint is
    begin
       if Iter = Null_Iter
+        and then Self.GUI.Manager /= null
         and then Self.GUI.Manager.Queues /= null
       then
          return Self.GUI.Manager.Queues'Length;
