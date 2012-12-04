@@ -299,9 +299,9 @@ package body Browsers.Elaborations is
       begin
          case Kind is
             when Withed =>
-               return "withes";
+               return "with";
             when Body_With_Specification =>
-               return "it's body";
+               return "body";
          end case;
       end Kind_Image;
 
