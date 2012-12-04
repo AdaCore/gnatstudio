@@ -18,8 +18,8 @@
 --  This package provides functions for drawing tooltips representing entity
 --  informations.
 
-with Cairo;            use Cairo;
 with GPS.Kernel;       use GPS.Kernel;
+with Gtk.Widget;
 with Language.Tree.Database; use Language.Tree.Database;
 with Xref;
 
@@ -29,14 +29,15 @@ package Entities_Tooltips is
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Xref.General_Entity;
       Ref           : Xref.General_Entity_Reference;
-      Draw_Border   : Boolean) return Cairo_Surface;
+      Draw_Border   : Boolean) return Gtk.Widget.Gtk_Widget;
    --  Return a tooltip representing Entity.
 
    function Draw_Tooltip
      (Kernel      : access Kernel_Handle_Record'Class;
       Entity      : Entity_Access;
       Draw_Border : Boolean;
-      Guess       : Boolean := False) return Cairo_Surface;
+      Guess       : Boolean := False)
+      return Gtk.Widget.Gtk_Widget;
    --  Same as above, based on an entity access. If guess is true then the
    --  entity information is a guess - may not be the actual one for the
    --  tooltip.

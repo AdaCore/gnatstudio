@@ -60,11 +60,11 @@ package body GPS.Kernel.Modules is
 
    function Tooltip_Handler
      (Module  : access Module_ID_Record;
-      Context : Selection_Context) return Cairo.Cairo_Surface
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Module, Context);
    begin
-      return Cairo.Null_Surface;
+      return null;
    end Tooltip_Handler;
 
    ----------------------

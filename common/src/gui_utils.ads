@@ -26,8 +26,6 @@ with Glib.Object;
 with Glib.Values;
 with Glib;                     use Glib;
 
-with Cairo;
-
 with Gdk.Event;
 with Gdk.Types;
 with Gdk.RGBA;
@@ -56,7 +54,6 @@ with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 with Gtk.Window;
-with Pango.Font;
 with String_List_Utils;
 
 package GUI_Utils is
@@ -387,34 +384,6 @@ package GUI_Utils is
    --
    --  In_Widget mustn't be a modal dialog, since otherwise the handling of
    --  grabs will interfer with the dialog.
-
-   --------------
-   -- Tooltips --
-   --------------
-
-   procedure Create_Pixmap_From_Text
-     (Text       : String;
-      Font       : Pango.Font.Pango_Font_Description;
-      Bg_Color   : Gdk.RGBA.Gdk_RGBA;
-      Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Pixmap     : out Cairo.Cairo_Surface;
-      Wrap_Width : Gint := -1;
-      Use_Markup : Boolean := False);
-   --  Create a new pixmap that contains Text. Bg_Color is used for the
-   --  background of the pixmap.
-   --  Widget is used to create the graphic context for the pango layout.
-   --
-   --  This procedure handles multi-lines text, as well as alignment of
-   --  tabulations, right-to-left writting, ...
-   --  Text must be a correct Utf8 text, see Glib.Convert
-   --
-   --  The maximal width of the text is Wrap_Width.
-   --
-   --  If the displayed text's height is greater than the screen's height, it
-   --  will be truncated.
-   --
-   --  If Use_Markup is true, then some html markup will be taken into account
-   --  when rendering the text, for instance <b>,...
 
    -----------
    -- Menus --

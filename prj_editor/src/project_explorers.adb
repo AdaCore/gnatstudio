@@ -20,7 +20,6 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Indefinite_Hashed_Sets;
 with Ada.Strings.Hash;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -31,8 +30,6 @@ with Glib;                      use Glib;
 with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-
-with Cairo;                     use Cairo;
 
 with Gdk;                       use Gdk;
 with Gdk.Dnd;                   use Gdk.Dnd;
@@ -48,8 +45,10 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
+with Gtk.Tooltip;               use Gtk.Tooltip;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -67,8 +66,6 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Pango.Font;                use Pango.Font;
-with Pango.Layout;              use Pango.Layout;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Find_Utils;                use Find_Utils;
@@ -82,7 +79,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
@@ -294,14 +290,15 @@ package body Project_Explorers is
    -- Tooltips --
    --------------
 
-   type Explorer_Tooltips is new Tooltips.Pixmap_Tooltips with record
+   type Explorer_Tooltips is new Tooltips.Tooltips with record
       Explorer : Project_Explorer;
    end record;
    type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
-   overriding procedure Draw
-     (Tooltip : access Explorer_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   overriding function Create_Contents
+     (Tooltip  : not null access Explorer_Tooltips;
+      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentatoin
 
    -----------------------
@@ -824,7 +821,7 @@ package body Project_Explorers is
 
       Tooltip := new Explorer_Tooltips;
       Tooltip.Explorer := Project_Explorer (Explorer);
-      Set_Tooltip (Tooltip, Explorer.Tree, 250);
+      Tooltip.Set_Tooltip (Explorer.Tree);
 
       Refresh (Explorer);
 
@@ -1365,21 +1362,18 @@ package body Project_Explorers is
       Set (Explorer.Tree.Model, Node, Up_To_Date_Column, False);
    end Set_Directory_Node_Attributes;
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
-     (Tooltip : access Explorer_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   overriding function Create_Contents
+     (Tooltip  : not null access Explorer_Tooltips;
+      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Font       : Pango_Font_Description;
-      Window     : Gdk.Gdk_Window;
-      New_Window : Gdk_Window;
-      Mask       : Gdk_Modifier_Type;
+      pragma Unreferenced (Widget);
 
-      X, Y       : Gint;
       Path       : Gtk_Tree_Path;
       Column     : Gtk_Tree_View_Column;
       Cell_X,
@@ -1388,55 +1382,29 @@ package body Project_Explorers is
       Par, Iter  : Gtk_Tree_Iter;
       Node_Type  : Node_Types;
       File       : Virtual_File;
-
-      Text       : String_Access;
+      Area       : Gdk_Rectangle;
+      Label      : Gtk_Label;
    begin
-      Pixmap := Null_Surface;
-      Area   := (0, 0, 0, 0);
-
-      Window := Get_Bin_Window (Tooltip.Explorer.Tree);
-      Get_Pointer (Window, X, Y, Mask, New_Window);
-
       Get_Path_At_Pos
         (Tooltip.Explorer.Tree, X, Y, Path,
          Column, Cell_X, Cell_Y, Row_Found);
 
       if not Row_Found then
-         return;
+         return null;
 
       else
          --  Now check that the cursor is over a text
 
          Iter := Get_Iter (Tooltip.Explorer.Tree.Model, Path);
-
-         declare
-            Str     : constant String :=
-                        Get_String
-                          (Tooltip.Explorer.Tree.Model,
-                           Iter, Display_Name_Column);
-            S_Icon  : constant Gint := 15; -- size used for the icon
-            S_Level : constant Gint := 12; -- size used for each indent level
-            --  ??? S_Icon and S_Level have been computed experimentally. It is
-            --  maybe possible to get the proper values from the Tree_View.
-            Layout  : Pango_Layout;
-            Width   : Gint;
-            Height  : Gint;
-         begin
-            Font := Default_Font.Get_Pref_Font;
-            Layout := Create_Pango_Layout (Tooltip.Explorer, "");
-            Set_Markup (Layout, Str);
-            Set_Font_Description (Layout, Font);
-            Get_Pixel_Size (Layout, Width, Height);
-
-            if Cell_X > S_Icon + (Get_Depth (Path) * S_Level) + Width + 10 then
-               return;
-            end if;
-         end;
+         if Iter = Null_Iter then
+            return null;
+         end if;
       end if;
 
       Get_Cell_Area (Tooltip.Explorer.Tree, Path, Column, Area);
-
       Path_Free (Path);
+
+      Tip.Set_Tip_Area (Area);
 
       Node_Type := Get_Node_Type (Tooltip.Explorer.Tree.Model, Iter);
 
@@ -1444,7 +1412,7 @@ package body Project_Explorers is
          when Project_Node_Types =>
             --  Project or extended project full pathname
             File := Get_File (Tooltip.Explorer.Tree.Model, Iter, File_Column);
-            Text := new String'(File.Display_Full_Name);
+            Gtk_New (Label, File.Display_Full_Name);
 
          when Directory_Node_Types =>
             --  Directroy full pathname and project name
@@ -1452,8 +1420,8 @@ package body Project_Explorers is
             Par := Parent (Tooltip.Explorer.Tree.Model, Iter);
 
             File := Get_File (Tooltip.Explorer.Tree.Model, Iter, File_Column);
-            Text := new String'
-              (File.Display_Full_Name
+            Gtk_New
+              (Label, File.Display_Full_Name
                & ASCII.LF &
                (-"in project ") &
                Get_String
@@ -1465,9 +1433,8 @@ package body Project_Explorers is
             Par := Parent
               (Tooltip.Explorer.Tree.Model,
                Parent (Tooltip.Explorer.Tree.Model, Iter));
-
-            Text := new String'
-              (Get_String
+            Gtk_New
+              (Label, Get_String
                  (Tooltip.Explorer.Tree.Model, Iter,
                   Display_Name_Column)
                & ASCII.LF &
@@ -1482,7 +1449,8 @@ package body Project_Explorers is
               (Tooltip.Explorer.Tree.Model,
                Parent (Tooltip.Explorer.Tree.Model, Iter));
 
-            Text := new String'
+            Gtk_New (Label);
+            Label.Set_Markup
               (Get_String
                  (Tooltip.Explorer.Tree.Model, Iter, Display_Name_Column)
                & ASCII.LF &
@@ -1497,16 +1465,8 @@ package body Project_Explorers is
             null;
       end case;
 
-      if Text /= null then
-         Create_Pixmap_From_Text
-           (Text.all,
-            Font, Tooltip_Color.Get_Pref,
-            Tooltip.Explorer.Tree,
-            Pixmap,
-            Use_Markup => True);
-         Free (Text);
-      end if;
-   end Draw;
+      return Gtk_Widget (Label);
+   end Create_Contents;
 
    -------------------------
    -- Expand_Project_Node --

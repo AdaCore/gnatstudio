@@ -28,11 +28,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
-with Glib.Unicode;              use Glib.Unicode;
 with Glib.Values;               use Glib.Values;
-
-with Cairo;                     use Cairo;
-with Cairo.Image_Surface;       use Cairo.Image_Surface;
 
 with Gdk;                       use Gdk;
 with Gdk.Cursor;                use Gdk.Cursor;
@@ -41,7 +37,6 @@ with Gdk.Keyval;                use Gdk.Keyval;
 with Gdk.Main;                  use Gdk.Main;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.RGBA;                  use Gdk.RGBA;
-with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
@@ -81,13 +76,6 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.Style;              use Gtkada.Style;
-
-with Pango.Context;             use Pango.Context;
-with Pango.Enums;               use Pango.Enums;
-with Pango.Font;                use Pango.Font;
-with Pango.Font_Metrics;        use Pango.Font_Metrics;
-with Pango.Layout;              use Pango.Layout;
 
 with Config;                    use Config;
 with String_List_Utils;         use String_List_Utils;
@@ -722,123 +710,6 @@ package body GUI_Utils is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Edited_Callback;
-
-   -----------------------------
-   -- Create_Pixmap_From_Text --
-   -----------------------------
-
-   procedure Create_Pixmap_From_Text
-     (Text       : String;
-      Font       : Pango.Font.Pango_Font_Description;
-      Bg_Color   : Gdk.RGBA.Gdk_RGBA;
-      Widget     : access Gtk_Widget_Record'Class;
-      Pixmap     : out Cairo_Surface;
-      Wrap_Width : Glib.Gint := -1;
-      Use_Markup : Boolean := False)
-   is
-      Margin        : constant := 2;
-      Color         : Cairo_Color;
-      Layout        : Pango_Layout;
-      Width, Height : Gint;
-      Line_Height   : Gint;
-      Font_Rec      : Pango_Font;
-      Font_Metrics  : Pango_Font_Metrics;
-      Max_Height    : Gint;
-      Max_Lines     : Gint;
-      Nb_Lines      : Gint;
-      Last          : Natural;
-      Ellipsis      : String (1 .. 6);
-      Ellipsis_Last : Integer;
-      Cr            : Cairo_Context;
-
-   begin
-      if Text = "" then
-         Pixmap := Null_Surface;
-         return;
-      end if;
-
-      Layout := Create_Pango_Layout (Widget);
-      Set_Font_Description (Layout, Font);
-
-      --  First, we will ensure that the tooltip is not greater than the screen
-      --  height: this could lead to X11 error and violent crash (G221-010)
-
-      --  We determine a line's height
-      Font_Rec := Load_Font (Get_Pango_Context (Widget), Font);
-      Font_Metrics := Get_Metrics (Font_Rec);
-
-      Line_Height :=
-         (Font_Metrics.Get_Ascent + Font_Metrics.Get_Descent) / 1024;
-      --  ??? 1024 is PANGO_SCALE. We should retrieve it from C macro
-
-      Font_Metrics.Unref;
-      Unref (Font_Rec);
-
-      --  We retrieve the screen's height
-      Max_Height := Gdk.Screen.Get_Height (Gdk.Screen.Get_Default);
-
-      --  And then we determine the maximum number of lines in the tooltip
-      Max_Lines := Max_Height / Line_Height - 1;
-
-      Nb_Lines := 1;
-      Ellipsis_Last := Ellipsis'First - 1;
-      for J in Text'Range loop
-         if Text (J) = ASCII.LF then
-            Nb_Lines := Nb_Lines + 1;
-
-            if Nb_Lines = Max_Lines then
-               Last := J;
-               Unichar_To_UTF8 (8230, Ellipsis, Ellipsis_Last);
-               exit;
-            end if;
-         end if;
-
-         Last := J;
-      end loop;
-
-      if Wrap_Width /= -1 then
-         Set_Wrap (Layout, Pango_Wrap_Char);
-         Set_Width (Layout, Wrap_Width * Pango_Scale);
-      end if;
-
-      if Use_Markup then
-         Set_Markup (Layout, Text (Text'First .. Last) &
-                     Ellipsis (1 .. Ellipsis_Last));
-      else
-         Set_Text (Layout, Text (Text'First .. Last) &
-                   Ellipsis (1 .. Ellipsis_Last));
-      end if;
-
-      Get_Pixel_Size (Layout, Width, Height);
-      Width := Width + Margin * 2;
-      Height := Height + Margin * 2;
-
-      Pixmap := Create (Cairo_Format_ARGB32, Width, Height);
-      Cr := Create (Pixmap);
-      Set_Line_Width (Cr, 0.5);
-
-      Draw_Rectangle
-        (Cr, To_Cairo (Bg_Color),
-         Filled => True,
-         X      => 0,
-         Y      => 0,
-         Width  => Width,
-         Height => Height);
-
-      Color := To_Cairo (Black_RGBA);
-      Draw_Rectangle
-        (Cr, Color,
-         Filled => False,
-         X      => 0,
-         Y      => 0,
-         Width  => Width,
-         Height => Height);
-
-      Draw_Layout (Cr, Color, Margin, Margin, Layout);
-
-      Unref (Layout);
-      Destroy (Cr);
-   end Create_Pixmap_From_Text;
 
    -------------
    -- Gtk_New --

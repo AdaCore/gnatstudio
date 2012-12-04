@@ -28,8 +28,6 @@ with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
-with Cairo;                     use Cairo;
-
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
@@ -37,9 +35,11 @@ with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tooltip;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -58,14 +58,13 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
+with Tooltips;
 with Traces;                    use Traces;
-with Tooltips;                  use Tooltips;
 with XML_Parsers;               use XML_Parsers;
 with XML_Utils;                 use XML_Utils;
 
@@ -233,15 +232,13 @@ package body Bookmark_Views is
    -- Tooltips --
    --------------
 
-   type Bookmark_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
-      Bookmark_View : Bookmark_View_Access;
-   end record;
-   type Bookmark_View_Tooltips_Access is
-     access all Bookmark_View_Tooltips'Class;
-   overriding procedure Draw
-     (Tooltip : access Bookmark_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   type Bookmark_View_Tooltips is new Tooltips.Tooltips
+     with null record;
+   overriding function Create_Contents
+     (Tooltip  : not null access Bookmark_View_Tooltips;
+      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
    -------------
    -- Destroy --
@@ -260,49 +257,48 @@ package body Bookmark_Views is
       Save_Bookmarks (Get_Kernel (Module));
    end Destroy;
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
-     (Tooltip : access Bookmark_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   overriding function Create_Contents
+     (Tooltip  : not null access Bookmark_View_Tooltips;
+      Tip     : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Model : constant Gtk_Tree_Model :=
-                Get_Model (Tooltip.Bookmark_View.Tree);
+      pragma Unreferenced (Tooltip);
+      Tree : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
+      Model : constant Gtk_Tree_Model := Get_Model (Tree);
       Iter  : Gtk_Tree_Iter;
-      Text  : GNAT.Strings.String_Access;
       Data  : Bookmark_Data_Access;
+      Label : Gtk_Label;
+      Area  : Gdk_Rectangle;
 
    begin
-      Pixmap := Null_Surface;
-      Initialize_Tooltips (Tooltip.Bookmark_View.Tree, Area, Iter);
+      Tooltips.Initialize_Tooltips (Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
          Data := Convert (Get_Address (Model, Iter, Data_Column));
+         Tip.Set_Tip_Area (Area);
 
          declare
             Location : constant String := To_String (Data.Marker);
          begin
             if Location = Data.Name.all then
-               Text := new String'("Location: " & Location);
+               Gtk_New (Label, "<b>Location:</b> " & Location);
             else
-               Text := new String'
-                 ("Name: " & Data.Name.all & ASCII.LF &
-                  "Location: " & Location);
+               Gtk_New
+                 (Label,
+                  "<b>Name:</b> " & Data.Name.all & ASCII.LF &
+                  "<b>Location:</b> " & Location);
             end if;
+            Label.Set_Use_Markup (True);
+            return Gtk_Widget (Label);
          end;
-
-         Create_Pixmap_From_Text
-           (Text.all,
-            Default_Font.Get_Pref_Font,
-            Tooltip_Color.Get_Pref,
-            Tooltip.Bookmark_View.Tree,
-            Pixmap);
-         Free (Text);
       end if;
-   end Draw;
+      return null;
+   end Create_Contents;
 
    ---------------------
    -- Delete_Bookmark --
@@ -725,7 +721,7 @@ package body Bookmark_Views is
      (View   : access Bookmark_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
-      Tooltip   : Bookmark_View_Tooltips_Access;
+      Tooltip   : Tooltips.Tooltips_Access;
       Refresh_H : Refresh_Hook_Access;
    begin
       View.Kernel := Kernel_Handle (Kernel);
@@ -786,8 +782,7 @@ package body Bookmark_Views is
       --  Initialize tooltips
 
       Tooltip := new Bookmark_View_Tooltips;
-      Tooltip.Bookmark_View := Bookmark_View_Access (View);
-      Set_Tooltip (Tooltip, View.Tree, 250);
+      Tooltip.Set_Tooltip (View.Tree);
 
       return Gtk_Widget (View.Tree);
    end Initialize;

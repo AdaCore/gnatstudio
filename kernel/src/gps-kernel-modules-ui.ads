@@ -62,7 +62,6 @@ with GNAT.Strings;
 with Gdk.Event;
 with Glib.Object;
 with Glib.Values;
-with Cairo;
 with Gdk.Types;
 with Gtk.Image;
 with Gtk.Handlers;
@@ -316,14 +315,13 @@ package GPS.Kernel.Modules.UI is
    -- Tooltips --
    --------------
 
-   procedure Compute_Tooltip
+   function Compute_Tooltip
      (Kernel  : access Kernel_Handle_Record'Class;
-      Context : Selection_Context;
-      Pixmap  : out Cairo.Cairo_Surface);
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
    --  Given a context, pointing to e.g an entity, the kernel will ask
    --  each of the registered modules whether it wants to display a tooltip.
-   --  The first module to set Pixmap will stop the process.
-   --  If no module wants to display a tooltip, Pixmap is set to null.
+   --  The first module to return non-null will stop the process.
+   --  If no module wants to display a tooltip, returns null.
 
    -----------
    -- Menus --

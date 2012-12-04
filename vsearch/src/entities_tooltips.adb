@@ -17,18 +17,12 @@
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Cairo.Image_Surface;       use Cairo.Image_Surface;
-
-with Pango.Font;                use Pango.Font;
-with Pango.Layout;              use Pango.Layout;
-with Gdk.Display;               use Gdk.Display;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.RGBA;                  use Gdk.RGBA;
-with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Window;                use Gdk.Window;
-with Glib;                      use Glib;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Style;              use Gtkada.Style;
 
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Language;                  use Language;
@@ -46,12 +40,11 @@ package body Entities_Tooltips is
    --  Return the image associated to an entity
 
    function Draw_Tooltip
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Header      : String;
+     (Header      : String;
       Doc         : String;
       Pixbuf      : Gdk_Pixbuf;
       Draw_Border : Boolean;
-      Guess       : Boolean := False) return Cairo.Cairo_Surface;
+      Guess       : Boolean := False) return Gtk_Widget;
    --  Helper function, factorizing the tooltip widget creation
 
    ----------------
@@ -76,12 +69,10 @@ package body Entities_Tooltips is
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : General_Entity;
       Ref           : General_Entity_Reference;
-      Draw_Border   : Boolean) return Cairo.Cairo_Surface
-   is
+      Draw_Border   : Boolean) return Gtk_Widget is
    begin
       return Draw_Tooltip
-        (Kernel      => Kernel,
-         Guess       => Is_Guess (Entity),
+        (Guess       => Is_Guess (Entity),
          Header      => Get_Tooltip_Header (Kernel, Entity),
          Pixbuf      => Get_Pixbuf (Kernel, Entity),
          Draw_Border => Draw_Border,
@@ -96,16 +87,14 @@ package body Entities_Tooltips is
      (Kernel      : access Kernel_Handle_Record'Class;
       Entity      : Entity_Access;
       Draw_Border : Boolean;
-      Guess       : Boolean := False) return Cairo.Cairo_Surface
+      Guess       : Boolean := False) return Gtk_Widget
    is
       pragma Unreferenced (Guess);
-
       Construct : constant access Simple_Construct_Information :=
         Get_Construct (Entity);
    begin
       return Draw_Tooltip
-        (Kernel => Kernel,
-         Guess  => False,
+        (Guess  => False,
          Header => Get_Tooltip_Header (Entity),
          Draw_Border => Draw_Border,
          Doc => Get_Tooltip_Documentation (Kernel, Entity),
@@ -119,86 +108,53 @@ package body Entities_Tooltips is
    ------------------
 
    function Draw_Tooltip
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Header      : String;
+     (Header      : String;
       Doc         : String;
       Pixbuf      : Gdk_Pixbuf;
       Draw_Border : Boolean;
-      Guess       : Boolean := False) return Cairo.Cairo_Surface
+      Guess       : Boolean := False)
+     return Gtk_Widget
    is
-      Widget : constant Gtk_Widget := Gtk_Widget (Get_Main_Window (Kernel));
-      Pixmap : Cairo.Cairo_Surface;
-      Cr     : Cairo.Cairo_Context;
+      pragma Unreferenced (Draw_Border);
 
-      Font   : constant Pango_Font_Description := Default_Font.Get_Pref_Font;
-      Fixed  : constant Pango_Font_Description := View_Fixed_Font.Get_Pref;
+      Header_Label, Doc_Label : Gtk_Label;
+      Box, Hbox : Gtk_Box;
+      Image : Gtk_Image;
 
-      Header_Layout, Doc_Layout : Pango_Layout;
-
-      Width, Height, W1, H1, W2, H2 : Gint := 0;
-      Color  : Cairo_Color;
-      Max_Height, Max_Width : Gint;
-
-      H_Pad : constant := 4;
-      V_Pad : constant := 3;
    begin
-      Header_Layout := Create_Pango_Layout (Widget, "");
+      Gtk_New_Vbox (Box, Homogeneous => False);
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Box.Pack_Start (Hbox, Expand => False, Fill => False);
+
+      if Pixbuf /= null then
+         Gtk_New (Image, Pixbuf);
+         Hbox.Pack_Start (Image, Expand => False, Fill => False);
+      end if;
+
+      Gtk_New (Header_Label);
+      Header_Label.Set_Alignment (0.0, 0.5);
+      Header_Label.Set_Padding (0, 6);
+      Hbox.Pack_Start (Header_Label, Expand => True, Fill => True);
 
       if Guess then
-         Set_Markup
-           (Header_Layout, "<span foreground =""#555555"">" &
-              Tooltip_Guess_Message & "</span>" & ASCII.LF & Header);
+         Header_Label.Set_Markup
+           ("<span foreground =""#555555"">"
+            & Tooltip_Guess_Message & "</span>" & ASCII.LF & Header);
       else
-         Set_Markup (Header_Layout, Header);
+         Header_Label.Set_Markup (Header);
       end if;
-
-      Set_Font_Description (Header_Layout, Font);
-      Get_Pixel_Size (Header_Layout, W1, H1);
-      Height := Height + V_Pad * 2 + H1;
 
       if Doc /= "" then
-         Doc_Layout := Create_Pango_Layout (Widget, "");
-         Set_Markup (Doc_Layout, Doc);
-         Set_Font_Description (Doc_Layout, Fixed);
-         Get_Pixel_Size (Doc_Layout, W2, H2);
-         Height := Height + V_Pad * 2 + 1 + H2;
+         Gtk_New (Doc_Label);
+         Doc_Label.Set_Alignment (0.0, 0.5);
+         Box.Pack_Start (Doc_Label, Expand => True, Fill => True);
+
+         Doc_Label.Override_Font (View_Fixed_Font.Get_Pref);
+         Doc_Label.Set_Markup (Doc);
       end if;
 
-      Width  := Gint'Max (W1 + Get_Width (Pixbuf) + H_Pad * 2, W2 + H_Pad * 2);
-
-      Color := To_Cairo (Gdk_RGBA'(Tooltip_Color.Get_Pref));
-
-      Max_Height := Get_Height (Get_Default_Screen (Gdk.Display.Get_Default));
-      Height := Gint'Min (Height, Max_Height);
-
-      Max_Width := Get_Width (Get_Default_Screen (Gdk.Display.Get_Default));
-      Width := Gint'Min (Width, Max_Width);
-
-      Pixmap := Create (Cairo_Format_ARGB32, Width, Height);
-      Cr := Create (Pixmap);
-      Set_Line_Width (Cr, 0.5);
-      Draw_Rectangle (Cr, Color, True, 0, 0, Width, Height);
-
-      Color := To_Cairo (Black_RGBA);
-      if Draw_Border then
-         Draw_Rectangle (Cr, Color, False, 0, 0, Width, Height);
-      end if;
-
-      Draw_Pixbuf (Cr, Pixbuf, V_Pad, H_Pad);
-
-      Draw_Layout
-        (Cr, Color, V_Pad + Get_Width (Pixbuf), H_Pad, Header_Layout);
-      Unref (Header_Layout);
-
-      if Doc_Layout /= null then
-         Draw_Line (Cr, Color, 0, H1 + V_Pad * 2, Width - 1, H1 + V_Pad * 2);
-         Draw_Layout (Cr, Color, H_Pad, H1 + 1 + V_Pad * 3, Doc_Layout);
-         Unref (Doc_Layout);
-      end if;
-
-      Destroy (Cr);
-
-      return Pixmap;
+      return Gtk_Widget (Box);
    end Draw_Tooltip;
 
 end Entities_Tooltips;

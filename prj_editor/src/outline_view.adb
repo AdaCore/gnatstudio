@@ -24,8 +24,6 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
-with Cairo;                     use Cairo;
-
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -33,6 +31,7 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Tooltip;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -224,14 +223,15 @@ package body Outline_View is
    -- Tooltips --
    --------------
 
-   type Outline_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
+   type Outline_View_Tooltips is new Tooltips.Tooltips with record
       Outline : Outline_View_Access;
    end record;
    type Outline_View_Tooltips_Access is access all Outline_View_Tooltips;
-   overriding procedure Draw
-     (Tooltip : access Outline_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   overriding function Create_Contents
+     (Tooltip  : not null access Outline_View_Tooltips;
+      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
    ------------------------
    -- Outline_Tree Model --
@@ -245,23 +245,27 @@ package body Outline_View is
      (View : access Outline_View_Record'Class; Model : Outline_Model);
    --  Set the outline model to the tree of this view
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
-     (Tooltip : access Outline_View_Tooltips;
-      Pixmap  : out Cairo.Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   overriding function Create_Contents
+     (Tooltip  : not null access Outline_View_Tooltips;
+      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
+      pragma Unreferenced (Widget);
       Iter     : Gtk_Tree_Iter;
       P_Entity : Entity_Persistent_Access;
       Entity   : Entity_Access;
+      Area     : Gdk_Rectangle;
    begin
-      Pixmap := Null_Surface;
-      Initialize_Tooltips (Tooltip.Outline.Tree, Area, Iter);
+      Initialize_Tooltips (Tooltip.Outline.Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
+         Tip.Set_Tip_Area (Area);
+
          P_Entity := Get_Entity (Iter);
 
          if Exists (P_Entity) then
@@ -269,13 +273,14 @@ package body Outline_View is
             Entity := Get_Declaration
               (Get_Tree_Language (Get_File (Entity)), Entity);
 
-            Pixmap := Entities_Tooltips.Draw_Tooltip
+            return Entities_Tooltips.Draw_Tooltip
               (Kernel      => Tooltip.Outline.Kernel,
                Draw_Border => True,
                Entity      => Entity);
          end if;
       end if;
-   end Draw;
+      return null;
+   end Create_Contents;
 
    ----------------------
    -- Location_Changed --

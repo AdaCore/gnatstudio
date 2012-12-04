@@ -11,6 +11,7 @@
    @define-color base_color black;
    @define-color bg_color #fff;
    @define-color theme_bg_color green;
+   @define-color theme_tooltip_bg_color yellow;
 */
 
 .gps-task-manager .progressbar {

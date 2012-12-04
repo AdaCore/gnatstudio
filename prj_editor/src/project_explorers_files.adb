@@ -17,9 +17,6 @@
 
 with Ada.Unchecked_Deallocation; use Ada;
 
-with Cairo;                     use Cairo;
-
-with GNAT.Strings;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
@@ -35,6 +32,7 @@ with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
 with Gtk.Handlers;               use Gtk.Handlers;
+with Gtk.Label;                  use Gtk.Label;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
@@ -44,6 +42,7 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Selection_Data;         use Gtk.Selection_Data;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Tooltip;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gdk.Types;
@@ -56,7 +55,6 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -276,14 +274,15 @@ package body Project_Explorers_Files is
    -- Tooltips --
    --------------
 
-   type Explorer_Tooltips is new Tooltips.Pixmap_Tooltips with record
+   type Explorer_Tooltips is new Tooltips.Tooltips with record
       Explorer : Project_Explorer_Files;
    end record;
    type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
-   overriding procedure Draw
-     (Tooltip : access Explorer_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   overriding function Create_Contents
+     (Tooltip  : not null access Explorer_Tooltips;
+      Tip     : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentatoin
 
    ------------------------------
@@ -921,7 +920,7 @@ package body Project_Explorers_Files is
 
       Tooltip := new Explorer_Tooltips;
       Tooltip.Explorer := Project_Explorer_Files (Explorer);
-      Set_Tooltip (Tooltip, Explorer.File_Tree, 250);
+      Tooltip.Set_Tooltip (Explorer.File_Tree);
    end Initialize;
 
    ------------------------------
@@ -1459,45 +1458,41 @@ package body Project_Explorers_Files is
       end loop;
    end Add_File;
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
-     (Tooltip : access Explorer_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   overriding function Create_Contents
+     (Tooltip  : not null access Explorer_Tooltips;
+      Tip     : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
+      pragma Unreferenced (Widget);
       Tree : constant Gtk.Tree_View.Gtk_Tree_View :=
         Tooltip.Explorer.File_Tree;
       Model : constant Gtk_Tree_Store := -Get_Model (Tree);
       Iter : Gtk_Tree_Iter;
-      Text : GNAT.Strings.String_Access;
+      Label : Gtk_Label;
+      Area : Gdk_Rectangle;
 
    begin
-      Pixmap := Null_Surface;
-      Initialize_Tooltips (Tree, Area, Iter);
+      Initialize_Tooltips (Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
+         Tip.Set_Tip_Area (Area);
          declare
             File : constant Virtual_File :=
               Get_File (Model, Iter, File_Column);
             Dir  : constant Virtual_File := Get_Parent (File);
          begin
-            Text := new String'
-              (File.Display_Base_Dir_Name & ASCII.LF & "in "
-               & Dir.Display_Full_Name);
+            Gtk_New (Label,
+                     File.Display_Base_Dir_Name & ASCII.LF & "in "
+                     & Dir.Display_Full_Name);
          end;
-
-         Create_Pixmap_From_Text
-           (Text.all,
-            Default_Font.Get_Pref_Font,
-            Tooltip_Color.Get_Pref,
-            Tree,
-            Pixmap);
-         GNAT.Strings.Free (Text);
       end if;
-   end Draw;
+      return Gtk_Widget (Label);
+   end Create_Contents;
 
    -------------
    -- Execute --

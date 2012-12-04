@@ -72,8 +72,8 @@
 
 with GNAT.Strings;
 with Glib.Object;
-with Cairo;
 with Generic_List;
+with Gtk.Widget;
 with XML_Utils;
 
 package GPS.Kernel.Modules is
@@ -138,7 +138,7 @@ package GPS.Kernel.Modules is
 
    function Tooltip_Handler
      (Module  : access Module_ID_Record;
-      Context : Selection_Context) return Cairo.Cairo_Surface;
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
    --  Callback used every time some tooltip event happens in GPS.
    --  Context contains all the information about the context of the tooltip.
    --

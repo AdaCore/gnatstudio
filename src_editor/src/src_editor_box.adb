@@ -892,10 +892,7 @@ package body Src_Editor_Box is
          Unref (Box.Source_Buffer);
       end if;
 
-      Set_Tooltip
-        (Tooltip   => Create_Tooltips (Box),
-         On_Widget => Box.Source_View,
-         Timeout   => Guint (Tooltip_Timeout.Get_Pref));
+      Create_Tooltips (Box).Set_Tooltip (Box.Source_View);
 
       --  The status bar, at the bottom of the window...
 

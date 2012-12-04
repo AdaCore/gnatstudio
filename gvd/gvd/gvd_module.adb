@@ -19,14 +19,11 @@ with GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
-with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-
-with Cairo;                     use Cairo;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -108,9 +105,6 @@ package body GVD_Module is
 
    Debug_Menu_Prefix : constant String := "<gps>/Debug/Initialize/";
 
-   Max_Tooltip_Width : constant := 400;
-   --  Maximum size to use for the tooltip windows
-
    type Bp_Array is array (Integer range <>) of Breakpoint_Identifier;
 
    type File_Edited_Hook_Record is new Function_With_Args with record
@@ -165,7 +159,7 @@ package body GVD_Module is
 
    overriding function Tooltip_Handler
      (Module  : access GVD_Module_Record;
-      Context : Selection_Context) return Cairo_Surface;
+      Context : Selection_Context) return Gtk_Widget;
    --  See inherited documentation
 
    GVD_Module_Name : constant String := "Debugger";
@@ -1637,13 +1631,15 @@ package body GVD_Module is
 
    overriding function Tooltip_Handler
      (Module  : access GVD_Module_Record;
-      Context : Selection_Context) return Cairo_Surface
+      Context : Selection_Context) return Gtk_Widget
    is
       pragma Unreferenced (Module);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Debugger : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Kernel));
       Value    : GNAT.Strings.String_Access;
+      W        : Gtk_Widget;
+      Label    : Gtk_Label;
 
    begin
       if Debugger = null
@@ -1651,7 +1647,7 @@ package body GVD_Module is
         or else not Has_Entity_Name_Information (Context)
         or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
-         return Null_Surface;
+         return null;
       end if;
 
       Push_State (Kernel, Busy);
@@ -1659,7 +1655,6 @@ package body GVD_Module is
       declare
          Variable_Name : constant String := Get_Variable_Name
            (Context, Dereference => False);
-         Pixmap        : Cairo_Surface;
 
       begin
          if Variable_Name = ""
@@ -1667,39 +1662,34 @@ package body GVD_Module is
              (Get_Language (Debugger.Debugger), Variable_Name)
          then
             Pop_State (Kernel);
-            return Null_Surface;
+            return null;
 
          else
             Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
          end if;
 
          if Value.all /= "" then
-            Create_Pixmap_From_Text
-              (Text       => Value.all,
-               Font       => GPS.Kernel.Preferences.Default_Font.Get_Pref_Font,
-               Bg_Color   => White_RGBA,
-               Widget     => Get_Main_Window (Kernel),
-               Pixmap     => Pixmap,
-               Wrap_Width => Max_Tooltip_Width);
+            Gtk_New (Label, Value.all);
+            W := Gtk_Widget (Label);
          else
             --  Note: if Value.all is "", we will return Pixmap below, hence
             --  the assignment.
 
-            Pixmap := Null_Surface;
+            W := null;
          end if;
 
          GNAT.Strings.Free (Value);
          Pop_State (Kernel);
-         return Pixmap;
+         return W;
       end;
 
    exception
       when Language.Unexpected_Type | Constraint_Error =>
          Pop_State (Kernel);
-         return Null_Surface;
+         return null;
       when E : others => Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         return Null_Surface;
+         return null;
    end Tooltip_Handler;
 
    -------------------

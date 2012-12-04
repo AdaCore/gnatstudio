@@ -18,18 +18,17 @@
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;              use GNAT.Strings;
 
-with Cairo;                     use Cairo;
-
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.RGBA;                  use Gdk.RGBA;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Tooltip;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -125,53 +124,45 @@ package body Clipboard_Views is
    -- Tooltips --
    --------------
 
-   type Clipboard_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
-      Clipboard_View : Clipboard_View_Access;
+   type Clipboard_View_Tooltips is new Tooltips.Tooltips with record
+      Kernel : Kernel_Handle;
    end record;
-   type Clipboard_View_Tooltips_Access is
-     access all Clipboard_View_Tooltips'Class;
-   overriding procedure Draw
-     (Tooltip : access Clipboard_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   type Clipboard_View_Tooltips_Access is access all Clipboard_View_Tooltips;
+   overriding function Create_Contents
+     (Tooltip  : not null access Clipboard_View_Tooltips;
+      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
-     (Tooltip : access Clipboard_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   overriding function Create_Contents
+     (Tooltip  : not null access Clipboard_View_Tooltips;
+      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Model      : constant Gtk_Tree_Model :=
-                     Get_Model (Tooltip.Clipboard_View.Tree);
+      Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
+      Model      : constant Gtk_Tree_Model := Get_Model (Tree);
       Iter       : Gtk_Tree_Iter;
       Selected   : Integer;
-
-      Text       : GNAT.Strings.String_Access;
+      Label      : Gtk_Label;
+      Area       : Gdk_Rectangle;
    begin
-      Pixmap := Null_Surface;
-
-      Initialize_Tooltips (Tooltip.Clipboard_View.Tree, Area, Iter);
+      Initialize_Tooltips (Tree, X, Y, Area, Iter);
       if Iter /= Null_Iter then
+         Tip.Set_Tip_Area (Area);
+
          Selected := Integer (Get_Int (Model, Iter, 2));
 
-         Text := new String'
-           (Get_Content
-              (Get_Clipboard (Tooltip.Clipboard_View.Kernel)) (Selected).all);
-
-         if Text /= null then
-            Create_Pixmap_From_Text
-              (Text.all,
-               Default_Font.Get_Pref_Font,
-               White_RGBA,
-               Tooltip.Clipboard_View.Tree,
-               Pixmap);
-            Free (Text);
-         end if;
+         Gtk_New
+           (Label,
+            Get_Content (Get_Clipboard (Tooltip.Kernel)) (Selected).all);
       end if;
-   end Draw;
+      return Gtk_Widget (Label);
+   end Create_Contents;
 
    -------------
    -- Execute --
@@ -468,8 +459,8 @@ package body Clipboard_Views is
       --  Initialize tooltips
 
       Tooltip := new Clipboard_View_Tooltips;
-      Tooltip.Clipboard_View := Clipboard_View_Access (View);
-      Set_Tooltip (Tooltip, View.Tree, 250);
+      Tooltip.Kernel := Kernel_Handle (Kernel);
+      Set_Tooltip (Tooltip, View.Tree);
 
       return Gtk_Widget (View.Tree);
    end Initialize;
