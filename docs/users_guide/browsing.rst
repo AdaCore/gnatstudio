@@ -313,10 +313,9 @@ representation of elaboration dependencies in Elaboration Cycles Browser.
 
 Such visual representation has program units as items in the browser.
 Direct dependencies between program units are displayed as links.
-But dependency caused by pragma Elaborate_All (explicit or implicit one)
-involves chain of several program units. Such dependencies are represented
-as items themselves and contain information about each unit involved in the
-dependency.
+All units involved in dependency caused by pragma Elaborate_All (explicit or
+implicit one) are also presented in the browser and connected by links with
+labels "it's body" and "withed".
 
 .. index:: screen shot
 .. image:: elaboration-graph.jpg

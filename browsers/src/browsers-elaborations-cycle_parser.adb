@@ -55,7 +55,10 @@ package body Browsers.Elaborations.Cycle_Parser is
       return Tools_Output_Parser_Access
    is
       pragma Unreferenced (Self);
+      Empty : Elaboration_Cycles.Cycle;
    begin
+      Set_Elaboration_Cycle (Empty);
+
       return new Circularity_Parser'
         (Child       => Child,
          Last_Cycle  => <>,
