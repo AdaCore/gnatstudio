@@ -16,19 +16,23 @@
 ------------------------------------------------------------------------------
 
 with Gdk;                  use Gdk;
+with Gdk.Event;            use Gdk.Event;
 with Gdk.Rectangle;        use Gdk.Rectangle;
+with Gdk.Screen;           use Gdk.Screen;
+with Gdk.Types;            use Gdk.Types;
 with Gdk.Window;           use Gdk.Window;
+with Glib.Main;            use Glib.Main;
 with Glib.Object;          use Glib.Object;
-with Glib.Values;          use Glib.Values;
+with Glib.Properties;      use Glib.Properties;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Tooltip;          use Gtk.Tooltip;
+with Gtk.Settings;         use Gtk.Settings;
+with Gtk.Style_Context;    use Gtk.Style_Context;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-with System.Address_Image;
+with Gtk.Window;           use Gtk.Window;
 
 package body Tooltips is
    Me : constant Trace_Handle := Create ("TOOLTIPS");
@@ -36,12 +40,40 @@ package body Tooltips is
    procedure Destroy_Cb (Data : Tooltips_Access);
    --  Called when the tooltip is being destroyed
 
-   function On_Query_Tooltip
-     (Widget        : access Gtk_Widget_Record'Class;
-      Args          : Glib.Values.GValues) return Boolean;
-   --  Computes the contents of the tooltip.
+   function On_Tooltip_Delay return Boolean;
+   --  Called when the mouse has been motionless for a while
+
+   procedure Hide_Tooltip;
+   procedure Show_Tooltip
+     (Widget  : not null access Gtk_Widget_Record'Class;
+      Tooltip : access Tooltips'Class);
+   --  Hide or show the tooltip
+
+   function Tooltip_Event_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event   : Gdk.Event.Gdk_Event) return Boolean;
+   --  Callback for all events that will disable the tooltip
+   --  e.g: focus_in/focus_out/motion_notify/button_clicked/key_press
 
    package Tooltip_User_Data is new Glib.Object.User_Data (Tooltips_Access);
+
+   type Tooltip_Object_Record is new Gtk.Window.Gtk_Window_Record with record
+      Timeout    : Gint;
+
+      Timeout_Id : G_Source_Id := 0;
+      On_Widget : Gtk_Widget;
+      Tip       : Tooltips_Access;  --  function to compute its contents
+
+      X, Y      : Glib.Gint;
+
+      Area_Is_Set : Boolean := False;
+      Area        : Gdk.Rectangle.Gdk_Rectangle := (0, 0, 0, 0);
+   end record;
+   type Tooltip_Object is access all Tooltip_Object_Record'Class;
+   --  There is one such object in the application.
+   --  gtk+ creates one per display.
+
+   Global_Tooltip : Tooltip_Object;
 
    ------------------
    -- Set_Tip_Area --
@@ -52,65 +84,168 @@ package body Tooltips is
       Area    : Gdk.Rectangle.Gdk_Rectangle)
    is
    begin
-      if Tooltip.Area.Width = 0 then
+      if Global_Tooltip /= null
+        and then Global_Tooltip.Tip = Tooltips_Access (Tooltip)
+      then
+         Global_Tooltip.Area_Is_Set := True;
+         Global_Tooltip.Area := Area;
          Trace (Me, "Set_Tip_Area"
                 & Area.X'Img & Area.Y'Img & Area.Width'Img & Area.Height'Img);
-         Tooltip.Area := Area;
       end if;
    end Set_Tip_Area;
 
    ----------------------
-   -- On_Query_Tooltip --
+   -- On_Tooltip_Delay --
    ----------------------
 
-   function On_Query_Tooltip
-     (Widget        : access Gtk_Widget_Record'Class;
-      Args          : Glib.Values.GValues)
-     return Boolean
-   is
-      --  X, Y are relative to Widget's left side
-      X : constant Gint := To_Gint (Args, 1);
-      Y : constant Gint := To_Gint (Args, 2);
-
-      --  True if tooltip triggered from keyboard
-      --  Keyboard_Mode : constant Boolean := To_Boolean (Args, 3);
-
-      --  A newly created tooltip object
-      Tooltip : constant Gtk_Tooltip := Gtk_Tooltip (To_Object (Args, 4));
-
-      Tip : constant Tooltips_Access :=
-        Tooltip_User_Data.Get (Widget, "gps-tooltip");
-
-      W : Gtk_Widget;
+   function On_Tooltip_Delay return Boolean is
+      Widget : Gtk_Widget;
+      Win_Width, Win_Height : Gint;
+      X, Y, W, H : Gint;
    begin
-      Trace (Me, "MANU On_Query_Tooltip " & X'Img & Y'Img
-             & " " & System.Address_Image (Get_Object (Tooltip))
-             & " Area="
-             & Tip.Area.X'Img & Tip.Area.Y'Img
-             & Tip.Area.Width'Img & Tip.Area.Height'Img);
+      if Global_Tooltip /= null then
 
-      if False and then Tip.Area.Width /= 0 then
-         if X < Tip.Area.X
-           or else X > Tip.Area.X + Tip.Area.Width
-           or else Y < Tip.Area.Y
-           or else Y > Tip.Area.Y + Tip.Area.Height
-         then
-            --  Hide the current tooltip
-            Tip.Area.Width := 0;
-            return False;
+         Global_Tooltip.Timeout_Id := 0;
+      end if;
+
+      Widget := Global_Tooltip.Tip.Create_Contents
+        (Global_Tooltip.On_Widget,
+         Global_Tooltip.X,
+         Global_Tooltip.Y);
+
+      if Widget /= null then
+         Global_Tooltip.Add (Widget);
+
+         Win_Width := Get_Width (Gdk.Screen.Get_Default);
+         Win_Height := Get_Height (Gdk.Screen.Get_Default);
+
+         Gdk.Window.Get_Root_Coords
+           (Global_Tooltip.On_Widget.Get_Window,
+            Global_Tooltip.X, Global_Tooltip.Y,
+            X, Y);
+
+         Global_Tooltip.Realize;
+         W := Global_Tooltip.Get_Allocated_Width;
+         H := Global_Tooltip.Get_Allocated_Height;
+
+         if X + W > Win_Width then
+            X := Win_Width - W - 12;
+         end if;
+
+         if Y + H > Win_Height then
+            Y := Win_Height - H - 12;
+         end if;
+
+         Global_Tooltip.Move (X + 10, Y + 10);
+         Global_Tooltip.Show_All;
+      end if;
+
+      return False;
+   end On_Tooltip_Delay;
+
+   ------------------
+   -- Show_Tooltip --
+   ------------------
+
+   procedure Show_Tooltip
+     (Widget  : not null access Gtk_Widget_Record'Class;
+      Tooltip : access Tooltips'Class)
+   is
+      Mask     : Gdk_Modifier_Type;
+      Window   : Gdk_Window;
+      X, Y     : Gint;
+      Settings : Gtk_Settings;
+   begin
+      if Global_Tooltip = null then
+         Global_Tooltip := new Tooltip_Object_Record;
+         Gtk.Window.Initialize (Global_Tooltip, Window_Popup);
+
+         Global_Tooltip.Set_Type_Hint (Window_Type_Hint_Tooltip);
+         Global_Tooltip.Set_App_Paintable (True);
+         Global_Tooltip.Set_Resizable (False);
+         Global_Tooltip.Set_Name ("gtk-tooltip");
+         Get_Style_Context (Global_Tooltip).Add_Class ("tooltip");
+
+         Settings := Gtk.Settings.Get_Default;
+         Global_Tooltip.Timeout := Int_Properties.Get_Property
+           (Settings, Int_Properties.Property (Gtk_Tooltip_Timeout_Property));
+         Trace (Me, "Timeout for tooltips is"
+                & Global_Tooltip.Timeout'Img);
+      end if;
+
+      Get_Pointer (Widget.Get_Window, X, Y, Mask, Window);
+
+      --  If still within the current area
+
+      if Global_Tooltip.Get_Mapped
+        and then Global_Tooltip.Area_Is_Set
+        and then not
+          (X < Global_Tooltip.Area.X
+           or else X > Global_Tooltip.Area.X + Global_Tooltip.Area.Width
+           or else Y < Global_Tooltip.Area.Y
+           or else Y > Global_Tooltip.Area.Y + Global_Tooltip.Area.Height)
+      then
+         --  Leave the tooltip as is
+         return;
+      end if;
+
+      Hide_Tooltip;
+
+      Global_Tooltip.On_Widget := Gtk_Widget (Widget);
+      Global_Tooltip.Tip := Tooltips_Access (Tooltip);
+      Global_Tooltip.X := X;
+      Global_Tooltip.Y := Y;
+      Global_Tooltip.Area_Is_Set := False;
+      Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
+        (Guint (Global_Tooltip.Timeout), On_Tooltip_Delay'Access);
+   end Show_Tooltip;
+
+   ------------------
+   -- Hide_Tooltip --
+   ------------------
+
+   procedure Hide_Tooltip is
+      Child : Gtk_Widget;
+   begin
+      if Global_Tooltip /= null then
+         if Global_Tooltip.Timeout_Id /= 0 then
+            Glib.Main.Remove (Global_Tooltip.Timeout_Id);
+            Global_Tooltip.Timeout_Id := 0;
+         end if;
+
+         Global_Tooltip.On_Widget := null;
+         Global_Tooltip.Area_Is_Set := False;
+         Global_Tooltip.Hide;
+
+         Child := Global_Tooltip.Get_Child;
+         if Child /= null then
+            Global_Tooltip.Remove (Child);
          end if;
       end if;
+   end Hide_Tooltip;
 
-      W := Tip.Create_Contents (Widget, X, Y);
-      if W /= null then
-         W.Show_All;
-         Tooltip.Set_Custom (W);
-         return True;
+   ----------------------
+   -- Tooltip_Event_Cb --
+   ----------------------
+
+   function Tooltip_Event_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event   : Gdk.Event.Gdk_Event) return Boolean
+   is
+      Tip : Tooltips_Access;
+   begin
+      if Get_Event_Type (Event) = Motion_Notify
+        and then Get_Property
+          (Gtk_Window (Widget.Get_Toplevel), Has_Toplevel_Focus_Property)
+      then
+         Tip := Tooltip_User_Data.Get (Widget, "gps-tooltip");
+         Show_Tooltip (Widget, Tip);
       else
-         Tip.Area.Width := 0;
-         return False;
+         Hide_Tooltip;
       end if;
-   end On_Query_Tooltip;
+
+      return False;
+   end Tooltip_Event_Cb;
 
    -----------------
    -- Set_Tooltip --
@@ -120,12 +255,38 @@ package body Tooltips is
      (Tooltip   : access Tooltips'Class;
       On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
-      On_Widget.Set_Has_Tooltip (True);
+      Add_Events
+        (On_Widget,
+         Pointer_Motion_Mask or Enter_Notify_Mask or Focus_Change_Mask
+         or Leave_Notify_Mask);
+      Return_Callback.Connect
+        (On_Widget, Signal_Button_Press_Event,
+         Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+      Return_Callback.Connect
+        (On_Widget, Signal_Key_Press_Event,
+         Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+--        Return_Callback.Connect
+--          (On_Widget, Signal_Key_Release_Event,
+--           Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+      Return_Callback.Connect
+        (On_Widget, Signal_Motion_Notify_Event,
+         Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+      Return_Callback.Connect
+        (On_Widget, Signal_Leave_Notify_Event,
+         Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+      Return_Callback.Connect
+        (On_Widget, Signal_Scroll_Event,
+         Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+      Return_Callback.Connect
+        (On_Widget, Signal_Focus_In_Event,
+         Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+      Return_Callback.Connect
+        (On_Widget, Signal_Focus_Out_Event,
+         Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+
       Tooltip_User_Data.Set
         (On_Widget, Tooltips_Access (Tooltip),
          "gps-tooltip", Destroy_Cb'Access);
-      Return_Callback.Connect
-        (On_Widget, Signal_Query_Tooltip, On_Query_Tooltip'Access);
    end Set_Tooltip;
 
    ----------------

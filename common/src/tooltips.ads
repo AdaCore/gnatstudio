@@ -15,13 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides tooltips-like functionality. It differs from
---  the original Gtk.Tooltips package in that the drawing function is
---  left to the end user.
---  The drawing function is called after the timeout period, which means
---  that dynamic tooltips can be implemented with this package (ie the contents
---  of the tooltip changes at each call, possibly depending on the position of
---  the pointer at the time the tooltip is displayed)
+--  This package provides tooltips-like functionality.
+--  It is not based on GtkTooltip, because the latter has several drawbacks
+--  as of gtk 3.4:
+--      * it doesn't seem possible to define an area in which the tooltip stays
+--        constant, and the window should stay visible while the pointer is in
+--        that area.  Set_Tip_Area doesn't seem to do that at least for
+--        GtTextView.
+--      * the contents of the tooltip is computed every time the mouse moves,
+--        not at the end of the timeout. This results in a lot of extra
+--        computation for the contents of the tooltip.
 
 with Glib;           use Glib;
 with Gtk.Widget;     use Gtk.Widget;
@@ -88,8 +91,6 @@ package Tooltips is
    --  Tooltip is automatically destroyed when the widget is destroyed.
 
 private
-   type Tooltips is abstract tagged record
-      Area : Gdk.Rectangle.Gdk_Rectangle := (0, 0, 0, 0);
-   end record;
+   type Tooltips is abstract tagged null record;
 
 end Tooltips;
