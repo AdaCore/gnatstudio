@@ -28,7 +28,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tooltip;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -130,7 +129,6 @@ package body Clipboard_Views is
    type Clipboard_View_Tooltips_Access is access all Clipboard_View_Tooltips;
    overriding function Create_Contents
      (Tooltip  : not null access Clipboard_View_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -140,7 +138,6 @@ package body Clipboard_Views is
 
    overriding function Create_Contents
      (Tooltip  : not null access Clipboard_View_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -153,7 +150,7 @@ package body Clipboard_Views is
    begin
       Initialize_Tooltips (Tree, X, Y, Area, Iter);
       if Iter /= Null_Iter then
-         Tip.Set_Tip_Area (Area);
+         Tooltip.Set_Tip_Area (Area);
 
          Selected := Integer (Get_Int (Model, Iter, 2));
 

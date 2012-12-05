@@ -48,7 +48,6 @@ with Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
-with Gtk.Tooltip;               use Gtk.Tooltip;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -296,7 +295,6 @@ package body Project_Explorers is
    type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
    overriding function Create_Contents
      (Tooltip  : not null access Explorer_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentatoin
@@ -1368,7 +1366,6 @@ package body Project_Explorers is
 
    overriding function Create_Contents
      (Tooltip  : not null access Explorer_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -1404,7 +1401,7 @@ package body Project_Explorers is
       Get_Cell_Area (Tooltip.Explorer.Tree, Path, Column, Area);
       Path_Free (Path);
 
-      Tip.Set_Tip_Area (Area);
+      Tooltip.Set_Tip_Area (Area);
 
       Node_Type := Get_Node_Type (Tooltip.Explorer.Tree.Model, Iter);
 

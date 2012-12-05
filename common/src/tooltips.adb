@@ -24,9 +24,11 @@ with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Tooltip;          use Gtk.Tooltip;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with System.Address_Image;
 
 package body Tooltips is
    Me : constant Trace_Handle := Create ("TOOLTIPS");
@@ -40,6 +42,22 @@ package body Tooltips is
    --  Computes the contents of the tooltip.
 
    package Tooltip_User_Data is new Glib.Object.User_Data (Tooltips_Access);
+
+   ------------------
+   -- Set_Tip_Area --
+   ------------------
+
+   procedure Set_Tip_Area
+     (Tooltip : not null access Tooltips;
+      Area    : Gdk.Rectangle.Gdk_Rectangle)
+   is
+   begin
+      if Tooltip.Area.Width = 0 then
+         Trace (Me, "Set_Tip_Area"
+                & Area.X'Img & Area.Y'Img & Area.Width'Img & Area.Height'Img);
+         Tooltip.Area := Area;
+      end if;
+   end Set_Tip_Area;
 
    ----------------------
    -- On_Query_Tooltip --
@@ -65,12 +83,33 @@ package body Tooltips is
 
       W : Gtk_Widget;
    begin
-      W := Tip.Create_Contents (Tooltip, Widget, X, Y);
+      Trace (Me, "MANU On_Query_Tooltip " & X'Img & Y'Img
+             & " " & System.Address_Image (Get_Object (Tooltip))
+             & " Area="
+             & Tip.Area.X'Img & Tip.Area.Y'Img
+             & Tip.Area.Width'Img & Tip.Area.Height'Img);
+
+      if False and then Tip.Area.Width /= 0 then
+         if X < Tip.Area.X
+           or else X > Tip.Area.X + Tip.Area.Width
+           or else Y < Tip.Area.Y
+           or else Y > Tip.Area.Y + Tip.Area.Height
+         then
+            --  Hide the current tooltip
+            Tip.Area.Width := 0;
+            return False;
+         end if;
+      end if;
+
+      W := Tip.Create_Contents (Widget, X, Y);
       if W /= null then
          W.Show_All;
          Tooltip.Set_Custom (W);
+         return True;
+      else
+         Tip.Area.Width := 0;
+         return False;
       end if;
-      return W /= null;
    end On_Query_Tooltip;
 
    -----------------

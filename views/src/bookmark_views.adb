@@ -39,7 +39,6 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Tooltip;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -236,7 +235,6 @@ package body Bookmark_Views is
      with null record;
    overriding function Create_Contents
      (Tooltip  : not null access Bookmark_View_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -263,11 +261,9 @@ package body Bookmark_Views is
 
    overriding function Create_Contents
      (Tooltip  : not null access Bookmark_View_Tooltips;
-      Tip     : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tooltip);
       Tree : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
       Model : constant Gtk_Tree_Model := Get_Model (Tree);
       Iter  : Gtk_Tree_Iter;
@@ -280,7 +276,7 @@ package body Bookmark_Views is
 
       if Iter /= Null_Iter then
          Data := Convert (Get_Address (Model, Iter, Data_Column));
-         Tip.Set_Tip_Area (Area);
+         Tooltip.Set_Tip_Area (Area);
 
          declare
             Location : constant String := To_String (Data.Marker);

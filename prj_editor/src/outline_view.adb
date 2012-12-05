@@ -31,7 +31,6 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Tooltip;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -229,7 +228,6 @@ package body Outline_View is
    type Outline_View_Tooltips_Access is access all Outline_View_Tooltips;
    overriding function Create_Contents
      (Tooltip  : not null access Outline_View_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -251,7 +249,6 @@ package body Outline_View is
 
    overriding function Create_Contents
      (Tooltip  : not null access Outline_View_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -264,7 +261,7 @@ package body Outline_View is
       Initialize_Tooltips (Tooltip.Outline.Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
-         Tip.Set_Tip_Area (Area);
+         Tooltip.Set_Tip_Area (Area);
 
          P_Entity := Get_Entity (Iter);
 

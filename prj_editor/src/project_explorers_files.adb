@@ -42,7 +42,6 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Selection_Data;         use Gtk.Selection_Data;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Tooltip;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gdk.Types;
@@ -280,7 +279,6 @@ package body Project_Explorers_Files is
    type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
    overriding function Create_Contents
      (Tooltip  : not null access Explorer_Tooltips;
-      Tip     : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentatoin
@@ -1464,7 +1462,6 @@ package body Project_Explorers_Files is
 
    overriding function Create_Contents
      (Tooltip  : not null access Explorer_Tooltips;
-      Tip     : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -1480,7 +1477,7 @@ package body Project_Explorers_Files is
       Initialize_Tooltips (Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
-         Tip.Set_Tip_Area (Area);
+         Tooltip.Set_Tip_Area (Area);
          declare
             File : constant Virtual_File :=
               Get_File (Model, Iter, File_Column);

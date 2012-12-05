@@ -200,7 +200,6 @@ package GPS.Kernel.Preferences is
    Display_Line_Numbers      : Boolean_Preference;
    Display_Subprogram_Names  : Boolean_Preference;
    Display_Tooltip           : Boolean_Preference;
-   Tooltip_Timeout           : Integer_Preference;
    Highlight_Delimiters      : Boolean_Preference;
    Periodic_Save             : Integer_Preference;
    Highlight_Column          : Integer_Preference;

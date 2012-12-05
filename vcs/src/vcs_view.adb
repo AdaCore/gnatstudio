@@ -256,7 +256,6 @@ package body VCS_View is
 
    overriding function Create_Contents
      (Tooltip : access VCS_Tooltips;
-      Tip     : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -290,7 +289,7 @@ package body VCS_View is
       Iter := Get_Iter (Tooltip.Explorer.Model, Path);
       Path_Free (Path);
 
-      Tip.Set_Tip_Area (Area);
+      Tooltip.Set_Tip_Area (Area);
 
       if Column = Tooltip.Explorer.Status_Column then
          Gtk_New

@@ -26,7 +26,6 @@
 with Glib;           use Glib;
 with Gtk.Widget;     use Gtk.Widget;
 with Gdk.Rectangle;
-with Gtk.Tooltip;    use Gtk.Tooltip;
 with Gtk.Tree_Model;
 with Gtk.Tree_View;
 
@@ -49,7 +48,7 @@ package Tooltips is
    -- Tooltips --
    --------------
 
-   type Tooltips is abstract tagged null record;
+   type Tooltips is abstract tagged private;
    type Tooltips_Access is access all Tooltips'Class;
    --  This type represents a tooltip creator: it can be attached to one or
    --  more widgets, and will create a tooltip (ie a graphical window to
@@ -63,7 +62,6 @@ package Tooltips is
 
    function Create_Contents
      (Tooltip  : not null access Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget is abstract;
    --  Return the widget to be displayed in the tooltip. This widget will be
@@ -74,6 +72,12 @@ package Tooltips is
    --  of widget the tooltip applies to (the tooltip will remain visible while
    --  the mouse is in this area).
 
+   procedure Set_Tip_Area
+     (Tooltip : not null access Tooltips;
+      Area    : Gdk.Rectangle.Gdk_Rectangle);
+   --  Set the active area for the tooltip. While the cursor remains in this
+   --  area, the tooltip is kept on screen with the same contents.
+
    procedure Set_Tooltip
      (Tooltip   : access Tooltips'Class;
       On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -82,5 +86,10 @@ package Tooltips is
    --  You can attach a given tooltip to a single widget for the time being.
    --  A Program_Error will be raised if you do not respect that.
    --  Tooltip is automatically destroyed when the widget is destroyed.
+
+private
+   type Tooltips is abstract tagged record
+      Area : Gdk.Rectangle.Gdk_Rectangle := (0, 0, 0, 0);
+   end record;
 
 end Tooltips;

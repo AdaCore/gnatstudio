@@ -23,9 +23,9 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Tooltip;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -55,7 +55,6 @@ package body Src_Editor_Box.Tooltips is
 
    overriding function Create_Contents
      (Tooltip  : not null access Editor_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation
@@ -128,7 +127,6 @@ package body Src_Editor_Box.Tooltips is
 
    overriding function Create_Contents
      (Tooltip  : not null access Editor_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -149,6 +147,8 @@ package body Src_Editor_Box.Tooltips is
       Vbox             : Gtk_Box;
       Label            : Gtk_Label;
       Area             : Gdk_Rectangle;
+      Image            : Gtk_Image;
+      HBox             : Gtk_Box;
 
    begin
       if not Display_Tooltip.Get_Pref then
@@ -210,9 +210,17 @@ package body Src_Editor_Box.Tooltips is
             end if;
 
             if Has_Info then
-               Gtk_New (Label, To_String (Content));
-               Tip.Set_Icon (Icon);
-               return Gtk_Widget (Label);
+               if Icon /= null then
+                  Gtk_New (Label, To_String (Content));
+                  return Gtk_Widget (Label);
+               else
+                  Gtk_New_Hbox (HBox, Homogeneous => False);
+                  Gtk_New (Image, Icon);
+                  HBox.Pack_Start (Image, Expand => False, Fill => False);
+                  Gtk_New (Label, To_String (Content));
+                  HBox.Pack_Start (Label, Expand => True, Fill => True);
+                  return Gtk_Widget (HBox);
+               end if;
             end if;
          end;
 
@@ -257,7 +265,7 @@ package body Src_Editor_Box.Tooltips is
          Area.X := Area.X + Tmp_Width;
       end;
 
-      Tip.Set_Tip_Area (Area);
+      Tooltip.Set_Tip_Area (Area);
 
       declare
          Entity     : General_Entity;
@@ -324,10 +332,17 @@ package body Src_Editor_Box.Tooltips is
                         Gtk_New_Vbox (Vbox, Homogeneous => False);
                      end if;
 
-                     Gtk_New (Label, To_String (Text));
-                     Vbox.Pack_Start (Label, Expand => False, Fill => True);
                      if Icon /= null then
-                        Tip.Set_Icon (Icon);
+                        Gtk_New (Label, To_String (Text));
+                        Vbox.Pack_Start (Label, Expand => False, Fill => True);
+                     else
+                        Gtk_New_Hbox (HBox, Homogeneous => False);
+                        Vbox.Pack_Start (HBox, Expand => False, Fill => True);
+                        Gtk_New (Image, Icon);
+                        HBox.Pack_Start
+                          (Image, Expand => False, Fill => False);
+                        Gtk_New (Label, To_String (Text));
+                        HBox.Pack_Start (Label, Expand => True, Fill => True);
                      end if;
                   end if;
                end;

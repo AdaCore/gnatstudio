@@ -518,16 +518,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Tooltips",
          Page    => -"Editor");
 
-      Tooltip_Timeout := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Tooltip-Timeout",
-         Minimum => 0,
-         Maximum => 10000,
-         Default => 600,
-         Doc     => -"Time (in milliseconds) before displaying tooltips",
-         Label   => -"Tooltips timeout",
-         Page    => -"Editor");
-
       Highlight_Delimiters := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Highlight-Delimiters",

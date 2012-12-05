@@ -28,7 +28,6 @@ with Gtk.Label;              use Gtk.Label;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
-with Gtk.Tooltip;
 with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
@@ -136,7 +135,6 @@ package body Buffer_Views is
    type Buffer_View_Tooltips is new Tooltips.Tooltips with null record;
    overriding function Create_Contents
      (Tooltip  : not null access Buffer_View_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -146,11 +144,9 @@ package body Buffer_Views is
 
    overriding function Create_Contents
      (Tooltip  : not null access Buffer_View_Tooltips;
-      Tip      : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tooltip);
       Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
       Model : constant Gtk_Tree_Model := Get_Model (Tree);
       Iter  : Gtk_Tree_Iter;
@@ -161,7 +157,7 @@ package body Buffer_Views is
       Initialize_Tooltips (Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
-         Tip.Set_Tip_Area (Area);
+         Tooltip.Set_Tip_Area (Area);
 
          declare
             Name : constant String :=

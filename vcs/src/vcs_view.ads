@@ -24,7 +24,6 @@ with Glib.Object;          use Glib.Object;
 with Gdk.Event;            use Gdk.Event;
 
 with Gtk.Box;              use Gtk.Box;
-with Gtk.Tooltip;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_Store;       use Gtk.Tree_Store;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
@@ -238,7 +237,6 @@ private
    type VCS_Tooltips_Access is access all VCS_Tooltips'Class;
    overriding function Create_Contents
      (Tooltip : access VCS_Tooltips;
-      Tip     : not null access Gtk.Tooltip.Gtk_Tooltip_Record'Class;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation

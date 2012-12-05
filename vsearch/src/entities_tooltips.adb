@@ -131,12 +131,12 @@ package body Entities_Tooltips is
 
       if Pixbuf /= null then
          Gtk_New (Image, Pixbuf);
+         Image.Set_Alignment (0.0, 0.0);
          Hbox.Pack_Start (Image, Expand => False, Fill => False);
       end if;
 
       Gtk_New (Header_Label);
       Header_Label.Set_Alignment (0.0, 0.5);
-      Header_Label.Set_Padding (0, 6);
       Hbox.Pack_Start (Header_Label, Expand => True, Fill => True);
 
       if Guess then
@@ -149,7 +149,7 @@ package body Entities_Tooltips is
 
       if Doc /= "" then
          Gtk_New_Hseparator (Sep);
-         Box.Pack_Start (Sep, Expand => False, Fill => False);
+         Box.Pack_Start (Sep, Expand => False, Fill => False, Padding => 5);
 
          Gtk_New (Doc_Label);
          Doc_Label.Set_Alignment (0.0, 0.5);
