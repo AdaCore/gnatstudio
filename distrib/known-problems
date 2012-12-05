@@ -8,6 +8,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- LB30-018: Missing references with extending projects
+  Problem:    If you are using extending projects, GPS will not
+              parse its .ali files (containing the xref information generated
+              by the compiler) if the corresponding source file does not
+              exist in the extending project but only in the extended project.
+  Workaround: Copying the source files from the extended project into the
+              extending project will solve this issue, but is not very
+              convenient.
+
 - LB26-008: GPS: Smart completion of C/C++ parameters
   Problem:    When a function/method has several parameters, we press the
               open parenthesis, and we choose smart completion of all the
