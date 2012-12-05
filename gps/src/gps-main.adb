@@ -51,7 +51,6 @@ with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Handlers;                     use Gtk.Handlers;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Main;                         use Gtk.Main;
-with Gtk.Rc;
 with Gtk.Window;                       use Gtk.Window;
 with Gtk_Utils;                        use Gtk_Utils;
 
@@ -514,12 +513,6 @@ procedure GPS.Main is
       end if;
 
       Prefix_Dir := Create (+Prefix.all);
-
-      --  Parse the config files
-      Gtk.Rc.Add_Default_File
-        (+Create_From_Dir (Prefix_Dir, "etc/gps/gtkrc").Full_Name);
-      Gtk.Rc.Add_Default_File
-        (+Create_From_Dir (GPS_Home_Dir, "gtkrc").Full_Name);
 
       Gtk.Main.Init;
 
