@@ -1432,10 +1432,12 @@ package body Xref is
          Iter.In_Scope := In_Scope;
 
          while Has_Element (Iter.Iter)
-           and then (Iter.In_File = No_File
-                     or else Iter.Iter.Element.File /= Iter.In_File)
-           and then (Iter.In_Scope = No_General_Entity
-                     or else Iter.Iter.Element.Scope /= Iter.In_Scope.Entity)
+           and then
+             ((Iter.In_File /= No_File
+               and then Iter.Iter.Element.File /= Iter.In_File)
+              or else
+                (Iter.In_Scope /= No_General_Entity
+                 and then Iter.Iter.Element.Scope /= Iter.In_Scope.Entity))
          loop
             Iter.Iter.Next;
          end loop;
@@ -1491,10 +1493,12 @@ package body Xref is
          Next (Iter.Iter);
 
          while Has_Element (Iter.Iter)
-           and then (Iter.In_File = No_File
-                     or else Iter.Iter.Element.File /= Iter.In_File)
-           and then (Iter.In_Scope = No_General_Entity
-                     or else Iter.Iter.Element.Scope /= Iter.In_Scope.Entity)
+           and then
+             ((Iter.In_File /= No_File
+               and then Iter.Iter.Element.File /= Iter.In_File)
+              or else
+                (Iter.In_Scope /= No_General_Entity
+                 and then Iter.Iter.Element.Scope /= Iter.In_Scope.Entity))
          loop
             Iter.Iter.Next;
          end loop;
