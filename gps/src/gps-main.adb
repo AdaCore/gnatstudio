@@ -231,6 +231,9 @@ procedure GPS.Main is
    Elaboration_Browser_Trace : constant Debug_Handle :=
      Create ("MODULE.Elaboration_Browser", GNATCOLL.Traces.On);
 
+   Check_Color_Depth : constant Debug_Handle :=
+     Create ("CHECK_COLOR_DEPTH", GNATCOLL.Traces.On);
+
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
 
@@ -1577,7 +1580,7 @@ procedure GPS.Main is
       Free (About_Contents);
 
       if not Hide_GPS
-        and then (not Active (Testsuite_Handle))
+        and then Active (Check_Color_Depth)
         and then Gdk.Visual.Get_Best_Depth < 24
       then
          declare
