@@ -1501,6 +1501,10 @@ package body Old_Entities.Queries is
                Project := Extended;
             end loop;
 
+            Trace
+              (Me, "Find_All_Projects_Importing "
+               & Project.Project_Path.Display_Full_Name);
+
             Importing := Find_All_Projects_Importing
               (Project, Include_Self => True);
          end if;
@@ -3580,7 +3584,7 @@ package body Old_Entities.Queries is
       --  Move to next project or language
 
       while P /= No_Project loop
-         Trace (Me, "Parse all LI information: project is " & P.Name);
+         Trace (Me, "Parse all LI information: project in " & P.Name);
 
          Iter.LI := new LI_Information_Iterator'Class'
            (Parse_All_LI_Information (Iter.Default_LI_Handler, P));
