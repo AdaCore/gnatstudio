@@ -4284,6 +4284,13 @@ text,... The following attribute names are currently recognized:
 
    Change the background color of the text.
 
+- *paragraph-background* (value is a string with the color name)
+
+   Change the background color of the entire lines.  Contrary to the
+   "background" property, this highlights the entire line, including the
+   space after the end of the text, regardless of which characters are
+   actually covered by the overlay.
+
 - *font* (value is a string with the font name)
 
    Changes the font of the text

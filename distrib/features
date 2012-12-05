@@ -49,6 +49,22 @@ NF-53-LB20-022 GPS: Key shortcuts dialog display improved (2012-11-21)
   key, a caret sign for the control key, and the special symbols for
   Mac keyboards.
 
+NF-53-LB15-037 GPS: EditorOverlay can now highlight a whole line (2012-12-05)
+
+  The EditorOverlay class can now be used in Python plugins to highlight an
+  entire line, through the property "paragraph-background":
+    # Create an overlay for an editor:
+    b = GPS.EditorBuffer.get(GPS.File ("my_file.adb"))
+    o = b.create_overlay("my_overlay_name")
+
+    # Set the paragraph-background property to pink
+    o.set_property ("paragraph-background", "#f0c0c0")
+
+    # This highlights the entire line 317 in my file
+    b.apply_overlay (o,
+       GPS.EditorLocation(b, 317, 1),
+       GPS.EditorLocation(b, 317, 1))
+
 NF-53-L926-027 GPS: Project, Files and Windows views pop-ups (2012-11-13)
 
   Tooltips added to views to help navigation when windows are narrow.
