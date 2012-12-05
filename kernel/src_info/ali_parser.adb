@@ -2565,6 +2565,7 @@ package body ALI_Parser is
              (Recursive           => False,
               Including_Libraries => True,
               Xrefs_Dirs          => True,
+              Exclude_Overridden  => True,
               ALI_Ext => "^.*\.[ags]li$");
       end if;
 
