@@ -37,10 +37,10 @@ with Gtk.Viewport;        use Gtk.Viewport;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with XML_Utils;           use XML_Utils;
 with Gtkada.MDI;          use Gtkada.MDI;
 
 with Projects;              use Projects;
+with Generic_Views;
 with GNAT.Case_Util;        use GNAT.Case_Util;
 with GNAT.Strings;          use GNAT.Strings;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
@@ -60,7 +60,7 @@ package body Scenario_Views is
 
    Me : constant Debug_Handle := Create ("Scenario_Views");
 
-   type Scenario_View_Record is new Gtk_Scrolled_Window_Record with record
+   type Scenario_View_Record is new Generic_Views.View_Record with record
       Vbox          : Gtk.Box.Gtk_Vbox;
       Table         : Gtk.Table.Gtk_Table;
       Kernel        : GPS.Kernel.Kernel_Handle;
@@ -70,7 +70,27 @@ package body Scenario_Views is
       --  Flag temporarily set to True when a user is modifying the value of
       --  one of the scenario variable through the combo boxes.
    end record;
-   type Scenario_View is access all Scenario_View_Record'Class;
+
+   function Initialize
+     (View    : access Scenario_View_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk_Widget;
+   --  Create a new scenario view associated with Manager.
+   --  The view is automatically refreshed every time the project view in
+   --  the manager changes.
+   --  Returns the focus widget in the view.
+
+   package Scenario_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Scenario_View",
+      View_Name          => -"Scenario",
+      Formal_View_Record => Scenario_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Local_Toolbar      => False,
+      Local_Config       => False,
+      Position           => Position_Left);
+   subtype Scenario_View is Scenario_Views.View_Access;
 
    type Contextual_Menu_Data is record
       View   : Scenario_View;
@@ -86,18 +106,6 @@ package body Scenario_Views is
      (User  : Contextual_Menu_Data;
       Event : Gdk_Event) return Gtk_Menu;
    --  Return the contextual menu when clicking on a variable
-
-   procedure Gtk_New
-     (View    : out Scenario_View;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Create a new scenario view associated with Manager.
-   --  The view is automatically refreshed every time the project view in
-   --  the manager changes.
-
-   procedure Initialize
-     (View    : access Scenario_View_Record'Class;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Internal function for creating new widgets
 
    procedure Add_Possible_Values
      (Kernel : access Kernel_Handle_Record'Class;
@@ -143,23 +151,6 @@ package body Scenario_Views is
    --  Callback when some aspect of the project has changed, to refresh the
    --  view.
 
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Handle desktop loading and saving
-
-   procedure On_Open_View
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Open the scenario view if it isn't already open
-
-   type Scenario_Module_Record is new Module_ID_Record with null record;
-   Scenario_Module_Id : Module_ID;
-
    -----------
    -- Setup --
    -----------
@@ -169,26 +160,14 @@ package body Scenario_Views is
       Add_Watch (Id, Data.View);
    end Setup;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (View : out Scenario_View;
-      Kernel : access Kernel_Handle_Record'Class)
-   is
-   begin
-      View := new Scenario_View_Record;
-      Initialize (View, Kernel);
-   end Gtk_New;
-
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize
-     (View   : access Scenario_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+   function Initialize
+     (View    : access Scenario_View_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Gtk_Widget
    is
       Hook     : Refresh_Hook;
       Viewport : Gtk_Viewport;
@@ -242,14 +221,16 @@ package body Scenario_Views is
         (Kernel          => Kernel,
          Event_On_Widget => View.Table,
          Object          => View,
-         ID              => Scenario_Module_Id,
+         ID              => Scenario_Views.Get_Module,
          Context_Func    => null);
       Register_Contextual_Menu
         (Kernel          => Kernel,
          Event_On_Widget => View.Empty_Event,
          Object          => View,
-         ID              => Scenario_Module_Id,
+         ID              => Scenario_Views.Get_Module,
          Context_Func    => null);
+
+      return Gtk_Widget (View);
    end Initialize;
 
    ----------------------------
@@ -553,90 +534,13 @@ package body Scenario_Views is
       end if;
    end Execute;
 
-   ------------------
-   -- On_Open_View --
-   ------------------
-
-   procedure On_Open_View
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Scenario : Scenario_View;
-      Child    : GPS_MDI_Child;
-   begin
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-                              (Get_MDI (Kernel), Scenario_View_Record'Tag));
-
-      if Child = null then
-         Gtk_New (Scenario, Kernel);
-         Gtk_New (Child, Scenario,
-                  Default_Width => 215,
-                  Group         => Group_View,
-                  Module        => Scenario_Module_Id);
-         Set_Title (Child, -"Scenario", -"Scenario");
-         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
-      end if;
-
-      Set_Focus_Child (Child);
-      Raise_Child (Child);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Open_View;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child is
-   begin
-      if Node.Tag.all = "Scenario_View" then
-         On_Open_View (MDI, User);
-         return Find_MDI_Child_By_Tag (MDI, Scenario_View_Record'Tag);
-      end if;
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Scenario_View_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Scenario_View");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
-
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Scenario_Module_Id := new Scenario_Module_Record;
-      Register_Module
-        (Module      => Scenario_Module_Id,
-         Kernel      => Kernel,
-         Module_Name => "Scenario_View");
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-
-      Register_Menu
-        (Kernel, '/' & (-"Tools") & '/' & (-"Views"),
-         -"_Scenario", "", On_Open_View'Access);
+      Scenario_Views.Register_Module (Kernel, Menu_Name => -"_Scenario");
    end Register_Module;
 
 end Scenario_Views;
