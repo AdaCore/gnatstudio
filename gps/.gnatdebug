@@ -57,7 +57,7 @@ ENTITIES.QUERIES_FILE_GRANULARITY = yes
 ENTITIES.ASSERT                   = no
 
 --  Deactivate SQL traces by default
-SQL.*                             = no
+SQL.*                             = yes
 
 --  Projects. Unfortunately the traces from PROJECTS.GNAT go to stdout
 
