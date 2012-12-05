@@ -2868,6 +2868,8 @@ package body Src_Editor_Module.Editors is
             Set_Property (This.Tag, Foreground_Property, Value);
          elsif Name = "background" then
             Set_Property (This.Tag, Background_Property, Value);
+         elsif Name = "paragraph-background" then
+            Set_Property (This.Tag, Paragraph_Background_Property, Value);
          elsif Name = "font" then
             Set_Property (This.Tag, Font_Property, Value);
          elsif Name = "weight" then

@@ -2306,6 +2306,7 @@ package body Src_Editor_Module.Shell is
               or else Name = "font"
               or else Name = "weight"
               or else Name = "style"
+              or else Name = "paragraph-background"
             then
                Get_Overlay (Data, 1).Set_Property
                  (Name, String'(Nth_Arg (Data, 3)));
