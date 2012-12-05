@@ -222,6 +222,8 @@ package body Python_Module is
          Python_Home := new String'(Executable_Location);
       end if;
 
+      Trace (Me, "PYTHONHOME=" & Python_Home.all);
+
       Register_Python_Scripting
         (Get_Scripts (Kernel),
          Module      => "GPS",
