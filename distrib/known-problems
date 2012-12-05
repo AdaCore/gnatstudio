@@ -41,6 +41,12 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: Avoid automatically fixing the code when the warning is reported
               in an expanded name.
 
+- LB15-004: GB: Renaming gnatbench gpr file causes gnatbench properties issues
+  Problem:    Rename gpr file. Try to update gnatbench properties. If the project
+              line name is not consistent with the gpr file name, Eclipse crashes. 
+  Workaround: Modify the project name in the gpr file to be consistent with the 
+              gpr filename. 
+
 - LB14-054: GPS: keyboard shortcuts not functional when Caps Lock is active
   Problem:    When Caps Lock is active, letter-based keyboard shortcuts for
               GPS actions do not work.
