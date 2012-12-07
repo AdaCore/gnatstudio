@@ -19,6 +19,12 @@ with Ada.Strings.Fixed;
 with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
+with Ada.Containers.Vectors;
+with Generic_Views;
+with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
+with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
+with XML_Utils;                      use XML_Utils;
+
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
@@ -38,8 +44,8 @@ with Gtk.Menu;                         use Gtk.Menu;
 with Gtk.Menu_Item;                    use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
 with Gtk.Separator_Menu_Item;          use Gtk.Separator_Menu_Item;
+with GPS.Tree_View;                    use GPS.Tree_View;
 with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
-with Gtk.Widget;                       use Gtk.Widget;
 
 with Gtkada.File_Selector;
 with Gtkada.Handlers;                  use Gtkada.Handlers;
@@ -64,7 +70,6 @@ with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
 with GPS.Location_View.Actions;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
-with XML_Utils;                        use XML_Utils;
 with Traces;                           use Traces;
 
 package body GPS.Location_View is
@@ -77,8 +82,61 @@ package body GPS.Location_View is
      (GPS.Kernel.Messages.Editor_Side => False,
       GPS.Kernel.Messages.Locations   => True);
 
-   type Location_View_Module is new Module_ID_Record with null record;
-   Location_View_Module_Id : Module_ID;
+   type Expansion_Request is record
+      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Goto_First : Boolean;
+   end record;
+
+   package Expansion_Request_Vectors is
+     new Ada.Containers.Vectors (Positive, Expansion_Request);
+
+   type Location_View_Record is new Generic_Views.View_Record with record
+      Kernel              : Kernel_Handle;
+      Filter_Panel        : Locations_Filter_Panel;
+      Filter_Panel_Shown  : Boolean := False;
+      Sort_By_Category    : Boolean := False;
+      --  Whether the view should be sorted by category
+
+      View                : GPS_Locations_Tree_View;
+
+      --  Idle handlers
+
+      Idle_Expand_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Requests            : Expansion_Request_Vectors.Vector;
+      --  Expansion requests.
+
+      --  Message listener
+      Listener            : GPS.Kernel.Messages.Listener_Access;
+
+      Do_Not_Delete_Messages_On_Exit : Boolean := False;
+      --  Protection against reentrancy
+   end record;
+
+   overriding procedure Save_To_XML
+     (View : access Location_View_Record;
+      Node : in out XML_Utils.Node_Ptr);
+   overriding procedure Load_From_XML
+     (View : access Location_View_Record; XML : XML_Utils.Node_Ptr);
+
+   function Initialize
+     (Self   : access Location_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
+      return Gtk_Widget;
+   --  Creates the locations view, and returns the focus widget
+
+   package Location_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Location_View_Record",
+      View_Name          => -"Locations",
+      Formal_View_Record => Location_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Local_Toolbar      => True,
+      Local_Config       => True,
+      Group              => Group_Consoles);
+   use Location_Views;
+   subtype Location_View is Location_Views.View_Access;
 
    package View_Idle is new Glib.Main.Generic_Sources (Location_View);
 
@@ -211,22 +269,6 @@ package body GPS.Location_View is
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Default context factory
 
-   function Get_Or_Create_Location_View_MDI
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True) return MDI_Child;
-   --  Internal version of Get_Or_Create_Location_View
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   --  Save the status of the project explorer to an XML tree
-
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Interactive shell command handler
@@ -269,16 +311,17 @@ package body GPS.Location_View is
    ---------------------
 
    procedure Expand_Category
-     (Self       : not null access Location_View_Record'Class;
+     (Self       : Location_View_Access;
       Category   : Ada.Strings.Unbounded.Unbounded_String;
-      Goto_First : Boolean) is
+      Goto_First : Boolean)
+   is
+      Loc : constant Location_View := Location_View (Self);
    begin
-      Self.Requests.Prepend ((Category, GNATCOLL.VFS.No_File, Goto_First));
+      Loc.Requests.Prepend ((Category, GNATCOLL.VFS.No_File, Goto_First));
 
-      if Self.Idle_Expand_Handler = No_Source_Id then
-         Self.Idle_Expand_Handler :=
-           View_Idle.Idle_Add
-             (Idle_Expand'Access, Location_View (Self));
+      if Loc.Idle_Expand_Handler = No_Source_Id then
+         Loc.Idle_Expand_Handler :=
+           View_Idle.Idle_Add (Idle_Expand'Access, Loc);
       end if;
    end Expand_Category;
 
@@ -287,17 +330,18 @@ package body GPS.Location_View is
    -----------------
 
    procedure Expand_File
-     (Self       : not null access Location_View_Record'Class;
+     (Self       : Location_View_Access;
       Category   : Ada.Strings.Unbounded.Unbounded_String;
       File       : GNATCOLL.VFS.Virtual_File;
-      Goto_First : Boolean) is
+      Goto_First : Boolean)
+   is
+      Loc : constant Location_View := Location_View (Self);
    begin
-      Self.Requests.Prepend ((Category, File, Goto_First));
+      Loc.Requests.Prepend ((Category, File, Goto_First));
 
-      if Self.Idle_Expand_Handler = No_Source_Id then
-         Self.Idle_Expand_Handler :=
-           View_Idle.Idle_Add
-             (Idle_Expand'Access, Location_View (Self));
+      if Loc.Idle_Expand_Handler = No_Source_Id then
+         Loc.Idle_Expand_Handler :=
+           View_Idle.Idle_Add (Idle_Expand'Access, Loc);
       end if;
    end Expand_File;
 
@@ -471,14 +515,15 @@ package body GPS.Location_View is
    -- On_Remove_Message --
    -----------------------
 
-   procedure On_Remove_Message (Self : access Location_View_Record'Class) is
+   procedure On_Remove_Message (Self : access Gtk_Widget_Record'Class) is
+      Loc     : constant Location_View := Location_View (Self);
       Model   : Gtk_Tree_Model;
       Iter    : Gtk_Tree_Iter;
       Value   : GValue;
       Message : Message_Access;
 
    begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
+      Loc.View.Get_Selection.Get_Selected (Model, Iter);
 
       if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
          return;
@@ -599,9 +644,10 @@ package body GPS.Location_View is
    -- On_Clear_Locations --
    ------------------------
 
-   procedure On_Clear_Locations (Self : access Location_View_Record'Class) is
+   procedure On_Clear_Locations (Self : access Gtk_Widget_Record'Class) is
+      Loc     : constant Location_View := Location_View (Self);
       Container : constant Messages_Container_Access :=
-                    Get_Messages_Container (Self.Kernel);
+                    Get_Messages_Container (Loc.Kernel);
 
    begin
       Container.Remove_All_Messages
@@ -666,9 +712,10 @@ package body GPS.Location_View is
    ---------------
 
    procedure Next_Item
-     (Self      : access Location_View_Record'Class;
+     (Self      : Location_View_Access;
       Backwards : Boolean := False)
    is
+      Loc : constant Location_View := Location_View (Self);
       Iter          : Gtk_Tree_Iter;
       Path          : Gtk_Tree_Path;
       File_Path     : Gtk_Tree_Path;
@@ -679,7 +726,7 @@ package body GPS.Location_View is
       pragma Unreferenced (Ignore);
 
    begin
-      Get_Selected (Get_Selection (Self.View), Model, Iter);
+      Get_Selected (Get_Selection (Loc.View), Model, Iter);
 
       if Iter = Null_Iter then
          return;
@@ -691,9 +738,9 @@ package body GPS.Location_View is
 
       Success := True;
       while Success and then Get_Depth (Path) < 3 loop
-         Success := Expand_Row (Self.View, Path, False);
+         Success := Expand_Row (Loc.View, Path, False);
          Down (Path);
-         Select_Path (Get_Selection (Self.View), Path);
+         Select_Path (Get_Selection (Loc.View), Path);
       end loop;
 
       if Get_Depth (Path) < 3 then
@@ -743,7 +790,7 @@ package body GPS.Location_View is
             end if;
          end if;
 
-         Ignore := Expand_Row (Self.View, File_Path, False);
+         Ignore := Expand_Row (Loc.View, File_Path, False);
          Path := Copy (File_Path);
          Down (Path);
 
@@ -756,9 +803,9 @@ package body GPS.Location_View is
          end if;
       end if;
 
-      Select_Path (Get_Selection (Self.View), Path);
-      Scroll_To_Cell (Self.View, Path, null, False, 0.1, 0.1);
-      Goto_Location (Self);
+      Select_Path (Get_Selection (Loc.View), Path);
+      Scroll_To_Cell (Loc.View, Path, null, False, 0.1, 0.1);
+      Goto_Location (Loc);
 
       Path_Free (File_Path);
       Path_Free (Path);
@@ -789,19 +836,6 @@ package body GPS.Location_View is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (View   : out Location_View;
-      Kernel : Kernel_Handle;
-      Module : Abstract_Module_ID) is
-   begin
-      View := new Location_View_Record;
-      Initialize (View, Kernel, Module);
-   end Gtk_New;
 
    ------------------
    -- Context_Func --
@@ -898,7 +932,7 @@ package body GPS.Location_View is
 
       elsif Get_Depth (Path) >= 3 then
          Gtk_New (Mitem, -"Remove message");
-         Location_View_Callbacks.Object_Connect
+         Widget_Callback.Object_Connect
            (Mitem, Signal_Activate, On_Remove_Message'Access, Explorer);
          Append (Menu, Mitem);
 
@@ -944,7 +978,7 @@ package body GPS.Location_View is
 
       Gtk_New (Mitem, -"Clear locations");
       Append (Menu, Mitem);
-      Location_View_Callbacks.Object_Connect
+      Widget_Callback.Object_Connect
         (Mitem, Signal_Activate, On_Clear_Locations'Access, Explorer);
 
       Path_Free (Path);
@@ -1077,27 +1111,27 @@ package body GPS.Location_View is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (Self   : access Location_View_Record'Class;
-      Kernel : Kernel_Handle;
-      Module : Abstract_Module_ID)
+      Kernel : access Kernel_Handle_Record'Class)
+      return Gtk_Widget
    is
-      Scrolled : Gtk_Scrolled_Window;
       M        : Gtk_Tree_Model;
-
    begin
-      Initialize_Vbox (Self);
+      Gtk.Scrolled_Window.Initialize (Self);
+      Self.Set_Policy (Policy_Automatic, Policy_Automatic);
 
-      Self.Kernel := Kernel;
+      Self.Kernel := Kernel_Handle (Kernel);
 
       --  Initialize the listener
 
-      Self.Listener := Listener_Access (Register (Kernel));
+      Self.Listener := Listener_Access (Register (Kernel_Handle (Kernel)));
 
       --  Initialize the tree view
 
       M := Get_Model (Locations_Listener_Access (Self.Listener));
       Gtk_New (Self.View, M);
+      Self.Add (Self.View);
       Location_View_Callbacks.Object_Connect
         (Gtk.Tree_Model."-" (M),
          Signal_Row_Deleted,
@@ -1107,14 +1141,10 @@ package body GPS.Location_View is
 
       Self.View.Set_Name ("Locations Tree");
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Add (Scrolled, Self.View);
-      Self.Pack_Start (Scrolled);
 
       --  Initialize the filter panel
 
-      Gtk_New (Self.Filter_Panel, Kernel);
+      Gtk_New (Self.Filter_Panel, Kernel_Handle (Kernel));
       Set_Filter_Visibility (Self, Visible => True);
       Location_View_Callbacks.Object_Connect
         (Self.Filter_Panel,
@@ -1153,7 +1183,7 @@ package body GPS.Location_View is
         (Self.Kernel,
          Event_On_Widget => Self.View,
          Object          => Self,
-         ID              => Module_ID (Module),
+         ID              => Location_Views.Get_Module,
          Context_Func    => Context_Func'Access);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
@@ -1166,6 +1196,8 @@ package body GPS.Location_View is
                 Wrapper (On_Location_Changed'Access),
                 Name  => "locations.location_changed",
                 Watch => GObject (Self));
+
+      return Gtk_Widget (Self.View);
    end Initialize;
 
    -----------------------
@@ -1244,63 +1276,11 @@ package body GPS.Location_View is
    ---------------------------------
 
    function Get_Or_Create_Location_View
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True) return Location_View
-   is
-      Child : MDI_Child;
+     (Kernel : access Kernel_Handle_Record'Class)
+      return Location_View_Access is
    begin
-      Child := Get_Or_Create_Location_View_MDI (Kernel, Allow_Creation);
-
-      if Child = null then
-         return null;
-      else
-         return Location_View (Get_Widget (Child));
-      end if;
+      return Location_View_Access (Location_Views.Get_Or_Create_View (Kernel));
    end Get_Or_Create_Location_View;
-
-   -------------------------------------
-   -- Get_Or_Create_Location_View_MDI --
-   -------------------------------------
-
-   function Get_Or_Create_Location_View_MDI
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True) return MDI_Child
-   is
-      Child     : GPS_MDI_Child;
-      Locations : Location_View;
-   begin
-      if Get_MDI (Kernel) = null then
-         --  We are destroying everything. This function gets called likely
-         --  because a module (code_analysis for instance) tries to cleanup
-         --  the locations view after the latter has already been destroyed)
-         return null;
-      end if;
-
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-         (Get_MDI (Kernel), Location_View_Record'Tag,
-          Visible_Only => not Allow_Creation));
-
-      if Child = null then
-         if not Allow_Creation then
-            return null;
-         end if;
-
-         Gtk_New (Locations, Kernel_Handle (Kernel),
-                  Abstract_Module_ID (Location_View_Module_Id));
-         Gtk_New (Child, Locations,
-                  Module              => Location_View_Module_Id,
-                  Default_Width       => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height      => Gint (Default_Widget_Height.Get_Pref),
-                  Focus_Widget        => Gtk_Widget (Locations.View),
-                  Group               => Group_Consoles,
-                  Desktop_Independent => True);
-         Set_Title (Child, -"Locations");
-         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-         Set_Focus_Child (Child);
-      end if;
-
-      return MDI_Child (Child);
-   end Get_Or_Create_Location_View_MDI;
 
    -------------------------
    -- Preferences_Changed --
@@ -1309,104 +1289,62 @@ package body GPS.Location_View is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      View  : Location_View;
-      Child : MDI_Child;
-
+      View  : constant Location_View := Location_Views.Retrieve_View (Kernel);
    begin
-      Child := Get_Or_Create_Location_View_MDI
-        (Kernel, Allow_Creation => False);
-
-      if Child = null then
-         return;
+      if View /= null then
+         Set_Font_And_Colors (View.View, Fixed_Font => True);
       end if;
-
-      View := Location_View (Get_Widget (Child));
-
-      Set_Font_And_Colors (View.View, Fixed_Font => True);
    end Preferences_Changed;
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
+   -----------------
+   -- Save_To_XML --
+   -----------------
 
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
+   overriding procedure Save_To_XML
+     (View : access Location_View_Record;
+      Node : in out XML_Utils.Node_Ptr)
    is
-      pragma Unreferenced (MDI);
-      Child                    : MDI_Child;
-      View                     : Location_View;
-
    begin
-      if Node.Tag.all = "Location_View_Record" then
-         Child := Get_Or_Create_Location_View_MDI
-           (User, Allow_Creation => True);
-         View := Location_View (Get_Widget (Child));
+      if View.Filter_Panel.Get_Mapped then
+         Set_Attribute (Node, "filter_panel", "TRUE");
 
-         if Boolean'Value (Get_Attribute (Node, "filter_panel", "FALSE")) then
-            Set_Filter_Visibility (View, Visible => True);
-            View.Filter_Panel.Set_Pattern
-              (Get_Attribute (Node, "filter_pattern", ""));
-
-         else
-            Set_Filter_Visibility (View, Visible => False);
+         if View.Filter_Panel.Get_Pattern /= "" then
+            Set_Attribute
+              (Node, "filter_pattern", View.Filter_Panel.Get_Pattern);
          end if;
-
-         View.Filter_Panel.Set_Is_Regexp
-           (Boolean'Value (Get_Attribute (Node, "filter_regexp", "FALSE")));
-         View.Filter_Panel.Set_Hide_Matched
-           (Boolean'Value
-             (Get_Attribute (Node, "filter_hide_matches", "FALSE")));
-
-         return Child;
       end if;
 
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-
-      N    : Node_Ptr;
-      View : Location_View;
-
-   begin
-      if Widget.all in Location_View_Record'Class then
-         View := Location_View (Widget);
-
-         N := new Node;
-         N.Tag := new String'("Location_View_Record");
-
-         if View.Filter_Panel.Get_Mapped then
-            Set_Attribute (N, "filter_panel", "TRUE");
-
-            if View.Filter_Panel.Get_Pattern /= "" then
-               Set_Attribute
-                 (N, "filter_pattern", View.Filter_Panel.Get_Pattern);
-            end if;
-         end if;
-
-         if View.Filter_Panel.Get_Is_Regexp then
-            Set_Attribute (N, "filter_regexp", "TRUE");
-         end if;
-
-         if View.Filter_Panel.Get_Hide_Matched then
-            Set_Attribute (N, "filter_hide_matches", "TRUE");
-         end if;
-
-         return N;
+      if View.Filter_Panel.Get_Is_Regexp then
+         Set_Attribute (Node, "filter_regexp", "TRUE");
       end if;
 
-      return null;
-   end Save_Desktop;
+      if View.Filter_Panel.Get_Hide_Matched then
+         Set_Attribute (Node, "filter_hide_matches", "TRUE");
+      end if;
+   end Save_To_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding procedure Load_From_XML
+     (View : access Location_View_Record; XML : XML_Utils.Node_Ptr)
+   is
+   begin
+      if Boolean'Value (Get_Attribute (XML, "filter_panel", "FALSE")) then
+         Set_Filter_Visibility (View, Visible => True);
+         View.Filter_Panel.Set_Pattern
+           (Get_Attribute (XML, "filter_pattern", ""));
+
+      else
+         Set_Filter_Visibility (View, Visible => False);
+      end if;
+
+      View.Filter_Panel.Set_Is_Regexp
+        (Boolean'Value (Get_Attribute (XML, "filter_regexp", "FALSE")));
+      View.Filter_Panel.Set_Hide_Matched
+        (Boolean'Value (Get_Attribute (XML, "filter_hide_matches", "FALSE")));
+   end Load_From_XML;
 
    ---------------------
    -- Register_Module --
@@ -1415,18 +1353,9 @@ package body GPS.Location_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Module_Name : constant String := "Location View";
-
    begin
-      Location_View_Module_Id := new Location_View_Module;
-      Register_Module
-        (Module      => Location_View_Module_Id,
-         Kernel      => Kernel,
-         Module_Name => Module_Name);
-
+      Location_Views.Register_Module (Kernel, Menu_Name => -"Locations");
       GPS.Location_View.Actions.Register_Actions (Kernel);
-
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
    -----------------------
@@ -1621,7 +1550,7 @@ package body GPS.Location_View is
         (Self.Filter_Panel.Get_Pattern,
          Self.Filter_Panel.Get_Is_Regexp,
          Self.Filter_Panel.Get_Hide_Matched);
-      Get_Or_Create_Location_View_MDI (Self.Kernel).Set_Title
+      Location_Views.Child_From_View (Self.Kernel, Self).Set_Title
         (+"Locations (filtered)");
    end On_Apply_Filter;
 
@@ -1632,7 +1561,8 @@ package body GPS.Location_View is
    procedure On_Cancel_Filter (Self : access Location_View_Record'Class) is
    begin
       Self.View.Get_Filter_Model.Set_Pattern ("", False, False);
-      Get_Or_Create_Location_View_MDI (Self.Kernel).Set_Title (+"Locations");
+      Location_Views.Child_From_View (Self.Kernel, Self).Set_Title
+        (+"Locations");
    end On_Cancel_Filter;
 
    ---------------------------
@@ -1649,7 +1579,8 @@ package body GPS.Location_View is
       end if;
 
       if Visible then
-         Self.Pack_End (Self.Filter_Panel, False, False);
+         --         Self.Pack_End (Self.Filter_Panel, False, False);
+         null;
       else
          Self.Remove (Self.Filter_Panel);
       end if;

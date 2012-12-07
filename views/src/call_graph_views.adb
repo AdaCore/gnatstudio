@@ -71,7 +71,6 @@ with Xref;                        use Xref;
 with Generic_List;
 
 package body Call_Graph_Views is
-   Me : constant Trace_Handle := Create ("CALLGRAPH");
 
    ---------------
    -- Constants --
@@ -161,8 +160,8 @@ package body Call_Graph_Views is
    function From_XML (N : Node_Ptr) return Reference_Record;
    --  Conversion functions
 
-   overriding function Save_To_XML
-     (View : access Callgraph_View_Record) return XML_Utils.Node_Ptr;
+   overriding procedure Save_To_XML
+     (View : access Callgraph_View_Record; XML : in out XML_Utils.Node_Ptr);
    overriding procedure Load_From_XML
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr);
    function Initialize
@@ -1054,8 +1053,8 @@ package body Call_Graph_Views is
    -- Save_To_XML --
    -----------------
 
-   overriding function Save_To_XML
-     (View : access Callgraph_View_Record) return XML_Utils.Node_Ptr
+   overriding procedure Save_To_XML
+     (View : access Callgraph_View_Record; XML : in out XML_Utils.Node_Ptr)
    is
       Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Root  : Node_Ptr;
@@ -1091,10 +1090,6 @@ package body Call_Graph_Views is
             Get_Value (Model, Iter, Entity_Column, Value);
             Entity := From_GValue (Value);
             Unset (Value);
-
-            Trace (Me, "MANU Save desktop, got entity="
-                   & View.Kernel.Databases.Get_Name (Entity)
-                   & " " & Boolean'Image (Entity = No_General_Entity));
 
             if Entity /= No_General_Entity then
                N := new XML_Utils.Node;
@@ -1153,11 +1148,11 @@ package body Call_Graph_Views is
 
    begin
       Root := new Node;
+      XML.Child := Root;
       Root.Tag := new String'("callgraph");
       Set_Attribute (Root, "position", Get_Position (View.Pane)'Img);
 
       Recursive_Save (Null_Iter, Root);
-      return Root;
    end Save_To_XML;
 
    -------------------
@@ -1202,7 +1197,6 @@ package body Call_Graph_Views is
          pragma Unreferenced (Tmp);
       begin
          while N /= null loop
-            Trace (Me, "MANU Load desktop, tag=" & N.Tag.all);
             if N.Tag.all = "loc" then
                L := Get_Locations_List (View, Parent_Iter, True);
                Append (L.all, From_XML (N));

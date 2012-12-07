@@ -17,18 +17,13 @@
 
 with Ada.Unchecked_Conversion;
 
-with Gtkada.MDI;
-with GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;
-with GPS.Location_View;
+with Glib.Main;                use Glib.Main;
+with Gtkada.MDI;               use Gtkada.MDI;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Location_View;        use GPS.Location_View;
 
 package body GPS.Kernel.Messages.View is
-
-   use Glib.Main;
-   use Gtkada.MDI;
-   use GPS.Kernel.MDI;
-   use GPS.Kernel.Preferences;
-   use GPS.Location_View;
 
    function To_View_Manager is
      new Ada.Unchecked_Conversion (System.Address, View_Manager_Access);
@@ -47,8 +42,9 @@ package body GPS.Kernel.Messages.View is
       Category : Ada.Strings.Unbounded.Unbounded_String)
    is
    begin
-      Get_Or_Create_Location_View (Self.Kernel).Expand_Category
-        (Category,
+      Expand_Category
+        (Get_Or_Create_Location_View (Self.Kernel),
+         Category,
          Self.Goto_First_Location and then Auto_Jump_To_First.Get_Pref);
    end Category_Added;
 
@@ -76,10 +72,12 @@ package body GPS.Kernel.Messages.View is
 
    procedure Expand_Category
      (Kernel   : not null access Kernel_Handle_Record'Class;
-      Category : String) is
+      Category : String)
+   is
    begin
-      Get_Or_Create_Location_View (Kernel).Expand_Category
-        (Ada.Strings.Unbounded.To_Unbounded_String (Category), False);
+      Expand_Category
+        (Get_Or_Create_Location_View (Kernel),
+         Ada.Strings.Unbounded.To_Unbounded_String (Category), False);
    end Expand_Category;
 
    -----------------
@@ -89,10 +87,12 @@ package body GPS.Kernel.Messages.View is
    procedure Expand_File
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Category : String;
-      File     : GNATCOLL.VFS.Virtual_File) is
+      File     : GNATCOLL.VFS.Virtual_File)
+   is
    begin
-      Get_Or_Create_Location_View (Kernel).Expand_File
-        (Ada.Strings.Unbounded.To_Unbounded_String (Category), File, False);
+      Expand_File
+        (Get_Or_Create_Location_View (Kernel),
+       Ada.Strings.Unbounded.To_Unbounded_String (Category), File, False);
    end Expand_File;
 
    -------------------
@@ -104,7 +104,6 @@ package body GPS.Kernel.Messages.View is
       Message : not null access Abstract_Message'Class)
    is
       pragma Unreferenced (Message);
-
    begin
       Highlight_Child
         (Find_MDI_Child

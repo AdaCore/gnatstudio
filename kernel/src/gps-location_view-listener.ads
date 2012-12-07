@@ -18,6 +18,7 @@
 --  This package provides classic Category/File/Message Gtk+ model to
 --  be used in location views.
 
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Gtkada.Abstract_Tree_Model;
@@ -25,6 +26,7 @@ with GNATCOLL.VFS;
 
 with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 
+with Glib;
 private with Gdk.Color;
 private with Gdk.Pixbuf;
 private with Glib.Values;

@@ -18,7 +18,6 @@ with Commands.Interactive;
 with Gtkada.MDI;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Actions;
-with GPS.Kernel.MDI;
 
 package body GPS.Location_View.Actions is
 
@@ -52,17 +51,11 @@ package body GPS.Location_View.Actions is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
-
-      Child : constant Gtkada.MDI.MDI_Child :=
-                Gtkada.MDI.Find_MDI_Child_By_Tag
-                  (GPS.Kernel.MDI.Get_MDI
-                       (GPS.Kernel.Get_Kernel (Context.Context)),
-                   Location_View_Record'Tag);
-
+      View : constant Location_View_Access := Get_Or_Create_Location_View
+        (Get_Kernel (Context.Context));
    begin
-      if Child /= null then
-         On_Clear_Locations
-           (Location_View_Record'Class (Child.Get_Widget.all)'Access);
+      if View /= null then
+         On_Clear_Locations (View);
       end if;
 
       return Commands.Success;
@@ -78,17 +71,11 @@ package body GPS.Location_View.Actions is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
-
-      Child : constant Gtkada.MDI.MDI_Child :=
-                Gtkada.MDI.Find_MDI_Child_By_Tag
-                  (GPS.Kernel.MDI.Get_MDI
-                       (GPS.Kernel.Get_Kernel (Context.Context)),
-                   Location_View_Record'Tag);
-
+      View : constant Location_View_Access := Get_Or_Create_Location_View
+        (Get_Kernel (Context.Context));
    begin
-      if Child /= null then
-         On_Remove_Message
-           (Location_View_Record'Class (Child.Get_Widget.all)'Access);
+      if View /= null then
+         On_Remove_Message (View);
       end if;
 
       return Commands.Success;

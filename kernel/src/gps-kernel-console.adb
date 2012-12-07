@@ -41,9 +41,12 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Location_View;      use GPS.Location_View;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
+
+pragma Unreferenced (GPS.Location_View);
 
 package body GPS.Kernel.Console is
 

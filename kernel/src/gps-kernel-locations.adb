@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Widget;                use Gtk.Widget;
 
 with Basic_Types;               use Basic_Types;
 with GPS.Kernel.Console;
@@ -38,9 +39,8 @@ package body GPS.Kernel.Locations is
      (Kernel    : access Kernel_Handle_Record'Class;
       Backwards : Boolean := False)
    is
-      View : constant GPS.Location_View.Location_View :=
-               GPS.Location_View.Get_Or_Create_Location_View (Kernel, False);
-
+      View : constant GPS.Location_View.Location_View_Access :=
+               GPS.Location_View.Get_Or_Create_Location_View (Kernel);
    begin
       if View /= null then
          GPS.Location_View.Next_Item (View, Backwards);

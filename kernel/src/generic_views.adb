@@ -38,30 +38,6 @@ with GPS.Stock_Icons;         use GPS.Stock_Icons;
 
 package body Generic_Views is
 
-   -------------------
-   -- Load_From_XML --
-   -------------------
-
-   procedure Load_From_XML
-     (View : access View_Record; XML : XML_Utils.Node_Ptr)
-   is
-      pragma Unreferenced (View, XML);
-   begin
-      null;
-   end Load_From_XML;
-
-   -----------------
-   -- Save_To_XML --
-   -----------------
-
-   function Save_To_XML
-     (View : access View_Record) return XML_Utils.Node_Ptr
-   is
-      pragma Unreferenced (View);
-   begin
-      return null;
-   end Save_To_XML;
-
    ------------------
    -- Simple_Views --
    ------------------
@@ -267,11 +243,7 @@ package body Generic_Views is
       begin
          if Node.Tag.all = Module_Name then
             Create_If_Needed (User, Child, View);
-
-            if Node.Child /= null then
-               Load_From_XML (View, Node.Child);
-            end if;
-
+            Load_From_XML (View, Node);
             return MDI_Child (Child);
          end if;
          return null;
@@ -292,7 +264,7 @@ package body Generic_Views is
          if Tb and then Widget.all in Toplevel_Box'Class then
             N := new Node;
             N.Tag := new String'(Module_Name);
-            N.Child := Save_To_XML (Toplevel_Box (Widget.all).Initial);
+            Save_To_XML (Toplevel_Box (Widget.all).Initial, N);
             return N;
 
          elsif not Tb
@@ -300,7 +272,7 @@ package body Generic_Views is
          then
             N := new Node;
             N.Tag := new String'(Module_Name);
-            N.Child := Save_To_XML (View_Access (Widget));
+            Save_To_XML (View_Access (Widget), N);
             return N;
          end if;
          return null;
