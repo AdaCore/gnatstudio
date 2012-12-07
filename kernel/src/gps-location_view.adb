@@ -69,7 +69,6 @@ with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
@@ -90,6 +89,8 @@ package body GPS.Location_View is
      "locations-sort-by-subcategory";
    Hist_Auto_Jump_To_First : constant History_Key :=
      "locations-auto-jump-to-first";
+   Hist_Locations_Wrap : constant History_Key := "locations-wrap";
+   Hist_Locations_Auto_Close : constant History_Key := "locations-auto-close";
 
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
@@ -836,7 +837,9 @@ package body GPS.Location_View is
          if not Success
            or else Get_Iter (Model, File_Path) = Null_Iter
          then
-            if Locations_Wrap.Get_Pref then
+            if Get_History (Get_History (Loc.Kernel).all,
+                            Hist_Locations_Wrap)
+            then
                File_Path := Copy (Category_Path);
                Down (File_Path);
 
@@ -1383,6 +1386,23 @@ package body GPS.Location_View is
         (Check, Gtk.Check_Menu_Item.Signal_Toggled,
          On_Change_Sort'Access, View);  --  force refresh
       Menu.Add (Check);
+
+      Gtk_New (Check, -"Wrap around on next/previous");
+      Check.Set_Tooltip_Text
+        (-("Whether using the Next Tag and Previous Tag actions "
+         & " should wrap around to the beginning when reaching the end of "
+         & " the category."));
+      Associate (Get_History (View.Kernel).all,
+                 Hist_Locations_Wrap, Check, Default => True);
+      Menu.Add (Check);
+
+      Gtk_New (Check, -"Auto close Locations");
+      Check.Set_Tooltip_Text
+        (-("Whether the Locations view should be closed "
+         & "automatically when it becomes empty."));
+      Associate (Get_History (View.Kernel).all,
+                 Hist_Locations_Auto_Close, Check, Default => True);
+      Menu.Add (Check);
    end Create_Menu;
 
    ---------------------
@@ -1401,6 +1421,14 @@ package body GPS.Location_View is
         (Hist => Get_History (Kernel).all,
          Key  => Hist_Auto_Jump_To_First,
          Default_Value => True);
+      Create_New_Boolean_Key_If_Necessary
+        (Hist => Get_History (Kernel).all,
+         Key  => Hist_Locations_Wrap,
+         Default_Value => True);
+      Create_New_Boolean_Key_If_Necessary
+        (Hist => Get_History (Kernel).all,
+         Key  => Hist_Locations_Auto_Close,
+         Default_Value => False);
 
       Command := new Remove_Message_Command;
       Register_Action
@@ -1632,7 +1660,9 @@ package body GPS.Location_View is
      (Self : access Location_View_Record'Class)
    is
    begin
-      if Locations_Auto_Close.Get_Pref then
+      if Get_History (Get_History (Self.Kernel).all,
+                      Hist_Locations_Auto_Close)
+      then
          if Get_Iter_First (Self.View.Get_Model) = Null_Iter then
             Self.Do_Not_Delete_Messages_On_Exit := True;
             Destroy (Self);
