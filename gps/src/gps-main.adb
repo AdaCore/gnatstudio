@@ -521,26 +521,22 @@ procedure GPS.Main is
 
       declare
          Python_Path : String_Access := Getenv ("PYTHONPATH");
+         New_Val : String_Access;
       begin
          if Python_Path.all = "" then
-            Setenv
-              ("PYTHONPATH",
-               +Create_From_Dir (Prefix_Dir, "share/gps/python").Full_Name);
+            New_Val := new String'
+              (+Create_From_Dir (Prefix_Dir, "share/gps/python").Full_Name);
          else
-            Setenv
-              ("PYTHONPATH",
-               +To_Path
+            New_Val := new String'
+              (+To_Path
                  (From_Path (+Python_Path.all) &
                   (1 => Create_From_Dir (Prefix_Dir, "share/gps/python"))));
          end if;
 
+         Setenv ("PYTHONPATH", New_Val.all);
+         Trace (Me, "PYTHONPATH=" & New_Val.all);
          Free (Python_Path);
-
-         if Active (Me) then
-            Python_Path := Getenv ("PYTHONPATH");
-            Trace (Me, "PYTHONPATH=" & Python_Path.all);
-            Free (Python_Path);
-         end if;
+         Free (New_Val);
       end;
 
       Gtkada.Intl.Setlocale;
