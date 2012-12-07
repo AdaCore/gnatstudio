@@ -99,7 +99,8 @@ def export_locations_to_editor (menu):
 def on_filter (context):
    return context.module_name == "Location View"
 
-GPS.Menu.create ("/File/Messages/_Export Locations to Editor", export_locations_to_editor)
+GPS.Menu.create("/File/Messages", ref="Change Directory...", add_before=False)
+GPS.Menu.create("/File/Messages/_Export Locations to Editor", export_locations_to_editor)
 GPS.Contextual ("Export messages to editor").create (
   on_activate=export_locations_to_editor,
   filter=on_filter)
