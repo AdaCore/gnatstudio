@@ -29,7 +29,6 @@ with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
 
 with Commands;                          use Commands;
 with GPS.Intl;                          use GPS.Intl;
-with GPS.Kernel.Console;                use GPS.Kernel.Console;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple;        use GPS.Kernel.Messages.Simple;
@@ -480,8 +479,8 @@ package body Vdiff2_Module.Utils is
          end if;
       end if;
 
-      Console.Insert
-        (Kernel, -"One of these files is already used in VDiff",
+      Kernel.Insert
+        (-"One of these files is already used in VDiff",
          Mode => Info);
 
       return null;
@@ -1317,7 +1316,7 @@ package body Vdiff2_Module.Utils is
       end if;
 
       if Result = Diff_Chunk_List.Null_List then
-         Console.Insert (Kernel, -"No differences found.", Mode => Info);
+         Kernel.Insert (-"No differences found.");
          return null;
       end if;
 
@@ -1370,7 +1369,7 @@ package body Vdiff2_Module.Utils is
       Result := Diff (Kernel, Orig_File, New_File, Diff_File, Revert);
 
       if Result = Diff_Chunk_List.Null_List then
-         Console.Insert (Kernel, -"No differences found.", Mode => Info);
+         Kernel.Insert (-"No differences found.");
          return null;
       end if;
 

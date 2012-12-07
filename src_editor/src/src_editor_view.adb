@@ -65,7 +65,6 @@ with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;

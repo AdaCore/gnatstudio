@@ -50,7 +50,6 @@ with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
 with GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
@@ -2238,12 +2237,11 @@ package body Src_Contexts is
                            Write (Writable, Contents);
                            Close (Writable);
                         else
-                           Insert
-                             (Kernel,
-                              "Could not save " & (+File.Full_Name.all)
+                           Kernel.Insert
+                             ("Could not save " & (+File.Full_Name.all)
                               & " with encoding " & Get_File_Charset (File)
                               & ", replace operation aborted for this file.",
-                              Mode => GPS.Kernel.Console.Error);
+                              Mode => GPS.Kernel.Error);
                            Error_Free (Error.all);
                            Error.all := null;
                         end if;

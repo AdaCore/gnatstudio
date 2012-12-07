@@ -47,7 +47,7 @@ with Basic_Types;             use Basic_Types;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Interactive;  use GPS.Kernel.Interactive;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;       use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;

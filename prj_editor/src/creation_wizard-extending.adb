@@ -33,7 +33,6 @@ with Gtk.Widget;               use Gtk.Widget;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
@@ -584,10 +583,9 @@ package body Creation_Wizard.Extending is
       if Response = Gtk_Response_Yes then
          Delete (File, Removed);
          if not Removed then
-            GPS.Kernel.Console.Insert
-              (Kernel,
-               Text => -"Failed to remove " & File.Display_Full_Name,
-               Mode => GPS.Kernel.Console.Error);
+            Kernel.Insert
+              (Text => -"Failed to remove " & File.Display_Full_Name,
+               Mode => GPS.Kernel.Error);
             return Failure;
          end if;
       end if;
@@ -606,9 +604,8 @@ package body Creation_Wizard.Extending is
          Free (List);
 
       elsif Project.Has_Attribute (Source_List_File_Attribute) then
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            Text => -"Project '"
+         Kernel.Insert
+           (Text => -"Project '"
             & Project.Name
             & (-("' specifies its sources via a"
               & " Source_List_File attribute, which wasn't edited"

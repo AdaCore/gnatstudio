@@ -28,7 +28,6 @@ with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with XML_Utils;                  use XML_Utils;
 
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with Log_Utils;                  use Log_Utils;
 with Projects;                   use Projects;
 with String_Hash;
@@ -645,13 +644,12 @@ package body VCS_Activities is
       --  file is not yet part of an open activity.
 
       if Item.VCS /= null and then VCS /= Item.VCS then
-         Console.Insert
-           (Kernel,
-            "Cannot add " & Display_Full_Name (File)
+         Kernel.Insert
+           ("Cannot add " & Display_Full_Name (File)
             & " to activity, VCS not matching.");
 
       elsif F_Activity /= No_Activity and then not Is_Closed (F_Activity) then
-         Console.Insert (Kernel, "Cannot add a file to a closed activity.");
+         Kernel.Insert ("Cannot add a file to a closed activity.");
 
       else
          Add (File);

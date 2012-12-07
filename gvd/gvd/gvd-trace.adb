@@ -18,7 +18,6 @@
 with Ada.Unchecked_Conversion;
 with Debugger;             use Debugger;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GPS.Kernel.Console;   use GPS.Kernel.Console;
 with GPS.Main_Window;      use GPS.Main_Window;
 with Process_Proxies;      use Process_Proxies;
 with Traces;               use Traces;
@@ -53,7 +52,7 @@ package body GVD.Trace is
       Str    : String) is
    begin
       Output_Line ("# " & Str);
-      Console.Insert (Kernel, Str, Mode => Console.Error);
+      Kernel.Insert (Str, Mode => GPS.Kernel.Error);
    end Output_Error;
 
    -----------------
@@ -74,7 +73,7 @@ package body GVD.Trace is
       Str    : String) is
    begin
       Output_Line ("% " & Str);
-      Console.Insert (Kernel, Str, Mode => Console.Info);
+      Kernel.Insert (Str);
    end Output_Info;
 
    --------------------

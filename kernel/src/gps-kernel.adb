@@ -53,7 +53,6 @@ with Default_Preferences;       use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -735,12 +734,11 @@ package body GPS.Kernel is
             (-"Please verify that you have write access to this file."),
             Error, Button_OK, Justification => Justify_Left);
       else
-         GPS.Kernel.Console.Insert
-           (Handle,
-            (-"Could not save the configuration file ") &
+         Handle.Insert
+           ((-"Could not save the configuration file ") &
             Filename.Display_Full_Name & ASCII.LF &
             (-"Please verify that you have write access to this file."),
-            Mode => GPS.Kernel.Console.Error);
+            Mode => Error);
       end if;
    end Report_Preference_File_Error;
 
@@ -1974,5 +1972,74 @@ package body GPS.Kernel is
          Kernel.Key_Setter_Function (Kernel, Action, Accel_Key, Accel_Mods);
       end if;
    end Set_Default_Key;
+
+   -------------------------
+   -- Set_Messages_Window --
+   -------------------------
+
+   procedure Set_Messages_Window
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Console : not null access Abstract_Messages_Window'Class) is
+   begin
+      Kernel.Messages := Abstract_Messages_Window_Access (Console);
+   end Set_Messages_Window;
+
+   -------------------------
+   -- Get_Messages_Window --
+   -------------------------
+
+   function Get_Messages_Window
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+      return Virtual_Console
+   is
+   begin
+      return Kernel.Messages.Get_Virtual_Console;
+   end Get_Messages_Window;
+
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info) is
+   begin
+      Kernel.Messages.Insert (Text, Add_LF, Mode);
+   end Insert;
+
+   -----------------
+   -- Insert_UTF8 --
+   -----------------
+
+   procedure Insert_UTF8
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      UTF8   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info) is
+   begin
+      Kernel.Messages.Insert_UTF8 (UTF8, Add_LF, Mode);
+   end Insert_UTF8;
+
+   --------------------
+   -- Clear_Messages --
+   --------------------
+
+   procedure Clear_Messages
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+   begin
+      Kernel.Messages.Clear;
+   end Clear_Messages;
+
+   -------------------
+   -- Raise_Console --
+   -------------------
+
+   procedure Raise_Console
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+   begin
+      Kernel.Messages.Raise_Console;
+   end Raise_Console;
 
 end GPS.Kernel;

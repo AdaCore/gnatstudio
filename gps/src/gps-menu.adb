@@ -34,7 +34,6 @@ with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;   use GPS.Kernel.Clipboard;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -127,9 +126,8 @@ package body GPS.Menu is
 
    exception
       when VFS_Directory_Error =>
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            "Cannot change to directory: " &
+         Kernel.Insert
+           ("Cannot change to directory: " &
             Dir.Display_Full_Name,
             Mode => Error);
       when E : others => Trace (Exception_Handle, E);

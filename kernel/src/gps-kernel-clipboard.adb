@@ -33,7 +33,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 
 with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Traces;                     use Traces;

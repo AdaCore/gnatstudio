@@ -26,7 +26,6 @@ with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
 with Toolchains_Old;         use Toolchains_Old;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
@@ -254,8 +253,8 @@ package body Diff_Utils2 is
       Cmd := Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = No_File then
-         Console.Insert
-           (Kernel, "command not found: " & Diff_Command &
+         Kernel.Insert
+           ("command not found: " & Diff_Command &
             ". You should modify the ""Visual Diff"" preferences",
             Mode => Error);
          Free (Cmd_Args);
@@ -331,8 +330,8 @@ package body Diff_Utils2 is
         Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = No_File then
-         Console.Insert
-           (Kernel, "command not found: " & Patch_Command &
+         Kernel.Insert
+           ("command not found: " & Patch_Command &
             ". You should modify the ""Visual Diff"" preferences",
             Mode => Error);
          Free (Cmd_Args);
@@ -467,8 +466,8 @@ package body Diff_Utils2 is
       Cmd      := Locate_Tool_Executable (+Cmd_Args (Cmd_Args'First).all);
 
       if Cmd = No_File then
-         Console.Insert
-           (Kernel, "command not found: " & Diff3_Command &
+         Kernel.Insert
+           ("command not found: " & Diff3_Command &
             ". You should modify the ""Visual Diff"" preferences",
             Mode => Error);
          Free (Cmd_Args);

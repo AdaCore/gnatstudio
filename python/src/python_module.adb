@@ -38,7 +38,6 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Commands.Custom;            use Commands.Custom;
 with Generic_Views;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
@@ -191,8 +190,7 @@ package body Python_Module is
 
       Init_PyGtk_Support (Script);
 
-      Set_Default_Console
-        (Script, Get_Or_Create_Virtual_Console (Get_Console (Kernel)));
+      Set_Default_Console (Script, Kernel.Get_Messages_Window);
 
       Python_Views.Register_Module
         (Kernel,
@@ -371,9 +369,7 @@ package body Python_Module is
       if Script /= null then
          --  Make sure the error messages will not be lost
 
-         Set_Default_Console
-           (Script,
-            Get_Or_Create_Virtual_Console (Get_Console (Kernel)));
+         Set_Default_Console (Script, Kernel.Get_Messages_Window);
          Load_Directory (Script, Dir, To_Load'Unrestricted_Access);
       end if;
    end Load_Dir;

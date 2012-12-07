@@ -32,7 +32,6 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -1819,9 +1818,8 @@ package body Docgen2 is
             --  Files are controlled objects that do not need explicit cleanup
             Command.Src_Files.Clear;
 
-            GPS.Kernel.Console.Insert
-              (Command.Kernel,
-               -"Documentation generated successfully in " &
+            Command.Kernel.Insert
+              (-"Documentation generated successfully in " &
                Get_Doc_Directory (Docgen_Object (Command)).Display_Full_Name);
 
             return Success;

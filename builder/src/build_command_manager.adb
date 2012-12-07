@@ -24,7 +24,6 @@ with Builder_Facility_Module;     use Builder_Facility_Module;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Commands.Builder;            use Commands.Builder;
 with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Kernel.Console;          use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Macros;           use GPS.Kernel.Macros;
 with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
@@ -243,7 +242,7 @@ package body Build_Command_Manager is
          when Verbose =>
             M := Verbose;
       end case;
-      Console.Insert (Adapter.Kernel, Text, Add_LF, M);
+      Adapter.Kernel.Insert (Text, Add_LF, M);
    end Console_Insert;
 
    --------------------------------------------

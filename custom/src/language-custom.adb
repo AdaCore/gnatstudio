@@ -43,7 +43,6 @@ with GPS.Intl;                  use GPS.Intl;
 with Project_Viewers;           use Project_Viewers;
 with Projects;                  use Projects;
 with Naming_Editors;            use Naming_Editors;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with String_Utils;              use String_Utils;
 with XML_Utils;                 use XML_Utils;

@@ -172,11 +172,10 @@ package body CodePeer.Module.Bridge is
       CL := Create ("gps_codepeer_bridge");
 
       if not Is_Directory (Output_Directory) then
-         Console.Insert
-           (Module.Kernel,
-            -"cannot find CodePeer output directory: " &
+         Module.Kernel.Insert
+           (-"cannot find CodePeer output directory: " &
             Output_Directory.Display_Full_Name,
-            Mode => Console.Error);
+            Mode => GPS.Kernel.Error);
          return;
       end if;
 
@@ -234,11 +233,10 @@ package body CodePeer.Module.Bridge is
          end case;
 
       else
-         GPS.Kernel.Console.Insert
-           (Context.Module.Get_Kernel,
-            "gps_codepeer_bridge execution failed",
+         Context.Module.Get_Kernel.Insert
+           ("gps_codepeer_bridge execution failed",
             True,
-            GPS.Kernel.Console.Error);
+            GPS.Kernel.Error);
       end if;
    end On_Bridge_Exit;
 
@@ -262,8 +260,8 @@ package body CodePeer.Module.Bridge is
          Delete (Reply_File_Name, Success);
 
          if not Success then
-            Console.Insert
-              (Module.Kernel, -"Unable to remove code review file");
+            Module.Kernel.Insert
+              (-"Unable to remove code review file");
          end if;
       end if;
    end Remove_Inspection_Cache_File;

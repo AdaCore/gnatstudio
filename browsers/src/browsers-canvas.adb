@@ -72,7 +72,6 @@ with Commands.Interactive;              use Commands.Interactive;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
-with GPS.Kernel.Console;                use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
@@ -968,9 +967,9 @@ package body Browsers.Canvas is
             Destroy (Surface);
 
             if Status /= Cairo_Status_Success then
-               GPS.Kernel.Console.Insert
-                 (Kernel, "Cannot create " & Display_Full_Name (Name),
-                  Mode => GPS.Kernel.Console.Error);
+               Kernel.Insert
+                 ("Cannot create " & Display_Full_Name (Name),
+                  Mode => GPS.Kernel.Error);
             end if;
 
             State_Pushed := False;

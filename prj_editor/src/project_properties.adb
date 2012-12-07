@@ -70,7 +70,6 @@ with Basic_Types;               use Basic_Types;
 with Creation_Wizard;           use Creation_Wizard;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;

@@ -56,7 +56,6 @@ with Config;
 with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                 use GPS.Intl;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;

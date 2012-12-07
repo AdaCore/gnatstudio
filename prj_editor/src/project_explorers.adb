@@ -71,7 +71,6 @@ with Find_Utils;                use Find_Utils;
 with Generic_Views;
 with Histories;                 use Histories;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -3068,7 +3067,7 @@ package body Project_Explorers is
          Insert (Kernel,
                  -"File not found in the explorer: "
                  & Display_Base_Name (File_Information (Context.Context)),
-                 Mode => GPS.Kernel.Console.Error);
+                 Mode => GPS.Kernel.Error);
       end if;
 
       Free (C);

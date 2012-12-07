@@ -30,7 +30,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Log_Utils;                 use Log_Utils;
 
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;

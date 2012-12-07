@@ -60,7 +60,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Interactive;    use GPS.Kernel.Interactive;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;

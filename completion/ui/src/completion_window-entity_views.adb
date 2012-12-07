@@ -32,7 +32,6 @@ with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 

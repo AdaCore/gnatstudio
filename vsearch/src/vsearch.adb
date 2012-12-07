@@ -56,7 +56,6 @@ with Gtkada.Types;              use Gtkada.Types;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;

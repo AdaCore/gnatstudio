@@ -71,7 +71,6 @@ with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Charsets;               use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;                use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
@@ -1377,8 +1376,8 @@ package body Src_Editor_Module is
          end if;
 
       else
-         Console.Insert
-           (Kernel, (-"Cannot open file ") & "'" & Display_Full_Name (File)
+         Kernel.Insert
+           ((-"Cannot open file ") & "'" & Display_Full_Name (File)
             & "'",
             Add_LF => True,
             Mode   => Error);
@@ -1812,7 +1811,7 @@ package body Src_Editor_Module is
       Source           : Source_Editor_Box;
    begin
       if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
-         Console.Insert (Kernel, "No source file selected", Mode => Error);
+         Kernel.Insert ("No source file selected", Mode => Error);
          return;
       end if;
 
@@ -1847,12 +1846,12 @@ package body Src_Editor_Module is
       if Has_Area_Information (Context) then
          Get_Area (Context, Natural (Start_Line), Natural (End_Line));
       else
-         Console.Insert (Kernel, "No selection", Mode => Error);
+         Kernel.Insert ("No selection", Mode => Error);
          return;
       end if;
 
       if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
-         Console.Insert (Kernel, "No source file selected", Mode => Error);
+         Kernel.Insert ("No source file selected", Mode => Error);
          return;
       end if;
 

@@ -27,6 +27,7 @@ with Gtkada.MDI;                       use Gtkada.MDI;
 
 with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
+with GPS.Kernel.Interactive;           use GPS.Kernel.Interactive;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Legacy;       use GPS.Kernel.Messages.Legacy;
 with GPS.Intl;                         use GPS.Intl;
@@ -136,7 +137,7 @@ package body Commands.Builder is
         and then Status /= 0
         and then not Build_Data.Background
       then
-         Console.Raise_Console (Data.Kernel);
+         Data.Kernel.Raise_Console;
       end if;
 
       Destroy (Build_Data.Background_Env);

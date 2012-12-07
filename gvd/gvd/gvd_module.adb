@@ -53,7 +53,6 @@ with Commands;                  use Commands;
 with Debugger;                  use Debugger;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -645,8 +644,8 @@ package body GVD_Module is
             end;
 
          else
-            Console.Insert
-              (Kernel, (-"Could not find file: ") & S.Display_Full_Name,
+            Kernel.Insert
+              ((-"Could not find file: ") & S.Display_Full_Name,
                Mode => Error);
          end if;
       end;
@@ -1343,8 +1342,8 @@ package body GVD_Module is
             Exec := GNATCOLL.VFS.Locate_On_Path (Base_Name (S));
 
             if not Is_Regular_File (Exec) then
-               Console.Insert
-                 (Kernel, (-"Could not find file: ") & Display_Base_Name (S),
+               Kernel.Insert
+                 ((-"Could not find file: ") & Display_Base_Name (S),
                   Mode => Error);
                S := GNATCOLL.VFS.No_File;
             else
@@ -1358,8 +1357,8 @@ package body GVD_Module is
 
       exception
          when Executable_Not_Found =>
-            Console.Insert
-              (Kernel, (-"Could not find file: ") & Display_Full_Name (S),
+            Kernel.Insert
+              ((-"Could not find file: ") & Display_Full_Name (S),
                Mode => Error);
       end;
 
@@ -1405,8 +1404,8 @@ package body GVD_Module is
                Mode => GVD.Types.Visible);
 
          else
-            Console.Insert
-              (Kernel, (-"Could not find core file: ") &
+            Kernel.Insert
+              ((-"Could not find core file: ") &
                Display_Full_Name (S),
                Mode => Error);
          end if;

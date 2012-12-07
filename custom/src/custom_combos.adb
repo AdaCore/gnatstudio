@@ -34,7 +34,6 @@ with Gtk.Label;          use Gtk.Label;
 with Gtk.Widget;         use Gtk.Widget;
 
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;

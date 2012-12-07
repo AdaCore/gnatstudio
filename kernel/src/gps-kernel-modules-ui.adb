@@ -58,7 +58,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -335,9 +334,8 @@ package body GPS.Kernel.Modules.UI is
          Activate (Menu);
          return Success;
       else
-         Console.Insert
-           (Command.Kernel,
-            (-"Can't execute ") & Command.Menu_Name.all,
+         Command.Kernel.Insert
+           ((-"Can't execute ") & Command.Menu_Name.all,
             Mode => Error);
          return Failure;
       end if;
@@ -2256,8 +2254,8 @@ package body GPS.Kernel.Modules.UI is
         Lookup_Action (B.Kernel, B.Action.all);
    begin
       if Action = null then
-         GPS.Kernel.Console.Insert
-           (B.Kernel, "Command not found: '" & B.Action.all & "'",
+         B.Kernel.Insert
+           ("Command not found: '" & B.Action.all & "'",
             Mode => Error);
 
       else

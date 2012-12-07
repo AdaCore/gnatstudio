@@ -25,7 +25,6 @@ with Glib.Object;               use Glib.Object;
 
 with Generic_List;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;

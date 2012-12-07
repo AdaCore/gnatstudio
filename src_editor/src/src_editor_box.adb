@@ -72,7 +72,6 @@ with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -315,8 +314,8 @@ package body Src_Editor_Box is
 
    begin
       if Get_Filename (Editor) = GNATCOLL.VFS.No_File then
-         Console.Insert
-           (Kernel, -"Cross-references not possible on unamed files",
+         Kernel.Insert
+           (-"Cross-references not possible on unamed files",
             Mode => Error);
          return;
       end if;
@@ -337,9 +336,8 @@ package body Src_Editor_Box is
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
 
-         Console.Insert
-           (Kernel,
-            -"No cross-reference information found for "
+         Kernel.Insert
+           (-"No cross-reference information found for "
             & Entity_Name_Information (Context) & ASCII.LF,
             Mode => Error);
          Pop_State (Kernel_Handle (Kernel));
@@ -473,9 +471,8 @@ package body Src_Editor_Box is
             if Get_Language_Context
               (Get_Language (Source.Source_Buffer)).Accurate_Xref
             then
-               Console.Insert
-                 (Kernel,
-                  -("xref info mismatch, cursor was set at closest ref to ")
+               Kernel.Insert
+                 (-("xref info mismatch, cursor was set at closest ref to ")
                     & Entity_Name);
             end if;
 
@@ -2084,8 +2081,8 @@ package body Src_Editor_Box is
 
       exception
          when Constraint_Error =>
-            Console.Insert
-              (Kernel, -"Invalid line number: " & Str, Mode => Error);
+            Kernel.Insert
+              (-"Invalid line number: " & Str, Mode => Error);
       end;
    end On_Goto_Line;
 
@@ -2163,9 +2160,8 @@ package body Src_Editor_Box is
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
 
-         Console.Insert
-           (Kernel,
-            -"No cross-reference information found for "
+         Kernel.Insert
+           (-"No cross-reference information found for "
             & Entity_Name_Information (Context.Context) & ASCII.LF,
             Mode => Error);
          return Commands.Failure;
@@ -2179,9 +2175,8 @@ package body Src_Editor_Box is
             Entity_Type := Get_Type_Of (Db, Entity);
 
             if Is_Predefined_Entity (Db, Entity_Type) then
-               Console.Insert
-                 (Kernel,
-                  Get_Name (Db, Entity)
+               Kernel.Insert
+                 (Get_Name (Db, Entity)
                   & " is of predefined type "
                   & Get_Name (Db, Entity_Type));
                return Commands.Failure;
@@ -2267,9 +2262,8 @@ package body Src_Editor_Box is
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
 
-         Console.Insert_UTF8
-           (Kernel,
-            -"No cross-reference information found for "
+         Kernel.Insert_UTF8
+           (-"No cross-reference information found for "
             & Entity_Name_Information (Context.Context) & ASCII.LF,
             Mode => Error);
          return Commands.Failure;
@@ -2286,9 +2280,8 @@ package body Src_Editor_Box is
             end if;
 
             if Is_Predefined_Entity (Db, Entity_Type) then
-               Console.Insert
-                 (Kernel,
-                  Name & (-" is of predefined type ")
+               Kernel.Insert
+                 (Name & (-" is of predefined type ")
                   & Get_Name (Db, Entity_Type));
                return Commands.Failure;
             end if;
@@ -2823,14 +2816,12 @@ package body Src_Editor_Box is
 
       else
          if Column = 1 then
-            Console.Insert
-              (Editor.Kernel,
-               -"Invalid line number: " & Image (Integer (Line)),
+            Editor.Kernel.Insert
+              (-"Invalid line number: " & Image (Integer (Line)),
                Mode => Error);
          else
-            Console.Insert
-              (Editor.Kernel,
-               -"Invalid source location: " &
+            Editor.Kernel.Insert
+              (-"Invalid source location: " &
                Image (Integer (Line)) &
                ':' & Image (Natural (Column)), Mode => Error);
          end if;

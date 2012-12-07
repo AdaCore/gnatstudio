@@ -32,7 +32,6 @@ with GPS.Editors;
 with GPS.Editors.Line_Information;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Console;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
@@ -763,11 +762,10 @@ package body CodePeer.Module is
          Self.Report_Subwindow.Raise_Child;
 
       else
-         Console.Insert
-           (Self.Kernel,
-            File.Display_Full_Name &
+         Self.Kernel.Insert
+           (File.Display_Full_Name &
             (-" does not exist. Please perform a full analysis first"),
-            Mode => Console.Error);
+            Mode => GPS.Kernel.Error);
       end if;
    end Load;
 
@@ -862,11 +860,10 @@ package body CodePeer.Module is
 
       begin
          if not Is_Regular_File (Info_File) then
-            Console.Insert
-              (Kernel,
-               Info_File.Display_Full_Name &
+            Kernel.Insert
+              (Info_File.Display_Full_Name &
                (-" does not exist. Please perform a full analysis first"),
-               Mode => Console.Error);
+               Mode => GPS.Kernel.Error);
          else
             Review
               (Module,
@@ -908,11 +905,10 @@ package body CodePeer.Module is
 
       begin
          if not Is_Regular_File (HTML_File) then
-            Console.Insert
-              (Kernel,
-               HTML_File.Display_Full_Name &
+            Kernel.Insert
+              (HTML_File.Display_Full_Name &
                (-" does not exist. Please perform a full analysis first"),
-               Mode => Console.Error);
+               Mode => GPS.Kernel.Error);
          else
             Open_Html (Kernel, String (Full_Name (HTML_File).all));
          end if;
@@ -961,10 +957,9 @@ package body CodePeer.Module is
                New_File     => False,
                Force_Reload => True);
          else
-            Console.Insert
-              (Kernel,
-               -"cannot find text listing: " & Text_File.Display_Full_Name,
-               Mode => Console.Error);
+            Kernel.Insert
+              (-"cannot find text listing: " & Text_File.Display_Full_Name,
+               Mode => GPS.Kernel.Error);
          end if;
       end;
 
@@ -1008,10 +1003,9 @@ package body CodePeer.Module is
                New_File     => False,
                Force_Reload => True);
          else
-            Console.Insert
-              (Kernel,
-               -"cannot find text overview: " & Text_File.Display_Full_Name,
-               Mode => Console.Error);
+            Kernel.Insert
+              (-"cannot find text overview: " & Text_File.Display_Full_Name,
+               Mode => GPS.Kernel.Error);
          end if;
       end;
 
@@ -1054,9 +1048,9 @@ package body CodePeer.Module is
                New_File     => False,
                Force_Reload => True);
          else
-            Console.Insert
-              (Kernel, -"cannot find log file: " & Log_File.Display_Full_Name,
-               Mode => Console.Error);
+            Kernel.Insert
+              (-"cannot find log file: " & Log_File.Display_Full_Name,
+               Mode => GPS.Kernel.Error);
          end if;
       end;
 
@@ -1098,18 +1092,16 @@ package body CodePeer.Module is
             Delete (Lock_File, Success);
 
             if Success then
-               Console.Insert
-                 (Kernel,
-                  -"deleted lock file: " & Lock_File.Display_Full_Name);
+               Kernel.Insert
+                 (-"deleted lock file: " & Lock_File.Display_Full_Name);
             else
-               Console.Insert
-                 (Kernel,
-                  -"could not delete lock file: " &
+               Kernel.Insert
+                 (-"could not delete lock file: " &
                   Lock_File.Display_Full_Name);
             end if;
          else
-            Console.Insert
-              (Kernel, -"no lock file found: " & Lock_File.Display_Full_Name);
+            Kernel.Insert
+              (-"no lock file found: " & Lock_File.Display_Full_Name);
          end if;
       end;
 
@@ -1261,7 +1253,7 @@ package body CodePeer.Module is
       pragma Unreferenced (Ignore);
 
    begin
-      Console.Insert (Kernel, -"Deleting SCIL directories...");
+      Kernel.Insert (-"Deleting SCIL directories...");
 
       --  Remove all SCIL and Insp_* directories under each <obj>/codepeer dir.
       --  Ignore errors on e.g. read-only or non-existent directories.
@@ -1326,8 +1318,8 @@ package body CodePeer.Module is
                      Success   => Ignore);
       end loop;
 
-      Console.Insert
-        (Kernel, -"Deleted all CodePeer artefacts.", Add_LF => False);
+      Kernel.Insert
+        (-"Deleted all CodePeer artefacts.", Add_LF => False);
 
    exception
       when E : others =>
@@ -1721,11 +1713,10 @@ package body CodePeer.Module is
          Module.Review_Message (Message);
 
       else
-         Console.Insert
-           (Self.Kernel,
-            File.Display_Full_Name &
+         Self.Kernel.Insert
+           (File.Display_Full_Name &
             (-" does not exist. Please perform a full analysis first"),
-            Mode => Console.Error);
+            Mode => GPS.Kernel.Error);
       end if;
    end Review_Message;
 

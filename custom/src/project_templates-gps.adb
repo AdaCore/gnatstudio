@@ -23,7 +23,6 @@ with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 with Traces;          use Traces;
 
-with GPS.Kernel.Console;    use GPS.Kernel.Console;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;

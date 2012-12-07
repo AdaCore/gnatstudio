@@ -17,7 +17,6 @@
 
 with Debugger;           use Debugger;
 with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GVD.Types;          use GVD.Types;
 with Process_Proxies;    use Process_Proxies;
 

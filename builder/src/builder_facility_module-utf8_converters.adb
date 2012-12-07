@@ -17,7 +17,6 @@
 
 with Basic_Types;
 with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Console;
 with UTF8_Utils;
 
 package body Builder_Facility_Module.UTF8_Converters is
@@ -68,10 +67,9 @@ package body Builder_Facility_Module.UTF8_Converters is
               (Output (1 .. Len));
          end if;
       else
-         GPS.Kernel.Console.Insert
-           (Self.Kernel,
-            -"Could not convert compiler output to UTF8",
-            Mode => GPS.Kernel.Console.Error);
+         Self.Kernel.Insert
+           (-"Could not convert compiler output to UTF8",
+            Mode => GPS.Kernel.Error);
       end if;
 
       Basic_Types.Free (Output);

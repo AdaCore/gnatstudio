@@ -36,7 +36,6 @@ with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with GPS.Editors;                use GPS.Editors;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;       use GPS.Kernel.Locations;

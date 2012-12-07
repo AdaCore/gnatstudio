@@ -19,7 +19,6 @@ with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -69,9 +68,8 @@ package body Coverage_GUI is
          if Is_Regular_File (Cov_File) then
             Add_Gcov_File_Info (Kernel, Src_File, Cov_File, Prj_Node);
          else
-            GPS.Kernel.Console.Insert
-              (Kernel,
-               -"Could not find coverage file " &
+            Kernel.Insert
+              (-"Could not find coverage file " &
                Display_Full_Name (Cov_File));
 
             declare
@@ -108,11 +106,11 @@ package body Coverage_GUI is
         := Get_Language_Handler (Kernel);
    begin
       if File_Time_Stamp (Src_File) > File_Time_Stamp (Cov_File) then
-         GPS.Kernel.Console.Insert
-           (Kernel, Display_Base_Name (Src_File) &
+         Kernel.Insert
+           (Display_Base_Name (Src_File) &
             (-" has been modified since GCOV information were generated.") &
             (-" Skipped."),
-            Mode => GPS.Kernel.Console.Error);
+            Mode => GPS.Kernel.Error);
          Set_Error (File_Node, File_Out_Of_Date);
       else
          declare
@@ -312,15 +310,14 @@ package body Coverage_GUI is
          end loop;
 
          if not File_Added then
-            GPS.Kernel.Console.Insert
-              (Kernel, -"There is no uncovered line in " &
+            Kernel.Insert
+              (-"There is no uncovered line in " &
                Display_Base_Name (File_Node.Name));
          end if;
       else
-         GPS.Kernel.Console.Insert
-           (Kernel, -"There is no Gcov information associated with " &
-            Display_Base_Name (File_Node.Name),
-            Mode => GPS.Kernel.Console.Info);
+         Kernel.Insert
+           (-"There is no Gcov information associated with " &
+            Display_Base_Name (File_Node.Name));
       end if;
    end List_File_Uncovered_Lines;
 
@@ -420,10 +417,10 @@ package body Coverage_GUI is
             end if;
          end loop;
       else
-         GPS.Kernel.Console.Insert
-           (Kernel, -"There is no Gcov information associated with " &
+         Kernel.Insert
+           (-"There is no Gcov information associated with " &
             Display_Base_Name (File_Node.Name),
-            Mode => GPS.Kernel.Console.Error);
+            Mode => GPS.Kernel.Error);
       end if;
    end List_Subprogram_Uncovered_Lines;
 
@@ -506,9 +503,8 @@ package body Coverage_GUI is
             end if;
 
             if Gcov_Root = No_File then
-               GPS.Kernel.Console.Insert
-                 (Kernel,
-                  -"Could not determine directory for GCOV files: make sure" &
+               Kernel.Insert
+                 (-"Could not determine directory for GCOV files: make sure" &
                   " that the root project has an object directory, or that" &
                   " the environment variable GCOV_ROOT is set.",
                   Mode => Error);

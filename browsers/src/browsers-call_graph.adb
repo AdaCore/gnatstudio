@@ -53,7 +53,6 @@ with Browsers.Canvas;               use Browsers.Canvas;
 with Commands.Generic_Asynchronous; use Commands;
 with Commands.Interactive;          use Commands.Interactive;
 with GPS.Intl;                      use GPS.Intl;
-with GPS.Kernel.Console;            use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;           use GPS.Kernel.Messages;
@@ -1442,8 +1441,8 @@ package body Browsers.Call_Graph is
          end if;
 
       else
-         Console.Insert
-           (Kernel, -"Cannot find references: no entity selected",
+         Kernel.Insert
+           (-"Cannot find references: no entity selected",
             Mode => Error);
       end if;
 

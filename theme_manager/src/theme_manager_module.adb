@@ -17,7 +17,6 @@
 
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Default_Preferences;      use Default_Preferences;

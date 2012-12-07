@@ -90,8 +90,29 @@ package body GPS.Kernel.Console is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
-   procedure Insert
-     (Kernel : access Kernel_Handle_Record'Class;
+   type Kernel_Messages_Window is new Abstract_Messages_Window with record
+      Kernel : Kernel_Handle;
+   end record;
+   overriding procedure Insert
+     (Self   : not null access Kernel_Messages_Window;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info);
+   overriding procedure Insert_UTF8
+     (Self   : not null access Kernel_Messages_Window;
+      UTF8   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info);
+   overriding procedure Raise_Console
+     (Self   : not null access Kernel_Messages_Window);
+   overriding procedure Clear
+     (Self   : not null access Kernel_Messages_Window);
+   overriding function Get_Virtual_Console
+     (Self : not null access Kernel_Messages_Window)
+      return GNATCOLL.Scripts.Virtual_Console;
+
+   procedure Internal_Insert
+     (Self   : not null access Kernel_Messages_Window'Class;
       Text   : String;
       UTF8   : Boolean;
       Add_LF : Boolean := True;
@@ -113,26 +134,45 @@ package body GPS.Kernel.Console is
    -- Clear --
    -----------
 
-   procedure Clear (Kernel : access Kernel_Handle_Record'Class) is
-      Console : constant Interactive_Console := Get_Console (Kernel);
+   overriding procedure Clear
+     (Self   : not null access Kernel_Messages_Window)
+   is
+      Console : constant Interactive_Console := Get_Console (Self.Kernel);
    begin
       if Console /= null then
          Clear (Console);
       end if;
    end Clear;
 
-   ------------
-   -- Insert --
-   ------------
+   -------------------------
+   -- Get_Virtual_Console --
+   -------------------------
 
-   procedure Insert
-     (Kernel : access Kernel_Handle_Record'Class;
+   overriding function Get_Virtual_Console
+     (Self : not null access Kernel_Messages_Window)
+      return GNATCOLL.Scripts.Virtual_Console
+   is
+      Console : constant Interactive_Console := Get_Console (Self.Kernel);
+   begin
+      if Console /= null then
+         return Get_Or_Create_Virtual_Console (Console);
+      else
+         return null;
+      end if;
+   end Get_Virtual_Console;
+
+   ---------------------
+   -- Internal_Insert --
+   ---------------------
+
+   procedure Internal_Insert
+     (Self   : not null access Kernel_Messages_Window'Class;
       Text   : String;
       UTF8   : Boolean;
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info)
    is
-      Console : constant Interactive_Console := Get_Console (Kernel);
+      Console : constant Interactive_Console := Get_Console (Self.Kernel);
       T       : constant Calendar.Time := Calendar.Clock;
    begin
       if Console = null then
@@ -154,7 +194,7 @@ package body GPS.Kernel.Console is
                   Add_LF, Mode = Error);
             end if;
 
-            Raise_Console (Kernel);
+            Self.Raise_Console;
 
          else
             if UTF8 then
@@ -162,46 +202,49 @@ package body GPS.Kernel.Console is
             else
                Insert (Console, Text, Add_LF, Mode = Error);
             end if;
-            Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
+            Highlight_Child (Find_MDI_Child (Get_MDI (Self.Kernel), Console));
          end if;
       end if;
-   end Insert;
+   end Internal_Insert;
 
    ------------
    -- Insert --
    ------------
 
-   procedure Insert
-     (Kernel : access Kernel_Handle_Record'Class;
+   overriding procedure Insert
+     (Self   : not null access Kernel_Messages_Window;
       Text   : String;
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info) is
    begin
-      Insert (Kernel, Text, False, Add_LF, Mode);
+      Internal_Insert (Self, Text, False, Add_LF, Mode);
    end Insert;
 
    -----------------
    -- Insert_UTF8 --
    -----------------
 
-   procedure Insert_UTF8
-     (Kernel : access Kernel_Handle_Record'Class;
+   overriding procedure Insert_UTF8
+     (Self   : not null access Kernel_Messages_Window;
       UTF8   : String;
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info) is
    begin
-      Insert (Kernel, UTF8, True, Add_LF, Mode);
+      Internal_Insert (Self, UTF8, True, Add_LF, Mode);
    end Insert_UTF8;
 
    -------------------
    -- Raise_Console --
    -------------------
 
-   procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class) is
-      View : constant GPS_Message := Messages_Views.Retrieve_View (Kernel);
+   overriding procedure Raise_Console
+     (Self   : not null access Kernel_Messages_Window)
+   is
+      View : constant GPS_Message :=
+        Messages_Views.Retrieve_View (Self.Kernel);
    begin
       if View /= null then
-         Messages_Views.Child_From_View (Kernel, View).Raise_Child
+         Messages_Views.Child_From_View (Self.Kernel, View).Raise_Child
            (Give_Focus => False);
       end if;
    end Raise_Console;
@@ -315,11 +358,11 @@ package body GPS.Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      Console : constant Interactive_Console := Get_Console (Kernel);
    begin
-      Clear (Kernel);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
+      if Console /= null then
+         Clear (Console);
+      end if;
    end On_Clear_Console;
 
    ----------------------------
@@ -376,95 +419,6 @@ package body GPS.Kernel.Console is
       return Gtk_Widget (Console.Get_View);
    end Initialize;
 
-   --------------------------------
-   -- Create_Interactive_Console --
-   --------------------------------
-
-   function Create_Interactive_Console
-     (Kernel              : access Kernel_Handle_Record'Class;
-      Title               : String := "";
-      History             : History_Key := "interactive";
-      Create_If_Not_Exist : Boolean := True;
-      Module              : GPS.Kernel.Abstract_Module_ID := null;
-      Force_Create        : Boolean := False;
-      Accept_Input        : Boolean := True;
-      ANSI_Support        : Boolean := False;
-      Manage_Prompt       : Boolean := True) return Interactive_Console
-   is
-      Console : Interactive_Console;
-      Child   : MDI_Child;
-      NChild  : GPS_MDI_Child;
-      Create  : Boolean;
-   begin
-      if Title /= "" and then Title /= "Messages" then
-         Create := Force_Create;
-         if not Create then
-            Child := Find_MDI_Child_By_Name (Get_MDI (Kernel), Title);
-            Create := (Child = null
-                       or else Get_Widget (Child).all not in
-                         Interactive_Console_Record'Class)
-                and then Create_If_Not_Exist;
-         end if;
-
-         if Create then
-            Gtk_New
-              (Console, "", null,
-               System.Null_Address,
-               History_List => Get_History (Kernel),
-               Key          => History,
-               Wrap_Mode    => Wrap_Char,
-               Manage_Prompt => Manage_Prompt,
-               ANSI_Support => ANSI_Support,
-               Highlight    => Message_Highlight.Get_Pref);
-            Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
-            Set_Max_Length   (Get_History (Kernel).all, 100, History);
-            Allow_Duplicates (Get_History (Kernel).all, History, True, True);
-
-            NChild := new GPS_Console_MDI_Child_Record;
-
-            if Module /= null then
-               GPS.Kernel.MDI.Initialize
-                 (NChild, Console,
-                  Group               => Group_Consoles,
-                  Focus_Widget        => Gtk_Widget (Get_View (Console)),
-                  Module              => Module_ID (Module),
-                  Desktop_Independent => True);
-
-            else
-               GPS.Kernel.MDI.Initialize
-                 (NChild, Console,
-                  Group               => Group_Consoles,
-                  Focus_Widget        => Gtk_Widget (Get_View (Console)),
-                  Module              => null,
-                  Desktop_Independent => False);
-            end if;
-
-            Set_Title (NChild, Title, Title);
-            Put
-              (Get_MDI (Kernel), NChild, Initial_Position => Position_Bottom);
-            Raise_Child (NChild);
-
-            if Console /= null then
-               Enable_Prompt_Display (Console, Accept_Input);
-            end if;
-
-         elsif Child /= null then
-            Highlight_Child (Child);
-            Console := Interactive_Console (Get_Widget (Child));
-            Enable_Prompt_Display (Console, Accept_Input);
-         end if;
-
-         return Console;
-
-      else
-         Console := Interactive_Console
-           (Messages_Views.Get_Or_Create_View (Kernel, Focus => False));
-         Messages_Views.Child_From_View (Kernel, GPS_Message (Console))
-           .Highlight_Child;
-         return Console;
-      end if;
-   end Create_Interactive_Console;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -475,12 +429,17 @@ package body GPS.Kernel.Console is
       File    : constant String := '/' & (-"File");
       Console : constant String := File & '/' & (-"Messa_ges");
       Msg     : GPS_Message;
+      Msg2    : constant access Kernel_Messages_Window :=
+        new Kernel_Messages_Window;
       pragma Unreferenced (Msg);
    begin
       Messages_Views.Register_Module
         (Kernel, Menu_Name    => -"_Messages");
 
       Msg := Messages_Views.Get_Or_Create_View (Kernel);
+
+      Msg2.Kernel := Kernel_Handle (Kernel);
+      Kernel.Set_Messages_Window (Msg2);
 
       Register_Menu
         (Kernel, Console,

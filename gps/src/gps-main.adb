@@ -1274,9 +1274,8 @@ procedure GPS.Main is
                      Line := Natural'Value (+S (S'First + 1 .. S'Last));
                   exception
                      when Constraint_Error =>
-                        Console.Insert
-                          (GPS_Main.Kernel,
-                           "Invalid switch: " & (+S),
+                        GPS_Main.Kernel.Insert
+                          ("Invalid switch: " & (+S),
                            Mode => Error);
                         Line := 1;
                   end;
@@ -1612,9 +1611,8 @@ procedure GPS.Main is
       --  Print a welcome message in the console, but before parsing the error
       --  messages, so that these are visible
 
-      Console.Insert
-        (GPS_Main.Kernel,
-         -"Welcome to " & GPS_Name (GPS_Main) & " " & Config.Version &
+      GPS_Main.Kernel.Insert
+        (-"Welcome to " & GPS_Name (GPS_Main) & " " & Config.Version &
          " (" & Config.Source_Date &
          (-") hosted on ") & Config.Target & ASCII.LF &
          (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &

@@ -18,7 +18,6 @@
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GNATCOLL.Utils;      use GNATCOLL.Utils;
 with GPS.Intl;            use GPS.Intl;
-with GPS.Kernel.Console;  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
@@ -150,7 +149,7 @@ package body Vdiff2_Command_Block is
       end if;
 
       if Tmp = Diff_Chunk_List.Null_List then
-         Console.Insert (Kernel, -"No differences found.", Mode => Info);
+         Kernel.Insert (-"No differences found.", Mode => Info);
       end if;
 
       Free_List (Item.List);

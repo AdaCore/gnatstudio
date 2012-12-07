@@ -36,7 +36,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;

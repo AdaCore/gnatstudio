@@ -24,7 +24,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with XML_Utils;                 use XML_Utils;
 with Commands.Custom;           use Commands.Custom;
 with Traces;                    use Traces;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Intl;                  use GPS.Intl;
@@ -186,8 +185,7 @@ package body GPS.Kernel.Custom is
                      if File_Node = null then
                         Trace (Me, "Could not parse XML file: "
                                & Display_Full_Name (F));
-                        Insert (Kernel, Error.all,
-                                Mode => GPS.Kernel.Console.Error);
+                        Kernel.Insert (Error.all, Mode => GPS.Kernel.Error);
                         Free (Error);
                      else
                         Execute_Customization_String
@@ -209,10 +207,9 @@ package body GPS.Kernel.Custom is
 
             exception
                when Assert_Failure =>
-                  Console.Insert
-                    (Kernel, -"Could not parse custom file "
-                     & Display_Full_Name (F),
-                     Mode => GPS.Kernel.Console.Error);
+                  Kernel.Insert
+                    (-"Could not parse custom file "
+                     & Display_Full_Name (F), Mode => GPS.Kernel.Error);
             end;
          end loop;
 
@@ -434,9 +431,8 @@ package body GPS.Kernel.Custom is
 
          if Node = null then
             Trace (Me, "Error while loading startup.xml: " & Err.all);
-            Console.Insert
-              (Kernel,
-               "Could not parse startup.xml: " & Err.all,
+            Kernel.Insert
+              ("Could not parse startup.xml: " & Err.all,
                Mode => Error);
             Free (Err);
 

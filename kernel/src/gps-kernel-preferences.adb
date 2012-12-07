@@ -32,7 +32,6 @@ with Config;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;

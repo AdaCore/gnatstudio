@@ -24,7 +24,6 @@ with GNATCOLL.SQL.Sqlite;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel.Console;             use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
@@ -167,10 +166,10 @@ package body GPS.Kernel.Xref is
       Error : String)
    is
    begin
-      Insert (Kernel => Self.Kernel,
-              Text   => Error,
-              Add_LF => True,
-              Mode   => GPS.Kernel.Console.Error);
+      Self.Kernel.Insert
+        (Text   => Error,
+         Add_LF => True,
+         Mode   => GPS.Kernel.Error);
    end On_Error;
 
    -------------------------------

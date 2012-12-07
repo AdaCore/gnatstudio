@@ -34,7 +34,6 @@ with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
-with GPS.Kernel.Console;           use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;          use GPS.Kernel.Messages;

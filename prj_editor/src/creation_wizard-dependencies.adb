@@ -41,7 +41,6 @@ with Gtkada.Dialogs;                   use Gtkada.Dialogs;
 with Gtkada.File_Selector;             use Gtkada.File_Selector;
 
 with GPS.Kernel;                       use GPS.Kernel;
-with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
@@ -172,9 +171,9 @@ package body Creation_Wizard.Dependencies is
 
       procedure Report_Error (S : String) is
       begin
-         Console.Insert
-           (Kernel, S & ASCII.LF,
-            Mode => Console.Error,
+         Kernel.Insert
+           (S & ASCII.LF,
+            Mode => GPS.Kernel.Error,
             Add_LF => False);
          Parse_File_Locations (Kernel, S, -"Project add dependency");
       end Report_Error;

@@ -43,7 +43,6 @@ with Gtk.Label;                              use Gtk.Label;
 with Gtkada.MDI;                             use Gtkada.MDI;
 with GPS.Intl;                               use GPS.Intl;
 with GPS.Kernel;                             use GPS.Kernel;
-with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
@@ -680,9 +679,8 @@ package body Code_Analysis_Module is
       Cov_File := Find_Gcov_File (Kernel, File);
 
       if not Is_Regular_File (Cov_File) then
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            -"Could not find coverage file " & Display_Full_Name (Cov_File));
+         Kernel.Insert
+           (-"Could not find coverage file " & Display_Full_Name (Cov_File));
 
          Set_Error (File_Node, File_Not_Found);
 
@@ -1361,9 +1359,8 @@ package body Code_Analysis_Module is
            (CB_Data.Kernel, Analysis, CB_Data.Project);
 
          if not Have_Gcov_Info (Analysis.Projects, CB_Data.Project) then
-            GPS.Kernel.Console.Insert
-              (CB_Data.Kernel,
-               -"No coverage information to display for "
+            CB_Data.Kernel.Insert
+              (-"No coverage information to display for "
                & Prj_Node.Name.Name);
 
             return;
@@ -1425,9 +1422,8 @@ package body Code_Analysis_Module is
          if not Have_Gcov_Info
            (Analysis.Projects, CB_Data.Project, CB_Data.File)
          then
-            GPS.Kernel.Console.Insert
-              (CB_Data.Kernel,
-               -"No coverage information to display for "
+            CB_Data.Kernel.Insert
+              (-"No coverage information to display for "
                & Display_Base_Name (File_Node.Name));
             return;
          end if;

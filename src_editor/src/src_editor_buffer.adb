@@ -72,7 +72,6 @@ with Completion_Module;                   use Completion_Module;
 with GPS.Intl;                            use GPS.Intl;
 with GPS.Kernel;                          use GPS.Kernel;
 with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;                  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                 use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
@@ -3416,10 +3415,9 @@ package body Src_Editor_Buffer is
            (Buffer, Filename, Contents (Contents'First .. Last));
 
          if NUL_Found then
-            Console.Insert
-              (Buffer.Kernel,
-               (-"Warning: NUL characters stripped from ")
-               & Display_Full_Name (Filename), Mode => Console.Error);
+            Buffer.Kernel.Insert
+              ((-"Warning: NUL characters stripped from ")
+               & Display_Full_Name (Filename), Mode => GPS.Kernel.Error);
          end if;
 
          UTF8 := Glib.Convert.Convert
@@ -3443,10 +3441,9 @@ package body Src_Editor_Buffer is
 
          if not Valid then
             Length := First_Invalid - 1;
-            Console.Insert
-              (Buffer.Kernel,
-               (-"Warning: invalid characters stripped from ")
-               & Display_Full_Name (Filename), Mode => Console.Error);
+            Buffer.Kernel.Insert
+              ((-"Warning: invalid characters stripped from ")
+               & Display_Full_Name (Filename), Mode => GPS.Kernel.Error);
          end if;
 
          Insert_At_Cursor (Buffer, UTF8, Gint (Length));
@@ -3723,11 +3720,10 @@ package body Src_Editor_Buffer is
       FD := Write_File (Filename);
 
       if FD = Invalid_File then
-         Insert
-           (Buffer.Kernel,
-            -"Could not open file for writing: "
+         Buffer.Kernel.Insert
+           (-"Could not open file for writing: "
             & Display_Full_Name (Filename),
-            Mode => GPS.Kernel.Console.Error);
+            Mode => GPS.Kernel.Error);
          Success := False;
          return;
       end if;

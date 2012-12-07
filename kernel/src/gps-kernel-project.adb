@@ -38,7 +38,6 @@ with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
 
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Properties;                   use GPS.Properties;
-with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
@@ -182,7 +181,7 @@ package body GPS.Kernel.Project is
       procedure Report_Error (S : String);
       procedure Report_Error (S : String) is
       begin
-         Console.Insert (Handle, S, Mode => Console.Error, Add_LF => False);
+         Handle.Insert (S, Mode => Error, Add_LF => False);
          Parse_File_Locations (Handle, S, Location_Category);
       end Report_Error;
 
@@ -588,7 +587,7 @@ package body GPS.Kernel.Project is
          --  the project file contains errors and couldn't be loaded, but it
          --  was also saved in the desktop. If that is the case, the project
          --  would be open several times otherwise
-         Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
+         Kernel.Insert (S, Mode => Error, Add_LF => False);
          Parse_File_Locations
            (Kernel, S, Location_Category, Allow_Auto_Jump_To_First => False);
       end Report_Error;
@@ -639,7 +638,7 @@ package body GPS.Kernel.Project is
          --  was also saved in the desktop. If that is the case, the project
          --  would be open several times otherwise
 
-         Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
+         Kernel.Insert (S, Mode => Error, Add_LF => False);
          Parse_File_Locations
            (Kernel, S, Location_Category, Allow_Auto_Jump_To_First => False);
       end Report_Error;
@@ -697,7 +696,7 @@ package body GPS.Kernel.Project is
 
          --  Clear the console so that obsolete messages are not displayed
          if Clear then
-            Console.Clear (Kernel);
+            Kernel.Clear_Messages;
          end if;
       end if;
 
@@ -716,12 +715,12 @@ package body GPS.Kernel.Project is
             Local_Project := To_Local (Project);
 
             if not Is_Regular_File (Local_Project) then
-               Console.Insert
-                 (Kernel, (-"Cannot find remote project file ")
+               Kernel.Insert
+                 ((-"Cannot find remote project file ")
                   & Display_Full_Name (Project) & (-" at local place ")
                   & Display_Full_Name (Local_Project) &
                   (-". Please check your remote configuration."),
-                  Mode => Console.Error, Add_LF => False);
+                  Mode => Error, Add_LF => False);
 
                --  Need to run Project_Changing hook to reset build_server
                Data.File := Previous_Project;
@@ -839,9 +838,9 @@ package body GPS.Kernel.Project is
          Pop_State (Kernel_Handle (Kernel));
 
       elsif not Same_Project then
-         Console.Insert (Kernel, (-"Cannot find project file ")
-                         & Display_Full_Name (Project),
-                         Mode => Console.Error, Add_LF => False);
+         Kernel.Insert (-"Cannot find project file "
+                        & Display_Full_Name (Project),
+                        Mode => Error, Add_LF => False);
          Ignore := Load_Desktop (Kernel);
       end if;
    end Load_Project;
@@ -970,7 +969,7 @@ package body GPS.Kernel.Project is
 
       procedure Report_Error (Msg : String) is
       begin
-         Insert (Kernel, Msg, Mode => GPS.Kernel.Console.Error);
+         Kernel.Insert (Msg, Mode => GPS.Kernel.Error);
          Parse_File_Locations (Kernel, Msg, "Project save");
          Result := False;
       end Report_Error;

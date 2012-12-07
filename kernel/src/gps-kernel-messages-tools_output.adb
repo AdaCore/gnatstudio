@@ -19,7 +19,6 @@ with GNAT.Regpat;
 
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Glib.Convert;
-with GPS.Kernel.Console;
 with GPS.Kernel.Messages.Hyperlink;   use GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Messages.Simple;      use GPS.Kernel.Messages.Simple;
@@ -622,10 +621,9 @@ package body GPS.Kernel.Messages.Tools_Output is
    begin
       Unknown_To_UTF8 (Text, Output, Len, Valid);
       if not Valid then
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            -"Locations.parse: could not convert input to UTF8",
-            Mode => Console.Error);
+         Kernel.Insert
+           (-"Locations.parse: could not convert input to UTF8",
+            Mode => GPS.Kernel.Error);
 
       else
          Styles (Errors) :=

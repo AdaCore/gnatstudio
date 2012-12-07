@@ -57,7 +57,6 @@ with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
