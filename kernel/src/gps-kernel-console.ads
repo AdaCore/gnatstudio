@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Kernel.MDI;
 with Interactive_Consoles; use Interactive_Consoles;
 
 package GPS.Kernel.Console is
@@ -78,5 +79,11 @@ package GPS.Kernel.Console is
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class) return Interactive_Console;
    --  Return the interactive console associated with the kernel
+
+   type GPS_Console_MDI_Child_Record is
+     new GPS.Kernel.MDI.GPS_MDI_Child_Record with null record;
+   overriding function Interrupt
+     (Child : access GPS_Console_MDI_Child_Record) return Boolean;
+   --  A special MDI child that handles interrupts
 
 end GPS.Kernel.Console;

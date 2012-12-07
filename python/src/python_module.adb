@@ -31,17 +31,17 @@ with GNATCOLL.Xref;
 with Basic_Types;
 
 with Glib.Object;                use Glib.Object;
-with XML_Utils;                  use XML_Utils;
+with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Commands.Custom;            use Commands.Custom;
+with Generic_Views;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -63,8 +63,6 @@ package body Python_Module is
 
    type Python_Module_Record is new Module_ID_Record with null record;
    overriding procedure Destroy (Module : in out Python_Module_Record);
-   type Python_Module_Record_Access is access all Python_Module_Record'Class;
-   Python_Module_Id : Python_Module_Record_Access;
 
    procedure Load_Dir
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -75,22 +73,24 @@ package body Python_Module is
    --  be autoloaded by default, unless otherwise mentioned in
    --  ~/.gps/startup.xml
 
-   function Create_Python_Console (Kernel : Kernel_Handle) return MDI_Child;
-   --  Create the python console if it doesn't exist yet
+   type Python_Console_Record is new Interactive_Console_Record
+     with null record;
 
-   procedure Open_Python_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Open a new python console if none exists
+   function Initialize
+     (Console : access Python_Console_Record'Class;
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget;
+   --  Initialize the python console, and returns the focus widget.
 
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-     return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Support functions for saving the desktop
+   package Python_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Python_Console",
+      View_Name          => -"Python",
+      Formal_View_Record => Python_Console_Record,
+      Formal_MDI_Child   => GPS_Console_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Local_Toolbar      => False,
+      Local_Config       => False,
+      Group              => Group_Consoles);
 
    procedure Python_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -104,29 +104,35 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the commands related to the various classes
 
-   ---------------------------
-   -- Create_Python_Console --
-   ---------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Create_Python_Console (Kernel : Kernel_Handle) return MDI_Child is
-      Console : Interactive_Console;
+   function Initialize
+     (Console : access Python_Console_Record'Class;
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget
+   is
       Backend : Virtual_Console;
       Script  : constant Scripting_Language :=
                   Lookup_Scripting_Language
                     (Get_Scripts (Kernel), Python_Name);
       Errors  : aliased Boolean;
       Result  : PyObject;
+
+      Hist : constant History_Key := "python_console";
    begin
-      Console := Create_Interactive_Console
-        (Kernel              => Kernel,
-         Title               => -"Python",
-         Module              => Abstract_Module_ID (Python_Module_Id),
-         History             => History_Key'("python_console"),
-         Create_If_Not_Exist => True);
+      Interactive_Consoles.Initialize
+        (Console, Prompt => "", Handler => Default_Command_Handler'Access,
+         User_Data       => System.Null_Address,
+         History_List    => Get_History (Kernel),
+         Wrap_Mode       => Wrap_None,
+         Key             => Hist);
+      Set_Font_And_Colors (Console, Fixed_Font => True);
+      Set_Max_Length   (Get_History (Kernel).all, 100, Hist);
+      Allow_Duplicates (Get_History (Kernel).all, Hist, True, True);
+
       Backend := Get_Or_Create_Virtual_Console (Console);
       Set_Default_Console (Script, Backend);
-      Set_Command_Handler
-        (Console, Default_Command_Handler'Access, System.Null_Address);
 
       --  After creating the Python console, import everything from
       --  the plugin GPS_help, to override the default help function
@@ -144,64 +150,9 @@ package body Python_Module is
       Py_XDECREF (Result);
       Console.Enable_Prompt_Display (True);
       Console.Display_Prompt;
-      return Find_MDI_Child (Get_MDI (Kernel), Console);
-   end Create_Python_Console;
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Python_Console" then
-         return Create_Python_Console (User);
-      end if;
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      N       : Node_Ptr;
-      Script  : Scripting_Language;
-      Virtual : Virtual_Console;
-      Child   : MDI_Child;
-   begin
-      if Widget.all not in Interactive_Console_Record'Class then
-         return null;
-      end if;
-
-      --  We must test whether this is indeed a python-specific console, since
-      --  it might happen that the default console is redirected elsewhere (for
-      --  instance to the Messages window at the beginning)
-
-      Script := Lookup_Scripting_Language (Get_Scripts (User), Python_Name);
-      Virtual := Get_Default_Console (Script);
-
-      if Virtual /= null
-        and then Gtk_Widget (Widget) = Gtk_Widget (Get_Console (Virtual))
-      then
-         Child := Find_MDI_Child (Get_MDI (User), Widget);
-         if Child /= null
-            and then Get_Title (Child) = "Python"
-         then
-            N := new Node;
-            N.Tag := new String'("Python_Console");
-            return N;
-         end if;
-      end if;
-      return null;
-   end Save_Desktop;
+      return Gtk_Widget (Console.Get_View);
+   end Initialize;
 
    ---------------------
    -- Register_Module --
@@ -242,18 +193,10 @@ package body Python_Module is
       Set_Default_Console
         (Script, Get_Or_Create_Virtual_Console (Get_Console (Kernel)));
 
-      Python_Module_Id := new Python_Module_Record;
-      Register_Module
-        (Module      => Module_ID (Python_Module_Id),
-         Kernel      => Kernel,
-         Module_Name => "Python");
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-
-      Register_Menu
+      Python_Views.Register_Module
         (Kernel,
-         Parent_Path => "/" & (-"_Tools") & '/' & (-"Consoles"),
-         Text        => -"_Python",
-         Callback    => Open_Python_Console'Access);
+         new Python_Module_Record,
+         Menu_Name  => -"Consoles/_Python");
 
       Add_PyWidget_Method
         (Get_Scripts (Kernel), Class => Get_GUI_Class (Kernel));
@@ -708,19 +651,6 @@ package body Python_Module is
             raise;
          end if;
    end Python_Location_Command_Handler;
-
-   -------------------------
-   -- Open_Python_Console --
-   -------------------------
-
-   procedure Open_Python_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Child : MDI_Child;
-      pragma Unreferenced (Widget, Child);
-   begin
-      Child := Create_Python_Console (Kernel);
-   end Open_Python_Console;
 
    -------------
    -- Destroy --

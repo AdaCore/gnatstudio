@@ -33,8 +33,8 @@ with Gtk.Text_Buffer;
 with Gtk.Text_View;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
-with Gtk.Scrolled_Window;
 
+with Generic_Views;
 with Histories;
 with GUI_Utils;
 with String_List_Utils;
@@ -42,7 +42,7 @@ with String_List_Utils;
 package Interactive_Consoles is
 
    type Interactive_Console_Record is new
-     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
+     Generic_Views.View_Record with private;
    type Interactive_Console is
      access all Interactive_Console_Record'Class;
    pragma No_Strict_Aliasing (Interactive_Console);
@@ -308,7 +308,7 @@ package Interactive_Consoles is
    --  console with a GNATCOLL.Scripts.Virtual_Console.
 
    function Get_Or_Create_Virtual_Console
-     (Console : Interactive_Console)
+     (Console : access Interactive_Console_Record'Class)
       return GNATCOLL.Scripts.Virtual_Console;
    --  Return the virtual console attached to Console.
    --  Create one if necessary.
@@ -329,9 +329,7 @@ private
       Next     : Hyper_Links;
    end record;
 
-   type Interactive_Console_Record is new
-     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
-   with record
+   type Interactive_Console_Record is new Generic_Views.View_Record with record
       Handler    : Command_Handler;
       Virtual    : GNATCOLL.Scripts.Virtual_Console;
 

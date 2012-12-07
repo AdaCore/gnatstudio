@@ -1179,7 +1179,8 @@ package body GPS.Location_View is
       Manager : constant View_Manager_Access := new View_Manager (Kernel);
       Command : Commands.Interactive.Interactive_Command_Access;
    begin
-      Location_Views.Register_Module (Kernel, Menu_Name => -"Locations");
+      Location_Views.Register_Module
+        (Kernel, Menu_Name => -"Views/Locations");
 
       Create_New_Boolean_Key_If_Necessary
         (Hist => Get_History (Kernel).all,

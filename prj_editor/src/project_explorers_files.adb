@@ -1605,7 +1605,7 @@ package body Project_Explorers_Files is
       Explorer_Files_Module_Id := new Explorer_Module_Record;
       Explorer_Files_Views.Register_Module
         (Kernel, Explorer_Files_Module_Id,
-         Menu_Name   => -"_Files",
+         Menu_Name   => -"Views/_Files",
          Before_Menu => -"Entity");
       Register_Filter
         (Kernel,

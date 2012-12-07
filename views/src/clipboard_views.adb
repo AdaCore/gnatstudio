@@ -472,7 +472,7 @@ package body Clipboard_Views is
       Command : Interactive_Command_Access;
    begin
       Generic_View.Register_Module
-        (Kernel, Menu_Name => -"_Clipboard", Before_Menu => -"Entity");
+        (Kernel, Menu_Name => -"Views/_Clipboard", Before_Menu => -"Entity");
       Command := new Merge_With_Previous_Command;
       Register_Contextual_Menu
         (Kernel, "Clipboard View Append To Previous",

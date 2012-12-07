@@ -123,7 +123,7 @@ package Generic_Views is
       procedure Register_Module
         (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
          ID          : GPS.Kernel.Modules.Module_ID := null;
-         Menu_Name   : String := View_Name;
+         Menu_Name   : String := "Views/" & View_Name;
          Before_Menu : String := "");
       --  Register the module. This sets it up for proper desktop handling, as
       --  well as create a menu in Tools/ so that the user can open the view.

@@ -934,7 +934,7 @@ package body Outline_View is
       Outline_View_Module := new Outline_View_Module_Record;
       Outline_Views.Register_Module
         (Kernel, Outline_View_Module,
-         Menu_Name   => -"_Outline",
+         Menu_Name   => -"Views/_Outline",
          Before_Menu => -"Messages");
 
       Create_New_Boolean_Key_If_Necessary

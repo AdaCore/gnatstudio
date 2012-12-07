@@ -449,14 +449,17 @@ package body Interactive_Consoles is
    -----------------------------------
 
    function Get_Or_Create_Virtual_Console
-     (Console : Interactive_Console) return Virtual_Console is
+     (Console : access Interactive_Console_Record'Class)
+      return GNATCOLL.Scripts.Virtual_Console
+   is
    begin
       if Console = null then
          return null;
 
       elsif Console.Virtual = null then
          Console.Virtual := new Interactive_Virtual_Console_Record;
-         Interactive_Virtual_Console (Console.Virtual).Console := Console;
+         Interactive_Virtual_Console (Console.Virtual).Console :=
+           Interactive_Console (Console);
       end if;
 
       return Console.Virtual;

@@ -540,7 +540,8 @@ package body Scenario_Views is
 
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Scenario_Views.Register_Module (Kernel, Menu_Name => -"_Scenario");
+      Scenario_Views.Register_Module
+        (Kernel, Menu_Name => -"Views/_Scenario");
    end Register_Module;
 
 end Scenario_Views;

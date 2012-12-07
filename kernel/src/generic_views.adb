@@ -28,6 +28,7 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
 
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
@@ -355,7 +356,7 @@ package body Generic_Views is
       procedure Register_Module
         (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
          ID          : GPS.Kernel.Modules.Module_ID := null;
-         Menu_Name   : String := View_Name;
+         Menu_Name   : String := "Views/" & View_Name;
          Before_Menu : String := "") is
       begin
          if ID = null then
@@ -371,8 +372,8 @@ package body Generic_Views is
             Priority    => GPS.Kernel.Modules.Default_Priority);
          Register_Desktop_Functions (Save_Desktop_Access, Load_Desktop_Access);
          Register_Open_Menu
-           (Kernel, '/' & (-"Tools") & '/' & (-"_Views"),
-            Menu_Name, Before => Before_Menu);
+           (Kernel, '/' & (-"Tools") & '/' & Dir_Name (Menu_Name),
+            Base_Name (Menu_Name), Before => Before_Menu);
       end Register_Module;
 
    end Simple_Views;

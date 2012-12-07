@@ -67,11 +67,6 @@ package body GPS.Kernel.Console is
 
    Me : constant Debug_Handle := Traces.Create (Console_Module_Name);
 
-   type GPS_Console_MDI_Child_Record is
-     new GPS_MDI_Child_Record with null record;
-   overriding function Interrupt
-     (Child : access GPS_Console_MDI_Child_Record) return Boolean;
-
    procedure Console_Destroyed
      (Console : access Glib.Object.GObject_Record'Class;
       Kernel  : Kernel_Handle);
