@@ -99,6 +99,7 @@ package body GPS.Kernel.MDI is
    MDI_All_Floating      : Boolean_Preference;
    MDI_Float_Short_Title : Boolean_Preference;
    MDI_Editors_Floating  : Boolean_Preference;
+   MDI_Homogeneous_Tabs  : Boolean_Preference;
 
    Desktop_Name : constant Filesystem_String := "perspectives.xml";
 
@@ -296,6 +297,16 @@ package body GPS.Kernel.MDI is
          Label   => -"Floating editors",
          Page    => "");  --  -"Windows"
 
+      MDI_Homogeneous_Tabs  := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-Homogeneous-Tabs",
+         Default => False,
+         Doc     =>
+           -("If enabled, the text in notebook tabs will never use ellipsis."
+             & " Changing this preference requires a restart of GPS."),
+         Label   => -"Homogeneous tabs",
+         Page    => -"Windows");
+
       MDI_Title_Bar_Color := Create
         (Manager => Get_Preferences (Kernel),
          Name    => "MDI-Title-Bar-Color",
@@ -372,7 +383,7 @@ package body GPS.Kernel.MDI is
          Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
          Show_Tabs_Policy          => Policy,
          Tabs_Position             => Pos,
-         Homogeneous_Tabs          => True,
+         Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref,
          Hardcode_Theme            => False);
 
       Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
