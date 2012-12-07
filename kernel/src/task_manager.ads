@@ -97,6 +97,11 @@ package Task_Manager is
    --  Return True if a queue identified by Queue_Id is currently running or
    --  paused in the task manager.
 
+   procedure Interrupt_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer);
+   --  Interrupt command referenced by Index
+
 private
 
    procedure Run

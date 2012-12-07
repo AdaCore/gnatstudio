@@ -81,11 +81,6 @@ package Task_Manager.GUI is
       Manager : Task_Manager_Access);
    --  Internal initialization procedure
 
-   procedure Interrupt_Command
-     (Manager : access Task_Manager_Record'Class;
-      Index   : Integer);
-   --  Interrupt command referenced by Index
-
    procedure Pause_Command
      (Manager : access Task_Manager_Record'Class;
       Index   : Integer);

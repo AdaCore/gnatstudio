@@ -38,6 +38,7 @@ with Generic_Views;
 with Histories;
 with GUI_Utils;
 with String_List_Utils;
+with GPS.Kernel.MDI;
 
 package Interactive_Consoles is
 
@@ -300,6 +301,17 @@ package Interactive_Consoles is
    --  Insert text in the console, highlighting any text that matches one of
    --  hyper links registered with Create_Hyper_Link.
    --  Clicking on these links will call On_Click on the matching Callback.
+
+   ---------------------
+   -- Support for MDI --
+   ---------------------
+
+   type GPS_Console_MDI_Child_Record is
+     new GPS.Kernel.MDI.GPS_MDI_Child_Record with null record;
+   overriding function Interrupt
+     (Child : access GPS_Console_MDI_Child_Record) return Boolean;
+   --  A special MDI child that handles interrupts (and forwards them to the
+   --  child widget, which must be an interactive console).
 
    ------------------------------
    -- Adapter for GNATCOLL.Scripts --

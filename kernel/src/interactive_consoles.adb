@@ -2146,4 +2146,17 @@ package body Interactive_Consoles is
       Terminate_Output (Console, Internal, Show_Prompt => False);
    end Insert_With_Links;
 
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   overriding function Interrupt
+     (Child : access GPS_Console_MDI_Child_Record) return Boolean
+   is
+      Console : constant Interactive_Console :=
+                  Interactive_Console (Get_Widget (Child));
+   begin
+      return Interrupt (Console);
+   end Interrupt;
+
 end Interactive_Consoles;

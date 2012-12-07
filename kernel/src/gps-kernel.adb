@@ -741,7 +741,6 @@ package body GPS.Kernel is
             Filename.Display_Full_Name & ASCII.LF &
             (-"Please verify that you have write access to this file."),
             Mode => GPS.Kernel.Console.Error);
-         Raise_Console (Handle);
       end if;
    end Report_Preference_File_Error;
 

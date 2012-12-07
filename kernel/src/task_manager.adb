@@ -18,7 +18,7 @@
 with Glib.Main;        use Glib.Main;
 with Traces;           use Traces;
 
-with Task_Manager.GUI; use Task_Manager.GUI;
+--  with Task_Manager.GUI; use Task_Manager.GUI;
 
 package body Task_Manager is
 
@@ -54,6 +54,28 @@ package body Task_Manager is
      (Command : Command_Access) return Command_Return_Type;
    --  Executes command, and returns the result. If an exception occurs during
    --  execution of the command, return Failure.
+
+   -----------------------
+   -- Interrupt_Command --
+   -----------------------
+
+   procedure Interrupt_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer) is
+   begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      if Index in Manager.Queues'Range then
+         Interrupt (Manager.Queues (Index).Queue.First_Element.all);
+
+         Manager.Queues (Index).Status := Completed;
+         Queue_Changed (Manager, Index, True);
+         Run (Task_Manager_Access (Manager),
+              Active => Index < Manager.Passive_Index);
+      end if;
+   end Interrupt_Command;
 
    ------------------
    -- Safe_Execute --

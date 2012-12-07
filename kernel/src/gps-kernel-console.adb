@@ -24,7 +24,6 @@ with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib.Object;            use Glib.Object;
-with XML_Utils;              use XML_Utils;
 
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Widget;             use Gtk.Widget;
@@ -34,6 +33,7 @@ with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
 with Config;                 use Config;
+with Generic_Views;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Tools_Output;  use GPS.Kernel.Messages.Tools_Output;
@@ -46,31 +46,29 @@ with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 
 package body GPS.Kernel.Console is
+   Me : constant Debug_Handle := Traces.Create ("CONSOLE");
 
    type GPS_Message_Record is new Interactive_Console_Record with null record;
-   type GPS_Message is access GPS_Message_Record'Class;
    --  Type for the messages window. This is mostly use to have a unique tag
    --  for this console, so that we can save it in the desktop
 
-   type Console_Module_Id_Record is new Module_ID_Record with record
-      Console : GPS_Message;
-      Child   : MDI_Child;
-   end record;
+   function Initialize
+     (Console : access GPS_Message_Record'Class;
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget;
+   --  Initialize the messages window, and return the focus widget.
 
-   type Console_Module_Id_Access is access all Console_Module_Id_Record'Class;
-
-   overriding procedure Destroy (Module : in out Console_Module_Id_Record);
-   --  Called when the module is destroyed
-
-   Console_Module_Id   : Console_Module_Id_Access;
-   Console_Module_Name : constant String := "GPS.Kernel.Console";
-
-   Me : constant Debug_Handle := Traces.Create (Console_Module_Name);
-
-   procedure Console_Destroyed
-     (Console : access Glib.Object.GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Called when the console has been destroyed
+   package Messages_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Message_Window",
+      View_Name          => -"Messages",
+      Formal_View_Record => GPS_Message_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Local_Toolbar      => False,
+      Local_Config       => False,
+      Group              => Group_Consoles);
+   use Messages_Views;
+   subtype GPS_Message is Messages_Views.View_Access;
 
    function Console_Delete_Event
      (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
@@ -88,21 +86,6 @@ package body GPS.Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Messages->Clear menu
 
-   procedure Open_Messages_View
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Open the Messages view
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   --  Save the status of the project explorer to an XML tree
-
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
@@ -115,19 +98,6 @@ package body GPS.Kernel.Console is
       Mode   : Message_Type := Info);
    --  Factor code between Insert_Non_UTF8 and Insert_UTF8
 
-   ---------------
-   -- Interrupt --
-   ---------------
-
-   overriding function Interrupt
-     (Child : access GPS_Console_MDI_Child_Record) return Boolean
-   is
-      Console : constant Interactive_Console :=
-                  Interactive_Console (Get_Widget (Child));
-   begin
-      return Interrupt (Console);
-   end Interrupt;
-
    -----------------
    -- Get_Console --
    -----------------
@@ -135,13 +105,8 @@ package body GPS.Kernel.Console is
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class) return Interactive_Console
    is
-      pragma Unreferenced (Kernel);
    begin
-      if Console_Module_Id = null then
-         return null;
-      else
-         return Interactive_Console (Console_Module_Id.Console);
-      end if;
+      return Interactive_Console (Messages_Views.Retrieve_View (Kernel));
    end Get_Console;
 
    -----------
@@ -233,28 +198,13 @@ package body GPS.Kernel.Console is
    -------------------
 
    procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class) is
-      pragma Unreferenced (Kernel);
-
+      View : constant GPS_Message := Messages_Views.Retrieve_View (Kernel);
    begin
-      if Console_Module_Id.Child /= null then
-         Raise_Child (Console_Module_Id.Child, Give_Focus => False);
-         Highlight_Child (Console_Module_Id.Child, False);
+      if View /= null then
+         Messages_Views.Child_From_View (Kernel, View).Raise_Child
+           (Give_Focus => False);
       end if;
    end Raise_Console;
-
-   -----------------------
-   -- Console_Destroyed --
-   -----------------------
-
-   procedure Console_Destroyed
-     (Console : access Glib.Object.GObject_Record'Class;
-      Kernel  : Kernel_Handle)
-   is
-      pragma Unreferenced (Console, Kernel);
-   begin
-      Console_Module_Id.Console := null;
-      Console_Module_Id.Child := null;
-   end Console_Destroyed;
 
    --------------------------
    -- Console_Delete_Event --
@@ -372,24 +322,6 @@ package body GPS.Kernel.Console is
       when E : others => Trace (Exception_Handle, E);
    end On_Clear_Console;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Module : in out Console_Module_Id_Record) is
-   begin
-      if Module.Console /= null then
-         Destroy (Module.Console);
-         Module.Console := null;
-      end if;
-
-      --  Destroyed has been called as GPS is in the way to quit. We want to
-      --  invalidate the module access as it will be freed just after this
-      --  call. We want to do that to be sure that every call to Get_Console
-      --  will return null at this point.
-      Console_Module_Id := null;
-   end Destroy;
-
    ----------------------------
    -- On_Preferences_Changed --
    ----------------------------
@@ -404,37 +336,15 @@ package body GPS.Kernel.Console is
       end if;
    end On_Preferences_Changed;
 
-   ------------------------
-   -- Open_Messages_View --
-   ------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Open_Messages_View
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   function Initialize
+     (Console : access GPS_Message_Record'Class;
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
-      pragma Unreferenced (Widget);
-      Console : constant Interactive_Console := Get_Console (Kernel);
-      Child   : MDI_Child;
    begin
-      Child := Find_MDI_Child (Get_MDI (Kernel), Console);
-      Child.Raise_Child;
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Open_Messages_View;
-
-   ------------------------
-   -- Initialize_Console --
-   ------------------------
-
-   procedure Initialize_Console
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Console : GPS_Message;
-      Child   : GPS_MDI_Child;
-
-   begin
-      --  ??? Using an interactive_console seems overkill, since the user
-      --  cannot write in the messages window
-      Console := new GPS_Message_Record;
       Initialize
         (Console,
          "",
@@ -446,34 +356,14 @@ package body GPS.Kernel.Console is
                                           --  well under Windows ???
          Key          => "",
          Wrap_Mode    => Wrap_Char);
-      Enable_Prompt_Display (Console, False);
-
-      Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
-
-      Gtk_New (Child, Console,
-               Default_Width       => 400,
-               Default_Height      => 120,
-               Group               => Group_Consoles,
-               Focus_Widget        => Gtk_Widget (Get_View (Console)),
-               Flags               => 0,
-               Module              => Console_Module_Id,
-               Desktop_Independent => True);
-      Set_Title (Child, -"Messages");
-      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-      Set_Focus_Child (Child);
-      Raise_Child (Child);
-
-      Console_Module_Id.Child   := MDI_Child (Child);
-      Console_Module_Id.Console := Console;
+      Console.Enable_Prompt_Display (False);
+      Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
 
       Add_Hook (Kernel, To_Hook_Name ("preferences_changed"),
                 Wrapper (On_Preferences_Changed'Access),
                 Name => "console.preferences_changed",
                 Watch => GObject (Console));
 
-      Kernel_Callback.Connect
-        (Console, Signal_Destroy,
-         Console_Destroyed'Access, Kernel_Handle (Kernel));
       Return_Callback.Connect
         (Console, Gtk.Widget.Signal_Delete_Event, Console_Delete_Event'Access);
 
@@ -481,9 +371,10 @@ package body GPS.Kernel.Console is
         (Kernel          => Kernel,
          Event_On_Widget => Get_View (Console),
          Object          => Console,
-         ID              => Module_ID (Console_Module_Id),
+         ID              => Messages_Views.Get_Module,
          Context_Func    => null);
-   end Initialize_Console;
+      return Gtk_Widget (Console.Get_View);
+   end Initialize;
 
    --------------------------------
    -- Create_Interactive_Console --
@@ -566,53 +457,13 @@ package body GPS.Kernel.Console is
          return Console;
 
       else
-         Highlight_Child (Console_Module_Id.Child);
-         return Get_Console (Kernel);
+         Console := Interactive_Console
+           (Messages_Views.Get_Or_Create_View (Kernel, Focus => False));
+         Messages_Views.Child_From_View (Kernel, GPS_Message (Console))
+           .Highlight_Child;
+         return Console;
       end if;
    end Create_Interactive_Console;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Message_Window" then
-         if Console_Module_Id.Console = null then
-            Initialize_Console (User);
-            return Console_Module_Id.Child;
-         else
-            return Console_Module_Id.Child;
-         end if;
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in GPS_Message_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Message_Window");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
 
    ---------------------
    -- Register_Module --
@@ -623,16 +474,13 @@ package body GPS.Kernel.Console is
    is
       File    : constant String := '/' & (-"File");
       Console : constant String := File & '/' & (-"Messa_ges");
+      Msg     : GPS_Message;
+      pragma Unreferenced (Msg);
    begin
-      Console_Module_Id := new Console_Module_Id_Record;
-      Register_Module
-        (Module       => Module_ID (Console_Module_Id),
-         Kernel       => Kernel,
-         Module_Name  => Console_Module_Name,
-         Priority     => Default_Priority);
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
+      Messages_Views.Register_Module
+        (Kernel, Menu_Name    => -"_Messages");
 
-      Initialize_Console (Kernel);
+      Msg := Messages_Views.Get_Or_Create_View (Kernel);
 
       Register_Menu
         (Kernel, Console,
@@ -644,12 +492,6 @@ package body GPS.Kernel.Console is
         (Kernel, Console, -"_Save As...", "", On_Save_Console_As'Access);
       Register_Menu
         (Kernel, Console, -"_Load Contents...", "", On_Load_To_Console'Access);
-
-      Register_Menu
-        (Kernel,
-         Parent_Path => "/" & (-"_Tools") & '/' & (-"_Views"),
-         Text        => -"_Messages",
-         Callback    => Open_Messages_View'Access);
    end Register_Module;
 
 end GPS.Kernel.Console;

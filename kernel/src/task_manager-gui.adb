@@ -42,7 +42,6 @@ with Gtk.Tree_Model.Utils;       use Gtk.Tree_Model.Utils;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Stock_Icons;            use GPS.Stock_Icons;
@@ -196,28 +195,6 @@ package body Task_Manager.GUI is
    begin
       Pop_State (Manager.D.Manager);
    end On_Progress_Bar_Destroy;
-
-   -----------------------
-   -- Interrupt_Command --
-   -----------------------
-
-   procedure Interrupt_Command
-     (Manager : access Task_Manager_Record'Class;
-      Index   : Integer) is
-   begin
-      if Manager.Queues = null then
-         return;
-      end if;
-
-      if Index in Manager.Queues'Range then
-         Interrupt (Manager.Queues (Index).Queue.First_Element.all);
-
-         Manager.Queues (Index).Status := Completed;
-         Queue_Changed (Manager, Index, True);
-         Run (Task_Manager_Access (Manager),
-              Active => Index < Manager.Passive_Index);
-      end if;
-   end Interrupt_Command;
 
    -------------------
    -- Pause_Command --

@@ -61,7 +61,6 @@ with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Main_Window;          use GPS.Main_Window;
-with GUI_Utils;                use GUI_Utils;
 
 with GPS.Editors;              use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -817,33 +816,6 @@ package body GPS.Kernel.MDI is
       Kernel_Desktop.Load_Perspective
         (Get_MDI (Kernel), Name, Kernel_Handle (Kernel));
    end Load_Perspective;
-
-   -------------------------
-   -- Set_Font_And_Colors --
-   -------------------------
-
-   procedure Set_Font_And_Colors
-     (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Fixed_Font : Boolean)
-   is
-      Active_Bg : constant Gdk_RGBA := Darken_Or_Lighten
-        (Default_Font.Get_Pref_Bg);
-   begin
-      if Fixed_Font then
-         Modify_Font (Widget, View_Fixed_Font.Get_Pref);
-      else
-         Modify_Font (Widget, Default_Font.Get_Pref_Font);
-      end if;
-
-      Override_Color (Widget, Gtk_State_Flag_Normal, Default_Font.Get_Pref_Fg);
-      Override_Color (Widget, Gtk_State_Flag_Active, Default_Font.Get_Pref_Fg);
-
-      Override_Background_Color
-        (Widget, Gtk_State_Flag_Normal,
-         Default_Font.Get_Pref_Bg);
-      Override_Background_Color
-        (Widget, Gtk_State_Flag_Active, Active_Bg);
-   end Set_Font_And_Colors;
 
    --------------------------------
    -- Register_Desktop_Functions --

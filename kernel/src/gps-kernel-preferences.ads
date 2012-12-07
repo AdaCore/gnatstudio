@@ -20,6 +20,7 @@ with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums;
 with Language;
 with GPS_Preferences_Types; use GPS_Preferences_Types;
+with Gtk.Widget;
 
 package GPS.Kernel.Preferences is
 
@@ -59,6 +60,11 @@ package GPS.Kernel.Preferences is
       Kernel : access Kernel_Handle_Record'Class;
       Value  : String);
    --  See Default_Preferences.Set_Pref
+
+   procedure Set_Font_And_Colors
+     (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Fixed_Font : Boolean);
+   --  Change the style of the widget based on the preferences
 
    --------------------------------
    -- Specific preferences pages --

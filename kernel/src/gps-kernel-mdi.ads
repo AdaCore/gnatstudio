@@ -223,11 +223,6 @@ package GPS.Kernel.MDI is
    --  something less drastic than killing the whole process), and return
    --  True.
 
-   procedure Set_Font_And_Colors
-     (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Fixed_Font : Boolean);
-   --  Change the style of the widget based on the preferences
-
    --------------------------
    -- MDI Location markers --
    --------------------------

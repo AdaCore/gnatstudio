@@ -23,7 +23,10 @@ with GNAT.Strings;              use GNAT.Strings;
 
 with XML_Utils;                 use XML_Utils;
 
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Pango.Font;                use Pango.Font;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Widget;                use Gtk.Widget;
 
 with Config;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
@@ -33,6 +36,7 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Traces;
 
@@ -225,7 +229,8 @@ package body GPS.Kernel.Preferences is
             elsif Typ = "enum" then
                declare
                   Val : constant String_List_Access :=
-                    new String_List (1 .. Number_Of_Arguments (Data) - 5);
+                    new GNAT.Strings.String_List
+                      (1 .. Number_Of_Arguments (Data) - 5);
                   --  Freed when the preference is destroyed
                begin
                   for V in Val'Range loop
@@ -1450,7 +1455,7 @@ package body GPS.Kernel.Preferences is
 
                declare
                   Val : constant String_List_Access :=
-                    new String_List (1 .. Child_Count);
+                    new GNAT.Strings.String_List (1 .. Child_Count);
                   --  Freed when the preference is destroyed
                begin
                   Child := Node.Child;
@@ -1660,5 +1665,32 @@ package body GPS.Kernel.Preferences is
       Preferences_Pages (Preferences_Pages'Last) := Preferences_Page (Page);
       Unchecked_Free (Tmp);
    end Register_Page;
+
+   -------------------------
+   -- Set_Font_And_Colors --
+   -------------------------
+
+   procedure Set_Font_And_Colors
+     (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Fixed_Font : Boolean)
+   is
+      Active_Bg : constant Gdk_RGBA := Darken_Or_Lighten
+        (Default_Font.Get_Pref_Bg);
+   begin
+      if Fixed_Font then
+         Modify_Font (Widget, View_Fixed_Font.Get_Pref);
+      else
+         Modify_Font (Widget, Default_Font.Get_Pref_Font);
+      end if;
+
+      Override_Color (Widget, Gtk_State_Flag_Normal, Default_Font.Get_Pref_Fg);
+      Override_Color (Widget, Gtk_State_Flag_Active, Default_Font.Get_Pref_Fg);
+
+      Override_Background_Color
+        (Widget, Gtk_State_Flag_Normal,
+         Default_Font.Get_Pref_Bg);
+      Override_Background_Color
+        (Widget, Gtk_State_Flag_Active, Active_Bg);
+   end Set_Font_And_Colors;
 
 end GPS.Kernel.Preferences;
