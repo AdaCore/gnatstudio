@@ -107,7 +107,8 @@ package Coverage_GUI is
    procedure List_File_Uncovered_Lines
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access;
-      Quiet     : Boolean);
+      Quiet     : Boolean;
+      Allow_Auto_Jump_To_First : Boolean);
    --  Add to the Locations view the not covered lines of the given File_Node
 
    procedure List_Project_Uncovered_Lines

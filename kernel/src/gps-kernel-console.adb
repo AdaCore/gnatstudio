@@ -36,17 +36,14 @@ with Gtkada.MDI;             use Gtkada.MDI;
 with Config;                 use Config;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;   use GPS.Kernel.Locations;
+with GPS.Kernel.Messages.Tools_Output;  use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Location_View;      use GPS.Location_View;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
-
-pragma Unreferenced (GPS.Location_View);
 
 package body GPS.Kernel.Console is
 

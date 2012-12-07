@@ -1127,9 +1127,6 @@ private
       Messages_Container : System.Address := System.Null_Address;
       --  The message container for this instance of kernel
 
-      Locations_View_Manager : System.Address := System.Null_Address;
-      --  The locations view manager
-
       Key_Setter_Function : Key_Setter;
       --  The function to set default keys
 

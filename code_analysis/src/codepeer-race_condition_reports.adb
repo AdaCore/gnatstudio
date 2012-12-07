@@ -25,7 +25,7 @@ with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
-with GPS.Kernel.Messages.View;
+with GPS.Location_View;          use GPS.Location_View;
 
 with CodePeer.Module;
 
@@ -176,10 +176,12 @@ package body CodePeer.Race_Condition_Reports is
 
             Self.Summary_Model.Get_Value
               (Iter, CodePeer.Race_Summary_Models.Object_Name_Column, Value);
-            GPS.Kernel.Messages.View.Expand_Category
-              (Self.Kernel,
+
+            Expand_Category
+              (Get_Or_Create_Location_View (Self.Kernel),
                CodePeer.Module.Race_Condition_Category
-                 (Glib.Values.Get_String (Value)));
+                 (Glib.Values.Get_String (Value)),
+               Goto_First => False);
          end if;
       end if;
 

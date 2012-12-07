@@ -779,7 +779,6 @@ package body Src_Contexts is
                     Match.Text,
                     0,
                     (Editor_Side => True, Locations => True));
-
             begin
                Message.Set_Highlighting
                  (Get_Or_Create_Style_Copy
@@ -818,7 +817,6 @@ package body Src_Contexts is
                     Match.Text,
                     0,
                     (Editor_Side => True, Locations => True));
-
             begin
                Message.Set_Highlighting
                  (Get_Or_Create_Style_Copy

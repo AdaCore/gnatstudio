@@ -44,8 +44,8 @@ with Histories;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
-with GPS.Kernel.Messages.View;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Location_View;     use GPS.Location_View;
 with Code_Analysis_GUI;
 with CodePeer.Module;
 
@@ -1083,10 +1083,11 @@ package body CodePeer.Messages_Reports is
                --  Request Locations View to expand corresponding category/file
 
                if File_Node /= null then
-                  GPS.Kernel.Messages.View.Expand_File
-                    (Self.Kernel,
+                  Expand_File
+                    (Get_Or_Create_Location_View (Self.Kernel),
                      CodePeer.Module.CodePeer_Category_Name,
-                     File_Node.Name);
+                     File_Node.Name,
+                     Goto_First => False);
                end if;
             end;
          end if;

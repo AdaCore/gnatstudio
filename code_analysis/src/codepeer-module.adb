@@ -38,7 +38,6 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
@@ -1823,7 +1822,8 @@ package body CodePeer.Module is
                     Basic_Types.Visible_Column_Type (Message.Column),
                     Image (Message),
                     Message_Ranking_Level'Pos (Message.Current_Ranking),
-                    Flags);
+                    Flags,
+                    Allow_Auto_Jump_To_First => False);
                Style   : constant Style_Access :=
                  Module.Message_Styles (Message.Current_Ranking);
 
@@ -2005,7 +2005,6 @@ package body CodePeer.Module is
       end Process_File;
 
    begin
-      Do_Not_Goto_First_Location (Self.Kernel);
       Get_Messages_Container (Self.Kernel).Set_Sort_Order_Hint
         (CodePeer_Category_Name, Alphabetical);
 

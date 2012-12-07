@@ -226,8 +226,12 @@ package GPS.Kernel.Messages is
       Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer;
-      Flags         : Message_Flags);
-   --  Initialize message and connect it to container
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean);
+   --  Initialize message and connect it to container.
+   --  If Allow_Auto_Jump_To_First is True and the user preference is also true
+   --  then the locations window will automatically jump to the first message
+   --  when the category is created.
    --  ??? Need doc for Weight, Actual_Line, Actual_Column, not trivial
 
    procedure Initialize
@@ -344,7 +348,10 @@ package GPS.Kernel.Messages is
 
    procedure Category_Added
      (Self     : not null access Abstract_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String) is null;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Allow_Auto_Jump_To_First : Boolean) is null;
+   --  If Allow_Auto_Jump_To_First is True and the user preference is also true
+   --  then the locations window will automatically jump to the first message.
 
    procedure File_Added
      (Self     : not null access Abstract_Listener;
@@ -515,7 +522,8 @@ private
         Weight        : Natural;
         Actual_Line   : Integer;
         Actual_Column : Integer;
-        Flags         : Message_Flags)
+        Flags         : Message_Flags;
+        Allow_Auto_Jump_To_First : Boolean)
         return not null Message_Access;
 
    type Secondary_Message_Load_Procedure is

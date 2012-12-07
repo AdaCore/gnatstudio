@@ -287,7 +287,8 @@ package body Coverage_GUI is
    procedure List_File_Uncovered_Lines
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access;
-      Quiet     : Boolean)
+      Quiet     : Boolean;
+      Allow_Auto_Jump_To_First : Boolean)
    is
       pragma Unreferenced (Quiet);
 
@@ -305,7 +306,8 @@ package body Coverage_GUI is
                   File_Node.Name,
                   J,
                   File_Node.Lines (J).Contents,
-                  File_Added);
+                  File_Added,
+                  Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
             end if;
          end loop;
 
@@ -343,7 +345,9 @@ package body Coverage_GUI is
 
       for J in Sort_Arr'Range loop
          if Sort_Arr (J).Analysis_Data.Coverage_Data /= null then
-            List_File_Uncovered_Lines (Kernel, Sort_Arr (J), False);
+            List_File_Uncovered_Lines
+              (Kernel, Sort_Arr (J), False,
+               Allow_Auto_Jump_To_First => False);
          end if;
       end loop;
    end List_Project_Uncovered_Lines;
@@ -411,7 +415,8 @@ package body Coverage_GUI is
                     File_Node.Name,
                     J,
                     File_Node.Lines (J).Contents,
-                    Added);
+                    Added,
+                    Allow_Auto_Jump_To_First => False);
             end if;
          end loop;
       else

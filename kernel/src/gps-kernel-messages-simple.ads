@@ -33,7 +33,8 @@ package GPS.Kernel.Messages.Simple is
       Column    : Basic_Types.Visible_Column_Type;
       Text      : String;
       Weight    : Natural;
-      Flags     : Message_Flags)
+      Flags     : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := True)
       return not null Simple_Message_Access;
    --  Creates new instance of primary Simple_Message.
 
@@ -45,7 +46,8 @@ package GPS.Kernel.Messages.Simple is
       Column    : Basic_Types.Visible_Column_Type;
       Text      : String;
       Weight    : Natural;
-      Flags     : Message_Flags);
+      Flags     : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := True);
    --  Creates new instance of primary Simple_Message.
 
    procedure Create_Simple_Message

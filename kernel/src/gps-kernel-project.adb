@@ -583,16 +583,14 @@ package body GPS.Kernel.Project is
       ------------------
 
       procedure Report_Error (S : String) is
-         Old_Pref : constant Boolean := Auto_Jump_To_First.Get_Pref;
       begin
-         --  Temporarily unset this, to handle the following case:
+         --  Temporarily unset auto-jump, to handle the following case:
          --  the project file contains errors and couldn't be loaded, but it
          --  was also saved in the desktop. If that is the case, the project
          --  would be open several times otherwise
-         Set_Pref (Auto_Jump_To_First, Kernel, False);
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
-         Parse_File_Locations (Kernel, S, Location_Category);
-         Set_Pref (Auto_Jump_To_First, Kernel, Old_Pref);
+         Parse_File_Locations
+           (Kernel, S, Location_Category, Allow_Auto_Jump_To_First => False);
       end Report_Error;
 
       Reloaded : Boolean := False;
@@ -635,17 +633,15 @@ package body GPS.Kernel.Project is
       ------------------
 
       procedure Report_Error (S : String) is
-         Old_Pref : constant Boolean := Auto_Jump_To_First.Get_Pref;
       begin
-         --  Temporarily unset this, to handle the following case:
+         --  Temporarily unset auto-jump, to handle the following case:
          --  the project file contains errors and couldn't be loaded, but it
          --  was also saved in the desktop. If that is the case, the project
          --  would be open several times otherwise
 
-         Set_Pref (Auto_Jump_To_First, Kernel, False);
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
-         Parse_File_Locations (Kernel, S, Location_Category);
-         Set_Pref (Auto_Jump_To_First, Kernel, Old_Pref);
+         Parse_File_Locations
+           (Kernel, S, Location_Category, Allow_Auto_Jump_To_First => False);
       end Report_Error;
 
       Ignore : Boolean;

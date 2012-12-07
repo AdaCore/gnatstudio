@@ -24,7 +24,6 @@ with GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Messages.View;
 with GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles; use GPS.Kernel.Styles;
@@ -80,8 +79,12 @@ package body GPS.Kernel.Messages is
       procedure Notify_Listeners_About_Category_Added
         (Self     : not null access constant Messages_Container'Class;
          Category : Ada.Strings.Unbounded.Unbounded_String;
-         Flags    : Message_Flags);
+         Flags    : Message_Flags;
+         Allow_Auto_Jump_To_First : Boolean);
       --  Calls listeners to notify about add of the category
+      --  If Allow_Auto_Jump_To_First is True and the user preference is also
+      --  true then the locations window will automatically jump to the first
+      --  message.
 
       procedure Notify_Listeners_About_File_Added
         (Self     : not null access constant Messages_Container'Class;
@@ -155,7 +158,9 @@ package body GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return not null Messages_Container_Access;
 
-   procedure Load (Self : not null access Messages_Container'Class);
+   procedure Load
+     (Self : not null access Messages_Container'Class;
+      Allow_Auto_Jump_To_First : Boolean);
    --  Loads all messages for the current project
 
    function Get_Message_File
@@ -703,7 +708,8 @@ package body GPS.Kernel.Messages is
       Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer;
-      Flags         : Message_Flags)
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean)
    is
       pragma Assert (Category /= "");
 
@@ -761,7 +767,8 @@ package body GPS.Kernel.Messages is
          --  Notify listeners
 
          Notifiers.Notify_Listeners_About_Category_Added
-           (Container, Category_Name, Flags);
+           (Container, Category_Name, Flags,
+            Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
       end if;
 
       --  Resolve file node, create new one when there is no existent node
@@ -845,8 +852,10 @@ package body GPS.Kernel.Messages is
    -- Load --
    ----------
 
-   procedure Load (Self : not null access Messages_Container'Class) is
-
+   procedure Load
+     (Self : not null access Messages_Container'Class;
+      Allow_Auto_Jump_To_First : Boolean)
+   is
       procedure Load_Message
         (XML_Node : Node_Ptr;
          Category : String;
@@ -917,7 +926,8 @@ package body GPS.Kernel.Messages is
             Weight,
             Actual_Line,
             Actual_Column,
-            Flags);
+            Flags,
+            Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
 
          if Style_Name /= "" then
             Style := Get_Or_Create_Style (Self.Kernel, Style_Name, True);
@@ -1131,7 +1141,8 @@ package body GPS.Kernel.Messages is
       procedure Notify_Listeners_About_Category_Added
         (Self     : not null access constant Messages_Container'Class;
          Category : Ada.Strings.Unbounded.Unbounded_String;
-         Flags    : Message_Flags)
+         Flags    : Message_Flags;
+         Allow_Auto_Jump_To_First : Boolean)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
@@ -1141,7 +1152,9 @@ package body GPS.Kernel.Messages is
                if Element (Listener_Position).Flags = Empty_Message_Flags
                  or else Match (Element (Listener_Position).Flags, Flags)
                then
-                  Element (Listener_Position).Category_Added (Category);
+                  Element (Listener_Position).Category_Added
+                    (Category,
+                     Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
                end if;
 
             exception
@@ -1331,10 +1344,8 @@ package body GPS.Kernel.Messages is
       if not Container.Messages_Loaded then
          --  Load messages for opened project
 
-         GPS.Kernel.Messages.View.Do_Not_Goto_First_Location (Kernel);
          Container.Project_File := Get_Project (Kernel).Project_Path;
-
-         Container.Load;
+         Container.Load (Allow_Auto_Jump_To_First => False);
          Container.Messages_Loaded := True;
       end if;
    end On_Project_View_Changed_Hook;

@@ -33,7 +33,6 @@ with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -388,8 +387,8 @@ package body Code_Analysis_GUI is
    is
       Marker : MDI_Location_Marker;
    begin
-      Do_Not_Goto_First_Location (Kernel);
-      List_File_Uncovered_Lines (Kernel, File_Node, Quiet);
+      List_File_Uncovered_Lines
+        (Kernel, File_Node, Quiet, Allow_Auto_Jump_To_First => False);
 
       Marker := Create_MDI_Marker (View.Name & (-" Report"));
       Push_Marker_In_History (Kernel, Marker);

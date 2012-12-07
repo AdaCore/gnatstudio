@@ -18,7 +18,6 @@
 --  This package handles source file locations and displays them
 --  in a graphical tree, per category.
 
-with Ada.Strings.Unbounded;
 with GNATCOLL.VFS;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;                 use Gtk.Tree_Model;
@@ -53,13 +52,13 @@ package GPS.Location_View is
 
    procedure Expand_Category
      (Self       : Location_View_Access;
-      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      Category   : String;
       Goto_First : Boolean);
    --  Requests to expand specified category and goto first visible location
 
    procedure Expand_File
      (Self       : Location_View_Access;
-      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      Category   : String;
       File       : GNATCOLL.VFS.Virtual_File;
       Goto_First : Boolean);
    --  Requests to expand specified category and file and goto first visible

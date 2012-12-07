@@ -168,7 +168,8 @@ package body Code_Coverage.Gcov is
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
       Line_Text   : String_Access;
-      Added       : in out Boolean)
+      Added       : in out Boolean;
+      Allow_Auto_Jump_To_First : Boolean)
    is
       Message : Simple_Message_Access;
 
@@ -184,7 +185,8 @@ package body Code_Coverage.Gcov is
               1,
               Line_Text.all,
               0,
-              Coverage_Message_Flags);
+              Coverage_Message_Flags,
+              Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
          Message.Set_Highlighting
            (Get_Or_Create_Style_Copy
               (Kernel,

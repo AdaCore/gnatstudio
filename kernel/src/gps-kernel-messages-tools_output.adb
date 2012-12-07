@@ -17,31 +17,29 @@
 
 with GNAT.Regpat;
 
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Glib.Convert;
-with GPS.Kernel.Messages.Hyperlink;
+with GPS.Kernel.Console;
+with GPS.Kernel.Messages.Hyperlink;   use GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Legacy;
-with GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Preferences;
-with GPS.Kernel.Styles;
-with String_Utils;
-with GPS.Editors; use GPS.Editors;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Kernel.Messages.Simple;      use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
+with GPS.Kernel.Styles;               use GPS.Kernel.Styles;
+with String_Utils;                    use String_Utils;
+with GPS.Editors;                     use GPS.Editors;
+with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
+with GPS.Intl;                        use GPS.Intl;
+with UTF8_Utils;                      use UTF8_Utils;
 
 package body GPS.Kernel.Messages.Tools_Output is
 
-   use Ada.Strings.Unbounded;
    use Basic_Types;
    use Category_Maps;
    use File_Maps;
    use GNAT.Regpat;
-   use GPS.Kernel.Messages.Hyperlink;
-   use GPS.Kernel.Messages.Simple;
-   use GPS.Kernel.Preferences;
-   use GPS.Kernel.Styles;
    use GPS.Styles;
    use GPS.Styles.UI;
    use Node_Vectors;
-   use String_Utils;
 
    type Location is record
       File   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -76,7 +74,8 @@ package body GPS.Kernel.Messages.Tools_Output is
       Highlight_Category : GPS.Styles.UI.Style_Access;
       Length             : Natural;
       Look_For_Secondary : Boolean;
-      Show_In_Locations  : Boolean) return Message_Access
+      Show_In_Locations  : Boolean;
+      Allow_Auto_Jump_To_First : Boolean := True) return Message_Access
    is
       Locs                   : Locations_List.List;
       Loc                    : Location;
@@ -159,7 +158,8 @@ package body GPS.Kernel.Messages.Tools_Output is
                       Text,
                       Weight,
                       (Editor_Side => True,
-                       Locations   => Show_In_Locations)));
+                       Locations   => Show_In_Locations),
+                      Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
             Returned := Primary;
 
             if Highlight_Category /= null then
@@ -323,7 +323,8 @@ package body GPS.Kernel.Messages.Tools_Output is
       Highlight         : Boolean := False;
       Styles            : Builder_Message_Styles :=
         (others => null);
-      Show_In_Locations : Boolean := True)
+      Show_In_Locations : Boolean := True;
+      Allow_Auto_Jump_To_First : Boolean := True)
    is
    begin
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
@@ -340,7 +341,8 @@ package body GPS.Kernel.Messages.Tools_Output is
          -1,
          -1,
          -1,
-         Show_In_Locations => Show_In_Locations);
+         Show_In_Locations => Show_In_Locations,
+         Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
    end Parse_File_Locations;
 
    --------------------------
@@ -361,7 +363,8 @@ package body GPS.Kernel.Messages.Tools_Output is
       Style_Index_In_Regexp   : Integer;
       Warning_Index_In_Regexp : Integer;
       Info_Index_In_Regexp    : Integer;
-      Show_In_Locations       : Boolean)
+      Show_In_Locations       : Boolean;
+      Allow_Auto_Jump_To_First : Boolean := True)
    is
       function Get_File_Location return GNAT.Regpat.Pattern_Matcher;
       --  Return the pattern matcher for the file location
@@ -571,7 +574,8 @@ package body GPS.Kernel.Messages.Tools_Output is
                   C,
                   Length,
                   True,
-                  Show_In_Locations);
+                  Show_In_Locations,
+                  Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
 
                if Message /= null then
                   Message.Set_Action (Action);
@@ -584,5 +588,90 @@ package body GPS.Kernel.Messages.Tools_Output is
          Start := Real_Last + 1;
       end loop;
    end Parse_File_Locations;
+
+   -------------------------------------------
+   -- Parse_File_Locations_Unknown_Encoding --
+   -------------------------------------------
+
+   procedure Parse_File_Locations_Unknown_Encoding
+     (Kernel                  : access Kernel_Handle_Record'Class;
+      Text                    : String;
+      Category                : Glib.UTF8_String;
+      Highlight               : Boolean := False;
+      Highlight_Category      : String := "Builder results";
+      Style_Category          : String := "Style errors";
+      Warning_Category        : String := "Builder warnings";
+      Info_Category           : String := "Compiler info";
+      File_Location_Regexp    : String := "";
+      File_Index_In_Regexp    : Integer := -1;
+      Line_Index_In_Regexp    : Integer := -1;
+      Col_Index_In_Regexp     : Integer := -1;
+      Msg_Index_In_Regexp     : Integer := -1;
+      Style_Index_In_Regexp   : Integer := -1;
+      Warning_Index_In_Regexp : Integer := -1;
+      Info_Index_In_Regexp    : Integer := -1;
+      Quiet                   : Boolean := False;
+      Allow_Auto_Jump_To_First : Boolean := True)
+   is
+      pragma Unreferenced (Quiet);
+
+      Output : Unchecked_String_Access;
+      Len    : Natural;
+      Valid  : Boolean;
+      Styles : Builder_Message_Styles;
+   begin
+      Unknown_To_UTF8 (Text, Output, Len, Valid);
+      if not Valid then
+         GPS.Kernel.Console.Insert
+           (Kernel,
+            -"Locations.parse: could not convert input to UTF8",
+            Mode => Console.Error);
+
+      else
+         Styles (Errors) :=
+           Get_Or_Create_Style (Kernel, Highlight_Category, False);
+         Styles (Warnings) :=
+           Get_Or_Create_Style (Kernel, Warning_Category, False);
+         Styles (Style) := Get_Or_Create_Style (Kernel, Style_Category, False);
+         Styles (Info) := Get_Or_Create_Style (Kernel, Info_Category, False);
+
+         if Output = null then
+            Parse_File_Locations
+              (Kernel                  => Kernel,
+               Text                    => Text,
+               Category                => Category,
+               Highlight               => Highlight,
+               Styles                  => Styles,
+               File_Location_Regexp    => File_Location_Regexp,
+               File_Index_In_Regexp    => File_Index_In_Regexp,
+               Line_Index_In_Regexp    => Line_Index_In_Regexp,
+               Col_Index_In_Regexp     => Col_Index_In_Regexp,
+               Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
+               Style_Index_In_Regexp   => Style_Index_In_Regexp,
+               Warning_Index_In_Regexp => Warning_Index_In_Regexp,
+               Info_Index_In_Regexp    => Info_Index_In_Regexp,
+               Show_In_Locations       => True,
+               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
+         else
+            Parse_File_Locations
+              (Kernel                  => Kernel,
+               Text                    => Output (1 .. Len),
+               Category                => Category,
+               Highlight               => Highlight,
+               Styles                  => Styles,
+               File_Location_Regexp    => File_Location_Regexp,
+               File_Index_In_Regexp    => File_Index_In_Regexp,
+               Line_Index_In_Regexp    => Line_Index_In_Regexp,
+               Col_Index_In_Regexp     => Col_Index_In_Regexp,
+               Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
+               Style_Index_In_Regexp   => Style_Index_In_Regexp,
+               Warning_Index_In_Regexp => Warning_Index_In_Regexp,
+               Info_Index_In_Regexp    => Info_Index_In_Regexp,
+               Show_In_Locations       => True,
+               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
+            Free (Output);
+         end if;
+      end if;
+   end Parse_File_Locations_Unknown_Encoding;
 
 end GPS.Kernel.Messages.Tools_Output;

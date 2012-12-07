@@ -15,11 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
+with Ada.Strings.Fixed;              use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
 with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Generic_Views;
 with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
 with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
@@ -58,7 +59,6 @@ with GPS.Editors.GtkAda;               use GPS.Editors.GtkAda;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;             use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
@@ -73,10 +73,6 @@ with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
 with Traces;                           use Traces;
 
 package body GPS.Location_View is
-
-   use Ada.Strings;
-   use Ada.Strings.Fixed;
-   use Ada.Strings.Unbounded;
 
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
@@ -157,6 +153,25 @@ package body GPS.Location_View is
 
    package Message_Conversions is
      new System.Address_To_Access_Conversions (Abstract_Message'Class);
+
+   --------------
+   -- Messages --
+   --------------
+
+   type View_Manager
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+     new Abstract_Listener with null record;
+   type View_Manager_Access is access all View_Manager'Class;
+   overriding procedure Message_Added
+     (Self    : not null access View_Manager;
+      Message : not null access Abstract_Message'Class);
+   overriding procedure Category_Added
+     (Self     : not null access View_Manager;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Allow_Auto_Jump_To_First : Boolean);
+   --  Monitoring messages.
+   --  ??? Can this be done simply by monitoring the model instead ? We are at
+   --  at a low-level anyway here
 
    ---------------------
    -- Local constants --
@@ -306,18 +321,54 @@ package body GPS.Location_View is
       File      : GNATCOLL.VFS.Virtual_File);
    --  Exports messages of the specified category and file into text file.
 
+   --------------------
+   -- Category_Added --
+   --------------------
+
+   overriding procedure Category_Added
+     (Self     : not null access View_Manager;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Allow_Auto_Jump_To_First : Boolean)
+   is
+   begin
+      Expand_Category
+        (Location_View_Access
+           (Location_Views.Get_Or_Create_View (Self.Kernel)),
+         Ada.Strings.Unbounded.To_String (Category),
+         Auto_Jump_To_First.Get_Pref
+         and then Allow_Auto_Jump_To_First);
+   end Category_Added;
+
+   -------------------
+   -- Message_Added --
+   -------------------
+
+   overriding procedure Message_Added
+     (Self    : not null access View_Manager;
+      Message : not null access Abstract_Message'Class)
+   is
+      pragma Unreferenced (Message);
+   begin
+      Location_Views.Child_From_View
+        (Self.Kernel,
+         Location_Views.Get_Or_Create_View (Self.Kernel))
+        .Highlight_Child;
+   end Message_Added;
+
    ---------------------
    -- Expand_Category --
    ---------------------
 
    procedure Expand_Category
      (Self       : Location_View_Access;
-      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      Category   : String;
       Goto_First : Boolean)
    is
       Loc : constant Location_View := Location_View (Self);
    begin
-      Loc.Requests.Prepend ((Category, GNATCOLL.VFS.No_File, Goto_First));
+      Loc.Requests.Prepend
+        ((Ada.Strings.Unbounded.To_Unbounded_String (Category),
+         GNATCOLL.VFS.No_File, Goto_First));
 
       if Loc.Idle_Expand_Handler = No_Source_Id then
          Loc.Idle_Expand_Handler :=
@@ -331,13 +382,15 @@ package body GPS.Location_View is
 
    procedure Expand_File
      (Self       : Location_View_Access;
-      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      Category   : String;
       File       : GNATCOLL.VFS.Virtual_File;
       Goto_First : Boolean)
    is
       Loc : constant Location_View := Location_View (Self);
    begin
-      Loc.Requests.Prepend ((Category, File, Goto_First));
+      Loc.Requests.Prepend
+        ((Ada.Strings.Unbounded.To_Unbounded_String (Category),
+         File, Goto_First));
 
       if Loc.Idle_Expand_Handler = No_Source_Id then
          Loc.Idle_Expand_Handler :=
@@ -1013,8 +1066,8 @@ package body GPS.Location_View is
    is
       D             : constant File_Location_Hooks_Args_Access :=
                         File_Location_Hooks_Args_Access (Data);
-      Child         : MDI_Child;
-      Locations     : Location_View;
+      Locations     : constant Location_View :=
+        Location_Views.Get_Or_Create_View (Kernel);
       Category_Iter : Gtk_Tree_Iter;
       File_Iter     : Gtk_Tree_Iter;
       Message_Iter  : Gtk_Tree_Iter;
@@ -1023,10 +1076,6 @@ package body GPS.Location_View is
       Path          : Gtk_Tree_Path;
 
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Location_View_Record'Tag);
-      Locations := Location_View (Get_Widget (Child));
-
       --  Check current selection: if it is on the same line as the new
       --  location, do not change the selection. Otherwise, there is no easy
       --  way for a user to click on a secondary location found in the same
@@ -1353,9 +1402,14 @@ package body GPS.Location_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Manager : constant View_Manager_Access := new View_Manager (Kernel);
    begin
       Location_Views.Register_Module (Kernel, Menu_Name => -"Locations");
       GPS.Location_View.Actions.Register_Actions (Kernel);
+      Get_Messages_Container (Kernel).Register_Listener
+        (Listener_Access (Manager),
+         (Editor_Side => False,
+          GPS.Kernel.Messages.Locations => True));
    end Register_Module;
 
    -----------------------

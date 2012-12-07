@@ -266,6 +266,7 @@ private
 
    overriding procedure Category_Added
      (Self     : not null access Locations_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String);
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Allow_Auto_Jump_To_First : Boolean);
 
 end GPS.Location_View.Listener;
