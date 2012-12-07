@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;              use Ada.Strings, Ada.Strings.Fixed;
-with Ada.Text_IO;
+with Ada.Text_IO;                    use Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
 with Ada.Containers.Vectors;
@@ -42,9 +42,7 @@ with Gtk.Check_Menu_Item;              use Gtk.Check_Menu_Item;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;                         use Gtk.Menu;
-with Gtk.Menu_Item;                    use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
-with Gtk.Separator_Menu_Item;          use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;          use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                        use Gtk.Stock;
 with Gtk.Tool_Button;                  use Gtk.Tool_Button;
@@ -74,16 +72,19 @@ with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
 with Histories;                        use Histories;
-with Traces;                           use Traces;
 
 package body GPS.Location_View is
 
-   Command_Remove_Message_Name : constant String  := "Remove message";
+   Command_Remove_Message_Name : constant String  :=
+     "Locations remove selection";
    Command_Remove_Message_Tip : constant String :=
-     "Remove the selected message";
-   Command_Clear_Locations_Name : constant String := "Clear locations";
+     "Remove the selected category, file or message";
+   Command_Clear_Locations_Name : constant String := "Locations clear";
    Command_Clear_Locations_Tip : constant String :=
      "Remove all the messages";
+   Command_Export_Name : constant String := "Locations export to text file";
+   Command_Export_Tip : constant String :=
+     "Export the selected category or file to a text file";
 
    History_Sort_By_Subcategory : constant History_Key :=
      "locations-sort-by-subcategory";
@@ -177,13 +178,21 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type;
    --  Removes all messages
 
-   type Remove_Message_Command is
+   type Remove_Selection_Command is
      new Commands.Interactive.Interactive_Command with null record;
    overriding function Execute
-     (Self    : access Remove_Message_Command;
+     (Self    : access Remove_Selection_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Removes selected message
+
+   type Export_Command is
+     new Commands.Interactive.Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Export_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Export selection to a text file
 
    --------------
    -- Messages --
@@ -278,17 +287,6 @@ package body GPS.Location_View is
      (Self : access Location_View_Record'Class);
    --  Called when a row has been delete in the model
 
-   procedure On_Remove_Category
-     (Self : access Location_View_Record'Class);
-   --  Remove the selected category in the Location_View
-
-   procedure On_Remove_File
-     (Self : access Location_View_Record'Class);
-   --  Remove the selected file in the Location_View
-
-   procedure On_Remove_Message (Self : access Location_View_Record'Class);
-   --  Removes selected message
-
    procedure On_Expand_Category (Self : access Location_View_Record'Class);
    --  Expand all files in the selected Category
 
@@ -297,14 +295,6 @@ package body GPS.Location_View is
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
-
-   procedure On_Export_Category
-     (Self : access Location_View_Record'Class);
-   --  Exports all messages of the selected category into text file
-
-   procedure On_Export_File
-     (Self : access Location_View_Record'Class);
-   --  Exports all messages of the selected file into text file
 
    procedure Context_Func
      (Context      : in out Selection_Context;
@@ -571,51 +561,13 @@ package body GPS.Location_View is
       end loop;
 
       Iter := Get_Iter (Model, Path);
+
+      if Iter /= Null_Iter then
+         On_Location_Clicked (Self, Path, Iter);
+      end if;
+
       Path_Free (Path);
-
-      if Iter = Null_Iter then
-         return;
-      end if;
-
-      declare
-         Mark     : constant Editor_Mark'Class :=
-           Get_Mark (Gtk.Tree_Model."-" (Model), Iter, Node_Mark_Column);
-         Location : constant Editor_Location'Class := Mark.Location (True);
-
-      begin
-         if Mark /= Nil_Editor_Mark then
-            Location.Buffer.Current_View.Cursor_Goto (Location, True);
-         end if;
-      end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Goto_Location;
-
-   -----------------------
-   -- On_Remove_Message --
-   -----------------------
-
-   procedure On_Remove_Message (Self : access Location_View_Record'Class) is
-      Model   : Gtk_Tree_Model;
-      Iter    : Gtk_Tree_Iter;
-      Value   : GValue;
-      Message : Message_Access;
-
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-
-      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
-         return;
-      end if;
-
-      Get_Value (Model, Iter, Message_Column, Value);
-      Message :=
-        Message_Access (Message_Conversions.To_Pointer (Get_Address (Value)));
-      Glib.Values.Unset (Value);
-
-      Message.Remove;
-   end On_Remove_Message;
 
    ------------------------
    -- On_Expand_Category --
@@ -639,86 +591,7 @@ package body GPS.Location_View is
       Dummy := Self.View.Expand_Row (Path, True);
 
       Path_Free (Path);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Expand_Category;
-
-   ------------------------
-   -- On_Export_Category --
-   ------------------------
-
-   procedure On_Export_Category
-     (Self : access Location_View_Record'Class)
-   is
-      Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
-        Get_Messages_Container (Self.Kernel);
-      Model       : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Export_File : GNATCOLL.VFS.Virtual_File;
-
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-
-      Export_File := Gtkada.File_Selector.Select_File;
-
-      if Export_File /= No_File then
-         declare
-            Category : constant Unbounded_String :=
-              To_Unbounded_String (Get_String (Model, Iter, Category_Column));
-            Files    : constant Virtual_File_Array :=
-              Container.Get_Files (Category);
-            File     : Ada.Text_IO.File_Type;
-
-         begin
-            Ada.Text_IO.Create
-              (File, Ada.Text_IO.Out_File, String (Export_File.Full_Name.all));
-
-            for J in Files'Range loop
-               Export_Messages (File, Container, Category, Files (J));
-            end loop;
-
-            Ada.Text_IO.Close (File);
-         end;
-      end if;
-   end On_Export_Category;
-
-   --------------------
-   -- On_Export_File --
-   --------------------
-
-   procedure On_Export_File
-     (Self : access Location_View_Record'Class)
-   is
-      Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
-        Get_Messages_Container (Self.Kernel);
-      Model       : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Export_File : GNATCOLL.VFS.Virtual_File;
-
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-
-      Export_File := Gtkada.File_Selector.Select_File;
-
-      if Export_File /= No_File then
-         declare
-            Category : constant Unbounded_String :=
-              To_Unbounded_String (Get_String (Model, Iter, Category_Column));
-            File     : constant Virtual_File :=
-              GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column);
-            Out_File : Ada.Text_IO.File_Type;
-
-         begin
-            Ada.Text_IO.Create
-              (Out_File,
-               Ada.Text_IO.Out_File,
-               String (Export_File.Full_Name.all));
-            Export_Messages (Out_File, Container, Category, File);
-            Ada.Text_IO.Close (Out_File);
-         end;
-      end if;
-   end On_Export_File;
 
    ---------------------
    -- On_Collapse_All --
@@ -727,51 +600,7 @@ package body GPS.Location_View is
    procedure On_Collapse_All (Self : access Location_View_Record'Class) is
    begin
       Self.View.Collapse_All;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Collapse_All;
-
-   ------------------------
-   -- On_Remove_Category --
-   ------------------------
-
-   procedure On_Remove_Category
-     (Self : access Location_View_Record'Class)
-   is
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-      Get_Messages_Container (Self.Kernel).Remove_Category
-        (Get_String (Model, Iter, Category_Column),
-         Locations_Message_Flags);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Remove_Category;
-
-   --------------------
-   -- On_Remove_File --
-   --------------------
-
-   procedure On_Remove_File
-     (Self : access Location_View_Record'Class)
-   is
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-      Get_Messages_Container (Self.Kernel).Remove_File
-        (Get_String (Model, Iter, Category_Column),
-         Get_File (Model, Iter, File_Column),
-         Locations_Message_Flags);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Remove_File;
 
    ---------------
    -- Next_Item --
@@ -900,9 +729,6 @@ package body GPS.Location_View is
       if V.Idle_Expand_Handler /= No_Source_Id then
          Glib.Main.Remove (V.Idle_Expand_Handler);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
 
    ------------------
@@ -917,75 +743,21 @@ package body GPS.Location_View is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget, Event);
-      Mitem    : Gtk_Menu_Item;
-      Sep      : Gtk_Separator_Menu_Item;
-
+      pragma Unreferenced (Kernel, Event_Widget, Event, Menu);
       Explorer : constant Location_View := Location_View (Object);
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
-      Created  : Boolean := False;
-
    begin
       Get_Selected (Get_Selection (Explorer.View), Model, Iter);
 
-      if Model = Null_Gtk_Tree_Model
-        or else Iter = Null_Iter
-      then
-         --  There is no selection
-
+      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
          return;
       end if;
 
-      Gtk_New (Sep);
-      Append (Menu, Sep);
-
       Path := Get_Path (Model, Iter);
 
-      if Get_Depth (Path) = 1 then
-         Gtk_New (Mitem, -"Remove category");
-         Location_View_Callbacks.Object_Connect
-           (Mitem,
-            Signal_Activate,
-            On_Remove_Category'Access,
-            Explorer);
-         Append (Menu, Mitem);
-         Gtk_New (Mitem, -"Export messages into text file...");
-         Location_View_Callbacks.Object_Connect
-           (Mitem,
-            Signal_Activate,
-            On_Export_Category'Access,
-            Explorer);
-         Append (Menu, Mitem);
-
-      elsif Get_Depth (Path) = 2 then
-         Gtk_New (Mitem, -"Remove File");
-         Location_View_Callbacks.Object_Connect
-           (Mitem,
-            Signal_Activate,
-            On_Remove_File'Access,
-            Explorer);
-         Append (Menu, Mitem);
-         Gtk_New (Mitem, -"Export messages into text file...");
-         Location_View_Callbacks.Object_Connect
-           (Mitem,
-            Signal_Activate,
-            On_Export_File'Access,
-            Explorer);
-         Append (Menu, Mitem);
-
-      elsif Get_Depth (Path) >= 3 then
-         Gtk_New (Mitem, -"Remove message");
-         Location_View_Callbacks.Object_Connect
-           (Mitem, Signal_Activate, On_Remove_Message'Access, Explorer);
-         Append (Menu, Mitem);
-
-         Gtk_New (Mitem, -"Jump to location");
-         Location_View_Callbacks.Object_Connect
-           (Mitem, Signal_Activate, Goto_Location'Access, Explorer);
-         Append (Menu, Mitem);
-
+      if Get_Depth (Path) >= 3 then
          declare
             File_Iter     : Gtk_Tree_Iter;
             Category_Iter : Gtk_Tree_Iter;
@@ -1011,14 +783,7 @@ package body GPS.Location_View is
               (Context,
                Category => Get_String (Model, Category_Iter, Category_Column),
                Message => Get_String (Model, Iter, Text_Column));
-
-            Created := True;
          end;
-      end if;
-
-      if Created then
-         Gtk_New (Sep);
-         Append (Menu, Sep);
       end if;
 
       Path_Free (Path);
@@ -1205,7 +970,7 @@ package body GPS.Location_View is
                 Name  => "locations.location_changed",
                 Watch => GObject (Self));
 
-      --  Read the current "sort by subcategory" setting
+      --  Apply the current "sort by subcategory" setting
       On_Change_Sort (Self);
 
       return Gtk_Widget (Self.View);
@@ -1240,9 +1005,6 @@ package body GPS.Location_View is
       end if;
 
       Unset (Value);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Action_Clicked;
 
    -------------------------
@@ -1267,10 +1029,6 @@ package body GPS.Location_View is
             Location.Buffer.Current_View.Cursor_Goto (Location, True);
          end if;
       end;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Location_Clicked;
 
    ---------------------------------
@@ -1321,6 +1079,12 @@ package body GPS.Location_View is
          Stock_Id => Stock_Remove,
          Action   => Command_Remove_Message_Name,
          Tooltip  => Command_Remove_Message_Tip);
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Save_As,
+         Action   => Command_Export_Name,
+         Tooltip  => Command_Export_Tip);
 
       Gtk_New (Sep);
       Toolbar.Insert (Sep);
@@ -1430,18 +1194,23 @@ package body GPS.Location_View is
          Key  => Hist_Locations_Auto_Close,
          Default_Value => False);
 
-      Command := new Remove_Message_Command;
+      Command := new Remove_Selection_Command;
       Register_Action
         (Kernel, Command_Remove_Message_Name,
          Command, Command_Remove_Message_Tip,
-         null, -"Locations view");
+         null, -"Locations");
       GPS.Kernel.Bind_Default_Key (Kernel, -"Remove message", "alt-Delete");
 
       Command := new Clear_Locations_Command;
       Register_Action
         (Kernel, Command_Clear_Locations_Name,
          Command, Command_Clear_Locations_Tip,
-         null, -"Locations view");
+         null, -"Locations");
+
+      Command := new Export_Command;
+      Register_Action
+        (Kernel, Command_Export_Name, Command, Command_Export_Tip,
+         null, -"Locations");
 
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager),
@@ -1698,17 +1467,122 @@ package body GPS.Location_View is
    -------------
 
    overriding function Execute
-     (Self    : access Remove_Message_Command;
+     (Self    : access Remove_Selection_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
       View : constant Location_View :=
         Location_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Path     : Gtk_Tree_Path;
+      Iter     : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+      Message  : Message_Access;
+      Value    : GValue;
    begin
-      if View /= null then
-         On_Remove_Message (View);
+      if View = null then
+         return Commands.Failure;
       end if;
+
+      Get_Selected (Get_Selection (View.View), Model, Iter);
+
+      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
+         return Commands.Failure;
+      end if;
+
+      Path := Get_Path (Model, Iter);
+
+      if Get_Depth (Path) = 1 then
+         Get_Messages_Container (View.Kernel).Remove_Category
+           (Get_String (Model, Iter, Category_Column),
+            Locations_Message_Flags);
+      elsif Get_Depth (Path) = 2 then
+         Get_Messages_Container (View.Kernel).Remove_File
+           (Get_String (Model, Iter, Category_Column),
+            Get_File (Model, Iter, File_Column),
+            Locations_Message_Flags);
+      elsif Get_Depth (Path) >= 3 then
+         Get_Value (Model, Iter, Message_Column, Value);
+         Message := Message_Access
+           (Message_Conversions.To_Pointer (Get_Address (Value)));
+         Glib.Values.Unset (Value);
+         Message.Remove;
+      end if;
+
+      Path_Free (Path);
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Export_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      View : constant Location_View :=
+        Location_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Path     : Gtk_Tree_Path;
+      Iter     : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+      Export_File : GNATCOLL.VFS.Virtual_File;
+      Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
+        Get_Messages_Container (View.Kernel);
+   begin
+      if View = null then
+         return Commands.Failure;
+      end if;
+
+      Get_Selected (Get_Selection (View.View), Model, Iter);
+
+      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
+         return Commands.Failure;
+      end if;
+
+      Path := Get_Path (Model, Iter);
+
+      if Get_Depth (Path) = 1 then
+         Export_File := Gtkada.File_Selector.Select_File;
+         if Export_File /= No_File then
+            declare
+               Category : constant Unbounded_String := To_Unbounded_String
+                 (Get_String (Model, Iter, Category_Column));
+               Files    : constant Virtual_File_Array :=
+                 Container.Get_Files (Category);
+               File     : Ada.Text_IO.File_Type;
+            begin
+               Create (File, Out_File, String (Export_File.Full_Name.all));
+               for J in Files'Range loop
+                  Export_Messages (File, Container, Category, Files (J));
+               end loop;
+               Ada.Text_IO.Close (File);
+            end;
+         end if;
+
+      elsif Get_Depth (Path) = 2 then
+         Export_File := Gtkada.File_Selector.Select_File;
+         if Export_File /= No_File then
+            declare
+               Category : constant Unbounded_String := To_Unbounded_String
+                 (Get_String (Model, Iter, Category_Column));
+               File     : constant Virtual_File :=
+                 GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column);
+               F : File_Type;
+            begin
+               Create (F, Out_File, String (Export_File.Full_Name.all));
+               Export_Messages (F, Container, Category, File);
+               Close (F);
+            end;
+         end if;
+
+      elsif Get_Depth (Path) >= 3 then
+         null;   --  Nothing to do
+      end if;
+
+      Path_Free (Path);
       return Commands.Success;
    end Execute;
 
