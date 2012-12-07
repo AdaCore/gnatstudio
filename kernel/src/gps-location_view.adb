@@ -88,6 +88,8 @@ package body GPS.Location_View is
 
    History_Sort_By_Subcategory : constant History_Key :=
      "locations-sort-by-subcategory";
+   Hist_Auto_Jump_To_First : constant History_Key :=
+     "locations-auto-jump-to-first";
 
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
@@ -351,8 +353,9 @@ package body GPS.Location_View is
       Category : Ada.Strings.Unbounded.Unbounded_String;
       Allow_Auto_Jump_To_First : Boolean)
    is
-      Auto : constant Boolean := Auto_Jump_To_First.Get_Pref
-         and then Allow_Auto_Jump_To_First;
+      Auto : constant Boolean := Allow_Auto_Jump_To_First
+        and then Get_History
+          (Get_History (Self.Kernel).all, Hist_Auto_Jump_To_First);
    begin
       Expand_Category
         (Location_View_Access
@@ -1368,6 +1371,18 @@ package body GPS.Location_View is
         (Check, Gtk.Check_Menu_Item.Signal_Toggled,
          On_Change_Sort'Access, View);
       Menu.Add (Check);
+
+      Gtk_New (Check, -"Jump to first location");
+      Check.Set_Tooltip_Text
+        (-("Whether GPS should automatically jump to the first location"
+           & " when entries are added to the Location window (error"
+           & " messages, find results, ...)"));
+      Associate (Get_History (View.Kernel).all,
+                 Hist_Auto_Jump_To_First, Check, Default => True);
+      Location_View_Callbacks.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+         On_Change_Sort'Access, View);  --  force refresh
+      Menu.Add (Check);
    end Create_Menu;
 
    ---------------------
@@ -1381,6 +1396,11 @@ package body GPS.Location_View is
       Command : Commands.Interactive.Interactive_Command_Access;
    begin
       Location_Views.Register_Module (Kernel, Menu_Name => -"Locations");
+
+      Create_New_Boolean_Key_If_Necessary
+        (Hist => Get_History (Kernel).all,
+         Key  => Hist_Auto_Jump_To_First,
+         Default_Value => True);
 
       Command := new Remove_Message_Command;
       Register_Action

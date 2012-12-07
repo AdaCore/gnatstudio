@@ -141,7 +141,6 @@ package GPS.Kernel.Preferences is
    Save_Desktop_On_Exit   : Boolean_Preference;
    Save_Editor_Desktop    : Editor_Desktop_Policy_Prefs.Preference;
    Multi_Language_Builder : Multi_Language_Builder_Policy_Prefs.Preference;
-   Auto_Jump_To_First     : Boolean_Preference;
    Hyper_Mode             : Boolean_Preference;
    Tip_Of_The_Day         : Boolean_Preference;
 
@@ -255,10 +254,6 @@ package GPS.Kernel.Preferences is
    CVS_Command               : String_Preference;
    ClearCase_Command         : String_Preference;
    Default_VCS               : String_Preference;
-
-   -- Location View --
-   Locations_Wrap            : Boolean_Preference;
-   Locations_Auto_Close      : Boolean_Preference;
 
    --  Debugger preferences are registered in GVD.Preferences
 

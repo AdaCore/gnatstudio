@@ -416,36 +416,6 @@ package body GPS.Kernel.Preferences is
          Page    => -"General",
          Default => Default_Builder);
 
-      Auto_Jump_To_First := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Auto-Jump-To-First",
-         Default => True,
-         Doc     =>
-         -("Whether GPS should automatically jump to the first location"
-           & " when entries are added to the Location window (error"
-           & " messages, find results, ...)"),
-         Label   => -"Jump to first location",
-         Page    => -"General");
-
-      Locations_Wrap := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Locations-Wrap",
-         Label   => -"Wrap around on next/previous",
-         Doc     => -("Whether using the Next Tag and Previous Tag actions "
-           & " should wrap around to the beginning when reaching the end of "
-           & " the category."),
-         Default => True,
-         Page    => "General");
-
-      Locations_Auto_Close := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Locations-Auto-Close",
-         Label   => -"Auto close Locations view",
-         Doc     => -("Whether the Locations view should be closed "
-             & "automatically when it becomes empty."),
-         Default => False,
-         Page    => "General");
-
       Hyper_Mode := Create
         (Manager => Kernel.Preferences,
          Name    => "Hyper-Mode",
