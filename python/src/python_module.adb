@@ -127,7 +127,7 @@ package body Python_Module is
          History_List    => Get_History (Kernel),
          Wrap_Mode       => Wrap_None,
          Key             => Hist);
-      Set_Font_And_Colors (Console, Fixed_Font => True);
+      Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
       Set_Max_Length   (Get_History (Kernel).all, 100, Hist);
       Allow_Duplicates (Get_History (Kernel).all, Hist, True, True);
 
