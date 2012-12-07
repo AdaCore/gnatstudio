@@ -602,14 +602,16 @@ package body Histories is
    ---------------
 
    procedure Associate
-     (Hist   : in out History_Record;
-      Key    : History_Key;
-      Button : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class)
+     (Hist    : in out History_Record;
+      Key     : History_Key;
+      Button  : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class;
+      Default : Boolean := True)
    is
-      Val : constant History_Key_Access :=
-              Create_New_Key_If_Necessary (Hist, Key, Booleans);
+      Val : History_Key_Access;
    begin
-      Set_Active (Button, Val.Value);
+      Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
+      Val := Create_New_Key_If_Necessary (Hist, Key, Booleans);
+      Button.Set_Active (Val.Value);
       Value_Callback.Connect
         (Button, Gtk.Toggle_Button.Signal_Toggled,
          Update_History'Access, User_Data => Val);

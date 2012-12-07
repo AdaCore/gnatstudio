@@ -267,6 +267,31 @@ package body GPS.Kernel.Modules.UI is
       Full_Path : String) return Menu_Command;
    --  Utility function: create a command for a given menu
 
+   --------------
+   -- Toolbars --
+   --------------
+
+   type Action_Tool_Button_Record is new Gtk_Tool_Button_Record with record
+      Kernel : Kernel_Handle;
+      Action : GNAT.Strings.String_Access;
+   end record;
+   type Action_Tool_Button is access all Action_Tool_Button_Record'Class;
+
+   procedure Gtk_New
+     (Button   : out Action_Tool_Button;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Stock_Id : String;
+      Action   : String);
+   --  Create a new button so that it executes action when pressed.
+
+   procedure On_Action_Button_Clicked
+     (Button : access Gtk_Widget_Record'Class);
+   --  Called when an Action_Tool_Button has been activated.
+
+   procedure On_Action_Button_Destroy
+     (Button : access Gtk_Widget_Record'Class);
+   --  Called when an Action_Tool_Button is destroyed.
+
    -----------------------------
    -- Create_Command_For_Menu --
    -----------------------------
@@ -1211,7 +1236,7 @@ package body GPS.Kernel.Modules.UI is
             Create_Proxy
               (Command.Command,
                (null, Context, False, No_File, null, null, 1, 0)),
-            Destroy_On_Exit => False,
+            Destroy_On_Exit => False,  --  ??? Should this be True
             Active          => True, Show_Bar => False, Queue_Id => "");
 
       elsif Get_Error_Message (Command.Filter) /= "" then
@@ -2218,5 +2243,83 @@ package body GPS.Kernel.Modules.UI is
          Ref_Item,
          Add_Before);
    end Register_Contextual_Submenu;
+
+   ------------------------------
+   -- On_Action_Button_Clicked --
+   ------------------------------
+
+   procedure On_Action_Button_Clicked
+     (Button : access Gtk_Widget_Record'Class)
+   is
+      B      : constant Action_Tool_Button := Action_Tool_Button (Button);
+      Action : constant Action_Record_Access :=
+        Lookup_Action (B.Kernel, B.Action.all);
+   begin
+      if Action = null then
+         GPS.Kernel.Console.Insert
+           (B.Kernel, "Command not found: '" & B.Action.all & "'",
+            Mode => Error);
+
+      else
+         Execute_Command
+           (B.Kernel,
+            Command => (Kernel  => B.Kernel,
+                        Command => Action.Command,
+                        Filter  => Action.Filter));
+      end if;
+   end On_Action_Button_Clicked;
+
+   ------------------------------
+   -- On_Action_Button_Destroy --
+   ------------------------------
+
+   procedure On_Action_Button_Destroy
+     (Button : access Gtk_Widget_Record'Class)
+   is
+      B : constant Action_Tool_Button := Action_Tool_Button (Button);
+   begin
+      GNAT.Strings.Free (B.Action);
+   end On_Action_Button_Destroy;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Button   : out Action_Tool_Button;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Stock_Id : String;
+      Action   : String)
+   is
+   begin
+      --  ??? Should automatically grey out when the context does not match.
+      Button := new Action_Tool_Button_Record;
+      Button.Kernel := Kernel_Handle (Kernel);
+      Button.Action := new String'(Action);
+      Gtk.Tool_Button.Initialize_From_Stock (Button, Stock_Id);
+      Widget_Callback.Connect
+        (Button, Gtk.Tool_Button.Signal_Clicked,
+         On_Action_Button_Clicked'Access);
+      Widget_Callback.Connect
+        (Button, Gtk.Widget.Signal_Destroy, On_Action_Button_Destroy'Access);
+   end Gtk_New;
+
+   ----------------
+   -- Add_Button --
+   ----------------
+
+   procedure Add_Button
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Stock_Id : String;
+      Action   : String;
+      Tooltip  : String)
+   is
+      Button : Action_Tool_Button;
+   begin
+      Gtk_New (Button, Kernel, Stock_Id, Action);
+      Button.Set_Tooltip_Markup (Tooltip);
+      Toolbar.Insert (Button);
+   end Add_Button;
 
 end GPS.Kernel.Modules.UI;

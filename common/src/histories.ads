@@ -187,7 +187,8 @@ package Histories is
    procedure Associate
      (Hist   : in out History_Record;
       Key    : History_Key;
-      Button : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class);
+      Button : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class;
+      Default : Boolean := True);
    procedure Associate
      (Hist   : in out History_Record;
       Key    : History_Key;

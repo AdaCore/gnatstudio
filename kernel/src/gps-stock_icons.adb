@@ -58,32 +58,36 @@ package body GPS.Stock_Icons is
          Error   : GError;
          Item    : Gtk_Stock_Item;
       begin
-         if not Wildcarded then
-            Gtk_New (Source);
-            Source.Set_Size_Wildcarded (False);
-            Source.Set_Size (Size);
-            Source.Set_Filename (P.Display_Full_Name);
-            Source.Set_Icon_Name (Stock);
+         if Path /= "" then
+            if not Wildcarded then
+               Gtk_New (Source);
+               Source.Set_Size_Wildcarded (False);
+               Source.Set_Size (Size);
+               Source.Set_Filename (P.Display_Full_Name);
+               Source.Set_Icon_Name (Stock);
 
-            Gtk_New (Set);
-            Set.Add_Source (Source);
+               Gtk_New (Set);
+               Set.Add_Source (Source);
 
-         else
-            Gdk_New_From_File (Pixbuf, +P.Full_Name.all, Error);
-
-            if Error /= null then
-               Trace (Me, "Error loading " & P.Display_Full_Name & ": "
-                      & Get_Message (Error));
             else
-               Gtk_New_From_Pixbuf (Set, Pixbuf);
+               Gdk_New_From_File (Pixbuf, +P.Full_Name.all, Error);
+
+               if Error /= null then
+                  Trace (Me, "Error loading " & P.Display_Full_Name & ": "
+                         & Get_Message (Error));
+               else
+                  Gtk_New_From_Pixbuf (Set, Pixbuf);
+               end if;
             end if;
+
+            Factory.Add (Stock, Set);
          end if;
 
-         Factory.Add (Stock, Set);
-
-         Gtk_New (Item, Stock_Id => Stock, Label => Label,
-                  Modifier => 0, Keyval => 0, Translation_Domain => "");
-         Add (Item);
+         if Label /= "" then
+            Gtk_New (Item, Stock_Id => Stock, Label => Label,
+                     Modifier => 0, Keyval => 0, Translation_Domain => "");
+            Add (Item);
+         end if;
       end Icon;
 
    begin
@@ -110,6 +114,9 @@ package body GPS.Stock_Icons is
       Icon (GPS_Stock_Config_Menu, -"Configuration", "20px/menu_20.png");
       Icon (GPS_Stop_Task, -"Close", "9px/close_8.png");
       Icon (GPS_Logo, -"Logo", "24px/gps_24.png");
+      Icon (GPS_Expand_All, -"Expand all", "9px/expand_12.png");
+      Icon (GPS_Collapse_All, "-Collapse all", "9px/collapse_12.png");
+      Icon (GPS_Clear_Entry, -"Clear", "16px/clear_entry_16.png");
    end Register_Stock_Icons;
 
 end GPS.Stock_Icons;

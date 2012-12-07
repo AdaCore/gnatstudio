@@ -68,6 +68,7 @@ with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Item;
 with Gtk.Target_List;
+with Gtk.Toolbar;
 with Gtk.Widget;
 with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
@@ -454,6 +455,17 @@ package GPS.Kernel.Modules.UI is
       Command  : Interactive_Command_Access := null;
       Tooltip  : String := "");
    --  Same as above but with a stock button
+
+   procedure Add_Button
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Stock_Id : String;
+      Action   : String;
+      Tooltip  : String);
+   --  Insert a button in the local toolbar, associated with the given named
+   --  action. The action will be lookuped up upon execution, so it is valid
+   --  even if it has not been registered yet.
+   --  Tooltip is a markup.
 
    -------------------------
    -- Drag'n'drop support --

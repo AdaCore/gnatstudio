@@ -35,14 +35,22 @@ package GPS.Stock_Icons is
    --  Register the stock icons for GPS.
    --  System_Dir is the installation prefix for GPS.
 
-   GPS_Stock_Config_Menu : constant String := "configMenu";
+   GPS_Stock_Config_Menu : constant String := "gps-configMenu";
    --  Icon used for the configuration menu in the toolbar of views
 
-   GPS_Stop_Task : constant String := "stopTask";
+   GPS_Stop_Task : constant String := "gps-stopTask";
    --  Icon used in the task manager's main progress bar to cancel a task
 
-   GPS_Logo : constant String := "logo";
+   GPS_Logo : constant String := "gps-logo";
    --  The GPS logo
+
+   GPS_Expand_All : constant String := "gps-expandAll";
+   GPS_Collapse_All : constant String := "gps-collapseAll";
+   --  Manipulating a tree view
+
+   GPS_Clear_Entry : constant String := "gps-clear-entry";
+   --  Clear the contents of the entry, to be used with
+   --  Gtk.GEntry.Set_Icon_From_Stock.
 
    Icon_Size_Action_Button : Gtk.Enums.Gtk_Icon_Size;
    --  A very small icon size (7x7). It is used for instance for the Stop_Task
