@@ -357,7 +357,7 @@ package body GPS.Location_View is
       Expand_Category
         (Location_View_Access
            (Location_Views.Get_Or_Create_View
-              (Self.Kernel, Focus => Auto)),
+              (Self.Kernel, Focus => True)),
          Ada.Strings.Unbounded.To_String (Category),
          Auto);
    end Category_Added;
@@ -375,7 +375,7 @@ package body GPS.Location_View is
       Location_Views.Child_From_View
         (Self.Kernel,
          Location_Views.Get_Or_Create_View
-           (Self.Kernel, Focus => False))
+           (Self.Kernel, Focus => True))
         .Highlight_Child;
    end Message_Added;
 
