@@ -463,8 +463,6 @@ package body GPS.Kernel.Timeout is
                   --  Display all remaining output
 
                   Insert (Data.Console, Output, Add_LF => False);
-                  Highlight_Child
-                    (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
                end if;
             end;
          end if;
