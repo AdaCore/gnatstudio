@@ -29,8 +29,6 @@ with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with XML_Utils;              use XML_Utils;
 
---  with Gdk.Color;              use Gdk.Color;
-
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Button;             use Gtk.Button;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
@@ -49,6 +47,7 @@ with Gtkada.Dialogs;         use Gtkada.Dialogs;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Collapsing_Pane;        use Collapsing_Pane;
 
+with Generic_Views;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -72,7 +71,7 @@ package body Remote.View is
    type Sync_Buttons_Array is array (Config_Servers) of Gtk_Button;
    type Server_Combo_Array is array (Config_Servers) of Gtk_Combo_Box;
 
-   type Remote_View_Record is new Gtk_Scrolled_Window_Record with record
+   type Remote_View_Record is new Generic_Views.View_Record with record
       Main_Table         : Gtk.Table.Gtk_Table;
       Kernel             : GPS.Kernel.Kernel_Handle;
       Pane               : Collapsing_Pane.Collapsing_Pane;
@@ -88,19 +87,27 @@ package body Remote.View is
       --  ??? Gtk3: These need to be converted to Gtk.Style_Context
       Connecting         : Boolean := False;
    end record;
-   type Remote_View is access all Remote_View_Record'Class;
+   overriding procedure Save_To_XML
+     (View : access Remote_View_Record;
+      XML  : in out XML_Utils.Node_Ptr);
+   overriding procedure Load_From_XML
+     (View : access Remote_View_Record; XML : XML_Utils.Node_Ptr);
 
-   procedure Gtk_New
-     (View            : out Remote_View;
-      Kernel          : Kernel_Handle;
-      Use_Simple_View : Boolean := True);
-   --  Create a new remote view associated with Manager.
-
-   procedure Initialize
+   function Initialize
      (View            : access Remote_View_Record'Class;
-      Kernel          : Kernel_Handle;
-      Use_Simple_View : Boolean := True);
-   --  Internal function for creating new widgets
+      Kernel          : access Kernel_Handle_Record'Class)
+      return Gtk_Widget;
+   --  Initialize view and returns the focus widget.
+
+   package Remote_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Remote_Module",
+      View_Name          => "Remote",
+      Formal_View_Record => Remote_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Position           => Position_Left);
+   subtype Remote_View is Remote_Views.View_Access;
 
    procedure Set_Servers
      (View : access Remote_View_Record'Class);
@@ -199,49 +206,40 @@ package body Remote.View is
       end if;
    end Get_Selected;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (View            : out Remote_View;
-      Kernel          : Kernel_Handle;
-      Use_Simple_View : Boolean := True) is
-   begin
-      View := new Remote_View_Record;
-      Initialize (View, Kernel, Use_Simple_View);
-   end Gtk_New;
-
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (View            : access Remote_View_Record'Class;
-      Kernel          : Kernel_Handle;
-      Use_Simple_View : Boolean := True)
+      Kernel          : access Kernel_Handle_Record'Class)
+      return Gtk_Widget
    is
       Server_Label   : Gtk_Label;
       Simple_Table   : Gtk_Table;
       Full_Table     : Gtk_Table;
---        Color          : Gdk_Color;
---        Success        : Boolean;
       Hbox           : Gtk_Hbox;
       Buttons_Box    : Gtk_Hbox;
       To_Local_Img   : Gtk_Image;
       To_Remote_Img  : Gtk_Image;
       List           : Gtk_List_Store;
       Cell           : Gtk_Cell_Renderer_Text;
+      Scrolled       : Gtk_Scrolled_Window;
 
    begin
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Name (View, "remote_view");
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
-      Set_Shadow_Type (View, Shadow_None);
-      Gtk_New (View.Main_Table, 3, 2, False);
-      Add_With_Viewport (View, View.Main_Table);
+      Initialize_Vbox (View, Homogeneous => False);
 
-      View.Kernel := Kernel;
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Scrolled.Set_Name ("remote_view");
+      Scrolled.Set_Shadow_Type (Shadow_None);
+
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
+
+      Gtk_New (View.Main_Table, 3, 2, False);
+      Scrolled.Add_With_Viewport (View.Main_Table);
+
+      View.Kernel := Kernel_Handle (Kernel);
 
       --  Server selection pane
 
@@ -256,11 +254,7 @@ package body Remote.View is
       Set_Expanded_Widget (View.Pane,
                            Full_Table);
 
-      if Use_Simple_View then
-         Set_State (View.Pane, Collapsed);
-      else
-         Set_State (View.Pane, Expanded);
-      end if;
+      Set_State (View.Pane, Collapsed);
 
       for S in Config_Servers'Range loop
          Gtk_New (List, (1 => Glib.GType_String));
@@ -268,8 +262,6 @@ package body Remote.View is
          Gtk_New (Cell);
          View.Servers_Combo (S).Pack_Start (Cell, True);
          View.Servers_Combo (S).Add_Attribute (Cell, "text", 0);
-         --  Set_Editable (Get_Entry (View.Servers_Combo (S)), False);
-         --  Set_Width_Chars (Get_Entry (View.Servers_Combo (S)), 0);
          View_Callback.Connect
            (View.Servers_Combo (S), Signal_Changed, On_Combo_Changed'Access,
             (View => Remote_View (View), Server => S));
@@ -402,10 +394,6 @@ package body Remote.View is
       --  Styles
       Gtk_New (View.Normal_Style);
       Gtk_New (View.Modified_Style);
---        Color := Parse ("red");
---        for State in Gtk_State_Type loop
---           Set_Color (View.Modified_Style, State, Color);
---        end loop;
 
       --  Buttons
 
@@ -482,22 +470,20 @@ package body Remote.View is
          Add_Hook (Kernel, Remote.Db.Server_List_Changed_Hook,
                    Hook_Func, "remote_views_module", Watch => GObject (View));
       end;
+
+      return Gtk_Widget (View);
    end Initialize;
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
+   -------------------
+   -- Load_From_XML --
+   -------------------
 
-   function Load_Desktop
-     (Module : GPS.Kernel.Modules.Module_ID;
-      Node   : Node_Ptr;
-      User   : Kernel_Handle) return MDI_Child
+   overriding procedure Load_From_XML
+     (View : access Remote_View_Record; XML : XML_Utils.Node_Ptr)
    is
-      View     : Remote_View;
-      Child    : GPS_MDI_Child;
       Mode     : Boolean;
       Mode_Str : constant String :=
-                   Get_Attribute (Node, "simple_mode", "True");
+                   Get_Attribute (XML, "simple_mode", "True");
    begin
       begin
          Mode := Boolean'Value (Mode_Str);
@@ -506,43 +492,27 @@ package body Remote.View is
             Mode := True;
       end;
 
-      Gtk_New (View, User, Mode);
-
-      Gtk_New (Child, View,
-               Default_Width => 215,
-               Group         => Group_View,
-               Module        => Module);
-      Set_Title (Child, -"Remote", -"Remote");
-      Put (Get_MDI (User), Child, Initial_Position => Position_Left);
-      return MDI_Child (Child);
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget      : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User        : GPS.Kernel.Kernel_Handle;
-      Module_Name : String) return XML_Utils.Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Remote_View_Record'Class then
-         N := new Node;
-         N.Tag := new String'(Module_Name);
-
-         if Get_State (Remote_View (Widget).Pane) = Collapsed then
-            Set_Attribute (N, "simple_mode", "true");
-         else
-            Set_Attribute (N, "simple_mode", "false");
-         end if;
-         return N;
+      if Mode then
+         Set_State (View.Pane, Collapsed);
+      else
+         Set_State (View.Pane, Expanded);
       end if;
+   end Load_From_XML;
 
-      return null;
-   end Save_Desktop;
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding procedure Save_To_XML
+     (View : access Remote_View_Record;
+      XML  : in out XML_Utils.Node_Ptr) is
+   begin
+      if Get_State (View.Pane) = Collapsed then
+         Set_Attribute (XML, "simple_mode", "true");
+      else
+         Set_Attribute (XML, "simple_mode", "false");
+      end if;
+   end Save_To_XML;
 
    -----------
    -- Setup --
@@ -1076,36 +1046,16 @@ package body Remote.View is
       Set_Sensitive (User.View.Set_Default_Button, False);
    end On_Set_Default_Clicked;
 
-   ----------------------
-   -- Show_Remote_View --
-   ----------------------
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   procedure Show_Remote_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID)
-   is
-      pragma Unreferenced (Widget);
-      Remote : Remote_View;
-      Child  : GPS_MDI_Child;
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-                              (Get_MDI (Kernel), Remote_View_Record'Tag));
-      if Child = null then
-         Gtk_New (Remote, Kernel);
-         Gtk_New (Child, Remote,
-                  Default_Width => 215,
-                  Group         => Group_View,
-                  Module        => Module);
-         Set_Title (Child, -"Remote", -"Remote");
-         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
-      end if;
-
-      Set_Focus_Child (Child);
-      Raise_Child (Child);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Show_Remote_View;
+      Remote_Views.Register_Module
+        (Kernel,
+         Menu_Name => -"Views/_Remote");
+   end Register_Module;
 
 end Remote.View;
