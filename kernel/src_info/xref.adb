@@ -1458,13 +1458,6 @@ package body Xref is
                File_Has_No_LI_Report, F, In_Scope.Old_Entity,
                Include_Overriding => Include_Overriding,
                Include_Overridden => Include_Overridden);
-
-            --  Skip cases where No_Entity_Reference is returned.
-            while not At_End (Iter.Old_Iter)
-              and then Get (Iter.Old_Iter) = Old_Entities.No_Entity_Reference
-            loop
-               Next (Iter.Old_Iter);
-            end loop;
          end;
       end if;
    end Find_All_References;
@@ -1505,11 +1498,6 @@ package body Xref is
 
       else
          Next (Iter.Old_Iter);
-         while not At_End (Iter.Old_Iter)
-           and then Get (Iter.Old_Iter) = Old_Entities.No_Entity_Reference
-         loop
-            Next (Iter.Old_Iter);
-         end loop;
       end if;
    end Next;
 
