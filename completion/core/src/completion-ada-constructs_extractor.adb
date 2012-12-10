@@ -543,7 +543,6 @@ package body Completion.Ada.Constructs_Extractor is
 
       Constr_Result.Persistent_Entity := To_Entity_Persistent_Access
         (Get_Entity (Proposal.View));
-      Ref (Constr_Result.Persistent_Entity);
       Constr_Result.Is_All := Is_All (Proposal.View);
       Constr_Result.Is_In_Call := Proposal.Is_In_Call;
 

@@ -367,7 +367,6 @@ package body Ada_Semantic_Tree.Interfaces is
 
                      Entity_Persistent :=
                        To_Entity_Persistent_Access (Entity);
-                     Ref (Entity_Persistent);
                      Assistant.Exports.Insert (P.Name, Entity_Persistent);
                   end if;
                end;

@@ -69,7 +69,8 @@ package body Outline_View.Model is
      (Model  : access Outline_Model_Record'Class;
       Entity : Entity_Persistent_Access) return Sorted_Node_Access;
    --  Create a new node, and connect it to the entity via the appropriate
-   --  annotation
+   --  annotation. This function adopts the reference to Entity, which must not
+   --  be Unrefered by the caller.
 
    function Get_Sorted_Node
      (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
@@ -443,7 +444,6 @@ package body Outline_View.Model is
          Annot);
 
       Node.Entity := Entity;
-      Ref (Node.Entity);
 
       if Model.Sorted then
          Node.Order_Kind := Alphabetical;

@@ -270,9 +270,6 @@ package body Ada_Semantic_Tree.Parts is
                   Third_Occurence  => Null_Entity_Persistent_Access),
                Side     => First);
 
-            Ref (Ada_Relation_Annotation
-                 (Parts_Annotation.Other_Val.all).Relation.First_Occurence);
-
             Set_Annotation
               (Get_Annotation_Container (Scope_Tree, Scope_It).all,
                Parts_Key,
@@ -369,8 +366,6 @@ package body Ada_Semantic_Tree.Parts is
                                  Relation.First_Occurence :=
                                    To_Entity_Persistent_Access
                                      (Element (Cur));
-
-                                 Ref (Relation.First_Occurence);
                               end if;
                            else
                               Relation := new Ada_Relation'
@@ -381,8 +376,6 @@ package body Ada_Semantic_Tree.Parts is
                                    Null_Entity_Persistent_Access,
                                  Third_Occurence  =>
                                    Null_Entity_Persistent_Access);
-
-                              Ref (Relation.First_Occurence);
 
                               Parts_Annotation.Other_Val :=
                                 new Ada_Relation_Annotation'(Relation, First);
@@ -419,8 +412,6 @@ package body Ada_Semantic_Tree.Parts is
                                 To_Entity_Persistent_Access
                                   (To_Entity_Access (Scope_File, It));
 
-                              Ref (Relation.Second_Occurence);
-
                               Ada_Relation_Annotation
                                 (Parts_Annotation.Other_Val.all).Side :=
                                 Second;
@@ -436,8 +427,6 @@ package body Ada_Semantic_Tree.Parts is
                               Relation.Third_Occurence :=
                                 To_Entity_Persistent_Access
                                   (To_Entity_Access (Scope_File, It));
-
-                              Ref (Relation.Third_Occurence);
 
                               Ada_Relation_Annotation
                                 (Parts_Annotation.Other_Val.all).Side :=
@@ -586,9 +575,6 @@ package body Ada_Semantic_Tree.Parts is
          Second_Occurence =>
            To_Entity_Persistent_Access (Body_Entity),
          Third_Occurence  => Null_Entity_Persistent_Access);
-
-      Ref (Relation.First_Occurence);
-      Ref (Relation.Second_Occurence);
 
       if Spec_Unit /= Null_Unit_Access then
          Parts_Annotation.Other_Val :=
@@ -938,13 +924,13 @@ package body Ada_Semantic_Tree.Parts is
       Right_Entity_Cmp : Entity_Persistent_Access;
    begin
       if Left_Relation = null then
-         Left_Entity_Cmp := To_Entity_Persistent_Access (Left);
+         Left_Entity_Cmp := To_Unrefed_Entity_Persistent_Access (Left);
       else
          Left_Entity_Cmp := Left_Relation.First_Occurence;
       end if;
 
       if Right_Relation = null then
-         Right_Entity_Cmp := To_Entity_Persistent_Access (Right);
+         Right_Entity_Cmp := To_Unrefed_Entity_Persistent_Access (Right);
       else
          Right_Entity_Cmp := Right_Relation.Second_Occurence;
       end if;
@@ -1040,14 +1026,14 @@ package body Ada_Semantic_Tree.Parts is
       Tree : constant Construct_Tree := Get_Tree (File);
    begin
       if Scope_Relation = null then
-         Scope_Entity_Cmp := To_Entity_Persistent_Access (Scope);
+         Scope_Entity_Cmp := To_Unrefed_Entity_Persistent_Access (Scope);
       else
          Scope_Entity_Cmp := Scope_Relation.First_Occurence;
       end if;
 
       loop
          if Entity_Relation = null then
-            Entity_Cmp := To_Entity_Persistent_Access (Entity_It);
+            Entity_Cmp := To_Unrefed_Entity_Persistent_Access (Entity_It);
          else
             Entity_Cmp := Entity_Relation.First_Occurence;
          end if;

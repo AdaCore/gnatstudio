@@ -1547,11 +1547,11 @@ package body Language.Tree.Database is
       Internal (This);
    end Free;
 
-   ---------------------------------
-   -- To_Entity_Persistent_Access --
-   ---------------------------------
+   -----------------------------------------
+   -- To_Unrefed_Entity_Persistent_Access --
+   -----------------------------------------
 
-   function To_Entity_Persistent_Access
+   function To_Unrefed_Entity_Persistent_Access
      (Entity : Entity_Access) return Entity_Persistent_Access
    is
       use Construct_Annotations_Pckg;
@@ -1583,6 +1583,51 @@ package body Language.Tree.Database is
                Index  => To_Construct_Tree_Iterator (Entity).Index,
                Refs   => 0));
 
+         Set_Annotation
+           (Annotations.all, Db.Persistent_Entity_Key, Persistent_Annotation);
+      end if;
+
+      return Entity_Persistent_Annotation
+        (Persistent_Annotation.Other_Val.all).Info;
+   end To_Unrefed_Entity_Persistent_Access;
+
+   ---------------------------------
+   -- To_Entity_Persistent_Access --
+   ---------------------------------
+
+   function To_Entity_Persistent_Access
+     (Entity : Entity_Access) return Entity_Persistent_Access
+   is
+      use Construct_Annotations_Pckg;
+
+      Db : Construct_Database_Access;
+
+      It          : constant Construct_Tree_Iterator :=
+        To_Construct_Tree_Iterator (Entity);
+      Annotations : access Annotation_Container;
+
+      Persistent_Annotation : Annotation (Other_Kind);
+   begin
+      if It = Null_Construct_Tree_Iterator then
+         return Null_Entity_Persistent_Access;
+      end if;
+
+      Db := Get_Database (Get_File (Entity));
+      Annotations := Get_Annotation_Container
+        (Get_Tree (Get_File (Entity)), It);
+
+      if Is_Set (Annotations.all, Db.Persistent_Entity_Key) then
+         Get_Annotation
+           (Annotations.all, Db.Persistent_Entity_Key, Persistent_Annotation);
+         Ref (Entity_Persistent_Annotation
+              (Persistent_Annotation.Other_Val.all).Info);
+      else
+         Persistent_Annotation.Other_Val := new Entity_Persistent_Annotation'
+           (Info => new Entity_Persistent_Info'
+              (Exists => True,
+               File   => Get_File (Entity),
+               Index  => To_Construct_Tree_Iterator (Entity).Index,
+               Refs   => 1));
          Set_Annotation
            (Annotations.all, Db.Persistent_Entity_Key, Persistent_Annotation);
       end if;

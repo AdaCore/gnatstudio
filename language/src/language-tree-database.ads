@@ -563,6 +563,15 @@ package Language.Tree.Database is
    function To_Entity_Persistent_Access
      (Entity : Entity_Access) return Entity_Persistent_Access;
    --  Create a persistant entity based on this entity access.
+   --  The result needs to be Unref-ed when no longer needed.
+
+   function To_Unrefed_Entity_Persistent_Access
+     (Entity : Entity_Access) return Entity_Persistent_Access;
+   --  Same as To_Entity_Persistent_Access, but the result does not hold a
+   --  reference, and will be cleaned the next time the same file is processed.
+   --  You need to explictly call ref if you intend to keep the entity.
+   --  In general, this function should not be used, prefer
+   --  To_Entity_Persistent_Access instead.
 
    function Get_Construct
      (Entity : Entity_Persistent_Access) return Simple_Construct_Information;

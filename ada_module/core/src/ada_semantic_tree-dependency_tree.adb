@@ -1243,7 +1243,6 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
             if Unit /= Null_Entity_Access then
                P_Unit := To_Entity_Persistent_Access (Unit);
-               Ref (P_Unit);
 
                Construct_Annotations_Pckg.Set_Annotation
                  (Get_Annotation_Container (Tree, It).all,
