@@ -587,7 +587,6 @@ package body Ada_Semantic_Tree.Type_Tree is
 
          Type_Info := new Ada_Type_Record;
          Type_Info.Entity := To_Entity_Persistent_Access (The_Type);
-         Ref (Type_Info.Entity);
 
          if Active (Test_Trace) then
             Trace
@@ -829,7 +828,6 @@ package body Ada_Semantic_Tree.Type_Tree is
                   Primitive_Info.Entity :=
                     To_Entity_Persistent_Access (Subprogram);
                   Ref (Primitive_Info);
-                  Ref (Primitive_Info.Entity);
 
                   Set_Annotation
                     (Get_Annotation_Container (Tree, It).all,
@@ -841,11 +839,10 @@ package body Ada_Semantic_Tree.Type_Tree is
 
                if Add_To_Dotted then
                   declare
-                     Persistent_Sb : Entity_Persistent_Access :=
+                     Persistent_Sb : constant Entity_Persistent_Access :=
                        To_Entity_Persistent_Access (Subprogram);
                   begin
                      Append (Dotted_Notation_Sb, Persistent_Sb);
-                     Ref (Persistent_Sb);
                   end;
                end if;
             end;

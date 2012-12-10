@@ -514,7 +514,6 @@ package body Ada_Semantic_Tree.Units is
 
                   Info.Entity := To_Entity_Persistent_Access
                     (To_Entity_Access (File, It));
-                  Ref (Info.Entity);
                   Info.Name := new Composite_Identifier'
                     (To_Composite_Identifier (Get (Construct.Name).all));
                   Info.Unit_Key := Assistant.Unit_Key;
@@ -555,15 +554,12 @@ package body Ada_Semantic_Tree.Units is
                       (To_Entity_Access (File, First (Tree)));
                else
                   Info.Start_Entity := Last_End_Entity;
+                  Ref (Info.Start_Entity);
                end if;
-
-               Ref (Info.Start_Entity);
 
                Info.End_Entity := To_Entity_Persistent_Access
                  (To_Entity_Access
                     (File, Next (Tree, It, Jump_Over)));
-
-               Ref (Info.End_Entity);
 
                Last_End_Entity := Info.End_Entity;
 
@@ -687,7 +683,6 @@ package body Ada_Semantic_Tree.Units is
                   It_Unit.Spec_Unit := Unit.Entity;
                   Unit.Body_Unit := It_Unit.Entity;
 
-                  Ref (It_Unit.Parent);
                   Ref (It_Unit.Spec_Unit);
                   Ref (Unit.Body_Unit);
 
@@ -720,8 +715,6 @@ package body Ada_Semantic_Tree.Units is
                      Unit.Parent := To_Entity_Persistent_Access (It_Entity);
 
                      Insert (It_Unit.Children_Units, Unit.Entity);
-
-                     Ref (Unit.Parent);
 
                      Parent_Found := True;
 
@@ -779,7 +772,6 @@ package body Ada_Semantic_Tree.Units is
                   Unit.Spec_Unit := It_Unit.Entity;
                   It_Unit.Body_Unit := Unit.Entity;
 
-                  Ref (Unit.Parent);
                   Ref (Unit.Spec_Unit);
                   Ref (It_Unit.Body_Unit);
 

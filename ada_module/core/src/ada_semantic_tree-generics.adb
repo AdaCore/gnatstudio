@@ -453,8 +453,6 @@ package body Ada_Semantic_Tree.Generics is
                    (Declaration_View_Record (Result.all).Generic_Context);
             end if;
 
-            Ref (Instanciated_Package (Cached.all).Generic_Package);
-
             Set_Cache (Info, Cached);
          end if;
 
@@ -509,9 +507,6 @@ package body Ada_Semantic_Tree.Generics is
          Generic_Package  =>
            To_Entity_Persistent_Access (Instance.Generic_Package),
          others => <>);
-
-      Ref (Result.Instance_Package);
-      Ref (Result.Generic_Package);
 
       Cur := Instance.Pre_Contexts.First;
 
