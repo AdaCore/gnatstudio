@@ -33,6 +33,7 @@ with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
+with Gtk.Box;                    use Gtk.Box;
 with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 use Gtk.Cell_Renderer.Cell_Renderer_List;
@@ -908,11 +909,16 @@ package body Revision_Views is
                   (1 => new String'(-"Revision"),
                    2 => new String'(-"Author"),
                    3 => new String'(-"Date / Log"));
+      Scrolled : Gtk_Scrolled_Window;
 
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+
+      Initialize_Vbox (View, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Revision_Column => GType_String,
@@ -940,7 +946,7 @@ package body Revision_Views is
          Set_Model (View.Tree, +S_Model);
       end Adjust_Model;
 
-      Add (View, View.Tree);
+      Scrolled.Add (View.Tree);
 
       View.Root_Color := Parse (Root_Color_Name);
 

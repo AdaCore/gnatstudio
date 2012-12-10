@@ -29,6 +29,7 @@ with Gdk.Types;
 with Glib;
 with Glib.Main;
 with Gtk.Enums;
+with Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;
 with Gtk.Text_View;
 with Gtk.Text_Mark;
@@ -344,6 +345,7 @@ private
    type Interactive_Console_Record is new Generic_Views.View_Record with record
       Handler    : Command_Handler;
       Virtual    : GNATCOLL.Scripts.Virtual_Console;
+      Scrolled   : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
 
       Completion           : GUI_Utils.Completion_Handler;
       Completion_User_Data : System.Address;

@@ -171,7 +171,7 @@ package body Generic_Views is
          View := new Formal_View_Record;
          Focus_Widget := Initialize (View, Kernel);
          if Focus_Widget = null then
-            Focus_Widget := Get_Child (View);
+            Focus_Widget := Gtk_Widget (View);
          end if;
 
          if Local_Toolbar or else Local_Config then

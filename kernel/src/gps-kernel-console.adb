@@ -494,7 +494,7 @@ package body GPS.Kernel.Console is
       pragma Unreferenced (Msg);
    begin
       Messages_Views.Register_Module
-        (Kernel, Menu_Name    => -"_Messages");
+        (Kernel, Menu_Name  => -"Views/_Messages");
 
       Msg := Messages_Views.Get_Or_Create_View (Kernel);
 

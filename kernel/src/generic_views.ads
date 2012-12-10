@@ -25,8 +25,8 @@ with GPS.Kernel.MDI;
 with Glib.Object;
 with XML_Utils;
 with Gtkada.Handlers;
+with Gtk.Box;
 with Gtk.Menu;
-with Gtk.Scrolled_Window;
 with Gtk.Toolbar;
 with Gtk.Widget;
 with Gtkada.MDI;
@@ -37,8 +37,7 @@ package Generic_Views is
    -- View_Record --
    -----------------
 
-   type View_Record is new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
-      with null record;
+   type View_Record is new Gtk.Box.Gtk_Box_Record with null record;
 
    procedure Save_To_XML
      (View : access View_Record;

@@ -24,6 +24,7 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -408,11 +409,15 @@ package body Clipboard_Views is
      (View   : access Clipboard_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
-      Tooltip : Clipboard_View_Tooltips_Access;
+      Tooltip  : Clipboard_View_Tooltips_Access;
+      Scrolled : Gtk_Scrolled_Window;
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+
+      Initialize_Vbox (View, Homogeneous => False);
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (0 => Gdk.Pixbuf.Get_Type,
@@ -423,7 +428,7 @@ package body Clipboard_Views is
          Selection_Mode     => Selection_None,
          Sortable_Columns   => False,
          Hide_Expander      => True);
-      Add (View, View.Tree);
+      Scrolled.Add (View.Tree);
 
       Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
 

@@ -34,6 +34,7 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -719,10 +720,14 @@ package body Bookmark_Views is
    is
       Tooltip   : Tooltips.Tooltips_Access;
       Refresh_H : Refresh_Hook_Access;
+      Scrolled  : Gtk_Scrolled_Window;
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (View, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Icon_Column     => Gdk.Pixbuf.Get_Type,
@@ -739,7 +744,7 @@ package body Bookmark_Views is
          Merge_Icon_Columns => False,
          Hide_Expander      => True);
       Set_Name (View.Tree, "Bookmark TreeView"); --  For the testsuite
-      Add (View, View.Tree);
+      Scrolled.Add (View.Tree);
 
       View.Goto_Icon := Render_Icon (View, Stock_Jump_To, Icon_Size_Menu);
 

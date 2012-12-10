@@ -171,17 +171,22 @@ package body Scenario_Views is
    is
       Hook     : Refresh_Hook;
       Viewport : Gtk_Viewport;
+      Scrolled : Gtk_Scrolled_Window;
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View, null, null);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
-      Set_Shadow_Type (View, Shadow_None);
+
+      Initialize_Vbox (View, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Scrolled.Set_Shadow_Type (Shadow_None);
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       --  Do not use Add_With_Viewport, since otherwise we do not have
       --  access to the viewport itself to change its shadow
       Gtk_New (Viewport);
-      Set_Shadow_Type (Viewport, Shadow_None);
-      Add (View, Viewport);
+      Viewport.Set_Shadow_Type (Shadow_None);
+      Scrolled.Add (Viewport);
 
       Gtk_New_Vbox (View.Vbox, Homogeneous => False);
       Add (Viewport, View.Vbox);

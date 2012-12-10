@@ -38,6 +38,7 @@ with Glib.Main;                        use Glib.Main;
 with Glib.Object;                      use Glib.Object;
 with Glib.Values;                      use Glib.Values;
 
+with Gtk.Box;                          use Gtk.Box;
 with Gtk.Check_Menu_Item;              use Gtk.Check_Menu_Item;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Handlers;
@@ -915,9 +916,13 @@ package body GPS.Location_View is
       return Gtk_Widget
    is
       M        : Gtk_Tree_Model;
+      Scrolled : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Self);
-      Self.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Self, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Self.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Self.Kernel := Kernel_Handle (Kernel);
 
@@ -929,7 +934,7 @@ package body GPS.Location_View is
 
       M := Get_Model (Locations_Listener_Access (Self.Listener));
       Gtk_New (Self.View, M);
-      Self.Add (Self.View);
+      Scrolled.Add (Self.View);
       Location_View_Callbacks.Object_Connect
         (Gtk.Tree_Model."-" (M),
          Signal_Row_Deleted,

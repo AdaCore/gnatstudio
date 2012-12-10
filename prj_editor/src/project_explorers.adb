@@ -714,9 +714,14 @@ package body Project_Explorers is
       H1       : Refresh_Hook;
       H2       : Project_Hook;
       Tooltip  : Explorer_Tooltips_Access;
+      Scrolled : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Explorer);
-      Explorer.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Explorer, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Explorer.Pack_Start (Scrolled, Expand => True, Fill => True);
+
       Explorer.Kernel := Kernel_Handle (Kernel);
 
       Init_Graphics (Gtk_Widget (Explorer));
@@ -726,7 +731,7 @@ package body Project_Explorers is
 
       Set_Name (Explorer.Tree, "Project Explorer Tree");  --  For testsuite
 
-      Explorer.Add (Explorer.Tree);
+      Scrolled.Add (Explorer.Tree);
       Set_Font_And_Colors (Explorer.Tree, Fixed_Font => True);
 
       Register_Contextual_Menu

@@ -24,6 +24,7 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -653,6 +654,7 @@ package body Outline_View is
       Pixbuf_Render : Gtk_Cell_Renderer_Pixbuf;
       Tooltip       : Outline_View_Tooltips_Access;
       Model         : Outline_Model;
+      Scrolled      : Gtk_Scrolled_Window;
       Data          : aliased Context_Hooks_Args;
 
       pragma Unreferenced (Col_Number);
@@ -662,8 +664,11 @@ package body Outline_View is
 
       Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
 
-      Gtk.Scrolled_Window.Initialize (Outline);
-      Set_Policy (Outline, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Outline);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Outline.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       --  Create the tree view using the sorting model
 
@@ -699,7 +704,7 @@ package body Outline_View is
         (Col, Text_Render, "markup", Outline_View.Model.Display_Name_Column);
       Clicked (Col);
 
-      Outline.Add (Outline.Tree);
+      Scrolled.Add (Outline.Tree);
 
       Outline.Icon := Render_Icon
         (Get_Main_Window (Kernel), "gps-box", Icon_Size_Menu);

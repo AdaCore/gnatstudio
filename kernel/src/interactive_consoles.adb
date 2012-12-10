@@ -40,6 +40,7 @@ with Gdk.Keyval;          use Gdk.Keyval;
 with Gdk.Types;           use Gdk, Gdk.Types;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Event;           use Gdk.Event;
+with Gtk.Box;             use Gtk.Box;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Main;            use Gtk.Main;
@@ -914,9 +915,9 @@ package body Interactive_Consoles is
       --  width of one scrollbar in any theme.
 
       if Alloc.Width < 25 then
-         Set_Policy (Console, Policy_Always, Policy_Always);
+         Set_Policy (Console.Scrolled, Policy_Always, Policy_Always);
       else
-         Set_Policy (Console, Policy_Automatic, Policy_Automatic);
+         Set_Policy (Console.Scrolled, Policy_Automatic, Policy_Automatic);
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1547,11 +1548,11 @@ package body Interactive_Consoles is
       Console.History := History_List;
       Console.Highlight := Highlight;
 
-      Gtk.Scrolled_Window.Initialize (Console);
-      Set_Policy
-        (Console,
-         Hscrollbar_Policy => Policy_Automatic,
-         Vscrollbar_Policy => Policy_Automatic);
+      Initialize_Vbox (Console, Homogeneous => False);
+
+      Gtk_New (Console.Scrolled);
+      Console.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Console.Pack_Start (Console.Scrolled, Expand => True, Fill => True);
 
       if ANSI_Support then
          Gtk_New (Term, Prevent_Cursor_Motion_With_Mouse => True);
@@ -1597,7 +1598,7 @@ package body Interactive_Consoles is
 
       Add (Get_Tag_Table (Console.Buffer), Console.Prompt_Tag);
 
-      Add (Console, Console.View);
+      Console.Scrolled.Add (Console.View);
 
       Console.Internal_Insert := True;
 

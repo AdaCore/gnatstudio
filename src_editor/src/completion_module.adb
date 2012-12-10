@@ -29,11 +29,8 @@ with Glib;                      use Glib;
 with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
@@ -48,7 +45,6 @@ with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -89,7 +85,6 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
 with Engine_Wrappers;                 use Engine_Wrappers;
 with Projects;                        use Projects;
-with XML_Utils;                       use XML_Utils;
 with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
 
 package body Completion_Module is
@@ -283,195 +278,6 @@ package body Completion_Module is
    --  Execute Smart completion at the current location.
    --  Complete indicates whether we should automatically complete to the
    --  biggest common prefix.
-
-   function Entity_View (Kernel : Kernel_Handle) return MDI_Child;
-   --  Create an entity view
-
-   procedure Entity_View_Dialog
-     (Kernel     : Kernel_Handle;
-      Pattern    : String;
-      Visibility : Visibility_Context);
-   --  Create an Entity_View in a dialog.
-   --  The pattern entry is pre-filled with Pattern.
-
-   procedure On_Entity_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Menu callback to display the Entity View
-
-   procedure On_Entity_View_Dialog
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Menu callback to display the Entity View
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Desktop handling
-
-   ------------------------
-   -- Entity_View_Dialog --
-   ------------------------
-
-   procedure Entity_View_Dialog
-     (Kernel     : Kernel_Handle;
-      Pattern    : String;
-      Visibility : Visibility_Context)
-   is
-      Dialog   : Gtk_Dialog;
-      Explorer : Entity_View_Access;
-
-      Response : Gtk_Response_Type;
-      Dummy    : Gtk_Widget;
-      pragma Unreferenced (Dummy);
-   begin
-      Gtk_New (Explorer, Kernel, Pattern, Visibility);
-      Gtk_New (Dialog, "Goto entity...", Get_Main_Window (Kernel), 0);
-
-      Set_Dialog (Explorer, Dialog);
-      Pack_Start (Get_Content_Area (Dialog), Explorer, True, True, 3);
-      Set_Default_Size (Dialog, 650, 300);
-      Show_All (Dialog);
-
-      Dummy := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Response := Run (Dialog);
-      if Response = Gtk_Response_Cancel then
-         Destroy (Dialog);
-      end if;
-   end Entity_View_Dialog;
-
-   -----------------
-   -- Entity_View --
-   -----------------
-
-   function Entity_View (Kernel : Kernel_Handle) return MDI_Child is
-      Child    : GPS_MDI_Child;
-      Explorer : Entity_View_Access;
-   begin
-      Gtk_New (Explorer, Kernel, "", Null_Visibility_Context);
-      Gtk_New (Child, Explorer,
-               Default_Width  => 600,
-               Default_Height => 400,
-               Group          => Group_Consoles,
-               Focus_Widget   => Gtk_Widget (Get_Entry (Explorer)),
-               Module         => Completion_Module);
-      Set_Title (Child, -"Entity", -"Entity");
-      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-
-      return MDI_Child (Child);
-   end Entity_View;
-
-   --------------------
-   -- On_Entity_View --
-   --------------------
-
-   procedure On_Entity_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Child    : MDI_Child;
-   begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel),
-         Completion_Window.Entity_Views.Entity_View_Record'Tag);
-
-      if Child = null then
-         Child := Entity_View (Kernel);
-      end if;
-
-      Raise_Child (Child);
-      Set_Focus_Child (Get_MDI (Kernel), Child);
-
-   exception
-      when E : others => Trace (Traces.Exception_Handle, E);
-   end On_Entity_View;
-
-   ---------------------------
-   -- On_Entity_View_Dialog --
-   ---------------------------
-
-   procedure On_Entity_View_Dialog
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-
-      Visibility      : Visibility_Context;
-      File            : Virtual_File;
-      Structured_File : Structured_File_Access;
-   begin
-      --  Create the Visisbility context from the context
-      if Has_Entity_Name_Information (Context)
-        and then Has_Line_Information (Context)
-        and then Has_Column_Information (Context)
-      then
-         --  Compute the offset
-
-         File := File_Information (Context);
-         Structured_File := Get_Or_Create
-           (Get_Construct_Database (Kernel), File);
-
-         Visibility :=
-           (Structured_File,
-            To_String_Index
-              (Structured_File,
-               Line_Information (Context),
-               Column_Information (Context)),
-            Everything,
-            Public_Library_Visible);
-
-         Entity_View_Dialog
-           (Kernel,
-            Entity_Name_Information (Context), Visibility);
-      else
-         Entity_View_Dialog (Kernel, "", Null_Visibility_Context);
-      end if;
-   exception
-      when E : others => Trace (Traces.Exception_Handle, E);
-   end On_Entity_View_Dialog;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-   begin
-      if Widget.all in
-        Completion_Window.Entity_Views.Entity_View_Record'Class
-      then
-         return Save_Desktop (Entity_View_Access (Widget));
-      end if;
-      return null;
-   end Save_Desktop;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Entity_View" then
-         return Completion_Window.Entity_Views.Load_Desktop
-           (User, Node, Module_ID (Completion_Module));
-      end if;
-      return null;
-   end Load_Desktop;
 
    -------------------------
    -- Preferences_Changed --
@@ -1405,8 +1211,6 @@ package body Completion_Module is
          Kernel      => Kernel,
          Module_Name => "Completion");
 
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-
       Command := new Completion_Command (Smart_Completion => False);
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Action := Register_Action
@@ -1455,19 +1259,9 @@ package body Completion_Module is
          Wrapper (File_Saved'Access),
          Name => "completion_module.file_saved");
 
-      Register_Menu
-        (Kernel, "/_Tools/_Views/", -"_Entity",
-         Ref_Item => -"Messages",
-         Callback   => On_Entity_View'Access);
-
-      Register_Menu
-        (Kernel, "/_Navigate/", "Goto _Entity...",
-         Ref_Item => "Goto _Line...",
-         Accel_Key => GDK_LC_t,
-         Accel_Mods => Control_Mask,
-         Callback => On_Entity_View_Dialog'Access);
-
       Register_Preferences (Kernel);
+
+      Completion_Window.Entity_Views.Register_Module (Kernel);
 
       Completion_Module.Completion_History := new Completion_History;
       Completion_Module.Completion_Keywords := new Completion_Keywords;

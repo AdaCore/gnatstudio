@@ -24,16 +24,31 @@ with Gtk.Enums;          use Gtk.Enums;
 with Gtk.Editable;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.Handlers;       use Gtk.Handlers;
+with Glib.Object;        use Glib.Object;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Dialog;         use Gtk.Dialog;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Gtk.Stock;          use Gtk.Stock;
 
 with Completion_Window;  use Completion_Window;
 
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with Generic_Views;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+
+with XML_Utils;  use XML_Utils;
+with Gtk.Paned;  use Gtk.Paned;
+
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with Ada_Semantic_Tree; use Ada_Semantic_Tree;
 
 with Traces; use Traces;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -41,6 +56,52 @@ with Language.Tree.Database; use Language.Tree.Database;
 package body Completion_Window.Entity_Views is
 
    Initial_Tree_Size     : constant := 200; --  Width of the tree, in pixel
+
+   type Entity_View_Record is new Generic_Views.View_Record with record
+      Explorer : Completion_Explorer_Access;
+
+      Visibility : Visibility_Context;
+      Ent      : Gtk_Entry;
+      Pane     : Gtk_Paned;
+      Notes_Scroll : Gtk_Scrolled_Window;
+
+      Is_Horizontal : Boolean := True;
+
+      Is_New        : Boolean := True;
+      --  True when the entity view was just created
+
+      Dialog        : Gtk_Dialog;
+
+      Vertical_Position   : Gint := -1;
+      Horizontal_Position : Gint := -1;
+      --  Record the horizontal and vertical positions of the paned.
+      --  -1 indicates that there is no recorded value.
+   end record;
+   overriding procedure Save_To_XML
+     (View : access Entity_View_Record;
+      XML  : in out XML_Utils.Node_Ptr);
+   overriding procedure Load_From_XML
+     (View : access Entity_View_Record; XML : XML_Utils.Node_Ptr);
+
+   function Initialize
+     (View     : not null access Entity_View_Record'Class;
+      Kernel   : not null access Kernel_Handle_Record'Class)
+      return Gtk_Widget;
+   --  Initialize the entity view, and returns the focus widget.
+
+   package Entity_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Entity_View",
+      View_Name          => "Entity",
+      Formal_View_Record => Entity_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Group              => Group_Consoles);
+   subtype Entity_View_Access is Entity_Views.View_Access;
+
+   procedure Set_Dialog (Explorer : Entity_View_Access; Dialog : Gtk_Dialog);
+   --  Set the Explorer in Dialog mode: in this mode, Dialog will be quit
+   --  right after jumping to an entry.
 
    package Simple_Cb is new Gtk.Handlers.Callback
      (Entity_View_Record);
@@ -80,20 +141,99 @@ package body Completion_Window.Entity_Views is
    procedure Jump_To_Selected (View : access Entity_View_Record'Class);
    --  Jump to the selected entry
 
-   -------------
-   -- Gtk_New --
-   -------------
+   procedure On_Entity_View_Dialog
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Menu callback to display the Entity View
 
-   procedure Gtk_New
-     (View       : out Entity_View_Access;
-      Kernel     : Kernel_Handle;
-      Initial    : Glib.UTF8_String;
-      Visibility : Visibility_Context)
+   ---------------------------
+   -- On_Entity_View_Dialog --
+   ---------------------------
+
+   procedure On_Entity_View_Dialog
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
+
+      procedure Entity_View_Dialog
+        (Kernel     : Kernel_Handle;
+         Pattern    : String;
+         Visibility : Visibility_Context);
+      --  Create an Entity_View in a dialog.
+      --  The pattern entry is pre-filled with Pattern.
+
+      ------------------------
+      -- Entity_View_Dialog --
+      ------------------------
+
+      procedure Entity_View_Dialog
+        (Kernel     : Kernel_Handle;
+         Pattern    : String;
+         Visibility : Visibility_Context)
+      is
+         Dialog   : Gtk_Dialog;
+         Explorer : Entity_View_Access;
+
+         Response : Gtk_Response_Type;
+         Dummy    : Gtk_Widget;
+         pragma Unreferenced (Dummy);
+      begin
+         Explorer := new Entity_View_Record;
+         Dummy := Initialize (Explorer, Kernel);
+
+         Explorer.Ent.Set_Text (Pattern);
+         Explorer.Visibility := Visibility;
+
+         Gtk_New (Dialog, "Goto entity...", Get_Main_Window (Kernel), 0);
+
+         Set_Dialog (Explorer, Dialog);
+         Pack_Start (Get_Content_Area (Dialog), Explorer, True, True, 3);
+         Set_Default_Size (Dialog, 650, 300);
+         Show_All (Dialog);
+
+         Dummy := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+         Response := Run (Dialog);
+         if Response = Gtk_Response_Cancel then
+            Destroy (Dialog);
+         end if;
+      end Entity_View_Dialog;
+
+      Visibility      : Visibility_Context;
+      File            : Virtual_File;
+      Structured_File : Structured_File_Access;
    begin
-      View := new Entity_View_Record;
-      Initialize (View, Kernel, Initial, Visibility);
-   end Gtk_New;
+      --  Create the Visisbility context from the context
+      if Has_Entity_Name_Information (Context)
+        and then Has_Line_Information (Context)
+        and then Has_Column_Information (Context)
+      then
+         --  Compute the offset
+
+         File := File_Information (Context);
+         Structured_File := Get_Or_Create
+           (Get_Construct_Database (Kernel), File);
+
+         Visibility :=
+           (Structured_File,
+            To_String_Index
+              (Structured_File,
+               Line_Information (Context),
+               Column_Information (Context)),
+            Everything,
+            Public_Library_Visible);
+
+         Entity_View_Dialog
+           (Kernel,
+            Entity_Name_Information (Context), Visibility);
+      else
+         Entity_View_Dialog (Kernel, "", Null_Visibility_Context);
+      end if;
+   exception
+      when E : others => Trace (Traces.Exception_Handle, E);
+   end On_Entity_View_Dialog;
 
    ----------------------
    -- Jump_To_Selected --
@@ -289,11 +429,10 @@ package body Completion_Window.Entity_Views is
    -- Initialize --
    ----------------
 
-   procedure Initialize
-     (View       : access Entity_View_Record'Class;
-      Kernel     : Kernel_Handle;
-      Initial    : Glib.UTF8_String;
-      Visibility : Visibility_Context)
+   function Initialize
+     (View     : not null access Entity_View_Record'Class;
+      Kernel   : not null access Kernel_Handle_Record'Class)
+      return Gtk_Widget
    is
       Hbox     : Gtk_Hbox;
       Label    : Gtk_Label;
@@ -310,9 +449,9 @@ package body Completion_Window.Entity_Views is
 
       Pack_Start (Hbox, View.Ent, True, True, 0);
 
-      Pack_Start (View, Hbox, False, False, 3);
+      View.Pack_Start (Hbox, False, False, 3);
 
-      Gtk_New (View.Explorer, Kernel);
+      Gtk_New (View.Explorer, Kernel_Handle (Kernel));
 
       Gtk_New (View.Notes_Scroll);
       Set_Policy (View.Notes_Scroll, Policy_Automatic, Policy_Automatic);
@@ -322,16 +461,11 @@ package body Completion_Window.Entity_Views is
       Add1 (View.Pane, View.Explorer);
       Add2 (View.Pane, View.Notes_Scroll);
 
-      Pack_Start (View, View.Pane, True, True, 0);
+      View.Pack_Start (View.Pane, True, True, 0);
 
       Set_Position (View.Pane, Initial_Tree_Size);
 
       --  Callbacks
-
-      Object_Connect
-        (View.Ent, Gtk.Editable.Signal_Changed,
-         To_Marshaller (On_Entry_Changed'Access),
-         View);
 
       Object_Connect
         (View.Ent, Gtk.Editable.Signal_Changed,
@@ -365,9 +499,11 @@ package body Completion_Window.Entity_Views is
       Modify_Font (View.Explorer.View, View.Explorer.Fixed_Width_Font);
       Modify_Font (View.Ent, View.Explorer.Fixed_Width_Font);
 
-      View.Visibility := Visibility;
+      View.Visibility := Null_Visibility_Context;
 
-      Insert_Text (View.Ent, Initial, Position);
+      Insert_Text (View.Ent, "", Position);
+
+      return Gtk_Widget (View.Ent);
    end Initialize;
 
    ------------------------------
@@ -448,7 +584,7 @@ package body Completion_Window.Entity_Views is
             To_Marshaller (On_Pane_Button_Release'Access),
             View, After => False);
 
-         Pack_Start (View, View.Pane, True, True, 0);
+         View.Pack_Start (View.Pane, True, True, 0);
          Add1 (View.Pane, View.Explorer);
          Add2 (View.Pane, View.Notes_Scroll);
 
@@ -459,79 +595,42 @@ package body Completion_Window.Entity_Views is
       when E : others => Trace (Exception_Handle, E);
    end On_Size_Allocated;
 
-   ------------------
-   -- Save_Desktop --
-   ------------------
+   -----------------
+   -- Save_To_XML --
+   -----------------
 
-   function Save_Desktop
-     (View : access Entity_View_Record'Class) return Node_Ptr
-   is
-      N : Node_Ptr;
+   overriding procedure Save_To_XML
+     (View : access Entity_View_Record;
+      XML  : in out XML_Utils.Node_Ptr) is
    begin
-      N := new Node;
-      N.Tag := new String'("Entity_View");
-
       if View.Is_Horizontal then
          Set_Attribute
-           (N, "position_horizontal", Get_Position (View.Pane)'Img);
+           (XML, "position_horizontal", Get_Position (View.Pane)'Img);
          Set_Attribute
-           (N, "position_vertical", View.Vertical_Position'Img);
+           (XML, "position_vertical", View.Vertical_Position'Img);
       else
          Set_Attribute
-           (N, "position_horizontal", View.Horizontal_Position'Img);
+           (XML, "position_horizontal", View.Horizontal_Position'Img);
          Set_Attribute
-           (N, "position_vertical", Get_Position (View.Pane)'Img);
+           (XML, "position_vertical", Get_Position (View.Pane)'Img);
       end if;
+   end Save_To_XML;
 
-      return N;
-   end Save_Desktop;
+   -------------------
+   -- Load_From_XML --
+   -------------------
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (Kernel : Kernel_Handle;
-      Node   : Node_Ptr;
-      Module : Module_ID) return MDI_Child
-   is
-      Explorer : Entity_View_Access;
-      Child    : GPS_MDI_Child;
+   overriding procedure Load_From_XML
+     (View : access Entity_View_Record; XML : XML_Utils.Node_Ptr) is
    begin
-      Gtk_New (Explorer, Kernel, "", Null_Visibility_Context);
-      Gtk_New (Child, Explorer,
-               Group  => Group_Consoles,
-               Module => Module);
-      Set_Title (Child, -"Entity", -"Entity");
-
-      declare
-      begin
-         Explorer.Horizontal_Position :=
-           Gint'Value (Get_Attribute (Node, "position_horizontal", "-1"));
-         Explorer.Vertical_Position :=
-           Gint'Value (Get_Attribute (Node, "position_vertical", "-1"));
-      exception
-         when Constraint_Error =>
-            Insert
-              (Kernel,
-               "Wrong value for attribute position in entity view",
-               Mode => Error);
-      end;
-
-      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-
-      return MDI_Child (Child);
-   end Load_Desktop;
-
-   ---------------
-   -- Get_Entry --
-   ---------------
-
-   function Get_Entry
-     (View : access Entity_View_Record'Class) return Gtk_Entry is
-   begin
-      return View.Ent;
-   end Get_Entry;
+      View.Horizontal_Position :=
+        Gint'Value (Get_Attribute (XML, "position_horizontal", "-1"));
+      View.Vertical_Position :=
+        Gint'Value (Get_Attribute (XML, "position_vertical", "-1"));
+   exception
+      when Constraint_Error =>
+         null;
+   end Load_From_XML;
 
    ----------------
    -- Set_Dialog --
@@ -541,5 +640,22 @@ package body Completion_Window.Entity_Views is
    begin
       Explorer.Dialog := Dialog;
    end Set_Dialog;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Entity_Views.Register_Module (Kernel, Menu_Name => -"Views/_Entity");
+
+      Register_Menu
+        (Kernel, "/_Navigate/", "Goto _Entity...",
+         Ref_Item => "Goto _Line...",
+         Accel_Key => GDK_LC_t,
+         Accel_Mods => Control_Mask,
+         Callback => On_Entity_View_Dialog'Access);
+   end Register_Module;
 
 end Completion_Window.Entity_Views;

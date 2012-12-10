@@ -21,6 +21,7 @@ with Gdk.Event;              use Gdk.Event;
 with Gdk.Pixbuf;             use Gdk.Pixbuf;
 with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Types;              use Gdk.Types;
+with Gtk.Box;                use Gtk.Box;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
@@ -573,10 +574,15 @@ package body Buffer_Views is
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       Tooltip   : Tooltips.Tooltips_Access;
+      Scrolled  : Gtk_Scrolled_Window;
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+
+      Initialize_Vbox (View, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Icon_Column => Gdk.Pixbuf.Get_Type,
@@ -588,7 +594,7 @@ package body Buffer_Views is
          Sortable_Columns   => True,
          Initial_Sort_On    => 2,
          Hide_Expander      => False);
-      Add (View, View.Tree);
+      Scrolled.Add (View.Tree);
 
       Set_Font_And_Colors (View.Tree, Fixed_Font => True);
 

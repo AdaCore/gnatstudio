@@ -29,6 +29,7 @@ with Gdk.Dnd;                    use Gdk.Dnd;
 with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Rectangle;              use Gdk.Rectangle;
+with Gtk.Box;                    use Gtk.Box;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
 with Gtk.Handlers;               use Gtk.Handlers;
@@ -829,9 +830,13 @@ package body Project_Explorers_Files is
       Renamed_Hook : File_Renamed_Hook;
       Project_Hook : Project_View_Changed_Hook;
       Tooltip      : Explorer_Tooltips_Access;
+      Scrolled     : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Explorer);
-      Set_Policy (Explorer, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Explorer, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Explorer.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       Gtk_New (Explorer.File_Model, Columns_Types);
       Gtk_New (Explorer.File_Tree, Explorer.File_Model);
@@ -842,7 +847,7 @@ package body Project_Explorers_Files is
 
       Explorer.Kernel := Kernel_Handle (Kernel);
 
-      Add (Explorer, Explorer.File_Tree);
+      Scrolled.Add (Explorer.File_Tree);
 
       Set_Headers_Visible (Explorer.File_Tree, False);
 

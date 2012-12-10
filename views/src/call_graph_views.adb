@@ -32,6 +32,7 @@ with Glib.Values;                 use Glib.Values;
 with Gdk.Event;                   use Gdk.Event;
 with Gdk.Types;                   use Gdk.Types;
 with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
+with Gtk.Box;                     use Gtk.Box;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
@@ -1291,14 +1292,15 @@ package body Call_Graph_Views is
       Scroll : Gtk_Scrolled_Window;
 
    begin
-      if View.Tree /= null then
-         --  This widget is already initialized, return it
-         return Gtk_Widget (View.Tree);
-      end if;
-
       View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (View, Homogeneous => False);
+
+      Gtk_New_Hpaned (View.Pane);
+      View.Pack_Start (View.Pane, Expand => True, Fill => True);
+
+      Gtk_New (Scroll);
+      View.Pane.Add1 (Scroll);
+      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Name_Column   => GType_String,
@@ -1314,18 +1316,15 @@ package body Call_Graph_Views is
          Show_Column_Titles => False,
          Sortable_Columns   => True);
       Set_Name (View.Tree, "Call Graph Tree"); --  For test suite
-      Gtk_New_Hpaned (View.Pane);
+      Scroll.Add (View.Tree);
 
       --  Set custom order by column: Name & Decl
       View.Tree.Get_Column (0).Set_Sort_Column_Id (Sort_Column);
       View.Tree.Get_Column (0).Clicked;
 
       Gtk_New (Scroll);
-      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
-      Add (Scroll, View.Tree);
-      Add1 (View.Pane, Scroll);
-
-      Add_With_Viewport (View, View.Pane);
+      Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
+      View.Pane.Add2 (Scroll);
 
       --  Create the lines list
 
@@ -1337,6 +1336,7 @@ package body Call_Graph_Views is
                 Location_File_Column      => GType_String));
       Gtk_New (View.Locations_Tree, View.Locations_Model);
       Set_Headers_Visible (View.Locations_Tree, False);
+      Scroll.Add (View.Locations_Tree);
 
       Set_Name (View.Locations_Tree, "Call Graph Location Tree");
       --  For test suite
@@ -1365,11 +1365,6 @@ package body Call_Graph_Views is
 
          Dummy := Append_Column (View.Locations_Tree, Col);
       end;
-
-      Gtk_New (Scroll);
-      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
-      Add (Scroll, View.Locations_Tree);
-      Add2 (View.Pane, Scroll);
 
       View.Show_Locations :=
         Get_History (Get_History (Kernel).all, History_Show_Locations);
