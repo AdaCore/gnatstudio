@@ -818,8 +818,6 @@ package body Project_Viewers is
       else
          Gtk_New (Viewer, Kernel);
          Gtk_New (Child, Viewer,
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_Default,
                   Module         => Prj_Editor_Module_ID);
          Set_Title (Child, -"Switches editor");

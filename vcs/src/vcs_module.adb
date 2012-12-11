@@ -1141,8 +1141,6 @@ package body VCS_Module is
 
       if Show and then M.Explorer_Child = null then
          Gtk_New (Child, M.Explorer,
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_VCS_Explorer,
                   Module         => VCS_Explorer_Module_Id);
          M.Explorer_Child := MDI_Child (Child);
@@ -1202,8 +1200,6 @@ package body VCS_Module is
 
       if Show and then M.Activities_Child = null then
          Gtk_New (Child, M.Activities,
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_VCS_Activities,
                   Module         => VCS_Module_ID);
          M.Activities_Child := MDI_Child (Child);

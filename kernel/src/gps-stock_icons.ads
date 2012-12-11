@@ -52,6 +52,12 @@ package GPS.Stock_Icons is
    --  Clear the contents of the entry, to be used with
    --  Gtk.GEntry.Set_Icon_From_Stock.
 
+   GPS_Toggle_Links : constant String := "gps-toggle-links";
+   --  Hide or Show links in a browser
+
+   GPS_Remove_Unselected : constant String := "gps-remove-unselected";
+   --  Remove unselected elements
+
    Icon_Size_Action_Button : Gtk.Enums.Gtk_Icon_Size;
    --  A very small icon size (7x7). It is used for instance for the Stop_Task
    --  button in the main toolbar.

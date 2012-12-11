@@ -325,6 +325,10 @@ package body Generic_Views is
          if Focus then
             Raise_Child (Child);
             Set_Focus_Child (Child);
+
+            --  ??? browsers used to do the following:
+
+            --  Add_Navigation_Location (Kernel, -"Call graph Browser");
          end if;
 
          if Child = null then
@@ -373,7 +377,7 @@ package body Generic_Views is
          Register_Desktop_Functions (Save_Desktop_Access, Load_Desktop_Access);
          Register_Open_Menu
            (Kernel, '/' & (-"Tools") & '/' & Dir_Name (Menu_Name),
-            Base_Name (Menu_Name), Before => Before_Menu);
+            "____" & Base_Name (Menu_Name), Before => Before_Menu);
       end Register_Module;
 
    end Simple_Views;

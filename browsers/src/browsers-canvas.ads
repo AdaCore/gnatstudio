@@ -32,6 +32,7 @@ with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Stock;
 with Gtk.Style;
+with Gtk.Toolbar;
 with Gtk.Widget;
 
 with Gtkada.Canvas;
@@ -49,6 +50,13 @@ package Browsers.Canvas is
 
    type General_Browser_Record is new Generic_Views.View_Record with private;
    type General_Browser is access all General_Browser_Record'Class;
+
+   overriding procedure Create_Toolbar
+     (View    : not null access General_Browser_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access General_Browser_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    type Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
    with record
@@ -91,10 +99,6 @@ package Browsers.Canvas is
       return Gtk.Hbutton_Box.Gtk_Hbutton_Box;
    --  Return the toolbar at the bottom of the browser. This returns null if no
    --  toolbar was created in the call to Initialize.
-
-   procedure Setup_Default_Toolbar (Browser : access General_Browser_Record);
-   --  Add the default buttons to the toolbar of browser. Nothing is done if no
-   --  toolbar was created.
 
    function Get_Canvas (Browser : access General_Browser_Record)
       return Gtkada.Canvas.Interactive_Canvas;

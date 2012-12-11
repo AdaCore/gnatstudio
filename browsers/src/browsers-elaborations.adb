@@ -70,6 +70,8 @@ package body Browsers.Elaborations is
       Formal_MDI_Child       => GPS_MDI_Child_Record,
       Reuse_If_Exist         => True,
       Initialize             => Initialize,
+      Local_Toolbar          => True,
+      Local_Config           => True,
       Position               => Position_Automatic,
       Group                  => Group_Graphs);
    subtype Elaboration_Browser is Elaboration_Views.View_Access;

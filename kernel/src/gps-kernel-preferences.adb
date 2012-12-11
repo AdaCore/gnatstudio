@@ -302,26 +302,6 @@ package body GPS.Kernel.Preferences is
 
       GPS.Kernel.Charsets.Register_Preferences (Kernel);
 
-      Default_Widget_Width := Create
-        (Manager => Kernel.Preferences,
-         Name    => "General-Default-Widget-Width",
-         Label   => -"Default width",
-         Doc     => -"Default width for all the newly created windows",
-         Minimum => 50,
-         Maximum => 2000,
-         Default => 200,
-         Page    => "");
-
-      Default_Widget_Height := Create
-        (Manager => Kernel.Preferences,
-         Name    => "General-Default-Widget-Height",
-         Label   => -"Default height",
-         Doc     => -"Default height for all the newly created windows",
-         Minimum => 50,
-         Maximum => 2000,
-         Default => 200,
-         Page    => "");
-
       Use_Native_Dialogs := Create
         (Manager => Kernel.Preferences,
          Name    => "General-Use-Native-Dialogs",

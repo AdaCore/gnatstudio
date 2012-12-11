@@ -58,7 +58,6 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GUI_Utils;                  use GUI_Utils;
 with String_Hash;
@@ -1043,8 +1042,6 @@ package body Revision_Views is
 
          Gtk_New (GPS_MDI_Child (Child), View,
                   Focus_Widget   => Gtk_Widget (View.Tree),
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_Consoles,
                   Module         => Revision_View_Module_ID);
          View.Child := Child;

@@ -978,8 +978,6 @@ package body Src_Editor_Module is
            (Child, Editor,
             Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
-            Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-            Default_Height => Gint (Default_Widget_Height.Get_Pref),
             Module         => Src_Editor_Module_Id);
 
          --  Find the first free view number
@@ -1244,8 +1242,6 @@ package body Src_Editor_Module is
             Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
             Group          => Group,
-            Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-            Default_Height => Gint (Default_Widget_Height.Get_Pref),
             Module         => Src_Editor_Module_Id);
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);

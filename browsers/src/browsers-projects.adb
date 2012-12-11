@@ -81,6 +81,8 @@ package body Browsers.Projects is
       Formal_MDI_Child       => GPS_MDI_Child_Record,
       Reuse_If_Exist         => True,
       Initialize             => Initialize,
+      Local_Toolbar          => True,
+      Local_Config           => True,
       Position               => Position_Automatic,
       Group                  => Group_Graphs);
    subtype Project_Browser is Project_Views.View_Access;
@@ -547,7 +549,8 @@ package body Browsers.Projects is
       Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Module);
-      Browser : constant Project_Browser := Project_Browser (Child);
+      Browser : constant Project_Browser :=
+        Project_Views.View_From_Widget (Child);
       Iter    : constant Item_Iterator :=
         Start (Get_Canvas (Browser), Selected_Only => True);
    begin

@@ -138,8 +138,6 @@ package GPS.Kernel.Preferences is
    Small_Font             : Font_Preference;
 
    Use_Native_Dialogs     : Boolean_Preference;
-   Default_Widget_Width   : Integer_Preference;
-   Default_Widget_Height  : Integer_Preference;
    Splash_Screen          : Boolean_Preference;
    Display_Welcome        : Boolean_Preference;
    Toolbar_Show_Text      : Boolean_Preference;

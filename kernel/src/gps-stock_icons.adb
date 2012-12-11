@@ -117,6 +117,9 @@ package body GPS.Stock_Icons is
       Icon (GPS_Expand_All, -"Expand all", "9px/expand_12.png");
       Icon (GPS_Collapse_All, "-Collapse all", "9px/collapse_12.png");
       Icon (GPS_Clear_Entry, -"Clear", "16px/clear_entry_16.png");
+      Icon (GPS_Toggle_Links, -"Hide/Show links", "9px/toggle_links_12.png");
+      Icon (GPS_Remove_Unselected, -"Remove unselected",
+            "9px/remove_unselected_12.png");
    end Register_Stock_Icons;
 
 end GPS.Stock_Icons;

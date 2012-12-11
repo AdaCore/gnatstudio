@@ -136,6 +136,8 @@ package body Browsers.Entities is
       Formal_MDI_Child       => GPS_MDI_Child_Record,
       Reuse_If_Exist         => True,
       Initialize             => Initialize,
+      Local_Toolbar          => True,
+      Local_Config           => True,
       Position               => Position_Automatic,
       Group                  => Group_Graphs);
    subtype Type_Browser is Entities_Views.View_Access;
@@ -1649,7 +1651,8 @@ package body Browsers.Entities is
       Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Module);
-      Browser : constant Type_Browser := Type_Browser (Child);
+      Browser : constant Type_Browser :=
+        Entities_Views.View_From_Widget (Child);
       Iter    : constant Item_Iterator :=
         Start (Get_Canvas (Browser), Selected_Only => True);
    begin
