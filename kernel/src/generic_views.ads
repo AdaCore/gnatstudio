@@ -38,6 +38,7 @@ package Generic_Views is
    -----------------
 
    type View_Record is new Gtk.Box.Gtk_Box_Record with null record;
+   type Abstract_View_Access is access all View_Record'Class;
 
    procedure Save_To_XML
      (View : access View_Record;

@@ -24,6 +24,7 @@ with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 
+with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
@@ -40,6 +41,7 @@ with Pango.Font;              use Pango.Font;
 with Gtkada.MDI;              use Gtkada.MDI;
 
 with Debugger;                use Debugger;
+with Generic_Views;           use Generic_Views;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
@@ -73,8 +75,7 @@ package body GVD.Assembly_View is
    --  Some debuggers (gdb) might take a long time to output the assembly code
    --  for a specific region, so it is better to keep it once we have it.
 
-   type Assembly_View_Record is
-     new GVD.Views.Scrolled_Views.Process_View_Record with
+   type Assembly_View_Record is new Base_Views.Process_View_Record with
       record
          View                : Gtk.Text_View.Gtk_Text_View;
 
@@ -137,13 +138,13 @@ package body GVD.Assembly_View is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window);
+      View    : Generic_Views.Abstract_View_Access);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Scrolled_Views.Simple_Views
+   package Simple_Views is new Base_Views.Simple_Views
      (Module_Name        => "Assembly_View",
       View_Name          => -"Assembly",
       Formal_View_Record => Assembly_View_Record,
@@ -1024,9 +1025,9 @@ package body GVD.Assembly_View is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Scrolled_Window (Process.Assembly);
+      return Generic_Views.Abstract_View_Access (Process.Assembly);
    end Get_View;
 
    --------------
@@ -1035,7 +1036,7 @@ package body GVD.Assembly_View is
 
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window) is
+      View    : Generic_Views.Abstract_View_Access) is
    begin
       --  If we are detaching, clear the old view
       if View = null
@@ -1133,13 +1134,17 @@ package body GVD.Assembly_View is
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       Hook : Preferences_Hook;
+      Scrolled : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Widget);
-      Set_Policy (Widget, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Widget, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Widget.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Widget.View);
       Widget.View.Get_Buffer.Insert_At_Cursor ("");
-      Add (Widget, Widget.View);
+      Scrolled.Add (Widget.View);
       Set_Editable (Widget.View, False);
       Set_Wrap_Mode (Widget.View, Wrap_None);
 

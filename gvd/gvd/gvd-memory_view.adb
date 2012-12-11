@@ -59,6 +59,7 @@ with Pango.Font;               use Pango.Font;
 
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Debugger;                 use Debugger;
+with Generic_Views;            use Generic_Views;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
@@ -93,7 +94,7 @@ package body GVD.Memory_View is
    --  Note that any change in this type needs to be coordinated in
    --  Update_Display.
 
-   type GVD_Memory_View_Record is new Boxed_Views.Process_View_Record with
+   type GVD_Memory_View_Record is new Base_Views.Process_View_Record with
       record
          Editor : Memory_View_Access;
 
@@ -160,13 +161,13 @@ package body GVD.Memory_View is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Box;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Box);
+      View    : Generic_Views.Abstract_View_Access);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Boxed_Views.Simple_Views
+   package Simple_Views is new Base_Views.Simple_Views
      (Module_Name        => "Memory_View",
       View_Name          => -"Memory",
       Formal_View_Record => GVD_Memory_View_Record,
@@ -329,9 +330,9 @@ package body GVD.Memory_View is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Box is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Box (Process.Memory_View);
+      return Generic_Views.Abstract_View_Access (Process.Memory_View);
    end Get_View;
 
    --------------
@@ -340,7 +341,7 @@ package body GVD.Memory_View is
 
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Box)
+      View    : Generic_Views.Abstract_View_Access)
    is
       Old : constant GVD_Memory_View :=
         GVD_Memory_View (Process.Memory_View);

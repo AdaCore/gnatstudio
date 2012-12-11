@@ -52,6 +52,7 @@ with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 with Breakpoints_Pkg;         use Breakpoints_Pkg;
+with Generic_Views;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
 with GPS.Intl;           use GPS.Intl;
@@ -72,7 +73,7 @@ with Traces;           use Traces;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Breakpoints_Editor is
-   type Breakpoint_Editor_Record is new Boxed_Views.Process_View_Record with
+   type Breakpoint_Editor_Record is new Base_Views.Process_View_Record with
       record
          Editor               : Breakpoints_Access;
          Advanced_Breakpoints : Advanced_Breakpoint_Access;
@@ -92,13 +93,13 @@ package body Breakpoints_Editor is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Box;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Box);
+      View    : Generic_Views.Abstract_View_Access);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Boxed_Views.Simple_Views
+   package Simple_Views is new Base_Views.Simple_Views
      (Module_Name        => "Breakpoints",
       View_Name          => -"Breakpoints",
       Formal_View_Record => Breakpoint_Editor_Record,
@@ -184,9 +185,9 @@ package body Breakpoints_Editor is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Box is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Box (Process.Breakpoints_Editor);
+      return Generic_Views.Abstract_View_Access (Process.Breakpoints_Editor);
    end Get_View;
 
    --------------
@@ -195,8 +196,9 @@ package body Breakpoints_Editor is
 
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Box)
+      View    : Generic_Views.Abstract_View_Access)
    is
+      use type Generic_Views.Abstract_View_Access;
       Old : constant Breakpoint_Editor :=
         Breakpoint_Editor (Process.Breakpoints_Editor);
    begin

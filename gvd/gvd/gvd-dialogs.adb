@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Config;                use Config;
+with Generic_Views;         use Generic_Views;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
@@ -95,7 +96,7 @@ package body GVD.Dialogs is
    --  Would be nice to use a primitive operation, but that would require
    --  declaring the types in the spec, not nice...
 
-   type Thread_View_Record is new Scrolled_Views.Process_View_Record with
+   type Thread_View_Record is new Base_Views.Process_View_Record with
       record
          Tree     : Gtk.Tree_View.Gtk_Tree_View;
          Get_Info : Get_Info_Subprogram := Info_Threads_Dispatch'Access;
@@ -108,14 +109,14 @@ package body GVD.Dialogs is
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    function Get_Thread_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_Thread_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window);
+      View    : Generic_Views.Abstract_View_Access);
    overriding procedure Update (Thread : access Thread_View_Record);
    --  See description in GVD.Generic_View
 
-   package Thread_Views is new Scrolled_Views.Simple_Views
+   package Thread_Views is new Base_Views.Simple_Views
      (Module_Name        => "Thread_View",
       View_Name          => -"Threads",
       Formal_View_Record => Thread_View_Record,
@@ -137,16 +138,16 @@ package body GVD.Dialogs is
    type Task_View_Record is new Thread_View_Record with null record;
    function Get_Task_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_Task_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window);
+      View    : Generic_Views.Abstract_View_Access);
    function Initialize
      (Tasks  : access Task_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
-   package Tasks_Views is new Scrolled_Views.Simple_Views
+   package Tasks_Views is new Base_Views.Simple_Views
      (Module_Name        => "Tasks_View",
       View_Name          => -"Tasks",
       Formal_View_Record => Task_View_Record,
@@ -163,16 +164,16 @@ package body GVD.Dialogs is
    type PD_View_Record is new Thread_View_Record with null record;
    function Get_PD_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_PD_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window);
+      View    : Generic_Views.Abstract_View_Access);
    function Initialize
      (PDs    : access PD_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
-   package PD_Views is new Scrolled_Views.Simple_Views
+   package PD_Views is new Base_Views.Simple_Views
      (Module_Name        => "PD_View",
       View_Name          => -"Protection Domains",
       Formal_View_Record => PD_View_Record,
@@ -387,9 +388,9 @@ package body GVD.Dialogs is
 
    function Get_Thread_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Scrolled_Window (Process.Threads);
+      return Generic_Views.Abstract_View_Access (Process.Threads);
    end Get_Thread_View;
 
    ---------------------
@@ -398,7 +399,7 @@ package body GVD.Dialogs is
 
    procedure Set_Thread_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window) is
+      View    : Generic_Views.Abstract_View_Access) is
    begin
       if View = null
         and then Process.Threads /= null
@@ -417,9 +418,9 @@ package body GVD.Dialogs is
 
    function Get_Task_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Scrolled_Window (Process.Tasks);
+      return Generic_Views.Abstract_View_Access (Process.Tasks);
    end Get_Task_View;
 
    -------------------
@@ -428,7 +429,7 @@ package body GVD.Dialogs is
 
    procedure Set_Task_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window) is
+      View    : Generic_Views.Abstract_View_Access) is
    begin
       if View = null
         and then Process.Tasks /= null
@@ -446,9 +447,9 @@ package body GVD.Dialogs is
 
    function Get_PD_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Scrolled_Window (Process.PDs);
+      return Generic_Views.Abstract_View_Access (Process.PDs);
    end Get_PD_View;
 
    -----------------
@@ -457,7 +458,7 @@ package body GVD.Dialogs is
 
    procedure Set_PD_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window) is
+      View    : Generic_Views.Abstract_View_Access) is
    begin
       if View = null
         and then Process.PDs /= null
@@ -591,9 +592,13 @@ package body GVD.Dialogs is
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Kernel);
+      Scrolled : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Thread);
-      Set_Policy (Thread, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Thread, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Thread.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       --  The tree will be created on the first call to Update, since we do not
       --  know yet how many columns are needed.
