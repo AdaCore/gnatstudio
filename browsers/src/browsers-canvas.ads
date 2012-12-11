@@ -27,7 +27,6 @@ with Gdk.RGBA; use Gdk.RGBA;
 
 with Glib.Object;
 
-with Gtk.Box;
 with Gtk.Handlers;
 with Gtk.Hbutton_Box;
 with Gtk.Menu;
@@ -39,6 +38,7 @@ with Gtkada.Canvas;
 
 with Pango.Layout;
 
+with Generic_Views;
 with GPS.Kernel;
 
 package Browsers.Canvas is
@@ -47,7 +47,7 @@ package Browsers.Canvas is
    --  Margin used when drawing the items, to leave space around the arrows and
    --  the actual contents of the item
 
-   type General_Browser_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type General_Browser_Record is new Generic_Views.View_Record with private;
    type General_Browser is access all General_Browser_Record'Class;
 
    type Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
@@ -530,7 +530,7 @@ package Browsers.Canvas is
 
 private
 
-   type General_Browser_Record is new Gtk.Box.Gtk_Box_Record with record
+   type General_Browser_Record is new Generic_Views.View_Record with record
       Canvas                   : Gtkada.Canvas.Interactive_Canvas;
       Kernel                   : GPS.Kernel.Kernel_Handle;
       Toolbar                  : Gtk.Hbutton_Box.Gtk_Hbutton_Box;

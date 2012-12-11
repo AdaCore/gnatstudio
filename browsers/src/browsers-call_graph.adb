@@ -52,6 +52,7 @@ with Basic_Types;
 with Browsers.Canvas;               use Browsers.Canvas;
 with Commands.Generic_Asynchronous; use Commands;
 with Commands.Interactive;          use Commands.Interactive;
+with Generic_Views;
 with GPS.Intl;                      use GPS.Intl;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
@@ -61,7 +62,6 @@ with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
-with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
@@ -72,7 +72,6 @@ with GPS.Styles.UI;                 use GPS.Styles.UI;
 with GPS.Kernel;                    use GPS.Kernel;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
-with XML_Utils;                     use XML_Utils;
 with Std_Dialogs;                   use Std_Dialogs;
 with Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
@@ -90,10 +89,10 @@ package body Browsers.Call_Graph is
       Locations   => True);
    --  Visibility of call graph's messages in the system at whole
 
-   type Callgraph_Module_Record is new Module_ID_Record with null record;
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
 
+   type Callgraph_Module_Record is new Module_ID_Record with null record;
    overriding procedure Default_Context_Factory
      (Module  : access Callgraph_Module_Record;
       Context : in out Selection_Context;
@@ -171,7 +170,22 @@ package body Browsers.Call_Graph is
    type Call_Graph_Browser_Record is new
      Browsers.Canvas.General_Browser_Record with null record;
 
-   type Call_Graph_Browser is access all Call_Graph_Browser_Record'Class;
+   function Initialize
+     (View   : access Call_Graph_Browser_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
+      return Gtk_Widget;
+   --  Initialize the browser, and return the focus widget
+
+   package Callgraph_Views is new Generic_Views.Simple_Views
+     (Module_Name            => Call_Graph_Module_Name,
+      View_Name              => -"Call Graph Browser",
+      Formal_View_Record     => Call_Graph_Browser_Record,
+      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Reuse_If_Exist         => True,
+      Initialize             => Initialize,
+      Position               => Position_Automatic,
+      Group                  => Group_Graphs);
+   subtype Call_Graph_Browser is Callgraph_Views.View_Access;
 
    -------------
    -- Filters --
@@ -400,14 +414,6 @@ package body Browsers.Call_Graph is
    --  Item_Name is not already displayed in the canvas.
    --  ??? Should also have line and column information
 
-   function Open_Call_Graph_Browser
-     (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child;
-   --  Find, or create a new, call graph editor
-
-   function Create_Call_Graph_Browser
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
-   --  Create a new call graph browser
-
    procedure Parse_All_Refs
      (Kernel             : access Kernel_Handle_Record'Class;
       Entity             : General_Entity;
@@ -460,23 +466,9 @@ package body Browsers.Call_Graph is
    package Xref_Commands is new Commands.Generic_Asynchronous
      (Entity_Idle_Data, Destroy_Idle);
 
-   procedure On_Call_Graph
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Create a callgraph for the entity described in the current kernel
-   --  context (if any)
-
    procedure On_Find_All_References
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Find all the references of the current entity
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   --  Support functions for the MDI
 
    procedure Print_Ref
      (Kernel       : access Kernel_Handle_Record'Class;
@@ -662,62 +654,24 @@ package body Browsers.Call_Graph is
       Destroy (Arrow_Item_Record (Item));
    end Destroy;
 
-   -------------------------------
-   -- Create_Call_Graph_Browser --
-   -------------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Create_Call_Graph_Browser
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
-   is
-      Browser : Call_Graph_Browser;
-      Child   : GPS_MDI_Child;
+   function Initialize
+     (View   : access Call_Graph_Browser_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
+      return Gtk_Widget is
    begin
-      Browser := new Call_Graph_Browser_Record;
-      Initialize (Browser, Kernel, Create_Toolbar => False);
-
+      Initialize (View, Kernel, Create_Toolbar => False);
       Register_Contextual_Menu
         (Kernel          => Kernel,
-         Event_On_Widget => Browser,
-         Object          => Browser,
+         Event_On_Widget => View,
+         Object          => View,
          ID              => Call_Graph_Module_Id,
          Context_Func    => Default_Browser_Context_Factory'Access);
-
-      Gtk_New (Child, Browser,
-               Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-               Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-               Default_Height => Gint (Default_Widget_Height.Get_Pref),
-               Group          => Group_Graphs,
-               Module         => Call_Graph_Module_Id);
-      Set_Title (Child, -"Call graph Browser");
-      Put (Get_MDI (Kernel), Child);
-
-      return MDI_Child (Child);
-   end Create_Call_Graph_Browser;
-
-   -----------------------------
-   -- Open_Call_Graph_Browser --
-   -----------------------------
-
-   function Open_Call_Graph_Browser
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child
-   is
-      Child : MDI_Child;
-   begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Call_Graph_Browser_Record'Tag);
-
-      if Child /= null then
-         Raise_Child (Child);
-      else
-         Child := Create_Call_Graph_Browser (Kernel);
-         Set_Focus_Child (Child);
-      end if;
-
-      Add_Navigation_Location (Kernel, -"Call graph Browser");
-
-      return Child;
-   end Open_Call_Graph_Browser;
+      return Gtk_Widget (View);
+   end Initialize;
 
    -----------------
    -- Find_Entity --
@@ -791,9 +745,8 @@ package body Browsers.Call_Graph is
       Entity  : General_Entity;
       Refresh : Boolean := True)
    is
-      Child_Browser : constant MDI_Child := Open_Call_Graph_Browser (Kernel);
-      Browser       : constant Call_Graph_Browser :=
-                        Call_Graph_Browser (Get_Widget (Child_Browser));
+      Browser : constant Call_Graph_Browser :=
+        Callgraph_Views.Get_Or_Create_View (Kernel, Focus => True);
       Item          : constant Entity_Item :=
                         Add_Entity_If_Not_Present (Browser, Entity);
       Canvas        : Interactive_Canvas;
@@ -837,10 +790,6 @@ package body Browsers.Call_Graph is
          Refresh_Canvas (Canvas);
          Align_Item (Canvas, Item, 0.4, 0.4);
       end if;
-
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
    end Examine_Entity_Call_Graph;
 
    -------------
@@ -996,13 +945,14 @@ package body Browsers.Call_Graph is
      (Kernel : access Kernel_Handle_Record'Class;
       Entity : General_Entity)
    is
-      Child_Browser : constant MDI_Child := Open_Call_Graph_Browser (Kernel);
+      Browser : constant Call_Graph_Browser :=
+        Callgraph_Views.Get_Or_Create_View (Kernel, Focus => True);
       Data          : Examine_Ancestors_Data_Access;
       Cr            : Cairo_Context;
    begin
       Data := new Examine_Ancestors_Data'
         (Commands_User_Data_Record with
-         Browser        => Call_Graph_Browser (Get_Widget (Child_Browser)),
+         Browser        => Browser,
          Item           => null,
          Link_From_Item => False);
       Data.Item := Add_Entity_If_Not_Present (Data.Browser, Entity);
@@ -1381,33 +1331,6 @@ package body Browsers.Call_Graph is
       when E : others =>
          Trace (Traces.Exception_Handle, E);
    end Contextual_Factory;
-
-   -------------------
-   -- On_Call_Graph --
-   -------------------
-
-   procedure On_Call_Graph
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Ignore : MDI_Child;
-      pragma Unreferenced (Widget, Ignore);
-
-      Context     : constant Selection_Context := Get_Current_Context (Kernel);
-      Node_Entity : General_Entity;
-   begin
-      Ignore := Open_Call_Graph_Browser (Kernel);
-
-      if Context /= No_Context then
-         Node_Entity := Get_Entity (Context);
-         if Node_Entity /= No_General_Entity then
-            Examine_Entity_Call_Graph (Kernel, Node_Entity);
-         end if;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
-   end On_Call_Graph;
 
    ----------------------------
    -- On_Find_All_References --
@@ -1840,8 +1763,8 @@ package body Browsers.Call_Graph is
          --  ??? Should check that Decl.Kind is a subprogram
 
          declare
-            Browser : constant Call_Graph_Browser := Call_Graph_Browser
-                        (Get_Widget (Open_Call_Graph_Browser (Kernel)));
+            Browser : constant Call_Graph_Browser :=
+              Callgraph_Views.Get_Or_Create_View (Kernel, Focus => True);
             Canvas  : constant Interactive_Canvas := Get_Canvas (Browser);
             Item    : Entity_Item;
             Iter    : Item_Iterator;
@@ -2377,7 +2300,6 @@ package body Browsers.Call_Graph is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools    : constant String := '/' & (-"Tools") & '/' & (-"Browsers");
       Navigate : constant String := "/_" & (-"Navigate");
       Find_All : constant String := -"Find _All References";
       Command  : Interactive_Command_Access;
@@ -2389,12 +2311,10 @@ package body Browsers.Call_Graph is
 
    begin
       Call_Graph_Module_Id := new Callgraph_Module_Record;
-      Register_Module
-        (Module      => Call_Graph_Module_Id,
-         Kernel      => Kernel,
-         Module_Name => Call_Graph_Module_Name,
-         Priority    => GPS.Kernel.Modules.Default_Priority);
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
+      Callgraph_Views.Register_Module
+        (Kernel,
+         ID        => Call_Graph_Module_Id,
+         Menu_Name => -"_Browsers/_Call Graph");
 
       Filter := new Subprogram_Entity_Filter;
       Subprogram_Entity_Filter (Filter.all).Kernel := Kernel_Handle (Kernel);
@@ -2464,13 +2384,6 @@ package body Browsers.Call_Graph is
                      and Lookup_Filter (Kernel, "Entity"));
 
       Register_Menu
-        (Kernel, '/' & (-"Tools") & '/', (-"_Browsers"),
-         Callback   => null,
-         Ref_Item   => -"Views",
-         Add_Before => False);
-      Register_Menu
-        (Kernel, Tools, -"_Call Graph", "", On_Call_Graph'Access);
-      Register_Menu
         (Kernel, Navigate, Find_All, "", On_Find_All_References'Access,
          Ref_Item => -"Find Previous", Add_Before => False);
 
@@ -2506,44 +2419,6 @@ package body Browsers.Call_Graph is
          Class   => ReferencesCommand_Class,
          Handler => References_Command_Handler'Access);
    end Register_Module;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Call_Graph" then
-         return Create_Call_Graph_Browser (User);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Call_Graph_Browser_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Call_Graph");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
 
    ---------------
    -- Draw_Link --

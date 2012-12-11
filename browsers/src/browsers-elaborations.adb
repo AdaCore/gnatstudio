@@ -20,6 +20,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Cairo;                     use Cairo;
 with Default_Preferences;       use Default_Preferences;
+with Generic_Views;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with GPS.Kernel;                use GPS.Kernel;
@@ -27,7 +28,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Tools_Output;   use GPS.Kernel.Tools_Output;
 with GPS.Intl;                  use GPS.Intl;
@@ -40,16 +40,7 @@ with Traces;                    use Traces;
 with Elaboration_Cycles;        use Elaboration_Cycles;
 with Browsers.Elaborations.Cycle_Parser;
 
----------------------------
--- Browsers.Elaborations --
----------------------------
-
 package body Browsers.Elaborations is
-
-   type Elaboration_Browser_Module_Record is
-     new Module_ID_Record with null record;
-
-   Elaboration_Browser_Module : Module_ID;
 
    Output_Parser : aliased Cycle_Parser.Output_Parser_Fabric;
    --  Fabric to create output parser
@@ -66,7 +57,23 @@ package body Browsers.Elaborations is
    with record
       Cycle : Elaboration_Cycles.Cycle;
    end record;
-   type Elaboration_Browser is access all Elaboration_Browser_Record'Class;
+
+   function Initialize
+     (View   : access Elaboration_Browser_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
+      return Gtk_Widget;
+   --  Initialize the view and returns the focus widget
+
+   package Elaboration_Views is new Generic_Views.Simple_Views
+     (Module_Name            => "Elaboration_Browser",
+      View_Name              => -"Elaboration Circularities",
+      Formal_View_Record     => Elaboration_Browser_Record,
+      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Reuse_If_Exist         => True,
+      Initialize             => Initialize,
+      Position               => Position_Automatic,
+      Group                  => Group_Graphs);
+   subtype Elaboration_Browser is Elaboration_Views.View_Access;
 
    --  Node to represent compilation unit in browser
    type Unit_Item_Record is new Browsers.Canvas.Browser_Item_Record with record
@@ -98,24 +105,6 @@ package body Browsers.Elaborations is
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class);
    --  See doc for inherited subprograms
-
-   function Open_Elaboration_Browser_Child
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child;
-   --  Create (or return an existing) browser, and insert it directly into
-   --  the MDI.
-   --  If a new browser is created, it is initially empty.
-   --  If the browser already existed, it is raised.
-
-   function Open_Elaboration_Browser
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Elaboration_Browser;
-   --  Create (or return an existing) browser. The newly created browser
-   --  is not inserted into the MDI.
-
-   procedure On_Elaboration_Browser
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Tools->Browsers->Elaboration Cycles browser menu callback
 
    procedure On_Compilation_Finished
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -218,67 +207,26 @@ package body Browsers.Elaborations is
          Height_Offset, Xoffset, Yoffset, Layout);
    end Resize_And_Draw;
 
-   ------------------------------
-   -- Open_Elaboration_Browser --
-   ------------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Open_Elaboration_Browser
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Elaboration_Browser
-   is
-      Browser    : constant Elaboration_Browser
-        := new Elaboration_Browser_Record;
+   function Initialize
+     (View   : access Elaboration_Browser_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
+      return Gtk_Widget is
    begin
-      Initialize
-        (Browser, Kernel,
-         Create_Toolbar  => True);
+      Initialize (View, Kernel, Create_Toolbar  => True);
 
       --  Register menu with default actions
       Register_Contextual_Menu
         (Kernel          => Kernel,
-         Event_On_Widget => Browser,
-         Object          => Browser,
-         ID              => Elaboration_Browser_Module,
+         Event_On_Widget => View,
+         Object          => View,
+         ID              => Elaboration_Views.Get_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
-
-      return Browser;
-   end Open_Elaboration_Browser;
-
-   ------------------------------------
-   -- Open_Elaboration_Browser_Child --
-   ------------------------------------
-
-   function Open_Elaboration_Browser_Child
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child
-   is
-      Child   : GPS_MDI_Child;
-      Browser : Elaboration_Browser;
-      Title   : constant String := -"Elaboration Cycles";
-   begin
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Elaboration_Browser_Record'Tag));
-
-      if Child /= null then
-         Raise_Child (Child);
-      else
-         Browser := Open_Elaboration_Browser (Kernel);
-         Gtk_New (Child, Browser,
-                  Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
-                  Group          => Group_Graphs,
-                  Module         => Elaboration_Browser_Module);
-
-         Set_Title (Child, Title);
-         Put (Get_MDI (Kernel), Child);
-         Set_Focus_Child (Child);
-      end if;
-
-      Add_Navigation_Location (Kernel, Title);
-
-      return MDI_Child (Child);
-   end Open_Elaboration_Browser_Child;
+      return Gtk_Widget (View);
+   end Initialize;
 
    ------------------------
    -- Fill_Elaborate_All --
@@ -326,7 +274,6 @@ package body Browsers.Elaborations is
       end loop;
 
       Refresh (Item_After);
-
    end Fill_Elaborate_All;
 
    ------------------
@@ -338,11 +285,8 @@ package body Browsers.Elaborations is
       Cycle  : Elaboration_Cycles.Cycle)
    is
       use type Ada.Containers.Count_Type;
-
-      Child   : constant Gtkada.MDI.MDI_Child
-        := Open_Elaboration_Browser_Child (Kernel);
-      Browser : constant Elaboration_Browser
-        := Elaboration_Browser (Get_Widget (Child));
+      Browser : constant Elaboration_Browser :=
+        Elaboration_Views.Get_Or_Create_View (Kernel, Focus => True);
    begin
       Browser.Cycle := Cycle;
 
@@ -380,10 +324,6 @@ package body Browsers.Elaborations is
 
       Layout (Browser);
       Refresh_Canvas (Get_Canvas (Browser));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end Fill_Browser;
 
    -----------------------------
@@ -414,18 +354,6 @@ package body Browsers.Elaborations is
       Fill_Browser (Kernel_Handle (Kernel), Cycle);
    end On_Compilation_Finished;
 
-   ----------------------------
-   -- On_Elaboration_Browser --
-   ----------------------------
-
-   procedure On_Elaboration_Browser
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Fill_Browser (Kernel, Last_Elaboration_Cycle);
-   end On_Elaboration_Browser;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -434,18 +362,9 @@ package body Browsers.Elaborations is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
    begin
-      Elaboration_Browser_Module := new Elaboration_Browser_Module_Record;
-
-      Register_Module
-        (Module      => Elaboration_Browser_Module,
-         Kernel      => Kernel,
-         Module_Name => "Elaboration_Browser");
-
-      Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => '/' & (-"Tools") & '/' & (-"Browsers"),
-         Text        => -"_Elaboration Cycles",
-         Callback    => On_Elaboration_Browser'Access);
+      Elaboration_Views.Register_Module
+        (Kernel,
+         Menu_Name => -"Browsers/_Elaboration Circularities");
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,

@@ -46,6 +46,7 @@ with Gdk.Rectangle;                     use Gdk.Rectangle;
 with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Window;                        use Gdk.Window;
 
+with Gtk.Box;                           use Gtk.Box;
 with Gtk.Button;                        use Gtk.Button;
 with Gtk.Check_Menu_Item;               use Gtk.Check_Menu_Item;
 with Gtk.Enums;                         use Gtk.Enums;
