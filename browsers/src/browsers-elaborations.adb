@@ -35,7 +35,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Canvas;             use Gtkada.Canvas;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Pango.Layout;              use Pango.Layout;
-with Traces;                    use Traces;
 
 with Elaboration_Cycles;        use Elaboration_Cycles;
 with Browsers.Elaborations.Cycle_Parser;
