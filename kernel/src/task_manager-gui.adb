@@ -15,38 +15,53 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Generic_Stack;
+with Generic_Views;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with System;                     use System;
-with System.Storage_Elements;    use System.Storage_Elements;
-
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with GPS.Main_Window;            use GPS.Main_Window;
+with GPS.Stock_Icons;            use GPS.Stock_Icons;
+with GUI_Utils;                  use GUI_Utils;
 with Gdk.Event;                  use Gdk.Event;
-
+with Gdk.Pixbuf;                 use Gdk.Pixbuf;
+with Glib.Main;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
-
+with Glib;                       use Glib;
+with Gtk.Box;                    use Gtk.Box;
+with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
+with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Handlers;
 with Gtk.Icon_Factory;
+with Gtk.Image;                  use Gtk.Image;
+with Gtk.Label;                  use Gtk.Label;
+with Gtk.Progress_Bar;           use Gtk.Progress_Bar;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Settings;
-with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Stock;                  use Gtk.Stock;
-
-with Gtkada.Abstract_List_Model; use Gtkada.Abstract_List_Model;
+with Gtk.Style_Context;          use Gtk.Style_Context;
+with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;       use Gtk.Tree_Model.Utils;
-
+with Gtk.Tree_View;              use Gtk.Tree_View;
+with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtkada.Abstract_List_Model; use Gtkada.Abstract_List_Model;
 with Gtkada.Handlers;            use Gtkada.Handlers;
-
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
-with GPS.Stock_Icons;            use GPS.Stock_Icons;
-with GUI_Utils;                  use GUI_Utils;
+with Gtkada.MDI;                 use Gtkada.MDI;
 with String_Utils;               use String_Utils;
+with System.Storage_Elements;    use System.Storage_Elements;
+with System;                     use System;
 with Traces;                     use Traces;
 
 package body Task_Manager.GUI is
@@ -83,6 +98,136 @@ package body Task_Manager.GUI is
    -- Local types --
    -----------------
 
+   type Task_Manager_Module_Record is new Module_ID_Record with null record;
+   overriding procedure Destroy (Module : in out Task_Manager_Module_Record);
+   --  Called when the module is destroyed
+
+   package Integer_Stack is new Generic_Stack (Integer);
+
+   type Task_Manager_Interface_Record is tagged;
+   type Task_Manager_Interface is access all
+     Task_Manager_Interface_Record'Class;
+
+   package Task_Manager_Source is new Glib.Main.Generic_Sources
+     (Task_Manager_Interface);
+
+   type Task_Manager_Widget_Record is new Generic_Views.View_Record with record
+      Model            : Task_Manager_Interface;
+      Tree             : Gtk_Tree_View;
+      Dialog           : Gtk_Widget := null;
+      Quit_Button_Col  : Gtk_Tree_View_Column;
+      Pause_Button_Col : Gtk_Tree_View_Column;
+   end record;
+
+   function Initialize
+     (View   : access Task_Manager_Widget_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
+      return Gtk_Widget;
+   --  Initialize the view and return the focus widget
+
+   package TM_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Task_Manager_Record",
+      View_Name          => -"Task Manager",
+      Formal_View_Record => Task_Manager_Widget_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Position           => Position_Bottom,
+      Group              => Group_Consoles,
+      Initialize         => Initialize);
+   subtype Task_Manager_Widget_Access is TM_Views.View_Access;
+
+   type Task_Manager_UI_Record is new Task_Manager_Record with record
+      GUI           : Task_Manager_Interface := null;
+   end record;
+   type Task_Manager_UI_Access is access all Task_Manager_UI_Record'Class;
+
+   overriding procedure Queue_Added
+     (Manager : access Task_Manager_UI_Record;
+      Index   : Integer);
+   --  Inform the GUI that a queue has been added
+
+   overriding procedure Queue_Removed
+     (Manager : access Task_Manager_UI_Record;
+      Index   : Integer);
+   --  Inform the GUI that a queue has been removed
+
+   overriding procedure Queue_Changed
+     (Manager           : access Task_Manager_UI_Record;
+      Index             : Integer;
+      Immediate_Refresh : Boolean);
+   --  Inform the GUI that the progress or running information of a queue has
+   --  been changed. If Immediate_Refresh is True, reflect the changes in the
+   --  GUI immediately, otherwise do it in a timeout callback.
+
+   type Task_Manager_Model_Record is new
+     Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with
+      record
+         GUI : Task_Manager_Interface;
+         --  This can not be null
+      end record;
+   type Task_Manager_Model is access all Task_Manager_Model_Record'Class;
+   --  GtkTreeModel subprograms
+
+   overriding function Get_Iter
+     (Self : access Task_Manager_Model_Record;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path)
+      return Gtk.Tree_Model.Gtk_Tree_Iter;
+   overriding function Get_Path
+     (Self : access Task_Manager_Model_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Path;
+   overriding procedure Next
+     (Self : access Task_Manager_Model_Record;
+      Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter);
+   overriding function N_Children
+     (Self : access Task_Manager_Model_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
+      return Glib.Gint;
+   overriding function Nth_Child
+     (Self   : access Task_Manager_Model_Record;
+      Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
+      N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
+   overriding function Get_N_Columns
+     (Self : access Task_Manager_Model_Record)
+      return Glib.Gint;
+   overriding function Get_Column_Type
+     (Self  : access Task_Manager_Model_Record;
+      Index : Glib.Gint) return Glib.GType;
+   overriding procedure Get_Value
+     (Self   : access Task_Manager_Model_Record;
+      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Column : Glib.Gint;
+      Value  : out Glib.Values.GValue);
+   --  See inherited documentation
+
+   type Task_Manager_Interface_Record is new Gtk_Box_Record with record
+      Kernel                 : Kernel_Handle;
+      Model                  : Task_Manager_Model;
+      Manager                : Task_Manager_UI_Access;
+
+      Main_Progress_Bar      : Gtk_Progress_Bar;
+      --  The main progress bar (in the toolbar) that summarizes all current
+      --  tasks.
+
+      Progress_Bar_Button    : Gtk_Button;
+      --  The pause/play button in the main progress bar
+
+      Task_Label         : Gtk_Label;
+      --  What action are we performing ?
+
+      Logo : Gtk_Image;
+      --  The logo displayed when GPS is idle.
+
+      Close_Button_Pixbuf    : Gdk_Pixbuf;
+      Pause_Button_Pixbuf    : Gdk_Pixbuf;
+      Play_Button_Pixbuf     : Gdk_Pixbuf;
+
+      To_Refresh             : Integer_Stack.Simple_Stack;
+
+      Timeout_Cb             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      --  The registered refresh timeout callback
+   end record;
+
    type Manager_Index_Record is record
       D     : Task_Manager_Interface;
       Index : Integer;
@@ -94,6 +239,10 @@ package body Task_Manager.GUI is
 
    package Task_Manager_Handler is new Gtk.Handlers.User_Callback
      (GObject_Record, Manager_Index_Record);
+
+   function Create (Kernel : Kernel_Handle) return Task_Manager_Access;
+   --  Create the task manager's main progress bar (to be displayed in the GPS
+   --  main toolbar).
 
    procedure Set_Column_Types
      (View : access Task_Manager_Widget_Record'Class);
@@ -183,6 +332,97 @@ package body Task_Manager.GUI is
    --  Remove the timeout that refreshes the GUI and clear the list of items
    --  that need to be refreshed.
 
+   function On_Exit_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean;
+   --  Called before GPS exits
+
+   procedure Pop_State (Manager : access Task_Manager_Record'Class);
+   --  Push and pop the "busy" state of the task manager
+
+   function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget;
+   procedure Set_GUI
+     (Manager : Task_Manager_Access;
+      GUI     : Gtk_Widget);
+   --  Get and set the active graphical interface for Manager
+
+   procedure Set_Progress_Area
+     (Manager : Task_Manager_Access;
+      Area    : Gtk.Box.Gtk_Hbox);
+   --  Indicate an area in which progress bars can be displayed
+
+   ------------------
+   -- On_Exit_Hook --
+   ------------------
+
+   function On_Exit_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean
+   is
+      Manager  : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+      Dialog   : Gtk_Dialog;
+      Label    : Gtk_Label;
+      Iface    : Task_Manager_Widget_Access;
+      Button, Focus   : Gtk_Widget;
+      Response : Gtk_Response_Type;
+
+      pragma Unreferenced (Data, Focus);
+
+      Previous_Interface : constant Gtk_Widget := Get_GUI (Manager);
+   begin
+      if not Has_Running_Commands (Manager, Consider_Silent => False) then
+         return True;
+      end if;
+
+      Gtk_New
+        (Dialog,
+         Title  => -"Tasks are running",
+         Parent => Get_Current_Window (Kernel),
+         Flags  => Modal or Destroy_With_Parent);
+
+      Gtk_New
+        (Label, -"The following tasks are running, do you want to quit GPS?" &
+         ASCII.LF & (-"Warning: Quitting will kill all running tasks"));
+
+      Set_Alignment (Label, 0.0, 0.0);
+      Pack_Start
+        (Get_Content_Area (Dialog), Label, Expand => False, Padding => 10);
+
+      Iface := new Task_Manager_Widget_Record;
+      Iface.Dialog := Gtk_Widget (Dialog);
+      Focus := Initialize (Iface, Kernel);
+      Pack_Start (Get_Content_Area (Dialog), Iface, Padding => 10);
+
+      Button := Add_Button (Dialog, Stock_Quit, Gtk_Response_Yes);
+      Grab_Default (Button);
+      Button := Add_Button (Dialog, -"Don't Quit", Gtk_Response_Cancel);
+
+      Set_Default_Size (Dialog, 400, 300);
+      Show_All (Dialog);
+      Response := Run (Dialog);
+
+      case Response is
+         when Gtk_Response_Cancel =>
+            Destroy (Dialog);
+            Set_GUI (Manager, Previous_Interface);
+            return False;
+
+         when Gtk_Response_Yes =>
+            Destroy (Dialog);
+            Set_GUI (Manager, Previous_Interface);
+            return True;
+
+         when Gtk_Response_None | Gtk_Response_No =>
+            Set_GUI (Manager, Previous_Interface);
+            return False;
+
+         when others =>
+            Destroy (Dialog);
+            Set_GUI (Manager, Previous_Interface);
+            return False;
+      end case;
+   end On_Exit_Hook;
+
    -----------------------------
    -- On_Progress_Bar_Destroy --
    -----------------------------
@@ -196,50 +436,6 @@ package body Task_Manager.GUI is
       Pop_State (Manager.D.Manager);
    end On_Progress_Bar_Destroy;
 
-   -------------------
-   -- Pause_Command --
-   -------------------
-
-   procedure Pause_Command
-     (Manager : access Task_Manager_Record'Class;
-      Index   : Integer) is
-   begin
-      if Manager.Queues = null then
-         return;
-      end if;
-
-      if Index in Manager.Queues'Range then
-         if Manager.Queues (Index).Status = Running then
-            Manager.Queues (Index).Status := Paused;
-         end if;
-
-         Queue_Changed (Manager, Index, True);
-      end if;
-   end Pause_Command;
-
-   --------------------
-   -- Resume_Command --
-   --------------------
-
-   procedure Resume_Command
-     (Manager : access Task_Manager_Record'Class;
-      Index   : Integer) is
-   begin
-      if Manager.Queues = null then
-         return;
-      end if;
-
-      if Index in Manager.Queues'Range then
-         if Manager.Queues (Index).Status = Paused then
-            Manager.Queues (Index).Status := Running;
-            Run (Task_Manager_Access (Manager),
-                 Active => Index < Manager.Passive_Index);
-         end if;
-
-         Queue_Changed (Manager, Index, True);
-      end if;
-   end Resume_Command;
-
    -----------------------------------------
    -- On_Main_Progress_Button_Press_Event --
    -----------------------------------------
@@ -250,18 +446,16 @@ package body Task_Manager.GUI is
    is
       GUI : constant Task_Manager_Interface :=
         Task_Manager_Interface (Object);
+      View : Task_Manager_Widget_Access;
+      pragma Unreferenced (View);
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
-         Show_Task_Manager (GUI.Kernel);
+         View := TM_Views.Get_Or_Create_View (GUI.Kernel, Focus => True);
       end if;
 
       return False;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end On_Main_Progress_Button_Press_Event;
 
    ---------------------------
@@ -475,25 +669,24 @@ package body Task_Manager.GUI is
          Pause_Button_Column     => Gdk.Pixbuf.Get_Type);
    end Columns_Types;
 
-   -------------------------
-   -- Task_Manager_Dialog --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Task_Manager_Dialog
-     (Manager : Task_Manager_Access;
-      Dialog  : Gtk_Widget := null) return Task_Manager_Widget_Access
+   function Initialize
+     (View   : access Task_Manager_Widget_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
+      return Gtk_Widget
    is
+      Manager  : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       GUI      : constant Task_Manager_Interface :=
                    Task_Manager_UI_Access (Manager).GUI;
-      View     : Task_Manager_Widget_Access;
       Scrolled : Gtk_Scrolled_Window;
    begin
-      View := new Task_Manager_Widget_Record;
       Initialize_Hbox (View);
 
       --  Initialize the tree
 
-      View.Dialog := Dialog;
       View.Model := GUI;
 
       Gtk_New (View.Tree, GUI.Model);
@@ -520,102 +713,7 @@ package body Task_Manager.GUI is
          View,
          After => False);
 
-      return View;
-   end Task_Manager_Dialog;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (View    : out Task_Manager_Interface;
-      Kernel  : Kernel_Handle;
-      Manager : Task_Manager_Access) is
-   begin
-      View := new Task_Manager_Interface_Record;
-      Initialize (View, Kernel, Manager);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (View    : access Task_Manager_Interface_Record'Class;
-      Kernel  : Kernel_Handle;
-      Manager : Task_Manager_Access)
-   is
-      Model : constant Task_Manager_Model := new Task_Manager_Model_Record;
-      Image   : Gtk_Image;
-      Box     : Gtk_Box;
-      VBox    : Gtk_Box;
-      Event   : Gtk_Event_Box;
-   begin
-      Initialize_Hbox (View, Homogeneous => False);
-      Get_Style_Context (View).Add_Class ("gps-task-manager");
-
-      --  The logo goes to the left of everything, so that when it is hidden
-      --  it doesn't matter if it is part of the size computation for the
-      --  task manager
-
-      Gtk_New (View.Logo, GPS_Logo, Icon_Size_Small_Toolbar);
-      View.Pack_Start (View.Logo, Expand => False);
-
-      --  The progress bar area
-
-      Gtk_New_Vbox (VBox);
-      View.Pack_Start (VBox, Expand => True);
-
-      Gtk_New (View.Task_Label, "");
-      View.Task_Label.Set_Alignment (0.0, 0.5);
-      View.Task_Label.Override_Font (Small_Font.Get_Pref);
-      VBox.Pack_Start (View.Task_Label, Expand => False);
-
-      Gtk_New_Hbox (Box);
-      VBox.Pack_Start (Box, Expand => False);
-
-      Gtk_New (Event);
-      Event.Set_Has_Window (False);
-      Box.Pack_Start (Event, Expand => True);
-
-      Gtk_New (View.Main_Progress_Bar);
-      View.Main_Progress_Bar.Override_Font (Small_Font.Get_Pref);
-      View.Main_Progress_Bar.Set_Show_Text (True);
-      Event.Add (View.Main_Progress_Bar);
-
-      Gtk_New (View.Progress_Bar_Button);
-      Gtk_New (Image, GPS_Stop_Task, Icon_Size_Action_Button);
-      View.Progress_Bar_Button.Add (Image);
-      View.Progress_Bar_Button.Set_Relief (Relief_None);
-      Box.Pack_Start (View.Progress_Bar_Button, Expand => False);
-
-      Task_Manager_Handler.Connect
-        (View.Progress_Bar_Button, Gtk.Button.Signal_Clicked,
-         On_Progress_Bar_Button_Clicked'Access,
-         User_Data => (Task_Manager_Interface (View), 0));
-
-      Set_Events (Event, Get_Events (Event) or Button_Press_Mask);
-      Return_Callback.Object_Connect
-        (Event,
-         Signal_Button_Press_Event,
-         Return_Callback.To_Marshaller
-           (On_Main_Progress_Button_Press_Event'Access),
-         View);
-
-      Gtkada.Abstract_List_Model.Initialize (Model);
-      Model.GUI := Task_Manager_Interface (View);
-
-      View.Kernel  := Kernel;
-      View.Manager := Task_Manager_UI_Access (Manager);
-      View.Model   := Model;
-      View.Manager.GUI := Task_Manager_Interface (View);
-
-      Task_Manager_Handler.Connect
-        (View,
-         "destroy",
-         Task_Manager_Handler.To_Marshaller (On_GUI_Destroy'Access),
-         User_Data => (Task_Manager_Interface (View), 0),
-         After => False);
+      return Gtk_Widget (View.Tree);
    end Initialize;
 
    ---------------
@@ -630,19 +728,6 @@ package body Task_Manager.GUI is
          Dummy := Execute (Manager.Pop_Command);
       end if;
    end Pop_State;
-
-   ----------------
-   -- Push_State --
-   ----------------
-
-   procedure Push_State (Manager : access Task_Manager_Record'Class) is
-      Dummy : Command_Return_Type;
-      pragma Unreferenced (Dummy);
-   begin
-      if Manager.Push_Command /= null then
-         Dummy := Execute (Manager.Push_Command);
-      end if;
-   end Push_State;
 
    --------------
    -- Get_Iter --
@@ -1312,22 +1397,86 @@ package body Task_Manager.GUI is
    ------------
 
    function Create (Kernel : Kernel_Handle) return Task_Manager_Access is
-      R : Task_Manager_Access;
+      Manager : Task_Manager_Access;
+      View : Task_Manager_Interface;
+      Model : constant Task_Manager_Model := new Task_Manager_Model_Record;
+      Image   : Gtk_Image;
+      Box     : Gtk_Box;
+      VBox    : Gtk_Box;
+      Event   : Gtk_Event_Box;
+
    begin
-      R := new Task_Manager_UI_Record;
-      Gtk_New (Task_Manager_UI_Access (R).GUI, Kernel, R);
-      return R;
+      Manager := new Task_Manager_UI_Record;
+      View := new Task_Manager_Interface_Record;
+      Task_Manager_UI_Access (Manager).GUI := View;
+
+      Initialize_Hbox (View, Homogeneous => False);
+      Get_Style_Context (View).Add_Class ("gps-task-manager");
+
+      --  The logo goes to the left of everything, so that when it is hidden
+      --  it doesn't matter if it is part of the size computation for the
+      --  task manager
+
+      Gtk_New (View.Logo, GPS_Logo, Icon_Size_Small_Toolbar);
+      View.Pack_Start (View.Logo, Expand => False);
+
+      --  The progress bar area
+
+      Gtk_New_Vbox (VBox);
+      View.Pack_Start (VBox, Expand => True);
+
+      Gtk_New (View.Task_Label, "");
+      View.Task_Label.Set_Alignment (0.0, 0.5);
+      View.Task_Label.Override_Font (Small_Font.Get_Pref);
+      VBox.Pack_Start (View.Task_Label, Expand => False);
+
+      Gtk_New_Hbox (Box);
+      VBox.Pack_Start (Box, Expand => False);
+
+      Gtk_New (Event);
+      Event.Set_Has_Window (False);
+      Box.Pack_Start (Event, Expand => True);
+
+      Gtk_New (View.Main_Progress_Bar);
+      View.Main_Progress_Bar.Override_Font (Small_Font.Get_Pref);
+      View.Main_Progress_Bar.Set_Show_Text (True);
+      Event.Add (View.Main_Progress_Bar);
+
+      Gtk_New (View.Progress_Bar_Button);
+      Gtk_New (Image, GPS_Stop_Task, Icon_Size_Action_Button);
+      View.Progress_Bar_Button.Add (Image);
+      View.Progress_Bar_Button.Set_Relief (Relief_None);
+      Box.Pack_Start (View.Progress_Bar_Button, Expand => False);
+
+      Task_Manager_Handler.Connect
+        (View.Progress_Bar_Button, Gtk.Button.Signal_Clicked,
+         On_Progress_Bar_Button_Clicked'Access,
+         User_Data => (View, 0));
+
+      Set_Events (Event, Get_Events (Event) or Button_Press_Mask);
+      Return_Callback.Object_Connect
+        (Event,
+         Signal_Button_Press_Event,
+         Return_Callback.To_Marshaller
+           (On_Main_Progress_Button_Press_Event'Access),
+         View);
+
+      Gtkada.Abstract_List_Model.Initialize (Model);
+      Model.GUI := View;
+
+      View.Kernel  := Kernel;
+      View.Manager := Task_Manager_UI_Access (Manager);
+      View.Model   := Model;
+
+      Task_Manager_Handler.Connect
+        (View,
+         "destroy",
+         Task_Manager_Handler.To_Marshaller (On_GUI_Destroy'Access),
+         User_Data => (View, 0),
+         After => False);
+
+      return Manager;
    end Create;
-
-   ----------------------
-   -- Get_Focus_Widget --
-   ----------------------
-
-   function Get_Focus_Widget
-     (GUI : Task_Manager_Widget_Access) return Gtk_Widget is
-   begin
-      return Gtk_Widget (GUI.Tree);
-   end Get_Focus_Widget;
 
    -------------
    -- Get_GUI --
@@ -1357,5 +1506,40 @@ package body Task_Manager.GUI is
    begin
       Area.Pack_End (Task_Manager_UI_Access (Manager).GUI, Expand => False);
    end Set_Progress_Area;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Module : in out Task_Manager_Module_Record) is
+   begin
+      Destroy (Get_Task_Manager (Get_Kernel (Module)));
+   end Destroy;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+   begin
+      TM_Views.Register_Module
+        (Kernel,
+         ID        => new Task_Manager_Module_Record,
+         Menu_Name => -"Views/Tas_ks");
+      Add_Hook
+        (Kernel, Before_Exit_Action_Hook,
+         Wrapper (On_Exit_Hook'Access),
+         Name => "task_manager.on_exit");
+
+      --  Create the main progress bar in the main toolbar
+      Set_Task_Manager (Kernel, Create (Kernel_Handle (Kernel)));
+
+      --  Display the main progress bar in the GPS main window
+      Set_Progress_Area
+        (Get_Task_Manager (Kernel),
+         GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box);
+   end Register_Module;
 
 end Task_Manager.GUI;

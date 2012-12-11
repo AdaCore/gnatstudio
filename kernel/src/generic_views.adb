@@ -377,7 +377,7 @@ package body Generic_Views is
          Register_Desktop_Functions (Save_Desktop_Access, Load_Desktop_Access);
          Register_Open_Menu
            (Kernel, '/' & (-"Tools") & '/' & Dir_Name (Menu_Name),
-            "____" & Base_Name (Menu_Name), Before => Before_Menu);
+            Base_Name (Menu_Name), Before => Before_Menu);
       end Register_Module;
 
    end Simple_Views;

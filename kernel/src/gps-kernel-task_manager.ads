@@ -112,12 +112,12 @@ package GPS.Kernel.Task_Manager is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the task manager module graphical entry points
 
+   procedure Set_Task_Manager
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Manager : Task_Manager_Access);
    function Get_Task_Manager
      (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access;
    --  Return the GPS task manager
-
-   procedure Show_Task_Manager (Kernel : Kernel_Handle);
-   --  Show the GPS task manager
 
    function Get_Command (Command : access Scheduled_Command'Class)
       return Command_Access;

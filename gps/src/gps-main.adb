@@ -90,7 +90,7 @@ with Projects;                         use Projects;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
-with Task_Manager;
+with Task_Manager.GUI;
 with Traces;                           use Traces;
 with Welcome;                          use Welcome;
 with Welcome_Page;                     use Welcome_Page;
@@ -1481,6 +1481,7 @@ procedure GPS.Main is
          Scenario_Views.Register_Module (GPS_Main.Kernel);
       end if;
 
+      Task_Manager.GUI.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Task_Manager.Register_Module (GPS_Main.Kernel);
 
       if Active (VCS_Trace) then

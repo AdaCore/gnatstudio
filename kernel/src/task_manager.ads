@@ -18,14 +18,12 @@
 --  This package provides a task manager with a scheduler
 --  to handle asynchronous or background tasks run by GPS.
 --
---  The task manager is created upon GPS startup.
+--  The task manager is created at GPS startup.
 --
 --  By default, the task manager does nothing.
 --  When it is given a command (through a call to Add_Command), it will begin
 --  the processing of the commands, and will run in the background until all
 --  the commands are finished.
-
-with Gtk.Widget;  use Gtk.Widget;
 
 with Commands;    use Commands;
 with GNAT.Strings;
@@ -72,6 +70,16 @@ package Task_Manager is
       Push_Command : Command_Access;
       Pop_Command  : Command_Access);
    --  Set the commands used to push/pop the busy state
+
+   procedure Pause_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer);
+   --  Pause command referenced by Index
+
+   procedure Resume_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer);
+   --  Resume paused command referenced by Index
 
    procedure Destroy
      (Manager : Task_Manager_Access);

@@ -603,6 +603,50 @@ package body Task_Manager is
       end if;
    end Destroy;
 
+   -------------------
+   -- Pause_Command --
+   -------------------
+
+   procedure Pause_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer) is
+   begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      if Index in Manager.Queues'Range then
+         if Manager.Queues (Index).Status = Running then
+            Manager.Queues (Index).Status := Paused;
+         end if;
+
+         Queue_Changed (Manager, Index, True);
+      end if;
+   end Pause_Command;
+
+   --------------------
+   -- Resume_Command --
+   --------------------
+
+   procedure Resume_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer) is
+   begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      if Index in Manager.Queues'Range then
+         if Manager.Queues (Index).Status = Paused then
+            Manager.Queues (Index).Status := Running;
+            Run (Task_Manager_Access (Manager),
+                 Active => Index < Manager.Passive_Index);
+         end if;
+
+         Queue_Changed (Manager, Index, True);
+      end if;
+   end Resume_Command;
+
    ---------------------------
    -- Interrupt_Latest_Task --
    ---------------------------
