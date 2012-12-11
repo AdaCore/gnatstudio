@@ -151,7 +151,7 @@ NF-52-L514-028 GPS: Action tooltip in Locations view (2012-05-21)
   The Locations View now displays a tooltip for the action associated with a
   message.
 
-NF-52-L509-002 GB: Viewing variables declared in packages (2012-09-12)
+NF-52-L509-022 GB: Viewing variables declared in packages (2012-09-12)
 
   When creating an expression in the debugger, the dialog is now filled with
   the qualified Ada expression for the current text.  This expression can be
