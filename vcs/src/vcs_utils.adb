@@ -46,23 +46,25 @@ package body VCS_Utils is
       Ref    : VCS_Access;
       Status : File_Status_Record)
    is
-      function Short_Revision (R : String) return String;
+      function Short_Revision return String;
       --  If R is too long, return only the last digits
 
       --------------------
       -- Short_Revision --
       --------------------
 
-      function Short_Revision (R : String) return String is
+      function Short_Revision return String is
       begin
          if Status.Working_Revision = null
            or else Status.Working_Revision.all = "n/a"
          then
             return "";
-         elsif R'Length <= Max_Rev_Length then
-            return R;
+         elsif Status.Working_Revision'Length <= Max_Rev_Length then
+            return Status.Working_Revision.all;
          else
-            return "[...]" & R (R'Last - Max_Rev_Length .. R'Last);
+            return "[...]" & Status.Working_Revision
+              (Status.Working_Revision'Last - Max_Rev_Length ..
+                 Status.Working_Revision'Last);
          end if;
       end Short_Revision;
 
@@ -79,8 +81,7 @@ package body VCS_Utils is
          Label := new String'("");
       else
          declare
-            R : constant String :=
-              Short_Revision (Status.Working_Revision.all);
+            R : constant String := Short_Revision;
          begin
             if R = "" then
                Label := new String'(Status.Status.Label.all);
