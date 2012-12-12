@@ -108,6 +108,9 @@ package body Src_Editor_Box is
 
    Me : constant Trace_Handle := Create ("Source_Editor");
 
+   Show_Modified_Unmodified_In_Status_Bar : constant Boolean := False;
+   --  Whether to show the modified/unmodified/saved status in the status bar.
+
    procedure Setup (Data : Source_Editor_Box; Id : Handler_Id);
    package Box_Callback is new Gtk.Handlers.User_Callback_With_Setup
      (Widget_Type => Glib.Object.GObject_Record,
@@ -603,7 +606,8 @@ package body Src_Editor_Box is
    is
       Child : constant MDI_Child := Find_Child (Box.Kernel, Box);
    begin
-      case Get_Status (Box.Source_Buffer) is
+      if Show_Modified_Unmodified_In_Status_Bar then
+         case Get_Status (Box.Source_Buffer) is
          when Unmodified =>
             Box.Modified_Label.Set_Tooltip_Text (-"Unmodified");
             Box.Modified_Label.Set (File_Pixbuf);
@@ -631,7 +635,8 @@ package body Src_Editor_Box is
             if Child /= null and then File_Modified_Pixbuf /= null then
                Set_Icon (Child, File_Modified_Pixbuf);
             end if;
-      end case;
+         end case;
+      end if;
 
       if Get_Writable (Box.Source_Buffer) then
          Set (Box.Read_Only_Label, GPS_Writable, Icon_Size_Menu);
@@ -951,11 +956,14 @@ package body Src_Editor_Box is
          After => False);
 
       --  Modified file area...
-      Gtk_New_Vseparator (Separator);
-      Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
-      Gtk_New (Box.Modified_Label);
-      Pack_End
-        (Box.Label_Box, Box.Modified_Label, Expand => False, Fill => True);
+      if Show_Modified_Unmodified_In_Status_Bar then
+         Gtk_New_Vseparator (Separator);
+         Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
+
+         Gtk_New (Box.Modified_Label);
+         Pack_End
+           (Box.Label_Box, Box.Modified_Label, Expand => False, Fill => True);
+      end if;
 
       --  Read only file area...
       Gtk_New_Vseparator (Separator);
