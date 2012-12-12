@@ -49,6 +49,7 @@ with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Handlers;               use Gtk.Handlers;
+with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu;                   use Gtk.Menu;
@@ -153,6 +154,10 @@ package body Src_Editor_Box is
    --  This handler is merely a proxy to Show_Cursor_Position. It just
    --  extracts the necessary values from Params, and pass them on to
    --  Show_Cursor_Position.
+
+   procedure Update_Status
+     (Box : not null access Source_Editor_Box_Record'Class);
+   --  Update the status icon showing the state Saved/Unsaved for the editor
 
    procedure Buffer_Information_Handler
      (Buffer : access Glib.Object.GObject_Record'Class;
@@ -562,7 +567,8 @@ package body Src_Editor_Box is
    begin
       Set_Text
         (Box.Cursor_Loc_Label,
-         Image (Integer (Line)) & ':' & Image (Integer (Column)));
+         String_Utils.Image (Integer (Line))
+         & ':' & String_Utils.Image (Integer (Column)));
    end Show_Cursor_Position;
 
    -------------------------
@@ -586,6 +592,46 @@ package body Src_Editor_Box is
       Set_Text (Editor.Function_Label, "");
    end Clear_Subprogram_Name;
 
+   -------------------
+   -- Update_Status --
+   -------------------
+
+   procedure Update_Status
+     (Box : not null access Source_Editor_Box_Record'Class)
+   is
+      Child : constant MDI_Child := Find_Child (Box.Kernel, Box);
+   begin
+      case Get_Status (Box.Source_Buffer) is
+         when Unmodified =>
+            Box.Modified_Label.Set_Tooltip_Text (-"Unmodified");
+            Box.Modified_Label.Set (File_Pixbuf);
+            if Child /= null and then File_Pixbuf /= null then
+               Set_Icon (Child, File_Pixbuf);
+            end if;
+
+         when Unsaved =>
+            Box.Modified_Label.Set_Tooltip_Text (-"Unsaved");
+            Box.Modified_Label.Set (File_Unsaved_Pixbuf);
+            if Child /= null and then File_Unsaved_Pixbuf /= null then
+               Set_Icon (Child, File_Unsaved_Pixbuf);
+            end if;
+
+         when Saved =>
+            Box.Modified_Label.Set_Tooltip_Text (-"Saved");
+            Box.Modified_Label.Set (File_Pixbuf);
+            if Child /= null and then File_Pixbuf /= null then
+               Set_Icon (Child, File_Pixbuf);
+            end if;
+
+         when Modified =>
+            Box.Modified_Label.Set_Tooltip_Text (-"Modified");
+            Box.Modified_Label.Set (File_Modified_Pixbuf);
+            if Child /= null and then File_Modified_Pixbuf /= null then
+               Set_Icon (Child, File_Modified_Pixbuf);
+            end if;
+      end case;
+   end Update_Status;
+
    ----------------------------
    -- Status_Changed_Handler --
    ----------------------------
@@ -596,41 +642,12 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box)
    is
       pragma Unreferenced (Buffer, Params);
-      Child : constant MDI_Child := Find_Child (Box.Kernel, Box);
    begin
-      case Get_Status (Box.Source_Buffer) is
-         when Unmodified =>
-            Set_Text (Box.Modified_Label, -"Unmodified");
-            if Child /= null and then File_Pixbuf /= null then
-               Set_Icon (Child, File_Pixbuf);
-            end if;
-
-         when Unsaved =>
-            Set_Text (Box.Modified_Label, -"Unsaved");
-            if Child /= null and then File_Unsaved_Pixbuf /= null then
-               Set_Icon (Child, File_Unsaved_Pixbuf);
-            end if;
-
-         when Saved =>
-            Set_Text (Box.Modified_Label, -"Saved");
-            if Child /= null and then File_Pixbuf /= null then
-               Set_Icon (Child, File_Pixbuf);
-            end if;
-
-         when Modified =>
-            Set_Text (Box.Modified_Label, -"Modified");
-            if Child /= null and then File_Modified_Pixbuf /= null then
-               Set_Icon (Child, File_Modified_Pixbuf);
-            end if;
-      end case;
-
+      Update_Status (Box);
       File_Status_Changed
         (Get_Kernel (Box),
          Get_Filename (Box.Source_Buffer),
          Get_Status (Box.Source_Buffer));
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
    end Status_Changed_Handler;
 
    ------------------------------
@@ -2309,7 +2326,7 @@ package body Src_Editor_Box is
       Initialize
         (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
          Get_Language (Source.Source_Buffer));
-      Set_Text (Box.Modified_Label, Get_Text (Source.Modified_Label));
+      Set (Box.Modified_Label, Gdk_Pixbuf'(Get (Source.Modified_Label)));
 
       if Get_Writable (Box.Source_Buffer) then
          Set_Text (Box.Read_Only_Label, -"Writable");
@@ -2433,9 +2450,11 @@ package body Src_Editor_Box is
       Set_Filename (Editor.Source_Buffer, Filename);
       Set_Initial_Dir (Editor.Source_Buffer, Initial_Dir);
       Set_Charset (Editor.Source_Buffer, Get_File_Charset (Filename));
-      Set_Text (Editor.Modified_Label, -"Unmodified");
+
       Set_Writable (Editor.Source_Buffer, Writable => True, Explicit => False);
       Load_Empty_File (Editor.Source_Buffer);
+
+      Update_Status (Editor);
    end Load_Empty_File;
 
    ------------------
@@ -2781,13 +2800,13 @@ package body Src_Editor_Box is
       else
          if Column = 1 then
             Editor.Kernel.Insert
-              (-"Invalid line number: " & Image (Integer (Line)),
+              (-"Invalid line number: " & String_Utils.Image (Integer (Line)),
                Mode => Error);
          else
             Editor.Kernel.Insert
               (-"Invalid source location: " &
-               Image (Integer (Line)) &
-               ':' & Image (Natural (Column)), Mode => Error);
+               String_Utils.Image (Integer (Line)) &
+               ':' & String_Utils.Image (Natural (Column)), Mode => Error);
          end if;
       end if;
    end Set_Cursor_Location;

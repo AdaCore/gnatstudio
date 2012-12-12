@@ -35,6 +35,7 @@ with Gtk.Box;
 with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Handlers;
+with Gtk.Image;
 with Gtk.Separator;
 with Gtk.Text_Mark;
 
@@ -495,7 +496,7 @@ private
       --  The status bar
       Function_Label       : Gtk.Label.Gtk_Label;
       Read_Only_Label      : Gtk.Label.Gtk_Label;
-      Modified_Label       : Gtk.Label.Gtk_Label;
+      Modified_Label       : Gtk.Image.Gtk_Image;
       Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
 
       --  The non graphical attributes
