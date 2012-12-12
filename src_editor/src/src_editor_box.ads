@@ -495,7 +495,7 @@ private
 
       --  The status bar
       Function_Label       : Gtk.Label.Gtk_Label;
-      Read_Only_Label      : Gtk.Label.Gtk_Label;
+      Read_Only_Label      : Gtk.Image.Gtk_Image;
       Modified_Label       : Gtk.Image.Gtk_Image;
       Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
 

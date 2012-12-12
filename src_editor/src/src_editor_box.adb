@@ -82,6 +82,7 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
+with GPS.Stock_Icons;            use GPS.Stock_Icons;
 
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
@@ -157,7 +158,8 @@ package body Src_Editor_Box is
 
    procedure Update_Status
      (Box : not null access Source_Editor_Box_Record'Class);
-   --  Update the status icon showing the state Saved/Unsaved for the editor
+   --  Update the status icon showing the state Saved/Unsaved for the editor,
+   --  as well as the writable/read-only status
 
    procedure Buffer_Information_Handler
      (Buffer : access Glib.Object.GObject_Record'Class;
@@ -630,6 +632,16 @@ package body Src_Editor_Box is
                Set_Icon (Child, File_Modified_Pixbuf);
             end if;
       end case;
+
+      if Get_Writable (Box.Source_Buffer) then
+         Set (Box.Read_Only_Label, GPS_Writable, Icon_Size_Menu);
+         Box.Read_Only_Label.Set_Tooltip_Text (-"Writable");
+         Get_Style_Context (Box.Source_View).Remove_Class ("read-only");
+      else
+         Set (Box.Read_Only_Label, GPS_Read_Only, Icon_Size_Menu);
+         Box.Read_Only_Label.Set_Tooltip_Text (-"Read Only");
+         Get_Style_Context (Box.Source_View).Add_Class ("read-only");
+      end if;
    end Update_Status;
 
    ----------------------------
@@ -2328,12 +2340,11 @@ package body Src_Editor_Box is
          Get_Language (Source.Source_Buffer));
       Set (Box.Modified_Label, Gdk_Pixbuf'(Get (Source.Modified_Label)));
 
-      if Get_Writable (Box.Source_Buffer) then
-         Set_Text (Box.Read_Only_Label, -"Writable");
-      else
-         Set_Text (Box.Read_Only_Label, -"Read Only");
+      if not Get_Writable (Box.Source_Buffer) then
          Set_Editable (Box.Source_View, False);
       end if;
+
+      Update_Status (Box);
    end Create_New_View;
 
    ----------------
@@ -2391,16 +2402,7 @@ package body Src_Editor_Box is
    begin
       for V in Views'Range loop
          Set_Editable (Views (V).Source_View, Writable);
-
-         if Writable then
-            Get_Style_Context
-              (Views (V).Source_View).Remove_Class ("read-only");
-            Set_Text (Views (V).Read_Only_Label, -"Writable");
-         else
-            Get_Style_Context
-              (Views (V).Source_View).Add_Class ("read-only");
-            Set_Text (Views (V).Read_Only_Label, -"Read Only");
-         end if;
+         Update_Status (Views (V));
 
          --  Changing the class does not take into account the CSS
          --  background-color, for some reason, although it does take other
