@@ -1528,7 +1528,6 @@ package body Src_Editor_View is
       Color  : Gdk_Color;
       Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
       Ink_Rect, Logical_Rect : Pango.Pango_Rectangle;
-      Tmp    : HSV_Color;
    begin
       --  Recompute the width of one character
 
@@ -1576,15 +1575,7 @@ package body Src_Editor_View is
          Modify_Font (Source, Default_Style.Get_Pref_Font);
       end if;
 
-      Color := Default_Style.Get_Pref_Bg;
-
-      if Color /= Source.Background_Color then
-         Source.Background_Color := Color;
-         Tmp := To_HSV (To_Cairo (Color));
-         Tmp.V := Tmp.V * 0.97;
-         Source.Background_Color_Other := To_Cairo (Tmp);
-         Modify_Base (Source, State_Normal, Color);
-      end if;
+      Source.Set_Background_Color;
 
       Color := Default_Style.Get_Pref_Fg;
 
@@ -1599,6 +1590,39 @@ package body Src_Editor_View is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Execute;
+
+   --------------------------
+   -- Set_Background_Color --
+   --------------------------
+
+   procedure Set_Background_Color
+     (Self : not null access Source_View_Record'Class)
+   is
+      Color : constant Gdk_Color := Default_Style.Get_Pref_Bg;
+      C     : Cairo_Color := To_Cairo (Color);
+   begin
+      if not Self.Get_Editable then
+         C.Green := C.Green * 0.9;
+         C.Red   := C.Red * 0.9;
+         C.Blue  := C.Blue * 0.9;
+      end if;
+
+      Self.Background_Color := C;
+
+      Self.Background_Color_Other.Green := C.Green * 0.97;
+      Self.Background_Color_Other.Red   := C.Red * 0.97;
+      Self.Background_Color_Other.Blue  := C.Blue * 0.97;
+      Self.Background_Color_Other.Alpha := 1.0;
+
+      Self.Override_Background_Color (Gtk_State_Flag_Normal, C);
+      Self.Override_Background_Color (Gtk_State_Flag_Active, C);
+      Self.Override_Background_Color (Gtk_State_Flag_Prelight, C);
+      Self.Override_Background_Color (Gtk_State_Flag_Selected, C);
+      Self.Override_Background_Color (Gtk_State_Flag_Focused, C);
+
+      Invalidate_Side_Column_Cache (Self);
+      Redraw_Columns (Self);  --  update color of the side panes
+   end Set_Background_Color;
 
    -------------
    -- Execute --

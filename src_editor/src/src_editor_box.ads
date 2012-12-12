@@ -496,12 +496,9 @@ private
       Function_Label       : Gtk.Label.Gtk_Label;
       Read_Only_Label      : Gtk.Label.Gtk_Label;
       Modified_Label       : Gtk.Label.Gtk_Label;
-      Overwrite_Label      : Gtk.Label.Gtk_Label;
       Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
 
       --  The non graphical attributes
-
-      Overwrite            : Boolean := False;
 
       Cursor_Handler       : Gtk.Handlers.Handler_Id;
       --  Handler connected to the signal "cursor_position_changed" in

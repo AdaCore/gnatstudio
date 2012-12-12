@@ -48,7 +48,6 @@ with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
-with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Main;                   use Gtk.Main;
@@ -57,9 +56,9 @@ with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Status_Bar;             use Gtk.Status_Bar;
+with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Mark;              use Gtk.Text_Mark;
-with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
@@ -192,13 +191,6 @@ package body Src_Editor_Box is
      (Kernel : access GObject_Record'Class;
       Entity : General_Entity);
    --  Jump to the body of the given entity
-
-   procedure On_Toggle_Overwrite
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Box    : Source_Editor_Box);
-   --  Callback to be called when the view receives the "toggle_overwrite"
-   --  signal.
 
    function Focus_In (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_in event. This checks whether the physical file
@@ -808,30 +800,6 @@ package body Src_Editor_Box is
          Trace (Traces.Exception_Handle, E);
    end On_Box_Destroy;
 
-   -------------------------
-   -- On_Toggle_Overwrite --
-   -------------------------
-
-   procedure On_Toggle_Overwrite
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Box    : Source_Editor_Box)
-   is
-      pragma Unreferenced (Object, Params);
-   begin
-      Box.Overwrite := not Box.Overwrite;
-
-      if Box.Overwrite then
-         Set_Text (Box.Overwrite_Label, -"Overwrite");
-      else
-         Set_Text (Box.Overwrite_Label, -"Insert");
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
-   end On_Toggle_Overwrite;
-
    ----------------
    -- Initialize --
    ----------------
@@ -842,7 +810,6 @@ package body Src_Editor_Box is
       Source : Source_Buffer := null;
       Lang   : Language.Language_Access)
    is
-      Frame          : Gtk_Frame;
       Event_Box      : Gtk_Event_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
       Drawing_Area   : Gtk_Drawing_Area;
@@ -966,32 +933,13 @@ package body Src_Editor_Box is
         (Event_Box, Signal_Button_Press_Event,
          On_Read_Only_Pressed'Access, Box);
 
-      --  Insert/Overwrite label
-      Gtk_New_Vseparator (Separator);
-      Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_None);
-      Gtk_New (Box.Overwrite_Label, -"Insert");
-
-      --  ??? Using an Event_Box should not be necessary, but it avoids
-      --  some overlaps when resizing the editor window
-
-      Gtk_New (Event_Box);
-      Pack_End (Box.Label_Box, Event_Box, Expand => False, Fill => True);
-      Add (Event_Box, Box.Overwrite_Label);
-      Box_Callback.Connect
-        (Box.Source_View,
-         Signal_Toggle_Overwrite,
-         On_Toggle_Overwrite'Access,
-         User_Data => Source_Editor_Box (Box));
-
       --  Function location area
       Gtk_New (Box.Function_Label);
       Set_Ellipsize (Box.Function_Label, Ellipsize_End);
       Set_Alignment (Box.Function_Label, 0.0, 0.5);
 
       --  Using an Event_Box to avoid some overlaps when resizing the editor
-      --  window. See also ??? comment above.
+      --  window.
 
       Gtk_New (Event_Box);
       Pack_Start (Box.Label_Box, Event_Box, Expand => True, Fill => True);
@@ -2421,10 +2369,19 @@ package body Src_Editor_Box is
          Set_Editable (Views (V).Source_View, Writable);
 
          if Writable then
+            Get_Style_Context
+              (Views (V).Source_View).Remove_Class ("read-only");
             Set_Text (Views (V).Read_Only_Label, -"Writable");
          else
+            Get_Style_Context
+              (Views (V).Source_View).Add_Class ("read-only");
             Set_Text (Views (V).Read_Only_Label, -"Read Only");
          end if;
+
+         --  Changing the class does not take into account the CSS
+         --  background-color, for some reason, although it does take other
+         --  attributes like "color" into account.
+         Views (V).Source_View.Set_Background_Color;
       end loop;
    end Set_Writable;
 

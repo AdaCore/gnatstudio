@@ -73,6 +73,11 @@ package Src_Editor_View is
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
 
+   procedure Set_Background_Color
+     (Self : not null access Source_View_Record'Class);
+   --  Update the background color of the window, based on the user preferences
+   --  and whether the editor is editable
+
    procedure Scroll_To_Cursor_Location
      (View      : access Source_View_Record;
       Centering : Centering_Type := Minimal);
@@ -240,7 +245,7 @@ private
       Scroll_To_Value      : Gdouble := 0.0;
       Scroll_Requested     : Boolean := False;
 
-      Background_Color       : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Background_Color      : Gtkada.Style.Cairo_Color := (0.0, 0.0, 0.0, 1.0);
       Background_Color_Other : Gtkada.Style.Cairo_Color := (others => 0.0);
       --  The editor background color and its ligthened/darkened version
 

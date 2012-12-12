@@ -1393,9 +1393,11 @@ package body Browsers.Canvas is
       Base := To_Cairo (White_RGBA);
 
       Color := Shade (Base, 1.3);
-      Cairo.Pattern.Add_Color_Stop_Rgb (Ptrn, 0.0, Color.R, Color.G, Color.B);
+      Cairo.Pattern.Add_Color_Stop_Rgb
+        (Ptrn, 0.0, Color.Red, Color.Green, Color.Blue);
       Color := Shade (Base, 0.95);
-      Cairo.Pattern.Add_Color_Stop_Rgb (Ptrn, 1.0, Color.R, Color.G, Color.B);
+      Cairo.Pattern.Add_Color_Stop_Rgb
+        (Ptrn, 1.0, Color.Red, Color.Green, Color.Blue);
       Set_Source (Cr, Ptrn);
       Destroy (Ptrn);
       Cairo.Fill (Cr);
@@ -1472,14 +1474,13 @@ package body Browsers.Canvas is
       Ptrn := Create_Linear
         (0.0, Gdouble (Item.Title_Coord.Y), 0.0,
          Gdouble (Item.Title_Coord.Y + Item.Title_Coord.Height - 1));
---      Base := To_Cairo (Get_Base (Style, State));
       Base := To_Cairo (White_RGBA);
 
       Color := Shade (Base, 1.15);
-      Add_Color_Stop_Rgb (Ptrn, 0.0, Color.R, Color.G, Color.B);
+      Add_Color_Stop_Rgb (Ptrn, 0.0, Color.Red, Color.Green, Color.Blue);
 
       Color := Shade (Base, 0.85);
-      Add_Color_Stop_Rgb (Ptrn, 1.0, Color.R, Color.G, Color.B);
+      Add_Color_Stop_Rgb (Ptrn, 1.0, Color.Red, Color.Green, Color.Blue);
 
       Set_Source (Cr, Ptrn);
       Destroy (Ptrn);
