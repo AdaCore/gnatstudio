@@ -28,14 +28,16 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
 
+with Commands.Interactive;      use Commands, Commands.Interactive;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Stock_Icons;         use GPS.Stock_Icons;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Stock_Icons;           use GPS.Stock_Icons;
 
 package body Generic_Views is
 
@@ -46,6 +48,12 @@ package body Generic_Views is
    package body Simple_Views is
 
       Module : Module_ID;
+
+      type Open_Command is new Interactive_Command with null record;
+      overriding function Execute
+        (Self    : access Open_Command;
+         Context : Interactive_Command_Context) return Command_Return_Type;
+      --  Open the view
 
       type Toplevel_Box is new Gtk_Box_Record with record
          Initial : View_Access;
@@ -279,6 +287,21 @@ package body Generic_Views is
          return null;
       end Save_Desktop;
 
+      -------------
+      -- Execute --
+      -------------
+
+      overriding function Execute
+        (Self    : access Open_Command;
+         Context : Interactive_Command_Context) return Command_Return_Type
+      is
+         Ignore : View_Access;
+         pragma Unreferenced (Self, Ignore);
+      begin
+         Ignore := Get_Or_Create_View (Get_Kernel (Context.Context));
+         return Commands.Success;
+      end Execute;
+
       ------------------
       -- On_Open_View --
       ------------------
@@ -361,13 +384,21 @@ package body Generic_Views is
         (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
          ID          : GPS.Kernel.Modules.Module_ID := null;
          Menu_Name   : String := "Views/" & View_Name;
-         Before_Menu : String := "") is
+         Before_Menu : String := "")
+      is
+         Command : Interactive_Command_Access;
       begin
          if ID = null then
             Module := new Module_ID_Record;
          else
             Module := ID;
          end if;
+
+         Command := new Open_Command;
+         Register_Action
+           (Kernel, "open " & View_Name,
+            Command, "Open (or reuse if it already exists) the '"
+              & View_Name & "' view", null, Commands_Category);
 
          Register_Module
            (Module      => Module,

@@ -116,6 +116,10 @@ package Generic_Views is
       Group  : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View;
       --  The group for newly created views.
 
+      Commands_Category : String := "Views";
+      --  Name of the category in the Key Shortcuts editor for the commands
+      --  declared in this package.
+
    package Simple_Views is
 
       type View_Access is access all Formal_View_Record'Class;

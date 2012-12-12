@@ -1984,6 +1984,17 @@ package body GPS.Kernel is
       Kernel.Messages := Abstract_Messages_Window_Access (Console);
    end Set_Messages_Window;
 
+   --------------------------
+   -- Get_Messages_Console --
+   --------------------------
+
+   function Get_Messages_Console
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget is
+   begin
+      return Kernel.Messages.Get_Console_Window;
+   end Get_Messages_Console;
+
    -------------------------
    -- Get_Messages_Window --
    -------------------------

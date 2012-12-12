@@ -33,6 +33,7 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
 
 with Glib.Object;  use Glib;
+with Gtk.Widget;
 with Gtk.Window;
 
 with Basic_Types;
@@ -651,6 +652,13 @@ package GPS.Kernel is
    --  avoid a direct dependency of several packages on the Messages window.
    --  Instead, the services of the kernel (see below) should be called.
 
+   function Get_Console_Window
+     (Self : not null access Abstract_Messages_Window)
+      return Gtk.Widget.Gtk_Widget is abstract;
+   --  Return the widget (if any) representing the console. It will be an
+   --  instance of Interactive_Console, but we cannot make that explicit here
+   --  to avoid circularities.
+
    function Get_Virtual_Console
      (Self : not null access Abstract_Messages_Window)
       return GNATCOLL.Scripts.Virtual_Console is abstract;
@@ -663,6 +671,11 @@ package GPS.Kernel is
      (Kernel  : not null access Kernel_Handle_Record'Class)
      return GNATCOLL.Scripts.Virtual_Console;
    --  Set the messages window
+
+   function Get_Messages_Console
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget;
+   --  Return the widget (if any) representing the console.
 
    procedure Insert
      (Kernel : not null access Kernel_Handle_Record'Class;

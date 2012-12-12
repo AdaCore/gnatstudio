@@ -119,6 +119,9 @@ package body GPS.Kernel.Console is
    overriding function Get_Virtual_Console
      (Self : not null access Kernel_Messages_Window)
       return GNATCOLL.Scripts.Virtual_Console;
+   overriding function Get_Console_Window
+     (Self : not null access Kernel_Messages_Window)
+      return Gtk.Widget.Gtk_Widget;
 
    procedure Internal_Insert
      (Self   : not null access Kernel_Messages_Window'Class;
@@ -170,6 +173,17 @@ package body GPS.Kernel.Console is
          Clear (Console);
       end if;
    end Clear;
+
+   ------------------------
+   -- Get_Console_Window --
+   ------------------------
+
+   overriding function Get_Console_Window
+     (Self : not null access Kernel_Messages_Window)
+      return Gtk.Widget.Gtk_Widget is
+   begin
+      return Gtk_Widget (Get_Console (Self.Kernel));
+   end Get_Console_Window;
 
    -------------------------
    -- Get_Virtual_Console --

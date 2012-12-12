@@ -90,7 +90,8 @@ package body GVD.Generic_View is
          Reuse_If_Exist     => False,
          Initialize         => Local_Initialize,
          Position           => Position,
-         Group              => Group);
+         Group              => Group,
+         Commands_Category  => -"Debugger");
       subtype Formal_View_Access is Views.View_Access;
       use type Formal_View_Access;
 
