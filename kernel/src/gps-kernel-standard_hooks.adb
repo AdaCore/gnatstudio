@@ -50,6 +50,7 @@ package body GPS.Kernel.Standard_Hooks is
       File       : Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
+      Tooltip    : String := "";
       Every_Line : Boolean := True;
       Normalize  : Boolean := True);
    --  Create the Mime info for adding/creating/removing line information,
@@ -111,6 +112,7 @@ package body GPS.Kernel.Standard_Hooks is
       File       : Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
+      Tooltip    : String := "";
       Every_Line : Boolean := True;
       Normalize  : Boolean := True)
    is
@@ -121,6 +123,7 @@ package body GPS.Kernel.Standard_Hooks is
                 File              => File,
                 Info              => Info,
                 Every_Line        => Every_Line,
+                Tooltip           => new String'(Tooltip),
                 Normalize         => Normalize);
    begin
       if File /= GNATCOLL.VFS.No_File then
@@ -149,6 +152,8 @@ package body GPS.Kernel.Standard_Hooks is
             end loop;
          end;
       end if;
+
+      GNAT.Strings.Free (Data.Tooltip);
    end General_Line_Information;
 
    ----------------------
@@ -159,7 +164,8 @@ package body GPS.Kernel.Standard_Hooks is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : Virtual_File;
       Identifier : String;
-      Label      : String)
+      Label      : String;
+      Tooltip    : String := "")
    is
       Infos : Line_Information_Data;
 
@@ -167,7 +173,8 @@ package body GPS.Kernel.Standard_Hooks is
       Infos := new Line_Information_Array (-1 .. -1);
       Infos (-1).Text := new String'(Label);
 
-      Add_Line_Information (Kernel, File, Identifier, Infos);
+      Add_Line_Information
+        (Kernel, File, Identifier, Infos, Tooltip => Tooltip);
 
       Unchecked_Free (Infos);
    end Add_Editor_Label;
@@ -190,12 +197,12 @@ package body GPS.Kernel.Standard_Hooks is
       A_Access (0) := Info;
 
       General_Line_Information
-        (Kernel,
-         File,
-         Identifier,
-         A_Access,
-         Every_Line,
-         Normalize);
+        (Kernel     => Kernel,
+         File       => File,
+         Identifier => Identifier,
+         Info       => A_Access,
+         Every_Line => Every_Line,
+         Normalize  => Normalize);
       Unchecked_Free (A_Access);
    end Create_Line_Information_Column;
 
@@ -223,10 +230,12 @@ package body GPS.Kernel.Standard_Hooks is
       File       : Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
-      Normalize  : Boolean := True) is
+      Normalize  : Boolean := True;
+      Tooltip    : String := "") is
    begin
       General_Line_Information
-        (Kernel, File, Identifier, Info, Normalize => Normalize);
+        (Kernel, File, Identifier, Info, Normalize => Normalize,
+         Tooltip => Tooltip);
    end Add_Line_Information;
 
    ------------------------
@@ -435,6 +444,7 @@ package body GPS.Kernel.Standard_Hooks is
          Identifier        => Identifier,
          File         => Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel))),
          Info              => null,
+         Tooltip           => null,
          Every_Line        => Nth_Arg (Data, 4),
          Normalize         => Nth_Arg (Data, 5));
    end From_Callback_Data_Line_Info;

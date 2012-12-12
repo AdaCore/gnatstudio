@@ -684,6 +684,13 @@ package body Src_Editor_Box is
             Gtk_New (Box.Buffer_Info_Frames (J).Label);
          end if;
 
+         if Info (J).Tooltip /= null
+           and then Info (J).Tooltip.all /= ""
+         then
+            Box.Buffer_Info_Frames (J).Label.Set_Tooltip_Markup
+              (Info (J).Tooltip.all);
+         end if;
+
          Gtk_New_Vseparator (Box.Buffer_Info_Frames (J).Separator);
          Pack_End
            (Box.Label_Box,

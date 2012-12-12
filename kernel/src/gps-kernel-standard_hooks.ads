@@ -320,6 +320,7 @@ package GPS.Kernel.Standard_Hooks is
       Every_Line : Boolean := True;
       Normalize  : Boolean := True;
       Identifier : String (1 .. Identifier_Length);
+      Tooltip    : GNAT.Strings.String_Access;
    end record;
    --  Identifier is the identity of the emitted
    --  If Every_Line is set to True, then the editor will emit a line_revealed
@@ -357,10 +358,13 @@ package GPS.Kernel.Standard_Hooks is
       File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
-      Normalize  : Boolean := True);
+      Normalize  : Boolean := True;
+      Tooltip    : String := "");
    --  Add line information to File.
    --  The range of Info must correspond to the range of line numbers
-   --  that are to be modified.
+   --  that are to be modified. If the range is -1 .. -1, the info is added to
+   --  the status line of the editors (and tooltip is then used when hovering
+   --  that label).
    --  If Normalize is True, the file name will be normalized.
    --  See File_Line_Action_Hook
    --  Infos must be freed by caller using Unchecked_Free. The actual contents
@@ -370,7 +374,8 @@ package GPS.Kernel.Standard_Hooks is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
-      Label      : String);
+      Label      : String;
+      Tooltip    : String := "");
    --  Add a label in the editors for File.
    --  See File_Line_Action_Hook
 

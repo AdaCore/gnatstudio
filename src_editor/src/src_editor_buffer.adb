@@ -1432,6 +1432,23 @@ package body Src_Editor_Buffer is
    -- Free --
    ----------
 
+   procedure Free (Info : in out Extra_Information_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Extra_Information_Record, Extra_Information_Access);
+   begin
+      if Info /= null then
+         GNAT.Strings.Free (Info.Identifier);
+         Free (Info.Info);
+         GNAT.Strings.Free (Info.Tooltip);
+      end if;
+
+      Unchecked_Free (Info);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (Info : in out Line_Information_Access) is
    begin
       if Info = null then

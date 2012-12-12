@@ -692,11 +692,11 @@ package Src_Editor_Buffer is
    type Extra_Information_Record is record
       Identifier : GNAT.Strings.String_Access;
       Info       : Line_Information_Access;
+      Tooltip    : GNAT.Strings.String_Access;
    end record;
    type Extra_Information_Access is access Extra_Information_Record;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Extra_Information_Record, Extra_Information_Access);
+   procedure Free (Info : in out Extra_Information_Access);
 
    type Extra_Information_Array is
      array (Natural range <>) of Extra_Information_Access;

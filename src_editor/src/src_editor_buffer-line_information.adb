@@ -687,9 +687,7 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       if Buffer.Extra_Information /= null then
          for J in Buffer.Extra_Information'Range loop
-            Free (Buffer.Extra_Information (J).Info);
-            GNAT.Strings.Free (Buffer.Extra_Information (J).Identifier);
-            Unchecked_Free (Buffer.Extra_Information (J));
+            Free (Buffer.Extra_Information (J));
          end loop;
          Unchecked_Free (Buffer.Extra_Information);
       end if;
@@ -784,7 +782,8 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Add_Extra_Information
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Info       : Line_Information_Data)
+      Info       : Line_Information_Data;
+      Tooltip    : String := "")
    is
       Found  : Boolean := False;
    begin
@@ -795,6 +794,7 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Extra_Information := new Extra_Information_Array'
            (1 => new Extra_Information_Record'
               (Identifier => new String'(Identifier),
+               Tooltip => new String'(Tooltip),
                Info    => new Line_Information_Record'(Info (Info'First))));
 
       else
@@ -819,6 +819,7 @@ package body Src_Editor_Buffer.Line_Information is
                  new Extra_Information_Record'
                    (Info       => new Line_Information_Record'
                         (Info (Info'First)),
+                    Tooltip => new String'(Tooltip),
                     Identifier => new String'(Identifier));
             end;
          end if;

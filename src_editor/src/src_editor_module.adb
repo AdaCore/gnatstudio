@@ -2232,10 +2232,20 @@ package body Src_Editor_Module is
             if D.Info'Last < 0 then
                --  This how the hook data encodes extra information
 
-               Add_Extra_Information
-                 (Get_Buffer
-                    (Source_Editor_Box
-                       (Get_Widget (Child))), D.Identifier, D.Info);
+               if D.Tooltip /= null then
+                  Add_Extra_Information
+                    (Get_Buffer
+                       (Source_Editor_Box
+                          (Get_Widget (Child))),
+                     D.Identifier, D.Info,
+                     Tooltip => D.Tooltip.all);
+               else
+                  Add_Extra_Information
+                    (Get_Buffer
+                       (Source_Editor_Box
+                          (Get_Widget (Child))),
+                     D.Identifier, D.Info);
+               end if;
             else
                --  ??? Source duplicated in src_editor_buffer-line_information
                --  (Add_Blank_Lines)

@@ -46,7 +46,8 @@ package Src_Editor_Buffer.Line_Information is
    procedure Add_Extra_Information
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Info       : Line_Information_Data);
+      Info       : Line_Information_Data;
+      Tooltip    : String := "");
    --  Add extra information in the buffer. Extra information is for example
    --  the VCS status information displayed at the bottom of editors.
 

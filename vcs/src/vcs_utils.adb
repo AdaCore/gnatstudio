@@ -46,9 +46,6 @@ package body VCS_Utils is
       Ref    : VCS_Access;
       Status : File_Status_Record)
    is
-      Status_Label   : GNAT.Strings.String_Access;
-      Revision_Label : GNAT.Strings.String_Access;
-
       function Short_Revision (R : String) return String;
       --  If R is too long, return only the last digits
 
@@ -58,13 +55,18 @@ package body VCS_Utils is
 
       function Short_Revision (R : String) return String is
       begin
-         if R'Length <= Max_Rev_Length then
+         if Status.Working_Revision = null
+           or else Status.Working_Revision.all = "n/a"
+         then
+            return "";
+         elsif R'Length <= Max_Rev_Length then
             return R;
-
          else
             return "[...]" & R (R'Last - Max_Rev_Length .. R'Last);
          end if;
       end Short_Revision;
+
+      Label   : GNAT.Strings.String_Access;
 
    begin
       if Ref = null then
@@ -74,26 +76,26 @@ package body VCS_Utils is
       if Status.Status = VCS.Unknown
         or else Status.Status.Label = null
       then
-         Status_Label := new String'("");
+         Label := new String'("");
       else
-         Status_Label := new String'(" (" & Status.Status.Label.all & ")");
-      end if;
-
-      if Status.Working_Revision = null
-        or else Status.Working_Revision.all = "n/a"
-      then
-         Revision_Label := new String'(Name (Ref));
-      else
-         Revision_Label := new String'
-           (Name (Ref) & ":" & Short_Revision (Status.Working_Revision.all));
+         declare
+            R : constant String :=
+              Short_Revision (Status.Working_Revision.all);
+         begin
+            if R = "" then
+               Label := new String'(Status.Status.Label.all);
+            else
+               Label := new String'(R & " (" & Status.Status.Label.all & ")");
+            end if;
+         end;
       end if;
 
       Add_Editor_Label
-        (Kernel, Status.File, VCS_Module_Name,
-         Revision_Label.all & Status_Label.all);
+        (Kernel, Status.File, VCS_Module_Name, Label.all,
+         Tooltip => "Status for <b>" & Name (Ref) & "</b>: "
+         & Label.all);
 
-      GNAT.Strings.Free (Status_Label);
-      GNAT.Strings.Free (Revision_Label);
+      GNAT.Strings.Free (Label);
    end Display_Editor_Status;
 
    ---------------------
