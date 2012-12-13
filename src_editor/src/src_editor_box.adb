@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Containers.Ordered_Sets; use Ada.Containers;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
@@ -43,6 +44,7 @@ with Glib.Values;                use Glib.Values;
 with Glib;                       use Glib;
 
 with Gtk;                        use Gtk;
+with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
@@ -185,6 +187,12 @@ package body Src_Editor_Box is
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box);
    --  Callback for the "destroy" signal
+
+   function On_Subprogram_Link
+     (Box  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Args : Gtk_Args) return Boolean;
+   --  Called when the user clicks on one of the links in the subprogram box in
+   --  the status bar.
 
    procedure On_Goto_Declaration_Of
      (Kernel : access GObject_Record'Class;
@@ -745,16 +753,33 @@ package body Src_Editor_Box is
      (Box : not null access Source_Editor_Box_Record'Class)
    is
       Block : Block_Record;
+      Iter  : Construct_Tree_Iterator;
+      Val   : Unbounded_String;
    begin
       if Display_Subprogram_Names.Get_Pref then
          Block := Get_Subprogram_Block (Box.Source_Buffer, Box.Current_Line);
-         if Block.Block_Type /= Cat_Unknown then
-            Set_Text (Box.Function_Label,
-                      Language.Tree.Get_Full_Name (Block.Tree, Block.Iter));
+         if Block.Block_Type /= Cat_Unknown
+           and then Block.Name /= No_Symbol
+         then
+            Val := To_Unbounded_String
+              ("<a href='" & Block.First_Line'Img & "'>"
+               & Get (Block.Name).all & "</a>");
+
+            Iter := Get_Parent_Scope (Block.Tree, Block.Iter);
+            while Iter /= Null_Construct_Tree_Iterator loop
+               Val :=
+                 "<a href='" & Get_Construct (Iter).Sloc_Start.Line'Img
+                 & "'>" & Get (Get_Construct (Iter).Name).all & "</a>."
+                 & Val;
+               Iter := Get_Parent_Scope (Block.Tree, Iter);
+            end loop;
+
+            Box.Function_Label.Set_Markup (To_String (Val));
+            return;
          end if;
-      else
-         Set_Text (Box.Function_Label, "");
       end if;
+
+      Box.Function_Label.Set_Text ("");
    end Update_Subprogram_Name;
 
    -------------------------------------
@@ -982,15 +1007,13 @@ package body Src_Editor_Box is
 
       --  Function location area
       Gtk_New (Box.Function_Label);
-      Set_Ellipsize (Box.Function_Label, Ellipsize_End);
+      Set_Ellipsize (Box.Function_Label, Ellipsize_Start);
       Set_Alignment (Box.Function_Label, 0.0, 0.5);
-
-      --  Using an Event_Box to avoid some overlaps when resizing the editor
-      --  window.
-
-      Gtk_New (Event_Box);
-      Pack_Start (Box.Label_Box, Event_Box, Expand => True, Fill => True);
-      Add (Event_Box, Box.Function_Label);
+      Box.Label_Box.Pack_Start
+        (Box.Function_Label, Expand => True, Fill => True);
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Box.Function_Label,
+         Gtk.Label.Signal_Activate_Link, On_Subprogram_Link'Access, Box);
 
       --  Connect to source buffer signals
 
@@ -2047,6 +2070,24 @@ package body Src_Editor_Box is
       On_Goto_Line (Box, Command.Kernel);
       return Commands.Success;
    end Execute;
+
+   ------------------------
+   -- On_Subprogram_Link --
+   ------------------------
+
+   function On_Subprogram_Link
+     (Box  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Args : Gtk_Args) return Boolean
+   is
+      B : constant Source_Editor_Box := Source_Editor_Box (Box);
+      URI : constant String := To_String (Args, 1);
+      Line : constant Editable_Line_Type := Editable_Line_Type'Value (URI);
+   begin
+      Push_Current_Editor_Location_In_History (B.Kernel);
+      Set_Cursor_Location (B, Line, 1, Centering => With_Margin);
+      Add_Navigation_Location (B);
+      return True;
+   end On_Subprogram_Link;
 
    ------------------
    -- On_Goto_Line --
