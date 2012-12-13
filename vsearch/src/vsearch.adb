@@ -948,9 +948,6 @@ package body Vsearch is
       end if;
 
       Internal_Search (Vsearch_Access (Object));
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Search;
 
    ------------------------
@@ -1694,7 +1691,8 @@ package body Vsearch is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Handle).all, "regexp_search", False);
       Associate
-        (Get_History (Handle).all, "regexp_search", Vsearch.Regexp_Check);
+        (Get_History (Handle).all, "regexp_search", Vsearch.Regexp_Check,
+         Default => False);
       Attach (Vsearch.Options_Vbox, Vsearch.Regexp_Check, 0, 1, 0, 1);
 
       Gtk_New (Vsearch.Whole_Word_Check, -"Whole Word");
@@ -1706,7 +1704,7 @@ package body Vsearch is
         (Get_History (Handle).all, "whole_word_search", False);
       Associate
         (Get_History (Handle).all, "whole_word_search",
-         Vsearch.Whole_Word_Check);
+         Vsearch.Whole_Word_Check, Default => False);
       Attach (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, 0, 1, 1, 2);
 
       Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
@@ -1718,7 +1716,7 @@ package body Vsearch is
         (Get_History (Handle).all, "case_sensitive_search", False);
       Associate
         (Get_History (Handle).all, "case_sensitive_search",
-         Vsearch.Case_Check);
+         Vsearch.Case_Check, Default => False);
       Attach (Vsearch.Options_Vbox, Vsearch.Case_Check, 0, 1, 2, 3);
 
       Gtk_New (Vsearch.Select_Editor_Check, -"Select on Match");
@@ -1728,7 +1726,8 @@ package body Vsearch is
       Associate
         (Hist   => Get_History (Handle).all,
          Key    => Select_On_Match_Hist_Key,
-         Button => Vsearch.Select_Editor_Check);
+         Button => Vsearch.Select_Editor_Check,
+         Default => True);
       Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 1, 2, 0, 1);
 
       Gtk_New (Vsearch.Case_Preserving_Replace, -"Preserve Casing");
@@ -1739,7 +1738,7 @@ package body Vsearch is
         (Get_History (Handle).all, "case_preserving_replace", True);
       Associate
         (Get_History (Handle).all, "case_preserving_replace",
-         Vsearch.Case_Preserving_Replace);
+         Vsearch.Case_Preserving_Replace, Default => True);
       Attach
         (Vsearch.Options_Vbox, Vsearch.Case_Preserving_Replace, 1, 2, 1, 2);
       Set_Sensitive (Vsearch.Case_Preserving_Replace, False);
@@ -1749,9 +1748,10 @@ package body Vsearch is
         (Vsearch.Auto_Hide_Check,
          -Close_On_Match_Description);
       Associate
-        (Hist   => Get_History (Handle).all,
-         Key    => Close_On_Match_Hist_Key,
-         Button => Vsearch.Auto_Hide_Check);
+        (Hist    => Get_History (Handle).all,
+         Key     => Close_On_Match_Hist_Key,
+         Default => False,
+         Button  => Vsearch.Auto_Hide_Check);
       Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check,  1, 2, 2, 3);
 
       --  Context specific search
