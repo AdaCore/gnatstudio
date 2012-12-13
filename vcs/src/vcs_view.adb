@@ -40,7 +40,6 @@ with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with VCS;                       use VCS;
 with VCS_Module;                use VCS_Module;
-with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 
 package body VCS_View is
 
@@ -126,7 +125,6 @@ package body VCS_View is
       Selection       : Gtk_Tree_Selection;
 
    begin
-      Init_Graphics;
       Initialize_Hbox (Explorer);
 
       Explorer.Kernel := Kernel_Handle (Kernel);
