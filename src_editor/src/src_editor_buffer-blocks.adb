@@ -79,6 +79,8 @@ package body Src_Editor_Buffer.Blocks is
                Last_Line         => Line_End,
                Name              => Current.Name,
                Block_Type        => Current.Category,
+               Tree              => Language.Tree.Null_Construct_Tree,
+               Iter              => Language.Tree.Null_Construct_Tree_Iterator,
                Color             => Gdk.Color.Null_Color);
 
             for J in Line_Start + 1 .. Line_End loop

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with String_Utils;            use String_Utils;
@@ -844,49 +845,29 @@ package body Language.Tree is
    -------------------
 
    --  ??? This is language dependent, to be either moved into a language
-   --  dependent package or made language indepenend
+   --  dependent package or made language independent
+
    function Get_Full_Name
      (Tree : Construct_Tree; It : Construct_Tree_Iterator)
       return String
    is
-      Length  : Integer;
+      Name : Unbounded_String;
       Current : Construct_Tree_Iterator := Get_Parent_Scope (Tree, It);
    begin
       if Get_Construct (It).Name = No_Symbol then
          return "";
       end if;
 
-      Length := Get (Get_Construct (It).Name)'Length;
+      Name := To_Unbounded_String (Get (Get_Construct (It).Name).all);
 
-      while Current /= Null_Construct_Tree_Iterator
-        and then Get_Construct (Current).Category = Cat_Package
-      loop
-         Length := Length + 1 + Get (Get_Construct (Current).Name)'Length;
+      while Current /= Null_Construct_Tree_Iterator loop
+         Name := Get (Get_Construct (Current).Name).all
+           & '.'
+           & Name;
          Current := Get_Parent_Scope (Tree, Current);
       end loop;
 
-      declare
-         Name  : String (1 .. Length);
-         Index : Natural := Length;
-      begin
-         Name (Index - Get (Get_Construct (It).Name)'Length + 1 .. Index) :=
-           Get (Get_Construct (It).Name).all;
-
-         Index := Index - Get (Get_Construct (It).Name)'Length;
-         Current := Get_Parent_Scope (Tree, It);
-
-         while Current /= Null_Construct_Tree_Iterator
-           and then Get_Construct (Current).Category = Cat_Package
-         loop
-            Name (Index - Get (Get_Construct (Current).Name)'Length .. Index)
-              := Get (Get_Construct (Current).Name).all & ".";
-
-            Index := Index - 1 - Get (Get_Construct (Current).Name)'Length;
-            Current := Get_Parent_Scope (Tree, Current);
-         end loop;
-
-         return Name;
-      end;
+      return To_String (Name);
    end Get_Full_Name;
 
    ------------------------------

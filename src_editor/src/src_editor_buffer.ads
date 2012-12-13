@@ -51,7 +51,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Styles;                use GPS.Styles;
 with GPS.Styles.UI;             use GPS.Styles.UI;
-with Language;
+with Language.Tree;
 with Src_Highlighting;
 
 package Src_Editor_Buffer is
@@ -824,23 +824,26 @@ package Src_Editor_Buffer is
 
       Color             : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       --  The color to use when highlighting this block
+
+      Tree              : Language.Tree.Construct_Tree;
+      Iter              : Language.Tree.Construct_Tree_Iterator;
+      --  The iterator representing the current construct. This can only used
+      --  until the file is modified, so should never be stored outside of this
+      --  block_record
    end record;
 
    function Get_Block
-     (Editor        : access Source_Buffer_Record;
-      Line          : Editable_Line_Type;
-      Force_Compute : Boolean := True) return Block_Record;
+     (Editor : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Filter : Language.Tree.Category_Array :=
+        Language.Tree.Null_Category_Array) return Block_Record;
    --  Return the block information associated with Line.
-   --  If Force_Compute is True, then the buffer blocks will be parsed
-   --  on-the-fly if needed. If Force_Compute is False and the buffer blocks
-   --  are not up-to-date, the latest known block at this line will be
-   --  returned.
 
    function Get_Subprogram_Block
      (Editor : access Source_Buffer_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record;
-   --  Returns the block corresponding to the subprogram enclosing Line. If no
-   --  block is found at this position an empty block is returned.
+      Line   : Editable_Line_Type) return Block_Record;
+   --  Same as above, with a filter that only selects blocks like subprograms
+   --  and packages.
 
    function Has_Block_Information
      (Editor : access Source_Buffer_Record) return Boolean;
@@ -1201,7 +1204,9 @@ private
 
    New_Block : constant Block_Record :=
      (0, 0, 0, 0, 0, GNATCOLL.Symbols.No_Symbol, Language.Cat_Unknown,
-      Gdk.Color.Null_Color);
+      Gdk.Color.Null_Color,
+      Language.Tree.Null_Construct_Tree,
+      Language.Tree.Null_Construct_Tree_Iterator);
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;

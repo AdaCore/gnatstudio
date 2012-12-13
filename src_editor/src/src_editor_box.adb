@@ -87,6 +87,7 @@ with GPS.Stock_Icons;            use GPS.Stock_Icons;
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language.Ada;               use Language.Ada;
+with Language.Tree;              use Language.Tree;
 with Language_Handlers;          use Language_Handlers;
 with Pango.Layout;               use Pango.Layout;
 with Projects;                   use Projects;
@@ -741,14 +742,16 @@ package body Src_Editor_Box is
    ----------------------------
 
    procedure Update_Subprogram_Name
-     (Box : not null access Source_Editor_Box_Record'Class) is
+     (Box : not null access Source_Editor_Box_Record'Class)
+   is
+      Block : Block_Record;
    begin
       if Display_Subprogram_Names.Get_Pref then
-         declare
-            Name : constant String := Get_Subprogram_Name (Box);
-         begin
-            Set_Text (Box.Function_Label, Name);
-         end;
+         Block := Get_Subprogram_Block (Box.Source_Buffer, Box.Current_Line);
+         if Block.Block_Type /= Cat_Unknown then
+            Set_Text (Box.Function_Label,
+                      Language.Tree.Get_Full_Name (Block.Tree, Block.Iter));
+         end if;
       else
          Set_Text (Box.Function_Label, "");
       end if;
@@ -2984,15 +2987,14 @@ package body Src_Editor_Box is
       Line   : Src_Editor_Buffer.Editable_Line_Type :=
         Src_Editor_Buffer.Editable_Line_Type'Last) return String
    is
+      Block       : Block_Record;
       Normalized_Line : Editable_Line_Type := Line;
-      Block           : Block_Record;
    begin
       if Normalized_Line = Editable_Line_Type'Last then
          Normalized_Line := Editor.Current_Line;
       end if;
 
       Block := Get_Subprogram_Block (Editor.Source_Buffer, Normalized_Line);
-
       if Block.Name /= No_Symbol then
          return Get (Block.Name).all;
       else

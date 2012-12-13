@@ -32,6 +32,7 @@ with GNAT.Regpat;                         use GNAT.Regpat;
 
 with GNATCOLL.Arg_Lists;                  use GNATCOLL.Arg_Lists;
 with GNATCOLL.Paragraph_Filling;          use GNATCOLL.Paragraph_Filling;
+with GNATCOLL.Projects;                   use GNATCOLL.Projects;
 with GNATCOLL.Symbols;                    use GNATCOLL.Symbols;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
@@ -83,6 +84,8 @@ with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
 with GPS.Properties;
 with Language;                            use Language;
+with Language.Tree;                       use Language.Tree;
+with Language.Tree.Database;              use Language.Tree.Database;
 with Language.Unknown;                    use Language.Unknown;
 with Language_Handlers;                   use Language_Handlers;
 with Src_Editor_Box;                      use Src_Editor_Box;
@@ -5660,42 +5663,73 @@ package body Src_Editor_Buffer is
    ---------------
 
    function Get_Block
-     (Editor        : access Source_Buffer_Record;
-      Line          : Editable_Line_Type;
-      Force_Compute : Boolean := True) return Block_Record
+     (Editor : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Filter : Language.Tree.Category_Array :=
+        Language.Tree.Null_Category_Array) return Block_Record
    is
-      Prev : Boolean;
+      File : Structured_File_Access;
+      Tree : Construct_Tree;
+      Iter : Construct_Tree_Iterator;
    begin
       if Line = 0 then
          return New_Block;
       end if;
 
-      --  If the editor hasn't calculated block information on-the-fly,
-      --  calculate the block information now.
+      File := Get_Or_Create
+        (Db      => Editor.Kernel.Get_Construct_Database,
+         File    => Editor.Filename,
+         Project =>
+           Get_Project_Tree (Editor.Kernel).Info (Editor.Filename).Project);
+      Tree := Get_Tree (File);
 
-      if Force_Compute then
-         --  We need to temporarily change the value of
-         --  Editor.Block_Highlighting so that Compute_Blocks parses the
-         --  information that we want.
+      Iter := Get_Iterator_At
+        (Tree,
+         Location          =>
+           (Absolute_Offset => False,   --   ??? Should use offset in buffer
+            Line            => Integer (Line),
+            Line_Offset     => 1),
+         From_Type         => Start_Construct,
+         Position          => Enclosing,
+         Categories_Seeked => Filter);
 
-         Prev := Editor.Block_Highlighting;
-         Editor.Block_Highlighting := True;
-         Compute_Blocks (Editor);
-         Editor.Block_Highlighting := Prev;
+      if Iter = Null_Construct_Tree_Iterator then
+         return New_Block;
       end if;
 
-      if Editor.Editable_Lines /= null
-        and then Line <= Editor.Editable_Lines'Last
-      then
-         if Editor.Editable_Lines (Line).Block = null then
-            return New_Block;
-         else
-            return Editor.Editable_Lines (Line).Block.all;
-         end if;
-      end if;
-
-      return New_Block;
+      declare
+         Current : constant access Simple_Construct_Information :=
+           Get_Construct (Iter);
+      begin
+         return Block_Record'
+           (Indentation_Level => 0,
+            Offset_Start      => Current.Sloc_Start.Index,
+            Stored_Offset     => Current.Sloc_Start.Index,
+            First_Line      => Editable_Line_Type (Current.Sloc_Start.Line),
+            Last_Line         => Editable_Line_Type (Current.Sloc_End.Line),
+            Name              => Current.Name,
+            Iter              => Iter,
+            Tree              => Tree,
+            Block_Type        => Current.Category,
+            Color             => Gdk.Color.Null_Color);
+      end;
    end Get_Block;
+
+   --------------------------
+   -- Get_Subprogram_Block --
+   --------------------------
+
+   function Get_Subprogram_Block
+     (Editor : access Source_Buffer_Record;
+      Line   : Editable_Line_Type) return Block_Record is
+   begin
+      return Get_Block
+        (Editor, Line,
+         Filter =>
+           (Cat_Package, Cat_Namespace, Cat_Task, Cat_Procedure,
+            Cat_Function, Cat_Constructor, Cat_Method, Cat_Destructor,
+            Cat_Protected, Cat_Entry, Cat_Class, Cat_Structure, Cat_Union));
+   end Get_Subprogram_Block;
 
    ---------------------------
    -- Has_Block_Information --
@@ -5995,8 +6029,8 @@ package body Src_Editor_Buffer is
             --  can be resolved (see TODO).
 
             Block := Get_Block
-              (Buffer, Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)),
-               Force_Compute => False);
+              (Buffer,
+               Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)));
             Offset_Line := Block.First_Line;
 
             Get_Iter_At_Line_Offset
@@ -7190,63 +7224,6 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.In_Destruction;
    end In_Destruction;
-
-   --------------------------
-   -- Get_Subprogram_Block --
-   --------------------------
-
-   function Get_Subprogram_Block
-     (Editor : access Source_Buffer_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record
-   is
-      Empty_Block : constant Block_Record :=
-        (0, 0, 0, 0, 0, No_Symbol, Language.Cat_Unknown, Null_Color);
-      L           : Editable_Line_Type;
-      New_L       : Editable_Line_Type;
-      Block       : Block_Record;
-   begin
-      L := Line;
-
-      Block := Get_Block (Editor, Line, Force_Compute => True);
-
-      if Block.Block_Type = Cat_Unknown
-        and then Block.Indentation_Level = 0
-      then
-         return Empty_Block;
-      end if;
-
-      while L > 1 loop
-         if Block.Block_Type in Namespace_Category
-           or else Block.Block_Type in Subprogram_Category
-         then
-            if Block.Name /= No_Symbol then
-               return Block;
-            else
-               return Empty_Block;
-            end if;
-         end if;
-
-         if Block.First_Line > 1 then
-            New_L := Block.First_Line - 1;
-
-            --  At this point, we have to check that we are not stuck on
-            --  the same line, this can happen when block information is not
-            --  up-to-date.
-
-            if New_L < L then
-               L := New_L;
-            else
-               L := L - 1;
-            end if;
-         else
-            exit;
-         end if;
-
-         Block := Get_Block (Editor, L, Force_Compute => False);
-      end loop;
-
-      return Empty_Block;
-   end Get_Subprogram_Block;
 
    -----------------------
    -- Get_Command_Queue --
