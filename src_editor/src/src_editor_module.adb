@@ -641,7 +641,7 @@ package body Src_Editor_Module is
          Box := Get_Source_Box_From_MDI (Find_Editor (Kernel, D.File));
 
          if Box /= null then
-            Show_Subprogram_Name (Box, Get_Subprogram_Name (Box));
+            Update_Subprogram_Name (Box);
          end if;
       end if;
 
@@ -3365,17 +3365,8 @@ package body Src_Editor_Module is
             Files : constant GNATCOLL.VFS.File_Array := Open_Files (Kernel);
          begin
             for Node in Files'Range loop
-               declare
-                  Box : constant Source_Editor_Box :=
-                    Get_Source_Box_From_MDI
-                      (Find_Editor (Kernel, Files (Node)));
-               begin
-                  if Pref_Display_Subprogram_Names then
-                     Show_Subprogram_Name (Box, Get_Subprogram_Name (Box));
-                  else
-                     Clear_Subprogram_Name (Box);
-                  end if;
-               end;
+               Get_Source_Box_From_MDI
+                 (Find_Editor (Kernel, Files (Node))).Update_Subprogram_Name;
             end loop;
          end;
 

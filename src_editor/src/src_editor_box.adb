@@ -144,13 +144,6 @@ package body Src_Editor_Box is
       Column : Character_Offset_Type);
    --  Redraw the cursor position in the Line/Column areas of the status bar
 
-   procedure Show_Which_Function
-     (Box  : Source_Editor_Box;
-      Name : String);
-   pragma Inline (Show_Which_Function);
-   --  Name if not null is the name of the enclosing subprogram, it is
-   --  displayed on the left of the status bar.
-
    procedure Cursor_Position_Changed_Handler
      (Buffer : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
@@ -576,27 +569,6 @@ package body Src_Editor_Box is
          & ':' & String_Utils.Image (Integer (Column)));
    end Show_Cursor_Position;
 
-   -------------------------
-   -- Show_Which_Function --
-   -------------------------
-
-   procedure Show_Which_Function
-     (Box  : Source_Editor_Box;
-      Name : String) is
-   begin
-      Set_Text (Box.Function_Label, Name);
-   end Show_Which_Function;
-
-   ---------------------------
-   -- Clear_Subprogram_Name --
-   ---------------------------
-
-   procedure Clear_Subprogram_Name
-     (Editor : access Source_Editor_Box_Record) is
-   begin
-      Set_Text (Editor.Function_Label, "");
-   end Clear_Subprogram_Name;
-
    -------------------
    -- Update_Status --
    -------------------
@@ -764,16 +736,23 @@ package body Src_Editor_Box is
       Show_All (Box.Label_Box);
    end Buffer_Information_Handler;
 
-   --------------------------
-   -- Show_Subprogram_Name --
-   --------------------------
+   ----------------------------
+   -- Update_Subprogram_Name --
+   ----------------------------
 
-   procedure Show_Subprogram_Name
-     (Box             : Source_Editor_Box;
-      Subprogram_Name : String) is
+   procedure Update_Subprogram_Name
+     (Box : not null access Source_Editor_Box_Record'Class) is
    begin
-      Show_Which_Function (Box, Subprogram_Name);
-   end Show_Subprogram_Name;
+      if Display_Subprogram_Names.Get_Pref then
+         declare
+            Name : constant String := Get_Subprogram_Name (Box);
+         begin
+            Set_Text (Box.Function_Label, Name);
+         end;
+      else
+         Set_Text (Box.Function_Label, "");
+      end if;
+   end Update_Subprogram_Name;
 
    -------------------------------------
    -- Cursor_Position_Changed_Handler --

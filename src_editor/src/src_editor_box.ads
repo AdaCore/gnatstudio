@@ -205,14 +205,9 @@ package Src_Editor_Box is
    overriding procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
    --  Set the focus on the source view
 
-   procedure Clear_Subprogram_Name
-     (Editor : access Source_Editor_Box_Record);
-   --  Clear the subprogram name label (set to empty string)
-
-   procedure Show_Subprogram_Name
-     (Box             : Source_Editor_Box;
-      Subprogram_Name : String);
-   --  Show the name of the current subprogram
+   procedure Update_Subprogram_Name
+     (Box : not null access Source_Editor_Box_Record'Class);
+   --  Update the name of the current subprogram
 
    procedure Scroll_To_Mark
      (Editor : access Source_Editor_Box_Record;
