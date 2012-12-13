@@ -49,6 +49,13 @@ NF-60-LB29-006 GPS: use ellipsis in window titles (2012-11-28)
   of notebook tabs is also limited so that we do not end up with a single tab
    using most of the notebook widths, thus hidding the others.
 
+NF-60-LB26-025 GPS: clickable qualified name in editor status bars (2012-12-13)
+
+  The name of the current subprogram, as displayed in the editors status bars,
+  now includes the name of the enclosing subprograms and packages. Each of
+  these names is clickable to easily jump to the beginning of the enclosing
+  block.
+
 NF-53-LB20-022 GPS: Key shortcuts dialog display improved (2012-11-21)
 
   The display of the key shortcuts in this dialog now matches what is
