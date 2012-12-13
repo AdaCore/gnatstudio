@@ -42,6 +42,7 @@ with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_View;              use Gtk.Text_View;
@@ -1600,7 +1601,11 @@ package body Src_Editor_View is
    is
       Color : constant Gdk_Color := Default_Style.Get_Pref_Bg;
       C     : Cairo_Color := To_Cairo (Color);
+      Select_Color : Gdk_RGBA;
    begin
+      Get_Style_Context (Self).Get_Background_Color
+        (Gtk_State_Flag_Selected, Select_Color);
+
       if not Self.Get_Editable then
          C.Green := C.Green * 0.9;
          C.Red   := C.Red * 0.9;
@@ -1614,11 +1619,10 @@ package body Src_Editor_View is
       Self.Background_Color_Other.Blue  := C.Blue * 0.97;
       Self.Background_Color_Other.Alpha := 1.0;
 
+      --  Overridding background color also seems to set the selected color, so
+      --  that selected text becomes invisible. So we have to reset it as well.
       Self.Override_Background_Color (Gtk_State_Flag_Normal, C);
-      Self.Override_Background_Color (Gtk_State_Flag_Active, C);
-      Self.Override_Background_Color (Gtk_State_Flag_Prelight, C);
-      Self.Override_Background_Color (Gtk_State_Flag_Selected, C);
-      Self.Override_Background_Color (Gtk_State_Flag_Focused, C);
+      Self.Override_Background_Color (Gtk_State_Flag_Selected, Select_Color);
 
       Invalidate_Side_Column_Cache (Self);
       Redraw_Columns (Self);  --  update color of the side panes
