@@ -606,37 +606,47 @@ package body Src_Editor_Box is
    is
       Child : constant MDI_Child := Find_Child (Box.Kernel, Box);
    begin
-      if Show_Modified_Unmodified_In_Status_Bar then
-         case Get_Status (Box.Source_Buffer) is
+      case Get_Status (Box.Source_Buffer) is
          when Unmodified =>
-            Box.Modified_Label.Set_Tooltip_Text (-"Unmodified");
-            Box.Modified_Label.Set (File_Pixbuf);
+            if Show_Modified_Unmodified_In_Status_Bar then
+               Box.Modified_Label.Set_Tooltip_Text (-"Unmodified");
+               Box.Modified_Label.Set (File_Pixbuf);
+            end if;
+
             if Child /= null and then File_Pixbuf /= null then
                Set_Icon (Child, File_Pixbuf);
             end if;
 
          when Unsaved =>
-            Box.Modified_Label.Set_Tooltip_Text (-"Unsaved");
-            Box.Modified_Label.Set (File_Unsaved_Pixbuf);
+            if Show_Modified_Unmodified_In_Status_Bar then
+               Box.Modified_Label.Set_Tooltip_Text (-"Unsaved");
+               Box.Modified_Label.Set (File_Unsaved_Pixbuf);
+            end if;
+
             if Child /= null and then File_Unsaved_Pixbuf /= null then
                Set_Icon (Child, File_Unsaved_Pixbuf);
             end if;
 
          when Saved =>
-            Box.Modified_Label.Set_Tooltip_Text (-"Saved");
-            Box.Modified_Label.Set (File_Pixbuf);
+            if Show_Modified_Unmodified_In_Status_Bar then
+               Box.Modified_Label.Set_Tooltip_Text (-"Saved");
+               Box.Modified_Label.Set (File_Pixbuf);
+            end if;
+
             if Child /= null and then File_Pixbuf /= null then
                Set_Icon (Child, File_Pixbuf);
             end if;
 
          when Modified =>
-            Box.Modified_Label.Set_Tooltip_Text (-"Modified");
-            Box.Modified_Label.Set (File_Modified_Pixbuf);
+            if Show_Modified_Unmodified_In_Status_Bar then
+               Box.Modified_Label.Set_Tooltip_Text (-"Modified");
+               Box.Modified_Label.Set (File_Modified_Pixbuf);
+            end if;
+
             if Child /= null and then File_Modified_Pixbuf /= null then
                Set_Icon (Child, File_Modified_Pixbuf);
             end if;
-         end case;
-      end if;
+      end case;
 
       if Get_Writable (Box.Source_Buffer) then
          Set (Box.Read_Only_Label, GPS_Writable, Icon_Size_Menu);
@@ -2346,7 +2356,10 @@ package body Src_Editor_Box is
       Initialize
         (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
          Get_Language (Source.Source_Buffer));
-      Set (Box.Modified_Label, Gdk_Pixbuf'(Get (Source.Modified_Label)));
+
+      if Show_Modified_Unmodified_In_Status_Bar then
+         Set (Box.Modified_Label, Gdk_Pixbuf'(Get (Source.Modified_Label)));
+      end if;
 
       if not Get_Writable (Box.Source_Buffer) then
          Set_Editable (Box.Source_View, False);
