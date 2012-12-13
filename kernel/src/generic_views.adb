@@ -28,6 +28,7 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
 
+with Ada.Tags;                  use Ada.Tags;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -133,18 +134,17 @@ package body Generic_Views is
       procedure Find
         (Kernel       : access Kernel_Handle_Record'Class;
          Child        : out GPS_MDI_Child;
-         View         : out View_Access) is
+         View         : out View_Access)
+      is
+         T    : Ada.Tags.Tag;
       begin
          if Local_Toolbar or else Local_Config then
-            Child := GPS_MDI_Child
-              (Find_MDI_Child_By_Tag
-                 (Get_MDI (Kernel), Toplevel_Box'Tag));
+            T := Toplevel_Box'Tag;
          else
-            Child := GPS_MDI_Child
-              (Find_MDI_Child_By_Tag
-                 (Get_MDI (Kernel), Formal_View_Record'Tag));
+            T := Formal_View_Record'Tag;
          end if;
 
+         Child := GPS_MDI_Child (Get_MDI (Kernel).Find_MDI_Child_By_Tag (T));
          if Child /= null then
             View := View_From_Widget (Child.Get_Widget);
          else
@@ -394,11 +394,13 @@ package body Generic_Views is
             Module := ID;
          end if;
 
-         Command := new Open_Command;
-         Register_Action
-           (Kernel, "open " & View_Name,
-            Command, "Open (or reuse if it already exists) the '"
-              & View_Name & "' view", null, Commands_Category);
+         if Commands_Category /= "" then
+            Command := new Open_Command;
+            Register_Action
+              (Kernel, "open " & View_Name,
+               Command, "Open (or reuse if it already exists) the '"
+               & View_Name & "' view", null, Commands_Category);
+         end if;
 
          Register_Module
            (Module      => Module,
@@ -406,9 +408,12 @@ package body Generic_Views is
             Module_Name => Module_Name,
             Priority    => GPS.Kernel.Modules.Default_Priority);
          Register_Desktop_Functions (Save_Desktop_Access, Load_Desktop_Access);
-         Register_Open_Menu
-           (Kernel, '/' & (-"Tools") & '/' & Dir_Name (Menu_Name),
-            Base_Name (Menu_Name), Before => Before_Menu);
+
+         if Menu_Name /= "" then
+            Register_Open_Menu
+              (Kernel, '/' & (-"Tools") & '/' & Dir_Name (Menu_Name),
+               Base_Name (Menu_Name), Before => Before_Menu);
+         end if;
       end Register_Module;
 
    end Simple_Views;

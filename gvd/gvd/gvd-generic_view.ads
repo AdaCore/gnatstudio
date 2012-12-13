@@ -151,7 +151,9 @@ package GVD.Generic_View is
       procedure Attach_To_View
         (Process             : access Visual_Debugger_Record'Class;
          Create_If_Necessary : Boolean);
-      --  Attach the process to an instance of the view.
+      --  Attach the process to an instance of the view. It is valid to pass a
+      --  null process, just to open a view.
+      --
       --  If an unattached view exists in the desktop, it is reused.
       --  If none exists, one is created if Create_If_Necessary is true.
       --  Nothing is done when Process is already attached to a view.

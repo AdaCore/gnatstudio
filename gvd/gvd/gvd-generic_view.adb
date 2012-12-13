@@ -90,8 +90,9 @@ package body GVD.Generic_View is
          Reuse_If_Exist     => False,
          Initialize         => Local_Initialize,
          Position           => Position,
-         Group              => Group,
-         Commands_Category  => -"Debugger");
+         Commands_Category  => "",  --  No "open ... " command, since we might
+                                    --  reuse existing views
+         Group              => Group);
       subtype Formal_View_Access is Views.View_Access;
       use type Formal_View_Access;
 
@@ -167,8 +168,21 @@ package body GVD.Generic_View is
          Button  : Message_Dialog_Buttons;
          pragma Unreferenced (Button);
 
+--           List : Debugger_List_Link;
+         P    : constant Visual_Debugger := Visual_Debugger (Process);
+
       begin
-         View := Formal_View_Access (Get_View (Process));
+         if Process = null then
+            null;
+            --  ??? Should try to attach to the current debugger, but there are
+            --  elaboration circularities.
+--              List := Get_Debugger_List (Kernel);
+--              if List /= null then
+--                 P := Visual_Debugger (List.Debugger);
+--              end if;
+         end if;
+
+         View := Formal_View_Access (Get_View (P));
 
          if View = null then
             --  Do we have an existing unattached view ?
@@ -200,36 +214,38 @@ package body GVD.Generic_View is
                --  Make it visible again
                Raise_Child (Child);
 
-               Set_Process (View, Visual_Debugger (Process));
-               Set_View (Process, Base_Type_Access (View));
+               if P /= null then
+                  Set_Process (View, P);
+                  Set_View (P, Base_Type_Access (View));
 
-               if Get_Num (Visual_Debugger (Process)) = 1 then
-                  Set_Title (Child, View_Name);
-               else
-                  Set_Title
-                    (Child,
-                     View_Name
-                     & " <"
-                     & Image (Integer (Get_Num (Visual_Debugger (Process))))
-                     & ">");
+                  if Get_Num (P) = 1 then
+                     Set_Title (Child, View_Name);
+                  else
+                     Set_Title
+                       (Child,
+                        View_Name
+                        & " <"
+                        & Image (Integer (Get_Num (P)))
+                        & ">");
+                  end if;
+
+                  On_Attach (View, P);
+
+                  if Command_In_Process (P) then
+                     Button := Message_Dialog
+                       (-"Cannot update " & View_Name
+                        & (-" while the debugger is busy." & ASCII.LF &
+                          (-"Interrupt the debugger or wait for its"
+                             & " availability.")),
+                        Dialog_Type => Warning,
+                        Buttons     => Button_OK);
+                  else
+                     Update (View);
+                  end if;
+
+                  Widget_Callback.Connect
+                    (View, Signal_Destroy, On_Destroy'Unrestricted_Access);
                end if;
-
-               On_Attach (View, Process);
-
-               if Command_In_Process (Process) then
-                  Button := Message_Dialog
-                    (-"Cannot update " & View_Name
-                     & (-" while the debugger is busy." & ASCII.LF &
-                       (-"Interrupt the debugger or wait for its"
-                          & " availability.")),
-                     Dialog_Type => Warning,
-                     Buttons     => Button_OK);
-               else
-                  Update (View);
-               end if;
-
-               Widget_Callback.Connect
-                 (View, Signal_Destroy, On_Destroy'Unrestricted_Access);
             end if;
 
          else
@@ -241,7 +257,10 @@ package body GVD.Generic_View is
                --  Something really bad happened: the stack window is not
                --  part of the MDI, reset it.
                Destroy (View);
-               Set_View (Process, null);
+
+               if P /= null then
+                  Set_View (P, null);
+               end if;
             end if;
          end if;
       end Attach_To_View;
@@ -335,10 +354,11 @@ package body GVD.Generic_View is
       --------------------------------
 
       procedure Register_Desktop_Functions
-        (Kernel : access Kernel_Handle_Record'Class) is
+        (Kernel : access Kernel_Handle_Record'Class)
+      is
       begin
-         Views.Register_Module (Kernel);
-         Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
+         Views.Register_Module (Kernel, Menu_Name => "");
+                  Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
                    Wrapper (On_Update'Unrestricted_Access),
                    Name => Module_Name & ".process_stopped");
          Add_Hook (Kernel, Debugger_Context_Changed_Hook,

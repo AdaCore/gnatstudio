@@ -118,7 +118,8 @@ package Generic_Views is
 
       Commands_Category : String := "Views";
       --  Name of the category in the Key Shortcuts editor for the commands
-      --  declared in this package.
+      --  declared in this package. If this is the empty string, no command is
+      --  registered.
 
    package Simple_Views is
 
