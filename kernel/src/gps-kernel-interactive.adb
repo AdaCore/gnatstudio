@@ -45,6 +45,10 @@ package body GPS.Kernel.Interactive is
       NChild  : GPS_MDI_Child;
       Create  : Boolean;
    begin
+      if Title = "" or else Title = "Messages" then
+         return Interactive_Console (Kernel.Get_Messages_Console);
+      end if;
+
       Create := Force_Create;
       if not Create then
          Child := Find_MDI_Child_By_Name (Get_MDI (Kernel), Title);

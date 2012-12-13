@@ -57,7 +57,6 @@ with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Interactive;    use GPS.Kernel.Interactive;
@@ -390,8 +389,6 @@ package body Commands.Custom is
       begin
          if Console /= null then
             Insert (Console, Message, Add_LF => False);
-            Highlight_Child
-              (Find_MDI_Child (Get_MDI (Command.Kernel), Console));
          end if;
       end Insert;
 

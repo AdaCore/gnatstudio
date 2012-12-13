@@ -1655,24 +1655,19 @@ package body GPS.Kernel.Scripts is
             Manage_Prompt : constant Boolean := Nth_Arg (Data, 11, True);
             ANSI_Support  : constant Boolean := Nth_Arg (Data, 12, False);
          begin
-            if Title = "" or else Title = "Messages" then
-               Console := Interactive_Console
-                 (Get_Kernel (Data).Get_Messages_Console);
-            else
-               Console := Create_Interactive_Console
-                 (Kernel              => Get_Kernel (Data),
-                  Title               => Title,
-                  History             => History_Key ("console_" & Title),
-                  Create_If_Not_Exist => Title /= "Python"
-                  and then Title /= "Shell",
-                  Force_Create        => Force,
-                  Manage_Prompt       => Manage_Prompt,
-                  ANSI_Support        => ANSI_Support,
-                  Accept_Input        => Accept_Input);
-               --   ??? If the console was already associated with an instance,
-               --  we would lose that original instance and all data the user
-               --  might have stored in it.
-            end if;
+            Console := Create_Interactive_Console
+              (Kernel              => Get_Kernel (Data),
+               Title               => Title,
+               History             => History_Key ("console_" & Title),
+               Create_If_Not_Exist => Title /= "Python"
+               and then Title /= "Shell",
+               Force_Create        => Force,
+               Manage_Prompt       => Manage_Prompt,
+               ANSI_Support        => ANSI_Support,
+               Accept_Input        => Accept_Input);
+            --   ??? If the console was already associated with an instance,
+            --  we would lose that original instance and all data the user
+            --  might have stored in it.
 
             if Console = null then
                if Title = "Python" or else Title = "Shell" then
