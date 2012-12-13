@@ -693,6 +693,7 @@ package Src_Editor_Buffer is
       Identifier : GNAT.Strings.String_Access;
       Info       : Line_Information_Access;
       Tooltip    : GNAT.Strings.String_Access;
+      Icon       : GNAT.Strings.String_Access;
    end record;
    type Extra_Information_Access is access Extra_Information_Record;
 

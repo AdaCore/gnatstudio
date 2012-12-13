@@ -93,8 +93,8 @@ package body VCS_Utils is
 
       Add_Editor_Label
         (Kernel, Status.File, VCS_Module_Name, Label.all,
-         Tooltip => "Status for <b>" & Name (Ref) & "</b>: "
-         & Label.all);
+         Tooltip => "Status for <b>" & Name (Ref) & "</b>: " & Label.all,
+         Icon    => Status.Status.Stock_Id.all);
 
       GNAT.Strings.Free (Label);
    end Display_Editor_Status;

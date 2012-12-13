@@ -783,7 +783,8 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
       Info       : Line_Information_Data;
-      Tooltip    : String := "")
+      Tooltip    : String := "";
+      Icon       : String := "")
    is
       Found  : Boolean := False;
    begin
@@ -795,6 +796,7 @@ package body Src_Editor_Buffer.Line_Information is
            (1 => new Extra_Information_Record'
               (Identifier => new String'(Identifier),
                Tooltip => new String'(Tooltip),
+               Icon    => new String'(Icon),
                Info    => new Line_Information_Record'(Info (Info'First))));
 
       else
@@ -820,6 +822,7 @@ package body Src_Editor_Buffer.Line_Information is
                    (Info       => new Line_Information_Record'
                         (Info (Info'First)),
                     Tooltip => new String'(Tooltip),
+                    Icon    => new String'(Icon),
                     Identifier => new String'(Identifier));
             end;
          end if;

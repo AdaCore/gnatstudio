@@ -2216,6 +2216,28 @@ package body Src_Editor_Module is
    is
       D     : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data.all);
       Child : constant MDI_Child := Find_Editor (Kernel, D.File);
+
+      function Get_Tooltip return String;
+      function Get_Icon return String;
+
+      function Get_Tooltip return String is
+      begin
+         if D.Tooltip = null then
+            return "";
+         else
+            return D.Tooltip.all;
+         end if;
+      end Get_Tooltip;
+
+      function Get_Icon return String is
+      begin
+         if D.Icon = null then
+            return "";
+         else
+            return D.Icon.all;
+         end if;
+      end Get_Icon;
+
    begin
       if Child /= null then
          if D.Info'First = 0 then
@@ -2232,20 +2254,14 @@ package body Src_Editor_Module is
             if D.Info'Last < 0 then
                --  This how the hook data encodes extra information
 
-               if D.Tooltip /= null then
-                  Add_Extra_Information
-                    (Get_Buffer
-                       (Source_Editor_Box
-                          (Get_Widget (Child))),
-                     D.Identifier, D.Info,
-                     Tooltip => D.Tooltip.all);
-               else
-                  Add_Extra_Information
-                    (Get_Buffer
-                       (Source_Editor_Box
-                          (Get_Widget (Child))),
-                     D.Identifier, D.Info);
-               end if;
+               Add_Extra_Information
+                 (Get_Buffer
+                    (Source_Editor_Box
+                       (Get_Widget (Child))),
+                  D.Identifier, D.Info,
+                  Icon    => Get_Icon,
+                  Tooltip => Get_Tooltip);
+
             else
                --  ??? Source duplicated in src_editor_buffer-line_information
                --  (Add_Blank_Lines)

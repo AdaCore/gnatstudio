@@ -1440,9 +1440,9 @@ package body Src_Editor_Buffer is
          GNAT.Strings.Free (Info.Identifier);
          Free (Info.Info);
          GNAT.Strings.Free (Info.Tooltip);
+         GNAT.Strings.Free (Info.Icon);
+         Unchecked_Free (Info);
       end if;
-
-      Unchecked_Free (Info);
    end Free;
 
    ----------

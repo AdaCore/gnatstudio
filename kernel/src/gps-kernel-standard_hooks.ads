@@ -321,6 +321,7 @@ package GPS.Kernel.Standard_Hooks is
       Normalize  : Boolean := True;
       Identifier : String (1 .. Identifier_Length);
       Tooltip    : GNAT.Strings.String_Access;
+      Icon       : GNAT.Strings.String_Access;
    end record;
    --  Identifier is the identity of the emitted
    --  If Every_Line is set to True, then the editor will emit a line_revealed
@@ -359,7 +360,8 @@ package GPS.Kernel.Standard_Hooks is
       Identifier : String;
       Info       : Line_Information_Data;
       Normalize  : Boolean := True;
-      Tooltip    : String := "");
+      Tooltip    : String := "";
+      Icon       : String := "");
    --  Add line information to File.
    --  The range of Info must correspond to the range of line numbers
    --  that are to be modified. If the range is -1 .. -1, the info is added to
@@ -369,15 +371,18 @@ package GPS.Kernel.Standard_Hooks is
    --  See File_Line_Action_Hook
    --  Infos must be freed by caller using Unchecked_Free. The actual contents
    --  will be freed by the editor.
+   --  Icon is the name of a stock icon to display
 
    procedure Add_Editor_Label
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
       Label      : String;
-      Tooltip    : String := "");
+      Tooltip    : String := "";
+      Icon       : String := "");
    --  Add a label in the editors for File.
    --  See File_Line_Action_Hook
+   --  Icon is the name of a stock image to display
 
    function To_Line_Information is new Ada.Unchecked_Conversion
      (System.Address, Line_Information_Data);

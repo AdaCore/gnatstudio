@@ -711,7 +711,9 @@ package body Src_Editor_Box is
       pragma Unreferenced (Buffer, Params);
 
       Info  : constant Extra_Information_Array_Access :=
-                Get_Extra_Information (Box.Source_Buffer);
+        Get_Extra_Information (Box.Source_Buffer);
+      Label : Gtk_Label;
+      Image : Gtk_Image;
 
    begin
       Destroy_Info_Frames (Box);
@@ -722,10 +724,17 @@ package body Src_Editor_Box is
       Box.Buffer_Info_Frames := new Frames_Array (Info'Range);
 
       for J in Box.Buffer_Info_Frames'Range loop
-         if Info (J).Info.Text /= null then
-            Gtk_New (Box.Buffer_Info_Frames (J).Label, Info (J).Info.Text.all);
+         if Info (J).Icon.all /= "" then
+            Gtk_New (Image, Stock_Id => Info (J).Icon.all,
+                     Size => Icon_Size_Menu);
+            Box.Buffer_Info_Frames (J).Label := Gtk_Widget (Image);
          else
-            Gtk_New (Box.Buffer_Info_Frames (J).Label);
+            if Info (J).Info.Text /= null then
+               Gtk_New (Label, Info (J).Info.Text.all);
+            else
+               Gtk_New (Label);
+            end if;
+            Box.Buffer_Info_Frames (J).Label := Gtk_Widget (Label);
          end if;
 
          if Info (J).Tooltip /= null
@@ -733,6 +742,8 @@ package body Src_Editor_Box is
          then
             Box.Buffer_Info_Frames (J).Label.Set_Tooltip_Markup
               (Info (J).Tooltip.all);
+         else
+            Box.Buffer_Info_Frames (J).Label.Set_Tooltip_Markup ("");
          end if;
 
          Gtk_New_Vseparator (Box.Buffer_Info_Frames (J).Separator);

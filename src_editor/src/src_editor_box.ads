@@ -38,6 +38,7 @@ with Gtk.Handlers;
 with Gtk.Image;
 with Gtk.Separator;
 with Gtk.Text_Mark;
+with Gtk.Widget;
 
 with Basic_Types;           use Basic_Types;
 with Language;
@@ -470,7 +471,7 @@ private
    --  has said yes.
 
    type Frame_Separator is record
-      Label     : Gtk.Label.Gtk_Label;
+      Label     : Gtk.Widget.Gtk_Widget;  --  label or image
       Separator : Gtk.Separator.Gtk_Separator;
    end record;
 
