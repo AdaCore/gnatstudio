@@ -39,3 +39,11 @@
    /* Size of handle to resize windows */
    -GtkAdaMultiPaned-handle-size: 2;
 }
+
+/*
+ * Tooltips
+ */
+/*
+@define-color theme_tooltip_bg_color #ffffee;
+@define-color theme_tooltip_fg_color black;
+*/
