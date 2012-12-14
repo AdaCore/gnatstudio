@@ -1107,14 +1107,12 @@ package body Call_Graph_Views is
                  (N, "name", Get_String (Model, Iter, Name_Column));
                Set_Attribute
                  (N, "decl", Get_String (Model, Iter, Decl_Column));
-
                Set_Attribute
                  (N, "type",
                   View_Type'Image
                     (View_Type'Val (Get_Int (Model, Iter, Kind_Column))));
 
                Decl := View.Kernel.Databases.Get_Declaration (Entity);
-               N.Tag := new String'("entity");
                Set_Attribute
                  (N, "entity_name",
                   View.Kernel.Databases.Get_Name (Entity));
@@ -1165,9 +1163,6 @@ package body Call_Graph_Views is
    is
       Model    : constant Gtk_Tree_Store := -Get_Model (View.Tree);
 
-      Is_Calls : Boolean := True;
-      --  For upward compatibility
-
       procedure Recursive_Load
         (Parent_Iter   : Gtk_Tree_Iter;
          Node          : Node_Ptr;
@@ -1216,24 +1211,11 @@ package body Call_Graph_Views is
                Set (Model, Iter, Sort_Column,
                     Get_Attribute (N, "name") & " "
                     & Get_Attribute (N, "decl"));
-
-               --  We want to be compatible with previous version not having
-               --  the type node. We then get information from top type node in
-               --  this case.
-
-               if Is_Calls then
-                  Set
-                    (Model, Iter, Kind_Column,
-                     View_Type'Pos
-                       (View_Type'Value
-                          (Get_Attribute (N, "type", "view_calls"))));
-               else
-                  Set
-                    (Model, Iter, Kind_Column,
-                     View_Type'Pos
-                       (View_Type'Value
-                          (Get_Attribute (N, "type", "view_called_by"))));
-               end if;
+               Set
+                 (Model, Iter, Kind_Column,
+                  View_Type'Pos
+                    (View_Type'Value
+                       (Get_Attribute (N, "type", "view_calls"))));
 
                File := Create
                  (Full_Filename => +Get_Attribute (N, "entity_decl"));
@@ -1265,19 +1247,21 @@ package body Call_Graph_Views is
          end loop;
       end Recursive_Load;
 
+      Callgraph : constant Node_Ptr := XML.Child;  --  The <callgraph> node
    begin
+      if Callgraph = null then
+         return;
+      end if;
+
+      Recursive_Load (Null_Iter, Callgraph.Child, False);
+
       declare
-         Pos_Str : constant String := Get_Attribute (XML, "position");
-         V_Type  : constant String := Get_Attribute (XML, "type");
+         Pos_Str : constant String := Get_Attribute (Callgraph, "position");
       begin
          if Pos_Str /= "" then
             Set_Position (View.Pane, Gint'Value (Pos_Str));
          end if;
-
-         Is_Calls := V_Type = "calls";
       end;
-
-      Recursive_Load (Null_Iter, XML.Child, False);
    end Load_From_XML;
 
    ----------------
