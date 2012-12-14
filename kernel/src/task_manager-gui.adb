@@ -866,6 +866,8 @@ package body Task_Manager.GUI is
       Iter : Gtk_Tree_Iter;
    begin
       if Parent = Null_Iter
+        and then Self.GUI /= null
+        and then Self.GUI.Manager /= null
         and then Self.GUI.Manager.Queues /= null
         and then N <= Self.GUI.Manager.Queues'Length
       then
