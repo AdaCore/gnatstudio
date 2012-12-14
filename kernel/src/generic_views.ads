@@ -121,6 +121,9 @@ package Generic_Views is
       --  declared in this package. If this is the empty string, no command is
       --  registered.
 
+      MDI_Flags : Gtkada.MDI.Child_Flags := Gtkada.MDI.All_Buttons;
+      --  Special flags used when creating the MDI window.
+
    package Simple_Views is
 
       type View_Access is access all Formal_View_Record'Class;
@@ -208,6 +211,12 @@ package Generic_Views is
           On_Display_Local_Config'Access;
       --  Called to display the local config menu
 
+      function On_Delete_Event
+        (Box : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+      On_Delete_Event_Access : constant
+        Gtkada.Handlers.Return_Callback.Simple_Handler :=
+          On_Delete_Event'Access;
+      --  Propagate the delete event to the view
    end Simple_Views;
 
 end Generic_Views;

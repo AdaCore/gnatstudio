@@ -17,6 +17,7 @@
 
 with Glib.Object;             use Glib, Glib.Object;
 with XML_Utils;               use XML_Utils;
+with Gdk.Event;               use Gdk.Event;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Menu;                use Gtk.Menu;
@@ -41,10 +42,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
 
 package body Generic_Views is
-
-   ------------------
-   -- Simple_Views --
-   ------------------
 
    package body Simple_Views is
 
@@ -74,6 +71,25 @@ package body Generic_Views is
          Child        : out GPS_MDI_Child;
          View         : out View_Access);
       --  Find any existing view
+
+      ---------------------
+      -- On_Delete_Event --
+      ---------------------
+
+      function On_Delete_Event
+        (Box : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
+      is
+         Event : Gdk_Event;
+         Prevent_Delete : Boolean;
+      begin
+         Gdk_New (Event, Delete);
+         Event.Any.Window := Toplevel_Box (Box.all).Initial.Get_Window;
+         Prevent_Delete := Return_Callback.Emit_By_Name
+           (Toplevel_Box (Box.all).Initial, "delete_event", Event);
+         Event.Any.Window := null;
+         Free (Event);
+         return Prevent_Delete;
+      end On_Delete_Event;
 
       -----------------------------
       -- On_Display_Local_Config --
@@ -197,6 +213,11 @@ package body Generic_Views is
             W := Gtk_Widget (Box);
             View.Create_Toolbar (Toolbar);
             Toolbar.Show_All;
+
+            --  We need to propagate the delete event to the view
+            Return_Callback.Connect
+              (Box, Gtk.Widget.Signal_Delete_Event, On_Delete_Event_Access);
+
          else
             W := Gtk_Widget (View);
          end if;
@@ -222,6 +243,7 @@ package body Generic_Views is
                      Default_Width  => 215,
                      Default_Height => 600,
                      Focus_Widget   => Focus_Widget,
+                     Flags          => MDI_Flags,
                      Module         => Module,
                      Group          => Group);
          Set_Title (Child, View_Name, View_Name);

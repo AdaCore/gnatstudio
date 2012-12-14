@@ -31,7 +31,6 @@ with Gtk.Toolbar;            use Gtk.Toolbar;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
-with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
 with Commands.Interactive;   use Commands, Commands.Interactive;
@@ -87,13 +86,10 @@ package body GPS.Kernel.Console is
       Initialize         => Initialize,
       Local_Toolbar      => True,
       Local_Config       => False,
+      MDI_Flags          => 0,  --  No destroy button
       Group              => Group_Consoles);
    use Messages_Views;
    subtype GPS_Message is Messages_Views.View_Access;
-
-   function Console_Delete_Event
-     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
-   --  Prevent the destruction of the console in the MDI
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -292,18 +288,6 @@ package body GPS.Kernel.Console is
       end if;
    end Raise_Console;
 
-   --------------------------
-   -- Console_Delete_Event --
-   --------------------------
-
-   function Console_Delete_Event
-     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Console);
-   begin
-      return True;
-   end Console_Delete_Event;
-
    -------------
    -- Execute --
    -------------
@@ -453,9 +437,6 @@ package body GPS.Kernel.Console is
                 Wrapper (On_Preferences_Changed'Access),
                 Name => "console.preferences_changed",
                 Watch => GObject (Console));
-
-      Return_Callback.Connect
-        (Console, Gtk.Widget.Signal_Delete_Event, Console_Delete_Event'Access);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
