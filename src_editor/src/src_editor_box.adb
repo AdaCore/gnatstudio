@@ -761,15 +761,17 @@ package body Src_Editor_Box is
          if Block.Block_Type /= Cat_Unknown
            and then Block.Name /= No_Symbol
          then
+            --  We cannot control the underline from the theme unfortunately.
             Val := To_Unbounded_String
-              ("<a href='" & Block.First_Line'Img & "'>"
-               & Get (Block.Name).all & "</a>");
+              ("<span underline='none'><a href='" & Block.First_Line'Img & "'>"
+               & Get (Block.Name).all & "</a></span>");
 
             Iter := Get_Parent_Scope (Block.Tree, Block.Iter);
             while Iter /= Null_Construct_Tree_Iterator loop
                Val :=
-                 "<a href='" & Get_Construct (Iter).Sloc_Start.Line'Img
-                 & "'>" & Get (Get_Construct (Iter).Name).all & "</a>."
+                 "<span underline='none'><a href='"
+                 & Get_Construct (Iter).Sloc_Start.Line'Img
+                 & "'>" & Get (Get_Construct (Iter).Name).all & "</a></span>."
                  & Val;
                Iter := Get_Parent_Scope (Block.Tree, Iter);
             end loop;

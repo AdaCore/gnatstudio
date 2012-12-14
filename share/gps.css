@@ -47,3 +47,12 @@
 @define-color theme_tooltip_bg_color #ffffee;
 @define-color theme_tooltip_fg_color black;
 */
+
+/*
+ * Editors
+ * Control the color of links displayed in the status bar of editors
+ */
+/*
+-GtkWidget-link-color: @link_color;
+-GtkWidget-visited-link-color: @link_color;
+*/
