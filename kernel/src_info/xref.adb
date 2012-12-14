@@ -140,6 +140,7 @@ package body Xref is
      (Self             : access General_Xref_Database_Record;
       Handler          : Language_Handlers.Language_Handler;
       Entity           : General_Entity;
+      Color_For_Optional_Param : String := "#555555";
       Raw_Format       : Boolean := False;
       Check_Constructs : Boolean := True) return String
    is
@@ -189,8 +190,10 @@ package body Xref is
                     Decl_End_Index    => Get_Construct (Node).Sloc_End.Index,
                     Language          => Context.Syntax,
                     Format            => Form);
-               Profile : constant String :=
-                 Get_Profile (Tree_Lang, Ent, Raw_Format => Raw_Format);
+               Profile : constant String := Get_Profile
+                 (Tree_Lang, Ent,
+                  Color_For_Optional_Param => Color_For_Optional_Param,
+                  Raw_Format => Raw_Format);
 
             begin
                if Comment /= "" then

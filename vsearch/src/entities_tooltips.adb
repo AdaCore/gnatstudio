@@ -19,6 +19,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
+with Gtkada.Style;              use Gtkada.Style;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
@@ -29,12 +30,12 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Language;                  use Language;
 with Language.Icons;            use Language.Icons;
 with Language.Tree;             use Language.Tree;
+with Tooltips;                  use Tooltips;
 with Xref;                      use Xref;
 
 with Entities_Tooltips_Utility; use Entities_Tooltips_Utility;
 
 package body Entities_Tooltips is
-
    function Get_Pixbuf
      (Kernel : access Kernel_Handle_Record'Class;
       Entity : General_Entity) return Gdk_Pixbuf;
@@ -141,7 +142,9 @@ package body Entities_Tooltips is
 
       if Guess then
          Header_Label.Set_Markup
-           ("<span foreground =""#555555"">"
+           ("<span foreground ="""
+            & To_Hex (Shade_Or_Lighten (Tooltips.Tooltips_Foreground_Color))
+            & """>"
             & Tooltip_Guess_Message & "</span>" & ASCII.LF & Header);
       else
          Header_Label.Set_Markup (Header);
@@ -156,6 +159,7 @@ package body Entities_Tooltips is
          Box.Pack_Start (Doc_Label, Expand => True, Fill => True);
 
          Doc_Label.Override_Font (View_Fixed_Font.Get_Pref);
+
          Doc_Label.Set_Markup (Doc);
       end if;
 

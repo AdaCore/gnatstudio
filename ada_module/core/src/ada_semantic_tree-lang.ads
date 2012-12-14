@@ -41,6 +41,7 @@ package Ada_Semantic_Tree.Lang is
    overriding function Get_Profile
      (Lang       : access Ada_Tree_Language;
       Entity     : Entity_Access;
+      Color_For_Optional_Param : String;
       Raw_Format : Boolean := False) return String;
    overriding procedure Diff
      (Lang               : access Ada_Tree_Language;

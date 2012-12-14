@@ -443,10 +443,12 @@ package Xref is
      (Self             : access General_Xref_Database_Record;
       Handler          : Language_Handlers.Language_Handler;
       Entity           : General_Entity;
+      Color_For_Optional_Param : String := "#555555";
       Raw_Format       : Boolean := False;
       Check_Constructs : Boolean := True) return String;
    --  Return the documentation (tooltips,...) for the entity.
-   --  If Raw_Format is False, the documentation is formated in HTML.
+   --  If Raw_Format is False, the documentation is formated in HTML (using
+   --  Color_For_Optional_Param to highlight optional parameters).
    --
    --  Check_Constructs should be False to disable the use of the constructs
    --  database.

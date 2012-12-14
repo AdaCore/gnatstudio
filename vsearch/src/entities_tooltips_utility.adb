@@ -21,12 +21,14 @@ with GPS.Intl;                  use GPS.Intl;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
+with Gtkada.Style;              use Gtkada.Style;
 
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Language.Tree;             use Language.Tree;
 with String_Utils;              use String_Utils;
+with Tooltips;                  use Tooltips;
 
 package body Entities_Tooltips_Utility is
 
@@ -136,8 +138,10 @@ package body Entities_Tooltips_Utility is
    begin
       return  Get_Instance (Kernel.Databases, Ref)
         & Kernel.Databases.Documentation
-           (Handler => Kernel.Get_Language_Handler,
-            Entity  => Entity);
+        (Handler => Kernel.Get_Language_Handler,
+         Color_For_Optional_Param =>
+           To_Hex (Shade_Or_Lighten (Tooltips.Tooltips_Foreground_Color)),
+         Entity  => Entity);
    end Get_Tooltip_Documentation;
 
    -------------------------------
@@ -150,8 +154,10 @@ package body Entities_Tooltips_Utility is
    is
    begin
       return Kernel.Databases.Documentation
-           (Handler => Kernel.Get_Language_Handler,
-            Entity  => From_Constructs (Entity));
+        (Handler => Kernel.Get_Language_Handler,
+         Color_For_Optional_Param =>
+           To_Hex (Shade_Or_Lighten (Tooltips.Tooltips_Foreground_Color)),
+         Entity  => From_Constructs (Entity));
    end Get_Tooltip_Documentation;
 
    -----------------------------

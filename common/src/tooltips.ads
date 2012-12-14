@@ -27,6 +27,7 @@
 --        computation for the contents of the tooltip.
 
 with Glib;           use Glib;
+with Gdk.RGBA;       use Gdk.RGBA;
 with Gtk.Widget;     use Gtk.Widget;
 with Gdk.Rectangle;
 with Gtk.Tree_Model;
@@ -46,6 +47,9 @@ package Tooltips is
    --
    --  See Gtk.Tree_View.Get_Tooltip_Context instead,
    --  and Gtk.Tree_View.Set_Tooltip_Cell
+
+   function Tooltips_Foreground_Color return Gdk.RGBA.Gdk_RGBA;
+   --  Return the default foreground color used for the text in the tooltip.
 
    --------------
    -- Tooltips --

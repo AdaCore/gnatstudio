@@ -110,6 +110,7 @@ package body Ada_Semantic_Tree.Lang is
    overriding function Get_Profile
      (Lang       : access Ada_Tree_Language;
       Entity     : Entity_Access;
+      Color_For_Optional_Param : String;
       Raw_Format : Boolean := False) return String
    is
       Tree                 : constant Construct_Tree :=
@@ -421,7 +422,9 @@ package body Ada_Semantic_Tree.Lang is
                     (Ada_Assign_Attribute)
                   then
                      if not Raw_Format then
-                        Append (Result, "<span foreground=""#555555"">[");
+                        Append
+                          (Result, "<span foreground="""
+                           & Color_For_Optional_Param & """>[");
                      end if;
                   end if;
 

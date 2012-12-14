@@ -74,6 +74,18 @@ package body Tooltips is
 
    Global_Tooltip : Tooltip_Object;
 
+   -------------------------------
+   -- Tooltips_Foreground_Color --
+   -------------------------------
+
+   function Tooltips_Foreground_Color return Gdk.RGBA.Gdk_RGBA is
+      Color : Gdk_RGBA;
+   begin
+      Get_Style_Context (Global_Tooltip).Get_Color
+        (Gtk_State_Flag_Normal, Color);
+      return Color;
+   end Tooltips_Foreground_Color;
+
    ------------------
    -- Set_Tip_Area --
    ------------------
@@ -103,7 +115,6 @@ package body Tooltips is
       X, Y, W, H : Gint;
    begin
       if Global_Tooltip /= null then
-
          Global_Tooltip.Timeout_Id := 0;
       end if;
 
