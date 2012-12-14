@@ -19,7 +19,6 @@ with Gdk;                  use Gdk;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Rectangle;        use Gdk.Rectangle;
 with Gdk.Screen;           use Gdk.Screen;
-with Gdk.Types;            use Gdk.Types;
 with Gdk.Window;           use Gdk.Window;
 with Glib.Main;            use Glib.Main;
 with Glib.Object;          use Glib.Object;
@@ -138,9 +137,16 @@ package body Tooltips is
 
          Global_Tooltip.Move (X + 10, Y + 10);
          Global_Tooltip.Show_All;
+      else
+         Trace (Me, "No tooltip to display at this location");
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return False;
    end On_Tooltip_Delay;
 
    ------------------
@@ -151,8 +157,6 @@ package body Tooltips is
      (Widget  : not null access Gtk_Widget_Record'Class;
       Tooltip : access Tooltips'Class)
    is
-      Mask     : Gdk_Modifier_Type;
-      Window   : Gdk_Window;
       X, Y     : Gint;
       Settings : Gtk_Settings;
    begin
@@ -175,7 +179,7 @@ package body Tooltips is
                 & Global_Tooltip.Timeout'Img);
       end if;
 
-      Get_Pointer (Widget.Get_Window, X, Y, Mask, Window);
+      Widget.Get_Pointer (X, Y);
 
       --  If still within the current area
 
@@ -197,7 +201,6 @@ package body Tooltips is
       Global_Tooltip.Tip := Tooltips_Access (Tooltip);
       Global_Tooltip.X := X;
       Global_Tooltip.Y := Y;
-      Global_Tooltip.Area_Is_Set := False;
       Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
         (Guint (Global_Tooltip.Timeout), On_Tooltip_Delay'Access);
    end Show_Tooltip;

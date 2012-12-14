@@ -1746,9 +1746,6 @@ package body Src_Editor_View is
       Buffer_Y      : Gint;
       Iter          : Gtk_Text_Iter;
       Iter_Location : Gdk_Rectangle;
-      Line_Height   : Gint;
-      Unused        : Gint;
-      Result        : Boolean;
 
    begin
       Window_To_Buffer_Coords
@@ -1778,14 +1775,12 @@ package body Src_Editor_View is
       --       return -1,-1.
 
       if not Ends_Line (Iter) then
-         Forward_To_Line_End (Iter, Result);
+         Out_Of_Bounds := False;
+      else
+         Get_Iter_Location (View, Iter, Iter_Location);
+         Out_Of_Bounds := Buffer_X > Iter_Location.X + Iter_Location.Width
+           or else Buffer_Y > Iter_Location.Y + Iter_Location.Height;
       end if;
-
-      Get_Iter_Location (View, Iter, Iter_Location);
-      Get_Line_Yrange (View, Iter, Unused, Line_Height);
-
-      Out_Of_Bounds := Buffer_X > Iter_Location.X
-        or else Buffer_Y > Iter_Location.Y + Line_Height;
    end Window_To_Buffer_Coords;
 
    ----------------------------

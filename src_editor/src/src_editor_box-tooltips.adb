@@ -227,7 +227,11 @@ package body Src_Editor_Box.Tooltips is
          return null;
       end if;
 
-      Window_To_Buffer_Coords (View, X, Y, Line, Col, Out_Of_Bounds);
+      Window_To_Buffer_Coords
+        (View,
+         X - Get_Border_Window_Size (View, Text_Window_Left),
+         Y - Get_Border_Window_Size (View, Text_Window_Top),
+         Line, Col, Out_Of_Bounds);
 
       if Out_Of_Bounds then
          --  Do not display a tooltip in an invalid location,
