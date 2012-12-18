@@ -22,7 +22,7 @@
 }
 
 .mdi {
-   background: shade(@theme_bg_color, 0.95);
+   /* background: shade(@theme_bg_color, 0.9); */
 }
 
 .mdifocused { /* The notebook that current has the focus */
@@ -38,6 +38,14 @@
 * {
    /* Size of handle to resize windows */
    -GtkAdaMultiPaned-handle-size: 2;
+
+   /* Control the location of the scroll arrows in notebooks */
+   -GtkNotebook-has-backward-stepper: 1;
+   -GtkNotebook-has-secondary-forward-stepper: 0;
+   -GtkNotebook-has-secondary-backward-stepper: 0;
+   -GtkNotebook-has-forward-stepper: 1;
+   -GtkWidget-scroll-arrow-hlength: 10px;
+   -GtkWidget-scroll-arrow-vlength: 10px;
 }
 
 /*
