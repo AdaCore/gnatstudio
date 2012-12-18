@@ -91,10 +91,12 @@ package body Gtkada.Abstract_Filter_Model is
    --  recompute visibility of nodes.
 
    procedure Hide
-     (Self : not null access Gtk_Abstract_Filter_Model_Record'Class;
-      Node : not null Node_Access);
+     (Self   : not null access Gtk_Abstract_Filter_Model_Record'Class;
+      Node   : not null Node_Access;
+      Delete : Boolean);
    --  Hides all visible nodes. Nodes' state is changed to Unknown. This
    --  subprogram emits "row-deleted" and "row-has-child-toggled" signals.
+   --  Node will be removed from mappings and freed when Delete is True.
 
    procedure Show_Visible
      (Self        : not null access Gtk_Abstract_Filter_Model_Record'Class;
@@ -519,8 +521,9 @@ package body Gtkada.Abstract_Filter_Model is
    ----------
 
    procedure Hide
-     (Self : not null access Gtk_Abstract_Filter_Model_Record'Class;
-      Node : not null Node_Access)
+     (Self   : not null access Gtk_Abstract_Filter_Model_Record'Class;
+      Node   : not null Node_Access;
+      Delete : Boolean)
    is
       use type Gtk.Tree_Model.Gtk_Tree_Path;
 
@@ -554,7 +557,7 @@ package body Gtkada.Abstract_Filter_Model is
 
       while Node_Vectors.Has_Element (Position) loop
          if Node_Vectors.Element (Position).Visibility = Visible then
-            Self.Hide (Node_Vectors.Element (Position));
+            Self.Hide (Node_Vectors.Element (Position), False);
          end if;
 
          Node_Vectors.Next (Position);
@@ -564,6 +567,13 @@ package body Gtkada.Abstract_Filter_Model is
 
       if Self.Root /= Node then
          Node.Visibility := Unknown;
+
+         if Delete then
+            --  Delete node from parent's list.
+
+            Node.Parent.Children.Delete
+              (Natural (Node.Parent.Children.Find_Index (Node)));
+         end if;
 
          --  Notify remove of the row.
 
@@ -581,6 +591,12 @@ package body Gtkada.Abstract_Filter_Model is
                Row_Has_Child_Toggled
                  (+Self, Proxy_Path, Self.Create_Iter (Node.Parent));
             end if;
+         end if;
+
+         if Delete then
+            --  Deallocate node and its children recursively.
+
+            Self.Deep_Free (Node);
          end if;
       end if;
 
@@ -622,7 +638,7 @@ package body Gtkada.Abstract_Filter_Model is
 
    begin
       Gtk_New_First (Path);
-      Self.Hide (Self.Root);
+      Self.Hide (Self.Root, False);
       Self.Show_Visible (Self.Root, Path, Iter);
       Gtk.Tree_Model.Path_Free (Path);
    end Invalidate;
@@ -887,7 +903,7 @@ package body Gtkada.Abstract_Filter_Model is
             else
                --  Row is hidden
 
-               Self.Hide (Node);
+               Self.Hide (Node, False);
             end if;
 
          elsif Is_Visible then
@@ -935,15 +951,7 @@ package body Gtkada.Abstract_Filter_Model is
 
       --  Hide child node.
 
-      Self.Hide (Child);
-
-      --  Delete node from parent's list.
-
-      Parent.Children.Delete (Natural (Indices (Indices'Last)));
-
-      --  Deallocate node and its children recursively.
-
-      Self.Deep_Free (Child);
+      Self.Hide (Child, True);
    end On_Row_Deleted_Callback;
 
    ------------------------------
