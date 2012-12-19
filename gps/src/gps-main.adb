@@ -1586,7 +1586,7 @@ procedure GPS.Main is
          begin
             Ignored := Gtkada.Dialogs.Message_Dialog
               (Msg            =>
-                 "GPS requires a display with a minimal color depth"
+                 "GPS requires a display with a minimum color depth"
                & " of 24 bits.",
                Dialog_Type    => Error,
                Buttons        => Button_OK,
