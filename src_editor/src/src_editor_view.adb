@@ -1787,12 +1787,12 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View         : constant Source_View := Source_View (Widget);
-      Dummy_Gint   : Gint;
-      W, H, D      : Gint;
-      Button_Y     : Gint;
-      Lower, Upper : Gdouble;
-      Adj          : Gtk_Adjustment;
+      View             : constant Source_View := Source_View (Widget);
+      Dummy_X, Dummy_Y : Gint;
+      W, H, D          : Gint;
+      Button_Y         : Gint;
+      Lower, Upper     : Gdouble;
+      Adj              : Gtk_Adjustment;
    begin
       if (Get_Event_Type (Event) = Button_Release
           and then Get_Button (Event) = 1)
@@ -1807,7 +1807,7 @@ package body Src_Editor_View is
          Button_Y := Gint (Get_Y (Event));
 
          Get_Geometry
-           (Get_Window (View.Area), Dummy_Gint, Dummy_Gint, W, H, D);
+           (Get_Window (View.Area), Dummy_X, Dummy_Y, W, H, D);
 
          Adj := Get_Vadjustment (View.Scroll);
          Lower := Get_Lower (Adj);
