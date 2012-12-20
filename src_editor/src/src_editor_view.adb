@@ -1806,8 +1806,7 @@ package body Src_Editor_View is
 
          Button_Y := Gint (Get_Y (Event));
 
-         Get_Geometry
-           (Get_Window (View.Area), Dummy_X, Dummy_Y, W, H, D);
+         Get_Geometry (Get_Window (View.Area), Dummy_X, Dummy_Y, W, H, D);
 
          Adj := Get_Vadjustment (View.Scroll);
          Lower := Get_Lower (Adj);
