@@ -26,8 +26,8 @@ package body Gtkada.Check_Button is
    procedure Redraw_State (Check : access Gtkada_Check_Button_Record'Class);
    --  Redraw the state of Check
 
-   procedure On_Clicked (Obj : System.Address);
-   pragma Convention (C, On_Clicked);
+   procedure On_Button_Clicked (Obj : System.Address);
+   pragma Convention (C, On_Button_Clicked);
    --  Callback for the clicked event
 
    -------------
@@ -89,7 +89,8 @@ package body Gtkada.Check_Button is
          --  always being called first even when connecting a new signal
          --  handler with 'Last' set to false.
          --  We absolutely need to be called before the class handler.
-         Install_Clicked_Handler (Get_Object (Check), On_Clicked'Address);
+         Install_Clicked_Handler
+            (Get_Object (Check), On_Button_Clicked'Address);
       end if;
 
       Redraw_State (Check);
@@ -193,11 +194,11 @@ package body Gtkada.Check_Button is
       return Check.State;
    end Get_State;
 
-   ----------------
-   -- On_Clicked --
-   ----------------
+   -----------------------
+   -- On_Button_Clicked --
+   -----------------------
 
-   procedure On_Clicked (Obj : System.Address)
+   procedure On_Button_Clicked (Obj : System.Address)
    is
       procedure Force_State (Check : System.Address; Val : Integer);
       pragma Import (C, Force_State, "gtkada_check_button_force_state");
@@ -257,7 +258,7 @@ package body Gtkada.Check_Button is
       Original_Handler (Get_Object (Check));
 
       Redraw_State (Check);
-   end On_Clicked;
+   end On_Button_Clicked;
 
    ------------------
    -- Redraw_State --
