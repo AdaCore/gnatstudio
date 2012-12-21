@@ -27,6 +27,7 @@ with Glib;
 with Generic_Views;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;
+with Gtkada.Handlers;
 with Gtk.Widget;
 with Gtkada.MDI;
 
@@ -168,6 +169,8 @@ package GVD.Generic_View is
    private
       procedure On_Destroy
         (View : access Gtk.Widget.Gtk_Widget_Record'Class);
+      Destroy_Access : constant Gtkada.Handlers.Widget_Callback.Simple_Handler
+         := On_Destroy'Access;
       --  Callback for the "destroy_event" signal on the Call Stack window.
       --  This needs to be in the spec since it is used as a callback in the
       --  body.

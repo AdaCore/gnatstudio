@@ -57,7 +57,7 @@ ENTITIES.QUERIES_FILE_GRANULARITY = yes
 ENTITIES.ASSERT                   = no
 
 --  Deactivate SQL traces by default
-SQL.*                             = no
+SQL.*                             = yes
 
 --  Projects. Unfortunately the traces from PROJECTS.GNAT go to stdout
 
@@ -77,6 +77,9 @@ ENTITIES.DEBUG=no
 ENTITIES.DUMP = no
 ENTITIES.REF  = no
 ENTITIES.QUERIES = no
+
+--  Monitor keybindings
+KEYMANAGER=yes
 
 --  Enable this to activate the use of sql-based entities.
 --  This cannot be set from the command line, since the kernel and the xref
