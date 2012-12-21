@@ -80,13 +80,21 @@ def on_project_view_changed(hook):
       run_main_target.show()
       test_run_target.hide()
 
+   # Update read-only areas in already opened files
+   buffer_list = GPS.EditorBuffer.list()
+   for buffer in buffer_list:
+      mark_read_only_areas (buffer)
+
 def on_file_edited (hook,file):
    """ Find read-only areas and apply an overlay on them. """
    if not is_harness_project():
       return
 
-   read_only_overlay = None
    buffer = GPS.EditorBuffer.get (file)
+   mark_read_only_areas (buffer)
+
+def mark_read_only_areas (buffer):
+   read_only_overlay = None
    loc = buffer.beginning_of_buffer ()
 
    # Iterate over read-only areas
@@ -114,7 +122,7 @@ def on_file_edited (hook,file):
          if read_only_overlay == None:
             read_only_overlay = buffer.create_overlay ()
             color = GPS.Preference ("Plugins/gnattest/read_only_color").get ()
-            read_only_overlay.set_property ("background", color)
+            read_only_overlay.set_property ("paragraph-background", color)
             read_only_overlay.set_property ("editable", False)
 
          buffer.apply_overlay (read_only_overlay, from_line, to_line)
