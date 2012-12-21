@@ -1692,30 +1692,14 @@ package body Src_Contexts is
       Get_Selection_Bounds
         (Get_Buffer (Editor), Selection_Start, Selection_End, Dummy);
 
-      if Search_Backward then
-         Search_In_Editor
-           (Context         => Context,
-            Start_At        => Selection_End,
-            Kernel          => Kernel,
-            Search_Backward => Search_Backward,
-            Match_From      => Match_From,
-            Match_Up_To     => Match_Up_To,
-            Found           => Found);
-      else
-         if not Equal (Selection_Start, Selection_End) then
-            --  Selection is not empty ?
-            Forward_Char (Selection_Start, Dummy);
-         end if;
-
-         Search_In_Editor
-           (Context         => Context,
-            Start_At        => Selection_End,
-            Kernel          => Kernel,
-            Search_Backward => Search_Backward,
-            Match_From      => Match_From,
-            Match_Up_To     => Match_Up_To,
-            Found           => Found);
-      end if;
+      Search_In_Editor
+        (Context         => Context,
+         Start_At        => Selection_End,
+         Kernel          => Kernel,
+         Search_Backward => Search_Backward,
+         Match_From      => Match_From,
+         Match_Up_To     => Match_Up_To,
+         Found           => Found);
 
       if Found then
          Push_Current_Editor_Location_In_History (Kernel);
