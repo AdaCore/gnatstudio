@@ -8,6 +8,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+
+- LA12-039: GB: Excluded_Source_List_File change not applied
+  Problem:    When using the Excluded_Source_List_File attribute, the user
+              entered an invalid file name in the referenced text file. Inspite of
+              correcting the file name spelling, GNATbench continued to raise a
+              .gpr error saying that the incorrect file name could not be found.
+              This error persisted even after a project clean. Only way to eliminate
+              the error was to restart Workbench.
+  Workaround: Problem is fixed in Windriver Workbench version 3.3
+
 - LB30-018: Missing references with extending projects
   Problem:    If you are using extending projects, GPS will not
               parse its .ali files (containing the xref information generated
