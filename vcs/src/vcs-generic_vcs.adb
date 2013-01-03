@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2012, AdaCore                     --
+--                     Copyright (C) 2001-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1188,7 +1188,7 @@ package body VCS.Generic_VCS is
          P      : Node_Ptr;
          Num    : Natural := 0;
          Node   : Node_Ptr;
-         Field  : String_Ptr;
+         Value  : String_Ptr;
 
          function Parse_Status_Parser
            (N : Node_Ptr) return Status_Parser_Record;
@@ -1296,7 +1296,7 @@ package body VCS.Generic_VCS is
                            -"Error when registering VCS """ & Name & """:"
                            & ASCII.LF
                            & (-"could not parse regular expression: ")
-                           & ASCII.LF & Field.all,
+                           & ASCII.LF & Value.all,
                            Mode => Error);
                         Trace (Exception_Handle, E);
                   end;
@@ -1305,64 +1305,70 @@ package body VCS.Generic_VCS is
                M := M.Next;
             end loop;
 
-            Field := Get_Field (N, "regexp");
+            Value := Get_Field (N, "regexp");
 
-            if Field /= null then
+            if Value /= null then
                declare
                begin
-                  Parser.Regexp := new Pattern_Matcher'(Compile (Field.all));
+                  Parser.Regexp := new Pattern_Matcher'(Compile (Value.all));
                exception
                   when E : GNAT.Regpat.Expression_Error =>
                      Insert
                        (Kernel,
                         "Error when registering VCS """ & Name & """:"
                         & ASCII.LF & "could not parse regular expression: "
-                        & ASCII.LF & Field.all,
+                        & ASCII.LF & Value.all,
                         Mode => Error);
                      Trace (Exception_Handle, E);
                end;
             end if;
 
-            Field := Get_Field (N, "file_index");
-            Set_Field (Parser, Field, Parser.File_Index);
+            pragma Warnings (Off);
+            ---  Warning about writable actual for "Parser" overlaps
+            ---  with actual for "Field" is harmless here
 
-            Field := Get_Field (N, "status_index");
-            Set_Field (Parser, Field, Parser.Status_Index);
+            Value := Get_Field (N, "file_index");
+            Set_Field (Parser, Value, Parser.File_Index);
 
-            Field := Get_Field (N, "local_revision_index");
-            Set_Field (Parser, Field, Parser.Local_Rev_Index);
+            Value := Get_Field (N, "status_index");
+            Set_Field (Parser, Value, Parser.Status_Index);
 
-            Field := Get_Field (N, "repository_revision_index");
-            Set_Field (Parser, Field, Parser.Repository_Rev_Index);
+            Value := Get_Field (N, "local_revision_index");
+            Set_Field (Parser, Value, Parser.Local_Rev_Index);
 
-            Field := Get_Field (N, "author_index");
-            Set_Field (Parser, Field, Parser.Author_Index);
+            Value := Get_Field (N, "repository_revision_index");
+            Set_Field (Parser, Value, Parser.Repository_Rev_Index);
 
-            Field := Get_Field (N, "date_index");
-            Set_Field (Parser, Field, Parser.Date_Index);
+            Value := Get_Field (N, "author_index");
+            Set_Field (Parser, Value, Parser.Author_Index);
 
-            Field := Get_Field (N, "log_index");
-            Set_Field (Parser, Field, Parser.Log_Index);
+            Value := Get_Field (N, "date_index");
+            Set_Field (Parser, Value, Parser.Date_Index);
 
-            Field := Get_Field (N, "sym_index");
-            Set_Field (Parser, Field, Parser.Sym_Index);
+            Value := Get_Field (N, "log_index");
+            Set_Field (Parser, Value, Parser.Log_Index);
 
-            Field := Get_Field (N, "tooltip_pattern");
+            Value := Get_Field (N, "sym_index");
+            Set_Field (Parser, Value, Parser.Sym_Index);
 
-            if Field /= null then
-               Parser.Pattern := new String'(Field.all);
+            pragma Warnings (On);
+
+            Value := Get_Field (N, "tooltip_pattern");
+
+            if Value /= null then
+               Parser.Pattern := new String'(Value.all);
 
                declare
-                  K : Natural := Field'First;
+                  K : Natural := Value'First;
                begin
                   loop
-                     K := Index (Field (K .. Field'Last), "\");
+                     K := Index (Value (K .. Value'Last), "\");
                      exit when K = 0
-                       or else K = Field'Last
-                       or else Field (K + 1) not in '0' .. '9';
+                       or else K = Value'Last
+                       or else Value (K + 1) not in '0' .. '9';
                      Parser.Matches_Num := Natural'Max
                        (Parser.Matches_Num,
-                        Natural'Value ((1 => Field (K + 1))));
+                        Natural'Value ((1 => Value (K + 1))));
                      K := K + 2;
                   end loop;
                end;
