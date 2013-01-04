@@ -48,8 +48,9 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               in an expanded name.
 
 - LB15-004: GB: Renaming gnatbench gpr file causes gnatbench properties issues
-  Problem:    Rename gpr file. Try to update gnatbench properties. If the project
-              line name is not consistent with the gpr file name, Eclipse crashes. 
+  Problem:    When renaming a gpr file and then updating gnatbench properties,
+              if the project file name is not consistent with the gpr file
+              name, Eclipse will crash. 
   Workaround: Modify the project name in the gpr file to be consistent with the 
               gpr filename. 
 
@@ -73,14 +74,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: Fix the indentation manually.
 
 - LA12-039: GB: Excluded_Source_List_File change not applied
-  Problem:    When using the Excluded_Source_List_File attribute, the user
-              entered an invalid file name in the referenced text file. 
-              Inspite of correcting the file name spelling, GNATbench 
-              continued to raise a .gpr error saying that the incorrect
-              file name could not be found. This error persisted even
-              after a project clean. Only way to eliminate the error
-              was to restart Workbench.
-  Workaround: Problem is fixed in Windriver Workbench version 3.3
+  Problem:    When using the Excluded_Source_List_File attribute, and entering
+              an invalid file name in the referenced text file, an error
+              is generated about the incorrect file name, even when fixing
+              the file name manually or cleaning the project.
+  Workaround: Restart Eclipse.
 
 - LA12-034: GPS: wrong menu for target with custom name in extending project
   Problem:    When using an extending project which defines an executable name
