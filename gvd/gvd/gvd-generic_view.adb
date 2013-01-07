@@ -243,7 +243,8 @@ package body GVD.Generic_View is
                      Update (View);
                   end if;
 
-                  Widget_Callback.Connect (View, Signal_Destroy, Destroy_Access);
+                  Widget_Callback.Connect
+                    (View, Signal_Destroy, Destroy_Access);
                end if;
             end if;
 
