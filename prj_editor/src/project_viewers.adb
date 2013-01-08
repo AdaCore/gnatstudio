@@ -57,6 +57,7 @@ with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
 with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
 with Creation_Wizard.Selector;     use Creation_Wizard.Selector;
 with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
@@ -1792,11 +1793,16 @@ package body Project_Viewers is
 
       Command := new Add_Variable_Command;
       Register_Contextual_Menu
-        (Kernel, "Add configuration variable",
+        (Kernel, "Add scenario variable",
          Action => Command,
-         Label  => "Project/Add configuration variable",
-         Filter => (Create (Module => Explorer_Module_Name) and Filter2)
-                   or Create (Module => "Scenario_View"));
+         Label  => "Project/Add scenario variable",
+         Filter => (Create (Module => Explorer_Module_Name) and Filter2));
+
+      Register_Action
+        (Kernel, Action_Add_Scenario_Variable,
+         Command => Command,
+         Description => -"Add a new scenario variable to the selected project",
+         Category => -"Projects");
 
       Filter := Lookup_Filter (Kernel, "Project and file");
       Register_Contextual_Menu

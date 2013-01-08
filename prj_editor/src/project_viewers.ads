@@ -26,6 +26,8 @@ with Naming_Editors;
 
 package Project_Viewers is
 
+   Action_Add_Scenario_Variable : constant String := "Add scenario variable";
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list

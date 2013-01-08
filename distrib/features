@@ -23,6 +23,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-LC21-017 GPS: Update to Scenario View (2013-01-08)
+
+  The Scenario view has been updated to a more usable tree rendering.
+
 NF-60-LC06-024 GPS: Locations view has a toolbar (2012-12-06)
 
   Actions such as "clear locations", or the filter panel were now moved into
