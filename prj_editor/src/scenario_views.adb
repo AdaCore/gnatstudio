@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with System.Assertions;
 
 with Glib;                use Glib;
@@ -38,7 +39,6 @@ with Gtk.Tree_Store;      use Gtk.Tree_Store;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.MDI;          use Gtkada.MDI;
 
@@ -64,10 +64,6 @@ with GUI_Utils;             use GUI_Utils;
 with Traces;                use Traces;
 with XML_Utils;             use XML_Utils;
 
---------------------
--- Scenario_Views --
---------------------
-
 package body Scenario_Views is
 
    Me : constant Debug_Handle := Create ("Scenario_Views");
@@ -75,6 +71,8 @@ package body Scenario_Views is
    type Scenario_View_Module_Record is new Module_ID_Record with record
       Modes : Gtk_List_Store;
       --  The list of registered build modes
+
+      Modes_Help : Ada.Strings.Unbounded.Unbounded_String;
    end record;
    type Scenario_View_Module is access all Scenario_View_Module_Record'Class;
    overriding procedure Customize
@@ -126,12 +124,6 @@ package body Scenario_Views is
      (View : access Scenario_View_Record'Class)
       return Scenario_Variable;
    --  Returns the currently selected variable
-
-   procedure Select_Value
-     (Combo : access Gtk_Combo_Box_Text_Record'Class;
-      Value : String);
-   pragma Unreferenced (Select_Value);
-   --  Selects value in Combo, if present
 
    procedure Variable_Value_Changed
      (View     : access GObject_Record'Class;
@@ -232,11 +224,14 @@ package body Scenario_Views is
          (0 => GType_String,   --  Name of the category or variable
           1 => GType_String,   --  Current value
           2 => Gtk.Tree_Model.Get_Type, --  The valid choices for the value
-          3 => GType_Boolean)); --  Whether the value is editable
+          3 => GType_Boolean,  --  Whether the value is editable
+          4 => GType_String)); --  The tooltip
       Gtk_New (View.View, Model);
       View.View.Set_Headers_Visible (False);
       Scrolled.Add (View.View);
       Unref (Model);
+
+      View.View.Set_Tooltip_Column (4);
 
       Gtk_New (Col);
       Col.Set_Reorderable (True);
@@ -271,6 +266,7 @@ package body Scenario_Views is
       Model.Set (Iter, 0, "Build mode");
       Model.Set (Iter, 1, Kernel.Get_Build_Mode);
       Model.Set (Iter, 3, True);  --  editable
+      Model.Set (Iter, 4, To_String (Module.Modes_Help));
       Init (Val, Gtk.List_Store.Get_Type);
       Set_Object (Val, Module.Modes);
       Model.Set_Value (Iter, 2, Val);
@@ -429,30 +425,6 @@ package body Scenario_Views is
             "Scenario variable not found: " & External_Name (Var));
          return null;
    end Add_Possible_Values;
-
-   ------------------
-   -- Select_Value --
-   ------------------
-
-   procedure Select_Value
-     (Combo : access Gtk_Combo_Box_Text_Record'Class;
-      Value : String)
-   is
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model renames Combo.Get_Model;
-   begin
-      Iter := Get_Iter_First (Model);
-
-      while Iter /= Null_Iter loop
-         if Get_String (Model, Iter, 0) = Value then
-            Combo.Set_Active_Iter (Iter);
-
-            return;
-         end if;
-
-         Next (Model, Iter);
-      end loop;
-   end Select_Value;
 
    -------------------
    -- Edit_Variable --
@@ -624,6 +596,8 @@ package body Scenario_Views is
 
          declare
             Name : constant String := Get_Attribute (Node, "name", "");
+            Description : constant XML_Utils.String_Ptr :=
+              Get_Field (Node, "description");
             Shadow : constant XML_Utils.String_Ptr :=
               Get_Field (Node, "shadow");
          begin
@@ -636,6 +610,11 @@ package body Scenario_Views is
             if Shadow = null or else not Boolean'Value (Shadow.all) then
                Module.Modes.Append (Iter);
                Module.Modes.Set (Iter, 0, Name);
+            end if;
+
+            if Description /= null then
+               Append (Module.Modes_Help,
+                       "<b>" & Name & "</b>: " & Description.all & ASCII.LF);
             end if;
 
          exception
