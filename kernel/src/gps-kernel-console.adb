@@ -25,7 +25,9 @@ with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib.Object;            use Glib.Object;
 
+with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Toolbar;            use Gtk.Toolbar;
 with Gtk.Widget;             use Gtk.Widget;
@@ -62,6 +64,8 @@ package body GPS.Kernel.Console is
      "Loads the contents of a file into the Messages window, and process"
      & " locations into the Locations window.";
 
+   History_Wrap_Lines : constant History_Key := "messages-wrap-line";
+
    type GPS_Message_Record is new Interactive_Console_Record with record
       Kernel : Kernel_Handle;
    end record;
@@ -71,6 +75,9 @@ package body GPS.Kernel.Console is
    overriding procedure Create_Toolbar
      (View    : not null access GPS_Message_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access GPS_Message_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
      (Console : access GPS_Message_Record'Class;
@@ -85,7 +92,7 @@ package body GPS.Kernel.Console is
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
       Local_Toolbar      => True,
-      Local_Config       => False,
+      Local_Config       => True,
       MDI_Flags          => 0,  --  No destroy button
       Group              => Group_Consoles);
    use Messages_Views;
@@ -144,6 +151,9 @@ package body GPS.Kernel.Console is
      (Self    : access Load_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Load the contents of a file into the Messages window
+
+   procedure On_Toggle_Line_Wrap (Self : access GObject_Record'Class);
+   --  Called when the user toggles line wrapping
 
    -----------------
    -- Get_Console --
@@ -409,6 +419,22 @@ package body GPS.Kernel.Console is
       end if;
    end On_Preferences_Changed;
 
+   -------------------------
+   -- On_Toggle_Line_Wrap --
+   -------------------------
+
+   procedure On_Toggle_Line_Wrap (Self : access GObject_Record'Class) is
+      Console : constant GPS_Message := GPS_Message (Self);
+   begin
+      if Get_History
+        (Get_History (Console.Kernel).all, History_Wrap_Lines)
+      then
+         Console.Get_View.Set_Wrap_Mode (Wrap_Char);
+      else
+         Console.Get_View.Set_Wrap_Mode (Wrap_None);
+      end if;
+   end On_Toggle_Line_Wrap;
+
    ----------------
    -- Initialize --
    ----------------
@@ -418,6 +444,9 @@ package body GPS.Kernel.Console is
       Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
    begin
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, History_Wrap_Lines, Default_Value => True);
+
       Console.Kernel := Kernel_Handle (Kernel);
       Initialize
         (Console,
@@ -430,6 +459,7 @@ package body GPS.Kernel.Console is
                                           --  well under Windows ???
          Key          => "",
          Wrap_Mode    => Wrap_Char);
+      On_Toggle_Line_Wrap (Console);
       Console.Enable_Prompt_Display (False);
       Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
 
@@ -446,6 +476,25 @@ package body GPS.Kernel.Console is
          Context_Func    => null);
       return Gtk_Widget (Console.Get_View);
    end Initialize;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access GPS_Message_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Check : Gtk_Check_Menu_Item;
+   begin
+      Gtk_New (Check, -"Wrap lines");
+      Check.Set_Tooltip_Text
+        (-"Whether to wrap long lines, or require horizontal scrolling");
+      Associate (Get_History (View.Kernel).all,
+                 History_Wrap_Lines, Check, Default => True);
+      Check.On_Toggled (On_Toggle_Line_Wrap'Access, View);
+      Menu.Add (Check);
+   end Create_Menu;
 
    --------------------
    -- Create_Toolbar --

@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M108-041 GPS: line wrapping in Messages window (2013-01-09)
+
+  It is now possible to configure whether the Messages window should wrap
+  lines, or require horizontal scrolling.
+
 NF-60-LC21-017 GPS: Update to Scenario View (2013-01-08)
 
   The Scenario view has been updated to a more usable tree rendering.
