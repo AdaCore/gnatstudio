@@ -151,6 +151,8 @@ package body Variable_Editors is
       end if;
 
       Set_Transient_For (Editor, Get_Main_Window (Kernel));
+      Editor.Set_Screen (Get_Main_Window (Kernel).Get_Screen);
+      Editor.Set_Position (Win_Pos_Center_On_Parent);
       Set_Title (Editor, Title);
 
       Set_Mode (Get_Selection (Editor.Values_List), Selection_Single);
