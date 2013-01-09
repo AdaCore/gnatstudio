@@ -86,8 +86,8 @@ package body Scenario_Views is
 
    type Scenario_View_Record is new Generic_Views.View_Record with record
       View          : Gtk.Tree_View.Gtk_Tree_View;
-      Scenario_Node : Gtk_Tree_Iter;
-      Build_Node    : Gtk_Tree_Iter;
+      Scenario_Node : Gtk_Tree_Path;
+      Build_Node    : Gtk_Tree_Path;
       Kernel        : GPS.Kernel.Kernel_Handle;
    end record;
    overriding procedure Create_Toolbar
@@ -190,8 +190,9 @@ package body Scenario_Views is
       View  : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
       Mode  : constant String := String_Hooks_Args (Data.all).Value;
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-View.View.Get_Model);
+      Build : constant Gtk_Tree_Iter := Model.Get_Iter (View.Build_Node);
    begin
-      Model.Set (View.Build_Node, 1, Mode);
+      Model.Set (Build, 1, Mode);
    end On_Build_Mode_Changed;
 
    ----------------
@@ -214,6 +215,7 @@ package body Scenario_Views is
       Combo    : Gtk_Cell_Renderer_Combo;
       Col_Number : Gint;
       Val      : GValue;
+      Iter     : Gtk_Tree_Iter;
       pragma Unreferenced (Col_Number);
    begin
       View.Kernel := Kernel_Handle (Kernel);
@@ -264,20 +266,22 @@ package body Scenario_Views is
 
       --  Show the build modes
 
-      Model.Append (View.Build_Node, Null_Iter);
-      Model.Set (View.Build_Node, 0, "Build mode");
-      Model.Set (View.Build_Node, 1, Kernel.Get_Build_Mode);
-      Model.Set (View.Build_Node, 3, True);  --  editable
+      Model.Append (Iter, Null_Iter);
+      View.Build_Node := Model.Get_Path (Iter);
+      Model.Set (Iter, 0, "Build mode");
+      Model.Set (Iter, 1, Kernel.Get_Build_Mode);
+      Model.Set (Iter, 3, True);  --  editable
       Init (Val, Gtk.List_Store.Get_Type);
       Set_Object (Val, Module.Modes);
-      Model.Set_Value (View.Build_Node, 2, Val);
+      Model.Set_Value (Iter, 2, Val);
       Unset (Val);
 
       --  Prepare the scenario variables node
 
-      Model.Append (View.Scenario_Node, Null_Iter);
-      Model.Set (View.Scenario_Node, 0, "Scenario Variables");
-      Model.Set (View.Scenario_Node, 3, False);  --  not editable
+      Model.Append (Iter, Null_Iter);
+      View.Scenario_Node := Model.Get_Path (Iter);
+      Model.Set (Iter, 0, "Scenario Variables");
+      Model.Set (Iter, 3, False);  --  not editable
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
@@ -331,14 +335,18 @@ package body Scenario_Views is
    begin
       Selection.Get_Selected (M, Iter);
       if Iter /= Null_Iter
-        and then Model.Parent (Iter) = View.Scenario_Node
+        and then Model.Parent (Iter) = Model.Get_Iter (View.Scenario_Node)
       then
+         Trace (Me, "MANU Selected variable");
          declare
             Variable : constant String := Model.Get_String (Iter, 0);
          begin
             return Get_Project_Tree
               (View.Kernel).Scenario_Variables (Variable);
          end;
+      elsif Iter /= Null_Iter then
+         Trace (Me, "MANU not a variable " & Model.Get_String (Iter, 0));
+         return No_Variable;
       else
          return No_Variable;
       end if;
@@ -366,7 +374,7 @@ package body Scenario_Views is
 
       --  Have we changed a scenario variable ?
 
-      if Model.Parent (Iter) = V.Scenario_Node then
+      if Model.Parent (Iter) = Model.Get_Iter (V.Scenario_Node) then
          declare
             Value : constant String := List.Get_String (New_Iter, 0);
             Variable : constant String := Model.Get_String (Iter, 0);
@@ -453,7 +461,6 @@ package body Scenario_Views is
    procedure Edit_Variable (View : access GObject_Record'Class) is
       V : constant Scenario_View := Scenario_View (View);
       Variable : constant Scenario_Variable := Selected_Variable (V);
-
       Edit : New_Var_Edit;
    begin
       if Variable /= No_Variable then
@@ -550,6 +557,7 @@ package body Scenario_Views is
       Iter   : Gtk_Tree_Iter;
       Model  : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
       Val    : GValue;
+      Scenario : constant Gtk_Tree_Iter := Model.Get_Iter (V.Scenario_Node);
    begin
       --  There is a small problem here: Refresh might be called while one of
       --  the combo boxes is still displayed. Thus, if we destroy it now, any
@@ -558,7 +566,7 @@ package body Scenario_Views is
       --  This also saves some refreshing when the values would be reflected
       --  automatically anyway.
 
-      Remove_Child_Nodes (Model, V.Scenario_Node);
+      Remove_Child_Nodes (Model, Scenario);
 
       declare
          Scenar_Var : constant Scenario_Variable_Array :=
@@ -569,7 +577,7 @@ package body Scenario_Views is
       begin
          if Scenar_Var'Length /= 0 then
             for J in Scenar_Var'Range loop
-               Model.Append (Iter, V.Scenario_Node);
+               Model.Append (Iter, Scenario);
 
                Row := Guint (J - Scenar_Var'First) + 1;
 
@@ -590,7 +598,7 @@ package body Scenario_Views is
                end;
             end loop;
 
-            P := Model.Get_Path (V.Scenario_Node);
+            P := Model.Get_Path (Scenario);
             Dummy := V.View.Expand_Row (Path => P, Open_All => False);
             Path_Free (P);
          end if;
