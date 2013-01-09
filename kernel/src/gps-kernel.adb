@@ -68,6 +68,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Properties;            use GPS.Properties;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
@@ -93,6 +94,10 @@ package body GPS.Kernel is
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
+
+   Build_Mode_Property : constant String := "Build-Mode";
+   --  The name of a GPS.Properties to store the current build mode. Use
+   --  Get_Build_Mode below instead
 
    use Action_Filters_Htable.String_Hash_Table;
 
@@ -2052,5 +2057,66 @@ package body GPS.Kernel is
    begin
       Kernel.Messages.Raise_Console;
    end Raise_Console;
+
+   --------------------
+   -- Set_Build_Mode --
+   --------------------
+
+   procedure Set_Build_Mode
+     (Kernel : access Kernel_Handle_Record'Class;
+      New_Mode : String)
+   is
+      Data   : aliased String_Hooks_Args :=
+        (Hooks_Data with
+         Length => New_Mode'Length,
+         Value  => New_Mode);
+      Prop : aliased String_Property_Access;
+   begin
+      Trace (Me, "Change build mode to: " & New_Mode);
+
+      if New_Mode /= "default" then
+         Prop := new String_Property;
+         Prop.Value := new String'(New_Mode);
+         Set_Property
+           (Kernel,
+            GPS.Kernel.Project.Get_Project (Kernel),
+            Build_Mode_Property,
+            Prop,
+            Persistent => True);
+      else
+         GPS.Kernel.Properties.Remove_Property
+           (Kernel,
+            GPS.Kernel.Project.Get_Project (Kernel),
+            Build_Mode_Property);
+      end if;
+
+      Run_Hook (Kernel, Build_Mode_Changed_Hook, Data'Access);
+      Destroy (Data);
+   end Set_Build_Mode;
+
+   --------------------
+   -- Get_Build_Mode --
+   --------------------
+
+   function Get_Build_Mode
+     (Kernel : access Kernel_Handle_Record'Class) return String
+   is
+      Prop  : String_Property;
+      Found : Boolean;
+   begin
+      --  This needs to be kept in sync with
+      --  Builder_Facility_Module.On_Build_Mode_Changed
+
+      Get_Property
+        (Prop,
+         Project => GPS.Kernel.Project.Get_Project (Kernel),
+         Name    => Build_Mode_Property,
+         Found   => Found);
+      if Found then
+         return Prop.Value.all;
+      else
+         return "default";
+      end if;
+   end Get_Build_Mode;
 
 end GPS.Kernel;

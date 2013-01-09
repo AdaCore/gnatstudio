@@ -367,14 +367,11 @@ package body CodePeer.Module is
       Force       : Boolean;
       Build_Target : String := "Run CodePeer")
    is
-      Saved_Mode    : constant String :=
-        CodePeer.Shell_Commands.Get_Build_Mode
-          (Kernel_Handle (Module.Kernel));
+      Saved_Mode    : constant String := Module.Kernel.Get_Build_Mode;
       Project : constant Project_Type := Get_Project (Module.Kernel);
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
       Module.Action := Load_UI;
 
       CodePeer.Shell_Commands.Build_Target_Execute
@@ -386,8 +383,7 @@ package body CodePeer.Module is
          Synchronous => False,
          Dir         => Project.Object_Dir);
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Saved_Mode);
+      Module.Kernel.Set_Build_Mode (Saved_Mode);
    end Review;
 
    --------------------
@@ -820,20 +816,16 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Mode : constant String := Get_Build_Mode (Kernel);
-
+      Mode : constant String := Kernel.Get_Build_Mode;
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
       CodePeer.Module.Bridge.Inspection (Module);
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Display_Code_Review;
 
    --------------------------
@@ -845,12 +837,9 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Mode : constant String := Get_Build_Mode (Kernel);
-
+      Mode : constant String := Kernel.Get_Build_Mode;
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Info_File : constant Virtual_File :=
@@ -872,14 +861,12 @@ package body CodePeer.Module is
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Regenerate_Report;
 
    --------------------------
@@ -891,11 +878,9 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Mode : constant String := Get_Build_Mode (Kernel);
+      Mode : constant String := Kernel.Get_Build_Mode;
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          HTML_File : constant Virtual_File :=
@@ -914,14 +899,12 @@ package body CodePeer.Module is
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_HTML_Report;
 
    --------------------------
@@ -935,12 +918,10 @@ package body CodePeer.Module is
       pragma Unreferenced (Widget);
 
       Context : constant Selection_Context := Get_Current_Context (Kernel);
-      Mode    : constant String :=
-                  Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      Mode    : constant String := Module.Kernel.Get_Build_Mode;
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Text_File : constant Virtual_File :=
@@ -963,14 +944,12 @@ package body CodePeer.Module is
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Edit_Text_Listing;
 
    ---------------------------
@@ -983,12 +962,10 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Widget);
 
-      Mode : constant String :=
-               Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      Mode : constant String := Module.Kernel.Get_Build_Mode;
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Text_File : constant Virtual_File :=
@@ -1009,14 +986,12 @@ package body CodePeer.Module is
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Edit_Text_Overview;
 
    -----------------
@@ -1028,12 +1003,10 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Mode  : constant String :=
-                Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      Mode  : constant String := Module.Kernel.Get_Build_Mode;
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Log_File : constant Virtual_File :=
@@ -1054,14 +1027,12 @@ package body CodePeer.Module is
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Edit_Log;
 
    --------------------
@@ -1073,12 +1044,10 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Mode : constant String :=
-               Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      Mode : constant String := Module.Kernel.Get_Build_Mode;
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Lock_File : constant Virtual_File :=
@@ -1105,14 +1074,12 @@ package body CodePeer.Module is
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Remove_Lock;
 
    ------------------------------
@@ -1338,9 +1305,7 @@ package body CodePeer.Module is
                     Compilation_Finished_Hooks_Args :=
                       GPS.Kernel.Standard_Hooks.
                         Compilation_Finished_Hooks_Args (Data.all);
-      Mode      : constant String :=
-                    CodePeer.Shell_Commands.Get_Build_Mode
-                      (GPS.Kernel.Kernel_Handle (Kernel));
+      Mode      : constant String := Kernel.Get_Build_Mode;
       Action    : constant CodePeer_Action := Module.Action;
 
    begin
@@ -1370,11 +1335,9 @@ package body CodePeer.Module is
               (Module, Force => True, Build_Target => "Run CodePeer Quickly");
 
          when Load_UI =>
-            CodePeer.Shell_Commands.Set_Build_Mode
-              (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
+            Kernel.Set_Build_Mode ("codepeer");
             CodePeer.Module.Bridge.Inspection (Module);
-            CodePeer.Shell_Commands.Set_Build_Mode
-              (GPS.Kernel.Kernel_Handle (Kernel), Mode);
+            Kernel.Set_Build_Mode (Mode);
 
          when None => null;
       end case;
@@ -1602,23 +1565,16 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Mode : constant String := Get_Build_Mode (Kernel);
-
+      Mode : constant String := Kernel.Get_Build_Mode;
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
-
+      Module.Kernel.Set_Build_Mode ("codepeer");
       Bridge.Remove_Inspection_Cache_File (Module);
-
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Remove_XML_Review;
 
    -------------------------

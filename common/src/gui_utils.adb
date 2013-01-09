@@ -1868,4 +1868,22 @@ package body GUI_Utils is
          return Lighten (Color);
       end if;
    end Darken_Or_Lighten;
+
+   ------------------------
+   -- Remove_Child_Nodes --
+   ------------------------
+
+   procedure Remove_Child_Nodes
+     (Model  : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Parent : Gtk_Tree_Iter)
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      loop
+         Iter := Model.Nth_Child (Parent, 0);
+         exit when Iter = Null_Iter;
+         Model.Remove (Iter);
+      end loop;
+   end Remove_Child_Nodes;
+
 end GUI_Utils;

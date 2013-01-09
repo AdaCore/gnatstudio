@@ -48,6 +48,7 @@ with GNAT.Case_Util;        use GNAT.Case_Util;
 with GNAT.Strings;          use GNAT.Strings;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
@@ -55,17 +56,38 @@ with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Project_Viewers;       use Project_Viewers;
 with Variable_Editors;      use Variable_Editors;
 with GPS.Intl;              use GPS.Intl;
+with GUI_Utils;             use GUI_Utils;
 with Traces;                use Traces;
+with XML_Utils;             use XML_Utils;
+
+--------------------
+-- Scenario_Views --
+--------------------
 
 package body Scenario_Views is
 
    Me : constant Debug_Handle := Create ("Scenario_Views");
 
+   type Scenario_View_Module_Record is new Module_ID_Record with record
+      Modes : Gtk_List_Store;
+      --  The list of registered build modes
+   end record;
+   type Scenario_View_Module is access all Scenario_View_Module_Record'Class;
+   overriding procedure Customize
+     (Module : access Scenario_View_Module_Record;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Node   : XML_Utils.Node_Ptr;
+      Level  : Customization_Level);
+   --  See inherited documentation
+
    type Scenario_View_Record is new Generic_Views.View_Record with record
       View          : Gtk.Tree_View.Gtk_Tree_View;
+      Scenario_Node : Gtk_Tree_Iter;
+      Build_Node    : Gtk_Tree_Iter;
       Kernel        : GPS.Kernel.Kernel_Handle;
    end record;
    overriding procedure Create_Toolbar
@@ -113,7 +135,7 @@ package body Scenario_Views is
 
    procedure Variable_Value_Changed
      (View     : access GObject_Record'Class;
-      Path     : UTF8_String;
+      Path     : Glib.UTF8_String;
       New_Iter : Gtk_Tree_Iter);
    --  Called when the value of one of the variables has changed.
    --  This recomputes the scenario view, so that changes are reflected in
@@ -138,6 +160,11 @@ package body Scenario_Views is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
+   procedure On_Build_Mode_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a new build mode is selected
+
    ----------------------------
    -- On_Preferences_Changed --
    ----------------------------
@@ -152,6 +179,21 @@ package body Scenario_Views is
       end if;
    end On_Preferences_Changed;
 
+   ---------------------------
+   -- On_Build_Mode_Changed --
+   ---------------------------
+
+   procedure On_Build_Mode_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      View  : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
+      Mode  : constant String := String_Hooks_Args (Data.all).Value;
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-View.View.Get_Model);
+   begin
+      Model.Set (View.Build_Node, 1, Mode);
+   end On_Build_Mode_Changed;
+
    ----------------
    -- Initialize --
    ----------------
@@ -161,6 +203,9 @@ package body Scenario_Views is
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtk_Widget
    is
+      Module : constant Scenario_View_Module :=
+        Scenario_View_Module (Scenario_Views.Get_Module);
+
       Hook     : Refresh_Hook;
       Scrolled : Gtk_Scrolled_Window;
       Model    : Gtk_Tree_Store;
@@ -168,6 +213,7 @@ package body Scenario_Views is
       Text     : Gtk_Cell_Renderer_Text;
       Combo    : Gtk_Cell_Renderer_Combo;
       Col_Number : Gint;
+      Val      : GValue;
       pragma Unreferenced (Col_Number);
    begin
       View.Kernel := Kernel_Handle (Kernel);
@@ -216,6 +262,23 @@ package body Scenario_Views is
 
       Combo.On_Changed (Variable_Value_Changed'Access, View);
 
+      --  Show the build modes
+
+      Model.Append (View.Build_Node, Null_Iter);
+      Model.Set (View.Build_Node, 0, "Build mode");
+      Model.Set (View.Build_Node, 1, Kernel.Get_Build_Mode);
+      Model.Set (View.Build_Node, 3, True);  --  editable
+      Init (Val, Gtk.List_Store.Get_Type);
+      Set_Object (Val, Module.Modes);
+      Model.Set_Value (View.Build_Node, 2, Val);
+      Unset (Val);
+
+      --  Prepare the scenario variables node
+
+      Model.Append (View.Scenario_Node, Null_Iter);
+      Model.Set (View.Scenario_Node, 0, "Scenario Variables");
+      Model.Set (View.Scenario_Node, 3, False);  --  not editable
+
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
       --  same thing in both cases.
@@ -232,6 +295,11 @@ package body Scenario_Views is
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "scenario_views.preferences_changed",
                 Watch => GObject (View));
+      Add_Hook (Kernel, Build_Mode_Changed_Hook,
+                Wrapper (On_Build_Mode_Changed'Access),
+                Name => "scenario_view.build_mode_changed",
+                Watch => GObject (View));
+
       Set_Font_And_Colors (View.View, Fixed_Font => False);
 
       --  Update the viewer with the current project
@@ -280,13 +348,12 @@ package body Scenario_Views is
 
    procedure Variable_Value_Changed
      (View     : access GObject_Record'Class;
-      Path     : UTF8_String;
+      Path     : Glib.UTF8_String;
       New_Iter : Gtk_Tree_Iter)
    is
       V : constant Scenario_View := Scenario_View (View);
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
       Iter  : constant Gtk_Tree_Iter := Model.Get_Iter_From_String (Path);
-      Variable : constant String := Model.Get_String (Iter, 0);
 
       Val  : GValue;
       List : Gtk_List_Store;
@@ -295,17 +362,26 @@ package body Scenario_Views is
       List := Gtk_List_Store (Get_Object (Val));
       Unset (Val);
 
-      declare
-         Value : constant String := List.Get_String (New_Iter, 0);
-         Var   : Scenario_Variable :=
-           Get_Project_Tree (V.Kernel).Scenario_Variables (Variable);
-      begin
-         Trace (Me, "Set value of '" & Variable & "' to '"
-                & Value & "'");
-         Set_Value (Var, Value);
-         Get_Registry (V.Kernel).Tree.Change_Environment ((1 => Var));
-         Recompute_View (V.Kernel);
-      end;
+      --  Have we changed a scenario variable ?
+
+      if Model.Parent (Iter) = V.Scenario_Node then
+         declare
+            Value : constant String := List.Get_String (New_Iter, 0);
+            Variable : constant String := Model.Get_String (Iter, 0);
+            Var   : Scenario_Variable :=
+              Get_Project_Tree (V.Kernel).Scenario_Variables (Variable);
+         begin
+            Trace (Me, "Set value of '" & Variable & "' to '"
+                   & Value & "'");
+            Set_Value (Var, Value);
+            Get_Registry (V.Kernel).Tree.Change_Environment ((1 => Var));
+            Recompute_View (V.Kernel);
+         end;
+
+      else
+         --  The build mode
+         V.Kernel.Set_Build_Mode (New_Mode => List.Get_String (New_Iter, 0));
+      end if;
    end Variable_Value_Changed;
 
    -------------------------
@@ -464,8 +540,8 @@ package body Scenario_Views is
       Row    : Guint;
       pragma Unreferenced (Row);
       Iter   : Gtk_Tree_Iter;
-      Parent : Gtk_Tree_Iter;
       Model  : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
+      Val    : GValue;
    begin
       --  There is a small problem here: Refresh might be called while one of
       --  the combo boxes is still displayed. Thus, if we destroy it now, any
@@ -474,66 +550,101 @@ package body Scenario_Views is
       --  This also saves some refreshing when the values would be reflected
       --  automatically anyway.
 
-      Model.Clear;
+      Remove_Child_Nodes (Model, V.Scenario_Node);
 
-      --  No project => Clean up the scenario viewer
-      if Get_Project (Kernel) = No_Project then
-         Model.Append (Parent, Null_Iter);
-         Model.Set (Parent, 0, "No project is loaded");
-         Model.Set (Parent, 3, False);  --  not editable
+      declare
+         Scenar_Var : constant Scenario_Variable_Array :=
+           Scenario_Variables (Kernel);
+         Dummy : Boolean;
+         P : Gtk_Tree_Path;
+         pragma Unreferenced (Dummy);
+      begin
+         if Scenar_Var'Length /= 0 then
+            for J in Scenar_Var'Range loop
+               Model.Append (Iter, V.Scenario_Node);
 
-      else
+               Row := Guint (J - Scenar_Var'First) + 1;
+
+               declare
+                  Name : String := External_Name (Scenar_Var (J));
+               begin
+                  To_Mixed (Name);
+
+                  Model.Set (Iter, 0, Name);
+                  Model.Set (Iter, 1, Value (Scenar_Var (J)));
+                  Model.Set (Iter, 3, True);  --  editable
+
+                  Init (Val, Gtk.List_Store.Get_Type);
+                  Set_Object
+                    (Val, Add_Possible_Values (Kernel, Scenar_Var (J)));
+                  Model.Set_Value (Iter, 2, Val);
+                  Unset (Val);
+               end;
+            end loop;
+
+            P := Model.Get_Path (V.Scenario_Node);
+            Dummy := V.View.Expand_Row (Path => P, Open_All => False);
+            Path_Free (P);
+         end if;
+      end;
+   end Execute;
+
+   ---------------
+   -- Customize --
+   ---------------
+
+   overriding procedure Customize
+     (Module : access Scenario_View_Module_Record;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Node   : XML_Utils.Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (File, Level);
+      Iter       : Gtk_Tree_Iter;
+
+   begin
+      if Node.Tag.all = "builder-mode" then
+         --  Create the mode and add it to the list of supported modes
+
          declare
-            Scenar_Var : constant Scenario_Variable_Array :=
-                           Scenario_Variables (Kernel);
-            Val : GValue;
-            Dummy : Boolean;
-            P : Gtk_Tree_Path;
-            pragma Unreferenced (Dummy);
+            Name : constant String := Get_Attribute (Node, "name", "");
+            Shadow : constant XML_Utils.String_Ptr :=
+              Get_Field (Node, "shadow");
          begin
-            Model.Append (Parent, Null_Iter);
-            Model.Set (Parent, 0, "Scenario Variables");
-            Model.Set (Parent, 3, False);  --  not editable
-
-            if Scenar_Var'Length /= 0 then
-               for J in Scenar_Var'Range loop
-                  Model.Append (Iter, Parent);
-
-                  Row := Guint (J - Scenar_Var'First) + 1;
-
-                  declare
-                     Name : String := External_Name (Scenar_Var (J));
-                  begin
-                     To_Mixed (Name);
-
-                     Model.Set (Iter, 0, Name);
-                     Model.Set (Iter, 1, Value (Scenar_Var (J)));
-                     Model.Set (Iter, 3, True);  --  editable
-
-                     Init (Val, Gtk.List_Store.Get_Type);
-                     Set_Object
-                       (Val, Add_Possible_Values (Kernel, Scenar_Var (J)));
-                     Model.Set_Value (Iter, 2, Val);
-                     Unset (Val);
-                  end;
-
-                  P := Model.Get_Path (Parent);
-                  Dummy := V.View.Expand_Row (Path => P, Open_All => False);
-                  Path_Free (P);
-               end loop;
+            if Name = "" then
+               return;
             end if;
+
+            --  Add the mode to the combo if it is not a shadow mode
+
+            if Shadow = null or else not Boolean'Value (Shadow.all) then
+               Module.Modes.Append (Iter);
+               Module.Modes.Set (Iter, 0, Name);
+            end if;
+
+         exception
+            when E : Constraint_Error =>
+               Trace (Me, E);
          end;
       end if;
-   end Execute;
+   end Customize;
 
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
+      M : constant Scenario_View_Module := new Scenario_View_Module_Record;
    begin
+      Gtk_New (M.Modes, (0 => GType_String));
+
+      --  Make sure it will never be destroyed even if we close the view
+      Ref (M.Modes);
+
       Scenario_Views.Register_Module
-        (Kernel, Menu_Name => -"Views/_Scenario");
+        (Kernel,
+         ID        => Module_ID (M),
+         Menu_Name => -"Views/_Scenario");
    end Register_Module;
 
 end Scenario_Views;

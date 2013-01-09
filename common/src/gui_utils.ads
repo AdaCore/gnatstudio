@@ -242,6 +242,11 @@ package GUI_Utils is
    --  Find in Model a node matching Name in Column.
    --  return Gtk_Null_Iter if there is no such node.
 
+   procedure Remove_Child_Nodes
+     (Model  : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Parent : Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Remove all children nodes of Parent
+
    procedure Expand_Row
      (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);

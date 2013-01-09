@@ -49,7 +49,6 @@ with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Build_Command_Utils;           use Build_Command_Utils;
 
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Properties;            use GPS.Properties;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -59,7 +58,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;
@@ -93,9 +91,6 @@ package body Builder_Facility_Module is
 
    Main_Menu : constant String := '/' & (-"_Build") & '/';
    --  -"Build"
-
-   Mode_Property : constant String := "Build-Mode";
-   --  History to store which mode is selected
 
    Output_Chopper   : aliased Output_Choppers.Output_Parser_Fabric;
    Text_Splitter    : aliased Text_Splitters.Output_Parser_Fabric;
@@ -359,6 +354,11 @@ package body Builder_Facility_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Any_Type;
    --  Called when computing build targets
+
+   procedure On_Build_Mode_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when the build mode is being changed by the user
 
    procedure Add_Action_For_Target (T : Target_Access);
    --  Register a Kernel Action to build T
@@ -1222,10 +1222,6 @@ package body Builder_Facility_Module is
    procedure On_Mode_Changed (Widget : access Gtk_Combo_Box_Text_Record'Class)
    is
       Mode : constant String := Get_Active_Text (Widget);
-      Reg  : Project_Registry renames
-               Project_Registry (Get_Registry (Get_Kernel).all);
-      Prop : aliased String_Property_Access;
-
    begin
       --  Do not consider a change to be effective if we are just creating
       --  items or browsign through them.
@@ -1236,27 +1232,7 @@ package body Builder_Facility_Module is
          return;
       end if;
 
-      if Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Registry, Mode) then
-         Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Registry, Mode));
-         Recompute_View (Get_Kernel);
-      end if;
-
-      if Mode /= "default" then
-         Prop := new String_Property;
-         Prop.Value := new String'(Mode);
-         Set_Property
-           (Get_Kernel,
-            GPS.Kernel.Project.Get_Project (Get_Kernel),
-            Mode_Property,
-            Prop,
-            True);
-
-      else
-         GPS.Kernel.Properties.Remove_Property
-           (Get_Kernel,
-            GPS.Kernel.Project.Get_Project (Get_Kernel),
-            Mode_Property);
-      end if;
+      Get_Kernel.Set_Build_Mode (New_Mode => Mode);
    end On_Mode_Changed;
 
    -------------------------------
@@ -1634,33 +1610,23 @@ package body Builder_Facility_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       use type Glib.Gint;
-
-      Prop  : String_Property;
-      Found : Boolean;
+      Mode  : constant String := Kernel.Get_Build_Mode;
 
    begin
-      Prop.Get_Property
-        (GPS.Kernel.Project.Get_Project (Kernel), Mode_Property, Found);
+      if Mode /= "default" then
+         --  Going in reverse order, so if unknown mode is specified in the
+         --  property then 'default' mode will be selected
 
-      if Found then
-         declare
-            Mode : constant String := Prop.Value.all;
-         begin
-            --  Going in reverse order, so if unknown mode is specified in the
-            --  property then 'default' mode will be selected
+         Builder_Module_ID.Browsing_For_Mode := To_Unbounded_String (Mode);
 
-            Builder_Module_ID.Browsing_For_Mode := To_Unbounded_String (Mode);
+         for J in reverse 0 ..
+           N_Children (Builder_Module_ID.Modes_Combo.Get_Model) - 1
+         loop
+            Builder_Module_ID.Modes_Combo.Set_Active (J);
+            exit when Builder_Module_ID.Modes_Combo.Get_Active_Text = Mode;
+         end loop;
 
-            for J in reverse 0 ..
-              N_Children (Builder_Module_ID.Modes_Combo.Get_Model) - 1
-            loop
-               Builder_Module_ID.Modes_Combo.Set_Active (J);
-
-               exit when Builder_Module_ID.Modes_Combo.Get_Active_Text = Mode;
-            end loop;
-
-            Builder_Module_ID.Browsing_For_Mode := Null_Unbounded_String;
-         end;
+         Builder_Module_ID.Browsing_For_Mode := Null_Unbounded_String;
 
       elsif Builder_Module_ID.Modes_Combo /= null then
          Builder_Module_ID.Modes_Combo.Set_Active (0);
@@ -1936,6 +1902,9 @@ package body Builder_Facility_Module is
       Add_Hook (Kernel, Compute_Build_Targets_Hook,
                 Wrapper (On_Compute_Build_Targets'Access),
                 Name => "builder_facility_module.compute_build_targets");
+      Add_Hook (Kernel, Build_Mode_Changed_Hook,
+                Wrapper (On_Build_Mode_Changed'Access),
+                Name => "builder_facility_module.build_mode_changed");
 
       Add_Hook
         (Kernel => Kernel,
@@ -2172,44 +2141,39 @@ package body Builder_Facility_Module is
       end if;
    end Set_Subdir;
 
-   --------------
-   -- Get_Mode --
-   --------------
+   ---------------------------
+   -- On_Build_Mode_Changed --
+   ---------------------------
 
-   function Get_Mode return String is
-   begin
-      if Builder_Module_ID.Modes_Combo = null then
-         return "";
-      end if;
-
-      return (Get_Active_Text (Builder_Module_ID.Modes_Combo));
-   end Get_Mode;
-
-   --------------
-   -- Set_Mode --
-   --------------
-
-   procedure Set_Mode (Mode : String) is
+   procedure On_Build_Mode_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      Mode : constant String := String_Hooks_Args (Data.all).Value;
+      Reg  : Project_Registry renames
+               Project_Registry (Get_Registry (Kernel).all);
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
    begin
-      if Builder_Module_ID.Modes_Combo = null then
-         return;
+      if Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Registry, Mode) then
+         Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Registry, Mode));
+         Recompute_View (Get_Kernel);
       end if;
 
-      Model := Builder_Module_ID.Modes_Combo.Get_Model;
+      if Builder_Module_ID.Modes_Combo /= null then
+         Model := Builder_Module_ID.Modes_Combo.Get_Model;
 
-      Iter := Get_Iter_First (Model);
+         Iter := Get_Iter_First (Model);
 
-      while Iter /= Null_Iter loop
-         if Get_String (Model, Iter, 0) = Mode then
-            Builder_Module_ID.Modes_Combo.Set_Active_Iter (Iter);
-            return;
-         end if;
-
-         Next (Model, Iter);
-      end loop;
-   end Set_Mode;
+         while Iter /= Null_Iter loop
+            if Get_String (Model, Iter, 0) = Mode then
+               Builder_Module_ID.Modes_Combo.Set_Active_Iter (Iter);
+               exit;
+            end if;
+            Next (Model, Iter);
+         end loop;
+      end if;
+   end On_Build_Mode_Changed;
 
    ----------------------------------
    -- Previous_Background_Build_Id --

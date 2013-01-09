@@ -878,6 +878,29 @@ package GPS.Kernel is
    --  of Makefile targets. The string parameter gives the kind of target to
    --  be computed (e.g. "main", "makefile").
 
+   -----------------
+   -- Build modes --
+   -----------------
+
+   Build_Mode_Changed_Hook : constant Hook_Name :=
+                               To_Hook_Name ("build_mode_changed");
+   --  Hook run to request the change of the build mode
+
+   procedure Set_Build_Mode
+     (Kernel : access Kernel_Handle_Record'Class;
+      New_Mode : String);
+   --  Called when a new build mode is being selected. The name of that mode is
+   --  passed as parameter to the Build_Mode_Changed_Hook. At the time the hook
+   --  is run, various settings like the object's subdir might not have been
+   --  set yet, since they are set by listeners on that hook.
+
+   function Get_Build_Mode
+     (Kernel : access Kernel_Handle_Record'Class) return String;
+   --  Returns the current build mode.
+   --  This build mode is in fact stored as a property of the root project by
+   --  the builder module, so this function is a convenient to retrieve that
+   --  property.
+
 private
 
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);

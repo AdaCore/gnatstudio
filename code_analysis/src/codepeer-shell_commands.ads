@@ -38,12 +38,4 @@ package CodePeer.Shell_Commands is
       Dir         : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    --  Executes BuildTarget.execute function.
 
-   function Get_Build_Mode (Kernel : GPS.Kernel.Kernel_Handle) return String;
-   --  Executes get_build_mode function.
-
-   procedure Set_Build_Mode
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      Mode   : String);
-   --  Executes set_build_mode function.
-
 end CodePeer.Shell_Commands;

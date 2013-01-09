@@ -382,11 +382,10 @@ package body Builder_Facility_Module.Scripts is
                         Main         => No_File);
 
       elsif Command = "get_build_mode" then
-         Set_Return_Value (Data, Get_Mode);
+         Set_Return_Value (Data, Kernel.Get_Build_Mode);
 
       elsif Command = "set_build_mode" then
-         Set_Mode (Nth_Arg (Data, 1, ""));
-
+         Kernel.Set_Build_Mode (Nth_Arg (Data, 1, ""));
       end if;
    end Shell_Handler;
 
