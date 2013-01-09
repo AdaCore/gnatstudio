@@ -20,6 +20,7 @@ with Gtk.GEntry;
 with Gtk.Tool_Item;
 with Gtk.Toolbar;
 with GPS.Kernel;
+with Generic_Views;
 
 package GPS.Location_View_Filter_Panel is
 
@@ -29,7 +30,8 @@ package GPS.Location_View_Filter_Panel is
      access all Locations_Filter_Panel_Record'Class;
 
    function Create_And_Append
-     (Kernel  : GPS.Kernel.Kernel_Handle;
+     (Self    : not null access Generic_Views.View_Record'Class;
+      Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
       return Locations_Filter_Panel;
    --  Create a new filter panel, and add it to the toolbar.

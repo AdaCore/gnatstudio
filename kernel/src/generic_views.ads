@@ -28,6 +28,7 @@ with Gtkada.Handlers;
 with Gtk.Box;
 with Gtk.Menu;
 with Gtk.Toolbar;
+with Gtk.Tool_Item;
 with Gtk.Widget;
 with Gtkada.MDI;
 
@@ -69,6 +70,17 @@ package Generic_Views is
    --  Fill the menu created by the local configuration menu (see Local_Config
    --  in the generic formal parameters below).
    --  This menu should contain entries that configure the current view.
+
+   procedure Append_Toolbar
+     (Self      : not null access View_Record;
+      Toolbar   : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Item      : not null access Gtk.Tool_Item.Gtk_Tool_Item_Record'Class;
+      Is_Filter : Boolean := False);
+   --  Appends an item to the local toolbar.
+   --  If Is_Filter is True, the item will be right-aligned.
+   --  It is better to use this procedure than Gtk.Toolbar.Insert, since the
+   --  latter makes it harder to know how to append items to the left or to
+   --  the right.
 
    ------------------
    -- Simple_Views --

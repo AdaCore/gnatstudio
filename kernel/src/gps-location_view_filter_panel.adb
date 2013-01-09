@@ -24,7 +24,6 @@ with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.Separator_Tool_Item;  use Gtk.Separator_Tool_Item;
 with Gtk.Handlers;
 with Gtk.Toggle_Button;
 with Gtk.Widget;
@@ -146,7 +145,8 @@ package body GPS.Location_View_Filter_Panel is
    -----------------------
 
    function Create_And_Append
-     (Kernel  : GPS.Kernel.Kernel_Handle;
+     (Self    : not null access Generic_Views.View_Record'Class;
+      Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
       return Locations_Filter_Panel
    is
@@ -155,7 +155,6 @@ package body GPS.Location_View_Filter_Panel is
       Item   : Gtk.Tool_Item.Gtk_Tool_Item;
       Regexp : Gtk_Check_Button;
       Hide   : Gtk_Check_Button;
-      Sep    : Gtk_Separator_Tool_Item;
    begin
       Gtk.Tool_Item.Initialize (Panel);
       Glib.Object.Initialize_Class_Record
@@ -165,10 +164,7 @@ package body GPS.Location_View_Filter_Panel is
          "GPSLocationViewFilterPanel",
          Signals_Parameters);
 
-      Panel.Kernel := Kernel;
-
-      Gtk_New (Sep);
-      Toolbar.Insert (Sep);
+      Panel.Kernel := Kernel_Handle (Kernel);
 
       --  Pattern entry
 
@@ -190,7 +186,7 @@ package body GPS.Location_View_Filter_Panel is
         (Panel.Pattern, Gtk.GEntry.Signal_Icon_Press, On_Clear_Entry'Access);
 
       Panel.Add (Panel.Pattern);
-      Toolbar.Insert (Panel);
+      Self.Append_Toolbar (Toolbar, Panel, Is_Filter => True);
 
       --  Regexp check button
 
@@ -208,7 +204,7 @@ package body GPS.Location_View_Filter_Panel is
 
       Gtk.Tool_Item.Gtk_New (Item);
       Item.Add (Regexp);
-      Toolbar.Insert (Item);
+      Self.Append_Toolbar (Toolbar, Item, Is_Filter => True);
 
       --  Hide matched check button
 
@@ -225,7 +221,7 @@ package body GPS.Location_View_Filter_Panel is
 
       Gtk.Tool_Item.Gtk_New (Item);
       Item.Add (Hide);
-      Toolbar.Insert (Item);
+      Self.Append_Toolbar (Toolbar, Item, Is_Filter => True);
 
       return Panel;
    end Create_And_Append;

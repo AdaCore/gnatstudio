@@ -24,6 +24,7 @@ with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Style_Context;       use Gtk.Style_Context;
 with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
 with Gtk.Tool_Button;         use Gtk.Tool_Button;
+with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
@@ -42,6 +43,73 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
 
 package body Generic_Views is
+
+   function Has_Toolbar_Separator
+     (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+      return Gint;
+   --  Return the index of the separator that right aligns items, or -1 if
+   --  there is none.
+
+   ---------------------------
+   -- Has_Toolbar_Separator --
+   ---------------------------
+
+   function Has_Toolbar_Separator
+     (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+      return Gint
+   is
+      Count : constant Gint := Toolbar.Get_N_Items;
+      Item  : Gtk_Tool_Item;
+   begin
+      for J in reverse 0 .. Count - 1 loop
+         Item := Toolbar.Get_Nth_Item (J);
+         if Item.all in Gtk_Separator_Tool_Item_Record'Class
+           and then Gtk_Separator_Tool_Item (Item).Get_Expand
+         then
+            return J;
+         end if;
+      end loop;
+      return -1;
+   end Has_Toolbar_Separator;
+
+   --------------------
+   -- Append_Toolbar --
+   --------------------
+
+   procedure Append_Toolbar
+     (Self      : not null access View_Record;
+      Toolbar   : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Item      : not null access Gtk.Tool_Item.Gtk_Tool_Item_Record'Class;
+      Is_Filter : Boolean := False)
+   is
+      pragma Unreferenced (Self);
+      Sep : Gtk_Separator_Tool_Item;
+      Loc : Gint;
+   begin
+      if Is_Filter then
+         if Has_Toolbar_Separator (Toolbar) = -1 then
+            Gtk_New (Sep);
+            Sep.Set_Draw (False);
+            Sep.Set_Expand (True);
+            Toolbar.Insert (Sep);
+         end if;
+
+         Toolbar.Insert (Item);
+
+      else
+         Loc := Has_Toolbar_Separator (Toolbar);
+         if Loc /= -1 then
+            --  Insert before the item, to left align
+            Toolbar.Insert (Item, Pos => Loc - 1);
+         else
+            Toolbar.Insert (Item, Pos => -1);
+         end if;
+      end if;
+   end Append_Toolbar;
+
+   ------------------
+   -- Simple_Views --
+   ------------------
 
    package body Simple_Views is
 
@@ -182,7 +250,6 @@ package body Generic_Views is
          Box          : Gtk_Box;
          W            : Gtk_Widget;
          Button       : Gtk_Tool_Button;
-         Sep          : Gtk_Separator_Tool_Item;
 
       begin
          if Reuse_If_Exist then
@@ -223,15 +290,10 @@ package body Generic_Views is
          end if;
 
          if Local_Config then
-            Gtk_New (Sep);
-            Sep.Set_Draw (False);
-            Sep.Set_Expand (True);
-            Toolbar.Insert (Sep);
-
             Gtk_New_From_Stock (Button, GPS_Stock_Config_Menu);
             Button.Set_Homogeneous (False);
             Button.Set_Tooltip_Text (-"Configure this panel");
-            Toolbar.Insert (Button);
+            View.Append_Toolbar (Toolbar, Button, Is_Filter => True);
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Button, Gtk.Tool_Button.Signal_Clicked,
                On_Display_Local_Config_Access, View);

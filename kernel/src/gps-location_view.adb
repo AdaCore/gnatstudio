@@ -1109,7 +1109,7 @@ package body GPS.Location_View is
          On_Collapse_All'Access, View);
       Toolbar.Insert (Button);
 
-      View.Filter := Create_And_Append (View.Kernel, Toolbar);
+      View.Filter := Create_And_Append (View, View.Kernel, Toolbar);
       Location_View_Callbacks.Object_Connect
         (View.Filter,
          Signal_Apply_Filter,
