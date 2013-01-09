@@ -23,9 +23,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib;
 with Glib.Object;               use Glib.Object;
 
-with Gtk.Alignment;             use Gtk.Alignment;
-with Gtk.Combo_Box;
-with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -108,9 +105,6 @@ package body Builder_Facility_Module is
    package Combo_Callback is new Gtk.Handlers.Callback
      (Gtkada_Combo_Tool_Button_Record);
 
-   package Combo_Box_Callback is new Gtk.Handlers.Callback
-     (Gtk_Combo_Box_Text_Record);
-
    package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
      (Gtk_Tool_Item);
 
@@ -178,14 +172,6 @@ package body Builder_Facility_Module is
 
       Build_Count : Natural := 0;
       --  The number of builds currently running
-
-      Modes_Toolbar_Item : Gtk_Tool_Item;
-      Modes_Combo : Gtk_Combo_Box_Text;
-      --  The toolbar item containing the modes
-
-      Browsing_For_Mode    : Unbounded_String := Null_Unbounded_String;
-      --  The mode we are currently looking for when filling the combo,
-      --  set to Null_Unbounded_String if we are not browsing.
 
       Background_Build_ID : Integer := 1;
       --  The ID of the current background build.
@@ -298,10 +284,6 @@ package body Builder_Facility_Module is
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
    --  Called when a user clicks on a toolbar combo button
 
-   procedure On_Mode_Changed
-     (Widget : access Gtk_Combo_Box_Text_Record'Class);
-   --  Called when a user selects a mode from the Mode combo box
-
    procedure On_Combo_Selection
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
    --  Called when a user selects a new item from the combo
@@ -380,11 +362,6 @@ package body Builder_Facility_Module is
    type Dynamic_Menu_Item is access all Dynamic_Menu_Item_Record'Class;
    --  So that items created for the dynamic Make and Run menus have a special
    --  type, and we only remove these when refreshing the menu
-
-   procedure On_Project_Changed_Hook
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when project changed. Selects value in the build-mode combobox
-   --  previously used for project
 
    type Contextual_Menu_Type is (Build_Targets, Run_Targets);
    procedure Append_To_Contextual_Menu
@@ -1215,26 +1192,6 @@ package body Builder_Facility_Module is
          ": " & Get_Selected_Item (Widget));
    end On_Combo_Selection;
 
-   ---------------------
-   -- On_Mode_Changed --
-   ---------------------
-
-   procedure On_Mode_Changed (Widget : access Gtk_Combo_Box_Text_Record'Class)
-   is
-      Mode : constant String := Get_Active_Text (Widget);
-   begin
-      --  Do not consider a change to be effective if we are just creating
-      --  items or browsign through them.
-
-      if Builder_Module_ID.Browsing_For_Mode /= Null_Unbounded_String
-        and then Mode /= To_String (Builder_Module_ID.Browsing_For_Mode)
-      then
-         return;
-      end if;
-
-      Get_Kernel.Set_Build_Mode (New_Mode => Mode);
-   end On_Mode_Changed;
-
    -------------------------------
    -- Install_Button_For_Target --
    -------------------------------
@@ -1602,37 +1559,6 @@ package body Builder_Facility_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Modes_Manager;
 
-   -----------------------------
-   -- On_Project_Changed_Hook --
-   -----------------------------
-
-   procedure On_Project_Changed_Hook
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      use type Glib.Gint;
-      Mode  : constant String := Kernel.Get_Build_Mode;
-
-   begin
-      if Mode /= "default" then
-         --  Going in reverse order, so if unknown mode is specified in the
-         --  property then 'default' mode will be selected
-
-         Builder_Module_ID.Browsing_For_Mode := To_Unbounded_String (Mode);
-
-         for J in reverse 0 ..
-           N_Children (Builder_Module_ID.Modes_Combo.Get_Model) - 1
-         loop
-            Builder_Module_ID.Modes_Combo.Set_Active (J);
-            exit when Builder_Module_ID.Modes_Combo.Get_Active_Text = Mode;
-         end loop;
-
-         Builder_Module_ID.Browsing_For_Mode := Null_Unbounded_String;
-
-      elsif Builder_Module_ID.Modes_Combo /= null then
-         Builder_Module_ID.Modes_Combo.Set_Active (0);
-      end if;
-   end On_Project_Changed_Hook;
-
    -----------------------
    -- Auxiliary_Console --
    -----------------------
@@ -1705,60 +1631,11 @@ package body Builder_Facility_Module is
 
    procedure Parse_Mode_Node (XML : Node_Ptr) is
       Mode       : Mode_Record;
-      First_Mode : Boolean := False;
-      Align      : Gtk_Alignment;
-
-      use type Glib.Gint;
-
+      pragma Unreferenced (Mode);
    begin
       --  Create the mode and add it to the list of supported modes
 
       Mode := Load_Mode_From_XML (Builder_Module_ID.Registry, XML);
-
-      if Mode.Name = "" then
-         return;
-      end if;
-
-      --  Add the mode to the combo if it is not a shadow mode
-
-      if not Mode.Shadow then
-         --  If the combo is not created, create it now
-
-         if Builder_Module_ID.Modes_Combo = null then
-            First_Mode := True;
-            Gtk_New (Builder_Module_ID.Modes_Combo);
-
-            --  ... and add it to the toolbar
-
-            Gtk_New (Builder_Module_ID.Modes_Toolbar_Item);
-            Gtk_New (Align, 0.5, 0.5, 1.0, 0.6);
-            Add (Align, Builder_Module_ID.Modes_Combo);
-
-            Builder_Module_ID.Modes_Toolbar_Item.Add (Align);
-
-            Insert (Get_Toolbar (Get_Kernel),
-                    Builder_Module_ID.Modes_Toolbar_Item);
-            Show_All (Builder_Module_ID.Modes_Toolbar_Item);
-            Combo_Box_Callback.Connect
-              (Builder_Module_ID.Modes_Combo,
-               Gtk.Combo_Box.Signal_Changed,
-               On_Mode_Changed'Access);
-         end if;
-
-         --  Now, insert the mode in the combo
-
-         Append_Text (Builder_Module_ID.Modes_Combo, To_String (Mode.Name));
-
-         if First_Mode then
-            Set_Active (Builder_Module_ID.Modes_Combo, 0);
-         end if;
-
-         --  Regenerate the tooltips for the combo box
-
-         Set_Tooltip_Text
-           (Builder_Module_ID.Modes_Toolbar_Item,
-           Get_Builder_Mode_Chooser_Tooltip (Builder_Module_ID.Registry));
-      end if;
    end Parse_Mode_Node;
 
    ---------------
@@ -1905,12 +1782,6 @@ package body Builder_Facility_Module is
       Add_Hook (Kernel, Build_Mode_Changed_Hook,
                 Wrapper (On_Build_Mode_Changed'Access),
                 Name => "builder_facility_module.build_mode_changed");
-
-      Add_Hook
-        (Kernel => Kernel,
-         Hook   => Project_Changed_Hook,
-         Func   => Wrapper (On_Project_Changed_Hook'Access),
-         Name   => "builder_facility_module.on_project_changed");
 
       --  Register the shell commands
 
@@ -2060,20 +1931,19 @@ package body Builder_Facility_Module is
       Index  : Natural;
       --  The first available element in Result;
 
+      Current : constant String := Get_Kernel.Get_Build_Mode;
+
       use Mode_Map;
       C : Mode_Map.Cursor;
       Mode : Mode_Record;
    begin
-      if Builder_Module_ID.Modes_Combo = null
-        or else Result'Length = 0
-      then
+      if Result'Length = 0 then
          return (1 => new String'(""));
       end if;
 
       --  The first mode is the one selected in the combo
 
-      Result (1) := new String'
-        (Get_Active_Text (Builder_Module_ID.Modes_Combo));
+      Result (1) := new String'(Current);
       Index := 2;
 
       --  Find all the shadow modes
@@ -2152,26 +2022,10 @@ package body Builder_Facility_Module is
       Mode : constant String := String_Hooks_Args (Data.all).Value;
       Reg  : Project_Registry renames
                Project_Registry (Get_Registry (Kernel).all);
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
    begin
       if Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Registry, Mode) then
          Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Registry, Mode));
          Recompute_View (Get_Kernel);
-      end if;
-
-      if Builder_Module_ID.Modes_Combo /= null then
-         Model := Builder_Module_ID.Modes_Combo.Get_Model;
-
-         Iter := Get_Iter_First (Model);
-
-         while Iter /= Null_Iter loop
-            if Get_String (Model, Iter, 0) = Mode then
-               Builder_Module_ID.Modes_Combo.Set_Active_Iter (Iter);
-               exit;
-            end if;
-            Next (Model, Iter);
-         end loop;
       end if;
    end On_Build_Mode_Changed;
 

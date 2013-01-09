@@ -643,8 +643,7 @@ package body Scenario_Views is
 
       Scenario_Views.Register_Module
         (Kernel,
-         ID        => Module_ID (M),
-         Menu_Name => -"Views/_Scenario");
+         ID        => Module_ID (M));
    end Register_Module;
 
 end Scenario_Views;
