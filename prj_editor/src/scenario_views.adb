@@ -105,7 +105,7 @@ package body Scenario_Views is
 
    package Scenario_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Scenario_View",
-      View_Name          => -"Environment",
+      View_Name          => -"Scenario",
       Formal_View_Record => Scenario_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,
@@ -330,7 +330,9 @@ package body Scenario_Views is
 
    begin
       Selection.Get_Selected (M, Iter);
-      if Iter /= Null_Iter then
+      if Iter /= Null_Iter
+        and then Model.Parent (Iter) = View.Scenario_Node
+      then
          declare
             Variable : constant String := Model.Get_String (Iter, 0);
          begin
@@ -454,14 +456,16 @@ package body Scenario_Views is
 
       Edit : New_Var_Edit;
    begin
-      Gtk_New (Edit, V.Kernel, Variable, -"Editing a variable");
-      Show_All (Edit);
-      while Run (Edit) = Gtk_Response_OK
-        and then not Update_Variable (Edit)
-      loop
-         null;
-      end loop;
-      Destroy (Edit);
+      if Variable /= No_Variable then
+         Gtk_New (Edit, V.Kernel, Variable, -"Editing a variable");
+         Show_All (Edit);
+         while Run (Edit) = Gtk_Response_OK
+           and then not Update_Variable (Edit)
+         loop
+            null;
+         end loop;
+         Destroy (Edit);
+      end if;
    end Edit_Variable;
 
    ---------------------
@@ -477,27 +481,31 @@ package body Scenario_Views is
         & ASCII.LF
         & "that variable, except for the currently selected value";
 
-      Response : constant Message_Dialog_Buttons := Message_Dialog
-        (Msg           => (-"Are you sure you want to remove the variable ")
-           & '"' & External_Name (Var)
-           & """?" & ASCII.LF & (-Message),
-         Dialog_Type   => Confirmation,
-         Buttons       => Button_OK or Button_Cancel,
-         Title         => -"Deleting a variable",
-         Justification => Justify_Left,
-         Parent        => Get_Current_Window (V.Kernel));
+      Response : Message_Dialog_Buttons;
    begin
-      if Response = Button_OK then
-         Get_Registry (V.Kernel).Tree.Delete_Scenario_Variable
-           (External_Name            => External_Name (Var),
-            Keep_Choice              => Value (Var),
-            Delete_Direct_References => False);
-         Run_Hook (V.Kernel, Variable_Changed_Hook);
+      if Var /= No_Variable then
+         Response := Message_Dialog
+           (Msg           => (-"Are you sure you want to remove the variable ")
+            & '"' & External_Name (Var)
+            & """?" & ASCII.LF & (-Message),
+            Dialog_Type   => Confirmation,
+            Buttons       => Button_OK or Button_Cancel,
+            Title         => -"Deleting a variable",
+            Justification => Justify_Left,
+            Parent        => Get_Current_Window (V.Kernel));
 
-         --  Recompute the view so that the explorer is updated graphically
-         Recompute_View (V.Kernel);
+         if Response = Button_OK then
+            Get_Registry (V.Kernel).Tree.Delete_Scenario_Variable
+              (External_Name            => External_Name (Var),
+               Keep_Choice              => Value (Var),
+               Delete_Direct_References => False);
+            Run_Hook (V.Kernel, Variable_Changed_Hook);
 
-         Trace (Me, "Delete_Variable: " & External_Name (Var));
+            --  Recompute the view so that the explorer is updated graphically
+            Recompute_View (V.Kernel);
+
+            Trace (Me, "Delete_Variable: " & External_Name (Var));
+         end if;
       end if;
    end Delete_Variable;
 
