@@ -348,7 +348,7 @@ package body GPS.Kernel.MDI is
          Page  => -"Windows",
          Doc   => -("Where the tabs should be displayed relative to the"
            & " notebooks"),
-         Default => Bottom);
+         Default => Top);
    end Create_MDI_Preferences;
 
    -------------------
