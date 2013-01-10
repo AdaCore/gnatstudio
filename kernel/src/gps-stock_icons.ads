@@ -62,6 +62,9 @@ package GPS.Stock_Icons is
    GPS_Writable  : constant String := "gps-writable";
    --  Locl and unlock icons
 
+   GPS_Regexp : constant String := "gps-regexp";
+   GPS_Negate_Search : constant String := "gps-negate";
+
    Icon_Size_Action_Button : Gtk.Enums.Gtk_Icon_Size;
    --  A very small icon size (7x7). It is used for instance for the Stop_Task
    --  button in the main toolbar.

@@ -122,6 +122,8 @@ package body GPS.Stock_Icons is
             "9px/remove_unselected_12.png");
       Icon (GPS_Read_Only, -"Read only", "16px/lock_16.png");
       Icon (GPS_Writable, -"Writable", "16px/unlock_16.png");
+      Icon (GPS_Regexp, -"Regexp", "16px/regexp.png");
+      Icon (GPS_Negate_Search, -"Invert search", "16px/negate.png");
    end Register_Stock_Icons;
 
 end GPS.Stock_Icons;

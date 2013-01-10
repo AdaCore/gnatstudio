@@ -18,14 +18,13 @@
 with GNAT.Strings;
 with Interfaces.C.Strings;
 
-with Glib.Object;
+with Glib.Object;              use Glib.Object;
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Toggle_Button;
+with Gtk.Toggle_Tool_Button;   use Gtk.Toggle_Tool_Button;
 with Gtk.Widget;
 
 with GPS.Kernel;      use GPS.Kernel;
@@ -63,14 +62,10 @@ package body GPS.Location_View_Filter_Panel is
       Self   : Locations_Filter_Panel);
    --  Called on pattern entry change
 
-   procedure On_Hide_Matched_Toggle
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Locations_Filter_Panel);
+   procedure On_Hide_Matched_Toggle (Panel : access GObject_Record'Class);
    --  Called on hide matched toggle
 
-   procedure On_Regexp_Toggle
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Locations_Filter_Panel);
+   procedure On_Regexp_Toggle (Panel  : access GObject_Record'Class);
    --  Called on regexp toggle
 
    procedure On_Clear_Entry
@@ -80,10 +75,6 @@ package body GPS.Location_View_Filter_Panel is
    package Gtk_Entry_Callbacks is
      new Gtk.Handlers.User_Callback
           (Gtk.GEntry.Gtk_Entry_Record, Locations_Filter_Panel);
-
-   package Gtk_Check_Button_Callbacks is
-     new Gtk.Handlers.User_Callback
-          (Gtk.Check_Button.Gtk_Check_Button_Record, Locations_Filter_Panel);
 
    package Locations_Filter_Panel_Callbacks is
      new Gtk.Handlers.Callback (Locations_Filter_Panel_Record);
@@ -152,9 +143,8 @@ package body GPS.Location_View_Filter_Panel is
    is
       Panel  : constant Locations_Filter_Panel :=
         new Locations_Filter_Panel_Record;
-      Item   : Gtk.Tool_Item.Gtk_Tool_Item;
-      Regexp : Gtk_Check_Button;
-      Hide   : Gtk_Check_Button;
+      Regexp : Gtk_Toggle_Tool_Button;
+      Hide   : Gtk_Toggle_Tool_Button;
    begin
       Gtk.Tool_Item.Initialize (Panel);
       Glib.Object.Initialize_Class_Record
@@ -190,38 +180,22 @@ package body GPS.Location_View_Filter_Panel is
 
       --  Regexp check button
 
-      Gtk_New (Regexp, Label => -"Regexp");
+      Gtk_New_From_Stock (Regexp, GPS_Regexp);
       Associate (Get_History (Kernel).all, Hist_Is_Regexp, Regexp,
                  Default => True);
       Regexp.Set_Tooltip_Text
         (-"Whether filter is a regular expression");
-      Gtk_Check_Button_Callbacks.Connect
-        (Regexp,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Gtk_Check_Button_Callbacks.To_Marshaller
-           (On_Regexp_Toggle'Access),
-         Panel);
-
-      Gtk.Tool_Item.Gtk_New (Item);
-      Item.Add (Regexp);
-      Self.Append_Toolbar (Toolbar, Item, Is_Filter => True);
+      Regexp.On_Toggled (On_Regexp_Toggle'Access, Panel);
+      Self.Append_Toolbar (Toolbar, Regexp, Is_Filter => True);
 
       --  Hide matched check button
 
-      Gtk_New (Hide, Label => -"Hide matches");
+      Gtk_New_From_Stock (Hide, GPS_Negate_Search);
       Associate (Get_History (Kernel).all, Hist_Hide_Match, Hide,
                  Default => False);
       Hide.Set_Tooltip_Text (-"Revert filter: hide matching items");
-      Gtk_Check_Button_Callbacks.Connect
-        (Hide,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Gtk_Check_Button_Callbacks.To_Marshaller
-           (On_Hide_Matched_Toggle'Access),
-         Panel);
-
-      Gtk.Tool_Item.Gtk_New (Item);
-      Item.Add (Hide);
-      Self.Append_Toolbar (Toolbar, Item, Is_Filter => True);
+      Hide.On_Toggled (On_Hide_Matched_Toggle'Access, Panel);
+      Self.Append_Toolbar (Toolbar, Hide, Is_Filter => True);
 
       return Panel;
    end Create_And_Append;
@@ -241,16 +215,12 @@ package body GPS.Location_View_Filter_Panel is
    -- On_Hide_Matched_Toggle --
    ----------------------------
 
-   procedure On_Hide_Matched_Toggle
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Locations_Filter_Panel)
-   is
-      pragma Unreferenced (Object);
-
+   procedure On_Hide_Matched_Toggle (Panel : access GObject_Record'Class) is
+      P : constant Locations_Filter_Panel := Locations_Filter_Panel (Panel);
    begin
-      if Self.Pattern.Get_Text /= "" then
+      if P.Pattern.Get_Text /= "" then
          Locations_Filter_Panel_Callbacks.Emit_By_Name
-           (Self, Signal_Visibility_Toggled);
+           (P, Signal_Visibility_Toggled);
       end if;
    end On_Hide_Matched_Toggle;
 
@@ -258,13 +228,10 @@ package body GPS.Location_View_Filter_Panel is
    -- On_Regexp_Toggle --
    ----------------------
 
-   procedure On_Regexp_Toggle
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Locations_Filter_Panel)
-   is
-      pragma Unreferenced (Object);
+   procedure On_Regexp_Toggle (Panel  : access GObject_Record'Class) is
+      P : constant Locations_Filter_Panel := Locations_Filter_Panel (Panel);
    begin
-      Self.Apply_Filter;
+      P.Apply_Filter;
    end On_Regexp_Toggle;
 
    ------------------------
