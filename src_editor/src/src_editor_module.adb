@@ -3171,7 +3171,7 @@ package body Src_Editor_Module is
                      Stock_Image => Stock_Jump_To,
                      Command     => Command,
                      Callback    => null,
-                     Accel_Key   => GDK_G,
+                     Accel_Key   => GDK_LC_g,
                      Accel_Mods  => Control_Mask,
                      Ref_Item    => -"Goto File Spec<->Body");
       Register_Contextual_Menu

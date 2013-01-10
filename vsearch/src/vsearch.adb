@@ -2500,14 +2500,14 @@ package body Vsearch is
       Vsearch_Module_Id.Next_Menu_Item := Register_Menu
         (Kernel, Navigate, -"Find _Next",
          "", Search_Next_Cb'Access,
-         Accel_Key => GDK_N, Accel_Mods => Control_Mask);
+         Accel_Key => GDK_LC_n, Accel_Mods => Control_Mask);
       Ref (Vsearch_Module_Id.Next_Menu_Item);
       Set_Sensitive (Vsearch_Module_Id.Next_Menu_Item, False);
 
       Vsearch_Module_Id.Prev_Menu_Item := Register_Menu
         (Kernel, Navigate, -"Find _Previous",
          "", Search_Previous_Cb'Access,
-         Accel_Key => GDK_P, Accel_Mods => Control_Mask);
+         Accel_Key => GDK_LC_p, Accel_Mods => Control_Mask);
       Ref (Vsearch_Module_Id.Prev_Menu_Item);
       Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, False);
 

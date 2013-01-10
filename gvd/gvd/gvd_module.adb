@@ -2485,10 +2485,10 @@ package body GVD_Module is
       Register_Menu (Kernel, Data_Sub, Sepitem);
       Register_Menu (Kernel, Data_Sub, -"Display _Local Variables", "",
                      On_Display_Locals'Access, null,
-                     GDK_L, Mod1_Mask);
+                     GDK_LC_l, Mod1_Mask);
       Register_Menu (Kernel, Data_Sub, -"Display _Arguments", "",
                      On_Display_Args'Access, null,
-                     GDK_U, Mod1_Mask);
+                     GDK_LC_u, Mod1_Mask);
       Register_Menu (Kernel, Data_Sub, -"Display _Registers", "",
                      On_Display_Regs'Access);
       Register_Menu (Kernel, Data_Sub, -"Display Any _Expression...", "",
