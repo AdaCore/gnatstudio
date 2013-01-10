@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- LC11-030: GPS: Potential conflict when redefining key shortcuts
+  Problem:    It is possible to associate by mistake key shortcuts to keys
+              that are already bound because the key manager dialog does not
+              display a warning for some keys (such as ctrl-f).
+  Workaround: Verify the absence of collisions manually.
+
 - LC11-029: GPS: some views not saved in the desktop
   Problem:    Some views (File Switches and Elaboration Circularities) were
               not properly saved in the desktop, and as such not restored when
