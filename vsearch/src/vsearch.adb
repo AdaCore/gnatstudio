@@ -2495,7 +2495,7 @@ package body Vsearch is
          Callback    => null,
          Command     => Command,
          Ref_Item    => Find_All,
-         Accel_Key   => GDK_F, Accel_Mods => Control_Mask);
+         Accel_Key   => GDK_LC_f, Accel_Mods => Control_Mask);
 
       Vsearch_Module_Id.Next_Menu_Item := Register_Menu
         (Kernel, Navigate, -"Find _Next",
