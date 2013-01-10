@@ -125,7 +125,7 @@ package body Python_Module is
         (Console, Prompt => "", Handler => Default_Command_Handler'Access,
          User_Data       => System.Null_Address,
          History_List    => Get_History (Kernel),
-         Wrap_Mode       => Wrap_None,
+         Wrap_Mode       => Wrap_Char,
          Key             => Hist);
       Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
       Set_Max_Length   (Get_History (Kernel).all, 100, Hist);
