@@ -68,7 +68,6 @@ with Histories;                 use Histories;
 with Language;                  use Language;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Tooltips;                  use Tooltips;
-with Traces;                    use Traces;
 
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -76,7 +75,6 @@ with Language.Tree.Database; use Language.Tree.Database;
 with Outline_View.Model; use Outline_View.Model;
 
 package body Outline_View is
-
    type Outline_View_Module_Record is new Module_ID_Record with record
       Construct_Annotation_Key : Construct_Annotations_Pckg.Annotation_Key;
    end record;
@@ -91,6 +89,8 @@ package body Outline_View is
    Hist_Show_Types        : constant History_Key := "outline-show-types";
    Hist_Show_Tasks        : constant History_Key := "outline-show-tasks";
    Hist_Show_Objects      : constant History_Key := "outline-show-objects";
+   Hist_Group_Spec_And_Body : constant History_Key :=
+     "outline-group-spec-and-body";
 
    overriding procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
@@ -113,6 +113,9 @@ package body Outline_View is
       Icon        : Gdk_Pixbuf;
       File_Icon   : Gdk_Pixbuf;
       Db_Listener : Outline_Db_Listener_Access;
+
+      Spec_Column : Gtk_Tree_View_Column;
+      Body_Column : Gtk_Tree_View_Column;
    end record;
    overriding procedure Create_Toolbar
      (View    : not null access Outline_View_Record;
@@ -165,8 +168,8 @@ package body Outline_View is
    --  Same as above, but force a full refresh
 
    function Button_Press
-     (Outline : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event) return Boolean;
+     (Outline : access GObject_Record'Class;
+      Event   : Gdk_Event_Button) return Boolean;
    --  Called every time a row is clicked
 
    procedure Preferences_Changed
@@ -256,7 +259,6 @@ package body Outline_View is
    is
       pragma Unreferenced (Widget);
       Iter     : Gtk_Tree_Iter;
-      P_Entity : Entity_Persistent_Access;
       Entity   : Entity_Access;
       Area     : Gdk_Rectangle;
    begin
@@ -265,10 +267,8 @@ package body Outline_View is
       if Iter /= Null_Iter then
          Tooltip.Set_Tip_Area (Area);
 
-         P_Entity := Get_Entity (Iter);
-
-         if Exists (P_Entity) then
-            Entity := To_Entity_Access (P_Entity);
+         Entity := Get_Entity (Get_Outline_Model (Tooltip.Outline), Iter);
+         if Entity /= Null_Entity_Access then
             Entity := Get_Declaration
               (Get_Tree_Language (Get_File (Entity)), Entity);
 
@@ -385,7 +385,7 @@ package body Outline_View is
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Line     : Integer := 1;
-      P_Entity : Entity_Persistent_Access;
+      Entity   : Entity_Access;
    begin
       Iter := Find_Iter_For_Event (Outline.Tree, Event);
 
@@ -402,16 +402,16 @@ package body Outline_View is
          end if;
          Path_Free (Path);
 
-         P_Entity := Get_Entity (Iter);
+         Entity := Get_Entity (Model, Iter);
 
          Set_Entity_Information
            (Context       => Context,
-            Entity_Name   => Get (Get_Construct (P_Entity).Name).all,
+            Entity_Name   => Get (Get_Construct (Entity).Name).all,
             Entity_Column =>
               Visible_Column_Type
-                (Get_Construct (P_Entity).Sloc_Entity.Column));
+                (Get_Construct (Entity).Sloc_Entity.Column));
 
-         Line := Get_Construct (P_Entity).Sloc_Entity.Line;
+         Line := Get_Construct (Entity).Sloc_Entity.Line;
       end if;
    end Outline_Context_Factory;
 
@@ -483,6 +483,13 @@ package body Outline_View is
       Widget_Callback.Object_Connect
         (Check, Signal_Toggled, Force_Refresh'Access, View);
 
+      Gtk_New (Check, Label => -"Group spec and body");
+      Associate
+        (Get_History (View.Kernel).all, Hist_Group_Spec_And_Body, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+
       Gtk_New (Sep);
       Menu.Append (Sep);
 
@@ -523,82 +530,105 @@ package body Outline_View is
    ------------------
 
    function Button_Press
-     (Outline : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event) return Boolean
+     (Outline : access GObject_Record'Class;
+      Event   : Gdk_Event_Button) return Boolean
    is
       View                : constant Outline_View_Access :=
                               Outline_View_Access (Outline);
       Model : constant Outline_Model := Outline_Model (-Get_Model (View.Tree));
-      Entity              : Entity_Persistent_Access;
       Iter                : Gtk_Tree_Iter;
       Path                : Gtk_Tree_Path;
-      Line, End_Line      : Integer;
-      Column, End_Column  : Visible_Column_Type;
-      Construct           : access Simple_Construct_Information;
+      Col                 : Gtk_Tree_View_Column;
+
+      procedure Goto_Entity (Entity : Entity_Access; Is_Spec : Boolean);
+      --  goto and highlight the entity
+
+      procedure Goto_Entity (Entity : Entity_Access; Is_Spec : Boolean) is
+         Line, End_Line      : Integer;
+         Column, End_Column  : Visible_Column_Type;
+         Construct           : access Simple_Construct_Information;
+      begin
+         if Entity = Null_Entity_Access then
+            return;
+         end if;
+
+         Construct  := Get_Construct (To_Construct_Tree_Iterator (Entity));
+
+         if Construct.Sloc_Entity.Index /= 0 then
+            To_Line_Column
+              (Get_File (Entity),
+               String_Index_Type (Construct.Sloc_Entity.Index),
+               Line,
+               Column);
+            To_Line_Column
+              (Get_File (Entity),
+               String_Index_Type
+                 (Construct.Sloc_Entity.Index
+                  + Get (Construct.Name)'Length),
+               End_Line,
+               End_Column);
+         else
+            To_Line_Column
+              (Get_File (Entity),
+               String_Index_Type (Construct.Sloc_Start.Index),
+               Line,
+               Column);
+            End_Line := Line;
+            End_Column := Column;
+         end if;
+
+         declare
+            Buffer   : constant Editor_Buffer'Class :=
+              Get (Get_Buffer_Factory (View.Kernel).all,
+                   View.File, False, False, False);
+            Location : constant Editor_Location'Class :=
+              New_Location (Buffer, Line, Column);
+            End_Location : constant Editor_Location'Class :=
+              New_Location (Buffer, End_Line, End_Column);
+            Editor : constant Editor_View'Class := Current_View (Buffer);
+         begin
+            if Col /= View.Spec_Column
+              and then Col /= View.Body_Column
+              and then Is_Spec
+              and then Location.Line = Editor.Cursor.Line
+            then
+               --  Clicking on the name will jump to the spec, unless this is
+               --  already the current location
+               Goto_Entity (Get_Entity (Model, Iter, Body_Pixbuf_Column),
+                            Is_Spec => False);
+            else
+               Editor.Cursor_Goto (Location);
+               Select_Text (Buffer, Location, End_Location);
+            end if;
+         end;
+      end Goto_Entity;
+
    begin
-      if Get_Button (Event) = 1 then
+      if Event.Button = 1 then
          if View.File = No_File then
             return False;
          end if;
 
-         Iter := Find_Iter_For_Event (View.Tree, Event);
+         Coordinates_For_Event
+           (Tree   => View.Tree,
+            Event  => Event,
+            Iter   => Iter,
+            Column => Col);
 
          if Iter /= Null_Iter then
             Path := Get_Path (Model, Iter);
             Set_Cursor (View.Tree, Path, null, False);
             Path_Free (Path);
 
-            Entity := Get_Entity (Iter);
-
-            Construct  := Get_Construct
-              (To_Construct_Tree_Iterator (To_Entity_Access (Entity)));
-
-            if Construct.Sloc_Entity.Index /= 0 then
-               To_Line_Column
-                 (Get_File (Entity),
-                  String_Index_Type (Construct.Sloc_Entity.Index),
-                  Line,
-                  Column);
-               To_Line_Column
-                 (Get_File (Entity),
-                  String_Index_Type
-                    (Construct.Sloc_Entity.Index
-                     + Get (Construct.Name)'Length),
-                  End_Line,
-                  End_Column);
+            if Col = View.Body_Column then
+               Goto_Entity (Get_Entity (Model, Iter, Body_Pixbuf_Column),
+                            Is_Spec => False);
             else
-               To_Line_Column
-                 (Get_File (Entity),
-                  String_Index_Type (Construct.Sloc_Start.Index),
-                  Line,
-                  Column);
-
-               End_Line := Line;
-               End_Column := Column;
+               Goto_Entity (Get_Entity (Model, Iter), Is_Spec => True);
             end if;
-
-            declare
-               Buffer   : constant Editor_Buffer'Class :=
-                 Get (Get_Buffer_Factory (View.Kernel).all,
-                      View.File, False, False, False);
-               Location : constant Editor_Location'Class :=
-                 New_Location (Buffer, Line, Column);
-               End_Location : constant Editor_Location'Class :=
-                 New_Location (Buffer, End_Line, End_Column);
-
-               View : constant Editor_View'Class := Current_View (Buffer);
-            begin
-               Cursor_Goto (View, Location);
-               Select_Text (Buffer, Location, End_Location);
-            end;
-
          end if;
       end if;
       return False;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end Button_Press;
 
    ------------------
@@ -648,7 +678,7 @@ package body Outline_View is
       Kernel  : access Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      Col           : Gtk_Tree_View_Column;
+      Text_Col      : Gtk_Tree_View_Column;
       Col_Number    : Gint;
       Text_Render   : Gtk_Cell_Renderer_Text;
       Pixbuf_Render : Gtk_Cell_Renderer_Pixbuf;
@@ -659,6 +689,7 @@ package body Outline_View is
 
       pragma Unreferenced (Col_Number);
       Out_Model : Outline_Model;
+
    begin
       Outline.Kernel := Kernel_Handle (Kernel);
 
@@ -690,19 +721,30 @@ package body Outline_View is
 
       --  Create an explicit columns for the expander
 
-      Gtk_New (Col);
-      Col_Number := Append_Column (Outline.Tree, Col);
+      Gtk_New (Outline.Spec_Column);
+      Col_Number := Append_Column (Outline.Tree, Outline.Spec_Column);
       Gtk_New (Pixbuf_Render);
-      Pack_Start (Col, Pixbuf_Render, False);
-      Add_Attribute (Col, Pixbuf_Render, "pixbuf", Pixbuf_Column);
-
-      Set_Expander_Column (Outline.Tree, Col);
-
-      Gtk_New (Text_Render);
-      Pack_Start (Col, Text_Render, False);
+      Pack_Start (Outline.Spec_Column, Pixbuf_Render, False);
       Add_Attribute
-        (Col, Text_Render, "markup", Outline_View.Model.Display_Name_Column);
-      Clicked (Col);
+        (Outline.Spec_Column, Pixbuf_Render, "pixbuf", Spec_Pixbuf_Column);
+
+      Set_Expander_Column (Outline.Tree, Outline.Spec_Column);
+
+      Gtk_New (Outline.Body_Column);
+      Col_Number := Append_Column (Outline.Tree, Outline.Body_Column);
+      Gtk_New (Pixbuf_Render);
+      Pack_Start (Outline.Body_Column, Pixbuf_Render, False);
+      Add_Attribute
+        (Outline.Body_Column, Pixbuf_Render, "pixbuf", Body_Pixbuf_Column);
+
+      Gtk_New (Text_Col);
+      Col_Number := Append_Column (Outline.Tree, Text_Col);
+      Gtk_New (Text_Render);
+      Pack_Start (Text_Col, Text_Render, False);
+      Add_Attribute
+        (Text_Col, Text_Render,
+         "markup", Outline_View.Model.Display_Name_Column);
+      Clicked (Text_Col);
 
       Scrolled.Add (Outline.Tree);
 
@@ -713,12 +755,7 @@ package body Outline_View is
 
       Set_Font_And_Colors (Outline.Tree, Fixed_Font => True);
 
-      Return_Callback.Object_Connect
-        (Outline.Tree,
-         Signal_Button_Press_Event,
-         Return_Callback.To_Marshaller (Button_Press'Access),
-         Slot_Object => Outline,
-         After       => False);
+      Outline.Tree.On_Button_Press_Event (Button_Press'Access, Outline);
 
       Widget_Callback.Connect
         (Outline, Signal_Destroy, On_Destroy'Access);
@@ -735,7 +772,6 @@ package body Outline_View is
       Set_Tooltip (Tooltip, Outline.Tree);
 
       Model := null;
-
       Set_Outline_Model (Outline, Model);
 
       Data := Context_Hooks_Args'
@@ -831,7 +867,12 @@ package body Outline_View is
 
    procedure Force_Refresh (View : access Gtk_Widget_Record'Class) is
       Outline : constant Outline_View_Access := Outline_View_Access (View);
+      Group   : constant Boolean := Get_History
+        (Get_History (Outline.Kernel).all, Hist_Group_Spec_And_Body);
    begin
+      Set_Group_Spec_And_Body (Get_Outline_Model (Outline), Group => Group);
+      Outline.Body_Column.Set_Visible (Group);
+
       if Outline.File /= No_File then
          Set_File (Outline, Outline.File);
       end if;
@@ -1040,9 +1081,17 @@ package body Outline_View is
    -----------------------
 
    procedure Set_Outline_Model
-     (View : access Outline_View_Record'Class; Model : Outline_Model) is
+     (View : access Outline_View_Record'Class; Model : Outline_Model)
+   is
+      Group   : constant Boolean := Get_History
+        (Get_History (View.Kernel).all, Hist_Group_Spec_And_Body);
    begin
       Set_Model (View.Tree, To_Interface (Model));
+
+      if Model /= null then
+         Set_Group_Spec_And_Body (Model, Group => Group);
+      end if;
+      View.Body_Column.Set_Visible (Group);
    end Set_Outline_Model;
 
    ------------------------

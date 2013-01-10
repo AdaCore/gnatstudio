@@ -755,12 +755,56 @@ package body GUI_Utils is
 
    function Find_Iter_For_Event
      (Tree  : access Gtk_Tree_View_Record'Class;
-      Event : Gdk_Event) return Gtk_Tree_Iter
+      Event : Gdk_Event_Button) return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter;
       Col  : Gtk_Tree_View_Column;
    begin
       Coordinates_For_Event (Tree, Event, Iter, Col);
+      return Iter;
+   end Find_Iter_For_Event;
+
+   -------------------------
+   -- Find_Iter_For_Event --
+   -------------------------
+
+   function Find_Iter_For_Event
+     (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Event : Gdk.Event.Gdk_Event) return Gtk.Tree_Model.Gtk_Tree_Iter
+   is
+      X, Y      : Gdouble;
+      Buffer_X  : Gint;
+      Buffer_Y  : Gint;
+      Row_Found : Boolean;
+      Path      : Gtk_Tree_Path;
+      N_Model   : Gtk_Tree_Model;
+      Iter      : Gtk_Tree_Iter;
+      Column    : Gtk_Tree_View_Column := null;
+   begin
+      if Event /= null
+        and then Get_Event_Type (Event) in Button_Press .. Button_Release
+      then
+         Get_Coords (Event, X, Y);
+         Get_Path_At_Pos
+           (Tree,
+            Gint (X),
+            Gint (Y),
+            Path,
+            Column,
+            Buffer_X,
+            Buffer_Y,
+            Row_Found);
+
+         if Path = Null_Gtk_Tree_Path then
+            return Null_Iter;
+         end if;
+
+         Iter := Get_Iter (Get_Model (Tree), Path);
+         Path_Free (Path);
+      else
+         Get_Selected (Get_Selection (Tree), N_Model, Iter);
+      end if;
+
       return Iter;
    end Find_Iter_For_Event;
 
@@ -770,12 +814,10 @@ package body GUI_Utils is
 
    procedure Coordinates_For_Event
      (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Event  : Gdk.Event.Gdk_Event;
+      Event  : Gdk.Event.Gdk_Event_Button;
       Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column)
    is
-      X         : Gdouble;
-      Y         : Gdouble;
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
@@ -784,15 +826,11 @@ package body GUI_Utils is
    begin
       Column := null;
 
-      if Event /= null
-        and then Get_Event_Type (Event) in Button_Press .. Button_Release
-      then
-         Get_Coords (Event, X, Y);
-         --  Path := Gtk_New;
+      if Event.The_Type in Button_Press .. Button_Release then
          Get_Path_At_Pos
            (Tree,
-            Gint (X),
-            Gint (Y),
+            Gint (Event.X),
+            Gint (Event.Y),
             Path,
             Column,
             Buffer_X,

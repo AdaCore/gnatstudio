@@ -29,10 +29,10 @@ with Gtk.Tree_Model.Utils;        use Gtk.Tree_Model.Utils;
 with Basic_Types;                 use Basic_Types;
 with Project_Explorers_Common;    use Project_Explorers_Common;
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
-
-with Traces; use Traces;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 
 package body Outline_View.Model is
+   Me : constant Trace_Handle := Create ("OUTLINE");
 
    use Construct_Annotations_Pckg;
 
@@ -104,6 +104,10 @@ package body Outline_View.Model is
      (Model   : access Outline_Model_Record'Class;
       New_Obj : Construct_Tree_Iterator);
    --  Adds the iterator in the internal model
+
+   procedure Reset
+     (Model : not null access Outline_Model_Record'Class);
+   --  Recompute the whole contents of the model
 
    ----------
    -- Free --
@@ -310,10 +314,42 @@ package body Outline_View.Model is
       Position : Sorted_Node_Set.Cursor;
       Inserted : Boolean;
 
+      It2      : Entity_Access;
+      It_Annot : Annotation (Other_Kind);
+      It_Node  : Sorted_Node_Access;
+      Tree     : constant Construct_Tree := Get_Tree (Model.File);
+
    begin
-      Node := New_Node
-        (Model,
-         To_Entity_Persistent_Access (To_Entity_Access (Model.File, It)));
+      --  Do we have a node for the other part already ? We know there is none
+      --  for the entity itself yet.
+      if Model.Group_Spec_And_Body then
+         It2 := To_Entity_Access (Model.File, It);
+         It2 := Find_Next_Part (Get_Tree_Language (Get_File (It2)), It2);
+
+         if It2 /= Null_Entity_Access
+           and then Get_File (It2) = Model.File
+         then
+            if Is_Set
+              (Get_Annotation_Container
+                 (Tree, To_Construct_Tree_Iterator (It2)).all,
+               Model.Annotation_Key)
+            then
+               Get_Annotation
+                 (Get_Annotation_Container
+                    (Tree, To_Construct_Tree_Iterator (It2)).all,
+                  Model.Annotation_Key,
+                  It_Annot);
+               It_Node := Entity_Sort_Annotation (It_Annot.Other_Val.all).Node;
+
+               if It_Node /= null then
+                  return null;
+               end if;
+            end if;
+         end if;
+      end if;
+
+      Node := New_Node (Model, To_Entity_Persistent_Access
+                        (To_Entity_Access (Model.File, It)));
 
       Node.Parent := Root;
 
@@ -468,6 +504,27 @@ package body Outline_View.Model is
       return Node.Entity;
    end Get_Entity;
 
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset
+     (Model : not null access Outline_Model_Record'Class)
+   is
+      It    : Construct_Tree_Iterator;
+   begin
+      Model.Phantom_Root.N_Children := 0;
+      It := First (Get_Tree (Model.File));
+
+      while It /= Null_Construct_Tree_Iterator loop
+         if Construct_Filter (Model.Filter, Get_Construct (It)) then
+            Add_In_Model (Model, It);
+         end if;
+
+         It := Next (Get_Tree (Model.File), It, Jump_Over);
+      end loop;
+   end Reset;
+
    ----------------
    -- Init_Model --
    ----------------
@@ -489,21 +546,7 @@ package body Outline_View.Model is
       Ref (File);
 
       if Add_Roots then
-         Model.Phantom_Root.N_Children := 0;
-
-         declare
-            It    : Construct_Tree_Iterator;
-         begin
-            It := First (Get_Tree (Model.File));
-
-            while It /= Null_Construct_Tree_Iterator loop
-               if Construct_Filter (Filter, Get_Construct (It)) then
-                  Add_In_Model (Model, It);
-               end if;
-
-               It := Next (Get_Tree (Model.File), It, Jump_Over);
-            end loop;
-         end;
+         Reset (Model);
       end if;
    end Init_Model;
 
@@ -525,12 +568,7 @@ package body Outline_View.Model is
    is
       pragma Unreferenced (Self);
    begin
-      return 2;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return 2;
+      return 3;
    end Get_N_Columns;
 
    ---------------------
@@ -543,7 +581,9 @@ package body Outline_View.Model is
    is
       pragma Unreferenced (Self);
    begin
-      if Index = Pixbuf_Column then
+      if Index = Spec_Pixbuf_Column then
+         return Gdk.Pixbuf.Get_Type;
+      elsif Index = Body_Pixbuf_Column then
          return Gdk.Pixbuf.Get_Type;
       elsif Index = Display_Name_Column then
          return GType_String;
@@ -553,7 +593,7 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return GType_String;
    end Get_Column_Type;
 
@@ -584,7 +624,7 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Null_Iter;
    end Get_Iter;
 
@@ -619,7 +659,7 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Gtk_New (Path, "");
          return Path;
    end Get_Path;
@@ -634,17 +674,28 @@ package body Outline_View.Model is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      Entity : constant Entity_Persistent_Access := Get_Entity (Iter);
+      Entity : constant Entity_Access := Get_Entity (Self, Iter, Column);
       It     : Construct_Tree_Iterator;
    begin
-      It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
-
-      if Column = Pixbuf_Column then
+      if Column = Spec_Pixbuf_Column then
+         It := To_Construct_Tree_Iterator (Entity);
          Init (Value, Gdk.Pixbuf.Get_Type);
          Set_Object
            (Value, GObject (Entity_Icon_Of (Get_Construct (It).all)));
 
+      elsif Column = Body_Pixbuf_Column then
+         Init (Value, Gdk.Pixbuf.Get_Type);
+
+         if Entity = Null_Entity_Access then
+            Set_Object (Value, null);
+         else
+            It := To_Construct_Tree_Iterator (Entity);
+            Set_Object
+              (Value, GObject (Entity_Icon_Of (Get_Construct (It).all)));
+         end if;
+
       elsif Column = Display_Name_Column then
+         It := To_Construct_Tree_Iterator (Entity);
          Init (Value, GType_String);
 
          if Get_Construct (It).Name /= No_Symbol then
@@ -655,7 +706,7 @@ package body Outline_View.Model is
                   Profile : constant String :=
                     Get_Profile
                     (Get_Tree_Language (Self.File),
-                     To_Entity_Access (Entity),
+                     Entity,
                      Raw_Format => True);
                begin
                   Set_String
@@ -677,7 +728,7 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Init (Value, GType_String);
          Set_String (Value, "");
    end Get_Value;
@@ -700,7 +751,7 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Iter := Null_Iter;
    end Next;
 
@@ -727,7 +778,7 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Null_Iter;
    end Children;
 
@@ -743,7 +794,7 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Has_Child;
 
@@ -770,7 +821,7 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return 0;
    end N_Children;
 
@@ -820,7 +871,7 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Null_Iter;
    end Nth_Child;
 
@@ -842,21 +893,60 @@ package body Outline_View.Model is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Null_Iter;
    end Parent;
+
+   -----------------------------
+   -- Set_Group_Spec_And_Body --
+   -----------------------------
+
+   procedure Set_Group_Spec_And_Body
+     (Model : not null access Outline_Model_Record'Class;
+      Group : Boolean)
+   is
+   begin
+      Model.Group_Spec_And_Body := Group;
+   end Set_Group_Spec_And_Body;
 
    ----------------
    -- Get_Entity --
    ----------------
 
-   function Get_Entity (Iter : Gtk_Tree_Iter) return Entity_Persistent_Access
+   function Get_Entity
+     (Self   : not null access Outline_Model_Record'Class;
+      Iter   : Gtk_Tree_Iter;
+      Column : Gint := Spec_Pixbuf_Column) return Entity_Access
    is
+      E      : Entity_Persistent_Access;
+      E2, E3 : Entity_Access;
    begin
       if Iter = Null_Iter then
-         return Null_Entity_Persistent_Access;
+         return Null_Entity_Access;
+      end if;
+
+      E := Get_Entity (Get_Sorted_Node (Iter));
+      if E = Null_Entity_Persistent_Access or else not Exists (E) then
+         return Null_Entity_Access;
+      end if;
+
+      E3 := To_Entity_Access (E);
+
+      if Self.Group_Spec_And_Body and then Column = Body_Pixbuf_Column then
+         E2 := Find_Next_Part (Get_Tree_Language (Get_File (E)), E3);
+
+         --  Only show the "other" part if it is in the same file, otherwise
+         --  it is irrelevant.
+         if E3 = E2
+           or else Get_File (E3) /= Get_File (E2)
+         then
+            return Null_Entity_Access;
+         else
+            return E2;
+         end if;
+
       else
-         return Get_Entity (Get_Sorted_Node (Iter));
+         return E3;
       end if;
    end Get_Entity;
 
@@ -961,7 +1051,7 @@ package body Outline_View.Model is
              (Get_Annotation_Container (Get_Tree (File), New_Obj).all,
               Model.Annotation_Key)
          then
-            --  If the parent is in the model, then retreive the node and
+            --  If the parent is in the model, then retrieve the node and
             --  check if we need to explicitely add the child.
             --  The child may have been already added, which is tested by
             --  the Is_Set on the annotation. In which case, there's nothing
@@ -982,6 +1072,10 @@ package body Outline_View.Model is
          --  we need to add that new node as well
 
          Child_Node := Sort_And_Add (Model, Parent_Node, New_Obj);
+         if Child_Node = null then
+            --  Not inserted, because there was already a node for it.
+            return;
+         end if;
 
          if Child_Node.Prev /= null then
             Child_Node.Index_In_Siblings :=
@@ -1101,7 +1195,7 @@ package body Outline_View.Model is
 
       --  First, update all the source locations for all the nodes of the
       --  model. This is needed in order to have proper ordering while
-      --  adding and removing ndoes
+      --  adding and removing nodes
 
       Update_Node (Model.Phantom_Root'Access);
 

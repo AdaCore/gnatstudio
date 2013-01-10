@@ -254,8 +254,8 @@ package body Task_Manager.GUI is
    --  Callback for a click on the global progress bar "x" button
 
    function On_Button_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Object : access GObject_Record'Class;
+      Event  : Gdk_Event_Button) return Boolean;
    --  Callback for a "button_press_event" on a tree view
 
    function On_Main_Progress_Button_Press_Event
@@ -463,8 +463,8 @@ package body Task_Manager.GUI is
    ---------------------------
 
    function On_Button_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Object : access GObject_Record'Class;
+      Event  : Gdk_Event_Button) return Boolean
    is
       Iface : constant Task_Manager_Widget_Access :=
         Task_Manager_Widget_Access (Object);
@@ -484,7 +484,7 @@ package body Task_Manager.GUI is
             A     : constant Gint_Array := Get_Indices (Path);
             Index : constant Natural := Natural (A (A'First)) + 1;
          begin
-            if Get_Button (Event) = 1 then
+            if Event.Button = 1 then
                if Col = Iface.Quit_Button_Col then
                   Interrupt_Command (Iface.Model.Manager, Index);
                elsif Col = Iface.Pause_Button_Col then
@@ -706,12 +706,7 @@ package body Task_Manager.GUI is
 
       Set_Font_And_Colors (View.Tree, Fixed_Font => True);
 
-      Return_Callback.Object_Connect
-        (View.Tree,
-         Signal_Button_Press_Event,
-         Return_Callback.To_Marshaller (On_Button_Press_Event'Access),
-         View,
-         After => False);
+      View.Tree.On_Button_Press_Event (On_Button_Press_Event'Access, View);
 
       return Gtk_Widget (View.Tree);
    end Initialize;

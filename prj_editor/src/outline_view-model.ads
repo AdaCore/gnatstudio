@@ -33,8 +33,9 @@ with Language.Tree.Database; use Language.Tree.Database;
 
 private package Outline_View.Model is
 
-   Pixbuf_Column       : constant := 0;
+   Spec_Pixbuf_Column  : constant := 0;
    Display_Name_Column : constant := 1;
+   Body_Pixbuf_Column  : constant := 2;
 
    type Outline_Model_Record
      is new Gtkada.Abstract_Tree_Model.Gtk_Abstract_Tree_Model_Record
@@ -64,6 +65,12 @@ private package Outline_View.Model is
       Filter    : Tree_Filter;
       Sort      : Boolean;
       Add_Roots : Boolean := False);
+
+   procedure Set_Group_Spec_And_Body
+     (Model : not null access Outline_Model_Record'Class;
+      Group : Boolean);
+   --  Whether to group the spec and body for a given entity on the same line.
+   --  This doesn't force a refresh of the model.
 
    function Get_File (Model : Outline_Model) return Structured_File_Access;
    --  Return the file modelized by this model
@@ -144,8 +151,13 @@ private package Outline_View.Model is
       return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  See inherited documentation
 
-   function Get_Entity (Iter : Gtk_Tree_Iter) return Entity_Persistent_Access;
-   --  Return the entity designed by this iterator
+   function Get_Entity
+     (Self   : not null access Outline_Model_Record'Class;
+      Iter   : Gtk_Tree_Iter;
+      Column : Gint := Spec_Pixbuf_Column) return Entity_Access;
+   --  Return the entity designed by this iterator.
+   --  If Column is set to Body_Pixbuf_Column, the "body" of the entity is
+   --  returned.
 
    procedure Free (Model : access Outline_Model_Record);
    --  Free the memory associated to this model content. The model won't be
@@ -199,6 +211,8 @@ private
       File           : Structured_File_Access;
       Filter         : Tree_Filter;
       Sorted         : Boolean;
+
+      Group_Spec_And_Body : Boolean := False;
 
       Phantom_Root : aliased Sorted_Node;
       --  This is a 'dummy' root, not in the model. Actual roots are children

@@ -135,8 +135,8 @@ package body Breakpoints_Editor is
    --  Called when a row of the breakpoint editor was selected.
 
    function Breakpoint_Clicked
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access GObject_Record'Class;
+      Event  : Gdk_Event_Button) return Boolean;
    --  Called when receiving a click on the breakpoint tree.
 
    procedure On_Advanced_Location_Clicked
@@ -469,13 +469,8 @@ package body Breakpoints_Editor is
         (Widget.Editor.View, Gtk.Button.Signal_Clicked,
          Widget_Callback.To_Marshaller (On_View_Clicked'Access), Widget);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Widget.Editor.Breakpoint_List,
-         Signal_Button_Press_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Breakpoint_Clicked'Access),
-         Slot_Object => Widget,
-         After       => False);
+      Widget.Editor.Breakpoint_List.On_Button_Press_Event
+        (Breakpoint_Clicked'Access, Widget);
 
       Add_Hook
         (Kernel, Debugger_Breakpoints_Changed_Hook,
@@ -608,8 +603,8 @@ package body Breakpoints_Editor is
    ------------------------
 
    function Breakpoint_Clicked
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access GObject_Record'Class;
+      Event  : Gdk_Event_Button) return Boolean
    is
       View  : constant Breakpoint_Editor := Breakpoint_Editor (Widget);
       Iter  : Gtk_Tree_Iter;
@@ -617,8 +612,8 @@ package body Breakpoints_Editor is
       Model : constant Gtk_Tree_Store :=
         -Get_Model (View.Editor.Breakpoint_List);
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
+      if Event.Button = 1
+        and then Event.The_Type = Button_Press
       then
          Coordinates_For_Event
            (View.Editor.Breakpoint_List,
@@ -642,10 +637,10 @@ package body Breakpoints_Editor is
             return True;
          end if;
 
-      elsif Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
+      elsif Event.Button = 1
+        and then Event.The_Type = Gdk_2button_Press
       then
-         On_View_Clicked (Widget);
+         On_View_Clicked (Gtk_Widget (Widget));
       end if;
 
       return False;

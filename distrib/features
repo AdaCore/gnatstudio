@@ -23,6 +23,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M110-025 GPS: group spec and body in Outline view (2013-01-10)
+
+  It is now possible to group the spec and body (or spec and full view) for an
+  entity on the same row in the Outline view, to restrict the total height of
+  the Outline view. Clicking on the name of the entity will jump to its spec,
+  but if this is already the current location in the editor will jump to its
+  body instead.
+
 NF-60-M108-041 GPS: line wrapping in Messages window (2013-01-09)
 
   It is now possible to configure whether the Messages window should wrap
