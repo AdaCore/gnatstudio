@@ -8,10 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
-- LC11-030: GPS: hotkeys to collapse and un-collapse code sections
-  Problem:    There is no warning sometimes on defining shortcut with already
-              used key.
-  Workaround: Try another key while binding the shortcut.
+- LC11-030: GPS: Potential conflict when redefining key shortcuts
+  Problem:    It is possible to associate by mistake key shortcuts to keys
+              that are already bound because the key manager dialog does not
+              display a warning for some keys (such as ctrl-f).
+  Workaround: Verify the absence of collisions manually.
 
 - LB30-018: Missing references with extending projects
   Problem:    If you are using extending projects, GPS will not
