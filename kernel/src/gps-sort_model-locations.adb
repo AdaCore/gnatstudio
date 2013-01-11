@@ -222,9 +222,9 @@ package body GPS.Sort_Model.Locations is
       B     : Gtk_Tree_Iter) return Gint
    is
       A_Name : constant Filesystem_String :=
-                 Get_File (Model, A, File_Column).Base_Name;
+                 Get_File (Gtk_Tree_Model (Model), A, File_Column).Base_Name;
       B_Name : constant Filesystem_String :=
-                 Get_File (Model, B, File_Column).Base_Name;
+                 Get_File (Gtk_Tree_Model (Model), B, File_Column).Base_Name;
 
    begin
       if A_Name < B_Name then
