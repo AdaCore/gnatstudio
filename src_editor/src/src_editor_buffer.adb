@@ -6250,6 +6250,15 @@ package body Src_Editor_Buffer is
       --  not considered a candidate to be refilled and Kind is set to None
       --  and Last is 0.
 
+      procedure Setup_Comment_Regexps;
+      --  Check if the language for the current file is known, and if it is
+      --  setup the regexps to use to find the bounds of comments.
+
+      procedure Find_Paragraph_Bounds
+        (From_Line, To_Line : out Editable_Line_Type);
+      --  Find the bounds of the region to refill (it will be the user
+      --  selection if available, or guessed automatically).
+
       procedure Unchecked_Free is new
         Ada.Unchecked_Deallocation (Pattern_Matcher, Pattern_Matcher_Access);
 
@@ -6395,7 +6404,7 @@ package body Src_Editor_Buffer is
 
             if In_ML_Comment then
 
-               --  Empty line in multi-line comment; continue acumulating
+               --  Empty line in multi-line comment; continue accumulating
                --  all the text of the current comment
 
                if Is_Empty (Line) then
@@ -6476,7 +6485,7 @@ package body Src_Editor_Buffer is
 
                      --  If we were acumulating single-line comments and this
                      --  line does not have a begin-comment delimiter then it
-                     --  is time to refill the acumulated comment.
+                     --  is time to refill the accumulated comment.
 
                      if In_Comment then
                         Refill_One_Comment;
@@ -6557,7 +6566,7 @@ package body Src_Editor_Buffer is
             Refill_One_Comment;
          end if;
 
-         --  Replace selected text by the new one
+         --  Replace selected text with the new one
 
          if Get_Line_Count (Buffer) >= Gint (To_Line + 1) then
             Replace_Slice
@@ -6773,69 +6782,17 @@ package body Src_Editor_Buffer is
          end if;
       end Scan_Comment;
 
-      --  Local variables
+      ---------------------------
+      -- Setup_Comment_Regexps --
+      ---------------------------
 
-      From, To  : Gtk_Text_Iter;
-      From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type;
-      Success   : Boolean;
-
-   --  Start of processing for Do_Refill
-
-   begin
-      if not Buffer.Writable then
-         End_Action (Buffer);
-         return False;
-      end if;
-
-      Start_Group (Buffer.Queue);
-      Enter_Current_Group (Buffer);
-
-      Get_Selection_Bounds (Buffer, From, To, Success);
-
-      --  No selection; get the current position
-
-      if not Success then
-         declare
-            Dummy : Character_Offset_Type;
-         begin
-            Get_Cursor_Position (Buffer, From_Line, Dummy);
-            To_Line := From_Line;
-         end;
-
-      else
-         --  Do not consider a line selected if only the first character is
-         --  selected.
-
-         if Get_Line_Offset (To) = 0 then
-            Backward_Char (To, Success);
-         end if;
-
-         --  Do not consider a line selected if only the last character is
-         --  selected.
-
-         if Ends_Line (From) then
-            Forward_Char (From, Success);
-         end if;
-
-         --  Get editable lines
-
-         From_Line :=
-           Get_Editable_Line
-             (Buffer, Buffer_Line_Type (Get_Line (From) + 1));
-
-         To_Line :=
-           Get_Editable_Line
-             (Buffer, Buffer_Line_Type (Get_Line (To) + 1));
-      end if;
-
-      declare
+      procedure Setup_Comment_Regexps is
          Start_Comment_Pattern : constant String := "^\s*";
          --  Start of line, followed by zero or more spaces
 
          End_Comment_Pattern   : constant String := "\s\s?[^\s]";
          --  One or two spaces, followed by a non-space. If there are more than
-         --  two spaces after the command marker, then we don't recognize it as
+         --  two spaces after the comment marker, then we don't recognize it as
          --  a comment line (it's an indented comment, which should not be
          --  reformatted). We also don't recognize it as a comment line if
          --  there is no space after the command marker.
@@ -6907,17 +6864,84 @@ package body Src_Editor_Buffer is
             Multiple_Lines_EC_Pattern :=
               new Pattern_Matcher'(Compile (To_String (S)));
          end if;
-      end;
+      end Setup_Comment_Regexps;
 
-      --  Refill comments in selected lines
+      ---------------------------
+      -- Find_Paragraph_Bounds --
+      ---------------------------
+
+      procedure Find_Paragraph_Bounds
+        (From_Line, To_Line : out Editable_Line_Type)
+      is
+         Success  : Boolean;
+         Current  : Editable_Line_Type;
+         Column   : Character_Offset_Type;
+         From, To : Gtk_Text_Iter;
+      begin
+         Get_Selection_Bounds (Buffer, From, To, Success);
+
+         if not Success then
+            --  No user selection. If the current file knows about comments,
+            --  we try and find the bounds of the current comment paragraph by
+            --  searching forward and backward for empty lines (or non-comment
+            --  lines); if we are formatting a plain text file, we always
+            --  refill the current line.
+
+            Get_Cursor_Position (Buffer, Current, Column);
+            Find_Current_Comment_Paragraph
+              (Buffer, Current, From_Line, To_Line);
+
+         else
+            --  Do not consider a line selected if only the first character is
+            --  selected.
+
+            if Get_Line_Offset (To) = 0 then
+               Backward_Char (To, Success);
+            end if;
+
+            --  Do not consider a line selected if only the last character is
+            --  selected.
+
+            if Ends_Line (From) then
+               Forward_Char (From, Success);
+            end if;
+
+            --  Get editable lines
+
+            From_Line :=
+              Get_Editable_Line
+                (Buffer, Buffer_Line_Type (Get_Line (From) + 1));
+
+            To_Line :=
+              Get_Editable_Line
+                (Buffer, Buffer_Line_Type (Get_Line (To) + 1));
+         end if;
+      end Find_Paragraph_Bounds;
+
+      --  Local variables
+
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type;
+
+   --  Start of processing for Do_Refill
+
+   begin
+      if not Buffer.Writable then
+         End_Action (Buffer);
+         return False;
+      end if;
+
+      Start_Group (Buffer.Queue);
+      Enter_Current_Group (Buffer);
+
+      Setup_Comment_Regexps;
+      Find_Paragraph_Bounds (From_Line, To_Line);
 
       if Single_Line_BC_Pattern /= null
         or else Multiple_Lines_BC_Pattern /= null
       then
+         --  We have a known syntax for comments
          Refill_Comments (From_Line, To_Line);
-
-      --  This is a text file
-
       else
          Refill_Plain_Text (From_Line, To_Line);
       end if;
@@ -6938,6 +6962,68 @@ package body Src_Editor_Buffer is
       Leave_Current_Group (Buffer);
       return True;
    end Do_Refill;
+
+   ------------------------------------
+   -- Find_Current_Comment_Paragraph --
+   ------------------------------------
+
+   procedure Find_Current_Comment_Paragraph
+     (Buffer : not null access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Start_Line, End_Line : out Editable_Line_Type)
+   is
+      Lang_Context : constant Language_Context_Access :=
+        Get_Language_Context (Buffer.Lang);
+      Single_Line_BC : constant GNAT.Strings.String_Access :=
+        Lang_Context.Syntax.New_Line_Comment_Start;
+      Non_Empty_Comment_Re : Pattern_Matcher_Access;
+
+      function Is_Comment_Line (Line : Editable_Line_Type) return Boolean;
+      --  Whether Pos is anywhere on a comment line (not necessarily within the
+      --  comment itself)
+
+      function Is_Comment_Line (Line : Editable_Line_Type) return Boolean is
+         L : Src_String;
+      begin
+         if Non_Empty_Comment_Re = null then
+            return False;
+         end if;
+
+         L := Get_String (Source_Buffer (Buffer), Line);
+         return L.Contents /= null and then Match
+           (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Length));
+      end Is_Comment_Line;
+
+   begin
+      if Single_Line_BC /= null then
+         Non_Empty_Comment_Re := new Pattern_Matcher'
+           (Compile ("^\s*" & Single_Line_BC.all & "\s*\S"));
+      end if;
+
+      --  Can only use Is_In_Comment at the end of the line
+      if not Is_Comment_Line (Line) then
+         Start_Line := Line;
+         End_Line := Start_Line;
+
+      else
+         Start_Line := Line;
+         End_Line  := Line;
+
+         while Start_Line > 1
+           and then Is_Comment_Line (Start_Line - 1)
+         loop
+            Start_Line := Start_Line - 1;
+         end loop;
+
+         while End_Line < Editable_Line_Type (Buffer.Get_Line_Count)
+           and then Is_Comment_Line (End_Line + 1)
+         loop
+            End_Line := End_Line + 1;
+         end loop;
+      end if;
+
+      Unchecked_Free (Non_Empty_Comment_Re);
+   end Find_Current_Comment_Paragraph;
 
    ------------------------------
    -- Filter_Matches_Primitive --

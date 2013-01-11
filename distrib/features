@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M111-033 GPS: Refill automatically computes paragraph (2013-01-11)
+
+  The menu /Edit/Selection/Refill will now either apply to the current
+  selection if it exists (as before), or automatically compute the extents
+  of the current paragraph to reformat (instead of only applying to the
+  current line).
+
 NF-60-M110-025 GPS: group spec and body in Outline view (2013-01-10)
 
   It is now possible to group the spec and body (or spec and full view) for an

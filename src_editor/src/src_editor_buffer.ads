@@ -487,11 +487,12 @@ package Src_Editor_Buffer is
    --  is one and Current_Line_Only is False).
 
    function Do_Refill (Buffer : Source_Buffer) return Boolean;
-   --  Refill selected text or the current line if no selection is active. The
-   --  text is wrapped depending on the right margin defined by the column
-   --  highlight preference. This routine handles simple text and comments.
-   --  The indentation and comment detection is done according to the first
-   --  line selected.
+   --  Refill selected text or the current paragraph if no selection is active.
+   --
+   --  The text is wrapped depending on the right margin defined by the column
+   --  highlight preference. This routine handles simple text and comments. The
+   --  indentation and comment detection is done according to the first line
+   --  selected.
 
    function Should_Indent (Buffer : Source_Buffer) return Boolean;
    --  Return true if auto-indentation is supported for this buffer, and if
@@ -599,7 +600,7 @@ package Src_Editor_Buffer is
 
    procedure Set_Avoid_Cursor_Move_On_Changes
      (Buffer : access Source_Buffer_Record; Value : Boolean);
-   --  Set wether we should avoid to do cusrot modifications in case of
+   --  Set wether we should avoid to do cursor modifications in case of
    --  additions / deletions.
 
    type Source_Buffer_Array is array (Natural range <>) of Source_Buffer;
@@ -1117,10 +1118,22 @@ private
    --  If Extend_Selection is True, extend the selection from the current
    --  bound to the given position.
 
+   procedure Find_Current_Comment_Paragraph
+     (Buffer : not null access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Start_Line, End_Line : out Editable_Line_Type);
+   --  Find the bounds of the current comment paragraph that includes Line.
+   --  * If Line is not a comment, returns the bounds for that line.
+   --  * Otherwise, search backward and forward for either the first blank
+   --    comment line, or the first line not in a comment, and use those bounds
+   --
+   --  This computation relies on syntax highlighting and will always only
+   --  return the current line if syntax highlighting has not been activated
+
    function Is_In_Comment
      (Buffer : Source_Buffer;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
-   --  Retruns true if Iter is in a comment. This relies on syntax coloring and
+   --  Returns true if Iter is in a comment. This relies on syntax coloring and
    --  will return False if the syntax coloring has not been computed for Iter.
 
    function Is_In_String
