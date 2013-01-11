@@ -2,7 +2,7 @@
 GPS 6.0 and GNATbench 2.8 NEW FEATURES LIST
 ===========================================
 
-Copyright (C) 2011-2012, AdaCore
+Copyright (C) 2011-2013, AdaCore
 
 This file contains a list of new features introduced in GPS and GNATbench IDEs.
 A full description of all features can be found in the GPS or GNATbench
@@ -35,6 +35,11 @@ NF-60-M108-041 GPS: line wrapping in Messages window (2013-01-09)
 
   It is now possible to configure whether the Messages window should wrap
   lines, or require horizontal scrolling.
+
+NF-53-M102-006 GPS: move Serialize to /Edit/Rectangle/ (2013-01-11)
+
+  This menu was previously in /Edit/Selection, but is more logical in the
+  Rectangle submenu since it conceptually applies to a rectangle.
 
 NF-60-LC21-017 GPS: Update to Scenario View (2013-01-08)
 
