@@ -109,6 +109,75 @@ package body Outline_View.Model is
      (Model : not null access Outline_Model_Record'Class);
    --  Recompute the whole contents of the model
 
+   function Get_Node
+     (Model  : access Outline_Model_Record'Class;
+      Entity : Entity_Access) return Sorted_Node_Access;
+   function Get_Node
+     (Model  : access Outline_Model_Record'Class;
+      It     : Construct_Tree_Iterator) return Sorted_Node_Access;
+   --  Return the node for the corresponding entity, or null if there is none.
+
+   function Get_Node_Next_Part
+     (Model  : access Outline_Model_Record'Class;
+      Entity : Entity_Access) return Sorted_Node_Access;
+   --  Same as Get_Node, but for the body or full view of the entity.
+
+   --------------
+   -- Get_Node --
+   --------------
+
+   function Get_Node
+     (Model  : access Outline_Model_Record'Class;
+      Entity : Entity_Access) return Sorted_Node_Access is
+   begin
+      return Get_Node (Model, To_Construct_Tree_Iterator (Entity));
+   end Get_Node;
+
+   --------------
+   -- Get_Node --
+   --------------
+
+   function Get_Node
+     (Model  : access Outline_Model_Record'Class;
+      It     : Construct_Tree_Iterator) return Sorted_Node_Access
+   is
+      Tree : constant Construct_Tree := Get_Tree (Model.File);
+      Annot : Annotation (Other_Kind);
+   begin
+      if Is_Set
+        (Get_Annotation_Container (Tree, It).all, Model.Annotation_Key)
+      then
+         Get_Annotation
+           (Get_Annotation_Container (Tree, It).all,
+            Model.Annotation_Key,
+            Annot);
+         return Entity_Sort_Annotation (Annot.Other_Val.all).Node;
+      else
+         return null;
+      end if;
+   end Get_Node;
+
+   ------------------------
+   -- Get_Node_Next_Part --
+   ------------------------
+
+   function Get_Node_Next_Part
+     (Model  : access Outline_Model_Record'Class;
+      Entity : Entity_Access) return Sorted_Node_Access
+   is
+      E : Entity_Access;
+   begin
+      if Model.Group_Spec_And_Body then
+         E := Find_Next_Part (Get_Tree_Language (Get_File (Entity)), Entity);
+         if E /= Null_Entity_Access
+           and then Get_File (E) = Model.File
+         then
+            return Get_Node (Model, E);
+         end if;
+      end if;
+      return null;
+   end Get_Node_Next_Part;
+
    ----------
    -- Free --
    ----------
@@ -313,43 +382,16 @@ package body Outline_View.Model is
       Node     : Sorted_Node_Access;
       Position : Sorted_Node_Set.Cursor;
       Inserted : Boolean;
-
-      It2      : Entity_Access;
-      It_Annot : Annotation (Other_Kind);
-      It_Node  : Sorted_Node_Access;
-      Tree     : constant Construct_Tree := Get_Tree (Model.File);
+      E : constant Entity_Access := To_Entity_Access (Model.File, It);
 
    begin
       --  Do we have a node for the other part already ? We know there is none
       --  for the entity itself yet.
-      if Model.Group_Spec_And_Body then
-         It2 := To_Entity_Access (Model.File, It);
-         It2 := Find_Next_Part (Get_Tree_Language (Get_File (It2)), It2);
-
-         if It2 /= Null_Entity_Access
-           and then Get_File (It2) = Model.File
-         then
-            if Is_Set
-              (Get_Annotation_Container
-                 (Tree, To_Construct_Tree_Iterator (It2)).all,
-               Model.Annotation_Key)
-            then
-               Get_Annotation
-                 (Get_Annotation_Container
-                    (Tree, To_Construct_Tree_Iterator (It2)).all,
-                  Model.Annotation_Key,
-                  It_Annot);
-               It_Node := Entity_Sort_Annotation (It_Annot.Other_Val.all).Node;
-
-               if It_Node /= null then
-                  return null;
-               end if;
-            end if;
-         end if;
+      if Get_Node_Next_Part (Model, E) /= null then
+         return null;
       end if;
 
-      Node := New_Node (Model, To_Entity_Persistent_Access
-                        (To_Entity_Access (Model.File, It)));
+      Node := New_Node (Model, To_Entity_Persistent_Access (E));
 
       Node.Parent := Root;
 
@@ -1035,36 +1077,14 @@ package body Outline_View.Model is
       File         : constant Structured_File_Access := Model.File;
       Parent       : constant Construct_Tree_Iterator :=
                        Get_Parent_Scope (Get_Tree (File), New_Obj);
-      Parent_Annot : Annotation (Other_Kind);
       Parent_Node  : Sorted_Node_Access;
       Child_Node   : Sorted_Node_Access;
       Path         : Gtk_Tree_Path;
    begin
       if Parent = Null_Construct_Tree_Iterator then
          Parent_Node := Model.Phantom_Root'Access;
-
-      else
-         if Is_Set
-           (Get_Annotation_Container (Get_Tree (File), Parent).all,
-            Model.Annotation_Key)
-           and then not Is_Set
-             (Get_Annotation_Container (Get_Tree (File), New_Obj).all,
-              Model.Annotation_Key)
-         then
-            --  If the parent is in the model, then retrieve the node and
-            --  check if we need to explicitely add the child.
-            --  The child may have been already added, which is tested by
-            --  the Is_Set on the annotation. In which case, there's nothing
-            --  to do here.
-
-            Get_Annotation
-              (Get_Annotation_Container (Get_Tree (File), Parent).all,
-               Model.Annotation_Key,
-               Parent_Annot);
-
-            Parent_Node :=
-              Entity_Sort_Annotation (Parent_Annot.Other_Val.all).Node;
-         end if;
+      elsif Get_Node (Model, New_Obj) = null then
+         Parent_Node := Get_Node (Model, Parent);
       end if;
 
       if Parent_Node /= null and then Parent_Node.N_Children /= -1 then
@@ -1227,30 +1247,23 @@ package body Outline_View.Model is
       ---------------
 
       procedure Open_Node (It : Construct_Tree_Iterator) is
-         Annot : Annotation (Other_Kind);
+         E   : Entity_Access;
       begin
          if It = Null_Construct_Tree_Iterator then
             return;
          end if;
 
-         if not Is_Set
-           (Get_Annotation_Container (Tree, It).all,
-            Model.Annotation_Key)
-         then
+         Last_Node := Get_Node (Model, It);
+         if Last_Node = null then
+            E := To_Entity_Access (Model.File, It);
+            Last_Node := Get_Node_Next_Part (Model, E);
+            if Last_Node /= null then
+               Compute_Sorted_Nodes (Model, Last_Node);
+               return;
+            end if;
+
             Open_Node (Get_Parent_Scope (Tree, It));
-         end if;
-
-         if Is_Set
-           (Get_Annotation_Container (Tree, It).all,
-            Model.Annotation_Key)
-         then
-            Get_Annotation
-              (Get_Annotation_Container (Tree, It).all,
-               Model.Annotation_Key,
-               Annot);
-
-            Last_Node := Entity_Sort_Annotation (Annot.Other_Val.all).Node;
-
+         else
             Compute_Sorted_Nodes (Model, Last_Node);
          end if;
       end Open_Node;
