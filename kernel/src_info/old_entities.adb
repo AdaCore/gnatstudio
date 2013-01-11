@@ -1534,6 +1534,11 @@ package body Old_Entities is
                  Right.Kind = Completion_Of_Private_Or_Incomplete_Type)
             then
                return True;
+            --  Allow both 'r' and 'm' references at the same location
+            elsif Left.Kind = Reference
+              and then Right.Kind = Modification
+            then
+               return True;
             end if;
          end if;
       end if;
@@ -1605,6 +1610,8 @@ package body Old_Entities is
    -- Element --
    -------------
 
+   --  This routine assumes that there is a single reference per location
+
    function Element
      (List : Entity_Reference_List; Key : Entity_Reference_Index)
       return E_Reference
@@ -1618,6 +1625,8 @@ package body Old_Entities is
    --------------
    -- Contains --
    --------------
+
+   --  This routine assumes that there is a single reference per location
 
    function Contains
      (Element : Entity_Reference_List; Key : Entity_Reference_Index)
@@ -1640,6 +1649,8 @@ package body Old_Entities is
    -- Replace --
    -------------
 
+   --  This routine assumes that there is a single reference per location
+
    procedure Replace
      (List   : Entity_Reference_List;
       Key    : Entity_Reference_Index;
@@ -1659,7 +1670,8 @@ package body Old_Entities is
    begin
       return
         (Element (Cursor.Entity_Cursor).Location,
-         Element (Cursor.Entity_Cursor).Is_Declaration);
+         Element (Cursor.Entity_Cursor).Is_Declaration,
+         Unknown);
    end Index;
 
    --------------------
@@ -2584,6 +2596,8 @@ package body Old_Entities is
          return Reference;
       elsif Ref.Index.Is_Declaration then
          return Declaration;
+      elsif Ref.Index.Kind /= Unknown then
+         return Ref.Index.Kind;
       elsif Ref.Entity.References /= Entity_File_Maps.Empty_Map then
          return Element (Ref.Entity.References, Ref.Index).Kind;
       else
@@ -2763,6 +2777,11 @@ package body Old_Entities is
    function Kind_To_String (Kind : Reference_Kind) return String is
    begin
       case Kind is
+         when Unknown                 =>
+            if Active (Debug_Me) then
+               Assert (Debug_Me, False, "Unknown kind of reference");
+            end if;
+            return -"reference";
          when Reference               => return -"reference";
          when Own_Reference           => return -"own reference";
          when Subprogram_Call         => return -"call";
