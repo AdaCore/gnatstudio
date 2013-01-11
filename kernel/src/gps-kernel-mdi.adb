@@ -331,7 +331,7 @@ package body GPS.Kernel.MDI is
          Doc   => -("Whether the windows should have their own title bars."
            & " If this is disabled, then the notebooks tabs will"
            & " be highlighted to show the current window"),
-         Default => Always);
+         Default => Never);
 
       Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
         (Get_Preferences (Kernel),
@@ -339,7 +339,7 @@ package body GPS.Kernel.MDI is
          Label => -"Notebook tabs policy",
          Page  => -"Windows",
          Doc   => -"When the notebook tabs should be displayed",
-         Default => Automatic);
+         Default => Always);
 
       Pref_Tabs_Position := Tabs_Position_Preferences.Create
         (Get_Preferences (Kernel),
