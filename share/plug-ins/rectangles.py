@@ -44,59 +44,55 @@
 from GPS import *
 import traceback
 import string
+from gps_utils import interactive, with_save_excursion
 
 
-def rectangle_delete(menu):
-    """Delete the selected rectangle"""
-    Rectangle.from_buffer(EditorBuffer.get()).delete()
-
-
-def rectangle_cut(menu):
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Cut")
+@with_save_excursion
+def rectangle_cut():
     """Cut the selected rectangle into the clipboard"""
     Rectangle.from_buffer(EditorBuffer.get()).cut()
 
 
-def rectangle_copy(menu):
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Copy")
+@with_save_excursion
+def rectangle_copy():
     """Copy the selected rectangle into the clipboard"""
     Rectangle.from_buffer(EditorBuffer.get()).copy()
 
 
-def rectangle_paste(menu):
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Paste")
+@with_save_excursion
+def rectangle_paste():
     """Paste the last entry in the clipboard as a rectangle in the current editor"""
     Rectangle.paste(loc=EditorBuffer.get().current_view().cursor())
 
 
-def rectangle_open(menu):
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Delete")
+@with_save_excursion
+def rectangle_delete():
+    """Delete the selected rectangle"""
+    Rectangle.from_buffer(EditorBuffer.get()).delete()
+
+
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Clear")
+@with_save_excursion
+def rectangle_clear():
+    """Replaces the contents of the rectangle with spaces"""
+    Rectangle.from_buffer(EditorBuffer.get()).clear()
+
+
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Open")
+@with_save_excursion
+def rectangle_open():
     """Insert blank spaces to fill the selected rectangle.
        This pushes its text to the right"""
     Rectangle.from_buffer(EditorBuffer.get()).open()
 
 
-def rectangle_insert(menu, text=None):
-    """Insert TEXT at the beginning of each line of the selected rectangle.
-      If TEXT is unspecified, an interactive dialog is open"""
-
-    if not text:
-        text = MDI.input_dialog('Text to insert before each line:', """""")
-        if not text:
-            return
-        text = text[0]
-    Rectangle.from_buffer(EditorBuffer.get()).insert(text)
-
-def rectangle_sort(menu):
-    Rectangle.from_buffer(EditorBuffer.get()).sort()
-
-
-def rectangle_sort_reverse(menu):
-    Rectangle.from_buffer(EditorBuffer.get()).sort(revert=True)
-
-
-def rectangle_clear(menu):
-    """Replaces the contents of the rectangle with spaces"""
-    Rectangle.from_buffer(EditorBuffer.get()).clear()
-
-
-def rectangle_string(menu, text=None):
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Replace with Text")
+@with_save_excursion
+def rectangle_string(text=None):
     """Replaces the contents of the rectangle with TEXT on each line.
       If TEXT is narrower or wider than the rectangle, the text is shifted
       right or left as appropriate.
@@ -110,23 +106,36 @@ def rectangle_string(menu, text=None):
     Rectangle.from_buffer(EditorBuffer.get()).string(text)
 
 
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Insert Text")
+@with_save_excursion
+def rectangle_insert(text=None):
+    """Insert TEXT at the beginning of each line of the selected rectangle.
+      If TEXT is unspecified, an interactive dialog is open"""
+
+    if not text:
+        text = MDI.input_dialog('Text to insert before each line:', """""")
+        if not text:
+            return
+        text = text[0]
+    Rectangle.from_buffer(EditorBuffer.get()).insert(text)
+
+
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Sort")
+@with_save_excursion
+def rectangle_sort():
+    Rectangle.from_buffer(EditorBuffer.get()).sort()
+
+
+@interactive("Editor", "Source editor", "/Edit/Rectangle/Sort Reverse")
+@with_save_excursion
+def rectangle_sort_reverse():
+    Rectangle.from_buffer(EditorBuffer.get()).sort(revert=True)
+
+
 def on_gps_started(hook_name):
     """Create the menus associated with this module"""
-    Menu.create('/Edit/Rectangle', ref='Redo', add_before=False)
-    Menu.create('/Edit/Rectangle/Cut', on_activate=rectangle_cut)
-    Menu.create('/Edit/Rectangle/Copy', on_activate=rectangle_copy)
-    Menu.create('/Edit/Rectangle/Paste', on_activate=rectangle_paste)
-    Menu.create('/Edit/Rectangle/-')
-    Menu.create('/Edit/Rectangle/Delete', on_activate=rectangle_delete)
-    Menu.create('/Edit/Rectangle/Clear', on_activate=rectangle_clear)
-    Menu.create('/Edit/Rectangle/Open', on_activate=rectangle_open)
-    Menu.create('/Edit/Rectangle/Replace with Text',
-                on_activate=rectangle_string)
-    Menu.create('/Edit/Rectangle/Insert Text', on_activate=rectangle_insert)
-    Menu.create('/Edit/Rectangle/-')
-    Menu.create('/Edit/Rectangle/Sort', on_activate=rectangle_sort)
-    Menu.create('/Edit/Rectangle/Sort reverse',
-                on_activate=rectangle_sort_reverse)
+    Menu.create('/Edit/Rectangle/-', ref='Sort', add_before=True)
+    Menu.create('/Edit/Rectangle/-', ref='Delete', add_before=True)
 
 
 ##############################################################################

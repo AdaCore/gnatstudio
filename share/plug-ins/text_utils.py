@@ -297,7 +297,7 @@ def lines_with_digit (buffer, loc, max=None):
 
    return max
 
-@interactive ("Editor", "Source editor", "/Edit/Selection/Serialize")
+@interactive ("Editor", "Source editor", "/Edit/Rectangle/Serialize")
 @with_save_excursion
 def serialize (increment=1):
    """Increment a set of numbers found on adjacent lines.
