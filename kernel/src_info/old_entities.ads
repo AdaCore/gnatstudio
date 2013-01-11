@@ -275,7 +275,8 @@ package Old_Entities is
    --------------------
 
    type Reference_Kind is
-     (Reference,
+     (Unknown,
+      Reference,
       Subprogram_Call,
       Dispatching_Call,
       Modification,
@@ -1090,10 +1091,11 @@ private
    type Entity_Reference_Index is record
       Loc            : File_Location;
       Is_Declaration : Boolean;
+      Kind           : Reference_Kind;
    end record;
 
    Null_Entity_Reference_Index : Entity_Reference_Index :=
-     (No_File_Location, False);
+     (No_File_Location, False, Unknown);
 
    package Entity_File_Maps is new
      Ada.Containers.Ordered_Maps

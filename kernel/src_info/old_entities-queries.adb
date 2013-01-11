@@ -1379,7 +1379,8 @@ package body Old_Entities.Queries is
          return
            (Entity => Iter.Entity,
             Index  => (Element (Iter.Entity_It).Location,
-                       Element (Iter.Entity_It).Is_Declaration));
+                       Element (Iter.Entity_It).Is_Declaration,
+                       Element (Iter.Entity_It).Kind));
       end if;
    end Get;
 
