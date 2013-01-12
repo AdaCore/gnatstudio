@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- M103-017: Write references reported as read references
+  Problem:    Variables passed in out-mode parameters are not listed as
+              as write references.
+  Workaround: None.
+
 - LC11-030: GPS: Potential conflict when redefining key shortcuts
   Problem:    It is possible to associate by mistake key shortcuts to keys
               that are already bound because the key manager dialog does not
