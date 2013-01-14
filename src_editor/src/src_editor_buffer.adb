@@ -6978,9 +6978,19 @@ package body Src_Editor_Buffer is
         Lang_Context.Syntax.New_Line_Comment_Start;
       Non_Empty_Comment_Re : Pattern_Matcher_Access;
 
+      Is_Empty_Re : Pattern_Matcher_Access;
+      Comment_Start_End_Re : Pattern_Matcher_Access;
+
       function Is_Comment_Line (Line : Editable_Line_Type) return Boolean;
       --  Whether Pos is anywhere on a comment line (not necessarily within the
       --  comment itself)
+
+      function Is_Boundary (Line : Editable_Line_Type) return Boolean;
+      --  Whether Line is a boundary for a pagraph.
+
+      ---------------------
+      -- Is_Comment_Line --
+      ---------------------
 
       function Is_Comment_Line (Line : Editable_Line_Type) return Boolean is
          L : Src_String;
@@ -6994,21 +7004,61 @@ package body Src_Editor_Buffer is
            (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Length));
       end Is_Comment_Line;
 
+      -----------------
+      -- Is_Boundary --
+      -----------------
+
+      function Is_Boundary (Line : Editable_Line_Type) return Boolean is
+         L : constant Src_String := Get_String (Source_Buffer (Buffer), Line);
+      begin
+         return L.Contents = null
+           or else Match (Is_Empty_Re.all, L.Contents (1 .. L.Length))
+           or else
+             (Non_Empty_Comment_Re /= null
+              and then Match  --  in a single line comment
+                (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Length)))
+           or else    --  boundary of comment block
+             (Comment_Start_End_Re /= null
+              and then Match (Comment_Start_End_Re.all,
+                              L.Contents (1 .. L.Length)));
+      end Is_Boundary;
+
    begin
       if Single_Line_BC /= null then
          Non_Empty_Comment_Re := new Pattern_Matcher'
            (Compile ("^\s*" & Single_Line_BC.all & "\s*\S"));
       end if;
 
-      --  Can only use Is_In_Comment at the end of the line
+      Start_Line := Line;
+      End_Line  := Line;
+
       if not Is_Comment_Line (Line) then
-         Start_Line := Line;
-         End_Line := Start_Line;
+         --  If we are not in a single line comment, we should simply search
+         --  for empty lines before and after to find the bounds of the
+         --  paragraph. We should also stop when we find a line that marks the
+         --  beginning of end of a comment.
+
+         Is_Empty_Re := new Pattern_Matcher'(Compile ("^\s*$"));
+
+         if Lang_Context.Syntax.Comment_Start /= null then
+            Comment_Start_End_Re := new Pattern_Matcher'
+              (Compile ("(" & Quote (Lang_Context.Syntax.Comment_Start.all)
+               & "|" & Quote (Lang_Context.Syntax.Comment_End.all) & ")"));
+         end if;
+
+         while Start_Line > 1
+           and then not Is_Boundary (Start_Line - 1)
+         loop
+            Start_Line := Start_Line - 1;
+         end loop;
+
+         while End_Line < Editable_Line_Type (Buffer.Get_Line_Count)
+           and then not Is_Boundary (End_Line + 1)
+         loop
+            End_Line := End_Line + 1;
+         end loop;
 
       else
-         Start_Line := Line;
-         End_Line  := Line;
-
          while Start_Line > 1
            and then Is_Comment_Line (Start_Line - 1)
          loop
@@ -7022,7 +7072,12 @@ package body Src_Editor_Buffer is
          end loop;
       end if;
 
+      Trace (Me, "Bounds" & Start_Line'Img & End_Line'Img
+             & " started from" & Line'Img);
+
       Unchecked_Free (Non_Empty_Comment_Re);
+      Unchecked_Free (Is_Empty_Re);
+      Unchecked_Free (Comment_Start_End_Re);
    end Find_Current_Comment_Paragraph;
 
    ------------------------------
