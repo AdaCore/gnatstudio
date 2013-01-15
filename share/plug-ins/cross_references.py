@@ -4,8 +4,6 @@
 import GPS
 import os.path
 
-gnatinspect_launch_registered = False
-
 class Sqlite_Cross_References(object):
     """
     A python class to support the xref engine in GPS.
@@ -57,10 +55,10 @@ class Sqlite_Cross_References(object):
         GPS.Hook("project_view_changed").add(self.on_project_view_changed)
         GPS.Hook("compilation_finished").add(self.on_compilation_finished)
         GPS.Hook("gps_started").add(self.on_gps_started)
+        self.gnatinspect_launch_registered = False
 
     def recompute_xref(self):
         """ Launch recompilation of the cross references """
-        global gnatinspect_launch_registered
 
         # The project might not exist, for instance when GPS is loading the
         # default project in a directory
@@ -72,11 +70,11 @@ class Sqlite_Cross_References(object):
         # of gnatinspect, but register one to be launched
 
         if "Recompute Xref info" in [t.name() for t in GPS.Task.list()]:
-            gnatinspect_launch_registered = True
+            self.gnatinspect_launch_registered = True
             return
 
         # We are about to launch gnatinspect
-        gnatinspect_launch_registered = False
+        self.gnatinspect_launch_registered = False
         target = GPS.BuildTarget("Recompute Xref info")
 
         # ??? should add <arg>--symlinks</arg> if preference "slow project loading"
@@ -94,13 +92,12 @@ class Sqlite_Cross_References(object):
 
                 self.recompute_xref()
 
-        if (gnatinspect_launch_registered
+        if (self.gnatinspect_launch_registered
             and target_name == "Recompute Xref info"):
             # A launch of gnatinspect was registered while this one was
             # running: relaunch one now.
 
             self.recompute_xref()
-
 
     def on_project_view_changed(self, hook):
         self.recompute_xref()
@@ -108,6 +105,7 @@ class Sqlite_Cross_References(object):
     def on_gps_started(self, hook):
         GPS.Menu.create("/Build/Recompute _Xref info",
              on_activate=lambda x : recompute_xref())
+
 
 if GPS.Logger("ENTITIES.SQLITE").active:
     Sqlite_Cross_References()
