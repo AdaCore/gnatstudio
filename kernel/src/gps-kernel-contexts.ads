@@ -247,7 +247,13 @@ package GPS.Kernel.Contexts is
    function Get_Entity
      (Context           : Selection_Context)
       return Xref.General_Entity;
+   pragma Inline (Get_Entity);
    --  Return the xref entity stored in the context.
+
+   function Get_Entity_Type_Of
+     (Context           : Selection_Context)
+      return Xref.General_Entity;
+   --  Return the type of the xref entity stored in the context.
 
    function Get_Closest_Ref
      (Context : Selection_Context) return Xref.General_Entity_Reference;

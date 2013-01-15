@@ -1879,11 +1879,8 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : constant General_Entity := Get_Entity (Context);
-      Kernel : constant Kernel_Handle  := Get_Kernel (Context);
    begin
-      return Entity /= No_General_Entity
-        and then Kernel.Databases.Get_Type_Of (Entity) /= No_General_Entity;
+      return Get_Entity_Type_Of (Context) /= No_General_Entity;
    end Filter_Matches_Primitive;
 
    ------------------------------

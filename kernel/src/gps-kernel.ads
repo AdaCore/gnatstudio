@@ -897,6 +897,10 @@ private
       --  xref engines are responsible for making a best guess, or setting
       --  this to null.
 
+      Xref_Entity_Type_Of : Xref.General_Entity := Xref.No_General_Entity;
+      --  The type of Xref_Entity, cached.
+      --  No_General_Entity indicates that the entity hasn't been computed.
+
       Xref_Closest_Ref  : Xref.General_Entity_Reference :=
         Xref.No_General_Entity_Reference;
       --  The reference on which the user has clicked. This is slightly
