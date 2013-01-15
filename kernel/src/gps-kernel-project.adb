@@ -750,6 +750,23 @@ package body GPS.Kernel.Project is
          Get_Messages_Container (Kernel).Remove_Category
            (Location_Category, Location_Message_Flags);
 
+         --  Always call Compute_Predefined_Paths to detect if recomputation
+         --  is really needed. This is also used to get the value of
+         --  ADA_PROJECT_PATH. and the default search path.
+         --  If we are running locally, do not use the cache, and recompute the
+         --  output of gnatls, so that users can possibly change the
+         --  environment variables like ADA_PROJECT_PATH before reloading the
+         --  project (FB07-010)
+         --  This call to Compute_Predefined_Paths is needed before even
+         --  loading the project, in case it depends on some predefined
+         --  projects. The loading of the project will call it a second time
+         --  once we know the "gnat" attribute.
+
+         Trace (Me, "Recompute predefined paths -- Local builder server ? "
+                & Boolean'Image (Is_Local (Build_Server)));
+         Compute_Predefined_Paths
+           (Kernel, Use_Cache => not Is_Local (Build_Server));
+
          begin
             New_Project_Loaded := True;
             Kernel.Registry.Tree.Load
@@ -827,23 +844,6 @@ package body GPS.Kernel.Project is
             Ignore := Load_Desktop
               (Kernel, For_Project => Local_Project);
          end if;
-
-         --  Always call Compute_Predefined_Paths who detects if recomputation
-         --  is really needed. This is also used to get the value of
-         --  ADA_PROJECT_PATH. and the default search path.
-         --  If we are running locally, do not use the cache, and recompute the
-         --  output of gnatls, so that users can possibly change the
-         --  environment variables like ADA_PROJECT_PATH before reloading the
-         --  project (FB07-010)
-         --  This call to Compute_Predefined_Paths is needed before even
-         --  loading the project, in case it depends on some predefined
-         --  projects. The loading of the project will call it a second time
-         --  once we know the "gnat" attribute.
-
-         Trace (Me, "Recompute predefined paths -- Local builder server ? "
-                & Boolean'Image (Is_Local (Build_Server)));
-         Compute_Predefined_Paths
-           (Kernel, Use_Cache => not Is_Local (Build_Server));
 
          Pop_State (Kernel_Handle (Kernel));
 
