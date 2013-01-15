@@ -11,15 +11,15 @@ Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 - M115-022: ECL: Android library not found when running app
   Problem:    The Ada project builder creates a folder in the associated
               Android project to hold the resulting dynamic library. This
-			  folder is named "libs/armeabi-v7a/" but that name is specific to
-			  that architecture. As a result, the Android OS will only load the
-			  library if the target architecture is compatible with the v7a
-			  version.
+              folder is named "libs/armeabi-v7a/" but that name is specific to
+              that architecture. As a result, the Android OS will only load the
+              library if the target architecture is compatible with the v7a
+              version.
   Workaround: Rename the folder to remove the "-v7a" suffix if the target is
               indeed incompatible.  For a permanent fix, change the content of
-			  file "postbuild.mk" so that the value of ANDROID_TARGET_VERSION
-			  is "armeabi" instead.  Subsequent Ada builds will then create a
-			  libs folder with the more architecture-independent name.
+              file "postbuild.mk" so that the value of ANDROID_TARGET_VERSION
+              is "armeabi" instead.  Subsequent Ada builds will then create a
+              libs folder with the more architecture-independent name.
 
 - M103-017: Write references reported as read references
   Problem:    Variables passed in out-mode parameters are not listed as
