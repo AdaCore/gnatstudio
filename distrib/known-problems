@@ -9,14 +9,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.0
 
 - LB21-039: GPS should not launch when the display depth is under 24 bits
-  Problem:    GPS does not support display depths under 24 bits per pixel,
-              and crashes at random when this is the case.
+  Problem:    GPS crashes unpredictably when using display depths shallower
+              than 24 bits per pixel.
   Workaround: None known.
 
 - LB27-003: Infinite loop when clicking on C++ enum type
-  Problem:    When right-clicking on a C++ enum variable, it is possible
-              that GPS locks. It is trying to compute cross-reference
-              information for the enum type.
+  Problem:    When right-clicking on a C++ enum variable, GPS attempts to
+              compute cross-reference information for the enum type. It is
+              possible for GPS to lock up during this operation.
   Workaround: This requires an update of GPS.
 
 - LB21-021: GPS: Navigation problem in goto type declaration
@@ -27,29 +27,28 @@ Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.0
               cursor to the location of the object declaration and repeat it
               to move the cursor to the declaration of the corresponding type.
 
-- LA24-013: Bad indentation of some lines in function calls
+- LA24-013: Incorrect indentation of lines while editing function calls
   Problem:    When indenting a single line in the middle of a complex function
               call containing several parentheses, the indentation engine may
-              get confused and badly indent the line.
-  Workaround: Select the whole function call and then indent it as a whole.
+              malfunction and indent the line incorrectly.
+  Workaround: Select the entire function call and indent it as a whole.
 
-- LA11-013: Aspect clause on a record confuses indentation
+- LA11-013: Aspect clause on a record causes incorrect indentation
   Problem:    When using an Ada 2012 aspect clause at the end of a record,
-              the indentation engine may get confused and unindent an extra
-              level wrongly, e.g:
+              such as in the example below, the indentation engine may
+              incorrectly unindent an extra level.
                  type R is record
                     X : Integer;
                  end record with Size => 32;
   Workaround: Use a 'for' clause instead to specify the aspect.
 
 - L814-016: GPS: Code completion of typedef struct types
-  Problem:    Completion of components in variables whose type is a C/C++
-              'typedef struct' type does not work.
-  Workaround: Instead of writing the name of the object as prefix, write
-              first the type of the object. After pressing "." or "->" GPS
-              offers the completions list of the type which allows to select
-              the desired component. Finally replace the prefix by the
-              variable name.
+  Problem:    In variables whose type is a C/C++ 'typedef struct', completion
+              of components does not work.
+  Workaround: When editing, temporarily enter and use the type of the object
+              rather than the name of the object. You can then use GPS
+              completions as you normally would. When finished, replace the
+              temporary prefix with the intended variable name.
 
 Known Problems fixed in GPS 5.2.0 / GNATbench 2.7.0
 
