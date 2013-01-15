@@ -4,6 +4,8 @@
 import GPS
 import os.path
 
+gnatinspect_launch_registered = False
+
 class Sqlite_Cross_References(object):
     """
     A python class to support the xref engine in GPS.
@@ -58,39 +60,51 @@ class Sqlite_Cross_References(object):
 
     def recompute_xref(self):
         """ Launch recompilation of the cross references """
-    
+        global gnatinspect_launch_registered
+
         # The project might not exist, for instance when GPS is loading the
         # default project in a directory
-    
+
         if not os.path.exists(GPS.Project.root().file().name()):
             return
-    
+
         # If we are already recomputing Xref info, do not launch another instance
-        # of gnatinspect
-    
+        # of gnatinspect, but register one to be launched
+
         if "Recompute Xref info" in [t.name() for t in GPS.Task.list()]:
+            gnatinspect_launch_registered = True
             return
-    
+
+        # We are about to launch gnatinspect
+        gnatinspect_launch_registered = False
         target = GPS.BuildTarget("Recompute Xref info")
-    
-        #  ??? should add <arg>--symlinks</arg> if preference "slow project loading"
-        #  is activated
-    
+
+        # ??? should add <arg>--symlinks</arg> if preference "slow project loading"
+        # is activated
+
         target.execute(synchronous=False, quiet=True)
-    
+
     def on_compilation_finished(self, hook, category,
         target_name="", mode_name="", status=""):
-    
+
         if not status:
             if (target_name in ["Compile File", "Build Main", "Build All",
                    "Compile All Sources", "Build <current file>", "Custom Build..."]
                 or category in ["Makefile"]):
 
                 self.recompute_xref()
-    
+
+        if (gnatinspect_launch_registered
+            and target_name == "Recompute Xref info"):
+            # A launch of gnatinspect was registered while this one was
+            # running: relaunch one now.
+
+            self.recompute_xref()
+
+
     def on_project_view_changed(self, hook):
         self.recompute_xref()
-    
+
     def on_gps_started(self, hook):
         GPS.Menu.create("/Build/Recompute _Xref info",
              on_activate=lambda x : recompute_xref())
