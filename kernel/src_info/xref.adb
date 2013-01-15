@@ -589,6 +589,11 @@ package body Xref is
    begin
       Closest_Ref := No_General_Entity_Reference;
 
+      if Entity_Name = "" then
+         Entity := No_General_Entity;
+         return;
+      end if;
+
       if Active (Me) then
          Increase_Indent (Me, "Find_Declaration of " & Entity_Name
                           & " file=" & Loc.File.Display_Base_Name
