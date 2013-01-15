@@ -120,6 +120,7 @@ package body Vsearch is
       Extra_Information : Gtk.Widget.Gtk_Widget;
       Id                : Module_ID;
       Label             : String_Access;
+      In_Selection      : Boolean;
    end record;
 
    No_Search : constant Search_Module_Data :=
@@ -127,7 +128,8 @@ package body Vsearch is
       Mask              => 0,
       Factory           => null,
       Id                => null,
-      Extra_Information => null);
+      Extra_Information => null,
+      In_Selection      => False);
 
    procedure Set_Last_Of_Module
      (Handle      : access Kernel_Handle_Record'Class;
@@ -137,8 +139,9 @@ package body Vsearch is
    --  module.
 
    function Search_Context_From_Module
-     (Id     : not null access Module_ID_Record'Class;
-      Handle : access Kernel_Handle_Record'Class) return Search_Module_Data;
+     (Id           : not null access Module_ID_Record'Class;
+      Handle       : access Kernel_Handle_Record'Class;
+      In_Selection : Boolean := False) return Search_Module_Data;
    --  Return the first search context that matches Id, or No_Search if there
    --  is none.
 
@@ -1912,20 +1915,24 @@ package body Vsearch is
       --  We must create the search dialog only after we have found the current
       --  context, otherwise it would return the context of the search widget
       --  itself
-      Module   : constant Module_ID := Get_Current_Module (Kernel);
+      Module     : constant Module_ID := Get_Current_Module (Kernel);
+      W          : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+      Buffer     : Gtk_Text_Buffer;
+      First_Iter : Gtk_Text_Iter;
+      Last_Iter  : Gtk_Text_Iter;
+
+      Has_Selection : Boolean := False;
+      --  If W has multiline selecion saved in First_Iter, Last_Iter
 
       Child   : GPS_MDI_Child;
-      Success : Boolean;
 
       Default_Pattern : String_Access := null;
 
-      pragma Unreferenced (Success);
    begin
       Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
                               (Get_MDI (Kernel), Vsearch_Record'Tag));
 
       declare
-         W : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
          Start, Stop : Gint;
          Success : Boolean := False;
       begin
@@ -1938,24 +1945,20 @@ package body Vsearch is
                Default_Pattern := new String'(Get_Chars (+W, Start, Stop));
             end if;
          elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
-            declare
-               Buffer     : constant Gtk_Text_Buffer := Get_Buffer
-                 (Gtk_Text_View (W));
-               First_Iter : Gtk_Text_Iter;
-               Last_Iter  : Gtk_Text_Iter;
-            begin
-               Get_Selection_Bounds
-                 (Buffer, First_Iter, Last_Iter, Success);
+            Buffer := Get_Buffer (Gtk_Text_View (W));
+            Get_Selection_Bounds
+              (Buffer, First_Iter, Last_Iter, Success);
 
-               if Success and then
-                 Get_Offset (First_Iter) /= Get_Offset (Last_Iter)
-               then
+            if Success then
+               if Get_Line (First_Iter) = Get_Line (Last_Iter) then
                   Default_Pattern := new String'
                     (Get_Slice (Buffer, First_Iter, Last_Iter));
-               end if;
 
-               Select_Range (Buffer, First_Iter, First_Iter);
-            end;
+                  Select_Range (Buffer, First_Iter, First_Iter);
+               else
+                  Has_Selection := True;
+               end if;
+            end if;
          end if;
 
          if Default_Pattern /= null
@@ -2041,7 +2044,8 @@ package body Vsearch is
                if Module /= null then
                   declare
                      Search : constant Search_Module_Data :=
-                       Search_Context_From_Module (Module, Vsearch.Kernel);
+                       Search_Context_From_Module
+                         (Module, Vsearch.Kernel, Has_Selection);
                   begin
                      if Search /= No_Search then
                         Add_Unique_Combo_Entry
@@ -2058,8 +2062,38 @@ package body Vsearch is
          end;
       end if;
 
+      if Has_Selection then
+         --  Restore multiline selection
+         Select_Range (Buffer, First_Iter, Last_Iter);
+
+         Vsearch_Module_Id.Search.Selection_From :=
+           Buffer.Create_Mark (Mark_Name    => "search_from",
+                               Where        => First_Iter,
+                               Left_Gravity => True);
+
+         Vsearch_Module_Id.Search.Selection_To :=
+           Buffer.Create_Mark (Mark_Name    => "search_to",
+                               Where        => Last_Iter,
+                               Left_Gravity => False);
+      end if;
+
       return Vsearch_Module_Id.Search;
    end Get_Or_Create_Vsearch;
+
+   -------------------
+   -- Get_Selection --
+   -------------------
+
+   procedure Get_Selection
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      From   : out Gtk_Text_Mark;
+      To     : out Gtk_Text_Mark)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      From := Vsearch_Module_Id.Search.Selection_From;
+      To   := Vsearch_Module_Id.Search.Selection_To;
+   end Get_Selection;
 
    --------------------
    -- Search_Next_Cb --
@@ -2140,7 +2174,8 @@ package body Vsearch is
       Factory           : Find_Utils.Module_Search_Context_Factory;
       Extra_Information : access Gtk.Widget.Gtk_Widget_Record'Class := null;
       Id          : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
-      Mask              : Search_Options_Mask := All_Options)
+      Mask              : Search_Options_Mask := All_Options;
+      In_Selection      : Boolean := False)
    is
       Data : constant Search_Module_Data :=
         Search_Module_Data'
@@ -2148,7 +2183,8 @@ package body Vsearch is
            Factory           => Factory,
            Extra_Information => Gtk_Widget (Extra_Information),
            Id                => Module_ID (Id),
-           Mask              => Mask);
+           Mask              => Mask,
+           In_Selection      => In_Selection);
       Command : Interactive_Command_Access;
    begin
       if Id /= null then
@@ -2234,9 +2270,9 @@ package body Vsearch is
    --------------------------------
 
    function Search_Context_From_Module
-     (Id     : not null access Module_ID_Record'Class;
-      Handle : access Kernel_Handle_Record'Class)
-      return Search_Module_Data
+     (Id           : not null access Module_ID_Record'Class;
+      Handle       : access Kernel_Handle_Record'Class;
+      In_Selection : Boolean := False) return Search_Module_Data
    is
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
       Last_Matching_Node : List_Node := Null_Node;
@@ -2247,7 +2283,9 @@ package body Vsearch is
 
    begin
       while List /= Null_Node loop
-         if Data (List).Id = Module_ID (Id) then
+         if Data (List).Id = Module_ID (Id)
+           and Data (List).In_Selection = In_Selection
+         then
             Last_Matching_Node := List;
 
             if not Get_Pref (Keep_Previous_Search_Context)

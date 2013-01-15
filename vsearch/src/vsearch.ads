@@ -30,6 +30,7 @@ with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Table;           use Gtk.Table;
+with Gtk.Text_Mark;       use Gtk.Text_Mark;
 with Gtk.Viewport;        use Gtk.Viewport;
 with Gtk.Widget;          use Gtk.Widget;
 
@@ -71,8 +72,9 @@ package Vsearch is
       Label             : String;
       Factory           : Find_Utils.Module_Search_Context_Factory;
       Extra_Information : access Gtk.Widget.Gtk_Widget_Record'Class := null;
-      Id          : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
-      Mask        : Find_Utils.Search_Options_Mask := Find_Utils.All_Options);
+      Id           : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
+      Mask         : Find_Utils.Search_Options_Mask := Find_Utils.All_Options;
+      In_Selection : Boolean := False);
    --  Register a new search function.
    --  This will be available under the title Label in the search combo box.
    --  This procedure immediately emits the kernel signal
@@ -97,6 +99,9 @@ package Vsearch is
    --  Id can be left null. If not null, it will be used to set the default
    --  search context when the search dialog is popped up (the first
    --  search_module_data that matches the current module is used).
+
+   --  When Id is not null and In_Selection = True it will be used to set the
+   --  default search context when there multiline selection in an editor.
 
    procedure Reset_Search
      (Object : access Glib.Object.GObject_Record'Class;
@@ -158,6 +163,12 @@ package Vsearch is
    function Get_Tab_Width return Natural;
    --  Return the default Tab width.
 
+   procedure Get_Selection
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      From   : out Gtk_Text_Mark;
+      To     : out Gtk_Text_Mark);
+   --  Return selection region saved at the beginning of last search
+
 private
 
    Open_Options_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
@@ -206,6 +217,8 @@ private
       --  there is another one already running: they need to have their own
       --  context.
       Find_Next               : Boolean := False;
+      Selection_From          : Gtk_Text_Mark;
+      Selection_To            : Gtk_Text_Mark;
    end record;
 
    type Search_Regexp is record

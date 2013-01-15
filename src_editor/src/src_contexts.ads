@@ -24,6 +24,7 @@ with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with Gtk.Box;
 with Gtk.Combo_Box_Text;
 with Gtk.Text_Iter;
+with Gtk.Text_Mark;                 use Gtk.Text_Mark;
 with Gtk.Widget;
 
 with Basic_Types;
@@ -121,6 +122,31 @@ package Src_Contexts is
    function Get_Terminate_Message
      (Context : access Current_File_Context;
       Kind    : Operation_Kind) return String;
+
+   --------------------------------
+   --  Current Selection Context --
+   --------------------------------
+
+   type Current_Selection_Context is new Current_File_Context with private;
+
+   overriding procedure Search
+     (Context         : access Current_Selection_Context;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean);
+   --  Search function for "Current Selection"
+
+   overriding function Context_Look_In
+     (Self : Current_Selection_Context) return String;
+
+   function Current_Selection_Factory
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Factory for "Current Selection".
 
    ----------------------------
    -- Abstract files context --
@@ -511,5 +537,13 @@ private
    end record;
 
    type Runtime_Files_Context is new Files_Project_Context with null record;
+
+   type Current_Selection_Context is new Current_File_Context with record
+      Selection_From : Gtk_Text_Mark;
+      Selection_To   : Gtk_Text_Mark;
+   end record;
+
+   type Current_Selection_Context_Access is
+     access all Current_Selection_Context'Class;
 
 end Src_Contexts;

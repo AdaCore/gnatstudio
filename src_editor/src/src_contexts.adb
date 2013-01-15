@@ -247,12 +247,15 @@ package body Src_Contexts is
    --  scope.
 
    function Auxiliary_Search
-     (Context         : access Current_File_Context;
+     (Context         : access Current_File_Context'Class;
       Editor          : Source_Editor_Box;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Range_Start     : Gtk_Text_Iter;
+      Range_End       : Gtk_Text_Iter) return Boolean;
    --  Auxiliary function, factorizes code between Search and Replace.
-   --  Return True in case of success
+   --  Return True in case of success.
+   --  Limit search to Range_Start .. Range_End text range.
 
    function Locations_Category_Name (Look_For : String) return String;
    --  Return the name of the category to use in the Locations window
@@ -1323,6 +1326,90 @@ package body Src_Contexts is
       return Search_Context_Access (Context);
    end Current_File_Factory;
 
+   -------------------------------
+   -- Current_Selection_Factory --
+   -------------------------------
+
+   function Current_Selection_Factory
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access
+   is
+      Selector : constant Scope_Selector := Scope_Selector (Extra_Information);
+      Scope    : constant Search_Scope :=
+        Search_Scope'Val (Get_Active (Selector.Combo));
+
+      Result : Current_Selection_Context_Access;
+   begin
+      Result := new Current_Selection_Context;
+
+      Get_Selection (Kernel, Result.Selection_From, Result.Selection_To);
+
+      Result.All_Occurrences := All_Occurrences;
+      Result.Scope := Scope;
+
+      return Search_Context_Access (Result);
+   end Current_Selection_Factory;
+
+   ------------
+   -- Search --
+   ------------
+
+   overriding procedure Search
+     (Context         : access Current_Selection_Context;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean)
+   is
+      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
+      Editor : Source_Editor_Box;
+
+   begin
+      Found := False;
+
+      if Child = null then
+         Continue := False;
+         return;
+      end if;
+
+      Editor := Get_Source_Box_From_MDI (Child);
+
+      Raise_Child (Child, Give_Focus);
+
+      if not Context.All_Occurrences then
+         declare
+            Buffer      : constant Gtk_Text_Buffer :=
+              Get_Buffer (Context.Selection_From);
+            Range_Start : Gtk_Text_Iter;
+            Range_End   : Gtk_Text_Iter;
+         begin
+            Buffer.Get_Iter_At_Mark (Range_Start, Context.Selection_From);
+            Buffer.Get_Iter_At_Mark (Range_End, Context.Selection_To);
+            Found := Auxiliary_Search
+              (Context, Editor, Kernel, Search_Backward,
+               Range_Start, Range_End);
+
+            if not Found then
+               Buffer.Select_Range (Range_Start, Range_End);
+            end if;
+
+            Continue := False; --  ??? Dummy boolean.
+         end;
+      else
+         --  All_Occurrences not supported
+         Continue := False;
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         Found := False;
+         Continue := False;
+         return;
+   end Search;
+
    --------------------------------
    -- Files_From_Project_Factory --
    --------------------------------
@@ -1676,10 +1763,12 @@ package body Src_Contexts is
    ----------------------
 
    function Auxiliary_Search
-     (Context         : access Current_File_Context;
+     (Context         : access Current_File_Context'Class;
       Editor          : Source_Editor_Box;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Range_Start     : Gtk_Text_Iter;
+      Range_End       : Gtk_Text_Iter) return Boolean
    is
       Selection_Start : Gtk_Text_Iter;
       Selection_End   : Gtk_Text_Iter;
@@ -1701,7 +1790,9 @@ package body Src_Contexts is
          Match_Up_To     => Match_Up_To,
          Found           => Found);
 
-      if Found then
+      if Found
+        and then In_Range (Match_From, Range_Start, Range_End)
+      then
          Push_Current_Editor_Location_In_History (Kernel);
          Select_Region (Get_Buffer (Editor), Match_Up_To, Match_From);
 
@@ -1726,6 +1817,7 @@ package body Src_Contexts is
    is
       Child  : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor : Source_Editor_Box;
+      Buffer : Source_Buffer;
 
       function Interactive_Callback (Match : Match_Result) return Boolean;
       --  Callbacks for the general search function
@@ -1770,16 +1862,25 @@ package body Src_Contexts is
       end if;
 
       Editor := Get_Source_Box_From_MDI (Child);
+      Buffer := Get_Buffer (Editor);
 
       Context.Current_File := To_Unbounded_String
-        (Get_Filename (Get_Buffer (Editor)).Display_Full_Name);
+        (Get_Filename (Buffer).Display_Full_Name);
 
       Raise_Child (Child, Give_Focus);
 
       if not Context.All_Occurrences then
-         Found := Auxiliary_Search
-           (Context, Editor, Kernel, Search_Backward);
-         Continue := False; --  ??? Dummy boolean.
+         declare
+            Buffer_Start : Gtk_Text_Iter;
+            Buffer_End   : Gtk_Text_Iter;
+         begin
+            Buffer.Get_Start_Iter (Buffer_Start);
+            Buffer.Get_End_Iter (Buffer_End);
+            Found := Auxiliary_Search
+              (Context, Editor, Kernel, Search_Backward,
+               Buffer_Start, Buffer_End);
+            Continue := False; --  ??? Dummy boolean.
+         end;
       else
          Search_From_Editor
            (Context,
@@ -2952,6 +3053,18 @@ package body Src_Contexts is
      (Self : Current_File_Context) return String is
    begin
       return To_String (Self.Current_File);
+   end Context_Look_In;
+
+   ---------------------
+   -- Context_Look_In --
+   ---------------------
+
+   overriding function Context_Look_In
+     (Self : Current_Selection_Context) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return -"selected region";
    end Context_Look_In;
 
    ---------------------
