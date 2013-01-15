@@ -8,6 +8,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M115-022: ECL: Android library not found when running app
+  Problem:    The Ada project builder creates a folder in the associated
+              Android project to hold the resulting dynamic library. This
+			  folder is named "libs/armeabi-v7a/" but that name is specific to
+			  that architecture. As a result, the Android OS will only load the
+			  library if the target architecture is compatible with the v7a
+			  version.
+  Workaround: Rename the folder to remove the "-v7a" suffix if the target is
+              indeed incompatible.  For a permanent fix, change the content of
+			  file "postbuild.mk" so that the value of ANDROID_TARGET_VERSION
+			  is "armeabi" instead.  Subsequent Ada builds will then create a
+			  libs folder with the more architecture-independent name.
+
 - M103-017: Write references reported as read references
   Problem:    Variables passed in out-mode parameters are not listed as
               as write references.
@@ -61,9 +74,9 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 - LB15-004: GB: Renaming gnatbench gpr file causes gnatbench properties issues
   Problem:    When renaming a gpr file and then updating gnatbench properties,
               if the project file name is not consistent with the gpr file
-              name, Eclipse will crash. 
-  Workaround: Modify the project name in the gpr file to be consistent with the 
-              gpr filename. 
+              name, Eclipse will crash.
+  Workaround: Modify the project name in the gpr file to be consistent with the
+              gpr filename.
 
 - LB14-054: GPS: keyboard shortcuts not functional when Caps Lock is active
   Problem:    When Caps Lock is active, letter-based keyboard shortcuts for
