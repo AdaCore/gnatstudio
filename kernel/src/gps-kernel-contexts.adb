@@ -760,6 +760,29 @@ package body GPS.Kernel.Contexts is
       return Context.Data.Data.Xref_Entity;
    end Get_Entity;
 
+   ------------------------
+   -- Get_Entity_Type_Of --
+   ------------------------
+
+   function Get_Entity_Type_Of
+     (Context           : Selection_Context)
+      return Xref.General_Entity
+   is
+   begin
+      if Context.Data.Data.Xref_Entity_Type_Of = No_General_Entity then
+         if Get_Entity (Context) = No_General_Entity then
+            return No_General_Entity;
+         end if;
+
+         Context.Data.Data.Xref_Entity_Type_Of :=
+           Get_Type_Of
+             (Databases (Context.Data.Data.Kernel),
+              Get_Entity (Context));
+      end if;
+
+      return Context.Data.Data.Xref_Entity_Type_Of;
+   end Get_Entity_Type_Of;
+
    ---------------------
    -- Get_Closest_Ref --
    ---------------------
