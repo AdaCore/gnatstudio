@@ -504,6 +504,7 @@ package body GPS.Kernel.Project is
       pragma Unreferenced (Ignore);
 
    begin
+      Trace (Me, "Load_Default_Project");
       --  Save all open children, and close everything. A new desktop will be
       --  open in the end anyway
 
@@ -557,14 +558,16 @@ package body GPS.Kernel.Project is
       Ignore : Boolean;
       pragma Unreferenced (Ignore);
    begin
+      Trace (Me, "Load_Empty_Project");
+
       Close_All_Children (Kernel);
-      Ignore := Load_Desktop (Kernel);
 
       Kernel.Registry.Tree.Load_Empty_Project
         (Kernel.Registry.Environment, Recompute_View => False);
-
       Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);   --  also resets the xref database.
+
+      Ignore := Load_Desktop (Kernel);
    end Load_Empty_Project;
 
    ------------------------------
@@ -653,6 +656,8 @@ package body GPS.Kernel.Project is
       Previous_Project : Virtual_File;
 
    begin
+      Trace (Me, "Load_Project " & Project.Display_Full_Name);
+
       --  Are we reloading the same project ?
       if Get_Registry (Kernel).Tree.Status = From_File
         and then Project_Path (Get_Project (Kernel)) = Project
@@ -737,38 +742,6 @@ package body GPS.Kernel.Project is
 
          Change_Dir (Dir (Local_Project));
 
-         GPS.Kernel.Xref.Project_Changed (Kernel.Database);
-
-         --  Reload the desktop, in case there is a project-specific setup
-         --  already. We need to do this before doing the actual loading (in
-         --  case errors result in the opening of the Locations window), and
-         --  before running the hooks, in case some python script needs to open
-         --  or refresh windows as a result.
-         --  If we fail to load the project, we will reload another project
-         --  anyway (corresponding to the default or empty project).
-
-         if not Same_Project and not Keep_Desktop then
-            Ignore := Load_Desktop
-              (Kernel, For_Project => Local_Project);
-         end if;
-
-         --  Always call Compute_Predefined_Paths who detects if recomputation
-         --  is really needed. This is also used to get the value of
-         --  ADA_PROJECT_PATH. and the default search path.
-         --  If we are running locally, do not use the cache, and recompute the
-         --  output of gnatls, so that users can possibly change the
-         --  environment variables like ADA_PROJECT_PATH before reloading the
-         --  project (FB07-010)
-         --  This call to Compute_Predefined_Paths is needed before even
-         --  loading the project, in case it depends on some predefined
-         --  projects. The loading of the project will call it a second time
-         --  once we know the "gnat" attribute.
-
-         Trace (Me, "Recompute predefined paths -- Local builder server ? "
-                & Boolean'Image (Is_Local (Build_Server)));
-         Compute_Predefined_Paths
-           (Kernel, Use_Cache => not Is_Local (Build_Server));
-
          Get_Messages_Container (Kernel).Remove_Category
            (Location_Category, Location_Message_Flags);
 
@@ -822,18 +795,50 @@ package body GPS.Kernel.Project is
                end;
             end if;
 
+            Ignore := Load_Desktop (Kernel);
+
          elsif Is_Default then
             --  Successful load of default project
             Get_Registry (Kernel).Tree.Set_Status (Default);
          end if;
 
-         if not New_Project_Loaded then
-            Ignore := Load_Desktop (Kernel);
-         end if;
-
          Run_Hook (Kernel, Project_Changed_Hook);
 
+         --  Recompute the project view before loading the desktop, since the
+         --  latter operation with also load files which might need to do xref
+         --  queries.
+         --  If the project results in errors, they will be properly displayed
+         --  in the locations view when it is opened, since they are stored in
+         --  a GUI independent model.
+
+         GPS.Kernel.Xref.Project_Changed (Kernel.Database);
          Recompute_View (Kernel);
+
+         --  Reload the desktop, in case there is a project-specific setup
+         --  already. We need to do this before running the hooks, in case some
+         --  python script needs to open or refresh windows as a result.
+
+         if not Same_Project and not Keep_Desktop then
+            Ignore := Load_Desktop
+              (Kernel, For_Project => Local_Project);
+         end if;
+
+         --  Always call Compute_Predefined_Paths who detects if recomputation
+         --  is really needed. This is also used to get the value of
+         --  ADA_PROJECT_PATH. and the default search path.
+         --  If we are running locally, do not use the cache, and recompute the
+         --  output of gnatls, so that users can possibly change the
+         --  environment variables like ADA_PROJECT_PATH before reloading the
+         --  project (FB07-010)
+         --  This call to Compute_Predefined_Paths is needed before even
+         --  loading the project, in case it depends on some predefined
+         --  projects. The loading of the project will call it a second time
+         --  once we know the "gnat" attribute.
+
+         Trace (Me, "Recompute predefined paths -- Local builder server ? "
+                & Boolean'Image (Is_Local (Build_Server)));
+         Compute_Predefined_Paths
+           (Kernel, Use_Cache => not Is_Local (Build_Server));
 
          Pop_State (Kernel_Handle (Kernel));
 

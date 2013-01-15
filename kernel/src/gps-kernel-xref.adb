@@ -738,6 +738,7 @@ package body GPS.Kernel.Xref is
          --  desktop for instance).
          --  ??? We really should not be doing anything until the project has
          --  been computed.
+         Trace (Me, "Set up xref database: :memory:");
          Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (":memory:"));
 
       else
@@ -789,6 +790,8 @@ package body GPS.Kernel.Xref is
          Dir := Tree.Root_Project.Object_Dir;
 
          if Dir = No_File then
+            Trace (Me, "Object_Dir is unknown for the root project "
+                   & Tree.Root_Project.Project_Path.Display_Full_Name);
             Dir := GNATCOLL.VFS.Get_Current_Dir;
          end if;
 
