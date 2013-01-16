@@ -86,7 +86,7 @@ class Sqlite_Cross_References(object):
         target_name="", mode_name="", status=""):
 
         if not status:
-            if (target_name in ["Compile File", "Build Main", "Build All",
+            if (target_name in ["Compile File", "Build Main", "Build All", "Make",
                    "Compile All Sources", "Build <current file>", "Custom Build..."]
                 or category in ["Makefile"]):
 
