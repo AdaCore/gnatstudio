@@ -2,7 +2,7 @@
    files.
    The Highlighter class should be considered abstract, and provides
    support for (re)highlighting editors when needed.
-   The Regexp_Highlighter is a concreate implementation to highlight
+   The Regexp_Highlighter is a concrete implementation to highlight
    editors based on regular expressions. One example is for instance
    to highlight tabs or trailing spaces on lines, when this is considered
    improper style:
@@ -33,7 +33,7 @@ try:
    gobject_available = 1
 except:
    gobject_available = 0
-   
+
 class Highlighter ():
   """This class provides a way to easily highlight text in an editor.
      When possible, the highlighting is done in the background, in
@@ -124,7 +124,7 @@ class Highlighter ():
      # Check whether highlighting should be done in this buffer
      if not self.must_highlight (buffer):
         return
-     
+
      over = self.__create_overlay (buffer)
 
      if loc:
