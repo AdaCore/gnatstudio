@@ -50,6 +50,13 @@ package body Codefix.Text_Manager.Ada_Commands is
       Cursor       : File_Cursor'Class) return File_Cursor;
    --  Displace Cursor to the first character after the preceding word
 
+   function To_Case (Text : String; With_Casing : Casing_Type) return String;
+   --  Return Text after re-cased according to the specified casing type
+
+   function To_Reserved_Word_Case (Word : String) return String;
+   --  Return the Word after re-cased according to the user-defined preferences
+   --  (value set in Edit->Preferences->Editor->Ada->Reserved_Word_Casing)
+
    -----------------------
    -- Get_Closing_Paren --
    -----------------------
@@ -245,6 +252,51 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       return End_Cursor;
    end Get_End_Of_Preceding_Token;
+
+   -------------
+   -- To_Case --
+   -------------
+
+   function To_Case
+     (Text        : String;
+      With_Casing : Casing_Type) return String
+   is
+      New_String  : String (Text'Range);
+
+   begin
+      case With_Casing is
+         when Mixed | Smart_Mixed =>
+            New_String := Text;
+            Mixed_Case (New_String);
+
+         when Upper =>
+            for J in Text'Range loop
+               New_String (J) := To_Upper (Text (J));
+            end loop;
+
+         when Lower | Unchanged =>
+            for J in Text'Range loop
+               New_String (J) := To_Lower (Text (J));
+            end loop;
+      end case;
+
+      return New_String;
+   end To_Case;
+
+   ---------------------------
+   -- To_Reserved_Word_Case --
+   ---------------------------
+
+   function To_Reserved_Word_Case (Word : String) return String is
+      Indent_Params : Indent_Parameters;
+      Indent_Style  : Indentation_Kind;
+      pragma Unreferenced (Indent_Style);
+
+   begin
+      Get_Indentation_Parameters (Ada_Lang, Indent_Params, Indent_Style);
+
+      return To_Case (Word, Indent_Params.Reserved_Casing);
+   end To_Reserved_Word_Case;
 
    --  Recase_Word_Cmd
 
@@ -1090,6 +1142,7 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Make_Constant_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
+      New_Word      : constant String := To_Reserved_Word_Case ("constant");
       Cursor        : File_Cursor;
       Work_Extract  : Ada_Statement;
       New_Instr     : GNAT.Strings.String_Access;
@@ -1113,7 +1166,7 @@ package body Codefix.Text_Manager.Ada_Commands is
            (Position      => File_Cursor'Class
               (Current_Text.Search_Token (Cursor, Semicolon_Tok)),
             Len           => 1,
-            New_Text      => ": constant",
+            New_Text      => ": " & New_Word,
             Blanks_Before => Keep,
             Blanks_After  => One);
       else
@@ -1130,12 +1183,12 @@ package body Codefix.Text_Manager.Ada_Commands is
          if New_Instr (Col_Decl + 1) /= ' ' then
             Assign
               (New_Instr,
-               New_Instr (New_Instr'First .. Col_Decl) & " constant" & " "
+               New_Instr (New_Instr'First .. Col_Decl) & " " & New_Word & " "
                & New_Instr (Col_Decl + 1 .. New_Instr'Last));
          else
             Assign
               (New_Instr,
-               New_Instr (New_Instr'First .. Col_Decl) & " constant"
+               New_Instr (New_Instr'First .. Col_Decl) & " " & New_Word
                & New_Instr (Col_Decl + 1 .. New_Instr'Last));
          end if;
 
