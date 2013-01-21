@@ -89,6 +89,7 @@ package body Outline_View is
    Hist_Show_Objects      : constant History_Key := "outline-show-objects";
    Hist_Group_Spec_And_Body : constant History_Key :=
      "outline-group-spec-and-body";
+   Hist_Flat_View         : constant History_Key := "outline-flat-view";
 
    overriding procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
@@ -304,7 +305,7 @@ package body Outline_View is
 
          Path := Get_Path_Enclosing_Location (Model, Loc.Line, Loc.Column);
 
-         if Get_Depth (Path) > 1 then
+         if Get_Depth (Path) >= 1 then
             declare
                Indices     : constant Glib.Gint_Array := Get_Indices (Path);
                Parent_Path : Gtk_Tree_Path;
@@ -469,6 +470,12 @@ package body Outline_View is
 
       Gtk_New (Check, Label => -"Sort alphabetically");
       Associate (Get_History (View.Kernel).all, Hist_Sort_Alphabetical, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+
+      Gtk_New (Check, Label => -"Flat view");
+      Associate (Get_History (View.Kernel).all, Hist_Flat_View, Check);
       Menu.Append (Check);
       Widget_Callback.Object_Connect
         (Check, Signal_Toggled, Force_Refresh'Access, View);
@@ -712,15 +719,15 @@ package body Outline_View is
       --  Create an explicit columns for the expander
 
       Gtk_New (Outline.Spec_Column);
+      Outline.Spec_Column.Set_Sizing (Tree_View_Column_Autosize);
       Col_Number := Append_Column (Outline.Tree, Outline.Spec_Column);
       Gtk_New (Pixbuf_Render);
       Pack_Start (Outline.Spec_Column, Pixbuf_Render, False);
       Add_Attribute
         (Outline.Spec_Column, Pixbuf_Render, "pixbuf", Spec_Pixbuf_Column);
 
-      Set_Expander_Column (Outline.Tree, Outline.Spec_Column);
-
       Gtk_New (Outline.Body_Column);
+      Outline.Body_Column.Set_Sizing (Tree_View_Column_Autosize);
       Col_Number := Append_Column (Outline.Tree, Outline.Body_Column);
       Gtk_New (Pixbuf_Render);
       Pack_Start (Outline.Body_Column, Pixbuf_Render, False);
@@ -848,11 +855,9 @@ package body Outline_View is
 
    procedure Force_Refresh (View : access Gtk_Widget_Record'Class) is
       Outline : constant Outline_View_Access := Outline_View_Access (View);
-      Group   : constant Boolean := Get_History
-        (Get_History (Outline.Kernel).all, Hist_Group_Spec_And_Body);
    begin
-      Set_Group_Spec_And_Body (Get_Outline_Model (Outline), Group => Group);
-      Outline.Body_Column.Set_Visible (Group);
+      --  Reset the display properties
+      Set_Outline_Model (Outline, Get_Outline_Model (Outline));
 
       if Outline.File /= No_File then
          Set_File (Outline, Outline.File);
@@ -977,6 +982,8 @@ package body Outline_View is
         (Get_History (Kernel).all, Hist_Show_Types, True);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Show_Objects, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Flat_View, False);
 
       Construct_Annotations_Pckg.Get_Annotation_Key
         (Get_Construct_Annotation_Key_Registry
@@ -1012,7 +1019,6 @@ package body Outline_View is
             Model := new Outline_Model_Record;
 
             Gtkada.Abstract_Tree_Model.Initialize (Model);
-
             Set_Outline_Model (Outline, Model);
          end if;
 
@@ -1066,11 +1072,15 @@ package body Outline_View is
    is
       Group   : constant Boolean := Get_History
         (Get_History (View.Kernel).all, Hist_Group_Spec_And_Body);
+      Flat   : constant Boolean := Get_History
+        (Get_History (View.Kernel).all, Hist_Flat_View);
    begin
       Set_Model (View.Tree, To_Interface (Model));
+      View.Tree.Set_Show_Expanders (Enabled => not Flat);
 
       if Model /= null then
          Set_Group_Spec_And_Body (Model, Group => Group);
+         Set_Flat_View (Model, Flat => Flat);
       end if;
       View.Body_Column.Set_Visible (Group);
    end Set_Outline_Model;

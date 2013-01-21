@@ -72,6 +72,11 @@ private package Outline_View.Model is
    --  Whether to group the spec and body for a given entity on the same line.
    --  This doesn't force a refresh of the model.
 
+   procedure Set_Flat_View
+     (Model : not null access Outline_Model_Record'Class;
+      Flat  : Boolean);
+   --  Whether to display all entities in a flat view, or hierarchically
+
    function Get_File (Model : Outline_Model) return Structured_File_Access;
    --  Return the file modelized by this model
 
@@ -193,7 +198,7 @@ private
       Parent      : Sorted_Node_Access;
 
       Index_In_Siblings : Integer := -1;
-      N_Children        : Integer := -1;
+      N_Children        : Integer := 0;
 
       Ordered_Index : Sorted_Node_Set.Set;
       Order_Kind    : Order_Kind_Type;
@@ -213,6 +218,7 @@ private
       Sorted         : Boolean;
 
       Group_Spec_And_Body : Boolean := False;
+      Flat_View           : Boolean := False;
 
       Phantom_Root : aliased Sorted_Node;
       --  This is a 'dummy' root, not in the model. Actual roots are children

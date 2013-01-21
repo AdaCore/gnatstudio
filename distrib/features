@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M121-011 GPS: Outline has a flat view mode (2013-01-21)
+
+  It is now possible to display all entities at the same level, rather than
+  nested hierarchically. In some cases, it makes searching for an entity
+  easier.
+
 NF-60-M111-033 GPS: Refill automatically computes paragraph (2013-01-11)
 
   The menu /Edit/Selection/Refill will now either apply to the current

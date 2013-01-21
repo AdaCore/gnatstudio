@@ -35,6 +35,7 @@ package body Outline_View.Model is
    Me : constant Trace_Handle := Create ("OUTLINE");
 
    use Construct_Annotations_Pckg;
+   use Sorted_Node_Set;
 
    type Entity_Sort_Annotation is new
      Construct_Annotations_Pckg.General_Annotation_Record
@@ -62,15 +63,10 @@ package body Outline_View.Model is
       Construct : access Simple_Construct_Information) return Boolean;
    --  Return False if the construct should be filtered out
 
-   procedure Compute_Sorted_Nodes
-     (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access);
-
-   function New_Node
-     (Model  : access Outline_Model_Record'Class;
-      Entity : Entity_Persistent_Access) return Sorted_Node_Access;
-   --  Create a new node, and connect it to the entity via the appropriate
-   --  annotation. This function adopts the reference to Entity, which must not
-   --  be Unrefered by the caller.
+   procedure Add_Recursive
+     (Model   : access Outline_Model_Record'Class;
+      New_Obj : Construct_Tree_Iterator);
+   --  Add new nodes for New_Obj and its nested entities
 
    function Get_Sorted_Node
      (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
@@ -93,17 +89,6 @@ package body Outline_View.Model is
    procedure Clear_Nodes
      (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access);
    --  Remove recursively all children nodes of the root given in parameter
-
-   function Sort_And_Add
-     (Model : access Outline_Model_Record'Class;
-      Root  : Sorted_Node_Access;
-      It    : Construct_Tree_Iterator) return Sorted_Node_Access;
-   --  Add and sort the new item. This doesn't update sibling indexes
-
-   procedure Add_In_Model
-     (Model   : access Outline_Model_Record'Class;
-      New_Obj : Construct_Tree_Iterator);
-   --  Adds the iterator in the internal model
 
    procedure Reset
      (Model : not null access Outline_Model_Record'Class);
@@ -367,174 +352,133 @@ package body Outline_View.Model is
       end case;
    end "<";
 
-   ------------------
-   -- Sort_And_Add --
-   ------------------
+   -------------------
+   -- Add_Recursive --
+   -------------------
 
-   function Sort_And_Add
-     (Model : access Outline_Model_Record'Class;
-      Root  : Sorted_Node_Access;
-      It    : Construct_Tree_Iterator) return Sorted_Node_Access
+   procedure Add_Recursive
+     (Model   : access Outline_Model_Record'Class;
+      New_Obj : Construct_Tree_Iterator)
    is
-      use Sorted_Node_Set;
-
-      Node_It  : Sorted_Node_Access;
-      Node     : Sorted_Node_Access;
-      Position : Sorted_Node_Set.Cursor;
-      Inserted : Boolean;
-      E : constant Entity_Access := To_Entity_Access (Model.File, It);
-
-   begin
-      --  Do we have a node for the other part already ? We know there is none
-      --  for the entity itself yet.
-      if Get_Node_Next_Part (Model, E) /= null then
-         return null;
-      end if;
-
-      Node := New_Node (Model, To_Entity_Persistent_Access (E));
-
-      Node.Parent := Root;
-
-      Insert
-        (Container => Root.Ordered_Index,
-         New_Item  => Node,
-         Position  => Position,
-         Inserted  => Inserted);
-
-      if Inserted then
-         if Previous (Position) = Sorted_Node_Set.No_Element then
-            Root.First_Child := Node;
-
-         else
-            Node_It := Element (Previous (Position));
-
-            Node_It.Next := Node;
-            Node.Prev := Node_It;
-         end if;
-
-         if Next (Position) = Sorted_Node_Set.No_Element then
-            Root.Last_Child := Node;
-
-         else
-            Node_It := Element (Next (Position));
-
-            Node_It.Prev := Node;
-            Node.Next := Node_It;
-         end if;
-
-         Root.N_Children := Root.N_Children + 1;
-
-         return Node;
-      end if;
-
-      raise Outline_Error with "couldn't add sorted element";
-   end Sort_And_Add;
-
-   --------------------------
-   -- Compute_Sorted_Nodes --
-   --------------------------
-
-   procedure Compute_Sorted_Nodes
-     (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access)
-   is
-      File   : Structured_File_Access;
       Parent : Construct_Tree_Iterator;
-
+      Parent_Node : Sorted_Node_Access;
+      Root   : Sorted_Node_Access;  --  node for New_Obj
       It     : Construct_Tree_Iterator;
       Dummy  : Sorted_Node_Access;
-      pragma Unreferenced (Dummy);
+      Path   : Gtk_Tree_Path;
+      E      : Entity_Access;
+      Position : Sorted_Node_Set.Cursor;
+      Inserted : Boolean;
+      Construct : constant access Simple_Construct_Information :=
+        Get_Construct (New_Obj);
+      Annot    : Annotation (Other_Kind);
+
    begin
       if Model = null or else Model.File = null then
          return;
       end if;
 
-      File := Model.File;
-
-      if Root.N_Children /= -1 then
-         --  In this case, we've already done the computation, just return
-         --  the value
-         return;
-
-      elsif Root = Model.Phantom_Root'Access then
-         --  If we're on the initial root node, then there's no parent
-         Parent := Null_Construct_Tree_Iterator;
-
-      else
-         Parent := To_Construct_Tree_Iterator (To_Entity_Access (Root.Entity));
-      end if;
-
-      Root.N_Children := 0;
-
-      if Parent = Null_Construct_Tree_Iterator then
-         It := First (Get_Tree (File));
-      else
-         It := Next (Get_Tree (File), Parent, Jump_Into);
-      end if;
-
-      if It = Null_Construct_Tree_Iterator then
+      if not Construct_Filter (Model.Filter, Construct) then
          return;
       end if;
 
-      while It /= Null_Construct_Tree_Iterator
-        and then Is_Parent_Scope (Parent, It)
-      loop
-         if Construct_Filter (Model.Filter, Get_Construct (It)) then
-            Dummy := Sort_And_Add (Model, Root, It);
+      --  Compute parent node
+
+      if Model.Flat_View then
+         Parent_Node := Model.Phantom_Root'Access;
+      else
+         Parent := Get_Parent_Scope (Get_Tree (Model.File), New_Obj);
+         if Parent = Null_Construct_Tree_Iterator then
+            Parent_Node := Model.Phantom_Root'Access;
+         elsif Get_Node (Model, New_Obj) = null then
+            Parent_Node := Get_Node (Model, Parent);
          end if;
 
-         It := Next (Get_Tree (File), It, Jump_Over);
-      end loop;
-
-      declare
-         Node_It : Sorted_Node_Access := Root.First_Child;
-         Ind : Natural := 0;
-      begin
-         while Node_It /= null loop
-            Node_It.Index_In_Siblings := Ind;
-            Ind := Ind + 1;
-            Node_It := Node_It.Next;
-         end loop;
-      end;
-   end Compute_Sorted_Nodes;
-
-   --------------
-   -- New_Node --
-   --------------
-
-   function New_Node
-     (Model  : access Outline_Model_Record'Class;
-      Entity : Entity_Persistent_Access) return Sorted_Node_Access
-   is
-      Node      : constant Sorted_Node_Access := new Sorted_Node;
-      Annot     : Annotation (Other_Kind);
-      Construct : constant Simple_Construct_Information :=
-                    Get_Construct (Entity);
-   begin
-      Annot.Other_Val := new Entity_Sort_Annotation'
-        (Construct_Annotations_Pckg.General_Annotation_Record
-         with Node => Node, Model => Outline_Model (Model));
-
-      Construct_Annotations_Pckg.Set_Annotation
-        (Get_Annotation_Container
-           (Get_Tree (Get_File (Entity)),
-            To_Construct_Tree_Iterator (To_Entity_Access (Entity))).all,
-         Model.Annotation_Key,
-         Annot);
-
-      Node.Entity := Entity;
-
-      if Model.Sorted then
-         Node.Order_Kind := Alphabetical;
-      else
-         Node.Order_Kind := Positional;
+         if Parent_Node = null then
+            return;
+         end if;
       end if;
 
-      Node.Category := Construct.Category;
-      Node.Name := Construct.Name;
-      Node.Sloc := Construct.Sloc_Start;
+      --  Add the node for the new object
 
-      return Node;
-   end New_Node;
+      E := To_Entity_Access (Model.File, New_Obj);
+      if Model.Group_Spec_And_Body
+        and then Get_Node_Next_Part (Model, E) /= null
+      then
+         --  Already have a node for the other part
+         Root := null;
+      else
+         Root := new Sorted_Node;
+         Root.Entity   := To_Entity_Persistent_Access (E);
+         Root.Category := Construct.Category;
+         Root.Name     := Construct.Name;
+         Root.Sloc     := Construct.Sloc_Start;
+         Root.Parent   := Parent_Node;
+
+         if Model.Sorted then
+            Root.Order_Kind := Alphabetical;
+         else
+            Root.Order_Kind := Positional;
+         end if;
+
+         Annot.Other_Val := new Entity_Sort_Annotation'
+           (Construct_Annotations_Pckg.General_Annotation_Record
+            with Node => Root, Model => Outline_Model (Model));
+         Construct_Annotations_Pckg.Set_Annotation
+           (Get_Annotation_Container (Get_Tree (Model.File), New_Obj).all,
+            Model.Annotation_Key,
+            Annot);
+
+         Insert
+           (Container => Parent_Node.Ordered_Index,
+            New_Item  => Root,
+            Position  => Position,
+            Inserted  => Inserted);
+
+         if Inserted then
+            if Previous (Position) = Sorted_Node_Set.No_Element then
+               Parent_Node.First_Child := Root;
+               Root.Index_In_Siblings := 0;
+            else
+               Dummy := Element (Previous (Position));
+               Dummy.Next := Root;
+               Root.Prev := Dummy;
+               Root.Index_In_Siblings := Root.Prev.Index_In_Siblings + 1;
+            end if;
+
+            if Next (Position) = Sorted_Node_Set.No_Element then
+               Parent_Node.Last_Child := Root;
+            else
+               Dummy := Element (Next (Position));
+               Dummy.Prev := Root;
+               Root.Next := Dummy;
+
+               --  Adjust the indexes for the node and its siblings, to
+               --  preserve sorting
+               while Dummy /= null loop
+                  Dummy.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
+                  Dummy := Dummy.Next;
+               end loop;
+            end if;
+
+            --  Notify the model of the change
+
+            Path := Get_Path (Model, Root);
+            Row_Inserted (+Model, Path, New_Iter (Root));
+            Path_Free (Path);
+         end if;
+      end if;
+
+      --  Then add all its children recursively
+
+      It := Next (Get_Tree (Model.File), New_Obj, Jump_Into);
+      while It /= Null_Construct_Tree_Iterator
+        and then Is_Parent_Scope (New_Obj, It)
+      loop
+         Add_Recursive (Model, It);
+         It := Next (Get_Tree (Model.File), It, Jump_Over);
+      end loop;
+   end Add_Recursive;
 
    ----------------
    -- Get_Entity --
@@ -553,16 +497,13 @@ package body Outline_View.Model is
    procedure Reset
      (Model : not null access Outline_Model_Record'Class)
    is
-      It    : Construct_Tree_Iterator;
+      It : Construct_Tree_Iterator := First (Get_Tree (Model.File));
    begin
+      Model.Phantom_Root.Ordered_Index.Clear;
       Model.Phantom_Root.N_Children := 0;
-      It := First (Get_Tree (Model.File));
 
       while It /= Null_Construct_Tree_Iterator loop
-         if Construct_Filter (Model.Filter, Get_Construct (It)) then
-            Add_In_Model (Model, It);
-         end if;
-
+         Add_Recursive (Model, It);
          It := Next (Get_Tree (Model.File), It, Jump_Over);
       end loop;
    end Reset;
@@ -654,7 +595,6 @@ package body Outline_View.Model is
             Current : Sorted_Node_Access := Self.Phantom_Root'Access;
          begin
             for J in Indices'Range loop
-               Compute_Sorted_Nodes (Self, Current);
                Current := Nth_Child (Self, Current, Indices (J));
             end loop;
 
@@ -663,11 +603,6 @@ package body Outline_View.Model is
       else
          return Null_Iter;
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return Null_Iter;
    end Get_Iter;
 
    --------------
@@ -684,7 +619,6 @@ package body Outline_View.Model is
       Gtk_New (Path);
       while Cur /= null and then Cur /= Self.Phantom_Root'Access loop
          Prepend_Index (Path, Gint (Cur.Index_In_Siblings));
-
          Cur := Cur.Parent;
       end loop;
 
@@ -695,15 +629,8 @@ package body Outline_View.Model is
      (Self : access Outline_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
-      Path : Gtk_Tree_Path;
    begin
       return Get_Path (Self, Get_Sorted_Node (Iter));
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Gtk_New (Path, "");
-         return Path;
    end Get_Path;
 
    ---------------
@@ -814,14 +741,7 @@ package body Outline_View.Model is
          Node := Get_Sorted_Node (Parent);
       end if;
 
-      Compute_Sorted_Nodes (Self, Node);
-
       return New_Iter (Node.First_Child);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return Null_Iter;
    end Children;
 
    ---------------
@@ -830,14 +750,12 @@ package body Outline_View.Model is
 
    overriding function Has_Child
      (Self : access Outline_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
+   is
+      Val : constant Boolean :=
+        Children (Self, Iter) /= Null_Iter;
    begin
-      return Children (Self, Iter) /= Null_Iter;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
+      return Val;
    end Has_Child;
 
    ----------------
@@ -857,14 +775,7 @@ package body Outline_View.Model is
          Node := Get_Sorted_Node (Iter);
       end if;
 
-      Compute_Sorted_Nodes (Self, Node);
-
       return Gint (Node.N_Children);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return 0;
    end N_Children;
 
    ---------------
@@ -879,12 +790,8 @@ package body Outline_View.Model is
       Cur_It : Sorted_Node_Access;
    begin
       if Node = null then
-         Compute_Sorted_Nodes (Model, Model.Phantom_Root'Access);
-
          Cur_It := Model.Phantom_Root.First_Child;
       else
-         Compute_Sorted_Nodes (Model, Node);
-
          Cur_It := Node.First_Child;
       end if;
 
@@ -898,6 +805,10 @@ package body Outline_View.Model is
 
       return Cur_It;
    end Nth_Child;
+
+   ---------------
+   -- Nth_Child --
+   ---------------
 
    overriding function Nth_Child
      (Self   : access Outline_Model_Record;
@@ -950,6 +861,18 @@ package body Outline_View.Model is
    begin
       Model.Group_Spec_And_Body := Group;
    end Set_Group_Spec_And_Body;
+
+   -------------------
+   -- Set_Flat_View --
+   -------------------
+
+   procedure Set_Flat_View
+     (Model : not null access Outline_Model_Record'Class;
+      Flat  : Boolean)
+   is
+   begin
+      Model.Flat_View := Flat;
+   end Set_Flat_View;
 
    ----------------
    -- Get_Entity --
@@ -1067,78 +990,6 @@ package body Outline_View.Model is
    end Free;
 
    ------------------
-   -- Add_In_Model --
-   ------------------
-
-   procedure Add_In_Model
-     (Model   : access Outline_Model_Record'Class;
-      New_Obj : Construct_Tree_Iterator)
-   is
-      File         : constant Structured_File_Access := Model.File;
-      Parent       : constant Construct_Tree_Iterator :=
-                       Get_Parent_Scope (Get_Tree (File), New_Obj);
-      Parent_Node  : Sorted_Node_Access;
-      Child_Node   : Sorted_Node_Access;
-      Path         : Gtk_Tree_Path;
-   begin
-      if Parent = Null_Construct_Tree_Iterator then
-         Parent_Node := Model.Phantom_Root'Access;
-      elsif Get_Node (Model, New_Obj) = null then
-         Parent_Node := Get_Node (Model, Parent);
-      end if;
-
-      if Parent_Node /= null and then Parent_Node.N_Children /= -1 then
-         --  In this case, the children of this node are in the model, so
-         --  we need to add that new node as well
-
-         Child_Node := Sort_And_Add (Model, Parent_Node, New_Obj);
-         if Child_Node = null then
-            --  Not inserted, because there was already a node for it.
-            return;
-         end if;
-
-         if Child_Node.Prev /= null then
-            Child_Node.Index_In_Siblings :=
-              Child_Node.Prev.Index_In_Siblings + 1;
-         else
-            Child_Node.Index_In_Siblings := 0;
-         end if;
-
-         declare
-            Tmp_Node : Sorted_Node_Access := Child_Node.Next;
-         begin
-            while Tmp_Node /= null loop
-               Tmp_Node.Index_In_Siblings :=
-                 Tmp_Node.Index_In_Siblings + 1;
-               Tmp_Node := Tmp_Node.Next;
-            end loop;
-         end;
-
-         --  Notify the model of the change
-
-         Path := Get_Path (Model, Child_Node);
-         Row_Inserted (+Model, Path, New_Iter (Child_Node));
-         Path_Free (Path);
-
-         --  Get the first level children and add them to the model
-
-         Compute_Sorted_Nodes (Model, Child_Node);
-
-         declare
-            Tmp_Node : Sorted_Node_Access := Child_Node.First_Child;
-         begin
-            while Tmp_Node /= null loop
-               Path := Get_Path (Model, Tmp_Node);
-               Row_Inserted (+Model, Path, New_Iter (Tmp_Node));
-               Path_Free (Path);
-
-               Tmp_Node := Tmp_Node.Next;
-            end loop;
-         end;
-      end if;
-   end Add_In_Model;
-
-   ------------------
    -- File_Updated --
    ------------------
 
@@ -1169,17 +1020,13 @@ package body Outline_View.Model is
             when Removed =>
                --  Nothing to be done here - nodes have already been removed
                --  when the annotation has been freed.
-
                null;
 
             when Added =>
-               if Construct_Filter (Model.Filter, Get_Construct (New_Obj)) then
-                  Add_In_Model (Model, New_Obj);
-               end if;
+               Add_Recursive (Model, New_Obj);
 
             when Preserved =>
                null;
-
          end case;
       end Diff_Callback;
 
@@ -1196,10 +1043,8 @@ package body Outline_View.Model is
 
          if Node = Model.Phantom_Root'Access or else Exists (Node.Entity) then
             Cur := Node.First_Child;
-
             while Cur /= null loop
                Update_Node (Cur);
-
                Cur := Cur.Next;
             end loop;
          end if;
@@ -1212,6 +1057,9 @@ package body Outline_View.Model is
       then
          return;
       end if;
+
+      --  We could simply Reset(Model), although we would need to modify the
+      --  view to avoid flickering.
 
       --  First, update all the source locations for all the nodes of the
       --  model. This is needed in order to have proper ordering while
@@ -1236,39 +1084,11 @@ package body Outline_View.Model is
      (Model        : access Outline_Model_Record;
       Line, Column : Integer) return Gtk_Tree_Path
    is
-      Tree      : constant Construct_Tree := Get_Tree (Model.File);
-      Last_Node : Sorted_Node_Access := null;
-
-      procedure Open_Node (It : Construct_Tree_Iterator);
-      --  Open all the nodes to the iterator given in parameter
-
-      ---------------
-      -- Open_Node --
-      ---------------
-
-      procedure Open_Node (It : Construct_Tree_Iterator) is
-         E   : Entity_Access;
-      begin
-         if It = Null_Construct_Tree_Iterator then
-            return;
-         end if;
-
-         Last_Node := Get_Node (Model, It);
-         if Last_Node = null then
-            E := To_Entity_Access (Model.File, It);
-            Last_Node := Get_Node_Next_Part (Model, E);
-            if Last_Node /= null then
-               Compute_Sorted_Nodes (Model, Last_Node);
-               return;
-            end if;
-
-            Open_Node (Get_Parent_Scope (Tree, It));
-         else
-            Compute_Sorted_Nodes (Model, Last_Node);
-         end if;
-      end Open_Node;
-
+      Tree : constant Construct_Tree := Get_Tree (Model.File);
+      Node : Sorted_Node_Access := null;
+      It   : Construct_Tree_Iterator;
       Path : Gtk_Tree_Path;
+      E    : Entity_Access;
 
    begin
       if Model.File = null then
@@ -1276,19 +1096,28 @@ package body Outline_View.Model is
          return Path;
       end if;
 
-      Open_Node
-        (Get_Iterator_At
-           (Tree     => Get_Tree (Model.File),
-            Location => To_Location (Line,  String_Index_Type (Column)),
-            --  ??? not sure if that conversion is accurate - we don't know
-            --  the type of column here!
-            Position => Enclosing));
+      It := Get_Iterator_At
+        (Tree     => Get_Tree (Model.File),
+         Location => To_Location (Line, String_Index_Type (Column)),
+         --  ??? not sure if that conversion is accurate - we don't know
+         --  the type of column here!
+         Position => Enclosing);
+      while It /= Null_Construct_Tree_Iterator loop
+         Node := Get_Node (Model, It);
+         exit when Node /= null;
 
-      if Last_Node = null then
+         E := To_Entity_Access (Model.File, It);
+         Node := Get_Node_Next_Part (Model, E);
+         exit when Node /= null;
+
+         It := Get_Parent_Scope (Tree, It);
+      end loop;
+
+      if Node = null then
          Gtk_New (Path);
          return Path;
       else
-         return Get_Path (Model, Last_Node);
+         return Get_Path (Model, Node);
       end if;
    end Get_Path_Enclosing_Location;
 
