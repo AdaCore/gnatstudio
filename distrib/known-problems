@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M119-001: GPS: crash when loading an erroneous project template
+  Problem:    If you write a custom project template (.gpt) file, GPS will
+              crash if the "Category" field is blank.
+  Workaround: Make sure to enter a "Category" field in the .gpt file.
+
 - M115-022: ECL: Android library not found when running app
   Problem:    The Ada project builder creates a folder in the associated
               Android project to hold the resulting dynamic library. This
