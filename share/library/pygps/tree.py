@@ -56,6 +56,9 @@ try:
 
          To send a double-click, emit an event with type=Gdk._2BUTTON_PRESS
       """
+      if not view.get_realized():
+          GPS.Logger("TESTSUITE").log("click_in_tree: view is not realized")
+          return
 
       if os.name=='nt' and button==3 and events==pygps.single_click_events:
          # ??? work around
