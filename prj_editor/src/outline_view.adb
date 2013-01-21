@@ -30,9 +30,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -197,9 +195,6 @@ package body Outline_View is
    procedure On_Destroy
      (Outline : access Gtk_Widget_Record'Class);
    --  Called when the outline is destroyed
-
-   procedure On_Refresh (View : access Gtk_Widget_Record'Class);
-   --  Refresh the view
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
 
@@ -423,14 +418,9 @@ package body Outline_View is
      (View    : not null access Outline_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
-      Button : Gtk_Tool_Button;
+      pragma Unreferenced (View, Toolbar);
    begin
-      Gtk_New_From_Stock (Button, Stock_Refresh);
-      Button.Set_Tooltip_Text (-"Refresh outline");
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked,
-         On_Refresh'Access, View);
-      Toolbar.Insert (Button);
+      null;
    end Create_Toolbar;
 
    -----------------
@@ -838,15 +828,6 @@ package body Outline_View is
       Unref (O.Icon);
       Unref (O.File_Icon);
    end On_Destroy;
-
-   ----------------
-   -- On_Refresh --
-   ----------------
-
-   procedure On_Refresh (View : access Gtk_Widget_Record'Class) is
-   begin
-      Refresh (Outline_View_Access (View));
-   end On_Refresh;
 
    -------------
    -- Refresh --
