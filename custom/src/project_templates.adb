@@ -205,6 +205,16 @@ package body Project_Templates is
       if Current /= Null_Project_Template then
          Current.Source_Dir := File.Dir;
 
+         --  Sanity check the contents of the template.
+
+         if Current.Category = "" then
+            Current.Category := To_Unbounded_String ("No Category");
+         end if;
+
+         if Current.Label = "" then
+            Current.Category := To_Unbounded_String ("No Label");
+         end if;
+
          Templates.Append (Current);
       end if;
 
