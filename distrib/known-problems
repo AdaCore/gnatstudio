@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M122-003: GPS: tasks view is too wide
+  Problem:    The Tasks view does not fit in a small width (the progress bar
+              gets truncated and the pause button to its left is not visible)
+  Workaround: Resize it with the handles
+
 - M119-001: GPS: crash when loading an erroneous project template
   Problem:    If you write a custom project template (.gpt) file, GPS will
               crash if the "Category" field is blank.

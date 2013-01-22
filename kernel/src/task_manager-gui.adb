@@ -43,12 +43,10 @@ with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Handlers;
-with Gtk.Icon_Factory;
 with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Progress_Bar;           use Gtk.Progress_Bar;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Settings;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
@@ -72,10 +70,6 @@ package body Task_Manager.GUI is
 
    Refresh_Timeout     : constant := 200;
    --  The timeout to refresh the GUI, in milliseconds
-
-   Progress_Bar_Length : constant := 200;
-   --  The length of the progress bar, in number of pixels
-   --  ??? This hard-codes the size of the tree column.
 
    function Columns_Types return GType_Array;
    --  Returns the types for the columns in the Model.
@@ -111,6 +105,10 @@ package body Task_Manager.GUI is
    package Task_Manager_Source is new Glib.Main.Generic_Sources
      (Task_Manager_Interface);
 
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences change
+
    type Task_Manager_Widget_Record is new Generic_Views.View_Record with record
       Model            : Task_Manager_Interface;
       Tree             : Gtk_Tree_View;
@@ -134,6 +132,7 @@ package body Task_Manager.GUI is
       Position           => Position_Bottom,
       Group              => Group_Consoles,
       Initialize         => Initialize);
+   use TM_Views;
    subtype Task_Manager_Widget_Access is TM_Views.View_Access;
 
    type Task_Manager_UI_Record is new Task_Manager_Record with record
@@ -619,18 +618,13 @@ package body Task_Manager.GUI is
       Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
       Progress_Rend : Gtk_Cell_Renderer_Progress;
       Dummy         : Gint;
-      W, H          : Gint;
-      Result        : Boolean;
       pragma Unreferenced (Dummy);
 
    begin
       Set_Rules_Hint (Tree, False);
 
-      Gtk.Icon_Factory.Icon_Size_Lookup_For_Settings
-        (Gtk.Settings.Get_Default, Icon_Size_Menu,
-         W, H, Result);
-
       Gtk_New (View.Quit_Button_Col);
+      View.Quit_Button_Col.Set_Sizing (Tree_View_Column_Autosize);
       Gtk_New (Pixbuf_Rend);
       Pack_End (View.Quit_Button_Col, Pixbuf_Rend, False);
       Add_Attribute
@@ -638,15 +632,16 @@ package body Task_Manager.GUI is
       Dummy := Append_Column (Tree, View.Quit_Button_Col);
 
       Gtk_New (Col);
-      Set_Expand (Col, False);
+      Col.Set_Sizing (Tree_View_Column_Autosize);
+      Set_Expand (Col, True);
       Gtk_New (Progress_Rend);
-      Progress_Rend.Set_Fixed_Size (Progress_Bar_Length, H);
       Pack_Start (Col, Progress_Rend, False);
       Add_Attribute (Col, Progress_Rend, "value", Command_Progress_Column);
       Add_Attribute (Col, Progress_Rend, "text", Command_Text_Column);
       Dummy := Append_Column (Tree, Col);
 
       Gtk_New (View.Pause_Button_Col);
+      View.Pause_Button_Col.Set_Sizing (Tree_View_Column_Autosize);
       Gtk_New (Pixbuf_Rend);
       Pack_End (View.Pause_Button_Col, Pixbuf_Rend, False);
       Add_Attribute
@@ -668,6 +663,21 @@ package body Task_Manager.GUI is
          Command_Button_Column   => Gdk.Pixbuf.Get_Type,
          Pause_Button_Column     => Gdk.Pixbuf.Get_Type);
    end Columns_Types;
+
+   ----------------------------
+   -- On_Preferences_Changed --
+   ----------------------------
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      View : constant Task_Manager_Widget_Access :=
+        TM_Views.Retrieve_View (Kernel);
+   begin
+      if View /= null then
+         Set_Font_And_Colors (View.Tree, Fixed_Font => False);
+      end if;
+   end On_Preferences_Changed;
 
    ----------------
    -- Initialize --
@@ -704,6 +714,10 @@ package body Task_Manager.GUI is
 
       Add (View, Scrolled);
 
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (On_Preferences_Changed'Access),
+                Name  => "task_manager.preferences_changed",
+                Watch => GObject (View));
       Set_Font_And_Colors (View.Tree, Fixed_Font => True);
 
       View.Tree.On_Button_Press_Event (On_Button_Press_Event'Access, View);
