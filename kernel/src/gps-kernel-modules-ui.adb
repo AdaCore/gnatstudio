@@ -110,7 +110,6 @@ package body GPS.Kernel.Modules.UI is
          Group                 : Integer;
          Visible               : Boolean := True;
          Sensitive             : Boolean := True;
-         Filter_For_Visibility : Boolean := True;
          Filter_Matched        : Boolean;
          --  Only valid while computing a contextual menu
 
@@ -122,6 +121,7 @@ package body GPS.Kernel.Modules.UI is
             when Type_Command =>
                Command       : Commands.Interactive.Interactive_Command_Access;
                Filter        : GPS.Kernel.Action_Filter;
+               Enable_Filter : GPS.Kernel.Action_Filter;
 
             when Type_Action =>
                Action           : Action_Record_Access;
@@ -129,6 +129,7 @@ package body GPS.Kernel.Modules.UI is
             when Type_Submenu =>
                Submenu          : Submenu_Factory;
                Submenu_Filter   : GPS.Kernel.Action_Filter;
+               Submenu_Enable   : GPS.Kernel.Action_Filter;
 
             when Type_Separator =>
                Ref_Item         : Contextual_Menu_Access;
@@ -668,6 +669,11 @@ package body GPS.Kernel.Modules.UI is
          Context : Selection_Context) return Boolean;
       --  Whether the menu C should be made visible
 
+      function Menu_Is_Sensitive
+        (C       : Contextual_Menu_Access;
+         Context : Selection_Context) return Boolean;
+      --  Whether the menu C should be sensetive
+
       procedure Create_Item
         (C         : Contextual_Menu_Access;
          Context   : Selection_Context;
@@ -687,6 +693,29 @@ package body GPS.Kernel.Modules.UI is
       --  Return True if the parent menu of C was explicitly registered by the
       --  user. In this case, C will be created only when that parent menu is
       --  created, not before.
+
+      -----------------------
+      -- Menu_Is_Sensitive --
+      -----------------------
+
+      function Menu_Is_Sensitive
+        (C       : Contextual_Menu_Access;
+         Context : Selection_Context) return Boolean is
+      begin
+         case C.Menu_Type is
+            when Type_Separator =>
+               return False;
+
+            when Type_Action =>
+               return True;
+
+            when Type_Command =>
+               return Filter_Matches (C.Enable_Filter, Context);
+
+            when Type_Submenu =>
+               return Filter_Matches (C.Submenu_Enable, Context);
+         end case;
+      end Menu_Is_Sensitive;
 
       ---------------------
       -- Menu_Is_Visible --
@@ -925,10 +954,8 @@ package body GPS.Kernel.Modules.UI is
          Is_Sensitive := C.Filter_Matched
            and then not Has_Explicit_Parent (C, Context);
 
-         if Is_Sensitive
-           or else not C.Filter_For_Visibility
-         then
-            C.Sensitive := Is_Sensitive;
+         if Is_Sensitive then
+            C.Sensitive := Menu_Is_Sensitive (C, Context);
 
             Create_Item (C, Context, Item, Full_Name);
 
@@ -1892,7 +1919,6 @@ package body GPS.Kernel.Modules.UI is
             Group                 => Group,
             Visible               => True,
             Sensitive             => True,
-            Filter_For_Visibility => True,
             Filter_Matched        => False,
             Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (T));
@@ -1906,7 +1932,6 @@ package body GPS.Kernel.Modules.UI is
             Group                 => Group,
             Visible               => True,
             Sensitive             => True,
-            Filter_For_Visibility => True,
             Filter_Matched        => False,
             Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (T));
@@ -1947,7 +1972,6 @@ package body GPS.Kernel.Modules.UI is
             Ref_Item              => null,
             Visible               => True,
             Sensitive             => True,
-            Filter_For_Visibility => True,
             Filter_Matched        => False,
             Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (Label));
@@ -1961,7 +1985,6 @@ package body GPS.Kernel.Modules.UI is
             Group                 => Group,
             Visible               => True,
             Sensitive             => True,
-            Filter_For_Visibility => True,
             Filter_Matched        => False,
             Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (Label));
@@ -1979,7 +2002,7 @@ package body GPS.Kernel.Modules.UI is
       Name              : String;
       Action            : Commands.Interactive.Interactive_Command_Access;
       Filter            : GPS.Kernel.Action_Filter := null;
-      Visibility_Filter : Boolean := True;
+      Enable_Filter     : GPS.Kernel.Action_Filter := null;
       Label             : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image       : String := "";
       Ref_Item          : String := "";
@@ -2005,7 +2028,6 @@ package body GPS.Kernel.Modules.UI is
             Visible               => True,
             Filter_Matched        => False,
             Sensitive             => True,
-            Filter_For_Visibility => Visibility_Filter,
             Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (Label));
       else
@@ -2014,13 +2036,13 @@ package body GPS.Kernel.Modules.UI is
             Name                  => new String'(Name),
             Command               => Action,
             Filter                => Filter,
+            Enable_Filter         => Enable_Filter,
             Pix                   => Pix,
             Next                  => null,
             Group                 => Group,
             Visible               => True,
             Filter_Matched        => False,
             Sensitive             => True,
-            Filter_For_Visibility => Visibility_Filter,
             Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (Label));
          Register_Perma_Command (Kernel, Action);
@@ -2039,7 +2061,7 @@ package body GPS.Kernel.Modules.UI is
       Action            : Commands.Interactive.Interactive_Command_Access :=
                             null;
       Filter            : GPS.Kernel.Action_Filter := null;
-      Visibility_Filter : Boolean := True;
+      Enable_Filter     : GPS.Kernel.Action_Filter := null;
       Label             : String := "";
       Custom            : Custom_Expansion := null;
       Stock_Image       : String := "";
@@ -2073,7 +2095,6 @@ package body GPS.Kernel.Modules.UI is
             Visible               => True,
             Group                 => Group,
             Sensitive             => True,
-            Filter_For_Visibility => Visibility_Filter,
             Filter_Matched        => False,
             Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (T));
@@ -2083,13 +2104,13 @@ package body GPS.Kernel.Modules.UI is
             Name                  => new String'(Name),
             Command               => Action,
             Filter                => Filter,
+            Enable_Filter         => Enable_Filter,
             Pix                   => Pix,
             Next                  => null,
             Visible               => True,
             Group                 => Group,
             Sensitive             => True,
             Filter_Matched        => False,
-            Filter_For_Visibility => Visibility_Filter,
             Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (T));
          Register_Perma_Command (Kernel, Action);
@@ -2116,7 +2137,6 @@ package body GPS.Kernel.Modules.UI is
             Name              => Name,
             Action            => null,
             Filter            => null,
-            Visibility_Filter => True,
             Label             => "");
          Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Name);
       end if;
@@ -2141,7 +2161,6 @@ package body GPS.Kernel.Modules.UI is
             Name              => Name,
             Action            => null,
             Filter            => null,
-            Visibility_Filter => True,
             Label             => "");
          Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Name);
       end if;
@@ -2189,7 +2208,7 @@ package body GPS.Kernel.Modules.UI is
       Name              : String;
       Label             : String := "";
       Filter            : GPS.Kernel.Action_Filter := null;
-      Visibility_Filter : Boolean := True;
+      Enable_Filter     : GPS.Kernel.Action_Filter := null;
       Submenu           : Submenu_Factory := null;
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
@@ -2210,12 +2229,12 @@ package body GPS.Kernel.Modules.UI is
            (Menu_Type             => Type_Submenu,
             Name                  => new String'(Name),
             Submenu_Filter        => Filter,
+            Submenu_Enable        => Enable_Filter,
             Pix                   => null,
             Next                  => null,
             Visible               => True,
             Filter_Matched        => False,
             Sensitive             => True,
-            Filter_For_Visibility => Visibility_Filter,
             Group                 => Group,
             Submenu               => Submenu,
             Label_For_Context     => Null_Unbounded_String,

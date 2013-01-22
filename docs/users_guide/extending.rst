@@ -2734,6 +2734,11 @@ following attributes:
   If both "after" and "before" are specified, only the latter is taken into
   account.
 
+*"group" (optional, default="0")*
+  Group attribute allows you to create groups of contextual menus that will
+  be put together. Items of the same group appear before all items with
+  a greater group number.
+
 It accepts one child tag, `<Title>` which specifies the name of the
 menu entry. If this child is not specified, the menu entry will use the name
 of the action itself. The title is in fact the full path to the new menu entry.
