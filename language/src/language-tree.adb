@@ -619,9 +619,15 @@ package body Language.Tree is
                It : Construct_Tree_Iterator := First (Tree);
             begin
                while It /= Null_Construct_Tree_Iterator loop
-                  exit when Location < It.Node.Construct.Sloc_Start;
+                  --  Only compare lines, not columns, since most likely the
+                  --  cursor is not exactly within the scope of the
+                  --  declaration (for instance, a subprogram's declaration
+                  --  starts at column 4, but the cursor is on column 1 of the
+                  --  same line => we still want to return the subprogram).
 
-                  if Location <= It.Node.Construct.Sloc_End then
+                  exit when Location.Line < It.Node.Construct.Sloc_Start.Line;
+
+                  if Location.Line <= It.Node.Construct.Sloc_End.Line then
                      if Match_Category (It.Node.Construct.Category) then
                         Last_Matched := It;
                      end if;

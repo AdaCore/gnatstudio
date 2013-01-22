@@ -55,75 +55,76 @@ BLOCKS_DEFS = {
     'CAT_ENTRY'              : [r'end \1;', r'\s*entry\s+([^ \n(]+).*']
     }
 
-def on_gps_started (hook_name):
+
+def on_gps_started(hook_name):
    "Initializes this module."
    global action_name, menu_name
 
-   init = "<action name='" + action_name + """' category='Editor'>
+   init = """<action name='%(action)s' category='Editor'>
      <description>End the current Ada block, by providing the appropriate "end" statement</description>
-      <filter language="ada"
-              error='""" + action_name + """ requires an Ada file' />
-      <shell lang="python" output="none">block_completion.block_complete("%F");</shell>
+      <filter language="ada" error='%(action)s requires an Ada file' />
+      <shell lang="python" output="none">block_completion.block_complete("%%F");</shell>
    </action>
+   <menu action='%(action)s' before="Refill">
+      <title>%(menu)s</title>
+   </menu>""" % {"action": action_name, "menu": menu_name}
+   GPS.parse_xml(init)
 
-   <menu action='""" + action_name + """' before="Refill">
-      <title>""" + menu_name + """</title>
-   </menu>"""
 
-   GPS.parse_xml (init)
-
-def block_complete_on_location (buffer, location):
+def block_complete_on_location(buffer, location):
    # Check if we need to insert a new-line character
-   start = GPS.EditorLocation (buffer, location.line(), 1)
-   end = GPS.EditorLocation (buffer, location.line(), location.column())
+   start = GPS.EditorLocation(buffer, location.line(), 1)
+   end = GPS.EditorLocation(buffer, location.line(), location.column())
 
    # A new-line character is inserted if there is some text on the left
    # of the current cursor position.
-   if buffer.get_chars (start, end).strip() != "":
-      buffer.insert (location, '\n');
+   if buffer.get_chars(start, end).strip() != "":
+      buffer.insert(location, '\n')
       location = location.forward_line()
 
-   block = location.block_type();
+   block = location.block_type()
 
-   if not BLOCKS_DEFS.has_key (block):
-      return;
+   if block not in BLOCKS_DEFS:
+      return
 
-   (term, pattern) = BLOCKS_DEFS [block];
+   (term, pattern) = BLOCKS_DEFS[block]
 
    if pattern != '':
-      # Retreive the line at the start of the block
+      # Retrieve the line at the start of the block
 
-      start = GPS.EditorLocation (buffer, location.block_start_line(), 1);
-      end = GPS.EditorLocation (buffer, location.block_start_line() + 1, 1);
+      start = GPS.EditorLocation(buffer, location.block_start_line(), 1)
+      end = GPS.EditorLocation(buffer, location.block_start_line() + 1, 1)
 
-      bs_content = buffer.get_chars (start, end);
+      bs_content = buffer.get_chars(start, end)
 
-      re_pattern = re.compile (pattern, re.IGNORECASE | re.DOTALL);
+      re_pattern = re.compile(pattern, re.IGNORECASE | re.DOTALL)
 
-      if re_pattern.match (bs_content):
-         term = re_pattern.sub (term, bs_content);
+      if re_pattern.match(bs_content):
+         term = re_pattern.sub(term, bs_content)
       else:
          # The pattern does not macth the content, remove the tags
-         term = term.replace (r' \1', '');
-         term = term.replace (r'\1', '');
-         term = term.replace (r' \2', '');
-         term = term.replace (r'\2', '');
+         term = term.replace(r' \1', '')
+         term = term.replace(r'\1', '')
+         term = term.replace(r' \2', '')
+         term = term.replace(r'\2', '')
 
-   buffer.start_undo_group();
-   buffer.insert (location, term);
-   buffer.indent (location, location);
-   buffer.finish_undo_group();
+   buffer.start_undo_group()
+   buffer.insert (location, term)
+   buffer.indent (location, location)
+   buffer.finish_undo_group()
 
-def block_complete (filename):
-   file = GPS.File (filename);
+
+def block_complete(filename):
+   file = GPS.File(filename)
 
    # Only Ada language supported
    if file.language().lower() != "ada":
-      return;
+      return
 
-   eb = GPS.EditorBuffer.get (file);
-   ev = eb.current_view();
-   el = ev.cursor();
-   block_complete_on_location (eb, el);
+   eb = GPS.EditorBuffer.get (file)
+   ev = eb.current_view()
+   el = ev.cursor()
+   block_complete_on_location(eb, el)
 
-GPS.Hook ("gps_started").add (on_gps_started)
+
+GPS.Hook("gps_started").add(on_gps_started)

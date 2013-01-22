@@ -5676,6 +5676,10 @@ package body Src_Editor_Buffer is
          return New_Block;
       end if;
 
+      Update_Contents
+        (Db      => Editor.Kernel.Get_Construct_Database,
+         File    => Editor.Filename);
+
       File := Get_Or_Create
         (Db      => Editor.Kernel.Get_Construct_Database,
          File    => Editor.Filename,
@@ -5689,7 +5693,7 @@ package body Src_Editor_Buffer is
            (Absolute_Offset => False,   --   ??? Should use offset in buffer
             Line            => Integer (Line),
             Line_Offset     => 1),
-         From_Type         => Start_Construct,
+         From_Type         => Start_Construct,  --  irrelevant with Enclosing
          Position          => Enclosing,
          Categories_Seeked => Filter);
 

@@ -49,6 +49,7 @@ with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;
 with Find_Utils;                use Find_Utils;
 with Language;                  use Language;
+with Language.Tree;             use Language.Tree;
 with Src_Contexts;              use Src_Contexts;
 with Traces;                    use Traces;
 
@@ -902,8 +903,29 @@ package body Src_Editor_Module.Editors is
             Block  := Get_Subprogram_Block
               (Buffer, Get_Editable_Line (Buffer, Line));
          else
-            Block  := Get_Block
-              (Buffer, Get_Editable_Line (Buffer, Line));
+            --  ??? This filter is in fact a constant
+            declare
+               Count : constant Natural :=
+                 Language_Category'Pos (Enclosing_Entity_Category'Last)
+                 - Language_Category'Pos (Enclosing_Entity_Category'First)
+                 + 1
+                 + 6;
+               Filter : Category_Array (1 .. Count);
+               Index : Natural := Filter'First;
+            begin
+               for F in Enclosing_Entity_Category loop
+                  Filter (Index) := F;
+                  Index := Index + 1;
+               end loop;
+               Filter (Index + 0) := Cat_Declare_Block;
+               Filter (Index + 1) := Cat_Loop_Statement;
+               Filter (Index + 2) := Cat_If_Statement;
+               Filter (Index + 3) := Cat_Case_Statement;
+               Filter (Index + 4) := Cat_Select_Statement;
+               Filter (Index + 5) := Cat_Return_Block;
+               Block  := Get_Block
+                 (Buffer, Get_Editable_Line (Buffer, Line), Filter => Filter);
+            end;
          end if;
       end if;
    end Get_Block;
