@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.3.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-53-M109-036 GPS: autofix on missing constant with preferences (2013-01-21)
+
+  Autofix has always done fixes in lowercases. This enhancement performs
+  the fixes on missing constants following the user defined preferences
+  specified in Preferences/Editor/Ada/Reserved word casing
+
 NF-53-M102-006 GPS: move Serialize to /Edit/Rectangle/ (2013-01-11)
 
   This menu was previously in /Edit/Selection, but is more logical in the
