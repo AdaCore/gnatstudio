@@ -44,6 +44,12 @@ NF-60-M110-025 GPS: group spec and body in Outline view (2013-01-10)
   but if this is already the current location in the editor will jump to its
   body instead.
 
+NF-53-M109-036 GPS: autofix on missing constant with preferences (2013-01-21)
+
+  Autofix has always done fixes in lowercases. This enhancement performs
+  the fixes on missing constants following the user defined preferences
+  specified in Preferences/Editor/Ada/Reserved word casing
+
 NF-60-M108-041 GPS: line wrapping in Messages window (2013-01-09)
 
   It is now possible to configure whether the Messages window should wrap
