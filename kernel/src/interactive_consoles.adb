@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2012, AdaCore                     --
+--                     Copyright (C) 2001-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1940,7 +1940,7 @@ package body Interactive_Consoles is
       return Interactive_Console
    is
    begin
-      return Interactive_Console (Get_Parent (View));
+      return Interactive_Console (Get_Parent (Get_Parent (View)));
    end From_View;
 
    ----------
