@@ -22,11 +22,11 @@
 
   <contextual action="Clear messages"/>
 
-  <contextual action="Select all in console">
+  <contextual action="Select all in console" group="-1">
     <title>Select all</title>
   </contextual>
 
-  <contextual action="Copy in console">
+  <contextual action="Copy in console" group="-1">
     <title>Copy</title>
   </contextual>
 </console>

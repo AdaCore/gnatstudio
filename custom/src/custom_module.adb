@@ -506,11 +506,23 @@ package body Custom_Module is
          Action  : constant String := Get_Attribute (Node, "action");
          Before  : constant String := Get_Attribute (Node, "before", "");
          After   : constant String := Get_Attribute (Node, "after", "");
+         Group   : Integer := Default_Contextual_Group;
          Child   : Node_Ptr;
          Title   : GNAT.OS_Lib.String_Access;
          Command : Action_Record_Access;
       begin
          Title := new String'(Action);
+
+         declare
+            Group_Image : constant String := Get_Attribute (Node, "group", "");
+         begin
+            if Group_Image /= "" then
+               Group := Integer'Value (Group_Image);
+            end if;
+         exception
+            when Constraint_Error =>
+               null;
+         end;
 
          Child := Node.Child;
          while Child /= null loop
@@ -553,7 +565,8 @@ package body Custom_Module is
                Label      => Title.all,
                Action     => Command,
                Ref_Item   => Before,
-               Add_Before => True);
+               Add_Before => True,
+               Group      => Group);
          elsif After /= "" then
             Register_Contextual_Menu
               (Kernel,
@@ -561,13 +574,15 @@ package body Custom_Module is
                Label      => Title.all,
                Action     => Command,
                Ref_Item   => After,
-               Add_Before => False);
+               Add_Before => False,
+               Group      => Group);
          else
             Register_Contextual_Menu
               (Kernel,
                Name       => Title.all,
                Label      => Title.all,
-               Action     => Command);
+               Action     => Command,
+               Group      => Group);
          end if;
 
          Free (Title);
@@ -1658,6 +1673,7 @@ package body Custom_Module is
       Cmd              : Subprogram_Command;
       Filter           : Subprogram_Filter;
       The_Filter       : Action_Filter;
+      Enable_Filter    : Action_Filter;
       Label            : Subprogram_Label;
       Subp             : Subprogram_Type;
    begin
@@ -1726,13 +1742,21 @@ package body Custom_Module is
             Label := new Subprogram_Label_Record'(Label => Subp);
          end if;
 
+         Subp := Nth_Arg (Data, 8, null);
+         if Subp /= null then
+            Filter := new Subprogram_Filter_Record'
+              (Action_Filter_Record with Filter => Subp);
+
+            Enable_Filter := Action_Filter (Filter);
+         end if;
+
          if Label /= null then
             Register_Contextual_Menu
               (Kernel,
                Name              => Get_Data (Inst, Contextual_Class),
                Action            => Interactive_Command_Access (Cmd),
                Filter            => The_Filter,
-               Visibility_Filter => Nth_Arg (Data, 8, True),
+               Enable_Filter     => Enable_Filter,
                Label             => Label,
                Ref_Item          => Nth_Arg (Data, 5, ""),
                Add_Before        => Nth_Arg (Data, 6, True),
@@ -1744,7 +1768,7 @@ package body Custom_Module is
                Name              => Get_Data (Inst, Contextual_Class),
                Action            => Interactive_Command_Access (Cmd),
                Filter            => The_Filter,
-               Visibility_Filter => Nth_Arg (Data, 8, True),
+               Enable_Filter     => Enable_Filter,
                Ref_Item          => Nth_Arg (Data, 5, ""),
                Add_Before        => Nth_Arg (Data, 6, True),
                Group             => Nth_Arg
@@ -1759,13 +1783,21 @@ package body Custom_Module is
          if Subp /= null then
             Filter  := new Subprogram_Filter_Record'
               (Action_Filter_Record with Filter => Subp);
+            The_Filter := Action_Filter (Filter);
+         end if;
+
+         Subp := Nth_Arg (Data, 9, null);
+         if Subp /= null then
+            Filter  := new Subprogram_Filter_Record'
+              (Action_Filter_Record with Filter => Subp);
+            Enable_Filter := Action_Filter (Filter);
          end if;
 
          Register_Contextual_Submenu
            (Kernel,
             Name              => Get_Data (Inst, Contextual_Class),
-            Filter            => Action_Filter (Filter),
-            Visibility_Filter => Nth_Arg (Data, 9, True),
+            Filter            => The_Filter,
+            Enable_Filter     => Enable_Filter,
             Label             => Nth_Arg (Data, 4, ""),
             Submenu           => new Create_Dynamic_Contextual'
               (Factory     => Nth_Arg (Data, 2),

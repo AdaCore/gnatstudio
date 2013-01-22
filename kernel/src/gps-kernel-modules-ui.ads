@@ -220,7 +220,7 @@ package GPS.Kernel.Modules.UI is
       Name              : String;
       Action            : Commands.Interactive.Interactive_Command_Access;
       Filter            : GPS.Kernel.Action_Filter := null;
-      Visibility_Filter : Boolean := True;
+      Enable_Filter     : GPS.Kernel.Action_Filter := null;
       Label             : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image       : String := "";
       Ref_Item          : String := "";
@@ -233,15 +233,15 @@ package GPS.Kernel.Modules.UI is
    --  Action doesn't need to Push_State/Pop_State, nor handle unexpected
    --  exceptions, since this is already done by its caller. This keeps the
    --  code shorter.
-   --  If Visibility_Filter is True, Filter will act on the menu's visibility.
-   --  Otherwise, it will act on its sensitivity.
+   --  Filter will act on the menu's visibility.
+   --  Enable_Filter will act on its sensitivity.
 
    procedure Register_Contextual_Menu
      (Kernel            : access Kernel_Handle_Record'Class;
       Name              : String;
       Action         : Commands.Interactive.Interactive_Command_Access := null;
       Filter            : GPS.Kernel.Action_Filter := null;
-      Visibility_Filter : Boolean := True;
+      Enable_Filter     : GPS.Kernel.Action_Filter := null;
       Label             : String := "";
       Custom            : Custom_Expansion := null;
       Stock_Image       : String := "";
@@ -267,7 +267,7 @@ package GPS.Kernel.Modules.UI is
       Name              : String;
       Label             : String := "";
       Filter            : GPS.Kernel.Action_Filter := null;
-      Visibility_Filter : Boolean := True;
+      Enable_Filter     : GPS.Kernel.Action_Filter := null;
       Submenu           : Submenu_Factory := null;
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
