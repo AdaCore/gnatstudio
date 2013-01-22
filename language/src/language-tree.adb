@@ -617,7 +617,14 @@ package body Language.Tree is
          when Enclosing =>
             declare
                It : Construct_Tree_Iterator := First (Tree);
+               Line : Natural;
             begin
+               if Location.Absolute_Offset then
+                  Line := 0;
+               else
+                  Line := Location.Line;
+               end if;
+
                while It /= Null_Construct_Tree_Iterator loop
                   --  Only compare lines, not columns, since most likely the
                   --  cursor is not exactly within the scope of the
@@ -625,9 +632,9 @@ package body Language.Tree is
                   --  starts at column 4, but the cursor is on column 1 of the
                   --  same line => we still want to return the subprogram).
 
-                  exit when Location.Line < It.Node.Construct.Sloc_Start.Line;
+                  exit when Line < It.Node.Construct.Sloc_Start.Line;
 
-                  if Location.Line <= It.Node.Construct.Sloc_End.Line then
+                  if Line <= It.Node.Construct.Sloc_End.Line then
                      if Match_Category (It.Node.Construct.Category) then
                         Last_Matched := It;
                      end if;
