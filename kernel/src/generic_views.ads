@@ -126,7 +126,8 @@ package Generic_Views is
    --     * remember option settings across sessions (through Hist_Prefix)
    --  Whenever the pattern is changed (or cleared), Self.Filter_Changed is
    --  called.
-   --  Nothing is done if the filter panel has already been built
+   --  Nothing is done if the filter panel has already been built.
+   --  This function should be called from Create_Toolbar.
 
    procedure Filter_Changed
      (Self    : not null access View_Record;

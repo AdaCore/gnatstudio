@@ -16,14 +16,15 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Ordered_Sets;
-
 with GNATCOLL.Symbols;
+with GNAT.Strings;
 
 with Glib;                       use Glib;
 with Glib.Values;                use Glib.Values;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtkada.Abstract_Tree_Model; use Gtkada.Abstract_Tree_Model;
 
+with Generic_Views;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -56,15 +57,14 @@ private package Outline_View.Model is
       Hide_Declarations : Boolean := False;
       Hide_Tasks        : Boolean := False;
       Show_Profile      : Boolean := False;
+      Sorted            : Boolean;
    end record;
 
    procedure Init_Model
      (Model     : access Outline_Model_Record'Class;
       Key       : Construct_Annotations_Pckg.Annotation_Key;
-      File      : Structured_File_Access;
-      Filter    : Tree_Filter;
-      Sort      : Boolean;
-      Add_Roots : Boolean := False);
+      Filter    : Tree_Filter);
+   --  Create a new model
 
    procedure Set_Group_Spec_And_Body
      (Model : not null access Outline_Model_Record'Class;
@@ -77,8 +77,18 @@ private package Outline_View.Model is
       Flat  : Boolean);
    --  Whether to display all entities in a flat view, or hierarchically
 
+   procedure Set_Filter
+     (Model   : not null access Outline_Model_Record'Class;
+      Pattern : String;
+      Options : Generic_Views.Filter_Options);
+   --  Filters the contents of the model. This does not refresh the model.
+
+   procedure Set_File
+     (Model : not null access Outline_Model_Record'Class;
+      File  : Structured_File_Access);
    function Get_File (Model : Outline_Model) return Structured_File_Access;
-   --  Return the file modelized by this model
+   --  Return the file modelized by this model.
+   --  Setting the file forces a refresh of the model.
 
    type Sorted_Node is private;
 
@@ -192,6 +202,8 @@ private
 
    type Sorted_Node is record
       Entity      : Entity_Persistent_Access;
+
+      --  ??? Could we only use Ordered_Index instead of these lists ?
       Prev, Next  : Sorted_Node_Access;
       First_Child : Sorted_Node_Access;
       Last_Child  : Sorted_Node_Access;
@@ -214,8 +226,9 @@ private
    type Outline_Model_Record is new Gtk_Abstract_Tree_Model_Record with record
       Annotation_Key : Construct_Annotations_Pckg.Annotation_Key;
       File           : Structured_File_Access;
+
       Filter         : Tree_Filter;
-      Sorted         : Boolean;
+      Filter_Pattern : GNAT.Strings.String_Access := null;
 
       Group_Spec_And_Body : Boolean := False;
       Flat_View           : Boolean := False;

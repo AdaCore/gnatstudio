@@ -32,6 +32,7 @@ with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
+with Gtkada.Types;            use Gtkada.Types;
 
 with Ada.Tags;                  use Ada.Tags;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -45,6 +46,7 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with Histories;                 use Histories;
+with System;
 
 package body Generic_Views is
 
@@ -62,6 +64,30 @@ package body Generic_Views is
 
    procedure Report_Filter_Changed (View : access GObject_Record'Class);
    --  Report a change in the filter panel
+
+   procedure Get_Filter_Preferred_Width
+     (Widget       : System.Address;
+      Minimum_Size : out Glib.Gint;
+      Natural_Size : out Glib.Gint);
+   pragma Convention (C, Get_Filter_Preferred_Width);
+
+   Filter_Class_Record : aliased Glib.Object.Ada_GObject_Class :=
+     Glib.Object.Uninitialized_Class;
+
+   --------------------------------
+   -- Get_Filter_Preferred_Width --
+   --------------------------------
+
+   procedure Get_Filter_Preferred_Width
+     (Widget       : System.Address;
+      Minimum_Size : out Glib.Gint;
+      Natural_Size : out Glib.Gint)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Minimum_Size := 30;
+      Natural_Size := 150; --  should ask widget;
+   end Get_Filter_Preferred_Width;
 
    ----------------
    -- Set_Kernel --
@@ -113,7 +139,18 @@ package body Generic_Views is
 
       Self.Filter := new Filter_Panel_Record;
       F := Self.Filter;
+
       Gtk.Tool_Item.Initialize (F);
+      if Glib.Object.Initialize_Class_Record
+        (F,
+         (1 .. 0 => Gtkada.Types.Null_Ptr),
+         Filter_Class_Record'Access,
+         "FilterPanel")
+      then
+         Set_Default_Get_Preferred_Width_Handler
+           (Filter_Class_Record,
+            Get_Filter_Preferred_Width'Access);
+      end if;
 
       F.Pattern := Gtk_Entry_New;
       Get_Style_Context (F.Pattern).Add_Class ("search");
@@ -128,6 +165,8 @@ package body Generic_Views is
         (F.Pattern, Gtk.Editable.Signal_Changed,
          Report_Filter_Changed'Access, Self);
       F.Add (F.Pattern);
+      F.Set_Expand (True);
+      F.Set_Homogeneous (False);
       Self.Append_Toolbar (Toolbar, F, Is_Filter => True);
 
       if Tooltip /= "" then

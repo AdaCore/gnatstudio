@@ -18,6 +18,7 @@
 with System; use System;
 
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
@@ -28,6 +29,7 @@ with Gtk.Tree_Model.Utils;        use Gtk.Tree_Model.Utils;
 
 with Basic_Types;                 use Basic_Types;
 with Project_Explorers_Common;    use Project_Explorers_Common;
+with GNAT.Strings;                use GNAT.Strings;
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 
@@ -59,7 +61,7 @@ package body Outline_View.Model is
       others              => 99);
 
    function Construct_Filter
-     (Filter    : Tree_Filter;
+     (Model     : not null access Outline_Model_Record'Class;
       Construct : access Simple_Construct_Information) return Boolean;
    --  Return False if the construct should be filtered out
 
@@ -89,10 +91,6 @@ package body Outline_View.Model is
    procedure Clear_Nodes
      (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access);
    --  Remove recursively all children nodes of the root given in parameter
-
-   procedure Reset
-     (Model : not null access Outline_Model_Record'Class);
-   --  Recompute the whole contents of the model
 
    function Get_Node
      (Model  : access Outline_Model_Record'Class;
@@ -180,7 +178,7 @@ package body Outline_View.Model is
          Path_Free (Path);
       end if;
 
-      --  First, ensuire parent consistency
+      --  First, ensure parent consistency
 
       if Obj.Node.Parent /= null then
          if Obj.Node.Parent.First_Child = Obj.Node then
@@ -212,7 +210,6 @@ package body Outline_View.Model is
          begin
             while Cur /= null loop
                Cur.Index_In_Siblings := Cur.Index_In_Siblings - 1;
-
                Cur := Cur.Next;
             end loop;
          end;
@@ -233,7 +230,7 @@ package body Outline_View.Model is
    ----------------------
 
    function Construct_Filter
-     (Filter    : Tree_Filter;
+     (Model     : not null access Outline_Model_Record'Class;
       Construct : access Simple_Construct_Information) return Boolean is
    begin
       --  No "with", "use", "#include"
@@ -244,19 +241,19 @@ package body Outline_View.Model is
             | Cat_Field | Cat_Variable
             | Type_Category =>
 
-            if Filter.Hide_Types
+            if Model.Filter.Hide_Types
               and then Construct.Category in Type_Category
             then
                return False;
             end if;
 
-            if Filter.Hide_Objects
+            if Model.Filter.Hide_Objects
               and then Construct.Category in Data_Category
             then
                return False;
             end if;
 
-            if Filter.Hide_Tasks
+            if Model.Filter.Hide_Tasks
               and then (Construct.Category = Cat_Task
                           or Construct.Category = Cat_Protected)
             then
@@ -264,7 +261,7 @@ package body Outline_View.Model is
             end if;
 
             if Construct.Category in Subprogram_Category
-              and then Filter.Hide_Declarations
+              and then Model.Filter.Hide_Declarations
               and then Construct.Is_Declaration
             then
                return False;
@@ -274,7 +271,20 @@ package body Outline_View.Model is
             return False;
       end case;
 
-      return Construct.Name /= No_Symbol;
+      if Construct.Name = No_Symbol then
+         return False;
+      end if;
+
+      if Model.Filter_Pattern /= null then
+         if Ada.Strings.Fixed.Index
+           (Source  => To_Lower (Get (Construct.Name).all),
+            Pattern => Model.Filter_Pattern.all) = 0
+         then
+            return False;
+         end if;
+      end if;
+
+      return True;
    end Construct_Filter;
 
    ---------
@@ -378,94 +388,104 @@ package body Outline_View.Model is
          return;
       end if;
 
-      if not Construct_Filter (Model.Filter, Construct) then
-         return;
-      end if;
+      --  Issue: if we have children that would match, we still need to
+      --  insert them. Depending on Group_Spec_And_Body, this might mean
+      --  adding the current node as well.
+      if Construct_Filter (Model, Construct) then
+         --  Compute parent node
 
-      --  Compute parent node
-
-      if Model.Flat_View then
-         Parent_Node := Model.Phantom_Root'Access;
-      else
-         Parent := Get_Parent_Scope (Get_Tree (Model.File), New_Obj);
-         if Parent = Null_Construct_Tree_Iterator then
+         if Model.Flat_View then
             Parent_Node := Model.Phantom_Root'Access;
-         elsif Get_Node (Model, New_Obj) = null then
-            Parent_Node := Get_Node (Model, Parent);
-         end if;
-
-         if Parent_Node = null then
-            return;
-         end if;
-      end if;
-
-      --  Add the node for the new object
-
-      E := To_Entity_Access (Model.File, New_Obj);
-      if Model.Group_Spec_And_Body
-        and then Get_Node_Next_Part (Model, E) /= null
-      then
-         --  Already have a node for the other part
-         Root := null;
-      else
-         Root := new Sorted_Node;
-         Root.Entity   := To_Entity_Persistent_Access (E);
-         Root.Category := Construct.Category;
-         Root.Name     := Construct.Name;
-         Root.Sloc     := Construct.Sloc_Start;
-         Root.Parent   := Parent_Node;
-
-         if Model.Sorted then
-            Root.Order_Kind := Alphabetical;
          else
-            Root.Order_Kind := Positional;
+            Parent := Get_Parent_Scope (Get_Tree (Model.File), New_Obj);
+            if Parent = Null_Construct_Tree_Iterator then
+               Parent_Node := Model.Phantom_Root'Access;
+            elsif Get_Node (Model, New_Obj) = null then
+               Parent_Node := Get_Node (Model, Parent);
+               if Model.Group_Spec_And_Body
+                 and then Parent_Node = null
+               then
+                  Parent_Node := Get_Node_Next_Part
+                    (Model, To_Entity_Access (Model.File, Parent));
+               end if;
+            end if;
+
+            if Parent_Node = null then
+               --  Parent node might have been filtered
+               Parent_Node := Model.Phantom_Root'Access;
+            end if;
          end if;
 
-         Annot.Other_Val := new Entity_Sort_Annotation'
-           (Construct_Annotations_Pckg.General_Annotation_Record
-            with Node => Root, Model => Outline_Model (Model));
-         Construct_Annotations_Pckg.Set_Annotation
-           (Get_Annotation_Container (Get_Tree (Model.File), New_Obj).all,
-            Model.Annotation_Key,
-            Annot);
+         --  Add the node for the new object
 
-         Insert
-           (Container => Parent_Node.Ordered_Index,
-            New_Item  => Root,
-            Position  => Position,
-            Inserted  => Inserted);
+         E := To_Entity_Access (Model.File, New_Obj);
+         if Model.Group_Spec_And_Body
+           and then Get_Node_Next_Part (Model, E) /= null
+         then
+            --  Already have a node for the other part
+            Root := null;
+         else
+            Root := new Sorted_Node;
+            Root.Entity   := To_Entity_Persistent_Access (E);
+            Root.Category := Construct.Category;
+            Root.Name     := Construct.Name;
+            Root.Sloc     := Construct.Sloc_Start;
+            Root.Parent   := Parent_Node;
 
-         if Inserted then
-            if Previous (Position) = Sorted_Node_Set.No_Element then
-               Parent_Node.First_Child := Root;
-               Root.Index_In_Siblings := 0;
+            if Model.Filter.Sorted then
+               Root.Order_Kind := Alphabetical;
             else
-               Dummy := Element (Previous (Position));
-               Dummy.Next := Root;
-               Root.Prev := Dummy;
-               Root.Index_In_Siblings := Root.Prev.Index_In_Siblings + 1;
+               Root.Order_Kind := Positional;
             end if;
 
-            if Next (Position) = Sorted_Node_Set.No_Element then
-               Parent_Node.Last_Child := Root;
-            else
-               Dummy := Element (Next (Position));
-               Dummy.Prev := Root;
-               Root.Next := Dummy;
+            Annot.Other_Val := new Entity_Sort_Annotation'
+              (Construct_Annotations_Pckg.General_Annotation_Record
+               with Node => Root, Model => Outline_Model (Model));
+            Construct_Annotations_Pckg.Set_Annotation
+              (Get_Annotation_Container (Get_Tree (Model.File), New_Obj).all,
+               Model.Annotation_Key,
+               Annot);
 
-               --  Adjust the indexes for the node and its siblings, to
-               --  preserve sorting
-               while Dummy /= null loop
-                  Dummy.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
-                  Dummy := Dummy.Next;
-               end loop;
+            --  ??? Ordered_Index is only used to do the sorting of the tree,
+            --  perhaps we could be more efficient.
+            Insert
+              (Container => Root.Parent.Ordered_Index,
+               New_Item  => Root,
+               Position  => Position,
+               Inserted  => Inserted);
+
+            if Inserted then
+               if Previous (Position) = Sorted_Node_Set.No_Element then
+                  Parent_Node.First_Child := Root;
+                  Root.Index_In_Siblings := 0;
+               else
+                  Dummy := Element (Previous (Position));
+                  Dummy.Next := Root;
+                  Root.Prev := Dummy;
+                  Root.Index_In_Siblings := Root.Prev.Index_In_Siblings + 1;
+               end if;
+
+               if Next (Position) = Sorted_Node_Set.No_Element then
+                  Parent_Node.Last_Child := Root;
+               else
+                  Dummy := Element (Next (Position));
+                  Dummy.Prev := Root;
+                  Root.Next := Dummy;
+
+                  --  Adjust the indexes for the node and its siblings, to
+                  --  preserve sorting
+                  while Dummy /= null loop
+                     Dummy.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
+                     Dummy := Dummy.Next;
+                  end loop;
+               end if;
+
+               --  Notify the model of the change
+
+               Path := Get_Path (Model, Root);
+               Row_Inserted (+Model, Path, New_Iter (Root));
+               Path_Free (Path);
             end if;
-
-            --  Notify the model of the change
-
-            Path := Get_Path (Model, Root);
-            Row_Inserted (+Model, Path, New_Iter (Root));
-            Path_Free (Path);
          end if;
       end if;
 
@@ -490,24 +510,6 @@ package body Outline_View.Model is
       return Node.Entity;
    end Get_Entity;
 
-   -----------
-   -- Reset --
-   -----------
-
-   procedure Reset
-     (Model : not null access Outline_Model_Record'Class)
-   is
-      It : Construct_Tree_Iterator := First (Get_Tree (Model.File));
-   begin
-      --   Model.Phantom_Root.Ordered_Index.Clear;
-      Model.Phantom_Root.N_Children := 0;
-
-      while It /= Null_Construct_Tree_Iterator loop
-         Add_Recursive (Model, It);
-         It := Next (Get_Tree (Model.File), It, Jump_Over);
-      end loop;
-   end Reset;
-
    ----------------
    -- Init_Model --
    ----------------
@@ -515,23 +517,38 @@ package body Outline_View.Model is
    procedure Init_Model
      (Model     : access Outline_Model_Record'Class;
       Key       : Construct_Annotations_Pckg.Annotation_Key;
-      File      : Structured_File_Access;
-      Filter    : Tree_Filter;
-      Sort      : Boolean;
-      Add_Roots : Boolean := False)
+      Filter    : Tree_Filter)
    is
    begin
       Model.Annotation_Key := Key;
-      Model.File := File;
       Model.Filter := Filter;
-      Model.Sorted := Sort;
-
-      Ref (File);
-
-      if Add_Roots then
-         Reset (Model);
-      end if;
    end Init_Model;
+
+   --------------
+   -- Set_File --
+   --------------
+
+   procedure Set_File
+     (Model : not null access Outline_Model_Record'Class;
+      File  : Structured_File_Access)
+   is
+      It : Construct_Tree_Iterator;
+   begin
+      Model.Clear_Nodes (Model.Phantom_Root'Access);
+      Model.Phantom_Root.Ordered_Index.Clear;
+
+      --  Order is important here, in case File=Model.File. This whole blocks
+      --  also needs to be called after we clear the tree.
+      Ref (File);
+      Unref (Model.File);
+      Model.File := File;
+
+      It := First (Get_Tree (Model.File));
+      while It /= Null_Construct_Tree_Iterator loop
+         Add_Recursive (Model, It);
+         It := Next (Get_Tree (Model.File), It, Jump_Over);
+      end loop;
+   end Set_File;
 
    --------------
    -- Get_File --
@@ -573,11 +590,6 @@ package body Outline_View.Model is
       end if;
 
       return GType_String;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return GType_String;
    end Get_Column_Type;
 
    --------------
@@ -821,11 +833,6 @@ package body Outline_View.Model is
       else
          return New_Iter (Nth_Child (Self, Get_Sorted_Node (Parent), N));
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return Null_Iter;
    end Nth_Child;
 
    ------------
@@ -843,11 +850,6 @@ package body Outline_View.Model is
       else
          return New_Iter (Get_Sorted_Node (Child).Parent);
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return Null_Iter;
    end Parent;
 
    -----------------------------
@@ -873,6 +875,24 @@ package body Outline_View.Model is
    begin
       Model.Flat_View := Flat;
    end Set_Flat_View;
+
+   ----------------
+   -- Set_Filter --
+   ----------------
+
+   procedure Set_Filter
+     (Model   : not null access Outline_Model_Record'Class;
+      Pattern : String;
+      Options : Generic_Views.Filter_Options)
+   is
+      pragma Unreferenced (Options);
+   begin
+      Free (Model.Filter_Pattern);
+
+      if Pattern /= "" then
+         Model.Filter_Pattern := new String'(To_Lower (Pattern));
+      end if;
+   end Set_Filter;
 
    ----------------
    -- Get_Entity --
@@ -987,6 +1007,8 @@ package body Outline_View.Model is
       Clear_Nodes (Model, Model.Phantom_Root'Access);
       Unref (Model.File);
       Model.File := null;
+
+      Free (Model.Filter_Pattern);
    end Free;
 
    ------------------

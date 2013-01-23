@@ -124,6 +124,10 @@ package body Outline_View is
    overriding procedure Create_Menu
      (View    : not null access Outline_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Outline_View_Record;
+      Pattern : String;
+      Options : Generic_Views.Filter_Options);
 
    function Initialize
      (Outline : access Outline_View_Record'Class)
@@ -420,14 +424,13 @@ package body Outline_View is
      (View    : not null access Outline_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
-      pragma Unreferenced (View, Toolbar);
    begin
-      --   Gtk.GEntry.Gtk_New (View.Filter);
-      --   Get_Style_Context (View.Filter).Add_Class ("search");
-      --   View.Filter.Set_Icon_From_Stock
-      --     (Gtk_Entry_Icon_Secondary, GPS_Clear_Entry);
-
-      null;
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "outline",
+         Tooltip     => -"Filter the contents of the outline view",
+         Placeholder => -"filter",
+         Options     => 0);
    end Create_Toolbar;
 
    -----------------
@@ -512,20 +515,17 @@ package body Outline_View is
    begin
       return
         (Hide_Types        => not Get_History
-           (Get_History (Kernel).all,
-            Hist_Show_Types),
+           (Get_History (Kernel).all, Hist_Show_Types),
          Hide_Objects      => not Get_History
-           (Get_History (Kernel).all,
-            Hist_Show_Objects),
+           (Get_History (Kernel).all, Hist_Show_Objects),
          Hide_Declarations => not Get_History
-           (Get_History (Kernel).all,
-            Hist_Show_Decls),
+           (Get_History (Kernel).all, Hist_Show_Decls),
          Hide_Tasks => not Get_History
-           (Get_History (Kernel).all,
-            Hist_Show_Tasks),
+           (Get_History (Kernel).all, Hist_Show_Tasks),
          Show_Profile => Get_History
-           (Get_History (Kernel).all,
-            Hist_Show_Profile));
+           (Get_History (Kernel).all, Hist_Show_Profile),
+         Sorted       => Get_History
+           (Get_History (Kernel).all, Hist_Sort_Alphabetical));
    end Get_Filter_Record;
 
    ------------------
@@ -671,6 +671,19 @@ package body Outline_View is
          Free (Model);
       end if;
    end Before_Clear_Db;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Outline_View_Record;
+      Pattern : String;
+      Options : Generic_Views.Filter_Options) is
+   begin
+      Get_Outline_Model (Self).Set_Filter (Pattern, Options);
+      Force_Refresh (Self);
+   end Filter_Changed;
 
    ----------------
    -- Initialize --
@@ -859,9 +872,6 @@ package body Outline_View is
    procedure Force_Refresh (View : access Gtk_Widget_Record'Class) is
       Outline : constant Outline_View_Access := Outline_View_Access (View);
    begin
-      --  Reset the display properties
-      Set_Outline_Model (Outline, Get_Outline_Model (Outline));
-
       if Outline.File /= No_File then
          Set_File (Outline, Outline.File);
       end if;
@@ -1013,28 +1023,20 @@ package body Outline_View is
 
       Model := Get_Outline_Model (Outline_View_Access (Outline));
 
-      if Model /= null then
-         Model.Free;
-      end if;
-
       if Struct_File /= null then
          if Model = null then
             Model := new Outline_Model_Record;
 
             Gtkada.Abstract_Tree_Model.Initialize (Model);
             Set_Outline_Model (Outline, Model);
+            Init_Model
+              (Model,
+               Outline_View_Module_Record
+                 (Outline_View_Module.all).Construct_Annotation_Key,
+               Get_Filter_Record (Outline.Kernel));
          end if;
 
-         Init_Model
-           (Model,
-             Outline_View_Module_Record
-               (Outline_View_Module.all).Construct_Annotation_Key,
-             Struct_File,
-             Get_Filter_Record (Outline.Kernel),
-             Get_History
-              (Get_History (Outline.Kernel).all,
-               Hist_Sort_Alphabetical),
-            True);
+         Model.Set_File (Struct_File);
 
          declare
             Path : Gtk_Tree_Path;
