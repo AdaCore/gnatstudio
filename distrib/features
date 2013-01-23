@@ -57,6 +57,11 @@ NF-53-LB15-037 GPS: EditorOverlay can now highlight a whole line (2012-12-05)
        GPS.EditorLocation(b, 317, 1),
        GPS.EditorLocation(b, 317, 1))
 
+NF-53-LB04-004 GB: Export GNATbench preferences like CDT (2013-01-22)
+
+  GNATbench preferences can now be exported via the export preferences wizard
+  and imported into another workspace via the import preferences wizard.
+
 NF-53-L926-027 GPS: Project, Files and Windows views pop-ups (2012-11-13)
 
   Tooltips added to views to help navigation when windows are narrow.
