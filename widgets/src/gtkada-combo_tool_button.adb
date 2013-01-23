@@ -122,8 +122,8 @@ package body Gtkada.Combo_Tool_Button is
 
    procedure Menu_Position
      (Menu    : not null access Gtk_Menu_Record'Class;
-      X       : out Gint;
-      Y       : out Gint;
+      X       : in out Gint;
+      Y       : in out Gint;
       Push_In : out Boolean;
       Widget  : Gtkada_Combo_Tool_Button);
 
@@ -300,8 +300,8 @@ package body Gtkada.Combo_Tool_Button is
 
    procedure Menu_Position
      (Menu    : not null access Gtk_Menu_Record'Class;
-      X       : out Gint;
-      Y       : out Gint;
+      X       : in out Gint;
+      Y       : in out Gint;
       Push_In : out Boolean;
       Widget  : Gtkada_Combo_Tool_Button)
    is
