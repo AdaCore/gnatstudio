@@ -85,12 +85,11 @@ class Sqlite_Cross_References(object):
     def on_compilation_finished(self, hook, category,
         target_name="", mode_name="", status=""):
 
-        if not status:
-            if (target_name in ["Compile File", "Build Main", "Build All", "Make",
-                   "Compile All Sources", "Build <current file>", "Custom Build..."]
-                or category in ["Makefile"]):
 
-                self.recompute_xref()
+        if (target_name in ["Compile File", "Build Main", "Build All", "Make",
+               "Compile All Sources", "Build <current file>", "Custom Build..."]
+            or category in ["Makefile"]):
+            self.recompute_xref()
 
         if (self.gnatinspect_launch_registered
             and target_name == "Recompute Xref info"):
