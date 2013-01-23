@@ -1939,8 +1939,20 @@ package body Interactive_Consoles is
      (View    : access Gtk.Text_View.Gtk_Text_View_Record'Class)
       return Interactive_Console
    is
+      P : Gtk_Widget;
    begin
-      return Interactive_Console (Get_Parent (Get_Parent (View)));
+      --  Depending on whether we have a local toolbar or not, the parent
+      --  tree might not be the same. So we explicitly look for the parent
+      --  of interest
+
+      P := Get_Parent (View);
+      while P /= null
+        and then P.all not in Interactive_Console_Record'Class
+      loop
+         P := Get_Parent (P);
+      end loop;
+
+      return Interactive_Console (P);
    end From_View;
 
    ----------
