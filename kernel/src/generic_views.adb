@@ -65,6 +65,9 @@ package body Generic_Views is
    procedure Report_Filter_Changed (View : access GObject_Record'Class);
    --  Report a change in the filter panel
 
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
+   --  Called when a Formal_View is destroyed
+
    procedure Get_Filter_Preferred_Width
      (Widget       : System.Address;
       Minimum_Size : out Glib.Gint;
@@ -73,6 +76,18 @@ package body Generic_Views is
 
    Filter_Class_Record : aliased Glib.Object.Ada_GObject_Class :=
      Glib.Object.Uninitialized_Class;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
+      V : constant Abstract_View_Access := Abstract_View_Access (View);
+   begin
+      if V.Filter /= null then
+         Unref (V.Filter);
+      end if;
+   end On_Destroy;
 
    --------------------------------
    -- Get_Filter_Preferred_Width --
@@ -439,6 +454,8 @@ package body Generic_Views is
          if Focus_Widget = null then
             Focus_Widget := Gtk_Widget (View);
          end if;
+
+         View.On_Destroy (Generic_Views.On_Destroy'Access);
 
          if Local_Toolbar or else Local_Config then
             Box := new Toplevel_Box;
