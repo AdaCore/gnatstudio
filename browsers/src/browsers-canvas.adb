@@ -315,7 +315,6 @@ package body Browsers.Canvas is
 
    procedure Initialize
      (Browser         : access General_Browser_Record'Class;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Create_Toolbar  : Boolean;
       Parents_Pixmap  : String := Stock_Go_Back;
       Children_Pixmap : String := Stock_Go_Forward)
@@ -337,7 +336,6 @@ package body Browsers.Canvas is
 
       Add (Scrolled, Browser.Canvas);
       Add_Events (Browser.Canvas, Key_Press_Mask);
-      Browser.Kernel := Kernel_Handle (Kernel);
 
       Set_Layout_Algorithm (Browser.Canvas, Simple_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, False);
@@ -370,9 +368,9 @@ package body Browsers.Canvas is
       Hook := new Preferences_Hook_Record;
       Hook.Browser := General_Browser (Browser);
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, Hook,
+        (Browser.Kernel, Preferences_Changed_Hook, Hook,
          Name => "browsers.preferences_changed", Watch => GObject (Browser));
-      Execute (Hook.all, Kernel);
+      Execute (Hook.all, Browser.Kernel);
 
       Change_Align_On_Grid (Browser);
    end Initialize;

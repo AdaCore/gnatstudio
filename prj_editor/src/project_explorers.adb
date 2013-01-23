@@ -119,7 +119,6 @@ package body Project_Explorers is
    type Project_Explorer_Record is new Generic_Views.View_Record with record
       Tree      : Gtkada.Tree_View.Tree_View;
 
-      Kernel    : GPS.Kernel.Kernel_Handle;
       Expand_Id : Gtk.Handlers.Handler_Id;
       --  The signal for the expansion of nodes in the project view
 
@@ -133,8 +132,7 @@ package body Project_Explorers is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
-     (Explorer : access Project_Explorer_Record'Class;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Explorer : access Project_Explorer_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    --  Create a new explorer, and return the focus widget.
 
@@ -661,7 +659,7 @@ package body Project_Explorers is
          return On_Button_Press
            (T.Kernel,
             MDI_Explorer_Child
-              (Explorer_Views.Child_From_View (T.Kernel, T)),
+              (Explorer_Views.Child_From_View (T)),
             T.Tree, T.Tree.Model, Event, False);
       end if;
    exception
@@ -707,8 +705,7 @@ package body Project_Explorers is
    ----------------
 
    function Initialize
-     (Explorer : access Project_Explorer_Record'Class;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Explorer : access Project_Explorer_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
       H1       : Refresh_Hook;
@@ -722,8 +719,6 @@ package body Project_Explorers is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Explorer.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      Explorer.Kernel := Kernel_Handle (Kernel);
-
       Init_Graphics (Gtk_Widget (Explorer));
       Gtk_New (Explorer.Tree, Columns_Types);
       Set_Headers_Visible (Explorer.Tree, False);
@@ -735,7 +730,7 @@ package body Project_Explorers is
       Set_Font_And_Colors (Explorer.Tree, Fixed_Font => True);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => Explorer.Kernel,
          Event_On_Widget => Explorer.Tree,
          Object          => Explorer,
          ID              => Explorer_Module_ID,
@@ -783,16 +778,16 @@ package body Project_Explorers is
       H1 := new Refresh_Hook_Record'
         (Function_No_Args with Explorer => Project_Explorer (Explorer));
       Add_Hook
-        (Kernel, Project_View_Changed_Hook, H1,
+        (Explorer.Kernel, Project_View_Changed_Hook, H1,
          Name => "explorer.project_view_changed", Watch => GObject (Explorer));
 
       H2 := new Project_Changed_Hook_Record'
         (Function_No_Args with Explorer => Project_Explorer (Explorer));
       Add_Hook
-        (Kernel, Project_Changed_Hook, H2,
+        (Explorer.Kernel, Project_Changed_Hook, H2,
          Name => "explorer.project_changed", Watch => GObject (Explorer));
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Explorer.Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "project_Explorer.preferences_changed",
                 Watch => GObject (Explorer));
@@ -801,14 +796,14 @@ package body Project_Explorers is
       --  project view is changed.
 
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Selected,
+        (Get_MDI (Explorer.Kernel), Signal_Child_Selected,
          Child_Selected'Access, Explorer, After => True);
 
       Gtk.Dnd.Dest_Set
         (Explorer.Tree, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
         (Explorer.Tree, Signal_Drag_Data_Received,
-         Drag_Data_Received'Access, Kernel_Handle (Kernel));
+         Drag_Data_Received'Access, Explorer.Kernel);
 
       --  Sorting is now alphabetic: directories come first, then files. Use
       --  a custom sort function

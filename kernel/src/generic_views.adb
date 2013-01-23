@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2012, AdaCore                     --
+--                     Copyright (C) 2005-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,12 +17,15 @@
 
 with Glib.Object;             use Glib, Glib.Object;
 with XML_Utils;               use XML_Utils;
+with Gtk.Editable;
 with Gdk.Event;               use Gdk.Event;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
+with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Style_Context;       use Gtk.Style_Context;
 with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
+with Gtk.Toggle_Tool_Button;  use Gtk.Toggle_Tool_Button;
 with Gtk.Tool_Button;         use Gtk.Tool_Button;
 with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
@@ -41,6 +44,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
+with Histories;                 use Histories;
 
 package body Generic_Views is
 
@@ -49,6 +53,122 @@ package body Generic_Views is
       return Gint;
    --  Return the index of the separator that right aligns items, or -1 if
    --  there is none.
+
+   procedure On_Clear_Filter_Entry
+     (View  : access GObject_Record'Class;
+      Pos   : Gtk_Entry_Icon_Position;
+      Event : Gdk_Event_Button);
+   --  Clear the contents of the entry.
+
+   procedure Report_Filter_Changed (View : access GObject_Record'Class);
+   --  Report a change in the filter panel
+
+   ----------------
+   -- Set_Kernel --
+   ----------------
+
+   procedure Set_Kernel
+     (View   : not null access View_Record'Class;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      View.Kernel := Kernel_Handle (Kernel);
+   end Set_Kernel;
+
+   ---------------------------
+   -- Report_Filter_Changed --
+   ---------------------------
+
+   procedure Report_Filter_Changed (View : access GObject_Record'Class) is
+      V : constant Abstract_View_Access := Abstract_View_Access (View);
+   begin
+      if V.Filter /= null then
+         V.Filter_Changed
+           (Pattern => V.Filter.Pattern.Get_Text,
+            Options => (Regexp =>
+                          V.Filter.Regexp /= null
+                          and then V.Filter.Regexp.Get_Active,
+                        Negate =>
+                          V.Filter.Negate /= null
+                          and then V.Filter.Negate.Get_Active));
+      end if;
+   end Report_Filter_Changed;
+
+   ------------------
+   -- Build_Filter --
+   ------------------
+
+   procedure Build_Filter
+     (Self        : not null access View_Record;
+      Toolbar     : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Hist_Prefix : History_Key;
+      Tooltip     : String := "";
+      Placeholder : String := "";
+      Options     : Filter_Options_Mask := 0)
+   is
+      F : Filter_Panel;
+   begin
+      if Self.Filter /= null then
+         return;
+      end if;
+
+      Self.Filter := new Filter_Panel_Record;
+      F := Self.Filter;
+      Gtk.Tool_Item.Initialize (F);
+
+      F.Pattern := Gtk_Entry_New;
+      Get_Style_Context (F.Pattern).Add_Class ("search");
+      F.Pattern.Set_Icon_From_Stock
+        (Gtk_Entry_Icon_Secondary, GPS_Clear_Entry);
+      F.Pattern.Set_Icon_Activatable (Gtk_Entry_Icon_Secondary, True);
+      F.Pattern.Set_Icon_Tooltip_Text
+        (Gtk_Entry_Icon_Secondary, -"Clear the pattern");
+      F.Pattern.Set_Placeholder_Text (Placeholder);
+      F.Pattern.On_Icon_Press (On_Clear_Filter_Entry'Access, Self);
+      Object_Callback.Object_Connect
+        (F.Pattern, Gtk.Editable.Signal_Changed,
+         Report_Filter_Changed'Access, Self);
+      F.Add (F.Pattern);
+      Self.Append_Toolbar (Toolbar, F, Is_Filter => True);
+
+      if Tooltip /= "" then
+         F.Pattern.Set_Tooltip_Text (Tooltip);
+      end if;
+
+      --  ??? Perhaps we should have a popdown menu for the options instead
+
+      if (Options and Has_Regexp) /= 0 then
+         Gtk_New_From_Stock (F.Regexp, GPS_Regexp);
+         Associate (Get_History (Self.Kernel).all,
+                    Hist_Prefix & "-filter-is-regexp",
+                    F.Regexp, Default => True);
+         F.Regexp.Set_Tooltip_Text
+           (-"Whether filter is a regular expression");
+         F.Regexp.On_Toggled (Report_Filter_Changed'Access, Self);
+         Self.Append_Toolbar (Toolbar, F.Regexp, Is_Filter => True);
+      end if;
+
+      if (Options and Has_Negate) /= 0 then
+         Gtk_New_From_Stock (F.Negate, GPS_Negate_Search);
+         Associate (Get_History (Self.Kernel).all,
+                    Hist_Prefix & "-filter-negate",
+                    F.Negate, Default => False);
+         F.Negate.Set_Tooltip_Text
+           (-"Revert filter: hide matching items");
+         F.Negate.On_Toggled (Report_Filter_Changed'Access, Self);
+         Self.Append_Toolbar (Toolbar, F.Negate, Is_Filter => True);
+      end if;
+   end Build_Filter;
+
+   ------------
+   -- Kernel --
+   ------------
+
+   function Kernel
+     (Self : not null access View_Record'Class)
+      return GPS.Kernel.Kernel_Handle is
+   begin
+      return Self.Kernel;
+   end Kernel;
 
    ---------------------------
    -- Has_Toolbar_Separator --
@@ -106,6 +226,22 @@ package body Generic_Views is
          end if;
       end if;
    end Append_Toolbar;
+
+   --------------------
+   -- On_Clear_Entry --
+   --------------------
+
+   procedure On_Clear_Filter_Entry
+     (View  : access GObject_Record'Class;
+      Pos   : Gtk_Entry_Icon_Position;
+      Event : Gdk_Event_Button)
+   is
+      pragma Unreferenced (Pos, Event);
+      V : constant Abstract_View_Access := Abstract_View_Access (View);
+   begin
+      V.Filter.Pattern.Set_Text ("");
+      Report_Filter_Changed (V);
+   end On_Clear_Filter_Entry;
 
    ------------------
    -- Simple_Views --
@@ -181,17 +317,16 @@ package body Generic_Views is
       ---------------------
 
       function Child_From_View
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         View   : not null access Formal_View_Record'Class)
+        (View   : not null access Formal_View_Record'Class)
          return MDI_Child
       is
       begin
          if Local_Config or else Local_Toolbar then
             return Find_MDI_Child
-              (Get_MDI (Kernel),
+              (Get_MDI (View.Kernel),
                View.Get_Parent);  --  the box
          else
-            return Find_MDI_Child (Get_MDI (Kernel), View);
+            return Find_MDI_Child (Get_MDI (View.Kernel), View);
          end if;
       end Child_From_View;
 
@@ -260,7 +395,8 @@ package body Generic_Views is
          end if;
 
          View := new Formal_View_Record;
-         Focus_Widget := Initialize (View, Kernel);
+         Set_Kernel (View, Kernel_Handle (Kernel));
+         Focus_Widget := Initialize (View);
          if Focus_Widget = null then
             Focus_Widget := Gtk_Widget (View);
          end if;
@@ -499,7 +635,6 @@ package body Generic_Views is
                Base_Name (Menu_Name), Before => Before_Menu);
          end if;
       end Register_Module;
-
    end Simple_Views;
 
 end Generic_Views;

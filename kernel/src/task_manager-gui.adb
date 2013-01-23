@@ -118,8 +118,7 @@ package body Task_Manager.GUI is
    end record;
 
    function Initialize
-     (View   : access Task_Manager_Widget_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Task_Manager_Widget_Record'Class)
       return Gtk_Widget;
    --  Initialize the view and return the focus widget
 
@@ -388,8 +387,9 @@ package body Task_Manager.GUI is
         (Get_Content_Area (Dialog), Label, Expand => False, Padding => 10);
 
       Iface := new Task_Manager_Widget_Record;
+      Iface.Set_Kernel (Kernel);
       Iface.Dialog := Gtk_Widget (Dialog);
-      Focus := Initialize (Iface, Kernel);
+      Focus := Initialize (Iface);
       Pack_Start (Get_Content_Area (Dialog), Iface, Padding => 10);
 
       Button := Add_Button (Dialog, Stock_Quit, Gtk_Response_Yes);
@@ -684,11 +684,11 @@ package body Task_Manager.GUI is
    ----------------
 
    function Initialize
-     (View   : access Task_Manager_Widget_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Task_Manager_Widget_Record'Class)
       return Gtk_Widget
    is
-      Manager  : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+      Manager  : constant Task_Manager_Access :=
+        Get_Task_Manager (View.Kernel);
       GUI      : constant Task_Manager_Interface :=
                    Task_Manager_UI_Access (Manager).GUI;
       Scrolled : Gtk_Scrolled_Window;
@@ -714,7 +714,7 @@ package body Task_Manager.GUI is
 
       Add (View, Scrolled);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preferences_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "task_manager.preferences_changed",
                 Watch => GObject (View));

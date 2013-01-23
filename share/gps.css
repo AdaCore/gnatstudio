@@ -48,6 +48,11 @@
    -GtkWidget-scroll-arrow-vlength: 10px;
 }
 
+/* Search and filter fields */
+GtkEntry.search {
+  border-radius: 10px;
+}
+
 /*
  * Tooltips
  */

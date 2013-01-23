@@ -22,7 +22,6 @@ with System.Address_To_Access_Conversions;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Generic_Views;
-with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
 with GPS.Stock_Icons;                use GPS.Stock_Icons;
 with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
 
@@ -109,10 +108,7 @@ package body GPS.Location_View is
      new Ada.Containers.Vectors (Positive, Expansion_Request);
 
    type Location_View_Record is new Generic_Views.View_Record with record
-      Kernel              : Kernel_Handle;
       View                : GPS_Locations_Tree_View;
-
-      Filter              : Locations_Filter_Panel;
 
       --  Idle handlers
 
@@ -133,10 +129,13 @@ package body GPS.Location_View is
    overriding procedure Create_Menu
      (View    : not null access Location_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Location_View_Record;
+      Pattern : String;
+      Options : Generic_Views.Filter_Options);
 
    function Initialize
-     (Self   : access Location_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Self   : access Location_View_Record'Class)
       return Gtk_Widget;
    --  Creates the locations view, and returns the focus widget
 
@@ -318,12 +317,6 @@ package body GPS.Location_View is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
-   procedure On_Apply_Filter (Self : access Location_View_Record'Class);
-   --  Called on "apply-filter" signal from filter panel
-
-   procedure On_Cancel_Filter (Self : access Location_View_Record'Class);
-   --  Called on "cancel-filter" signal from filter panel
-
    procedure Goto_Location (Self : access Location_View_Record'Class);
    --  Goto the selected location in the Location_View
 
@@ -369,8 +362,7 @@ package body GPS.Location_View is
       pragma Unreferenced (Message);
    begin
       Location_Views.Child_From_View
-        (Self.Kernel,
-         Location_Views.Get_Or_Create_View
+        (Location_Views.Get_Or_Create_View
            (Self.Kernel, Focus => True))
         .Highlight_Child;
    end Message_Added;
@@ -911,8 +903,7 @@ package body GPS.Location_View is
    ----------------
 
    function Initialize
-     (Self   : access Location_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Self   : access Location_View_Record'Class)
       return Gtk_Widget
    is
       M        : Gtk_Tree_Model;
@@ -924,11 +915,9 @@ package body GPS.Location_View is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Self.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      Self.Kernel := Kernel_Handle (Kernel);
-
       --  Initialize the listener
 
-      Self.Listener := Listener_Access (Register (Kernel_Handle (Kernel)));
+      Self.Listener := Listener_Access (Register (Self.Kernel));
 
       --  Initialize the tree view
 
@@ -965,13 +954,13 @@ package body GPS.Location_View is
          ID              => Location_Views.Get_Module,
          Context_Func    => Context_Func'Access);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Self.Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "location_view.preferences_changed",
                 Watch => GObject (Self));
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
 
-      Add_Hook (Kernel, Location_Changed_Hook,
+      Add_Hook (Self.Kernel, Location_Changed_Hook,
                 Wrapper (On_Location_Changed'Access),
                 Name  => "locations.location_changed",
                 Watch => GObject (Self));
@@ -1070,6 +1059,7 @@ package body GPS.Location_View is
      (View    : not null access Location_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
+      use Generic_Views;
       Button : Gtk_Tool_Button;
       Sep    : Gtk_Separator_Tool_Item;
    begin
@@ -1109,22 +1099,12 @@ package body GPS.Location_View is
          On_Collapse_All'Access, View);
       Toolbar.Insert (Button);
 
-      View.Filter := Create_And_Append (View, View.Kernel, Toolbar);
-      Location_View_Callbacks.Object_Connect
-        (View.Filter,
-         Signal_Apply_Filter,
-         Location_View_Callbacks.To_Marshaller (On_Apply_Filter'Access),
-         Location_View (View));
-      Location_View_Callbacks.Object_Connect
-        (View.Filter,
-         Signal_Visibility_Toggled,
-         Location_View_Callbacks.To_Marshaller (On_Apply_Filter'Access),
-         Location_View (View));
-      Location_View_Callbacks.Object_Connect
-        (View.Filter,
-         Signal_Cancel_Filter,
-         Location_View_Callbacks.To_Marshaller (On_Cancel_Filter'Access),
-         Location_View (View));
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "locations",
+         Tooltip     => -"The text pattern or regular expression",
+         Placeholder => -"filter",
+         Options     => Has_Regexp or Has_Negate);
    end Create_Toolbar;
 
    -----------------
@@ -1407,26 +1387,21 @@ package body GPS.Location_View is
       end if;
    end Default_Command_Handler;
 
-   ---------------------
-   -- On_Apply_Filter --
-   ---------------------
+   --------------------
+   -- Filter_Changed --
+   --------------------
 
-   procedure On_Apply_Filter (Self : access Location_View_Record'Class) is
+   overriding procedure Filter_Changed
+     (Self    : not null access Location_View_Record;
+      Pattern : String;
+      Options : Generic_Views.Filter_Options)
+   is
    begin
       Self.View.Get_Filter_Model.Set_Pattern
-        (Self.Filter.Get_Pattern,
-         Self.Filter.Get_Is_Regexp,
-         Self.Filter.Get_Hide_Matched);
-   end On_Apply_Filter;
-
-   ----------------------
-   -- On_Cancel_Filter --
-   ----------------------
-
-   procedure On_Cancel_Filter (Self : access Location_View_Record'Class) is
-   begin
-      Self.View.Get_Filter_Model.Set_Pattern ("", False, False);
-   end On_Cancel_Filter;
+        (Pattern,
+         Is_Regexp    => Options.Regexp,
+         Hide_Matched => Options.Negate);
+   end Filter_Changed;
 
    --------------------
    -- On_Row_Deleted --

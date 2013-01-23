@@ -124,8 +124,7 @@ package body Browsers.Entities is
    --  See inherited documentation
 
    function Initialize
-     (View   : access Type_Browser_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Type_Browser_Record'Class)
       return Gtk_Widget;
    --  Creates the dependency browser and returns the focus widget
 
@@ -704,8 +703,7 @@ package body Browsers.Entities is
    ----------------
 
    function Initialize
-     (View   : access Type_Browser_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Type_Browser_Record'Class)
       return Gtk_Widget
    is
       i_page_xpm : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
@@ -713,7 +711,7 @@ package body Browsers.Entities is
 
    begin
       Initialize
-        (View, Kernel,
+        (View,
          Create_Toolbar  => False,
          Parents_Pixmap  => Stock_Go_Up,
          Children_Pixmap => Stock_Go_Down);
@@ -722,7 +720,7 @@ package body Browsers.Entities is
       View.Primitive_Button := Gdk_New_From_Xpm_Data (i_page_xpm);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View,
          Object          => View,
          ID              => Entities_Views.Get_Module,

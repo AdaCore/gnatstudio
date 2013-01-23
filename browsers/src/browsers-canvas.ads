@@ -69,7 +69,6 @@ package Browsers.Canvas is
 
    procedure Initialize
      (Browser         : access General_Browser_Record'Class;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Create_Toolbar  : Boolean;
       Parents_Pixmap  : String := Gtk.Stock.Stock_Go_Back;
       Children_Pixmap : String := Gtk.Stock.Stock_Go_Forward);
@@ -536,7 +535,6 @@ private
 
    type General_Browser_Record is new Generic_Views.View_Record with record
       Canvas                   : Gtkada.Canvas.Interactive_Canvas;
-      Kernel                   : GPS.Kernel.Kernel_Handle;
       Toolbar                  : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
       Selected_Link_Color      : Gdk_RGBA;

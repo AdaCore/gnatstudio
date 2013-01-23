@@ -77,8 +77,7 @@ package body Python_Module is
      with null record;
 
    function Initialize
-     (Console : access Python_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Console : access Python_Console_Record'Class) return Gtk_Widget;
    --  Initialize the python console, and returns the focus widget.
 
    package Python_Views is new Generic_Views.Simple_Views
@@ -109,13 +108,12 @@ package body Python_Module is
    ----------------
 
    function Initialize
-     (Console : access Python_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (Console : access Python_Console_Record'Class) return Gtk_Widget
    is
       Backend : Virtual_Console;
       Script  : constant Scripting_Language :=
                   Lookup_Scripting_Language
-                    (Get_Scripts (Kernel), Python_Name);
+                    (Get_Scripts (Console.Kernel), Python_Name);
       Errors  : aliased Boolean;
       Result  : PyObject;
 
@@ -124,12 +122,12 @@ package body Python_Module is
       Interactive_Consoles.Initialize
         (Console, Prompt => "", Handler => Default_Command_Handler'Access,
          User_Data       => System.Null_Address,
-         History_List    => Get_History (Kernel),
+         History_List    => Get_History (Console.Kernel),
          Wrap_Mode       => Wrap_Char,
          Key             => Hist);
       Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
-      Set_Max_Length   (Get_History (Kernel).all, 100, Hist);
-      Allow_Duplicates (Get_History (Kernel).all, Hist, True, True);
+      Set_Max_Length   (Get_History (Console.Kernel).all, 100, Hist);
+      Allow_Duplicates (Get_History (Console.Kernel).all, Hist, True, True);
 
       Backend := Get_Or_Create_Virtual_Console (Console);
       Set_Default_Console (Script, Backend);

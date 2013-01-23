@@ -499,7 +499,7 @@ package body Outline_View.Model is
    is
       It : Construct_Tree_Iterator := First (Get_Tree (Model.File));
    begin
-      Model.Phantom_Root.Ordered_Index.Clear;
+      --   Model.Phantom_Root.Ordered_Index.Clear;
       Model.Phantom_Root.N_Children := 0;
 
       while It /= Null_Construct_Tree_Iterator loop

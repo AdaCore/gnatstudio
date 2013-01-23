@@ -99,7 +99,6 @@ package body Bookmark_Views is
 
    type Bookmark_View_Record is new Generic_Views.View_Record with record
       Tree      : Gtk_Tree_View;
-      Kernel    : Kernel_Handle;
       Goto_Icon : Gdk_Pixbuf;
       Deleting  : Boolean := False;
       --  Whether we are deleting multiple bookmarks
@@ -111,8 +110,7 @@ package body Bookmark_Views is
    use Bookmarks_Selection_Foreach;
 
    function Initialize
-     (View   : access Bookmark_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (View   : access Bookmark_View_Record'Class) return Gtk_Widget;
    --  Create a new Bookmark view
 
    package Generic_View is new Generic_Views.Simple_Views
@@ -715,14 +713,12 @@ package body Bookmark_Views is
    ----------------
 
    function Initialize
-     (View   : access Bookmark_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (View   : access Bookmark_View_Record'Class) return Gtk_Widget
    is
       Tooltip   : Tooltips.Tooltips_Access;
       Refresh_H : Refresh_Hook_Access;
       Scrolled  : Gtk_Scrolled_Window;
    begin
-      View.Kernel := Kernel_Handle (Kernel);
       Initialize_Vbox (View, Homogeneous => False);
 
       Gtk_New (Scrolled);
@@ -757,13 +753,13 @@ package body Bookmark_Views is
          After       => False);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
          ID              => Module_ID (Bookmark_Views_Module),
          Context_Func    => View_Context_Factory'Access);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preferences_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "bookmark_views.preferences_changed",
                 Watch => GObject (View));
@@ -771,11 +767,11 @@ package body Bookmark_Views is
 
       Refresh_H := new Refresh_Hook'
         (Function_With_Args with View => Bookmark_View (View));
-      Add_Hook (Kernel, Bookmark_Added_Hook,
+      Add_Hook (View.Kernel, Bookmark_Added_Hook,
                 Refresh_H,
                 Name  => "bookmark_views.refresh",
                 Watch => GObject (View));
-      Add_Hook (Kernel, Bookmark_Removed_Hook,
+      Add_Hook (View.Kernel, Bookmark_Removed_Hook,
                 Refresh_H,
                 Name  => "bookmark_views.refresh",
                 Watch => GObject (View));

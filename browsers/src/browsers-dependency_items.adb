@@ -109,8 +109,7 @@ package body Browsers.Dependency_Items is
    end record;
 
    function Initialize
-     (View   : access Dependency_Browser_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Dependency_Browser_Record'Class)
       return Gtk_Widget;
    --  Creates the dependency browser and returns the focus widget
 
@@ -460,15 +459,14 @@ package body Browsers.Dependency_Items is
    ----------------
 
    function Initialize
-     (View   : access Dependency_Browser_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Dependency_Browser_Record'Class)
       return Gtk_Widget
    is
       Hook    : Project_Changed_Hook;
    begin
-      Initialize (View, Kernel, Create_Toolbar => False);
+      Initialize (View, Create_Toolbar => False);
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View,
          Object          => View,
          ID              => Dependency_Views.Get_Module,
@@ -479,7 +477,7 @@ package body Browsers.Dependency_Items is
       Hook := new Project_Changed_Hook_Record'
         (Function_No_Args with Browser => View);
       Add_Hook
-        (Kernel, GPS.Kernel.Project_Changed_Hook,
+        (View.Kernel, GPS.Kernel.Project_Changed_Hook,
          Hook,
          Name  => "browsers.dependency_items.project_changed",
          Watch => GObject (View));

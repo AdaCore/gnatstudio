@@ -65,11 +65,6 @@ generic
      (Process : access Visual_Debugger_Record'Class) return Boolean is <>;
    --  Whether a command is currently being processed by the debugger
 
-   with function Get_Kernel
-     (Process : access Visual_Debugger_Record'Class)
-     return GPS.Kernel.Kernel_Handle is <>;
-   --  Return the kernel
-
 package GVD.Generic_View is
    type Process_View_Record is abstract new Base_Type with private;
 

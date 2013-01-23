@@ -74,14 +74,12 @@ package body Buffer_Views is
 
    type Buffer_View_Record is new Generic_Views.View_Record with record
       Tree              : Gtk_Tree_View;
-      Kernel            : Kernel_Handle;
       File              : Virtual_File; -- current selected file (cache)
       Child_Selected_Id : Gtk.Handlers.Handler_Id;
    end record;
 
    function Initialize
-     (View   : access Buffer_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (View   : access Buffer_View_Record'Class) return Gtk_Widget;
    --  Create a new Buffer view
 
    Module_Name : constant String := "Windows_View";
@@ -570,14 +568,11 @@ package body Buffer_Views is
    ----------------
 
    function Initialize
-     (View   : access Buffer_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (View   : access Buffer_View_Record'Class) return Gtk_Widget
    is
       Tooltip   : Tooltips.Tooltips_Access;
       Scrolled  : Gtk_Scrolled_Window;
    begin
-      View.Kernel := Kernel_Handle (Kernel);
-
       Initialize_Vbox (View, Homogeneous => False);
 
       Gtk_New (Scrolled);
@@ -599,22 +594,25 @@ package body Buffer_Views is
       Set_Font_And_Colors (View.Tree, Fixed_Font => True);
 
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Added,
+        (Get_MDI (View.Kernel), Signal_Child_Added,
          Refresh'Access, Slot_Object => View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Removed, Refresh'Access,
+        (Get_MDI (View.Kernel), Signal_Child_Removed, Refresh'Access,
          Slot_Object => View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Title_Changed, Refresh'Access, View);
+        (Get_MDI (View.Kernel),
+         Signal_Child_Title_Changed, Refresh'Access, View);
       View.Child_Selected_Id := Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Selected,
+        (Get_MDI (View.Kernel), Signal_Child_Selected,
          Widget_Callback.To_Marshaller (Child_Selected'Access), View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Icon_Changed, Refresh'Access, View);
+        (Get_MDI (View.Kernel), Signal_Child_Icon_Changed,
+         Refresh'Access, View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Float_Child, Refresh'Access, View);
+        (Get_MDI (View.Kernel), Signal_Float_Child, Refresh'Access, View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Children_Reorganized, Refresh'Access, View);
+        (Get_MDI (View.Kernel), Signal_Children_Reorganized, Refresh'Access,
+         View);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree,
@@ -624,13 +622,13 @@ package body Buffer_Views is
          After       => False);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
          ID              => Generic_View.Get_Module,
          Context_Func    => View_Context_Factory'Access);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "windows view.preferences_changed",
                 Watch => GObject (View));

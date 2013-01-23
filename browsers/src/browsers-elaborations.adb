@@ -58,8 +58,7 @@ package body Browsers.Elaborations is
    end record;
 
    function Initialize
-     (View   : access Elaboration_Browser_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Elaboration_Browser_Record'Class)
       return Gtk_Widget;
    --  Initialize the view and returns the focus widget
 
@@ -213,15 +212,14 @@ package body Browsers.Elaborations is
    ----------------
 
    function Initialize
-     (View   : access Elaboration_Browser_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Elaboration_Browser_Record'Class)
       return Gtk_Widget is
    begin
-      Initialize (View, Kernel, Create_Toolbar  => True);
+      Initialize (View, Create_Toolbar  => True);
 
       --  Register menu with default actions
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View,
          Object          => View,
          ID              => Elaboration_Views.Get_Module,

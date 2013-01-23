@@ -978,15 +978,18 @@ package body GVD.Canvas is
      (Canvas : access GVD_Canvas_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
+      pragma Unreferenced (Kernel);
       Annotation_Font : Pango_Font_Description;
       Hook            : Preferences_Hook;
    begin
+      Assert (Me, Canvas.Kernel /= null,
+              "Canvas' kernel not initialized");
       Browsers.Canvas.Initialize
-        (Canvas, Kernel, Create_Toolbar => False);
+        (Canvas, Create_Toolbar => False);
       Canvas.Detect_Aliases := Default_Detect_Aliases.Get_Pref;
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => Canvas.Kernel,
          Event_On_Widget => Canvas,
          Object          => Canvas,
          ID              => Debugger_Module_ID,
@@ -1002,7 +1005,7 @@ package body GVD.Canvas is
       Hook := new Preferences_Hook_Record'
         (Function_No_Args with Canvas => GVD_Canvas (Canvas));
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, Hook,
+        (Canvas.Kernel, Preferences_Changed_Hook, Hook,
          Name  => "canvas.preferences_changed",
          Watch => GObject (Canvas));
 

@@ -98,7 +98,6 @@ package body Project_Explorers_Files is
 
    type Project_Explorer_Files_Record is new Generic_Views.View_Record with
       record
-         Kernel              : GPS.Kernel.Kernel_Handle;
          File_Tree           : Gtk.Tree_View.Gtk_Tree_View;
          File_Model          : Gtk.Tree_Store.Gtk_Tree_Store;
          Expanding           : Boolean := False;
@@ -120,8 +119,7 @@ package body Project_Explorers_Files is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
-     (Explorer : access Project_Explorer_Files_Record'Class;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Explorer : access Project_Explorer_Files_Record'Class)
       return Gtk_Widget;
    --  Create a new explorer and returns the focus widget
 
@@ -821,8 +819,7 @@ package body Project_Explorers_Files is
    ----------------
 
    function Initialize
-     (Explorer : access Project_Explorer_Files_Record'Class;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Explorer : access Project_Explorer_Files_Record'Class)
       return Gtk_Widget
    is
       Deleted_Hook : File_Deleted_Hook;
@@ -844,8 +841,6 @@ package body Project_Explorers_Files is
 
       --  The model should be destroyed as soon as the tree view is destroyed
       Unref (Explorer.File_Model);
-
-      Explorer.Kernel := Kernel_Handle (Kernel);
 
       Scrolled.Add (Explorer.File_Tree);
 
@@ -883,7 +878,7 @@ package body Project_Explorers_Files is
       Set_Column_Types (Explorer.File_Tree);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => Explorer.Kernel,
          Event_On_Widget => Explorer.File_Tree,
          Object          => Explorer,
          ID              => Explorer_Files_Module_Id,
@@ -915,35 +910,35 @@ package body Project_Explorers_Files is
         (Explorer.File_Tree, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
         (Explorer.File_Tree, Signal_Drag_Data_Received,
-         Drag_Data_Received'Access, Kernel_Handle (Kernel));
+         Drag_Data_Received'Access, Explorer.Kernel);
       Explorer.File_Tree.Enable_Model_Drag_Source
         (Gdk.Types.Button1_Mask, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
         (Explorer.File_Tree, Signal_Drag_Data_Get,
-         Drag_Data_Get'Access, Kernel_Handle (Kernel));
+         Drag_Data_Get'Access, Explorer.Kernel);
 
       Deleted_Hook := new File_Deleted_Hook_Record;
       Deleted_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Kernel, GPS.Kernel.File_Deleted_Hook,
+      Add_Hook (Explorer.Kernel, GPS.Kernel.File_Deleted_Hook,
                 Deleted_Hook,
                 Name  => "project_explorers_files.file_deleted",
                 Watch => GObject (Explorer));
       Saved_Hook := new File_Saved_Hook_Record;
       Saved_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Kernel, GPS.Kernel.File_Saved_Hook,
+      Add_Hook (Explorer.Kernel, GPS.Kernel.File_Saved_Hook,
                 Saved_Hook,
                 Name  => "project_explorers_files.file_saved",
                 Watch => GObject (Explorer));
       Renamed_Hook := new File_Renamed_Hook_Record;
       Renamed_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Kernel, GPS.Kernel.File_Renamed_Hook,
+      Add_Hook (Explorer.Kernel, GPS.Kernel.File_Renamed_Hook,
                 Renamed_Hook,
                 Name  => "project_explorers_files.file_renamed",
                 Watch => GObject (Explorer));
 
       Project_Hook := new Project_View_Changed_Hook_Record;
       Project_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Kernel, GPS.Kernel.Project_View_Changed_Hook,
+      Add_Hook (Explorer.Kernel, GPS.Kernel.Project_View_Changed_Hook,
                 Project_Hook,
                 Name => "project_explorers_files.project_view_changed",
                 Watch => GObject (Explorer));
@@ -1217,8 +1212,7 @@ package body Project_Explorers_Files is
    begin
       return On_Button_Press
         (T.Kernel,
-         MDI_Explorer_Child (Explorer_Files_Views.Child_From_View
-           (T.Kernel, T)),
+         MDI_Explorer_Child (Explorer_Files_Views.Child_From_View (T)),
          T.File_Tree, T.File_Model, Event, True);
    end File_Button_Press;
 

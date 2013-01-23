@@ -84,8 +84,7 @@ package body Completion_Window.Entity_Views is
      (View : access Entity_View_Record; XML : XML_Utils.Node_Ptr);
 
    function Initialize
-     (View     : not null access Entity_View_Record'Class;
-      Kernel   : not null access Kernel_Handle_Record'Class)
+     (View     : not null access Entity_View_Record'Class)
       return Gtk_Widget;
    --  Initialize the entity view, and returns the focus widget.
 
@@ -181,7 +180,8 @@ package body Completion_Window.Entity_Views is
          pragma Unreferenced (Dummy);
       begin
          Explorer := new Entity_View_Record;
-         Dummy := Initialize (Explorer, Kernel);
+         Explorer.Set_Kernel (Kernel);
+         Dummy := Initialize (Explorer);
 
          Explorer.Ent.Set_Text (Pattern);
          Explorer.Visibility := Visibility;
@@ -430,8 +430,7 @@ package body Completion_Window.Entity_Views is
    ----------------
 
    function Initialize
-     (View     : not null access Entity_View_Record'Class;
-      Kernel   : not null access Kernel_Handle_Record'Class)
+     (View     : not null access Entity_View_Record'Class)
       return Gtk_Widget
    is
       Hbox     : Gtk_Hbox;
@@ -451,7 +450,7 @@ package body Completion_Window.Entity_Views is
 
       View.Pack_Start (Hbox, False, False, 3);
 
-      Gtk_New (View.Explorer, Kernel_Handle (Kernel));
+      Gtk_New (View.Explorer, View.Kernel);
 
       Gtk_New (View.Notes_Scroll);
       Set_Policy (View.Notes_Scroll, Policy_Automatic, Policy_Automatic);

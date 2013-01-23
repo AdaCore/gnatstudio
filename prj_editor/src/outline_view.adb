@@ -26,6 +26,7 @@ with Glib.Object;               use Glib.Object;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
+with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -106,12 +107,13 @@ package body Outline_View is
    type Outline_Db_Listener_Access is access all Outline_Db_Listener'Class;
 
    type Outline_View_Record is new Generic_Views.View_Record with record
-      Kernel      : Kernel_Handle;
       Tree        : Gtk_Tree_View;
       File        : GNATCOLL.VFS.Virtual_File;
       Icon        : Gdk_Pixbuf;
       File_Icon   : Gdk_Pixbuf;
       Db_Listener : Outline_Db_Listener_Access;
+
+      Filter      : Gtk.GEntry.Gtk_Entry;
 
       Spec_Column : Gtk_Tree_View_Column;
       Body_Column : Gtk_Tree_View_Column;
@@ -124,8 +126,7 @@ package body Outline_View is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
-     (Outline : access Outline_View_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class)
+     (Outline : access Outline_View_Record'Class)
      return Gtk.Widget.Gtk_Widget;
    --  Create a new outline view, and return the focus widget.
 
@@ -421,6 +422,11 @@ package body Outline_View is
    is
       pragma Unreferenced (View, Toolbar);
    begin
+      --   Gtk.GEntry.Gtk_New (View.Filter);
+      --   Get_Style_Context (View.Filter).Add_Class ("search");
+      --   View.Filter.Set_Icon_From_Stock
+      --     (Gtk_Entry_Icon_Secondary, GPS_Clear_Entry);
+
       null;
    end Create_Toolbar;
 
@@ -671,8 +677,7 @@ package body Outline_View is
    ----------------
 
    function Initialize
-     (Outline : access Outline_View_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class)
+     (Outline : access Outline_View_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
       Text_Col      : Gtk_Tree_View_Column;
@@ -688,9 +693,7 @@ package body Outline_View is
       Out_Model : Outline_Model;
 
    begin
-      Outline.Kernel := Kernel_Handle (Kernel);
-
-      Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
+      Init_Graphics (Gtk_Widget (Get_Main_Window (Outline.Kernel)));
 
       Initialize_Vbox (Outline);
 
@@ -713,7 +716,7 @@ package body Outline_View is
       Outline.Db_Listener.Outline := Outline;
 
       Add_Database_Listener
-        (Kernel.Get_Construct_Database,
+        (Outline.Kernel.Get_Construct_Database,
          Database_Listener_Access (Outline.Db_Listener));
 
       --  Create an explicit columns for the expander
@@ -746,9 +749,9 @@ package body Outline_View is
       Scrolled.Add (Outline.Tree);
 
       Outline.Icon := Render_Icon
-        (Get_Main_Window (Kernel), "gps-box", Icon_Size_Menu);
+        (Get_Main_Window (Outline.Kernel), "gps-box", Icon_Size_Menu);
       Outline.File_Icon := Render_Icon
-        (Get_Main_Window (Kernel), "gps-file", Icon_Size_Menu);
+        (Get_Main_Window (Outline.Kernel), "gps-file", Icon_Size_Menu);
 
       Set_Font_And_Colors (Outline.Tree, Fixed_Font => True);
 
@@ -758,7 +761,7 @@ package body Outline_View is
         (Outline, Signal_Destroy, On_Destroy'Access);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => Outline.Kernel,
          Event_On_Widget => Outline.Tree,
          Object          => Outline,
          ID              => Outline_View_Module,
@@ -772,39 +775,39 @@ package body Outline_View is
       Set_Outline_Model (Outline, Model);
 
       Data := Context_Hooks_Args'
-        (Hooks_Data with Context => Get_Current_Context (Kernel));
+        (Hooks_Data with Context => Get_Current_Context (Outline.Kernel));
 
-      On_Context_Changed (Kernel, Data'Unchecked_Access);
+      On_Context_Changed (Outline.Kernel, Data'Unchecked_Access);
 
-      Add_Hook (Kernel, Context_Changed_Hook,
+      Add_Hook (Outline.Kernel, Context_Changed_Hook,
                 Wrapper (On_Context_Changed'Access),
                 Name => "outline.context_changed",
                 Watch => GObject (Outline));
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Outline.Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "outline.preferences_changed",
                 Watch => GObject (Outline));
-      Add_Hook (Kernel, Location_Changed_Hook,
+      Add_Hook (Outline.Kernel, Location_Changed_Hook,
                 Wrapper (Location_Changed'Access),
                 Name  => "outline.location_changed",
                 Watch => GObject (Outline));
-      Add_Hook (Kernel, File_Saved_Hook,
+      Add_Hook (Outline.Kernel, File_Saved_Hook,
                 Wrapper (File_Saved'Access),
                 Name  => "outline.file_saved",
                 Watch => GObject (Outline));
-      Add_Hook (Kernel, File_Closed_Hook,
+      Add_Hook (Outline.Kernel, File_Closed_Hook,
                 Wrapper (File_Closed'Access),
                 Name  => "outline.file_closed",
                 Watch => GObject (Outline));
-      Add_Hook (Kernel, File_Edited_Hook,
+      Add_Hook (Outline.Kernel, File_Edited_Hook,
                 Wrapper (File_Edited'Access),
                 Name  => "outline.file_edited",
                 Watch => GObject (Outline));
-      Add_Hook (Kernel, Buffer_Modified_Hook,
+      Add_Hook (Outline.Kernel, Buffer_Modified_Hook,
                 Wrapper (File_Saved'Access),
                 Name  => "outline.file_modified",
                 Watch => GObject (Outline));
-      Add_Hook (Kernel, Project_View_Changed_Hook,
+      Add_Hook (Outline.Kernel, Project_View_Changed_Hook,
                 Wrapper (On_Project_Changed'Access),
                 Name => "outline.projet_changed",
                 Watch => GObject (Outline));

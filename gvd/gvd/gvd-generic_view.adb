@@ -77,8 +77,7 @@ package body GVD.Generic_View is
 
    package body Simple_Views is
       function Local_Initialize
-        (View   : access Formal_View_Record'Class;
-         Kernel : access Kernel_Handle_Record'Class)
+        (View   : access Formal_View_Record'Class)
          return Gtk_Widget;
       --  Initialize the view and returns the focus widget.
 
@@ -134,13 +133,13 @@ package body GVD.Generic_View is
             --  we were to destroy the latter, this means that
             --  gtk_notebook_destroy's loop would then point to an invalid
             --  location.
-            if Get_Main_Window (Get_Kernel (P)) /= null
-              and then not Get_Main_Window (Get_Kernel (P)).In_Destruction
+            if Get_Main_Window (Kernel) /= null
+              and then not Get_Main_Window (Kernel).In_Destruction
               and then Get_Process (V) /= null
             then
                Set_View (Get_Process (V), null);
                Unset_Process (V);
-               Views.Child_From_View (Kernel, V).Close_Child (Force => True);
+               Views.Child_From_View (V).Close_Child (Force => True);
             else
                Set_View (Get_Process (V), null);
                Unset_Process (V);
@@ -204,7 +203,7 @@ package body GVD.Generic_View is
 
             if Child = null and then Create_If_Necessary then
                View := Views.Get_Or_Create_View (Kernel);
-               Child := Views.Child_From_View (Kernel, View);
+               Child := Views.Child_From_View (View);
             end if;
 
             if Child /= null then
@@ -270,15 +269,14 @@ package body GVD.Generic_View is
       ----------------------
 
       function Local_Initialize
-        (View   : access Formal_View_Record'Class;
-         Kernel : access Kernel_Handle_Record'Class)
+        (View   : access Formal_View_Record'Class)
          return Gtk_Widget
       is
          Focus_Widget : Gtk_Widget;
       begin
-         Focus_Widget := Initialize (View, Kernel);
+         Focus_Widget := Initialize (View, View.Kernel);
          Add_Hook
-           (Kernel,
+           (View.Kernel,
             Hook  => Debugger_Terminated_Hook,
             Func  => Wrapper (On_Debugger_Terminate'Unrestricted_Access),
             Name  => "terminate_" & Module_Name,

@@ -69,8 +69,7 @@ package body Browsers.Projects is
      with null record;
 
    function Initialize
-     (View   : access Project_Browser_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Project_Browser_Record'Class)
       return Gtk_Widget;
    --  Initialize the browser, and return the focus widget
 
@@ -524,14 +523,13 @@ package body Browsers.Projects is
    ----------------
 
    function Initialize
-     (View   : access Project_Browser_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+     (View   : access Project_Browser_Record'Class)
       return Gtk_Widget
    is
    begin
-      Initialize (View, Kernel, Create_Toolbar => False);
+      Initialize (View, Create_Toolbar => False);
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View,
          Object          => View,
          ID              => Project_Views.Get_Module,

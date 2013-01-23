@@ -66,9 +66,8 @@ package body GPS.Kernel.Console is
 
    History_Wrap_Lines : constant History_Key := "messages-wrap-line";
 
-   type GPS_Message_Record is new Interactive_Console_Record with record
-      Kernel : Kernel_Handle;
-   end record;
+   type GPS_Message_Record is new Interactive_Console_Record with
+      null record;
    --  Type for the messages window. This is mostly use to have a unique tag
    --  for this console, so that we can save it in the desktop
 
@@ -80,8 +79,7 @@ package body GPS.Kernel.Console is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
-     (Console : access GPS_Message_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Console : access GPS_Message_Record'Class) return Gtk_Widget;
    --  Initialize the messages window, and return the focus widget.
 
    package Messages_Views is new Generic_Views.Simple_Views
@@ -251,7 +249,7 @@ package body GPS.Kernel.Console is
             end if;
 
             Messages_Views.Child_From_View
-              (Self.Kernel, GPS_Message (Console)).Highlight_Child;
+              (GPS_Message (Console)).Highlight_Child;
          end if;
       end if;
    end Internal_Insert;
@@ -293,7 +291,7 @@ package body GPS.Kernel.Console is
         Messages_Views.Retrieve_View (Self.Kernel);
    begin
       if View /= null then
-         Messages_Views.Child_From_View (Self.Kernel, View).Raise_Child
+         Messages_Views.Child_From_View (View).Raise_Child
            (Give_Focus => False);
       end if;
    end Raise_Console;
@@ -440,19 +438,18 @@ package body GPS.Kernel.Console is
    ----------------
 
    function Initialize
-     (Console : access GPS_Message_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (Console : access GPS_Message_Record'Class) return Gtk_Widget
    is
    begin
       Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, History_Wrap_Lines, Default_Value => True);
+        (Get_History (Console.Kernel).all, History_Wrap_Lines,
+         Default_Value => True);
 
-      Console.Kernel := Kernel_Handle (Kernel);
       Initialize
         (Console,
          "",
          null,
-         Kernel.all'Address,
+         Console.Kernel.all'Address,
          Highlight    => Message_Highlight.Get_Pref,
          History_List => null,
          ANSI_Support => Host /= Windows, --  ANSI_Support does not work
@@ -463,13 +460,13 @@ package body GPS.Kernel.Console is
       Console.Enable_Prompt_Display (False);
       Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
 
-      Add_Hook (Kernel, To_Hook_Name ("preferences_changed"),
+      Add_Hook (Console.Kernel, Preferences_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name => "console.preferences_changed",
                 Watch => GObject (Console));
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => Console.Kernel,
          Event_On_Widget => Get_View (Console),
          Object          => Console,
          ID              => Messages_Views.Get_Module,

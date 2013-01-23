@@ -153,8 +153,6 @@ package body Project_Viewers is
       --  Color to use when displaying switches that are set at the project
       --  level, rather than file specific
 
-      Kernel : GPS.Kernel.Kernel_Handle;
-
       View_Changed_Blocked : Boolean := False;
       --  True if the hook for "project_view_changed" should be ignored
 
@@ -171,8 +169,7 @@ package body Project_Viewers is
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    function Initialize
-     (Viewer : access Project_Viewer_Record'Class;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Viewer : access Project_Viewer_Record'Class)
      return Gtk_Widget;
    --  Create a new project viewer, and return the focus widget.
    --  Every time the selection in Explorer changes, the info displayed in
@@ -533,8 +530,7 @@ package body Project_Viewers is
       Directory : Virtual_File := GNATCOLL.VFS.No_File;
       File      : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      Child : constant MDI_Child :=
-        File_Views.Child_From_View (Viewer.Kernel, Viewer);
+      Child : constant MDI_Child := File_Views.Child_From_View (Viewer);
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
 
@@ -632,11 +628,11 @@ package body Project_Viewers is
    ----------------
 
    function Initialize
-     (Viewer : access Project_Viewer_Record'Class;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Viewer : access Project_Viewer_Record'Class)
       return Gtk_Widget
    is
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      Context : constant Selection_Context :=
+        Get_Current_Context (Viewer.Kernel);
 
       Column_Types : constant GType_Array :=
                        (Display_File_Name_Column => GType_String,
@@ -654,7 +650,6 @@ package body Project_Viewers is
       pragma Unreferenced (Col_Number);
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
-      Viewer.Kernel := Kernel_Handle (Kernel);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -689,7 +684,7 @@ package body Project_Viewers is
       Add_Attribute (Col, Render, "foreground_gdk", Compiler_Color_Column);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => Viewer.Kernel,
          Event_On_Widget => Viewer.Tree,
          Object          => Viewer,
          ID              => Module_ID (Prj_Editor_Module_ID),
@@ -702,21 +697,21 @@ package body Project_Viewers is
       Hook3 := new Context_Hook_Record'
         (Function_With_Args with Viewer => Project_Viewer (Viewer));
       Add_Hook
-        (Kernel, Context_Changed_Hook, Hook3,
+        (Viewer.Kernel, Context_Changed_Hook, Hook3,
          Name => "project_viewer.context_changed", Watch => GObject (Viewer));
 
       Hook2 := new Project_View_Hook_Record'
         (Function_No_Args with Viewer => Project_Viewer (Viewer));
       Add_Hook
-        (Kernel, Project_View_Changed_Hook, Hook2,
+        (Viewer.Kernel, Project_View_Changed_Hook, Hook2,
          Name => "project_viewer.project_view_changed",
          Watch => GObject (Viewer));
 
       Hook := new Preferences_Hook_Record'
         (Function_No_Args with Viewer => Project_Viewer (Viewer));
-      Execute (Hook.all, Kernel);
+      Execute (Hook.all, Viewer.Kernel);
       Add_Hook
-        (Kernel, Preferences_Changed_Hook,
+        (Viewer.Kernel, Preferences_Changed_Hook,
          Hook,
          Name => "project_viewer.preferences_changed",
          Watch => GObject (Viewer));
@@ -729,7 +724,7 @@ package body Project_Viewers is
       if Context /= No_Context then
          Explorer_Selection_Changed (Viewer, Context);
       else
-         Update_Contents (Viewer, Get_Project (Kernel));
+         Update_Contents (Viewer, Get_Project (Viewer.Kernel));
       end if;
 
       return Gtk_Widget (Viewer.Tree);

@@ -59,13 +59,11 @@ package body Clipboard_Views is
 
    type Clipboard_View_Record is new Generic_Views.View_Record with record
       Tree    : Gtk_Tree_View;
-      Kernel  : Kernel_Handle;
       Current : Gdk_Pixbuf;
    end record;
 
    function Initialize
-     (View   : access Clipboard_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (View   : access Clipboard_View_Record'Class) return Gtk_Widget;
    --  Create a new clipboard view
 
    package Generic_View is new Generic_Views.Simple_Views
@@ -406,14 +404,11 @@ package body Clipboard_Views is
    ----------------
 
    function Initialize
-     (View   : access Clipboard_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (View   : access Clipboard_View_Record'Class) return Gtk_Widget
    is
       Tooltip  : Clipboard_View_Tooltips_Access;
       Scrolled : Gtk_Scrolled_Window;
    begin
-      View.Kernel := Kernel_Handle (Kernel);
-
       Initialize_Vbox (View, Homogeneous => False);
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -442,17 +437,17 @@ package body Clipboard_Views is
          After       => False);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
          ID              => Generic_View.Get_Module,
          Context_Func    => View_Context_Factory'Access);
 
-      Add_Hook (Kernel, Clipboard_Changed_Hook,
+      Add_Hook (View.Kernel, Clipboard_Changed_Hook,
                 Wrapper (On_Clipboard_Changed'Access),
                 Name => "clipboard_views.on_clipboard_changed",
                 Watch => GObject (View));
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preferences_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "clipboard_views.preferences_changed",
                 Watch => GObject (View));
@@ -461,7 +456,7 @@ package body Clipboard_Views is
       --  Initialize tooltips
 
       Tooltip := new Clipboard_View_Tooltips;
-      Tooltip.Kernel := Kernel_Handle (Kernel);
+      Tooltip.Kernel := View.Kernel;
       Set_Tooltip (Tooltip, View.Tree);
 
       return Gtk_Widget (View.Tree);

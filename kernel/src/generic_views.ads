@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2012, AdaCore                     --
+--                     Copyright (C) 2005-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -26,11 +26,14 @@ with Glib.Object;
 with XML_Utils;
 with Gtkada.Handlers;
 with Gtk.Box;
+private with Gtk.GEntry;
 with Gtk.Menu;
+private with Gtk.Toggle_Tool_Button;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
 with Gtk.Widget;
 with Gtkada.MDI;
+with Histories;
 
 package Generic_Views is
 
@@ -38,7 +41,7 @@ package Generic_Views is
    -- View_Record --
    -----------------
 
-   type View_Record is new Gtk.Box.Gtk_Box_Record with null record;
+   type View_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Abstract_View_Access is access all View_Record'Class;
 
    procedure Save_To_XML
@@ -82,6 +85,57 @@ package Generic_Views is
    --  latter makes it harder to know how to append items to the left or to
    --  the right.
 
+   function Kernel
+     (Self : not null access View_Record'Class)
+      return GPS.Kernel.Kernel_Handle;
+   pragma Inline (Kernel);
+   --  Return the kernel stored in Self
+
+   procedure Set_Kernel
+     (View   : not null access View_Record'Class;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Set the Kernel field (needed only internally from the generic, where
+   --  we can directly access the kernel field)
+
+   ------------------------------
+   -- Search and filter fields --
+   ------------------------------
+
+   type Filter_Options is record
+      Regexp : Boolean;
+      Negate : Boolean;
+   end record;
+
+   type Filter_Options_Mask is mod Natural'Last;
+   Has_Regexp : constant Filter_Options_Mask := 2 ** 0;
+   Has_Negate : constant Filter_Options_Mask := 2 ** 1;
+
+   procedure Build_Filter
+     (Self        : not null access View_Record;
+      Toolbar     : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Hist_Prefix : Histories.History_Key;
+      Tooltip     : String := "";
+      Placeholder : String := "";
+      Options     : Filter_Options_Mask := 0);
+   --  Build a search field which provides a standard look-and-feel:
+   --     * rounded corner (through the theme)
+   --     * "clear" icon
+   --     * placeholder text
+   --     * tooltip
+   --     * a number of predefined options
+   --     * remember option settings across sessions (through Hist_Prefix)
+   --  Whenever the pattern is changed (or cleared), Self.Filter_Changed is
+   --  called.
+   --  Nothing is done if the filter panel has already been built
+
+   procedure Filter_Changed
+     (Self    : not null access View_Record;
+      Pattern : String;
+      Options : Filter_Options) is null;
+   --  Called when the user has changed the filter applied to the view. Some
+   --  of the patterns in Options might be irrelevant, depending on the
+   --  mask set in Build_Filter.
+
    ------------------
    -- Simple_Views --
    ------------------
@@ -106,8 +160,7 @@ package Generic_Views is
       --  If True a single MDI child will be created and shared
 
       with function Initialize
-        (View   : access Formal_View_Record'Class;
-         Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+        (View : access Formal_View_Record'Class)
          return Gtk.Widget.Gtk_Widget is <>;
       --  Function used to create the view itself.
       --  The Gtk_Widget returned, if non-null, is the Focus Widget to pass
@@ -177,8 +230,7 @@ package Generic_Views is
       --  to convert from a Child.Get_Widget to a Formal_View
 
       function Child_From_View
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         View   : not null access Formal_View_Record'Class)
+        (View : not null access Formal_View_Record'Class)
          return Gtkada.MDI.MDI_Child;
       --  Return the MDI Child containing view.
 
@@ -230,5 +282,19 @@ package Generic_Views is
           On_Delete_Event'Access;
       --  Propagate the delete event to the view
    end Simple_Views;
+
+private
+   type Filter_Panel_Record is new Gtk.Tool_Item.Gtk_Tool_Item_Record
+     with record
+      Pattern : Gtk.GEntry.Gtk_Entry;
+      Regexp  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
+      Negate  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
+     end record;
+   type Filter_Panel is access all Filter_Panel_Record'Class;
+
+   type View_Record is new Gtk.Box.Gtk_Box_Record with record
+      Kernel : GPS.Kernel.Kernel_Handle;
+      Filter : Filter_Panel;   --  might be null
+   end record;
 
 end Generic_Views;

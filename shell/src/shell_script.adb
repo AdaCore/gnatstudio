@@ -109,8 +109,7 @@ package body Shell_Script is
    --  the console.
 
    function Initialize
-     (Console : access Shell_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Console : access Shell_Console_Record'Class) return Gtk_Widget;
    --  Initialize a new shell console and returns the focus widget.
 
    package Shell_Views is new Generic_Views.Simple_Views
@@ -129,17 +128,17 @@ package body Shell_Script is
    ----------------
 
    function Initialize
-     (Console : access Shell_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (Console : access Shell_Console_Record'Class) return Gtk_Widget
    is
       Script  : constant Shell_Scripting := Shell_Scripting
-        (Lookup_Scripting_Language (Get_Scripts (Kernel), GPS_Shell_Name));
+        (Lookup_Scripting_Language
+           (Get_Scripts (Console.Kernel), GPS_Shell_Name));
    begin
       Initialize
         (Console      => Console,
          Prompt       => "GPS> ",
-         User_Data    => Kernel.all'Address,
-         History_List => Get_History (Kernel),
+         User_Data    => Console.Kernel.all'Address,
+         History_List => Get_History (Console.Kernel),
          Key          => "shell",
          Wrap_Mode    => Wrap_Char);
       Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);

@@ -73,7 +73,6 @@ package body Remote.View is
 
    type Remote_View_Record is new Generic_Views.View_Record with record
       Main_Table         : Gtk.Table.Gtk_Table;
-      Kernel             : GPS.Kernel.Kernel_Handle;
       Pane               : Collapsing_Pane.Collapsing_Pane;
       Servers_Combo      : Server_Combo_Array;
       To_Local_Buttons   : Sync_Buttons_Array;
@@ -94,8 +93,7 @@ package body Remote.View is
      (View : access Remote_View_Record; XML : XML_Utils.Node_Ptr);
 
    function Initialize
-     (View            : access Remote_View_Record'Class;
-      Kernel          : access Kernel_Handle_Record'Class)
+     (View            : access Remote_View_Record'Class)
       return Gtk_Widget;
    --  Initialize view and returns the focus widget.
 
@@ -211,8 +209,7 @@ package body Remote.View is
    ----------------
 
    function Initialize
-     (View            : access Remote_View_Record'Class;
-      Kernel          : access Kernel_Handle_Record'Class)
+     (View            : access Remote_View_Record'Class)
       return Gtk_Widget
    is
       Server_Label   : Gtk_Label;
@@ -238,8 +235,6 @@ package body Remote.View is
 
       Gtk_New (View.Main_Table, 3, 2, False);
       Scrolled.Add_With_Viewport (View.Main_Table);
-
-      View.Kernel := Kernel_Handle (Kernel);
 
       --  Server selection pane
 
@@ -458,7 +453,7 @@ package body Remote.View is
                        new On_Server_Config_Hook'
                          (Function_With_Args with View => Remote_View (View));
       begin
-         Add_Hook (Kernel, GPS.Kernel.Remote.Server_Config_Changed_Hook,
+         Add_Hook (View.Kernel, GPS.Kernel.Remote.Server_Config_Changed_Hook,
                    Hook_Func, "remote_views module", Watch => GObject (View));
       end;
 
@@ -467,7 +462,7 @@ package body Remote.View is
                        new On_Server_List_Hook'
                          (Function_No_Args with View => Remote_View (View));
       begin
-         Add_Hook (Kernel, Remote.Db.Server_List_Changed_Hook,
+         Add_Hook (View.Kernel, Remote.Db.Server_List_Changed_Hook,
                    Hook_Func, "remote_views_module", Watch => GObject (View));
       end;
 

@@ -86,15 +86,13 @@ package body Scenario_Views is
       View          : Gtk.Tree_View.Gtk_Tree_View;
       Scenario_Node : Gtk_Tree_Path;
       Build_Node    : Gtk_Tree_Path;
-      Kernel        : GPS.Kernel.Kernel_Handle;
    end record;
    overriding procedure Create_Toolbar
      (View    : not null access Scenario_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    function Initialize
-     (View    : access Scenario_View_Record'Class;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (View    : access Scenario_View_Record'Class)
       return Gtk_Widget;
    --  Create a new scenario view associated with Manager.
    --  The view is automatically refreshed every time the project view in
@@ -192,8 +190,7 @@ package body Scenario_Views is
    ----------------
 
    function Initialize
-     (View    : access Scenario_View_Record'Class;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (View    : access Scenario_View_Record'Class)
       return Gtk_Widget
    is
       Module : constant Scenario_View_Module :=
@@ -210,8 +207,6 @@ package body Scenario_Views is
       Iter     : Gtk_Tree_Iter;
       pragma Unreferenced (Col_Number);
    begin
-      View.Kernel := Kernel_Handle (Kernel);
-
       Initialize_Vbox (View, Homogeneous => False);
 
       Gtk_New (Scrolled);
@@ -264,7 +259,7 @@ package body Scenario_Views is
       Model.Append (Iter, Null_Iter);
       View.Build_Node := Model.Get_Path (Iter);
       Model.Set (Iter, 0, "Build mode");
-      Model.Set (Iter, 1, Kernel.Get_Build_Mode);
+      Model.Set (Iter, 1, View.Kernel.Get_Build_Mode);
       Model.Set (Iter, 3, True);  --  editable
       Model.Set (Iter, 4, To_String (Module.Modes_Help));
       Init (Val, Gtk.List_Store.Get_Type);
@@ -286,16 +281,16 @@ package body Scenario_Views is
         (Function_No_Args with View => Scenario_View (View));
 
       Add_Hook
-        (Kernel, Project_View_Changed_Hook, Hook,
+        (View.Kernel, Project_View_Changed_Hook, Hook,
          Name => "scenario.project_view_changed",
          Watch => GObject (View));
-      Add_Hook (Kernel, Variable_Changed_Hook, Hook,
+      Add_Hook (View.Kernel, Variable_Changed_Hook, Hook,
                 Name => "scenario.variable_changed", Watch => GObject (View));
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preferences_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "scenario_views.preferences_changed",
                 Watch => GObject (View));
-      Add_Hook (Kernel, Build_Mode_Changed_Hook,
+      Add_Hook (View.Kernel, Build_Mode_Changed_Hook,
                 Wrapper (On_Build_Mode_Changed'Access),
                 Name => "scenario_view.build_mode_changed",
                 Watch => GObject (View));
@@ -303,10 +298,10 @@ package body Scenario_Views is
       Set_Font_And_Colors (View.View, Fixed_Font => False);
 
       --  Update the viewer with the current project
-      Execute (Hook.all, Kernel);
+      Execute (Hook.all, View.Kernel);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View.View,
          Object          => View,
          ID              => Scenario_Views.Get_Module,

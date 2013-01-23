@@ -107,7 +107,6 @@ package body Call_Graph_Views is
 
    type Callgraph_View_Record is new Generic_Views.View_Record with record
       Tree              : Gtk_Tree_View;
-      Kernel            : Kernel_Handle;
 
       Show_Locations    : Boolean := True;
       --  Whether we should show the locations in the call graph
@@ -166,8 +165,7 @@ package body Call_Graph_Views is
    overriding procedure Load_From_XML
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr);
    function Initialize
-     (View   : access Callgraph_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (View   : access Callgraph_View_Record'Class) return Gtk_Widget;
    --  Create a new view
 
    package Generic_View is new Generic_Views.Simple_Views
@@ -1269,14 +1267,12 @@ package body Call_Graph_Views is
    ----------------
 
    function Initialize
-     (View   : access Callgraph_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (View   : access Callgraph_View_Record'Class) return Gtk_Widget
    is
       Names  : GNAT.Strings.String_List := (1 => new String'(-"Name"));
       Scroll : Gtk_Scrolled_Window;
 
    begin
-      View.Kernel := Kernel_Handle (Kernel);
       Initialize_Vbox (View, Homogeneous => False);
 
       Gtk_New_Hpaned (View.Pane);
@@ -1351,7 +1347,7 @@ package body Call_Graph_Views is
       end;
 
       View.Show_Locations :=
-        Get_History (Get_History (Kernel).all, History_Show_Locations);
+        Get_History (Get_History (View.Kernel).all, History_Show_Locations);
 
       Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
 
@@ -1384,7 +1380,7 @@ package body Call_Graph_Views is
          After       => False);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
          ID              => Generic_View.Get_Module,
