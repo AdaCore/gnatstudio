@@ -17,6 +17,7 @@
 
 with Generic_Stack;
 with Generic_Views;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPS.Intl;                   use GPS.Intl;
@@ -60,9 +61,9 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with String_Utils;               use String_Utils;
 with System.Storage_Elements;    use System.Storage_Elements;
 with System;                     use System;
-with Traces;                     use Traces;
 
 package body Task_Manager.GUI is
+   Me : constant Trace_Handle := Create ("TASKS");
 
    ---------------------
    -- Local constants --
@@ -500,11 +501,6 @@ package body Task_Manager.GUI is
       end if;
 
       return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end On_Button_Press_Event;
 
    ------------------------------------
@@ -537,9 +533,6 @@ package body Task_Manager.GUI is
       if Count = 1 then
          Interrupt_Command (Data.D.Manager, Index);
       end if;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Progress_Bar_Button_Clicked;
 
    --------------
@@ -775,10 +768,6 @@ package body Task_Manager.GUI is
                User_Data_2 => System.Null_Address,
                User_Data_3 => System.Null_Address);
          end if;
-      exception
-         when E : others =>
-            Trace (Exception_Handle, E);
-            return Null_Iter;
       end;
    end Get_Iter;
 
@@ -803,7 +792,7 @@ package body Task_Manager.GUI is
       return Result;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Path_Free (Result);
          Gtk_New (Result, "");
          return Result;
@@ -833,10 +822,6 @@ package body Task_Manager.GUI is
             User_Data_2 => System.Null_Address,
             User_Data_3 => System.Null_Address);
       end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end Next;
 
    ----------------
@@ -856,11 +841,6 @@ package body Task_Manager.GUI is
       end if;
 
       return 0;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return 0;
    end N_Children;
 
    ---------------
@@ -890,11 +870,6 @@ package body Task_Manager.GUI is
       end if;
 
       return Null_Iter;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return Null_Iter;
    end Nth_Child;
 
    -------------------
@@ -907,11 +882,6 @@ package body Task_Manager.GUI is
       pragma Unreferenced (Self);
    begin
       return Columns_Types'Length;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return 0;
    end Get_N_Columns;
 
    ---------------------
@@ -926,11 +896,6 @@ package body Task_Manager.GUI is
       T : constant GType_Array := Columns_Types;
    begin
       return T (Guint (Index));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return T (0);
    end Get_Column_Type;
 
    --------------------
@@ -1039,11 +1004,16 @@ package body Task_Manager.GUI is
 
             when Command_Text_Column =>
                Init (Value, GType_String);
-               Set_String
-                 (Value,
-                  Get_Progress_Text
-                    (Task_Manager_Access (Self.GUI.Manager),
-                     Integer (Index), False, True).Text);
+
+               declare
+                  Data : constant Progress_Data :=
+                    Get_Progress_Text
+                      (Task_Manager_Access (Self.GUI.Manager),
+                       Integer (Index), False, True);
+               begin
+                  Set_String
+                    (Value, Data.Text & " " & Data.Progress_Text);
+               end;
 
             when Command_Button_Column =>
                Init_Graphics (Self.GUI);
@@ -1068,7 +1038,7 @@ package body Task_Manager.GUI is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Init (Value, GType_String);
          Set_String (Value, "");
    end Get_Value;
@@ -1181,7 +1151,7 @@ package body Task_Manager.GUI is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          GUI.Timeout_Cb := Glib.Main.No_Source_Id;
          return False;
    end GUI_Refresh_Cb;
