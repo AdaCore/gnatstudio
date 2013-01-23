@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M122-025 GPS: filter in the outline view (2013-01-23)
+
+  A filter has been added to the Outline view to make it easier to find
+  entities.
+
 NF-60-M121-011 GPS: Outline has a flat view mode (2013-01-21)
 
   It is now possible to display all entities at the same level, rather than

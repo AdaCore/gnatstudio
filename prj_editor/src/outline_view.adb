@@ -245,10 +245,6 @@ package body Outline_View is
      (View : Outline_View_Access) return Outline_Model;
    --  Return the outline model stored in this view
 
-   procedure Set_Outline_Model
-     (View : access Outline_View_Record'Class; Model : Outline_Model);
-   --  Set the outline model to the tree of this view
-
    ---------------------
    -- Create_Contents --
    ---------------------
@@ -525,7 +521,11 @@ package body Outline_View is
          Show_Profile => Get_History
            (Get_History (Kernel).all, Hist_Show_Profile),
          Sorted       => Get_History
-           (Get_History (Kernel).all, Hist_Sort_Alphabetical));
+           (Get_History (Kernel).all, Hist_Sort_Alphabetical),
+         Group_Spec_And_Body => Get_History
+           (Get_History (Kernel).all, Hist_Group_Spec_And_Body),
+         Flat_View           => Get_History
+           (Get_History (Kernel).all, Hist_Flat_View));
    end Get_Filter_Record;
 
    ------------------
@@ -698,7 +698,6 @@ package body Outline_View is
       Text_Render   : Gtk_Cell_Renderer_Text;
       Pixbuf_Render : Gtk_Cell_Renderer_Pixbuf;
       Tooltip       : Outline_View_Tooltips_Access;
-      Model         : Outline_Model;
       Scrolled      : Gtk_Scrolled_Window;
       Data          : aliased Context_Hooks_Args;
 
@@ -783,9 +782,6 @@ package body Outline_View is
       Tooltip := new Outline_View_Tooltips;
       Tooltip.Outline := Outline;
       Set_Tooltip (Tooltip, Outline.Tree);
-
-      Model := null;
-      Set_Outline_Model (Outline, Model);
 
       Data := Context_Hooks_Args'
         (Hooks_Data with Context => Get_Current_Context (Outline.Kernel));
@@ -1015,6 +1011,8 @@ package body Outline_View is
    is
       Model       : Outline_Model;
       Struct_File : Structured_File_Access;
+      Filter      : constant Tree_Filter :=
+        Get_Filter_Record (Outline.Kernel);
    begin
       Outline.File := File;
 
@@ -1023,21 +1021,25 @@ package body Outline_View is
 
       Model := Get_Outline_Model (Outline_View_Access (Outline));
 
+      if Model = null then
+         Model := new Outline_Model_Record;
+         Gtkada.Abstract_Tree_Model.Initialize (Model);
+         Outline.Tree.Set_Model (To_Interface (Model));
+      end if;
+
+      --  This function is called directly after the settings have changed,
+      --  and should take their new value into account.
+
+      Model.Setup
+        (Outline_View_Module_Record
+           (Outline_View_Module.all).Construct_Annotation_Key,
+         Filter);
+      Outline.Tree.Set_Show_Expanders (Enabled => not Filter.Flat_View);
+      Outline.Body_Column.Set_Visible (Filter.Group_Spec_And_Body);
+
+      Model.Set_File (Struct_File);
+
       if Struct_File /= null then
-         if Model = null then
-            Model := new Outline_Model_Record;
-
-            Gtkada.Abstract_Tree_Model.Initialize (Model);
-            Set_Outline_Model (Outline, Model);
-            Init_Model
-              (Model,
-               Outline_View_Module_Record
-                 (Outline_View_Module.all).Construct_Annotation_Key,
-               Get_Filter_Record (Outline.Kernel));
-         end if;
-
-         Model.Set_File (Struct_File);
-
          declare
             Path : Gtk_Tree_Path;
          begin
@@ -1067,28 +1069,6 @@ package body Outline_View is
          return null;
       end if;
    end Get_Outline_Model;
-
-   -----------------------
-   -- Set_Outline_Model --
-   -----------------------
-
-   procedure Set_Outline_Model
-     (View : access Outline_View_Record'Class; Model : Outline_Model)
-   is
-      Group   : constant Boolean := Get_History
-        (Get_History (View.Kernel).all, Hist_Group_Spec_And_Body);
-      Flat   : constant Boolean := Get_History
-        (Get_History (View.Kernel).all, Hist_Flat_View);
-   begin
-      Set_Model (View.Tree, To_Interface (Model));
-      View.Tree.Set_Show_Expanders (Enabled => not Flat);
-
-      if Model /= null then
-         Set_Group_Spec_And_Body (Model, Group => Group);
-         Set_Flat_View (Model, Flat => Flat);
-      end if;
-      View.Body_Column.Set_Visible (Group);
-   end Set_Outline_Model;
 
    ------------------------
    -- On_Project_Changed --

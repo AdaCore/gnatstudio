@@ -150,7 +150,7 @@ package body Outline_View.Model is
    is
       E : Entity_Access;
    begin
-      if Model.Group_Spec_And_Body then
+      if Model.Filter.Group_Spec_And_Body then
          E := Find_Next_Part (Get_Tree_Language (Get_File (Entity)), Entity);
          if E /= Null_Entity_Access
            and then Get_File (E) = Model.File
@@ -178,32 +178,10 @@ package body Outline_View.Model is
          Path_Free (Path);
       end if;
 
-      --  First, ensure parent consistency
-
-      if Obj.Node.Parent /= null then
-         if Obj.Node.Parent.First_Child = Obj.Node then
-            Obj.Node.Parent.First_Child := Obj.Node.Next;
-         end if;
-
-         if Obj.Node.Parent.Last_Child = Obj.Node then
-            Obj.Node.Parent.Last_Child := Obj.Node.Prev;
-         end if;
-
-         Obj.Node.Parent.N_Children := Obj.Node.Parent.N_Children - 1;
-      end if;
-
-      --  Then, change the previous siblings
-
-      if Obj.Node.Prev /= null then
-         Obj.Node.Prev.Next := Obj.Node.Next;
-      end if;
-
       --  Then, updated next siblings
 
       if Obj.Node.Next /= null then
-         Obj.Node.Next.Prev := Obj.Node.Prev;
-
-         --  ??? We should have means to optimize this loop when supressing
+         --  ??? We should have means to optimize this loop when suppressing
          --  multiple nodes
          declare
             Cur : Sorted_Node_Access := Obj.Node.Next;
@@ -394,7 +372,7 @@ package body Outline_View.Model is
       if Construct_Filter (Model, Construct) then
          --  Compute parent node
 
-         if Model.Flat_View then
+         if Model.Filter.Flat_View then
             Parent_Node := Model.Phantom_Root'Access;
          else
             Parent := Get_Parent_Scope (Get_Tree (Model.File), New_Obj);
@@ -402,7 +380,7 @@ package body Outline_View.Model is
                Parent_Node := Model.Phantom_Root'Access;
             elsif Get_Node (Model, New_Obj) = null then
                Parent_Node := Get_Node (Model, Parent);
-               if Model.Group_Spec_And_Body
+               if Model.Filter.Group_Spec_And_Body
                  and then Parent_Node = null
                then
                   Parent_Node := Get_Node_Next_Part
@@ -419,7 +397,7 @@ package body Outline_View.Model is
          --  Add the node for the new object
 
          E := To_Entity_Access (Model.File, New_Obj);
-         if Model.Group_Spec_And_Body
+         if Model.Filter.Group_Spec_And_Body
            and then Get_Node_Next_Part (Model, E) /= null
          then
             --  Already have a node for the other part
@@ -456,20 +434,15 @@ package body Outline_View.Model is
 
             if Inserted then
                if Previous (Position) = Sorted_Node_Set.No_Element then
-                  Parent_Node.First_Child := Root;
                   Root.Index_In_Siblings := 0;
                else
                   Dummy := Element (Previous (Position));
                   Dummy.Next := Root;
-                  Root.Prev := Dummy;
-                  Root.Index_In_Siblings := Root.Prev.Index_In_Siblings + 1;
+                  Root.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
                end if;
 
-               if Next (Position) = Sorted_Node_Set.No_Element then
-                  Parent_Node.Last_Child := Root;
-               else
+               if Has_Element (Next (Position)) then
                   Dummy := Element (Next (Position));
-                  Dummy.Prev := Root;
                   Root.Next := Dummy;
 
                   --  Adjust the indexes for the node and its siblings, to
@@ -509,20 +482,6 @@ package body Outline_View.Model is
    begin
       return Node.Entity;
    end Get_Entity;
-
-   ----------------
-   -- Init_Model --
-   ----------------
-
-   procedure Init_Model
-     (Model     : access Outline_Model_Record'Class;
-      Key       : Construct_Annotations_Pckg.Annotation_Key;
-      Filter    : Tree_Filter)
-   is
-   begin
-      Model.Annotation_Key := Key;
-      Model.Filter := Filter;
-   end Init_Model;
 
    --------------
    -- Set_File --
@@ -746,6 +705,7 @@ package body Outline_View.Model is
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Node : Sorted_Node_Access;
+      C    : Sorted_Node_Set.Cursor;
    begin
       if Parent = Null_Iter then
          Node := Self.Phantom_Root'Access;
@@ -753,7 +713,12 @@ package body Outline_View.Model is
          Node := Get_Sorted_Node (Parent);
       end if;
 
-      return New_Iter (Node.First_Child);
+      C := Node.Ordered_Index.First;
+      if Has_Element (C) then
+         return New_Iter (Element (C));
+      else
+         return Null_Iter;
+      end if;
    end Children;
 
    ---------------
@@ -787,7 +752,7 @@ package body Outline_View.Model is
          Node := Get_Sorted_Node (Iter);
       end if;
 
-      return Gint (Node.N_Children);
+      return Gint (Node.Ordered_Index.Length);
    end N_Children;
 
    ---------------
@@ -799,23 +764,24 @@ package body Outline_View.Model is
       Node  : Sorted_Node_Access;
       Nth   : Gint) return Sorted_Node_Access
    is
-      Cur_It : Sorted_Node_Access;
+      C : Sorted_Node_Set.Cursor;
    begin
       if Node = null then
-         Cur_It := Model.Phantom_Root.First_Child;
+         C := Model.Phantom_Root.Ordered_Index.First;
       else
-         Cur_It := Node.First_Child;
+         C := Node.Ordered_Index.First;
       end if;
 
       for J in 1 .. Nth loop
-         if Cur_It = null then
-            return null;
-         end if;
-
-         Cur_It := Cur_It.Next;
+         exit when not Has_Element (C);
+         Next (C);
       end loop;
 
-      return Cur_It;
+      if Has_Element (C) then
+         return Element (C);
+      else
+         return null;
+      end if;
    end Nth_Child;
 
    ---------------
@@ -852,29 +818,18 @@ package body Outline_View.Model is
       end if;
    end Parent;
 
-   -----------------------------
-   -- Set_Group_Spec_And_Body --
-   -----------------------------
+   -----------
+   -- Setup --
+   -----------
 
-   procedure Set_Group_Spec_And_Body
-     (Model : not null access Outline_Model_Record'Class;
-      Group : Boolean)
-   is
+   procedure Setup
+     (Model  : not null access Outline_Model_Record'Class;
+      Key    : Construct_Annotations_Pckg.Annotation_Key;
+      Filter : Tree_Filter) is
    begin
-      Model.Group_Spec_And_Body := Group;
-   end Set_Group_Spec_And_Body;
-
-   -------------------
-   -- Set_Flat_View --
-   -------------------
-
-   procedure Set_Flat_View
-     (Model : not null access Outline_Model_Record'Class;
-      Flat  : Boolean)
-   is
-   begin
-      Model.Flat_View := Flat;
-   end Set_Flat_View;
+      Model.Filter := Filter;
+      Model.Annotation_Key := Key;
+   end Setup;
 
    ----------------
    -- Set_Filter --
@@ -917,7 +872,9 @@ package body Outline_View.Model is
 
       E3 := To_Entity_Access (E);
 
-      if Self.Group_Spec_And_Body and then Column = Body_Pixbuf_Column then
+      if Self.Filter.Group_Spec_And_Body
+        and then Column = Body_Pixbuf_Column
+      then
          E2 := Find_Next_Part (Get_Tree_Language (Get_File (E)), E3);
 
          --  Only show the "other" part if it is in the same file, otherwise
@@ -980,22 +937,25 @@ package body Outline_View.Model is
    is
       It        : Sorted_Node_Access;
       Construct : Construct_Tree_Iterator;
+      C         : constant Sorted_Node_Set.Cursor := Root.Ordered_Index.First;
    begin
-      It := Root.First_Child;
+      if Has_Element (C) then
+         It := Element (C);
 
-      while It /= null loop
-         Construct := To_Construct_Tree_Iterator
-           (To_Entity_Access (It.Entity));
+         while It /= null loop
+            Construct := To_Construct_Tree_Iterator
+              (To_Entity_Access (It.Entity));
 
-         --  Deleting the annotation will have as effect the destruction of
-         --  the node, which is why we need to iterate before.
-         It := It.Next;
+            --  Deleting the annotation will have as effect the destruction of
+            --  the node, which is why we need to iterate before.
+            It := It.Next;
 
-         Construct_Annotations_Pckg.Free_Annotation
-           (Get_Annotation_Container
-              (Get_Tree (Model.File), Construct).all,
-            Model.Annotation_Key);
-      end loop;
+            Construct_Annotations_Pckg.Free_Annotation
+              (Get_Annotation_Container
+                 (Get_Tree (Model.File), Construct).all,
+               Model.Annotation_Key);
+         end loop;
+      end if;
    end Clear_Nodes;
 
    ----------
@@ -1057,17 +1017,17 @@ package body Outline_View.Model is
       -----------------
 
       procedure Update_Node (Node : Sorted_Node_Access) is
-         Cur : Sorted_Node_Access;
+         C   : Sorted_Node_Set.Cursor;
       begin
          if Exists (Node.Entity) then
             Node.Sloc := Get_Construct (Node.Entity).Sloc_Start;
          end if;
 
          if Node = Model.Phantom_Root'Access or else Exists (Node.Entity) then
-            Cur := Node.First_Child;
-            while Cur /= null loop
-               Update_Node (Cur);
-               Cur := Cur.Next;
+            C := Node.Ordered_Index.First;
+            while Has_Element (C) loop
+               Update_Node (Element (C));
+               Next (C);
             end loop;
          end if;
       end Update_Node;

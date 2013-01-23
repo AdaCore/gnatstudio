@@ -58,24 +58,20 @@ private package Outline_View.Model is
       Hide_Tasks        : Boolean := False;
       Show_Profile      : Boolean := False;
       Sorted            : Boolean;
+      Group_Spec_And_Body : Boolean := False;
+      Flat_View           : Boolean := False;
    end record;
+   --  Group_Spec_And_Body indicates whether to group the spec and body for
+   --  a given entity on the same line. This doesn't force a refresh of the
+   --  model.
+   --  Flat_View indicates whether to display all entities in a flat view, or
+   --  hierarchically
 
-   procedure Init_Model
-     (Model     : access Outline_Model_Record'Class;
-      Key       : Construct_Annotations_Pckg.Annotation_Key;
-      Filter    : Tree_Filter);
-   --  Create a new model
-
-   procedure Set_Group_Spec_And_Body
-     (Model : not null access Outline_Model_Record'Class;
-      Group : Boolean);
-   --  Whether to group the spec and body for a given entity on the same line.
-   --  This doesn't force a refresh of the model.
-
-   procedure Set_Flat_View
-     (Model : not null access Outline_Model_Record'Class;
-      Flat  : Boolean);
-   --  Whether to display all entities in a flat view, or hierarchically
+   procedure Setup
+     (Model  : not null access Outline_Model_Record'Class;
+      Key    : Construct_Annotations_Pckg.Annotation_Key;
+      Filter : Tree_Filter);
+   --  Setup the filters for the model.
 
    procedure Set_Filter
      (Model   : not null access Outline_Model_Record'Class;
@@ -203,14 +199,10 @@ private
    type Sorted_Node is record
       Entity      : Entity_Persistent_Access;
 
-      --  ??? Could we only use Ordered_Index instead of these lists ?
-      Prev, Next  : Sorted_Node_Access;
-      First_Child : Sorted_Node_Access;
-      Last_Child  : Sorted_Node_Access;
-      Parent      : Sorted_Node_Access;
+      Next   : Sorted_Node_Access;
+      Parent : Sorted_Node_Access;
 
       Index_In_Siblings : Integer := -1;
-      N_Children        : Integer := 0;
 
       Ordered_Index : Sorted_Node_Set.Set;
       Order_Kind    : Order_Kind_Type;
@@ -229,9 +221,6 @@ private
 
       Filter         : Tree_Filter;
       Filter_Pattern : GNAT.Strings.String_Access := null;
-
-      Group_Spec_And_Body : Boolean := False;
-      Flat_View           : Boolean := False;
 
       Phantom_Root : aliased Sorted_Node;
       --  This is a 'dummy' root, not in the model. Actual roots are children
