@@ -3286,7 +3286,7 @@ package body Src_Editor_Module is
          Factory           => Current_Selection_Factory'Access,
          Extra_Information => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options - All_Occurrences,
+         Mask              => All_Options,
          In_Selection      => True);
       Register_Search_Function
         (Kernel => Kernel,

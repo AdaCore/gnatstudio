@@ -304,6 +304,13 @@ package body Src_Contexts is
    --  editor will be taken instead. Return True if there is matches still to
    --  be replaced, false otherwise.
 
+   procedure Replace_Matched
+     (Context     : access File_Search_Context'Class;
+      Replacement : Replacement_Pattern;
+      Matches     : Match_Result_Array_Access;
+      Buffer      : Src_Editor_Buffer.Source_Buffer);
+   --  Replace all search mathes in given Buffer with Replacement
+
    -----------------
    -- Scan_Buffer --
    -----------------
@@ -1366,8 +1373,53 @@ package body Src_Contexts is
       Found           : out Boolean;
       Continue        : out Boolean)
    is
+      function Interactive_Callback (Match : Match_Result) return Boolean;
+      --  Callbacks for the general search function
+      --  ??? This should be factorized somehow with the Search fonction
+      --  from the Abstract_File_Context.
+
       Child  : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor : Source_Editor_Box;
+
+      Begin_Line           : Editable_Line_Type;
+      Begin_Column         : Character_Offset_Type;
+      End_Line             : Natural;
+      End_Column           : Character_Offset_Type;
+
+      --------------------------
+      -- Interactive_Callback --
+      --------------------------
+
+      function Interactive_Callback (Match : Match_Result) return Boolean is
+      begin
+         if Match.Begin_Line > End_Line or
+           (Match.Begin_Line = End_Line and Match.Begin_Column > End_Column)
+         then
+            return False;
+         end if;
+
+         Found := True;
+
+         if Get_Filename (Editor) /= GNATCOLL.VFS.No_File then
+            Highlight_Result
+              (Kernel      => Kernel,
+               File_Name   => Get_Filename (Editor),
+               Look_For    => Context_Look_For (Context),
+               Match       => Match,
+               Give_Focus  => Give_Focus,
+               Interactive => not Context.All_Occurrences);
+         else
+            Highlight_Result
+              (Kernel      => Kernel,
+               File_Name   => Editor.Get_Buffer.Get_File_Identifier,
+               Look_For    => Context_Look_For (Context),
+               Match       => Match,
+               Give_Focus  => Give_Focus,
+               Interactive => not Context.All_Occurrences);
+         end if;
+
+         return True;
+      end Interactive_Callback;
 
    begin
       Found := False;
@@ -1381,15 +1433,16 @@ package body Src_Contexts is
 
       Raise_Child (Child, Give_Focus);
 
-      if not Context.All_Occurrences then
-         declare
-            Buffer      : constant Gtk_Text_Buffer :=
-              Get_Buffer (Context.Selection_From);
-            Range_Start : Gtk_Text_Iter;
-            Range_End   : Gtk_Text_Iter;
-         begin
-            Buffer.Get_Iter_At_Mark (Range_Start, Context.Selection_From);
-            Buffer.Get_Iter_At_Mark (Range_End, Context.Selection_To);
+      declare
+         Buffer      : constant Gtk_Text_Buffer :=
+           Get_Buffer (Context.Selection_From);
+         Range_Start : Gtk_Text_Iter;
+         Range_End   : Gtk_Text_Iter;
+      begin
+         Buffer.Get_Iter_At_Mark (Range_Start, Context.Selection_From);
+         Buffer.Get_Iter_At_Mark (Range_End, Context.Selection_To);
+
+         if not Context.All_Occurrences then
             Found := Auxiliary_Search
               (Context, Editor, Kernel, Search_Backward,
                Range_Start, Range_End);
@@ -1399,11 +1452,32 @@ package body Src_Contexts is
             end if;
 
             Continue := False; --  ??? Dummy boolean.
-         end;
-      else
-         --  All_Occurrences not supported
-         Continue := False;
-      end if;
+         else
+            declare
+               State : Recognized_Lexical_States := Statements;
+            begin
+               Begin_Line := Editable_Line_Type (Get_Line (Range_Start) + 1);
+               End_Line := Natural (Get_Line (Range_End) + 1);
+               Begin_Column :=
+                 Character_Offset_Type (Get_Line_Offset (Range_Start) + 1);
+               End_Column :=
+                 Character_Offset_Type (Get_Line_Offset (Range_End) + 1);
+
+               Scan_Editor
+                 (Context,
+                  Get_Language_Handler (Kernel),
+                  Child,
+                  Interactive_Callback'Unrestricted_Access,
+                  Context.Scope,
+                  Start_Line    => Begin_Line,
+                  Start_Column  => Begin_Column,
+                  Lexical_State => State,
+                  Was_Partial   => Continue);
+
+               Continue := False;  --  Ignore callback termination
+            end;
+         end if;
+      end;
    exception
       when E : others =>
          Trace (Exception_Handle, E);
@@ -1411,6 +1485,106 @@ package body Src_Contexts is
          Continue := False;
          return;
    end Search;
+
+   -------------
+   -- Replace --
+   -------------
+
+   overriding function Replace
+     (Context         : access Current_Selection_Context;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Case_Preserving : Boolean;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean
+   is
+      Child        : constant MDI_Child := Find_Current_Editor (Kernel);
+      Buffer       : Src_Editor_Buffer.Source_Buffer;
+      Editor       : Source_Editor_Box;
+      Matches      : Match_Result_Array_Access;
+      Replacement  : constant Replacement_Pattern :=
+        Context.Get_Replacement_Pattern (Replace_String, Case_Preserving);
+      Begin_Line   : Editable_Line_Type;
+      Begin_Column : Character_Offset_Type;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Character_Offset_Type;
+   begin
+      if Context.All_Occurrences then
+         if Child = null then
+            return False;
+         end if;
+
+         Editor := Get_Source_Box_From_MDI (Child);
+         Buffer := Get_Buffer (Editor);
+
+         declare
+            Range_Start : Gtk_Text_Iter;
+            Range_End   : Gtk_Text_Iter;
+         begin
+            Buffer.Get_Iter_At_Mark (Range_Start, Context.Selection_From);
+            Buffer.Get_Iter_At_Mark (Range_End, Context.Selection_To);
+
+            Begin_Line := Editable_Line_Type (Get_Line (Range_Start) + 1);
+            End_Line := Editable_Line_Type (Get_Line (Range_End) + 1);
+            Begin_Column :=
+              Character_Offset_Type (Get_Line_Offset (Range_Start) + 1);
+            End_Column :=
+              Character_Offset_Type (Get_Line_Offset (Range_End) + 1);
+         end;
+
+         Matches := Scan_And_Store
+           (Context => Context,
+            Handler => Get_Language_Handler (Kernel),
+            Kernel  => Kernel_Handle (Kernel),
+            Str     => Buffer.Get_Text
+              (Begin_Line, Begin_Column, End_Line, End_Column),
+            File    => GNATCOLL.VFS.No_File,
+            Scope   => Context.Scope,
+            Lang    => Get_Language (Buffer));
+
+         if Matches /= null then
+            --  Fix line and column numbers
+            for M in Matches'Range loop
+               if Matches (M).Begin_Line = 1 then
+                  Matches (M).Begin_Column :=
+                    Matches (M).Begin_Column + Begin_Column - 1;
+               end if;
+
+               if Matches (M).End_Line = 1 then
+                  Matches (M).End_Column :=
+                    Matches (M).End_Column + Begin_Column - 1;
+               end if;
+
+               Matches (M).Begin_Line :=
+                 Matches (M).Begin_Line + Natural (Begin_Line - 1);
+               Matches (M).End_Line :=
+                 Matches (M).End_Line + Natural (Begin_Line - 1);
+            end loop;
+
+            Replace_Matched
+              (Context     => Context,
+               Replacement => Replacement,
+               Matches     => Matches,
+               Buffer      => Buffer);
+
+            Free (Matches);
+         end if;
+
+         return False;
+      else
+         --  Parent's implementaion is fine in this case
+         return Current_File_Context (Context.all).Replace
+           (Kernel          => Kernel,
+            Replace_String  => Replace_String,
+            Case_Preserving => Case_Preserving,
+            Search_Backward => Search_Backward,
+            Give_Focus      => Give_Focus);
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end Replace;
 
    --------------------------------
    -- Files_From_Project_Factory --
@@ -2053,6 +2227,48 @@ package body Src_Contexts is
       return Pattern.Casings (Current_Casing).all;
    end Replacement_Text;
 
+   procedure Replace_Matched
+     (Context     : access File_Search_Context'Class;
+      Replacement : Replacement_Pattern;
+      Matches     : Match_Result_Array_Access;
+      Buffer      : Src_Editor_Buffer.Source_Buffer) is
+   begin
+      --  Replace starting from the end, so as to preserve lines and
+      --  columns
+
+      Set_Avoid_Cursor_Move_On_Changes (Buffer, True);
+
+      Start_Undo_Group (Buffer);
+
+      declare
+      begin
+         for M in reverse Matches'Range loop
+            Replace_Slice
+              (Buffer,
+               Editable_Line_Type (Matches (M).Begin_Line),
+               Matches (M).Begin_Column,
+               Editable_Line_Type (Matches (M).End_Line),
+               Matches (M).End_Column,
+               Context.Replacement_Text
+                 (Replacement,
+                  Get_Text
+                    (Buffer,
+                     Editable_Line_Type (Matches (M).Begin_Line),
+                     Matches (M).Begin_Column,
+                     Editable_Line_Type (Matches (M).End_Line),
+                     Matches (M).End_Column)));
+         end loop;
+      exception
+         when others =>
+            --  For safety
+            Finish_Undo_Group (Buffer);
+      end;
+
+      Finish_Undo_Group (Buffer);
+
+      Set_Avoid_Cursor_Move_On_Changes (Buffer, False);
+   end Replace_Matched;
+
    -------------------------
    -- Replace_From_Editor --
    -------------------------
@@ -2086,40 +2302,12 @@ package body Src_Contexts is
             Lang    => Get_Language (Get_Buffer (Editor)));
 
          if Matches /= null then
-            --  Replace starting from the end, so as to preserve lines and
-            --  columns
+            Replace_Matched
+              (Context     => Context,
+               Replacement => Replacement,
+               Matches     => Matches,
+               Buffer      => Get_Buffer (Editor));
 
-            Set_Avoid_Cursor_Move_On_Changes (Get_Buffer (Editor), True);
-
-            Start_Undo_Group (Get_Buffer (Editor));
-
-            declare
-            begin
-               for M in reverse Matches'Range loop
-                  Replace_Slice
-                    (Get_Buffer (Editor),
-                     Editable_Line_Type (Matches (M).Begin_Line),
-                     Matches (M).Begin_Column,
-                     Editable_Line_Type (Matches (M).End_Line),
-                     Matches (M).End_Column,
-                     Context.Replacement_Text
-                       (Replacement,
-                        Get_Text
-                          (Get_Buffer (Editor),
-                           Editable_Line_Type (Matches (M).Begin_Line),
-                           Matches (M).Begin_Column,
-                           Editable_Line_Type (Matches (M).End_Line),
-                           Matches (M).End_Column)));
-               end loop;
-            exception
-               when others =>
-                  --  For safety
-                  Finish_Undo_Group (Get_Buffer (Editor));
-            end;
-
-            Finish_Undo_Group (Get_Buffer (Editor));
-
-            Set_Avoid_Cursor_Move_On_Changes (Get_Buffer (Editor), False);
             Free (Matches);
 
             return True;

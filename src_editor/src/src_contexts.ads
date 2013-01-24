@@ -138,6 +138,14 @@ package Src_Contexts is
       Continue        : out Boolean);
    --  Search function for "Current Selection"
 
+   overriding function Replace
+     (Context         : access Current_Selection_Context;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Case_Preserving : Boolean;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean) return Boolean;
+
    overriding function Context_Look_In
      (Self : Current_Selection_Context) return String;
 
