@@ -1922,6 +1922,8 @@ package body Vsearch is
       Last_Iter  : Gtk_Text_Iter;
 
       Has_Selection : Boolean := False;
+      --  If W has selecion saved in First_Iter, Last_Iter
+      Has_Multiline_Selection : Boolean := False;
       --  If W has multiline selecion saved in First_Iter, Last_Iter
 
       Child   : GPS_MDI_Child;
@@ -1947,16 +1949,16 @@ package body Vsearch is
          elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
             Buffer := Get_Buffer (Gtk_Text_View (W));
             Get_Selection_Bounds
-              (Buffer, First_Iter, Last_Iter, Success);
+              (Buffer, First_Iter, Last_Iter, Has_Selection);
 
-            if Success then
+            if Has_Selection then
                if Get_Line (First_Iter) = Get_Line (Last_Iter) then
                   Default_Pattern := new String'
                     (Get_Slice (Buffer, First_Iter, Last_Iter));
 
                   Select_Range (Buffer, First_Iter, First_Iter);
                else
-                  Has_Selection := True;
+                  Has_Multiline_Selection := True;
                end if;
             end if;
          end if;
@@ -2045,7 +2047,7 @@ package body Vsearch is
                   declare
                      Search : constant Search_Module_Data :=
                        Search_Context_From_Module
-                         (Module, Vsearch.Kernel, Has_Selection);
+                         (Module, Vsearch.Kernel, Has_Multiline_Selection);
                   begin
                      if Search /= No_Search then
                         Add_Unique_Combo_Entry
@@ -2064,7 +2066,9 @@ package body Vsearch is
 
       if Has_Selection then
          --  Restore multiline selection
-         Select_Range (Buffer, First_Iter, Last_Iter);
+         if Has_Multiline_Selection then
+            Select_Range (Buffer, First_Iter, Last_Iter);
+         end if;
 
          Vsearch_Module_Id.Search.Selection_From :=
            Buffer.Create_Mark (Mark_Name    => "search_from",
