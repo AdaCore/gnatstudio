@@ -146,6 +146,16 @@ NF-53-L921-032 GPS: Show protected objects in Outline view (2012-10-16)
   Outline View. New filter in Outline View "Show tasks, entries, and protected
   types" is used to show/hide these items.
 
+NF-53-L530-025 New cross-reference engine based on sqlite (2013-01-24)
+
+   GPS and GNATbench both have a new xref engine, based on sqlite. This new
+   engine is expected to bring extra performance (since the xref database
+   becomes persistent across sessions and GPS will no longer need to parse ALI
+   files on the fly), as well as more stability (by using an external process
+   to fill the database, and relying on sqlite's very good stability).
+   This engine is currently disabled by default, but can be enabled by adding
+   a line "ENTITIES.SQLITES=yes" in $HOME/.gps/traces.cfg .
+
 NF-53-J728-022 GPS: the Project Wizard takes advantage of gnatname (2012-11-08)
 
   The project wizard now optionally uses gnatname to search for Ada units in
