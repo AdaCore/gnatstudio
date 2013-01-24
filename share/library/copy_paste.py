@@ -112,24 +112,25 @@ def on_gps_started (hook):
       grey_out_contextual = GPS.Preference ("Plugins/copy paste/greyedout").get()
       copy_with_line_numbers_contextual = GPS.Preference ("Plugins/copy paste/copy_with_line_nums").get()
 
-      GPS.Contextual ("Cut").create \
+      GPS.Contextual ("Cut in editor").create \
         (on_activate=on_cut, filter=on_source_editor_area, group=-1, \
-         visibility_filter=on_area,
+         visibility_filter=on_area, label=lambda x : "Cut",
          ref="Copy", add_before=True)
-      GPS.Contextual ("Paste").create \
+      GPS.Contextual ("Paste in editor").create \
         (on_activate=on_paste, group=-1, \
-         filter=on_source_editor,
+         filter=on_source_editor, label=lambda x : "Paste",
          ref="Copy", add_before=False)
       if copy_with_line_numbers_contextual:
          GPS.Contextual ("Copy with line numbers").create \
            (on_activate=copy_with_line_numbers, filter=on_source_editor_area, \
             group=-1, visibility_filter=on_area, \
-            ref="Cut")
-      GPS.Contextual ("sep_group_1").create \
+            ref="Cut in editor")
+      GPS.Contextual ("sep_group_in_editor").create \
         (on_activate=None, group=-1, filter=on_source_editor,
-         ref="Paste", add_before=False)
-      GPS.Contextual ("Copy").create \
+         ref="Paste in editor", add_before=False)
+      GPS.Contextual ("Copy in editor").create \
         (on_activate=on_copy, filter=on_source_editor_area, group=-1, \
-         visibility_filter=on_area, ref="Paste")
+         visibility_filter=on_area, label=lambda x : "Copy", \
+         ref="Paste in editor")
 
 GPS.Hook ("gps_started").add (on_gps_started)
