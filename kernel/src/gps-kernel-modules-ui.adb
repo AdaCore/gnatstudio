@@ -1747,8 +1747,9 @@ package body GPS.Kernel.Modules.UI is
       Ref_Item   : String := "";
       Add_Before : Boolean := True)
    is
-      C, Previous, Last_Group : Contextual_Menu_Access;
-      Menu_Ref                : Contextual_Menu_Reference;
+      C, Previous : Contextual_Menu_Access;
+      Menu_Ref    : Contextual_Menu_Reference;
+      Ref_Found   : Boolean := False;
    begin
       Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Menu.Name.all);
 
@@ -1775,15 +1776,29 @@ package body GPS.Kernel.Modules.UI is
          if Kernel.Contextual /= System.Null_Address then
             C := Convert (Kernel.Contextual);
 
-            while C /= null
-              and then (Ref_Item = "" or else C.Name.all /= Ref_Item)
+            --  Look for element C after which we should insert new menu item.
+            --  If C = null insert at head of the list
             loop
                if C.Group > Menu.Group then
-                  Last_Group := Previous;
+                  --  Insert before greater group
+                  C := Previous;
 
-                  if Previous = null or else Previous.Group < Menu.Group then
-                     exit;
+                  exit;
+               elsif C.Group = Menu.Group
+                 and then Ref_Item /= ""
+                 and then C.Name.all = Ref_Item
+               then
+                  --  We've found Ref_Item in given group
+                  if Add_Before then
+                     C := Previous;
                   end if;
+
+                  Ref_Found := True;
+
+                  exit;
+               elsif C.Next = null then
+                  --  End of list
+                  exit;
                end if;
 
                Previous := C;
@@ -1794,32 +1809,14 @@ package body GPS.Kernel.Modules.UI is
                Menu.Ref_Item := C;
             end if;
 
-            if Ref_Item /= "" and then C = null then
+            if Ref_Item /= "" and then not Ref_Found then
                Trace (Me, "Ref_Item not found (" & Ref_Item & ") when adding "
                       & Menu.Name.all);
             end if;
 
             if C = null then
-               if Last_Group /= null then
-                  Menu.Next       := Last_Group.Next;
-                  Last_Group.Next := Menu;
-               elsif Previous /= null then
-                  Menu.Next     := Previous.Next;
-                  Previous.Next := Menu;
-               else
-                  Menu.Next         := Convert (Kernel.Contextual);
-                  Kernel.Contextual := Convert (Menu);
-               end if;
-
-            elsif Add_Before and then Ref_Item /= "" then
-               if Previous = null then
-                  Menu.Next := Convert (Kernel.Contextual);
-                  Kernel.Contextual := Convert (Menu);
-               else
-                  Menu.Next := Previous.Next;
-                  Previous.Next := Menu;
-               end if;
-
+               Menu.Next         := Convert (Kernel.Contextual);
+               Kernel.Contextual := Convert (Menu);
             else
                Menu.Next := C.Next;
                C.Next := Menu;
