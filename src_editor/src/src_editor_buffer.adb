@@ -2345,7 +2345,7 @@ package body Src_Editor_Buffer is
 
       if Column = 0 then
          Found := True;
-      elsif Line_Length (Iter) > Column then
+      elsif Line_Length (Iter) >= Column then
          Set_Pos (Iter, Column);
          Found := True;
       else
