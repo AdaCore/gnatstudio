@@ -199,7 +199,7 @@ private
    type Sorted_Node is record
       Entity      : Entity_Persistent_Access;
 
-      Next   : Sorted_Node_Access;
+      Prev, Next   : Sorted_Node_Access;
       Parent : Sorted_Node_Access;
 
       Index_In_Siblings : Integer := -1;

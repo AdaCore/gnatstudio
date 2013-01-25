@@ -180,7 +180,13 @@ package body Outline_View.Model is
 
       --  Then, updated next siblings
 
+      if Obj.Node.Prev /= null then
+         Obj.Node.Prev.Next := Obj.Node.Next;
+      end if;
+
       if Obj.Node.Next /= null then
+         Obj.Node.Next.Prev := Obj.Node.Prev;
+
          --  ??? We should have means to optimize this loop when suppressing
          --  multiple nodes
          declare
@@ -438,12 +444,14 @@ package body Outline_View.Model is
                else
                   Dummy := Element (Previous (Position));
                   Dummy.Next := Root;
+                  Root.Prev := Dummy;
                   Root.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
                end if;
 
                if Has_Element (Next (Position)) then
                   Dummy := Element (Next (Position));
                   Root.Next := Dummy;
+                  Dummy.Prev := Root;
 
                   --  Adjust the indexes for the node and its siblings, to
                   --  preserve sorting
