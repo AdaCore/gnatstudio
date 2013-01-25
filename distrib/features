@@ -86,3 +86,9 @@ NF-53-J728-022 GPS: the Project Wizard takes advantage of gnatname (2012-11-08)
 
   The project wizard now optionally uses gnatname to search for Ada units in
   files with non-standard naming conventions.
+
+NF-53-I320-015 GB: Enhance block completions (2013-01-25)
+
+  The block completion facility has been extended to cover additional
+  constructs e.g. extended return statement, protected entry bodies,
+  variant parts inside record declarations.
