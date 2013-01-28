@@ -246,6 +246,10 @@ package body Navigation_Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when a project is loaded.
 
+   procedure On_Desktop_Loaded_Hook
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the desktop is loaded
+
    --------------------------------
    -- On_Marker_Added_In_History --
    --------------------------------
@@ -489,6 +493,16 @@ package body Navigation_Module is
       --  Load the history for the new project
       Load_History_Markers (Kernel);
    end On_Project_Loaded_Hook;
+
+   ----------------------------
+   -- On_Desktop_Loaded_Hook --
+   ----------------------------
+
+   procedure On_Desktop_Loaded_Hook
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Load_History_Markers (Kernel);
+   end On_Desktop_Loaded_Hook;
 
    ---------------------------------
    -- Check_Marker_History_Status --
@@ -1201,6 +1215,12 @@ package body Navigation_Module is
          Hook    => Project_View_Changed_Hook,
          Func    => Wrapper (On_Project_Loaded_Hook'Access),
          Name    => "navigation_module.project_view_changed");
+
+      Add_Hook
+        (Kernel  => Kernel,
+         Hook    => Desktop_Loaded_Hook,
+         Func    => Wrapper (On_Desktop_Loaded_Hook'Access),
+         Name    => "navigation_module.desktop_loaded");
 
       Refresh_Location_Buttons (Kernel);
    end Register_Module;
