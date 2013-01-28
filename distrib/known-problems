@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- M125-011  GPS: use all type clause corrupts outline view & vertical bracket
+  Problem:    when Ada 2012 use all type clause is used, the displayed 
+              vertical bracket around blocks may be wrong. The Outline view
+              also is may display wrong data.
+  Workaround: None.
+
 - M119-001: GPS: crash when loading an erroneous project template
   Problem:    If you write a custom project template (.gpt) file, GPS will
               crash if the "Category" field is blank.
