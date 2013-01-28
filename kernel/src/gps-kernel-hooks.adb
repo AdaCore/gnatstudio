@@ -1872,6 +1872,7 @@ package body GPS.Kernel.Hooks is
       Register_Hook_No_Args (Kernel, Contextual_Menu_Open_Hook);
       Register_Hook_No_Args (Kernel, Contextual_Menu_Close_Hook);
       Register_Hook_No_Args (Kernel, Search_Reset_Hook);
+      Register_Hook_No_Args (Kernel, Desktop_Loaded_Hook);
       Register_Hook_No_Args (Kernel, Search_Functions_Changed_Hook);
       Register_Hook_No_Args (Kernel, Search_Regexps_Changed_Hook);
       Register_Hook_No_Args (Kernel, Variable_Changed_Hook);
