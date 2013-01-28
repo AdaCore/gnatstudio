@@ -55,6 +55,7 @@ with Config;
 with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
@@ -1174,6 +1175,9 @@ package body GPS.Kernel.MDI is
 
       --  Report a context changed, so that all views can update themselves
       Context_Changed (Handle);
+
+      --  Report the load of the desktop
+      Run_Hook (Handle, Desktop_Loaded_Hook);
 
       if Is_Default_Desktop then
          return False;

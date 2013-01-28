@@ -741,6 +741,8 @@ package GPS.Kernel is
                                      To_Hook_Name ("contextual_menu_open");
    Contextual_Menu_Close_Hook    : constant Hook_Name :=
                                      To_Hook_Name ("contextual_menu_close");
+   Desktop_Loaded_Hook           : constant Hook_Name :=
+                                     To_Hook_Name ("desktop_loaded");
 
    --  Hooks with File_Hooks_Args argument
    Project_Changing_Hook         : constant Hook_Name :=
