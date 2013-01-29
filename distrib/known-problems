@@ -24,6 +24,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               crash if the "Category" field is blank.
   Workaround: Make sure to enter a "Category" field in the .gpt file.
 
+- M117-021: GPS: Put "Copy" near "Cut" and "Paste" in context menus
+  Problem:    Menu items for Cut, Copy and/or Paste sometimes don't
+              group together in contextual menu.
+  Workaround: Rename "Copy" item to "Copy " in copy_paste.py file.
+
 - M115-022: ECL: Android library not found when running app
   Problem:    The Ada project builder creates a folder in the associated
               Android project to hold the resulting dynamic library. This
