@@ -274,10 +274,13 @@ package body Codefix.Text_Manager.Ada_Commands is
                New_String (J) := To_Upper (Text (J));
             end loop;
 
-         when Lower | Unchanged =>
+         when Lower =>
             for J in Text'Range loop
                New_String (J) := To_Lower (Text (J));
             end loop;
+
+         when Unchanged =>
+            null;
       end case;
 
       return New_String;

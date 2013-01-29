@@ -722,11 +722,16 @@ package Codefix.Text_Manager is
      (This         : Text_Command'Class;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Error_Cb     : Execute_Corrupted := null);
-   --  Same as execute, but catches exception. Error_Cb.Panic is called in case
-   --  of a Codefix_Panic, and Error_Cb.Obsolescent is called in case of an
-   --  Obsolescent fix caught.
-   --  ??? Cases where Obsolescent_Fix should be raised instead of
-   --  Codefix_Panic should be investigated further.
+   --  Same as execute, but:
+   --    * The command is executed with Casing_Policy disabled. Required since
+   --      the Casing_Policy preference must be considered only when the buffer
+   --      is being manually modified by the user; otherwise it may cause
+   --      unexpected changes to the fix.
+   --    * Catches exception. The routine Error_Cb.Panic is called in case of
+   --      Codefix_Panic, and Error_Cb.Obsolescent is called in case of an
+   --      Obsolescent fix caught.
+   --        ??? Cases where Obsolescent_Fix should be raised instead of
+   --        Codefix_Panic should be investigated further.
 
    procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command

@@ -23,6 +23,7 @@ with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
+with Case_Handling;     use Case_Handling;
 with Language.Ada;      use Language.Ada;
 with Projects;          use Projects;
 with String_Utils;      use String_Utils;
@@ -2173,8 +2174,21 @@ package body Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class;
       Error_Cb     : Execute_Corrupted := null)
    is
+      Saved_Params : Indent_Parameters;
+      New_Params   : Indent_Parameters;
+      Saved_Style  : Indentation_Kind;
+
    begin
+      Get_Indentation_Parameters (Ada_Lang, Saved_Params, Saved_Style);
+
+      --  Disable Casing_Policy while we execute the fix.
+
+      New_Params := Saved_Params;
+      New_Params.Casing_Policy := Disabled;
+      Set_Indentation_Parameters (Ada_Lang, New_Params, Saved_Style);
+
       Execute (This, Current_Text);
+      Set_Indentation_Parameters (Ada_Lang, Saved_Params, Saved_Style);
    exception
       when E : Obsolescent_Fix =>
          if Error_Cb /= null then
