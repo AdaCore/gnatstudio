@@ -144,20 +144,6 @@ package body CodePeer.Messages_Reports is
       Self      : Messages_Report) return Glib.Gint;
    --  Compare two rows in the model.
 
-   function Is_Messages_Category_Visible
-     (Model : Gtk_Tree_Model;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self  : Messages_Report) return Boolean;
-   --  Returns True when specified item in the Entity's Messages Summary
-   --  view must be visible. Model must have the same column's layout as
-   --  Entity_Messages_Model has.
-
-   package Summary_Report_Visible_Funcs is
-     new Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Messages_Report);
-
-   package Message_Category_Conversions is
-     new System.Address_To_Access_Conversions (Message_Category);
-
    procedure Emit_By_Name
      (Object : System.Address;
       Name   : Glib.Signal_Name);
@@ -651,66 +637,6 @@ package body CodePeer.Messages_Reports is
 
       --  Analysis view callbacks
 
-<<<<<<< .working
-      Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Scrolled.Set_Size_Request (Height => 200);
-      Scrolled.Set_Policy
-        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Report_Pane.Pack2 (Scrolled);
-
-      CodePeer.Entity_Messages_Models.Gtk_New
-        (Self.Messages_Model, Project_Data.Message_Categories);
-      Gtk.Tree_Model_Filter.Gtk_New
-        (Self.Messages_Filter, To_Interface (Self.Messages_Model));
-      Summary_Report_Visible_Funcs.Set_Visible_Func
-        (Self.Messages_Filter,
-         Is_Messages_Category_Visible'Access,
-         Messages_Report (Self));
-      Gtk.Tree_View.Gtk_New (Self.Messages_View, Self.Messages_Filter);
-      Scrolled.Add (Self.Messages_View);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"Message category");
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Entity_Messages_Models.Category_Name_Column);
-      Dummy := Self.Messages_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"High");
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Entity_Messages_Models.High_Count_Column);
-      Dummy := Self.Messages_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"Medium");
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Entity_Messages_Models.Medium_Count_Column);
-      Dummy := Self.Messages_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"Low");
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Entity_Messages_Models.Low_Count_Column);
-      Dummy := Self.Messages_View.Append_Column (Column);
-
-=======
->>>>>>> .merge-right.r201757
       Tree_View_Report_Return_Boolean_Callbacks.Connect
         (Self.Analysis_View,
          Gtk.Widget.Signal_Button_Press_Event,
@@ -888,60 +814,6 @@ package body CodePeer.Messages_Reports is
          Context_Func    => Context_Func'Access);
    end Initialize;
 
-<<<<<<< .working
-   ----------------------------------
-   -- Is_Messages_Category_Visible --
-   ----------------------------------
-
-   function Is_Messages_Category_Visible
-     (Model : Gtk_Tree_Model;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self  : Messages_Report) return Boolean
-   is
-      use CodePeer.Categories_Criteria_Editors;
-
-      Value    : Glib.Values.GValue;
-      Category : Message_Category_Access;
-      Visible  : Boolean := False;
-
-   begin
-      Get_Value
-        (Model, Iter,
-         CodePeer.Entity_Messages_Models.Message_Category_Column,
-         Value);
-      Category :=
-        Message_Category_Access
-          (Message_Category_Conversions.To_Pointer
-               (Glib.Values.Get_Address (Value)));
-      Glib.Values.Unset (Value);
-
-      --  Is_Messages_Category_Visible is called during initialization,
-      --  thus this member can be null, just because editor is not created.
-
-      if Self.Warning_Categories_Editor /= null then
-         Visible :=
-           Self.Warning_Categories_Editor.Get_Visible_Categories.Contains
-             (Category)
-           or Self.Check_Categories_Editor.Get_Visible_Categories.Contains
-             (Category);
-      end if;
-
-      return
-        Visible
-        and then
-          (Get_String
-             (Model, Iter, CodePeer.Entity_Messages_Models.Low_Count_Column) /=
-             ""
-           or else Get_String
-             (Model, Iter, CodePeer.Entity_Messages_Models.Medium_Count_Column)
-             /= ""
-           or else Get_String
-             (Model, Iter, CodePeer.Entity_Messages_Models.High_Count_Column)
-             /= "");
-   end Is_Messages_Category_Visible;
-
-=======
->>>>>>> .merge-right.r201757
    -----------------------
    -- On_Analysis_Click --
    -----------------------
