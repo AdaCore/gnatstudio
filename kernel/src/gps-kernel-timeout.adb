@@ -567,6 +567,7 @@ package body GPS.Kernel.Timeout is
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
       Use_Pipes            : Boolean := True;
+      Block_Exit           : Boolean := True;
       Created_Command      : out Scheduled_Command_Access)
    is
       Q_Id          : constant String := Get_New_Queue_Id (Queue_Id);
@@ -646,7 +647,8 @@ package body GPS.Kernel.Timeout is
             Command_Access (C),
             Active   => False,
             Show_Bar => Show_In_Task_Manager,
-            Queue_Id => Q_Id);
+            Queue_Id => Q_Id,
+            Block_Exit => Block_Exit);
       end if;
 
       if not Is_Local (Server) then
@@ -758,7 +760,8 @@ package body GPS.Kernel.Timeout is
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
-      Use_Pipes            : Boolean := True)
+      Use_Pipes            : Boolean := True;
+      Block_Exit           : Boolean := True)
    is
       Created_Command : Scheduled_Command_Access;
    begin
@@ -784,6 +787,7 @@ package body GPS.Kernel.Timeout is
          Timeout              => Timeout,
          Strip_CR             => Strip_CR,
          Use_Pipes            => Use_Pipes,
+         Block_Exit           => Block_Exit,
          Created_Command      => Created_Command);
    end Launch_Process;
 

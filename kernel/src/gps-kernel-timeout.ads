@@ -92,7 +92,8 @@ package GPS.Kernel.Timeout is
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
-      Use_Pipes            : Boolean := True);
+      Use_Pipes            : Boolean := True;
+      Block_Exit           : Boolean := True);
    --  Launch a given command with arguments on server 'Server'.
    --  Arguments must be freed by the user.
    --
@@ -144,6 +145,9 @@ package GPS.Kernel.Timeout is
    --
    --  Use_Pipes tells if process communication shall be performed with pipes
    --   or through the console on Windows
+   --
+   --  Block_Exit indicates whether the fact that this process is running
+   --  should prevent GPS from closing.
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
@@ -167,6 +171,7 @@ package GPS.Kernel.Timeout is
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
       Use_Pipes            : Boolean := True;
+      Block_Exit           : Boolean := True;
       Created_Command      : out Scheduled_Command_Access);
    --  Same as above, and returns the created Command_Access.
    --  Cmd is allocated by this procedure, and will be cleaned automatically,
