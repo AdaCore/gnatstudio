@@ -17,7 +17,7 @@
 
 with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
-with System.Address_To_Access_Conversions;
+with System;
 
 with Glib.Object;
 with Glib.Values;
@@ -206,8 +206,7 @@ package body CodePeer.Messages_Reports is
       use type Glib.Gint;
 
       type Column_Sort_Order is
-        (High_Added,   Medium_Added,   Low_Added,
-         High_Current, Medium_Current, Low_Current);
+        (High_Current, Medium_Current, Low_Current);
       --  Literals in this type are in the comparison order. To change
       --  comparison order just reorder literals.
 
@@ -262,27 +261,14 @@ package body CodePeer.Messages_Reports is
       function Get (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Counts is
       begin
          return
-           (High_Added =>
-              Get
-                (Iter,
-                 CodePeer.Messages_Summary_Models.High_Added_Count_Column),
-            Medium_Added =>
-              Get
-                (Iter,
-                 CodePeer.Messages_Summary_Models.Medium_Added_Count_Column),
-            Low_Added =>
-              Get
-                (Iter,
-                 CodePeer.Messages_Summary_Models.Low_Added_Count_Column),
-            High_Current =>
+           (High_Current =>
               Get
                 (Iter,
                  CodePeer.Messages_Summary_Models.High_Current_Count_Column),
             Medium_Current =>
               Get
                 (Iter,
-                 CodePeer.Messages_Summary_Models.
-                   Medium_Current_Count_Column),
+                 CodePeer.Messages_Summary_Models.Medium_Current_Count_Column),
             Low_Current =>
               Get
                 (Iter,
@@ -466,7 +452,8 @@ package body CodePeer.Messages_Reports is
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Pixbuf_Renderer : Gtk.Cell_Renderer_Pixbuf.Gtk_Cell_Renderer_Pixbuf;
       Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
-      Report_Pane     : Gtk.Paned.Gtk_Vpaned;
+      Message_Box     : Gtk.Box.Gtk_Hbox;
+      Category_Box    : Gtk.Box.Gtk_Vbox;
       Filter_Box      : Gtk.Box.Gtk_Vbox;
       Check           : Gtk.Check_Button.Gtk_Check_Button;
       Label           : Gtk.Label.Gtk_Label;
@@ -560,13 +547,10 @@ package body CodePeer.Messages_Reports is
       Gtk.Paned.Gtk_New_Hpaned (Panel);
       Self.Pack_Start (Panel);
 
-      Gtk.Paned.Gtk_New_Vpaned (Report_Pane);
-      Panel.Pack1 (Report_Pane, Resize => True);
-
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Report_Pane.Pack1 (Scrolled, Resize => True);
+      Panel.Pack1 (Scrolled, Resize => True);
 
       CodePeer.Messages_Summary_Models.Gtk_New
         (Self.Analysis_Model,
@@ -601,38 +585,7 @@ package body CodePeer.Messages_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title ("+/-");
-      Column.Set_Resizable (True);
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, True);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Messages_Summary_Models.Entity_Lifeage_Column);
-      Dummy := Self.Analysis_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Messages_Summary_Models.High_Base_Count_Column);
-      Dummy := Self.Analysis_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-("High" & Ada.Characters.Latin_1.LF & "deltas"));
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Messages_Summary_Models.High_Deltas_Count_Column);
-      Dummy := Self.Analysis_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "now"));
+      Column.Set_Title (-("High"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
@@ -646,27 +599,7 @@ package body CodePeer.Messages_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Messages_Summary_Models.Medium_Base_Count_Column);
-      Dummy := Self.Analysis_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-("Medium" & Ada.Characters.Latin_1.LF & "deltas"));
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Messages_Summary_Models.Medium_Deltas_Count_Column);
-      Dummy := Self.Analysis_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "now"));
+      Column.Set_Title (-("Med"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
@@ -680,27 +613,7 @@ package body CodePeer.Messages_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Messages_Summary_Models.Low_Base_Count_Column);
-      Dummy := Self.Analysis_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-("Low" & Ada.Characters.Latin_1.LF & "deltas"));
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Messages_Summary_Models.Low_Deltas_Count_Column);
-      Dummy := Self.Analysis_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "now"));
+      Column.Set_Title (-("Low"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
@@ -714,16 +627,6 @@ package body CodePeer.Messages_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-("Total" & Ada.Characters.Latin_1.LF & "checks"));
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_Start (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         CodePeer.Messages_Summary_Models.Total_Checks_Count_Column);
-      Dummy := Self.Analysis_View.Append_Column (Column);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-("Passed" & Ada.Characters.Latin_1.LF & "checks"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, False);
@@ -734,10 +637,21 @@ package body CodePeer.Messages_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-("Total" & Ada.Characters.Latin_1.LF & "checks"));
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         CodePeer.Messages_Summary_Models.Total_Checks_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
-      --  Message category view
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
 
+      --  Analysis view callbacks
+
+<<<<<<< .working
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Size_Request (Height => 200);
       Scrolled.Set_Policy
@@ -795,6 +709,8 @@ package body CodePeer.Messages_Reports is
          CodePeer.Entity_Messages_Models.Low_Count_Column);
       Dummy := Self.Messages_View.Append_Column (Column);
 
+=======
+>>>>>>> .merge-right.r201757
       Tree_View_Report_Return_Boolean_Callbacks.Connect
         (Self.Analysis_View,
          Gtk.Widget.Signal_Button_Press_Event,
@@ -810,14 +726,57 @@ package body CodePeer.Messages_Reports is
          Messages_Report (Self),
          False);
 
+      --  Message categories box
+
+      Gtk.Box.Gtk_New_Hbox (Message_Box);
+      Panel.Pack2 (Message_Box);
+
+      Gtk.Box.Gtk_New_Vbox (Category_Box);
+      Category_Box.Set_Size_Request (Width => 200);
+      Message_Box.Pack_Start (Category_Box);
+
+      --  Warning messages categories
+
+      CodePeer.Categories_Criteria_Editors.Gtk_New
+        (Self.Warning_Categories_Editor,
+         Self.Kernel,
+         -"Warning categories",
+         "codepeer-summary_report-categories-warning",
+         Project_Data.Warning_Categories);
+      Category_Box.Pack_Start (Self.Warning_Categories_Editor);
+
+      Message_Categories_Criteria_Callbacks.Connect
+        (Self.Warning_Categories_Editor,
+         CodePeer.Categories_Criteria_Editors.Signal_Criteria_Changed,
+         Message_Categories_Criteria_Callbacks.To_Marshaller
+           (On_Categories_Criteria_Changed'Access),
+         Messages_Report (Self));
+
+      --  Checks messages categories
+
+      CodePeer.Categories_Criteria_Editors.Gtk_New
+        (Self.Check_Categories_Editor,
+         Self.Kernel,
+         -"Check categories",
+         "codepeer-summary_report-categories-check",
+         Project_Data.Check_Categories);
+      Category_Box.Pack_Start (Self.Check_Categories_Editor);
+
+      Message_Categories_Criteria_Callbacks.Connect
+        (Self.Check_Categories_Editor,
+         CodePeer.Categories_Criteria_Editors.Signal_Criteria_Changed,
+         Message_Categories_Criteria_Callbacks.To_Marshaller
+           (On_Categories_Criteria_Changed'Access),
+         Messages_Report (Self));
+
       --  Filter view
 
       Gtk.Box.Gtk_New_Vbox (Filter_Box);
-      Filter_Box.Set_Size_Request (Width => 250);
-      Panel.Pack2 (Filter_Box);
+      Filter_Box.Set_Size_Request (Width => 200);
+      Message_Box.Pack_Start (Filter_Box);
 
       Gtk.Check_Button.Gtk_New (Check, -"Show all subprograms");
---      Filter_Box.Pack_Start (Check, False);
+--  ???    Filter_Box.Pack_Start (Check, False);
 --  This check button is not displayed by default, see H519-028 discussion
       Check_Button_Report_Callbacks.Connect
         (Check,
@@ -826,7 +785,7 @@ package body CodePeer.Messages_Reports is
            (On_Show_All_Subprograms_Toggled'Access),
          Messages_Report (Self));
 
-      --  Messages lifeage
+      --  Messages history
 
       Gtk.Label.Gtk_New (Label, -"Message history");
       Filter_Box.Pack_Start (Label, False);
@@ -861,7 +820,7 @@ package body CodePeer.Messages_Reports is
            (On_Show_Removed_Messages_Toggled'Access),
          Messages_Report (Self));
 
-      --  Messages probabilities
+      --  Messages ranking
 
       Gtk.Separator.Gtk_New_Hseparator (Separator);
       Filter_Box.Pack_Start (Separator, False);
@@ -919,40 +878,6 @@ package body CodePeer.Messages_Reports is
            (On_Show_High_Messages_Toggled'Access),
          Messages_Report (Self));
 
-      --  Warning messages categories
-
-      CodePeer.Categories_Criteria_Editors.Gtk_New
-        (Self.Warning_Categories_Editor,
-         Self.Kernel,
-         -"Warning categories",
-         "codepeer-summary_report-categories-warning",
-         Project_Data.Warning_Categories);
-      Filter_Box.Pack_Start (Self.Warning_Categories_Editor);
-
-      Message_Categories_Criteria_Callbacks.Connect
-        (Self.Warning_Categories_Editor,
-         CodePeer.Categories_Criteria_Editors.Signal_Criteria_Changed,
-         Message_Categories_Criteria_Callbacks.To_Marshaller
-           (On_Categories_Criteria_Changed'Access),
-         Messages_Report (Self));
-
-      --  Checks messages categories
-
-      CodePeer.Categories_Criteria_Editors.Gtk_New
-        (Self.Check_Categories_Editor,
-         Self.Kernel,
-         -"Checks categories",
-         "codepeer-summary_report-categories-check",
-         Project_Data.Check_Categories);
-      Filter_Box.Pack_Start (Self.Check_Categories_Editor);
-
-      Message_Categories_Criteria_Callbacks.Connect
-        (Self.Check_Categories_Editor,
-         CodePeer.Categories_Criteria_Editors.Signal_Criteria_Changed,
-         Message_Categories_Criteria_Callbacks.To_Marshaller
-           (On_Categories_Criteria_Changed'Access),
-         Messages_Report (Self));
-
       --
 
       Register_Contextual_Menu
@@ -963,6 +888,7 @@ package body CodePeer.Messages_Reports is
          Context_Func    => Context_Func'Access);
    end Initialize;
 
+<<<<<<< .working
    ----------------------------------
    -- Is_Messages_Category_Visible --
    ----------------------------------
@@ -1014,6 +940,8 @@ package body CodePeer.Messages_Reports is
              /= "");
    end Is_Messages_Category_Visible;
 
+=======
+>>>>>>> .merge-right.r201757
    -----------------------
    -- On_Analysis_Click --
    -----------------------
@@ -1059,27 +987,10 @@ package body CodePeer.Messages_Reports is
               (Iter, Sort_Iter);
 
             declare
-               Project_Node    : constant Code_Analysis.Project_Access :=
-                 Self.Analysis_Model.Project_At (Iter);
                File_Node       : constant Code_Analysis.File_Access :=
                  Self.Analysis_Model.File_At (Iter);
-               Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                 Self.Analysis_Model.Subprogram_At (Iter);
 
             begin
-               if Subprogram_Node /= null then
-                  Self.Messages_Model.Set (Subprogram_Node);
-
-               elsif File_Node /= null then
-                  Self.Messages_Model.Set (File_Node);
-
-               elsif Project_Node /= null then
-                  Self.Messages_Model.Set (Project_Node);
-
-               elsif Iter /= Null_Iter then
-                  Self.Messages_Model.Set (Self.Tree);
-               end if;
-
                --  Request Locations View to expand corresponding category/file
 
                if File_Node /= null then
@@ -1128,7 +1039,6 @@ package body CodePeer.Messages_Reports is
       Self.Analysis_Model.Set_Visible_Message_Categories
         (Self.Warning_Categories_Editor.Get_Visible_Categories.Union
            (Self.Check_Categories_Editor.Get_Visible_Categories));
-      Self.Messages_Filter.Refilter;
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Categories_Criteria_Changed;
@@ -1144,7 +1054,6 @@ package body CodePeer.Messages_Reports is
       --  analysis data.
 
       Self.Analysis_Model.Clear;
-      Self.Messages_Model.Clear;
    end On_Destroy;
 
    -------------------------------------
@@ -1294,7 +1203,6 @@ package body CodePeer.Messages_Reports is
    procedure Update (Self : access Messages_Report_Record'Class) is
    begin
       Self.Analysis_Model.Reconstruct;
-      Self.Messages_Model.Update;
    end Update;
 
    ---------------------

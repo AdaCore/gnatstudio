@@ -49,11 +49,11 @@ package CodePeer is
    package Message_Category_Sets is new Ada.Containers.Hashed_Sets
      (Message_Category_Access, Hash, "=");
 
-   type Audit_Record (Probability_Changed : Boolean) is record
+   type Audit_Record (Ranking_Changed : Boolean) is record
       Timestamp   : GNAT.Strings.String_Access;
       Comment     : GNAT.Strings.String_Access;
 
-      case Probability_Changed is
+      case Ranking_Changed is
          when True =>
             Ranking : Message_Ranking_Level;
 

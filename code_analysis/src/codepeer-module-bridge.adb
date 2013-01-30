@@ -96,7 +96,7 @@ package body CodePeer.Module.Bridge is
       Ids.Insert (Message.Id);
       Ids.Union (Message.Merged);
 
-      if Message.Audit.First_Element.Probability_Changed then
+      if Message.Audit.First_Element.Ranking_Changed then
          CodePeer.Bridge.Commands.Add_Audit_Record
            (Command_File_Name,
             Codepeer_Output_Directory (Project),

@@ -110,21 +110,21 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
          if Attrs.Get_Index ("probability") /= -1 then
             Self.Audit_Record :=
               new CodePeer.Audit_Record'
-                (Probability_Changed => True,
-                 Timestamp           =>
+                (Ranking_Changed => True,
+                 Timestamp       =>
                    new String'(Attrs.Get_Value ("timestamp")),
                  Ranking         =>
                    CodePeer.Message_Ranking_Level'Value
                      (Attrs.Get_Value ("probability")),
-                 Comment             => null);
+                 Comment         => null);
 
          else
             Self.Audit_Record :=
               new CodePeer.Audit_Record'
-                (Probability_Changed => False,
-                 Timestamp           =>
+                (Ranking_Changed => False,
+                 Timestamp       =>
                    new String'(Attrs.Get_Value ("timestamp")),
-                 Comment             => null);
+                 Comment         => null);
          end if;
 
       else

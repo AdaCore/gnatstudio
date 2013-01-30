@@ -167,7 +167,7 @@ package body CodePeer.Message_Review_Dialogs is
             History_Model_Timestamp_Column,
             Audit.Timestamp.all);
 
-         if Audit.Probability_Changed then
+         if Audit.Ranking_Changed then
             Store.Set
               (Iter,
                History_Model_Probability_Column,
