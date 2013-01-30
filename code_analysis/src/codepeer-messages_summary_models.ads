@@ -27,39 +27,17 @@ package CodePeer.Messages_Summary_Models is
    Entity_Icon_Column                 : constant :=  0;
    Entity_Name_Column                 : constant :=  1;
    Entity_Lifeage_Column              : constant :=  2;
-   Informational_Base_Count_Column    : constant :=  3;
-   Informational_Added_Count_Column   : constant :=  4;
-   Informational_Deltas_Count_Column  : constant :=  5;
-   Informational_Removed_Count_Column : constant :=  6;
-   Informational_Current_Count_Column : constant :=  7;
-   Low_Base_Count_Column              : constant :=  8;
-   Low_Added_Count_Column             : constant :=  9;
-   Low_Deltas_Count_Column            : constant := 10;
-   Low_Removed_Count_Column           : constant := 11;
-   Low_Current_Count_Column           : constant := 12;
-   Low_Current_Color_Column           : constant := 13;
-   Medium_Base_Count_Column           : constant := 14;
-   Medium_Added_Count_Column          : constant := 15;
-   Medium_Deltas_Count_Column         : constant := 16;
-   Medium_Removed_Count_Column        : constant := 17;
-   Medium_Current_Count_Column        : constant := 18;
-   Medium_Current_Color_Column        : constant := 19;
-   High_Base_Count_Column             : constant := 20;
-   High_Added_Count_Column            : constant := 21;
-   High_Deltas_Count_Column           : constant := 22;
-   High_Removed_Count_Column          : constant := 23;
-   High_Current_Count_Column          : constant := 24;
-   High_Current_Color_Column          : constant := 25;
-   Suppressed_Base_Count_Column       : constant := 26;
-   Suppressed_Added_Count_Column      : constant := 27;
-   Suppressed_Deltas_Count_Column     : constant := 28;
-   Suppressed_Removed_Count_Column    : constant := 29;
-   Suppressed_Current_Count_Column    : constant := 30;
-   Total_Checks_Count_Column          : constant := 31;
-   Passed_Checks_Count_Column         : constant := 32;
-   Number_Of_Columns                  : constant := 33;
-   --  *_Added_* and *_Removed_* are used for sorting by the intermediate
-   --  GtkTreeModelSort model.
+   Informational_Current_Count_Column : constant :=  3;
+   Low_Current_Count_Column           : constant :=  4;
+   Low_Current_Color_Column           : constant :=  5;
+   Medium_Current_Count_Column        : constant :=  6;
+   Medium_Current_Color_Column        : constant :=  7;
+   High_Current_Count_Column          : constant :=  8;
+   High_Current_Color_Column          : constant :=  9;
+   Suppressed_Current_Count_Column    : constant := 10;
+   Passed_Checks_Count_Column         : constant := 11;
+   Total_Checks_Count_Column          : constant := 12;
+   Number_Of_Columns                  : constant := 13;
 
    type Messages_Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;
@@ -104,7 +82,7 @@ private
       Show_All_Files       : Boolean := False;
       Show_All_Projects    : Boolean := True;
       Message_Categories   : CodePeer.Message_Category_Sets.Set;
-      --  Set of the message categories, which is showed in the report
+      --  Set of the message categories, which is shown in the report
       Project_Icon         : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Icon            : Gdk.Pixbuf.Gdk_Pixbuf;
       Subprogram_Icon      : Gdk.Pixbuf.Gdk_Pixbuf;

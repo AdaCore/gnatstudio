@@ -18,6 +18,7 @@
 with Glib.Object;
 with Gdk.Color;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.Intl;          use GPS.Intl;
 
@@ -100,30 +101,10 @@ package body CodePeer.Messages_Summary_Models is
 
          when Entity_Name_Column
             | Entity_Lifeage_Column
-            | Informational_Base_Count_Column
-            | Informational_Added_Count_Column
-            | Informational_Deltas_Count_Column
-            | Informational_Removed_Count_Column
             | Informational_Current_Count_Column
-            | Low_Base_Count_Column
-            | Low_Added_Count_Column
-            | Low_Deltas_Count_Column
-            | Low_Removed_Count_Column
             | Low_Current_Count_Column
-            | Medium_Base_Count_Column
-            | Medium_Added_Count_Column
-            | Medium_Deltas_Count_Column
-            | Medium_Removed_Count_Column
             | Medium_Current_Count_Column
-            | High_Base_Count_Column
-            | High_Added_Count_Column
-            | High_Deltas_Count_Column
-            | High_Removed_Count_Column
             | High_Current_Count_Column
-            | Suppressed_Base_Count_Column
-            | Suppressed_Added_Count_Column
-            | Suppressed_Deltas_Count_Column
-            | Suppressed_Removed_Count_Column
             | Suppressed_Current_Count_Column
             | Total_Checks_Count_Column
             | Passed_Checks_Count_Column
@@ -166,92 +147,43 @@ package body CodePeer.Messages_Summary_Models is
    is
       use type Code_Analysis.Tree_Models.Subprogram_Item_Access;
 
-      type Count_Kinds is (Base, Added, Removed, Current);
-
       Project_Node    : constant Project_Item_Access :=
-                          Project_Item_Access (Self.Project (Iter));
+        Project_Item_Access (Self.Project (Iter));
       File_Node       : constant File_Item_Access :=
-                          File_Item_Access (Self.File (Iter));
+        File_Item_Access (Self.File (Iter));
       Subprogram_Node : constant Subprogram_Item_Access :=
-                          Subprogram_Item_Access (Self.Subprogram (Iter));
+        Subprogram_Item_Access (Self.Subprogram (Iter));
 
       procedure Set_Lifeage_Sign (Lifeage : Lifeage_Kinds);
+      --  ???
 
       procedure Set_Integer_Image (Item : Natural; Suppress_Zero : Boolean);
+      --  ???
 
-      procedure Set_Count_Image
-        (Level : CodePeer.Message_Ranking_Level;
-         Kind  : Count_Kinds);
+      procedure Set_Count_Image (Level : CodePeer.Message_Ranking_Level);
+      --  ???
 
-      procedure Set_Deltas_Image (Level : CodePeer.Message_Ranking_Level);
-
-      procedure Set_Deltas_Image (Added : Natural; Removed : Natural);
+      function Percent_Image (Passed, Total : Natural) return String;
+      --  Return a string representing the percentage Passed/Total in the
+      --  form "(xxx%)"
 
       ---------------------
       -- Set_Count_Image --
       ---------------------
 
-      procedure Set_Count_Image
-        (Level : CodePeer.Message_Ranking_Level;
-         Kind  : Count_Kinds)
-      is
+      procedure Set_Count_Image (Level : CodePeer.Message_Ranking_Level) is
       begin
          if Subprogram_Node /= null then
-            case Kind is
-               when Base =>
-                  Set_Integer_Image
-                    (Subprogram_Node.Messages_Counts (Level).Base, True);
-
-               when Added =>
-                  Set_Integer_Image
-                    (Subprogram_Node.Messages_Counts (Level).Added, True);
-
-               when Removed =>
-                  Set_Integer_Image
-                    (Subprogram_Node.Messages_Counts (Level).Removed, True);
-
-               when Current =>
-                  Set_Integer_Image
-                    (Subprogram_Node.Messages_Counts (Level).Current, True);
-            end case;
+            Set_Integer_Image
+              (Subprogram_Node.Messages_Counts (Level).Current, True);
 
          elsif File_Node /= null then
-            case Kind is
-               when Base =>
-                  Set_Integer_Image
-                    (File_Node.Messages_Counts (Level).Base, True);
-
-               when Added =>
-                  Set_Integer_Image
-                    (File_Node.Messages_Counts (Level).Added, True);
-
-               when Removed =>
-                  Set_Integer_Image
-                    (File_Node.Messages_Counts (Level).Removed, True);
-
-               when Current =>
-                  Set_Integer_Image
-                    (File_Node.Messages_Counts (Level).Current, True);
-            end case;
+            Set_Integer_Image
+              (File_Node.Messages_Counts (Level).Current, True);
 
          elsif Project_Node /= null then
-            case Kind is
-               when Base =>
-                  Set_Integer_Image
-                    (Project_Node.Messages_Counts (Level).Base, True);
-
-               when Added =>
-                  Set_Integer_Image
-                    (Project_Node.Messages_Counts (Level).Added, True);
-
-               when Removed =>
-                  Set_Integer_Image
-                    (Project_Node.Messages_Counts (Level).Removed, True);
-
-               when Current =>
-                  Set_Integer_Image
-                    (Project_Node.Messages_Counts (Level).Current, True);
-            end case;
+            Set_Integer_Image
+              (Project_Node.Messages_Counts (Level).Current, True);
 
          else
             --  "Total" line
@@ -268,89 +200,10 @@ package body CodePeer.Messages_Summary_Models is
                   Counts,
                   Dummy_Checks,
                   Dummy_Totals);
-
-               case Kind is
-                  when Base =>
-                     Set_Integer_Image (Counts (Level).Base, True);
-
-                  when Added =>
-                     Set_Integer_Image (Counts (Level).Added, True);
-
-                  when Removed =>
-                     Set_Integer_Image (Counts (Level).Removed, True);
-
-                  when Current =>
-                     Set_Integer_Image (Counts (Level).Current, True);
-               end case;
+               Set_Integer_Image (Counts (Level).Current, True);
             end;
          end if;
       end Set_Count_Image;
-
-      ----------------------
-      -- Set_Deltas_Image --
-      ----------------------
-
-      procedure Set_Deltas_Image (Level : CodePeer.Message_Ranking_Level) is
-      begin
-         if Subprogram_Node /= null then
-            Set_Deltas_Image
-              (Subprogram_Node.Messages_Counts (Level).Added,
-               Subprogram_Node.Messages_Counts (Level).Removed);
-
-         elsif File_Node /= null then
-            Set_Deltas_Image
-              (File_Node.Messages_Counts (Level).Added,
-               File_Node.Messages_Counts (Level).Removed);
-
-         elsif Project_Node /= null then
-            Set_Deltas_Image
-              (Project_Node.Messages_Counts (Level).Added,
-               Project_Node.Messages_Counts (Level).Removed);
-
-         else
-            --  "Total" line
-
-            declare
-               Counts       : CodePeer.Utilities.Messages_Counts;
-               Dummy_Checks : Natural;
-               Dummy_Totals : Natural;
-
-            begin
-               CodePeer.Utilities.Compute_Messages_Count
-                 (Self.Tree,
-                  Self.Message_Categories,
-                  Counts,
-                  Dummy_Checks,
-                  Dummy_Totals);
-
-               Set_Deltas_Image (Counts (Level).Added, Counts (Level).Removed);
-            end;
-         end if;
-      end Set_Deltas_Image;
-
-      ----------------------
-      -- Set_Deltas_Image --
-      ----------------------
-
-      procedure Set_Deltas_Image (Added : Natural; Removed : Natural) is
-         Added_Image   : constant String := Natural'Image (Added);
-         Removed_Image : constant String := Natural'Image (Removed);
-
-      begin
-         Glib.Values.Init (Value, Glib.GType_String);
-
-         if Added = 0 and then Removed = 0 then
-            Glib.Values.Set_String (Value, "");
-
-         else
-            Glib.Values.Set_String
-              (Value,
-               '-'
-               & Removed_Image (Removed_Image'First + 1 .. Removed_Image'Last)
-               & "/+"
-               & Added_Image (Added_Image'First + 1 .. Added_Image'Last));
-         end if;
-      end Set_Deltas_Image;
 
       -----------------------
       -- Set_Integer_Image --
@@ -358,7 +211,6 @@ package body CodePeer.Messages_Summary_Models is
 
       procedure Set_Integer_Image (Item : Natural; Suppress_Zero : Boolean) is
          Image : constant String := Natural'Image (Item);
-
       begin
          Glib.Values.Init (Value, Glib.GType_String);
 
@@ -390,6 +242,17 @@ package body CodePeer.Messages_Summary_Models is
                Glib.Values.Set_String (Value, "-");
          end case;
       end Set_Lifeage_Sign;
+
+      -------------------
+      -- Percent_Image --
+      -------------------
+
+      function Percent_Image (Passed, Total : Natural) return String is
+      begin
+         return "("
+           & Image ((if Total = 0 then 100 else Passed * 100 / Total), 1)
+           & "%)";
+      end Percent_Image;
 
    begin
       case Column is
@@ -460,92 +323,116 @@ package body CodePeer.Messages_Summary_Models is
                Glib.Values.Set_String (Value, "");
             end if;
 
-         when Informational_Base_Count_Column =>
-            Set_Count_Image (CodePeer.Informational, Base);
-
-         when Informational_Added_Count_Column =>
-            Set_Count_Image (CodePeer.Informational, Added);
-
-         when Informational_Deltas_Count_Column =>
-            Set_Deltas_Image (CodePeer.Informational);
-
-         when Informational_Removed_Count_Column =>
-            Set_Count_Image (CodePeer.Informational, Removed);
-
          when Informational_Current_Count_Column =>
-            Set_Count_Image (CodePeer.Informational, Current);
-
-         when Low_Base_Count_Column =>
-            Set_Count_Image (CodePeer.Low, Base);
-
-         when Low_Added_Count_Column =>
-            Set_Count_Image (CodePeer.Low, Added);
-
-         when Low_Deltas_Count_Column =>
-            Set_Deltas_Image (CodePeer.Low);
-
-         when Low_Removed_Count_Column =>
-            Set_Count_Image (CodePeer.Low, Removed);
+            Set_Count_Image (CodePeer.Informational);
 
          when Low_Current_Count_Column =>
-            Set_Count_Image (CodePeer.Low, Current);
+            Set_Count_Image (CodePeer.Low);
 
          when Low_Current_Color_Column =>
             Glib.Values.Init (Value, Gdk.Color.Gdk_Color_Type);
             Gdk.Color.Set_Value (Value, CodePeer.Module.Get_Color (Low));
 
-         when Medium_Base_Count_Column =>
-            Set_Count_Image (CodePeer.Medium, Base);
-
-         when Medium_Added_Count_Column =>
-            Set_Count_Image (CodePeer.Medium, Added);
-
-         when Medium_Deltas_Count_Column =>
-            Set_Deltas_Image (CodePeer.Medium);
-
-         when Medium_Removed_Count_Column =>
-            Set_Count_Image (CodePeer.Medium, Removed);
-
          when Medium_Current_Count_Column =>
-            Set_Count_Image (CodePeer.Medium, Current);
+            Set_Count_Image (CodePeer.Medium);
 
          when Medium_Current_Color_Column =>
             Glib.Values.Init (Value, Gdk.Color.Gdk_Color_Type);
             Gdk.Color.Set_Value (Value, CodePeer.Module.Get_Color (Medium));
 
-         when High_Base_Count_Column =>
-            Set_Count_Image (CodePeer.High, Base);
-
-         when High_Added_Count_Column =>
-            Set_Count_Image (CodePeer.High, Added);
-
-         when High_Deltas_Count_Column =>
-            Set_Deltas_Image (CodePeer.High);
-
-         when High_Removed_Count_Column =>
-            Set_Count_Image (CodePeer.High, Removed);
-
          when High_Current_Count_Column =>
-            Set_Count_Image (CodePeer.High, Current);
+            Set_Count_Image (CodePeer.High);
 
          when High_Current_Color_Column =>
             Glib.Values.Init (Value, Gdk.Color.Gdk_Color_Type);
             Gdk.Color.Set_Value (Value, CodePeer.Module.Get_Color (High));
 
-         when Suppressed_Base_Count_Column =>
-            Set_Count_Image (CodePeer.Suppressed, Base);
-
-         when Suppressed_Added_Count_Column =>
-            Set_Count_Image (CodePeer.Suppressed, Added);
-
-         when Suppressed_Deltas_Count_Column =>
-            Set_Deltas_Image (CodePeer.Suppressed);
-
-         when Suppressed_Removed_Count_Column =>
-            Set_Count_Image (CodePeer.Suppressed, Removed);
-
          when Suppressed_Current_Count_Column =>
-            Set_Count_Image (CodePeer.Suppressed, Current);
+            Set_Count_Image (CodePeer.Suppressed);
+
+         when Passed_Checks_Count_Column =>
+            if Subprogram_Node /= null then
+               --  Nothing to output, checks are counted per file
+
+               Set_Integer_Image (0, True);
+
+            elsif File_Node /= null then
+               if CodePeer.File_Data
+                    (File_Node.Node.Analysis_Data.CodePeer_Data.all).
+                        Total_Checks < File_Node.Checks_Count
+               then
+                  --  KC30-001: total number of checks may be less than number
+                  --  of check messages because of inconsistency of CodePeer
+                  --  database. This code is used in such cases to prevent GPS
+                  --  from crashing.
+
+                  Glib.Values.Init (Value, Glib.GType_String);
+                  Glib.Values.Set_String (Value, "ERROR");
+
+               else
+                  declare
+                     Total  : constant Natural := CodePeer.File_Data
+                       (File_Node.Node.Analysis_Data.CodePeer_Data.all).
+                       Total_Checks;
+                     Passed : constant Natural :=
+                       Total - File_Node.Checks_Count;
+
+                  begin
+                     Glib.Values.Init (Value, Glib.GType_String);
+                     Glib.Values.Set_String
+                       (Value,
+                        Image (Passed, 1)
+                        & " " & Percent_Image (Passed, Total));
+                  end;
+               end if;
+
+            elsif Project_Node /= null then
+               if Project_Node.Total_Checks < Project_Node.Checks_Count then
+                  --  KC30-001: total number of checks may be less than number
+                  --  of check messages because of inconsistency of CodePeer
+                  --  database. This code is used in such cases to prevent GPS
+                  --  from crashing.
+
+                  Glib.Values.Init (Value, Glib.GType_String);
+                  Glib.Values.Set_String (Value, "ERROR");
+
+               else
+                  declare
+                     Total  : constant Natural := Project_Node.Total_Checks;
+                     Passed : constant Natural :=
+                       Total - Project_Node.Checks_Count;
+
+                  begin
+                     Glib.Values.Init (Value, Glib.GType_String);
+                     Glib.Values.Set_String
+                       (Value,
+                        Image (Passed, 1)
+                        & " " & Percent_Image (Passed, Total));
+                  end;
+               end if;
+
+            else
+               declare
+                  Counts : CodePeer.Utilities.Messages_Counts;
+                  Checks : Natural;
+                  Totals : Natural;
+                  Passed : Natural;
+
+               begin
+                  CodePeer.Utilities.Compute_Messages_Count
+                    (Self.Tree,
+                     Self.Message_Categories,
+                     Counts,
+                     Checks,
+                     Totals);
+
+                  Passed := Totals - Checks;
+                  Glib.Values.Init (Value, Glib.GType_String);
+                  Glib.Values.Set_String
+                    (Value,
+                     Image (Passed, 1) & " " & Percent_Image (Passed, Totals));
+               end;
+            end if;
 
          when Total_Checks_Count_Column =>
             if Subprogram_Node /= null then
@@ -562,67 +449,6 @@ package body CodePeer.Messages_Summary_Models is
 
             elsif Project_Node /= null then
                Set_Integer_Image (Project_Node.Total_Checks, True);
-
-            else
-               declare
-                  Counts : CodePeer.Utilities.Messages_Counts;
-                  Checks : Natural;
-                  Totals : Natural;
-
-               begin
-                  CodePeer.Utilities.Compute_Messages_Count
-                    (Self.Tree,
-                     Self.Message_Categories,
-                     Counts,
-                     Checks,
-                     Totals);
-
-                  Set_Integer_Image (Totals, True);
-               end;
-            end if;
-
-         when Passed_Checks_Count_Column =>
-            if Subprogram_Node /= null then
-               --  Nothing to output, checks are counted per file
-
-               Set_Integer_Image (0, True);
-
-            elsif File_Node /= null then
-               if CodePeer.File_Data
-                    (File_Node.Node.Analysis_Data.CodePeer_Data.all).
-                        Total_Checks < File_Node.Checks_Count
-               then
-                  --  KC30-001: total number of checks may be less than number
-                  --  of check messages because of inconsistency of CodePeer
-                  --  database. This code is used in such cases to prevent GPS
-                  --  from crash.
-
-                  Glib.Values.Init (Value, Glib.GType_String);
-                  Glib.Values.Set_String (Value, "ERROR");
-
-               else
-                  Set_Integer_Image
-                    (CodePeer.File_Data
-                       (File_Node.Node.Analysis_Data.CodePeer_Data.all).
-                          Total_Checks - File_Node.Checks_Count,
-                     True);
-               end if;
-
-            elsif Project_Node /= null then
-               if Project_Node.Total_Checks < Project_Node.Checks_Count then
-                  --  KC30-001: total number of checks may be less than number
-                  --  of check messages because of inconsistency of CodePeer
-                  --  database. This code is used in such cases to prevent GPS
-                  --  from crash.
-
-                  Glib.Values.Init (Value, Glib.GType_String);
-                  Glib.Values.Set_String (Value, "ERROR");
-
-               else
-                  Set_Integer_Image
-                    (Project_Node.Total_Checks - Project_Node.Checks_Count,
-                     True);
-               end if;
 
             else
                declare

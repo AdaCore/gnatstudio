@@ -229,7 +229,7 @@ package body CodePeer.Module is
      (Self : not null access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
    --  Shows file and its messages in the location view. Current messages
-   --  fileter is applied. Messages container's messages are created when
+   --  filter is applied. Messages container's messages are created when
    --  necessary.
 
    procedure Review
