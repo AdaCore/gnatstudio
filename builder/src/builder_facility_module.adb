@@ -766,7 +766,8 @@ package body Builder_Facility_Module is
          Category        => D.Value,
          Clear_Console   => (not D.Quiet)
            and then (D.Shadow or else Builder_Module_ID.Build_Count = 0),
-         Clear_Locations => Builder_Module_ID.Build_Count = 0,
+         Clear_Locations => (not D.Quiet)
+           and then Builder_Module_ID.Build_Count = 0,
          Shadow          => D.Shadow,
          Background      => D.Background);
 
