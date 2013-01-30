@@ -69,9 +69,12 @@ class Sqlite_Cross_References(object):
         # If we are already recomputing Xref info, do not launch another instance
         # of gnatinspect, but register one to be launched
 
-        if "Recompute Xref info" in [t.name() for t in GPS.Task.list()]:
-            self.gnatinspect_launch_registered = True
-            return
+        tasks = GPS.Task.list()
+
+        if tasks:
+            if "Recompute Xref info" in [t.name() for t in tasks]:
+                self.gnatinspect_launch_registered = True
+                return
 
         # We are about to launch gnatinspect
         self.gnatinspect_launch_registered = False
@@ -103,7 +106,7 @@ class Sqlite_Cross_References(object):
 
     def on_gps_started(self, hook):
         GPS.Menu.create("/Build/Recompute _Xref info",
-             on_activate=lambda x : recompute_xref())
+             on_activate=lambda x : self.recompute_xref())
 
 
 if GPS.Logger("ENTITIES.SQLITE").active:
