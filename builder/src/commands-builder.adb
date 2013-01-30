@@ -290,6 +290,9 @@ package body Commands.Builder is
             Show_Exit_Status     => not (Data.Shadow
               or else Data.Background
               or else Data.Quiet),
+            Block_Exit           => not (Data.Shadow
+              or else Data.Background
+              or else Data.Quiet),
             Created_Command      => Created_Command);
 
          --  ??? check value of Success
