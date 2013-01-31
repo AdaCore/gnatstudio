@@ -44,7 +44,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Basic_Types;                use Basic_Types;
 with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
 with GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
@@ -182,7 +181,11 @@ package body Src_Contexts is
       Current_Column : Character_Offset_Type;
       Backward       : Boolean;
       Dialog_On_Failure : Boolean := True;
-      Result         : out Match_Result_Access);
+      Result         : out Match_Result_Access;
+      Start_Line     : Editable_Line_Type := 1;
+      Start_Column   : Character_Offset_Type := 1;
+      End_Line       : Editable_Line_Type := 0;
+      End_Column     : Character_Offset_Type := 0);
    --  Return the next occurrence of Context in Editor, just before or just
    --  after Current_Line, Current_Column. If no match is found after the
    --  current position, for a forward search, return the first occurrence from
@@ -191,6 +194,8 @@ package body Src_Contexts is
    --  and column will always be correct.
    --  null is returned if there is no match.
    --  Current_Scope is the scope at current_line, current_column.
+   --  Restrict search to given range (if specified):
+   --  Start_Line:Start_Column .. End_Line:End_Column
 
    procedure First_Match
      (Context       : access Search_Context'Class;
@@ -251,11 +256,14 @@ package body Src_Contexts is
       Editor          : Source_Editor_Box;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Range_Start     : Gtk_Text_Iter;
-      Range_End       : Gtk_Text_Iter) return Boolean;
+      Start_Line      : Editable_Line_Type := 1;
+      Start_Column    : Character_Offset_Type := 1;
+      End_Line        : Editable_Line_Type := 0;
+      End_Column      : Character_Offset_Type := 0) return Boolean;
    --  Auxiliary function, factorizes code between Search and Replace.
    --  Return True in case of success.
-   --  Limit search to Range_Start .. Range_End text range.
+   --  Restrict search to given range (if specified):
+   --  Start_Line:Start_Column .. End_Line:End_Column
 
    function Locations_Category_Name (Look_For : String) return String;
    --  Return the name of the category to use in the Locations window
@@ -846,17 +854,21 @@ package body Src_Contexts is
    ---------------
 
    procedure Scan_Next
-     (Context           : access Search_Context'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Editor            : access Source_Buffer_Record'Class;
-      Scope             : Search_Scope;
-      Lexical_State     : in out Recognized_Lexical_States;
-      Lang              : Language_Access;
-      Current_Line      : Editable_Line_Type;
-      Current_Column    : Character_Offset_Type;
-      Backward          : Boolean;
+     (Context        : access Search_Context'Class;
+      Kernel         : access Kernel_Handle_Record'Class;
+      Editor         : access Source_Buffer_Record'Class;
+      Scope          : Search_Scope;
+      Lexical_State  : in out Recognized_Lexical_States;
+      Lang           : Language_Access;
+      Current_Line   : Editable_Line_Type;
+      Current_Column : Character_Offset_Type;
+      Backward       : Boolean;
       Dialog_On_Failure : Boolean := True;
-      Result            : out Match_Result_Access)
+      Result         : out Match_Result_Access;
+      Start_Line     : Editable_Line_Type := 1;
+      Start_Column   : Character_Offset_Type := 1;
+      End_Line       : Editable_Line_Type := 0;
+      End_Column     : Character_Offset_Type := 0)
    is
       Continue_Till_End : Boolean := False;
 
@@ -933,19 +945,20 @@ package body Src_Contexts is
       end Continue_Dialog;
 
       Was_Partial       : Boolean;
-      Buffer_Text       : GNAT.Strings.String_Access;
+      Begin_Line        : Editable_Line_Type := Start_Line;
+      Begin_Column      : Character_Offset_Type := Start_Column;
 
    begin
       Result := null;
 
       if Backward then
-         Buffer_Text := Get_String (Source_Buffer (Editor));
          Scan_Buffer
-           (Buffer_Text.all, 1, Context,
+           (Get_Text (Editor, Start_Line, 1, End_Line, End_Column),
+            Natural (Start_Column), Context,
             Backward_Callback'Unrestricted_Access, Scope,
             Lexical_State, Lang,
-            Was_Partial => Was_Partial);
-         Free (Buffer_Text);
+            Was_Partial => Was_Partial,
+            Ref_Line    => Start_Line);
 
          --  Start from the end if necessary.
 
@@ -960,17 +973,24 @@ package body Src_Contexts is
          end if;
 
       else
+         if Current_Line > Begin_Line or else
+           (Current_Line = Begin_Line and Current_Column > Begin_Column)
+         then
+            Begin_Line := Current_Line;
+            Begin_Column := Current_Column;
+         end if;
+
          Scan_Buffer
-           (Buffer        => Get_Text (Editor, Current_Line, 1),
-            Buffer_First  => Natural (Current_Column),
+           (Buffer        => Get_Text
+              (Editor, Begin_Line, 1, End_Line, End_Column),
+            Buffer_First  => Natural (Begin_Column),
             Context       => Context,
             Callback      => Stop_At_First_Callback'Unrestricted_Access,
             Scope         => Scope,
             Lexical_State => Lexical_State,
             Lang          => Lang,
-            Ref_Line      => Current_Line,
-            Ref_Column    => Current_Column,
-            Was_Partial   => Was_Partial);
+            Was_Partial   => Was_Partial,
+            Ref_Line      => Begin_Line);
 
          --  Start from the beginning if necessary.
          --  Do not display the continue dialog if starting search from the
@@ -990,13 +1010,14 @@ package body Src_Contexts is
             end if;
 
             Lexical_State := Statements;
-            Buffer_Text := Get_String (Source_Buffer (Editor));
             Scan_Buffer
-              (Buffer_Text.all, 1, Context,
+              (Get_Text (Editor, Start_Line, 1, End_Line, End_Column),
+               Natural (Start_Column),
+               Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope,
                Lexical_State, Lang,
-               Was_Partial => Was_Partial);
-            Free (Buffer_Text);
+               Was_Partial => Was_Partial,
+               Ref_Line    => Start_Line);
          end if;
       end if;
    end Scan_Next;
@@ -1383,7 +1404,7 @@ package body Src_Contexts is
 
       Begin_Line           : Editable_Line_Type;
       Begin_Column         : Character_Offset_Type;
-      End_Line             : Natural;
+      End_Line             : Editable_Line_Type;
       End_Column           : Character_Offset_Type;
 
       --------------------------
@@ -1392,8 +1413,9 @@ package body Src_Contexts is
 
       function Interactive_Callback (Match : Match_Result) return Boolean is
       begin
-         if Match.Begin_Line > End_Line or
-           (Match.Begin_Line = End_Line and Match.Begin_Column > End_Column)
+         if Match.Begin_Line > Natural (End_Line) or
+           (Match.Begin_Line = Natural (End_Line) and
+              Match.Begin_Column > End_Column)
          then
             return False;
          end if;
@@ -1442,10 +1464,17 @@ package body Src_Contexts is
          Buffer.Get_Iter_At_Mark (Range_Start, Context.Selection_From);
          Buffer.Get_Iter_At_Mark (Range_End, Context.Selection_To);
 
+         Begin_Line := Editable_Line_Type (Get_Line (Range_Start) + 1);
+         End_Line := Editable_Line_Type (Get_Line (Range_End) + 1);
+         Begin_Column :=
+           Character_Offset_Type (Get_Line_Offset (Range_Start) + 1);
+         End_Column :=
+           Character_Offset_Type (Get_Line_Offset (Range_End) + 1);
+
          if not Context.All_Occurrences then
             Found := Auxiliary_Search
               (Context, Editor, Kernel, Search_Backward,
-               Range_Start, Range_End);
+               Begin_Line, Begin_Column, End_Line, End_Column);
 
             if not Found then
                Buffer.Select_Range (Range_Start, Range_End);
@@ -1456,13 +1485,6 @@ package body Src_Contexts is
             declare
                State : Recognized_Lexical_States := Statements;
             begin
-               Begin_Line := Editable_Line_Type (Get_Line (Range_Start) + 1);
-               End_Line := Natural (Get_Line (Range_End) + 1);
-               Begin_Column :=
-                 Character_Offset_Type (Get_Line_Offset (Range_Start) + 1);
-               End_Column :=
-                 Character_Offset_Type (Get_Line_Offset (Range_End) + 1);
-
                Scan_Editor
                  (Context,
                   Get_Language_Handler (Kernel),
@@ -1838,7 +1860,11 @@ package body Src_Contexts is
       Dialog_On_Failure : Boolean := True;
       Match_From      : out Gtk.Text_Iter.Gtk_Text_Iter;
       Match_Up_To     : out Gtk.Text_Iter.Gtk_Text_Iter;
-      Found           : out Boolean)
+      Found           : out Boolean;
+      Start_Line      : Editable_Line_Type := 1;
+      Start_Column    : Character_Offset_Type := 1;
+      End_Line        : Editable_Line_Type := 0;
+      End_Column      : Character_Offset_Type := 0)
    is
       Editor : constant Source_Buffer := Source_Buffer (Get_Buffer (Start_At));
       Lang   : Language_Access;
@@ -1885,7 +1911,11 @@ package body Src_Contexts is
          Current_Column => Column,
          Dialog_On_Failure => Dialog_On_Failure,
          Backward       => Search_Backward,
-         Result         => Match);
+         Result         => Match,
+         Start_Line     => Start_Line,
+         Start_Column   => Start_Column,
+         End_Line       => End_Line,
+         End_Column     => End_Column);
 
       if Match /= null then
          Found := True;
@@ -1943,8 +1973,10 @@ package body Src_Contexts is
       Editor          : Source_Editor_Box;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Range_Start     : Gtk_Text_Iter;
-      Range_End       : Gtk_Text_Iter) return Boolean
+      Start_Line      : Editable_Line_Type := 1;
+      Start_Column    : Character_Offset_Type := 1;
+      End_Line        : Editable_Line_Type := 0;
+      End_Column      : Character_Offset_Type := 0) return Boolean
    is
       Selection_Start : Gtk_Text_Iter;
       Selection_End   : Gtk_Text_Iter;
@@ -1964,11 +1996,13 @@ package body Src_Contexts is
          Search_Backward => Search_Backward,
          Match_From      => Match_From,
          Match_Up_To     => Match_Up_To,
-         Found           => Found);
+         Found           => Found,
+         Start_Line      => Start_Line,
+         Start_Column    => Start_Column,
+         End_Line        => End_Line,
+         End_Column      => End_Column);
 
-      if Found
-        and then In_Range (Match_From, Range_Start, Range_End)
-      then
+      if Found then
          Push_Current_Editor_Location_In_History (Kernel);
          Select_Region (Get_Buffer (Editor), Match_Up_To, Match_From);
 
@@ -2046,17 +2080,8 @@ package body Src_Contexts is
       Raise_Child (Child, Give_Focus);
 
       if not Context.All_Occurrences then
-         declare
-            Buffer_Start : Gtk_Text_Iter;
-            Buffer_End   : Gtk_Text_Iter;
-         begin
-            Buffer.Get_Start_Iter (Buffer_Start);
-            Buffer.Get_End_Iter (Buffer_End);
-            Found := Auxiliary_Search
-              (Context, Editor, Kernel, Search_Backward,
-               Buffer_Start, Buffer_End);
-            Continue := False; --  ??? Dummy boolean.
-         end;
+         Found := Auxiliary_Search (Context, Editor, Kernel, Search_Backward);
+         Continue := False; --  ??? Dummy boolean.
       else
          Search_From_Editor
            (Context,
