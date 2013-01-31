@@ -79,9 +79,15 @@ package body Task_Manager.Shell is
 
       elsif Command = "name" then
          Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         C := Manager.Queues
-           (Get_Data (Task_Inst, Task_Class)).Queue.First_Element;
-         Set_Return_Value (Data, Commands.Name (C));
+         if Manager.Queues
+           (Get_Data (Task_Inst, Task_Class)).Queue.Is_Empty
+         then
+            Set_Return_Value (Data, String'(""));
+         else
+            C := Manager.Queues
+              (Get_Data (Task_Inst, Task_Class)).Queue.First_Element;
+            Set_Return_Value (Data, Commands.Name (C));
+         end if;
       end if;
    end Task_Command_Handler;
 
