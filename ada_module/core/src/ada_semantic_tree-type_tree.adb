@@ -654,7 +654,8 @@ package body Ada_Semantic_Tree.Type_Tree is
                --  loop in the type references. The use of an excluding stack
                --  avoids infinite loops
 
-               if not Is_Excluded (Excluded, Parent_Type) then
+               if Parent_Type /= Null_Entity_Access and then
+                 not Is_Excluded (Excluded, Parent_Type) then
                   Perform_Type_Analyzis_If_Needed (Parent_Type, Excluded);
 
                   Parent_Info := Get_Type_Info (Ada_Type_Key, Parent_Type);
