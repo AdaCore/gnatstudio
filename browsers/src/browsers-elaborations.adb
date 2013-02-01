@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Cairo;                     use Cairo;
@@ -138,6 +139,9 @@ package body Browsers.Elaborations is
       Elaborate_All : Dependency);
    --  Put all units of Elaborate_All dependency in browser
 
+   function Strip_Unit_Kind (Unit_Name : String) return String;
+   --  Strip (spec) and (body) from Unit_Name
+
    --------------
    -- Get_Unit --
    --------------
@@ -146,6 +150,7 @@ package body Browsers.Elaborations is
      (Browser   : Elaboration_Browser;
       Unit_Name : String) return Unit_Item
    is
+      Unit_Without_Kind : constant String := Strip_Unit_Kind (Unit_Name);
       Iter : Item_Iterator := Start (Get_Canvas (Browser));
       Item : Unit_Item;
    begin
@@ -153,7 +158,7 @@ package body Browsers.Elaborations is
          exit when Get (Iter) = null;
 
          if Get (Iter).all in Unit_Item_Record
-           and then Unit_Item (Get (Iter)).Name = Unit_Name
+           and then Unit_Item (Get (Iter)).Name = Unit_Without_Kind
          then
             Item := Unit_Item (Get (Iter));
             exit;
@@ -163,7 +168,7 @@ package body Browsers.Elaborations is
       end loop;
 
       if Item = null then
-         Gtk_New (Item, Unit_Name, Browser);
+         Gtk_New (Item, Unit_Without_Kind, Browser);
          Put (Get_Canvas (Browser), Item);
       end if;
 
@@ -308,21 +313,23 @@ package body Browsers.Elaborations is
       Prev_Unit : Unit_Item := Item_After;
    begin
       for J in reverse 1 .. Links_Count (Elaborate_All) loop
-         declare
-            Next      : constant Link := Element (Elaborate_All, J);
-            Next_Unit : constant Unit_Item
-              := Get_Unit (Browser, "Unit: " & Unit_Name (Next));
-            Link      : constant Browser_Link := new Browser_Link_Record;
-         begin
-            Add_Link
-              (Get_Canvas (Browser),
-               Link,
-               Prev_Unit,
-               Next_Unit,
-               Descr => Kind_Image (Kind (Next)));
-            Refresh (Next_Unit);
-            Prev_Unit := Next_Unit;
-         end;
+         if Kind (Element (Elaborate_All, J)) = Withed then
+            declare
+               Next      : constant Link := Element (Elaborate_All, J);
+               Next_Unit : constant Unit_Item
+                 := Get_Unit (Browser, "Unit: " & Unit_Name (Next));
+               Link      : constant Browser_Link := new Browser_Link_Record;
+            begin
+               Add_Link
+                 (Get_Canvas (Browser),
+                  Link,
+                  Prev_Unit,
+                  Next_Unit,
+                  Descr => Kind_Image (Kind (Next)));
+               Refresh (Next_Unit);
+               Prev_Unit := Next_Unit;
+            end;
+         end if;
       end loop;
 
       Refresh (Item_After);
@@ -471,5 +478,20 @@ package body Browsers.Elaborations is
    begin
       Last_Elaboration_Cycle := Value;
    end Set_Elaboration_Cycle;
+
+   ---------------------
+   -- Strip_Unit_Kind --
+   ---------------------
+
+   function Strip_Unit_Kind (Unit_Name : String) return String is
+      Space : constant Natural := Ada.Strings.Fixed.Index
+        (Unit_Name, " ", Ada.Strings.Backward);
+   begin
+      if Space in Unit_Name'Range then
+         return Unit_Name (Unit_Name'First .. Space - 1);
+      else
+         return Unit_Name;
+      end if;
+   end Strip_Unit_Kind;
 
 end Browsers.Elaborations;
