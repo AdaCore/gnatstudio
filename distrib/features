@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-53-M129-002 GPS: return block completion (2013-02-04)
+
+  Add "return ... end return;" statement support for complete block
+  completion
+
 NF-60-M122-025 GPS: filter in the outline view (2013-01-23)
 
   A filter has been added to the Outline view to make it easier to find

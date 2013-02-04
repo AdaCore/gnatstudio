@@ -11,7 +11,7 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 - M125-011: GPS: use all type clause corrupts outline view & vertical bracket
   Problem:    when Ada 2012 use all type clause is used, the displayed 
               vertical bracket around blocks may be wrong. The Outline view
-              also is may display wrong data.
+              also may display wrong data.
   Workaround: None.
 
 - M122-003: GPS: tasks view is too wide
@@ -150,3 +150,8 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               cross-reference is available anymore for that file.
   Workaround: force the loading of all xref in memory, through
               /Build/Load Xref In Memory.
+
+- L806-019: Ada 2012 aspect in type declaration corrupts completion & outline
+  Problem:    If an aspect is used in a type declaration, it corrupts the
+              completion database. The outline view may also be frozen.
+  Workaround: None

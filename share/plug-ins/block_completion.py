@@ -45,6 +45,7 @@ BLOCKS_DEFS = {
     'CAT_CASE_STATEMENT'     : ['end case;', ''],
     'CAT_CASE_INSIDE_RECORD' : ['end case;', ''],
     'CAT_LOOP_STATEMENT'     : [r'end loop \1;', r'\s*([^ ]+)\s*:\s*loop.*'],
+    'CAT_RETURN_BLOCK'       : [r'end return;', ''],
     'CAT_PROCEDURE'          : [r'end \2;', r'\s*(overriding\s+)?\s*procedure\s+([^ \n(]+).*'],
     'CAT_FUNCTION'           : [r'end \2;', r'\s*(overriding\s+)?\s*function\s+([^ \n(]+).*'],
     'CAT_DECLARE_BLOCK'      : [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
