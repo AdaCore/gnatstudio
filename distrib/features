@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.3.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-53-M129-002 GPS: return block completion (2013-02-04)
+
+  Add "return ... end return;" statement support for complete block
+  completion
+
 NF-53-M109-036 GPS: autofix on missing constant with preferences (2013-01-21)
 
   Autofix has always done fixes in lowercases. This enhancement performs
