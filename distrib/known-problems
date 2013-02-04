@@ -139,4 +139,3 @@ Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
   Problem:    If an aspect is used in a type declaration, it corrupts the
               completion database. The outline view may also be frozen.
   Workaround: None
-  
