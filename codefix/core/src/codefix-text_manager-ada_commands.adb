@@ -261,7 +261,7 @@ package body Codefix.Text_Manager.Ada_Commands is
      (Text        : String;
       With_Casing : Casing_Type) return String
    is
-      New_String  : String (Text'Range);
+      New_String  : String (Text'Range) := Text;
 
    begin
       case With_Casing is
