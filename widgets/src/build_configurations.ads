@@ -306,6 +306,9 @@ package Build_Configurations is
       Messages_Category : Unbounded_String;
       --  Name of the messages category to be used to create messages in
       --  the messages container.
+
+      Output_Parsers    : Unbounded_String;
+      --  Names of output parsers separated by space.
    end record;
 
    function Get_Properties (Target : Target_Access) return Target_Properties;
@@ -427,6 +430,7 @@ package Build_Configurations is
    --     <key>KEY</key>
    --     <launch-mode>LAUNCH_MODE</launch-mode>
    --     <server>SERVER</server>
+   --     <output-parsers>PARSER NAMES</output-parsers>
    --     <command-line>
    --           <arg>COMMAND</arg>
    --           <arg>ARG1</arg>
@@ -455,6 +459,7 @@ package Build_Configurations is
    --     COMMAND      (optional) is a string containing the executable
    --     ARG1..ARGN   (optional) arguments
    --     ICON         (optional) is a stock identifier
+   --     PARSER NAMES (optional) is list of output parser names
 
    function Save_Target_To_XML
      (Registry : Build_Config_Registry_Access;

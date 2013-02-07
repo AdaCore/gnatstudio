@@ -755,9 +755,9 @@ package body Build_Command_Manager is
          return;
       end if;
 
-      Register_Output_Parser (Console_Writer'Access, Reserved + 20);
-      Register_Output_Parser (Location_Parser'Access, Reserved + 30);
-      Register_Output_Parser (Output_Collector'Access, Line_By_Line + 10);
+      Register_Output_Parser (Console_Writer'Access, "console_writer");
+      Register_Output_Parser (Location_Parser'Access, "location_parser");
+      Register_Output_Parser (Output_Collector'Access, "output_collector");
 
       Parsers_Registered := True;
    end Register_Output_Parsers;

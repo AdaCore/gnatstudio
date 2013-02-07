@@ -62,19 +62,39 @@ package GPS.Kernel.Tools_Output is
    --  Priority is used to sort chain of output parser on creation.
    --  Parser with lower priority is executed first
 
-   Reserved     : constant Parser_Priority := 20;
-   --  System parsers such as UTF-8 converter registered at Reserved level
-
-   Line_By_Line : constant Parser_Priority := 500;
-   --  Parsers registered after Line_By_Line level will get input line by line
-
    procedure Register_Output_Parser
      (Fabric   : access Output_Parser_Fabric'Class;
-      Priority : Parser_Priority);
-   --  Register new output parser fabric at given Priority
+      Name     : String);
+   --  Register new output parser fabric with given name
 
-   function New_Parser_Chain return Tools_Output_Parser_Access;
+   function New_Parser_Chain
+     (Target_Name : String) return Tools_Output_Parser_Access;
    --  Create new chain of Tools_Output_Parsers.
    --  Result should be deallocated after use
+
+   procedure Set_Parsers
+     (Target_Name : String;
+      Parser_List : String);
+   --  Assign parser name list to given target
+
+   type External_Parser_Fabric is abstract tagged limited null record;
+
+   procedure Create_External_Parsers
+     (Self        : access External_Parser_Fabric;
+      Parser_List : in out String_List_Utils.String_List.List_Node;
+      Child       : in out Tools_Output_Parser_Access;
+      Found       : out Boolean) is abstract;
+   --  This procedure iterates over Parser_List and creates output parser chain
+   --  in scripting language. Then it creates wrapper and adds it to Child.
+   --  It stops when unknown parser encountered.
+   --  If even very first parser not found it returns Found = False and
+   --  unmodified Child and Parser_List.
+
+   type External_Parser_Fabric_Access is
+     access all External_Parser_Fabric'Class;
+
+   procedure Set_External_Parser_Fabric
+     (Value : External_Parser_Fabric_Access);
+   --  Define external parser fabric
 
 end GPS.Kernel.Tools_Output;

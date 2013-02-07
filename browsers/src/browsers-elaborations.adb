@@ -459,7 +459,7 @@ package body Browsers.Elaborations is
          GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
          Name => "gnatstack.compilation_finished");
 
-      Register_Output_Parser (Output_Parser'Access, Line_By_Line + 20);
+      Register_Output_Parser (Output_Parser'Access, "elaboration_cycles");
 
       Auto_Show_Preference := Create
         (Get_Preferences (Kernel),

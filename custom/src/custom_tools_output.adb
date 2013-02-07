@@ -15,47 +15,36 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
+with GNATCOLL.Any_Types;         use GNATCOLL.Any_Types;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 
-with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Tools_Output;    use GPS.Kernel.Tools_Output;
+with String_List_Utils;
 
 package body Custom_Tools_Output is
 
-   Tools_Output_Handler_Class_Name : constant String := "ToolsOutputHandler";
+   Tools_Output_Handler_Class_Name : constant String := "OutputParserWrapper";
 
-   On_Parse_Cst       : aliased constant String := "on_parse_stdout";
-   On_EOF_Cst         : aliased constant String := "on_eof_stdout";
-   On_Parse_Error_Cst : aliased constant String := "on_parse_stderr";
-   On_EOF_Error_Cst   : aliased constant String := "on_eof_stderr";
-   Priority_Cst       : aliased constant String := "priority";
+   On_Stdout_Cst : aliased constant String := "on_stdout";
+   On_Exit_Cst   : aliased constant String := "on_exit";
+   On_Stderr_Cst : aliased constant String := "on_stderr";
+   Text_Cst      : aliased constant String := "text";
 
-   Handler_Constructor_Args : constant Cst_Argument_List :=
-     (2  => On_Parse_Cst'Access,
-      3  => On_EOF_Cst'Access,
-      4  => On_Parse_Error_Cst'Access,
-      5  => On_EOF_Error_Cst'Access);
-
-   Register_Args : constant Cst_Argument_List :=
-     (2  => Priority_Cst'Access);
+   On_Text_Params : constant Cst_Argument_List := (1 => Text_Cst'Access);
 
    type Tools_Output_Property is new Instance_Property_Record with record
-      Inst           : Class_Instance;
-      On_Parse       : Subprogram_Type;
-      On_EOF         : Subprogram_Type;
-      On_Parse_Error : Subprogram_Type;
-      On_EOF_Error   : Subprogram_Type;
+      Child : Tools_Output_Parser_Access;
    end record;
 
    type Tools_Output_Property_Access is access all Tools_Output_Property;
 
    procedure Handler
      (Data    : in out Callback_Data'Class; Command : String);
-   --  Handle the custom timeout commands
+   --  Handle the custom output parser commands
 
    type Custom_Parser is new Tools_Output_Parser with record
-      Object : Tools_Output_Property;
+      Inst : Class_Instance;
    end record;
 
    overriding procedure Parse_Standard_Output
@@ -72,30 +61,86 @@ package body Custom_Tools_Output is
      (Self : not null access Custom_Parser);
    --  Process end of streams (both output and error).
 
-   type Custom_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
-      Object : Tools_Output_Property;
+   type Python_Parser_Fabric is new External_Parser_Fabric with record
+      Kernel : Kernel_Handle;
    end record;
 
-   overriding function Create
-     (Self  : access Custom_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access;
-   --  Create new parser to write on given Console.
+   overriding procedure Create_External_Parsers
+     (Self        : access Python_Parser_Fabric;
+      Parser_List : in out String_List_Utils.String_List.List_Node;
+      Child       : in out Tools_Output_Parser_Access;
+      Found       : out Boolean);
 
-   ------------
-   -- Create --
-   ------------
+   -----------------------------
+   -- Create_External_Parsers --
+   -----------------------------
 
-   overriding function Create
-     (Self  : access Custom_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access
+   overriding procedure Create_External_Parsers
+     (Self        : access Python_Parser_Fabric;
+      Parser_List : in out String_List_Utils.String_List.List_Node;
+      Child       : in out Tools_Output_Parser_Access;
+      Found       : out Boolean)
    is
-      pragma Unreferenced (Self);
+      use String_List_Utils.String_List;
+
+      Create_Parser : constant String := "tool_output.create_parser";
+
+      Inst   : Class_Instance;
+      Script : constant Scripting_Language :=
+        Lookup_Scripting_Language (Get_Scripts (Self.Kernel), "Python");
    begin
-      return new Custom_Parser (Child);
-   end Create;
+      --  Try to create new python parser
+      declare
+         Args : Callback_Data'Class :=
+           Create (Script, 1 + Boolean'Pos (Child /= null));
+      begin
+         Set_Nth_Arg (Args, 1, Data (Parser_List));
+
+         if Child /= null then
+            --  Create wrapper around Child and pass to python function
+            declare
+               Class    : constant Class_Type :=
+                 New_Class (Self.Kernel, Tools_Output_Handler_Class_Name);
+               Instance : constant Class_Instance :=
+                 New_Instance (Script, Class);
+               Property : constant Tools_Output_Property := (Child => Child);
+            begin
+               Set_Data (Instance, Tools_Output_Handler_Class_Name, Property);
+               Set_Nth_Arg (Args, 2, Instance);
+            end;
+         end if;
+
+         Execute_Command (Args, Create_Parser);
+
+         Inst := Args.Return_Value;
+      end;
+
+      if Inst = No_Class_Instance then
+         Found := False;
+         return;
+      end if;
+
+      Parser_List := Next (Parser_List);
+
+      while Parser_List /= Null_Node loop
+         declare
+            Args : Callback_Data'Class := Create (Script, 2);
+         begin
+            Set_Nth_Arg (Args, 1, Data (Parser_List));
+            Set_Nth_Arg (Args, 2, Inst);
+
+            Execute_Command (Args, Create_Parser);
+
+            exit when Args.Return_Value = No_Class_Instance;
+
+            Inst := Args.Return_Value;
+            Parser_List := Next (Parser_List);
+         end;
+      end loop;
+
+      Found := True;
+      Child := new Custom_Parser'(Child => null, Inst => Inst);
+   end Create_External_Parsers;
 
    -------------------
    -- End_Of_Stream --
@@ -104,31 +149,19 @@ package body Custom_Tools_Output is
    overriding procedure End_Of_Stream
      (Self : not null access Custom_Parser)
    is
-      C : Callback_Data'Class := Create
-        (Get_Script (Self.Object.Inst), Arguments_Count => 0);
+      Args : Callback_Data'Class := Create
+        (Get_Script (Self.Inst), Arguments_Count => 0);
+      Proc : Subprogram_Type;
    begin
-      if Self.Object.On_EOF /= null then
-         declare
-            Text : constant String := Execute (Self.Object.On_EOF, C);
-         begin
-            if Text /= "" then
-               Self.Child.Parse_Standard_Output (Text);
-            end if;
-         end;
-      end if;
+      Proc := Get_Method (Self.Inst, On_Exit_Cst);
 
-      if Self.Object.On_EOF_Error /= null then
-         declare
-            Text : constant String := Execute (Self.Object.On_EOF_Error, C);
-         begin
-            if Text /= "" then
-               Self.Child.Parse_Standard_Error (Text);
-            end if;
-         end;
-      end if;
-
-      Self.Child.End_Of_Stream;
-      Free (C);
+      declare
+         Ignore : constant Any_Type := Proc.Execute (Args);
+         pragma Unreferenced (Ignore);
+      begin
+         Free (Proc);
+         Free (Args);
+      end;
    end End_Of_Stream;
 
    -------------
@@ -136,59 +169,44 @@ package body Custom_Tools_Output is
    -------------
 
    procedure Handler
-     (Data    : in out Callback_Data'Class; Command : String) is
+     (Data    : in out Callback_Data'Class; Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Class  : constant Class_Type := New_Class
+        (Kernel, Tools_Output_Handler_Class_Name);
    begin
-      if Command = Constructor_Method then
-         Name_Parameters (Data, Handler_Constructor_Args);
+      if Command = On_Stdout_Cst then
+         Name_Parameters (Data, On_Text_Params);
 
          declare
-            Inst            : constant Class_Instance :=
-                                Nth_Arg
-                                  (Data, 1,
-                                   New_Class
-                                     (Get_Repository (Data),
-                                      Tools_Output_Handler_Class_Name));
-
-            Property        : Tools_Output_Property;
-
+            Inst     : constant Class_Instance := Nth_Arg (Data, 1, Class);
+            Text     : constant String := Nth_Arg (Data, 2);
+            Property : constant Tools_Output_Property_Access :=
+              Tools_Output_Property_Access
+                (Get_Data (Inst, Tools_Output_Handler_Class_Name));
          begin
-            Property := (Inst           => Inst,
-                         On_Parse       => Nth_Arg (Data, 2, null),
-                         On_EOF         => Nth_Arg (Data, 3, null),
-                         On_Parse_Error => Nth_Arg (Data, 2, null),
-                         On_EOF_Error   => Nth_Arg (Data, 3, null));
-
-            Set_Data (Inst, Tools_Output_Handler_Class_Name, Property);
+            Property.Child.Parse_Standard_Output (Text);
          end;
-      elsif Command = "register_tools_output_handler" then
-         Name_Parameters (Data, Register_Args);
+      elsif Command = On_Stderr_Cst then
+         Name_Parameters (Data, On_Text_Params);
 
          declare
-            Inst            : constant Class_Instance :=
-                                Nth_Arg
-                                  (Data, 1,
-                                   New_Class
-                                     (Get_Repository (Data),
-                                      Tools_Output_Handler_Class_Name),
-                                   Allow_Null => True);
-
-            Priority        : constant Integer := Nth_Arg (Data, 2);
-
-            Property        : Tools_Output_Property_Access;
+            Inst     : constant Class_Instance := Nth_Arg (Data, 1, Class);
+            Text     : constant String := Nth_Arg (Data, 2);
+            Property : constant Tools_Output_Property_Access :=
+              Tools_Output_Property_Access
+                (Get_Data (Inst, Tools_Output_Handler_Class_Name));
          begin
-            if Inst = No_Class_Instance then
-               Set_Error_Msg
-                 (Data, -"handler object must be initialized");
-               return;
-            end if;
-
-            Property := Tools_Output_Property_Access
-              (GNATCOLL.Scripts.Get_Data
-                 (Inst, Tools_Output_Handler_Class_Name));
-
-            Register_Output_Parser
-              (new Custom_Parser_Fabric'(Object => Property.all),
-               Parser_Priority (Priority));
+            Property.Child.Parse_Standard_Error (Text);
+         end;
+      elsif Command = On_Exit_Cst then
+         declare
+            Inst     : constant Class_Instance := Nth_Arg (Data, 1, Class);
+            Property : constant Tools_Output_Property_Access :=
+              Tools_Output_Property_Access
+                (Get_Data (Inst, Tools_Output_Handler_Class_Name));
+         begin
+            Property.Child.End_Of_Stream;
          end;
       end if;
    end Handler;
@@ -201,22 +219,20 @@ package body Custom_Tools_Output is
      (Self : not null access Custom_Parser;
       Item : String)
    is
-      C : Callback_Data'Class := Create
-        (Get_Script (Self.Object.Inst), Arguments_Count => 1);
+      Args : Callback_Data'Class := Create
+        (Get_Script (Self.Inst), Arguments_Count => 1);
+      Proc : Subprogram_Type;
    begin
-      if Self.Object.On_Parse_Error /= null then
-         Set_Nth_Arg (C, 1, Item);
+      Proc := Get_Method (Self.Inst, On_Stderr_Cst);
+      Set_Nth_Arg (Args, 1, Item);
 
-         declare
-            Text : constant String := Execute (Self.Object.On_Parse_Error, C);
-         begin
-            Self.Child.Parse_Standard_Error (Text);
-         end;
-      else
-         Self.Child.Parse_Standard_Error (Item);
-      end if;
-
-      Free (C);
+      declare
+         Ignore : constant Any_Type := Proc.Execute (Args);
+         pragma Unreferenced (Ignore);
+      begin
+         Free (Proc);
+         Free (Args);
+      end;
    end Parse_Standard_Error;
 
    ---------------------------
@@ -227,22 +243,20 @@ package body Custom_Tools_Output is
      (Self : not null access Custom_Parser;
       Item : String)
    is
-      C : Callback_Data'Class := Create
-        (Get_Script (Self.Object.Inst), Arguments_Count => 1);
+      Args : Callback_Data'Class := Create
+        (Get_Script (Self.Inst), Arguments_Count => 1);
+      Proc : Subprogram_Type;
    begin
-      if Self.Object.On_Parse /= null then
-         Set_Nth_Arg (C, 1, Item);
+      Proc := Get_Method (Self.Inst, On_Stdout_Cst);
+      Set_Nth_Arg (Args, 1, Item);
 
-         declare
-            Text : constant String := Execute (Self.Object.On_Parse, C);
-         begin
-            Self.Child.Parse_Standard_Output (Text);
-         end;
-      else
-         Self.Child.Parse_Standard_Output (Item);
-      end if;
-
-      Free (C);
+      declare
+         Ignore : constant Any_Type := Proc.Execute (Args);
+         pragma Unreferenced (Ignore);
+      begin
+         Free (Proc);
+         Free (Args);
+      end;
    end Parse_Standard_Output;
 
    -----------------------
@@ -250,24 +264,40 @@ package body Custom_Tools_Output is
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-      Handler_Class : constant Class_Type :=
+      Fabric : constant External_Parser_Fabric_Access :=
+        new Python_Parser_Fabric'(Kernel => Kernel_Handle (Kernel));
+      Class : constant Class_Type :=
         New_Class (Kernel, Tools_Output_Handler_Class_Name);
    begin
       Register_Command
         (Kernel,
          Constructor_Method,
          Minimum_Args  => 1,
-         Maximum_Args  => Handler_Constructor_Args'Last,
-         Class         => Handler_Class,
+         Maximum_Args  => 0,
+         Class         => Class,
          Handler       => Handler'Access);
       Register_Command
         (Kernel,
-         "register_tools_output_handler",
-         Minimum_Args  => 2,
-         Maximum_Args  => Register_Args'Last,
-         Class         => Handler_Class,
-         Handler       => Handler'Access,
-         Static_Method => True);
+         On_Stdout_Cst,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Class,
+         Handler       => Handler'Access);
+      Register_Command
+        (Kernel,
+         On_Stderr_Cst,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Class,
+         Handler       => Handler'Access);
+      Register_Command
+        (Kernel,
+         On_Exit_Cst,
+         Maximum_Args  => 0,
+         Class         => Class,
+         Handler       => Handler'Access);
+
+      Set_External_Parser_Fabric (Fabric);
    end Register_Commands;
 
 end Custom_Tools_Output;

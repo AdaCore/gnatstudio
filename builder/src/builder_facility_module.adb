@@ -284,6 +284,9 @@ package body Builder_Facility_Module is
    procedure Add_Menu_For_Target (Target : Target_Access);
    --  Create a menu item to build Target
 
+   procedure Set_Parsers_For_Target (Target : Target_Access);
+   --  Set list of output parser for given Target
+
    function Get_Targets_File return GNATCOLL.VFS.Virtual_File;
    --  Return the file where user targets are stored
 
@@ -1085,6 +1088,8 @@ package body Builder_Facility_Module is
             Install_Button_For_Target (T);
 
             Add_Menu_For_Target (T);
+
+            Set_Parsers_For_Target (T);
          end if;
 
       else
@@ -1497,6 +1502,16 @@ package body Builder_Facility_Module is
                           Menu_Name   => Get_Menu_Name (Target));
       end if;
    end Add_Menu_For_Target;
+
+   ----------------------------
+   -- Set_Parsers_For_Target --
+   ----------------------------
+
+   procedure Set_Parsers_For_Target (Target : Target_Access) is
+      P : constant Target_Properties := Get_Properties (Target);
+   begin
+      Set_Parsers (Get_Name (Target), To_String (P.Output_Parsers));
+   end Set_Parsers_For_Target;
 
    -----------------
    -- Clear_Menus --
@@ -1961,9 +1976,9 @@ package body Builder_Facility_Module is
                 Wrapper (On_GPS_Started'Access),
                 Name  => "builder_facility_module.gps_started");
 
-      Register_Output_Parser (Output_Chopper'Access, Reserved - 15);
-      Register_Output_Parser (UTF8_Converter'Access, Reserved - 5);
-      Register_Output_Parser (Text_Splitter'Access, Line_By_Line);
+      Register_Output_Parser (Output_Chopper'Access, "output_chopper");
+      Register_Output_Parser (UTF8_Converter'Access, "utf_converter");
+      Register_Output_Parser (Text_Splitter'Access, "text_splitter");
       UTF8_Converter.Set (Kernel);
    end Register_Module;
 
