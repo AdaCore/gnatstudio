@@ -15,20 +15,81 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Latin_1;           use Ada.Characters.Latin_1;
+with Ada.Strings;                      use Ada.Strings;
+with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
+with Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
-with Ada.Containers.Ordered_Maps;
+with Ada.Containers.Indefinite_Ordered_Maps;
+
+with String_List_Utils;
 
 package body GPS.Kernel.Tools_Output is
+   use String_List_Utils.String_List;
 
    type Output_Parser_Fabric_Access is access all Output_Parser_Fabric'Class;
 
-   package Fabric_Maps is new Ada.Containers.Ordered_Maps
-     (Natural, Output_Parser_Fabric_Access);
+   package Fabric_Maps is new Ada.Containers.Indefinite_Ordered_Maps
+     (String, Output_Parser_Fabric_Access);
 
-   Last : Natural := 0;
-   --  Unique parser index
+   package Target_Maps is new Ada.Containers.Indefinite_Ordered_Maps
+     (String, List);
+
+   function To_Parser_List (Parser_List : String) return List;
+   --  Convert string with parser_names to list of parser
+
    Map : Fabric_Maps.Map;
-   --  Map of registered parser sorted by priority and unique parser index
+   --  Map of registered parser sorted by unique parser name
+
+   Target_Parsers : Target_Maps.Map;
+   --  Map from target name to list of output parser names
+
+   Default_Macros : constant String := "[default]";
+
+   Default_Parser_Names : constant String :=
+     "output_chopper"   & " " &
+     "utf_converter"    & " " &
+     "progress_parser"  & " " &
+     "console_writer"   & " " &
+     "location_parser"  & " " &
+     "text_splitter"    & " " &
+     "output_collector" & " " &
+     "elaboration_cycles";
+
+   Space : constant Ada.Strings.Maps.Character_Set :=
+     Ada.Strings.Maps.To_Set (" " & CR & LF & HT);
+   --  Character set to separate parser names in a list
+
+   External_Parsers_Fabric : External_Parser_Fabric_Access;
+
+   --------------------
+   -- To_Parser_List --
+   --------------------
+
+   function To_Parser_List (Parser_List : String) return List is
+      Macros : constant Natural := Index (Parser_List, Default_Macros);
+      First  : Positive;
+      Last   : Natural := 0;
+      Result : List;
+   begin
+      if Macros > 0 then
+         return To_Parser_List
+           (Replace_Slice
+              (Parser_List,
+               Low  => Macros,
+               High => Macros + Default_Macros'Length - 1,
+               By   => Default_Parser_Names));
+      end if;
+      loop
+         Find_Token (Parser_List, Space, Last + 1, Outside, First, Last);
+         exit when First > Last;
+         Prepend (Result, Parser_List (First .. Last));
+      end loop;
+
+      return Result;
+   end To_Parser_List;
+
+   Default_Parsers : constant List := To_Parser_List (Default_Parser_Names);
 
    -------------
    -- Destroy --
@@ -66,18 +127,72 @@ package body GPS.Kernel.Tools_Output is
       Free_Instance (Self);
    end Free;
 
+   -----------------
+   -- Set_Parsers --
+   -----------------
+
+   procedure Set_Parsers
+     (Target_Name : String;
+      Parser_List : String) is
+   begin
+      if Parser_List = "" then
+         if Target_Parsers.Contains (Target_Name) then
+            Target_Parsers.Delete (Target_Name);
+         end if;
+      else
+         Target_Parsers.Include (Target_Name, To_Parser_List (Parser_List));
+      end if;
+   end Set_Parsers;
+
    ----------------------
    -- New_Parser_Chain --
    ----------------------
 
-   function New_Parser_Chain return Tools_Output_Parser_Access is
-      use Fabric_Maps;
-      Pos    : Cursor := Map.Last;
-      Result : Tools_Output_Parser_Access;
+   function New_Parser_Chain
+     (Target_Name : String) return Tools_Output_Parser_Access
+   is
+      function Get_Parser_List (Target_Name : String) return List;
+      --  Return list of parser names for given target
+
+      ---------------------
+      -- Get_Parser_List --
+      ---------------------
+
+      function Get_Parser_List (Target_Name : String) return List is
+      begin
+         if Target_Parsers.Contains (Target_Name) then
+            return Target_Parsers (Target_Name);
+         else
+            return Default_Parsers;
+         end if;
+      end Get_Parser_List;
+
+      Node    : List_Node := First (Get_Parser_List (Target_Name));
+      Result  : Tools_Output_Parser_Access;
+      Found   : Boolean;
    begin
-      while Has_Element (Pos) loop
-         Result := Element (Pos).Create (Result);
-         Previous (Pos);
+      while Node /= Null_Node loop
+         if Map.Contains (Data (Node)) then
+            declare
+               Fabric : constant Output_Parser_Fabric_Access :=
+                 Map (Data (Node));
+            begin
+               Result := Fabric.Create (Result);
+            end;
+
+            Node := Next (Node);
+         elsif External_Parsers_Fabric = null then
+            Node := Next (Node);
+         else
+            External_Parsers_Fabric.Create_External_Parsers
+              (Node, Result, Found);
+
+            if not Found then
+               --  Both Ada and python parsers not found
+               --  Report error and skip to next parser
+               Node := Next (Node);
+            end if;
+         end if;
       end loop;
 
       return Result;
@@ -115,12 +230,19 @@ package body GPS.Kernel.Tools_Output is
 
    procedure Register_Output_Parser
      (Fabric   : access Output_Parser_Fabric'Class;
-      Priority : Parser_Priority)
-   is
-      Index : constant Natural := Last + Natural (Priority) * 1024;
+      Name     : String) is
    begin
-      Map.Insert (Index, Output_Parser_Fabric_Access (Fabric));
-      Last := Last + 1;
+      Map.Insert (Name, Output_Parser_Fabric_Access (Fabric));
    end Register_Output_Parser;
+
+   --------------------------------
+   -- Set_External_Parser_Fabric --
+   --------------------------------
+
+   procedure Set_External_Parser_Fabric
+     (Value : External_Parser_Fabric_Access) is
+   begin
+      External_Parsers_Fabric := Value;
+   end Set_External_Parser_Fabric;
 
 end GPS.Kernel.Tools_Output;

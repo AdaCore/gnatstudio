@@ -1123,6 +1123,13 @@ package body Build_Configurations is
       C.Tag := new String'("server");
       C.Value := new String'(Target.Properties.Server'Img);
 
+      if Target.Properties.Output_Parsers /= "" then
+         C.Next := new Node;
+         C := C.Next;
+         C.Tag := new String'("output-parsers");
+         C.Value := new String'(To_String (Target.Properties.Output_Parsers));
+      end if;
+
       if Target.Command_Line /= null then
          C.Next := Command_Line_To_XML
            (Target.Command_Line.all, "command-line");
@@ -1269,6 +1276,10 @@ package body Build_Configurations is
 
          elsif Child.Tag.all = "server" then
             Target.Properties.Server := Server_Type'Value (Child.Value.all);
+
+         elsif Child.Tag.all = "output-parsers" then
+            Target.Properties.Output_Parsers :=
+              To_Unbounded_String (Child.Value.all);
 
          else
             Log (Registry, (-"Warning: invalid child to <target> node: ")

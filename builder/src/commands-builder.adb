@@ -177,7 +177,8 @@ package body Commands.Builder is
          --  Initialize progress parser with command
          Progress_Parser.Set_Command (Data.Command);
             --  Create new chain of output parsers
-         Build_Data.Output_Parser := New_Parser_Chain;
+         Build_Data.Output_Parser := New_Parser_Chain
+           (To_String (Build_Data.Target_Name));
       end if;
 
       if Build_Data.Output_Parser /= null then
@@ -215,7 +216,7 @@ package body Commands.Builder is
             --  ??? This is configurable in some cases (from XML for instance),
             --  so we should not have a hard coded regexp here.
          begin
-            Register_Output_Parser (Progress_Parser'Access, Reserved + 10);
+            Register_Output_Parser (Progress_Parser'Access, "progress_parser");
             Progress_Parser.Set_Pattern (Progress_Pattern);
             Parser_Registered := True;
          end;
