@@ -48,7 +48,8 @@ class Sqlite_Cross_References(object):
        <arg>%X</arg>
     </command-line>
 </target>
-</GPS>"""
+</GPS>
+"""
 
     def __init__(self):
         GPS.parse_xml(self.xml)
