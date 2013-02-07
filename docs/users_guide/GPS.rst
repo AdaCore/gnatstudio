@@ -1197,6 +1197,21 @@ Classes
 
    .. inheritance-diagram:: GPS.Missing_Arguments
 
+:class:`GPS.OutputParserWrapper`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: OutputParserWrapper
+
+   
+
+   .. automethod:: GPS.OutputParserWrapper.__init__
+
+   .. automethod:: GPS.OutputParserWrapper.on_exit
+
+   .. automethod:: GPS.OutputParserWrapper.on_stderr
+
+   .. automethod:: GPS.OutputParserWrapper.on_stdout
+
 :class:`GPS.Preference`
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1448,17 +1463,6 @@ Classes
    .. automethod:: GPS.Toolbar.get_by_pos
 
    .. automethod:: GPS.Toolbar.insert
-
-:class:`GPS.ToolsOutputHandler`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: ToolsOutputHandler
-
-   
-
-   .. automethod:: GPS.ToolsOutputHandler.__init__
-
-   .. automethod:: GPS.ToolsOutputHandler.register_tools_output_handler
 
 :class:`GPS.Unexpected_Exception`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -9319,43 +9319,65 @@ column.
         pass  # implemented in Ada
 
 ###########################################################
-# ToolsOutputHandler
+# OutputParserWrapper
 ###########################################################
 
-class ToolsOutputHandler(object):
+class OutputParserWrapper(object):
     """
-    This class is used to handle user-defined tools output parsers.
-    Parsers are organized in chain. Output on one parser is passed as
-    input to next one.
+    This class is used to handle user-defined tool output parsers.
+    Parsers are organized in chain. Output of one parser is passed as
+    input to next one. Chain of parser could be attached to a build target.
+    This class is for internal use only. Instead user should inherit custom
+    parser from OutputParser defined in tool_output.py, but their methods
+    are match.
+
+    .. code-block:: python
+
+       # Here is an example of custom parser:
+       #
+       import GPS, tool_output
+
+       class PopupParser(tool_output.OutputParser):
+         def on_stdout(self,text):
+           GPS.MDI.dialog (text)
+           if self.child != None:
+             self.child.on_stdout (text)
+
+    You can attach custom parser to a build target by specify it in XML file
+
+    .. code-block:: python
+
+       <target model="myTarget" category="_Run" name="My Target">
+          <output-parsers>[default] popupparser</output-parsers>
+       </target>
+
+    Where [default] abbreviates names of all parsers predefined in GPS.
     """
 
-    def __init__(self, on_parse_stdout=None, on_eof_stdout=None,
-                 on_parse_stderr=None, on_eof_stderr=None):
+    def __init__(self, child=None):
         """
-        Create a new GPS.ToolsOutputHandler instance. You
-        need to register it afterwards using register_tools_output_handler.
-
-``on_parse_stdout`` is a callback that is called each time a portion of
-tool output is ready to parse. It takes the portion of output as parameter
-and returns filtered portion as result.
-
-``on_eof_stdout`` is a callback that is called when all output is parsed.
-It takes no parameters and returns last piece of filtered output if any.
-
-``on_parse_stderr`` is like on_parse_stdout but concern error stream.
-
-``on_eof_stderr`` is like on_eof_stdout but concern error stream.
-
+        Create a new parser and initialize its child reference if provided.
         """
         pass  # implemented in Ada
 
-    def register_tools_output_handler (priority):
+    def on_stdout(self, text):
         """
-        Add handler to chain with given priority.
-        Parser with lower priority will be executed first.
-        Priorities 0 .. 20 reserved for internal use.
-        Parser with priority 500 or more will receive input line by line,
-        (each line as dedicated on_parse_stdout call).
+        This method is called each time a portion of output text is ready to
+        parse. It takes the portion of text as parameter and pass filtered
+        portion to its child.
+        """
+        pass  # implemented in Ada
+
+    def on_stderr(self, text):
+        """
+        This is like on_stdout, but concerns error stream.
+        """
+        pass  # implemented in Ada
+
+    def on_exit(self):
+        """
+        This method is called when all output is parsed.
+        Its purpose is to flush any buffered data at end of stream.
         """
         pass  # implemented in Ada
 
