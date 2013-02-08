@@ -1439,7 +1439,7 @@ package body CodePeer.Module is
 
       begin
          Get_Messages_Container (Context.Module.Kernel).Remove_Category
-           (Category, Race_Message_Flags);
+           (Category, Empty_Message_Flags);
       end Process_Category;
 
       ------------------
