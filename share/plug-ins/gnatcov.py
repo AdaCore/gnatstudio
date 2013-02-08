@@ -172,11 +172,13 @@ xml = """
     <command-line>
       <arg>gnatcov</arg>
       <arg>run</arg>
+      <arg>-P%PP</arg>
+      <arg>--recursive</arg>
+      <arg>%target</arg>
       <arg>-c</arg>
       <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
       <arg>-o</arg>
       <arg>%TT.trace</arg>
-      <arg>%target</arg>
       <arg>%E</arg>
       <arg>%attr(ide_coverage'switches_run)</arg>
     </command-line>
@@ -189,6 +191,9 @@ xml = """
     <command-line>
       <arg>gnatcov</arg>
       <arg>coverage</arg>
+      <arg>-P%PP</arg>
+      <arg>--recursive</arg>
+      <arg>%target</arg>
       <arg>--annotate=xcov</arg>
     </command-line>
     <icon>gps-build-all</icon>
@@ -208,8 +213,9 @@ xml = """
     <command-line>
       <arg>gnatcov</arg>
       <arg>coverage</arg>
-      <arg>-P</arg>
-      <arg>%PP</arg>
+      <arg>-P%PP</arg>
+      <arg>--recursive</arg>
+      <arg>%target</arg>
       <arg>-c</arg>
       <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
       <arg>--annotate=xcov+</arg>
