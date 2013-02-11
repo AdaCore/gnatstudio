@@ -538,9 +538,11 @@ package body Build_Command_Manager is
          Data.Is_A_Run       := Is_Run (T);
 
          if Is_Run (T) then
-            Console := Get_Build_Console
-              (Kernel, Shadow, Background, False,
-               "Run: " & Main.Display_Base_Name);
+            if not Data.Quiet then
+               Console := Get_Build_Console
+                 (Kernel, Shadow, Background, False,
+                  "Run: " & Main.Display_Base_Name);
+            end if;
 
             --  Is_Run target writes its output directly to console, so
             --  it doesn't need Output_Parser
