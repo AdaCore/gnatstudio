@@ -493,7 +493,7 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
       which can be mapped (to e.g. :kbd:`Tab`) via
       :ref:`The_Key_Manager_Dialog`. Finally, another alternative is to
       reconfigure the default key binding for the automatic indentation action:
-      by default, it is mapped to :kbd:`Ctrl-Tab` and can be changed to
+      by default, it is mapped to :kbd:`Tab` and can be changed to
       :kbd:`Tab` by modifying the `/Edit/Format Selection` action from
       :ref:`The_Key_Manager_Dialog`.
 
@@ -591,7 +591,7 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
       character-by-character while typing.  For the `End_Of_Line`,
       `End_Of_Word` and `On_The_Fly` policies it is always possible to force
       the casing of the current line by pressing the indentation key
-      (:kbd:`Ctrl-Tab` by default).
+      (:kbd:`Tab` by default).
 
       It is also possible to disable the casing for a single character (action
       `No Casing/indentation on Next Key`, default :kbd:`Ctrl-Q`) or
