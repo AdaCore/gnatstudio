@@ -23,6 +23,7 @@ with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
+with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
 with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
@@ -383,6 +384,14 @@ package body Src_Editor_Module is
    procedure Register_Editor_Close
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Register an idle callback to close all editors except current
+
+   type Is_Not_Makefile_Context is new GPS.Kernel.Action_Filter_Record
+      with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access Is_Not_Makefile_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   --  Filter which passes when the context contains a file which is not
+   --  a Makefile.
 
    -----------------------
    -- On_Editor_Destroy --
@@ -2633,6 +2642,27 @@ package body Src_Editor_Module is
       Casing_Customize (Get_Kernel (Module.all), File, Node, Level);
    end Customize;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access Is_Not_Makefile_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+      File : Virtual_File;
+   begin
+      if not Has_File_Information (Ctxt) then
+         return False;
+      end if;
+
+      File := File_Information (Ctxt);
+
+      return not (Starts_With (To_Lower (+File.Base_Name), "makefile"));
+   end Filter_Matches_Primitive;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2665,6 +2695,8 @@ package body Src_Editor_Module is
                                    new Is_Dispatching_Filter;
       Src_Action_Context       : constant Action_Filter :=
                                    new Src_Editor_Action_Context;
+      Is_Not_Makefile          : constant Action_Filter :=
+                                   new Is_Not_Makefile_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
 
@@ -3136,7 +3168,7 @@ package body Src_Editor_Module is
          null, Command, GDK_Tab,
          Ref_Item   => "Insert File...",
          Add_Before => False,
-         Filter     => Src_Action_Context);
+         Filter     => Src_Action_Context and Is_Not_Makefile);
       Register_Action
         (Kernel, "Format selection",
          Command, -"Format the current line or selection",
