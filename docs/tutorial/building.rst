@@ -20,17 +20,14 @@ GPS has automatically jumped to the first error message (*sdc.adb, 28:6  :
 Fix the error by hand by inserting a space.
 
 Now you can fix the next error by moving the cursor to the line 30 (press the
-:kbd:`down` arrow twice), and by using :kbd:`Ctrl-Tab` (press first the
-:kbd:`Control` key, and then the :kbd:`Tab` key on your keyboard): this key
-combination asks the source editor to automatically re-indent the current line.
+:kbd:`down` arrow twice), and by using :kbd:`Tab`: this key
+shortcut asks the source editor to automatically re-indent the current line.
 
-Note that on some window managers or desktop environments, :kbd:`Ctrl-Tab` is
-already defined. If this is the case, you can change this shortcut from the key
-shortcuts dialog (menu `Edit->Key shortcuts`, `Menus` section, `/Edit/Format
-Selection` item).
+Note that you can change this shortcut from the key shortcuts dialog
+(menu `Edit->Key shortcuts`, `Menus` section, `/Edit/Format Selection` item).
 
 You can then fix all the remaining errors by selecting the whole block (from
-line 28 to line 40) and pressing :kbd:`Ctrl-Tab`. To select a block, you can
+line 28 to line 40) and pressing :kbd:`Tab`. To select a block, you can
 either click on the left mouse button and select the area while holding the
 button, or using the keyboard by pressing the :kbd:`Shift` key and moving the
 cursor using the :kbd:`Up` or :kbd:`Down` keys.

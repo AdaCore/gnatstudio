@@ -105,7 +105,7 @@ integrated environments, including:
 
   When enabled, lines are automatically indented each time you press the
   :kbd:`Enter` key, or by pressing the indentation key.  The indentation key is
-  :kbd:`Ctrl-Tab` by default, and can be changed in the key manager dialog,
+  :kbd:`Tab` by default, and can be changed in the key manager dialog,
   :ref:`The_Key_Manager_Dialog`.
 
   If a set of lines is selected when you press the indentation key, this whole
