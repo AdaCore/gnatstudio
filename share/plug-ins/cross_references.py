@@ -26,6 +26,7 @@ class Sqlite_Cross_References(object):
       <arg>-P%PP</arg>
       <arg>%X</arg>
    </command-line>
+   <is-run>True</is-run>
    <switches command="">
    </switches>
 </target-model>
