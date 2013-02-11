@@ -357,59 +357,34 @@ package body CodePeer.Messages_Summary_Models is
                Set_Integer_Image (0, True);
 
             elsif File_Node /= null then
-               if CodePeer.File_Data
+               declare
+                  Total  : constant Natural := CodePeer.File_Data
                     (File_Node.Node.Analysis_Data.CodePeer_Data.all).
-                        Total_Checks < File_Node.Checks_Count
-               then
-                  --  KC30-001: total number of checks may be less than number
-                  --  of check messages because of inconsistency of CodePeer
-                  --  database. This code is used in such cases to prevent GPS
-                  --  from crashing.
+                    Total_Checks;
+                  Passed : constant Natural :=
+                    Total - File_Node.Checks_Count;
 
+               begin
                   Glib.Values.Init (Value, Glib.GType_String);
-                  Glib.Values.Set_String (Value, "ERROR");
-
-               else
-                  declare
-                     Total  : constant Natural := CodePeer.File_Data
-                       (File_Node.Node.Analysis_Data.CodePeer_Data.all).
-                       Total_Checks;
-                     Passed : constant Natural :=
-                       Total - File_Node.Checks_Count;
-
-                  begin
-                     Glib.Values.Init (Value, Glib.GType_String);
-                     Glib.Values.Set_String
-                       (Value,
-                        Image (Passed, 1)
-                        & " " & Percent_Image (Passed, Total));
-                  end;
-               end if;
+                  Glib.Values.Set_String
+                    (Value,
+                     Image (Passed, 1)
+                     & " " & Percent_Image (Passed, Total));
+               end;
 
             elsif Project_Node /= null then
-               if Project_Node.Total_Checks < Project_Node.Checks_Count then
-                  --  KC30-001: total number of checks may be less than number
-                  --  of check messages because of inconsistency of CodePeer
-                  --  database. This code is used in such cases to prevent GPS
-                  --  from crashing.
+               declare
+                  Total  : constant Natural := Project_Node.Total_Checks;
+                  Passed : constant Natural :=
+                    Total - Project_Node.Checks_Count;
 
+               begin
                   Glib.Values.Init (Value, Glib.GType_String);
-                  Glib.Values.Set_String (Value, "ERROR");
-
-               else
-                  declare
-                     Total  : constant Natural := Project_Node.Total_Checks;
-                     Passed : constant Natural :=
-                       Total - Project_Node.Checks_Count;
-
-                  begin
-                     Glib.Values.Init (Value, Glib.GType_String);
-                     Glib.Values.Set_String
-                       (Value,
-                        Image (Passed, 1)
-                        & " " & Percent_Image (Passed, Total));
-                  end;
-               end if;
+                  Glib.Values.Set_String
+                    (Value,
+                     Image (Passed, 1)
+                     & " " & Percent_Image (Passed, Total));
+               end;
 
             else
                declare
