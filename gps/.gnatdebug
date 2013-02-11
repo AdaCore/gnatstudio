@@ -81,10 +81,10 @@ ENTITIES.QUERIES = no
 --  Monitor keybindings
 KEYMANAGER=yes
 
---  Enable this to activate the use of sql-based entities.
+--  Deactivate this to disable the use of sql-based entities.
 --  This cannot be set from the command line, since the kernel and the xref
---  database has already been created by the type --traceon is seen.
-ENTITIES.SQLITE                   = no
+--  database has already been created by the time --traceon is seen.
+ENTITIES.SQLITE                   = yes
 
 SCRIPTS.REF = no
 CONTEXTS.REF = no
