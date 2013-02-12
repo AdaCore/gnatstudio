@@ -2501,10 +2501,11 @@ package body Xref is
    begin
       if not Active (SQLITE) then
          Old_Entities.Freeze (Self.Entities);
+         return (Constructs =>
+                   Old_Entities.Lock_Construct_Heuristics (Self.Entities));
+      else
+         return No_Lock;
       end if;
-
-      return (Constructs =>
-                Old_Entities.Lock_Construct_Heuristics (Self.Entities));
    end Freeze;
 
    ----------
@@ -2517,9 +2518,8 @@ package body Xref is
    begin
       if not Active (SQLITE) then
          Old_Entities.Thaw (Self.Entities);
+         Old_Entities.Unlock_Construct_Heuristics (Lock.Constructs);
       end if;
-
-      Old_Entities.Unlock_Construct_Heuristics (Lock.Constructs);
    end Thaw;
 
    ------------------
