@@ -18,6 +18,7 @@
 --  This package is the root of the GPS' kernel API
 
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Ordered_Maps;
 with Ada.Finalization;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
@@ -942,6 +943,11 @@ private
 
    overriding procedure Free (Filter : in out Base_Action_Filter_Record);
 
+   package Filter_Result_Map is new Ada.Containers.Ordered_Maps
+     (Key_Type     => System.Address,
+      Element_Type => Boolean,
+      "<"          => System."<");
+
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
       Creator   : Abstract_Module_ID;
@@ -1011,6 +1017,9 @@ private
       --  The reference on which the user has clicked. This is slightly
       --  redundant with the location above, but since this was computed at the
       --  same time as the entity anyway, we might as well store it.
+
+      Computed_Filters : Filter_Result_Map.Map;
+      --  Cache the result of each filter object applied to this context.
    end record;
 
    type Selection_Context_Data is access all Selection_Context_Data_Record;

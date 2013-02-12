@@ -1755,10 +1755,28 @@ package body GPS.Kernel is
 
    function Filter_Matches
      (Filter  : Action_Filter;
-      Context : Selection_Context) return Boolean is
+      Context : Selection_Context) return Boolean
+   is
+      use Filter_Result_Map;
+      C      : Filter_Result_Map.Cursor;
+      Result : Boolean;
    begin
-      return Filter = null
-        or else Filter_Matches_Primitive (Filter, Context);
+      if Filter = null then
+         return True;
+      end if;
+
+      --  Cache the result of each filter on this context in Computed_Filters.
+
+      C := Context.Data.Data.Computed_Filters.Find (Filter.all'Address);
+
+      if Has_Element (C) then
+         return Element (C);
+      else
+         Result := Filter_Matches_Primitive (Filter, Context);
+         Context.Data.Data.Computed_Filters.Insert
+           (Filter.all'Address, Result);
+         return Result;
+      end if;
    end Filter_Matches;
 
    ----------
