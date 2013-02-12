@@ -537,7 +537,6 @@ package body GPS.Kernel.Xref is
                            if not Dispatching_Calls
                              or else not Through_Dispatching
                            then
-                              Trace (Me, "MANU On_Entity_Found, not dispatch");
                               if not On_Entity_Found
                                 (User_Data,
                                  Entity              => Get_Entity (Refs),
@@ -560,7 +559,6 @@ package body GPS.Kernel.Xref is
                             (Ref)
                         then
                            Is_First := False;
-                           Trace (Me, "MANU On_Entity_Found, first time");
                            if not On_Entity_Found
                              (User_Data,
                               Entity            => Get_Entity (Refs),
