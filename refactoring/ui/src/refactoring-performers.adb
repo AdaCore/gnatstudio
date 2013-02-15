@@ -229,14 +229,18 @@ package body Refactoring.Performers is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
-      Ref    : constant General_Entity_Reference := Get (Data.Iter);
+      Ref    : General_Entity_Reference;
       Loc    : General_Location;
    begin
       if At_End (Data.Iter) then
          On_End_Of_Search (Data);
          Result := Success;
+         return;
+      end if;
 
-      elsif Ref /= No_General_Entity_Reference then
+      Ref := Get (Data.Iter);
+
+      if Ref /= No_General_Entity_Reference then
          Loc := Get_Location (Ref);
 
          if Data.Kernel.Databases.Is_Up_To_Date (Loc.File) then
