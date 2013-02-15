@@ -6,7 +6,13 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.0
+Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.1
+
+- M214-041: GB: UI freeze at startup on right click.
+  Problem:    GB UI does'nt reply if a project explorer or editor
+              contextual menu is displayed before the end of the GB
+              initialization.
+  Workaround: wait until startup jobs completion before right clicking.
 
 - LB21-039: GPS should not launch when the display depth is under 24 bits
   Problem:    GPS crashes unpredictably when using display depths shallower
