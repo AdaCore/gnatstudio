@@ -255,6 +255,11 @@ package GPS.Kernel.Contexts is
       return Xref.General_Entity;
    --  Return the type of the xref entity stored in the context.
 
+   function Has_Parent_Types
+     (Context : Selection_Context) return Boolean;
+   --  Whether the entity has at least one parent type (and thus is itself a
+   --  type)
+
    function Get_Closest_Ref
      (Context : Selection_Context) return Xref.General_Entity_Reference;
    --  Return the entity reference corresponding to the current context. You

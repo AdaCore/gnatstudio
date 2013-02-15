@@ -1888,6 +1888,19 @@ package body Src_Editor_Box is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Parent_Type_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Has_Parent_Types (Context);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Is_Access_Type_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -2235,6 +2248,17 @@ package body Src_Editor_Box is
       begin
          if Db.Is_Access (Entity) then
             return Db.Pointed_Type (Entity);
+         elsif Db.Is_Type (Entity) then
+            declare
+               Parents : constant Entity_Array :=
+                 Db.Parent_Types (Entity, Recursive => False);
+            begin
+               if Parents'Length /= 0 then
+                  return Parents (Parents'First);
+               else
+                  return No_General_Entity;
+               end if;
+            end;
          else
             return Get_Type_Of (Db, Entity);
          end if;
