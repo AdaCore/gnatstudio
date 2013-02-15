@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar.Time_Zones;  use Ada.Calendar.Time_Zones;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 package body Time_Utils is
 
@@ -69,4 +70,21 @@ package body Time_Utils is
                                      Time_Zone   => TZ);
    end Local_Split;
 
+   ---------------------------
+   -- Local_Timestamp_Image --
+   ---------------------------
+
+   function Local_Timestamp_Image (T : Ada.Calendar.Time) return String is
+      Y : Year_Number;
+      M : Month_Number;
+      D : Day_Number;
+      H : Hour_Number;
+      Mi : Minute_Number;
+      S : Second_Number;
+      Ss : Second_Duration;
+   begin
+      Local_Split (T, Y, M, D, H, Mi, S, Ss);
+      return Image (Y, 4) & Image (M, 2) & Image (D, 2) & "-" &
+        Image (H, 2) & ":" & Image (Mi, 2) & ":" & Image (S, 2);
+   end Local_Timestamp_Image;
 end Time_Utils;

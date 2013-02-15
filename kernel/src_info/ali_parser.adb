@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Calendar;              use Ada.Calendar;
-with Ada.Calendar.Formatting;   use Ada.Calendar.Formatting;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -2596,10 +2595,6 @@ package body ALI_Parser is
       function Is_ALI_File (LI : LI_File) return Boolean;
       --  Return True is LI represents an ALI file (as opposed to e.g. a .sli)
 
-      function Local_Timestamp_Image (T : Ada.Calendar.Time) return String;
-      pragma Inline (Local_Timestamp_Image);
-      --  Return an "%D-%T" image for D.
-
       procedure Load_And_Scan_ALI
         (ALI_Filename          : Virtual_File;
          Reset_First           : Boolean;
@@ -2701,24 +2696,6 @@ package body ALI_Parser is
             Last_Sect := Xref_Section.Last;
          end if;
       end Load_And_Scan_ALI;
-
-      ---------------------------
-      -- Local_Timestamp_Image --
-      ---------------------------
-
-      function Local_Timestamp_Image (T : Ada.Calendar.Time) return String is
-         Y : Year_Number;
-         M : Month_Number;
-         D : Day_Number;
-         H : Hour_Number;
-         Mi : Minute_Number;
-         S : Second_Number;
-         Ss : Second_Duration;
-      begin
-         Local_Split (T, Y, M, D, H, Mi, S, Ss);
-         return Image (Y, 4) & Image (M, 2) & Image (D, 2) & "-" &
-           Image (H, 2) & ":" & Image (Mi, 2) & ":" & Image (S, 2);
-      end Local_Timestamp_Image;
 
       --  Local variables
 
