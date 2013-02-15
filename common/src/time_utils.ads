@@ -42,4 +42,7 @@ package Time_Utils is
       Sub_Second : out Second_Duration);
    --  Same as above.
 
+   function Local_Timestamp_Image (T : Ada.Calendar.Time) return String;
+   --  Return a displayed version of the time (mostly for debug purposes).
+
 end Time_Utils;
