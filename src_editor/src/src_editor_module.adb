@@ -2688,7 +2688,8 @@ package body Src_Editor_Module is
       Line_Numbers_Area_Filter : Action_Filter;
       Submenu                  : Submenu_Factory;
 
-      Has_Type                 : constant Action_Filter := new Has_Type_Filter;
+      Has_Type          : constant Action_Filter := new Has_Type_Filter;
+      Has_Parent_Type   : constant Action_Filter := new Has_Parent_Type_Filter;
       Is_Access                : constant Action_Filter :=
                                    new Is_Access_Type_Filter;
       Is_Dispatching           : constant Action_Filter :=
@@ -2884,7 +2885,7 @@ package body Src_Editor_Module is
         (Kernel, "Display type hierarchy of entity",
          Action     => Command,
          Label      => -"Display type hierarchy for %e",
-         Filter     => Has_Type or Is_Access);
+         Filter     => Has_Parent_Type or Is_Access);
 
       Command := new Goto_Other_File_Command;
       Filter  := new Has_Other_File_Filter;

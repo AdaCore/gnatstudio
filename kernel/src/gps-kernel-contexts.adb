@@ -783,6 +783,32 @@ package body GPS.Kernel.Contexts is
       return Context.Data.Data.Xref_Entity_Type_Of;
    end Get_Entity_Type_Of;
 
+   ----------------------
+   -- Has_Parent_Types --
+   ----------------------
+
+   function Has_Parent_Types
+     (Context           : Selection_Context)
+      return Boolean
+   is
+      use GNATCOLL.Tribooleans;
+   begin
+      if Context.Data.Data.Xref_Entity_Has_Parent_Types = Indeterminate
+        and then Get_Entity (Context) /= No_General_Entity
+      then
+         declare
+            Parents : constant Xref.Entity_Array :=
+              Databases (Context.Data.Data.Kernel).Parent_Types
+              (Get_Entity (Context), Recursive => False);
+         begin
+            Context.Data.Data.Xref_Entity_Has_Parent_Types :=
+              To_TriBoolean (Parents'Length /= 0);
+         end;
+      end if;
+
+      return To_Boolean (Context.Data.Data.Xref_Entity_Has_Parent_Types);
+   end Has_Parent_Types;
+
    ---------------------
    -- Get_Closest_Ref --
    ---------------------

@@ -1012,6 +1012,10 @@ private
       --  The type of Xref_Entity, cached.
       --  No_General_Entity indicates that the entity hasn't been computed.
 
+      Xref_Entity_Has_Parent_Types : GNATCOLL.Tribooleans.Triboolean :=
+        GNATCOLL.Tribooleans.Indeterminate;
+      --  Whether the entity has at least one parent type.
+
       Xref_Closest_Ref  : Xref.General_Entity_Reference :=
         Xref.No_General_Entity_Reference;
       --  The reference on which the user has clicked. This is slightly
