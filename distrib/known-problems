@@ -14,6 +14,19 @@ Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.1
               initialization.
   Workaround: wait until startup jobs completion before right clicking.
 
+- M208-003: GB: SPARK & Codepeer plugin top level menus not displayed.
+  Problem:    When running eclipse 4.2 or Wind River Workbench 3.3, enabling
+              the SPARK & Codepeer menubar menus desn't display any
+              additional menus.
+  Workaround: Use contextual menus.
+  
+- LB29-024: WB: When debugger is active, breakpoints menu is not displayed.
+  Problem:    During a debug session, breakpoints menus in ada code are not
+              displayed.
+  Workaround: Set breakpoints double click the left margin. Use breakpoints
+              view to manage breakpoint. If required, configure breakpoints
+              before starting the debug session.
+  
 - LB21-039: GPS should not launch when the display depth is under 24 bits
   Problem:    GPS crashes unpredictably when using display depths shallower
               than 24 bits per pixel.
