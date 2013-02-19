@@ -24,7 +24,7 @@ TIMEOUT=50           # Interval (in milliseconds) between two batches
 default_colors =  {
     #"label"      : "lightblue",
     #"literal"    : "lightblue",
-  "object"     : "#ffbeee",
+  "object"     : "#ffcefe",
   "subprogram" : "#ffcf90",
   "package/namespace" : "lightgreen",
   "type"              : "lightgreen",
