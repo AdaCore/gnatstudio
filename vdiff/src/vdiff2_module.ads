@@ -50,6 +50,6 @@ private
       end record;
 
    type VDiff2_Module is access all VDiff2_Module_Record'Class;
-   procedure Destroy (Id : in out VDiff2_Module_Record);
+   overriding procedure Destroy (Id : in out VDiff2_Module_Record);
 
 end Vdiff2_Module;
