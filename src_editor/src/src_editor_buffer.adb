@@ -1719,6 +1719,10 @@ package body Src_Editor_Buffer is
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
 
+      --  Move mark of start of re-highlight area into insertion position.
+
+      Move_Mark (Buffer, Buffer.First_Highlight_Mark, Pos);
+
       if Line = 0 then
          --  In a special line: we simply stop propagation
          Emit_Stop_By_Name (Object => Buffer, Name => "insert_text");
@@ -7086,7 +7090,6 @@ package body Src_Editor_Buffer is
    begin
       if not Buffer.Highlight_Needed then
          Buffer.Highlight_Needed := True;
-         Move_Mark (Buffer, Buffer.First_Highlight_Mark, Iter);
          Move_Mark (Buffer, Buffer.Last_Highlight_Mark, Iter);
 
       else
