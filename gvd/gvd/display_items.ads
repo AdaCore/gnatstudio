@@ -82,7 +82,7 @@ package Display_Items is
    --  If Remove_Aliases is True, then all the items on the canvas that are
    --  aliases of Item are also removed.
 
-   function Get_Graph_Cmd (Item : access Display_Item_record) return String;
+   function Get_Graph_Cmd (Item : access Display_Item_Record) return String;
    --  Return the "graph display..." command used to create the item
 
    function Find_Item
