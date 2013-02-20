@@ -622,7 +622,6 @@ package body ALI_Parser is
                     +Imported_Projects (Imported_Projects'First).File_From_Unit
                        (Base (Base'First .. Base'Last - 4),
                         Part,
-                        Check_Predefined_Library => True,
                         Language => "ada");
                begin
                   Name_Len := N'Length;
