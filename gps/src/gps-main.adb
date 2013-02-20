@@ -252,6 +252,7 @@ procedure GPS.Main is
    Debugger_Name          : String_Access;
    Startup_Dir            : String_Access;
    About_Contents         : String_Access;
+   Passed_Project_Name    : String_Access;
 
    Python_Path : String_Access;
 
@@ -291,6 +292,9 @@ procedure GPS.Main is
 
    procedure Display_Splash_Screen;
    --  Display the GPS splash screen
+
+   procedure Set_Project_Name;
+   --  Set the project name from the command line switch
 
    function Finish_Setup (Data : Process_Data) return Boolean;
    --  Finish the set up of GPS, while the main loop is running
@@ -357,6 +361,61 @@ procedure GPS.Main is
          Show_All (Splash);
       end if;
    end Display_Splash_Screen;
+
+   ----------------------
+   -- Set_Project_Name --
+   ----------------------
+
+   procedure Set_Project_Name is
+   begin
+      if Passed_Project_Name /= null then
+         Project_Name :=
+           Create
+             (Normalize_Pathname
+                  (Filesystem_String (Passed_Project_Name.all),
+                   Resolve_Links =>
+                   not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref));
+
+         if not Is_Regular_File (Project_Name) then
+            if Is_Regular_File
+              (+(Full_Name (Project_Name) & Project_File_Extension))
+            then
+               Project_Name := Create
+                 (Normalize_Pathname
+                    (Full_Name (Project_Name) & Project_File_Extension,
+                     Resolve_Links =>
+                     not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref));
+               Trace
+                 (Me, "Found project: " &
+                    Display_Full_Name (Project_Name));
+            else
+               --  Keep Project_Name even if it is invalid, we will look
+               --  for it later on the project path, but the latter is
+               --  not known yet at this point
+               if Equal (File_Extension (Project_Name),
+                         Project_File_Extension)
+               then
+                  Project_Name :=
+                    Create_From_Base (Base_Name => +Parameter (Parser));
+               else
+                  Project_Name :=
+                    Create_From_Base
+                      (Base_Name =>
+                       +Parameter (Parser) & Project_File_Extension);
+               end if;
+
+               Trace
+                 (Me, "Project not found in current dir: "
+                  & Project_Name.Display_Base_Name);
+            end if;
+         else
+            Trace (Me, "Found project: " &
+                     Display_Full_Name (Project_Name));
+         end if;
+
+         Free (Passed_Project_Name);
+      end if;
+   end Set_Project_Name;
 
    -------------------
    -- Init_Settings --
@@ -637,7 +696,11 @@ procedure GPS.Main is
              & String_Utils.Image (Gtk_Minor_Version) & '.'
              & String_Utils.Image (Gtk_Micro_Version));
 
+      Parse_Switches;
+
       Gtk_New (GPS_Main, GPS_Home_Dir, Prefix_Dir);
+
+      Set_Project_Name;
 
       About_Contents := Create_From_Dir
         (Prefix_Dir, "share/gps/about.txt").Read_File;
@@ -663,7 +726,6 @@ procedure GPS.Main is
          Title_Changed'Access, GPS_Main.Kernel);
 
       DDE.Register_DDE_Server (GPS_Main.Kernel);
-      Parse_Switches;
       Display_Splash_Screen;
 
       if Splash = null then
@@ -835,49 +897,7 @@ procedure GPS.Main is
                --  directory names are still local. These users should use
                --  Trusted mode so that we do not resolve symbolic links
 
-               Project_Name :=
-                 Create
-                   (Normalize_Pathname
-                        (Filesystem_String (Parameter (Parser)),
-                         Resolve_Links =>
-                           not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref));
-
-               if not Is_Regular_File (Project_Name) then
-                  if Is_Regular_File
-                    (+(Full_Name (Project_Name) & Project_File_Extension))
-                  then
-                     Project_Name := Create
-                       (Normalize_Pathname
-                          (Full_Name (Project_Name) & Project_File_Extension,
-                           Resolve_Links =>
-                            not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref));
-                     Trace
-                       (Me, "Found project: " &
-                        Display_Full_Name (Project_Name));
-                  else
-                     --  Keep Project_Name even if it is invalid, we will look
-                     --  for it later on the project path, but the latter is
-                     --  not known yet at this point
-                     if Equal (File_Extension (Project_Name),
-                               Project_File_Extension)
-                     then
-                        Project_Name :=
-                          Create_From_Base (Base_Name => +Parameter (Parser));
-                     else
-                        Project_Name :=
-                          Create_From_Base
-                            (Base_Name =>
-                               +Parameter (Parser) & Project_File_Extension);
-                     end if;
-
-                     Trace
-                       (Me, "Project not found in current dir: "
-                        & Project_Name.Display_Base_Name);
-                  end if;
-               else
-                  Trace (Me, "Found project: " &
-                         Display_Full_Name (Project_Name));
-               end if;
+               Passed_Project_Name := new String'(Parameter (Parser));
 
             when ASCII.NUL =>
                exit;
