@@ -34,7 +34,6 @@ with Gtk.Widget;         use Gtk.Widget;
 
 with Gtkada.MDI;         use Gtkada.MDI;
 
-with Commands.Controls;  use Commands.Controls;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
 with GPS.Styles;         use GPS.Styles;
@@ -57,13 +56,6 @@ package Src_Editor_Module is
    Src_Editor_Module_Name : constant String := "Source_Editor";
 
    Search_Result_Highlighting : constant String := "Search Results";
-
-   Undo_Redo_Id : constant String := "Source_Editor_Undo_Redo_Information";
-
-   package Undo_Redo_Data is new Glib.Object.User_Data (Undo_Redo);
-   --  ??? The undo/redo widgets should probably be handled by the kernel, not
-   --  by the source_editor_module. This will allow us to get rid of this
-   --  package
 
    ---------------------------------------
    -- Module-specific graphical objects --
