@@ -192,10 +192,18 @@ package body GVD_Module is
    --  in the editors for file.
    --  If File is empty, create them for all files.
 
+   type File_And_Kernel_Record is record
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      File    : GNATCOLL.VFS.Virtual_File;
+   end record;
+
+   package File_And_Kernel_Cb is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, File_And_Kernel_Record);
+
    procedure Debug_Init
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : File_Project_Record;
-      Args   : String);
+     (Kernel  : GPS.Kernel.Kernel_Handle;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Args    : String);
    --  Initialize the debugger
 
    procedure Start_Program
@@ -218,7 +226,7 @@ package body GVD_Module is
    --------------------
 
    procedure On_Debug_Init
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
+     (Object : access GObject_Record'Class; Data : File_And_Kernel_Record);
    --  Debug->Initialize
 
    procedure On_Connect_To_Board
@@ -551,8 +559,9 @@ package body GVD_Module is
       Args   : String) is
    begin
       Debug_Init
-        (Kernel,
-         File_Project_Record'(Get_Project (Kernel), No_File), Args);
+        (GPS.Kernel.Kernel_Handle (Kernel),
+         No_File,
+         Args);
    end Initialize_Debugger;
 
    -----------------------------
@@ -1753,15 +1762,15 @@ package body GVD_Module is
    ----------------
 
    procedure Debug_Init
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : File_Project_Record;
-      Args   : String)
+     (Kernel  : GPS.Kernel.Kernel_Handle;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Args    : String)
    is
       Ignore : Visual_Debugger;
       pragma Unreferenced (Ignore);
    begin
       Ignore := Spawn
-        (Kernel, Debugger_Kind.Get_Pref, Data.File,
+        (Kernel, Debugger_Kind.Get_Pref, File,
          Get_Project (Kernel), Args);
    end Debug_Init;
 
@@ -1770,9 +1779,12 @@ package body GVD_Module is
    -------------------
 
    procedure On_Debug_Init
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
+     (Object : access GObject_Record'Class;
+      Data   : File_And_Kernel_Record)
+   is
+      pragma Unreferenced (Object);
    begin
-      Debug_Init (Kernel_Handle (Kernel), Data, "");
+      Debug_Init (Data.Kernel, Data.File, "");
    end On_Debug_Init;
 
    ------------------------
@@ -2192,12 +2204,11 @@ package body GVD_Module is
                   File := Create_From_Dir (Dir, Exec);
                end if;
 
-               File_Project_Cb.Object_Connect
+               File_And_Kernel_Cb.Connect
                  (Mitem, Gtk.Menu_Item.Signal_Activate,
                   On_Debug_Init'Access,
-                  Slot_Object => Kernel,
-                  User_Data   => File_Project_Record'
-                    (Project => No_Project,
+                  User_Data   => File_And_Kernel_Record'
+                    (Kernel  => Kernel_Handle (Kernel),
                      File    => File));
 
                --  Only set accelerators for main units of the root project
@@ -2267,11 +2278,10 @@ package body GVD_Module is
       --  Specific entry to start the debugger without any main program
       Gtk_New (Mitem, -"<no main file>");
       Append (Menu, Mitem);
-      File_Project_Cb.Object_Connect
+      File_And_Kernel_Cb.Connect
         (Mitem, Gtk.Menu_Item.Signal_Activate, On_Debug_Init'Access,
-         Slot_Object => Kernel,
-         User_Data   => File_Project_Record'
-           (Project => Get_Project (Kernel),
+         User_Data   => File_And_Kernel_Record'
+           (Kernel  => Kernel_Handle (Kernel),
             File    => GNATCOLL.VFS.No_File));
       Set_Accel_Path (Mitem, Debug_Menu_Prefix & "<no main>",
                       Get_Default_Accelerators (Kernel));
