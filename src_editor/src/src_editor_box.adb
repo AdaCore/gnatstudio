@@ -120,8 +120,13 @@ package body Src_Editor_Box is
       User_Type   => Source_Editor_Box,
       Setup       => Setup);
 
+   type Entity_And_Kernel is record
+      Kernel : Kernel_Handle;
+      Entity : General_Entity;
+   end record;
+
    package Entity_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, General_Entity);
+     (Glib.Object.GObject_Record, Entity_And_Kernel);
 
    --------------------------
    -- Forward declarations --
@@ -195,13 +200,13 @@ package body Src_Editor_Box is
    --  the status bar.
 
    procedure On_Goto_Declaration_Of
-     (Kernel : access GObject_Record'Class;
-      Entity : General_Entity);
+     (Object : access GObject_Record'Class;
+      Data   : Entity_And_Kernel);
    --  Jump to the declaration of the given entity
 
    procedure On_Goto_Body_Of
-     (Kernel : access GObject_Record'Class;
-      Entity : General_Entity);
+     (Object : access GObject_Record'Class;
+      Data   : Entity_And_Kernel);
    --  Jump to the body of the given entity
 
    function Focus_In (Box : access GObject_Record'Class) return Boolean;
@@ -1638,20 +1643,21 @@ package body Src_Editor_Box is
    ----------------------------
 
    procedure On_Goto_Declaration_Of
-     (Kernel : access GObject_Record'Class;
-      Entity : General_Entity)
+     (Object : access GObject_Record'Class;
+      Data   : Entity_And_Kernel)
    is
-      K        : constant Kernel_Handle := Kernel_Handle (Kernel);
+      pragma Unreferenced (Object);
+      K        : constant Kernel_Handle := Data.Kernel;
       Db       : constant General_Xref_Database := K.Databases;
       Location : constant General_Location :=
-        Get_Declaration (Db, Entity).Loc;
+        Get_Declaration (Db, Data.Entity).Loc;
    begin
       Go_To_Closest_Match
         (Kernel   => K,
          Filename => Location.File,
          Line     => Convert (Location.Line),
          Column   => Location.Column,
-         Entity   => Entity);
+         Entity   => Data.Entity);
    end On_Goto_Declaration_Of;
 
    ---------------------
@@ -1659,21 +1665,22 @@ package body Src_Editor_Box is
    ---------------------
 
    procedure On_Goto_Body_Of
-     (Kernel : access GObject_Record'Class;
-      Entity : General_Entity)
+     (Object : access GObject_Record'Class;
+      Data   : Entity_And_Kernel)
    is
-      K   : constant Kernel_Handle := Kernel_Handle (Kernel);
+      pragma Unreferenced (Object);
+      K   : constant Kernel_Handle := Data.Kernel;
       Db  : constant General_Xref_Database := K.Databases;
       Loc : General_Location;
 
    begin
-      Loc := Db.Get_Body (Entity);
+      Loc := Db.Get_Body (Data.Entity);
       Go_To_Closest_Match
         (Kernel   => K,
          Filename => Loc.File,
          Line     => Convert (Loc.Line),
          Column   => Loc.Column,
-         Entity   => Entity);
+         Entity   => Data.Entity);
    end On_Goto_Body_Of;
 
    --------------------------------
@@ -1747,9 +1754,9 @@ package body Src_Editor_Box is
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
          Add (Item, Label);
-         Entity_Callback.Object_Connect
+         Entity_Callback.Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
-            Callback, Get_Kernel (Context), E.Callee);
+            Callback, (Kernel => Get_Kernel (Context), Entity => E.Callee));
          Add (Menu, Item);
          Count := Count + 1;
       end Fill_Menu;
@@ -1824,9 +1831,9 @@ package body Src_Editor_Box is
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
          Add (Item, Label);
-         Entity_Callback.Object_Connect
+         Entity_Callback.Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
-            Callback, Kernel, Get_Entity (Context));
+            Callback, (Kernel => Kernel, Entity => Get_Entity (Context)));
          Add (Menu, Item);
       end if;
 
