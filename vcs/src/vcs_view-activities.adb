@@ -46,6 +46,7 @@ with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
+with Gtk.Handlers;
 
 package body VCS_View.Activities is
 
@@ -60,6 +61,14 @@ package body VCS_View.Activities is
      (Explorer : VCS_Activities_View_Access) return Boolean;
    --  Function called to start editing the selected line. This is necessary
    --  since any editing is stopped as soon as the tree gains the focus back.
+
+   type Kernel_And_Int is record
+      Kernel : Kernel_Handle;
+      Value : Glib.Gint;
+   end record;
+
+   package Kernel_And_Int_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Kernel_And_Int);
 
    -------------------
    -- Columns_Types --
@@ -103,9 +112,9 @@ package body VCS_View.Activities is
    ---------------
 
    procedure Edited_Callback
-     (Kernel : access GObject_Record'Class;
+     (Object : access GObject_Record'Class;
       Params : Glib.Values.GValues;
-      Data   : Glib.Gint);
+      Data   : Kernel_And_Int);
    --  Called for the edited activity cells
 
    type File_Hook_Record is new Function_With_Args with record
@@ -132,11 +141,12 @@ package body VCS_View.Activities is
    ---------------------
 
    procedure Edited_Callback
-     (Kernel : access GObject_Record'Class;
+     (Object : access GObject_Record'Class;
       Params : Glib.Values.GValues;
-      Data   : Glib.Gint)
+      Data   : Kernel_And_Int)
    is
-      K           : constant Kernel_Handle := Kernel_Handle (Kernel);
+      pragma Unreferenced (Object);
+      K           : constant Kernel_Handle := Data.Kernel;
       Explorer    : constant VCS_Activities_View_Access :=
                       Get_Activities_Explorer (K, False, False);
       Path_String : constant String := Get_String (Nth (Params, 1));
@@ -151,7 +161,7 @@ package body VCS_View.Activities is
 
       --  Set value in the model
 
-      Set_Value (Explorer.Model, Iter, Data, Text_Value);
+      Set_Value (Explorer.Model, Iter, Data.Value, Text_Value);
 
       --  Set value in the activities registry and save it
 
@@ -638,9 +648,9 @@ package body VCS_View.Activities is
 
       Set_Rules_Hint (Explorer.Tree, True);
 
-      Tree_Model_Callback.Object_Connect
+      Kernel_And_Int_Callback.Connect
         (Edit_Rend, Signal_Edited, Edited_Callback'Access,
-         Slot_Object => Explorer.Kernel, User_Data => Base_Name_Column);
+         User_Data => (Explorer.Kernel, Base_Name_Column));
 
       Gtk_New (Explorer.File_Column);
       Set_Title (Explorer.File_Column, -"Activity / File");
