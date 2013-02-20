@@ -411,12 +411,12 @@ procedure GPS.Main is
                          Project_File_Extension)
                then
                   Project_Name :=
-                    Create_From_Base (Base_Name => +Parameter (Parser));
+                    Create_From_Base (Base_Name => +Passed_Project_Name.all);
                else
                   Project_Name :=
                     Create_From_Base
                       (Base_Name =>
-                       +Parameter (Parser) & Project_File_Extension);
+                       +Passed_Project_Name.all & Project_File_Extension);
                end if;
 
                Trace
