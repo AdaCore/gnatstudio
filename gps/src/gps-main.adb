@@ -48,7 +48,6 @@ with Gdk.Visual;
 
 with Gtk;                              use Gtk;
 with Gtk.Enums;                        use Gtk.Enums;
-with Gtk.Handlers;                     use Gtk.Handlers;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Main;                         use Gtk.Main;
 with Gtk.Window;                       use Gtk.Window;
@@ -1866,14 +1865,6 @@ procedure GPS.Main is
       Destroy (GPS_Main);
 
       Free_Modules (Kernel);
-
-      --  Call Handlers_Destroy after Free_Modules and Destroy (GPS),
-      --  since some handlers are already disconnected by these functions, and
-      --  only Handlers_Destroy know what handlers are still left and need to
-      --  be disconnected.
-
-      --  ??? Is this still needed, since we are destroying Kernel anyway
-      Handlers_Destroy (Kernel);
 
       Destroy (Kernel);
 
