@@ -1771,12 +1771,8 @@ package body Src_Editor_Box is
         (Callee, Primitive_Of : General_Entity) return Boolean
       is
          New_Elem : constant CP := (Callee, Primitive_Of);
-
       begin
-         if not E_Set.Contains (New_Elem) then
-            E_Set.Insert (New_Elem);
-         end if;
-
+         E_Set.Include (New_Elem);
          return True;
       end On_Callee;
 
