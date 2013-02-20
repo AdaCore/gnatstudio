@@ -471,6 +471,28 @@ package body GPS.Kernel is
       Kernel.Toolchains_Manager := Manager;
    end Set_Toolchains_Manager;
 
+   -------------------
+   -- Get_Undo_Redo --
+   -------------------
+
+   function Get_Undo_Redo
+     (Kernel : access Kernel_Handle_Record)
+      return Commands.Controls.Undo_Redo is
+   begin
+      return Kernel.Undo_Redo;
+   end Get_Undo_Redo;
+
+   -------------------
+   -- Set_Undo_Redo --
+   -------------------
+
+   procedure Set_Undo_Redo
+     (Kernel : access Kernel_Handle_Record;
+      Value  : Commands.Controls.Undo_Redo) is
+   begin
+      Kernel.Undo_Redo := Value;
+   end Set_Undo_Redo;
+
    ---------------------------
    -- Source_Lines_Revealed --
    ---------------------------

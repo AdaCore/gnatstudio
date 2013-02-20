@@ -63,6 +63,7 @@ with Aliases_Module;                    use Aliases_Module;
 with Casing_Exceptions;                 use Casing_Exceptions;
 with Case_Handling;                     use Case_Handling;
 with Commands.Interactive;              use Commands, Commands.Interactive;
+with Commands.Controls;                 use Commands.Controls;
 with Completion_Module;                 use Completion_Module;
 with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
@@ -456,7 +457,7 @@ package body Src_Editor_Module is
       UR : Undo_Redo;
       pragma Unreferenced (Widget);
    begin
-      UR := Undo_Redo_Data.Get (Kernel, Undo_Redo_Id);
+      UR := Kernel.Get_Undo_Redo;
       UR.Undo_Button_Handler_ID.Id := Null_Handler_Id;
       UR.Undo_Button := null;
       UR.Redo_Button := null;
@@ -3269,7 +3270,7 @@ package body Src_Editor_Module is
                 Wrapper (Cursor_Stopped_Cb'Access),
                 Name => "src_editor.location_changed");
 
-      Undo_Redo_Data.Set (Kernel, UR, Undo_Redo_Id);
+      Kernel.Set_Undo_Redo (UR);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

@@ -39,7 +39,7 @@ with Gtk.Window;
 
 with Basic_Types;
 with Basic_Mapper;
-with Commands;
+with Commands.Controls;
 with Generic_List;
 with HTables;
 with Language_Handlers;
@@ -611,6 +611,18 @@ package GPS.Kernel is
    procedure Set_Toolchains_Manager
      (Kernel  : access Kernel_Handle_Record;
       Manager : Toolchains.Toolchain_Manager);
+
+   ----------------
+   --  Undo_Redo --
+   ----------------
+
+   function Get_Undo_Redo
+     (Kernel : access Kernel_Handle_Record)
+      return Commands.Controls.Undo_Redo;
+
+   procedure Set_Undo_Redo
+     (Kernel : access Kernel_Handle_Record;
+      Value  : Commands.Controls.Undo_Redo);
 
    -----------------
    -- Refactoring --
@@ -1255,6 +1267,9 @@ private
       Refactoring : Standard.Refactoring.Factory_Context;
 
       Messages : Abstract_Messages_Window_Access;
+
+      Undo_Redo : Commands.Controls.Undo_Redo;
+      --  Undo/redo controls
    end record;
 
 end GPS.Kernel;
