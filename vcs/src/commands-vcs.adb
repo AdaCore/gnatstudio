@@ -259,7 +259,7 @@ package body Commands.VCS is
          The_Context := Get_Current_Context (Command.Kernel);
       end if;
 
-      Command.Callback (Command.Kernel, The_Context);
+      Command.Callback (null, The_Context);
 
       return Success;
    end Execute;
