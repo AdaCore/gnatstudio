@@ -294,7 +294,6 @@ package body GPS.Kernel is
       Handler : Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
-      Glib.Object.Initialize (Handle);
 
       Handle.Main_Window  := Main_Window;
       Weak_Ref (Handle.Main_Window,
