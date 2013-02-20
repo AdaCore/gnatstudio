@@ -56,10 +56,11 @@ with XML_Utils;
 with Xref;
 
 with GPS.Editors;
+with GPS.Core_Kernels;
 
 package GPS.Kernel is
 
-   type Kernel_Handle_Record is new Glib.Object.GObject_Record with private;
+   type Kernel_Handle_Record is new GPS.Core_Kernels.Core_Kernel with private;
    type Kernel_Handle is access all Kernel_Handle_Record'Class;
    pragma No_Strict_Aliasing (Kernel_Handle);
    --  A kernel handle used to share information throughout GPS
@@ -1038,7 +1039,7 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
 
-   type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
+   type Kernel_Handle_Record is new GPS.Core_Kernels.Core_Kernel with record
       Database : Xref.General_Xref_Database;
       --  The cross-reference information
 
