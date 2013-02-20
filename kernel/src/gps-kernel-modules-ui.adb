@@ -100,6 +100,7 @@ package body GPS.Kernel.Modules.UI is
    type Contextual_Menu_Record
      (Menu_Type : Contextual_Menu_Type := Type_Separator)
       is record
+         Kernel                : Kernel_Handle;
          Name                  : GNAT.Strings.String_Access;
          Label                 : Contextual_Menu_Label_Creator;
          Pix                   : GNAT.Strings.String_Access;
@@ -188,7 +189,7 @@ package body GPS.Kernel.Modules.UI is
    --  Return the widget that currently has the keyboard focus
 
    procedure Contextual_Action
-     (Kernel : access GObject_Record'Class; Action : Contextual_Menu_Access);
+     (Object : access GObject_Record'Class; Action : Contextual_Menu_Access);
    --  Execute action, in the context of a contextual menu
 
    function Create_Contextual_Menu
@@ -615,20 +616,21 @@ package body GPS.Kernel.Modules.UI is
    -----------------------
 
    procedure Contextual_Action
-     (Kernel : access GObject_Record'Class;
+     (Object : access GObject_Record'Class;
       Action : Contextual_Menu_Access)
    is
+      pragma Unreferenced (Object);
       C       : Command_Access;
       Context : Interactive_Command_Context;
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
-      Context.Context := Kernel_Handle (Kernel).Last_Context_For_Contextual;
+      Push_State (Action.Kernel, Busy);
+      Context.Context := Action.Kernel.Last_Context_For_Contextual;
 
       Assert (Me, Context.Context.Data.Data /= null,
               "Contextual_Action called on freed context");
       Context.Event :=
         GPS_Window
-          (Kernel_Handle (Kernel).Main_Window).Last_Event_For_Contextual;
+          (Action.Kernel.Main_Window).Last_Event_For_Contextual;
       --   Event will be deep-copied in the call to Create_Proxy below
 
       case Action.Menu_Type is
@@ -641,15 +643,15 @@ package body GPS.Kernel.Modules.UI is
       end case;
 
       Launch_Background_Command
-        (Kernel          => Kernel_Handle (Kernel),
+        (Kernel          => Action.Kernel,
          Command         => C,
          Active          => True,
          Show_Bar        => True,
          Destroy_On_Exit => True);
-      Pop_State (Kernel_Handle (Kernel));
+      Pop_State (Action.Kernel);
    exception
       when E : others =>
-         Pop_State (Kernel_Handle (Kernel));
+         Pop_State (Action.Kernel);
          Trace (Exception_Handle, "Unexpected exception while executing "
                 & Action.Name.all & " " & Exception_Information (E));
    end Contextual_Action;
@@ -861,11 +863,10 @@ package body GPS.Kernel.Modules.UI is
                      Item := Gtk_Menu_Item (Image);
                   end if;
 
-                  Action_Callback.Object_Connect
+                  Action_Callback.Connect
                     (Item, Signal_Activate,
                      Contextual_Action'Access,
-                     User_Data   => C,
-                     Slot_Object => Kernel);
+                     User_Data   => C);
                else
                   Item := null;
                end if;
@@ -1250,14 +1251,15 @@ package body GPS.Kernel.Modules.UI is
      (Widget  : access GObject_Record'Class;
       Command : Interactive_Action)
    is
+      pragma Unreferenced (Widget);
       Context : constant Selection_Context :=
-                  Get_Current_Context (Kernel_Handle (Widget));
+                  Get_Current_Context (Command.Kernel);
    begin
       if Context /= No_Context
         and then Filter_Matches (Command.Filter, Context)
       then
          Launch_Background_Command
-           (Kernel_Handle (Widget),
+           (Command.Kernel,
             Create_Proxy
               (Command.Command,
                (null, Context, False, No_File, null, null, 1, 0)),
@@ -1265,11 +1267,11 @@ package body GPS.Kernel.Modules.UI is
             Active          => True, Show_Bar => False, Queue_Id => "");
 
       elsif Get_Error_Message (Command.Filter) /= "" then
-         Insert (Kernel_Handle (Widget), Get_Error_Message (Command.Filter),
+         Insert (Command.Kernel, Get_Error_Message (Command.Filter),
                  Mode => Error);
 
       else
-         Insert (Kernel_Handle (Widget),
+         Insert (Command.Kernel,
                  -"Invalid context for this action", Mode => Error);
       end if;
 
@@ -1367,17 +1369,15 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
       if Command /= null then
-         Command_Callback.Object_Connect
+         Command_Callback.Connect
            (Item, Signal_Activate, Execute_Command'Access,
-            Slot_Object => Kernel_Handle (Kernel),
             User_Data   => (Kernel_Handle (Kernel), Command, Filter));
          Register_Perma_Command (Kernel, Command);
       end if;
 
       if Action /= null then
-         Command_Callback.Object_Connect
+         Command_Callback.Connect
            (Item, Signal_Activate, Execute_Command'Access,
-            Slot_Object => Kernel_Handle (Kernel),
             User_Data   => (Kernel_Handle (Kernel),
                             Action.Command,
                             Action.Filter));
@@ -1671,9 +1671,8 @@ package body GPS.Kernel.Modules.UI is
          Register_Perma_Command (Kernel, Command);
       end if;
 
-      Command_Callback.Object_Connect
+      Command_Callback.Connect
         (Button, Signal_Clicked, Execute_Command'Access,
-         Slot_Object => Kernel_Handle (Kernel),
          User_Data   => (Kernel_Handle (Kernel), Command, null));
    end Register_Button;
 
@@ -1701,9 +1700,8 @@ package body GPS.Kernel.Modules.UI is
          Register_Perma_Command (Kernel, Command);
       end if;
 
-      Command_Callback.Object_Connect
+      Command_Callback.Connect
         (Button, Signal_Clicked, Execute_Command'Access,
-         Slot_Object => Kernel_Handle (Kernel),
          User_Data   => (Kernel_Handle (Kernel), Command, null));
    end Register_Button;
 
@@ -1925,7 +1923,8 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
          Menu := new Contextual_Menu_Record'
-           (Menu_Type             => Type_Separator,
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => Filter,
             Pix                   => Pix,
@@ -1939,7 +1938,8 @@ package body GPS.Kernel.Modules.UI is
             Label                 => Contextual_Menu_Label_Creator (T));
       else
          Menu := new Contextual_Menu_Record'
-           (Menu_Type             => Type_Action,
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Action,
             Name                  => new String'(Name),
             Action                => Action,
             Pix                   => Pix,
@@ -1978,7 +1978,8 @@ package body GPS.Kernel.Modules.UI is
 
       if Action = null then
          Menu := new Contextual_Menu_Record'
-           (Menu_Type             => Type_Separator,
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => null,
             Pix                   => Pix,
@@ -1992,7 +1993,8 @@ package body GPS.Kernel.Modules.UI is
             Label                 => Contextual_Menu_Label_Creator (Label));
       else
          Menu := new Contextual_Menu_Record'
-           (Menu_Type             => Type_Action,
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Action,
             Name                  => new String'(Name),
             Action                => Action,
             Pix                   => Pix,
@@ -2033,7 +2035,8 @@ package body GPS.Kernel.Modules.UI is
 
       if Action = null then
          Menu := new Contextual_Menu_Record'
-           (Menu_Type             => Type_Separator,
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => Filter,
             Pix                   => Pix,
@@ -2047,7 +2050,8 @@ package body GPS.Kernel.Modules.UI is
             Label                 => Contextual_Menu_Label_Creator (Label));
       else
          Menu := new Contextual_Menu_Record'
-           (Menu_Type             => Type_Command,
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Command,
             Name                  => new String'(Name),
             Command               => Action,
             Filter                => Filter,
@@ -2101,7 +2105,8 @@ package body GPS.Kernel.Modules.UI is
 
       if Action = null then
          Menu := new Contextual_Menu_Record'
-           (Menu_Type             => Type_Separator,
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => Filter,
             Pix                   => Pix,
@@ -2115,7 +2120,8 @@ package body GPS.Kernel.Modules.UI is
             Label                 => Contextual_Menu_Label_Creator (T));
       else
          Menu := new Contextual_Menu_Record'
-           (Menu_Type             => Type_Command,
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Command,
             Name                  => new String'(Name),
             Command               => Action,
             Filter                => Filter,
@@ -2241,7 +2247,8 @@ package body GPS.Kernel.Modules.UI is
       Add_Contextual_Menu
         (Kernel,
          new Contextual_Menu_Record'
-           (Menu_Type             => Type_Submenu,
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Submenu,
             Name                  => new String'(Name),
             Submenu_Filter        => Filter,
             Submenu_Enable        => Enable_Filter,
