@@ -333,6 +333,8 @@ package body Xref is
             function Tagged_Type (E : Entity_Information)
                return Entity_Information;
 
+            function Should_Show (E : Entity_Information) return Boolean;
+
             function Tagged_Type (E : Entity_Information)
                return Entity_Information is
             begin
@@ -340,46 +342,56 @@ package body Xref is
                  (Dbase.Xref.Method_Of (E)).Location.Entity;
             end Tagged_Type;
 
+            function Should_Show (E : Entity_Information) return Boolean is
+               R : References_Cursor;
+            begin
+               if Filter = null then
+                  return True;
+               end if;
+
+               Dbase.Xref.References (E, R);
+               while R.Has_Element loop
+                  if Filter (Dbase, (Ref => R.Element, others => <>)) then
+                     return True;
+                  end if;
+                  R.Next;
+               end loop;
+               return False;
+            end Should_Show;
+
             Cursor : Recursive_Entities_Cursor;
             Prim   : Entity_Information;
-            Show   : Boolean;
-            R      : References_Cursor;
 
          begin
             Prim     := Entity.Entity;
             Prim_Ent := To_General_Entity (Dbase, Prim);
             Typ_Ent  := To_General_Entity (Dbase, Tagged_Type (Prim));
 
-            if On_Callee (Callee => Prim_Ent, Primitive_Of => Typ_Ent) then
-               Recursive
-                 (Self    => Dbase.Xref,
-                  Entity  => Entity.Entity,
-                  Compute => Overridden_By'Unrestricted_Access,
-                  Cursor  => Cursor);
-
-               while Cursor.Has_Element loop
-                  Prim     := Cursor.Element;
-                  Prim_Ent := To_General_Entity (Dbase, Prim);
-                  Typ_Ent  := To_General_Entity (Dbase, Tagged_Type (Prim));
-
-                  Show := Filter = null;
-                  if not Show then
-                     Dbase.Xref.References (Typ_Ent.Entity, R);
-                     while R.Has_Element loop
-                        Show := Filter
-                          (Dbase, (Ref => R.Element, others => <>));
-                        exit when Show;
-                        R.Next;
-                     end loop;
-                  end if;
-
-                  exit when Show and then not On_Callee
-                    (Callee       => Prim_Ent,
-                     Primitive_Of => Typ_Ent);
-
-                  Cursor.Next;
-               end loop;
+            if Should_Show (Prim_Ent.Entity)
+              and then not On_Callee
+                (Callee => Prim_Ent, Primitive_Of => Typ_Ent)
+            then
+               return;
             end if;
+
+            Recursive
+              (Self    => Dbase.Xref,
+               Entity  => Entity.Entity,
+               Compute => Overridden_By'Unrestricted_Access,
+               Cursor  => Cursor);
+
+            while Cursor.Has_Element loop
+               Prim     := Cursor.Element;
+               Prim_Ent := To_General_Entity (Dbase, Prim);
+               Typ_Ent  := To_General_Entity (Dbase, Tagged_Type (Prim));
+
+               exit when Should_Show (Prim_Ent.Entity)
+                 and then not On_Callee
+                   (Callee       => Prim_Ent,
+                    Primitive_Of => Typ_Ent);
+
+               Cursor.Next;
+            end loop;
 
          exception
             when E : others =>
