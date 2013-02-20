@@ -338,7 +338,9 @@ package body GPS.Kernel.Xref is
          Ref := Get (Data.Iter);
          Result := Execute_Again;
 
-         if Ref /= No_General_Entity_Reference then
+         if Ref /= No_General_Entity_Reference
+           and then not Data.Kernel.Databases.Reference_Is_Declaration (Ref)
+         then
             Parent := Get_Caller (Ref);
 
             if Parent /= No_General_Entity
