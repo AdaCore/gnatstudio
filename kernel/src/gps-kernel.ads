@@ -47,7 +47,6 @@ with Language.Tree.Database;
 with String_Hash;
 with Default_Preferences;
 with Histories;
-with Projects;
 with Refactoring;
 with Switches_Chooser;
 with String_List_Utils;
@@ -1143,12 +1142,6 @@ private
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
 
    type Kernel_Handle_Record is new GPS.Core_Kernels.Core_Kernel with record
-      Database : Xref.General_Xref_Database;
-      --  The cross-reference information
-
-      Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
-      --  The symbol used to store common strings read from sources
-
       Tools   : Tools_List.List;
       --  The tools registered in the kernel
 
@@ -1174,12 +1167,6 @@ private
 
       Main_Window : Gtk.Window.Gtk_Window;
       --  The main GPS window
-
-      Registry : Projects.Project_Registry_Access;
-      --  The project registry
-
-      Scripts : GNATCOLL.Scripts.Scripts_Repository;
-      --  Data used to store information for the scripting languages
 
       GNAT_Version : GNAT.Strings.String_Access;
       --  Full GNAT Version, if relevant
@@ -1218,9 +1205,6 @@ private
 
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;
       --  Mapping between files and logs
-
-      Lang_Handler : Language_Handlers.Language_Handler;
-      --  The type used to convert from file names to languages
 
       Open_Files : GNATCOLL.VFS.File_Array_Access;
       --  The list of currently open files
@@ -1272,5 +1256,14 @@ private
       Undo_Redo : Commands.Controls.Undo_Redo;
       --  Undo/redo controls
    end record;
+
+   overriding procedure Create_Registry
+     (Self : not null access Kernel_Handle_Record);
+
+   overriding procedure Create_Database
+     (Self : not null access Kernel_Handle_Record);
+
+   overriding procedure Create_Scripts_Repository
+     (Self : not null access Kernel_Handle_Record);
 
 end GPS.Kernel;

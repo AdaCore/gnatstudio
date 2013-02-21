@@ -17,9 +17,44 @@
 
 --  This package defines the abstract root type for GPS kernel.
 
-package GPS.Core_Kernels is
-   pragma Pure;
+with Language_Handlers;
+with Projects;
+with Xref;
 
-   type Core_Kernel is abstract tagged null record;
+with GNATCOLL.Scripts;
+with GNATCOLL.Symbols;
+
+package GPS.Core_Kernels is
+
+   type Core_Kernel is abstract tagged record
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
+      --  The symbol used to store common strings read from sources
+
+      Lang_Handler : Language_Handlers.Language_Handler;
+      --  The type used to convert from file names to languages
+
+      Registry : Projects.Project_Registry_Access;
+      --  The project registry
+
+      Database : Xref.General_Xref_Database;
+      --  The cross-reference information
+
+      Scripts : GNATCOLL.Scripts.Scripts_Repository;
+      --  Data used to store information for the scripting languages
+   end record;
+
+   procedure Create_Registry (Self : not null access Core_Kernel) is abstract;
+   --  Initialize Registry with kernel specific version
+
+   procedure Create_Database (Self : not null access Core_Kernel) is abstract;
+   --  Initialize Database with kernel specific version
+
+   procedure Create_Scripts_Repository (Self : not null access Core_Kernel) is
+     abstract;
+   --  Initialize Scripts_Repository with kernel specific version
+
+   procedure Initialize (Self : not null access Core_Kernel'Class);
+
+   procedure Destroy (Self : not null access Core_Kernel'Class);
 
 end GPS.Core_Kernels;

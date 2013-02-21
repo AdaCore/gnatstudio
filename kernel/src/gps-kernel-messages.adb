@@ -27,6 +27,7 @@ with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles; use GPS.Kernel.Styles;
+with Projects;
 with Traces;
 with XML_Parsers;
 with XML_Utils;
