@@ -2283,7 +2283,7 @@ package body GPS.Kernel.Modules.UI is
 
       else
          Execute_Command
-           (B.Kernel,
+           (Button,
             Command => (Kernel  => B.Kernel,
                         Command => Action.Command,
                         Filter  => Action.Filter));

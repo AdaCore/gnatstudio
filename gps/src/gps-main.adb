@@ -49,6 +49,7 @@ with Gdk.Visual;
 with Gtk;                              use Gtk;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Image;                        use Gtk.Image;
+with Gtk.Handlers;
 with Gtk.Main;                         use Gtk.Main;
 with Gtk.Window;                       use Gtk.Window;
 with Gtk_Utils;                        use Gtk_Utils;
