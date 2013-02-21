@@ -20,7 +20,6 @@ with Ada.Unchecked_Deallocation;
 with Commands.Generic_Asynchronous;  use Commands;
 with Commands;                       use Commands;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
-with GNATCOLL.SQL.Sqlite;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
