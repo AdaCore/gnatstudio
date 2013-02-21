@@ -316,7 +316,7 @@ package body Call_Graph_Views is
       Iter : Gtk_Tree_Iter) return General_Entity
    is
       Model    : constant Gtk_Tree_Store :=
-                   Gtk_Tree_Store (Get_Model (View.Tree));
+                   Gtk_Tree_Store (Gtk.Tree_Store."-"(Get_Model (View.Tree)));
    begin
       return View.Kernel.Databases.Get_Entity
         (Name => Get_String (Model, Iter, Entity_Name_Column),
@@ -1154,6 +1154,9 @@ package body Call_Graph_Views is
    is
       Model    : constant Gtk_Tree_Store := -Get_Model (View.Tree);
 
+      Is_Calls : Boolean := True;
+      --  For upward compatibility
+
       procedure Recursive_Load
         (Parent_Iter   : Gtk_Tree_Iter;
          Node          : Node_Ptr;
@@ -1257,15 +1260,18 @@ package body Call_Graph_Views is
          return;
       end if;
 
-      Recursive_Load (Null_Iter, Callgraph.Child, False);
-
       declare
          Pos_Str : constant String := Get_Attribute (Callgraph, "position");
+         V_Type  : constant String := Get_Attribute (XML, "type");
       begin
          if Pos_Str /= "" then
             Set_Position (View.Pane, Gint'Value (Pos_Str));
          end if;
+
+         Is_Calls := V_Type = "calls";
       end;
+
+      Recursive_Load (Null_Iter, Callgraph.Child, False);
    end Load_From_XML;
 
    ----------------
