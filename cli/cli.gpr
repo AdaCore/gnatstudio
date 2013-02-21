@@ -1,6 +1,7 @@
 with "../shared";
 
 with "../kernel/kernel_core";
+with "../python/python_core";
 
 project CLI is
 

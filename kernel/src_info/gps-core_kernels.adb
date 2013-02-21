@@ -56,6 +56,17 @@ package body GPS.Core_Kernels is
       GNATCOLL.Symbols.Free (Self.Symbols);
    end Destroy;
 
+   -----------------
+   -- Get_Scripts --
+   -----------------
+
+   function Get_Scripts
+     (Kernel : access Core_Kernel'Class)
+      return GNATCOLL.Scripts.Scripts_Repository is
+   begin
+      return Kernel.Scripts;
+   end Get_Scripts;
+
    ----------------
    -- Initialize --
    ----------------
