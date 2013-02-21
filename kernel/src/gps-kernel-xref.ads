@@ -55,18 +55,6 @@ package GPS.Kernel.Xref is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create and initialize the xref databases
 
-   procedure Project_Changed (Self : General_Xref_Database);
-   --  The project has changed, we need to reset the xref database. This is
-   --  called at least once prior to calls to Project_View_Changed.
-   --  At this stage, the view of the project hasn't been computed, so you can
-   --  not do any query on the project itself.
-
-   procedure Project_View_Changed
-     (Self   : General_Xref_Database;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  The view of the project has changed, we need to refresh the xref
-   --  databases.
-
    procedure Compilation_Finished
      (Kernel : access Kernel_Handle_Record'Class;
       C_Only : Boolean);

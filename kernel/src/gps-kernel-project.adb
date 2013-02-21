@@ -46,7 +46,7 @@ with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
-with GPS.Kernel.Xref;
+with Xref;
 
 package body GPS.Kernel.Project is
 
@@ -165,8 +165,8 @@ package body GPS.Kernel.Project is
 
       --  ??? Could be run as part of the hook itself, which would give control
       --  to the user as to whether we want to run it or not.
-      GPS.Kernel.Xref.Project_View_Changed
-        (Self.Handle.Database, Self.Handle);
+      Xref.Project_View_Changed
+        (Self.Handle.Database, Get_Project_Tree (Self.Handle));
 
       Run_Hook (Self.Handle, Project_View_Changed_Hook);
 
@@ -828,7 +828,7 @@ package body GPS.Kernel.Project is
          --  in the locations view when it is opened, since they are stored in
          --  a GUI independent model.
 
-         GPS.Kernel.Xref.Project_Changed (Kernel.Database);
+         Xref.Project_Changed (Kernel.Database);
          Recompute_View (Kernel);
 
          --  Reload the desktop, in case there is a project-specific setup

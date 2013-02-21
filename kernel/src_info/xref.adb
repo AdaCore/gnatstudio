@@ -23,6 +23,8 @@ with Ada.Unchecked_Deallocation;
 with ALI_Parser;
 with Dynamic_Arrays;
 with Glib.Convert;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.SQL.Sqlite;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.Strings;              use GNAT.Strings;
@@ -3684,5 +3686,109 @@ package body Xref is
    begin
       return GER;
    end Get_Entity_Reference;
+
+   ---------------------
+   -- Project_Changed --
+   ---------------------
+
+   procedure Project_Changed (Self : General_Xref_Database) is
+   begin
+      if Active (SQLITE) then
+         --  Create an initial empty database. It will never be filled, and
+         --  will be shortly replaced in Project_View_Changed, but it ensures
+         --  that GPS does not raise exceptions if some action is performed
+         --  while the project has not been computed (like loading of the
+         --  desktop for instance).
+         --  ??? We really should not be doing anything until the project has
+         --  been computed.
+         Trace (Me, "Set up xref database: :memory:");
+         if Self.Xref = null then
+            Trace (Me, "Set up xref database: :memory:");
+         end if;
+
+         Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (":memory:"));
+      else
+         --  When loading a new project, we need to reset the cache containing
+         --  LI information, otherwise this cache might contain dangling
+         --  references to projects that have been freed. Recompute_View does
+         --  something similar but tries to limit the files that are reset, so
+         --  the calls below will just speed up the processing in
+         --  Recompute_View when a new project is loaded.
+
+         Old_Entities.Reset (Self.Entities);
+      end if;
+   end Project_Changed;
+
+   --------------------------
+   -- Project_View_Changed --
+   --------------------------
+
+   procedure Project_View_Changed
+     (Self   : General_Xref_Database;
+      Tree   : Project_Tree_Access)
+   is
+
+      procedure Reset_File_If_External (S : in out Old_Entities.Source_File);
+      --  Reset the xref info for a source file that no longer belongs to the
+      --  project.
+
+      ----------------------------
+      -- Reset_File_If_External --
+      ----------------------------
+
+      procedure Reset_File_If_External (S : in out Old_Entities.Source_File) is
+         Info : constant File_Info :=
+           Tree.Info (Old_Entities.Get_Filename (S));
+      begin
+         if Info.Project = No_Project then
+            Old_Entities.Reset (S);
+         end if;
+      end Reset_File_If_External;
+
+      Dir  : Virtual_File;
+      File : Virtual_File;
+   begin
+      if Active (SQLITE) then
+         --  Self.Xref was initialized in Project_Changed.
+         Self.Xref.Free;
+
+         Dir := Tree.Root_Project.Object_Dir;
+
+         if Dir = No_File then
+            Trace (Me, "Object_Dir is unknown for the root project "
+                   & Tree.Root_Project.Project_Path.Display_Full_Name);
+            Dir := GNATCOLL.VFS.Get_Current_Dir;
+         end if;
+
+         File := Create_From_Dir
+           (Dir       => Dir,
+            Base_Name => "gnatinspect.db");
+
+         Trace (Me, "Set up xref database: " & File.Display_Full_Name);
+         Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all));
+
+         --  ??? Now would be a good opportunity to update the cross-references
+         --  rather than wait for the next compilation.
+
+      else
+         --  The list of source or ALI files might have changed, so we need to
+         --  reset the cache containing LI information, otherwise this cache
+         --  might contain dangling references to projects that have been
+         --  freed. We used to do this only when loading a new project, but
+         --  in fact that is not sufficient: when we look up xref info for a
+         --  source file, if we haven't reset the cache we might get a reply
+         --  pointing to a source file in a directory that is no longer part
+         --  of the project in the new scenario.
+         --
+         --  In fact, we only reset the info for those source files that are no
+         --  longer part of the project. This might take longer than dropping
+         --  the whole database since in the former case we need to properly
+         --  handle refcounting whereas Reset takes a shortcut. It is still
+         --  probably cleaner to only reset what's needed.
+
+         Old_Entities.Foreach_Source_File
+           (Self.Entities, Reset_File_If_External'Access);
+      end if;
+   end Project_View_Changed;
 
 end Xref;
