@@ -18,14 +18,11 @@
 with Ada.Containers;
 with Ada.Unchecked_Conversion;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Python;                use GNATCOLL.Python;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
-with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
 with Basic_Types;
@@ -45,6 +42,7 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Python_Core;
 with Histories;                  use Histories;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
@@ -164,21 +162,8 @@ package body Python_Module is
       pragma Unreferenced (Ignored, Tmp);
       Script  : Scripting_Language;
 
-      Python_Home : String_Access := Getenv ("GPS_PYTHONHOME");
    begin
-      if Python_Home.all = "" then
-         Free (Python_Home);
-         Python_Home := new String'(Executable_Location);
-      end if;
-
-      Trace (Me, "PYTHONHOME=" & Python_Home.all);
-
-      Register_Python_Scripting
-        (Get_Scripts (Kernel),
-         Module      => "GPS",
-         Python_Home => Python_Home.all);
-
-      Free (Python_Home);
+      GPS.Python_Core.Register_Python (Kernel);
 
       Script := Lookup_Scripting_Language (Get_Scripts (Kernel), Python_Name);
       if Script = null then

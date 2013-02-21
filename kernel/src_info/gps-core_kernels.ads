@@ -43,6 +43,10 @@ package GPS.Core_Kernels is
       --  Data used to store information for the scripting languages
    end record;
 
+   function Get_Scripts
+     (Kernel : access Core_Kernel'Class)
+      return GNATCOLL.Scripts.Scripts_Repository;
+
    procedure Create_Registry (Self : not null access Core_Kernel) is abstract;
    --  Initialize Registry with kernel specific version
 
