@@ -17,10 +17,13 @@
 --  Driver for command line version of GPS
 
 with GPS.CLI_Kernels;
+with GPS.Core_Kernels;
 
 procedure GPS.CLI is
-   Kernel : GPS.CLI_Kernels.CLI_Kernel;
-   pragma Unreferenced (Kernel);
+   Kernel : aliased GPS.CLI_Kernels.CLI_Kernel;
 begin
-   null;
+   GPS.Core_Kernels.Initialize (Kernel'Access);
+
+   --  Destroy all
+   GPS.Core_Kernels.Destroy (Kernel'Access);
 end GPS.CLI;
