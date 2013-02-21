@@ -1079,56 +1079,59 @@ package body Call_Graph_Views is
          end if;
 
          while Iter /= Null_Iter loop
-            N := new XML_Utils.Node;
-            N.Tag := new String'("entity");
-            Add_Child (Parent, N, Append => True);
+            if Get_String (Model, Iter, Name_Column) /= Computing_Label then
+               N := new XML_Utils.Node;
+               N.Tag := new String'("entity");
+               Add_Child (Parent, N, Append => True);
 
-            Path := Get_Path (Model, Iter);
-            if Row_Expanded (View.Tree, Path) then
-               Set_Attribute (N, "expanded", "true");
+               Path := Get_Path (Model, Iter);
+               if Row_Expanded (View.Tree, Path) then
+                  Set_Attribute (N, "expanded", "true");
+               end if;
+               Path_Free (Path);
+
+               Set_Attribute
+                 (N, "name", Get_String (Model, Iter, Name_Column));
+               Set_Attribute
+                 (N, "decl", Get_String (Model, Iter, Decl_Column));
+
+               Set_Attribute
+                 (N, "type",
+                  View_Type'Image
+                    (View_Type'Val (Get_Int (Model, Iter, Kind_Column))));
+
+               N.Tag := new String'("entity");
+               Set_Attribute
+                 (N, "entity_name",
+                  Get_String (Model, Iter, Entity_Name_Column));
+               --  ??? This is potentially not UTF8, should not be in an
+               --  attribute
+               Set_Attribute
+                 (N, "entity_decl",
+                  Get_File (Model, Iter, File_Column).Display_Full_Name);
+               --  ??? This is potentially not UTF8, should not be in an
+               --  attribute
+               Set_Attribute
+                 (N, "entity_line",
+                  Image (Integer (Get_Int (Model, Iter, Line_Column))));
+               Set_Attribute
+                 (N, "entity_column",
+                  Image (Integer (Get_Int (Model, Iter, Column_Column))));
+
+               L := Get_Locations_List (View, Iter, False);
+
+               if L /= null then
+                  Node := First (L.all);
+
+                  while Node /= Null_Node loop
+                     XML_Utils.Add_Child
+                       (N, To_XML (Data (Node)), True);
+                     Node := Next (Node);
+                  end loop;
+               end if;
+
+               Recursive_Save (Iter, N);
             end if;
-            Path_Free (Path);
-
-            Set_Attribute
-              (N, "name", Get_String (Model, Iter, Name_Column));
-            Set_Attribute
-              (N, "decl", Get_String (Model, Iter, Decl_Column));
-
-            Set_Attribute
-              (N, "type",
-               View_Type'Image
-                 (View_Type'Val (Get_Int (Model, Iter, Kind_Column))));
-
-            N.Tag := new String'("entity");
-            Set_Attribute
-              (N, "entity_name", Get_String (Model, Iter, Entity_Name_Column));
-            --  ??? This is potentially not UTF8, should not be in an
-            --  attribute
-            Set_Attribute
-              (N, "entity_decl",
-               Get_File (Model, Iter, File_Column).Display_Full_Name);
-            --  ??? This is potentially not UTF8, should not be in an
-            --  attribute
-            Set_Attribute
-              (N, "entity_line",
-               Image (Integer (Get_Int (Model, Iter, Line_Column))));
-            Set_Attribute
-              (N, "entity_column",
-               Image (Integer (Get_Int (Model, Iter, Column_Column))));
-
-            L := Get_Locations_List (View, Iter, False);
-
-            if L /= null then
-               Node := First (L.all);
-
-               while Node /= Null_Node loop
-                  XML_Utils.Add_Child
-                    (N, To_XML (Data (Node)), True);
-                  Node := Next (Node);
-               end loop;
-            end if;
-
-            Recursive_Save (Iter, N);
 
             Next (Model, Iter);
          end loop;
