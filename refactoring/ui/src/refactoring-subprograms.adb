@@ -240,40 +240,49 @@ package body Refactoring.Subprograms is
    ----------
 
    procedure Sort (Self : in out Parameters'Class) is
-      P : Parameter_Lists.Cursor;
-   begin
-      --  Put all "out" parameters last, so that we read from input parameters
-      --  to output parameters
+      Dispatchs : Parameter_Lists.List;  --  The dispatching parameters
+      Normals   : Parameter_Lists.List;  --  Non dispatching, non out params
+      Outs      : Parameter_Lists.List;  --  Out parameters
 
-      P := Self.List.First;
-      while Has_Element (P) loop
-         case Element (P).PType is
-            when Out_Parameter | In_Out_Parameter =>
-               Self.List.Swap (P, Self.List.Last);
-            when In_Parameter | Access_Parameter =>
-               null;
-         end case;
-         Next (P);
-      end loop;
+   begin
 
       --  Put the dispatching parameter first, if any. By convention, we also
       --  put "Self" or "This" first if we can't find another dispatching
       --  parameter.
       --  Needs to be done after the "out" parameter, in case the dispatching
       --  parameter is also out
-
-      P := Self.List.First;
-      while Has_Element (P) loop
-         if Element (P).Is_Tagged then
-            Self.List.Swap (P, Self.List.First);
-         end if;
-         Next (P);
-      end loop;
+      --  Put all "out" parameters last, so that we read from input parameters
+      --  to output parameters
 
       --  ??? Put parameters with default values last
       --  We currently do not create default values, so this is irrelevant
 
-      null;
+      for E of Self.List loop
+         if E.Is_Tagged then
+            Dispatchs.Append (E);
+         else
+            case E.PType is
+            when Out_Parameter | In_Out_Parameter =>
+               Outs.Append (E);
+            when In_Parameter | Access_Parameter =>
+               Normals.Append (E);
+            end case;
+         end if;
+      end loop;
+
+      Self.List.Clear;
+
+      for E of Dispatchs loop
+         Self.List.Append (E);
+      end loop;
+
+      for E of Normals loop
+         Self.List.Append (E);
+      end loop;
+
+      for E of Outs loop
+         Self.List.Append (E);
+      end loop;
    end Sort;
 
    -----------------------------
