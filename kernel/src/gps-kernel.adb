@@ -22,7 +22,6 @@ with Ada.Unchecked_Conversion;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
-with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
@@ -284,6 +283,42 @@ package body GPS.Kernel is
       Convert (Kernel).Main_Window := null;
    end On_Main_Window_Destroyed;
 
+   ---------------------
+   -- Create_Registry --
+   ---------------------
+
+   overriding procedure Create_Registry
+     (Self : not null access Kernel_Handle_Record) is
+   begin
+      GPS.Kernel.Project.Create_Registry (Self);
+      --  Note: we do not compute the view of this project yet. This will be
+      --  done only if no other project was loaded from the command line, which
+      --  is more efficient in case the current directory has lots of source
+      --  files.
+
+   end Create_Registry;
+
+   ---------------------
+   -- Create_Database --
+   ---------------------
+
+   overriding procedure Create_Database
+     (Self : not null access Kernel_Handle_Record) is
+   begin
+      GPS.Kernel.Xref.Create_Database (Self);
+   end Create_Database;
+
+   -------------------------------
+   -- Create_Scripts_Repository --
+   -------------------------------
+
+   overriding procedure Create_Scripts_Repository
+     (Self : not null access Kernel_Handle_Record) is
+   begin
+      Self.Scripts := new Kernel_Scripts_Repository'
+        (Scripts_Repository_Record with Kernel => Kernel_Handle (Self));
+   end Create_Scripts_Repository;
+
    -------------
    -- Gtk_New --
    -------------
@@ -292,39 +327,21 @@ package body GPS.Kernel is
      (Handle           : out Kernel_Handle;
       Main_Window      : Gtk.Window.Gtk_Window;
       Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File)
-   is
-      Handler : Language_Handler;
+      Prefix_Directory : Virtual_File) is
    begin
       Handle := new Kernel_Handle_Record;
+      Handle.Home_Dir := Home_Dir;
+      Handle.Prefix   := Prefix_Directory;
 
       Handle.Main_Window  := Main_Window;
       Weak_Ref (Handle.Main_Window,
                 On_Main_Window_Destroyed'Access,
                 Handle.all'Address);
 
-      Handle.Home_Dir := Home_Dir;
-      Handle.Prefix   := Prefix_Directory;
-
-      Handle.Symbols := GNATCOLL.Symbols.Allocate;
-
-      --  Create the language handler
-
-      Create_Handler (Handler, Handle.Symbols);
-      Handle.Lang_Handler := Handler;
+      GPS.Core_Kernels.Initialize (Handle);
 
       --  by default, the local server
       Handle.Gnatls_Server := new String'("");
-
-      Create_Registry (Handle);
-      Set_Registry (Handle.Lang_Handler, Handle.Registry);
-
-      --  Note: we do not compute the view of this project yet. This will be
-      --  done only if no other project was loaded from the command line, which
-      --  is more efficient in case the current directory has lots of source
-      --  files.
-
-      GPS.Kernel.Xref.Create_Database (Handle);
 
       --  Initialize the preferences. We load the file now, even though it
       --  will also be reloaded after the customization files, so that themes
@@ -347,9 +364,6 @@ package body GPS.Kernel is
       Load (Handle.History.all,
             Create_From_Dir (Handle.Home_Dir, "histories.xml"));
       Set_Max_Length (Handle.History.all, History_Max_Length);
-
-      Handle.Scripts := new Kernel_Scripts_Repository'
-        (Scripts_Repository_Record with Kernel => Handle);
 
       Restore_Persistent_Properties (Handle);
 
@@ -1115,7 +1129,6 @@ package body GPS.Kernel is
 
    procedure Destroy (Handle : access Kernel_Handle_Record) is
       Success : Boolean;
-      Tmp     : String_Access;
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (History_Record, History);
@@ -1147,8 +1160,6 @@ package body GPS.Kernel is
       --  ??? Already done in remote.db.Destroy
       --  GNAT.Expect.TTY.Remote.Close_All;
 
-      Destroy (Handle.Registry);
-
       --  Do not free the contexts. They can still be stored as Data in a
       --  Class_Instance, and this will be finalized later automatically. If
       --  we call Unref here, this results in a double deallocation.
@@ -1176,37 +1187,15 @@ package body GPS.Kernel is
 
       Commands.Free (Handle.Perma_Commands);
 
-      --  Most of the rest if for the sake of memory leaks checkin, and since
-      --  it can take a while for big projects we do not do this in normal
-      --  times.
-
-      Tmp := GNAT.OS_Lib.Getenv ("VALGRIND");
-      if Tmp.all /= "" then
-
-         Destroy (Handle.Scripts);
-
-         --  Destroy the entities database after we have finalized the
-         --  scripting languages, in case some class instances were still
-         --  owning references to entities
-
-         Standard.Xref.Destroy (Handle.Database);
-      end if;
-
-      --  Remove the language handlers (used for xref). This needs to be done
-      --  after finalizing the xref database, source_files contain a pointer
-      --  to their language handler.
-
-      Destroy (Language_Handler (Handle.Lang_Handler));
-
       Unchecked_Free (Handle.Refactoring);
 
-      Free (Tmp);
       Free (Handle.Gnatls_Cache);
       Free (Handle.Gnatls_Server);
       Free (Handle.GNAT_Version);
 
       --  Handle.Symbols.Display_Stats;
-      GNATCOLL.Symbols.Free (Handle.Symbols);
+
+      GPS.Core_Kernels.Destroy (Handle);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.
