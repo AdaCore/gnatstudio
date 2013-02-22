@@ -120,12 +120,15 @@ package body GPS.Kernel.Project is
    -- Create_Registry --
    ---------------------
 
-   procedure Create_Registry (Handle : access Kernel_Handle_Record'Class) is
+   procedure Create_Registry
+     (Handle : access Kernel_Handle_Record'Class;
+      Result : out Projects.Project_Registry_Access)
+   is
       Tree : constant Project_Tree_Access := new GPS_Project_Tree;
    begin
       GPS_Project_Tree (Tree.all).Handle := Kernel_Handle (Handle);
-      Handle.Registry := Projects.Create (Tree => Tree);
-      Tree.Load_Empty_Project (Env => Handle.Registry.Environment);
+      Result := Projects.Create (Tree => Tree);
+      Tree.Load_Empty_Project (Env => Result.Environment);
    end Create_Registry;
 
    ------------------
@@ -167,7 +170,7 @@ package body GPS.Kernel.Project is
       --  ??? Could be run as part of the hook itself, which would give control
       --  to the user as to whether we want to run it or not.
       Xref.Project_View_Changed
-        (Self.Handle.Database, Get_Project_Tree (Self.Handle));
+        (Self.Handle.Databases, Get_Project_Tree (Self.Handle));
 
       Run_Hook (Self.Handle, Project_View_Changed_Hook);
 
@@ -833,7 +836,7 @@ package body GPS.Kernel.Project is
          --  in the locations view when it is opened, since they are stored in
          --  a GUI independent model.
 
-         Xref.Project_Changed (Kernel.Database);
+         Xref.Project_Changed (Kernel.Databases);
          Recompute_View (Kernel);
 
          --  Reload the desktop, in case there is a project-specific setup

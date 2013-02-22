@@ -22,6 +22,17 @@ with Language_Handlers;                use Language_Handlers;
 
 package body GPS.Core_Kernels is
 
+   ---------------
+   -- Databases --
+   ---------------
+
+   function Databases
+     (Kernel : access Core_Kernel'Class)
+      return Xref.General_Xref_Database is
+   begin
+      return Kernel.Database;
+   end Databases;
+
    -------------
    -- Destroy --
    -------------
@@ -56,16 +67,49 @@ package body GPS.Core_Kernels is
       GNATCOLL.Symbols.Free (Self.Symbols);
    end Destroy;
 
-   -----------------
-   -- Get_Scripts --
-   -----------------
+   ------------------
+   -- Lang_Handler --
+   ------------------
 
-   function Get_Scripts
+   function Lang_Handler
+     (Kernel : access Core_Kernel'Class)
+      return Language_Handlers.Language_Handler is
+   begin
+      return Kernel.Lang_Handler;
+   end Lang_Handler;
+
+   --------------
+   -- Registry --
+   --------------
+
+   function Registry
+     (Kernel : access Core_Kernel'Class)
+      return Projects.Project_Registry_Access is
+   begin
+      return Kernel.Registry;
+   end Registry;
+
+   -------------
+   -- Scripts --
+   -------------
+
+   function Scripts
      (Kernel : access Core_Kernel'Class)
       return GNATCOLL.Scripts.Scripts_Repository is
    begin
       return Kernel.Scripts;
-   end Get_Scripts;
+   end Scripts;
+
+   -------------
+   -- Symbols --
+   -------------
+
+   function Symbols
+     (Kernel : access Core_Kernel'Class)
+      return GNATCOLL.Symbols.Symbol_Table_Access is
+   begin
+      return Kernel.Symbols;
+   end Symbols;
 
    ----------------
    -- Initialize --
@@ -77,10 +121,10 @@ package body GPS.Core_Kernels is
       Self.Symbols := GNATCOLL.Symbols.Allocate;
       Create_Handler (Handler, Self.Symbols);
       Self.Lang_Handler := Handler;
-      Self.Create_Registry;
+      Self.Create_Registry (Self.Registry);
       Set_Registry (Self.Lang_Handler, Self.Registry);
-      Self.Create_Database;
-      Self.Create_Scripts_Repository;
+      Self.Create_Database (Self.Database);
+      Self.Create_Scripts_Repository (Self.Scripts);
    end Initialize;
 
 end GPS.Core_Kernels;

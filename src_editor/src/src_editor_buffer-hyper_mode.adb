@@ -21,7 +21,6 @@ with GNATCOLL.Xref;
 
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
 
-with GPS.Kernel;        use GPS.Kernel;
 with GUI_Utils;         use GUI_Utils;
 with Src_Editor_Box;    use Src_Editor_Box;
 with String_Utils;      use String_Utils;
