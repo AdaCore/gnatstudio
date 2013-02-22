@@ -56,7 +56,7 @@ package body GPS.Core_Kernels is
          Standard.Xref.Destroy (Self.Database);
       end if;
 
-      Free (Tmp);
+      Free (Valgrind);
 
       Projects.Destroy (Self.Registry);
 
