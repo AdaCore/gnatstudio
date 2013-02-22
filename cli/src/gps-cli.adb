@@ -22,6 +22,7 @@ with Ada.Text_IO;                      use Ada.Text_IO;
 with GNAT.Command_Line;                use GNAT.Command_Line;
 with GNAT.Strings;                     use GNAT.Strings;
 
+with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 with GPS.CLI_Kernels;
@@ -46,7 +47,9 @@ procedure GPS.CLI is
    Cmdline               : Command_Line_Configuration;
    Project_Name          : aliased GNAT.Strings.String_Access;
    Kernel                : aliased GPS.CLI_Kernels.CLI_Kernel;
+   GNAT_Version          : GNAT.Strings.String_Access;
 begin
+   GNATCOLL.Traces.Parse_Config_File;
    Set_Usage
      (Cmdline,
       Help => "GPS command line interface");
@@ -87,8 +90,11 @@ begin
          end if;
       end if;
 
+      Kernel.Registry.Environment.Set_Path_From_Gnatls
+         ("gnatls", GNAT_Version);
       Kernel.Registry.Tree.Load
-        (Root_Project_Path => Path);
+        (Root_Project_Path => Path,
+         Env => Kernel.Registry.Environment);
    end;
 
    --  Destroy all
