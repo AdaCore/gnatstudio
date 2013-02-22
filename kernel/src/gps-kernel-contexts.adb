@@ -776,7 +776,7 @@ package body GPS.Kernel.Contexts is
 
          Context.Data.Data.Xref_Entity_Type_Of :=
            Get_Type_Of
-             (Databases (Context.Data.Data.Kernel),
+             (Context.Data.Data.Kernel.Databases,
               Get_Entity (Context));
       end if;
 
@@ -798,7 +798,7 @@ package body GPS.Kernel.Contexts is
       then
          declare
             Parents : constant Xref.Entity_Array :=
-              Databases (Context.Data.Data.Kernel).Parent_Types
+              Context.Data.Data.Kernel.Databases.Parent_Types
               (Get_Entity (Context), Recursive => False);
          begin
             Context.Data.Data.Xref_Entity_Has_Parent_Types :=

@@ -16,17 +16,26 @@
 ------------------------------------------------------------------------------
 --  Kernel for CLI
 
+with GNATCOLL.Scripts;
+
 with GPS.Core_Kernels;
+with Projects;
+with Xref;
 
 package GPS.CLI_Kernels is
 
    type CLI_Kernel is new GPS.Core_Kernels.Core_Kernel with null record;
 
-   overriding procedure Create_Registry (Self : not null access CLI_Kernel);
+   overriding procedure Create_Registry
+     (Self   : not null access CLI_Kernel;
+      Result : out Projects.Project_Registry_Access);
 
-   overriding procedure Create_Database (Self : not null access CLI_Kernel);
+   overriding procedure Create_Database
+     (Self   : not null access CLI_Kernel;
+      Result : out Xref.General_Xref_Database);
 
    overriding procedure Create_Scripts_Repository
-     (Self : not null access CLI_Kernel);
+     (Self   : not null access CLI_Kernel;
+      Result : out GNATCOLL.Scripts.Scripts_Repository);
 
 end GPS.CLI_Kernels;

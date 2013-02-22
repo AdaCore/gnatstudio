@@ -39,7 +39,7 @@ package body GPS.Python_Core is
       end if;
 
       Register_Python_Scripting
-        (Kernel.Get_Scripts,
+        (Kernel.Scripts,
          Module      => "GPS",
          Python_Home => Python_Home.all);
 

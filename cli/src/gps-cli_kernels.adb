@@ -16,10 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Projects;
-with GNATCOLL.Scripts;
-
-with Projects;
-with Xref;
 
 package body GPS.CLI_Kernels is
 
@@ -27,23 +23,29 @@ package body GPS.CLI_Kernels is
    -- Create_Database --
    ---------------------
 
-   overriding procedure Create_Database (Self : not null access CLI_Kernel) is
+   overriding procedure Create_Database
+     (Self   : not null access CLI_Kernel;
+      Result : out Xref.General_Xref_Database) is
    begin
-      Self.Database := new Xref.General_Xref_Database_Record;
+      Result := new Xref.General_Xref_Database_Record;
 
       Xref.Initialize
-        (Self.Database, Self.Lang_Handler, Self.Symbols, Self.Registry);
+        (Result, Self.Lang_Handler, Self.Symbols, Self.Registry);
    end Create_Database;
 
    ---------------------
    -- Create_Registry --
    ---------------------
 
-   overriding procedure Create_Registry (Self : not null access CLI_Kernel) is
+   overriding procedure Create_Registry
+     (Self   : not null access CLI_Kernel;
+      Result : out Projects.Project_Registry_Access)
+   is
+      pragma Unreferenced (Self);
       Tree : constant GNATCOLL.Projects.Project_Tree_Access :=
         new GNATCOLL.Projects.Project_Tree;
    begin
-      Self.Registry := Projects.Create (Tree => Tree);
+      Result := Projects.Create (Tree => Tree);
       Tree.Load_Empty_Project;
    end Create_Registry;
 
@@ -52,9 +54,12 @@ package body GPS.CLI_Kernels is
    -------------------------------
 
    overriding procedure Create_Scripts_Repository
-     (Self : not null access CLI_Kernel) is
+     (Self   : not null access CLI_Kernel;
+      Result : out GNATCOLL.Scripts.Scripts_Repository)
+   is
+      pragma Unreferenced (Self);
    begin
-      Self.Scripts := new GNATCOLL.Scripts.Scripts_Repository_Record;
+      Result := new GNATCOLL.Scripts.Scripts_Repository_Record;
    end Create_Scripts_Repository;
 
 end GPS.CLI_Kernels;

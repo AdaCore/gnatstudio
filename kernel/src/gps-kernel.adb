@@ -285,9 +285,10 @@ package body GPS.Kernel is
    ---------------------
 
    overriding procedure Create_Registry
-     (Self : not null access Kernel_Handle_Record) is
+     (Self   : not null access Kernel_Handle_Record;
+      Result : out Projects.Project_Registry_Access) is
    begin
-      GPS.Kernel.Project.Create_Registry (Self);
+      GPS.Kernel.Project.Create_Registry (Self, Result);
       --  Note: we do not compute the view of this project yet. This will be
       --  done only if no other project was loaded from the command line, which
       --  is more efficient in case the current directory has lots of source
@@ -300,9 +301,10 @@ package body GPS.Kernel is
    ---------------------
 
    overriding procedure Create_Database
-     (Self : not null access Kernel_Handle_Record) is
+     (Self   : not null access Kernel_Handle_Record;
+      Result : out Standard.Xref.General_Xref_Database) is
    begin
-      GPS.Kernel.Xref.Create_Database (Self);
+      GPS.Kernel.Xref.Create_Database (Self, Result);
    end Create_Database;
 
    -------------------------------
@@ -310,9 +312,10 @@ package body GPS.Kernel is
    -------------------------------
 
    overriding procedure Create_Scripts_Repository
-     (Self : not null access Kernel_Handle_Record) is
+     (Self   : not null access Kernel_Handle_Record;
+      Result : out GNATCOLL.Scripts.Scripts_Repository) is
    begin
-      Self.Scripts := new Kernel_Scripts_Repository'
+      Result := new Kernel_Scripts_Repository'
         (Scripts_Repository_Record with Kernel => Kernel_Handle (Self));
    end Create_Scripts_Repository;
 
@@ -403,20 +406,8 @@ package body GPS.Kernel is
      (Kernel : access Kernel_Handle_Record)
       return Language.Tree.Database.Construct_Database_Access is
    begin
-      return Kernel.Database.Constructs;
+      return Kernel.Databases.Constructs;
    end Get_Construct_Database;
-
-   ---------------
-   -- Databases --
-   ---------------
-
-   function Databases
-     (Kernel : access Kernel_Handle_Record)
-      return Standard.Xref.General_Xref_Database
-   is
-   begin
-      return Kernel.Database;
-   end Databases;
 
    ----------------------
    -- Load_Preferences --
@@ -1925,7 +1916,7 @@ package body GPS.Kernel is
          Kernel.Refactoring := new GPS_Refactoring_Factory_Context'
            (Kernel                 => Kernel_Handle (Kernel),
             Buffer_Factory         => Get_Buffer_Factory (Kernel),
-            Db                     => Kernel.Database,
+            Db                     => Kernel.Databases,
             Add_Subprogram_Box     => False,
             Add_In_Keyword         => False,
             Create_Subprogram_Decl => False);
@@ -1940,17 +1931,6 @@ package body GPS.Kernel is
 
       return Kernel.Refactoring;
    end Refactoring_Context;
-
-   -------------
-   -- Symbols --
-   -------------
-
-   function Symbols
-     (Kernel : access Kernel_Handle_Record)
-      return GNATCOLL.Symbols.Symbol_Table_Access is
-   begin
-      return Kernel.Symbols;
-   end Symbols;
 
    -----------------------------
    -- Set_Is_Dispatching_Call --

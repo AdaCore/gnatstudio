@@ -246,7 +246,7 @@ package body GPS.Kernel.Xref is
 
          Old_Entities.Queries.Start
            (All_LI_Information_Command (C.all).Iter,
-            Kernel.Database.Entities,
+            Kernel.Databases.Entities,
             Get_Language_Handler (Kernel),
             Get_Project (Kernel).Start (Recursive => True),
             C_Filter'Access);
@@ -256,7 +256,7 @@ package body GPS.Kernel.Xref is
          All_LI_Information_Command (C.all).Lang_Name := All_Name;
          Old_Entities.Queries.Start
            (All_LI_Information_Command (C.all).Iter,
-            Kernel.Database.Entities,
+            Kernel.Databases.Entities,
             Get_Language_Handler (Kernel),
             Get_Project (Kernel).Start (Recursive => True));
       end if;
@@ -494,7 +494,7 @@ package body GPS.Kernel.Xref is
    begin
       if Entity /= No_General_Entity then
          Push_State (Kernel_Handle (Kernel), Busy);
-         Calls := Kernel.Database.Get_All_Called_Entities (Entity);
+         Calls := Kernel.Databases.Get_All_Called_Entities (Entity);
 
          For_Each_Entity :
          while not At_End (Calls) loop
@@ -699,24 +699,26 @@ package body GPS.Kernel.Xref is
    ---------------------
 
    procedure Create_Database
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Result : out Standard.Xref.General_Xref_Database) is
    begin
       if Kernel.Databases = null then
-         Kernel.Database := new GPS_General_Xref_Database_Record;
-         GPS_General_Xref_Database_Record (Kernel.Database.all).Kernel :=
+         Result := new GPS_General_Xref_Database_Record;
+         GPS_General_Xref_Database_Record (Result.all).Kernel :=
            Kernel_Handle (Kernel);
+      else
+         Result := Kernel.Databases;
       end if;
 
       if Active (SQLITE) then
-         if Kernel.Database.Xref = null then
-            Kernel.Database.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
-            GPS_Xref_Database (Kernel.Database.Xref.all).Kernel :=
+         if Result.Xref = null then
+            Result.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
+            GPS_Xref_Database (Result.Xref.all).Kernel :=
               Kernel_Handle (Kernel);
          end if;
       end if;
 
-      Kernel.Database.Initialize
+      Result.Initialize
         (Lang_Handler => Kernel.Lang_Handler,
          Symbols      => Kernel.Symbols,
          Registry     => Kernel.Registry,
@@ -764,7 +766,7 @@ package body GPS.Kernel.Xref is
             Count, Total : Natural;
          begin
             Start (Iter,
-                   Kernel.Database.Entities,
+                   Kernel.Databases.Entities,
                    Get_Language_Handler (Kernel),
                    Project => Project.Start (Recursive => Recursive));
 

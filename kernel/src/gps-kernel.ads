@@ -28,7 +28,6 @@ with GNAT.Strings;
 with GNATCOLL.Projects;
 with GNAT.Regpat;
 with GNATCOLL.Scripts;
-with GNATCOLL.Symbols;
 with GNATCOLL.Tribooleans;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
@@ -44,6 +43,7 @@ with Generic_List;
 with HTables;
 with Language_Handlers;
 with Language.Tree.Database;
+with Projects;
 with String_Hash;
 with Default_Preferences;
 with Histories;
@@ -283,17 +283,6 @@ package GPS.Kernel is
      (Kernel : access Kernel_Handle_Record)
       return Language.Tree.Database.Construct_Database_Access;
    --  Return the database storing the construct information
-
-   function Databases
-     (Kernel : access Kernel_Handle_Record)
-      return Standard.Xref.General_Xref_Database;
-   --  Return the entity databases
-
-   function Symbols
-     (Kernel : access Kernel_Handle_Record)
-      return GNATCOLL.Symbols.Symbol_Table_Access;
-   --  Return the symbol table used to store various shared strings, in
-   --  particular storing the name of all entities found in the source files
 
    --------------
    -- Contexts --
@@ -1258,12 +1247,15 @@ private
    end record;
 
    overriding procedure Create_Registry
-     (Self : not null access Kernel_Handle_Record);
+     (Self   : not null access Kernel_Handle_Record;
+      Result : out Projects.Project_Registry_Access);
 
    overriding procedure Create_Database
-     (Self : not null access Kernel_Handle_Record);
+     (Self   : not null access Kernel_Handle_Record;
+      Result : out Xref.General_Xref_Database);
 
    overriding procedure Create_Scripts_Repository
-     (Self : not null access Kernel_Handle_Record);
+     (Self   : not null access Kernel_Handle_Record;
+      Result : out GNATCOLL.Scripts.Scripts_Repository);
 
 end GPS.Kernel;
