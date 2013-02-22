@@ -38,12 +38,14 @@ package body GPS.Core_Kernels is
    -------------
 
    procedure Destroy (Self : not null access Core_Kernel'Class) is
-      Tmp : String_Access := GNAT.OS_Lib.Getenv ("VALGRIND");
+      Valgrind : String_Access := GNAT.OS_Lib.Getenv ("VALGRIND");
    begin
       --  Most of the rest if for the sake of memory leaks checkin, and since
       --  it can take a while for big projects we do not do this in normal
       --  times.
-      if Tmp.all /= "" then
+      if Valgrind.all /= ""
+        and then Valgrind.all /= "no"
+      then
 
          GNATCOLL.Scripts.Destroy (Self.Scripts);
 
