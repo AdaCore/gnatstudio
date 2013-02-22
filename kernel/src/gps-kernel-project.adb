@@ -128,7 +128,6 @@ package body GPS.Kernel.Project is
    begin
       GPS_Project_Tree (Tree.all).Handle := Kernel_Handle (Handle);
       Result := Projects.Create (Tree => Tree);
-      Tree.Load_Empty_Project (Env => Result.Environment);
    end Create_Registry;
 
    ------------------
