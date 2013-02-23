@@ -44,7 +44,7 @@ package body GPS.Core_Kernels is
       --  it can take a while for big projects we do not do this in normal
       --  times.
       if Valgrind.all /= ""
-        and then Valgrind.all /= "no"
+--          and then Valgrind.all /= "no"
       then
 
          GNATCOLL.Scripts.Destroy (Self.Scripts);
