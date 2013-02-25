@@ -64,12 +64,6 @@ Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
               by GPS is correct but their names (shown as comments) is wrong.
   Workaround: Fix the name of the parameters manually.
 
-- LB21-056: GB: Preview pane hidden on project unit name wizard page
-  Problem:    When converting an existing project to an Ada project, the
-              preview pane on the wizard page where you select the project
-              unit name is hidden.
-  Workaround: Edit the project unit name.
-
 - LB21-035: GPS: wrong &lt char in locations
   Problem:    In Location View text created through scripting API has
               escaped markup characters.
