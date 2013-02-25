@@ -27,6 +27,12 @@ Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.1
               view to manage breakpoint. If required, configure breakpoints
               before starting the debug session.
   
+- LB21-056: GB: Preview pane hidden on project unit name wizard page
+  Problem:    When converting an existing project to an Ada project, the
+              preview pane on the wizard page where you select the project
+              unit name is hidden.
+  Workaround: Edit the project unit name.
+
 - LB21-039: GPS should not launch when the display depth is under 24 bits
   Problem:    GPS crashes unpredictably when using display depths shallower
               than 24 bits per pixel.
