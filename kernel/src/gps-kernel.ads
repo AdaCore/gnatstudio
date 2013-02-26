@@ -253,13 +253,6 @@ package GPS.Kernel is
    --  opened from the command line. As a result, Name might be found even
    --  if it doesn't directly belong to a project.
 
-   function Create_From_Base
-     (Name   : Filesystem_String;
-      Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.Virtual_File;
-   --  Create a new file. First try to resolve Base_Name (Name) to an absolute
-   --  path based on the source and object paths. If no file is found,
-   --  use Name instead.
-
    function Is_Open
      (Kernel   : access Kernel_Handle_Record;
       Filename : GNATCOLL.VFS.Virtual_File) return Boolean;

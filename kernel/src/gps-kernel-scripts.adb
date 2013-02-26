@@ -1009,7 +1009,7 @@ package body GPS.Kernel.Scripts is
 
             File := Create_From_Base (Name);
             Set_Data
-              (Instance, Create_From_Base (Full_Name (File), Kernel));
+              (Instance, Kernel.Create_From_Base (Full_Name (File)));
          end;
 
       elsif Command = "name" then

@@ -23,6 +23,7 @@ with Xref;
 
 with GNATCOLL.Scripts;
 with GNATCOLL.Symbols;
+with GNATCOLL.VFS;
 
 package GPS.Core_Kernels is
 
@@ -55,6 +56,14 @@ package GPS.Core_Kernels is
      (Kernel : access Core_Kernel_Record'Class)
       return Xref.General_Xref_Database;
    --  Return the entity databases
+
+   function Create_From_Base
+     (Kernel : access Core_Kernel_Record'Class;
+      Name   : GNATCOLL.VFS.Filesystem_String)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Create a new file. First try to resolve Base_Name (Name) to an absolute
+   --  path based on the source and object paths. If no file is found,
+   --  use Name instead.
 
    procedure Create_Registry
      (Self   : not null access Core_Kernel_Record;

@@ -30,7 +30,6 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;      use GNATCOLL.Tribooleans;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
@@ -1409,25 +1408,6 @@ package body GPS.Kernel is
 
       return File;
    end Create;
-
-   ----------------------
-   -- Create_From_Base --
-   ----------------------
-
-   function Create_From_Base
-     (Name   : Filesystem_String;
-      Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.Virtual_File
-   is
-      File : Virtual_File;
-   begin
-      File := Get_Registry (Kernel).Tree.Create (Base_Name (Name));
-
-      if File = GNATCOLL.VFS.No_File then
-         return Create (Full_Filename => Name);
-      end if;
-
-      return File;
-   end Create_From_Base;
 
    ----------
    -- Free --
