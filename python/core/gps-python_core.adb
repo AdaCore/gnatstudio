@@ -29,7 +29,7 @@ package body GPS.Python_Core is
    ---------------------
 
    procedure Register_Python
-     (Kernel : access GPS.Core_Kernels.Core_Kernel'Class)
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
    is
       Python_Home : String_Access := Getenv ("GPS_PYTHONHOME");
    begin
