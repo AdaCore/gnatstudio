@@ -26,56 +26,58 @@ with GNATCOLL.Symbols;
 
 package GPS.Core_Kernels is
 
-   type Core_Kernel is abstract tagged private;
+   type Core_Kernel_Record is abstract tagged private;
+
+   type Core_Kernel is access all Core_Kernel_Record'Class;
 
    function Scripts
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return GNATCOLL.Scripts.Scripts_Repository;
    --  Data used to store information for the scripting languages
 
    function Symbols
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return GNATCOLL.Symbols.Symbol_Table_Access;
    --  Return the symbol table used to store various shared strings, in
    --  particular storing the name of all entities found in the source files
 
    function Lang_Handler
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return Language_Handlers.Language_Handler;
    --  The type used to convert from file names to languages
 
    function Registry
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return Projects.Project_Registry_Access;
    --  The project registry
 
    function Databases
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return Xref.General_Xref_Database;
    --  Return the entity databases
 
    procedure Create_Registry
-     (Self   : not null access Core_Kernel;
+     (Self   : not null access Core_Kernel_Record;
       Result : out Projects.Project_Registry_Access) is abstract;
    --  Initialize Registry with kernel specific version
 
    procedure Create_Database
-     (Self   : not null access Core_Kernel;
+     (Self   : not null access Core_Kernel_Record;
       Result : out Xref.General_Xref_Database) is abstract;
    --  Initialize Database with kernel specific version
 
    procedure Create_Scripts_Repository
-     (Self   : not null access Core_Kernel;
+     (Self   : not null access Core_Kernel_Record;
       Result : out GNATCOLL.Scripts.Scripts_Repository) is abstract;
    --  Initialize Scripts_Repository with kernel specific version
 
-   procedure Initialize (Self : not null access Core_Kernel'Class);
+   procedure Initialize (Self : not null access Core_Kernel_Record'Class);
 
-   procedure Destroy (Self : not null access Core_Kernel'Class);
+   procedure Destroy (Self : not null access Core_Kernel_Record'Class);
 
 private
 
-   type Core_Kernel is abstract tagged record
+   type Core_Kernel_Record is abstract tagged record
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
       --  The symbol used to store common strings read from sources
 

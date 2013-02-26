@@ -27,7 +27,7 @@ package body GPS.Core_Kernels is
    ---------------
 
    function Databases
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return Xref.General_Xref_Database is
    begin
       return Kernel.Database;
@@ -37,7 +37,7 @@ package body GPS.Core_Kernels is
    -- Destroy --
    -------------
 
-   procedure Destroy (Self : not null access Core_Kernel'Class) is
+   procedure Destroy (Self : not null access Core_Kernel_Record'Class) is
       Valgrind : String_Access := GNAT.OS_Lib.Getenv ("VALGRIND");
    begin
       --  Most of the rest if for the sake of memory leaks checkin, and since
@@ -74,7 +74,7 @@ package body GPS.Core_Kernels is
    ------------------
 
    function Lang_Handler
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return Language_Handlers.Language_Handler is
    begin
       return Kernel.Lang_Handler;
@@ -85,7 +85,7 @@ package body GPS.Core_Kernels is
    --------------
 
    function Registry
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return Projects.Project_Registry_Access is
    begin
       return Kernel.Registry;
@@ -96,7 +96,7 @@ package body GPS.Core_Kernels is
    -------------
 
    function Scripts
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return GNATCOLL.Scripts.Scripts_Repository is
    begin
       return Kernel.Scripts;
@@ -107,7 +107,7 @@ package body GPS.Core_Kernels is
    -------------
 
    function Symbols
-     (Kernel : access Core_Kernel'Class)
+     (Kernel : access Core_Kernel_Record'Class)
       return GNATCOLL.Symbols.Symbol_Table_Access is
    begin
       return Kernel.Symbols;
@@ -117,7 +117,7 @@ package body GPS.Core_Kernels is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Self : not null access Core_Kernel'Class) is
+   procedure Initialize (Self : not null access Core_Kernel_Record'Class) is
       Handler : Language_Handler;
    begin
       Self.Symbols := GNATCOLL.Symbols.Allocate;

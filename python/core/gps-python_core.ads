@@ -20,7 +20,7 @@ with GPS.Core_Kernels;
 package GPS.Python_Core is
 
    procedure Register_Python
-     (Kernel : access GPS.Core_Kernels.Core_Kernel'Class);
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class);
    --  Register python in script registry of the Kernel
 
 end GPS.Python_Core;
