@@ -52,6 +52,14 @@ Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.1
               cursor to the location of the object declaration and repeat it
               to move the cursor to the declaration of the corresponding type.
 
+- LB17-014: GB: multiple SPARK/Codepeer menus in menubar
+  Problem:    Moving the selection in navigator using arrows may lead to have
+              SPARK/Codepeer menus displayed more than once in the menubar.
+  Workaround: Hide the SPARK/Codepeer menubar configuring the perspective
+              using the Window => Customize Perspective... menu and then
+              disabling GNATbench SPARK/Codepeer Menubar menus in command
+              group availability.               
+
 - LA24-013: Incorrect indentation of lines while editing function calls
   Problem:    When indenting a single line in the middle of a complex function
               call containing several parentheses, the indentation engine may
