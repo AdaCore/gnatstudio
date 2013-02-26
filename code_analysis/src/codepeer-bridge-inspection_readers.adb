@@ -331,8 +331,7 @@ package body CodePeer.Bridge.Inspection_Readers is
          --  Use this file instead of original name which comes from the
          --  database to be able to reuse database between several users.
 
-         Relocated_Name :=
-           GPS.Kernel.Create_From_Base (File_Name.Base_Name, Self.Kernel);
+         Relocated_Name := Self.Kernel.Create_From_Base (File_Name.Base_Name);
 
          if Relocated_Name.Is_Regular_File then
             File_Name := Relocated_Name;

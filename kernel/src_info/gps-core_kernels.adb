@@ -18,9 +18,29 @@
 with GNAT.OS_Lib;
 with GNAT.Strings;                     use GNAT.Strings;
 
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 with Language_Handlers;                use Language_Handlers;
 
 package body GPS.Core_Kernels is
+
+   ----------------------
+   -- Create_From_Base --
+   ----------------------
+
+   function Create_From_Base
+     (Kernel : access Core_Kernel_Record'Class;
+      Name   : Filesystem_String) return Virtual_File
+   is
+      File : constant Virtual_File :=
+        Kernel.Registry.Tree.Create (Base_Name (Name));
+   begin
+      if File = No_File then
+         return Create (Full_Filename => Name);
+      end if;
+
+      return File;
+   end Create_From_Base;
 
    ---------------
    -- Databases --

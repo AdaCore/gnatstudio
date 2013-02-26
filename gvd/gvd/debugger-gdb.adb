@@ -3400,9 +3400,8 @@ package body Debugger.Gdb is
                   Get_Nickname (Debug_Server)));
 
             if not Br (Num).File.Is_Absolute_Path then
-               Br (Num).File := Create_From_Base
-                 (Br (Num).File.Full_Name,
-                  Debugger.Kernel);
+               Br (Num).File := Debugger.Kernel.Create_From_Base
+                 (Br (Num).File.Full_Name);
             end if;
 
             Br (Num).Line := Integer'Value
