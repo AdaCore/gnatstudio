@@ -100,6 +100,7 @@ package body Builder_Facility_Module is
    Output_Chopper   : aliased Output_Choppers.Output_Parser_Fabric;
    Text_Splitter    : aliased Text_Splitters.Output_Parser_Fabric;
    UTF8_Converter   : aliased UTF8_Converters.Output_Parser_Fabric;
+   --  ??? These should be moved to Builder_Module_ID
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
