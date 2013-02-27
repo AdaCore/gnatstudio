@@ -20,6 +20,8 @@
 with Elaboration_Cycles;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 
+with Commands; use Commands;
+
 with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
 
 package Browsers.Elaborations.Cycle_Parser is
@@ -37,8 +39,9 @@ package Browsers.Elaborations.Cycle_Parser is
    --     * Elab_Body boolean flag
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Circularity_Parser;
-      Item : String);
+     (Self    : not null access Circularity_Parser;
+      Item    : String;
+      Command : Command_Access);
 
    type Output_Parser_Fabric is
      new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;

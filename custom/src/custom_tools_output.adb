@@ -18,6 +18,8 @@
 with GNATCOLL.Any_Types;         use GNATCOLL.Any_Types;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 
+with Commands; use Commands;
+
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Tools_Output;    use GPS.Kernel.Tools_Output;
 with String_List_Utils;
@@ -48,17 +50,20 @@ package body Custom_Tools_Output is
    end record;
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Custom_Parser;
-      Item : String);
+     (Self    : not null access Custom_Parser;
+      Item    : String;
+      Command : Command_Access);
    --  Parse a piece of an output passed as Item.
 
    overriding procedure Parse_Standard_Error
-     (Self : not null access Custom_Parser;
-      Item : String);
+     (Self    : not null access Custom_Parser;
+      Item    : String;
+      Command : Command_Access);
    --  Parse a piece of an stderr passed as Item.
 
    overriding procedure End_Of_Stream
-     (Self : not null access Custom_Parser);
+     (Self    : not null access Custom_Parser;
+      Command : Command_Access);
    --  Process end of streams (both output and error).
 
    type Python_Parser_Fabric is new External_Parser_Fabric with record
@@ -147,8 +152,10 @@ package body Custom_Tools_Output is
    -------------------
 
    overriding procedure End_Of_Stream
-     (Self : not null access Custom_Parser)
+     (Self    : not null access Custom_Parser;
+      Command : Command_Access)
    is
+      pragma Unreferenced (Command);
       Args : Callback_Data'Class := Create
         (Get_Script (Self.Inst), Arguments_Count => 0);
       Proc : Subprogram_Type;
@@ -185,7 +192,7 @@ package body Custom_Tools_Output is
               Tools_Output_Property_Access
                 (Get_Data (Inst, Tools_Output_Handler_Class_Name));
          begin
-            Property.Child.Parse_Standard_Output (Text);
+            Property.Child.Parse_Standard_Output (Text, null);
          end;
       elsif Command = On_Stderr_Cst then
          Name_Parameters (Data, On_Text_Params);
@@ -197,7 +204,7 @@ package body Custom_Tools_Output is
               Tools_Output_Property_Access
                 (Get_Data (Inst, Tools_Output_Handler_Class_Name));
          begin
-            Property.Child.Parse_Standard_Error (Text);
+            Property.Child.Parse_Standard_Error (Text, null);
          end;
       elsif Command = On_Exit_Cst then
          declare
@@ -206,7 +213,7 @@ package body Custom_Tools_Output is
               Tools_Output_Property_Access
                 (Get_Data (Inst, Tools_Output_Handler_Class_Name));
          begin
-            Property.Child.End_Of_Stream;
+            Property.Child.End_Of_Stream (null);
          end;
       end if;
    end Handler;
@@ -216,9 +223,11 @@ package body Custom_Tools_Output is
    --------------------------
 
    overriding procedure Parse_Standard_Error
-     (Self : not null access Custom_Parser;
-      Item : String)
+     (Self    : not null access Custom_Parser;
+      Item    : String;
+      Command : Command_Access)
    is
+      pragma Unreferenced (Command);
       Args : Callback_Data'Class := Create
         (Get_Script (Self.Inst), Arguments_Count => 1);
       Proc : Subprogram_Type;
@@ -240,9 +249,11 @@ package body Custom_Tools_Output is
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Custom_Parser;
-      Item : String)
+     (Self    : not null access Custom_Parser;
+      Item    : String;
+      Command : Command_Access)
    is
+      pragma Unreferenced (Command);
       Args : Callback_Data'Class := Create
         (Get_Script (Self.Inst), Arguments_Count => 1);
       Proc : Subprogram_Type;

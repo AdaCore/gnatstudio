@@ -40,9 +40,11 @@ package body GPS.Kernel.Tools_Output is
 
    Map : Fabric_Maps.Map;
    --  Map of registered parser sorted by unique parser name
+   --  ??? Should be moved to a module or the kernel
 
    Target_Parsers : Target_Maps.Map;
    --  Map from target name to list of output parser names
+   --  ??? Should be moved to a module or the kernel
 
    Default_Macros : constant String := "[default]";
 
@@ -107,10 +109,12 @@ package body GPS.Kernel.Tools_Output is
    -- End_Of_Stream --
    -------------------
 
-   procedure End_Of_Stream (Self : not null access Tools_Output_Parser) is
+   procedure End_Of_Stream
+     (Self    : not null access Tools_Output_Parser;
+      Command : Command_Access) is
    begin
       if Self.Child /= null then
-         Self.Child.End_Of_Stream;
+         Self.Child.End_Of_Stream (Command);
       end if;
    end End_Of_Stream;
 
@@ -203,11 +207,12 @@ package body GPS.Kernel.Tools_Output is
    ---------------------------
 
    procedure Parse_Standard_Output
-     (Self : not null access Tools_Output_Parser;
-      Item : String) is
+     (Self    : not null access Tools_Output_Parser;
+      Item    : String;
+      Command : Command_Access) is
    begin
       if Self.Child /= null then
-         Self.Child.Parse_Standard_Output (Item);
+         Self.Child.Parse_Standard_Output (Item, Command);
       end if;
    end Parse_Standard_Output;
 
@@ -216,11 +221,12 @@ package body GPS.Kernel.Tools_Output is
    --------------------------
 
    procedure Parse_Standard_Error
-     (Self : not null access Tools_Output_Parser;
-      Item : String) is
+     (Self    : not null access Tools_Output_Parser;
+      Item    : String;
+      Command : Command_Access) is
    begin
       if Self.Child /= null then
-         Self.Child.Parse_Standard_Error (Item);
+         Self.Child.Parse_Standard_Error (Item, Command);
       end if;
    end Parse_Standard_Error;
 

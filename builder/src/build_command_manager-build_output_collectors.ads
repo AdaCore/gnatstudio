@@ -27,7 +27,8 @@ package Build_Command_Manager.Build_Output_Collectors is
 
    overriding procedure Parse_Standard_Output
      (Self : not null access Build_Output_Collector;
-      Item : String);
+      Item : String;
+      Command : Command_Access);
 
    type Output_Parser_Fabric is
      new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;

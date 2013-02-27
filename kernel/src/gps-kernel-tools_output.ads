@@ -17,6 +17,8 @@
 
 --  Root of filters hierarchy to parse output of tools running by GPS.
 
+with Commands; use Commands;
+
 package GPS.Kernel.Tools_Output is
 
    type Tools_Output_Parser is tagged;
@@ -28,18 +30,22 @@ package GPS.Kernel.Tools_Output is
    --  Child is pointer to next item in the chain.
 
    procedure Parse_Standard_Output
-     (Self : not null access Tools_Output_Parser;
-      Item : String);
+     (Self    : not null access Tools_Output_Parser;
+      Item    : String;
+      Command : Command_Access);
    --  Parse a piece of an output passed as Item.
    --  Default implementation just pass Item to the Child if any.
 
    procedure Parse_Standard_Error
-     (Self : not null access Tools_Output_Parser;
-      Item : String);
+     (Self    : not null access Tools_Output_Parser;
+      Item    : String;
+      Command : Command_Access);
    --  Parse a piece of an error output passed as Item.
    --  Default implementation just pass Item to the Child if any.
 
-   procedure End_Of_Stream (Self : not null access Tools_Output_Parser);
+   procedure End_Of_Stream
+     (Self    : not null access Tools_Output_Parser;
+      Command : Command_Access);
    --  Process end of streams (both output and error).
    --  Default implementation just call the Child if any.
 

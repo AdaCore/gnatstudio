@@ -41,8 +41,9 @@ package body Build_Command_Manager.Location_Parsers is
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Location_Parser;
-      Item : String) is
+     (Self    : not null access Location_Parser;
+      Item    : String;
+      Command : Command_Access) is
    begin
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
         (Self.Kernel,
@@ -52,7 +53,7 @@ package body Build_Command_Manager.Location_Parsers is
          Styles            => Self.Styles,
          Show_In_Locations => Self.Show_In_Locations);
 
-      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
+      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
    end Parse_Standard_Output;
 
    ---------

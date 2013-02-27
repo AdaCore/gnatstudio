@@ -41,8 +41,9 @@ package body Build_Command_Manager.Build_Output_Collectors is
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Build_Output_Collector;
-      Item : String)
+     (Self    : not null access Build_Output_Collector;
+      Item    : String;
+      Command : Command_Access)
    is
       Last     : Natural := Item'Last;
    begin
@@ -58,7 +59,7 @@ package body Build_Command_Manager.Build_Output_Collectors is
          Self.Shadow,
          Self.Background);
 
-      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
+      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
    end Parse_Standard_Output;
 
    ---------

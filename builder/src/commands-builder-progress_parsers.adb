@@ -32,7 +32,6 @@ package body Commands.Builder.Progress_Parsers is
    begin
       return new Progress_Parser'
         (Child   => Child,
-         Command => Self.Command,
          Matcher => Self.Matcher);
    end Create;
 
@@ -41,8 +40,9 @@ package body Commands.Builder.Progress_Parsers is
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Progress_Parser;
-      Item : String)
+     (Self    : not null access Progress_Parser;
+      Item    : String;
+      Command : Command_Access)
    is
       use type Commands.Command_Access;
       use type Tools_Output_Parser_Access;
@@ -60,8 +60,8 @@ package body Commands.Builder.Progress_Parsers is
          Progress.Total := Natural'Value
            (Item (Matched (2).First .. Matched (2).Last));
 
-         if Self.Command /= null then
-            Self.Command.Set_Progress (Progress);
+         if Command /= null then
+            Command.Set_Progress (Progress);
          end if;
 
          Append (Buffer, Item (Start .. Matched (0).First - 1));
@@ -71,20 +71,9 @@ package body Commands.Builder.Progress_Parsers is
       Append (Buffer, Item (Start .. Item'Last));
 
       if Length (Buffer) /= 0 and Self.Child /= null then
-         Self.Child.Parse_Standard_Output (To_String (Buffer));
+         Self.Child.Parse_Standard_Output (To_String (Buffer), Command);
       end if;
    end Parse_Standard_Output;
-
-   -----------------
-   -- Set_Command --
-   -----------------
-
-   procedure Set_Command
-     (Self    : access Output_Parser_Fabric;
-      Command : Commands.Command_Access) is
-   begin
-      Self.Command := Command;
-   end Set_Command;
 
    -----------------
    -- Set_Pattern --

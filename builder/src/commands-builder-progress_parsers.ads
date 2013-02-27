@@ -28,8 +28,9 @@ package Commands.Builder.Progress_Parsers is
    type Progress_Parser_Access is access all Progress_Parser'Class;
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Progress_Parser;
-      Item : String);
+     (Self    : not null access Progress_Parser;
+      Item    : String;
+      Command : Command_Access);
    --  Process the builder output: update the progress bar in Command as
    --  necessary, strip the progress output, and pass the other outputs to
    --  Child.
@@ -40,10 +41,7 @@ package Commands.Builder.Progress_Parsers is
    procedure Set_Pattern
      (Self    : access Output_Parser_Fabric;
       Pattern : String);
-
-   procedure Set_Command
-     (Self    : access Output_Parser_Fabric;
-      Command : Commands.Command_Access);
+   --  ??? Needs doc
 
    overriding function Create
      (Self  : access Output_Parser_Fabric;
@@ -59,11 +57,9 @@ private
    type Output_Parser_Fabric is
      new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
       Matcher : Pattern_Matcher_Access;
-      Command : Commands.Command_Access;
    end record;
 
    type Progress_Parser is new Tools_Output_Parser with record
-      Command : Commands.Command_Access;
       Matcher : Pattern_Matcher_Access;
    end record;
 
