@@ -43,8 +43,9 @@ package body Builder_Facility_Module.Output_Choppers is
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Output_Chopper;
-      Item : String)
+     (Self    : not null access Output_Chopper;
+      Item    : String;
+      Command : Command_Access)
    is
       Last_EOL : Natural;
    begin
@@ -59,7 +60,8 @@ package body Builder_Facility_Module.Output_Choppers is
          Append (Self.Buffer, Item);
       else
          Self.Child.Parse_Standard_Output
-           (To_String (Self.Buffer) & Item (Item'First .. Last_EOL));
+           (To_String (Self.Buffer) & Item (Item'First .. Last_EOL),
+            Command);
          Self.Buffer := To_Unbounded_String (Item (Last_EOL + 1 .. Item'Last));
       end if;
    end Parse_Standard_Output;
@@ -69,13 +71,15 @@ package body Builder_Facility_Module.Output_Choppers is
    -------------------
 
    overriding procedure End_Of_Stream
-     (Self : not null access Output_Chopper) is
+     (Self    : not null access Output_Chopper;
+      Command : Command_Access) is
    begin
       if Self.Child = null or Self.Buffer = "" then
          return;
       end if;
 
-      Self.Child.Parse_Standard_Output (To_String (Self.Buffer) & New_Line);
+      Self.Child.Parse_Standard_Output
+        (To_String (Self.Buffer) & New_Line, Command);
    end End_Of_Stream;
 
 end Builder_Facility_Module.Output_Choppers;

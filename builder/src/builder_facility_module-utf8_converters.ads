@@ -17,6 +17,8 @@
 
 --  Declare parser to convert output to UTF-8 encoding.
 
+with Commands; use Commands;
+
 with GPS.Kernel;
 
 with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
@@ -27,8 +29,9 @@ package Builder_Facility_Module.UTF8_Converters is
    --  This parser converts output to UTF-8 encoding
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access UTF8_Converter;
-      Item : String);
+     (Self    : not null access UTF8_Converter;
+      Item    : String;
+      Command : Command_Access);
 
    type Output_Parser_Fabric is
      new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;

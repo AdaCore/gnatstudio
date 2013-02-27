@@ -40,8 +40,9 @@ package body Builder_Facility_Module.Text_Splitters is
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Text_Splitter;
-      Item : String)
+     (Self    : not null access Text_Splitter;
+      Item    : String;
+      Command : Command_Access)
    is
       use type Tools_Output_Parser_Access;
       From : Positive := Item'First;
@@ -55,10 +56,11 @@ package body Builder_Facility_Module.Text_Splitters is
          To := Ada.Strings.Fixed.Index (Item, New_Line, From => From);
 
          if To = 0 then
-            Self.Child.Parse_Standard_Output (Item (From .. Item'Last));
+            Self.Child.Parse_Standard_Output
+              (Item (From .. Item'Last), Command);
             exit;
          else
-            Self.Child.Parse_Standard_Output (Item (From .. To));
+            Self.Child.Parse_Standard_Output (Item (From .. To), Command);
             From := To + 1;
          end if;
       end loop;

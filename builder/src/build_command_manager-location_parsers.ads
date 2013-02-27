@@ -17,6 +17,7 @@
 
 --  Declare parser to fill Locations view and highlight locations in editors.
 
+with Commands; use Commands;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with GPS.Kernel;
 with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
@@ -27,8 +28,9 @@ package Build_Command_Manager.Location_Parsers is
    type Location_Parser is new Tools_Output_Parser with private;
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Location_Parser;
-      Item : String);
+     (Self    : not null access Location_Parser;
+      Item    : String;
+      Command : Command_Access);
 
    type Output_Parser_Fabric is
      new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;

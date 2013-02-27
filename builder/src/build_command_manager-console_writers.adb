@@ -40,11 +40,12 @@ package body Build_Command_Manager.Console_Writers is
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Console_Writer;
-      Item : String) is
+     (Self    : not null access Console_Writer;
+      Item    : String;
+      Command : Command_Access) is
    begin
       Self.Console.Insert (Item, Add_LF => False);
-      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
+      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
    end Parse_Standard_Output;
 
    -----------------

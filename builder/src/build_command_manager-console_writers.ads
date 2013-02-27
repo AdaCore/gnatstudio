@@ -17,6 +17,7 @@
 
 --  Declare parser to write each output item to console.
 
+with Commands; use Commands;
 with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
 with Interactive_Consoles;
 
@@ -25,8 +26,9 @@ package Build_Command_Manager.Console_Writers is
    type Console_Writer is new Tools_Output_Parser with private;
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Console_Writer;
-      Item : String);
+     (Self    : not null access Console_Writer;
+      Item    : String;
+      Command : Command_Access);
 
    type Output_Parser_Fabric is
      new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;

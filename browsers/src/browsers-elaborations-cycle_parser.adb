@@ -95,8 +95,9 @@ package body Browsers.Elaborations.Cycle_Parser is
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Circularity_Parser;
-      Item : String)
+     (Self    : not null access Circularity_Parser;
+      Item    : String;
+      Command : Command_Access)
    is
       use Elaboration_Cycles;
 
@@ -117,7 +118,7 @@ package body Browsers.Elaborations.Cycle_Parser is
    begin
       --  Skip empty lines
       if Item = "" or Item = (1 => ASCII.LF) then
-         Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
+         Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
          return;
       end if;
 
@@ -273,7 +274,7 @@ package body Browsers.Elaborations.Cycle_Parser is
          end case;
       end loop;
 
-      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
+      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
    end Parse_Standard_Output;
 
 end Browsers.Elaborations.Cycle_Parser;

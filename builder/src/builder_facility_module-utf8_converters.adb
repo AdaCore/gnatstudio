@@ -41,8 +41,9 @@ package body Builder_Facility_Module.UTF8_Converters is
    ---------------------------
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access UTF8_Converter;
-      Item : String)
+     (Self    : not null access UTF8_Converter;
+      Item    : String;
+      Command : Command_Access)
    is
       use type Basic_Types.Unchecked_String_Access;
       Output : Basic_Types.Unchecked_String_Access;
@@ -62,10 +63,11 @@ package body Builder_Facility_Module.UTF8_Converters is
 
       if Valid then
          if Output = null then
-            Tools_Output_Parser (Self.all).Parse_Standard_Output (Item);
+            Tools_Output_Parser (Self.all).Parse_Standard_Output
+              (Item, Command);
          else
             Tools_Output_Parser (Self.all).Parse_Standard_Output
-              (Output (1 .. Len));
+              (Output (1 .. Len), Command);
          end if;
       else
          GPS.Kernel.Console.Insert
