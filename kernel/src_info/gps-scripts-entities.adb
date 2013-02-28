@@ -15,11 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Core_Kernels;        use GPS.Core_Kernels;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Core_Kernels;                 use GPS.Core_Kernels;
+with GPS.Intl;                         use GPS.Intl;
 with GPS.Scripts.Files;
-with Xref;                    use Xref;
-with Basic_Types;             use Basic_Types;
+with GPS.Scripts.File_Locations;
+with Xref;                             use Xref;
+with Basic_Types;                      use Basic_Types;
 
 package body GPS.Scripts.Entities is
 
@@ -34,7 +35,10 @@ package body GPS.Scripts.Entities is
    Line_Cst       : aliased constant String := "line";
    Col_Cst        : aliased constant String := "column";
    Fast_Cst       : aliased constant String := "fast";
+   Nth_Cst        : aliased constant String := "nth";
 
+   Body_Cmd_Parameters      : constant Cst_Argument_List :=
+                                (1 => Nth_Cst'Access);
    Entity_Cmd_Parameters    : constant Cst_Argument_List :=
                                 (Name_Cst'Access, File_Cst'Access,
                                  Line_Cst'Access, Col_Cst'Access,
@@ -166,6 +170,70 @@ package body GPS.Scripts.Entities is
          Entity := Get_Data (Data, 1);
          Set_Return_Value (Data, Kernel.Databases.Is_Type (Entity));
 
+      elsif Command = "declaration" then
+         declare
+            Location : General_Location;
+         begin
+            Entity := Get_Data (Data, 1);
+            Location := Kernel.Databases.Get_Declaration (Entity).Loc;
+
+            Set_Return_Value
+              (Data, GPS.Scripts.File_Locations.Create_File_Location
+                 (Get_Script (Data),
+                  File   => GPS.Scripts.Files.Create_File
+                              (Get_Script (Data), Location.File),
+                  Line   => Location.Line,
+                  Column => Location.Column));
+         end;
+
+      elsif Command = "body" then
+         Name_Parameters (Data, Body_Cmd_Parameters);
+         declare
+            Location     : General_Location := No_Location;
+            Cur_Location : General_Location := No_Location;
+            Count        : Integer := Nth_Arg (Data, 2, 1);
+         begin
+            Entity := Get_Data (Data, 1);
+            while Count > 0 loop
+               Location := Kernel.Databases.Get_Body
+                 (Entity, After => Cur_Location);
+               Count := Count - 1;
+               Cur_Location := Location;
+            end loop;
+
+            if Location /= No_Location then
+               Set_Return_Value
+                 (Data, GPS.Scripts.File_Locations.Create_File_Location
+                    (Get_Script (Data),
+                     File   => GPS.Scripts.Files.Create_File
+                                 (Get_Script (Data), Location.File),
+                     Line   => Location.Line,
+                     Column => Location.Column));
+
+            else
+               Set_Error_Msg (Data, -"Body not found for the entity");
+            end if;
+         end;
+
+      elsif Command = "end_of_scope" then
+         declare
+            Location : General_Location := No_Location;
+         begin
+            Entity := Get_Data (Data, 1);
+            Location := Kernel.Databases.End_Of_Scope (Entity);
+            if Location /= No_Location then
+               Set_Return_Value
+                 (Data, GPS.Scripts.File_Locations.Create_File_Location
+                    (Get_Script (Data),
+                     File   => GPS.Scripts.Files.Create_File
+                                 (Get_Script (Data), Location.File),
+                     Line   => Location.Line,
+                     Column => Location.Column));
+            else
+               Set_Error_Msg (Data, -"end-of-scope not found for the entity");
+            end if;
+         end;
+
       end if;
    end Entity_Command_Handler;
 
@@ -258,6 +326,22 @@ package body GPS.Scripts.Entities is
          Handler      => Entity_Command_Handler'Access);
       Register_Command
         (Kernel.Scripts, "is_container",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "declaration",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "body",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "end_of_scope",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class        => Get_Entity_Class (Kernel),
          Handler      => Entity_Command_Handler'Access);
    end Register_Commands;

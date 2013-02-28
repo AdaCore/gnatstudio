@@ -23,6 +23,7 @@ with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GPS.Scripts.Entities;
 with GPS.Scripts.Files;
+with GPS.Scripts.File_Locations;
 with GPS.Scripts.Projects;
 with Xref;
 
@@ -160,29 +161,22 @@ package GPS.Kernel.Scripts is
    -------------------------
 
    function Get_File_Location_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
+      return Class_Type
+      renames GPS.Scripts.File_Locations.Get_File_Location_Class;
    --  Return the class used to represent locations in files. This encapsulates
    --  a File_Location_Info
 
-   type File_Location_Info is private;
+   type File_Location_Info is
+     new GPS.Scripts.File_Locations.File_Location_Info;
    No_File_Location : constant File_Location_Info;
-
-   function Get_File (Location : File_Location_Info) return Class_Instance;
-   function Get_Line (Location : File_Location_Info) return Integer;
-   function Get_Column
-     (Location : File_Location_Info) return Basic_Types.Visible_Column_Type;
-   --  Return the information stored in the file location
-
-   function Get_Data (Data : Callback_Data'Class; N : Positive)
-      return File_Location_Info;
-   --  Retrieve the file location information from an instance
 
    function Create_File_Location
      (Script : access Scripting_Language_Record'Class;
       File   : Class_Instance;
       Line   : Natural;
-      Column : Basic_Types.Visible_Column_Type) return Class_Instance;
+      Column : Basic_Types.Visible_Column_Type) return Class_Instance
+      renames GPS.Scripts.File_Locations.Create_File_Location;
    --  Return a new file.
    --  File mustn't be destroyed after this call.
 
@@ -255,11 +249,7 @@ package GPS.Kernel.Scripts is
    --  Return a class for an Entity_Selection_Context
 
 private
-   type File_Location_Info is record
-      File   : Class_Instance;
-      Line   : Natural;
-      Column : Basic_Types.Visible_Column_Type;
-   end record;
-   No_File_Location : constant File_Location_Info := (No_Class_Instance, 0, 0);
+   No_File_Location : constant File_Location_Info :=
+     File_Location_Info (GPS.Scripts.File_Locations.No_File_Location);
 
 end GPS.Kernel.Scripts;
