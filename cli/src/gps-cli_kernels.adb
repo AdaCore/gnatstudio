@@ -24,7 +24,7 @@ package body GPS.CLI_Kernels is
    ---------------------
 
    overriding procedure Create_Database
-     (Self   : not null access CLI_Kernel;
+     (Self   : not null access CLI_Kernel_Record;
       Result : out Xref.General_Xref_Database) is
    begin
       Result := new Xref.General_Xref_Database_Record;
@@ -38,7 +38,7 @@ package body GPS.CLI_Kernels is
    ---------------------
 
    overriding procedure Create_Registry
-     (Self   : not null access CLI_Kernel;
+     (Self   : not null access CLI_Kernel_Record;
       Result : out Projects.Project_Registry_Access)
    is
       pragma Unreferenced (Self);
@@ -48,18 +48,5 @@ package body GPS.CLI_Kernels is
       Result := Projects.Create (Tree => Tree);
       Tree.Load_Empty_Project;
    end Create_Registry;
-
-   -------------------------------
-   -- Create_Scripts_Repository --
-   -------------------------------
-
-   overriding procedure Create_Scripts_Repository
-     (Self   : not null access CLI_Kernel;
-      Result : out GNATCOLL.Scripts.Scripts_Repository)
-   is
-      pragma Unreferenced (Self);
-   begin
-      Result := new GNATCOLL.Scripts.Scripts_Repository_Record;
-   end Create_Scripts_Repository;
 
 end GPS.CLI_Kernels;
