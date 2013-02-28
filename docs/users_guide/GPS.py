@@ -4792,7 +4792,7 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def references(self, include_implicit=False, synchronous=True, show_kind=False, in_file='None', kind_in=''):
+    def references(self, include_implicit=False, synchronous=True, show_kind=False, in_file=None, kind_in=''):
         """
         List all references to the entity in the project sources. If
         include_implicit is true, then implicit uses of the entity will also be
@@ -7210,14 +7210,15 @@ class Message(object):
         """
         pass  # implemented in Ada
 
-    def set_style(self, style):
+    def set_style(self, style, len):
         """
         Set the style of the message. The second parameter indicates the length
         in number of characters to highlight. If 0, then highlight the whole
         line. If left out, this means the length of the message highlighting is
         not modified.
 
-        :param style: An Integer
+        :param style: An integer
+        :param len: An integer
         """
         pass  # implemented in Ada
 
