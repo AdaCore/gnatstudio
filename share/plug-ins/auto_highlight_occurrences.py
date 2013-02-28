@@ -163,7 +163,9 @@ class LocationHighlighter(object):
                     end_index += 1
 
                 if self.entity:
-                    loc = GPS.FileLocation(self.file, line, tab_expanded_index + 1)
+                    loc = GPS.FileLocation(
+                        self.file, line, tab_expanded_index + 1)
+
                     if loc in self.entity_refs:
                         tokens.append((tab_expanded_index, end_index - index))
                 else:
@@ -342,7 +344,8 @@ class LocationHighlighter(object):
 
             try:
                 # Destroy the timeout when the buffer is destroyed
-                self.buffer.current_view().pywidget().connect("destroy", self.stop)
+                self.buffer.current_view().pywidget().connect(
+                    "destroy", self.stop)
             except:
                 # This can happen if pywidget() is not found: rather than leave
                 # GPS open to crashing, deactivate highlighting
