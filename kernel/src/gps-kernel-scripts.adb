@@ -77,7 +77,6 @@ package body GPS.Kernel.Scripts is
               Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
    Context_Class_Name       : constant String := "Context";
-   File_Location_Class_Name : constant String := "FileLocation";
    Hook_Class_Name          : constant String := "Hook";
 
    function To_Address is new Ada.Unchecked_Conversion
@@ -139,10 +138,6 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "Project" command
 
-   procedure Create_Location_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   --  Handler for the "Location" command
-
    procedure Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all context-related commands
@@ -159,8 +154,6 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all GUI class commands
 
-   procedure Set_Data
-     (Instance : Class_Instance; Location : File_Location_Info);
    procedure Set_Data
      (Instance : Class_Instance; Context  : Selection_Context);
    --  Set the data for an instance
@@ -216,8 +209,6 @@ package body GPS.Kernel.Scripts is
 
    Name_Cst       : aliased constant String := "name";
    Filename_Cst   : aliased constant String := "filename";
-   Line_Cst       : aliased constant String := "line";
-   Col_Cst        : aliased constant String := "column";
    Shared_Lib_Cst : aliased constant String := "shared_lib";
    Module_Cst     : aliased constant String := "module";
    Xml_Cst        : aliased constant String := "xml";
@@ -227,7 +218,6 @@ package body GPS.Kernel.Scripts is
    Force_Cst      : aliased constant String := "force";
    Value_Cst      : aliased constant String := "value";
    Recursive_Cst  : aliased constant String := "recursive";
-   Nth_Cst        : aliased constant String := "nth";
    Regexp_Cst     : aliased constant String := "regexp";
    On_Click_Cst   : aliased constant String := "on_click";
    Text_Cst       : aliased constant String := "text";
@@ -239,15 +229,9 @@ package body GPS.Kernel.Scripts is
    Insmod_Cmd_Parameters    : constant Cst_Argument_List :=
                                 (1 => Shared_Lib_Cst'Access,
                                  2 => Module_Cst'Access);
-   Body_Cmd_Parameters      : constant Cst_Argument_List :=
-                                (1 => Nth_Cst'Access);
    Open_Cmd_Parameters      : constant Cst_Argument_List :=
                                 (1 => Filename_Cst'Access,
                                  2 => Force_Cst'Access);
-   Location_Cmd_Parameters  : constant Cst_Argument_List :=
-                                (1 => Filename_Cst'Access,
-                                 2 => Line_Cst'Access,
-                                 3 => Col_Cst'Access);
    Xml_Custom_Parameters    : constant Cst_Argument_List :=
                                 (1 => Xml_Cst'Access);
    Exec_Action_Parameters   : constant Cst_Argument_List :=
@@ -280,48 +264,6 @@ package body GPS.Kernel.Scripts is
    Enable_Cst         : aliased constant String := "enable";
 
    Enable_Input_Args  : constant Cst_Argument_List := (1 => Enable_Cst'Access);
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Location : File_Location_Info) is
-   begin
-      if not Is_Subclass (Instance, File_Location_Class_Name) then
-         raise Invalid_Data;
-      end if;
-
-      Set_Data
-        (Instance, File_Location_Class_Name,
-         GPS_Properties_Record'
-           (Typ => File_Locations, Location => Location));
-   end Set_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data (Data : Callback_Data'Class; N : Positive)
-      return File_Location_Info
-   is
-      Class : constant Class_Type :=
-                Get_File_Location_Class (Get_Kernel (Data));
-      Inst  : constant Class_Instance :=
-                Nth_Arg (Data, N, Class);
-      D     : Instance_Property;
-   begin
-      if Inst /= No_Class_Instance then
-         D := Get_Data (Inst, File_Location_Class_Name);
-      end if;
-
-      if D = null then
-         return No_File_Location;
-      else
-         return GPS_Properties (D).Location;
-      end if;
-   end Get_Data;
 
    -----------------------------
    -- Default_Command_Handler --
@@ -564,51 +506,6 @@ package body GPS.Kernel.Scripts is
       end if;
    end Default_Command_Handler;
 
-   -------------------------------------
-   -- Create_Location_Command_Handler --
-   -------------------------------------
-
-   procedure Create_Location_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Location : File_Location_Info;
-
-   begin
-      if Command = Constructor_Method then
-         Name_Parameters (Data, Location_Cmd_Parameters);
-
-         declare
-            File     : constant Class_Instance  :=
-                         Nth_Arg (Data, 2, Get_File_Class (Kernel));
-            L        : constant Integer := Nth_Arg (Data, 3);
-            C        : constant Visible_Column_Type :=
-                         Visible_Column_Type (Nth_Arg (Data, 4, Default => 1));
-            Instance : constant Class_Instance :=
-                         Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
-         begin
-            Set_Data (Instance, File_Location_Info'(File, L, C));
-         end;
-
-      elsif Command = "line" then
-         Location := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Line (Location));
-
-      elsif Command = "column" then
-         Location := Get_Data (Data, 1);
-         Set_Return_Value (Data, Natural (Get_Column (Location)));
-
-      elsif Command = "file" then
-         Location := Get_Data (Data, 1);
-
-         declare
-            File : constant Class_Instance := Get_File (Location);
-         begin
-            Set_Return_Value (Data, File);
-         end;
-      end if;
-   end Create_Location_Command_Handler;
-
    -----------------------------------
    -- Create_Entity_Command_Handler --
    -----------------------------------
@@ -616,75 +513,13 @@ package body GPS.Kernel.Scripts is
    procedure Create_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Entity : General_Entity;
-
+      pragma Unreferenced (Data);
    begin
-      if Command = "declaration" then
-         declare
-            Location : General_Location;
-         begin
-            Entity := Get_Data (Data, 1);
-            Location := Kernel.Databases.Get_Declaration (Entity).Loc;
-
-            Set_Return_Value
-              (Data, Create_File_Location
-                 (Get_Script (Data),
-                  File   => Create_File (Get_Script (Data), Location.File),
-                  Line   => Location.Line,
-                  Column => Location.Column));
-         end;
-
-      elsif Command = "body" then
-         Name_Parameters (Data, Body_Cmd_Parameters);
-         declare
-            Location     : General_Location := No_Location;
-            Cur_Location : General_Location := No_Location;
-            Count        : Integer := Nth_Arg (Data, 2, 1);
-         begin
-            Entity := Get_Data (Data, 1);
-            while Count > 0 loop
-               Location := Kernel.Databases.Get_Body
-                 (Entity, After => Cur_Location);
-               Count := Count - 1;
-               Cur_Location := Location;
-            end loop;
-
-            if Location /= No_Location then
-               Set_Return_Value
-                 (Data, Create_File_Location
-                    (Get_Script (Data),
-                     File   => Create_File (Get_Script (Data), Location.File),
-                     Line   => Location.Line,
-                     Column => Location.Column));
-
-            else
-               Set_Error_Msg (Data, -"Body not found for the entity");
-            end if;
-         end;
-
-      elsif Command = "category" then
+      if Command = "category" then
          raise Program_Error
            with "GPS.Entity.category has been deprecated, see is_*";
 --       Set_Return_Value (Data, Category_To_String (Get_Category (Entity)));
 
-      elsif Command = "end_of_scope" then
-         declare
-            Location : General_Location := No_Location;
-         begin
-            Entity := Get_Data (Data, 1);
-            Location := Kernel.Databases.End_Of_Scope (Entity);
-            if Location /= No_Location then
-               Set_Return_Value
-                 (Data, Create_File_Location
-                    (Get_Script (Data),
-                     File   => Create_File (Get_Script (Data), Location.File),
-                     Line   => Location.Line,
-                     Column => Location.Column));
-            else
-               Set_Error_Msg (Data, -"end-of-scope not found for the entity");
-            end if;
-         end;
       end if;
    end Create_Entity_Command_Handler;
 
@@ -1565,44 +1400,11 @@ package body GPS.Kernel.Scripts is
 
       GPS.Scripts.Entities.Register_Commands (Kernel);
       Register_Command
-        (Kernel, "declaration",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "body",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
         (Kernel, "category",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "end_of_scope",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, Constructor_Method,
-         Minimum_Args => 3,
-         Maximum_Args => 3,
-         Class        => Get_File_Location_Class (Kernel),
-         Handler      => Create_Location_Command_Handler'Access);
-      Register_Command
-        (Kernel, "line",
-         Class         => Get_File_Location_Class (Kernel),
-         Handler       => Create_Location_Command_Handler'Access);
-      Register_Command
-        (Kernel, "column",
-         Class         => Get_File_Location_Class (Kernel),
-         Handler       => Create_Location_Command_Handler'Access);
-      Register_Command
-        (Kernel, "file",
-         Class        => Get_File_Location_Class (Kernel),
-         Handler      => Create_Location_Command_Handler'Access);
+      GPS.Scripts.File_Locations.Register_Commands (Kernel);
 
       GPS.Scripts.Projects.Register_Commands (Kernel);
       Register_Command
@@ -1722,17 +1524,6 @@ package body GPS.Kernel.Scripts is
       GPS.Kernel.Command_API.Register_Commands (Kernel);
    end Register_Default_Script_Commands;
 
-   -----------------------------
-   -- Get_File_Location_Class --
-   -----------------------------
-
-   function Get_File_Location_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return New_Class (Kernel.Scripts, File_Location_Class_Name);
-   end Get_File_Location_Class;
-
    -----------------
    -- Get_Scripts --
    -----------------
@@ -1798,54 +1589,6 @@ package body GPS.Kernel.Scripts is
    begin
       return Kernel_Handle (GPS.Scripts.Get_Kernel (Script));
    end Get_Kernel;
-
-   --------------------------
-   -- Create_File_Location --
-   --------------------------
-
-   function Create_File_Location
-     (Script : access Scripting_Language_Record'Class;
-      File   : Class_Instance;
-      Line   : Natural;
-      Column : Basic_Types.Visible_Column_Type) return Class_Instance
-   is
-      Instance : constant Class_Instance := New_Instance
-        (Script,
-         New_Class (Get_Repository (Script), File_Location_Class_Name));
-      Info     : constant File_Location_Info := (File, Line, Column);
-
-   begin
-      Set_Data (Instance, Info);
-      return Instance;
-   end Create_File_Location;
-
-   --------------
-   -- Get_File --
-   --------------
-
-   function Get_File (Location : File_Location_Info) return Class_Instance is
-   begin
-      return Location.File;
-   end Get_File;
-
-   --------------
-   -- Get_Line --
-   --------------
-
-   function Get_Line (Location : File_Location_Info) return Integer is
-   begin
-      return Location.Line;
-   end Get_Line;
-
-   ----------------
-   -- Get_Column --
-   ----------------
-
-   function Get_Column
-     (Location : File_Location_Info) return Visible_Column_Type is
-   begin
-      return Location.Column;
-   end Get_Column;
 
    -----------------------
    -- Get_Context_Class --

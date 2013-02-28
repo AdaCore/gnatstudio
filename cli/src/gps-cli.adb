@@ -32,6 +32,7 @@ with GPS.CLI_Kernels;
 with GPS.Core_Kernels;
 with GPS.Python_Core;
 with GPS.Scripts.Entities;
+with GPS.Scripts.File_Locations;
 with GPS.Scripts.Files;
 with GPS.Scripts.Projects;
 
@@ -96,6 +97,7 @@ procedure GPS.CLI is
  is
    begin
       GPS.Scripts.Entities.Register_Commands (Kernel);
+      GPS.Scripts.File_Locations.Register_Commands (Kernel);
       GPS.Scripts.Files.Register_Commands (Kernel);
       GPS.Scripts.Projects.Register_Commands (Kernel);
    end Register_Classes;
