@@ -76,7 +76,6 @@ package body GPS.Kernel.Scripts is
    Ref_Me : constant Trace_Handle :=
               Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
-   Entity_Class_Name        : constant String := "Entity";
    Context_Class_Name       : constant String := "Context";
    File_Location_Class_Name : constant String := "FileLocation";
    Hook_Class_Name          : constant String := "Hook";
@@ -135,10 +134,6 @@ package body GPS.Kernel.Scripts is
    procedure Create_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "Entity" command
-
-   procedure Create_File_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   --  Handler for the "File" command
 
    procedure Create_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -221,7 +216,6 @@ package body GPS.Kernel.Scripts is
 
    Name_Cst       : aliased constant String := "name";
    Filename_Cst   : aliased constant String := "filename";
-   File_Cst       : aliased constant String := "file";
    Line_Cst       : aliased constant String := "line";
    Col_Cst        : aliased constant String := "column";
    Shared_Lib_Cst : aliased constant String := "shared_lib";
@@ -234,11 +228,9 @@ package body GPS.Kernel.Scripts is
    Value_Cst      : aliased constant String := "value";
    Recursive_Cst  : aliased constant String := "recursive";
    Nth_Cst        : aliased constant String := "nth";
-   Local_Cst      : aliased constant String := "local";
    Regexp_Cst     : aliased constant String := "regexp";
    On_Click_Cst   : aliased constant String := "on_click";
    Text_Cst       : aliased constant String := "text";
-   Fast_Cst       : aliased constant String := "fast";
 
    Create_Link_Args         : constant Cst_Argument_List :=
      (1 => Regexp_Cst'Access, 2 => On_Click_Cst'Access);
@@ -249,12 +241,6 @@ package body GPS.Kernel.Scripts is
                                  2 => Module_Cst'Access);
    Body_Cmd_Parameters      : constant Cst_Argument_List :=
                                 (1 => Nth_Cst'Access);
-   Entity_Cmd_Parameters    : constant Cst_Argument_List :=
-                                (Name_Cst'Access, File_Cst'Access,
-                                 Line_Cst'Access, Col_Cst'Access,
-                                 Fast_Cst'Access);
-   File_Entities_Parameters  : constant Cst_Argument_List :=
-                                (1 => Local_Cst'Access);
    Open_Cmd_Parameters      : constant Cst_Argument_List :=
                                 (1 => Filename_Cst'Access,
                                  2 => Force_Cst'Access);
@@ -301,24 +287,6 @@ package body GPS.Kernel.Scripts is
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Entity   : General_Entity) is
-   begin
-      if not Is_Subclass (Instance, Entity_Class_Name) then
-         raise Invalid_Data;
-      end if;
-
-      Ref (Entity);
-      Set_Data
-        (Instance, Entity_Class_Name,
-         GPS_Properties_Record'(Typ => Entities, Entity => Entity));
-   end Set_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : Class_Instance;
       Location : File_Location_Info) is
    begin
       if not Is_Subclass (Instance, File_Location_Class_Name) then
@@ -330,31 +298,6 @@ package body GPS.Kernel.Scripts is
          GPS_Properties_Record'
            (Typ => File_Locations, Location => Location));
    end Set_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Data : Callback_Data'Class;
-      N    : Positive) return General_Entity
-   is
-      Class : constant Class_Type := Get_Entity_Class (Get_Kernel (Data));
-      Inst  : constant Class_Instance := Nth_Arg
-        (Data, N, Class, Allow_Null => True);
-      Props : Instance_Property;
-   begin
-      if Inst = No_Class_Instance then
-         return No_General_Entity;
-      end if;
-
-      Props := Get_Data (Inst, Entity_Class_Name);
-      if Props = null then
-         return No_General_Entity;
-      else
-         return GPS_Properties (Props).Entity;
-      end if;
-   end Get_Data;
 
    --------------
    -- Get_Data --
@@ -675,60 +618,9 @@ package body GPS.Kernel.Scripts is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Entity : General_Entity;
-      Ref    : General_Entity_Reference;
 
    begin
-      if Command = Constructor_Method then
-         Name_Parameters (Data, Entity_Cmd_Parameters);
-
-         declare
-            Name   : constant String  := Nth_Arg (Data, 2);
-            File   : constant Class_Instance  :=
-                       Nth_Arg (Data, 3, Get_File_Class (Kernel),
-                                Default    => No_Class_Instance,
-                                Allow_Null => True);
-            Loc    : General_Location;
-
-         begin
-            if File = No_Class_Instance then
-               --  Looking for a predefined entity
-               Loc := No_Location;
-            else
-               Loc := (File => Get_Data (File),
-                       Line => Nth_Arg (Data, 4, Default => 1),
-                       Column => Visible_Column_Type
-                         (Nth_Arg (Data, 5, Default => 1)));
-            end if;
-
-            Kernel.Databases.Find_Declaration_Or_Overloaded
-              (Loc               => Loc,
-               Entity_Name       => Name,
-               Ask_If_Overloaded => False,
-               Entity            => Entity,
-               Closest_Ref       => Ref);
-
-            if Entity = No_General_Entity then
-               Set_Error_Msg (Data, -"Entity not found");
-            else
-               declare
-                  Instance : constant Class_Instance :=
-                    Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
-               begin
-                  Set_Data (Instance, Entity);
-               end;
-            end if;
-         end;
-
-      elsif Command = "full_name" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value
-           (Data, Kernel.Databases.Qualified_Name (Entity));
-
-      elsif Command = "name" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Get_Name (Entity));
-
-      elsif Command = "declaration" then
+      if Command = "declaration" then
          declare
             Location : General_Location;
          begin
@@ -771,44 +663,6 @@ package body GPS.Kernel.Scripts is
             end if;
          end;
 
-      elsif Command = "attributes" then
-         --  ??? Should be made obsolete and replaced by separate functions.
-         Entity := Get_Data (Data, 1);
-
-         Set_Return_Value (Data, Kernel.Databases.Is_Global (Entity));
-         Set_Return_Value_Key (Data, "global");
-
-         Set_Return_Value (Data, Kernel.Databases.Is_Static_Local (Entity));
-         Set_Return_Value_Key (Data, "static");
-
-      elsif Command = "is_subprogram" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Subprogram (Entity));
-
-      elsif Command = "is_generic" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Generic (Entity));
-
-      elsif Command = "is_global" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Global (Entity));
-
-      elsif Command = "is_access" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Access (Entity));
-
-      elsif Command = "is_array" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Array (Entity));
-
-      elsif Command = "is_type" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Type (Entity));
-
-      elsif Command = "is_container" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Type (Entity));
-
       elsif Command = "category" then
          raise Program_Error
            with "GPS.Entity.category has been deprecated, see is_*";
@@ -833,44 +687,6 @@ package body GPS.Kernel.Scripts is
          end;
       end if;
    end Create_Entity_Command_Handler;
-
-   ---------------------------------
-   -- Create_File_Command_Handler --
-   ---------------------------------
-
-   procedure Create_File_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
-      Info    : Virtual_File;
-   begin
-      if Command = "entities" then
-         Name_Parameters (Data, File_Entities_Parameters);
-         Info := Nth_Arg (Data, 1);
-         declare
-            Iter   : Entities_In_File_Cursor;
-            Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
-            Ent    : General_Entity;
-         begin
-            Set_Return_Value_As_List (Data);
-            Iter := Kernel.Databases.Entities_In_File
-              (File => Info,
-               Name => "");
-
-            while not At_End (Iter) loop
-               Ent := Get (Iter);
-               if not Defined_In_File
-                 or else Kernel.Databases.Get_Declaration (Ent).Loc.File = Info
-               then
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Ent));
-               end if;
-               Next (Iter);
-            end loop;
-         end;
-
-      end if;
-   end Create_File_Command_Handler;
 
    ------------------------------------
    -- Create_Project_Command_Handler --
@@ -1747,27 +1563,7 @@ package body GPS.Kernel.Scripts is
 
       GPS.Scripts.Files.Register_Commands (Kernel);
 
-      Register_Command
-        (Kernel, "entities",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class        => Get_File_Class (Kernel),
-         Handler      => Create_File_Command_Handler'Access);
-
-      Register_Command
-        (Kernel, Constructor_Method,
-         Minimum_Args => 1,
-         Maximum_Args => 5,
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "name",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "full_name",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
+      GPS.Scripts.Entities.Register_Commands (Kernel);
       Register_Command
         (Kernel, "declaration",
          Class        => Get_Entity_Class (Kernel),
@@ -1779,42 +1575,9 @@ package body GPS.Kernel.Scripts is
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel, "attributes",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
         (Kernel, "category",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_subprogram",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_generic",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_global",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_access",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_array",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_type",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_container",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-
       Register_Command
         (Kernel, "end_of_scope",
          Minimum_Args => 0,
@@ -1959,17 +1722,6 @@ package body GPS.Kernel.Scripts is
       GPS.Kernel.Command_API.Register_Commands (Kernel);
    end Register_Default_Script_Commands;
 
-   ----------------------
-   -- Get_Entity_Class --
-   ----------------------
-
-   function Get_Entity_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return New_Class (Kernel.Scripts, Entity_Class_Name);
-   end Get_Entity_Class;
-
    -----------------------------
    -- Get_File_Location_Class --
    -----------------------------
@@ -2046,26 +1798,6 @@ package body GPS.Kernel.Scripts is
    begin
       return Kernel_Handle (GPS.Scripts.Get_Kernel (Script));
    end Get_Kernel;
-
-   -------------------
-   -- Create_Entity --
-   -------------------
-
-   function Create_Entity
-     (Script : access Scripting_Language_Record'Class;
-      Entity : General_Entity) return Class_Instance
-   is
-      Instance : Class_Instance;
-   begin
-      if Entity = No_General_Entity then
-         return No_Class_Instance;
-      else
-         Instance := New_Instance
-           (Script, New_Class (Get_Repository (Script), Entity_Class_Name));
-         Set_Data (Instance, Entity);
-         return Instance;
-      end if;
-   end Create_Entity;
 
    --------------------------
    -- Create_File_Location --

@@ -21,8 +21,10 @@ with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 with OS_Utils;                use OS_Utils;
 with Remote;                  use Remote;
 with GPS.Core_Kernels;        use GPS.Core_Kernels;
+with GPS.Scripts.Entities;
 with GPS.Scripts.Projects;
 with Language_Handlers;       use Language_Handlers;
+with Xref;                    use Xref;
 
 package body GPS.Scripts.Files is
 
@@ -48,6 +50,8 @@ package body GPS.Scripts.Files is
    File_Cmd_Parameters   : constant Cst_Argument_List :=
                                 (1 => Name_Cst'Access,
                                  2 => Local_Cst'Access);
+   File_Entities_Parameters  : constant Cst_Argument_List :=
+                                (1 => Local_Cst'Access);
    File_Name_Parameters  : constant Cst_Argument_List :=
                                 (1 => Server_Cst'Access);
    File_Project_Parameters  : constant Cst_Argument_List :=
@@ -213,6 +217,32 @@ package body GPS.Scripts.Files is
            (Data,
             GPS.Scripts.Projects.Create_Project (Get_Script (Data), Project));
 
+      elsif Command = "entities" then
+         Name_Parameters (Data, File_Entities_Parameters);
+         Info := Nth_Arg (Data, 1);
+         declare
+            Iter   : Entities_In_File_Cursor;
+            Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
+            Ent    : General_Entity;
+         begin
+            Set_Return_Value_As_List (Data);
+            Iter := Kernel.Databases.Entities_In_File
+              (File => Info,
+               Name => "");
+
+            while not At_End (Iter) loop
+               Ent := Get (Iter);
+               if not Defined_In_File
+                 or else Kernel.Databases.Get_Declaration (Ent).Loc.File = Info
+               then
+                  Set_Return_Value
+                    (Data, GPS.Scripts.Entities.Create_Entity
+                             (Get_Script (Data), Ent));
+               end if;
+               Next (Iter);
+            end loop;
+         end;
+
       end if;
    end File_Command_Handler;
    --------------------
@@ -274,6 +304,12 @@ package body GPS.Scripts.Files is
          Handler      => File_Command_Handler'Access);
       Register_Command
         (Kernel.Scripts, "project",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class        => Get_File_Class (Kernel),
+         Handler      => File_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "entities",
          Minimum_Args => 0,
          Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
