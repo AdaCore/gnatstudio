@@ -21,6 +21,7 @@
 with Basic_Types;
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GPS.Scripts.Entities;
 with GPS.Scripts.Files;
 with GPS.Scripts.Projects;
 with Xref;
@@ -94,23 +95,25 @@ package GPS.Kernel.Scripts is
    --  modules.
 
    function Get_Entity_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
+      return Class_Type renames GPS.Scripts.Entities.Get_Entity_Class;
    --  Return the class to use for entities. This encapsulates an
    --  Entity_Information.
 
    procedure Set_Data
-     (Instance : Class_Instance; Entity : Xref.General_Entity);
+     (Instance : Class_Instance; Entity : Xref.General_Entity)
+      renames GPS.Scripts.Entities.Set_Data;
    function Get_Data
      (Data : Callback_Data'Class; N : Positive)
-      return Xref.General_Entity;
+      return Xref.General_Entity renames GPS.Scripts.Entities.Get_Data;
    --  The Entity class stores some Entity_Information data in Instance
    --  You should destroy the entity passed to Set_Data, but not the value
    --  returned by Get_Data
 
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
-      Entity : Xref.General_Entity) return Class_Instance;
+      Entity : Xref.General_Entity)
+      return Class_Instance renames GPS.Scripts.Entities.Create_Entity;
    --  Return a new entity. Entity parameter should be freed by the caller
 
    ----------------
