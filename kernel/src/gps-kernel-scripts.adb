@@ -77,7 +77,6 @@ package body GPS.Kernel.Scripts is
               Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
    Entity_Class_Name        : constant String := "Entity";
-   Project_Class_Name       : constant String := "Project";
    Context_Class_Name       : constant String := "Context";
    File_Location_Class_Name : constant String := "FileLocation";
    Hook_Class_Name          : constant String := "Hook";
@@ -166,8 +165,6 @@ package body GPS.Kernel.Scripts is
    --  Handler for all GUI class commands
 
    procedure Set_Data
-     (Instance : Class_Instance; Project  : Project_Type);
-   procedure Set_Data
      (Instance : Class_Instance; Location : File_Location_Info);
    procedure Set_Data
      (Instance : Class_Instance; Context  : Selection_Context);
@@ -236,7 +233,6 @@ package body GPS.Kernel.Scripts is
    Force_Cst      : aliased constant String := "force";
    Value_Cst      : aliased constant String := "value";
    Recursive_Cst  : aliased constant String := "recursive";
-   Default_Cst    : aliased constant String := "default_to_root";
    Nth_Cst        : aliased constant String := "nth";
    Local_Cst      : aliased constant String := "local";
    Regexp_Cst     : aliased constant String := "regexp";
@@ -248,8 +244,6 @@ package body GPS.Kernel.Scripts is
      (1 => Regexp_Cst'Access, 2 => On_Click_Cst'Access);
    Write_With_Link_Args         : constant Cst_Argument_List :=
      (1 => Text_Cst'Access);
-   Project_Cmd_Parameters   : constant Cst_Argument_List :=
-                                (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters    : constant Cst_Argument_List :=
                                 (1 => Shared_Lib_Cst'Access,
                                  2 => Module_Cst'Access);
@@ -259,8 +253,6 @@ package body GPS.Kernel.Scripts is
                                 (Name_Cst'Access, File_Cst'Access,
                                  Line_Cst'Access, Col_Cst'Access,
                                  Fast_Cst'Access);
-   File_Project_Parameters  : constant Cst_Argument_List :=
-                                (1 => Default_Cst'Access);
    File_Entities_Parameters  : constant Cst_Argument_List :=
                                 (1 => Local_Cst'Access);
    Open_Cmd_Parameters      : constant Cst_Argument_List :=
@@ -385,46 +377,6 @@ package body GPS.Kernel.Scripts is
          return No_File_Location;
       else
          return GPS_Properties (D).Location;
-      end if;
-   end Get_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data (Instance : Class_Instance; Project  : Project_Type) is
-   begin
-      if not Is_Subclass (Instance, Project_Class_Name) then
-         raise Invalid_Data;
-      end if;
-
-      Set_Data
-        (Instance, Project_Class_Name,
-         GPS_Properties_Record'(Typ => Projects, Project => Project));
-   end Set_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Data : Callback_Data'Class; N : Positive) return Project_Type
-   is
-      Class : constant Class_Type := Get_Project_Class (Get_Kernel (Data));
-      Inst  : constant Class_Instance :=
-        Nth_Arg (Data, N, Class, Allow_Null => True);
-      Value : Instance_Property;
-
-   begin
-      if Inst = No_Class_Instance then
-         return No_Project;
-      end if;
-
-      Value := Get_Data (Inst, Project_Class_Name);
-      if Value = null then
-         return No_Project;
-      else
-         return GPS_Properties (Value).Project;
       end if;
    end Get_Data;
 
@@ -891,20 +843,8 @@ package body GPS.Kernel.Scripts is
    is
       Kernel  : constant Kernel_Handle := Get_Kernel (Data);
       Info    : Virtual_File;
-      Project : Project_Type;
    begin
-      if Command = "project" then
-         Name_Parameters (Data, File_Project_Parameters);
-         Info := Nth_Arg (Data, 1);
-         Project := Get_Registry (Kernel).Tree.Info (Info).Project;
-
-         if Project = No_Project and then Nth_Arg (Data, 2, True) then
-            Project := Get_Project (Kernel);
-         end if;
-
-         Set_Return_Value (Data, Create_Project (Get_Script (Data), Project));
-
-      elsif Command = "entities" then
+      if Command = "entities" then
          Name_Parameters (Data, File_Entities_Parameters);
          Info := Nth_Arg (Data, 1);
          declare
@@ -940,9 +880,6 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : Class_Instance;
-      Project  : Project_Type;
-
    begin
       if Command = "load" then
          Name_Parameters (Data, Open_Cmd_Parameters);
@@ -958,80 +895,12 @@ package body GPS.Kernel.Scripts is
       elsif Command = "recompute" then
          Recompute_View (Get_Kernel (Data));
 
-      elsif Command = "root" then
-         Set_Return_Value
-           (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
-
-      else
-         if Command = Constructor_Method then
-            Name_Parameters (Data, Project_Cmd_Parameters);
-            Project  := Get_Registry (Kernel).Tree.Project_From_Name
-              (Nth_Arg (Data, 2));
-
-            if Project = No_Project then
-               Set_Error_Msg (Data, -"No such project: " & Nth_Arg (Data, 2));
-            else
-               Instance := Nth_Arg (Data, 1, Get_Project_Class (Kernel));
-               Set_Data (Instance, Project);
-            end if;
-
-         elsif Command = "name" then
-            Project := Get_Data (Data, 1);
-            Set_Return_Value (Data, Project.Name);
-
-         elsif Command = "file" then
-            Project := Get_Data (Data, 1);
-            Set_Return_Value
-              (Data,
-               Create_File (Get_Script (Data), Project_Path (Project)));
-
-         elsif Command = "ancestor_deps" then
-            declare
-               Iter : Project_Iterator;
-               P    : Project_Type;
-            begin
-               Project := Get_Data (Data, 1);
-               Set_Return_Value_As_List (Data);
-               Iter := Find_All_Projects_Importing
-                 (Project, Include_Self => True);
-
-               loop
-                  P := Current (Iter);
-                  exit when P = No_Project;
-                  Set_Return_Value
-                    (Data, Create_Project (Get_Script (Data), P));
-                  Next (Iter);
-               end loop;
-            end;
-
-         elsif Command = "dependencies" then
-            Name_Parameters (Data, (1 => Recursive_Cst'Access));
-            declare
-               Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-               Iter : Project_Iterator;
-               P    : Project_Type;
-            begin
-               Project := Get_Data (Data, 1);
-               Set_Return_Value_As_List (Data);
-               Iter := Start
-                 (Project, Recursive => True, Direct_Only => not Recursive);
-
-               loop
-                  P := Current (Iter);
-                  exit when P = No_Project;
-                  Set_Return_Value
-                    (Data, Create_Project (Get_Script (Data), P));
-                  Next (Iter);
-               end loop;
-            end;
-
-         elsif Command = "update_xref" then
-            Name_Parameters (Data, (1 => Recursive_Cst'Access));
-            Parse_All_LI_Information
-              (Kernel    => Kernel,
-               Project   => Get_Data (Data, 1),
-               Recursive => Nth_Arg (Data, 2, False));
-         end if;
+      elsif Command = "update_xref" then
+         Name_Parameters (Data, (1 => Recursive_Cst'Access));
+         Parse_All_LI_Information
+           (Kernel    => Kernel,
+            Project   => Get_Data (Data, 1),
+            Recursive => Nth_Arg (Data, 2, False));
       end if;
    end Create_Project_Command_Handler;
 
@@ -1884,12 +1753,6 @@ package body GPS.Kernel.Scripts is
          Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
-      Register_Command
-        (Kernel, "project",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class        => Get_File_Class (Kernel),
-         Handler      => Create_File_Command_Handler'Access);
 
       Register_Command
         (Kernel, Constructor_Method,
@@ -1978,17 +1841,7 @@ package body GPS.Kernel.Scripts is
          Class        => Get_File_Location_Class (Kernel),
          Handler      => Create_Location_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, Constructor_Method,
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "root",
-         Class         => Get_Project_Class (Kernel),
-         Static_Method => True,
-         Handler       => Create_Project_Command_Handler'Access);
+      GPS.Scripts.Projects.Register_Commands (Kernel);
       Register_Command
         (Kernel, "recompute",
          Class         => Get_Project_Class (Kernel),
@@ -2001,24 +1854,6 @@ package body GPS.Kernel.Scripts is
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "name",
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "file",
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "ancestor_deps",
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "dependencies",
-         Class        => Get_Project_Class (Kernel),
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel, "update_xref",
          Minimum_Args => 0,
@@ -2135,28 +1970,6 @@ package body GPS.Kernel.Scripts is
       return New_Class (Kernel.Scripts, Entity_Class_Name);
    end Get_Entity_Class;
 
-   --------------------
-   -- Get_File_Class --
-   --------------------
-
-   function Get_File_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return GPS.Scripts.Files.Get_File_Class (Kernel);
-   end Get_File_Class;
-
-   -----------------------
-   -- Get_Project_Class --
-   -----------------------
-
-   function Get_Project_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return New_Class (Kernel.Scripts, Project_Class_Name);
-   end Get_Project_Class;
-
    -----------------------------
    -- Get_File_Location_Class --
    -----------------------------
@@ -2253,24 +2066,6 @@ package body GPS.Kernel.Scripts is
          return Instance;
       end if;
    end Create_Entity;
-
-   --------------------
-   -- Create_Project --
-   --------------------
-
-   function Create_Project
-     (Script  : access Scripting_Language_Record'Class;
-      Project : Project_Type) return Class_Instance
-   is
-      Instance : Class_Instance := No_Class_Instance;
-   begin
-      if Project /= No_Project then
-         Instance := New_Instance
-           (Script, New_Class (Get_Repository (Script), Project_Class_Name));
-         Set_Data (Instance, Project);
-      end if;
-      return Instance;
-   end Create_Project;
 
    --------------------------
    -- Create_File_Location --
