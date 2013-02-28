@@ -309,18 +309,6 @@ package body GPS.Kernel is
       GPS.Kernel.Xref.Create_Database (Self, Result);
    end Create_Database;
 
-   -------------------------------
-   -- Create_Scripts_Repository --
-   -------------------------------
-
-   overriding procedure Create_Scripts_Repository
-     (Self   : not null access Kernel_Handle_Record;
-      Result : out GNATCOLL.Scripts.Scripts_Repository) is
-   begin
-      Result := new Kernel_Scripts_Repository'
-        (Scripts_Repository_Record with Kernel => Kernel_Handle (Self));
-   end Create_Scripts_Repository;
-
    -------------
    -- Gtk_New --
    -------------

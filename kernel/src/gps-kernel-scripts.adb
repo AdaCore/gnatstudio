@@ -60,6 +60,7 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
+with GPS.Scripts;             use GPS.Scripts;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
 with Language_Handlers;       use Language_Handlers;
@@ -2402,7 +2403,7 @@ package body GPS.Kernel.Scripts is
    function Get_Kernel (Data : Callback_Data'Class)
       return GPS.Kernel.Kernel_Handle is
    begin
-      return Kernel_Scripts_Repository (Get_Repository (Data).all).Kernel;
+      return Kernel_Handle (GPS.Scripts.Get_Kernel (Data));
    end Get_Kernel;
 
    ----------------
@@ -2413,7 +2414,7 @@ package body GPS.Kernel.Scripts is
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class)
       return GPS.Kernel.Kernel_Handle is
    begin
-      return Kernel_Scripts_Repository (Get_Repository (Script).all).Kernel;
+      return Kernel_Handle (GPS.Scripts.Get_Kernel (Script));
    end Get_Kernel;
 
    -------------------
