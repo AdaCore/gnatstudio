@@ -2765,6 +2765,7 @@ package body Src_Editor_Buffer is
       Buffer.Line_Data := new Line_Data_Array (1 .. 1);
       Buffer.Line_Data (1) := New_Line_Data;
       Buffer.Line_Data (1).Editable_Line := 1;
+      Create_Side_Info (Buffer, 1);
 
       --  Compute the block information
 
