@@ -21,6 +21,7 @@
 with Basic_Types;
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GPS.Scripts.Files;
 with Xref;
 
 package GPS.Kernel.Scripts is
@@ -124,19 +125,21 @@ package GPS.Kernel.Scripts is
 
    function Nth_Arg
      (Data : Callback_Data'Class; N : Positive)
-      return GNATCOLL.VFS.Virtual_File;
+      return GNATCOLL.VFS.Virtual_File renames GPS.Scripts.Files.Nth_Arg;
    procedure Set_Nth_Arg
      (Data : in out Callback_Data'Class;
       N    : Positive;
-      File : GNATCOLL.VFS.Virtual_File);
+      File : GNATCOLL.VFS.Virtual_File) renames GPS.Scripts.Files.Set_Nth_Arg;
    function Get_Data
-     (Instance : Class_Instance) return GNATCOLL.VFS.Virtual_File;
+     (Instance : Class_Instance)
+      return GNATCOLL.VFS.Virtual_File renames GPS.Scripts.Files.Get_Data;
    --  Retrieve the file information from an instance. This returns No_File
    --  if no instance is passed
 
    function Create_File
      (Script : access Scripting_Language_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File) return Class_Instance;
+      File   : GNATCOLL.VFS.Virtual_File)
+      return Class_Instance renames GPS.Scripts.Files.Create_File;
    --  Return a new file
 
    ---------------

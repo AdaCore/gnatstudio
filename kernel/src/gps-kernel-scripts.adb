@@ -65,10 +65,8 @@ with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
 with Language_Handlers;       use Language_Handlers;
 with Projects;                use Projects;
-with Remote;                  use Remote;
 with String_List_Utils;
 with Traces;
-with OS_Utils;                use OS_Utils;
 with Xref;                    use Xref;
 
 package body GPS.Kernel.Scripts is
@@ -79,7 +77,6 @@ package body GPS.Kernel.Scripts is
               Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
    Entity_Class_Name        : constant String := "Entity";
-   File_Class_Name          : constant String := "File";
    Project_Class_Name       : constant String := "Project";
    Context_Class_Name       : constant String := "Context";
    File_Location_Class_Name : constant String := "FileLocation";
@@ -168,7 +165,6 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all GUI class commands
 
-   procedure Set_Data (Instance : Class_Instance; File : Virtual_File);
    procedure Set_Data
      (Instance : Class_Instance; Project  : Project_Type);
    procedure Set_Data
@@ -246,7 +242,6 @@ package body GPS.Kernel.Scripts is
    Regexp_Cst     : aliased constant String := "regexp";
    On_Click_Cst   : aliased constant String := "on_click";
    Text_Cst       : aliased constant String := "text";
-   Server_Cst     : aliased constant String := "remote_server";
    Fast_Cst       : aliased constant String := "fast";
 
    Create_Link_Args         : constant Cst_Argument_List :=
@@ -264,11 +259,6 @@ package body GPS.Kernel.Scripts is
                                 (Name_Cst'Access, File_Cst'Access,
                                  Line_Cst'Access, Col_Cst'Access,
                                  Fast_Cst'Access);
-   File_Cmd_Parameters      : constant Cst_Argument_List :=
-                                (1 => Name_Cst'Access,
-                                 2 => Local_Cst'Access);
-   File_Name_Parameters  : constant Cst_Argument_List :=
-                                (1 => Server_Cst'Access);
    File_Project_Parameters  : constant Cst_Argument_List :=
                                 (1 => Default_Cst'Access);
    File_Entities_Parameters  : constant Cst_Argument_List :=
@@ -395,66 +385,6 @@ package body GPS.Kernel.Scripts is
          return No_File_Location;
       else
          return GPS_Properties (D).Location;
-      end if;
-   end Get_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data (Instance : Class_Instance; File : Virtual_File) is
-   begin
-      if not Is_Subclass (Instance, File_Class_Name) then
-         raise Invalid_Data;
-      end if;
-
-      Set_Data
-        (Instance, File_Class_Name,
-         GPS_Properties_Record'(Typ => Files, File => File));
-   end Set_Data;
-
-   -------------
-   -- Nth_Arg --
-   -------------
-
-   function Nth_Arg
-     (Data : Callback_Data'Class; N : Positive) return Virtual_File
-   is
-      Class : constant Class_Type := Get_File_Class (Get_Kernel (Data));
-      Inst  : constant Class_Instance := Nth_Arg (Data, N, Class);
-   begin
-      return Get_Data (Inst);
-   end Nth_Arg;
-
-   -----------------
-   -- Set_Nth_Arg --
-   -----------------
-
-   procedure Set_Nth_Arg
-     (Data : in out Callback_Data'Class;
-      N    : Positive;
-      File : GNATCOLL.VFS.Virtual_File)
-   is
-      Inst  : constant Class_Instance := Create_File (Get_Script (Data), File);
-   begin
-      Set_Nth_Arg (Data, N, Inst);
-   end Set_Nth_Arg;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data (Instance : Class_Instance) return Virtual_File is
-      Data : Instance_Property;
-   begin
-      if Instance /= No_Class_Instance then
-         Data := Get_Data (Instance, File_Class_Name);
-      end if;
-
-      if Data = null then
-         return GNATCOLL.VFS.No_File;
-      else
-         return GPS_Properties (Data).File;
       end if;
    end Get_Data;
 
@@ -963,81 +893,7 @@ package body GPS.Kernel.Scripts is
       Info    : Virtual_File;
       Project : Project_Type;
    begin
-      if Command = Constructor_Method then
-         Name_Parameters (Data, File_Cmd_Parameters);
-
-         declare
-            Instance : constant Class_Instance :=
-                         Nth_Arg (Data, 1, Get_File_Class (Kernel));
-            Name     : constant Filesystem_String := Nth_Arg (Data, 2);
-            File     : Virtual_File;
-         begin
-            if Is_Absolute_Path (Name) then
-               if Is_Cygwin_Path (Name) then
-                  --  This is a cygwing PATH style, convert to standard DOS
-                  Set_Data
-                    (Instance,
-                     Create (Format_Pathname (Name, DOS)));
-               else
-                  Set_Data (Instance, Create (Name));
-               end if;
-               return;
-            end if;
-
-            --  Base name case. Find full name using the following rules:
-            --  1) If third argument is set to true, create from current dir
-            --  else
-            --  2) If Base Name can be found in project, use it
-            --  else
-            --  3) Create from current dir
-
-            --  If we really want to create from current directory
-
-            if Number_Of_Arguments (Data) > 2 then
-               declare
-                  From_Current : constant Boolean := Nth_Arg (Data, 3);
-               begin
-                  if From_Current then
-                     Set_Data
-                       (Instance,
-                        Create_From_Dir (Get_Current_Dir, Name));
-                     return;
-                  end if;
-               end;
-            end if;
-
-            --  Kernel's Create_From_Base will override File if needed
-
-            File := Create_From_Base (Name);
-            Set_Data
-              (Instance, Kernel.Create_From_Base (Full_Name (File)));
-         end;
-
-      elsif Command = "name" then
-         Name_Parameters (Data, File_Name_Parameters);
-         Info := Nth_Arg (Data, 1);
-
-         declare
-            Server : Server_Type;
-         begin
-            --  Get the Server_Type value
-            begin
-               Server := Server_Type'Value (Nth_Arg (Data, 2, "GPS_Server"));
-            exception
-               when Constraint_Error =>
-                  Server := GPS_Server;
-            end;
-
-            if Server = GPS_Server then
-               Set_Return_Value (Data, Full_Name (Info));
-            else
-               Set_Return_Value
-                 (Data,
-                  Full_Name (To_Remote (Info, Get_Nickname (Server))));
-            end if;
-         end;
-
-      elsif Command = "project" then
+      if Command = "project" then
          Name_Parameters (Data, File_Project_Parameters);
          Info := Nth_Arg (Data, 1);
          Project := Get_Registry (Kernel).Tree.Info (Info).Project;
@@ -1047,23 +903,6 @@ package body GPS.Kernel.Scripts is
          end if;
 
          Set_Return_Value (Data, Create_Project (Get_Script (Data), Project));
-
-      elsif Command = "directory" then
-         Info := Nth_Arg (Data, 1);
-         Set_Return_Value (Data, Dir_Name (Info));
-
-      elsif Command = "language" then
-         Info := Nth_Arg (Data, 1);
-         Set_Return_Value
-           (Data, Get_Language_From_File
-              (Get_Language_Handler (Kernel), Info));
-
-      elsif Command = "other_file" then
-         Info  := Nth_Arg (Data, 1);
-         Set_Return_Value
-           (Data,
-            Create_File (Get_Script (Data),
-                         Get_Registry (Kernel).Tree.Other_File (Info)));
 
       elsif Command = "entities" then
          Name_Parameters (Data, File_Entities_Parameters);
@@ -2037,30 +1876,8 @@ package body GPS.Kernel.Scripts is
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, Constructor_Method,
-         Minimum_Args => 1,
-         Maximum_Args => 2,
-         Class        => Get_File_Class (Kernel),
-         Handler      => Create_File_Command_Handler'Access);
-      Register_Command
-        (Kernel, "language",
-         Class        => Get_File_Class (Kernel),
-         Handler      => Create_File_Command_Handler'Access);
-      Register_Command
-        (Kernel, "name",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class        => Get_File_Class (Kernel),
-         Handler      => Create_File_Command_Handler'Access);
-      Register_Command
-        (Kernel, "directory",
-         Class        => Get_File_Class (Kernel),
-         Handler      => Create_File_Command_Handler'Access);
-      Register_Command
-        (Kernel, "other_file",
-         Class        => Get_File_Class (Kernel),
-         Handler      => Create_File_Command_Handler'Access);
+      GPS.Scripts.Files.Register_Commands (Kernel);
+
       Register_Command
         (Kernel, "entities",
          Minimum_Args => 0,
@@ -2326,7 +2143,7 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      return New_Class (Kernel.Scripts, File_Class_Name);
+      return GPS.Scripts.Files.Get_File_Class (Kernel);
    end Get_File_Class;
 
    -----------------------
@@ -2436,21 +2253,6 @@ package body GPS.Kernel.Scripts is
          return Instance;
       end if;
    end Create_Entity;
-
-   -----------------
-   -- Create_File --
-   -----------------
-
-   function Create_File
-     (Script : access Scripting_Language_Record'Class;
-      File   : Virtual_File) return Class_Instance
-   is
-      Instance : constant Class_Instance := New_Instance
-        (Script, New_Class (Get_Repository (Script), File_Class_Name));
-   begin
-      Set_Data (Instance, File);
-      return Instance;
-   end Create_File;
 
    --------------------
    -- Create_Project --
