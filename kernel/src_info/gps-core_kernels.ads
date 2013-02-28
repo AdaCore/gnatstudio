@@ -77,7 +77,7 @@ package GPS.Core_Kernels is
 
    procedure Create_Scripts_Repository
      (Self   : not null access Core_Kernel_Record;
-      Result : out GNATCOLL.Scripts.Scripts_Repository) is abstract;
+      Result : out GNATCOLL.Scripts.Scripts_Repository);
    --  Initialize Scripts_Repository with kernel specific version
 
    procedure Initialize (Self : not null access Core_Kernel_Record'Class);

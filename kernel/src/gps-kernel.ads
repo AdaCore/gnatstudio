@@ -1115,12 +1115,6 @@ private
    --  System_Level : system custom files loaded
    --  User_Level   : system and user custom files loaded
 
-   type Kernel_Scripts_Repository is
-     new GNATCOLL.Scripts.Scripts_Repository_Record
-   with record
-      Kernel : Kernel_Handle;
-   end record;
-
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
@@ -1249,9 +1243,5 @@ private
    overriding procedure Create_Database
      (Self   : not null access Kernel_Handle_Record;
       Result : out Xref.General_Xref_Database);
-
-   overriding procedure Create_Scripts_Repository
-     (Self   : not null access Kernel_Handle_Record;
-      Result : out GNATCOLL.Scripts.Scripts_Repository);
 
 end GPS.Kernel;

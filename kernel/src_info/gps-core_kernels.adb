@@ -20,6 +20,9 @@ with GNAT.Strings;                     use GNAT.Strings;
 
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
+
+with GPS.Scripts;
+
 with Language_Handlers;                use Language_Handlers;
 
 package body GPS.Core_Kernels is
@@ -41,6 +44,18 @@ package body GPS.Core_Kernels is
 
       return File;
    end Create_From_Base;
+
+   -------------------------------
+   -- Create_Scripts_Repository --
+   -------------------------------
+
+   procedure Create_Scripts_Repository
+     (Self   : not null access Core_Kernel_Record;
+      Result : out GNATCOLL.Scripts.Scripts_Repository) is
+   begin
+      Result := new GPS.Scripts.Kernel_Scripts_Repository'
+        (GPS.Scripts.Create (Core_Kernel (Self)));
+   end Create_Scripts_Repository;
 
    ---------------
    -- Databases --
