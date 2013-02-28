@@ -15,11 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 with OS_Utils;                use OS_Utils;
 with Remote;                  use Remote;
 with GPS.Core_Kernels;        use GPS.Core_Kernels;
+with GPS.Scripts.Projects;
 with Language_Handlers;       use Language_Handlers;
 
 package body GPS.Scripts.Files is
@@ -38,6 +40,7 @@ package body GPS.Scripts.Files is
 
    File_Class_Name          : constant String := "File";
 
+   Default_Cst    : aliased constant String := "default_to_root";
    Name_Cst       : aliased constant String := "name";
    Local_Cst      : aliased constant String := "local";
    Server_Cst     : aliased constant String := "remote_server";
@@ -47,6 +50,8 @@ package body GPS.Scripts.Files is
                                  2 => Local_Cst'Access);
    File_Name_Parameters  : constant Cst_Argument_List :=
                                 (1 => Server_Cst'Access);
+   File_Project_Parameters  : constant Cst_Argument_List :=
+                                (1 => Default_Cst'Access);
    -----------------
    -- Create_File --
    -----------------
@@ -102,6 +107,7 @@ package body GPS.Scripts.Files is
    is
       Kernel  : constant Core_Kernel := Get_Kernel (Data);
       Info    : Virtual_File;
+      Project : Project_Type;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
@@ -193,6 +199,20 @@ package body GPS.Scripts.Files is
            (Data,
             Create_File (Get_Script (Data),
                          Kernel.Registry.Tree.Other_File (Info)));
+
+      elsif Command = "project" then
+         Name_Parameters (Data, File_Project_Parameters);
+         Info := Nth_Arg (Data, 1);
+         Project := Kernel.Registry.Tree.Info (Info).Project;
+
+         if Project = No_Project and then Nth_Arg (Data, 2, True) then
+            Project := Kernel.Registry.Tree.Root_Project;
+         end if;
+
+         Set_Return_Value
+           (Data,
+            GPS.Scripts.Projects.Create_Project (Get_Script (Data), Project));
+
       end if;
    end File_Command_Handler;
    --------------------
@@ -250,6 +270,12 @@ package body GPS.Scripts.Files is
          Handler      => File_Command_Handler'Access);
       Register_Command
         (Kernel.Scripts, "other_file",
+         Class        => Get_File_Class (Kernel),
+         Handler      => File_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "project",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => File_Command_Handler'Access);
    end Register_Commands;
