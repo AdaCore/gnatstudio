@@ -73,9 +73,6 @@ package GPS.Main_Window is
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);
    --  Register the key bindings associated with the window
 
-   function GPS_Name (Window : access GPS_Window_Record) return String;
-   --  Return the name of this GPS release
-
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;
       Force       : Boolean := False;
