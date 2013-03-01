@@ -1970,6 +1970,17 @@ package body Ada_Analyzer is
             when Tok_Type =>
                if Reserved = Tok_Record then
                   Top_Token.In_Entity_Profile := False;
+
+                  --  type N is new O with record ...
+                  --  type N is new O with null record ...
+                  if Prev_Token = Tok_With or
+                    (Prev_Prev_Token = Tok_With and Prev_Token = Tok_Null) then
+                     Top_Token.Attributes (Ada_Tagged_Attribute) := True;
+                  end if;
+
+               --  type N is new O with private;
+               elsif Prev_Token = Tok_With and Reserved = Tok_Private then
+                  Top_Token.Attributes (Ada_Tagged_Attribute) := True;
                end if;
 
             when others =>
@@ -2184,18 +2195,6 @@ package body Ada_Analyzer is
 
                if Top_Token.Token = No_Token then
                   Do_Push := True;
-
-               elsif Top_Token.Token = Tok_Type
-                  and then Prev_Token /= Tok_Record
-               then
-                  --  ??? incorrect for Ada 05 constructs:
-                  --  task type foo is new A with entry A; end task;
-                  --  ??? incorrect for Ada 2012 constructs:
-                  --  type T is new Integer with Size => 32;
-                  --  Comparison against Tok_End above handles:
-                  --  type R is record ... end record with Size => 32;
-
-                  Top_Token.Attributes (Ada_Tagged_Attribute) := True;
                end if;
             end if;
 
