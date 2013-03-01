@@ -228,7 +228,7 @@ package body Src_Editor_Buffer is
    --
    --  This procedure assumes that the language has been set.
 
-   procedure Insert_Text_Handler
+   procedure After_Insert_Text
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues);
    --  This procedure is just a proxy between the "insert_text" signal
@@ -241,7 +241,7 @@ package body Src_Editor_Buffer is
    --  case the Insert_Iter iterator is located at the end of the inserted
    --  text.
 
-   procedure First_Insert_Text
+   procedure Before_Insert_Text
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues);
    --  First handler connected to the "insert_text" signal
@@ -255,13 +255,13 @@ package body Src_Editor_Buffer is
    --
    --  This procedure assumes that the language has been set.
 
-   procedure Delete_Range_Before_Handler
+   procedure Before_Delete_Range
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues);
    --  Handler connected to the "delete_range" signal, but which occurs before
    --  the actual deletion.
 
-   procedure Delete_Range_Handler
+   procedure After_Delete_Range
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues);
    --  This procedure is just a proxy between the "delete_range" signal
@@ -1643,11 +1643,11 @@ package body Src_Editor_Buffer is
          Trace (Traces.Exception_Handle, E);
    end Insert_Text_Cb;
 
-   -------------------------
-   -- Insert_Text_Handler --
-   -------------------------
+   -----------------------
+   -- After_Insert_Text --
+   -----------------------
 
-   procedure Insert_Text_Handler
+   procedure After_Insert_Text
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
@@ -1715,13 +1715,13 @@ package body Src_Editor_Buffer is
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
-   end Insert_Text_Handler;
+   end After_Insert_Text;
 
-   -----------------------
-   -- First_Insert_Text --
-   -----------------------
+   ------------------------
+   -- Before_Insert_Text --
+   ------------------------
 
-   procedure First_Insert_Text
+   procedure Before_Insert_Text
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
@@ -1906,7 +1906,7 @@ package body Src_Editor_Buffer is
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
-   end First_Insert_Text;
+   end Before_Insert_Text;
 
    ---------------------
    -- Delete_Range_Cb --
@@ -1919,11 +1919,11 @@ package body Src_Editor_Buffer is
       Update_Highlight_Region (Source_Buffer (Buffer), Iter);
    end Delete_Range_Cb;
 
-   --------------------------
-   -- Delete_Range_Handler --
-   --------------------------
+   ------------------------
+   -- After_Delete_Range --
+   ------------------------
 
-   procedure Delete_Range_Handler
+   procedure After_Delete_Range
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
@@ -1950,13 +1950,13 @@ package body Src_Editor_Buffer is
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
-   end Delete_Range_Handler;
+   end After_Delete_Range;
 
-   ---------------------------------
-   -- Delete_Range_Before_Handler --
-   ---------------------------------
+   -------------------------
+   -- Before_Delete_Range --
+   -------------------------
 
-   procedure Delete_Range_Before_Handler
+   procedure Before_Delete_Range
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
@@ -2211,7 +2211,7 @@ package body Src_Editor_Buffer is
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
-   end Delete_Range_Before_Handler;
+   end Before_Delete_Range;
 
    -----------------------------
    -- Line_Highlights_Changed --
@@ -2924,18 +2924,18 @@ package body Src_Editor_Buffer is
          Cb => Mark_Set_Handler'Access, After => True);
       Buffer_Callback.Connect
         (Buffer, Signal_Insert_Text,
-         Cb => First_Insert_Text'Access);
+         Cb => Before_Insert_Text'Access);
       Buffer_Callback.Connect
         (Buffer, Signal_Insert_Text,
-         Cb => Insert_Text_Handler'Access,
+         Cb => After_Insert_Text'Access,
          After => True);
       Buffer_Callback.Connect
         (Buffer, Signal_Delete_Range,
-         Cb => Delete_Range_Handler'Access,
+         Cb => After_Delete_Range'Access,
          After => True);
       Buffer_Callback.Connect
         (Buffer, Signal_Delete_Range,
-         Cb    => Delete_Range_Before_Handler'Access,
+         Cb    => Before_Delete_Range'Access,
          After => False);
 
       Buffer.Editable_Line_Info_Columns :=
