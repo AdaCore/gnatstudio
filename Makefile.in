@@ -15,6 +15,7 @@ examplesdir     = $(prefix)/share/examples/gps
 
 default:
 	$(MAKE) -C gps $@
+	$(MAKE) -C cli $@
 
 codepeer:
 	$(MAKE) -C gps scil
