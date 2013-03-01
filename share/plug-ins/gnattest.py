@@ -79,6 +79,7 @@ def on_project_view_changed(hook):
    else:
       run_main_target.show()
       test_run_target.hide()
+      return
 
    # Update read-only areas in already opened files
    buffer_list = GPS.EditorBuffer.list()
