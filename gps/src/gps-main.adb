@@ -764,13 +764,13 @@ procedure GPS.Main is
                   --  --version
                   when 'v' =>
                      if Config.Can_Output then
-                        Put_Line (GPS_Name (GPS_Main) & " version " &
+                        Put_Line ("GPS version " &
                                   Config.Version & " (" &
                                   Config.Source_Date & ") hosted on " &
                                   Config.Target);
                      else
                         Button := Message_Dialog
-                          (GPS_Name (GPS_Main) & " version " &
+                          ("GPS version " &
                            Config.Version & " (" &
                            Config.Source_Date & ") hosted on " & Config.Target,
                            Information, Button_OK,
@@ -924,7 +924,7 @@ procedure GPS.Main is
    procedure Help is
       use ASCII;
       Help_String : constant String :=
-        GPS_Name (GPS_Main) & " " & Config.Version & " (" &
+        "GPS " & Config.Version & " (" &
         Config.Source_Date & ")" &
         (-", the GNAT Programming Studio.") & LF
         & (-"Usage:") & LF
@@ -1591,7 +1591,7 @@ procedure GPS.Main is
 
       Console.Insert
         (GPS_Main.Kernel,
-         -"Welcome to " & GPS_Name (GPS_Main) & " " & Config.Version &
+         -"Welcome to GPS " & Config.Version &
          " (" & Config.Source_Date &
          (-") hosted on ") & Config.Target & ASCII.LF &
          (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &

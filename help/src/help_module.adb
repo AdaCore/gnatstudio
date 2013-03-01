@@ -49,7 +49,6 @@ with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Traces;                     use Traces;
@@ -931,8 +930,6 @@ package body Help_Module is
       pragma Unreferenced (Widget, Ignore);
 
       Verbose    : aliased String := "-v";
-      Top        : constant GPS_Window :=
-                     GPS_Window (Get_Main_Window (Kernel));
       Codepeer   : constant Virtual_File := Locate_On_Path ("codepeer");
       About_File : constant Virtual_File :=
                      Create_From_Dir
@@ -949,7 +946,7 @@ package body Help_Module is
 
       Set_Unbounded_String
         (About_Text,
-         GPS_Name (Top) & " " & Config.Version & " (" & Config.Source_Date &
+         "GPS " & Config.Version & " (" & Config.Source_Date &
          (-") hosted on ") & Config.Target & LF &
          (-"GNAT ") & GNAT_Version (Kernel) & LF);
 

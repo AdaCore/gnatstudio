@@ -1388,16 +1388,6 @@ package body GPS.Main_Window is
       return Success;
    end Execute;
 
-   --------------
-   -- GPS_Name --
-   --------------
-
-   function GPS_Name (Window : access GPS_Window_Record) return String is
-      pragma Unreferenced (Window);
-   begin
-      return "GPS";
-   end GPS_Name;
-
    ----------------
    -- On_Destroy --
    ----------------
@@ -1464,7 +1454,7 @@ package body GPS.Main_Window is
 
    begin
       Set_Title
-        (Window, GPS_Name (Window) &
+        (Window, "GPS" &
          (-" - (") &
          Get_Project (Window.Kernel).Name &
          Remote_Str & " project)" & Info_Str);

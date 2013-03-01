@@ -92,9 +92,6 @@ package GPS.Main_Window is
    procedure Display_Default_Image (Kernel : GPS.Kernel.Kernel_Handle);
    --  Display the default image in the top right corner of the main window
 
-   function GPS_Name (Window : access GPS_Window_Record) return String;
-   --  Return the name of this GPS release
-
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;
       Force       : Boolean := False;
