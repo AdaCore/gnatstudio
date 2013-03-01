@@ -1,0 +1,2 @@
+default:
+	gprbuild -Pcli
