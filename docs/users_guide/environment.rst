@@ -545,7 +545,7 @@ installing GPS.
   Then it means there is a conflict with :file:`~/.local/share/mime/mime.cache`.
   Removing this file will solve this conflict.
 
-*GPS requiring a display depth of at least 24 bits*
+*GPS requires a display depth of at least 24 bits*
 
   GPS requires a display depth of at least 24 bits per pixel. This can be an
   issue when using Windows remotely, since the Remote Desktop feature is
