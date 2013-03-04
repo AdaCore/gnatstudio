@@ -64,6 +64,11 @@ Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
               by GPS is correct but their names (shown as comments) is wrong.
   Workaround: Fix the name of the parameters manually.
 
+- LB26-002: GPS: wrong comment highlighting after paste
+  Problem:    When multiline Ada comment is pasted to the end of another
+              comment line first line isn't highligthed properly.
+  Workaround: None.
+
 - LB21-035: GPS: wrong &lt char in locations
   Problem:    In Location View text created through scripting API has
               escaped markup characters.
