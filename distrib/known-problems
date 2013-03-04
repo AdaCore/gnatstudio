@@ -8,6 +8,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- M304-016: Bad indentation of comment in the middle of a separate declaration
+  Problem:    When indenting code of the form:
+                separate (Foo)
+                -- comment
+                procedure Bar is
+              the comment line is indented an extra level using the
+              continuation lines setting.
+  Workaround: Ignore this incorrect indentation, fix the indentation manually,
+              or put the comment before the separate.
+
 - M125-011: GPS: use all type clause corrupts outline view & vertical bracket
   Problem:    when Ada 2012 use all type clause is used, the displayed 
               vertical bracket around blocks may be wrong. The Outline view
