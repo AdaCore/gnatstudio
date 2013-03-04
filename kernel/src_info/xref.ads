@@ -39,7 +39,7 @@ with Language.Tree.Database;
 package Xref is
 
    SQLITE : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create ("Entities.SQLITE", GNATCOLL.Traces.Off);
+     GNATCOLL.Traces.Create ("Entities.SQLITE", GNATCOLL.Traces.On);
    --  Whether to use the sqlite-based cross-reference system
 
    ---------------
