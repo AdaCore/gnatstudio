@@ -1933,6 +1933,10 @@ package body Src_Editor_Buffer is
 
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
 
+      --  Move mark of start of re-highlight area into insertion position.
+
+      Move_Mark (Buffer, Buffer.First_Highlight_Mark, Start_Iter);
+
       if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
          Delete_Range_Cb (Buffer, Start_Iter);
       end if;
