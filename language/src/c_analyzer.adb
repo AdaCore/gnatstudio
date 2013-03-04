@@ -949,11 +949,11 @@ package body C_Analyzer is
             Start_Char := Char_In_Line;
             Start_Line := Line;
             Column     := Char_In_Line;
+            Last_Blank := 0;
 
             if Indent_Comments then
                Do_Indent (Index, Indent);
                Tmp := Line_Start (Buffer, Index);
-               Last_Blank := 0;
 
                loop
                   case Buffer (Tmp) is
