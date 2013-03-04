@@ -10,7 +10,7 @@ class PopupParser(tool_output.OutputParser):
         if self.child != None:
             self.child.on_stdout (text)
 
-To add custom parser to a target insert next line to target desription:
+To add custom parser to a target insert next line to target description:
 
 <output-parsers>[default] popupparser</output-parsers>
 </target>
