@@ -545,3 +545,14 @@ installing GPS.
   Then it means there is a conflict with :file:`~/.local/share/mime/mime.cache`.
   Removing this file will solve this conflict.
 
+*GPS requiring a display depth of at least 24 bits*
+
+  GPS requires a display depth of at least 24 bits per pixel. This can be an
+  issue when using Windows remotely, since the Remote Desktop feature is
+  capped by default at 16 bits per pixels. However, the system provides ways
+  to remove this cap in most cases. Here is how to do this on Windows Server 2003:
+    `http://www.compdigitec.com/labs/2009/03/07/enabling-24-bit-colour-rdp-in-windows-2003/
+    <http://www.compdigitec.com/labs/2009/03/07/enabling-24-bit-colour-rdp-in-windows-2003/>`_
+  And on Windows XP:
+  `https://blogs.oracle.com/ThinkThin/entry/24_bit_rdp_under_windows
+  <https://blogs.oracle.com/ThinkThin/entry/24_bit_rdp_under_windows>`_
