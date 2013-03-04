@@ -2410,7 +2410,6 @@ package body Ada_Analyzer is
          elsif Reserved = Tok_Generic then
             Temp.In_Declaration := True;
             Do_Push := True;
-
          end if;
 
       exception
@@ -3251,9 +3250,11 @@ package body Ada_Analyzer is
 
                if Indent_Comments then
                   if First_Indent
-                    and then ((Prev_Token in Reserved_Token_Type
-                               and then Prev_Token not in Token_Class_No_Cont)
-                              or else Prev_Token = Tok_Right_Paren)
+                    and then
+                      ((Prev_Token in Reserved_Token_Type
+                        and then Prev_Token not in Token_Class_No_Cont)
+                       or else (Prev_Token = Tok_Right_Paren
+                                and then Top (Tokens).Token /= No_Token))
                   then
                      --  Add simple handling of comment and continuation lines
                      Do_Indent (P, L, Ref_Indent, Continuation => True);
