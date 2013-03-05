@@ -28,6 +28,7 @@ with Gtk.Box;                  use Gtk.Box;
 with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
 
 with Ada.Unchecked_Deallocation;
 with Gtk.Tree_View; use Gtk.Tree_View;

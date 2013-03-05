@@ -25,8 +25,6 @@
 --  the processing of the commands, and will run in the background until all
 --  the commands are finished.
 
-with Gtk.Widget;  use Gtk.Widget;
-
 with Commands;    use Commands;
 with GNAT.Strings;
 

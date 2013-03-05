@@ -1,0 +1,18 @@
+with "gtkada";
+with "common";
+with "../gnatlib/src/gnatcoll_gtk";
+
+project Common_UI is
+
+   for Languages use ("Ada");
+   for Source_Dirs use ("ui/src");
+   for Object_Dir use "ui/obj";
+
+   package Compiler is
+      for Default_Switches ("Ada")
+        use Common.Compiler'Default_Switches ("Ada");
+   end Compiler;
+
+   package IDE renames Common.IDE;
+
+end Common_UI;
