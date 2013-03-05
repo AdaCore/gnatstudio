@@ -1,5 +1,5 @@
 with "gtkada";
-with "../common/common";
+with "../common/common_ui";
 with "../shared";
 
 project Widgets is

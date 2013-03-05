@@ -21,7 +21,6 @@ with Ada.Strings.Wide_Wide_Unbounded; use Ada.Strings.Wide_Wide_Unbounded;
 
 with GNAT.Decode_UTF8_String;         use GNAT.Decode_UTF8_String;
 with GNAT.Encode_UTF8_String;         use GNAT.Encode_UTF8_String;
-with GNAT.IO;                         use GNAT.IO;
 with GNAT.Strings;                    use GNAT.Strings;
 with GNAT.UTF_32;                     use GNAT.UTF_32;
 
@@ -575,11 +574,7 @@ package body XML_Utils is
 
       procedure Put (S : String) is
       begin
-         if File = No_File then
-            GNAT.IO.Put (S);
-         else
-            Write (Writable, S);
-         end if;
+         Write (Writable, S);
       end Put;
 
       --------------
@@ -669,9 +664,12 @@ package body XML_Utils is
       end Print_Node;
 
    begin
-      if File /= GNATCOLL.VFS.No_File then
-         Writable := Write_File (File);
+      if File = GNATCOLL.VFS.No_File then
+         Success := False;
+         return;
       end if;
+
+      Writable := Write_File (File);
 
       Put_Line ("<?xml version=""1.0""?>");
 
@@ -681,9 +679,7 @@ package body XML_Utils is
 
       Print_Node (N, 0);
 
-      if File /= GNATCOLL.VFS.No_File then
-         Close (Writable);
-      end if;
+      Close (Writable);
 
       Success := True;
    end Print;

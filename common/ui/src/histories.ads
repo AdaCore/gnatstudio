@@ -29,7 +29,6 @@ with Gtk.Check_Menu_Item;
 with Gtk.Combo_Box;
 with Gtk.GEntry;
 with Gtk.Toggle_Button;
-with Gtk.Toggle_Tool_Button;
 with Gtk.Menu_Item;
 with String_Hash;
 
@@ -187,25 +186,16 @@ package Histories is
    procedure Associate
      (Hist   : in out History_Record;
       Key    : History_Key;
-      Button : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class;
-      Default : Boolean := True);
-   procedure Associate
-     (Hist   : in out History_Record;
-      Key    : History_Key;
-      Button : not null access
-        Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button_Record'Class;
-      Default : Boolean := True);
+      Button : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class);
    --  Associate Button with Key.
    --  The status of the button is set to the value of Key.
    --  Every time the button is toggled, the key's value is changed. Thus, its
    --  current value will be saved when Hist is saved.
-   --  Default is used to create the key if it doesn't exist yet.
 
    procedure Associate
      (Hist : in out History_Record;
       Key  : History_Key;
-      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class;
-      Default : Boolean := True);
+      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class);
    --  Same as above
 
 private

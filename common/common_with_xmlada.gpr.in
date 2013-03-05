@@ -8,8 +8,8 @@ with "../gnatlib/src/gnatcoll_gtk";
 project Common is
 
    for Languages use ("Ada", "C");
-   for Source_Dirs use ("src", "tty", "tests");
-   for Object_Dir use "obj";
+   for Source_Dirs use ("core/src", "tty", "tests");
+   for Object_Dir use "core/obj";
 
    package Compiler is
       for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
