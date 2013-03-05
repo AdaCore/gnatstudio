@@ -23,15 +23,14 @@ with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Label;             use Gtk.Label;
-with Gtk.Combo_Box;         use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;    use Gtk.Combo_Box_Text;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
-with GUI_Utils;             use GUI_Utils;
 
 package body Std_Dialogs is
 
    type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
-      Entry_Field : Gtk_Combo_Box;
+      Entry_Field : Gtk_Combo_Box_Text;
       Label       : Gtk_Label;
    end record;
    type Simple_Entry_Dialog_Access is access
@@ -89,7 +88,7 @@ package body Std_Dialogs is
       Set_Position (Dialog, Position);
 
       Gtk_New_Vbox (Vbox);
-      Pack_Start (Get_Vbox (Dialog), Vbox, False);
+      Pack_Start (Get_Content_Area (Dialog), Vbox, False);
 
       Gtk_New_Hbox (Box);
       Pack_Start (Vbox, Box, False, Padding => 10);
@@ -98,7 +97,7 @@ package body Std_Dialogs is
       Set_Alignment (Dialog.Label, 0.0, 0.5);
       Pack_Start (Box, Dialog.Label, False, Padding => 10);
 
-      Gtk_New_Combo_Text_With_Entry (Dialog.Entry_Field);
+      Gtk_New_With_Entry (Dialog.Entry_Field);
       Pack_Start (Box, Dialog.Entry_Field, Padding => 10);
       Widget_Callback.Object_Connect
         (Dialog.Entry_Field.Get_Child, Signal_Activate,
@@ -158,7 +157,7 @@ package body Std_Dialogs is
       Dialog          : Simple_Entry_Dialog_Access;
    begin
       Dialog := new Simple_Entry_Dialog_Record;
-      Initialize (Dialog);
+      Gtk.Dialog.Initialize (Dialog);
 
       declare
          S : constant String := Internal_Simple_Entry_Dialog
@@ -191,7 +190,7 @@ package body Std_Dialogs is
       Dialog : Display_Dialog_Access;
    begin
       Dialog := new Display_Dialog_Record;
-      Initialize (Dialog);
+      Gtk.Dialog.Initialize (Dialog);
 
       if Check_Msg /= "" then
          Gtk_New (Dialog.Check, Check_Msg);
