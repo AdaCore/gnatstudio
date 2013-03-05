@@ -21,6 +21,7 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regexp;                use GNAT.Regexp;
 with GNAT.Regpat;                use GNAT.Regpat;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
@@ -49,7 +50,6 @@ with GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
@@ -1655,7 +1655,8 @@ package body Src_Contexts is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      Selected : constant Selection_Context := Get_Current_Context (Kernel);
+      Project  : constant GNATCOLL.Projects.Project_Type :=
+        Vsearch.Get_Selected_Project (Kernel);
       Scope    : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context  : constant Files_Project_Context_Access :=
                   new Files_Project_Context;
@@ -1664,10 +1665,10 @@ package body Src_Contexts is
       Context.All_Occurrences := All_Occurrences;
       Context.Begin_Line      := 0;
 
-      if Has_Project_Information (Selected) then
+      if Project /= No_Project then
          --  Search in selected project if any
          Set_File_List
-           (Context, Project_Information (Selected).Source_Files (False));
+           (Context, Project.Source_Files (False));
       else
          --  Search in root project if no project selected
          Set_File_List (Context, Get_Project (Kernel).Source_Files (False));
