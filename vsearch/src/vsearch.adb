@@ -56,6 +56,7 @@ with Gtkada.Types;              use Gtkada.Types;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -1915,6 +1916,7 @@ package body Vsearch is
       --  We must create the search dialog only after we have found the current
       --  context, otherwise it would return the context of the search widget
       --  itself
+      Selected   : constant Selection_Context := Get_Current_Context (Kernel);
       Module     : constant Module_ID := Get_Current_Module (Kernel);
       W          : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       Buffer     : Gtk_Text_Buffer;
@@ -2081,8 +2083,27 @@ package body Vsearch is
                                Left_Gravity => False);
       end if;
 
+      if Has_Project_Information (Selected) then
+         Vsearch_Module_Id.Search.Project := Project_Information (Selected);
+      else
+         Vsearch_Module_Id.Search.Project := GNATCOLL.Projects.No_Project;
+      end if;
+
       return Vsearch_Module_Id.Search;
    end Get_Or_Create_Vsearch;
+
+   --------------------------
+   -- Get_Selected_Project --
+   --------------------------
+
+   function Get_Selected_Project
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return GNATCOLL.Projects.Project_Type
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Vsearch_Module_Id.Search.Project;
+   end Get_Selected_Project;
 
    -------------------
    -- Get_Selection --

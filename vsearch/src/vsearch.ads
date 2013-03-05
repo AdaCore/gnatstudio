@@ -18,6 +18,8 @@
 with GNAT.Strings;
 
 with Glib.Main;
+with GNATCOLL.Projects;
+
 with Glib.Object;
 
 with Gdk.Pixbuf;
@@ -169,6 +171,11 @@ package Vsearch is
       To     : out Gtk_Text_Mark);
    --  Return selection region saved at the beginning of last search
 
+   function Get_Selected_Project
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return GNATCOLL.Projects.Project_Type;
+   --  Return selected project saved at the beginning of last search
+
 private
 
    Open_Options_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
@@ -219,6 +226,7 @@ private
       Find_Next               : Boolean := False;
       Selection_From          : Gtk_Text_Mark;
       Selection_To            : Gtk_Text_Mark;
+      Project                 : GNATCOLL.Projects.Project_Type;
    end record;
 
    type Search_Regexp is record
