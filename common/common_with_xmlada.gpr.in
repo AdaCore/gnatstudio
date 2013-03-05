@@ -38,8 +38,9 @@ project Common is
    end Naming;
 
    package Linker is
-      for Linker_Options use
+      for Linker_Options use Shared.Linker'Linker_Options &
         @TARGET_LFLAGS@;
+      for Default_Switches ("Ada") use Shared.Linker'Default_Switches ("Ada");
    end Linker;
 
 end Common;
