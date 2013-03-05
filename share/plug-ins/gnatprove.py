@@ -222,8 +222,6 @@ prove_line           = "Prove Line"
 prove_subp           = "Prove Subprogram"
 show_unprovable_code = "Show Unprovable Code"
 clean_up             = "Clean Proofs"
-show_path            = "Show Path"
-trace_category       = "gnatprove_trace"
 clear_traces_text    = "Remove Path Information"
 
 # Check for GNAT toolchain: gnatprove
@@ -429,7 +427,6 @@ def on_prove_subp(self):
     target.execute(
         extra_args="--limit-subp="+mk_loc_string (loc),
         synchronous=False)
-
 
 class GNATProve_Plugin:
     """Class to contain the main functionality of the GNATProve_Plugin"""
