@@ -60,11 +60,18 @@ class Sqlite_Cross_References(object):
 """
 
     def __init__(self):
+        # Whether we trust that there are no links in the project hierarchy
+        self.trusted_mode = True
+
         GPS.parse_xml(self.xml)
         GPS.Hook("project_view_changed").add(self.on_project_view_changed)
         GPS.Hook("compilation_finished").add(self.on_compilation_finished)
         GPS.Hook("gps_started").add(self.on_gps_started)
+        GPS.Hook("preferences_changed").add(self.on_preferences_changed)
         self.gnatinspect_launch_registered = False
+
+        # Initialize self.trusted_mode and other preferences
+        self.on_preferences_changed(None)
 
     def recompute_xref(self):
         """ Launch recompilation of the cross references """
@@ -89,10 +96,11 @@ class Sqlite_Cross_References(object):
         self.gnatinspect_launch_registered = False
         target = GPS.BuildTarget("Recompute Xref info")
 
-        # ??? should add <arg>--symlinks</arg> if preference "slow project loading"
-        # is activated
+        extra_args = None
+        if not self.trusted_mode:
+            extra_args = "--symlinks"
 
-        target.execute(synchronous=False, quiet=True)
+        target.execute(synchronous=False, quiet=True, extra_args=extra_args)
 
     def on_compilation_finished(self, hook, category,
         target_name="", mode_name="", status=""):
@@ -113,10 +121,12 @@ class Sqlite_Cross_References(object):
     def on_project_view_changed(self, hook):
         self.recompute_xref()
 
+    def on_preferences_changed(self, hook_name):
+        self.trusted_mode = GPS.Preference("Prj-Editor-Trusted-Mode").get()
+
     def on_gps_started(self, hook):
         GPS.Menu.create("/Build/Recompute _Xref info",
              on_activate=lambda x : self.recompute_xref())
-
 
 if GPS.Logger("ENTITIES.SQLITE").active:
     Sqlite_Cross_References()
