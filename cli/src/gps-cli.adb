@@ -127,7 +127,13 @@ begin
       Long_Switch => "--load=",
       Help        => "Execute an external file written in the language lang");
 
-   Getopt (Cmdline, Parse_Command_Line'Unrestricted_Access);
+   begin
+      Getopt (Cmdline, Parse_Command_Line'Unrestricted_Access);
+   exception
+      when GNAT.Command_Line.Exit_From_Command_Line =>
+         --  User provided -h or --help option. Just return
+         return;
+   end;
 
    if Project_Name.all = "" then
       Free (Project_Name);
