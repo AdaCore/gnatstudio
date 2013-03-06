@@ -1,13 +1,13 @@
-ADC_REVISION($Revision$)
-AC_INIT(gps/src/gps-main.adb)
+AC_INIT(gps,[6.0.0w],[report@adacore.com])
+GPS_VERSION=AC_PACKAGE_VERSION()
 
+AC_CONFIG_SRCDIR(gps/src/gps-main.adb)
 AC_CANONICAL_SYSTEM
 
 # Forces gtk+ 3.0
 CONFIGURE_SWITCH_WITH_GTK=3.0
 export CONFIGURE_SWITCH_WITH_GTK
 
-GPS_VERSION=6.0.0w
 STRIP_CR=False
 CAN_OUTPUT=True
 TARGET_CFLAGS=""
@@ -38,7 +38,6 @@ EXEC_PREFIX="$prefix"
 
 PROJECT_PATH=`gnatls -v | tr -d '\015' | awk 'BEGIN {display=0} /<Current/ {next} {if (display) {printf "%s:", $1}} /Project Search Path/ {display=1}'`
 AC_CHECK_PROG(XMLADA_GPR, xmlada.gpr, "with_xmlada", "no_xmlada", $PROJECT_PATH)
-IFS=' '
 
 ######## checking for local tools ###
 AC_PROG_CC
