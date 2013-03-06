@@ -17,7 +17,6 @@
 
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System;              use System;
 
 with GNAT.Expect;         use GNAT.Expect;
@@ -26,7 +25,6 @@ with GNAT.Regpat;         use GNAT.Regpat;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Utils;      use GNATCOLL.Utils;
 
-with Basic_Types;         use Basic_Types;
 with Config;              use Config;
 
 with Glib;                use Glib;
@@ -55,14 +53,14 @@ with Gtk.Arguments;       use Gtk.Arguments;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.Terminal;     use Gtkada.Terminal;
 with Gtkada.MDI;          use Gtkada.MDI;
-with Gtkada.Types;
 with Pango.Enums;         use Pango.Enums;
 
 with Traces;              use Traces;
 with Histories;           use Histories;
 with String_List_Utils;   use String_List_Utils;
 with GUI_Utils;           use GUI_Utils;
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
+with GNATCOLL.Iconv;      use GNATCOLL.Iconv;
 
 package body Interactive_Consoles is
    Me : constant Debug_Handle := Create ("Console");
@@ -211,18 +209,6 @@ package body Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False);
    --  Same as Insert_UTF8, but the tag to use for highlighting is specified
-
-   procedure Insert_UTF8_With_Tag
-     (Console        : access Interactive_Console_Record;
-      UTF8           : Gtkada.Types.Chars_Ptr;
-      Add_LF         : Boolean := True;
-      Highlight      : Boolean := False;
-      Highlight_Tag  : Gtk_Text_Tag;
-      Add_To_History : Boolean := False;
-      Show_Prompt    : Boolean := True;
-      Text_Is_Input  : Boolean := False);
-   --  Same as Insert_UTF8_With_Tag, but handles directly a C string,
-   --  presumably coming from a file.
 
    procedure Prepare_For_Output
      (Console        : access Interactive_Console_Record'Class;
@@ -522,13 +508,29 @@ package body Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False)
    is
-      Bytes_Read    : aliased Natural;
-      Bytes_Written : aliased Natural;
-      UTF8 : Interfaces.C.Strings.chars_ptr :=
-        Glib.Convert.Locale_To_UTF8
-          (Text, Bytes_Read'Access, Bytes_Written'Access);
+      procedure Replace_Zeros (S : in out String);
+      pragma Inline (Replace_Zeros);
+      --  Replace ASCII.NULs in S.
+
+      procedure Replace_Zeros (S : in out String) is
+      begin
+         for C in S'Range loop
+            if S (C) = ASCII.NUL then
+               S (C) := '0';
+            end if;
+         end loop;
+      end Replace_Zeros;
+
+      UTF8 : String := Iconv
+        (Input           => Text,
+         To_Code         => GNATCOLL.Iconv.UTF8,
+         From_Code       => Locale,
+         Ignore_Errors   => True,
+         Transliteration => True,
+         Ignore          => True);
 
    begin
+      Replace_Zeros (UTF8);
       Insert_UTF8_With_Tag
         (Console, UTF8,
          Add_LF         => Add_LF,
@@ -537,7 +539,6 @@ package body Interactive_Consoles is
          Add_To_History => Add_To_History,
          Show_Prompt    => Show_Prompt,
          Text_Is_Input  => Text_Is_Input);
-      Free (UTF8);
    end Insert;
 
    -----------------
@@ -663,77 +664,6 @@ package body Interactive_Consoles is
       Console.Message_Was_Displayed := True;
       Console.Internal_Insert := Internal;
    end Terminate_Output;
-
-   --------------------------
-   -- Insert_UTF8_With_Tag --
-   --------------------------
-
-   procedure Insert_UTF8_With_Tag
-     (Console        : access Interactive_Console_Record;
-      UTF8           : Gtkada.Types.Chars_Ptr;
-      Add_LF         : Boolean := True;
-      Highlight      : Boolean := False;
-      Highlight_Tag  : Gtk_Text_Tag;
-      Add_To_History : Boolean := False;
-      Show_Prompt    : Boolean := True;
-      Text_Is_Input  : Boolean := False)
-   is
-      Last_Iter : Gtk_Text_Iter;
-      Internal  : Boolean;
-      LF        : Boolean := Add_LF;
-
-      function Strlen
-        (Str : Interfaces.C.Strings.chars_ptr) return Interfaces.C.size_t;
-      pragma Import (C, Strlen);
-      --  Import Strlen directly, for efficiency
-
-      --  Avoid using primary and secondary stack by converting
-      --  the C char* into an unchecked string.
-      Ada_UTF8 : constant Unchecked_String_Access :=
-        To_Unchecked_String (UTF8);
-      Last     : constant Integer := Integer (Strlen (UTF8));
-
-   begin
-      Prepare_For_Output (Console, Text_Is_Input, Internal, Last_Iter);
-
-      if Highlight then
-         Insert_With_Tags (Console.Buffer, Last_Iter, UTF8, Highlight_Tag);
-      else
-         --  Do not display GtkWarnings coming from python under Windows,
-         --  since they are usually harmless, and cause confusion in the
-         --  test suite and on users.
-
-         if Host = Windows
-           and then Last > 17
-           and then Ada_UTF8 (1 .. 17) = "sys:1: GtkWarning"
-         then
-            Trace (Me, Ada_UTF8 (1 .. Last));
-            LF := False;
-         else
-            Insert (Console.Buffer, Last_Iter, UTF8);
-         end if;
-      end if;
-
-      if LF then
-         Insert (Console.Buffer, Last_Iter, "" & ASCII.LF);
-      end if;
-
-      if not Text_Is_Input then
-         if Add_To_History and then Console.History /= null then
-            if Ada_UTF8 (Last) = ASCII.LF then
-               Histories.Add_To_History
-                 (Console.History.all, History_Key (Console.Key.all),
-                  Ada_UTF8 (1 .. Last - 1));
-            else
-               Histories.Add_To_History
-                 (Console.History.all, History_Key (Console.Key.all),
-                  Ada_UTF8 (1 .. Last));
-            end if;
-         end if;
-
-         Terminate_Output (Console, Internal, Show_Prompt);
-      end if;
-   end Insert_UTF8_With_Tag;
 
    --------------------------
    -- Insert_UTF8_With_Tag --
