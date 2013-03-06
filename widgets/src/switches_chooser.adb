@@ -1831,9 +1831,11 @@ package body Switches_Chooser is
    begin
       return "The following macros are available from this command line:" &
             ASCII.LF &
-            "   %builder: multi-language builder (e.g. gnatmake, gprbuild)" &
+            "   %builder: default language builder (e.g. gnatmake, gprbuild)" &
             ASCII.LF &
             "   %gnatmake: gnatmake command configured in your project" &
+            ASCII.LF &
+            "   %gprbuild: gprbuild command" &
             ASCII.LF &
             "   %gprclean: clean tool (e.g. gnat clean, gprclean)" &
             ASCII.LF &
