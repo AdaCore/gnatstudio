@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M305-055: Bad expansion of %gprbuild
+  Problem:    %gprbuild in build targets gets expanded as gnatmake instead
+              of gprbuild in case of an Ada only prefer, and the Default
+              builder preference is set to Auto.
+  Workaround: Set the Default builder preference to gprbuild.
+
 - M304-016: Bad indentation of comment in the middle of a separate declaration
   Problem:    When indenting code of the form:
                 separate (Foo)
@@ -157,10 +163,10 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Problem:    If you use separate Ada units, and compile them explicitly from
               the editor (for instance /Build/Compile File), then no
               cross-reference is available anymore for that file.
-  Workaround: force the loading of all xref in memory, through
+  Workaround: Force the loading of all xref in memory, through
               /Build/Load Xref In Memory.
 
 - L806-019: Ada 2012 aspect in type declaration corrupts completion & outline
   Problem:    If an aspect is used in a type declaration, it corrupts the
               completion database. The outline view may also be frozen.
-  Workaround: None
+  Workaround: Use pragmas instead of aspects.
