@@ -10,7 +10,7 @@
 ## No user customization below this line
 ############################################################################
 
-import GPS, os_utils, os.path, tool_output
+import GPS, os_utils, os.path, tool_output, re
 
 xml_gnatprove = """<?xml version="1.0"?>
   <GNATPROVE>
@@ -72,6 +72,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--show-tag</arg>
           <arg>-U</arg>
        </command-line>
        <output-parsers>
@@ -91,6 +92,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--show-tag</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -109,6 +111,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--show-tag</arg>
           <arg>-u</arg>
           <arg>%fp</arg>
        </command-line>
@@ -129,6 +132,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--show-tag</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -147,6 +151,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--show-tag</arg>
           <arg>--limit-line=%f:%l</arg>
        </command-line>
        <output-parsers>
@@ -234,6 +239,8 @@ def goto_location(sloc):
     v.goto(GPS.EditorLocation(buf, sloc.line(),sloc.column()))
     v.center()
 
+Tag_regex = re.compile("\[(.*)\]$")
+
 class GNATprove_Message(GPS.Message):
     """Class that defines gnatprove messages, which are richer than plain GPS
     messages. In particular, a gnatprove message can have an explanation
@@ -241,12 +248,18 @@ class GNATprove_Message(GPS.Message):
 
     def __init__(self, category, f, line, col, text, flags):
         """initialize state for GNATprove_Message"""
+        match = Tag_regex.search(text)
+        if match:
+            self.tag = match.group(1)
+            text = text[0:match.start()-1]
+        else:
+            self.tag = None
         GPS.Message.__init__(self, category, f, line, col, text, flags)
         self.overlay = None
         self.buf = None
         self.trace_visible = False
         self.lines = []
-        if os.path.isfile(self.compute_trace_filename()):
+        if self.tag and os.path.isfile(self.compute_trace_filename()):
             self.set_subprogram(
                 lambda m : m.toggle_trace(),
                 "gps-semantic-check",
@@ -264,15 +277,14 @@ class GNATprove_Message(GPS.Message):
         """compute the trace file name in which the path information is
            stored
         """
-        text = self.get_text()
-        cutoff = text.find("not proved")
         objdirs = GPS.Project.root().object_dirs()
         gnatprove_dir = os.path.join(objdirs[0], "gnatprove")
-        return (os.path.join(gnatprove_dir,
-                             os.path.basename(self.get_file().name()) + "_" +
-                             str(self.get_line()) +
-                             "_" + str(self.get_column()) + "_" +
-                             text[:(cutoff - 1)].replace(' ','_') + ".trace"))
+        fn = "%(file)s_%(line)d_%(col)d_%(tag)s.trace" % \
+             { "file" : os.path.basename(self.get_file().name()),
+               "line" : self.get_line(),
+               "col"  : self.get_column(),
+               "tag"  : self.tag }
+        return os.path.join(gnatprove_dir, fn)
 
     def remove(self):
         """remove the message and clear the trace"""
