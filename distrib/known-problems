@@ -14,6 +14,12 @@ Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
               builder preference is set to Auto.
   Workaround: Set the Default builder preference to gprbuild.
 
+- M305-044: GPS: Support of ASCII.NUL character in executable output
+  Problem:    When running an execuable in a GPS console, if the executable
+              returns ASCII.NUL characters as part of its output, then the
+              output shown in the console is truncated to the first ASCII.NUL.
+  Workaround: Use an external console to run the executable.
+
 - M304-016: Bad indentation of comment in the middle of a separate declaration
   Problem:    When indenting code of the form:
                 separate (Foo)
