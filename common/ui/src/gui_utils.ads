@@ -26,12 +26,9 @@ with Glib.Object;
 with Glib.Values;
 with Glib;                     use Glib;
 
-with Cairo;
-
-with Gdk.Color;
 with Gdk.Event;
 with Gdk.Types;
-with Gdk.Window;
+with Gdk.RGBA;
 
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Button;
@@ -57,7 +54,6 @@ with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 with Gtk.Window;
-with Pango.Font;
 with String_List_Utils;
 
 package GUI_Utils is
@@ -79,14 +75,14 @@ package GUI_Utils is
    -- Colors --
    ------------
 
-   function Darken (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color;
-   function Lighten (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color;
+   function Darken (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA;
+   function Lighten (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA;
    --  Darken or lighten a color. This is linear darkening for all of RGB
    --  components.
    --  The returned color has been allocated
 
    function Darken_Or_Lighten
-     (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color;
+     (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA;
    --  Darken or lighten a color depending on its current luminosity. The goal
    --  is to obtain a contrast between the two
    --  The returned color has been allocated
@@ -106,10 +102,6 @@ package GUI_Utils is
    -- Combos and lists --
    ----------------------
 
-   procedure Gtk_New_Combo_Text_With_Entry
-     (Combo : out Gtk.Combo_Box.Gtk_Combo_Box);
-   --  Similar to Gtk_New_Text *and* Gtk_New_With_Entry
-
    function Add_Unique_List_Entry
      (List    : access Gtk.List_Store.Gtk_List_Store_Record'Class;
       Text    : String;
@@ -119,11 +111,11 @@ package GUI_Utils is
    --  is already visible in the list. Text must be UTF8-encoded.
 
    procedure Add_Unique_Combo_Entry
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Select_Text    : Boolean := False;
-      Prepend        : Boolean := False;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text         : String;
+      Select_Text  : Boolean := False;
+      Prepend      : Boolean := False;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True);
    --  Add Text to the popdown list of a text combo_box, if it is not already
    --  there.
@@ -133,24 +125,24 @@ package GUI_Utils is
    --  Text must be UTF8-encoded.
 
    function Add_Unique_Combo_Entry
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Select_Text    : Boolean := False;
-      Prepend        : Boolean := False;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text         : String;
+      Select_Text  : Boolean := False;
+      Prepend      : Boolean := False;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Same as above, but return the inserted iter (or the previously existing
    --  one).
 
    procedure Set_Active_Text
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text         : String;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True);
    --  Select the item containing Text in the Combo.
 
    procedure Set_Busy_Cursor
-     (Window        : Gdk.Window.Gdk_Window;
+     (Window        : Gdk.Gdk_Window;
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False);
    --  Enable or disable the "busy" cursor for a specific top-level window.
@@ -229,7 +221,9 @@ package GUI_Utils is
 
    function Find_Iter_For_Event
      (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Button) return Gtk.Tree_Model.Gtk_Tree_Iter;
+   function Find_Iter_For_Event
+     (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Get the iter in the tree view under the cursor corresponding to Event,
    --  if any.
@@ -237,8 +231,7 @@ package GUI_Utils is
 
    procedure Coordinates_For_Event
      (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      Event  : Gdk.Event.Gdk_Event;
+      Event  : Gdk.Event.Gdk_Event_Button;
       Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column);
    --  Get the Iter and Column corresponding to the position under the
@@ -251,6 +244,11 @@ package GUI_Utils is
       Column : Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Find in Model a node matching Name in Column.
    --  return Gtk_Null_Iter if there is no such node.
+
+   procedure Remove_Child_Nodes
+     (Model  : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Parent : Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Remove all children nodes of Parent
 
    procedure Expand_Row
      (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
@@ -394,34 +392,6 @@ package GUI_Utils is
    --
    --  In_Widget mustn't be a modal dialog, since otherwise the handling of
    --  grabs will interfer with the dialog.
-
-   --------------
-   -- Tooltips --
-   --------------
-
-   procedure Create_Pixmap_From_Text
-     (Text       : String;
-      Font       : Pango.Font.Pango_Font_Description;
-      Bg_Color   : Gdk.Color.Gdk_Color;
-      Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Pixmap     : out Cairo.Cairo_Surface;
-      Wrap_Width : Gint := -1;
-      Use_Markup : Boolean := False);
-   --  Create a new pixmap that contains Text. Bg_Color is used for the
-   --  background of the pixmap.
-   --  Widget is used to create the graphic context for the pango layout.
-   --
-   --  This procedure handles multi-lines text, as well as alignment of
-   --  tabulations, right-to-left writting, ...
-   --  Text must be a correct Utf8 text, see Glib.Convert
-   --
-   --  The maximal width of the text is Wrap_Width.
-   --
-   --  If the displayed text's height is greater than the screen's height, it
-   --  will be truncated.
-   --
-   --  If Use_Markup is true, then some html markup will be taken into account
-   --  when rendering the text, for instance <b>,...
 
    -----------
    -- Menus --
