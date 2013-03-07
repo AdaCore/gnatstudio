@@ -6189,7 +6189,6 @@
   fun:builtin___import__ 
   fun:PyObject_CallFunction 
 }
-<<<<<<< .working
 
 {
   OSX specific
