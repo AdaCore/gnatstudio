@@ -28,9 +28,6 @@ package body CodePeer.Utilities is
 
    begin
       for J in CodePeer.Message_Ranking_Level'Range loop
-         Result (J).Base := Left (J).Base + Right (J).Base;
-         Result (J).Added := Left (J).Added + Right (J).Added;
-         Result (J).Removed := Left (J).Removed + Right (J).Removed;
          Result (J).Current := Left (J).Current + Right (J).Current;
       end loop;
 
@@ -63,22 +60,15 @@ package body CodePeer.Utilities is
          if Categories.Contains (Message.Category) then
             case Message.Lifeage is
                when Added =>
-                  Counts (Message.Current_Ranking).Added :=
-                    Counts (Message.Current_Ranking).Added + 1;
                   Counts (Message.Current_Ranking).Current :=
                     Counts (Message.Current_Ranking).Current + 1;
 
                when Unchanged =>
-                  Counts (Message.Current_Ranking).Base :=
-                    Counts (Message.Current_Ranking).Base + 1;
                   Counts (Message.Current_Ranking).Current :=
                     Counts (Message.Current_Ranking).Current + 1;
 
                when Removed =>
-                  Counts (Message.Current_Ranking).Base :=
-                    Counts (Message.Current_Ranking).Base + 1;
-                  Counts (Message.Current_Ranking).Removed :=
-                    Counts (Message.Current_Ranking).Removed + 1;
+                  null;
             end case;
          end if;
 
