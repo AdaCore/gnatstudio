@@ -6192,7 +6192,7 @@
 
 {
    Libiconv on linux
-   Memcheck: Addr4
+   Memcheck:Leak
    obj:*libiconv*
    obj:*libiconv*
    fun:libiconv_open
