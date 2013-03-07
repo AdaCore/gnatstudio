@@ -18,9 +18,6 @@
 package CodePeer.Utilities is
 
    type Counts is record
-      Base    : Natural := 0;
-      Added   : Natural := 0;
-      Removed : Natural := 0;
       Current : Natural := 0;
    end record;
 
