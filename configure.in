@@ -36,8 +36,13 @@ EXEC_PREFIX="$prefix"
 
 ######## Check XML/Ada
 
-PROJECT_PATH=`gnatls -v | tr -d '\015' | awk 'BEGIN {display=0} /<Current/ {next} {if (display) {printf "%s:", $1}} /Project Search Path/ {display=1}'`
-AC_CHECK_PROG(XMLADA_GPR, xmlada.gpr, "with_xmlada", "no_xmlada", $PROJECT_PATH)
+AC_MSG_CHECKING(for xmlada.gpr)
+AM_HAS_GNAT_PROJECT(xmlada)
+if test x"${HAVE_GNAT_PROJECT_xmlada}" = x"yes" ; then
+   XMLADA_GPR=yes
+else
+   XMLADA_GPR=no
+fi
 
 ######## checking for local tools ###
 AC_PROG_CC
