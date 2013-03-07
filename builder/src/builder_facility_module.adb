@@ -90,12 +90,6 @@ package body Builder_Facility_Module is
    Main_Menu : constant String := '/' & (-"_Build") & '/';
    --  -"Build"
 
-   Output_Chopper   : aliased Output_Choppers.Output_Parser_Fabric;
-   Text_Splitter    : aliased Text_Splitters.Output_Parser_Fabric;
-   UTF8_Converter   : aliased UTF8_Converters.Output_Parser_Fabric;
-   Progress_Parser  : aliased Progress_Parsers.Output_Parser_Fabric;
-   --  ??? These should be moved to Builder_Module_ID
-
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
       Target : Unbounded_String;
@@ -188,6 +182,12 @@ package body Builder_Facility_Module is
 
       Last_Mains : Files.Map;
       --  The last launched main
+
+      Output_Chopper   : aliased Output_Choppers.Output_Parser_Fabric;
+      Text_Splitter    : aliased Text_Splitters.Output_Parser_Fabric;
+      UTF8_Converter   : aliased UTF8_Converters.Output_Parser_Fabric;
+      Progress_Parser  : aliased Progress_Parsers.Output_Parser_Fabric;
+
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -1819,9 +1819,12 @@ package body Builder_Facility_Module is
                 Wrapper (On_GPS_Started'Access),
                 Name  => "builder_facility_module.gps_started");
 
-      Register_Output_Parser (Output_Chopper'Access, "output_chopper");
-      Register_Output_Parser (UTF8_Converter'Access, "utf_converter");
-      Register_Output_Parser (Text_Splitter'Access, "text_splitter");
+      Register_Output_Parser
+        (Builder_Module_ID.Output_Chopper'Access, "output_chopper");
+      Register_Output_Parser
+        (Builder_Module_ID.UTF8_Converter'Access, "utf_converter");
+      Register_Output_Parser
+        (Builder_Module_ID.Text_Splitter'Access, "text_splitter");
 
       declare
          Progress_Pattern : constant String :=
@@ -1829,11 +1832,12 @@ package body Builder_Facility_Module is
          --  ??? This is configurable in some cases (from XML for instance),
          --  so we should not have a hard coded regexp here.
       begin
-         Register_Output_Parser (Progress_Parser'Access, "progress_parser");
-         Progress_Parser.Set_Pattern (Progress_Pattern);
+         Register_Output_Parser
+           (Builder_Module_ID.Progress_Parser'Access, "progress_parser");
+         Builder_Module_ID.Progress_Parser.Set_Pattern (Progress_Pattern);
       end;
 
-      UTF8_Converter.Set (Kernel);
+      Builder_Module_ID.UTF8_Converter.Set (Kernel);
    end Register_Module;
 
    --------------

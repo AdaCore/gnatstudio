@@ -232,7 +232,7 @@ package GPS.Kernel is
    --  ??? Could be moved to GPS.Kernel.Module if the contexts didn't require
    --  an Abstract_Module_ID. Perhaps we could move them to GPS.Kernel.Contexts
 
-   type Abstract_Module_ID_Record is abstract tagged null record;
+   type Abstract_Module_ID_Record is abstract tagged limited null record;
    type Abstract_Module_ID is access all Abstract_Module_ID_Record'Class;
 
    -----------
