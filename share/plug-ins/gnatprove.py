@@ -259,11 +259,14 @@ class GNATprove_Message(GPS.Message):
         self.buf = None
         self.trace_visible = False
         self.lines = []
-        if self.tag and os.path.isfile(self.compute_trace_filename()):
-            self.set_subprogram(
-                lambda m : m.toggle_trace(),
-                "gps-semantic-check",
-                "show path information")
+        if self.tag:
+            fn = self.compute_trace_filename()
+            if os.path.isfile(fn):
+                self.parse_trace_file(fn)
+                self.set_subprogram(
+                    lambda m : m.toggle_trace(),
+                    "gps-semantic-check",
+                    "show path information")
         # register ourselves in the gnatprove plugin
         gnatprove_plug.add_msg(self)
 
@@ -316,18 +319,17 @@ class GNATprove_Message(GPS.Message):
         trace_text = ("trace for " + os.path.basename(self.get_file().name()) + ":"
                       + str(self.get_line()) + ":" + str(self.get_column())
                       + ": " + self.get_text())
-        if not self.lines:
-            self.parse_trace_file(self.compute_trace_filename())
-        first_sloc = self.lines[0]
-        self.buf = GPS.EditorBuffer.get(first_sloc.file())
-        goto_location(first_sloc)
-        self.overlay = self.buf.create_overlay(trace_text)
-        self.overlay.set_property("paragraph-background", "#ffe0c0")
-        for sloc in self.lines[1:]:
-            self.buf.apply_overlay(
-                self.overlay,
-                GPS.EditorLocation(self.buf, sloc.line(), 1),
-                GPS.EditorLocation(self.buf, sloc.line(), 1))
+        if self.lines:
+            first_sloc = self.lines[0]
+            self.buf = GPS.EditorBuffer.get(first_sloc.file())
+            goto_location(first_sloc)
+            self.overlay = self.buf.create_overlay(trace_text)
+            self.overlay.set_property("paragraph-background", "#ffe0c0")
+            for sloc in self.lines[1:]:
+                self.buf.apply_overlay(
+                    self.overlay,
+                    GPS.EditorLocation(self.buf, sloc.line(), 1),
+                    GPS.EditorLocation(self.buf, sloc.line(), 1))
 
 class GNATprove_Parser(tool_output.OutputParser):
     """Class that parses messages of the gnatprove tool, and creates
@@ -345,6 +347,8 @@ class GNATprove_Parser(tool_output.OutputParser):
                         int(sl[2]),
                         ':'.join(sl[3:]).strip(),
                         0)
+            else:
+                print line
 
 def is_subp_decl_context(self):
     """Check whether the given context is the context of a subprogram
