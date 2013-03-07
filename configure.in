@@ -39,9 +39,9 @@ EXEC_PREFIX="$prefix"
 AC_MSG_CHECKING(for xmlada.gpr)
 AM_HAS_GNAT_PROJECT(xmlada)
 if test x"${HAVE_GNAT_PROJECT_xmlada}" = x"yes" ; then
-   XMLADA_GPR=yes
+   XMLADA_GPR=with_xmlada
 else
-   XMLADA_GPR=no
+   XMLADA_GPR=no_xmlada
 fi
 
 ######## checking for local tools ###

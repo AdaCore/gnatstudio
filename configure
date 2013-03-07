@@ -2357,9 +2357,9 @@ $as_echo "$HAVE_GNAT_PROJECT_xmlada" >&6; }
 
 
 if test x"${HAVE_GNAT_PROJECT_xmlada}" = x"yes" ; then
-   XMLADA_GPR=yes
+   XMLADA_GPR=with_xmlada
 else
-   XMLADA_GPR=no
+   XMLADA_GPR=no_xmlada
 fi
 
 ######## checking for local tools ###
