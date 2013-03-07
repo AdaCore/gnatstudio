@@ -50,7 +50,7 @@ copyright = get_copyright()
 
 def get_version():
     """Extract the version from configure.in"""
-    for line in file("../../configure.in").readlines():
+    for line in file("../../configure").readlines():
         if line.startswith("GPS_VERSION"):
             return line.strip().split("=")[1]
     raise Exception("Cannot find version number")
