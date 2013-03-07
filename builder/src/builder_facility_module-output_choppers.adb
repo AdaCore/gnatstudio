@@ -80,6 +80,9 @@ package body Builder_Facility_Module.Output_Choppers is
 
       Self.Child.Parse_Standard_Output
         (To_String (Self.Buffer) & New_Line, Command);
+
+      --  Call parent procedure
+      Tools_Output_Parser (Self.all).End_Of_Stream (Command);
    end End_Of_Stream;
 
 end Builder_Facility_Module.Output_Choppers;
