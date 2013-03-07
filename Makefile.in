@@ -80,6 +80,7 @@ endif
 		| (cd $(sharedir)/gps/docgen2; tar xf -)
 	$(MAKE) -C docs install
 	(cd examples; tar cf - --exclude .svn . ) | (cd $(examplesdir); tar xf -)
+	$(MAKE) -C gnatlib install
 
 install: install-common
 # Install gnatcoll itself, so that it also installs the GPS-support files, as
