@@ -6189,6 +6189,7 @@
   fun:builtin___import__ 
   fun:PyObject_CallFunction 
 }
+<<<<<<< .working
 
 {
   OSX specific
@@ -6249,4 +6250,12 @@
   OSX specific
   Memcheck:Cond
   fun:pthread_rwlock_init
+}
+
+{
+   Libiconv on linux
+   Memcheck:Leak
+   obj:*libiconv*
+   obj:*libiconv*
+   fun:libiconv_open
 }
