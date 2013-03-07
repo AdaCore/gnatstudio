@@ -120,6 +120,10 @@ package body Commands.Builder is
                      renames Build_Callback_Data (Data.Callback_Data.all);
 
    begin
+      if Build_Data.Output_Parser /= null then
+         Build_Data.Output_Parser.End_Of_Stream (Data.Command);
+      end if;
+
       if Build_Data.Is_A_Run then
          --  Nothing to do for runs.
          return;
