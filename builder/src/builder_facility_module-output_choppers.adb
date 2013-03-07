@@ -74,7 +74,7 @@ package body Builder_Facility_Module.Output_Choppers is
      (Self    : not null access Output_Chopper;
       Command : Command_Access) is
    begin
-      if Self.Child = null or Self.Buffer = "" then
+      if Self.Child = null then
          return;
       end if;
 
