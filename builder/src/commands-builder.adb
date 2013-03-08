@@ -237,9 +237,11 @@ package body Commands.Builder is
            Shadow     => Data.Shadow,
            Background => Data.Background)
       then
-         Append_To_Build_Output
-           (Kernel, To_Display_String (CL), To_String (Data.Target_Name),
-            Data.Shadow, Data.Background);
+         if not Data.Quiet then
+            Append_To_Build_Output
+              (Kernel, To_Display_String (CL), To_String (Data.Target_Name),
+               Data.Shadow, Data.Background);
+         end if;
 
          if Data.Mode_Name /= "default" then
             Cmd_Name := Data.Target_Name & " (" & Data.Mode_Name & ")";
