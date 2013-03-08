@@ -36,6 +36,7 @@ package body CodePeer.Messages_Summary_Models is
    procedure Clear (Self : access Messages_Summary_Model_Record) is
    begin
       Self.Message_Categories.Clear;
+      Self.Message_Lifeages := (others => False);
    end Clear;
 
    ------------
@@ -483,6 +484,7 @@ package body CodePeer.Messages_Summary_Models is
 
       Model.Tree := Tree;
       Model.Message_Categories := Categories;
+      Model.Message_Lifeages := (others => True);
 
       Model.Project_Icon    := Project_Icon;
       Model.File_Icon       := File_Icon;
