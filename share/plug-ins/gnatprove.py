@@ -387,15 +387,12 @@ class GNATprove_Message(GPS.Message):
            trace file to load the information.
         """
         self.trace_visible = True
-        print "show trace"
         if self.lines:
-            print "lines are there"
             first_sloc = self.lines[0]
             buf = GPS.EditorBuffer.get(first_sloc.file())
             goto_location(first_sloc)
             overlay = get_overlay(buf, "trace")
             for sloc in self.lines:
-                print "showing lines " + str(sloc.line())
                 buf.apply_overlay(
                     overlay,
                     GPS.EditorLocation(buf, sloc.line(), 1),
