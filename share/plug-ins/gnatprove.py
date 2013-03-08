@@ -228,7 +228,7 @@ prove_line           = "Prove Line"
 prove_subp           = "Prove Subprogram"
 show_unprovable_code = "Show Unprovable Code"
 clean_up             = "Clean Proofs"
-clear_traces_text    = "Remove Path Information"
+clear_highlighting   = "Remove Editor Highlighting"
 
 Default_colors = {
   "info"    : "#88eeaa",
@@ -360,10 +360,20 @@ class GNATprove_Message(GPS.Message):
                "tag"  : self.tag }
         return os.path.join(gnatprove_dir, fn)
 
+    def clear_highlighting(self):
+        """simply remove all overlays. Note that this will also affect the
+           highlighting of other messages
+        """
+        self.clear_trace()
+        buf = GPS.EditorBuffer.get(self.get_file())
+        for k in Overlays:
+            o = get_overlay(buf, k)
+            buf.remove_overlay(o)
+
     def remove(self):
         """remove the message and clear the trace"""
         GPS.Message.remove(self)
-        self.clear_trace()
+        self.clear_highlighting()
 
     def toggle_trace(self):
         """Toggle visibility of the trace information"""
@@ -483,8 +493,8 @@ def on_prove_file(self):
 def on_prove_line(self):
     generic_on_prove(prove_line)
 
-def on_clear_traces(self):
-    gnatprove_plug.clear_traces()
+def on_clear_highlighting(self):
+    gnatprove_plug.clear_highlighting()
 
 def on_show_unprovable_code(self):
     GPS.BuildTarget(show_unprovable_code).execute(synchronous=False)
@@ -531,8 +541,8 @@ class GNATProve_Plugin:
             menu_prefix + "/" + clean_up,
             on_clean_up)
         GPS.Menu.create(
-            menu_prefix + "/" + clear_traces_text,
-            on_clear_traces)
+            menu_prefix + "/" + clear_highlighting,
+            on_clear_highlighting)
         GPS.Contextual(prefix + "/" + prove_file).create(
             on_activate = on_prove_file,
             filter = is_ada_file_context)
@@ -555,17 +565,17 @@ class GNATProve_Plugin:
         """reset the list of messages"""
         self.messages = []
 
-    def clear_traces(self):
+    def clear_highlighting(self):
         """delete the traces for all registered messages"""
         for msg in self.messages:
-            msg.clear_trace()
+            msg.clear_highlighting()
 
     def clean_locations_view(self):
         """clean up the locations view: delete the "gnatprove" category,
            remove traces of the gnatprove messages, and remove the messages
            themselves
         """
-        self.clear_traces()
+        self.clear_highlighting()
         self.clear_messages()
         GPS.Locations.remove_category(toolname)
 
