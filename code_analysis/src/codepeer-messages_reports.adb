@@ -696,6 +696,8 @@ package body CodePeer.Messages_Reports is
          -"Message history",
          "codepeer-summary_report-lifeage");
       Filter_Box.Pack_Start (Self.Lifeage_Editor, False);
+      Self.Analysis_Model.Set_Visible_Message_Lifeages
+        (Self.Lifeage_Editor.Get_Visible_Lifeages);
 
       Message_Lifeage_Criteria_Callbacks.Connect
         (Self.Lifeage_Editor,
