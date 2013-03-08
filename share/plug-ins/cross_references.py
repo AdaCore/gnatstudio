@@ -100,7 +100,7 @@ class Sqlite_Cross_References(object):
         if not self.trusted_mode:
             extra_args = "--symlinks"
 
-        target.execute(synchronous=False, quiet=True, extra_args=extra_args)
+        target.execute(synchronous=GPS.Logger("TESTSUITE").active, quiet=True, extra_args=extra_args)
 
     def on_compilation_finished(self, hook, category,
         target_name="", mode_name="", status=""):
