@@ -41,6 +41,7 @@ package body CodePeer.Utilities is
    procedure Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
+      Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Counts     : out Messages_Counts;
       Checks     : out Natural)
    is
@@ -55,21 +56,13 @@ package body CodePeer.Utilities is
                      Message_Vectors.Element (Position);
 
       begin
-         --  Count messages by ranking only when have specified categories.
+         --  Count messages of specified categories and lifeage.
 
-         if Categories.Contains (Message.Category) then
-            case Message.Lifeage is
-               when Added =>
-                  Counts (Message.Current_Ranking).Current :=
-                    Counts (Message.Current_Ranking).Current + 1;
-
-               when Unchanged =>
-                  Counts (Message.Current_Ranking).Current :=
-                    Counts (Message.Current_Ranking).Current + 1;
-
-               when Removed =>
-                  null;
-            end case;
+         if Categories.Contains (Message.Category)
+           and Lifeages (Message.Lifeage)
+         then
+            Counts (Message.Current_Ranking).Current :=
+              Counts (Message.Current_Ranking).Current + 1;
          end if;
 
          --  Count all non-removed checks with non-suppressed ranking
@@ -98,6 +91,7 @@ package body CodePeer.Utilities is
    procedure Compute_Messages_Count
      (File       : Code_Analysis.File_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
+      Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Counts     : out Messages_Counts;
       Checks     : out Natural)
    is
@@ -115,7 +109,7 @@ package body CodePeer.Utilities is
 
       begin
          Compute_Messages_Count
-           (Subprogram, Categories, Aux_Counts, Aux_Checks);
+           (Subprogram, Categories, Lifeages, Aux_Counts, Aux_Checks);
 
          Counts := Counts + Aux_Counts;
          Checks := Checks + Aux_Checks;
@@ -135,6 +129,7 @@ package body CodePeer.Utilities is
    procedure Compute_Messages_Count
      (Project      : Code_Analysis.Project_Access;
       Categories   : CodePeer.Message_Category_Sets.Set;
+      Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Counts       : out Messages_Counts;
       Checks       : out Natural;
       Total_Checks : out Natural)
@@ -152,7 +147,8 @@ package body CodePeer.Utilities is
          Aux_Checks : Natural;
 
       begin
-         Compute_Messages_Count (File, Categories, Aux_Counts, Aux_Checks);
+         Compute_Messages_Count
+           (File, Categories, Lifeages, Aux_Counts, Aux_Checks);
 
          Counts := Counts + Aux_Counts;
          Checks := Checks + Aux_Checks;
@@ -177,6 +173,7 @@ package body CodePeer.Utilities is
    procedure Compute_Messages_Count
      (Tree         : Code_Analysis.Code_Analysis_Tree;
       Categories   : CodePeer.Message_Category_Sets.Set;
+      Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Counts       : out Messages_Counts;
       Checks       : out Natural;
       Total_Checks : out Natural)
@@ -196,7 +193,7 @@ package body CodePeer.Utilities is
 
       begin
          Compute_Messages_Count
-           (Project, Categories, Aux_Counts, Aux_Checks, Aux_Total);
+           (Project, Categories, Lifeages, Aux_Counts, Aux_Checks, Aux_Total);
 
          Counts := Counts + Aux_Counts;
          Checks := Checks + Aux_Checks;
