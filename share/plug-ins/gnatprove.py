@@ -217,6 +217,7 @@ xml_gnatprove = """<?xml version="1.0"?>
   </GNATPROVE>
 """
 
+# constants that are required by the plug-in
 toolname             = "gnatprove"
 prefix               = "Prove"
 menu_prefix          = "/" + prefix
@@ -229,8 +230,33 @@ show_unprovable_code = "Show Unprovable Code"
 clean_up             = "Clean Proofs"
 clear_traces_text    = "Remove Path Information"
 
-# Check for GNAT toolchain: gnatprove
+Default_colors = {
+  "info"    : "#88eeaa",
+  "error"   : "#f75d59",
+  "trace"   : "#00ffff" }
 
+Pref_Names = {}
+
+Tag_regex = re.compile("\[(.*)\]$")
+
+Overlays = {
+    "trace" : "gnatprove_trace_overlay",
+    "error" : "gnatprove_error_overlay",
+    "info"  : "gnatprove_info_overlay"
+    }
+
+Color_pref_prefix = "Plugins/gnatprove/color_"
+
+# The default colors
+for k in Default_colors:
+    pref_name = Color_pref_prefix + k
+    GPS.Preference (pref_name).create(
+          "Highlight color for " + k, "color",
+          "color used to highlight corresponding lines"
+          " You must restart gps to take changes into account",
+          Default_colors[k])
+
+# helper functions that do not really fit elsewhere
 def goto_location(sloc):
     """go to the location defined by the given GPS.FileLocation"""
     buf = GPS.EditorBuffer.get(sloc.file())
@@ -239,7 +265,35 @@ def goto_location(sloc):
     v.goto(GPS.EditorLocation(buf, sloc.line(),sloc.column()))
     v.center()
 
-Tag_regex = re.compile("\[(.*)\]$")
+def get_overlay(buf,overlay_name):
+    """ For a buffer and an overlay name, return the corresponding overlay
+        object of the buffer.
+
+        The Overlay name must be a key of the Overlays object. This function
+        will take care of creating the needed overlays in the buffer when they
+        are not there, and will also take care of creating them in the right
+        order.
+    """
+    needed_attr = Overlays[overlay_name]
+    if not hasattr(buf,needed_attr):
+        # the overlay is not there, it means we need to create all three in
+        # the right order.
+        info  = buf.create_overlay ("info overlay")
+        error = buf.create_overlay ("error overlay")
+        trace = buf.create_overlay ("trace overlay")
+        my_overlays = {
+            "info"  : info,
+            "trace" : trace,
+            "error" : error }
+        for k in Overlays:
+            o = my_overlays[k]
+            pref_name = Color_pref_prefix + k
+            o.set_property(
+                "paragraph-background",
+                GPS.Preference(pref_name).get())
+            setattr(buf,Overlays[k],o)
+    # we are all set now, get the required attribute
+    return getattr(buf,needed_attr)
 
 class GNATprove_Message(GPS.Message):
     """Class that defines gnatprove messages, which are richer than plain GPS
@@ -255,10 +309,15 @@ class GNATprove_Message(GPS.Message):
         else:
             self.tag = None
         GPS.Message.__init__(self, category, f, line, col, text, flags)
-        self.overlay = None
-        self.buf = None
         self.trace_visible = False
         self.lines = []
+        self.is_info_message = (text.find("info:") != -1)
+        self.highlight_message()
+        self.load_trace_if_needed()
+        # register ourselves in the gnatprove plugin
+        gnatprove_plug.add_msg(self)
+
+    def load_trace_if_needed(self):
         if self.tag:
             fn = self.compute_trace_filename()
             if os.path.isfile(fn):
@@ -267,13 +326,25 @@ class GNATprove_Message(GPS.Message):
                     lambda m : m.toggle_trace(),
                     "gps-semantic-check",
                     "show path information")
-        # register ourselves in the gnatprove plugin
-        gnatprove_plug.add_msg(self)
+
+    def highlight_message(self):
+        msg_buffer = GPS.EditorBuffer.get(self.get_file())
+        if self.is_info_message:
+            needed_overlay = "info"
+        else:
+            needed_overlay = "error"
+        overlay = get_overlay(msg_buffer, needed_overlay)
+        loc = GPS.EditorLocation(msg_buffer, self.get_line(),1)
+        msg_buffer.apply_overlay(overlay, loc, loc)
 
     def clear_trace(self):
         """clear the trace of the message"""
-        if self.overlay and self.buf:
-            self.buf.remove_overlay(self.overlay)
+        if self.lines:
+            first_sloc = self.lines[0]
+            buf = GPS.EditorBuffer.get(first_sloc.file())
+            if buf:
+                overlay = get_overlay(buf,"trace")
+                buf.remove_overlay(overlay)
         self.trace_visible = False
 
     def compute_trace_filename(self):
@@ -316,20 +387,19 @@ class GNATprove_Message(GPS.Message):
            trace file to load the information.
         """
         self.trace_visible = True
-        trace_text = ("trace for " + os.path.basename(self.get_file().name()) + ":"
-                      + str(self.get_line()) + ":" + str(self.get_column())
-                      + ": " + self.get_text())
+        print "show trace"
         if self.lines:
+            print "lines are there"
             first_sloc = self.lines[0]
-            self.buf = GPS.EditorBuffer.get(first_sloc.file())
+            buf = GPS.EditorBuffer.get(first_sloc.file())
             goto_location(first_sloc)
-            self.overlay = self.buf.create_overlay(trace_text)
-            self.overlay.set_property("paragraph-background", "#ffe0c0")
-            for sloc in self.lines[1:]:
-                self.buf.apply_overlay(
-                    self.overlay,
-                    GPS.EditorLocation(self.buf, sloc.line(), 1),
-                    GPS.EditorLocation(self.buf, sloc.line(), 1))
+            overlay = get_overlay(buf, "trace")
+            for sloc in self.lines:
+                print "showing lines " + str(sloc.line())
+                buf.apply_overlay(
+                    overlay,
+                    GPS.EditorLocation(buf, sloc.line(), 1),
+                    GPS.EditorLocation(buf, sloc.line(), 1))
 
 class GNATprove_Parser(tool_output.OutputParser):
     """Class that parses messages of the gnatprove tool, and creates
@@ -502,6 +572,7 @@ class GNATProve_Plugin:
         self.clear_messages()
         GPS.Locations.remove_category(toolname)
 
+# Check for GNAT toolchain: gnatprove
 gnatprove = os_utils.locate_exec_on_path(toolname)
 
 if gnatprove:
