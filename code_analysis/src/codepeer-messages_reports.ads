@@ -25,6 +25,7 @@ with GPS.Kernel.Modules;
 with Code_Analysis;
 private with CodePeer.Messages_Summary_Models;
 private with CodePeer.Categories_Criteria_Editors;
+private with CodePeer.Lifeage_Criteria_Editors;
 
 package CodePeer.Messages_Reports is
 
@@ -78,8 +79,9 @@ private
         CodePeer.Categories_Criteria_Editors.Categories_Criteria_Editor;
       Check_Categories_Editor :
         CodePeer.Categories_Criteria_Editors.Categories_Criteria_Editor;
+      Lifeage_Editor      :
+        CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor;
 
-      Show_Lifeage        : Lifeage_Kinds_Flags;
       Show_Ranking        : Message_Ranking_Level_Flags;
       Double_Click        : Boolean := False;
       --  Used to handle double click by setting to True on mouse double-press

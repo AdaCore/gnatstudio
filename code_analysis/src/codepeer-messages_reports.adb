@@ -74,24 +74,17 @@ package body CodePeer.Messages_Reports is
              Categories_Criteria_Editor_Record,
            Messages_Report);
 
+   package Message_Lifeage_Criteria_Callbacks is
+     new Gtk.Handlers.User_Callback
+          (CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record,
+           Messages_Report);
+
    package Compare_Functions is
      new Gtk.Tree_Sortable.Compare_Funcs (Messages_Report);
 
    procedure On_Destroy (Self : access Messages_Report_Record'Class);
 
    procedure On_Show_All_Subprograms_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-
-   procedure On_Show_Added_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-
-   procedure On_Show_Unchanged_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-
-   procedure On_Show_Removed_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
 
@@ -122,6 +115,12 @@ package body CodePeer.Messages_Reports is
       Self   : Messages_Report);
    --  Handles change of set of visible message's categories.
 
+   procedure On_Lifeage_Criteria_Changed
+     (Object : access
+        CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record'Class;
+      Self   : Messages_Report);
+   --  Handles change of set of visible message's lifeages.
+
    procedure Context_Func
      (Context      : in out GPS.Kernel.Selection_Context;
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -149,12 +148,6 @@ package body CodePeer.Messages_Reports is
       Name   : Glib.Signal_Name);
    pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
 
-   Lifeage_Added_History         : constant Histories.History_Key :=
-     "codepeer-summary_report-lifeage-added";
-   Lifeage_Unchanged_History     : constant Histories.History_Key :=
-     "codepeer-summary_report-lifeage-unchanged";
-   Lifeage_Removed_History       : constant Histories.History_Key :=
-     "codepeer-summary_report-lifeage-removed";
    Ranking_Suppressed_History    : constant Histories.History_Key :=
      "codepeer-summary_report-ranking-suppressed";
    Ranking_Informational_History : constant Histories.History_Key :=
@@ -488,22 +481,6 @@ package body CodePeer.Messages_Reports is
       --  Restore filter settings from histories.
 
       Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Lifeage_Added_History, True);
-      Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Lifeage_Unchanged_History, True);
-      Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Lifeage_Removed_History, False);
-
-      Self.Show_Lifeage (Added)     :=
-        Histories.Get_History (Kernel.Get_History.all, Lifeage_Added_History);
-      Self.Show_Lifeage (Unchanged) :=
-        Histories.Get_History
-          (Kernel.Get_History.all, Lifeage_Unchanged_History);
-      Self.Show_Lifeage (Removed)   :=
-        Histories.Get_History
-          (Kernel.Get_History.all, Lifeage_Removed_History);
-
-      Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all, Ranking_Suppressed_History, False);
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all, Ranking_Informational_History, False);
@@ -713,37 +690,18 @@ package body CodePeer.Messages_Reports is
 
       --  Messages history
 
-      Gtk.Label.Gtk_New (Label, -"Message history");
-      Filter_Box.Pack_Start (Label, False);
+      CodePeer.Lifeage_Criteria_Editors.Gtk_New
+        (Self.Lifeage_Editor,
+         Kernel,
+         -"Message history",
+         "codepeer-summary_report-lifeage");
+      Filter_Box.Pack_Start (Self.Lifeage_Editor, False);
 
-      Gtk.Check_Button.Gtk_New (Check, -"added");
-      Check.Set_Active (Self.Show_Lifeage (Added));
-      Filter_Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Added_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"unchanged");
-      Check.Set_Active (Self.Show_Lifeage (Unchanged));
-      Filter_Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Unchanged_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"removed");
-      Check.Set_Active (Self.Show_Lifeage (Removed));
-      Filter_Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Removed_Messages_Toggled'Access),
+      Message_Lifeage_Criteria_Callbacks.Connect
+        (Self.Lifeage_Editor,
+         CodePeer.Lifeage_Criteria_Editors.Signal_Criteria_Changed,
+         Message_Lifeage_Criteria_Callbacks.To_Marshaller
+           (On_Lifeage_Criteria_Changed'Access),
          Messages_Report (Self));
 
       --  Messages ranking
@@ -940,22 +898,6 @@ package body CodePeer.Messages_Reports is
    end On_Show_All_Subprograms_Toggled;
 
    -----------------------------------
-   -- On_Show_Added_Messages_Toggled --
-   ------------------------------------
-
-   procedure On_Show_Added_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Lifeage (Added) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Lifeage_Added_History,
-         Self.Show_Lifeage (Added));
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Added_Messages_Toggled;
-
-   -----------------------------------
    -- On_Show_High_Messages_Toggled --
    -----------------------------------
 
@@ -1019,22 +961,6 @@ package body CodePeer.Messages_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Medium_Messages_Toggled;
 
-   --------------------------------------
-   -- On_Show_Removed_Messages_Toggled --
-   --------------------------------------
-
-   procedure On_Show_Removed_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Lifeage (Removed) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Lifeage_Removed_History,
-         Self.Show_Lifeage (Removed));
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Removed_Messages_Toggled;
-
    -----------------------------------------
    -- On_Show_Suppressed_Messages_Toggled --
    -----------------------------------------
@@ -1051,21 +977,22 @@ package body CodePeer.Messages_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Suppressed_Messages_Toggled;
 
-   ----------------------------------------
-   -- On_Show_Unchanged_Messages_Toggled --
-   ----------------------------------------
+   ---------------------------------
+   -- On_Lifeage_Criteria_Changed --
+   ---------------------------------
 
-   procedure On_Show_Unchanged_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
+   procedure On_Lifeage_Criteria_Changed
+     (Object : access
+        CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record'Class;
+      Self   : Messages_Report)
+   is
+      pragma Unreferenced (Object);
+
    begin
-      Self.Show_Lifeage (Unchanged) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Lifeage_Unchanged_History,
-         Self.Show_Lifeage (Unchanged));
+      --  Emit 'criteria-changed' signal.
+
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Unchanged_Messages_Toggled;
+   end On_Lifeage_Criteria_Changed;
 
    ------------
    -- Update --
@@ -1089,7 +1016,7 @@ package body CodePeer.Messages_Reports is
         Self.Warning_Categories_Editor.Get_Visible_Categories.Union
           (Self.Check_Categories_Editor.Get_Visible_Categories);
       Criteria.Rankings   := Self.Show_Ranking;
-      Criteria.Lineages   := Self.Show_Lifeage;
+      Criteria.Lineages   := Self.Lifeage_Editor.Get_Visible_Lifeages;
    end Update_Criteria;
 
 end CodePeer.Messages_Reports;
