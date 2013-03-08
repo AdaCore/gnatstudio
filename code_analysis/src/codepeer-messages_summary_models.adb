@@ -196,6 +196,7 @@ package body CodePeer.Messages_Summary_Models is
                CodePeer.Utilities.Compute_Messages_Count
                  (Self.Tree,
                   Self.Message_Categories,
+                  Self.Message_Lifeages,
                   Counts,
                   Dummy_Checks,
                   Dummy_Totals);
@@ -396,6 +397,7 @@ package body CodePeer.Messages_Summary_Models is
                   CodePeer.Utilities.Compute_Messages_Count
                     (Self.Tree,
                      Self.Message_Categories,
+                     Self.Message_Lifeages,
                      Counts,
                      Checks,
                      Totals);
@@ -434,6 +436,7 @@ package body CodePeer.Messages_Summary_Models is
                   CodePeer.Utilities.Compute_Messages_Count
                     (Self.Tree,
                      Self.Message_Categories,
+                     Self.Message_Lifeages,
                      Counts,
                      Checks,
                      Totals);
@@ -549,6 +552,7 @@ package body CodePeer.Messages_Summary_Models is
       CodePeer.Utilities.Compute_Messages_Count
         (Project_Node.Node,
          Self.Message_Categories,
+         Self.Message_Lifeages,
          Project_Node.Messages_Counts,
          Project_Node.Checks_Count,
          Project_Node.Total_Checks);
@@ -582,6 +586,7 @@ package body CodePeer.Messages_Summary_Models is
       CodePeer.Utilities.Compute_Messages_Count
         (File_Node.Node,
          Self.Message_Categories,
+         Self.Message_Lifeages,
          File_Node.Messages_Counts,
          File_Node.Checks_Count);
       File_Node.Computed := True;
@@ -613,6 +618,7 @@ package body CodePeer.Messages_Summary_Models is
       CodePeer.Utilities.Compute_Messages_Count
         (Subprogram_Node.Node,
          Self.Message_Categories,
+         Self.Message_Lifeages,
          Subprogram_Node.Messages_Counts,
          Dummy);
       Subprogram_Node.Computed := True;
@@ -641,11 +647,22 @@ package body CodePeer.Messages_Summary_Models is
 
    procedure Set_Visible_Message_Categories
      (Self : access Messages_Summary_Model_Record'Class;
-      To   : CodePeer.Message_Category_Sets.Set)
-   is
+      To   : CodePeer.Message_Category_Sets.Set) is
    begin
       Self.Message_Categories := To;
       Self.Reconstruct;
    end Set_Visible_Message_Categories;
+
+   ----------------------------------
+   -- Set_Visible_Message_Lifeages --
+   ----------------------------------
+
+   procedure Set_Visible_Message_Lifeages
+     (Self : access Messages_Summary_Model_Record'Class;
+      To   : CodePeer.Lifeage_Kinds_Flags) is
+   begin
+      Self.Message_Lifeages := To;
+      Self.Reconstruct;
+   end Set_Visible_Message_Lifeages;
 
 end CodePeer.Messages_Summary_Models;

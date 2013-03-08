@@ -70,6 +70,12 @@ package CodePeer.Messages_Summary_Models is
    procedure Set_Visible_Message_Categories
      (Self : access Messages_Summary_Model_Record'Class;
       To   : CodePeer.Message_Category_Sets.Set);
+   --  Sets subset of visible message categories.
+
+   procedure Set_Visible_Message_Lifeages
+     (Self : access Messages_Summary_Model_Record'Class;
+      To   : CodePeer.Lifeage_Kinds_Flags);
+   --  Sets subset of visible message lifeages.
 
    procedure Clear (Self : access Messages_Summary_Model_Record);
 
@@ -83,6 +89,8 @@ private
       Show_All_Projects    : Boolean := True;
       Message_Categories   : CodePeer.Message_Category_Sets.Set;
       --  Set of the message categories, which is shown in the report
+      Message_Lifeages     : CodePeer.Lifeage_Kinds_Flags;
+      --  Set of the message lifeages, which is show in the report
       Project_Icon         : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Icon            : Gdk.Pixbuf.Gdk_Pixbuf;
       Subprogram_Icon      : Gdk.Pixbuf.Gdk_Pixbuf;

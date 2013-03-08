@@ -990,6 +990,9 @@ package body CodePeer.Messages_Reports is
       pragma Unreferenced (Object);
 
    begin
+      Self.Analysis_Model.Set_Visible_Message_Lifeages
+        (Self.Lifeage_Editor.Get_Visible_Lifeages);
+
       --  Emit 'criteria-changed' signal.
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
