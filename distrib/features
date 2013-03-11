@@ -30,6 +30,10 @@ NF-53-M204-035 ECL: automatic scenario set for Android projects (2013-02-04)
   This setting is essential for creating proper library names for subsequent
   use by the Android OS.
 
+NF-53-M129-023 GPS: cleanup of CodePeer report (2013-03-11)
+
+  CodePeer report was changed to improve usability.
+
 NF-53-M129-002 GPS: return block completion (2013-02-04)
 
   Add "return ... end return;" statement support for complete block
