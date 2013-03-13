@@ -31,7 +31,8 @@ with Histories;
 
 package body CodePeer.Lifeage_Criteria_Editors is
 
-   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+   Class_Record : Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Criteria_Changed)));
