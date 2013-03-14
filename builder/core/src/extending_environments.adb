@@ -17,7 +17,6 @@
 
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with Projects;           use Projects;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
 
 package body Extending_Environments is
 
@@ -44,7 +43,7 @@ package body Extending_Environments is
    ----------------------------------
 
    function Create_Extending_Environment
-     (Kernel : Kernel_Handle;
+     (Kernel : access Core_Kernel_Record'Class;
       Source : Virtual_File;
       Server : Server_Type) return Extending_Environment
    is
@@ -105,6 +104,7 @@ package body Extending_Environments is
 
       Project_File : Virtual_File;
 
+      Success : Boolean;
    begin
       --  Create the temporary directory
       Env.Temporary_Dir := Create_From_Dir
@@ -117,8 +117,8 @@ package body Extending_Environments is
 
       --  Create the project file
 
-      P := Get_Registry (Kernel).Tree.Info (Source).Project;
-      Root := Get_Registry (Kernel).Tree.Root_Project;
+      P := Kernel.Registry.Tree.Info (Source).Project;
+      Root := Kernel.Registry.Tree.Root_Project;
 
       Write_Extending_Project (File   => Project_File,
                                P      => P,
@@ -136,10 +136,9 @@ package body Extending_Environments is
       --  Create the file
       Env.File := Create_From_Dir (Env.Temporary_Dir, Base_Name (Source));
 
-      Get_Buffer_Factory (Kernel).Get
-        (Source).Save (Interactive => False,
-                       File        => Env.File,
-                       Internal    => True);
+      Source.Copy
+        (Target_Name => Filesystem_String (Env.File.Display_Full_Name),
+         Success     => Success);
 
       return Env;
    end Create_Extending_Environment;

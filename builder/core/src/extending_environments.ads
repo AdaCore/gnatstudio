@@ -22,7 +22,7 @@
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Remote;       use Remote;
 
-with GPS.Kernel;   use GPS.Kernel;
+with GPS.Core_Kernels;   use GPS.Core_Kernels;
 
 package Extending_Environments is
 
@@ -35,7 +35,7 @@ package Extending_Environments is
    --  Return the project file in Env
 
    function Create_Extending_Environment
-     (Kernel : Kernel_Handle;
+     (Kernel : access Core_Kernel_Record'Class;
       Source : Virtual_File;
       Server : Server_Type) return Extending_Environment;
    --  Create an extending environment needed to build Source.
