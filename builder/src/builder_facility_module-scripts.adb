@@ -266,8 +266,7 @@ package body Builder_Facility_Module.Scripts is
                Dir := GNATCOLL.VFS.Create (Directory);
             end if;
 
-            Launch_Target (Kernel       => Kernel,
-                           Registry     => Registry,
+            Launch_Target (Builder      => Builder,
                            Target_Name  => Name,
                            Mode_Name    => Build_Mode,
                            Force_File   => Info,
@@ -292,7 +291,8 @@ package body Builder_Facility_Module.Scripts is
          declare
             S : constant String := To_String
               (Get_Build_Output
-                 (Target     => Nth_Arg (Data, 1, ""),
+                 (Self       => Builder,
+                  Target     => Nth_Arg (Data, 1, ""),
                   Shadow     => Nth_Arg (Data, 2, False),
                   Background => Nth_Arg (Data, 3, False)));
             Prev : Integer := S'First;
@@ -320,8 +320,7 @@ package body Builder_Facility_Module.Scripts is
          Extra_Args := GNAT.OS_Lib.Argument_String_To_List
            (Nth_Arg (Data, 2, ""));
 
-         Launch_Target (Kernel       => Kernel,
-                        Registry     => Registry,
+         Launch_Target (Builder      => Builder,
                         Target_Name  => Compile_File_Target,
                         Mode_Name    => "",
                         Force_File   => Info,
@@ -339,8 +338,7 @@ package body Builder_Facility_Module.Scripts is
          Extra_Args := GNAT.OS_Lib.Argument_String_To_List
            (Nth_Arg (Data, 2, ""));
 
-         Launch_Target (Kernel       => Kernel,
-                        Registry     => Registry,
+         Launch_Target (Builder      => Builder,
                         Target_Name  => Build_File_Target,
                         Mode_Name    => "",
                         Force_File   => Info,
@@ -355,8 +353,7 @@ package body Builder_Facility_Module.Scripts is
 
       elsif Command = "check_syntax" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Launch_Target (Kernel       => Kernel,
-                        Registry     => Registry,
+         Launch_Target (Builder      => Builder,
                         Target_Name  => Check_Syntax_Target,
                         Force_File   => Info,
                         Mode_Name    => "",
@@ -369,8 +366,7 @@ package body Builder_Facility_Module.Scripts is
 
       elsif Command = "check_semantic" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Launch_Target (Kernel       => Kernel,
-                        Registry     => Registry,
+         Launch_Target (Builder      => Builder,
                         Target_Name  => Check_Semantic_Target,
                         Force_File   => Info,
                         Mode_Name    => "",

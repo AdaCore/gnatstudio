@@ -27,10 +27,9 @@ with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
-with GPS.Kernel;
-with Build_Configurations;  use Build_Configurations;
 with Commands;              use Commands;
 with Commands.Interactive;  use Commands.Interactive;
+with Build_Command_Utils;   use Build_Command_Utils;
 
 package Build_Command_Manager is
 
@@ -45,8 +44,7 @@ package Build_Command_Manager is
    --  Default means that the target default should be enforced
 
    procedure Launch_Target
-     (Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
+     (Builder     : Builder_Context;
       Target_Name : String;
       Mode_Name   : String;
       Force_File  : Virtual_File;
@@ -84,10 +82,9 @@ package Build_Command_Manager is
    type Build_Command is new Interactive_Command with record
       Target_Name  : Unbounded_String;
       Main         : Virtual_File;
-      Registry     : Build_Config_Registry_Access;
-      Kernel       : GPS.Kernel.Kernel_Handle;
       Dialog       : Dialog_Mode;
       Quiet        : Boolean;
+      Builder      : Builder_Context;
    end record;
    type Build_Command_Access is access all Build_Command'Class;
 
@@ -99,8 +96,7 @@ package Build_Command_Manager is
 
    procedure Create
      (Item        : out Build_Command_Access;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
+      Builder     : Builder_Context;
       Target_Name : String;
       Main        : Virtual_File;
       Quiet       : Boolean;
@@ -119,10 +115,9 @@ package Build_Command_Manager is
       Target_Name  : Unbounded_String;
       Target_Type  : Unbounded_String;
       Main         : Natural;
-      Registry     : Build_Config_Registry_Access;
-      Kernel       : GPS.Kernel.Kernel_Handle;
       Dialog       : Dialog_Mode;
       Quiet        : Boolean;
+      Builder      : Builder_Context;
    end record;
    type Build_Main_Command_Access is access all Build_Main_Command'Class;
 
@@ -134,8 +129,7 @@ package Build_Command_Manager is
 
    procedure Create
      (Item        : out Build_Main_Command_Access;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
+      Builder     : Builder_Context;
       Target_Name : String;
       Target_Type : String;
       Main        : Natural;

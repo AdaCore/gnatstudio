@@ -21,7 +21,9 @@
 --
 --  See spec of Builder_Facility_Module for an overview of the build system.
 
+with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded.Hash;
 
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
@@ -33,9 +35,11 @@ with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 
+with GPS.Kernel;
 with GPS_Preferences_Types; use GPS_Preferences_Types;
 
 with Build_Configurations;  use Build_Configurations;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 
 package Build_Command_Utils is
 
@@ -74,6 +78,9 @@ package Build_Command_Utils is
    --  The returned argument_list should be freed by the caller
 
    type Abstract_Build_Command_Adapter is abstract tagged private;
+   --  This type provides values to expand macros in command arguments.
+   --  Actual expansion done in Expand_Command_Line subprogram
+
    type Abstract_Build_Command_Adapter_Access is access all
       Abstract_Build_Command_Adapter'Class;
 
@@ -226,6 +233,123 @@ package Build_Command_Utils is
    --  fills in one call all members handled by Abstract_Build_Command_Adapter
    --  getters.
 
+   type Builder_Context_Record is tagged limited private;
+   --  Builder context stores set of last main for launched targets and
+   --  background identifier for last launched command.
+   type Builder_Context is access all Builder_Context_Record;
+
+   procedure Initialize
+     (Self     : access Builder_Context_Record'Class;
+      Kernel   : GPS.Kernel.Kernel_Handle;
+      Registry : Build_Config_Registry_Access);
+   --  Initialize Builder_Context_Record members
+
+   function Registry
+     (Self : access Builder_Context_Record)
+      return Build_Config_Registry_Access;
+   --  Return build config registry associated with context
+
+   function Kernel
+     (Self : access Builder_Context_Record)
+      return GPS.Kernel.Kernel_Handle;
+   --  Return kernel associated with context
+
+   ------------------
+   -- Build Output --
+   ------------------
+
+   procedure Append_To_Build_Output
+     (Self       : access Builder_Context_Record;
+      Line       : String;
+      Target     : String;
+      Shadow     : Boolean;
+      Background : Boolean);
+   --  Register Line as part of the current compilation output
+   --  Shadow indicates whether to add it to the normal or the shadow output
+
+   function Get_Build_Output
+     (Self       : access Builder_Context_Record;
+      Target     : String;
+      Shadow     : Boolean;
+      Background : Boolean) return Unbounded_String;
+   --  Return the last build output.
+   --  Shadow indicates whether to get the normal or the shadow output
+   --  If Target is null, get all output in the category.
+
+   procedure Clear_Build_Output
+     (Self       : access Builder_Context_Record;
+      Shadow     : Boolean;
+      Background : Boolean);
+   --  Clear all saved build output
+
+   package Target_Outputs is new Ada.Containers.Hashed_Maps
+     (Unbounded_String, Unbounded_String, Ada.Strings.Unbounded.Hash, "=");
+
+   function Clear_All_Build_Output
+     (Self       : access Builder_Context_Record;
+      Shadow     : Boolean;
+      Background : Boolean) return Target_Outputs.Cursor;
+
+   -----------------
+   -- Latest main --
+   -----------------
+
+   --  Storing the latest Main on which a target was launched is useful
+   --  for launching background commands working on mains
+
+   procedure Set_Last_Main
+     (Self   : access Builder_Context_Record;
+      Target : String;
+      Main   : Virtual_File);
+   function Get_Last_Main
+     (Self   : access Builder_Context_Record;
+      Target : String) return Virtual_File;
+   --  Get/Set the last main that was actually used when launching a manual
+   --  build for Target
+
+   function Get_List_Of_Modes
+     (Kernel   : GPS.Kernel.Kernel_Handle;
+      Registry : Build_Config_Registry_Access;
+      Model    : String) return GNAT.OS_Lib.Argument_List;
+   --  Return the list of modes in which to build a target. This means
+   --  the current mode, and any shadow mode pertaining to this model.
+   --  Caller must free the result;
+
+   --------------------------
+   -- Background build ids --
+   --------------------------
+
+   --  For background builds, we do not want to erase the messages of build N-1
+   --  until the end of build N, since that would create annoying highlighting
+   --  removal and additions as the user types. To support this we introduce
+   --  the notion of background build ID.
+
+   function Previous_Background_Build_Id
+     (Self : access Builder_Context_Record) return String;
+   --  Return the ID of the previous background build
+
+   function Current_Background_Build_Id
+     (Self : access Builder_Context_Record) return String;
+   --  Return the ID of the current background build
+
+   procedure Background_Build_Finished (Self : access Builder_Context_Record);
+   --  Inform the module that a background build has finished
+
+   procedure Background_Build_Started
+     (Self    : access Builder_Context_Record;
+      Command : Scheduled_Command_Access);
+   --  Inform the module that a background build has started, controlled by
+   --  Command.
+
+   ----------------------
+   -- Background build --
+   ----------------------
+
+   procedure Interrupt_Background_Build (Self : access Builder_Context_Record);
+   --  Interrupt the currently running background build
+
+   procedure Destroy (Self : access Builder_Context_Record);
+   --  Cleanup internal data
 private
 
    type Abstract_Build_Command_Adapter is abstract tagged record
@@ -241,6 +365,30 @@ private
       Trusted_Mode_Preference : Boolean;
       Execute_Command_Preference : Unbounded_String;
       Multi_Language_Builder : Multi_Language_Builder_Policy;
+   end record;
+
+   package Files is new Ada.Containers.Hashed_Maps
+     (Unbounded_String, Virtual_File, Ada.Strings.Unbounded.Hash, "=");
+
+   type Target_Output_Type is
+     (Normal_Output, Background_Output, Shadow_Output);
+
+   type Target_Output_Array is array (Target_Output_Type) of
+     Target_Outputs.Map;
+
+   type Builder_Context_Record is tagged limited record
+      Kernel : GPS.Kernel.Kernel_Handle;
+      --  Kernel handle
+      Registry : Build_Config_Registry_Access;
+      --  Build Config Registry
+      Last_Mains : Files.Map;
+      --  The last launched main
+      Background_Build_ID      : Integer := 0;
+      --  The ID of the current background build.
+      Background_Build_Command : Scheduled_Command_Access;
+      --  The command holding the background build.
+      Outputs : Target_Output_Array;
+      --  Save output for target builds
    end record;
 
 end Build_Command_Utils;

@@ -43,8 +43,6 @@ with Commands.Interactive;        use Commands.Interactive;
 with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
-with Build_Command_Utils;           use Build_Command_Utils;
-
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -70,9 +68,6 @@ with Build_Command_Manager;     use Build_Command_Manager;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Commands.Builder;          use Commands.Builder;
 with XML_Utils;                 use XML_Utils;
-
-with Ada.Containers.Hashed_Maps;
-with Ada.Strings.Unbounded.Hash;
 
 with GPS.Kernel.Tools_Output;   use GPS.Kernel.Tools_Output;
 
@@ -124,18 +119,6 @@ package body Builder_Facility_Module is
    package Unbounded_String_List is new Ada.Containers.Doubly_Linked_Lists
      (Unbounded_String);
 
-   package Target_Outputs is new Ada.Containers.Hashed_Maps
-     (Unbounded_String, Unbounded_String, Ada.Strings.Unbounded.Hash, "=");
-
-   type Target_Output_Type is
-     (Normal_Output, Background_Output, Shadow_Output);
-
-   type Target_Output_Array is array (Target_Output_Type) of
-     Target_Outputs.Map;
-
-   package Files is new Ada.Containers.Hashed_Maps
-     (Unbounded_String, Virtual_File, Ada.Strings.Unbounded.Hash, "=");
-
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
    with record
@@ -165,29 +148,19 @@ package body Builder_Facility_Module is
       --  The set of menu items that need to be removed when reloading the
       --  targets
 
-      Outputs : Target_Output_Array;
-
       Build_Count : Natural := 0;
       --  The number of builds currently running
-
-      Background_Build_ID : Integer := 1;
-      --  The ID of the current background build.
-
-      Background_Build_Command : Scheduled_Command_Access;
-      --  The command holding the background build.
 
       Prevent_Save_Reentry : Boolean := False;
       --  Used to prevent cases where a compilation is triggered "on file save"
       --  and the "file save" is caused by another compilation
-
-      Last_Mains : Files.Map;
-      --  The last launched main
 
       Output_Chopper   : aliased Output_Choppers.Output_Parser_Fabric;
       Text_Splitter    : aliased Text_Splitters.Output_Parser_Fabric;
       UTF8_Converter   : aliased UTF8_Converters.Output_Parser_Fabric;
       Progress_Parser  : aliased Progress_Parsers.Output_Parser_Fabric;
 
+      Builder          : aliased Builder_Context_Record;
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -506,10 +479,7 @@ package body Builder_Facility_Module is
 
    overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
-      for T in Target_Output_Type loop
-         Module.Outputs (T).Clear;
-      end loop;
-
+      Module.Builder.Destroy;
       Free (Module.Registry);
    end Destroy;
 
@@ -539,7 +509,7 @@ package body Builder_Facility_Module is
          --  Register the "build main number x"-like actions
 
          for J in 1 .. 4 loop
-            Create (M, Get_Kernel, Builder_Module_ID.Registry, N,
+            Create (M, Builder_Module_ID.Builder'Access, N,
                     To_String (Get_Properties (T).Target_Type), J,
                     False, Default);
             Set_Unbounded_String (Action, N & (-" Number") & J'Img);
@@ -555,8 +525,7 @@ package body Builder_Facility_Module is
          end loop;
       else
          Create
-           (C, Get_Kernel,
-            Builder_Module_ID.Registry, N, No_File, False, Default);
+           (C, Builder_Module_ID.Builder'Access, N, No_File, False, Default);
 
          Register_Action (Kernel      => Get_Kernel,
                           Name        => Name,
@@ -695,13 +664,7 @@ package body Builder_Facility_Module is
            (Category, Builder_Message_Flags);
       end if;
 
-      if Shadow then
-         Builder_Module_ID.Outputs (Shadow_Output).Clear;
-      elsif Background then
-         Builder_Module_ID.Outputs (Background_Output).Clear;
-      else
-         Builder_Module_ID.Outputs (Normal_Output).Clear;
-      end if;
+      Builder_Module_ID.Builder.Clear_Build_Output (Shadow, Background);
    end Clear_Compilation_Output;
 
    --------------------
@@ -933,7 +896,7 @@ package body Builder_Facility_Module is
          --  build errors, do not launch a background build.
 
          if Has_Category
-           (Get_Messages_Container (Get_Kernel), Error_Category)
+           (Get_Messages_Container (Kernel), Error_Category)
          then
             return;
          end if;
@@ -946,7 +909,7 @@ package body Builder_Facility_Module is
       declare
          P : Project_Type;
       begin
-         P := Get_Registry (Get_Kernel).Tree.Info (File).Project;
+         P := Get_Registry (Kernel).Tree.Info (File).Project;
 
          --  No project was found for the file: this is not a source file, so
          --  return now.
@@ -964,8 +927,7 @@ package body Builder_Facility_Module is
            or else (not Saved
                     and then Get_Properties (T).Launch_Mode = In_Background)
          then
-            Launch_Target (Kernel       => Kernel_Handle (Kernel),
-                           Registry     => Builder_Module_ID.Registry,
+            Launch_Target (Builder      => Builder_Module_ID.Builder'Access,
                            Target_Name  => Get_Name (T),
                            Mode_Name    => "",
                            Force_File   => File,
@@ -1148,8 +1110,7 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Widget);
    begin
       Launch_Target
-        (Get_Kernel,
-         Builder_Module_ID.Registry,
+        (Builder_Module_ID.Builder'Access,
          To_String (Data.Target),
          "",
          No_File,
@@ -1171,8 +1132,7 @@ package body Builder_Facility_Module is
    begin
       if Data /= null then
          Launch_Target
-           (Get_Kernel,
-            Builder_Module_ID.Registry,
+           (Builder_Module_ID.Builder'Access,
             To_String (Target_And_Main (Data.all).Target),
             "",
             No_File,
@@ -1346,8 +1306,7 @@ package body Builder_Facility_Module is
       begin
          Create
            (C,
-            Get_Kernel,
-            Builder_Module_ID.Registry,
+            Builder_Module_ID.Builder'Access,
             Name,
             Main,
             False,
@@ -1595,13 +1554,8 @@ package body Builder_Facility_Module is
       if Console = null then
          Console := Get_Build_Console (Kernel, Shadow, Background, True);
 
-         if Shadow then
-            C := Builder_Module_ID.Outputs (Shadow_Output).First;
-         elsif Background then
-            C := Builder_Module_ID.Outputs (Background_Output).First;
-         else
-            C := Builder_Module_ID.Outputs (Normal_Output).First;
-         end if;
+         C := Builder_Module_ID.Builder.Clear_All_Build_Output
+           (Shadow, Background);
 
          while Target_Outputs.Has_Element (C) loop
             Insert (Console,
@@ -1735,6 +1689,11 @@ package body Builder_Facility_Module is
       --  Initialise the registry
       Builder_Module_ID.Registry := Create (Log'Access);
 
+      Initialize
+        (Builder_Module_ID.Builder'Access,
+         Kernel_Handle (Kernel),
+         Builder_Module_ID.Registry);
+
       Register_Module
         (Module      => Builder_Module_ID,
          Kernel      => Kernel,
@@ -1850,168 +1809,14 @@ package body Builder_Facility_Module is
       return Builder_Module_ID.Registry;
    end Registry;
 
-   ----------------------------
-   -- Append_To_Build_Output --
-   ----------------------------
+   -------------
+   -- Builder --
+   -------------
 
-   procedure Append_To_Build_Output
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Line       : String;
-      Target     : String;
-      Shadow     : Boolean;
-      Background : Boolean)
-   is
-      pragma Unreferenced (Kernel);
-
-      Inserted : Boolean := True;
-      C : Target_Outputs.Cursor;
-      T : Target_Output_Type;
-      use Target_Outputs;
+   function Builder return Builder_Context is
    begin
-      if Builder_Module_ID /= null then
-         if Shadow then
-            T := Shadow_Output;
-
-         elsif Background then
-            T := Background_Output;
-
-         else
-            T := Normal_Output;
-         end if;
-
-         C := Builder_Module_ID.Outputs (T).Find
-           (To_Unbounded_String (Target));
-
-         if C = Target_Outputs.No_Element then
-            Builder_Module_ID.Outputs (T).Insert
-              (Key       => To_Unbounded_String (Target),
-               New_Item  => To_Unbounded_String (Line & ASCII.LF),
-               Position  => C,
-               Inserted  => Inserted);
-         else
-            declare
-               procedure Local_Append (Key : Unbounded_String;
-                                       E   : in out Unbounded_String);
-               --  Auxiliary subprogram to append to an unbounded string
-               --  in place in the container.
-
-               ------------------
-               -- Local_Append --
-               ------------------
-
-               procedure Local_Append (Key : Unbounded_String;
-                                       E   : in out Unbounded_String)
-               is
-                  pragma Unreferenced (Key);
-               begin
-                  Append (E, Line & ASCII.LF);
-               end Local_Append;
-            begin
-               Builder_Module_ID.Outputs (T).Update_Element
-                 (C, Local_Append'Access);
-            end;
-         end if;
-      end if;
-   end Append_To_Build_Output;
-
-   ----------------------
-   -- Get_Build_Output --
-   ----------------------
-
-   function Get_Build_Output
-     (Target     : String;
-      Shadow     : Boolean;
-      Background : Boolean) return Unbounded_String
-   is
-      Output : Target_Output_Type;
-   begin
-      if Shadow then
-         Output := Shadow_Output;
-      elsif Background then
-         Output := Background_Output;
-      else
-         Output := Normal_Output;
-      end if;
-
-      if Target = "" then
-         declare
-            C : Target_Outputs.Cursor;
-            R : Unbounded_String;
-         begin
-            C := Builder_Module_ID.Outputs (Output).First;
-
-            while Target_Outputs.Has_Element (C) loop
-               R := R & Target_Outputs.Element (C);
-               Target_Outputs.Next (C);
-            end loop;
-
-            return R;
-         end;
-      else
-         return Builder_Module_ID.Outputs (Output).Element
-           (To_Unbounded_String (Target));
-      end if;
-   end Get_Build_Output;
-
-   -----------------------
-   -- Get_List_Of_Modes --
-   -----------------------
-
-   function Get_List_Of_Modes
-     (Model : String) return GNAT.OS_Lib.Argument_List
-   is
-      Result : Argument_List
-        (1 .. Number_Of_Modes (Builder_Module_ID.Registry));
-      Index  : Natural;
-      --  The first available element in Result;
-
-      Current : constant String := Get_Kernel.Get_Build_Mode;
-
-      use Mode_Map;
-      C : Mode_Map.Cursor;
-      Mode : Mode_Record;
-   begin
-      if Result'Length = 0 then
-         return (1 => new String'(""));
-      end if;
-
-      --  The first mode is the one selected in the combo
-
-      Result (1) := new String'(Current);
-      Index := 2;
-
-      --  Find all the shadow modes
-
-      C := First_Mode (Builder_Module_ID.Registry);
-
-      while Has_Element (C) loop
-         Mode := Element (C);
-
-         if Mode.Shadow
-           and then Mode.Active
-         then
-            declare
-               use Model_List;
-               C2 : Model_List.Cursor;
-            begin
-               C2 := Mode.Models.First;
-
-               while Has_Element (C2) loop
-                  if Element (C2).Model = Model then
-                     Result (Index) := new String'(To_String (Mode.Name));
-                     Index := Index + 1;
-                  end if;
-
-                  Next (C2);
-               end loop;
-            end;
-         end if;
-
-         Next (C);
-      end loop;
-
-      return Result (1 .. Index - 1);
-   end Get_List_Of_Modes;
+      return Builder_Module_ID.Builder'Access;
+   end Builder;
 
    -------------------
    -- Activate_Mode --
@@ -2062,94 +1867,5 @@ package body Builder_Facility_Module is
          Recompute_View (Get_Kernel);
       end if;
    end On_Build_Mode_Changed;
-
-   ----------------------------------
-   -- Previous_Background_Build_Id --
-   ----------------------------------
-
-   function Previous_Background_Build_Id return String is
-   begin
-      return Integer'Image (Builder_Module_ID.Background_Build_ID - 1);
-   end Previous_Background_Build_Id;
-
-   ---------------------------------
-   -- Current_Background_Build_Id --
-   ---------------------------------
-
-   function Current_Background_Build_Id return String is
-   begin
-      return Integer'Image (Builder_Module_ID.Background_Build_ID);
-   end Current_Background_Build_Id;
-
-   -------------------------------
-   -- Background_Build_Finished --
-   -------------------------------
-
-   procedure Background_Build_Finished is
-   begin
-      if Builder_Module_ID.Background_Build_ID = Integer'Last then
-         --  Very very unlikely, but just in case.
-         Builder_Module_ID.Background_Build_ID := 1;
-      else
-         Builder_Module_ID.Background_Build_ID :=
-           Builder_Module_ID.Background_Build_ID + 1;
-      end if;
-
-      Builder_Module_ID.Background_Build_Command := null;
-   end Background_Build_Finished;
-
-   ------------------------------
-   -- Background_Build_Started --
-   ------------------------------
-
-   procedure Background_Build_Started (Command : Scheduled_Command_Access) is
-   begin
-      Builder_Module_ID.Background_Build_Command := Command;
-   end Background_Build_Started;
-
-   --------------------------------
-   -- Interrupt_Background_Build --
-   --------------------------------
-
-   procedure Interrupt_Background_Build is
-   begin
-      if Builder_Module_ID.Background_Build_Command /= null then
-         Get_Messages_Container (Builder_Module_ID.Get_Kernel).Remove_Category
-           (Current_Background_Build_Id, Background_Message_Flags);
-
-         Interrupt_Queue
-           (Get_Kernel,
-            Command_Access (Builder_Module_ID.Background_Build_Command));
-         Builder_Module_ID.Background_Build_Command := null;
-      end if;
-   end Interrupt_Background_Build;
-
-   -------------------
-   -- Set_Last_Main --
-   -------------------
-
-   procedure Set_Last_Main (Target : String; Main : Virtual_File) is
-      Key : constant Unbounded_String := To_Unbounded_String (Target);
-   begin
-      Builder_Module_ID.Last_Mains.Exclude (Key);
-      Builder_Module_ID.Last_Mains.Insert (Key, Main);
-   end Set_Last_Main;
-
-   -------------------
-   -- Get_Last_Main --
-   -------------------
-
-   function Get_Last_Main (Target : String) return Virtual_File is
-      Key : constant Unbounded_String := To_Unbounded_String (Target);
-      Cur : Files.Cursor;
-      use Files;
-   begin
-      Cur := Builder_Module_ID.Last_Mains.Find (Key);
-      if Cur /= Files.No_Element then
-         return Element (Cur);
-      else
-         return No_File;
-      end if;
-   end Get_Last_Main;
 
 end Builder_Facility_Module;

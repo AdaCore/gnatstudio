@@ -28,6 +28,7 @@ with GPS.Kernel.Messages;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Extending_Environments;    use Extending_Environments;
 with GPS.Kernel.Tools_Output;   use GPS.Kernel.Tools_Output;
+with Build_Command_Utils;       use Build_Command_Utils;
 
 package Commands.Builder is
 
@@ -73,6 +74,8 @@ package Commands.Builder is
 
       Output_Parser  : Tools_Output_Parser_Access;
       --  Chain of output parsers
+
+      Builder        : Builder_Context;
    end record;
 
    type Build_Callback_Data_Access is access all Build_Callback_Data'Class;

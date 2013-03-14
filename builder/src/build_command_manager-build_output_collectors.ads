@@ -18,7 +18,7 @@
 --  Declare parser to collect builder output.
 
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
-with GPS.Kernel;
+with Build_Command_Utils;              use Build_Command_Utils;
 with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
 
 package Build_Command_Manager.Build_Output_Collectors is
@@ -35,7 +35,7 @@ package Build_Command_Manager.Build_Output_Collectors is
 
    procedure Set
      (Self       : access Output_Parser_Fabric;
-      Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Builder    : Builder_Context;
       Target     : String;
       Shadow     : Boolean;
       Background : Boolean);
@@ -52,14 +52,14 @@ private
 
    type Output_Parser_Fabric is
      new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
-      Kernel     : GPS.Kernel.Kernel_Handle;
+      Builder    : Builder_Context;
       Target     : Unbounded_String;
       Shadow     : Boolean;
       Background : Boolean;
    end record;
 
    type Build_Output_Collector is new Tools_Output_Parser with record
-      Kernel     : GPS.Kernel.Kernel_Handle;
+      Builder    : Builder_Context;
       Target     : Unbounded_String;
       Shadow     : Boolean;
       Background : Boolean;

@@ -32,8 +32,6 @@ with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Legacy;       use GPS.Kernel.Messages.Legacy;
 with GPS.Intl;                         use GPS.Intl;
 
-with Builder_Facility_Module;          use Builder_Facility_Module;
-
 package body Commands.Builder is
 
    Shell_Env : constant String := Getenv ("SHELL").all;
@@ -147,9 +145,10 @@ package body Commands.Builder is
          --  the new background build is completed.
 
          Get_Messages_Container (Data.Kernel).Remove_Category
-           (Previous_Background_Build_Id, Background_Message_Flags);
+           (Previous_Background_Build_Id (Build_Data.Builder),
+            Background_Message_Flags);
 
-         Background_Build_Finished;
+         Background_Build_Finished (Build_Data.Builder);
       end if;
 
       --  ??? should also pass the Status value to Compilation_Finished
@@ -216,7 +215,8 @@ package body Commands.Builder is
          --  If we are starting a "real" build, remove messages from the
          --  current background build
          Get_Messages_Container (Kernel).Remove_Category
-           (Previous_Background_Build_Id, Background_Message_Flags);
+           (Data.Builder.Previous_Background_Build_Id,
+            Background_Message_Flags);
       end if;
 
       if not Data.Shadow and Show_Command then
@@ -239,7 +239,8 @@ package body Commands.Builder is
       then
          if not Data.Quiet then
             Append_To_Build_Output
-              (Kernel, To_Display_String (CL), To_String (Data.Target_Name),
+              (Data.Builder,
+               To_Display_String (CL), To_String (Data.Target_Name),
                Data.Shadow, Data.Background);
          end if;
 
@@ -287,7 +288,7 @@ package body Commands.Builder is
          --  ??? check value of Success
 
          if Success and then Background then
-            Background_Build_Started (Created_Command);
+            Background_Build_Started (Data.Builder, Created_Command);
          end if;
       end if;
 

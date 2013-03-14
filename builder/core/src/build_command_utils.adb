@@ -28,8 +28,11 @@ with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
 with GPS.Intl;                    use GPS.Intl;
 with GPS.Kernel.Shared_Macros; use GPS.Kernel.Shared_Macros;
+with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
 with Traces;                      use Traces;
 with GNAT.Strings;
+with Commands; use Commands;
+with Commands.Builder;
 
 package body Build_Command_Utils is
 
@@ -363,6 +366,39 @@ package body Build_Command_Utils is
       Adapter.Multi_Language_Builder := Multi_Language_Builder;
 
    end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self     : access Builder_Context_Record'Class;
+      Kernel   : GPS.Kernel.Kernel_Handle;
+      Registry : Build_Config_Registry_Access) is
+   begin
+      Self.Kernel := Kernel;
+      Self.Registry := Registry;
+   end Initialize;
+
+   --------------------------------
+   -- Interrupt_Background_Build --
+   --------------------------------
+
+   procedure Interrupt_Background_Build
+     (Self : access Builder_Context_Record) is
+   begin
+      if Self.Background_Build_Command /= null then
+         Get_Messages_Container (Self.Kernel).Remove_Category
+           (Self.Current_Background_Build_Id,
+            Commands.Builder.Background_Message_Flags);
+
+         GPS.Kernel.Task_Manager.Interrupt_Queue
+           (Self.Kernel,
+            Command_Access (Self.Background_Build_Command));
+
+         Self.Background_Build_Command := null;
+      end if;
+   end Interrupt_Background_Build;
 
    -------------------------
    -- Get_Kernel_Registry --
@@ -1149,6 +1185,17 @@ package body Build_Command_Utils is
       end if;
    end Console_Insert;
 
+   --------------
+   -- Registry --
+   --------------
+
+   function Registry
+     (Self : access Builder_Context_Record)
+      return Build_Config_Registry_Access is
+   begin
+      return Self.Registry;
+   end Registry;
+
    --------------------------------------------
    -- Remove_Error_Builder_Message_From_File --
    --------------------------------------------
@@ -1282,6 +1329,17 @@ package body Build_Command_Utils is
       return Args_Length (Result.Args);
    end Args_Length;
 
+   ------------
+   -- Kernel --
+   ------------
+
+   function Kernel
+     (Self : access Builder_Context_Record)
+      return GPS.Kernel.Kernel_Handle is
+   begin
+      return Self.Kernel;
+   end Kernel;
+
    -------------
    -- Nth_Arg --
    -------------
@@ -1317,5 +1375,299 @@ package body Build_Command_Utils is
    begin
       return To_String (Result.Status);
    end Status;
+
+   -------------------
+   -- Set_Last_Main --
+   -------------------
+
+   procedure Set_Last_Main
+     (Self   : access Builder_Context_Record;
+      Target : String;
+      Main   : Virtual_File)
+   is
+      Key : constant Unbounded_String := To_Unbounded_String (Target);
+   begin
+      Self.Last_Mains.Include (Key, Main);
+   end Set_Last_Main;
+
+   -------------------
+   -- Get_Last_Main --
+   -------------------
+
+   function Get_Last_Main
+     (Self   : access Builder_Context_Record;
+      Target : String) return Virtual_File
+   is
+      Key : constant Unbounded_String := To_Unbounded_String (Target);
+      Cur : Files.Cursor;
+      use Files;
+   begin
+      Cur := Self.Last_Mains.Find (Key);
+      if Cur /= Files.No_Element then
+         return Element (Cur);
+      else
+         return No_File;
+      end if;
+   end Get_Last_Main;
+
+   -----------------------
+   -- Get_List_Of_Modes --
+   -----------------------
+
+   function Get_List_Of_Modes
+     (Kernel   : GPS.Kernel.Kernel_Handle;
+      Registry : Build_Config_Registry_Access;
+      Model    : String) return GNAT.OS_Lib.Argument_List
+   is
+      Result : Argument_List (1 .. Number_Of_Modes (Registry));
+      Index  : Natural;
+      --  The first available element in Result;
+
+      Current : constant String := Kernel.Get_Build_Mode;
+
+      use Mode_Map;
+      C : Mode_Map.Cursor;
+      Mode : Mode_Record;
+   begin
+      if Result'Length = 0 then
+         return (1 => new String'(""));
+      end if;
+
+      --  The first mode is the one selected in the combo
+
+      Result (1) := new String'(Current);
+      Index := 2;
+
+      --  Find all the shadow modes
+
+      C := First_Mode (Registry);
+
+      while Has_Element (C) loop
+         Mode := Element (C);
+
+         if Mode.Shadow
+           and then Mode.Active
+         then
+            declare
+               use Model_List;
+               C2 : Model_List.Cursor;
+            begin
+               C2 := Mode.Models.First;
+
+               while Has_Element (C2) loop
+                  if Element (C2).Model = Model then
+                     Result (Index) := new String'(To_String (Mode.Name));
+                     Index := Index + 1;
+                  end if;
+
+                  Next (C2);
+               end loop;
+            end;
+         end if;
+
+         Next (C);
+      end loop;
+
+      return Result (1 .. Index - 1);
+   end Get_List_Of_Modes;
+
+   ---------------------------------
+   -- Current_Background_Build_Id --
+   ---------------------------------
+
+   function Current_Background_Build_Id
+     (Self : access Builder_Context_Record) return String is
+   begin
+      return Integer'Image (Self.Background_Build_ID);
+   end Current_Background_Build_Id;
+
+   ----------------------------------
+   -- Previous_Background_Build_Id --
+   ----------------------------------
+
+   function Previous_Background_Build_Id
+     (Self : access Builder_Context_Record) return String is
+   begin
+      return Integer'Image (Self.Background_Build_ID - 1);
+   end Previous_Background_Build_Id;
+
+   -------------------------------
+   -- Background_Build_Finished --
+   -------------------------------
+
+   procedure Background_Build_Finished
+     (Self : access Builder_Context_Record) is
+   begin
+      if Self.Background_Build_ID = Integer'Last then
+         --  Very very unlikely, but just in case.
+         Self.Background_Build_ID := 1;
+      else
+         Self.Background_Build_ID := Self.Background_Build_ID + 1;
+      end if;
+
+      Self.Background_Build_Command := null;
+   end Background_Build_Finished;
+
+   ------------------------------
+   -- Background_Build_Started --
+   ------------------------------
+
+   procedure Background_Build_Started
+     (Self    : access Builder_Context_Record;
+      Command : Scheduled_Command_Access) is
+   begin
+      Self.Background_Build_Command := Command;
+   end Background_Build_Started;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Self : access Builder_Context_Record) is
+   begin
+      for T in Target_Output_Type loop
+         Self.Outputs (T).Clear;
+      end loop;
+   end Destroy;
+
+   ----------------------------
+   -- Append_To_Build_Output --
+   ----------------------------
+
+   procedure Append_To_Build_Output
+     (Self       : access Builder_Context_Record;
+      Line       : String;
+      Target     : String;
+      Shadow     : Boolean;
+      Background : Boolean)
+   is
+      Inserted : Boolean := True;
+      C : Target_Outputs.Cursor;
+      T : Target_Output_Type;
+      use Target_Outputs;
+   begin
+      if Shadow then
+         T := Shadow_Output;
+
+      elsif Background then
+         T := Background_Output;
+
+      else
+         T := Normal_Output;
+      end if;
+
+      C := Self.Outputs (T).Find
+        (To_Unbounded_String (Target));
+
+      if C = Target_Outputs.No_Element then
+         Self.Outputs (T).Insert
+           (Key       => To_Unbounded_String (Target),
+            New_Item  => To_Unbounded_String (Line & ASCII.LF),
+            Position  => C,
+            Inserted  => Inserted);
+      else
+         declare
+            procedure Local_Append (Key : Unbounded_String;
+                                    E   : in out Unbounded_String);
+            --  Auxiliary subprogram to append to an unbounded string
+            --  in place in the container.
+
+            ------------------
+            -- Local_Append --
+            ------------------
+
+            procedure Local_Append (Key : Unbounded_String;
+                                    E   : in out Unbounded_String)
+            is
+               pragma Unreferenced (Key);
+            begin
+               Append (E, Line & ASCII.LF);
+            end Local_Append;
+         begin
+            Self.Outputs (T).Update_Element
+              (C, Local_Append'Access);
+         end;
+      end if;
+   end Append_To_Build_Output;
+
+   ----------------------
+   -- Get_Build_Output --
+   ----------------------
+
+   function Get_Build_Output
+     (Self       : access Builder_Context_Record;
+      Target     : String;
+      Shadow     : Boolean;
+      Background : Boolean) return Unbounded_String
+   is
+      Output : Target_Output_Type;
+   begin
+      if Shadow then
+         Output := Shadow_Output;
+      elsif Background then
+         Output := Background_Output;
+      else
+         Output := Normal_Output;
+      end if;
+
+      if Target = "" then
+         declare
+            C : Target_Outputs.Cursor;
+            R : Unbounded_String;
+         begin
+            C := Self.Outputs (Output).First;
+
+            while Target_Outputs.Has_Element (C) loop
+               R := R & Target_Outputs.Element (C);
+               Target_Outputs.Next (C);
+            end loop;
+
+            return R;
+         end;
+      else
+         return Self.Outputs (Output).Element
+           (To_Unbounded_String (Target));
+      end if;
+   end Get_Build_Output;
+
+   ------------------------
+   -- Clear_Build_Output --
+   ------------------------
+
+   procedure Clear_Build_Output
+     (Self       : access Builder_Context_Record;
+      Shadow     : Boolean;
+      Background : Boolean) is
+   begin
+      if Shadow then
+         Self.Outputs (Shadow_Output).Clear;
+      elsif Background then
+         Self.Outputs (Background_Output).Clear;
+      else
+         Self.Outputs (Normal_Output).Clear;
+      end if;
+   end Clear_Build_Output;
+
+   ----------------------------
+   -- Clear_All_Build_Output --
+   ----------------------------
+
+   function Clear_All_Build_Output
+     (Self       : access Builder_Context_Record;
+      Shadow     : Boolean;
+      Background : Boolean) return Target_Outputs.Cursor
+   is
+      C : Target_Outputs.Cursor;
+   begin
+      if Shadow then
+         C := Self.Outputs (Shadow_Output).First;
+      elsif Background then
+         C := Self.Outputs (Background_Output).First;
+      else
+         C := Self.Outputs (Normal_Output).First;
+      end if;
+
+      return C;
+   end Clear_All_Build_Output;
 
 end Build_Command_Utils;

@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Builder_Facility_Module;
-
 package body Build_Command_Manager.Build_Output_Collectors is
 
    ------------
@@ -30,7 +28,7 @@ package body Build_Command_Manager.Build_Output_Collectors is
    begin
       return new Build_Output_Collector'
         (Child      => Child,
-         Kernel     => Self.Kernel,
+         Builder    => Self.Builder,
          Shadow     => Self.Shadow,
          Target     => Self.Target,
          Background => Self.Background);
@@ -52,9 +50,8 @@ package body Build_Command_Manager.Build_Output_Collectors is
          Last := Last - 1;
       end if;
 
-      Builder_Facility_Module.Append_To_Build_Output
-        (Self.Kernel,
-         Item (Item'First .. Last),
+      Self.Builder.Append_To_Build_Output
+        (Item (Item'First .. Last),
          To_String (Self.Target),
          Self.Shadow,
          Self.Background);
@@ -68,12 +65,12 @@ package body Build_Command_Manager.Build_Output_Collectors is
 
    procedure Set
      (Self       : access Output_Parser_Fabric;
-      Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Builder    : Builder_Context;
       Target     : String;
       Shadow     : Boolean;
       Background : Boolean) is
    begin
-      Self.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
+      Self.Builder := Builder;
       Self.Target := To_Unbounded_String (Target);
       Self.Shadow := Shadow;
       Self.Background := Background;

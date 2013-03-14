@@ -19,8 +19,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
-with Build_Command_Utils;         use Build_Command_Utils;
-with Builder_Facility_Module;     use Builder_Facility_Module;
+with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Commands.Builder;            use Commands.Builder;
 with GPS.Kernel;                  use GPS.Kernel;
@@ -63,14 +62,14 @@ package body Build_Command_Manager is
      (Argument_List, Argument_List_Access);
 
    type Build_Command_Adapter is new Abstract_Build_Command_Adapter with record
-      Kernel         : GPS.Kernel.Kernel_Handle;
       Context        : Selection_Context;
       Background_Env : Extending_Environment;
+      Builder        : Builder_Context;
    end record;
    type Build_Command_Adapter_Access is access all Build_Command_Adapter;
 
    function Expand_Command_Line
-     (Kernel     : GPS.Kernel.Kernel_Handle;
+     (Builder    : Builder_Context;
       CL         : Argument_List;
       Target     : Target_Access;
       Server     : Server_Type;
@@ -141,8 +140,9 @@ package body Build_Command_Manager is
      (Adapter : Build_Command_Adapter;
       Target : Target_Access) return Virtual_File
    is
-      Kernel : constant GPS.Kernel.Kernel_Handle := Adapter.Kernel;
-      Last : constant Virtual_File := Get_Last_Main (Get_Name (Target));
+      Kernel : constant GPS.Kernel.Kernel_Handle := Adapter.Builder.Kernel;
+      Last : constant Virtual_File := Get_Last_Main
+        (Adapter.Builder, Get_Name (Target));
    begin
       if Last = No_File then
          --  There is no last-launched main: compute the list of
@@ -171,7 +171,7 @@ package body Build_Command_Manager is
                             GNATCOLL.VFS.Create
                               (+Mains.List (1).Tuple (2).Str);
             begin
-               Set_Last_Main (Get_Name (Target), The_Main);
+               Set_Last_Main (Adapter.Builder, Get_Name (Target), The_Main);
 
                return The_Main;
             end;
@@ -200,7 +200,7 @@ package body Build_Command_Manager is
    function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array is
    begin
-      return Scenario_Variables (Adapter.Kernel);
+      return Scenario_Variables (Adapter.Builder.Kernel);
    end Get_Scenario_Variables;
 
    ----------------
@@ -242,7 +242,7 @@ package body Build_Command_Manager is
          when Verbose =>
             M := Verbose;
       end case;
-      Adapter.Kernel.Insert (Text, Add_LF, M);
+      Adapter.Builder.Kernel.Insert (Text, Add_LF, M);
    end Console_Insert;
 
    --------------------------------------------
@@ -254,7 +254,7 @@ package body Build_Command_Manager is
      (Adapter : Build_Command_Adapter;
       File     : Virtual_File) is
    begin
-      Get_Messages_Container (Adapter.Kernel).Remove_File
+      Get_Messages_Container (Adapter.Builder.Kernel).Remove_File
                        (Error_Category, File, Builder_Message_Flags);
    end Remove_Error_Builder_Message_From_File;
 
@@ -277,7 +277,7 @@ package body Build_Command_Manager is
    -------------------------
 
    function Expand_Command_Line
-     (Kernel     : GPS.Kernel.Kernel_Handle;
+     (Builder    : Builder_Context;
       CL         : Argument_List;
       Target     : Target_Access;
       Server     : Server_Type;
@@ -288,17 +288,18 @@ package body Build_Command_Manager is
       Simulate   : Boolean;
       Background_Env : Extending_Environment) return Expansion_Result
    is
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      Context : constant Selection_Context :=
+        Get_Current_Context (Builder.Kernel);
       Adapter : Build_Command_Adapter_Access := new Build_Command_Adapter;
       Res     : Expansion_Result;
    begin
-      Adapter.Kernel := Kernel;
       Adapter.Background_Env := Background_Env;
       Adapter.Context := Context;
+      Adapter.Builder := Builder;
 
       Initialize
         (Adapter.all,
-         Get_Registry (Kernel),
+         Get_Registry (Builder.Kernel),
          Get_Project (Get_Kernel (Context)),
          Get_Kernel (Context).Get_Toolchains_Manager,
          File_Information (Context),
@@ -319,8 +320,7 @@ package body Build_Command_Manager is
    -------------------
 
    procedure Launch_Target
-     (Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
+     (Builder     : Builder_Context;
       Target_Name : String;
       Mode_Name   : String;
       Force_File  : Virtual_File;
@@ -332,7 +332,7 @@ package body Build_Command_Manager is
       Background  : Boolean;
       Directory   : Virtual_File := No_File)
    is
-      Prj            : constant Project_Type := Get_Project (Kernel);
+      Prj            : constant Project_Type := Get_Project (Builder.Kernel);
       Dir            : Virtual_File := No_File;
       T              : Target_Access;
       Full           : Expansion_Result;
@@ -358,7 +358,7 @@ package body Build_Command_Manager is
       is
 
          Subdir : constant Filesystem_String :=
-            Get_Mode_Subdir (Registry, Mode);
+            Get_Mode_Subdir (Builder.Registry, Mode);
          Server : Server_Type;
          Data   : Build_Callback_Data_Access;
          Background_Env : Extending_Environment;
@@ -374,11 +374,11 @@ package body Build_Command_Manager is
          function Expand_Cmd_Line (CL : String) return String is
             CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
             Mode_Args : Argument_List_Access :=
-                          Apply_Mode_Args (Registry, Get_Model (T), Mode,
-                                           CL_Args.all);
+              Apply_Mode_Args (Builder.Registry, Get_Model (T), Mode,
+                               CL_Args.all);
             Res       : constant Expansion_Result :=
                           Expand_Command_Line
-                            (Kernel,
+                            (Builder,
                              Mode_Args.all & All_Extra_Args.all,
                              T,
                              Server,
@@ -402,7 +402,7 @@ package body Build_Command_Manager is
             All_Extra_Args := new Argument_List (1 .. 0);
          end if;
 
-         Server := Get_Server (Registry, Mode, T);
+         Server := Get_Server (Builder.Registry, Mode, T);
 
          if (not Shadow)
            and then (not Background)
@@ -417,10 +417,10 @@ package body Build_Command_Manager is
          then
             --  Use the single target dialog to get the unexpanded command line
             Single_Target_Dialog
-              (Registry        => Registry,
-               Parent          => Get_Main_Window (Kernel),
+              (Registry        => Builder.Registry,
+               Parent          => Get_Main_Window (Builder.Kernel),
                Target          => Target_Name,
-               History         => Get_History (Kernel),
+               History         => Get_History (Builder.Kernel),
                Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,
                Result          => Command_Line);
 
@@ -432,11 +432,11 @@ package body Build_Command_Manager is
 
             declare
                CL_Mode : Argument_List_Access :=
-                           Apply_Mode_Args
-                             (Registry, Get_Model (T), Mode, Command_Line.all);
+                 Apply_Mode_Args (Builder.Registry, Get_Model (T),
+                                  Mode, Command_Line.all);
             begin
                Full := Expand_Command_Line
-                 (Kernel, CL_Mode.all & All_Extra_Args.all, T,
+                 (Builder, CL_Mode.all & All_Extra_Args.all, T,
                   Server, Force_File, Main, Subdir, False, False,
                   Background_Env);
                Free (Command_Line);
@@ -446,15 +446,15 @@ package body Build_Command_Manager is
          else
             --  Get the unexpanded command line from the target
             if Background then
-               Background_Env :=
-                 Create_Extending_Environment (Kernel, Force_File, Server);
+               Background_Env := Create_Extending_Environment
+                 (Builder.Kernel, Force_File, Server);
             end if;
 
             declare
                CL      : constant Argument_List :=
-                           Get_Command_Line_Unexpanded (Registry, T);
+                 Get_Command_Line_Unexpanded (Builder.Registry, T);
                CL_Mode : Argument_List_Access :=
-                           Apply_Mode_Args (Registry, Get_Model (T), Mode, CL);
+                 Apply_Mode_Args (Builder.Registry, Get_Model (T), Mode, CL);
             begin
                --  Sanity check that the command line contains at least one
                --  item (the command itself). It can happen that this is not
@@ -462,7 +462,7 @@ package body Build_Command_Manager is
 
                if CL_Mode'Length = 0 then
                   Insert
-                    (Kernel,
+                    (Builder.Kernel,
                      -"Command line is empty for target: " & Target_Name,
                      Mode => Error);
                   Free (CL_Mode);
@@ -474,11 +474,11 @@ package body Build_Command_Manager is
 
                if All_Extra_Args = null then
                   Full := Expand_Command_Line
-                    (Kernel, CL_Mode.all, T, Server, Force_File, Main,
+                    (Builder, CL_Mode.all, T, Server, Force_File, Main,
                      Subdir, Background, False, Background_Env);
                else
                   Full := Expand_Command_Line
-                    (Kernel, CL_Mode.all & All_Extra_Args.all, T,
+                    (Builder, CL_Mode.all & All_Extra_Args.all, T,
                      Server, Force_File, Main, Subdir, Background, False,
                      Background_Env);
                end if;
@@ -508,6 +508,7 @@ package body Build_Command_Manager is
 
          Data := new Build_Callback_Data;
          Data.Target_Name := To_Unbounded_String (Target_Name);
+         Data.Builder := Builder;
 
          --  For background compilation synthetic messages category name is
          --  used. For non-background compilation target's messages category is
@@ -516,8 +517,7 @@ package body Build_Command_Manager is
 
          if Background then
             Data.Category_Name :=
-              To_Unbounded_String (Current_Background_Build_Id);
-
+              To_Unbounded_String (Builder.Current_Background_Build_Id);
          else
             Data.Category_Name := Get_Messages_Category (T);
 
@@ -526,7 +526,7 @@ package body Build_Command_Manager is
             end if;
 
             if Main /= No_File then
-               Set_Last_Main (Target_Name, Main);
+               Set_Last_Main (Builder, Target_Name, Main);
             end if;
          end if;
 
@@ -540,7 +540,7 @@ package body Build_Command_Manager is
          if Is_Run (T) then
             if not Data.Quiet then
                Console := Get_Build_Console
-                 (Kernel, Shadow, Background, False,
+                 (Builder.Kernel, Shadow, Background, False,
                   "Run: " & Main.Display_Base_Name);
             end if;
 
@@ -548,17 +548,17 @@ package body Build_Command_Manager is
             --  it doesn't need Output_Parser
          else
             Console := Get_Build_Console
-              (Kernel, Shadow, Background, False);
+              (Builder.Kernel, Shadow, Background, False);
 
             --  Configure output parser fabrics
             Output_Collector.Set
-              (Kernel     => Kernel,
+              (Builder    => Builder,
                Target     => Target_Name,
                Shadow     => Shadow,
                Background => Background);
 
             Location_Parser.Set
-              (Kernel            => Kernel,
+              (Kernel            => Builder.Kernel,
                Category          => To_String (Data.Category_Name),
                Styles            => GPS.Styles.UI.Builder_Styles,
                Show_In_Locations => not Background);
@@ -567,7 +567,7 @@ package body Build_Command_Manager is
          end if;
 
          Launch_Build_Command
-           (Kernel, Full.Args, Data, Server,
+           (Builder.Kernel, Full.Args, Data, Server,
             Synchronous, Uses_Shell (T),
             Console, Dir);
 
@@ -580,23 +580,24 @@ package body Build_Command_Manager is
 
       --  If there is already a background build running, interrupt it
       --  and clean up before launching a new build.
-      Interrupt_Background_Build;
+      Interrupt_Background_Build (Builder);
 
       --  Get the target
 
-      T := Get_Target_From_Name (Registry, Target_Name);
+      T := Get_Target_From_Name (Builder.Registry, Target_Name);
 
       if T = null then
          --  This should never happen
          Insert
-           (Kernel,
+           (Builder.Kernel,
             (-"Build target not found in registry: ") & Target_Name);
          return;
       end if;
 
       if Mode_Name = "" then
          declare
-            Modes : Argument_List := Get_List_Of_Modes (Get_Model (T));
+            Modes : Argument_List := Get_List_Of_Modes
+              (Builder.Kernel, Builder.Registry, Get_Model (T));
          begin
             for J in Modes'Range loop
                --  All modes after Modes'First are Shadow modes
@@ -625,9 +626,7 @@ package body Build_Command_Manager is
       pragma Unreferenced (Context);
    begin
       Launch_Target
-        (Kernel       => Command.Kernel,
-         Registry     => Command.Registry,
-         Target_Name  => To_String (Command.Target_Name),
+        (Target_Name  => To_String (Command.Target_Name),
          Mode_Name    => "",
          Force_File   => No_File,
          Extra_Args   => null,
@@ -635,7 +634,8 @@ package body Build_Command_Manager is
          Dialog       => Command.Dialog,
          Synchronous  => False,
          Background   => False,
-         Main         => Command.Main);
+         Main         => Command.Main,
+         Builder      => Command.Builder);
       return Success;
    end Execute;
 
@@ -645,16 +645,14 @@ package body Build_Command_Manager is
 
    procedure Create
      (Item        : out Build_Command_Access;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
+      Builder     : Builder_Context;
       Target_Name : String;
       Main        : Virtual_File;
       Quiet       : Boolean;
       Dialog      : Dialog_Mode) is
    begin
       Item := new Build_Command;
-      Item.Kernel := Kernel;
-      Item.Registry := Registry;
+      Item.Builder := Builder;
       Item.Target_Name := To_Unbounded_String (Target_Name);
       Item.Main := Main;
       Item.Dialog := Dialog;
@@ -678,14 +676,14 @@ package body Build_Command_Manager is
                        Length => Target_Type'Length,
                        Value  => Target_Type);
       Mains       : Any_Type := Run_Hook_Until_Not_Empty
-        (Command.Kernel,
+        (Command.Builder.Kernel,
          Compute_Build_Targets_Hook,
          Data'Unchecked_Access);
 
    begin
       if Mains.T /= List_Type then
          Insert
-           (Command.Kernel,
+           (Command.Builder.Kernel,
             (-"The command for determining the target type of target " &
              Target_Type & (-" returned a ") & Mains.T'Img
                & (-("but should return a LIST_TYPE "
@@ -697,7 +695,7 @@ package body Build_Command_Manager is
       end if;
 
       if Command.Main not in Mains.List'Range then
-         Insert (Command.Kernel,
+         Insert (Command.Builder.Kernel,
                  (-"This project does not contain") & Command.Main'Img
                  & " " & Target_Type & (-" targets"), Mode => Error);
          Free (Mains);
@@ -705,9 +703,7 @@ package body Build_Command_Manager is
       end if;
 
       Launch_Target
-        (Kernel      => Command.Kernel,
-         Registry    => Command.Registry,
-         Target_Name => To_String (Command.Target_Name),
+        (Target_Name => To_String (Command.Target_Name),
          Mode_Name   => "",
          Force_File  => No_File,
          Extra_Args  => null,
@@ -715,7 +711,8 @@ package body Build_Command_Manager is
          Dialog      => Command.Dialog,
          Synchronous => False,
          Background  => False,
-         Main        => Create (+Mains.List (Command.Main).Tuple (2).Str));
+         Main        => Create (+Mains.List (Command.Main).Tuple (2).Str),
+         Builder     => Command.Builder);
 
       Free (Mains);
       return Success;
@@ -727,8 +724,7 @@ package body Build_Command_Manager is
 
    procedure Create
      (Item        : out Build_Main_Command_Access;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
+      Builder     : Builder_Context;
       Target_Name : String;
       Target_Type : String;
       Main        : Natural;
@@ -737,8 +733,7 @@ package body Build_Command_Manager is
    is
    begin
       Item := new Build_Main_Command;
-      Item.Kernel := Kernel;
-      Item.Registry := Registry;
+      Item.Builder := Builder;
       Set_Unbounded_String (Item.Target_Name, Target_Name);
       Set_Unbounded_String (Item.Target_Type, Target_Type);
       Item.Main := Main;

@@ -101,42 +101,18 @@
 --   The Run... Menu
 --   The loading of Xref
 
-with GNAT.OS_Lib;
 with GPS.Kernel;
 with Build_Configurations;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with Build_Command_Utils; use Build_Command_Utils;
 
 package Builder_Facility_Module is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module
-
-   procedure Append_To_Build_Output
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Line       : String;
-      Target     : String;
-      Shadow     : Boolean;
-      Background : Boolean);
-   --  Register Line as part of the current compilation output
-   --  Shadow indicates whether to add it to the normal or the shadow output
-
-   function Get_Build_Output
-     (Target     : String;
-      Shadow     : Boolean;
-      Background : Boolean) return Unbounded_String;
-   --  Return the last build output.
-   --  Shadow indicates whether to get the normal or the shadow output
-   --  If Target is null, get all output in the category.
-
-   function Get_List_Of_Modes
-     (Model : String) return GNAT.OS_Lib.Argument_List;
-   --  Return the list of modes in which to build a target. This means
-   --  the current mode, and any shadow mode pertaining to this model.
-   --  Caller must free the result;
 
    procedure Activate_Mode (Mode : String; Active : Boolean);
    --  Activate or deactivate Mode.
@@ -148,53 +124,15 @@ package Builder_Facility_Module is
    function Registry return Build_Configurations.Build_Config_Registry_Access;
    --  Return the registry stored in the module
 
+   function Builder return Builder_Context;
+   --  Return the builder context stored in the module
+
    procedure Refresh_Graphical_Elements;
    --  Recompute the menus and toolbar icons, based on the targets described
    --  in the Registry.
 
-   --------------------------
-   -- Background build ids --
-   --------------------------
-
-   --  For background builds, we do not want to erase the messages of build N-1
-   --  until the end of build N, since that would create annoying highlighting
-   --  removal and additions as the user types. To support this we introduce
-   --  the notion of background build ID.
-
-   function Previous_Background_Build_Id return String;
-   --  Return the ID of the previous background build
-
-   function Current_Background_Build_Id return String;
-   --  Return the ID of the current background build
-
-   procedure Background_Build_Finished;
-   --  Inform the module that a background build has finished
-
-   procedure Background_Build_Started (Command : Scheduled_Command_Access);
-   --  Inform the module that a background build has started, controlled by
-   --  Command.
-
    procedure Save_Targets;
    procedure Load_Targets;
    --  Save/Load the targets in the user-defined XML
-
-   -----------------
-   -- Latest main --
-   -----------------
-
-   --  Storing the latest Main on which a target was launched is useful
-   --  for launching background commands working on mains
-
-   procedure Set_Last_Main (Target : String; Main : Virtual_File);
-   function Get_Last_Main (Target : String) return Virtual_File;
-   --  Get/Set the last main that was actually used when launching a manual
-   --  build for Target
-
-   ----------------------
-   -- Background build --
-   ----------------------
-
-   procedure Interrupt_Background_Build;
-   --  Interrupt the currently running background build
 
 end Builder_Facility_Module;

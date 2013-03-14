@@ -114,12 +114,11 @@ package body Builder_Module is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      pragma Unreferenced (Data);
    begin
       if Command = "compute_xref" then
          Build_Command_Manager.Launch_Target
-           (Kernel,
-            Builder_Facility_Module.Registry,
+           (Builder_Facility_Module.Builder,
             "Build All", "xref",
             GNATCOLL.VFS.No_File,
             Extra_Args  => null,
@@ -131,8 +130,7 @@ package body Builder_Module is
 
       elsif Command = "compute_xref_bg" then
          Build_Command_Manager.Launch_Target
-           (Kernel,
-            Builder_Facility_Module.Registry,
+           (Builder_Facility_Module.Builder,
             "Build All", "xref",
             GNATCOLL.VFS.No_File,
             Extra_Args  => null,
@@ -151,11 +149,11 @@ package body Builder_Module is
    procedure On_Compute_Xref
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Kernel);
       pragma Unreferenced (Object);
    begin
       Build_Command_Manager.Launch_Target
-        (Kernel,
-         Builder_Facility_Module.Registry,
+        (Builder_Facility_Module.Builder,
          "Build All", "xref",
          GNATCOLL.VFS.No_File,
          Extra_Args  => null,
