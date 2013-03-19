@@ -107,7 +107,7 @@ package body Welcome_Page is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Html (Kernel, "gps-tutorial.html");
+      Open_Html (Kernel, "tutorial/index.html");
       return False;
    exception
       when E : others =>
@@ -125,7 +125,7 @@ package body Welcome_Page is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Html (Kernel, "gps.html");
+      Open_Html (Kernel, "users_guide/index.html");
       return False;
    exception
       when E : others =>
