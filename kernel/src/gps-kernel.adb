@@ -1988,6 +1988,18 @@ package body GPS.Kernel is
       return Kernel.Messages.Get_Virtual_Console;
    end Get_Messages_Window;
 
+   ---------------------
+   -- Messages_Window --
+   ---------------------
+
+   overriding function Messages_Window
+     (Self : not null access Kernel_Handle_Record)
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access is
+   begin
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access
+        (Self.Messages);
+   end Messages_Window;
+
    ------------
    -- Insert --
    ------------

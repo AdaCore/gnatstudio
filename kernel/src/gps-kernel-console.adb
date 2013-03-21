@@ -217,6 +217,7 @@ package body GPS.Kernel.Console is
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info)
    is
+      use type Message_Type;
       Console : constant Interactive_Console := Get_Console (Self.Kernel);
       T       : constant Calendar.Time := Calendar.Clock;
    begin

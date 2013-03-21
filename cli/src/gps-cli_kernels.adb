@@ -49,4 +49,17 @@ package body GPS.CLI_Kernels is
       Tree.Load_Empty_Project;
    end Create_Registry;
 
+   ---------------------
+   -- Messages_Window --
+   ---------------------
+
+   overriding function Messages_Window
+     (Self : not null access CLI_Kernel_Record)
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access
+   is
+      pragma Unreferenced (Self);
+   begin
+      return null;
+   end Messages_Window;
+
 end GPS.CLI_Kernels;
