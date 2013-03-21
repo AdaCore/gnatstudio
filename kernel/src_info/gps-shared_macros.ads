@@ -19,7 +19,7 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with Remote;                use Remote;
 
-package GPS.Kernel.Shared_Macros is
+package GPS.Shared_Macros is
 
    function Shared_Macros_Substitute
      (Project_From_Kernel : Project_Type;
@@ -52,4 +52,4 @@ package GPS.Kernel.Shared_Macros is
    --  builder target command line expansion.
    --  It uses only parameters available from GNATbench.
 
-end GPS.Kernel.Shared_Macros;
+end GPS.Shared_Macros;

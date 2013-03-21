@@ -27,12 +27,9 @@ with GNATCOLL.Templates;          use GNATCOLL.Templates;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
 with GPS.Intl;                    use GPS.Intl;
-with GPS.Kernel.Shared_Macros; use GPS.Kernel.Shared_Macros;
-with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
+with GPS.Shared_Macros;           use GPS.Shared_Macros;
 with Traces;                      use Traces;
 with GNAT.Strings;
-with Commands; use Commands;
-with Commands.Builder;
 
 package body Build_Command_Utils is
 
@@ -373,7 +370,7 @@ package body Build_Command_Utils is
 
    procedure Initialize
      (Self     : access Builder_Context_Record'Class;
-      Kernel   : GPS.Kernel.Kernel_Handle;
+      Kernel   : GPS.Core_Kernels.Core_Kernel;
       Registry : Build_Config_Registry_Access) is
    begin
       Self.Kernel := Kernel;
@@ -385,19 +382,11 @@ package body Build_Command_Utils is
    --------------------------------
 
    procedure Interrupt_Background_Build
-     (Self : access Builder_Context_Record) is
+     (Self    : access Builder_Context_Record;
+      Command : out Command_Access) is
    begin
-      if Self.Background_Build_Command /= null then
-         Get_Messages_Container (Self.Kernel).Remove_Category
-           (Self.Current_Background_Build_Id,
-            Commands.Builder.Background_Message_Flags);
-
-         GPS.Kernel.Task_Manager.Interrupt_Queue
-           (Self.Kernel,
-            Command_Access (Self.Background_Build_Command));
-
-         Self.Background_Build_Command := null;
-      end if;
+      Command := Self.Background_Build_Command;
+      Self.Background_Build_Command := null;
    end Interrupt_Background_Build;
 
    -------------------------
@@ -1335,7 +1324,7 @@ package body Build_Command_Utils is
 
    function Kernel
      (Self : access Builder_Context_Record)
-      return GPS.Kernel.Kernel_Handle is
+      return GPS.Core_Kernels.Core_Kernel is
    begin
       return Self.Kernel;
    end Kernel;
@@ -1415,15 +1404,13 @@ package body Build_Command_Utils is
    -----------------------
 
    function Get_List_Of_Modes
-     (Kernel   : GPS.Kernel.Kernel_Handle;
+     (Current  : String;
       Registry : Build_Config_Registry_Access;
       Model    : String) return GNAT.OS_Lib.Argument_List
    is
       Result : Argument_List (1 .. Number_Of_Modes (Registry));
       Index  : Natural;
       --  The first available element in Result;
-
-      Current : constant String := Kernel.Get_Build_Mode;
 
       use Mode_Map;
       C : Mode_Map.Cursor;
@@ -1514,7 +1501,7 @@ package body Build_Command_Utils is
 
    procedure Background_Build_Started
      (Self    : access Builder_Context_Record;
-      Command : Scheduled_Command_Access) is
+      Command : Command_Access) is
    begin
       Self.Background_Build_Command := Command;
    end Background_Build_Started;

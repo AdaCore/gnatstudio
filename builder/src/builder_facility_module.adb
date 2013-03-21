@@ -75,6 +75,7 @@ with Builder_Facility_Module.Output_Choppers;
 with Builder_Facility_Module.Text_Splitters;
 with Builder_Facility_Module.UTF8_Converters;
 with Commands.Builder.Progress_Parsers;
+with GPS.Core_Kernels;
 
 package body Builder_Facility_Module is
 
@@ -1691,7 +1692,7 @@ package body Builder_Facility_Module is
 
       Initialize
         (Builder_Module_ID.Builder'Access,
-         Kernel_Handle (Kernel),
+         GPS.Core_Kernels.Core_Kernel (Kernel),
          Builder_Module_ID.Registry);
 
       Register_Module

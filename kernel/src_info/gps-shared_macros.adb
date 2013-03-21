@@ -24,7 +24,7 @@ with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with String_Utils;            use String_Utils;
 with GNATCOLL.Templates;      use GNATCOLL.Templates;
 
-package body GPS.Kernel.Shared_Macros is
+package body GPS.Shared_Macros is
 
    function Shared_Macros_Substitute
      (Project_From_Kernel : Project_Type;
@@ -255,4 +255,4 @@ package body GPS.Kernel.Shared_Macros is
       return "";
    end Shared_Macros_Substitute;
 
-end GPS.Kernel.Shared_Macros;
+end GPS.Shared_Macros;

@@ -288,7 +288,8 @@ package body Commands.Builder is
          --  ??? check value of Success
 
          if Success and then Background then
-            Background_Build_Started (Data.Builder, Created_Command);
+            Background_Build_Started
+              (Data.Builder, Command_Access (Created_Command));
          end if;
       end if;
 

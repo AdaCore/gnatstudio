@@ -35,11 +35,11 @@ with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 
-with GPS.Kernel;
+with GPS.Core_Kernels;
 with GPS_Preferences_Types; use GPS_Preferences_Types;
 
 with Build_Configurations;  use Build_Configurations;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with Commands;              use Commands;
 
 package Build_Command_Utils is
 
@@ -240,7 +240,7 @@ package Build_Command_Utils is
 
    procedure Initialize
      (Self     : access Builder_Context_Record'Class;
-      Kernel   : GPS.Kernel.Kernel_Handle;
+      Kernel   : GPS.Core_Kernels.Core_Kernel;
       Registry : Build_Config_Registry_Access);
    --  Initialize Builder_Context_Record members
 
@@ -251,7 +251,7 @@ package Build_Command_Utils is
 
    function Kernel
      (Self : access Builder_Context_Record)
-      return GPS.Kernel.Kernel_Handle;
+      return GPS.Core_Kernels.Core_Kernel;
    --  Return kernel associated with context
 
    ------------------
@@ -308,11 +308,11 @@ package Build_Command_Utils is
    --  build for Target
 
    function Get_List_Of_Modes
-     (Kernel   : GPS.Kernel.Kernel_Handle;
+     (Current  : String;
       Registry : Build_Config_Registry_Access;
       Model    : String) return GNAT.OS_Lib.Argument_List;
    --  Return the list of modes in which to build a target. This means
-   --  the current mode, and any shadow mode pertaining to this model.
+   --  the Current mode, and any shadow mode pertaining to this model.
    --  Caller must free the result;
 
    --------------------------
@@ -337,7 +337,7 @@ package Build_Command_Utils is
 
    procedure Background_Build_Started
      (Self    : access Builder_Context_Record;
-      Command : Scheduled_Command_Access);
+      Command : Command_Access);
    --  Inform the module that a background build has started, controlled by
    --  Command.
 
@@ -345,7 +345,9 @@ package Build_Command_Utils is
    -- Background build --
    ----------------------
 
-   procedure Interrupt_Background_Build (Self : access Builder_Context_Record);
+   procedure Interrupt_Background_Build
+     (Self    : access Builder_Context_Record;
+      Command : out Command_Access);
    --  Interrupt the currently running background build
 
    procedure Destroy (Self : access Builder_Context_Record);
@@ -377,7 +379,7 @@ private
      Target_Outputs.Map;
 
    type Builder_Context_Record is tagged limited record
-      Kernel : GPS.Kernel.Kernel_Handle;
+      Kernel : GPS.Core_Kernels.Core_Kernel;
       --  Kernel handle
       Registry : Build_Config_Registry_Access;
       --  Build Config Registry
@@ -385,7 +387,7 @@ private
       --  The last launched main
       Background_Build_ID      : Integer := 0;
       --  The ID of the current background build.
-      Background_Build_Command : Scheduled_Command_Access;
+      Background_Build_Command : Command_Access;
       --  The command holding the background build.
       Outputs : Target_Output_Array;
       --  Save output for target builds
