@@ -99,12 +99,6 @@ package body Docgen2 is
    function Current (Context : Analysis_Context) return Context_Stack_Element;
    --  Context stack manipulation
 
-   procedure Remove_Element
-     (List   : in out Files_List.Vector;
-      Cursor : in out Files_List.Cursor);
-   --  Removes an element, and place the cursor just after the current
-   --  postition
-
    type Custom_File_Record is record
       Name     : Unbounded_String;
       Filename : Unbounded_String;
@@ -253,31 +247,37 @@ package body Docgen2 is
    function Location_Image (Loc : General_Location) return String;
    --  Return the location formated the gnat way: "file:line:col"
 
-   procedure Get_All_Comments
-     (Lang     : Language_Access;
-      Buffer   : String;
-      Comments : out Comments_List.Vector);
-   --  Retrieve all comment blocks from a file
-
    type Href_Kind is
      (API_Href, Spec_Href, Body_Href);
 
-   function Get_Ref
+   --------------
+   -- Gen_Href --
+   --------------
+
+   function Gen_Href
      (Backend : Backend_Handle;
       EInfo   : Entity_Info;
-      Kind    : Href_Kind) return String;
-   --  Get the anchor to EInfo.
+      To_API  : Boolean;
+      To_Spec : Boolean;
+      To_Body : Boolean;
+      Name    : String) return String
+   is
+      function Get_Ref
+        (Backend : Backend_Handle;
+         EInfo   : Entity_Info;
+         Kind    : Href_Kind) return String;
+      --  Get the anchor to EInfo.
 
-   -------------
-   -- Get_Ref --
-   -------------
+      -------------
+      -- Get_Ref --
+      -------------
 
-   function Get_Ref
-     (Backend : Backend_Handle;
-      EInfo   : Entity_Info;
-      Kind    : Href_Kind) return String is
-   begin
-      case Kind is
+      function Get_Ref
+        (Backend : Backend_Handle;
+         EInfo   : Entity_Info;
+         Kind    : Href_Kind) return String is
+      begin
+         case Kind is
          when API_Href =>
             --  Href to API file
             return Backend.To_Href
@@ -299,21 +299,11 @@ package body Docgen2 is
                "src_" & EInfo.Location.Body_Loc.File.Base_Name,
                Pkg_Nb   => 1);
 
-      end case;
-   end Get_Ref;
+         end case;
+      end Get_Ref;
 
-   --------------
-   -- Gen_Href --
-   --------------
+      --  Local variables
 
-   function Gen_Href
-     (Backend : Backend_Handle;
-      EInfo   : Entity_Info;
-      To_API  : Boolean;
-      To_Spec : Boolean;
-      To_Body : Boolean;
-      Name    : String) return String
-   is
       Kind    : Href_Kind;
       N_Links : Natural := 0;
 
@@ -1392,79 +1382,6 @@ package body Docgen2 is
               Total    => Total);
    end Progress;
 
-   ----------------------
-   -- Get_All_Comments --
-   ----------------------
-
-   procedure Get_All_Comments
-     (Lang     : Language_Access;
-      Buffer   : String;
-      Comments : out Comments_List.Vector)
-   is
-      Last_Entity : Language_Entity := Normal_Text;
-
-      function CB
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean;
-      --  Callback used when parsing the file.
-
-      --------
-      -- CB --
-      --------
-
-      function CB
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean
-      is
-         pragma Unreferenced (Partial_Entity);
-
-      begin
-         if Entity = Comment_Text or else Entity = Annotated_Comment_Text then
-            --  ??? would be nice to handle annotated comments specially
-            --  in particular SPARK annotations
-            Add_Comment_Line
-              (Sloc_Start, Sloc_End,
-               Comment_Block
-                 (Lang, Buffer (Sloc_Start.Index .. Sloc_End.Index),
-                  Comment => False,
-                  Clean   => False),
-               Force_New => Last_Entity /= Comment_Text,
-               List      => Comments);
-            Last_Entity := Comment_Text;
-         else
-            Last_Entity := Entity;
-         end if;
-
-         return False;
-
-      exception
-         when E : others =>
-            Trace (Exception_Handle, E);
-            return True;
-      end CB;
-
-   begin
-      Parse_Entities (Lang, Buffer, CB'Unrestricted_Access);
-   end Get_All_Comments;
-
-   --------------------
-   -- Remove_Element --
-   --------------------
-
-   procedure Remove_Element
-     (List   : in out Files_List.Vector;
-      Cursor : in out Files_List.Cursor)
-   is
-      Prev : constant Files_List.Extended_Index := To_Index (Cursor);
-   begin
-      List.Delete (Cursor);
-      Cursor := List.To_Cursor (Prev);
-   end Remove_Element;
-
    -------------
    -- Execute --
    -------------
@@ -1472,6 +1389,95 @@ package body Docgen2 is
    overriding function Execute
      (Command : access Docgen_Command) return Command_Return_Type
    is
+      procedure Get_All_Comments
+        (Lang     : Language_Access;
+         Buffer   : String;
+         Comments : out Comments_List.Vector);
+      --  Retrieve all comment blocks from a file
+
+      procedure Remove_Element
+        (List   : in out Files_List.Vector;
+         Cursor : in out Files_List.Cursor);
+      --  Removes an element, and place the cursor just after the current
+      --  position
+
+      ----------------------
+      -- Get_All_Comments --
+      ----------------------
+
+      procedure Get_All_Comments
+        (Lang     : Language_Access;
+         Buffer   : String;
+         Comments : out Comments_List.Vector)
+      is
+         Last_Entity : Language_Entity := Normal_Text;
+
+         function CB
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean;
+         --  Callback used when parsing the file.
+
+         --------
+         -- CB --
+         --------
+
+         function CB
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean
+         is
+            pragma Unreferenced (Partial_Entity);
+
+         begin
+            if Entity = Comment_Text
+              or else Entity = Annotated_Comment_Text
+            then
+               --  ??? would be nice to handle annotated comments specially
+               --  in particular SPARK annotations
+               Add_Comment_Line
+                 (Sloc_Start, Sloc_End,
+                  Comment_Block
+                    (Lang, Buffer (Sloc_Start.Index .. Sloc_End.Index),
+                     Comment => False,
+                     Clean   => False),
+                  Force_New => Last_Entity /= Comment_Text,
+                  List      => Comments);
+               Last_Entity := Comment_Text;
+            else
+               Last_Entity := Entity;
+            end if;
+
+            return False;
+
+         exception
+            when E : others =>
+               Trace (Exception_Handle, E);
+               return True;
+         end CB;
+
+      begin
+         Parse_Entities (Lang, Buffer, CB'Unrestricted_Access);
+      end Get_All_Comments;
+
+      --------------------
+      -- Remove_Element --
+      --------------------
+
+      procedure Remove_Element
+        (List   : in out Files_List.Vector;
+         Cursor : in out Files_List.Cursor)
+      is
+         Prev : constant Files_List.Extended_Index := To_Index (Cursor);
+      begin
+         List.Delete (Cursor);
+         Cursor := List.To_Cursor (Prev);
+      end Remove_Element;
+
+      --  Local variables
+
       File_EInfo    : Entity_Info;
       File_Buffer   : GNAT.Strings.String_Access;
       Database    : constant General_Xref_Database := Command.Kernel.Databases;
