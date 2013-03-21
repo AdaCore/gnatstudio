@@ -636,181 +636,167 @@ package body Docgen2 is
    -----------------------
 
    procedure Analyse_Construct (Cmd : Docgen_Object) is
-      Db            : constant General_Xref_Database := Cmd.Kernel.Databases;
-      Context       : Analysis_Context renames Cmd.Analysis_Ctxt;
-      Construct     : access Simple_Construct_Information;
-      Entity        : General_Entity := No_General_Entity;
-      E_Info        : Entity_Info;
-      Lang          : constant Language_Access :=
-                        Get_Language_From_File
-                          (Context.Language, Context.File);
-      Body_Location : General_Location;
-      Context_Elem  : constant Context_Stack_Element := Current (Context);
+      Context      : Analysis_Context renames Cmd.Analysis_Ctxt;
+      Context_Elem : constant Context_Stack_Element := Current (Context);
 
-      function Create_Xref
-        (E             : General_Entity;
-         Use_Full_Name : Boolean := False)
+      function Get_Entity
+        (Construct : access Simple_Construct_Information)
+         return Entity_Info;
+      --  Retrieve and decorate the entity associated with Construct (if any);
+      --  otherwise returns null.
+
+      function Ignore
+        (Construct : access Simple_Construct_Information)
+         return Boolean;
+      --  Return true if the construct must be ignored
+
+      ----------------
+      -- Get_Entity --
+      ----------------
+
+      function Get_Entity
+        (Construct : access Simple_Construct_Information)
+         return Entity_Info
+      is
+         Db : constant General_Xref_Database := Cmd.Kernel.Databases;
+
+         function Create_EInfo
+           (Cat        : Language_Category;
+            Loc        : General_Location;
+            Short_Name : String) return Entity_Info;
+         --  Create a new Entity Info and update the Entity info list
+
+         function Create_Xref
+           (E             : General_Entity;
+            Entity        : General_Entity;
+            Use_Full_Name : Boolean := False)
          return Cross_Ref;
-      function Create_Xref
-        (Name : String;
-         Loc  : General_Location;
-         Xref : Entity_Info := null) return Cross_Ref;
-      --  Create a new Cross-Ref and update the Cross-Refs list
+         function Create_Xref
+           (Name : String;
+            Loc  : General_Location;
+            Xref : Entity_Info := null) return Cross_Ref;
+         --  Create a new Cross-Ref and update the Cross-Refs list
 
-      function Create_EInfo
-        (Cat        : Language_Category;
-         Loc        : General_Location;
-         Short_Name : String) return Entity_Info;
-      --  Create a new Entity Info and update the Entity info list
+         ------------------
+         -- Create_EInfo --
+         ------------------
 
-      -----------------
-      -- Create_Xref --
-      -----------------
+         function Create_EInfo
+           (Cat        : Language_Category;
+            Loc        : General_Location;
+            Short_Name : String) return Entity_Info
+         is
+            E_Info : Entity_Info;
+            Vect   : Entity_Info_Vector.Vector;
 
-      function Create_Xref
-        (Name : String;
-         Loc  : General_Location;
-         Xref : Entity_Info := null) return Cross_Ref
-      is
-         N_Xref : Cross_Ref;
-      begin
-         if Loc = No_Location then
-            return null;
-         end if;
+         begin
+            pragma Assert (Loc /= No_Location);
 
-         N_Xref := new Cross_Ref_Record'
-           (Name          => new String'(Name),
-            Location      => Loc,
-            Xref          => Xref,
-            Inherited     => False,
-            Overriding_Op => null);
+            E_Info := new Entity_Info_Record (Category => To_Category (Cat));
+            E_Info.Lang_Category := Cat;
+            E_Info.Short_Name := Db.Symbols.Find (Short_Name);
 
-         if Xref = null then
-            --  To be completed later, so put in Xref_List.
-            Cmd.Xref_List.Append (N_Xref);
-         end if;
-
-         return N_Xref;
-      end Create_Xref;
-
-      -----------------
-      -- Create_Xref --
-      -----------------
-
-      function Create_Xref
-        (E             : General_Entity;
-         Use_Full_Name : Boolean := False)
-         return Cross_Ref
-      is
-         Loc : General_Location;
-         Loc_E : General_Location;
-      begin
-         if E = No_General_Entity then
-            return null;
-         end if;
-
-         Loc := Db.Get_Declaration (E).Loc;
-         Loc_E := Db.Get_Declaration (Entity).Loc;
-
-         --  If the cross ref is in the same file, use a simple name
-         --  If in another file, then use the fully qualified name
-         if not Use_Full_Name
-           and then Loc.File = Loc_E.File
-         then
-            return Create_Xref (Db.Get_Name (E), Loc);
-         else
-            return Create_Xref (Db.Qualified_Name (E), Loc);
-         end if;
-      end Create_Xref;
-
-      ------------------
-      -- Create_EInfo --
-      ------------------
-
-      function Create_EInfo
-        (Cat        : Language_Category;
-         Loc        : General_Location;
-         Short_Name : String) return Entity_Info
-      is
-         E_Info : Entity_Info;
-         Vect   : Entity_Info_Vector.Vector;
-
-      begin
-         pragma Assert (Loc /= No_Location);
-
-         E_Info := new Entity_Info_Record (Category => To_Category (Cat));
-         E_Info.Lang_Category := Cat;
-         E_Info.Short_Name := Db.Symbols.Find (Short_Name);
-
-         if Context_Elem.Pkg_Entity /= null then
-            E_Info.Location := (Spec_Loc  => Loc,
-                                Body_Loc  => No_Location,
-                                Pkg_Nb    => Context_Elem.Pkg_Entity.Pkg_Nb);
-         else
-            E_Info.Location := (Spec_Loc => Loc,
-                                Body_Loc => No_Location,
-                                Pkg_Nb   => 1);
-         end if;
-
-         Cmd.EInfos.Include (Loc, E_Info);
-
-         if E_Info.Category /= Cat_Parameter
-           and then E_Info.Category /= Cat_Unknown
-         then
-            if Cmd.EInfos_By_Name.Contains (Short_Name) then
-               Vect := Cmd.EInfos_By_Name.Element (Short_Name);
-               Vect.Append (E_Info);
-               Cmd.EInfos_By_Name.Replace (Short_Name, Vect);
+            if Context_Elem.Pkg_Entity /= null then
+               E_Info.Location :=
+                 (Spec_Loc  => Loc,
+                  Body_Loc  => No_Location,
+                  Pkg_Nb    => Context_Elem.Pkg_Entity.Pkg_Nb);
             else
-               Vect.Append (E_Info);
-               Cmd.EInfos_By_Name.Include (Short_Name, Vect);
+               E_Info.Location :=
+                 (Spec_Loc => Loc,
+                  Body_Loc => No_Location,
+                  Pkg_Nb   => 1);
             end if;
-         end if;
 
-         E_Info.Is_Visible := not Context.In_Body;
+            Cmd.EInfos.Include (Loc, E_Info);
 
-         return E_Info;
-      end Create_EInfo;
+            if E_Info.Category /= Cat_Parameter
+              and then E_Info.Category /= Cat_Unknown
+            then
+               if Cmd.EInfos_By_Name.Contains (Short_Name) then
+                  Vect := Cmd.EInfos_By_Name.Element (Short_Name);
+                  Vect.Append (E_Info);
+                  Cmd.EInfos_By_Name.Replace (Short_Name, Vect);
+               else
+                  Vect.Append (E_Info);
+                  Cmd.EInfos_By_Name.Include (Short_Name, Vect);
+               end if;
+            end if;
 
-   begin
-      --  Exit when no more construct is available
-      if Context.Iter = Null_Construct_Tree_Iterator then
-         return;
-      end if;
+            E_Info.Is_Visible := not Context.In_Body;
 
-      --  If scope has changed, pop the context and return
-      if Context_Elem.Parent_Iter /= Null_Construct_Tree_Iterator
-        and then Get_Parent_Scope (Context.Tree, Context.Iter) /=
-          Context_Elem.Parent_Iter
-      then
-         Pop (Context);
-         return;
-      end if;
+            return E_Info;
+         end Create_EInfo;
 
-      Construct := Get_Construct (Context.Iter);
+         -----------------
+         -- Create_Xref --
+         -----------------
 
-      --  Ignore the private part
-      if Construct.Visibility = Visibility_Private
-        and then not Cmd.Options.Show_Private
-      then
-         Pop (Context);
-         return;
-      end if;
+         function Create_Xref
+           (Name : String;
+            Loc  : General_Location;
+            Xref : Entity_Info := null) return Cross_Ref
+         is
+            N_Xref : Cross_Ref;
+         begin
+            if Loc = No_Location then
+               return null;
+            end if;
 
-      --  Ignoring constructs within <doc_ignore> </doc_ignore>
-      --  Ignoring with, use clauses
-      --  Ignoring parameters, directly handled in subprogram nodes
-      --  Ignoring represenation clauses.
-      --  Ignoring constructs whose category is Unknown
-      --  Ignoring unnamed entities.
-      if not Ignore (Construct.Sloc_Start, Context.Comments)
-        and then Construct.Category not in Dependency_Category
-        and then Construct.Category not in Cat_Exception_Handler .. Cat_Pragma
-        and then Construct.Category /= Cat_Representation_Clause
-        and then Construct.Category /= Cat_Namespace
-        and then Category_Name (Construct.Category) /= ""
-        and then Construct.Name /= No_Symbol
-      then
+            N_Xref := new Cross_Ref_Record'
+              (Name          => new String'(Name),
+               Location      => Loc,
+               Xref          => Xref,
+               Inherited     => False,
+               Overriding_Op => null);
+
+            if Xref = null then
+               --  To be completed later, so put in Xref_List.
+               Cmd.Xref_List.Append (N_Xref);
+            end if;
+
+            return N_Xref;
+         end Create_Xref;
+
+         -----------------
+         -- Create_Xref --
+         -----------------
+
+         function Create_Xref
+           (E             : General_Entity;
+            Entity        : General_Entity;
+            Use_Full_Name : Boolean := False)
+         return Cross_Ref
+         is
+            Loc : General_Location;
+            Loc_E : General_Location;
+         begin
+            if E = No_General_Entity then
+               return null;
+            end if;
+
+            Loc := Db.Get_Declaration (E).Loc;
+            Loc_E := Db.Get_Declaration (Entity).Loc;
+
+            --  If the cross ref is in the same file, use a simple name
+            --  If in another file, then use the fully qualified name
+            if not Use_Full_Name
+              and then Loc.File = Loc_E.File
+            then
+               return Create_Xref (Db.Get_Name (E), Loc);
+            else
+               return Create_Xref (Db.Qualified_Name (E), Loc);
+            end if;
+         end Create_Xref;
+
+         --  Local variables
+
+         Lang   : constant Language_Access :=
+                    Get_Language_From_File (Context.Language, Context.File);
+         E_Info : Entity_Info := null;
+         Entity : General_Entity;
+
+      begin
          --  Try to retrieve the entity declared at Sloc_Entity
          Entity := Docgen2.Utils.Get_Entity
            (Cmd.Kernel,
@@ -843,7 +829,7 @@ package body Docgen2 is
                       Line   => Construct.Sloc_Entity.Line,
                       Column => Basic_Types.Visible_Column_Type
                         (Construct.Sloc_Entity.Column)),
-                    Db.Get_Name (Entity));
+                     Db.Get_Name (Entity));
                   E_Info.Name := Construct.Name;
                   E_Info.Short_Name := E_Info.Name;
                end if;
@@ -867,13 +853,17 @@ package body Docgen2 is
                         Construct.Sloc_End,
                         Context.Comments);
          end if;
-      end if;
 
-      if Entity /= No_General_Entity then
-         Context_Elem.Parent_Entity.Children.Append (E_Info);
+         --  No entity available
+
+         if E_Info = null then
+            return null;
+         end if;
+
+         --  Complete the decoration of this entity
+
          E_Info.Entity_Loc := Construct.Sloc_Entity;
 
-         --  First set values common to all categories
          if Db.Is_Container (Entity) then
             E_Info.Location.Body_Loc := Db.Get_Body (Entity);
          end if;
@@ -916,7 +906,8 @@ package body Docgen2 is
                      if Caller_E /= No_General_Entity
                        and then Db.Is_Subprogram (Caller_E)
                      then
-                        E_Info.Called.Append (Create_Xref (Caller_E));
+                        E_Info.Called.Append
+                          (Create_Xref (Caller_E, Entity));
                      end if;
                   end if;
 
@@ -931,7 +922,7 @@ package body Docgen2 is
                   if Called_E /= No_General_Entity
                     and then Db.Is_Subprogram (Called_E)
                   then
-                     E_Info.Calls.Append (Create_Xref (Called_E));
+                     E_Info.Calls.Append (Create_Xref (Called_E, Entity));
                   end if;
 
                   Next (Calls_Iter);
@@ -988,7 +979,8 @@ package body Docgen2 is
                Renamed_Entity : constant General_Entity :=
                                   Db.Renaming_Of (Entity);
             begin
-               E_Info.Renamed_Entity := Create_Xref (Renamed_Entity);
+               E_Info.Renamed_Entity :=
+                 Create_Xref (Renamed_Entity, Entity);
             end;
          end if;
 
@@ -996,25 +988,32 @@ package body Docgen2 is
          if E_Info.Is_Instantiation then
             declare
                Instantiated_Entity : constant General_Entity :=
-                                       Db.Instance_Of (Entity);
+                 Db.Instance_Of (Entity);
             begin
-               E_Info.Instantiated_Entity := Create_Xref (Instantiated_Entity);
+               E_Info.Instantiated_Entity :=
+                 Create_Xref (Instantiated_Entity, Entity);
             end;
          end if;
 
-         --  Is the entity a partial declaration ?
-         Body_Location := Db.Get_Body (Entity);
+         declare
+            Body_Location : constant General_Location :=
+                              Db.Get_Body (Entity);
 
-         if Body_Location /= No_Location
-           and then Body_Location /= E_Info.Location.Spec_Loc
-           and then Body_Location.File = Context.File
-         then
-            E_Info.Is_Partial := True;
-            E_Info.Full_Declaration :=
-              Create_Xref (Get (E_Info.Short_Name).all, Body_Location);
-         end if;
+         begin
+            --  Is the entity a partial declaration ?
 
-         --  Initialize now category specific parameters
+            if Body_Location /= No_Location
+              and then Body_Location /= E_Info.Location.Spec_Loc
+              and then Body_Location.File = Context.File
+            then
+               E_Info.Is_Partial := True;
+               E_Info.Full_Declaration :=
+                 Create_Xref (Get (E_Info.Short_Name).all, Body_Location);
+            end if;
+         end;
+
+         --  Decorate now category specific information
+
          case E_Info.Category is
             when Cat_Package =>
                if not E_Info.Is_Instantiation
@@ -1033,43 +1032,16 @@ package body Docgen2 is
                           (E_Info.Generic_Params);
 
                         while Entity_Info_List.Has_Element (Cursor) loop
-                           Entity_Info_List.Element (Cursor).Location.Pkg_Nb :=
-                             E_Info.Pkg_Nb;
+                           Entity_Info_List.Element (Cursor).Location.Pkg_Nb
+                             := E_Info.Pkg_Nb;
                            Entity_Info_List.Next (Cursor);
                         end loop;
                      end;
                   end if;
-
-                  --  Get children
-                  declare
-                     New_Context : constant Context_Stack_Element :=
-                                     (Parent_Entity => E_Info,
-                                      Pkg_Entity    => E_Info,
-                                      Parent_Iter   => Context.Iter);
-                  begin
-                     Push (Context, New_Context);
-                     Context.Iter := Next
-                       (Context.Tree, Context.Iter, Jump_Into);
-                     return;
-                  end;
                end if;
 
             when Cat_Task | Cat_Protected =>
                E_Info.Is_Type := Db.Is_Type (Entity);
-
-               --  Get children (task entries)
-
-               declare
-                  New_Context : constant Context_Stack_Element :=
-                                  (Parent_Entity => E_Info,
-                                   Pkg_Entity    => Context_Elem.Pkg_Entity,
-                                   Parent_Iter   => Context.Iter);
-               begin
-                  Push (Context, New_Context);
-                  Context.Iter := Next
-                    (Context.Tree, Context.Iter, Jump_Into);
-                  return;
-               end;
 
             when Cat_Class =>
                --  Add to the global class list, using the full name.
@@ -1087,7 +1059,8 @@ package body Docgen2 is
                   for J in Parents'Range loop
                      --  Use full name, as Parents is used in the inheritance
                      --  tree and we want fully qualified names there.
-                     E_Info.Parents.Append (Create_Xref (Parents (J), True));
+                     E_Info.Parents.Append
+                       (Create_Xref (Parents (J), Entity, True));
                   end loop;
                end;
 
@@ -1099,7 +1072,7 @@ package body Docgen2 is
                   for C in Children'Range loop
                      if Children (C) /= No_General_Entity then
                         E_Info.Class_Children.Append
-                          (Create_Xref (Children (C), True));
+                          (Create_Xref (Children (C), Entity, True));
                      end if;
                   end loop;
                end;
@@ -1138,7 +1111,7 @@ package body Docgen2 is
                   --  Insert non overriden operations in the xref list.
                   for J in List'Range loop
                      if not List (J).Overriden then
-                        Op_Xref := Create_Xref  (List (J).Entity);
+                        Op_Xref := Create_Xref  (List (J).Entity, Entity);
 
                         Op_Xref.Inherited :=
                           Db.Is_Primitive_Of (List (J).Entity) /= Entity;
@@ -1147,7 +1120,7 @@ package body Docgen2 is
 
                         if E_Overriden /= No_General_Entity then
                            Op_Xref.Overriding_Op :=
-                             Create_Xref (E_Overriden);
+                             Create_Xref (E_Overriden, Entity);
                         end if;
 
                         E_Info.Primitive_Ops.Append (Op_Xref);
@@ -1175,13 +1148,15 @@ package body Docgen2 is
                   end if;
 
                   if Type_Entity /= No_General_Entity then
-                     E_Info.Variable_Type := Create_Xref (Type_Entity);
+                     E_Info.Variable_Type :=
+                       Create_Xref (Type_Entity, Entity);
                   end if;
                end;
 
             when Cat_Parameter =>
                declare
                   Type_Entity : General_Entity;
+
                begin
                   Type_Entity := Db.Get_Type_Of (Entity);
 
@@ -1190,7 +1165,9 @@ package body Docgen2 is
                   end if;
 
                   if Type_Entity /= No_General_Entity then
-                     E_Info.Parameter_Type := Create_Xref (Type_Entity);
+                     E_Info.Parameter_Type :=
+                       Create_Xref (Type_Entity, Entity);
+
                   else
                      --  don't know the type, let's use the printout as name
                      E_Info.Parameter_Type :=
@@ -1212,22 +1189,13 @@ package body Docgen2 is
 
                --  Parameters
                declare
-                  New_Context : constant Context_Stack_Element :=
-                                  (Parent_Entity => E_Info,
-                                   Pkg_Entity    => Context_Elem.Pkg_Entity,
-                                   Parent_Iter   => Context.Iter);
-                  Type_Entity : General_Entity;
+                  Type_Entity : constant General_Entity :=
+                                  Db.Returned_Type (Entity);
                begin
-                  Type_Entity := Db.Returned_Type (Entity);
-
                   if Type_Entity /= No_General_Entity then
-                     E_Info.Return_Type := Create_Xref (Type_Entity);
+                     E_Info.Return_Type :=
+                       Create_Xref (Type_Entity, Entity);
                   end if;
-
-                  Push (Context, New_Context);
-                  Context.Iter := Next
-                    (Context.Tree, Context.Iter, Jump_Into);
-                  return;
                end;
 
             when others =>
@@ -1239,11 +1207,131 @@ package body Docgen2 is
                --  Cat_Field (do we want to detail a record's field ?)
                --  Cat_Literal (do we want to output anything for a literal ?)
                null;
+
          end case;
+
+         return E_Info;
+      end Get_Entity;
+
+      ------------
+      -- Ignore --
+      ------------
+
+      function Ignore
+        (Construct : access Simple_Construct_Information)
+         return Boolean is
+      begin
+         return
+           Construct.Category in Dependency_Category
+             or else Construct.Category in Cat_Exception_Handler .. Cat_Pragma
+             or else Construct.Category = Cat_Representation_Clause
+             or else Construct.Category = Cat_Namespace
+             or else Category_Name (Construct.Category) = ""
+             or else Construct.Name = No_Symbol;
+      end Ignore;
+
+      --  Local variables
+
+      Construct : access Simple_Construct_Information;
+      E_Info    : Entity_Info;
+
+   begin
+      --  Exit when no more construct is available in this scope
+      if Context.Iter = Null_Construct_Tree_Iterator then
+         return;
       end if;
 
-      Context.Iter := Next
-        (Context.Tree, Context.Iter, Jump_Over);
+      --  If scope has changed, pop the context and return
+      if Context_Elem.Parent_Iter /= Null_Construct_Tree_Iterator
+        and then
+          Get_Parent_Scope (Context.Tree, Context.Iter)
+            /= Context_Elem.Parent_Iter
+      then
+         Pop (Context);
+         return;
+      end if;
+
+      Construct := Get_Construct (Context.Iter);
+
+      --  Ignore the private part
+      if Construct.Visibility = Visibility_Private
+        and then not Cmd.Options.Show_Private
+      then
+         Pop (Context);
+         return;
+      end if;
+
+      if not Ignore (Construct) then
+         E_Info := Get_Entity (Construct);
+
+         if E_Info /= null then
+            Context_Elem.Parent_Entity.Children.Append (E_Info);
+
+            case E_Info.Category is
+
+               when Cat_Package =>
+                  if not E_Info.Is_Instantiation
+                    and then not E_Info.Is_Renaming
+                  then
+                     declare
+                        New_Context : constant Context_Stack_Element :=
+                          (Parent_Entity => E_Info,
+                           Pkg_Entity    => E_Info,
+                           Parent_Iter   => Context.Iter);
+                     begin
+                        Push (Context, New_Context);
+                        Context.Iter := Next
+                          (Context.Tree, Context.Iter, Jump_Into);
+                     end;
+
+                     return;
+                  end if;
+
+               when Cat_Task | Cat_Protected =>
+                  declare
+                     New_Context : constant Context_Stack_Element :=
+                       (Parent_Entity => E_Info,
+                        Pkg_Entity    => Context_Elem.Pkg_Entity,
+                        Parent_Iter   => Context.Iter);
+                  begin
+                     Push (Context, New_Context);
+                     Context.Iter := Next
+                       (Context.Tree, Context.Iter, Jump_Into);
+                  end;
+
+                  return;
+
+               when Cat_Class =>
+                  null;
+
+               when Cat_Variable =>
+                  null;
+
+               when Cat_Entry | Cat_Subprogram =>
+                  declare
+                     New_Context : constant Context_Stack_Element :=
+                       (Parent_Entity => E_Info,
+                        Pkg_Entity    => Context_Elem.Pkg_Entity,
+                        Parent_Iter   => Context.Iter);
+                  begin
+                     Push (Context, New_Context);
+                     Context.Iter := Next
+                       (Context.Tree, Context.Iter, Jump_Into);
+                  end;
+
+                  return;
+
+               when Cat_Parameter =>
+                  null;
+
+               when others =>
+                  null;
+            end case;
+         end if;
+      end if;
+
+      Context.Iter :=
+        Next (Context.Tree, Context.Iter, Jump_Over);
    end Analyse_Construct;
 
    ----------
