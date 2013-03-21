@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M315-040: GPS: link broken in Welcome page
+  Problem:    Links in Welcome page are broken.
+  Workaround: Use "Help/Gps/Using the GNAT Programming Studio" and
+              "Help/Gps/GNAT Programming Studio Tutorial" menus instead.
+
 - M305-055: Bad expansion of %gprbuild
   Problem:    %gprbuild in build targets gets expanded as gnatmake instead
               of gprbuild in case of an Ada only prefer, and the Default
