@@ -34,6 +34,9 @@ package body Docgen2.Tags is
    XML_Regpat : constant Pattern_Matcher :=
                   Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
 
+   procedure Append_Txt (N : Node_Ptr; S : String);
+   --  Accumulate consecutive comments in the same node
+
    function To_Unbounded_String
      (Docgen      : Docgen_Object;
       N           : Node_Ptr;
@@ -44,12 +47,45 @@ package body Docgen2.Tags is
 --     function Strip_Blanks (S : Unbounded_String) return String;
 
    procedure Parse_Buffer
-     (S    : String;
-      N    : in out Node_Ptr;
-      Opts : Docgen_Options);
+     (Comment     : in out Comment_Type;
+      Docgen      : Docgen_Object;
+      File        : Virtual_File;
+      Entity_Name : String;
+      Href        : String);
+   --  Translate the block into an xml tree
 
    procedure Free_Node (N : in out Node_Ptr);
    --  Free a xml node tree
+
+   ----------------
+   -- Append_Txt --
+   ----------------
+
+   procedure Append_Txt (N : Node_Ptr; S : String) is
+      New_Node : Node_Ptr;
+
+   begin
+      if N.Last_Child /= null and then N.Last_Child.Kind = Text_Node then
+         Append (N.Last_Child.Value, S);
+
+      else
+         New_Node := new Node'
+           (Kind       => Text_Node,
+            Value      => To_Unbounded_String (S),
+            Parent     => N,
+            Children   => null,
+            Last_Child => null,
+            Next       => null);
+
+         if N.Last_Child = null then
+            N.Children := New_Node;
+         else
+            N.Last_Child.Next := New_Node;
+         end if;
+
+         N.Last_Child := New_Node;
+      end if;
+   end Append_Txt;
 
    -------------------------
    -- To_Unbounded_String --
@@ -215,124 +251,153 @@ package body Docgen2.Tags is
    ------------------
 
    procedure Parse_Buffer
-     (S    : String;
-      N    : in out Node_Ptr;
-      Opts : Docgen_Options)
-   is
-      Matches      : Match_Array (0 .. 3);
-      Tag          : Unbounded_String;
-      New_Node     : Node_Ptr;
-      Closing_Tag  : Boolean;
-      Stand_Alone  : Boolean;
+     (Comment     : in out Comment_Type;
+      Docgen      : Docgen_Object;
+      File        : Virtual_File;
+      Entity_Name : String;
+      Href        : String) is
 
-      procedure Append_Txt (S : String);
-      --  Append text to N
+      procedure Parse
+        (S    : String;
+         N    : in out Node_Ptr;
+         Opts : Docgen_Options);
 
-      procedure Append_Txt (S : String) is
-         New_Node : Node_Ptr;
+      procedure Parse
+        (S    : String;
+         N    : in out Node_Ptr;
+         Opts : Docgen_Options)
+      is
+         Matches      : Match_Array (0 .. 3);
+         Tag          : Unbounded_String;
+         New_Node     : Node_Ptr;
+         Closing_Tag  : Boolean;
+         Stand_Alone  : Boolean;
+
       begin
-         if N.Last_Child /= null and then N.Last_Child.Kind = Text_Node then
-            Append (N.Last_Child.Value, S);
+         Match (XML_Regpat, S, Matches);
 
+         --  No xml case
+         if Matches (0) = No_Match then
+            --  Regular string. Let's append it to the current node value
+            Append_Txt (N, S);
+
+            return;
+         end if;
+
+         --  Append characters to the last opened tag.
+         if Matches (0).First > S'First then
+            Append_Txt (N, S (S'First .. Matches (0).First - 1));
+         end if;
+
+         Tag :=
+           To_Unbounded_String (S (Matches (2).First .. Matches (2).Last));
+
+         --  Treat closing tags.
+         if S (Matches (1).First .. Matches (1).Last) = "/" then
+            Closing_Tag := True;
+         else
+            Closing_Tag := False;
+         end if;
+
+         --  If we found an unexpected xml tag, then treat it like raw text
+         if not Is_Custom_Tag (To_String (Tag))
+           or else (Closing_Tag
+                    and then (N.Kind /= Element_Node or else Tag /= N.Tag))
+         then
+            Append_Txt (N, S (Matches (0).First .. Matches (0).Last));
+
+            --  Treat closing tags.
+         elsif Closing_Tag then
+            N := N.Parent;
+
+            --  Opening tag
          else
             New_Node := new Node'
-              (Kind       => Text_Node,
-               Value      => To_Unbounded_String (S),
-               Parent     => N,
+              (Kind       => Element_Node,
+               Tag        => Tag,
+               Attributes => Null_Unbounded_String,
+               Next       => null,
                Children   => null,
                Last_Child => null,
-               Next       => null);
+               Parent     => N);
 
-            if N.Last_Child = null then
+            if N.Children = null then
                N.Children := New_Node;
             else
                N.Last_Child.Next := New_Node;
             end if;
 
             N.Last_Child := New_Node;
+
+            --  See if the tag finishes by '/>'
+            Stand_Alone := False;
+
+            if Matches (3).First >= Matches (3).Last
+              and then S (Matches (3).Last) = '/'
+            then
+               Stand_Alone := True;
+               Matches (3).Last := Matches (3).Last - 1;
+            end if;
+
+            --  Now initialize the attributes field
+            if Matches (3).First <= Matches (3).Last then
+               New_Node.Attributes :=
+                 To_Unbounded_String
+                   (S (Matches (3).First .. Matches (3).Last));
+            end if;
+
+            --  Set N to the newly created node if the tag is not stand-alone
+            if not Stand_Alone then
+               N := New_Node;
+            end if;
          end if;
-      end Append_Txt;
 
+         if Matches (0).Last < S'Last then
+            Parse (S (Matches (0).Last + 1 .. S'Last), N, Opts);
+         end if;
+      end Parse;
+
+      --  Local variables
+
+      S    : constant String := To_String (Comment.Block);
+      Opts : constant Docgen_Options := Get_Options (Docgen);
+      N    : Node_Ptr;
    begin
-      Match (XML_Regpat, S, Matches);
-
-      --  No xml case
-      if Matches (0) = No_Match then
-         --  Regular string. Let's append it to the current node value
-         Append_Txt (S);
-
+      if S = "" then
          return;
       end if;
 
-      --  Append characters to the last opened tag.
-      if Matches (0).First > S'First then
-         Append_Txt (S (S'First .. Matches (0).First - 1));
-      end if;
+      N := new Node'
+        (Kind       => Root_Node,
+         Next       => null,
+         Children   => null,
+         Last_Child => null,
+         Parent     => null);
 
-      Tag := To_Unbounded_String (S (Matches (2).First .. Matches (2).Last));
+      Parse (S, N, Opts);
 
-      --  Treat closing tags.
-      if S (Matches (1).First .. Matches (1).Last) = "/" then
-         Closing_Tag := True;
-      else
-         Closing_Tag := False;
-      end if;
+      --  Check unclosed XML tags
 
-      --  If we found an unexpected xml tag, then treat it like raw text
-      if not Is_Custom_Tag (To_String (Tag))
-        or else (Closing_Tag
-                 and then (N.Kind /= Element_Node or else Tag /= N.Tag))
-      then
-         Append_Txt (S (Matches (0).First .. Matches (0).Last));
+      while N.Parent /= null loop
+         Warning
+           (Get_Kernel (Docgen),
+            (File => File,
+             Line => Comment.Sloc_Stop.Line,
+             Column =>
+               GNATCOLL.Xref.Visible_Column (Comment.Sloc_Stop.Column)),
+            "Tag " & To_String (N.Tag) &
+              " is not closed");
 
-      --  Treat closing tags.
-      elsif Closing_Tag then
          N := N.Parent;
+      end loop;
 
-      --  Opening tag
-      else
-         New_Node := new Node'
-           (Kind       => Element_Node,
-            Tag        => Tag,
-            Attributes => Null_Unbounded_String,
-            Next       => null,
-            Children   => null,
-            Last_Child => null,
-            Parent     => N);
+      --  Translate the xml tree back to a block, using appropriate
+      --  user tag transformations
 
-         if N.Children = null then
-            N.Children := New_Node;
-         else
-            N.Last_Child.Next := New_Node;
-         end if;
+      Comment.Block :=
+        To_Unbounded_String (Docgen, N, Entity_Name, Href);
 
-         N.Last_Child := New_Node;
-
-         --  See if the tag finishes by '/>'
-         Stand_Alone := False;
-
-         if Matches (3).First >= Matches (3).Last
-           and then S (Matches (3).Last) = '/'
-         then
-            Stand_Alone := True;
-            Matches (3).Last := Matches (3).Last - 1;
-         end if;
-
-         --  Now initialize the attributes field
-         if Matches (3).First <= Matches (3).Last then
-            New_Node.Attributes :=
-              To_Unbounded_String (S (Matches (3).First .. Matches (3).Last));
-         end if;
-
-         --  Set N to the newly created node if the tag is not stand-alone
-         if not Stand_Alone then
-            N := New_Node;
-         end if;
-      end if;
-
-      if Matches (0).Last < S'Last then
-         Parse_Buffer (S (Matches (0).Last + 1 .. S'Last), N, Opts);
-      end if;
+      Free_Node (N);
    end Parse_Buffer;
 
    ----------------------
@@ -366,9 +431,9 @@ package body Docgen2.Tags is
       end if;
    end Add_Comment_Line;
 
-   ----------------------
-   -- Analyse_Comments --
-   ----------------------
+   ---------------------
+   -- Analyse_Comment --
+   ---------------------
 
    procedure Analyse_Comment
      (Comment     : in out Comment_Type;
@@ -377,40 +442,13 @@ package body Docgen2.Tags is
       Entity_Name : String;
       Href        : String)
    is
-      N : Node_Ptr;
    begin
       if Comment.Analysed then
          return;
       end if;
 
-      N := new Node'
-        (Kind       => Root_Node,
-         Next       => null,
-         Children   => null,
-         Last_Child => null,
-         Parent     => null);
+      Parse_Buffer (Comment, Docgen, File, Entity_Name, Href);
 
-      --  Translate the block into an xml tree
-      Parse_Buffer (To_String (Comment.Block), N, Get_Options (Docgen));
-
-      while N.Parent /= null loop
-         Warning
-           (Get_Kernel (Docgen),
-            (File => File,
-             Line => Comment.Sloc_Stop.Line,
-             Column =>
-               GNATCOLL.Xref.Visible_Column (Comment.Sloc_Stop.Column)),
-            "Tag " & To_String (N.Tag) &
-            " is not closed");
-         N := N.Parent;
-      end loop;
-
-      --  And translate the xml tree back to a block, using appropriate
-      --  user tag transformations
-      Comment.Block := To_Unbounded_String
-        (Docgen, N, Entity_Name, Href);
-      Free_Node (N);
-      --  Set comment.analyzed so that this transformation is not done twice.
       Comment.Analysed := True;
    end Analyse_Comment;
 
