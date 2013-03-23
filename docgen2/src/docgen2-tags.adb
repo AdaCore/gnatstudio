@@ -29,8 +29,6 @@ with GNATCOLL.Xref;
 
 package body Docgen2.Tags is
 
---     procedure Free is new Ada.Unchecked_Deallocation (Node, Node_Ptr);
-
    XML_Regpat : constant Pattern_Matcher :=
                   Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
 
@@ -43,8 +41,6 @@ package body Docgen2.Tags is
       Entity_Name : String;
       Href        : String;
       Keep_Layout : Boolean := False) return Unbounded_String;
-
---     function Strip_Blanks (S : Unbounded_String) return String;
 
    procedure Parse_Buffer
      (Comment     : in out Comment_Type;
@@ -533,36 +529,5 @@ package body Docgen2.Tags is
 
       return No_Comment;
    end Find_Doc;
-
-   ------------
-   -- Ignore --
-   ------------
-
-   function Ignore
-     (Loc      : Source_Location;
-      Comments : Comments_List.Vector) return Boolean
-   is
---        Ignore_State : Boolean := False;
---        Elem         : User_Tag;
-      pragma Unreferenced (Loc, Comments);
-
-   begin
-      return False;
---        for J in Context.User_Tags.First_Index ..
---          Context.User_Tags.Last_Index
---        loop
---           Elem := Context.User_Tags.Element (J);
---
---           if Location (Elem).Line > Loc.Line then
---              return Ignore_State;
---           end if;
---
---           if Kind (Elem) = Tag_Kind_Doc_Ignore then
---              Ignore_State := Is_Opening_Tag (Elem);
---           end if;
---        end loop;
---
---        return Ignore_State;
-   end Ignore;
 
 end Docgen2.Tags;
