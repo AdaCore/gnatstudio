@@ -745,6 +745,9 @@ package body Ada_Analyzer is
       Index_Ident         : Natural;
       In_Generic          : Boolean := False;
 
+      Aspect_Clause       : Boolean := False;
+      --  True when the current construct is an Ada 2012 aspect clause
+
       type In_Declaration_Kind is
         (No_Decl, Subprogram_Decl, Subprogram_Aspect, Type_Decl);
 
@@ -4082,6 +4085,7 @@ package body Ada_Analyzer is
                   if Buffer (P) = ';' then
                      Prev_Token := Tok_Semicolon;
                      Right_Assignment := False;
+                     Aspect_Clause := False;
 
                      if Local_Top_Token.Token = Tok_Colon then
                         Pop_And_Set_Local (Tokens);
@@ -4101,7 +4105,6 @@ package body Ada_Analyzer is
                            --  for ... use ...;
 
                            Pop_And_Set_Local (Tokens);
-
                            In_Declaration := No_Decl;
 
                         elsif Local_Top_Token.Token = Tok_With
@@ -4379,6 +4382,7 @@ package body Ada_Analyzer is
                         or else (Prev_Token = Tok_Is and then not In_Generic))
               and then Prev_Token /= Tok_Dot
               and then Prev_Token /= Tok_Apostrophe
+              and then not Aspect_Clause
             then
                --  This is a variable, a field declaration or a enumeration
                --  literal
@@ -4540,6 +4544,15 @@ package body Ada_Analyzer is
                  and then Token in Tok_Function | Tok_Procedure | Tok_Package
                then
                   In_Generic := False;
+               end if;
+
+               --  Set Aspect_Clause
+
+               if Token = Tok_With
+                 and then Top (Tokens).Token = Tok_Type
+                 and then Prev_Prev_Token /= Tok_New
+               then
+                  Aspect_Clause := True;
                end if;
 
                if Do_Push then
