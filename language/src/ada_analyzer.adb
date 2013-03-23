@@ -731,19 +731,19 @@ package body Ada_Analyzer is
       -- Variables --
       ---------------
 
-      Line_Count          : Integer           := 1;
+      Line_Count          : Integer := 1;
       Str                 : String (1 .. 1024);
-      Str_Len             : Natural           := 0;
+      Str_Len             : Natural := 0;
       Current             : Natural;
-      Prec                : Natural           := Buffer'First;
+      Prec                : Natural := Buffer'First;
       Start_Of_Line       : Natural;
       Prev_Line           : Natural;
-      Num_Spaces          : Integer           := 0;
-      Continuation_Val    : Integer           := 0;
-      Indent_Done         : Boolean           := False;
-      Num_Parens          : Integer           := 0;
+      Num_Spaces          : Integer := 0;
+      Continuation_Val    : Integer := 0;
+      Indent_Done         : Boolean := False;
+      Num_Parens          : Integer := 0;
       Index_Ident         : Natural;
-      In_Generic          : Boolean           := False;
+      In_Generic          : Boolean := False;
 
       type In_Declaration_Kind is
         (No_Decl, Subprogram_Decl, Subprogram_Aspect, Type_Decl);
@@ -751,14 +751,14 @@ package body Ada_Analyzer is
       In_Declaration : In_Declaration_Kind := No_Decl;
       --  Identifies when we are in a declaration
 
-      Syntax_Error        : Boolean           := False;
+      Syntax_Error        : Boolean := False;
       --  Not used for now, but may be useful in the future
       pragma Unreferenced (Syntax_Error);
 
-      Comments_Skipped    : Boolean           := False;
+      Comments_Skipped    : Boolean := False;
       Token               : Token_Type;
-      Prev_Token          : Token_Type        := No_Token;
-      Prev_Prev_Token     : Token_Type        := No_Token;
+      Prev_Token          : Token_Type := No_Token;
+      Prev_Prev_Token     : Token_Type := No_Token;
       Tokens              : Token_Stack.Simple_Stack;
       Paren_Stack         : Construct_Stack.Simple_Stack;
       Indents             : Indent_Stack.Stack.Simple_Stack;
