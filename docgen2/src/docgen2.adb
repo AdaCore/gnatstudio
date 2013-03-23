@@ -475,7 +475,6 @@ package body Docgen2 is
       use type GNAT.Expect.Pattern_Matcher_Access;
 
    begin
-
       --  take care of comments filters (way to ignore comments)
       if Docgen.Options.Comments_Filter /= null then
          Match (Docgen.Options.Comments_Filter.all, Doc, Matches);
@@ -1703,12 +1702,15 @@ package body Docgen2 is
             end;
 
          when Analyse_File_Constructs =>
-            if Command.Analysis_Ctxt.Iter
-              = Null_Construct_Tree_Iterator
-            then
-               --  Current file is analysed. Let's see if it has a single
-               --  child e_info to move comment when appropriate
+            --  Analysis of a new construct of the current file.
 
+            if Command.Analysis_Ctxt.Iter /= Null_Construct_Tree_Iterator then
+               Analyse_Construct (Docgen_Object (Command));
+
+            --  Current file is analysed. Let's see if it has a single
+            --  child e_info to move comment when appropriate
+
+            else
                --  For this, we pop all values until getting the root
                --  context
                while Current (Command.Analysis_Ctxt).Parent_Iter /=
@@ -1735,9 +1737,6 @@ package body Docgen2 is
                end;
 
                Command.State := Analysis_Tear_Down;
-            else
-               --  Analysis of a new construct of the current file.
-               Analyse_Construct (Docgen_Object (Command));
             end if;
 
          when Analysis_Tear_Down =>
@@ -1950,9 +1949,9 @@ package body Docgen2 is
       Options : Docgen_Options)
    is
       P          : constant Project_Type :=
-                        Get_Registry (Kernel).Tree.Info (File).Project (True);
+                     Get_Registry (Kernel).Tree.Info (File).Project (True);
       Other_File : constant Virtual_File :=
-                        Get_Registry (Kernel).Tree.Other_File (File);
+                     Get_Registry (Kernel).Tree.Other_File (File);
       C          : Docgen_Object;
    begin
       Parse_All_LI_Information (Kernel, P, Recursive => False);
@@ -2376,8 +2375,8 @@ package body Docgen2 is
             Command.Backend.To_Href
               (Location =>
                  Command.Backend.Line_Image (E_Info.Location.Spec_Loc.Line),
-               Src_File => "src_" &
-               E_Info.Location.Spec_Loc.File.Base_Name,
+               Src_File =>
+                 "src_" & E_Info.Location.Spec_Loc.File.Base_Name,
                Pkg_Nb   => 1));
 
          Found := False;
@@ -2392,8 +2391,8 @@ package body Docgen2 is
                Command.Backend.To_Href
                  (Location =>
                     Command.Backend.Line_Image (E_Info.Location.Body_Loc.Line),
-                  Src_File => "src_" &
-                  E_Info.Location.Body_Loc.File.Base_Name,
+                  Src_File =>
+                    "src_" & E_Info.Location.Body_Loc.File.Base_Name,
                   Pkg_Nb   => 1));
          else
             Append
@@ -2442,7 +2441,7 @@ package body Docgen2 is
                      Location_Image (Loc) &
                        " (" &
                        Get_Display_Kind (E_Info.References.Element (J)) &
-                     ")");
+                       ")");
                end if;
             end;
          end loop;
