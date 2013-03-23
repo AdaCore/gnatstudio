@@ -71,12 +71,6 @@ package Docgen2.Tags is
    function To_String (Comment : Comment_Type) return String;
    --  Return a formatted string representing Comment.
 
-   function Ignore
-     (Loc      : Source_Location;
-      Comments : Comments_List.Vector) return Boolean;
-   --  Tell if the current file location should be ignored in the
-   --  documentation (because of user tags <doc_ignore>)
-
 private
 
    type Node_Kind is (Root_Node, Text_Node, Element_Node);
