@@ -4551,6 +4551,7 @@ package body Ada_Analyzer is
                if Token = Tok_With
                  and then Top (Tokens).Token = Tok_Type
                  and then Prev_Prev_Token /= Tok_New
+                 and then Prev_Prev_Token /= Tok_And
                then
                   Aspect_Clause := True;
                end if;
