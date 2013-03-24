@@ -74,22 +74,22 @@ package body CodePeer.Module.Bridge is
    is
       Project           : constant Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory  : constant Virtual_File := Project.Object_Dir;
-      Command_File_Name : constant Virtual_File :=
-                            Create_From_Dir
-                              (Object_Directory, Add_Audit_File_Name);
-
       Mode              : constant String := Module.Kernel.Get_Build_Mode;
+      Object_Directory  : Virtual_File;
+      Command_File_Name : Virtual_File;
       Success           : Boolean;
       CL                : Arg_List;
       Ids               : Natural_Sets.Set;
       pragma Warnings (Off, Success);
 
    begin
-      CL := Create ("gps_codepeer_bridge");
-      Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
-
       Module.Kernel.Set_Build_Mode ("codepeer");
+
+      --  Compute name of object directory and request file
+
+      Object_Directory  := Project.Object_Dir;
+      Command_File_Name :=
+        Create_From_Dir (Object_Directory, Add_Audit_File_Name);
 
       --  Generate command file
 
@@ -116,6 +116,9 @@ package body CodePeer.Module.Bridge is
       end if;
 
       --  Run gps_codepeer_bridge
+
+      CL := Create ("gps_codepeer_bridge");
+      Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
 
       GPS.Kernel.Timeout.Launch_Process
         (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
