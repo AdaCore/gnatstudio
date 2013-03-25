@@ -71,19 +71,80 @@ package body Docgen2 is
    --  Filters the doc according to the Options.
 
    package Scopes is
-      --  Supplementary package used to perform constructs analysis
+      --  Supplementary package used to perform constructs analysis.
 
-      type Context_Stack_Element is record
+      type Context_Element is record
          Parent_Entity : Entity_Info;
          Pkg_Entity    : Entity_Info;
          Parent_Iter   : Construct_Tree_Iterator;
       end record;
 
+      type Analysis_Context is private;
+
+      function New_Context
+         (File_EInfo  : Entity_Info;
+          Tree        : Construct_Tree;
+          File_Buffer : GNAT.Strings.String_Access;
+          Language    : Language_Handler;
+          Comments    : Comments_List.Vector) return Analysis_Context;
+      --  Constructor of Analysis_Context. Initializes the implicit cursor
+      --  to start traversing the Tree of constructs.
+
+      procedure Free (Context : in out Analysis_Context);
+
+      procedure Enter_Scope
+        (Context : in out Analysis_Context;
+         Parent  : Entity_Info;
+         Entity  : Entity_Info);
+      --  Enter in the scope of Entity and displace the implicit cursor to
+      --  start processing all the entities defined in the scope of Entity.
+
+      procedure Exit_Scope
+        (Context : in out Analysis_Context);
+      --  Exit the current scope and move the implicit cursor to the next
+      --  construct of the enclosing scope
+
+      function Current_Scope
+        (Context : Analysis_Context)
+         return Context_Element;
+      --  Return the current scope referenced by the implicit cursor.
+
+      function Get_New_Pkg_Id
+        (Context : in out Analysis_Context) return Natural;
+      --  Generate and returns a new package number identifier
+
+      --  Implicit cursor subprograms **************************************
+      function Get_Construct
+        (Context : Analysis_Context)
+         return access Simple_Construct_Information;
+      --  Returns the current construct referenced by the implicit cursor
+      function Has_Next_Construct
+        (Context : Analysis_Context) return Boolean;
+      --  Return True if the current scope has more constructs to traverse
+      procedure Next_Construct
+        (Context : in out Analysis_Context);
+      --  Move the implicit cursor to the next construct of the current scope
+      procedure Reset_Cursor
+        (Context : in out Analysis_Context);
+
+      --  Context getters/setters *****************************************
+      function Get_Comments
+        (Context : Analysis_Context) return Comments_List.Vector;
+      function Get_File
+        (Context : Analysis_Context) return Virtual_File;
+      function Get_File_Buffer
+        (Context : Analysis_Context) return GNAT.Strings.String_Access;
+      function Get_Language
+        (Context : Analysis_Context) return Language_Handler;
+      function Get_Parent_Scope_Iterator (Context : Analysis_Context)
+        return Construct_Tree_Iterator;
+      function In_Body
+        (Context : Analysis_Context) return Boolean;
+
+   private
       package Context_Stack is new Ada.Containers.Vectors
         (Index_Type   => Natural,
-         Element_Type => Context_Stack_Element);
-
-      Empty_Stack : Context_Stack.Vector renames Context_Stack.Empty_Vector;
+         Element_Type => Context_Element);
 
       type Analysis_Context is record
          Stack       : Context_Stack.Vector;
@@ -96,24 +157,6 @@ package body Docgen2 is
          Comments    : Comments_List.Vector;
          In_Body     : Boolean;
       end record;
-
-      procedure Enter_Scope
-        (Context : in out Analysis_Context;
-         Parent  : Entity_Info;
-         Entity  : Entity_Info);
-      --  Enter in the scope of Entity and displace the cursor/iterator to
-      --  start processing all the entities defined in the scope of Entity.
-
-      procedure Exit_Scope
-        (Context : in out Analysis_Context);
-      --  Exit the current scope and move the cursor/iterator to the next
-      --  construct of the enclosing scope
-
-      function Current_Scope
-        (Context : Analysis_Context)
-         return Context_Stack_Element;
-      --  Return the current scope
-
    end Scopes;
    use Scopes;
 
@@ -608,7 +651,7 @@ package body Docgen2 is
 
    procedure Analyse_Construct (Cmd : Docgen_Object) is
       Context      : Analysis_Context renames Cmd.Analysis_Ctxt;
-      Context_Elem : constant Context_Stack_Element := Current_Scope (Context);
+      Context_Elem : constant Context_Element := Current_Scope (Context);
 
       function Get_Entity
         (Construct : access Simple_Construct_Information)
@@ -694,7 +737,7 @@ package body Docgen2 is
                end if;
             end if;
 
-            E_Info.Is_Visible := not Context.In_Body;
+            E_Info.Is_Visible := not In_Body (Context);
 
             return E_Info;
          end Create_EInfo;
@@ -763,7 +806,8 @@ package body Docgen2 is
          --  Local variables
 
          Lang   : constant Language_Access :=
-                    Get_Language_From_File (Context.Language, Context.File);
+                    Get_Language_From_File
+                      (Get_Language (Context), Get_File (Context));
          E_Info : Entity_Info := null;
          Entity : General_Entity;
 
@@ -772,7 +816,7 @@ package body Docgen2 is
          Entity := Docgen2.Utils.Get_Entity
            (Cmd.Kernel,
             Get (Construct.Name).all,
-            (File => Context.File,
+            (File => Get_File (Context),
              Line => Construct.Sloc_Entity.Line,
              Column => GNATCOLL.Xref.Visible_Column
                (Construct.Sloc_Entity.Column)),
@@ -781,7 +825,7 @@ package body Docgen2 is
          if Entity = No_General_Entity then
             Entity := Docgen2.Utils.Get_Declaration_Entity
               (Get (Construct.Name).all,
-               (File   => Context.File,
+               (File   => Get_File (Context),
                 Line   => Construct.Sloc_Entity.Line,
                 Column => GNATCOLL.Xref.Visible_Column
                   (Construct.Sloc_Entity.Column)),
@@ -796,7 +840,7 @@ package body Docgen2 is
                   --  ??? In what occasions do we have this happening ?
                   E_Info := Create_EInfo
                     (Construct.Category,
-                     (File   => Context.File,
+                     (File   => Get_File (Context),
                       Line   => Construct.Sloc_Entity.Line,
                       Column => Basic_Types.Visible_Column_Type
                         (Construct.Sloc_Entity.Column)),
@@ -822,7 +866,7 @@ package body Docgen2 is
             E_Info.Description :=
               Find_Doc (Construct.Sloc_Start,
                         Construct.Sloc_End,
-                        Context.Comments);
+                        Get_Comments (Context));
          end if;
 
          --  No entity available
@@ -842,13 +886,13 @@ package body Docgen2 is
          --  Retrieve printout
 
          if Construct.Category not in Namespace_Category then
-            Set_Printout (Construct.all, Context.File_Buffer, E_Info);
+            Set_Printout (Construct.all, Get_File_Buffer (Context), E_Info);
 
          elsif Construct.Category = Cat_Package
            and then Entity /= No_General_Entity
          then
             Set_Pkg_Printout
-              (Construct.all, Db, Entity, Context.File_Buffer, E_Info);
+              (Construct.all, Db, Entity, Get_File_Buffer (Context), E_Info);
          end if;
 
          E_Info.Is_Private := Construct.Visibility = Visibility_Private;
@@ -931,7 +975,7 @@ package body Docgen2 is
                     Find_Doc
                       (Param_EInfo.Entity_Loc,
                        Param_EInfo.Entity_Loc,
-                       Context.Comments);
+                       Get_Comments (Context));
 
                   --  ??? need a better handling of formal parameters types
                   Param_EInfo.Parameter_Type := Create_Xref
@@ -975,7 +1019,7 @@ package body Docgen2 is
 
             if Body_Location /= No_Location
               and then Body_Location /= E_Info.Location.Spec_Loc
-              and then Body_Location.File = Context.File
+              and then Body_Location.File = Get_File (Context)
             then
                E_Info.Is_Partial := True;
                E_Info.Full_Declaration :=
@@ -991,24 +1035,29 @@ package body Docgen2 is
                  and then not E_Info.Is_Renaming
                then
                   --  Bump pkg nb
-                  Context.Pkg_Nb := Context.Pkg_Nb + 1;
-                  E_Info.Pkg_Nb := Context.Pkg_Nb;
-                  E_Info.Location.Pkg_Nb := Context.Pkg_Nb;
 
-                  if E_Info.Is_Generic then
-                     declare
-                        Cursor : Entity_Info_List.Cursor;
-                     begin
-                        Cursor := Entity_Info_List.First
-                          (E_Info.Generic_Params);
+                  declare
+                     New_Id : constant Natural := Get_New_Pkg_Id (Context);
 
-                        while Entity_Info_List.Has_Element (Cursor) loop
-                           Entity_Info_List.Element (Cursor).Location.Pkg_Nb
-                             := E_Info.Pkg_Nb;
-                           Entity_Info_List.Next (Cursor);
-                        end loop;
-                     end;
-                  end if;
+                  begin
+                     E_Info.Pkg_Nb := New_Id;
+                     E_Info.Location.Pkg_Nb := New_Id;
+
+                     if E_Info.Is_Generic then
+                        declare
+                           Cursor : Entity_Info_List.Cursor;
+                        begin
+                           Cursor := Entity_Info_List.First
+                             (E_Info.Generic_Params);
+
+                           while Entity_Info_List.Has_Element (Cursor) loop
+                              Entity_Info_List.Element (Cursor).Location.Pkg_Nb
+                                := E_Info.Pkg_Nb;
+                              Entity_Info_List.Next (Cursor);
+                           end loop;
+                        end;
+                     end if;
+                  end;
                end if;
 
             when Cat_Task | Cat_Protected =>
@@ -1144,7 +1193,7 @@ package body Docgen2 is
                      E_Info.Parameter_Type :=
                        new Cross_Ref_Record'
                          (Name          => new String'
-                              (Context.File_Buffer
+                              (Get_File_Buffer (Context)
                                    (Construct.Sloc_Start.Index +
                                         Get (Construct.Name)'Length ..
                                           Construct.Sloc_End.Index)),
@@ -1208,21 +1257,20 @@ package body Docgen2 is
 
    begin
       --  Exit when no more construct is available in this scope
-      if Context.Iter = Null_Construct_Tree_Iterator then
+      if not Has_Next_Construct (Context) then
          return;
       end if;
 
       --  If scope has changed, pop the context and return
       if Context_Elem.Parent_Iter /= Null_Construct_Tree_Iterator
-        and then
-          Get_Parent_Scope (Context.Tree, Context.Iter)
-            /= Context_Elem.Parent_Iter
+        and then Get_Parent_Scope_Iterator (Context)
+                   /= Context_Elem.Parent_Iter
       then
          Exit_Scope (Context);
          return;
       end if;
 
-      Construct := Get_Construct (Context.Iter);
+      Construct := Get_Construct (Context);
 
       --  Ignore the private part
       if Construct.Visibility = Visibility_Private
@@ -1280,8 +1328,7 @@ package body Docgen2 is
          end if;
       end if;
 
-      Context.Iter :=
-        Next (Context.Tree, Context.Iter, Jump_Over);
+      Next_Construct (Context);
    end Analyse_Construct;
 
    ----------
@@ -1642,21 +1689,13 @@ package body Docgen2 is
                end if;
 
                --  We now create the command's analysis_ctxt structure
-               Command.Analysis_Ctxt
-                 := (Stack          => Empty_Stack,
-                     Iter           => First (Construct_T),
-                     Tree           => Construct_T,
-                     File_Buffer    => File_Buffer,
-                     Language       => Lang_Handler,
-                     File           => File_EInfo.Location.Spec_Loc.File,
-                     In_Body        => File_EInfo.Is_Body,
-                     Comments       => Comments,
-                     Pkg_Nb         => 0);
-
-               Enter_Scope
-                 (Context => Command.Analysis_Ctxt,
-                  Parent  => File_EInfo,
-                  Entity  => null);
+               Command.Analysis_Ctxt :=
+                 New_Context
+                   (File_EInfo  => File_EInfo,
+                    Tree        => Construct_T,
+                    File_Buffer => File_Buffer,
+                    Language    => Lang_Handler,
+                    Comments    => Comments);
 
                Command.State := Analyse_File_Constructs;
             end;
@@ -1664,7 +1703,7 @@ package body Docgen2 is
          when Analyse_File_Constructs =>
             --  Analysis of a new construct of the current file.
 
-            if Command.Analysis_Ctxt.Iter /= Null_Construct_Tree_Iterator then
+            if Has_Next_Construct (Command.Analysis_Ctxt) then
                Analyse_Construct (Docgen_Object (Command));
 
             --  Current file is analysed. Let's see if it has a single
@@ -1680,7 +1719,7 @@ package body Docgen2 is
                end loop;
 
                declare
-                  Ctxt_Elem  : constant Context_Stack_Element :=
+                  Ctxt_Elem  : constant Context_Element :=
                                  Current_Scope (Command.Analysis_Ctxt);
                   EInfo      : Entity_Info renames Ctxt_Elem.Parent_Entity;
                begin
@@ -1700,9 +1739,7 @@ package body Docgen2 is
 
          when Analysis_Tear_Down =>
             --  Clean-up analysis context
-            Free (Command.Analysis_Ctxt.Tree);
-            Free (Command.Analysis_Ctxt.File_Buffer);
-            Free (Command.Analysis_Ctxt.Comments);
+            Free (Command.Analysis_Ctxt);
 
             --  And setup for next file analysis
             Next (Command.File_Index);
@@ -1922,12 +1959,12 @@ package body Docgen2 is
          C.Src_Files.Append (Other_File);
       end if;
 
-      C.State              := Analysis_Setup;
-      C.Kernel             := Kernel_Handle (Kernel);
-      C.Backend            := Backend;
-      C.Project            := P;
-      C.Options            := Options;
-      C.Analysis_Ctxt.Iter := Null_Construct_Tree_Iterator;
+      C.State   := Analysis_Setup;
+      C.Kernel  := Kernel_Handle (Kernel);
+      C.Backend := Backend;
+      C.Project := P;
+      C.Options := Options;
+      Reset_Cursor (C.Analysis_Ctxt);
 
       Launch_Background_Command
         (Kernel,
@@ -1971,15 +2008,15 @@ package body Docgen2 is
       begin
          C := new Docgen_Command;
 
-         C.State          := Analysis_Setup;
-         C.Kernel         := Kernel_Handle (Kernel);
-         C.Backend        := Backend;
-         C.Project        := P;
+         C.State   := Analysis_Setup;
+         C.Kernel  := Kernel_Handle (Kernel);
+         C.Backend := Backend;
+         C.Project := P;
          for J in Source_Files'Range loop
             C.Src_Files.Append (Source_Files (J));
          end loop;
-         C.Options        := Options;
-         C.Analysis_Ctxt.Iter := Null_Construct_Tree_Iterator;
+         C.Options := Options;
+         Reset_Cursor (C.Analysis_Ctxt);
          Unchecked_Free (Source_Files);
       end;
 
@@ -3884,18 +3921,19 @@ package body Docgen2 is
    ------------
 
    package body Scopes is
-
-      procedure Push
-        (Context : in out Analysis_Context;
-         Elem    : Context_Stack_Element);
-      --  Add an element to the stack
+      Empty_Stack : Context_Stack.Vector renames Context_Stack.Empty_Vector;
 
       procedure Pop (Context : in out Analysis_Context);
       --  Remove an element from the stack
 
+      procedure Push
+        (Context : in out Analysis_Context;
+         Elem    : Context_Element);
+      --  Add an element to the stack
+
       function Top
         (Context : Analysis_Context)
-         return Context_Stack_Element;
+         return Context_Element;
       --  Return the element in the top of the stack
 
       function Is_Empty (Context : Analysis_Context) return Boolean;
@@ -3917,7 +3955,7 @@ package body Docgen2 is
 
       procedure Push
         (Context : in out Analysis_Context;
-         Elem    : Context_Stack_Element) is
+         Elem    : Context_Element) is
       begin
          Context.Stack.Append (Elem);
       end Push;
@@ -3928,7 +3966,7 @@ package body Docgen2 is
 
       function Top
         (Context : Analysis_Context)
-         return Context_Stack_Element is
+         return Context_Element is
       begin
          pragma Assert (not Is_Empty (Context));
          return Context.Stack.Last_Element;
@@ -3940,7 +3978,7 @@ package body Docgen2 is
 
       function Current_Scope
         (Context : Analysis_Context)
-         return Context_Stack_Element is
+         return Context_Element is
       begin
          return Top (Context);
       end Current_Scope;
@@ -3954,21 +3992,11 @@ package body Docgen2 is
          Parent  : Entity_Info;
          Entity  : Entity_Info)
       is
-         New_Scope : Context_Stack_Element;
-
+         New_Scope : constant Context_Element :=
+                       (Parent_Entity => Parent,
+                        Pkg_Entity    => Entity,
+                        Parent_Iter   => Context.Iter);
       begin
-         if Entity = null then
-            New_Scope :=
-              (Parent_Entity => Parent,
-               Pkg_Entity    => null,
-               Parent_Iter   => Null_Construct_Tree_Iterator);
-         else
-            New_Scope :=
-              (Parent_Entity => Parent,
-               Pkg_Entity    => Entity,
-               Parent_Iter   => Context.Iter);
-         end if;
-
          Push (Context, New_Scope);
          Context.Iter :=
            Next (Context.Tree, Context.Iter, Jump_Into);
@@ -3986,6 +4014,108 @@ package body Docgen2 is
          Pop (Context);
       end Exit_Scope;
 
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (Context : in out Analysis_Context) is
+      begin
+         Free (Context.Tree);
+         Free (Context.File_Buffer);
+         Free (Context.Comments);
+      end Free;
+
+      ------------------
+      -- Get_Comments --
+      ------------------
+
+      function Get_Comments
+        (Context : Analysis_Context) return Comments_List.Vector is
+      begin
+         return Context.Comments;
+      end Get_Comments;
+
+      -------------------
+      -- Get_Construct --
+      -------------------
+
+      function Get_Construct
+        (Context : Analysis_Context)
+         return access Simple_Construct_Information is
+      begin
+         return Get_Construct (Context.Iter);
+      end Get_Construct;
+
+      --------------
+      -- Get_File --
+      --------------
+
+      function Get_File (Context : Analysis_Context) return Virtual_File is
+      begin
+         return Context.File;
+      end Get_File;
+
+      ---------------------
+      -- Get_File_Buffer --
+      ---------------------
+
+      function Get_File_Buffer
+        (Context : Analysis_Context) return GNAT.Strings.String_Access is
+      begin
+         return Context.File_Buffer;
+      end Get_File_Buffer;
+
+      -------------------------------
+      -- Get_Parent_Scope_Iterator --
+      -------------------------------
+
+      function Get_Parent_Scope_Iterator
+        (Context : Analysis_Context) return Construct_Tree_Iterator is
+      begin
+         return Get_Parent_Scope (Context.Tree, Context.Iter);
+      end Get_Parent_Scope_Iterator;
+
+      ------------------
+      -- Get_Language --
+      ------------------
+
+      function Get_Language
+        (Context : Analysis_Context) return Language_Handler
+      is
+      begin
+         return Context.Language;
+      end Get_Language;
+
+      --------------
+      -- Has_Next --
+      --------------
+
+      function Has_Next_Construct
+        (Context : Analysis_Context) return Boolean is
+      begin
+         return Context.Iter /= Null_Construct_Tree_Iterator;
+      end Has_Next_Construct;
+
+      --------------------
+      -- Get_New_Pkg_Id --
+      --------------------
+
+      function Get_New_Pkg_Id
+        (Context : in out Analysis_Context) return Natural is
+      begin
+         Context.Pkg_Nb := Context.Pkg_Nb + 1;
+         return Context.Pkg_Nb;
+      end Get_New_Pkg_Id;
+
+      -------------
+      -- In_Body --
+      -------------
+
+      function In_Body (Context : Analysis_Context) return Boolean is
+      begin
+         return Context.In_Body;
+      end In_Body;
+
       --------------
       -- Is_Empty --
       --------------
@@ -3996,5 +4126,61 @@ package body Docgen2 is
          return Context.Stack.Is_Empty;
       end Is_Empty;
 
+      ----------
+      -- Next --
+      ----------
+
+      procedure Next_Construct
+        (Context : in out Analysis_Context) is
+      begin
+         Context.Iter :=
+           Next (Context.Tree, Context.Iter, Jump_Over);
+      end Next_Construct;
+
+      -----------------
+      -- New_Context --
+      -----------------
+
+      function New_Context
+        (File_EInfo  : Entity_Info;
+         Tree        : Construct_Tree;
+         File_Buffer : GNAT.Strings.String_Access;
+         Language    : Language_Handler;
+         Comments    : Comments_List.Vector) return Analysis_Context
+      is
+         Ctxt_Elem   : Context_Element;
+         New_Context : Analysis_Context;
+
+      begin
+         New_Context :=
+           (Stack          => Empty_Stack,
+            Iter           => First (Tree),
+            Tree           => Tree,
+            File_Buffer    => File_Buffer,
+            Language       => Language,
+            File           => File_EInfo.Location.Spec_Loc.File,
+            In_Body        => File_EInfo.Is_Body,
+            Comments       => Comments,
+            Pkg_Nb         => 0);
+
+         Ctxt_Elem :=
+           (Parent_Entity => File_EInfo,
+            Pkg_Entity    => null,
+            Parent_Iter   => Null_Construct_Tree_Iterator);
+
+         Push (New_Context, Ctxt_Elem);
+
+         return New_Context;
+      end New_Context;
+
+      ------------------
+      -- Reset_Cursor --
+      ------------------
+
+      procedure Reset_Cursor (Context : in out Analysis_Context) is
+      begin
+         Context.Iter := Null_Construct_Tree_Iterator;
+      end Reset_Cursor;
    end Scopes;
+
 end Docgen2;
