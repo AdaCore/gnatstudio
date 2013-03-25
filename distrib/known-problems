@@ -44,7 +44,7 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Problem:    Messages' categories for CodePeer race conditions are not removed
               on close of CodePeer report window when it was attempted to be
               removed from Locations View manually.
-  Workaround: None.
+  Workaround: Restart GPS.
 
 - M125-011: GPS: use all type clause corrupts outline view & vertical bracket
   Problem:    when Ada 2012 use all type clause is used, the displayed 
