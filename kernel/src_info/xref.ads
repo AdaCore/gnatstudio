@@ -783,7 +783,7 @@ private
       Is_Fuzzy   : Boolean := False;  --  Whether this is a fuzzy match
       Entity     : GNATCOLL.Xref.Entity_Information := No_Entity;
 
-      Loc        : General_Location;
+      Loc        : General_Location := No_Location;
       --  The location which was used to query the entity. This is used to
       --  fall back on the Constructs database if Entity and Old_Entity are
       --  null.
