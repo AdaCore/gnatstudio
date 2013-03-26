@@ -10,7 +10,7 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
 - M324-004: GB: Stack size warning messages at startup
   Problem:    At startup SPARK & Codepeer plugins on linux may ask to
-              to set stack size to unlimited. This is useless.
+              to set the stack size to unlimited. This is unnecessary.
   Workaround: Ignore these messages.
  
 - M322-021: Bad indentation of multiple aspect clauses
