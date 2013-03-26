@@ -172,13 +172,6 @@ package body Commands.Builder is
       Build_Data : Build_Callback_Data
         renames Build_Callback_Data (Data.Callback_Data.all);
    begin
-      if Build_Data.Output_Parser = null then
-         --  Initialize progress parser with command
-         --  Create new chain of output parsers
-         Build_Data.Output_Parser := New_Parser_Chain
-           (To_String (Build_Data.Target_Name));
-      end if;
-
       if Build_Data.Output_Parser /= null then
          Build_Data.Output_Parser.Parse_Standard_Output (Output, Data.Command);
       end if;

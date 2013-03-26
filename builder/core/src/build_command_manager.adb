@@ -516,6 +516,7 @@ package body Build_Command_Manager is
 
          Data := new Build_Callback_Data;
          Data.Target_Name := To_Unbounded_String (Target_Name);
+         Data.Output_Parser := New_Parser_Chain (Target_Name);
          Data.Builder := Builder;
 
          --  For background compilation synthetic messages category name is
