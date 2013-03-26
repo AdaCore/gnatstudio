@@ -986,9 +986,13 @@ package body Xref is
             end if;
 
             if C_Entity = Null_Entity_Access then
-               Loc := Db.Get_Declaration (Entity).Loc;
-               if Loc /= No_Location then
-                  C_Entity := Get_Entity_At_Location (Db, Loc);
+               if Entity.Loc /= No_Location then
+                  C_Entity := Get_Entity_At_Location (Db, Entity.Loc);
+               else
+                  Loc := Db.Get_Declaration (Entity).Loc;
+                  if Loc /= No_Location then
+                     C_Entity := Get_Entity_At_Location (Db, Loc);
+                  end if;
                end if;
             end if;
 
