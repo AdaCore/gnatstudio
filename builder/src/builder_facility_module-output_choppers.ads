@@ -18,7 +18,7 @@
 --  Declare parser to round output by line bounds.
 with Commands; use Commands;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
-with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 package Builder_Facility_Module.Output_Choppers is
 
@@ -36,7 +36,7 @@ package Builder_Facility_Module.Output_Choppers is
       Command : Command_Access);
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    overriding function Create
      (Self  : access Output_Parser_Fabric;
@@ -47,7 +47,7 @@ package Builder_Facility_Module.Output_Choppers is
 private
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with null record;
+     new GPS.Tools_Output.Output_Parser_Fabric with null record;
 
    type Output_Chopper is new Tools_Output_Parser with record
       Buffer : Unbounded_String;

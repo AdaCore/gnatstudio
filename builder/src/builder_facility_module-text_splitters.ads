@@ -18,7 +18,7 @@
 --  Declare parser to split text to lines and pass to child line by line.
 
 with Commands; use Commands;
-with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 package Builder_Facility_Module.Text_Splitters is
 
@@ -31,7 +31,7 @@ package Builder_Facility_Module.Text_Splitters is
       Command : Command_Access);
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    overriding function Create
      (Self  : access Output_Parser_Fabric;
@@ -42,7 +42,7 @@ package Builder_Facility_Module.Text_Splitters is
 private
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with null record;
+     new GPS.Tools_Output.Output_Parser_Fabric with null record;
 
    type Text_Splitter is new Tools_Output_Parser with null record;
 

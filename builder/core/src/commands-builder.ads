@@ -27,7 +27,7 @@ with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GPS.Kernel.Messages;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Extending_Environments;    use Extending_Environments;
-with GPS.Kernel.Tools_Output;   use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;          use GPS.Tools_Output;
 with Build_Command_Utils;       use Build_Command_Utils;
 
 package Commands.Builder is

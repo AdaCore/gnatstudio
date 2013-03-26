@@ -20,7 +20,7 @@
 with Commands; use Commands;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with GPS.Kernel;
-with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;          use GPS.Tools_Output;
 with GPS.Styles.UI;
 
 package Build_Command_Manager.Location_Parsers is
@@ -33,7 +33,7 @@ package Build_Command_Manager.Location_Parsers is
       Command : Command_Access);
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set
      (Self              : access Output_Parser_Fabric;
@@ -53,7 +53,7 @@ package Build_Command_Manager.Location_Parsers is
 private
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
+     new GPS.Tools_Output.Output_Parser_Fabric with record
       Kernel            : GPS.Kernel.Kernel_Handle;
       Category          : Unbounded_String;
       Styles            : GPS.Styles.UI.Builder_Message_Styles;

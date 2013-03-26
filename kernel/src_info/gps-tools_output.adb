@@ -22,9 +22,7 @@ with Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Indefinite_Ordered_Maps;
 
-with String_List_Utils;
-
-package body GPS.Kernel.Tools_Output is
+package body GPS.Tools_Output is
    use String_List_Utils.String_List;
 
    type Output_Parser_Fabric_Access is access all Output_Parser_Fabric'Class;
@@ -251,4 +249,4 @@ package body GPS.Kernel.Tools_Output is
       External_Parsers_Fabric := Value;
    end Set_External_Parser_Fabric;
 
-end GPS.Kernel.Tools_Output;
+end GPS.Tools_Output;

@@ -36,7 +36,7 @@ package Commands.Builder.Progress_Parsers is
    --  Child.
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set_Pattern
      (Self    : access Output_Parser_Fabric;
@@ -55,7 +55,7 @@ private
    type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
+     new GPS.Tools_Output.Output_Parser_Fabric with record
       Matcher : Pattern_Matcher_Access;
    end record;
 

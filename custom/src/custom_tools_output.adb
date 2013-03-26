@@ -21,7 +21,7 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with Commands; use Commands;
 
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Kernel.Tools_Output;    use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;           use GPS.Tools_Output;
 with String_List_Utils;
 
 package body Custom_Tools_Output is

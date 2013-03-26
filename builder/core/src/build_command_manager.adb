@@ -41,7 +41,7 @@ with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 
-with GPS.Kernel.Tools_Output;     use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;            use GPS.Tools_Output;
 
 with Build_Command_Manager.Build_Output_Collectors;
 with Build_Command_Manager.Console_Writers;

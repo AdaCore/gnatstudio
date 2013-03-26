@@ -30,7 +30,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Tools_Output;   use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;          use GPS.Tools_Output;
 with GPS.Intl;                  use GPS.Intl;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Canvas;             use Gtkada.Canvas;

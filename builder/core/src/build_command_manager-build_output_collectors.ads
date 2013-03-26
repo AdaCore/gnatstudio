@@ -19,7 +19,7 @@
 
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Build_Command_Utils;              use Build_Command_Utils;
-with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 package Build_Command_Manager.Build_Output_Collectors is
 
@@ -31,7 +31,7 @@ package Build_Command_Manager.Build_Output_Collectors is
       Command : Command_Access);
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set
      (Self       : access Output_Parser_Fabric;
@@ -51,7 +51,7 @@ package Build_Command_Manager.Build_Output_Collectors is
 private
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
+     new GPS.Tools_Output.Output_Parser_Fabric with record
       Builder    : Builder_Context;
       Target     : Unbounded_String;
       Shadow     : Boolean;

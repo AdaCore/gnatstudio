@@ -18,8 +18,9 @@
 --  Root of filters hierarchy to parse output of tools running by GPS.
 
 with Commands; use Commands;
+with String_List_Utils;
 
-package GPS.Kernel.Tools_Output is
+package GPS.Tools_Output is
 
    type Tools_Output_Parser is tagged;
    type Tools_Output_Parser_Access is access all Tools_Output_Parser'Class;
@@ -103,4 +104,4 @@ package GPS.Kernel.Tools_Output is
      (Value : External_Parser_Fabric_Access);
    --  Define external parser fabric
 
-end GPS.Kernel.Tools_Output;
+end GPS.Tools_Output;

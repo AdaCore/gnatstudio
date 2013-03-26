@@ -18,7 +18,7 @@
 --  Declare parser to write each output item to console.
 
 with Commands; use Commands;
-with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;          use GPS.Tools_Output;
 with Interactive_Consoles;
 
 package Build_Command_Manager.Console_Writers is
@@ -31,7 +31,7 @@ package Build_Command_Manager.Console_Writers is
       Command : Command_Access);
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set_Console
      (Self    : access Output_Parser_Fabric;
@@ -46,7 +46,7 @@ package Build_Command_Manager.Console_Writers is
 private
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
+     new GPS.Tools_Output.Output_Parser_Fabric with record
       Console : Interactive_Consoles.Interactive_Console;
    end record;
 

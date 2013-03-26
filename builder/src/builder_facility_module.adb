@@ -69,7 +69,7 @@ with Interactive_Consoles;      use Interactive_Consoles;
 with Commands.Builder;          use Commands.Builder;
 with XML_Utils;                 use XML_Utils;
 
-with GPS.Kernel.Tools_Output;   use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;          use GPS.Tools_Output;
 
 with Builder_Facility_Module.Output_Choppers;
 with Builder_Facility_Module.Text_Splitters;
