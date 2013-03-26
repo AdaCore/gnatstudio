@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M324-004 GB: Stack size warning messages at startup
+  Problem:    At startup SPARK & Codepeer plugins on linux may ask to
+              to set stack size to unlimited. This is useless.
+  Workaround: Ignore these messages.
+ 
 - M322-021 Bad indentation of multiple aspect clauses
   Problem:    The indentation engine gets confused when multiple Ada 2012
               aspect clauses are specified on a record type.
