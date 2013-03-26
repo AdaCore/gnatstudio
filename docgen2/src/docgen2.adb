@@ -65,9 +65,9 @@ package body Docgen2 is
                  GNATCOLL.Symbols.Allocate;
 
    function Filter_Documentation
-     (Doc     : String;
-      Docgen  : Docgen_Object;
-      File    : Virtual_File) return String;
+     (Doc    : String;
+      Docgen : Docgen_Object;
+      File   : Virtual_File) return String;
    --  Filters the doc according to the Options.
 
    package Scopes is
@@ -107,11 +107,11 @@ package body Docgen2 is
       function Current_Scope
         (Context : Analysis_Context)
          return Context_Element;
-      --  Return the current scope referenced by the implicit cursor.
+      --  Returns the current scope referenced by the implicit cursor.
 
       function Get_New_Pkg_Id
         (Context : in out Analysis_Context) return Natural;
-      --  Generate and returns a new package number identifier
+      --  Generates and returns a new package number identifier
 
       --  Implicit cursor subprograms **************************************
       function Get_Construct
@@ -120,12 +120,10 @@ package body Docgen2 is
       --  Returns the current construct referenced by the implicit cursor
       function Has_Next_Construct
         (Context : Analysis_Context) return Boolean;
-      --  Return True if the current scope has more constructs to traverse
+      --  Returns True if the current scope has more constructs to traverse
       procedure Next_Construct
         (Context : in out Analysis_Context);
       --  Move the implicit cursor to the next construct of the current scope
-      procedure Reset_Cursor
-        (Context : in out Analysis_Context);
 
       --  Context getters/setters *****************************************
       function Get_Comments
@@ -166,8 +164,8 @@ package body Docgen2 is
       Content  : Unbounded_String;
    end record;
 
-   package Custom_Files_List is new Ada.Containers.Vectors
-     (Natural, Custom_File_Record);
+   package Custom_Files_List is
+      new Ada.Containers.Vectors (Natural, Custom_File_Record);
 
    procedure Add_Custom_Index
      (Cmd   : Docgen_Object;
@@ -476,6 +474,7 @@ package body Docgen2 is
    --------------------
 
    function Location_Image (Loc : General_Location) return String is
+
       function Int_Img (I : Integer) return String;
 
       -------------
@@ -662,7 +661,7 @@ package body Docgen2 is
       function Ignore
         (Construct : access Simple_Construct_Information)
          return Boolean;
-      --  Return true if the construct must be ignored
+      --  Returns true if the construct must be ignored
 
       ----------------
       -- Get_Entity --
@@ -1964,7 +1963,6 @@ package body Docgen2 is
       C.Backend := Backend;
       C.Project := P;
       C.Options := Options;
-      Reset_Cursor (C.Analysis_Ctxt);
 
       Launch_Background_Command
         (Kernel,
@@ -2016,7 +2014,6 @@ package body Docgen2 is
             C.Src_Files.Append (Source_Files (J));
          end loop;
          C.Options := Options;
-         Reset_Cursor (C.Analysis_Ctxt);
          Unchecked_Free (Source_Files);
       end;
 
@@ -3300,6 +3297,7 @@ package body Docgen2 is
 
    procedure Generate_Comments (Cmd : Docgen_Object) is
       Cursor : Entity_Info_Map.Cursor;
+
       procedure Internal (Loc : General_Location; Elem : in out Entity_Info);
       --  Update the comment for Elem
 
@@ -3813,8 +3811,7 @@ package body Docgen2 is
    -- Generate_Support_Files --
    ----------------------------
 
-   procedure Generate_Support_Files (Cmd : Docgen_Object)
-   is
+   procedure Generate_Support_Files (Cmd : Docgen_Object) is
       Src_Dir : constant GNATCOLL.VFS.Virtual_File :=
                   Cmd.Backend.Get_Support_Dir (Get_System_Dir (Cmd.Kernel));
       Dst_Dir : constant GNATCOLL.VFS.Virtual_File :=
@@ -4173,14 +4170,6 @@ package body Docgen2 is
          return New_Context;
       end New_Context;
 
-      ------------------
-      -- Reset_Cursor --
-      ------------------
-
-      procedure Reset_Cursor (Context : in out Analysis_Context) is
-      begin
-         Context.Iter := Null_Construct_Tree_Iterator;
-      end Reset_Cursor;
    end Scopes;
 
 end Docgen2;
