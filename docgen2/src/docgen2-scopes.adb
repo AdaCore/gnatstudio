@@ -121,7 +121,7 @@ package body Docgen2.Scopes is
    ------------------
 
    function Get_Comments
-     (Context : Analysis_Context) return Comments_List.Vector is
+     (Context : Analysis_Context) return Comments_List is
    begin
       return Context.Comments;
    end Get_Comments;
@@ -236,7 +236,7 @@ package body Docgen2.Scopes is
       Tree        : Construct_Tree;
       File_Buffer : GNAT.Strings.String_Access;
       Language    : Language_Handler;
-      Comments    : Comments_List.Vector) return Analysis_Context
+      Comments    : Comments_List) return Analysis_Context
    is
       Ctxt_Elem   : Context_Element;
       New_Context : Analysis_Context;
