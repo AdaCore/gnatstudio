@@ -25,17 +25,12 @@ package body Dynamic_Arrays is
 
    type Small_Table_Ptr is access all Table_Type;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Table_Type, Small_Table_Ptr);
-
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Table_Ptr);
    function Convert is new Ada.Unchecked_Conversion
      (Table_Ptr, System.Address);
-   function Convert is new Ada.Unchecked_Conversion
-     (Table_Ptr, Small_Table_Ptr);
    function Convert is new Ada.Unchecked_Conversion
      (Small_Table_Ptr, Table_Ptr);
    pragma Warnings (On);
@@ -73,11 +68,12 @@ package body Dynamic_Arrays is
       if T.Table = null then
          if Needs_Controlled then
             Tmp := new Table_Type
-              (First .. First + Index_Type (Table_Initial_Size));
-            T := (Table => Convert (Tmp),
+              (First .. First + Index_Type (Table_Initial_Size) - 1);
+            T := (Table => Convert (Tmp),   --  loses range info
                   P     => (Next_To_Last   => First,
-                            Last_Allocated => Index_Type'Pred
-                              (First + Index_Type (Table_Initial_Size))));
+                            Last_Allocated => Tmp'Last));
+            raise Program_Error with
+               "Dynamic_Arrays with controlled types do not work well";
          else
             T := (Table => Convert
                   (Alloc (size_t (Table_Initial_Size) * Component_Size)),
@@ -93,18 +89,32 @@ package body Dynamic_Arrays is
             Old_Size * Index_Type (Table_Multiplier));
 
          if Needs_Controlled then
-            Tmp := Convert (T.Table);
-            T.Table := new Table_Type (First .. First + New_Size);
-            T.Table (First .. First + Old_Size) :=
-              Tmp (First .. First + Old_Size);
-            Unchecked_Free (Tmp);
+            declare
+               --  Bounds info has been lost
+               type Short_Table is
+                  new Table_Type (First .. T.P.Last_Allocated);
+               type Old_Ptr is access all Short_Table;
+               function Convert is new Ada.Unchecked_Conversion
+                  (Table_Ptr, Old_Ptr);
+               procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+                 (Short_Table, Old_Ptr);
+               Tmp3 : Old_Ptr := Convert (T.Table);
+               Tmp2 : Small_Table_Ptr;
+            begin
+               Tmp2 := new Table_Type (First .. First + New_Size);
+               for T in Tmp3'Range loop
+                  Tmp2 (T) := Tmp3 (T);
+               end loop;
+               T.Table := Convert (Tmp2);
+               T.P.Last_Allocated := Tmp2'Last;
+               Unchecked_Free (Tmp3);
+            end;
          else
             T.Table := Convert
               (Realloc (Convert (T.Table),
                size_t (New_Size) * Component_Size));
+            T.P.Last_Allocated := New_Size + First - 1;
          end if;
-
-         T.P.Last_Allocated := New_Size + First - 1;
       end if;
 
       T.Table (T.P.Next_To_Last) := Item;
@@ -181,12 +191,22 @@ package body Dynamic_Arrays is
    ----------
 
    procedure Free (T : in out Instance) is
-      Tmp : Small_Table_Ptr;
    begin
       if T.Table /= null then
          if Needs_Controlled then
-            Tmp := Convert (T.Table);
-            Unchecked_Free (Tmp);
+            declare
+               --  Bounds info has been lost
+               type Short_Table is
+                  new Table_Type (First .. T.P.Last_Allocated);
+               type Old_Ptr is access all Short_Table;
+               function Convert is new Ada.Unchecked_Conversion
+                  (Table_Ptr, Old_Ptr);
+               procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+                 (Short_Table, Old_Ptr);
+               Tmp3 : Old_Ptr := Convert (T.Table);
+            begin
+               Unchecked_Free (Tmp3);
+            end;
          else
             Free (Convert (T.Table));
          end if;

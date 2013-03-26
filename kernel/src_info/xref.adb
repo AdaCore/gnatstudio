@@ -17,11 +17,11 @@
 
 pragma Ada_2012;
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
 with ALI_Parser;
-with Dynamic_Arrays;
 with Glib.Convert;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.SQL.Sqlite;
@@ -53,8 +53,9 @@ package body Xref is
    type Hash_Type is range 0 .. 2 ** 20 - 1;
    function Hash is new String_Utils.Hash (Hash_Type);
 
-   package Entity_Arrays is new Dynamic_Arrays (General_Entity);
-   use Entity_Arrays;
+   package Entity_Lists is new Ada.Containers.Doubly_Linked_Lists
+      (General_Entity);
+   use Entity_Lists;
 
    function Get_Location
      (Ref : Entity_Reference) return General_Location;
@@ -80,10 +81,10 @@ package body Xref is
 
    procedure Fill_Entity_Array
      (Curs : in out Entities_Cursor'Class;
-      Arr  : in out Entity_Arrays.Instance);
+      Arr  : in out Entity_Lists.List);
    --  Store all entities returned by the cursor into the array
 
-   function To_Entity_Array (Arr : Entity_Arrays.Instance) return Entity_Array;
+   function To_Entity_Array (Arr : Entity_Lists.List) return Entity_Array;
    --  Creates an entity array.
    --  ??? This is not very efficient
 
@@ -3115,11 +3116,11 @@ package body Xref is
 
    procedure Fill_Entity_Array
      (Curs : in out Entities_Cursor'Class;
-      Arr  : in out Entity_Arrays.Instance)
+      Arr  : in out Entity_Lists.List)
    is
    begin
       while Curs.Has_Element loop
-         Append (Arr, From_New (Curs.Element));
+         Arr.Append (From_New (Curs.Element));
          Curs.Next;
       end loop;
    end Fill_Entity_Array;
@@ -3129,13 +3130,14 @@ package body Xref is
    ---------------------
 
    function To_Entity_Array
-     (Arr : Entity_Arrays.Instance) return Entity_Array
+     (Arr : Entity_Lists.List) return Entity_Array
    is
-      Last : constant Integer := Integer (Entity_Arrays.Last (Arr));
-      Result : Entity_Array (Integer (Entity_Arrays.First) .. Last);
+      Result : Entity_Array (1 .. Integer (Arr.Length));
+      C      : Entity_Lists.Cursor := Arr.First;
    begin
       for R in Result'Range loop
-         Result (R) := Arr.Table (Entity_Arrays.Index_Type (R));
+         Result (R) := Element (C);
+         Entity_Lists.Next (C);
       end loop;
       return Result;
    end To_Entity_Array;
@@ -3168,7 +3170,7 @@ package body Xref is
       (Self              : access General_Xref_Database_Record;
        Entity            : General_Entity) return Entity_Array
    is
-      Arr : Entity_Arrays.Instance;
+      Arr : Entity_Lists.List;
    begin
       if Active (SQLITE) then
          declare
@@ -3200,9 +3202,7 @@ package body Xref is
          end;
       end if;
 
-      return R : constant Entity_Array := To_Entity_Array (Arr) do
-         Free (Arr);
-      end return;
+      return To_Entity_Array (Arr);
    end Discriminants;
 
    -----------------------
@@ -3214,7 +3214,7 @@ package body Xref is
        Entity : General_Entity) return Entity_Array
    is
       use Old_Entities;
-      Arr : Entity_Arrays.Instance;
+      Arr : Entity_Lists.List;
    begin
       if Active (SQLITE) then
          declare
@@ -3240,9 +3240,7 @@ package body Xref is
          end;
       end if;
 
-      return R : constant Entity_Array := To_Entity_Array (Arr) do
-         Free (Arr);
-      end return;
+      return To_Entity_Array (Arr);
    end Formal_Parameters;
 
    --------------
@@ -3254,7 +3252,7 @@ package body Xref is
        Entity            : General_Entity) return Entity_Array
    is
       use Old_Entities;
-      Arr : Entity_Arrays.Instance;
+      Arr : Entity_Lists.List;
    begin
       if Active (Me) then
          Increase_Indent
@@ -3306,9 +3304,7 @@ package body Xref is
          Decrease_Indent (Me);
       end if;
 
-      return R : constant Entity_Array := To_Entity_Array (Arr) do
-         Free (Arr);
-      end return;
+      return To_Entity_Array (Arr);
    end Literals;
 
    -----------------
@@ -3321,7 +3317,7 @@ package body Xref is
        Recursive : Boolean) return Entity_Array
    is
       use Old_Entities;
-      Arr : Entity_Arrays.Instance;
+      Arr : Entity_Lists.List;
    begin
       if Active (SQLITE) then
          declare
@@ -3355,9 +3351,7 @@ package body Xref is
          end;
       end if;
 
-      return R : constant Entity_Array := To_Entity_Array (Arr) do
-         Free (Arr);
-      end return;
+      return To_Entity_Array (Arr);
    end Child_Types;
 
    ------------------
@@ -3370,7 +3364,7 @@ package body Xref is
        Recursive : Boolean) return Entity_Array
    is
       use Old_Entities;
-      Arr : Entity_Arrays.Instance;
+      Arr : Entity_Lists.List;
    begin
       if Active (SQLITE) then
          declare
@@ -3400,9 +3394,7 @@ package body Xref is
          end;
       end if;
 
-      return R : constant Entity_Array := To_Entity_Array (Arr) do
-         Free (Arr);
-      end return;
+      return To_Entity_Array (Arr);
    end Parent_Types;
 
    ------------
@@ -3414,7 +3406,7 @@ package body Xref is
        Entity            : General_Entity) return Entity_Array
    is
       use Old_Entities;
-      Arr : Entity_Arrays.Instance;
+      Arr : Entity_Lists.List;
    begin
       if Active (SQLITE) then
          declare
@@ -3453,9 +3445,7 @@ package body Xref is
          end;
       end if;
 
-      return R : constant Entity_Array := To_Entity_Array (Arr) do
-         Free (Arr);
-      end return;
+      return To_Entity_Array (Arr);
    end Fields;
 
    -------------
@@ -3467,7 +3457,7 @@ package body Xref is
        Entity            : General_Entity;
        Include_Inherited : Boolean) return Entity_Array
    is
-      Result : Entity_Arrays.Instance;
+      Result : Entity_Lists.List;
    begin
       if Active (SQLITE) then
          declare
@@ -3504,9 +3494,7 @@ package body Xref is
          end;
       end if;
 
-      return R : constant Entity_Array := To_Entity_Array (Result) do
-         Free (Result);
-      end return;
+      return To_Entity_Array (Result);
    end Methods;
 
    --------------------
@@ -3555,14 +3543,12 @@ package body Xref is
       if Active (SQLITE) then
          declare
             Curs : Entities_Cursor;
-            Arr  : Entity_Arrays.Instance;
+            Arr  : Entity_Lists.List;
          begin
             Self.Xref.Index_Types (Entity.Entity, Cursor => Curs);
             Fill_Entity_Array (Curs, Arr);
 
-            return R : constant Entity_Array := To_Entity_Array (Arr) do
-               Free (Arr);
-            end return;
+            return To_Entity_Array (Arr);
          end;
       else
          declare
