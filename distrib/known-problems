@@ -28,6 +28,14 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               .metadata/.plugins/org.eclipse.core.runtime/.settings
               hidden folder of the workspace.
 
+- M318-027: GB: Missing menus when editing Ada file not part of a GPR project
+  Problem:    When Codepeer plugin is installed, and when an Ada file not part
+              of the workspace's GNAT projects is edited, some menus
+              (ex: breakpoints/watchpoints contextual menu) are not displayed,
+              and exceptions are reported in the Error Log.
+  Workaround: Import in the workspace a GNAT Project containing the Ada file.
+              see menu File > Import... > Ada > Existing GNAT Project
+
 - M315-040: GPS: link broken in Welcome page
   Problem:    Links in Welcome page are broken.
   Workaround: Use "Help/Gps/Using the GNAT Programming Studio" and
