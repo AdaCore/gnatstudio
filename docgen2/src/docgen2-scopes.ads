@@ -25,7 +25,7 @@ with Language.Tree;     use Language.Tree;
 with Language_Handlers; use Language_Handlers;
 
 with Docgen2.Entities;  use Docgen2.Entities;
-with Docgen2.Tags;      use Docgen2.Tags;
+with Docgen2.Comments.List;   use Docgen2.Comments.List;
 
 private package Docgen2.Scopes is
 
@@ -42,7 +42,7 @@ private package Docgen2.Scopes is
       Tree        : Construct_Tree;
       File_Buffer : GNAT.Strings.String_Access;
       Language    : Language_Handler;
-      Comments    : Comments_List.Vector) return Analysis_Context;
+      Comments    : Comments_List) return Analysis_Context;
    --  Constructor of Analysis_Context. Initializes the implicit cursor to
    --  start traversing the Tree of constructs.
 
@@ -83,7 +83,7 @@ private package Docgen2.Scopes is
 
    --  Context getters/setters *****************************************
    function Get_Comments
-     (Context : Analysis_Context) return Comments_List.Vector;
+     (Context : Analysis_Context) return Comments_List;
    function Get_File
      (Context : Analysis_Context) return Virtual_File;
    function Get_File_Buffer
@@ -108,7 +108,7 @@ private
       File        : Virtual_File;
       Language    : Language_Handler;
       Pkg_Nb      : Natural;
-      Comments    : Comments_List.Vector;
+      Comments    : Comments_List;
       In_Body     : Boolean;
    end record;
 end Docgen2.Scopes;

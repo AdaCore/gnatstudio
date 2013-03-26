@@ -53,7 +53,8 @@ with Docgen2.Entities;        use Docgen2.Entities;
                               use Docgen2.Entities.Files_List;
 with Docgen2.Scopes;          use Docgen2.Scopes;
 with Docgen2.Scripts;         use Docgen2.Scripts;
-with Docgen2.Tags;            use Docgen2.Tags;
+with Docgen2.Comments;        use Docgen2.Comments;
+with Docgen2.Comments.List;   use Docgen2.Comments.List;
 with Docgen2.Utils;           use Docgen2.Utils;
 with Language.Tree.Database;  use Language.Tree.Database;
 with Xref;                    use Xref;
@@ -260,7 +261,7 @@ package body Docgen2 is
       procedure Get_All_Comments
         (Lang     : Language_Access;
          Buffer   : String;
-         Comments : out Comments_List.Vector);
+         Comments : out Comments_List);
       --  Retrieve all comment blocks from a file
 
       procedure Remove_Element
@@ -276,7 +277,7 @@ package body Docgen2 is
       procedure Get_All_Comments
         (Lang     : Language_Access;
          Buffer   : String;
-         Comments : out Comments_List.Vector)
+         Comments : out Comments_List)
       is
          Last_Entity : Language_Entity := Normal_Text;
 
@@ -467,7 +468,7 @@ package body Docgen2 is
             declare
                Construct_T : Construct_Tree;
                Constructs  : aliased Construct_List;
-               Comments    : Comments_List.Vector;
+               Comments    : Comments_List;
                Last        : Natural;
                CR_Found    : Boolean;
 

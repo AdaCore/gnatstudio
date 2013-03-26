@@ -23,8 +23,8 @@ with GNAT.Strings;
 
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
-with Language;     use Language;
-with Docgen2.Tags;
+with Language;         use Language;
+with Docgen2.Comments;
 with Xref;
 
 package Docgen2.Entities is
@@ -117,7 +117,7 @@ package Docgen2.Entities is
          Short_Name           : GNATCOLL.Symbols.Symbol;
          --  Short name
 
-         Description          : aliased Docgen2.Tags.Comment_Type;
+         Description          : aliased Docgen2.Comments.Comment_Type;
          --  Associated comment
 
          Printout             : GNAT.Strings.String_Access;
