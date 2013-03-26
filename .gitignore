@@ -22,7 +22,11 @@ b~*
 common/Makefile.common
 common/common.gpr
 common/expect/Makefile
-common/src/config.ads
+common/core/src/config.ads
+common/core/obj/*
+gnatinspect.db*
+*-msg.xml
+*-loc.xml
 config.log
 config.status
 design/tests/F221-006/hello.adb.redo_0
