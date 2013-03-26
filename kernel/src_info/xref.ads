@@ -781,19 +781,21 @@ private
    type General_Entity is record
       Old_Entity : Old_Entities.Entity_Information := null;
       Is_Fuzzy   : Boolean := False;  --  Whether this is a fuzzy match
-
       Entity     : GNATCOLL.Xref.Entity_Information := No_Entity;
 
-      Node       : Language.Tree.Database.Entity_Persistent_Access :=
-        Language.Tree.Database.Null_Entity_Persistent_Access;
-      --  The corresponding node in the constructs database. This can be
-      --  computed from the other two fields.
+      Loc        : General_Location;
+      --  The location which was used to query the entity. This is used to
+      --  fall back on the Constructs database if Entity and Old_Entity are
+      --  null.
    end record;
    No_General_Entity : constant General_Entity :=
      (Old_Entity => null,
       Is_Fuzzy   => False,
-      Entity     => No_Entity,
-      Node       => Language.Tree.Database.Null_Entity_Persistent_Access);
+      Loc        => No_Location,
+      Entity     => No_Entity);
+   --  We no longer store the Entity_Persistent_Access node in General_Entity,
+   --  since we would need to also control the assignments to make sure its
+   --  reference counting is properly incremented.
 
    type General_Entity_Reference is record
       Old_Ref : Old_Entities.Entity_Reference :=

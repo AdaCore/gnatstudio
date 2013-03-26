@@ -62,7 +62,7 @@ package body Xref is
 
    procedure Node_From_Entity
      (Self        : access General_Xref_Database_Record'Class;
-      Handler     : Language_Handlers.Language_Handler;
+      Handler     : access Abstract_Language_Handler_Record'Class;
       Decl        : General_Location;
       Ent         : out Entity_Access;
       Tree_Lang   : out Tree_Language_Access);
@@ -167,12 +167,7 @@ package body Xref is
          Buffer    : GNAT.Strings.String_Access;
          Node      : Construct_Tree_Iterator;
       begin
-         if not Exists (Entity.Node) then
-            Node_From_Entity (Self, Handler, Decl, Ent, Tree_Lang);
-         else
-            Ent := To_Entity_Access (Entity.Node);
-            Tree_Lang := Get_Tree_Language (Get_File (Ent));
-         end if;
+         Node_From_Entity (Self, Handler, Decl, Ent, Tree_Lang);
 
          if Ent = Null_Entity_Access then
             return "";
@@ -636,76 +631,63 @@ package body Xref is
         and then Loc /= No_Location   --  Nothing for predefined entities
       then
          declare
-            Tree_Lang : constant Tree_Language_Access :=
-                         Get_Tree_Language_From_File
-                           (Self.Lang_Handler, Loc.File);
-            S_File : constant Structured_File_Access :=
-              Get_Or_Create
-                (Db   => Self.Constructs,
-                 File => Loc.File);
-
+            Tree_Lang : Tree_Language_Access;
             Result       : Entity_Access;
             New_Location : General_Location;
             New_Entity   : General_Entity;
 
          begin
             Trace (Me, "Searching entity declaration in constructs");
-            if not Is_Null (S_File) then
-               --  In some cases, the references are extracted from a place
-               --  where there is still an ALI file, but no more source file.
-               --  This will issue a null Structured_File_Access, which is why
-               --  we're protecting the following code with the above condition
+            Node_From_Entity
+               (Self      => Self,
+                Handler   => Self.Lang_Handler,
+                Decl      => Loc,
+                Ent       => Result,
+                Tree_Lang => Tree_Lang);
 
-               Update_Contents (S_File);
+            if Result /= Null_Entity_Access
+               and then
+                  (Entity_Name = "" or else
+                   Get (Get_Construct (Result).Name).all = Entity_Name)
+            then
+               --  First, try to see if there's already a similar entity in
+               --  the database. If that's the case, it's better to use it
+               --  than the dummy one created from the construct.
 
-               Result := Tree_Lang.Find_Declaration
-                 (S_File, Loc.Line,
-                  To_Line_String_Index (S_File, Loc.Line, Loc.Column));
+               New_Location :=
+                 (File   => Get_File_Path (Get_File (Result)),
+                  Line   => Get_Construct (Result).Sloc_Entity.Line,
+                  Column => To_Visible_Column
+                    (Get_File (Result),
+                     Get_Construct (Result).Sloc_Entity.Line,
+                     String_Index_Type
+                       (Get_Construct (Result).Sloc_Entity.Column)));
 
-               if Result /= Null_Entity_Access
-                 and then
-                   (Entity_Name = "" or else
-                    Get (Get_Construct (Result).Name).all = Entity_Name)
+               New_Entity := Internal_No_Constructs
+                 (Name  => Get (Get_Construct (Result).Name).all,
+                  Loc   => (File   => New_Location.File,
+                            Line   => New_Location.Line,
+                            Column => New_Location.Column));
+
+               if New_Entity /= No_General_Entity
+                 and then not Is_Fuzzy (New_Entity)
                then
-                  --  First, try to see if there's already a similar entity in
-                  --  the database. If that's the case, it's better to use it
-                  --  than the dummy one created from the construct.
+                  --  If we found an updated ALI entity, use it.
+                  Entity := New_Entity;
 
-                  New_Location :=
-                    (File   => Get_File_Path (Get_File (Result)),
-                     Line   => Get_Construct (Result).Sloc_Entity.Line,
-                     Column => To_Visible_Column
-                       (Get_File (Result),
-                        Get_Construct (Result).Sloc_Entity.Line,
-                        String_Index_Type
-                          (Get_Construct (Result).Sloc_Entity.Column)));
+               elsif Entity /= No_General_Entity then
+                  --  Reuse the ALI entity, since that gives us a chance to
+                  --  query its references as well.
+                  Entity.Loc := New_Location;
 
-                  New_Entity := Internal_No_Constructs
-                    (Name  => Get (Get_Construct (Result).Name).all,
-                     Loc   => (File   => New_Location.File,
-                               Line   => New_Location.Line,
-                               Column => New_Location.Column));
+               else
+                  --  If we have no entity to connect to, then create one
+                  --  from the construct database.
 
-                  if New_Entity /= No_General_Entity
-                    and then not Is_Fuzzy (New_Entity)
-                  then
-                     --  If we found an updated ALI entity, use it.
-                     Entity := New_Entity;
-
-                  elsif Entity /= No_General_Entity then
-                     --  Reuse the ALI entity, since that gives us a change to
-                     --  query its references as well.
-                     Entity.Node := To_Entity_Persistent_Access (Result);
-
-                  else
-                     --  If we have no entity to connect to, then create one
-                     --  from the construct database.
-
-                     Entity := To_LI_Entity (Self, Result);
-                  end if;
-
-                  Entity.Is_Fuzzy := True;
+                  Entity := To_LI_Entity (Self, Result);
                end if;
+
+               Entity.Is_Fuzzy := True;
             end if;
          end;
       end if;
@@ -869,22 +851,27 @@ package body Xref is
          end if;
       end if;
 
-      if Exists (Entity.Node) then
+      if Entity.Loc /= No_Location then
          declare
-            Decl : constant Entity_Access :=
-              Get_Declaration
-                (Get_Tree_Language (Get_File (Entity.Node)),
-                 To_Entity_Access (Entity.Node));
-            Node : constant Construct_Tree_Iterator :=
-              To_Construct_Tree_Iterator (Decl);
-
+            Result    : Entity_Access;
+            Tree_Lang : Tree_Language_Access;
+            Decl      : Entity_Access;
+            Node      : Construct_Tree_Iterator;
          begin
-            return (Loc => (File   => Get_File_Path (Get_File (Decl)),
-                            Line   => Get_Construct (Node).Sloc_Start.Line,
-                            Column => Visible_Column_Type
-                              (Get_Construct (Node).Sloc_Start.Column)),
-                    Body_Is_Full_Declaration => False,
-                    Name => Null_Unbounded_String); --  ??? How to get the name
+            Node_From_Entity
+               (Db, Db.Lang_Handler, Entity.Loc, Result, Tree_Lang);
+
+            if Result /= Null_Entity_Access then
+               Decl := Get_Declaration
+                  (Get_Tree_Language (Get_File (Result)), Result);
+               Node := To_Construct_Tree_Iterator (Decl);
+               return (Loc => (File   => Get_File_Path (Get_File (Decl)),
+                               Line   => Get_Construct (Node).Sloc_Start.Line,
+                               Column => Visible_Column_Type
+                                 (Get_Construct (Node).Sloc_Start.Column)),
+                       Body_Is_Full_Declaration => False,
+                       Name => Null_Unbounded_String);
+            end if;
          end;
       end if;
 
@@ -995,17 +982,9 @@ package body Xref is
             end if;
 
             if C_Entity = Null_Entity_Access then
-               --  Do not reuse the Node information from the Entity, in case
-               --  it is no longer up-to-date
-
-               if Exists (Entity.Node) then
-                  C_Entity := To_Entity_Access (Entity.Node);
-
-               else
-                  Loc := Db.Get_Declaration (Entity).Loc;
-                  if Loc /= No_Location then
-                     C_Entity := Get_Entity_At_Location (Db, Loc);
-                  end if;
+               Loc := Db.Get_Declaration (Entity).Loc;
+               if Loc /= No_Location then
+                  C_Entity := Get_Entity_At_Location (Db, Loc);
                end if;
             end if;
 
@@ -1230,33 +1209,30 @@ package body Xref is
 
    procedure Node_From_Entity
      (Self        : access General_Xref_Database_Record'Class;
-      Handler     : Language_Handlers.Language_Handler;
+      Handler     : access Abstract_Language_Handler_Record'Class;
       Decl        : General_Location;
       Ent         : out Entity_Access;
       Tree_Lang   : out Tree_Language_Access)
    is
       Data_File   : Structured_File_Access;
-      Node        : Construct_Tree_Iterator;
    begin
-      Ent       := Null_Entity_Access;
+      Ent := Null_Entity_Access;
       Tree_Lang := Get_Tree_Language_From_File (Handler, Decl.File, False);
       Data_File := Language.Tree.Database.Get_Or_Create
         (Db   => Self.Constructs,
          File => Decl.File);
+      Update_Contents (Data_File);
 
-      if Data_File /= null then
-         Node := Get_Iterator_At
-           (Tree        => Get_Tree (Data_File),
-            Location    =>
-              (Absolute_Offset => False,
-               Line            => Decl.Line,
-               Line_Offset     => To_Line_String_Index
-                 (Data_File, Decl.Line, Decl.Column)),
-            From_Type   => Start_Name);
+      --  In some cases, the references are extracted from a place
+      --  where there is still an ALI file, but no more source file.
+      --  This will issue a null Structured_File_Access, which is why
+      --  we're protecting the following code with the above condition
 
-         if Node /= Null_Construct_Tree_Iterator then
-            Ent := To_Entity_Access (Data_File, Node);
-         end if;
+      if not Is_Null (Data_File) then
+         --  Find_Declaration does more than Get_Iterator_At, so use it.
+         Ent := Tree_Lang.Find_Declaration
+            (Data_File, Decl.Line,
+             To_Line_String_Index (Data_File, Decl.Line, Decl.Column));
       end if;
    end Node_From_Entity;
 
@@ -1334,7 +1310,6 @@ package body Xref is
    procedure Unref (Entity : in out General_Entity) is
    begin
       Old_Entities.Unref (Entity.Old_Entity);
-      Unref (Entity.Node);
    end Unref;
 
    -----------------
@@ -1379,45 +1354,9 @@ package body Xref is
    overriding function "=" (E1, E2 : General_Entity) return Boolean is
    begin
       if Active (SQLITE) then
-         --  Entities are equal if:
-         --    - their Entity field is set for both, and they are equal
-         --    - or their Node fields are set for both and equal, and the two
-         --      Entity fields do not indicate they are different
-         --    - or both fields are null for both entities
-
-         if E1.Entity = E2.Entity
-           and then E1.Entity /= No_Entity
-         then
-            return True;
-
-         elsif E1.Node = E2.Node
-           and then Exists (E1.Node)
-           and then (E1.Entity = E1.Entity
-                     or else E1.Entity = No_Entity
-                     or else E2.Entity = No_Entity)
-         then
-            return True;
-
-         elsif E1.Entity = No_Entity
-           and then E2.Entity = No_Entity
-           and then not Exists (E1.Node)
-           and then not Exists (E2.Node)
-         then
-            return True;
-
-         else
-            return False;
-         end if;
+         return E1.Entity = E2.Entity;
       else
-         if E1.Old_Entity = null then
-            return E2.Old_Entity = null
-              and then not Exists (E2.Node);
-         elsif E2.Old_Entity = null then
-            return E1.Old_Entity = null
-              and then not Exists (E1.Node);
-         else
-            return E1.Old_Entity = E2.Old_Entity;
-         end if;
+         return E1.Old_Entity = E2.Old_Entity;
       end if;
    end "=";
 
@@ -2649,6 +2588,7 @@ package body Xref is
         (Get_Assistant (Self.Constructs, LI_Assistant_Id));
 
       Construct_Annotation : Construct_Annotations_Pckg.Annotation;
+      Loc : General_Location;
    begin
       Get_Annotation
         (Get_Annotation_Container
@@ -2657,6 +2597,13 @@ package body Xref is
          Construct_Annotation);
 
       if Construct_Annotation = Construct_Annotations_Pckg.Null_Annotation then
+         Loc := (File => Get_File_Path (Get_File (E)),
+                 Line => Get_Construct (E).Sloc_Entity.Line,
+                 Column => To_Visible_Column
+                  (Get_File (E),
+                   Get_Construct (E).Sloc_Entity.Line,
+                   String_Index_Type (Get_Construct (E).Sloc_Entity.Column)));
+
          --  Create a new LI entity
 
          if not Active (SQLITE) then
@@ -2669,14 +2616,9 @@ package body Xref is
             begin
                Declaration :=
                  (Get_Or_Create
-                    (Db    => Assistant.Db.Entities,
-                     File  => Get_File_Path (Get_File (E))),
-                  Get_Construct (E).Sloc_Entity.Line,
-                  To_Visible_Column
-                    (Get_File (E),
-                     Get_Construct (E).Sloc_Entity.Line,
-                     String_Index_Type
-                       (Get_Construct (E).Sloc_Entity.Column)));
+                    (Db  => Assistant.Db.Entities, File  => Loc.File),
+                  Loc.Line,
+                  Loc.Column);
 
                --  Make a simple association between construct categories
                --  and entity categories. This association is known to be
@@ -2755,18 +2697,14 @@ package body Xref is
 
             Entity := From_New
               (Self.Xref.Add_Entity
-                 (Name => Get (Get_Construct (E).Name).all,
-                  Kind => "procedure",
-                  Decl_File => Get_File_Path (Get_File (E)),
-                  Decl_Line => Get_Construct (E).Sloc_Entity.Line,
-                  Decl_Column => Integer (To_Visible_Column
-                    (Get_File (E),
-                     Get_Construct (E).Sloc_Entity.Line,
-                     String_Index_Type
-                       (Get_Construct (E).Sloc_Entity.Column)))));
+                 (Name        => Get (Get_Construct (E).Name).all,
+                  Kind        => "procedure",
+                  Decl_File   => Loc.File,
+                  Decl_Line   => Loc.Line,
+                  Decl_Column => Integer (Loc.Column)));
          end if;
 
-         Entity.Node := To_Entity_Persistent_Access (E);
+         Entity.Loc := Loc;
          Construct_Annotation := (Other_Kind, Other_Val => new LI_Annotation);
          LI_Annotation (Construct_Annotation.Other_Val.all).Entity := Entity;
          Set_Annotation
@@ -3086,9 +3024,18 @@ package body Xref is
    ---------------------
 
    function From_Constructs
-     (Entity : Language.Tree.Database.Entity_Access) return General_Entity is
+     (Entity : Language.Tree.Database.Entity_Access) return General_Entity
+   is
+      Loc : General_Location;
    begin
-      return (Node => To_Entity_Persistent_Access (Entity), others => <>);
+      Loc :=
+         (File => Get_File_Path (Get_File (Entity)),
+          Line => Get_Construct (Entity).Sloc_Entity.Line,
+          Column => To_Visible_Column
+            (Get_File (Entity),
+             Get_Construct (Entity).Sloc_Entity.Line,
+             String_Index_Type (Get_Construct (Entity).Sloc_Entity.Column)));
+      return (Loc => Loc, others => <>);
    end From_Constructs;
 
    -----------------
