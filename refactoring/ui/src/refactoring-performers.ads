@@ -30,7 +30,7 @@ package Refactoring.Performers is
      (Factory       : access Refactor_Performer_Record;
       Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Entity        : General_Entity;
-      Refs          : Location_Arrays.Instance;
+      Refs          : Location_Arrays.List;
       No_LI_List    : Source_File_Set;
       Stale_LI_List : Source_File_Set) is abstract;
    --  Called after we have found all the references to an entity, to perform

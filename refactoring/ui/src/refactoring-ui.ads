@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Hashed_Sets;
-with Dynamic_Arrays;
+with Ada.Containers.Doubly_Linked_Lists;
 with GPS.Kernel;
 with Gtk.Scrolled_Window;
 with Gtk.Stock;
@@ -25,13 +25,8 @@ with GNATCOLL.VFS;
 
 package Refactoring.UI is
 
-   package Location_Arrays is new Dynamic_Arrays
-     (Data                    => Xref.General_Location,
-      "="                     => Xref."=",
-      Needs_Controlled        => True,
-      Table_Multiplier        => 2,
-      Table_Minimum_Increment => 10,
-      Table_Initial_Size      => 100);
+   package Location_Arrays is new Ada.Containers.Doubly_Linked_Lists
+     (Xref.General_Location, Xref."=");
    --  Handling of dynamic arrays
 
    package Source_File_Sets is new Ada.Containers.Hashed_Sets

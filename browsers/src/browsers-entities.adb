@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Numerics.Generic_Elementary_Functions;
 
-with GNAT.Heap_Sort_G;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Xref;             use GNATCOLL.Xref;
 with GNAT.Strings;              use GNAT.Strings;
@@ -51,7 +51,6 @@ with Basic_Types;
 
 with Browsers.Canvas;           use Browsers.Canvas;
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Dynamic_Arrays;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -71,7 +70,8 @@ package body Browsers.Entities is
    package Num is new Ada.Numerics.Generic_Elementary_Functions (Gdouble);
    use Num;
 
-   package Entity_Arrays is new Dynamic_Arrays (General_Entity);
+   package Entity_Arrays is new Ada.Containers.Doubly_Linked_Lists
+      (General_Entity);
    use Entity_Arrays;
 
    type Entity_Browser_Module_Record is new Module_ID_Record with null record;
@@ -389,7 +389,7 @@ package body Browsers.Entities is
 
    procedure Sort
      (Db  : access General_Xref_Database_Record'Class;
-      Arr : in out Entity_Arrays.Instance);
+      Arr : in out Entity_Arrays.List);
    --  Sort the array alphabetically
 
    --------------
@@ -891,60 +891,22 @@ package body Browsers.Entities is
 
    procedure Sort
      (Db  : access General_Xref_Database_Record'Class;
-      Arr : in out Entity_Arrays.Instance)
+      Arr : in out Entity_Arrays.List)
    is
-      use type Entity_Arrays.Index_Type;
-      First : constant Integer :=
-                Integer (Entity_Arrays.First) - 1;
-
-      procedure Move (From, To : Natural);
-      function Lt (Op1, Op2 : Natural) return Boolean;
-      --  See GNAT.Heap_Sort_G
-
-      Tmp : General_Entity;
-
-      ----------
-      -- Move --
-      ----------
-
-      procedure Move (From, To : Natural) is
-      begin
-         if From = 0 then
-            Arr.Table (Entity_Arrays.Index_Type (To + First)) :=
-              Tmp;
-         elsif To = 0 then
-            Tmp :=
-              Arr.Table (Entity_Arrays.Index_Type (From + First));
-         else
-            Arr.Table (Entity_Arrays.Index_Type (To + First)) :=
-              Arr.Table (Entity_Arrays.Index_Type (From + First));
-         end if;
-      end Move;
+      function Lt (Op1, Op2 : General_Entity) return Boolean;
 
       --------
       -- Lt --
       --------
 
-      function Lt (Op1, Op2 : Natural) return Boolean is
+      function Lt (Op1, Op2 : General_Entity) return Boolean is
       begin
-         if Op1 = 0 then
-            return Db.Cmp
-              (Tmp, Arr.Table (Entity_Arrays.Index_Type (Op2 + First))) < 0;
-         elsif Op2 = 0 then
-            return Db.Cmp
-              (Arr.Table (Entity_Arrays.Index_Type (Op1 + First)),
-               Tmp) < 0;
-         else
-            return Db.Cmp
-              (Arr.Table (Entity_Arrays.Index_Type (Op1 + First)),
-               Arr.Table (Entity_Arrays.Index_Type (Op2 + First))) < 0;
-         end if;
+         return Db.Cmp (Op1, Op2) < 0;
       end Lt;
 
-      package Entity_Sort is new GNAT.Heap_Sort_G (Move, Lt);
+      package Do_Sort is new Entity_Arrays.Generic_Sorting (Lt);
    begin
-      Entity_Sort.Sort
-        (Integer (Entity_Arrays.Last (Arr)) - First);
+      Do_Sort.Sort (Arr);
    end Sort;
 
    ------------------------------
@@ -961,7 +923,7 @@ package body Browsers.Entities is
         Kernel.Databases.Methods
           (Item.Entity, Include_Inherited => Item.Inherited_Primitives);
 
-      Arr  : Entity_Arrays.Instance;
+      Arr  : Entity_Arrays.List;
    begin
       Trace (Me, "Add_Primitive_Operations: Inherited_Primitives="
              & Item.Inherited_Primitives'Img);
@@ -998,9 +960,9 @@ package body Browsers.Entities is
                   for M in Parent_Methods'Range loop
                      Op := Parent_Methods (M);
 
-                     for A in Entity_Arrays.First .. Last (Arr) loop
-                        if Arr.Table (A) = Op then
-                           Arr.Table (A) := No_General_Entity;
+                     for A of Arr loop
+                        if A = Op then
+                           A := No_General_Entity;
                            exit;
                         end if;
                      end loop;
@@ -1010,13 +972,11 @@ package body Browsers.Entities is
          end;
       end if;
 
-      for A in Entity_Arrays.First .. Last (Arr) loop
-         if Arr.Table (A) /= No_General_Entity then
-            Add_Subprogram (Kernel, List, Item, Arr.Table (A));
+      for A of Arr loop
+         if A /= No_General_Entity then
+            Add_Subprogram (Kernel, List, Item, A);
          end if;
       end loop;
-
-      Free (Arr);
    end Add_Primitive_Operations;
 
    --------------------
@@ -1110,10 +1070,9 @@ package body Browsers.Entities is
       Parent : constant General_Entity :=
         Kernel.Databases.Parent_Package (Item.Entity);
       Iter   : Calls_Iterator;
-      Arr    : Entity_Arrays.Instance;
+      Arr    : Entity_Arrays.List;
       Called : General_Entity;
       Subp   : General_Entity;
-      Current : General_Entity;
 
    begin
       if Parent /= No_General_Entity then
@@ -1135,9 +1094,7 @@ package body Browsers.Entities is
 
       Sort (Kernel.Databases, Arr);
 
-      for A in Entity_Arrays.First .. Last (Arr) loop
-         Current := Arr.Table (A);
-
+      for Current of Arr loop
          if Kernel.Databases.Is_Subprogram (Current) then
             Add_Subprogram (Kernel, Meth_List, Item, Current);
 
@@ -1167,8 +1124,6 @@ package body Browsers.Entities is
             end if;
          end if;
       end loop;
-
-      Free (Arr);
    end Add_Package_Contents;
 
    ----------------
@@ -1187,7 +1142,7 @@ package body Browsers.Entities is
         Kernel.Databases.Fields (Item.Entity);
       Literals : constant Xref.Entity_Array :=
         Kernel.Databases.Literals (Item.Entity);
-      Fields : Entity_Arrays.Instance;
+      Fields : Entity_Arrays.List;
 
    begin
       for D in Discrs'Range loop
@@ -1201,9 +1156,8 @@ package body Browsers.Entities is
 
       --  Sort (Fields, Sort_By => Sort_Source_Order);
 
-      for F in Entity_Arrays.First .. Last (Fields) loop
-         Add_Type (List, Item, Fields.Table (F),
-                   Kernel.Databases.Get_Name (Fields.Table (F)));
+      for F of Fields loop
+         Add_Type (List, Item, F, Kernel.Databases.Get_Name (F));
       end loop;
 
       for F in Literals'Range loop

@@ -37,7 +37,6 @@ with Gtk.Widget;            use Gtk.Widget;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 
 package body Refactoring.UI is
-   use Location_Arrays;
 
    ------------
    -- Dialog --
