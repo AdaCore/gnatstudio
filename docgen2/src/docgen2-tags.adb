@@ -29,372 +29,55 @@ with GNATCOLL.Xref;
 
 package body Docgen2.Tags is
 
-   XML_Regpat : constant Pattern_Matcher :=
-                  Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
+   -----------
+   -- Local --
+   -----------
 
-   procedure Append_Txt (N : Node_Ptr; S : String);
-   --  Accumulate consecutive comments in the same node
+   --  Local package containing routines routines shared by both versions
 
-   function To_Unbounded_String
-     (Docgen      : Docgen_Object;
-      N           : Node_Ptr;
-      Entity_Name : String;
-      Href        : String;
-      Keep_Layout : Boolean := False) return Unbounded_String;
+   package Local is
 
-   procedure Parse_Buffer
-     (Comment     : in out Comment_Type;
-      Docgen      : Docgen_Object;
-      File        : Virtual_File;
-      Entity_Name : String;
-      Href        : String);
-   --  Translate the block into an xml tree
+      procedure Append_Txt (N : Node_Ptr; S : String);
+      --  Accumulate consecutive comments in the same node
 
-   procedure Free_Node (N : in out Node_Ptr);
-   --  Free a xml node tree
+      procedure Free_Node (N : in out Node_Ptr);
+      --  Free a xml node tree
 
-   ----------------
-   -- Append_Txt --
-   ----------------
+      function To_Unbounded_String
+        (Docgen      : Docgen_Object;
+         N           : Node_Ptr;
+         Entity_Name : String;
+         Href        : String;
+         Keep_Layout : Boolean := False) return Unbounded_String;
+      --  Translate the xml tree back to a block, using appropriate user tag
+      --  transformations
 
-   procedure Append_Txt (N : Node_Ptr; S : String) is
-      New_Node : Node_Ptr;
-
-   begin
-      if N.Last_Child /= null and then N.Last_Child.Kind = Text_Node then
-         Append (N.Last_Child.Value, S);
-
-      else
-         New_Node := new Node'
-           (Kind       => Text_Node,
-            Value      => To_Unbounded_String (S),
-            Parent     => N,
-            Children   => null,
-            Last_Child => null,
-            Next       => null);
-
-         if N.Last_Child = null then
-            N.Children := New_Node;
-         else
-            N.Last_Child.Next := New_Node;
-         end if;
-
-         N.Last_Child := New_Node;
-      end if;
-   end Append_Txt;
-
-   -------------------------
-   -- To_Unbounded_String --
-   -------------------------
-
-   function To_Unbounded_String
-     (Docgen      : Docgen_Object;
-      N           : Node_Ptr;
-      Entity_Name : String;
-      Href        : String;
-      Keep_Layout : Boolean := False) return Unbounded_String
-   is
-      Node    : Node_Ptr;
-      Backend : Docgen2_Backend.Backend_Handle renames
-                      Get_Backend (Docgen);
-
-      function Is_Intended_LF (Str : String; Idx : Natural) return Boolean;
-      --  True if the line starting at Idx seems intended (e.g. is a list item
-      --  or a paragraph start.
-
-      function Is_Intended_LF (Str : String; Idx : Natural) return Boolean is
-      begin
-         if Idx + 2 <= Str'Last
-           and then (Str (Idx .. Idx + 1) = "- "
-                     or else Str (Idx .. Idx + 1) = "* ")
-         then
-            --  List item
-            return True;
-         end if;
-
-         if Str (Idx) in 'A' .. 'Z' then
-            for J in reverse Str'First .. Idx - 1 loop
-               if Str (J) = '.' then
-                  --  A new sentence starting with a new-line: suppose this is
-                  --  intentional
-                  return True;
-
-               elsif not Is_Blank (Str (J)) then
-                  return False;
-
-               end if;
-            end loop;
-         end if;
-
-         return False;
-      end Is_Intended_LF;
-
-   begin
-      if N = null then
-         return Null_Unbounded_String;
-      end if;
-
-      if N.Kind = Text_Node then
-         return To_Unbounded_String (Backend.Filter (To_String (N.Value)));
-
-      elsif N.Kind = Root_Node then
-         declare
-            Ret : Unbounded_String;
-         begin
-            Node := N.Children;
-
-            while Node /= null loop
-               Append
-                 (Ret, To_Unbounded_String (Docgen, Node, Entity_Name, Href));
-               Node := Node.Next;
-            end loop;
-
-            return Ret;
-         end;
-
-      else
-         declare
-            C_Val  : Unbounded_String;
-            Val    : Unbounded_String;
-            Keep_L : Boolean := Keep_Layout;
-         begin
-
-            if To_String (N.Tag) = "code" then
-               Keep_L := True;
-            end if;
-
-            Node := N.Children;
-
-            while Node /= null loop
-               Append
-                 (C_Val,
-                  To_Unbounded_String
-                    (Docgen, Node, Entity_Name, Href, Keep_L));
-               Node := Node.Next;
-            end loop;
-
-            Node := N;
-
-            declare
-               S       : constant String := To_String (C_Val);
-               Idx     : Natural;
-               P_First : Natural := S'First;
-
-            begin
-               Idx := S'First;
-
-               while Idx < S'Last loop
-                  if Is_Intended_LF (S, Idx) then
-                     Append (Val,
-                             Backend.Gen_Paragraph (S (P_First .. Idx - 1)));
-                     P_First := Idx;
-                  end if;
-
-                  Idx := Next_Line (S, Idx);
-               end loop;
-
-               if P_First > S'First then
-                  Append (Val, Backend.Gen_Paragraph (S (P_First .. S'Last)));
-               else
-                  Append (Val, S);
-               end if;
-
-               declare
-                  Res : constant String :=
-                          On_Custom_Tag
-                            (Docgen,
-                             To_String (Node.Tag),
-                             To_String (Node.Attributes),
-                             To_String (Val),
-                             Entity_Name,
-                             Href);
-               begin
-                  if Res'Length > 0 then
-                     --  The way for a script not to print anything is to
-                     --  return a single space character. In this case, do
-                     --  not append it to the result.
-                     if Res'Length > 1 or else Res /= " " then
-                        return To_Unbounded_String (Res);
-                     else
-                        return Null_Unbounded_String;
-                     end if;
-
-                  else
-                     return To_Unbounded_String
-                       (Backend.Gen_User_Tag
-                          (To_String (Node.Tag),
-                           To_String (Node.Attributes),
-                           To_String (Val)));
-                  end if;
-               end;
-            end;
-         end;
-      end if;
-   end To_Unbounded_String;
+   end Local;
 
    ---------------
-   -- To_String --
+   -- Version_2 --
    ---------------
 
-   function To_String (Comment : Comment_Type) return String
-   is
-   begin
-      return To_String (Comment.Block);
-   end To_String;
+   --  Local package containing the behavior required for Docgen version 2
 
-   ------------------
-   -- Parse_Buffer --
-   ------------------
+   package Version_2 is
 
-   procedure Parse_Buffer
-     (Comment     : in out Comment_Type;
-      Docgen      : Docgen_Object;
-      File        : Virtual_File;
-      Entity_Name : String;
-      Href        : String) is
+      function Find_Doc
+        (Sloc_Start : Source_Location;
+         Sloc_End   : Source_Location;
+         Comments   : Comments_List.Vector;
+         File_Doc   : Boolean := False) return Comment_Type;
+      --  Find a comment placed just before Sloc_Start or just after Sloc_End.
 
-      procedure Parse
-        (S    : String;
-         N    : in out Node_Ptr;
-         Opts : Docgen_Options);
+      procedure Parse_Buffer
+        (Comment     : in out Comment_Type;
+         Docgen      : Docgen_Object;
+         File        : Virtual_File;
+         Entity_Name : String;
+         Href        : String);
+      --  Translate the block into an xml tree
 
-      procedure Parse
-        (S    : String;
-         N    : in out Node_Ptr;
-         Opts : Docgen_Options)
-      is
-         Matches      : Match_Array (0 .. 3);
-         Tag          : Unbounded_String;
-         New_Node     : Node_Ptr;
-         Closing_Tag  : Boolean;
-         Stand_Alone  : Boolean;
-
-      begin
-         Match (XML_Regpat, S, Matches);
-
-         --  No xml case
-         if Matches (0) = No_Match then
-            --  Regular string. Let's append it to the current node value
-            Append_Txt (N, S);
-
-            return;
-         end if;
-
-         --  Append characters to the last opened tag.
-         if Matches (0).First > S'First then
-            Append_Txt (N, S (S'First .. Matches (0).First - 1));
-         end if;
-
-         Tag :=
-           To_Unbounded_String (S (Matches (2).First .. Matches (2).Last));
-
-         --  Treat closing tags.
-         if S (Matches (1).First .. Matches (1).Last) = "/" then
-            Closing_Tag := True;
-         else
-            Closing_Tag := False;
-         end if;
-
-         --  If we found an unexpected xml tag, then treat it like raw text
-         if not Is_Custom_Tag (To_String (Tag))
-           or else (Closing_Tag
-                    and then (N.Kind /= Element_Node or else Tag /= N.Tag))
-         then
-            Append_Txt (N, S (Matches (0).First .. Matches (0).Last));
-
-            --  Treat closing tags.
-         elsif Closing_Tag then
-            N := N.Parent;
-
-            --  Opening tag
-         else
-            New_Node := new Node'
-              (Kind       => Element_Node,
-               Tag        => Tag,
-               Attributes => Null_Unbounded_String,
-               Next       => null,
-               Children   => null,
-               Last_Child => null,
-               Parent     => N);
-
-            if N.Children = null then
-               N.Children := New_Node;
-            else
-               N.Last_Child.Next := New_Node;
-            end if;
-
-            N.Last_Child := New_Node;
-
-            --  See if the tag finishes by '/>'
-            Stand_Alone := False;
-
-            if Matches (3).First >= Matches (3).Last
-              and then S (Matches (3).Last) = '/'
-            then
-               Stand_Alone := True;
-               Matches (3).Last := Matches (3).Last - 1;
-            end if;
-
-            --  Now initialize the attributes field
-            if Matches (3).First <= Matches (3).Last then
-               New_Node.Attributes :=
-                 To_Unbounded_String
-                   (S (Matches (3).First .. Matches (3).Last));
-            end if;
-
-            --  Set N to the newly created node if the tag is not stand-alone
-            if not Stand_Alone then
-               N := New_Node;
-            end if;
-         end if;
-
-         if Matches (0).Last < S'Last then
-            Parse (S (Matches (0).Last + 1 .. S'Last), N, Opts);
-         end if;
-      end Parse;
-
-      --  Local variables
-
-      S    : constant String := To_String (Comment.Block);
-      Opts : constant Docgen_Options := Get_Options (Docgen);
-      N    : Node_Ptr;
-   begin
-      if S = "" then
-         return;
-      end if;
-
-      N := new Node'
-        (Kind       => Root_Node,
-         Next       => null,
-         Children   => null,
-         Last_Child => null,
-         Parent     => null);
-
-      Parse (S, N, Opts);
-
-      --  Check unclosed XML tags
-
-      while N.Parent /= null loop
-         Warning
-           (Get_Kernel (Docgen),
-            (File => File,
-             Line => Comment.Sloc_Stop.Line,
-             Column =>
-               GNATCOLL.Xref.Visible_Column (Comment.Sloc_Stop.Column)),
-            "Tag " & To_String (N.Tag) &
-              " is not closed");
-
-         N := N.Parent;
-      end loop;
-
-      --  Translate the xml tree back to a block, using appropriate
-      --  user tag transformations
-
-      Comment.Block :=
-        To_Unbounded_String (Docgen, N, Entity_Name, Href);
-
-      Free_Node (N);
-   end Parse_Buffer;
+   end Version_2;
 
    ----------------------
    -- Add_Comment_Line --
@@ -407,7 +90,8 @@ package body Docgen2.Tags is
       Force_New  : Boolean;
       List       : in out Comments_List.Vector)
    is
-      Elem   : Comment_Access;
+      Elem : Comment_Access;
+
    begin
       if not Force_New
         and then not List.Is_Empty
@@ -443,31 +127,23 @@ package body Docgen2.Tags is
          return;
       end if;
 
-      Parse_Buffer (Comment, Docgen, File, Entity_Name, Href);
+      Version_2.Parse_Buffer (Comment, Docgen, File, Entity_Name, Href);
 
       Comment.Analysed := True;
    end Analyse_Comment;
 
-   ---------------
-   -- Free_Node --
-   ---------------
+   --------------
+   -- Find_Doc --
+   --------------
 
-   procedure Free_Node (N : in out Node_Ptr) is
-      procedure Internal is new Ada.Unchecked_Deallocation (Node, Node_Ptr);
-      Child : Node_Ptr;
-      Next  : Node_Ptr;
+   function Find_Doc
+     (Sloc_Start : Source_Location;
+      Sloc_End   : Source_Location;
+      Comments   : Comments_List.Vector;
+      File_Doc   : Boolean := False) return Comment_Type is
    begin
-      Child := N.Children;
-
-      while Child /= null loop
-         Next := Child.Next;
-         Free_Node (Child);
-         Child := Next;
-      end loop;
-
-      Internal (N);
-      N := null;
-   end Free_Node;
+      return Version_2.Find_Doc (Sloc_Start, Sloc_End, Comments, File_Doc);
+   end Find_Doc;
 
    ----------
    -- Free --
@@ -483,8 +159,8 @@ package body Docgen2.Tags is
    ----------
 
    procedure Free (List : in out Comments_List.Vector) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Comment_Type, Comment_Access);
+      procedure Internal is
+         new Ada.Unchecked_Deallocation (Comment_Type, Comment_Access);
 
       Comment : Comment_Access;
    begin
@@ -496,38 +172,418 @@ package body Docgen2.Tags is
       end loop;
    end Free;
 
-   --------------
-   -- Find_Doc --
-   --------------
+   ---------------
+   -- To_String --
+   ---------------
 
-   function Find_Doc
-     (Sloc_Start : Source_Location;
-      Sloc_End   : Source_Location;
-      Comments   : Comments_List.Vector;
-      File_Doc   : Boolean := False) return Comment_Type
-   is
+   function To_String (Comment : Comment_Type) return String is
    begin
-      for J in Comments.First_Index .. Comments.Last_Index loop
-         if File_Doc
-           and then Comments.Element (J).Sloc_Start.Line < Sloc_Start.Line
-           and then
-             (J = Comments.Last_Index
-              or else Comments.Element (J + 1).Sloc_Start.Line >
-                Sloc_Start.Line)
-         then
-            return Comments.Element (J).all;
+      return To_String (Comment.Block);
+   end To_String;
 
-         elsif Sloc_Start.Line - 1 = Comments.Element (J).Sloc_Stop.Line
-           or else Sloc_End.Line + 1 = Comments.Element (J).Sloc_Start.Line
-         then
-            --  ??? Should not return twice a comment. Mark it as used ?
-            return Comments.Element (J).all;
+   package body Local is
+
+      ----------------
+      -- Append_Txt --
+      ----------------
+
+      procedure Append_Txt (N : Node_Ptr; S : String) is
+         New_Node : Node_Ptr;
+
+      begin
+         if N.Last_Child /= null and then N.Last_Child.Kind = Text_Node then
+            Append (N.Last_Child.Value, S);
+
+         else
+            New_Node := new Node'
+              (Kind       => Text_Node,
+               Value      => To_Unbounded_String (S),
+               Parent     => N,
+               Children   => null,
+               Last_Child => null,
+               Next       => null);
+
+            if N.Last_Child = null then
+               N.Children := New_Node;
+            else
+               N.Last_Child.Next := New_Node;
+            end if;
+
+            N.Last_Child := New_Node;
+         end if;
+      end Append_Txt;
+
+      ---------------
+      -- Free_Node --
+      ---------------
+
+      procedure Free_Node (N : in out Node_Ptr) is
+         procedure Internal is new Ada.Unchecked_Deallocation (Node, Node_Ptr);
+         Child : Node_Ptr;
+         Next  : Node_Ptr;
+      begin
+         Child := N.Children;
+
+         while Child /= null loop
+            Next := Child.Next;
+            Free_Node (Child);
+            Child := Next;
+         end loop;
+
+         Internal (N);
+         N := null;
+      end Free_Node;
+
+      -------------------------
+      -- To_Unbounded_String --
+      -------------------------
+
+      function To_Unbounded_String
+        (Docgen      : Docgen_Object;
+         N           : Node_Ptr;
+         Entity_Name : String;
+         Href        : String;
+         Keep_Layout : Boolean := False) return Unbounded_String
+      is
+         Node    : Node_Ptr;
+         Backend : Docgen2_Backend.Backend_Handle renames
+                     Get_Backend (Docgen);
+
+         function Is_Intended_LF (Str : String; Idx : Natural) return Boolean;
+         --  True if the line starting at Idx seems intended (e.g. is a list
+         --  item or a paragraph start.
+
+         function Is_Intended_LF (Str : String; Idx : Natural) return Boolean
+         is
+         begin
+            if Idx + 2 <= Str'Last
+              and then (Str (Idx .. Idx + 1) = "- "
+                          or else Str (Idx .. Idx + 1) = "* ")
+            then
+               --  List item
+               return True;
+            end if;
+
+            if Str (Idx) in 'A' .. 'Z' then
+               for J in reverse Str'First .. Idx - 1 loop
+                  if Str (J) = '.' then
+                     --  A new sentence starting with a new-line: suppose this
+                     --  is intentional
+                     return True;
+
+                  elsif not Is_Blank (Str (J)) then
+                     return False;
+
+                  end if;
+               end loop;
+            end if;
+
+            return False;
+         end Is_Intended_LF;
+
+      begin
+         if N = null then
+            return Null_Unbounded_String;
          end if;
 
-         exit when Comments.Element (J).Sloc_Start > Sloc_End;
-      end loop;
+         if N.Kind = Text_Node then
+            return To_Unbounded_String (Backend.Filter (To_String (N.Value)));
 
-      return No_Comment;
-   end Find_Doc;
+         elsif N.Kind = Root_Node then
+            declare
+               Ret : Unbounded_String;
+            begin
+               Node := N.Children;
+
+               while Node /= null loop
+                  Append (Ret,
+                    To_Unbounded_String (Docgen, Node, Entity_Name, Href));
+                  Node := Node.Next;
+               end loop;
+
+               return Ret;
+            end;
+
+         else
+            declare
+               C_Val  : Unbounded_String;
+               Val    : Unbounded_String;
+               Keep_L : Boolean := Keep_Layout;
+
+            begin
+               if To_String (N.Tag) = "code" then
+                  Keep_L := True;
+               end if;
+
+               Node := N.Children;
+
+               while Node /= null loop
+                  Append
+                    (C_Val,
+                     To_Unbounded_String
+                       (Docgen, Node, Entity_Name, Href, Keep_L));
+                  Node := Node.Next;
+               end loop;
+
+               Node := N;
+
+               declare
+                  S       : constant String := To_String (C_Val);
+                  Idx     : Natural;
+                  P_First : Natural := S'First;
+
+               begin
+                  Idx := S'First;
+
+                  while Idx < S'Last loop
+                     if Is_Intended_LF (S, Idx) then
+                        Append (Val,
+                          Backend.Gen_Paragraph (S (P_First .. Idx - 1)));
+                        P_First := Idx;
+                     end if;
+
+                     Idx := Next_Line (S, Idx);
+                  end loop;
+
+                  if P_First > S'First then
+                     Append (Val,
+                       Backend.Gen_Paragraph (S (P_First .. S'Last)));
+                  else
+                     Append (Val, S);
+                  end if;
+
+                  declare
+                     Res : constant String :=
+                             On_Custom_Tag
+                               (Docgen,
+                                To_String (Node.Tag),
+                                To_String (Node.Attributes),
+                                To_String (Val),
+                                Entity_Name,
+                                Href);
+                  begin
+                     if Res'Length > 0 then
+                        --  The way for a script not to print anything is to
+                        --  return a single space character. In this case, do
+                        --  not append it to the result.
+                        if Res'Length > 1 or else Res /= " " then
+                           return To_Unbounded_String (Res);
+                        else
+                           return Null_Unbounded_String;
+                        end if;
+
+                     else
+                        return To_Unbounded_String
+                          (Backend.Gen_User_Tag
+                             (To_String (Node.Tag),
+                              To_String (Node.Attributes),
+                              To_String (Val)));
+                     end if;
+                  end;
+               end;
+            end;
+         end if;
+      end To_Unbounded_String;
+
+   end Local;
+
+   ---------------
+   -- Version_2 --
+   ---------------
+
+   package body Version_2 is
+      XML_Regpat : constant Pattern_Matcher :=
+        Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
+
+      --------------
+      -- Find_Doc --
+      --------------
+
+      function Find_Doc
+        (Sloc_Start : Source_Location;
+         Sloc_End   : Source_Location;
+         Comments   : Comments_List.Vector;
+         File_Doc   : Boolean := False) return Comment_Type
+      is
+      begin
+         for J in Comments.First_Index .. Comments.Last_Index loop
+            if File_Doc
+              and then Comments.Element (J).Sloc_Start.Line < Sloc_Start.Line
+              and then
+                (J = Comments.Last_Index
+                   or else Comments.Element (J + 1).Sloc_Start.Line
+                             > Sloc_Start.Line)
+            then
+               return Comments.Element (J).all;
+
+            elsif Sloc_Start.Line - 1 = Comments.Element (J).Sloc_Stop.Line
+              or else Sloc_End.Line + 1 = Comments.Element (J).Sloc_Start.Line
+            then
+               --  ??? Should not return twice a comment. Mark it as used ?
+               return Comments.Element (J).all;
+            end if;
+
+            exit when Comments.Element (J).Sloc_Start > Sloc_End;
+         end loop;
+
+         return No_Comment;
+      end Find_Doc;
+
+      ------------------
+      -- Parse_Buffer --
+      ------------------
+
+      procedure Parse_Buffer
+        (Comment     : in out Comment_Type;
+         Docgen      : Docgen_Object;
+         File        : Virtual_File;
+         Entity_Name : String;
+         Href        : String) is
+
+         procedure Parse
+           (S    : String;
+            N    : in out Node_Ptr;
+            Opts : Docgen_Options);
+
+         procedure Parse
+           (S    : String;
+            N    : in out Node_Ptr;
+            Opts : Docgen_Options)
+         is
+            Matches      : Match_Array (0 .. 3);
+            Tag          : Unbounded_String;
+            New_Node     : Node_Ptr;
+            Closing_Tag  : Boolean;
+            Stand_Alone  : Boolean;
+
+         begin
+            Match (XML_Regpat, S, Matches);
+
+            --  No xml case
+            if Matches (0) = No_Match then
+               --  Regular string. Let's append it to the current node value
+               Local.Append_Txt (N, S);
+
+               return;
+            end if;
+
+            --  Append characters to the last opened tag.
+            if Matches (0).First > S'First then
+               Local.Append_Txt (N, S (S'First .. Matches (0).First - 1));
+            end if;
+
+            Tag :=
+              To_Unbounded_String (S (Matches (2).First .. Matches (2).Last));
+
+            --  Treat closing tags.
+            if S (Matches (1).First .. Matches (1).Last) = "/" then
+               Closing_Tag := True;
+            else
+               Closing_Tag := False;
+            end if;
+
+            --  If we found an unexpected xml tag, then treat it like raw text
+            if not Is_Custom_Tag (To_String (Tag))
+              or else (Closing_Tag
+                       and then (N.Kind /= Element_Node or else Tag /= N.Tag))
+            then
+               Local.Append_Txt (N, S (Matches (0).First .. Matches (0).Last));
+
+            --  Treat closing tags.
+            elsif Closing_Tag then
+               N := N.Parent;
+
+            --  Opening tag
+            else
+               New_Node := new Node'
+                 (Kind       => Element_Node,
+                  Tag        => Tag,
+                  Attributes => Null_Unbounded_String,
+                  Next       => null,
+                  Children   => null,
+                  Last_Child => null,
+                  Parent     => N);
+
+               if N.Children = null then
+                  N.Children := New_Node;
+               else
+                  N.Last_Child.Next := New_Node;
+               end if;
+
+               N.Last_Child := New_Node;
+
+               --  See if the tag finishes by '/>'
+               Stand_Alone := False;
+
+               if Matches (3).First >= Matches (3).Last
+                 and then S (Matches (3).Last) = '/'
+               then
+                  Stand_Alone := True;
+                  Matches (3).Last := Matches (3).Last - 1;
+               end if;
+
+               --  Now initialize the attributes field
+               if Matches (3).First <= Matches (3).Last then
+                  New_Node.Attributes :=
+                    To_Unbounded_String
+                      (S (Matches (3).First .. Matches (3).Last));
+               end if;
+
+               --  Set N to the newly created node if the tag is not
+               --  stand-alone
+               if not Stand_Alone then
+                  N := New_Node;
+               end if;
+            end if;
+
+            if Matches (0).Last < S'Last then
+               Parse (S (Matches (0).Last + 1 .. S'Last), N, Opts);
+            end if;
+         end Parse;
+
+         --  Local variables
+
+         S    : constant String := To_String (Comment.Block);
+         Opts : constant Docgen_Options := Get_Options (Docgen);
+         N    : Node_Ptr;
+      begin
+         if S = "" then
+            return;
+         end if;
+
+         N := new Node'
+           (Kind       => Root_Node,
+            Next       => null,
+            Children   => null,
+            Last_Child => null,
+            Parent     => null);
+
+         Parse (S, N, Opts);
+
+         --  Check unclosed XML tags
+
+         while N.Parent /= null loop
+            Warning
+              (Get_Kernel (Docgen),
+               (File => File,
+                Line => Comment.Sloc_Stop.Line,
+                Column =>
+                  GNATCOLL.Xref.Visible_Column (Comment.Sloc_Stop.Column)),
+               "Tag " & To_String (N.Tag) &
+                 " is not closed");
+
+            N := N.Parent;
+         end loop;
+
+         --  Translate the xml tree back to a block, using appropriate
+         --  user tag transformations
+
+         Comment.Block :=
+           Local.To_Unbounded_String (Docgen, N, Entity_Name, Href);
+
+         Local.Free_Node (N);
+      end Parse_Buffer;
+
+   end Version_2;
 
 end Docgen2.Tags;
