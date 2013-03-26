@@ -18,6 +18,16 @@ Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
               aspect clauses are specified on a record type.
   Workaround: Use attributes and pragmas instead of aspects.
 
+- M319-007: GB: Hang at startup if GPR project build is launched automatically
+  Problem:    If "Build Automatically" feature is "ON" and GNATbench last
+              exit occured during a GPR project build, the future GNATbench
+              starts may hang.
+  Workaround: Disable "Build Automatically" feature adding the line
+              "description.autobuilding=false" to the
+              org.eclipse.core.resources.prefs file located in
+              .metadata/.plugins/org.eclipse.core.runtime/.settings
+              hidden folder of the workspace.
+
 - M315-040: GPS: link broken in Welcome page
   Problem:    Links in Welcome page are broken.
   Workaround: Use "Help/Gps/Using the GNAT Programming Studio" and
