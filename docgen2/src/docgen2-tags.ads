@@ -47,12 +47,6 @@ package Docgen2.Tags is
       Href        : String);
    --  Parse the comments list for user tags.
 
-   procedure Free (List : in out Comments_List.Vector);
-   --  Free memory allocated by List.
-
-   procedure Free (Comment : in out Comment_Type);
-   --  Free memory allocated by Comment
-
    function Find_Doc
      (Sloc_Start : Source_Location;
       Sloc_End   : Source_Location;
@@ -67,6 +61,12 @@ package Docgen2.Tags is
    --  The returned comment is a deep copy of the object in the list, so that
    --  the list can be freed while the returned values remain OK. This should
    --  then be freed manually.
+
+   procedure Free (List : in out Comments_List.Vector);
+   --  Free memory allocated by List.
+
+   procedure Free (Comment : in out Comment_Type);
+   --  Free memory allocated by Comment
 
    function To_String (Comment : Comment_Type) return String;
    --  Return a formatted string representing Comment.
