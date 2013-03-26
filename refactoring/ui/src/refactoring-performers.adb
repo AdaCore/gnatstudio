@@ -40,7 +40,7 @@ package body Refactoring.Performers is
      (Report : in out Renaming_Error_Record; File : Virtual_File);
 
    type Get_Locations_Data is record
-      Refs                : Location_Arrays.Instance;
+      Refs                : Location_Arrays.List;
       Stale_LI_List       : Source_File_Set;
       Read_Only_Files     : Source_File_Set;
       On_Completion       : Refactor_Performer;
@@ -85,7 +85,6 @@ package body Refactoring.Performers is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Renaming_Error_Record'Class, Renaming_Error);
    begin
-      Free (Data.Refs);
       Data.Errors.No_LI_List.Clear;
       Data.Stale_LI_List.Clear;
       Destroy (Data.Iter);

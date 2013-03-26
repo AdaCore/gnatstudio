@@ -76,7 +76,7 @@ package body Refactoring.Rename is
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : General_Entity;
-      Refs          : Location_Arrays.Instance;
+      Refs          : Location_Arrays.List;
       No_LI_List    : Source_File_Set;
       Stale_LI_List : Source_File_Set);
    --  Implements the "Renaming entity" refactoring
@@ -205,7 +205,7 @@ package body Refactoring.Rename is
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : General_Entity;
-      Refs          : Location_Arrays.Instance;
+      Refs          : Location_Arrays.List;
       No_LI_List    : Source_File_Set;
       Stale_LI_List : Source_File_Set)
    is
@@ -213,6 +213,8 @@ package body Refactoring.Rename is
       Name : constant String := Kernel.Databases.Get_Name (Entity);
       Errors : Source_File_Set;
       Was_Open : Boolean;
+      C : Location_Arrays.Cursor;
+      Current_File : Virtual_File := No_File;
 
       procedure Terminate_File (File : Virtual_File);
       --  Finish the processing for a given file
@@ -236,62 +238,71 @@ package body Refactoring.Rename is
       --  Replace first the last occurrences since we are about to modify
       --  the file, and the locations would become invalid.
 
-      for L in reverse Location_Arrays.First .. Last (Refs) loop
-         if L = Last (Refs)
-           or else Refs.Table (L).File /= Refs.Table (L + 1).File
-         then
-            if L /= Last (Refs) then
-               Terminate_File (Refs.Table (L + 1).File);
+      C := Refs.Last;
+      while Has_Element (C) loop
+         declare
+            Loc : constant General_Location := Element (C);
+         begin
+            if Current_File = No_File
+               or else Current_File /= Loc.File
+            then
+               if Current_File /= No_File then
+                  Terminate_File (Current_File);
+               end if;
+
+               Current_File := Loc.File;
+
+               Was_Open := Get_Buffer_Factory (Kernel).Get
+                 (File  => Current_File,
+                  Force => False, Open_View => False) /= Nil_Editor_Buffer;
+
+               Start_Undo_Group (Kernel, Current_File);
             end if;
 
-            Was_Open := Get_Buffer_Factory (Kernel).Get
-              (File  => Refs.Table (L).File,
-               Force => False, Open_View => False) /= Nil_Editor_Buffer;
+            if not Insert_Text
+              (Kernel.Refactoring_Context,
+               Loc.File,
+               Loc.Line,
+               Loc.Column,
+               To_String (Factory.New_Name),
+               Indent            => False,
+               Replaced_Length   => Name'Length,
+               Only_If_Replacing => To_String (Factory.Old_Name))
+            then
+               Create_Simple_Message
+                 (Get_Messages_Container (Kernel),
+                  (-"Refactoring - rename ") & To_String (Factory.Old_Name)
+                  & (-" to ") & To_String (Factory.New_Name),
+                  Loc.File,
+                  Loc.Line,
+                  Loc.Column,
+                  -"error, failed to rename entity",
+                  0,
+                  (Editor_Side => True, Locations => True));
 
-            Start_Undo_Group (Kernel, Refs.Table (L).File);
-         end if;
+               Errors.Include (Loc.File);
 
-         if not Insert_Text
-           (Kernel.Refactoring_Context,
-            Refs.Table (L).File,
-            Refs.Table (L).Line,
-            Refs.Table (L).Column,
-            To_String (Factory.New_Name),
-            Indent            => False,
-            Replaced_Length   => Name'Length,
-            Only_If_Replacing => To_String (Factory.Old_Name))
-         then
-            Create_Simple_Message
-              (Get_Messages_Container (Kernel),
-               (-"Refactoring - rename ") & To_String (Factory.Old_Name)
-               & (-" to ") & To_String (Factory.New_Name),
-               Refs.Table (L).File,
-               Refs.Table (L).Line,
-               Refs.Table (L).Column,
-               -"error, failed to rename entity",
-               0,
-               (Editor_Side => True, Locations => True));
+            else
+               --  Renaming done, insert entry into locations view
 
-            Errors.Include (Refs.Table (L).File);
+               Create_Simple_Message
+                 (Get_Messages_Container (Kernel),
+                  (-"Refactoring - rename ") & To_String (Factory.Old_Name)
+                  & (-" to ") & To_String (Factory.New_Name),
+                  Loc.File,
+                  Loc.Line,
+                  Loc.Column,
+                  -"entity renamed",
+                  0,
+                  (Editor_Side => True, Locations => True));
+            end if;
+         end;
 
-         else
-            --  Renaming done, insert entry into locations view
-
-            Create_Simple_Message
-              (Get_Messages_Container (Kernel),
-               (-"Refactoring - rename ") & To_String (Factory.Old_Name)
-               & (-" to ") & To_String (Factory.New_Name),
-               Refs.Table (L).File,
-               Refs.Table (L).Line,
-               Refs.Table (L).Column,
-               -"entity renamed",
-               0,
-               (Editor_Side => True, Locations => True));
-         end if;
+         Previous (C);
       end loop;
 
-      if Length (Refs) > 0 then
-         Terminate_File (Refs.Table (Location_Arrays.First).File);
+      if Current_File /= No_File then
+         Terminate_File (Current_File);
       end if;
 
       if not Errors.Is_Empty then
@@ -306,16 +317,16 @@ package body Refactoring.Rename is
             Cancel_Label  => Gtk.Stock.Stock_Undo)
          then
             declare
-               Filenames   : File_Array (1 .. Integer (Last (Refs)));
+               Filenames   : File_Array (1 .. Integer (Refs.Length));
                First_Empty : Positive := 1;
                Found       : Boolean;
-               The_File    : Virtual_File;
+               The_File    : Virtual_File := No_File;
             begin
-               for L in Location_Arrays.First .. Last (Refs) loop
-                  if L = Location_Arrays.First
-                    or else Refs.Table (L).File /= Refs.Table (L - 1).File
+               for Loc of Refs loop
+                  if The_File = No_File
+                     or else The_File /= Loc.File
                   then
-                     The_File := Refs.Table (L).File;
+                     The_File := Loc.File;
 
                      --  We do not want to undo with No_File, since the
                      --  call to Get below would return the current buffer
