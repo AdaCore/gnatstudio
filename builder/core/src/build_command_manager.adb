@@ -342,6 +342,7 @@ package body Build_Command_Manager is
       Full           : Expansion_Result;
       Command_Line   : Argument_List_Access;
       All_Extra_Args : Argument_List_Access;
+      Category_Name  : Unbounded_String;
 
       procedure Interrupt_Background_Build;
       --  Interrupt current background command and clear its messages
@@ -367,7 +368,6 @@ package body Build_Command_Manager is
          Subdir : constant Filesystem_String :=
             Get_Mode_Subdir (Builder.Registry, Mode);
          Server : Server_Type;
-         Data   : Build_Callback_Data_Access;
          Background_Env : Extending_Environment;
          Console        : Interactive_Console;
 
@@ -514,23 +514,19 @@ package body Build_Command_Manager is
             end if;
          end if;
 
-         Data := new Build_Callback_Data;
-         Data.Target_Name := To_Unbounded_String (Target_Name);
-         Data.Builder := Builder;
-
          --  For background compilation synthetic messages category name is
          --  used. For non-background compilation target's messages category is
          --  used when defined, otherwise Error_Category is used for backward
          --  compatibility and compatibility with codefix.
 
          if Background then
-            Data.Category_Name :=
+            Category_Name :=
               To_Unbounded_String (Builder.Current_Background_Build_Id);
          else
-            Data.Category_Name := Get_Messages_Category (T);
+            Category_Name := Get_Messages_Category (T);
 
-            if Data.Category_Name = Null_Unbounded_String then
-               Data.Category_Name := To_Unbounded_String (Error_Category);
+            if Category_Name = Null_Unbounded_String then
+               Category_Name := To_Unbounded_String (Error_Category);
             end if;
 
             if Main /= No_File then
@@ -538,15 +534,8 @@ package body Build_Command_Manager is
             end if;
          end if;
 
-         Data.Mode_Name      := To_Unbounded_String (Mode);
-         Data.Quiet          := Quiet;
-         Data.Shadow         := Shadow;
-         Data.Background     := Background;
-         Data.Background_Env := Background_Env;
-         Data.Is_A_Run       := Is_Run (T);
-
          if Is_Run (T) then
-            if not Data.Quiet then
+            if not Quiet then
                Console := Get_Build_Console
                  ((Kernel_Handle (Builder.Kernel)), Shadow, Background, False,
                   "Run: " & Main.Display_Base_Name);
@@ -567,19 +556,30 @@ package body Build_Command_Manager is
 
             Location_Parser.Set
               (Kernel            => (Kernel_Handle (Builder.Kernel)),
-               Category          => To_String (Data.Category_Name),
+               Category          => To_String (Category_Name),
                Styles            => GPS.Styles.UI.Builder_Styles,
                Show_In_Locations => not Background);
 
             Console_Writer.Set_Console (Console);
          end if;
 
-         Data.Output_Parser := New_Parser_Chain (Target_Name);
-
          Launch_Build_Command
-           ((Kernel_Handle (Builder.Kernel)), Full.Args, Data, Server,
-            Synchronous, Uses_Shell (T),
-            Console, Dir);
+           (Kernel           => Kernel_Handle (Builder.Kernel),
+            CL               => Full.Args,
+            Server           => Server,
+            Synchronous      => Synchronous,
+            Use_Shell        => Uses_Shell (T),
+            Console          => Console,
+            Directory        => Dir,
+            Is_Run           => Is_Run (T),
+            Builder          => Builder,
+            Background_Env   => Background_Env,
+            Target_Name      => Target_Name,
+            Mode             => Mode,
+            Category_Name    => Category_Name,
+            Quiet            => Quiet,
+            Shadow           => Shadow,
+            Background       => Background);
 
          Unchecked_Free (All_Extra_Args);
       end Launch_For_Mode;

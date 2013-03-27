@@ -25,12 +25,10 @@ with Remote;                    use Remote;
 with Interactive_Consoles;      use Interactive_Consoles;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GPS.Kernel.Messages;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Extending_Environments;    use Extending_Environments;
-with GPS.Tools_Output;          use GPS.Tools_Output;
 with Build_Command_Utils;       use Build_Command_Utils;
 
-package Commands_Builder is
+package Commands.Builder is
 
    Error_Category : constant String := "Builder results";
    --  -"Builder results"
@@ -42,54 +40,23 @@ package Commands_Builder is
      (GPS.Kernel.Messages.Editor_Side => True,
       GPS.Kernel.Messages.Locations   => False);
 
-   type Build_Callback_Data is new Callback_Data_Record with record
-      Target_Name   : Unbounded_String;
-      --  The name of the target being built
-
-      Mode_Name     : Unbounded_String;
-      --  The name of the mode being built
-
-      Category_Name : Unbounded_String;
-      --  The name of the messages category to create messages in messages
-      --  container.
-
-      Quiet : Boolean := False;
-      --  Whether the target should be Quiet.
-      --  A Quiet target does not cause the cursor to jump to the first
-      --  error found. This is useful for builds that occur on saving, or in
-      --  a background mode.
-
-      Background : Boolean := False;
-      --  Whether this is a background build
-
-      Shadow : Boolean := False;
-      --  Whether this is a Shadow build
-
-      Is_A_Run : Boolean := False;
-      --  Whether this is a run build
-
-      Background_Env : Extending_Environment;
-      --  The extending environment created for the purpose of running this
-      --  target.
-
-      Output_Parser  : Tools_Output_Parser_Access;
-      --  Chain of output parsers
-
-      Builder        : Builder_Context;
-   end record;
-
-   type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
-   overriding procedure Destroy (Data : in out Build_Callback_Data);
-
    procedure Launch_Build_Command
      (Kernel           : GPS.Kernel.Kernel_Handle;
       CL               : Arg_List;
-      Data             : Build_Callback_Data_Access;
       Server           : Server_Type;
       Synchronous      : Boolean;
       Use_Shell        : Boolean;
       Console          : Interactive_Console;
-      Directory        : Virtual_File);
+      Directory        : Virtual_File;
+      Builder          : Builder_Context;
+      Background_Env   : Extending_Environment;
+      Target_Name      : String;
+      Mode             : String;
+      Category_Name    : Unbounded_String;
+      Quiet            : Boolean;
+      Shadow           : Boolean;
+      Background       : Boolean;
+      Is_Run           : Boolean);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
    --  and the rest are arguments.
@@ -110,4 +77,4 @@ package Commands_Builder is
    --  Return the console appropriate for showing compiler errors
    --  If New_Console_Name is specified, create a new console with this name.
 
-end Commands_Builder;
+end Commands.Builder;

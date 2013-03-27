@@ -32,9 +32,45 @@ with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Legacy;       use GPS.Kernel.Messages.Legacy;
 with GPS.Intl;                         use GPS.Intl;
 
-package body Commands_Builder is
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Tools_Output;          use GPS.Tools_Output;
+
+package body Commands.Builder is
 
    Shell_Env : constant String := Getenv ("SHELL").all;
+
+   type Build_Callback_Data is new Callback_Data_Record with record
+      Target_Name   : Unbounded_String;
+      --  The name of the target being built
+
+      Mode_Name     : Unbounded_String;
+      --  The name of the mode being built
+
+      Category_Name : Unbounded_String;
+      --  The name of the messages category to create messages in messages
+      --  container.
+
+      Background : Boolean := False;
+      --  Whether this is a background build
+
+      Shadow : Boolean := False;
+      --  Whether this is a Shadow build
+
+      Is_A_Run : Boolean := False;
+      --  Whether this is a run build
+
+      Background_Env : Extending_Environment;
+      --  The extending environment created for the purpose of running this
+      --  target.
+
+      Output_Parser  : Tools_Output_Parser_Access;
+      --  Chain of output parsers
+
+      Builder        : Builder_Context;
+   end record;
+
+   type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
+   overriding procedure Destroy (Data : in out Build_Callback_Data);
 
    -----------------------
    -- Local subprograms --
@@ -184,27 +220,44 @@ package body Commands_Builder is
    procedure Launch_Build_Command
      (Kernel           : GPS.Kernel.Kernel_Handle;
       CL               : Arg_List;
-      Data             : Build_Callback_Data_Access;
       Server           : Server_Type;
       Synchronous      : Boolean;
       Use_Shell        : Boolean;
       Console          : Interactive_Console;
-      Directory        : Virtual_File)
+      Directory        : Virtual_File;
+      Builder          : Builder_Context;
+      Background_Env   : Extending_Environment;
+      Target_Name      : String;
+      Mode             : String;
+      Category_Name    : Unbounded_String;
+      Quiet            : Boolean;
+      Shadow           : Boolean;
+      Background       : Boolean;
+      Is_Run           : Boolean)
    is
+      Data     : Build_Callback_Data_Access;
       CL2      : Arg_List;
       Success  : Boolean := False;
       Cmd_Name : Unbounded_String;
       Show_Output  : Boolean;
       Show_Command : Boolean;
       Created_Command : Scheduled_Command_Access;
-      Background : constant Boolean := Data.Background;
    begin
-      Show_Output  := Data.Is_A_Run and not Data.Background and not Data.Quiet;
-      Show_Command := not Data.Background and not Data.Quiet;
+      Data := new Build_Callback_Data;
+      Data.Target_Name := To_Unbounded_String (Target_Name);
+      Data.Builder := Builder;
+      Data.Category_Name  := Category_Name;
+      Data.Mode_Name      := To_Unbounded_String (Mode);
+      Data.Shadow         := Shadow;
+      Data.Background     := Background;
+      Data.Background_Env := Background_Env;
+      Data.Is_A_Run       := Is_Run;
+      Data.Output_Parser  := New_Parser_Chain (Target_Name);
 
-      if not Data.Is_A_Run
-        and then not Data.Background
-      then
+      Show_Output  := Is_Run and not Data.Background and not Quiet;
+      Show_Command := not Background and not Quiet;
+
+      if not Is_Run and then not Background then
          --  If we are starting a "real" build, remove messages from the
          --  current background build
          Get_Messages_Container (Kernel).Remove_Category
@@ -212,8 +265,8 @@ package body Commands_Builder is
             Background_Message_Flags);
       end if;
 
-      if not Data.Shadow and Show_Command then
-         if Data.Is_A_Run then
+      if not Shadow and Show_Command then
+         if Is_Run then
             Clear (Console);
             Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console),
                          Give_Focus => True);
@@ -222,22 +275,22 @@ package body Commands_Builder is
          end if;
       end if;
 
-      if Data.Is_A_Run
+      if Is_Run
         or else Compilation_Starting
           (Handle     => Kernel,
-           Category   => To_String (Data.Category_Name),
-           Quiet      => Data.Quiet,
-           Shadow     => Data.Shadow,
-           Background => Data.Background)
+           Category   => To_String (Category_Name),
+           Quiet      => Quiet,
+           Shadow     => Shadow,
+           Background => Background)
       then
-         if not Data.Quiet then
+         if not Quiet then
             Append_To_Build_Output
-              (Data.Builder,
-               To_Display_String (CL), To_String (Data.Target_Name),
-               Data.Shadow, Data.Background);
+              (Builder,
+               To_Display_String (CL), Target_Name,
+               Shadow, Background);
          end if;
 
-         if Data.Mode_Name /= "default" then
+         if Mode /= "default" then
             Cmd_Name := Data.Target_Name & " (" & Data.Mode_Name & ")";
          else
             Cmd_Name := Data.Target_Name;
@@ -267,25 +320,25 @@ package body Commands_Builder is
             Directory            => Directory,
             Callback             => Build_Callback'Access,
             Exit_Cb              => End_Build_Callback'Access,
-            Show_In_Task_Manager => not Data.Background,
+            Show_In_Task_Manager => not Background,
             Name_In_Task_Manager => To_String (Cmd_Name),
             Synchronous          => Synchronous,
-            Show_Exit_Status     => not (Data.Shadow
-              or else Data.Background
-              or else Data.Quiet),
-            Block_Exit           => not (Data.Shadow
-              or else Data.Background
-              or else Data.Quiet),
+            Show_Exit_Status     => not (Shadow
+              or else Background
+              or else Quiet),
+            Block_Exit           => not (Shadow
+              or else Background
+              or else Quiet),
             Created_Command      => Created_Command);
 
          --  ??? check value of Success
 
          if Success and then Background then
             Background_Build_Started
-              (Data.Builder, Command_Access (Created_Command));
+              (Builder, Command_Access (Created_Command));
          end if;
       end if;
 
    end Launch_Build_Command;
 
-end Commands_Builder;
+end Commands.Builder;

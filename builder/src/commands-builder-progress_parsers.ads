@@ -19,6 +19,7 @@
 
 with Commands;
 private with GNAT.Regpat;
+with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 package Commands.Builder.Progress_Parsers is
 
