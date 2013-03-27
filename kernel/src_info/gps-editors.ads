@@ -83,6 +83,8 @@ package GPS.Editors is
      (This : Editor_Overlay; Name : String) return String  is abstract;
    function Get_Property
      (This : Editor_Overlay; Name : String) return Boolean is abstract;
+   function Get_Property
+     (This : Editor_Overlay; Name : String) return Integer is abstract;
    --  Retrieve the value of specific properties.
    --  See the python documentation for a list of supported properties
 
@@ -90,6 +92,8 @@ package GPS.Editors is
      (This : Editor_Overlay; Name : String; Value : String) is abstract;
    procedure Set_Property
      (This : Editor_Overlay; Name : String; Value : Boolean) is abstract;
+   procedure Set_Property
+     (This : Editor_Overlay; Name : String; Value : Integer) is abstract;
    --  Set the value of specific properties.
 
    package Overlay_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
@@ -952,10 +956,14 @@ private
      (This : Dummy_Editor_Overlay; Name : String) return String;
    overriding function Get_Property
      (This : Dummy_Editor_Overlay; Name : String) return Boolean;
+   overriding function Get_Property
+     (This : Dummy_Editor_Overlay; Name : String) return Integer is (0);
    overriding procedure Set_Property
      (This : Dummy_Editor_Overlay; Name : String; Value : String) is null;
    overriding procedure Set_Property
      (This : Dummy_Editor_Overlay; Name : String; Value : Boolean) is null;
+   overriding procedure Set_Property
+     (This : Dummy_Editor_Overlay; Name : String; Value : Integer) is null;
 
    Nil_Editor_Overlay : constant Editor_Overlay'Class :=
      Dummy_Editor_Overlay'(Controlled with others => <>);

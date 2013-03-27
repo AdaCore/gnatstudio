@@ -2284,11 +2284,28 @@ package body Src_Editor_Module.Shell is
               or else Name = "font"
               or else Name = "weight"
               or else Name = "style"
+              or else Name = "paragraph-background"
             then
                Set_Return_Value
                  (Data, String'(Get_Overlay (Data, 1).Get_Property (Name)));
 
-            elsif Name = "editable" then
+            elsif Name = "rise"
+              or else Name = "pixels-above-lines"
+              or else Name = "pixels-below-lines"
+              or else Name = "pixels-inside-wrap"
+              or else Name = "size-points"
+              or else Name = "variant"
+              or else Name = "stretch"
+              or else Name = "underline"
+            then
+               Set_Return_Value
+                  (Data, Integer'(Get_Overlay (Data, 1).Get_Property (Name)));
+
+            elsif Name = "editable"
+              or else Name = "invisible"
+              or else Name = "strikethrough"
+              or else Name = "background-full-height"
+            then
                Set_Return_Value
                  (Data, Boolean'(Get_Overlay (Data, 1).Get_Property (Name)));
             end if;
@@ -2310,9 +2327,29 @@ package body Src_Editor_Module.Shell is
                Get_Overlay (Data, 1).Set_Property
                  (Name, String'(Nth_Arg (Data, 3)));
 
-            elsif Name = "editable" then
+            elsif Name = "rise"
+              or else Name = "pixels-above-lines"
+              or else Name = "pixels-below-lines"
+              or else Name = "pixels-inside-wrap"
+              or else Name = "size-points"
+              or else Name = "variant"
+              or else Name = "stretch"
+              or else Name = "underline"
+            then
+               Get_Overlay (Data, 1).Set_Property
+                 (Name, Integer'(Nth_Arg (Data, 3)));
+
+            elsif Name = "editable"
+              or else Name = "invisible"
+              or else Name = "strikethrough"
+              or else Name = "background-full-height"
+            then
                Get_Overlay (Data, 1).Set_Property
                  (Name, Boolean'(Nth_Arg (Data, 3)));
+
+            else
+               Get_Overlay (Data, 1).Set_Property
+                 (Name, String'(Nth_Arg (Data, 3)));
             end if;
          end;
 

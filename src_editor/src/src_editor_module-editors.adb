@@ -522,10 +522,14 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String) return String;
    overriding function Get_Property
      (This : Src_Editor_Overlay; Name : String) return Boolean;
+   overriding function Get_Property
+     (This : Src_Editor_Overlay; Name : String) return Integer;
    overriding procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : String);
    overriding procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : Boolean);
+   overriding procedure Set_Property
+     (This : Src_Editor_Overlay; Name : String; Value : Integer);
    overriding procedure Adjust (This : in out Src_Editor_Overlay);
    overriding procedure Finalize (This : in out Src_Editor_Overlay);
 
@@ -2813,6 +2817,17 @@ package body Src_Editor_Module.Editors is
    ------------------
 
    overriding function Get_Property
+     (This : Src_Editor_Overlay; Name : String) return Integer is
+   begin
+      return Integer (Get_Property
+         (This.Tag, Property_Int'(Glib.Properties.Build (Name))));
+   end Get_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   overriding function Get_Property
      (This : Src_Editor_Overlay; Name : String) return String
    is
       Color : Gdk_Color;
@@ -2852,8 +2867,10 @@ package body Src_Editor_Module.Editors is
                when Pango_Style_Italic =>
                   return "italic";
             end case;
+
          else
-            raise Editor_Exception with -"Invalid property";
+            return Get_Property
+               (This.Tag, Property_String'(Glib.Properties.Build (Name)));
          end if;
       end if;
 
@@ -2868,11 +2885,8 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String) return Boolean is
    begin
       if This.Tag /= null then
-         if Name = "editable" then
-            return Get_Property (This.Tag, Gtk.Text_Tag.Editable_Property);
-         else
-            raise Editor_Exception with -"Invalid property";
-         end if;
+         return Get_Property
+            (This.Tag, Property_Boolean'(Glib.Properties.Build (Name)));
       end if;
 
       return False;
@@ -2886,15 +2900,7 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String; Value : String) is
    begin
       if This.Tag /= null then
-         if Name = "foreground" then
-            Set_Property (This.Tag, Foreground_Property, Value);
-         elsif Name = "background" then
-            Set_Property (This.Tag, Background_Property, Value);
-         elsif Name = "paragraph-background" then
-            Set_Property (This.Tag, Paragraph_Background_Property, Value);
-         elsif Name = "font" then
-            Set_Property (This.Tag, Font_Property, Value);
-         elsif Name = "weight" then
+         if Name = "weight" then
             if Value = "light" then
                Set_Property (This.Tag, Weight_Property, Pango_Weight_Light);
             elsif Value = "normal" then
@@ -2905,6 +2911,7 @@ package body Src_Editor_Module.Editors is
                raise Editor_Exception
                  with -"Invalid weight: use light, normal or bold";
             end if;
+
          elsif Name = "style" then
             if Value = "normal" then
                Set_Property
@@ -2919,8 +2926,11 @@ package body Src_Editor_Module.Editors is
                raise Editor_Exception
                  with -"Invalid style: use normal, oblique or italic";
             end if;
+
          else
-            raise Editor_Exception with -"Invalid property";
+            Set_Property (This.Tag,
+                          Property_String'(Glib.Properties.Build (Name)),
+                          Value);
          end if;
       end if;
    end Set_Property;
@@ -2929,11 +2939,19 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String; Value : Boolean) is
    begin
       if This.Tag /= null then
-         if Name = "editable" then
-            Set_Property (This.Tag, Gtk.Text_Tag.Editable_Property, Value);
-         else
-            raise Editor_Exception with -"Invalid property";
-         end if;
+         Set_Property (This.Tag,
+                       Property_Boolean'(Glib.Properties.Build (Name)),
+                       Value);
+      end if;
+   end Set_Property;
+
+   overriding procedure Set_Property
+     (This : Src_Editor_Overlay; Name : String; Value : Integer) is
+   begin
+      if This.Tag /= null then
+         Set_Property (This.Tag,
+                       Property_Int'(Glib.Properties.Build (Name)),
+                       Gint (Value));
       end if;
    end Set_Property;
 

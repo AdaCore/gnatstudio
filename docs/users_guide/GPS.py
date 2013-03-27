@@ -4302,6 +4302,45 @@ text,... The following attribute names are currently recognized:
 - *editable* (value is a boolean): Indicates whether this range of text is
    editable or not
 
+- *variant* (one of 0 ("normal") or 1 ("small_caps"))
+
+- *stretch* (from 0 ("ultra-condensed") to 8 ("ultra-expanded"))
+
+- *underline* (one of 0 ("none"), 1 ("single"), 2 ("double"), 3 ("low"))
+
+- *size-points* (an integer)
+  Font size in points
+
+- *rise* (an integer)
+
+  Offset of text above the baseline (below the baseline if rise is negative,
+  in Pango units.
+
+- *pixels-above-lines* (an integer)
+
+  Pixels of blank space above paragraphs.
+
+- *pixels-below-lines* (an integer)
+
+  Pixels of blank space below paragraphs.
+
+- *pixels-inside-wrap* (an integer)
+
+  Pixels of blank space between wrapped lines in a paragraph.
+
+- *invisible* (a boolean)
+
+  Whether this text is hidden
+
+- *strikethrough* (a boolean)
+
+  Whether to strike through the text.
+
+- *background-full-height* (a boolean)
+
+  Whether the background color fills the entire line height or only the
+  height of the tagged characters.
+
 The set of predefined attributes is fixed. However, overlays are especially
 useful to store your own user data in the usual python manner, which you can
 retrieve later. This can be used to mark specially specific ranges of text
