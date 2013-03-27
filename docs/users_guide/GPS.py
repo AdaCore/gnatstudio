@@ -9377,7 +9377,7 @@ class OutputParserWrapper(object):
         """
         pass  # implemented in Ada
 
-    def on_exit(self):
+    def on_exit(self,status=0):
         """
         This method is called when all output is parsed.
         Its purpose is to flush any buffered data at end of stream.

@@ -72,6 +72,7 @@ package body Builder_Facility_Module.Output_Choppers is
 
    overriding procedure End_Of_Stream
      (Self    : not null access Output_Chopper;
+      Status  : Integer;
       Command : Command_Access) is
    begin
       if Self.Child = null then
@@ -82,7 +83,7 @@ package body Builder_Facility_Module.Output_Choppers is
         (To_String (Self.Buffer) & New_Line, Command);
 
       --  Call parent procedure
-      Tools_Output_Parser (Self.all).End_Of_Stream (Command);
+      Tools_Output_Parser (Self.all).End_Of_Stream (Status, Command);
    end End_Of_Stream;
 
 end Builder_Facility_Module.Output_Choppers;

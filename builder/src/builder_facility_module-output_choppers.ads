@@ -33,6 +33,7 @@ package Builder_Facility_Module.Output_Choppers is
    overriding
    procedure End_Of_Stream
      (Self    : not null access Output_Chopper;
+      Status  : Integer;
       Command : Command_Access);
 
    type Output_Parser_Fabric is

@@ -45,6 +45,7 @@ package GPS.Kernel.Tools_Output is
 
    procedure End_Of_Stream
      (Self    : not null access Tools_Output_Parser;
+      Status  : Integer;
       Command : Command_Access);
    --  Process end of streams (both output and error).
    --  Default implementation just call the Child if any.

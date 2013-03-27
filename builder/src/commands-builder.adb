@@ -121,7 +121,7 @@ package body Commands.Builder is
 
    begin
       if Build_Data.Output_Parser /= null then
-         Build_Data.Output_Parser.End_Of_Stream (Data.Command);
+         Build_Data.Output_Parser.End_Of_Stream (Status, Data.Command);
       end if;
 
       if Build_Data.Is_A_Run then

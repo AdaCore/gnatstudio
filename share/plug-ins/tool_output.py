@@ -49,9 +49,9 @@ class OutputParser(object):
         if self.child != None:
            self.child.on_stderr (text)
 
-    def on_exit(self):
+    def on_exit(self,status=0):
         if self.child != None:
-            self.child.on_exit ()
+            self.child.on_exit (status)
 
 def create_parser(name, child=None):
     if OutputParserMetaClass.registered.has_key (name):
