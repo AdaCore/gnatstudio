@@ -9,23 +9,32 @@ to highlight tabs or trailing spaces on lines, when this is considered
 improper style:
 
 Regexp_Highlighter(
-    name="tabs style", regexp="\t+|\s+$",
-    bg_color="#FF7979")
+    regexp="\t+|\s+$",
+    style=OverlayStyle(
+       name="tabs style",
+       strikethrough=True,
+       background="#FF7979"))
 
 Another example is to highlight TODO lines. Various conventions exist
 to mark these in the sources, but the following should catch some of
 these:
 
-Regexp_Highlighter (name="todo", regexp="TODO.*|\?\?\?.*",
-bg_color="#FF7979")
+Regexp_Highlighter(
+    regexp="TODO.*|\?\?\?.*",
+    style=OverlayStyle(
+       name="todo",
+       background="#FF7979"))
 
 Another example is a class to highlight Spark comments. This should
 only be applied when the language is spark
 
-class Spark_Highlighter (Regexp_Highlighter):
-def must_highlight (self, buffer):
-return buffer.file().language().lower() == "spark"
-Spark_Highlighter (name="spark", regexp="--#.*$", fg_color="red")
+class Spark_Highlighter(Regexp_Highlighter):
+    def must_highlight(self, buffer):
+        return buffer.file().language().lower() == "spark"
+Spark_Highlighter(
+    regexp="--#.*$",
+    style=OverlayStyle(
+        name="spark", foreground="red"))
 """
 
 import GPS
