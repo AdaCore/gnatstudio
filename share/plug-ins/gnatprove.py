@@ -428,7 +428,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                         ':'.join(sl[3:]).strip(),
                         0)
             else:
-                print line
+                GPS.Console("Messages").write(line + '\n')
 
 def is_subp_decl_context(self):
     """Check whether the given context is the context of a subprogram
