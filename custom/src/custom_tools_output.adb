@@ -32,8 +32,10 @@ package body Custom_Tools_Output is
    On_Exit_Cst   : aliased constant String := "on_exit";
    On_Stderr_Cst : aliased constant String := "on_stderr";
    Text_Cst      : aliased constant String := "text";
+   Status_Cst    : aliased constant String := "status";
 
    On_Text_Params : constant Cst_Argument_List := (1 => Text_Cst'Access);
+   On_Exit_Params : constant Cst_Argument_List := (1 => Status_Cst'Access);
 
    type Tools_Output_Property is new Instance_Property_Record with record
       Child : Tools_Output_Parser_Access;
@@ -63,6 +65,7 @@ package body Custom_Tools_Output is
 
    overriding procedure End_Of_Stream
      (Self    : not null access Custom_Parser;
+      Status  : Integer;
       Command : Command_Access);
    --  Process end of streams (both output and error).
 
@@ -153,14 +156,16 @@ package body Custom_Tools_Output is
 
    overriding procedure End_Of_Stream
      (Self    : not null access Custom_Parser;
+      Status  : Integer;
       Command : Command_Access)
    is
       pragma Unreferenced (Command);
       Args : Callback_Data'Class := Create
-        (Get_Script (Self.Inst), Arguments_Count => 0);
+        (Get_Script (Self.Inst), Arguments_Count => 1);
       Proc : Subprogram_Type;
    begin
       Proc := Get_Method (Self.Inst, On_Exit_Cst);
+      Set_Nth_Arg (Args, 1, Status);
 
       declare
          Ignore : constant Any_Type := Proc.Execute (Args);
@@ -207,13 +212,16 @@ package body Custom_Tools_Output is
             Property.Child.Parse_Standard_Error (Text, null);
          end;
       elsif Command = On_Exit_Cst then
+         Name_Parameters (Data, On_Exit_Params);
+
          declare
             Inst     : constant Class_Instance := Nth_Arg (Data, 1, Class);
+            Status   : constant Integer := Nth_Arg (Data, 2, 0);
             Property : constant Tools_Output_Property_Access :=
               Tools_Output_Property_Access
                 (Get_Data (Inst, Tools_Output_Handler_Class_Name));
          begin
-            Property.Child.End_Of_Stream (null);
+            Property.Child.End_Of_Stream (Status, null);
          end;
       end if;
    end Handler;
@@ -283,8 +291,8 @@ package body Custom_Tools_Output is
       Register_Command
         (Kernel,
          Constructor_Method,
-         Minimum_Args  => 1,
-         Maximum_Args  => 0,
+         Minimum_Args  => 0,
+         Maximum_Args  => 1,
          Class         => Class,
          Handler       => Handler'Access);
       Register_Command
@@ -304,7 +312,8 @@ package body Custom_Tools_Output is
       Register_Command
         (Kernel,
          On_Exit_Cst,
-         Maximum_Args  => 0,
+         Minimum_Args  => 0,
+         Maximum_Args  => 1,
          Class         => Class,
          Handler       => Handler'Access);
 

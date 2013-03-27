@@ -30,7 +30,7 @@ with Extending_Environments;    use Extending_Environments;
 with GPS.Tools_Output;          use GPS.Tools_Output;
 with Build_Command_Utils;       use Build_Command_Utils;
 
-package Commands.Builder is
+package Commands_Builder is
 
    Error_Category : constant String := "Builder results";
    --  -"Builder results"
@@ -110,4 +110,4 @@ package Commands.Builder is
    --  Return the console appropriate for showing compiler errors
    --  If New_Console_Name is specified, create a new console with this name.
 
-end Commands.Builder;
+end Commands_Builder;

@@ -109,10 +109,11 @@ package body GPS.Tools_Output is
 
    procedure End_Of_Stream
      (Self    : not null access Tools_Output_Parser;
+      Status  : Integer;
       Command : Command_Access) is
    begin
       if Self.Child /= null then
-         Self.Child.End_Of_Stream (Command);
+         Self.Child.End_Of_Stream (Status, Command);
       end if;
    end End_Of_Stream;
 
