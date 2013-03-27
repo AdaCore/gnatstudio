@@ -196,13 +196,14 @@ package body Docgen2 is
 
    package Version_3 is
 
-      procedure Move_Comment
+      procedure Save_Comment
         (Context : Analysis_Context;
          E_Info  : Entity_Info);
-      --  (Docgen_Version3): Move to the enclosing entry/subprogram a comment
-      --  found after a parameter.
+      --  (Docgen_Version3): Move to the temporary buffer of the enclosing
+      --  entry/subprogram a comment found in middle of the parameters
+      --  profile.
 
-      procedure Move_Inlined_Params_Doc (To : Entity_Info);
+      procedure Move_Saved_Comments (To : Entity_Info);
       --  Move documentation on params found in middle of the parameters
       --  profile of this entry or subprogram entity before its first tag.
       --  If no tag is found then the documentation is appended to the
@@ -591,7 +592,7 @@ package body Docgen2 is
             --  child e_info to move comment when appropriate
 
             else
-               Version_3.Move_Inlined_Params_Doc
+               Version_3.Move_Saved_Comments
                  (Current_Scope (Command.Analysis_Ctxt).Parent_Entity);
 
                --  For this, we pop all values until getting the root
@@ -1767,7 +1768,7 @@ package body Docgen2 is
            and then Get_Parent_Scope_Iterator (Context)
                       /= Context_Elem.Parent_Iter
          then
-            Version_3.Move_Inlined_Params_Doc (Context_Elem.Parent_Entity);
+            Version_3.Move_Saved_Comments (Context_Elem.Parent_Entity);
             Exit_Scope (Context);
             return;
          end if;
@@ -1822,7 +1823,7 @@ package body Docgen2 is
                      return;
 
                   when Cat_Parameter =>
-                     Version_3.Move_Comment (Context, E_Info);
+                     Version_3.Save_Comment (Context, E_Info);
                      null;
 
                   when others =>
@@ -3985,10 +3986,10 @@ package body Docgen2 is
    package body Version_3 is
 
       -------------------------
-      -- Append_Extra_Params --
+      -- Move_Saved_Comments --
       -------------------------
 
-      procedure Move_Inlined_Params_Doc (To : Entity_Info) is
+      procedure Move_Saved_Comments (To : Entity_Info) is
       begin
          if not Active (DOCGEN_V3) then
             return;
@@ -4002,13 +4003,13 @@ package body Docgen2 is
                Text    => To.Params_Buffer);
             To.Params_Buffer := Null_Unbounded_String;
          end if;
-      end Move_Inlined_Params_Doc;
+      end Move_Saved_Comments;
 
       ------------------
-      -- Move_Comment --
+      -- Save_Comment --
       ------------------
 
-      procedure Move_Comment
+      procedure Save_Comment
         (Context : Analysis_Context;
          E_Info  : Entity_Info)
       is
@@ -4045,7 +4046,7 @@ package body Docgen2 is
                E_Info.Description := No_Comment;
             end;
          end if;
-      end Move_Comment;
+      end Save_Comment;
 
    end Version_3;
 

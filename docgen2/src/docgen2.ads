@@ -19,7 +19,7 @@
 --  <description>
 --  Docgen2 is the module handling automatic documentation generation in GPS.
 --
---  The documentation analysis is preformed in 3 different steps:
+--  The documentation analysis is performed in 3 different steps:
 --
 --  * A first step analyse the involved file/project and collects various
 --  informations on all entitities
@@ -31,8 +31,8 @@
 --
 --  Finaly, index files are created, and the appropriate viewer is launched.
 --
---  Docgen2 is intended to support several backend for documentation generation
---  but only an HTML backend is implemented for now.
+--  Docgen2 is intended to support several backends for documentation
+--  generation but only an HTML backend is implemented for now.
 --  </description>
 
 with Ada.Containers.Vectors;
@@ -47,7 +47,7 @@ with GNATCOLL.VFS;
 package Docgen2 is
    DOCGEN_V3 : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create ("Docgen.V3", GNATCOLL.Traces.Off);
-   --  Whether to use the sqlite-based cross-reference system
+   --  Whether to enable the prototype of Docgen version 3
 
    package User_Tags_List is new Ada.Containers.Vectors
      (Natural,
