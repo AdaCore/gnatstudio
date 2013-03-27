@@ -36,6 +36,13 @@ package Docgen2.Comments is
    procedure Free (Comment : in out Comment_Type);
    --  Free memory allocated by Comment
 
+   procedure Insert_Before_First_Tag
+     (Comment : in out Comment_Type;
+      Text    : Ada.Strings.Unbounded.Unbounded_String);
+   --  Add Text after the first tags of the comment. If the comment has no tags
+   --  then Text is added at the end of the comment. No action performed under
+   --  Docgen V2.
+
    function To_String (Comment : Comment_Type) return String;
    --  Return a formatted string representing Comment.
 
@@ -67,12 +74,17 @@ private
       Sloc_Start : Source_Location;
       Sloc_Stop  : Source_Location;
       Analysed   : Boolean := False;
+      Filtered   : Boolean := False;
+      Retrieved  : Boolean := False;
+      --  Flags used to avoid analysing/filtering/retrieving a comment twice
    end record;
 
    No_Comment : constant Comment_Type :=
                   (Block      => Ada.Strings.Unbounded.Null_Unbounded_String,
                    Sloc_Start => (Line => 0, Column => 0, Index => 0),
                    Sloc_Stop  => (Line => 0, Column => 0, Index => 0),
-                   Analysed   => False);
+                   Analysed   => False,
+                   Filtered   => False,
+                   Retrieved  => False);
 
 end Docgen2.Comments;

@@ -130,4 +130,43 @@ package body Docgen2.Utils is
       return Entity;
    end Get_Declaration_Entity;
 
+   ------------
+   -- Filter --
+   ------------
+
+   function Filter (S : String) return String is
+      F : Natural := S'First;
+      L : Natural := S'Last;
+   begin
+      while F <= S'Last and then S (F) = ASCII.LF loop
+         F := F + 1;
+      end loop;
+
+      while L >= F and then S (L) = ASCII.LF loop
+         L := L - 1;
+      end loop;
+
+      return S (F .. L);
+   end Filter;
+
+   -----------------
+   -- Spaces_Only --
+   -----------------
+
+   function Spaces_Only (Text : String) return Boolean is
+   begin
+      if Text'Length = 0 then
+         return False;
+
+      else
+         for J in Text'Range loop
+            if Text (J) /= ' ' then
+               return False;
+            end if;
+         end loop;
+
+         return True;
+      end if;
+   end Spaces_Only;
+
 end Docgen2.Utils;

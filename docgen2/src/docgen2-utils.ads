@@ -49,4 +49,11 @@ package Docgen2.Utils is
       return Xref.General_Entity;
    --  Retrieve the entity declaration corresponding to construct.
 
+   function Filter (S : String) return String;
+   --  Returns an string without the spaces and line terminators at the
+   --  beginning/end of the string.
+
+   function Spaces_Only (Text : String) return Boolean;
+   --  Returns true if the string is not empty and all its characters are ' '
+
 end Docgen2.Utils;

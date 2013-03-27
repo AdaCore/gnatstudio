@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
+with Docgen2.Entities;       use Docgen2.Entities;
 with Language;               use Language;
 
 package Docgen2.Comments.List is
@@ -31,11 +32,15 @@ package Docgen2.Comments.List is
    --  Add a new comment line to the comments_list
 
    function Find_Doc
-     (Sloc_Start : Source_Location;
+     (Regexp     : GNAT.Expect.Pattern_Matcher_Access;
+      Sloc_Start : Source_Location;
       Sloc_End   : Source_Location;
+      Category   : Entity_Info_Category;
       Comments   : Comments_List;
       File_Doc   : Boolean := False) return Comment_Type;
-   --  Find a comment placed just before Sloc_Start or just after Sloc_End.
+   --  Filter comments using the Regexp pattern and find a comment placed just
+   --  before Sloc_Start or just after Sloc_End (or in middle of entities whose
+   --  Category is a parameter under Docgen V3).
    --  Comments is the list of comments constructed using Add_Comment_Line and
    --  Analyse_Comments.
    --  If File_Doc is set, then the first comment found before Sloc_Start is

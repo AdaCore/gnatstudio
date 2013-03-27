@@ -120,6 +120,12 @@ package Docgen2.Entities is
          Description          : aliased Docgen2.Comments.Comment_Type;
          --  Associated comment
 
+         Params_Buffer        : Ada.Strings.Unbounded.Unbounded_String;
+         --  Temporary buffer used by Docgen V3 to accumulate comments of entry
+         --  and subprogram parameters. The buffer is used to handle comments
+         --  on parameters found in middle of the parameters profile in a
+         --  single tree traversal.
+
          Printout             : GNAT.Strings.String_Access;
          --  Code display
 

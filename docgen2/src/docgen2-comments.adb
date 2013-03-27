@@ -22,6 +22,7 @@ with Docgen2_Backend;            use Docgen2_Backend;
 with Docgen2.Scripts;            use Docgen2.Scripts;
 with Docgen2.Utils;              use Docgen2.Utils;
 with String_Utils;               use String_Utils;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.Xref;
@@ -71,6 +72,31 @@ package body Docgen2.Comments is
 
    end Version_2;
 
+   ---------------
+   -- Version_3 --
+   ---------------
+
+   --  Local package containing the behavior required for Docgen version 2
+
+   package Version_3 is
+      JavaDoc_Regpat : constant Pattern_Matcher :=
+        Compile (" *@([^ ]+) *([^ ]+)( .+)?$*", Multiple_Lines);
+
+      procedure Insert_Before_First_Tag
+        (Comment : in out Comment_Type;
+         Text    : Ada.Strings.Unbounded.Unbounded_String);
+      --  Add Text after the first tags of the comment. If the comment has no
+      --  tags then Text is added at the end of the comment.
+
+      procedure Parse_Buffer
+        (Comment     : in out Comment_Type;
+         Docgen      : Docgen_Object;
+         Entity_Name : String;
+         Href        : String);
+      --  Translate the block into an xml tree
+
+   end Version_3;
+
    ---------------------
    -- Analyse_Comment --
    ---------------------
@@ -87,7 +113,11 @@ package body Docgen2.Comments is
          return;
       end if;
 
-      Version_2.Parse_Buffer (Comment, Docgen, File, Entity_Name, Href);
+      if not Active (DOCGEN_V3) then
+         Version_2.Parse_Buffer (Comment, Docgen, File, Entity_Name, Href);
+      else
+         Version_3.Parse_Buffer (Comment, Docgen, Entity_Name, Href);
+      end if;
 
       Comment.Analysed := True;
    end Analyse_Comment;
@@ -100,6 +130,19 @@ package body Docgen2.Comments is
    begin
       Comment.Block := Null_Unbounded_String;
    end Free;
+
+   -----------------------------
+   -- Insert_Before_First_Tag --
+   -----------------------------
+
+   procedure Insert_Before_First_Tag
+     (Comment : in out Comment_Type;
+      Text    : Ada.Strings.Unbounded.Unbounded_String) is
+   begin
+      if Active (DOCGEN_V3) then
+         Version_3.Insert_Before_First_Tag (Comment, Text);
+      end if;
+   end Insert_Before_First_Tag;
 
    ---------------
    -- To_String --
@@ -354,11 +397,10 @@ package body Docgen2.Comments is
          begin
             Match (XML_Regpat, S, Matches);
 
-            --  No xml case
-            if Matches (0) = No_Match then
-               --  Regular string. Let's append it to the current node value
-               Local.Append_Txt (N, S);
+            --  Regular string. Let's append it to the current node value.
 
+            if Matches (0) = No_Match then
+               Local.Append_Txt (N, S);
                return;
             end if;
 
@@ -377,7 +419,7 @@ package body Docgen2.Comments is
                Closing_Tag := False;
             end if;
 
-            --  If we found an unexpected xml tag, then treat it like raw text
+            --  If we found an unexpected tag, then treat it like raw text
             if not Is_Custom_Tag (To_String (Tag))
               or else (Closing_Tag
                        and then (N.Kind /= Element_Node or else Tag /= N.Tag))
@@ -480,5 +522,195 @@ package body Docgen2.Comments is
       end Parse_Buffer;
 
    end Version_2;
+
+   ---------------
+   -- Version_3 --
+   ---------------
+
+   package body Version_3 is
+
+      -----------------------------
+      -- Insert_Before_First_Tag --
+      -----------------------------
+
+      procedure Insert_Before_First_Tag
+        (Comment : in out Comment_Type;
+         Text    : Ada.Strings.Unbounded.Unbounded_String)
+      is
+         use Ada.Strings.Unbounded;
+
+         Pos : Natural;
+      begin
+         if Text = Null_Unbounded_String then
+            return;
+         end if;
+
+         if Comment.Block = Null_Unbounded_String then
+            Comment.Block := Text;
+            return;
+         end if;
+
+         Pos := Index (Comment.Block, "@");
+
+         if Pos > 0 then
+            Insert (Comment.Block, Pos, To_String (Text));
+         else
+            Comment.Block := Comment.Block & Text;
+         end if;
+      end Insert_Before_First_Tag;
+
+      ------------------
+      -- Parse_Buffer --
+      ------------------
+
+      procedure Parse_Buffer
+        (Comment     : in out Comment_Type;
+         Docgen      : Docgen_Object;
+         Entity_Name : String;
+         Href        : String)
+      is
+         procedure Parse
+           (S    : String;
+            N    : in out Node_Ptr;
+            Opts : Docgen_Options);
+
+         procedure Parse
+           (S    : String;
+            N    : in out Node_Ptr;
+            Opts : Docgen_Options)
+         is
+            Matches  : Match_Array (0 .. 3);
+            Tag      : Unbounded_String;
+            New_Node : Node_Ptr;
+
+         begin
+            Match (JavaDoc_Regpat, S, Matches);
+
+            --  Regular string. Let's append it to the current node value.
+
+            if Matches (0) = No_Match then
+               Local.Append_Txt (N, S);
+               return;
+            end if;
+
+            --  Append characters to the last opened tag.
+            if Matches (0).First > S'First then
+               Local.Append_Txt (N, S (S'First .. Matches (0).First - 1));
+            end if;
+
+            declare
+               Tag_Text     : constant String :=
+                                S (Matches (1).First .. Matches (1).Last);
+               Is_Param_Tag : constant Boolean := Tag_Text = "param";
+
+            begin
+               --  In order to share the Docgen v2 backend infrastructure for
+               --  handling parameters we internally replace the tag "param"
+               --  by the tag "parameter. That is, for parameters this
+               --  subprogram is just an "adapter".
+
+               if Is_Param_Tag then
+                  Tag := To_Unbounded_String ("parameter");
+               else
+                  Tag := To_Unbounded_String (Tag_Text);
+               end if;
+
+               --  If we found an unexpected tag, then treat it like raw text
+               if not Is_Custom_Tag (To_String (Tag)) then
+                  Local.Append_Txt (N,
+                    S (Matches (0).First .. Matches (0).Last));
+
+               --  Opening tag
+               else
+                  if N.Kind /= Root_Node then
+                     N := N.Parent;
+                  end if;
+
+                  New_Node := new Node'
+                    (Kind       => Element_Node,
+                     Tag        => Tag,
+                     Attributes => Null_Unbounded_String,
+                     Next       => null,
+                     Children   => null,
+                     Last_Child => null,
+                     Parent     => N);
+
+                  if N.Children = null then
+                     N.Children := New_Node;
+                  else
+                     N.Last_Child.Next := New_Node;
+                  end if;
+
+                  N.Last_Child := New_Node;
+                  N := New_Node;
+
+                  --  Now initialize the attributes field
+                  if Matches (2).First <= Matches (2).Last then
+
+                     --  In order to share the Docgen v2 backend infrastructure
+                     --  for handling parameters we internally add the syntax
+                     --  expected by version 2 to reference name of the
+                     --  parameter.
+
+                     if Is_Param_Tag then
+                        New_Node.Attributes :=
+                          To_Unbounded_String
+                            ("name=""" &
+                               S (Matches (2).First .. Matches (2).Last) &
+                               """");
+                     else
+                        Local.Append_Txt (N,
+                          S (Matches (2).First .. Matches (2).Last));
+                     end if;
+                  end if;
+
+                  if Matches (3) /= No_Match
+                    and then Matches (3).First <= Matches (3).Last
+                  then
+                     Local.Append_Txt (N,
+                       S (Matches (3).First .. Matches (3).Last));
+                  end if;
+               end if;
+            end;
+
+            if Matches (0).Last < S'Last then
+               Parse (S (Matches (0).Last + 1 .. S'Last), N, Opts);
+            end if;
+         end Parse;
+
+         --  Local variables
+
+         S    : constant String := To_String (Comment.Block);
+         Opts : constant Docgen_Options := Get_Options (Docgen);
+         Root : Node_Ptr;
+         N    : Node_Ptr;
+
+      --  Start of processing for Parse_Buffer
+
+      begin
+         if S = "" then
+            return;
+         end if;
+
+         Root := new Node'
+           (Kind       => Root_Node,
+            Next       => null,
+            Children   => null,
+            Last_Child => null,
+            Parent     => null);
+
+         N := Root;
+         Parse (S, N, Opts);
+
+         --  Translate the xml tree back to a block, using appropriate
+         --  user tag transformations
+
+         Comment.Block :=
+           Local.To_Unbounded_String (Docgen, Root, Entity_Name, Href);
+
+         Local.Free_Node (Root);
+      end Parse_Buffer;
+
+   end Version_3;
 
 end Docgen2.Comments;
