@@ -1,2 +1,2 @@
 default:
-	gprbuild -Pcli -cargs $(COVERAGE_CARGS) -largs $(COVERAGE_LARGS)
+	gprbuild -p -Pcli -cargs $(COVERAGE_CARGS) -largs $(COVERAGE_LARGS)
