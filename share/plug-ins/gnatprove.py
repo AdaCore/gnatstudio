@@ -318,7 +318,7 @@ class GNATprove_Message(GPS.Message):
         gnatprove_plug.add_msg(self)
 
     def load_trace_if_needed(self):
-        if self.tag:
+        if not self.is_info_message and self.tag:
             fn = self.compute_trace_filename()
             if os.path.isfile(fn):
                 self.parse_trace_file(fn)
@@ -378,8 +378,10 @@ class GNATprove_Message(GPS.Message):
     def toggle_trace(self):
         """Toggle visibility of the trace information"""
         if self.trace_visible:
+            gnatprove_plug.remove_trace(self)
             self.clear_trace()
         else:
+            gnatprove_plug.register_trace(self)
             self.show_trace()
 
     def parse_trace_file(self, fn):
@@ -402,6 +404,7 @@ class GNATprove_Message(GPS.Message):
             buf = GPS.EditorBuffer.get(first_sloc.file())
             goto_location(first_sloc)
             overlay = get_overlay(buf, "trace")
+            buf.remove_overlay(overlay)
             for sloc in self.lines:
                 buf.apply_overlay(
                     overlay,
@@ -554,6 +557,7 @@ class GNATProve_Plugin:
             filter = is_subp_context)
         GPS.parse_xml(xml_gnatprove)
         self.messages = []
+        self.trace_msg = None
 
     def add_msg(self,msg):
         """register the given message as a gnatprove message. objects of
@@ -569,6 +573,15 @@ class GNATProve_Plugin:
         """delete the traces for all registered messages"""
         for msg in self.messages:
             msg.clear_highlighting()
+
+    def register_trace(self,msg):
+        if self.trace_msg:
+            self.trace_msg.toggle_trace()
+        self.trace_msg = msg
+
+    def remove_trace(self,msg):
+        if self.trace_msg == msg:
+            self.trace_msg = None
 
     def clean_locations_view(self):
         """clean up the locations view: delete the "gnatprove" category,
