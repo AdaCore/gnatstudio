@@ -15,18 +15,18 @@ not known until run time.
 import GPS
 from GPS import *
 
-Preference ("Plugins/dispatching/onopen").create (
-  "Highlight dispatching calls", "boolean",
+Preference("Plugins/dispatching/onopen").create(
+   "Highlight dispatching calls", "boolean",
    """If enabled, highlighting of dispatching calls is done as soon as a file is opened. This can slow down GPS, though, so should be deactivated if opening a file seems slow""", True)
 
-Preference ("Plugins/dispatching/color").create (
-  "Highlight color", "color",
+Preference("Plugins/dispatching/color").create(
+   "Highlight color", "color",
    """Background color to use for dispatching calls""",
    "#FFF3C2")
 
-Preference ("Plugins/dispatching/context").create (
-  "Search context", "integer",
-  """When the cross-reference information is not up-to-date, GPS will search a few lines around the original location for matching entities. This preference indicates how many lines it will search -- the bigger the slower of course, and potentially less precise too""", 5, 0, 50)
+Preference("Plugins/dispatching/context").create(
+   "Search context", "integer",
+   """When the cross-reference information is not up-to-date, GPS will search a few lines around the original location for matching entities. This preference indicates how many lines it will search -- the bigger the slower of course, and potentially less precise too""", 5, 0, 50)
 
 try:
    ## If we have PyGTK installed, we'll do the highlighting of the next

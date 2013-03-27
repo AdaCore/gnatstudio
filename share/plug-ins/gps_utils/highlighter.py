@@ -1,239 +1,539 @@
-"""This file provides various classes to help highlight patterns in
-   files.
-   The Highlighter class should be considered abstract, and provides
-   support for (re)highlighting editors when needed.
-   The Regexp_Highlighter is a concrete implementation to highlight
-   editors based on regular expressions. One example is for instance
-   to highlight tabs or trailing spaces on lines, when this is considered
-   improper style:
+"""
+This file provides various classes to help highlight patterns in
+files.
+The Highlighter class should be considered abstract, and provides
+support for (re)highlighting editors when needed.
+The Regexp_Highlighter is a concrete implementation to highlight
+editors based on regular expressions. One example is for instance
+to highlight tabs or trailing spaces on lines, when this is considered
+improper style:
 
-   Regexp_Highlighter (name="tabs style", regexp="\t+|\s+$",
-                       bg_color="#FF7979")
+Regexp_Highlighter(
+    name="tabs style", regexp="\t+|\s+$",
+    bg_color="#FF7979")
 
-   Another example is to highlight TODO lines. Various conventions exist
-   to mark these in the sources, but the following should catch some of
-   these:
+Another example is to highlight TODO lines. Various conventions exist
+to mark these in the sources, but the following should catch some of
+these:
 
-   Regexp_Highlighter (name="todo", regexp="TODO.*|\?\?\?.*",
-                       bg_color="#FF7979")
+Regexp_Highlighter (name="todo", regexp="TODO.*|\?\?\?.*",
+bg_color="#FF7979")
 
-   Another example is a class to highlight Spark comments. This should
-   only be applied when the language is spark
+Another example is a class to highlight Spark comments. This should
+only be applied when the language is spark
 
-   class Spark_Highlighter (Regexp_Highlighter):
-      def must_highlight (self, buffer):
-         return buffer.file().language().lower() == "spark"
-   Spark_Highlighter (name="spark", regexp="--#.*$", fg_color="red")
+class Spark_Highlighter (Regexp_Highlighter):
+def must_highlight (self, buffer):
+return buffer.file().language().lower() == "spark"
+Spark_Highlighter (name="spark", regexp="--#.*$", fg_color="red")
 """
 
-from GPS import *
+import GPS
+import traceback
 
 try:
-   from gi.repository import GObject
-   gobject_available = 1
+    from gi.repository import GObject, GLib
+    gobject_available = 1
 except:
-   gobject_available = 0
+    gobject_available = 0
 
-class Highlighter ():
-  """This class provides a way to easily highlight text in an editor.
-     When possible, the highlighting is done in the background, in
-     which case it is also done on the fly every time the file is
-     modified. If pygobject is not available, the highlighting is only done
-     when the file is opened or saved"""
 
-  def do_highlight (self, buffer, overlay, start, end):
-     """Do the highlighting in the range of text.
-        This needs to be overridden to do anything useful"""
+class OverlayStyle(object):
+    """
+    Description for a style to apply to a section of an editor. In practice,
+    this could be implemented as an editor overlay, or a message, depending
+    on whether highlighting should be done on the whole line or not.
+    """
 
-     pass
+    def __init__(self, name, foreground="", background="", weight=None,
+                 slant=None, editable=True, whole_line=False, speedbar=False,
+                 **kwargs):
+        """
+        The style to apply.
+        :param name: name of the overlay so that we can remove it later.
+        :param foreground:  foreground color
+        :param background:  background color
+        :param weight: one of "bold", "normal", "light"
+        :param slant:  one of "normal", "oblique", "italic"
+        :param whole_line: whether to highlight the whole line, up to the
+           right margin
+        :param speedbar: whether to show a mark in the speedbar to the left
+           of editors. This forces whole_line to True.
+        :param kwargs: other properties supported by EditorOverlay
+        """
+        self.name = name
+        self.foreground = foreground
+        self.background = background
+        self.weight = weight
+        self.slant = slant
+        self.editable = editable
+        self.whole_line = whole_line
 
-  def must_highlight (self, buffer):
-     """Return True if highlighting should be done in this buffer.
-        The default is to higlight all buffers, but some highlightings
-        might apply only to specific languages for instance"""
+        self.__style = None
+        self.__messages = []
 
-     return True
+        self.others = kwargs
 
-  def __init__ (self, name,
-                context_lines=0,
-                fg_color="grey", bg_color="",
-                weight="",   # or "bold", "normal", "light"
-                style="",    # or "normal", "oblique", "italic"
-                editable=True): # or None
-     """Create a highlighter object.
-        This then needs to be attached to one or more buffers through
-        the monitor() function below.
-        name is the name of the highlighter, and is used in particular
-        to create the overlays used for the highlighting. They must be
-        unique.
-        context_lines is the number of lines (plus or minus) around the
-        current location that get refreshed when a local highlighting is
-        requested.
-        fg_color, bg_color, weight, style, editable are the properties
-        of the overlay
-     """
+        if speedbar:
+            self.__style = GPS.Style(self.name)
+            if self.background:
+                self.__style.set_background(self.background)
+            if self.foreground:
+                self.__style.set_foreground(self.foreground)
+            self.__style.set_in_speedbar(speedbar)
 
-     self.name = name
-     self.context_lines = context_lines
-     self.fg_color = fg_color
-     self.bg_color = bg_color
-     self.weight   = weight
-     self.style    = style
-     self.editable = editable
+    def use_messages(self):
+        return self.__style is not None
 
-     self.start ()
+    def __create_style(self, buffer):
+        """
+        Create (or reuse) a buffer overlay.
+        """
+        if self.use_messages():
+            return self.__style
+        else:
+            over = buffer.create_overlay(self.name) # Return existing one or create
+            if not hasattr(over, "created"):
+                if self.foreground:
+                    over.set_property("foreground", self.foreground)
+                if self.background:
+                    if self.whole_line:
+                        over.set_property(
+                            "paragraph-background", self.background)
+                    else:
+                        over.set_property("background", self.background)
 
-  def start (self):
-     """Start highlighting. This is automatically called from __init__,
-        and only needs to be called when you have called stop() first.
-        Do not call this function multiple times.
-     """
+                if self.weight:
+                    over.set_property("weight", self.weight)
+                if self.slant:
+                    over.set_property("style", self.slant)
 
-     Hook ("file_edited").add (self.__do_whole_highlight)
-     Hook ("file_saved").add (self.__do_whole_highlight)
-     Hook ("file_changed_on_disk").add (self.__do_whole_highlight)
-     if gobject_available:
-        Hook ("character_added").add (self.__do_context_highlight)
+                for prop, value in self.others.iteritems():
+                    over.set_property(prop, value)
 
-     for l in EditorBuffer.list ():
-        self.highlight (l)
+                over.set_property("editable", self.editable)
+                over.created = True
+            return over
 
-  def stop (self):
-     """Stop highlighting through self"""
+    def apply(self, start, end):
+        """
+        Apply the highlighting to part of the buffer.
 
-     Hook ("file_edited").remove (self.__do_whole_highlight)
-     Hook ("file_saved").remove (self.__do_whole_highlight)
-     Hook ("file_changed_on_disk").remove (self.__do_whole_highlight)
-     if gobject_available:
-        Hook ("character_added").remove (self.__do_context_highlight)
+        :param start: a GPS.EditorLocation
+        :param end:   a GPS.EditorLocation
+        """
+        buffer = start.buffer()
+        over = self.__create_style(buffer)
 
-     for buffer in EditorBuffer.list ():
-        if self.must_highlight (buffer):
-           try:
-              over = self.__create_overlay (buffer)
-              buffer.remove_overlay (over, buffer.beginning_of_buffer(),
-                                     buffer.end_of_buffer())
-           except:
-              pass
+        if self.use_messages():
+            msg = GPS.Message(
+                category=self.name,
+                file=buffer.file(),
+                line=start.line(),
+                column=start.column(),  # index in python starts at 0
+                text="",
+                flags=2)
 
-  def highlight (self, buffer, loc=None):
-     """Refresh highlighting in one specific buffer.
-        If loc (an instance of GPS.EditorLocation) is specified, the
-        location is only tested refreshed around that line"""
+            if self.whole_line:
+                msg.set_style(over)
+            else:
+                msg.set_style(over, len=end.column() - start.column())
+            self.__messages.append(msg)
 
-     # Check whether highlighting should be done in this buffer
-     if not self.must_highlight (buffer):
-        return
+        else:
+            buffer.apply_overlay(over, start, end)
 
-     over = self.__create_overlay (buffer)
+    def remove(self, start, end=None):
+        """
+        Remove the highlighting in whole or part of the buffer.
+        :param start: a GPS.EditorLocation
+        :param end:   a GPS.EditorLocation
+           If unspecified, the highlighting for the whole buffer is removed.
+        """
+        if isinstance(start, GPS.EditorBuffer):
+            buffer = start
+            start = buffer.beginning_of_buffer()
+        else:
+            buffer = start.buffer()
 
-     if loc:
-        start = loc
-        start.forward_line (-self.context_lines)
-        end   = loc
-        end.forward_line (self.context_lines)
+        if self.use_messages():
+            # ??? Missing support for removing partial messages. When we do
+            # that, we can remove the call to remove() in start_highlight
+            # when appending the buffer to the list.
+            if end is None:
+                tmp = []
+                file = buffer.file()
+                for m in self.__messages:
+                    if m.get_file() == file:
+                        m.remove()
+                    else:
+                        tmp.append(m)
+                self.__messages = tmp
 
-     else:
-        start = buffer.beginning_of_buffer ()
-        end   = buffer.end_of_buffer ()
+        else:
+            over = self.__create_style(buffer)
+            if end is None:
+                start = buffer.beginning_of_buffer()
+                end   = buffer.end_of_buffer()
+            buffer.remove_overlay(over, start, end)
 
-     start = start.beginning_of_line ()
-     end   = end.end_of_line ()
 
-     try:
-        buffer.remove_overlay (over, start, end)
-     except:
+class Background_Highlighter(object):
+    """
+    An abstract class that provides facilities for highlighting parts of an
+    editor. If possible, this highlighting is done in the background so that it
+    doesn't interfer with the user typing.
+    Example of use:
+
+    class Example(Background_Highlighter):
+       def process(self, start, end):
+           ... analyze the given range of lines, and perform highlighting
+           ... where necessary.
+
+    e = Example()
+    e.start_highlight(buffer1)   # start highlighting a first buffer
+    e.start_highlight(buffer2)   # start highlighting a second buffer
+    """
+
+    timeout_ms = 40   # Interval in milliseconds between two batches.
+                      # This is only used when gobject is not available
+
+    batch_size = 20   # Number of lines to process at each iteration
+
+
+    def __init__(self, style):
+        """
+        :param style: an instance of OverlayStyle
+        """
+
+        self.__source_id = None  # The gtk source_id used for background
+                                 # or the GPS.Timeout instance
+        self.__buffers = []      # The list of buffers to highlight
+        self.terminated = False
+
+        self.style = style
+        GPS.Hook("before_exit_action_hook").add(self.__before_exit)
+
+    def __del__(self):
+        self.stop_highlight()
+        GPS.Hook("before_exit_action_hook").remove(self.__before_exit)
+
+    def __before_exit(self, hook):
+        """
+        Called when GPS is about to exit
+        """
+        self.terminated = True
+        self.stop_highlight()
+        return True
+
+    def set_style(self, style):
+        """
+        Change the current highlight style.
+
+        :param style: an instance of OverlayStyle
+        """
+        self.remove_highlight()
+        self.style = style
+
+    def start_highlight(self, buffer=None, line=None, context=None):
+        """
+        Start highlighting the buffer, possibly in the background.
+
+        :param buffer:
+           The buffer to highlight (defaults to the current buffer). This
+           buffer is added to the list of buffers, and will be processed
+           when other buffers are finished.
+
+        :param line:
+           The line the highlighting should start from. By default, this
+           is the current line in the editor, so that the user sees
+           changes immediately. But you could chose to start from the
+           top of the file instead.
+
+        :param context:
+           Number of lines before and after 'line' that should be
+           highlighted. By default, the whole buffer is highlighted.
+        """
+        if buffer is None:
+            context = GPS.current_context()
+            location = context.location()
+            buffer = GPS.EditorBuffer.get(location.file(), open=False)
+
+        if buffer is not None and line is None:
+            view = buffer.current_view()
+            line = view.cursor().line() if view is not None else 1
+
+        if buffer is not None:
+            # Is the buffer already in the list ?
+            for b in self.__buffers:
+                if b[0].file() == buffer.file():
+                    return
+
+            start_line = 0 if context is None else max(0, line - context)
+            end_line = buffer.lines_count()
+            if context is not None:
+                end_line = min(end_line, line + context)
+
+            try:
+                # Destroy the timeout when the buffer is destroyed
+                buffer.current_view().pywidget().connect(
+                    "destroy",
+                    lambda *args: self.stop_highlight(buffer))
+
+                self.__buffers.insert(
+                    0, (buffer, line, line + 1, start_line, end_line))
+
+                if self.style and self.style.use_messages():
+                    self.style.remove(buffer)
+
+                if self.__source_id is None:
+                    if gobject_available:
+                        self.__source_id = GLib.idle_add(
+                            self.__do_highlight) # , priority=GLib.PRIORITY_LOW)
+                    else:
+                        self.__source_id = GPS.Timeout(
+                            self.timeout_ms, self.__do_highlight)
+
+            except Exception as e:
+                # This can happen if pywidget() is not found: rather than leave
+                # GPS open to crashing, do not highlight this buffer.
+                traceback.print_exc()
+                pass
+
+    def stop_highlight(self):
+        """
+        Stop the background highlighting of the buffer, but preserves
+        any highlighting that has been done so far.
+        """
+        if self.__source_id:
+            if gobject_available:
+                GLib.source_remove(self.__source_id)
+            else:
+                self.__source_id.remove()
+            self.__source_id = None
+
+        self.__buffers = []
+
+    def remove_highlight(self, buffer=None):
+        """
+        Remove all highlighting done by self in the buffer.
+        :param buffer: defaults to the current buffer
+        """
+        if buffer is None:
+            buffer = GPS.EditorBuffer.get()
+
+        if buffer is not None and self.style is not None:
+            self.style.remove(buffer)
+
+    def process(self, start, end):
+        """
+        Called to highlight the given range of editor. When this is called,
+        previous highlighting has already been removed in that range.
+
+        :param start: an instance of GPS.EditorLocation.
+        :param end:   an instance of GPS.EditorLocation.
+        """
         pass
 
-     self.do_highlight (buffer, over, start, end)
+    def __do_highlight(self, *args, **kwargs):
+        """
+        The function called at regular intervals, and that computes
+        the range of lines to highlight.
+        """
+        if self.terminated:
+            return False
 
-  def __create_overlay (self, buffer):
-     """Create the overlay to use in a specific buffer, and returns it.
-        If the overlay already exists, it is returned as is."""
+        if not self.__buffers:
+            self.stop_highlight()
+            return False
 
-     over = buffer.create_overlay (self.name) # Return existing one or create
-     if not over.__dict__.has_key ('created'):
-        if self.fg_color:
-           over.set_property ("foreground", self.fg_color)
-        if self.bg_color:
-           over.set_property ("background", self.bg_color)
-        if self.weight:
-           over.set_property ("weight", self.weight)
-        if self.style:
-           over.set_property ("style", self.style)
-        over.set_property ("editable", self.editable)
-        over.created = True
-     return over
+        try:
+            (buffer, min_line, max_line,
+             start_line, end_line) = self.__buffers[0]
 
-  def __do_whole_highlight (self, hook_name, file):
-     """Called from GPS hooks to request the refresh of the whole file"""
+            changed = False
 
-     self.highlight (EditorBuffer.get (file))
+            if min_line >= start_line:
+                from_line = max(start_line, min_line - self.batch_size)
 
-  def __do_context_highlight (self, hook_name, file):
-     """Called from GPS hooks to request the refresh of a few lines
+                f = GPS.EditorLocation(buffer, from_line, 1)
+                e = GPS.EditorLocation(buffer, min_line, 1).end_of_line()
+
+                if self.style:
+                    self.style.remove(f, e)
+                self.process(f, e)
+
+                min_line = from_line - 1
+                changed = True
+
+            elif max_line < end_line:
+                to_line = min(end_line - 1, max_line + self.batch_size)
+
+                f = GPS.EditorLocation(buffer, max_line, 1)
+                e = GPS.EditorLocation(buffer, to_line, 1).end_of_line()
+
+                if self.style:
+                    self.style.remove(f, e)
+                self.process(f, e)
+
+                max_line = to_line + 1
+                changed = True
+
+            if changed:
+                self.__buffers[0] = (
+                    buffer, min_line, max_line, start_line, end_line)
+            else:
+                self.__buffers.pop(0)
+
+            return True
+
+        except Exception as e:
+            GPS.Logger("HIGHLIGHTER").log("Unexpected exception: %s" % e)
+            traceback.print_exc()
+            self.stop_highlight()
+            return False
+
+
+class On_The_Fly_Highlighter(Background_Highlighter):
+    """
+    This class provides a way to easily highlight text in an editor.
+    When possible, the highlighting is done in the background, in
+    which case it is also done on the fly every time the file is
+    modified. If pygobject is not available, the highlighting is only done
+    when the file is opened or saved
+    """
+
+    def do_highlight(self, buffer, start, end):
+        """
+        Do the highlighting in the range of text.
+        This needs to be overridden to do anything useful
+        """
+        pass
+
+    def must_highlight(self, buffer):
+        """
+        Return True if highlighting should be done in this buffer.
+        The default is to higlight all buffers, but some highlightings
+        might apply only to specific languages for instance
+        """
+        return True
+
+    def __init__(self, style, context_lines=0):
+        """
+        Create a highlighter object.
+        This then needs to be attached to one or more buffers through
+        the monitor() function below.
+
+        :param style: an instance of OverlayStyle
+        :param context_lines:
+           The number of lines (plus or minus) around the current location that
+           get refreshed when a local highlighting is requested.
+        """
+
+        Background_Highlighter.__init__(self, style=style)
+        self.context_lines = context_lines
+        self.start()
+
+    def start(self):
+        """
+        Start highlighting. This is automatically called from __init__,
+        and only needs to be called when you have called stop() first.
+        Do not call this function multiple times.
+        """
+
+        GPS.Hook("file_edited").add(self.__do_whole_highlight)
+        GPS.Hook("file_saved").add(self.__do_whole_highlight)
+        GPS.Hook("file_changed_on_disk").add(self.__do_whole_highlight)
+
+        if gobject_available:
+            GPS.Hook("character_added").add(self.__do_context_highlight)
+            for buf in GPS.EditorBuffer.list():
+                if self.must_highlight(buf):
+                    sef.start_highlight(buf)
+
+    def stop(self):
+        """
+        Stop highlighting through self
+        """
+        GPS.Hook("file_edited").remove(self.__do_whole_highlight)
+        GPS.Hook("file_saved").remove(self.__do_whole_highlight)
+        GPS.Hook("file_changed_on_disk").remove(self.__do_whole_highlight)
+
+        if gobject_available:
+            GPS.Hook("character_added").remove(self.__do_context_highlight)
+            for buffer in GPS.EditorBuffer.list():
+                if self.must_highlight(buffer) and self.style:
+                    self.style.remove(buffer)
+
+    def __do_whole_highlight(self, hook_name, file):
+        """
+        Called from GPS hooks to request the refresh of the whole file.
+        """
+        buffer = GPS.EditorBuffer.get(file)
+        if self.must_highlight(buffer):
+            self.start_highlight(buffer)
+
+    def __do_context_highlight(self, hook_name, file):
+        """
+        Called from GPS hooks to request the refresh of a few lines
         around the cursor. The number of context lines was specified when
-        the highlighted was created"""
-
-     buffer = EditorBuffer.get (file)
-     self.highlight (buffer, loc=buffer.current_view().cursor())
-
-class Regexp_Highlighter (Highlighter):
-  """A specific class of highlighters based on regexps.
-     Example of use:
-       Regexp_Highlighter ("spark", "--#.*$", fg_color="red")
-  """
-
-  def __init__ (self, name, regexp,
-                context_lines=0,
-                fg_color="grey", bg_color="",
-                weight="",   # or "bold", "normal", "light"
-                style="",    # or "normal", "oblique", "italic"
-                editable=True): # or None
-
-     self.regexp = regexp
-     Highlighter.__init__ (self, name, context_lines=context_lines,
-                           fg_color=fg_color, bg_color=bg_color,
-                           weight=weight, style=style, editable=editable)
-
-  def do_highlight (self, buffer, overlay, start, end):
-     """Do the highlighting in the range of text"""
-     while True:
-        start = start.search (self.regexp, regexp=True, dialog_on_failure=False)
-        if not start or start[0] > end:
-           return
-        buffer.apply_overlay (overlay, start [0], start [1] - 1)
-        start = start [1] + 1
-
-class Text_Highlighter (Highlighter):
-  """Similar to Regexp_Highlighter, but highlights constant text instead of
-     a regular expression.
-     By default, highlighting is done in all buffer, override the function
-     must_highlight to reduce the scope.
-  """
-
-  def __init__ (self, name, text,
-                whole_word=False,
-                context_lines=0,
-                fg_color="grey", bg_color="",
-                weight="",   # or "bold", "normal", "light"
-                style="",    # or "normal", "oblique", "italic"
-                editable=True): # or None
-
-     self.text = text
-     self.whole_word = whole_word
-     Highlighter.__init__ (self, name, context_lines=context_lines,
-                           fg_color=fg_color, bg_color=bg_color,
-                           weight=weight, style=style, editable=editable)
-
-  def do_highlight (self, buffer, overlay, start, end):
-     """Do the highlighting in the range of text"""
-     while True:
-        start = start.search (self.text, regexp=False, dialog_on_failure=False,
-                             whole_word=self.whole_word)
-        if not start or start[0] > end:
-           return
-        buffer.apply_overlay (overlay, start [0], start [1] - 1)
-        start = start [1] + 1
+        the highlighted was created.
+        """
+        buffer = GPS.EditorBuffer.get(file)
+        if self.must_highlight(buffer):
+            self.start_highlight(buffer, context=self.context_lines)
 
 
+class Regexp_Highlighter(On_The_Fly_Highlighter):
+    """
+    A specific class of highlighters based on regexps.
+    Example of use:
+         Regexp_Highlighter("spark", "--#.*$", fg_color="red")
+    """
+
+    def __init__(self, regexp, style, context_lines=0):
+        """
+        :param style: an instance of OverlayStyle
+        """
+        self.regexp = regexp
+        On_The_Fly_Highlighter.__init__(
+            self, context_lines=context_lines, style=style)
+
+    def process(self, start, end):
+        """Called by Background_Highlighter"""
+        while True:
+            start = start.search(
+                self.regexp, regexp=True, dialog_on_failure=False)
+            if not start or start[0] > end:
+                return
+            self.style.apply(start[0], start[1] - 1)
+            start = start[1] + 1
+
+
+class Text_Highlighter(On_The_Fly_Highlighter):
+    """
+    Similar to Regexp_Highlighter, but highlights constant text instead of
+    a regular expression.
+    By default, highlighting is done in all buffer, override the function
+    must_highlight to reduce the scope.
+    """
+
+    def __init__(self, text, style, whole_word=False, context_lines=0):
+        """
+        :param style: an instance of OverlayStyle
+        """
+        self.text = text
+        self.whole_word = whole_word
+        On_The_Fly.Highlighter.__init__(
+            self, context_lines=context_lines, style=style)
+
+    def process(self, start, end):
+        """Do the highlighting in the range of text"""
+        while True:
+            start = start.search(
+                self.text, regexp=False, dialog_on_failure=False,
+                whole_word=self.whole_word)
+            if not start or start[0] > end:
+                return
+            self.style.apply(start[0], start[1] - 1)
+            start = start[1] + 1
