@@ -193,6 +193,22 @@ package body Docgen2 is
 
    end Local;
 
+   package Version_3 is
+
+      procedure Move_Comment
+        (Context : Analysis_Context;
+         E_Info  : Entity_Info);
+      --  (Docgen_Version3): Move to the enclosing entry/subprogram a comment
+      --  found after a parameter.
+
+      procedure Move_Inlined_Params_Doc (To : Entity_Info);
+      --  Move documentation on params found in middle of the parameters
+      --  profile of this entry or subprogram entity before its first tag.
+      --  If no tag is found then the documentation is appended to the
+      --  documentation of this entity.
+
+   end Version_3;
+
    ----------
    -- Name --
    ----------
@@ -542,8 +558,10 @@ package body Docgen2 is
                if First (Construct_T) /= Null_Construct_Tree_Iterator then
                   File_EInfo.Description :=
                     Find_Doc
-                      (Get_Construct (First (Construct_T)).Sloc_Start,
+                      (Docgen_Object (Command).Options.Comments_Filter,
+                       Get_Construct (First (Construct_T)).Sloc_Start,
                        Get_Construct (First (Construct_T)).Sloc_End,
+                       Category => File_EInfo.Category,
                        Comments => Comments,
                        File_Doc => True);
                else
@@ -572,6 +590,9 @@ package body Docgen2 is
             --  child e_info to move comment when appropriate
 
             else
+               Version_3.Move_Inlined_Params_Doc
+                 (Current_Scope (Command.Analysis_Ctxt).Parent_Entity);
+
                --  For this, we pop all values until getting the root
                --  context
                while Current_Scope (Command.Analysis_Ctxt).Parent_Iter /=
@@ -1331,8 +1352,10 @@ package body Docgen2 is
 
                --  Retrieve documentation comments
                E_Info.Description :=
-                 Find_Doc (Construct.Sloc_Start,
+                 Find_Doc (Cmd.Options.Comments_Filter,
+                           Construct.Sloc_Start,
                            Construct.Sloc_End,
+                           E_Info.Category,
                            Get_Comments (Context));
             end if;
 
@@ -1444,8 +1467,10 @@ package body Docgen2 is
 
                      Param_EInfo.Description :=
                        Find_Doc
-                         (Param_EInfo.Entity_Loc,
+                         (Cmd.Options.Comments_Filter,
                           Param_EInfo.Entity_Loc,
+                          Param_EInfo.Entity_Loc,
+                          Param_EInfo.Category,
                           Get_Comments (Context));
 
                      --  ??? need a better handling of formal parameters types
@@ -1740,6 +1765,7 @@ package body Docgen2 is
            and then Get_Parent_Scope_Iterator (Context)
                       /= Context_Elem.Parent_Iter
          then
+            Version_3.Move_Inlined_Params_Doc (Context_Elem.Parent_Entity);
             Exit_Scope (Context);
             return;
          end if;
@@ -1794,6 +1820,7 @@ package body Docgen2 is
                      return;
 
                   when Cat_Parameter =>
+                     Version_3.Move_Comment (Context, E_Info);
                      null;
 
                   when others =>
@@ -2545,6 +2572,7 @@ package body Docgen2 is
             function To_Global_Loc
               (Src : Source_Location) return Source_Location;
             function Extract (Idx_Start, Idx_End : Natural) return String;
+
             function CB
               (Entity         : Language_Entity;
                Sloc_Start     : Source_Location;
@@ -2587,6 +2615,8 @@ package body Docgen2 is
             -- CB --
             --------
 
+            Prev_Entity : Language_Entity := Normal_Text;
+
             function CB
               (Entity         : Language_Entity;
                Sloc_Start     : Source_Location;
@@ -2603,12 +2633,51 @@ package body Docgen2 is
             begin
                --  Print all text between previous call and current one
                if Last_Idx < Sloc_Start.Index then
-                  Append (Printout, Extract (Last_Idx, Sloc_Start.Index - 1));
+                  if not Active (DOCGEN_V3) then
+                     Append (Printout,
+                       Extract (Last_Idx, Sloc_Start.Index - 1));
+
+                  else
+                     declare
+                        Text : constant String :=
+                          Filter (Extract (Last_Idx, Sloc_Start.Index - 1));
+                     begin
+                        if Prev_Entity = Type_Text
+                          and then Entity = Comment_Text
+                          and then Spaces_Only (Text)
+                        then
+                           --  Skip this empty comment and continue!
+
+                           Last_Idx := Sloc_End.Index + 1;
+                           return False;
+
+                        --  Skip spaces found after a type name and an operator
+                        --  Example: "procedure X (P : Integer      );
+
+                        elsif Prev_Entity = Type_Text
+                          and then Entity = Operator_Text
+                          and then Spaces_Only (Text)
+                        then
+                           null;
+
+                        else
+                           Append (Printout, Text);
+                        end if;
+                     end;
+                  end if;
                end if;
 
+               Prev_Entity := Entity;
                Last_Idx := Sloc_End.Index + 1;
 
-               if Entity not in Identifier_Entity then
+               --  In version 3 we skip comments since they may appear in
+               --  middle of the parameters profile of a subprogram (and this
+               --  generates wrong output).
+
+               if Active (DOCGEN_V3) and then Entity = Comment_Text then
+                  null;
+
+               elsif Entity not in Identifier_Entity then
                   --  For all entities that are not identifiers, print them
                   --  directly
                   Append
@@ -3910,5 +3979,72 @@ package body Docgen2 is
       end Gen_Href;
 
    end Local;
+
+   package body Version_3 is
+
+      -------------------------
+      -- Append_Extra_Params --
+      -------------------------
+
+      procedure Move_Inlined_Params_Doc (To : Entity_Info) is
+      begin
+         if not Active (DOCGEN_V3) then
+            return;
+         end if;
+
+         if To.Category = Cat_Subprogram
+           or else To.Category = Cat_Entry
+         then
+            Insert_Before_First_Tag
+              (Comment => To.Description,
+               Text    => To.Params_Buffer);
+            To.Params_Buffer := Null_Unbounded_String;
+         end if;
+      end Move_Inlined_Params_Doc;
+
+      ------------------
+      -- Move_Comment --
+      ------------------
+
+      procedure Move_Comment
+        (Context : Analysis_Context;
+         E_Info  : Entity_Info)
+      is
+         Context_Elem : constant Context_Element := Current_Scope (Context);
+         Comment      : constant String := To_String (E_Info.Description);
+
+      begin
+         if not Active (DOCGEN_V3) then
+            return;
+         end if;
+
+         if Comment /= "" then
+            declare
+               Prefix : constant String :=
+                 ASCII.LF &
+                 "@param " & Get (E_Info.Short_Name).all & " ";
+               Parent : Entity_Info;
+
+            begin
+               Parent := Context_Elem.Parent_Entity;
+               pragma Assert (Parent /= null);
+
+               if Parent.Params_Buffer = Null_Unbounded_String then
+                  Parent.Params_Buffer :=
+                    To_Unbounded_String
+                     (Filter (Prefix & Comment) & ASCII.LF);
+               else
+                  Append
+                    (Parent.Params_Buffer,
+                      Filter (Prefix & Comment) & ASCII.LF);
+               end if;
+
+               --  ??? does not seem to affect the output
+               E_Info.Description := No_Comment;
+            end;
+         end if;
+      end Move_Comment;
+
+   end Version_3;
 
 end Docgen2;

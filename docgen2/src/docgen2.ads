@@ -41,9 +41,13 @@ with GNAT.Expect;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with Docgen2_Backend;
 with GPS.Kernel;
+with GNATCOLL.Traces;
 with GNATCOLL.VFS;
 
 package Docgen2 is
+   DOCGEN_V3 : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create ("Docgen.V3", GNATCOLL.Traces.Off);
+   --  Whether to use the sqlite-based cross-reference system
 
    package User_Tags_List is new Ada.Containers.Vectors
      (Natural,
