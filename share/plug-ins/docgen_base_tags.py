@@ -7,6 +7,7 @@ The list of custom tags is:
 - summary
 - parameter (attribute "name" is expected)
 - exception
+- return
 - seealso
 - c_version
 - group (this builds a custom index from all <group>A Group</group> tags)
@@ -91,6 +92,7 @@ def on_gps_start (hook):
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("description"))
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("summary"))
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("exception"))
+   GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("return"))
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("seealso"))
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("code"))
    # register <parameter>, <c_version> and <group> tags.
