@@ -536,12 +536,12 @@ package body Build_Command_Manager is
 
          --  Configure output parser fabrics
          Output_Collector.Set
-           (Builder    => Builder, 
+           (Builder    => Builder,
             Target     => Target_Name,
             Shadow     => Shadow,
             Background => Background);
 
-         Location_Parser.Set   
+         Location_Parser.Set
            (Kernel            => (Kernel_Handle (Builder.Kernel)),
             Category          => To_String (Category_Name),
             Styles            => GPS.Styles.UI.Builder_Styles,
