@@ -273,6 +273,23 @@ package body Docgen2 is
    -- Execute --
    -------------
 
+   --  This subprogram implements a finite-state automaton whose state
+   --  transitions can be summarized by means of the following regular
+   --  expression:
+   --
+   --     S0 -> {S1} -> {S2,S3,S4} -> S5 -> {S6} -> {S7} -> S8
+   --
+   --  This is the meaning of each state:
+   --    S0: Analysis_Setup
+   --    S1: Update_Xrefs
+   --    S2: Analyse_Files
+   --    S3: Analyse_File_Constructs
+   --    S4: Analysis_Tear_Down
+   --    S5: Gen_Doc_Setup
+   --    S6: Gen_Doc_Annotated_Src
+   --    S7: Gen_Doc_Spec
+   --    S8: Gen_Doc_Tear_Down
+
    overriding function Execute
      (Command : access Docgen_Command) return Command_Return_Type
    is
@@ -824,6 +841,8 @@ package body Docgen2 is
    -- Generate --
    --------------
 
+   --  Generate documentation for a single file
+
    procedure Generate
      (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend : Docgen2_Backend.Backend_Handle;
@@ -863,6 +882,8 @@ package body Docgen2 is
    --------------
    -- Generate --
    --------------
+
+   --  Generate documentation for a project
 
    procedure Generate
      (Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -916,6 +937,8 @@ package body Docgen2 is
    ---------------------------------
    -- Generate_Custom_Docgen_File --
    ---------------------------------
+
+   --  Customized user-generated files
 
    procedure Generate_Custom_Docgen_File
      (Command  : Docgen_Object;
@@ -1857,8 +1880,12 @@ package body Docgen2 is
          use type GNAT.Expect.Pattern_Matcher_Access;
 
       begin
-         --  take care of comments filters (way to ignore comments)
-         if Docgen.Options.Comments_Filter /= null then
+         --  Take care of comments filters (way to ignore comments under
+         --  Docgen V2)
+
+         if not Active (DOCGEN_V3)
+           and then Docgen.Options.Comments_Filter /= null
+         then
             Match (Docgen.Options.Comments_Filter.all, Doc, Matches);
 
             if Matches (0) /= No_Match then
