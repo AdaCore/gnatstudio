@@ -132,7 +132,8 @@ class LocationHighlighter(Background_Highlighter):
 
                 # Get the string on the line
                 end_loc = start.end_of_line()
-                s = buffer.get_chars(start, end_loc).decode("utf8")
+                s = buffer.get_chars(start, end_loc)  # byte-sequence
+                u = s.decode("utf8") # unicode-string
                 s_len = len(s)
 
                 # Find the tokens on the current line
