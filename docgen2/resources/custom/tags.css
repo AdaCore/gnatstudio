@@ -32,6 +32,12 @@ div.exception:before
    font-weight: bold;
 }
 
+div.return:before
+{
+   content: "Returns: ";
+   font-weight: bold;
+}
+
 div.seealso:before
 {
    content: "See also: ";
