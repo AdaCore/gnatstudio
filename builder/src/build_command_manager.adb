@@ -538,6 +538,19 @@ package body Build_Command_Manager is
          Data.Background_Env := Background_Env;
          Data.Is_A_Run       := Is_Run (T);
 
+         --  Configure output parser fabrics
+         Output_Collector.Set
+           (Kernel     => Kernel,
+            Target     => Target_Name,
+            Shadow     => Shadow,
+            Background => Background);
+
+         Location_Parser.Set
+           (Kernel            => Kernel,
+            Category          => To_String (Data.Category_Name),
+            Styles            => GPS.Styles.UI.Builder_Styles,
+            Show_In_Locations => not Background);
+
          if Is_Run (T) then
             if not Data.Quiet then
                Console := Get_Build_Console
@@ -550,19 +563,6 @@ package body Build_Command_Manager is
          else
             Console := Get_Build_Console
               (Kernel, Shadow, Background, False);
-
-            --  Configure output parser fabrics
-            Output_Collector.Set
-              (Kernel     => Kernel,
-               Target     => Target_Name,
-               Shadow     => Shadow,
-               Background => Background);
-
-            Location_Parser.Set
-              (Kernel            => Kernel,
-               Category          => To_String (Data.Category_Name),
-               Styles            => GPS.Styles.UI.Builder_Styles,
-               Show_In_Locations => not Background);
 
             Console_Writer.Set_Console (Console);
          end if;
