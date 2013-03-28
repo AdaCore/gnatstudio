@@ -224,10 +224,12 @@ class Background_Highlighter(object):
 
         self.style = style
         GPS.Hook("before_exit_action_hook").add(self.__before_exit)
+        GPS.Hook("file_closed").add(self.__on_file_closed)
 
     def __del__(self):
         self.stop_highlight()
         GPS.Hook("before_exit_action_hook").remove(self.__before_exit)
+        GPS.Hook("file_closed").remove(self.__on_file_closed)
 
     def __before_exit(self, hook):
         """
@@ -285,35 +287,29 @@ class Background_Highlighter(object):
             if context is not None:
                 end_line = min(end_line, line + context)
 
-            try:
-                # Destroy the timeout when the buffer is destroyed
-                buffer.current_view().pywidget().connect(
-                    "destroy",
-                    lambda *args: self.stop_highlight(buffer))
+            self.__buffers.insert(
+                0, (buffer, line, line + 1, start_line, end_line))
 
-                self.__buffers.insert(
-                    0, (buffer, line, line + 1, start_line, end_line))
+            if self.style and self.style.use_messages():
+                self.style.remove(buffer)
 
-                if self.style and self.style.use_messages():
-                    self.style.remove(buffer)
+            if self.synchronous:
+                while self.__do_highlight():
+                    pass
 
-                if self.synchronous:
-                    while self.__do_highlight():
-                        pass
+            elif self.__source_id is None:
+                if gobject_available:
+                    self.__source_id = GLib.idle_add(
+                        self.__do_highlight) # , priority=GLib.PRIORITY_LOW)
+                else:
+                    self.__source_id = GPS.Timeout(
+                        self.timeout_ms, self.__do_highlight)
 
-                elif self.__source_id is None:
-                    if gobject_available:
-                        self.__source_id = GLib.idle_add(
-                            self.__do_highlight) # , priority=GLib.PRIORITY_LOW)
-                    else:
-                        self.__source_id = GPS.Timeout(
-                            self.timeout_ms, self.__do_highlight)
-
-            except Exception as e:
-                # This can happen if pywidget() is not found: rather than leave
-                # GPS open to crashing, do not highlight this buffer.
-                traceback.print_exc()
-                pass
+    def __on_file_closed(self, hook, file):
+        for b in self.__buffers:
+            if b[0].file() == file:
+                self.stop_highlight(b[0])
+                break
 
     def stop_highlight(self, buffer=None):
         """
@@ -326,9 +322,10 @@ class Background_Highlighter(object):
 
         if buffer is not None:
             for b in self.__buffers:
-                if self.__buffers[0] == buffer:
+                if b[0] == buffer:
                     self.__buffers.remove(b)
-                    break
+                    return
+
         elif self.__source_id:
             if gobject_available:
                 GLib.source_remove(self.__source_id)
