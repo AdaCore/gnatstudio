@@ -309,19 +309,28 @@ class Background_Highlighter(object):
                 traceback.print_exc()
                 pass
 
-    def stop_highlight(self):
+    def stop_highlight(self, buffer=None):
         """
         Stop the background highlighting of the buffer, but preserves
         any highlighting that has been done so far.
+        :param buffer:
+           If specified, highlighting is only stopped for a specific
+           buffer.
         """
-        if self.__source_id:
+
+        if buffer is not None:
+            for b in self.__buffers:
+                if self.__buffers[0] == buffer:
+                    self.__buffers.remove(b)
+                    break
+        elif self.__source_id:
             if gobject_available:
                 GLib.source_remove(self.__source_id)
             else:
                 self.__source_id.remove()
             self.__source_id = None
 
-        self.__buffers = []
+            self.__buffers = []
 
     def remove_highlight(self, buffer=None):
         """
