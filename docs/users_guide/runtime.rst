@@ -10,4 +10,10 @@ The :file:`highlighter.py` module
 .. automodule:: gps_utils.highlighter
    :members:
 
+The :file:`console_process.py` module
+-------------------------------------
+
+.. automodule:: gps_utils.console_process
+   :members:
+
 

@@ -22,10 +22,15 @@ Key_Escape = 65307
 class Console_Process(GPS.Console, GPS.Process):
     """This class provides a way to spawn an interactive process and
      do its input/output in a dedicated console in GPS.
+     The process is created so that it does not appear in the task
+     manager, and therefore the user can exit GPS without being
+     asked whether or not to kill the process.
+
      You can of course derive from this class easily. Things are
      slightly more complicated if you want in fact to derive from
      a child of GPS.Console (for instance a class that would handle
-     ANSI escape sequences). The code would then look like:
+     ANSI escape sequences). The code would then look like::
+
         class ANSI_Console (GPS.Console):
            def write (self, txt): ...
 
@@ -45,7 +50,54 @@ class Console_Process(GPS.Console, GPS.Process):
 
      See also the class ANSI_Console_Process if you need your process
      to execute within a terminal that understands ANSI escape sequences.
-    """
+
+     :param boolean force: If True, a new console is opened, otherwise an
+        existing one will be reused (although you should take care in this
+        case if you have multiple processes attached to the same console).
+
+     :param boolean manage_prompt: If True, then GPS will do some higher level
+        handling of prompts: when some output is done by the process, GPS
+        will temporarily hide what the user was typing, insert the output,
+        and append what the user was typing. This is in general suitable but
+        might interfer with external programs that do their own screen
+        management through ANSI commands (like a Unix shell for instance).
+     """
+
+    def __init__(self, process, args='', close_on_exit=True, force=False,
+                 ansi=False, manage_prompt=True):
+        self.close_on_exit = close_on_exit
+        try:
+            GPS.Console.__init__(
+                self,
+                process.split()[0],
+                manage_prompt=manage_prompt,
+                on_input=self.on_input,
+                on_destroy=self.on_destroy,
+                on_resize=self.on_resize,
+                on_interrupt=self.on_interrupt,
+                on_completion=self.on_completion,
+                on_key=self.on_key,
+                ansi=ansi,
+                force=force)
+            GPS.Process.__init__(
+                self,
+                process + ' ' + args,
+                '.+',
+                single_line_regexp=True,  # For efficiency
+                strip_cr=not ansi,        # if ANSI terminal, CR is irrelevant
+                task_manager=False,
+                on_exit=self.on_exit,
+                on_match=self.on_output)
+            GPS.MDI.get_by_child(self).raise_window()
+        except:
+            GPS.Console().write(str(sys.exc_info()[1]) + '\n')
+            try:
+                self.destroy()
+                self.kill()
+            except:
+                pass
+            GPS.Console().write('Could not spawn: ' + process + ' ' + args
+                                + '\n')
 
     def on_output(self, matched, unmatched):
         """This method is called when the process has emitted some output.
@@ -111,71 +163,18 @@ class Console_Process(GPS.Console, GPS.Process):
            already been handled and will not do its standard processing with it.
            By default, we simply let the key through and let GPS handle it.
 
-           _key_ is the unicode character (numeric value) that was entered by
-           the user. _modifier_ is a mask of the control and shift keys that
-           were pressed at the same time. See the *_Mask constants above.
-           keycode is the code of the key, which is useful for non-printable
-           characters. It is set to 0 in some cases if the input is simulated
-           after the user has copied some text into the console
+           :param key: the unicode character (numeric value) that was entered by
+              the user. _modifier_ is a mask of the control and shift keys that
+              were pressed at the same time. See the Mask constants above.
+              keycode is the code of the key, which is useful for non-printable
+              characters. It is set to 0 in some cases if the input is simulated
+              after the user has copied some text into the console
 
            This function is also called for each character pasted by the user
            in the console. If it returns True, then the selection will not be
            inserted in the console.
         """
         return False
-
-    def __init__(self, process, args='', close_on_exit=True, force=False,
-                 ansi=False, manage_prompt=True):
-        """Spawn a new interactive process and show its input/output in a
-           new GPS console. The process is created so that it does not
-           appear in the task manager, and therefore the user can exit GPS
-           without being asked whether or not to kill the process.
-
-           If _force_ is set to True, a new console is opened, otherwise an
-           existing one will be reused (although you should take care in this
-           case if you have multiple processes attached to the same console).
-
-           If _manage_prompt_ is True, then GPS will do some higher level
-           handling of prompts: when some output is done by the process, GPS
-           will temporarily hide what the user was typing, insert the output,
-           and append what the user was typing. This is in general suitable but
-           might interfer with external programs that do their own screen
-           management through ANSI commands (like a Unix shell for instance).
-        """
-
-        self.close_on_exit = close_on_exit
-        try:
-            GPS.Console.__init__(
-                self,
-                process.split()[0],
-                manage_prompt=manage_prompt,
-                on_input=self.on_input,
-                on_destroy=self.on_destroy,
-                on_resize=self.on_resize,
-                on_interrupt=self.on_interrupt,
-                on_completion=self.on_completion,
-                on_key=self.on_key,
-                ansi=ansi,
-                force=force)
-            GPS.Process.__init__(
-                self,
-                process + ' ' + args,
-                '.+',
-                single_line_regexp=True,  # For efficiency
-                strip_cr=not ansi,        # if ANSI terminal, CR is irrelevant
-                task_manager=False,
-                on_exit=self.on_exit,
-                on_match=self.on_output)
-            GPS.MDI.get_by_child(self).raise_window()
-        except:
-            GPS.Console().write(str(sys.exc_info()[1]) + '\n')
-            try:
-                self.destroy()
-                self.kill()
-            except:
-                pass
-            GPS.Console().write('Could not spawn: ' + process + ' ' + args
-                                + '\n')
 
 
 class ANSI_Console_Process(Console_Process):
@@ -187,6 +186,10 @@ class ANSI_Console_Process(Console_Process):
       It also provides an ANSI terminal to the external process. The latter
       can thus send escape sequences to change colors, cursor position,...
     """
+
+    def __init__(self, process, args=''):
+        Console_Process.__init__(self, process, args, force=True, ansi=True,
+                                 manage_prompt=False)
 
     def on_input(self, input):
         # Do nothing, this was already handled when each key was pressed
@@ -242,7 +245,3 @@ class ANSI_Console_Process(Console_Process):
                                       + ' modifier=' + `modifier`)
 
         return True
-
-    def __init__(self, process, args=''):
-        Console_Process.__init__(self, process, args, force=True, ansi=True,
-                                 manage_prompt=False)
