@@ -4236,6 +4236,17 @@ class EditorOverlay(object):
     or more overlays are applied to the same range of text, the final colors
     and fonts of the text depends on the priorities of these overlays and the
     order in which they were applied to the buffer.
+
+    This class is fairly low-level, and we recommend using the class
+    :py:func:`gps_utils.highlighter.OverlayStyle` instead. That class provides
+    similar support for specifying attributes, but makes it easier to highlight
+    sections of an editor with that style, or to remove the highlighting.
+
+    In fact, if your goal is to highlight parts of editors, it might be simpler
+    to use :py:func:`gps_utils.highilghter.Background_Highlighter` or one of the
+    classes derived from it. These classes provide convenient support for
+    highlighting editors in the background, i.e. without interfering with the
+    user or slowing things down.
     """
 
     def __init__(self):
@@ -8539,6 +8550,12 @@ class Style(object):
     """
     This class is used to manipulate GPS Styles, which are used for instance to
     represent graphical attributes given to Messages.
+
+    This class is fairly low-level, and we recommend using the class
+    :py:func:`gps_utils.highlighter.OverlayStyle` instead. That class provides
+    similar support for specifying attributes, but makes it easier to highlight
+    sections of an editor with that style, or to remove the highlighting.
+
     """
 
     def __init__(self, name, create):

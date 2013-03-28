@@ -1551,3 +1551,7 @@ Classes
    .. automethod:: GPS.XMLViewer.parse
 
    .. automethod:: GPS.XMLViewer.parse_string
+
+
+.. automodule: gps_utils.highlighter::
+   :members:

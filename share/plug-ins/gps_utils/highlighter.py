@@ -1,40 +1,6 @@
 """
 This file provides various classes to help highlight patterns in
 files.
-The Highlighter class should be considered abstract, and provides
-support for (re)highlighting editors when needed.
-The Regexp_Highlighter is a concrete implementation to highlight
-editors based on regular expressions. One example is for instance
-to highlight tabs or trailing spaces on lines, when this is considered
-improper style:
-
-Regexp_Highlighter(
-    regexp="\t+|\s+$",
-    style=OverlayStyle(
-       name="tabs style",
-       strikethrough=True,
-       background="#FF7979"))
-
-Another example is to highlight TODO lines. Various conventions exist
-to mark these in the sources, but the following should catch some of
-these:
-
-Regexp_Highlighter(
-    regexp="TODO.*|\?\?\?.*",
-    style=OverlayStyle(
-       name="todo",
-       background="#FF7979"))
-
-Another example is a class to highlight Spark comments. This should
-only be applied when the language is spark
-
-class Spark_Highlighter(Regexp_Highlighter):
-    def must_highlight(self, buffer):
-        return buffer.file().language().lower() == "spark"
-Spark_Highlighter(
-    regexp="--#.*$",
-    style=OverlayStyle(
-        name="spark", foreground="red"))
 """
 
 import GPS
@@ -52,24 +18,22 @@ class OverlayStyle(object):
     Description for a style to apply to a section of an editor. In practice,
     this could be implemented as an editor overlay, or a message, depending
     on whether highlighting should be done on the whole line or not.
+
+    :param string name: name of the overlay so that we can remove it later.
+    :param string foreground:  foreground color
+    :param string background:  background color
+    :param string weight: one of "bold", "normal", "light"
+    :param string slant:  one of "normal", "oblique", "italic"
+    :param boolean whole_line: whether to highlight the whole line, up to the
+       right margin
+    :param boolean speedbar: whether to show a mark in the speedbar to the left
+       of editors. This forces whole_line to True.
+    :param kwargs: other properties supported by EditorOverlay
     """
 
     def __init__(self, name, foreground="", background="", weight=None,
                  slant=None, editable=True, whole_line=False, speedbar=False,
                  **kwargs):
-        """
-        The style to apply.
-        :param name: name of the overlay so that we can remove it later.
-        :param foreground:  foreground color
-        :param background:  background color
-        :param weight: one of "bold", "normal", "light"
-        :param slant:  one of "normal", "oblique", "italic"
-        :param whole_line: whether to highlight the whole line, up to the
-           right margin
-        :param speedbar: whether to show a mark in the speedbar to the left
-           of editors. This forces whole_line to True.
-        :param kwargs: other properties supported by EditorOverlay
-        """
         self.name = name
         self.foreground = foreground
         self.background = background
@@ -92,11 +56,18 @@ class OverlayStyle(object):
             self.__style.set_in_speedbar(speedbar)
 
     def use_messages(self):
+        """
+        :return: Whether this style will use a `GPS.Message` or \
+           a `GPS.EditorOverlay` to highlight.
+        :rtype: boolean
+        """
         return self.__style is not None
 
     def __create_style(self, buffer):
         """
         Create (or reuse) a buffer overlay.
+        :param GPS.EditorBuffer buffer: the buffer in which the style will
+           be applied.
         """
         if self.use_messages():
             return self.__style
@@ -128,8 +99,8 @@ class OverlayStyle(object):
         """
         Apply the highlighting to part of the buffer.
 
-        :param start: a GPS.EditorLocation
-        :param end:   a GPS.EditorLocation
+        :param GPS.EditorLocation start: start of highlighted region.
+        :param GPS.EditorLocation end: end of highlighted region.
         """
         buffer = start.buffer()
         over = self.__create_style(buffer)
@@ -155,9 +126,9 @@ class OverlayStyle(object):
     def remove(self, start, end=None):
         """
         Remove the highlighting in whole or part of the buffer.
-        :param start: a GPS.EditorLocation
-        :param end:   a GPS.EditorLocation
-           If unspecified, the highlighting for the whole buffer is removed.
+        :param GPS.EditorLocation start: start of region.
+        :param GPS.EditorLocation end: end of region.  If unspecified, the \
+            highlighting for the whole buffer is removed.
         """
         if isinstance(start, GPS.EditorBuffer):
             buffer = start
@@ -192,16 +163,18 @@ class Background_Highlighter(object):
     An abstract class that provides facilities for highlighting parts of an
     editor. If possible, this highlighting is done in the background so that it
     doesn't interfer with the user typing.
-    Example of use:
+    Example of use::
 
-    class Example(Background_Highlighter):
-       def process(self, start, end):
-           ... analyze the given range of lines, and perform highlighting
-           ... where necessary.
+        class Example(Background_Highlighter):
+           def process(self, start, end):
+               ... analyze the given range of lines, and perform highlighting
+               ... where necessary.
 
-    e = Example()
-    e.start_highlight(buffer1)   # start highlighting a first buffer
-    e.start_highlight(buffer2)   # start highlighting a second buffer
+        e = Example()
+        e.start_highlight(buffer1)   # start highlighting a first buffer
+        e.start_highlight(buffer2)   # start highlighting a second buffer
+
+    :param OverlayStyle style: style to use for highlighting.
     """
 
     timeout_ms = 40   # Interval in milliseconds between two batches.
@@ -213,10 +186,6 @@ class Background_Highlighter(object):
                         # foreground. This is for testsuite purposes
 
     def __init__(self, style):
-        """
-        :param style: an instance of OverlayStyle
-        """
-
         self.__source_id = None  # The gtk source_id used for background
                                  # or the GPS.Timeout instance
         self.__buffers = []      # The list of buffers to highlight
@@ -243,7 +212,7 @@ class Background_Highlighter(object):
         """
         Change the current highlight style.
 
-        :param style: an instance of OverlayStyle
+        :param OverlayStyle style: style to use for highlighting.
         """
         self.remove_highlight()
         self.style = style
@@ -252,18 +221,18 @@ class Background_Highlighter(object):
         """
         Start highlighting the buffer, possibly in the background.
 
-        :param buffer:
+        :param GPS.EditorBuffer buffer:
            The buffer to highlight (defaults to the current buffer). This
            buffer is added to the list of buffers, and will be processed
            when other buffers are finished.
 
-        :param line:
+        :param integer line:
            The line the highlighting should start from. By default, this
            is the current line in the editor, so that the user sees
            changes immediately. But you could chose to start from the
            top of the file instead.
 
-        :param context:
+        :param integer context:
            Number of lines before and after 'line' that should be
            highlighted. By default, the whole buffer is highlighted.
         """
@@ -315,9 +284,9 @@ class Background_Highlighter(object):
         """
         Stop the background highlighting of the buffer, but preserves
         any highlighting that has been done so far.
-        :param buffer:
-           If specified, highlighting is only stopped for a specific
-           buffer.
+
+        :param GPS.EditorBuffer buffer: If specified, highlighting is \
+           only stopped for a specific buffer.
         """
 
         if buffer is not None:
@@ -338,7 +307,8 @@ class Background_Highlighter(object):
     def remove_highlight(self, buffer=None):
         """
         Remove all highlighting done by self in the buffer.
-        :param buffer: defaults to the current buffer
+
+        :param GPS.EditorBuffer buffer: defaults to the current buffer
         """
         if buffer is None:
             buffer = GPS.EditorBuffer.get()
@@ -351,8 +321,8 @@ class Background_Highlighter(object):
         Called to highlight the given range of editor. When this is called,
         previous highlighting has already been removed in that range.
 
-        :param start: an instance of GPS.EditorLocation.
-        :param end:   an instance of GPS.EditorLocation.
+        :param GPS.EditorLocation start: start of region to process.
+        :param GPS.EditorLocation end: end of region to process.
         """
         pass
 
@@ -417,11 +387,16 @@ class Background_Highlighter(object):
 
 class On_The_Fly_Highlighter(Background_Highlighter):
     """
-    This class provides a way to easily highlight text in an editor.
+    This abstract class provides a way to easily highlight text in an editor.
     When possible, the highlighting is done in the background, in
     which case it is also done on the fly every time the file is
     modified. If pygobject is not available, the highlighting is only done
     when the file is opened or saved
+
+    :param OverlayStyle style: the style to apply.
+    :param intger context_lines: The number of lines (plus or minus)
+       around the current location that get refreshed when a local
+       highlighting is requested.
     """
 
     def do_highlight(self, buffer, start, end):
@@ -433,24 +408,16 @@ class On_The_Fly_Highlighter(Background_Highlighter):
 
     def must_highlight(self, buffer):
         """
-        Return True if highlighting should be done in this buffer.
-        The default is to higlight all buffers, but some highlightings
-        might apply only to specific languages for instance
+        :param GPS.EditorBuffer buffer: The buffer to test.
+
+        :return: whether to highlight this buffer.
+           The default is to higlight all buffers, but some highlightings
+           might apply only to specific languages for instance
+        :rtype: boolean
         """
         return True
 
     def __init__(self, style, context_lines=0):
-        """
-        Create a highlighter object.
-        This then needs to be attached to one or more buffers through
-        the monitor() function below.
-
-        :param style: an instance of OverlayStyle
-        :param context_lines:
-           The number of lines (plus or minus) around the current location that
-           get refreshed when a local highlighting is requested.
-        """
-
         Background_Highlighter.__init__(self, style=style)
         self.context_lines = context_lines
         self.start()
@@ -507,21 +474,54 @@ class On_The_Fly_Highlighter(Background_Highlighter):
 
 class Regexp_Highlighter(On_The_Fly_Highlighter):
     """
-    A specific class of highlighters based on regexps.
-    Example of use:
-         Regexp_Highlighter("spark", "--#.*$", fg_color="red")
+    The Regexp_Highlighter is a concrete implementation to highlight
+    editors based on regular expressions. One example is for instance
+    to highlight tabs or trailing spaces on lines, when this is considered
+    improper style::
+    
+        Regexp_Highlighter(
+            regexp="\t+|\s+$",
+            style=OverlayStyle(
+               name="tabs style",
+               strikethrough=True,
+               background="#FF7979"))
+    
+    Another example is to highlight TODO lines. Various conventions exist
+    to mark these in the sources, but the following should catch some of
+    these::
+    
+        Regexp_Highlighter(
+            regexp="TODO.*|\?\?\?.*",
+            style=OverlayStyle(
+               name="todo",
+               background="#FF7979"))
+    
+    Another example is a class to highlight Spark comments. This should
+    only be applied when the language is spark::
+    
+        class Spark_Highlighter(Regexp_Highlighter):
+            def must_highlight(self, buffer):
+                return buffer.file().language().lower() == "spark"
+    
+        Spark_Highlighter(
+            regexp="--#.*$",
+            style=OverlayStyle(
+                name="spark", foreground="red"))
+
+    :param string regexp: the regular expression to search for.
+       It should preferrably apply to a single line, since highlighting
+       is done on small sections of the editor at a time, and it might
+       not detect cases where the regular expression would match across
+       sections.
+    :param OverlayStyle style: the style to apply.
     """
 
     def __init__(self, regexp, style, context_lines=0):
-        """
-        :param style: an instance of OverlayStyle
-        """
         self.regexp = regexp
         On_The_Fly_Highlighter.__init__(
             self, context_lines=context_lines, style=style)
 
     def process(self, start, end):
-        """Called by Background_Highlighter"""
         while True:
             start = start.search(
                 self.regexp, regexp=True, dialog_on_failure=False)
@@ -537,19 +537,21 @@ class Text_Highlighter(On_The_Fly_Highlighter):
     a regular expression.
     By default, highlighting is done in all buffer, override the function
     must_highlight to reduce the scope.
+
+    :param string text: the text to search for.
+       It should preferrably apply to a single line, since highlighting
+       is done on small sections of the editor at a time, and it might
+       not detect cases where the text would match across sections.
+    :param OverlayStyle style: the style to apply.
     """
 
     def __init__(self, text, style, whole_word=False, context_lines=0):
-        """
-        :param style: an instance of OverlayStyle
-        """
         self.text = text
         self.whole_word = whole_word
         On_The_Fly.Highlighter.__init__(
             self, context_lines=context_lines, style=style)
 
     def process(self, start, end):
-        """Do the highlighting in the range of text"""
         while True:
             start = start.search(
                 self.text, regexp=False, dialog_on_failure=False,
