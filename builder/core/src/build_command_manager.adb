@@ -534,6 +534,19 @@ package body Build_Command_Manager is
             end if;
          end if;
 
+         --  Configure output parser fabrics
+         Output_Collector.Set
+           (Builder    => Builder, 
+            Target     => Target_Name,
+            Shadow     => Shadow,
+            Background => Background);
+
+         Location_Parser.Set   
+           (Kernel            => (Kernel_Handle (Builder.Kernel)),
+            Category          => To_String (Category_Name),
+            Styles            => GPS.Styles.UI.Builder_Styles,
+            Show_In_Locations => not Background);
+
          if Is_Run (T) then
             if not Quiet then
                Console := Get_Build_Console
@@ -546,19 +559,6 @@ package body Build_Command_Manager is
          else
             Console := Get_Build_Console
               ((Kernel_Handle (Builder.Kernel)), Shadow, Background, False);
-
-            --  Configure output parser fabrics
-            Output_Collector.Set
-              (Builder    => Builder,
-               Target     => Target_Name,
-               Shadow     => Shadow,
-               Background => Background);
-
-            Location_Parser.Set
-              (Kernel            => (Kernel_Handle (Builder.Kernel)),
-               Category          => To_String (Category_Name),
-               Styles            => GPS.Styles.UI.Builder_Styles,
-               Show_In_Locations => not Background);
 
             Console_Writer.Set_Console (Console);
          end if;
