@@ -209,6 +209,8 @@ class Background_Highlighter(object):
 
     batch_size = 20   # Number of lines to process at each iteration
 
+    synchronous = False # If True, highlighting is always done in the
+                        # foreground. This is for testsuite purposes
 
     def __init__(self, style):
         """
@@ -295,7 +297,11 @@ class Background_Highlighter(object):
                 if self.style and self.style.use_messages():
                     self.style.remove(buffer)
 
-                if self.__source_id is None:
+                if self.synchronous:
+                    while self.__do_highlight():
+                        pass
+
+                elif self.__source_id is None:
                     if gobject_available:
                         self.__source_id = GLib.idle_add(
                             self.__do_highlight) # , priority=GLib.PRIORITY_LOW)

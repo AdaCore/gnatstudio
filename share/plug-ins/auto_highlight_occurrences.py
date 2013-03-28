@@ -111,12 +111,16 @@ class LocationHighlighter(Background_Highlighter):
         if self.entity:
             s = GPS.FileLocation(buffer.file(), start.line(), start.column())
             e = GPS.FileLocation(buffer.file(), end.line(), end.column())
+
+            # n is a sequence of bytes, encoded in UTF-8.
+            # To compute its length, we need to convert it to a unicode string
             n = self.entity.name()
+            u = n.decode("utf-8")
 
             for r in self.entity_refs:
                 if s <= r <= e:
                     s2 = GPS.EditorLocation(buffer, r.line(), r.column())
-                    e2 = s2 + len(n) - 1
+                    e2 = s2 + len(u) - 1
                     if buffer.get_chars(s2, e2) == n:
                         self.style.apply(s2, e2);
 
