@@ -676,7 +676,10 @@ package Xref is
       In_File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       In_Scope              : General_Entity := No_General_Entity;
       Include_Overriding    : Boolean := False;
-      Include_Overridden    : Boolean := False);
+      Include_Overridden    : Boolean := False;
+      Include_Implicit      : Boolean := False;
+      Include_All           : Boolean := False;
+      Kind                  : String := "");
    --  Find all the references to the entity. This also return the location
    --  for the declaration of the entity.
    --  If In_File is specified, then only the references in that file will be
@@ -690,6 +693,14 @@ package Xref is
    --  references to an overriding or Overriden subprogram will also be
    --  returned. If Entity is a parameter of subprogram A, this will also
    --  return the parameters of subprograms that override A.
+   --
+   --  If Include_Implicit is False, then implicit references will not be
+   --  returned.
+   --  If Include_All is True, then references like end-of-spec and other
+   --  information on the entity will be returned.
+   --  Kind can be used to filter the reference kinds that should be returned.
+   --  If it is specified, Include_Implicit and Include_All are ignored. It is
+   --  a list of comma-separated strings.
 
    subtype References_Sort is GNATCOLL.Xref.References_Sort;
    procedure Find_All_References

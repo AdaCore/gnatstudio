@@ -269,7 +269,6 @@ package body Browsers.Call_Graph is
    type References_Command is new Root_Command with record
       Kernel        : Kernel_Handle;
       Iter          : Entity_Reference_Iterator;
-      Filter        : Custom_Filter;
       Locations     : Entity_Ref_List.List;
       Show_Ref_Kind : Boolean;
    end record;
@@ -1062,9 +1061,7 @@ package body Browsers.Call_Graph is
 
          Ref := Get (Command.Iter);
 
-         if Ref /= No_General_Entity_Reference
-           and then Is_Valid (Command.Filter, Ref)
-         then
+         if Ref /= No_General_Entity_Reference then
             Append (Command.Locations, Ref);
          end if;
 
@@ -1501,35 +1498,19 @@ package body Browsers.Call_Graph is
          begin
             Ref_Command.Kernel := Kernel;
             Ref_Command.Show_Ref_Kind := Show_Ref_Type;
-            Ref_Command.Filter :=
-              (Db        => Kernel.Databases,
-               Ref_Kinds => null,
-               Filter    => null);
 
             if Inst_In_File /= No_Class_Instance then
                In_File := Get_Data (Inst_In_File);
-            end if;
-
-            if Only_If_Kind = "" then
-               if Implicit then
-                  Ref_Command.Filter.Filter :=
-                    Is_Real_Or_Implicit_Reference'Access;
-               else
-                  Ref_Command.Filter.Filter := Is_Real_Reference'Access;
-               end if;
-            else
-               Ref_Command.Filter.Ref_Kinds :=
-                 GNATCOLL.Utils.Split (Only_If_Kind, ',');
             end if;
 
             Kernel.Databases.Find_All_References
               (Iter                  => Ref_Command.Iter,
                Entity                => Entity,
                In_File               => In_File,
-               Kind                  => Only_If_Kind,
                Include_Implicit      => Implicit,
+               Include_All           => False,
+               Kind                  => Only_If_Kind,
                File_Has_No_LI_Report => null);
-            --  ??? Should we give access to In_Scope
 
             if Synchronous then
                --  Synchronous, return directly the result

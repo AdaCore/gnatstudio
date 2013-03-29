@@ -1397,16 +1397,38 @@ package body Xref is
       In_File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       In_Scope              : General_Entity := No_General_Entity;
       Include_Overriding    : Boolean := False;
-      Include_Overridden    : Boolean := False)
+      Include_Overridden    : Boolean := False;
+      Include_Implicit      : Boolean := False;
+      Include_All           : Boolean := False;
+      Kind                  : String := "")
    is
       F      : Old_Entities.Source_File;
+
+      procedure Internal
+        (Self   : Xref_Database'Class;
+         Entity : Entity_Information;
+         Cursor : out References_Cursor'Class);
+      --  Wraps GNATCOLL.Xref.References to pass correct parameters
+
+      procedure Internal
+        (Self   : Xref_Database'Class;
+         Entity : Entity_Information;
+         Cursor : out References_Cursor'Class) is
+      begin
+         GNATCOLL.Xref.References
+           (Self, Entity, Cursor,
+            Include_Implicit => Include_Implicit,
+            Include_All      => Include_All,
+            Kinds            => Kind);
+      end Internal;
+
    begin
       if Active (SQLITE) then
          --  File_Has_No_LI_Report voluntarily ignored.
 
          Self.Xref.Recursive
            (Entity          => Entity.Entity,
-            Compute         => GNATCOLL.Xref.References'Access,
+            Compute         => Internal'Unrestricted_Access,
             Cursor          => Iter.Iter,
             From_Overriding => Include_Overriding,
             From_Overridden => Include_Overridden,
@@ -1428,7 +1450,37 @@ package body Xref is
       else
          declare
             use Old_Entities;
+            Filter : Old_Entities.Reference_Kind_Filter;
+            R : String_List_Access;
          begin
+            if Kind /= "" then
+               Filter := (others => False);
+               R := GNATCOLL.Utils.Split (Kind, ',');
+
+               for K in Filter'Range loop
+                  declare
+                     KS : constant String := Kind_To_String (K);
+                  begin
+                     for F2 in R'Range loop
+                        if KS = R (F2).all then
+                           Filter (K) := True;
+                           exit;
+                        end if;
+                     end loop;
+                  end;
+               end loop;
+
+               Free (R);
+
+            elsif Include_All then
+               Filter := (others => True);
+            else
+               Filter := Real_References_Filter;
+               if Include_Implicit then
+                  Filter (Implicit) := True;
+               end if;
+            end if;
+
             if In_File /= No_File then
                F := Old_Entities.Get_Or_Create
                  (Db    => Self.Entities,
@@ -1439,6 +1491,7 @@ package body Xref is
             Old_Entities.Queries.Find_All_References
               (Iter.Old_Iter, Entity.Old_Entity,
                File_Has_No_LI_Report, F, In_Scope.Old_Entity,
+               Filter             => Filter,
                Include_Overriding => Include_Overriding,
                Include_Overridden => Include_Overridden);
          end;
