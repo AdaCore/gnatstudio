@@ -2814,16 +2814,11 @@ package body Xref is
      (Self   : access General_Xref_Database_Record;
       Entity : General_Entity) return Integer
    is
-
-      Decl : Entity_Declaration;
+      pragma Unreferenced (Self);
    begin
       if Active (SQLITE) then
-         Decl := Self.Xref.Declaration (Entity.Entity);
-         return Integer
-           (Hash (To_String (Decl.Name)
-            & Decl.Location.File.Display_Full_Name
-            & Decl.Location.Line'Img
-            & Decl.Location.Column'Img));
+         --  Use directly the sqlite internal id.
+         return GNATCOLL.Xref.Internal_Id (Entity.Entity);
 
       elsif Entity.Old_Entity /= null then
          declare
@@ -2851,8 +2846,20 @@ package body Xref is
      (Self   : access General_Xref_Database_Record;
       Entity1, Entity2 : General_Entity) return Integer
    is
+      Id1, Id2 : Natural;
    begin
-      if Entity1 = No_General_Entity then
+      if Active (SQLITE) then
+         Id1 := GNATCOLL.Xref.Internal_Id (Entity1.Entity);
+         Id2 := GNATCOLL.Xref.Internal_Id (Entity2.Entity);
+         if Id1 < Id2 then
+            return -1;
+         elsif Id1 = Id2 then
+            return 0;
+         else
+            return 1;
+         end if;
+
+      elsif Entity1 = No_General_Entity then
          if Entity2 = No_General_Entity then
             return 0;
          else

@@ -69,10 +69,19 @@ class Dispatching_Highlighter(Location_Highlighter):
 
     def recompute_refs(self, buffer):
         try:
-            return [(e.name(), r)
-                    for e, r in buffer.file().references(
-                       kind="dispatching call")]
-        except:
+            # Minor optimization to query the names of each entities only once.
+            names = dict()
+            result = []
+            for e, r in buffer.file().references(kind="dispatching call"):
+                n = names.get(e)
+                if n is None:
+                    n = names[e] = e.name()
+                result.append((n, r))
+
+            return result
+
+        except Exception as e:
+            GPS.Logger("DISPATCHING").log("recompute_refs exception %s" % e)
             # xref engine might not be up-to-date, or available yet
             return []
 
