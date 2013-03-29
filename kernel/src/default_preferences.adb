@@ -21,7 +21,6 @@ with Ada.Strings.Hash;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
-with Gdk.Color;                use Gdk.Color;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
 
@@ -235,24 +234,6 @@ package body Default_Preferences is
      (Manager             : access Preferences_Manager_Record'Class;
       Name                : String) return Preferences_Maps.Cursor;
    --  Return a pointer to the preference Name
-
-   function To_Color (R : Gdk.RGBA.Gdk_RGBA) return Gdk.Color.Gdk_Color;
-   --  Conversion function
-   --  ??? Should be moved to GtkAda?
-
-   --------------
-   -- To_Color --
-   --------------
-
-   function To_Color (R : Gdk.RGBA.Gdk_RGBA) return Gdk.Color.Gdk_Color is
-      C : Gdk_Color;
-   begin
-      Set_Rgb (C,
-               Guint16 (65535.0 * R.Red),
-               Guint16 (65535.0 * R.Green),
-               Guint16 (65535.0 * R.Blue));
-      return C;
-   end To_Color;
 
    --------------
    -- Get_Name --
@@ -620,12 +601,6 @@ package body Default_Preferences is
       return Pref.Color;
    end Get_Pref;
 
-   function Get_Pref
-     (Pref : access Color_Preference_Record) return Gdk.Color.Gdk_Color is
-   begin
-      return To_Color (Pref.Get_Pref);
-   end Get_Pref;
-
    overriding function Get_Pref
      (Pref : access Key_Preference_Record) return String is
    begin
@@ -751,20 +726,6 @@ package body Default_Preferences is
          end if;
       end if;
       return Pref.Bg_Color;
-   end Get_Pref_Bg;
-
-   function Get_Pref_Fg
-     (Pref     : access Style_Preference_Record'Class)
-      return Gdk.Color.Gdk_Color is
-   begin
-      return To_Color (Pref.Get_Pref_Fg);
-   end Get_Pref_Fg;
-
-   function Get_Pref_Bg
-     (Pref     : access Style_Preference_Record'Class)
-      return Gdk.Color.Gdk_Color is
-   begin
-      return To_Color (Pref.Get_Pref_Bg);
    end Get_Pref_Bg;
 
    -----------------------
@@ -1267,8 +1228,8 @@ package body Default_Preferences is
      (Button : access GObject_Record'Class;
       Data   : Manager_Preference) is
    begin
-      Set_Color (Gtk_Color_Button (Button),
-                 Get_Pref_Fg (Style_Preference (Data.Pref)));
+      Gtk_Color_Button (Button).Set_Rgba
+        (Get_Pref_Fg (Style_Preference (Data.Pref)));
    end Update_Fg;
 
    ---------------
@@ -1279,8 +1240,8 @@ package body Default_Preferences is
      (Button : access GObject_Record'Class;
       Data   : Manager_Preference) is
    begin
-      Set_Color (Gtk_Color_Button (Button),
-                 Get_Pref_Bg (Style_Preference (Data.Pref)));
+      Gtk_Color_Button (Button).Set_Rgba
+        (Get_Pref_Bg (Style_Preference (Data.Pref)));
    end Update_Bg;
 
    -----------------------
@@ -1641,7 +1602,8 @@ package body Default_Preferences is
    is
       Button : Gtk_Color_Button;
    begin
-      Gtk_New_With_Color (Button, Get_Pref (Color_Preference (Pref)));
+      Gtk_New_With_Rgba (Button, Get_Pref (Color_Preference (Pref)));
+      Button.Set_Use_Alpha (True);
 
       Preference_Handlers.Connect
         (Button, Signal_Color_Set,
@@ -1745,7 +1707,8 @@ package body Default_Preferences is
    is
       Button : Gtk_Color_Button;
    begin
-      Gtk_New_With_Color (Button, Get_Pref_Fg (Style_Preference (Pref)));
+      Gtk_New_With_Rgba (Button, Get_Pref_Fg (Style_Preference (Pref)));
+      Button.Set_Use_Alpha (True);
       Set_Tooltip_Text (Button, -"Foreground color");
       Pack_Start (Box, Button, Expand => False);
       Preference_Handlers.Connect
@@ -1757,7 +1720,7 @@ package body Default_Preferences is
          Update_Fg'Access, Button,
          User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
-      Gtk_New_With_Color (Button, Get_Pref_Bg (Style_Preference (Pref)));
+      Gtk_New_With_Rgba (Button, Get_Pref_Bg (Style_Preference (Pref)));
       Set_Tooltip_Text (Button, -"Background color");
       Pack_Start (Box, Button, Expand => False);
       Preference_Handlers.Connect

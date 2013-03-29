@@ -20,7 +20,7 @@
 
 with Cairo;         use Cairo;
 
-with Gdk.Color;
+with Gdk.RGBA;
 with Gdk.Pixbuf;    use Gdk.Pixbuf;
 
 with Gtk.Text_View; use Gtk.Text_View;
@@ -90,7 +90,7 @@ package Src_Editor_Buffer.Line_Information is
       Top_Line    : Buffer_Line_Type;
       Bottom_Line : Buffer_Line_Type;
       View        : Gtk_Text_View;
-      Color       : Gdk.Color.Gdk_Color;
+      Color       : Gdk.RGBA.Gdk_RGBA;
       Layout      : Pango_Layout;
       Drawable    : Cairo.Cairo_Surface);
    --  Draw side info from Top_Line to Bottom_Line on Drawable.

@@ -25,7 +25,6 @@ with Cairo.Surface;              use Cairo.Surface;
 
 with Gdk;                        use Gdk;
 with Gdk.Cairo;                  use Gdk.Cairo;
-with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.RGBA;                   use Gdk.RGBA;
@@ -938,7 +937,7 @@ package body Src_Editor_View is
          Bottom_Line      : Buffer_Line_Type;
          Top_In_Buffer    : Gint;
          Bottom_In_Buffer : Gint;
-         Color            : Gdk_Color;
+         Color            : Gdk_RGBA;
          Tmp_Color        : HSV_Color;
 
          Window : constant Gdk.Gdk_Window :=
@@ -1069,7 +1068,7 @@ package body Src_Editor_View is
             Color := Get_Highlight_Color
               (Buffer, Line, Context => Highlight_Editor);
 
-            if Color /= Null_Color then
+            if Color /= Null_RGBA then
                Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
                Buffer_To_Window_Coords
                  (View, Text_Window_Text,
@@ -1525,7 +1524,7 @@ package body Src_Editor_View is
       pragma Unreferenced (Kernel);
       Source : constant Source_View := Hook.View;
       Layout : Pango_Layout;
-      Color  : Gdk_Color;
+      Color  : Gdk_RGBA;
       Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
       Ink_Rect, Logical_Rect : Pango.Pango_Rectangle;
    begin
@@ -1581,7 +1580,7 @@ package body Src_Editor_View is
 
       if Color /= Source.Text_Color then
          Source.Text_Color := Color;
-         Modify_Text (Source, State_Normal, Color);
+         Override_Color (Source, Gtk_State_Flag_Normal, Color);
       end if;
 
       Source.Current_Line_Color := Current_Line_Color.Get_Pref;
@@ -1598,7 +1597,7 @@ package body Src_Editor_View is
    procedure Set_Background_Color
      (Self : not null access Source_View_Record'Class)
    is
-      Color : constant Gdk_Color := Default_Style.Get_Pref_Bg;
+      Color : constant Gdk_RGBA := Default_Style.Get_Pref_Bg;
       C     : Cairo_Color := To_Cairo (Color);
       Select_Color : Gdk_RGBA;
    begin
@@ -2298,7 +2297,7 @@ package body Src_Editor_View is
       Right_Window : Gdk.Gdk_Window;
 
       X, Y, Width, Height : Gint;
-      Color        : Gdk_Color;
+      Color        : Gdk_RGBA;
 
       Src_Buffer   : constant Source_Buffer :=
                        Source_Buffer (Get_Buffer (View));
@@ -2356,7 +2355,7 @@ package body Src_Editor_View is
               (Src_Buffer, Buffer_Line_Type (J),
                Context => Highlight_Speedbar);
 
-            if Color /= Null_Color then
+            if Color /= Null_RGBA then
                Set_Source_Color (Cr, Color);
                Draw_Line
                  (Cr, To_Cairo (Color),

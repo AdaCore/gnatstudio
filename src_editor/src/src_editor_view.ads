@@ -22,7 +22,6 @@
 
 with Cairo;                  use Cairo;
 with Glib.Main;
-with Gdk.Color;
 with Gdk.Event;
 with Gdk.RGBA;
 with Glib;                   use Glib;
@@ -209,7 +208,7 @@ private
 
       Width_Of_256_Chars  : Gint;
 
-      Current_Block_Color : Gdk.Color.Gdk_Color;
+      Current_Block_Color : Gdk.RGBA.Gdk_RGBA;
 
       Highlight_Blocks    : Boolean := False;
       --  Whether source blocks should be highlighted
@@ -249,7 +248,7 @@ private
       Background_Color_Other : Gtkada.Style.Cairo_Color := (others => 0.0);
       --  The editor background color and its ligthened/darkened version
 
-      Text_Color           : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Text_Color           : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The editor text color
 
       Button_Pressed       : Boolean := False;

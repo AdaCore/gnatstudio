@@ -39,9 +39,7 @@ with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
-with Gdk.Color;                           use Gdk.Color;
 with Gdk.RGBA;                            use Gdk.RGBA;
-
 with Glib.Convert;                        use Glib.Convert;
 with Glib.Error;                          use Glib.Error;
 with Glib.Object;                         use Glib.Object;
@@ -2876,11 +2874,11 @@ package body Src_Editor_Buffer is
         (Buffer.Hyper_Mode_Tag,
          Gtk.Text_Tag.Underline_Property,
          Pango_Underline_Single);
-      Set_Property (Buffer.Hyper_Mode_Tag, Foreground_Gdk_Property,
+      Set_Property (Buffer.Hyper_Mode_Tag, Foreground_Rgba_Property,
                     Hyper_Links_Style.Get_Pref_Fg);
 
       if Hyper_Links_Style.Get_Pref_Bg /= Gdk.RGBA.White_RGBA then
-         Set_Property (Buffer.Hyper_Mode_Tag, Background_Gdk_Property,
+         Set_Property (Buffer.Hyper_Mode_Tag, Background_Rgba_Property,
                        Hyper_Links_Style.Get_Pref_Bg);
       end if;
 
@@ -3124,7 +3122,7 @@ package body Src_Editor_Buffer is
       if B.Delimiter_Tag /= null then
          Set_Property
            (B.Delimiter_Tag,
-            Background_Gdk_Property,
+            Background_Rgba_Property,
             Delimiter_Color.Get_Pref);
       end if;
 
@@ -5649,10 +5647,10 @@ package body Src_Editor_Buffer is
    function Get_Highlight_Color
      (Editor  : access Source_Buffer_Record;
       Line    : Buffer_Line_Type;
-      Context : Highlight_Location) return Gdk_Color is
+      Context : Highlight_Location) return Gdk_RGBA is
    begin
       if Line = 0 then
-         return Null_Color;
+         return Null_RGBA;
       end if;
 
       if Editor.Line_Data /= null
@@ -5663,7 +5661,7 @@ package body Src_Editor_Buffer is
            Get_Color (Editor.Line_Data (Line).Highlighting (Context).Active);
 
       else
-         return Null_Color;
+         return Null_RGBA;
       end if;
    end Get_Highlight_Color;
 
@@ -5724,7 +5722,7 @@ package body Src_Editor_Buffer is
             Iter              => Iter,
             Tree              => Tree,
             Block_Type        => Current.Category,
-            Color             => Gdk.Color.Null_Color);
+            Color             => Null_RGBA);
       end;
    end Get_Block;
 

@@ -18,7 +18,7 @@
 --  This package handles the commands necessary to configure/add/remove
 --  line highlighting in the source editors.
 
-with Gdk.Color; use Gdk.Color;
+with Gdk.RGBA; use Gdk.RGBA;
 with GNATCOLL.Scripts;
 
 package Src_Editor_Module.Line_Highlighting is
@@ -40,7 +40,7 @@ package Src_Editor_Module.Line_Highlighting is
    --  Return the index corresponding to Style.
    --  If there is no category corresponding to Style, create one.
 
-   function Get_Color (Index : Natural) return Gdk_Color;
+   function Get_Color (Index : Natural) return Gdk_RGBA;
    --  Return the Color corresponding to a category Index.
    --  If Index does not correspond to an existing category, return null.
 

@@ -14,41 +14,30 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with Interfaces.C.Strings;
 
-with Glib.Object;
-with Glib.Properties;
-with Glib.Values;
-with Gdk.Color;
-with Gdk.Event;
-with Gdk.Rectangle;
-with Gtk.Cell_Renderer_Pixbuf;
+with Glib.Object;              use Glib, Glib.Object;
+with Glib.Properties;          use Glib.Properties;
+with Glib.Values;              use Glib.Values;
+with Gdk.RGBA;                 use Gdk.RGBA;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Rectangle;            use Gdk.Rectangle;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Handlers;
-with Gtk.Tooltip;
-with Gtk.Widget;
+with Gtk.Tooltip;              use Gtk.Tooltip;
+with Gtk.Widget;               use Gtk.Widget;
 
-with GPS.Location_View.Listener;
-with Traces;
+with GPS.Location_View.Listener; use GPS.Location_View.Listener;
+with Traces;                     use Traces;
 
 package body GPS.Tree_View.Locations is
 
-   use Gdk.Color;
-   use Gdk.Event;
-   use Gdk.Rectangle;
-   use Glib;
    use Glib.Main;
-   use Glib.Object;
-   use Glib.Properties;
-   use Glib.Values;
-   use Gtk.Cell_Renderer_Pixbuf;
    use Gtk.Cell_Renderer_Text;
-   use Gtk.Tooltip;
    use Gtk.Tree_Model;
    use Gtk.Tree_View_Column;
-   use Gtk.Widget;
-   use GPS.Location_View.Listener;
    use GPS.Sort_Model.Locations;
-   use Traces;
 
    function On_Button_Press
      (Self  : access GPS_Locations_Tree_View_Record'Class;
@@ -170,7 +159,7 @@ package body GPS.Tree_View.Locations is
          Node_Markup_Column);
       Self.Location_Column.Add_Attribute
         (Self.Text_Renderer,
-         Property_Name (Foreground_Gdk_Property),
+         Property_Name (Foreground_Rgba_Property),
          Node_Foreground_Column);
       Dummy := Self.Append_Column (Self.Location_Column);
       Self.Set_Expander_Column (Self.Location_Column);

@@ -21,7 +21,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 with System.Address_To_Access_Conversions;
 
-with Gdk.Color;                 use Gdk.Color;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Glib.Object;
 with Glib;                      use Glib;
@@ -455,7 +455,7 @@ package body GPS.Location_View.Listener is
             return Glib.GType_String;
 
          when Node_Foreground_Column =>
-            return Gdk.Color.Gdk_Color_Type;
+            return Gdk.RGBA.Get_Type;
 
          when Node_Tooltip_Column =>
             return Glib.GType_String;
@@ -794,11 +794,11 @@ package body GPS.Location_View.Listener is
             Set_Node_Markup (Value, Node);
 
          when Node_Foreground_Column =>
-            Init (Value, Gdk_Color_Type);
+            Init (Value, Gdk.RGBA.Get_Type);
 
             case Node.Kind is
                when Node_Category | Node_File =>
-                  Set_Value (Value, Self.Non_Leaf_Color);
+                  Gdk.RGBA.Set_Value (Value, Self.Non_Leaf_Color);
 
                when Node_Message =>
                   null;
@@ -1011,12 +1011,13 @@ package body GPS.Location_View.Listener is
    ----------------
 
    procedure Initialize (Self : access Classic_Tree_Model_Record'Class) is
+      Success : Boolean;
    begin
       Gtkada.Abstract_Tree_Model.Initialize (Self);
 
       --  Allocate foreground color for category and file nodes
 
-      Self.Non_Leaf_Color := Parse (Non_Leaf_Color_Name);
+      Gdk.RGBA.Parse (Self.Non_Leaf_Color, Non_Leaf_Color_Name, Success);
       Glib.Object.Weak_Ref (Self, On_Destroy'Access);
    end Initialize;
 

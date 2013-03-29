@@ -18,7 +18,7 @@
 with GNAT.Strings;            use GNAT.Strings;
 with GNAT.Regpat;             use GNAT.Regpat;
 
-with Gdk.Color;               use Gdk.Color;
+with Gdk.RGBA;                use Gdk.RGBA;
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Glib;                    use Glib;
@@ -264,7 +264,7 @@ package body GVD.Assembly_View is
    is
       Tag_Table : constant Gtk_Text_Tag_Table :=
                     Get_Tag_Table (Get_Buffer (View.View));
-      Color     : Gdk_Color;
+      Color     : Gdk_RGBA;
    begin
       --  Font
 
@@ -274,7 +274,7 @@ package body GVD.Assembly_View is
 
       Gtk_New (View.Highlight_Tag);
       Set_Property
-        (View.Highlight_Tag, Foreground_Gdk_Property,
+        (View.Highlight_Tag, Foreground_Rgba_Property,
          Asm_Highlight_Color.Get_Pref);
       Add (Tag_Table, View.Highlight_Tag);
 
@@ -282,7 +282,7 @@ package body GVD.Assembly_View is
 
       Gtk_New (View.Breakpoint_Tag);
       Set_Property
-        (View.Breakpoint_Tag, Background_Gdk_Property,
+        (View.Breakpoint_Tag, Background_Rgba_Property,
          Asm_Breakpoint_Color.Get_Pref);
       Add (Tag_Table, View.Breakpoint_Tag);
 
@@ -292,9 +292,9 @@ package body GVD.Assembly_View is
       --  counter at the Gtk_Text_Buffer level.
 
       Gtk_New (View.Pc_Tag);
-      Set_Rgb (Color, 0, Guint16'Last, 0);
+      Color := (Red => 0.0, Green => 1.0, Blue => 0.0, Alpha => 1.0);
       Set_Property
-        (View.Pc_Tag, Background_Gdk_Property, Color);
+        (View.Pc_Tag, Background_Rgba_Property, Color);
       Add (Tag_Table, View.Pc_Tag);
 
    end Configure;
@@ -1177,11 +1177,11 @@ package body GVD.Assembly_View is
    begin
       Set_Property
         (Hook.View.Highlight_Tag,
-         Foreground_Gdk_Property,
+         Foreground_Rgba_Property,
          Asm_Highlight_Color.Get_Pref);
       Set_Property
         (Hook.View.Breakpoint_Tag,
-         Background_Gdk_Property,
+         Background_Rgba_Property,
          Asm_Breakpoint_Color.Get_Pref);
       Set_Font (Hook.View, Default_Style.Get_Pref_Font);
 

@@ -24,7 +24,7 @@ with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
 with GNATCOLL.Traces;
 with GNATCOLL.Xref;
 
-with Gdk.Color;                 use Gdk.Color;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -2830,17 +2830,17 @@ package body Src_Editor_Module.Editors is
    overriding function Get_Property
      (This : Src_Editor_Overlay; Name : String) return String
    is
-      Color : Gdk_Color;
+      Color : Gdk_RGBA;
       W     : Weight;
       S     : Pango.Enums.Style;
    begin
       if This.Tag /= null then
          if Name = "foreground" then
-            Color := Get_Property (This.Tag, Foreground_Gdk_Property);
+            Color := Get_Property (This.Tag, Foreground_Rgba_Property);
             return To_String (Color);
 
          elsif Name = "background" then
-            Color := Get_Property (This.Tag, Background_Gdk_Property);
+            Color := Get_Property (This.Tag, Background_Rgba_Property);
             return To_String (Color);
 
          elsif Name = "font" then

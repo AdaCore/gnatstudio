@@ -33,7 +33,7 @@ with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
-with Gdk.Color;
+with Gdk.RGBA;
 with Glib;                      use Glib;
 with Glib.Main;
 with Gtk;
@@ -795,7 +795,7 @@ package Src_Editor_Buffer is
    function Get_Highlight_Color
      (Editor  : access Source_Buffer_Record;
       Line    : Buffer_Line_Type;
-      Context : Highlight_Location) return Gdk.Color.Gdk_Color;
+      Context : Highlight_Location) return Gdk.RGBA.Gdk_RGBA;
    pragma Inline (Get_Highlight_Color);
    --  Return the current highlighting for Line, or null if no highlighting
    --  is set.
@@ -823,7 +823,7 @@ package Src_Editor_Buffer is
       Block_Type        : Language.Language_Category := Language.Cat_Unknown;
       --  Indicates the type of the block, if Indentation_Level /= 0
 
-      Color             : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Color             : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The color to use when highlighting this block
 
       Tree              : Language.Tree.Construct_Tree;
@@ -1217,7 +1217,7 @@ private
 
    New_Block : constant Block_Record :=
      (0, 0, 0, 0, 0, GNATCOLL.Symbols.No_Symbol, Language.Cat_Unknown,
-      Gdk.Color.Null_Color,
+      Gdk.RGBA.Null_RGBA,
       Language.Tree.Null_Construct_Tree,
       Language.Tree.Null_Construct_Tree_Iterator);
 

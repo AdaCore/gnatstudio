@@ -27,7 +27,6 @@ with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with System.Assertions;
 
-with Gdk.Color;                use Gdk.Color;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
@@ -1699,7 +1698,7 @@ package body Aliases_Module is
       Event            : Gtk_Event_Box;
       Frame            : Gtk_Frame;
       Color            : Gdk_RGBA;
-      C                : Gdk_Color;
+      C                : Gdk_RGBA;
       Expansion_Buffer : Gtk_Text_Buffer;
       Scrolled         : Gtk_Scrolled_Window;
       Button           : Gtk_Button;
@@ -1894,13 +1893,15 @@ package body Aliases_Module is
       W := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       W := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
 
-      C := Parse (Highlight_Color);
       Gtk_New (Editor.Highlight_Tag);
-      Set_Property
-        (Editor.Highlight_Tag, Gtk.Text_Tag.Foreground_Gdk_Property, C);
-      Gtk.Text_Tag_Table.Add
-        (Get_Tag_Table (Get_Buffer (Editor.Expansion)),
-         Editor.Highlight_Tag);
+      Parse (C, Highlight_Color, Success);
+      if Success then
+         Set_Property
+           (Editor.Highlight_Tag, Gtk.Text_Tag.Foreground_Rgba_Property, C);
+         Gtk.Text_Tag_Table.Add
+           (Get_Tag_Table (Get_Buffer (Editor.Expansion)),
+            Editor.Highlight_Tag);
+      end if;
    end Gtk_New;
 
    -------------------

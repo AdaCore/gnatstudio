@@ -29,7 +29,6 @@ with GNAT.Strings;
 
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with Gdk.Color;
 with Gdk.RGBA;
 with Gdk.Types;
 with Glib;            use Glib;
@@ -244,8 +243,6 @@ package Default_Preferences is
      (Pref : access Color_Preference_Record) return String;
    function Get_Pref
      (Pref : access Color_Preference_Record) return Gdk.RGBA.Gdk_RGBA;
-   function Get_Pref
-     (Pref : access Color_Preference_Record) return Gdk.Color.Gdk_Color;
 
    overriding function Get_Pref
      (Pref : access Font_Preference_Record) return String;
@@ -269,12 +266,6 @@ package Default_Preferences is
    function Get_Pref_Bg
      (Pref     : access Style_Preference_Record'Class)
       return Gdk.RGBA.Gdk_RGBA;
-   function Get_Pref_Fg
-     (Pref     : access Style_Preference_Record'Class)
-      return Gdk.Color.Gdk_Color;
-   function Get_Pref_Bg
-     (Pref     : access Style_Preference_Record'Class)
-      return Gdk.Color.Gdk_Color;
 
    overriding function Get_Pref
      (Pref : access Variant_Preference_Record) return String;

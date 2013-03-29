@@ -53,7 +53,7 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Glib.Main;           use Glib.Main;
 
-with Gdk.Color;           use Gdk.Color;
+with Gdk.RGBA;            use Gdk.RGBA;
 with Gdk.Pixbuf;          use Gdk.Pixbuf;
 
 with Gtk.Button;          use Gtk.Button;
@@ -297,8 +297,8 @@ private
       Filters                : Filter_List.List;
       --  A list of all registered filters
 
-      Highlighted_Color      : Gdk_Color := Null_Color;
-      Insensitive_Color      : Gdk_Color := Null_Color;
+      Highlighted_Color      : Gdk_RGBA := Null_RGBA;
+      Insensitive_Color      : Gdk_RGBA := Null_RGBA;
 
       Moving_Through_History : Boolean := True;
       --  Set to true in case we are navigating using the back/forward buttons

@@ -30,7 +30,7 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
 
-with Gdk.Color;                 use Gdk.Color;
+with Gdk.RGBA;                  use Gdk.RGBA;
 
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
@@ -1511,14 +1511,15 @@ package body Src_Editor_Module.Shell is
             Color    : constant String := Nth_Arg (Data, 2);
             Box      : Source_Editor_Box;
             Child    : MDI_Child;
-            Col      : Gdk_Color;
+            Col      : Gdk_RGBA;
+            Success  : Boolean;
          begin
             Child := Find_Editor (Kernel, Filename);
 
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
-               Col := Parse (Color);
-               Modify_Base (Get_View (Box), State_Normal, Col);
+               Parse (Col, Color, Success);
+               Override_Color (Get_View (Box), Gtk_State_Flag_Normal, Col);
             end if;
          end;
 

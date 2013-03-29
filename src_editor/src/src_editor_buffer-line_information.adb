@@ -19,7 +19,7 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with Gdk;                      use Gdk;
 with Gdk.Cairo;                use Gdk.Cairo;
-with Gdk.Color;                use Gdk.Color;
+with Gdk.RGBA;                 use Gdk.RGBA;
 
 with Glib.Object;              use Glib.Object;
 
@@ -967,7 +967,7 @@ package body Src_Editor_Buffer.Line_Information is
       Top_Line    : Buffer_Line_Type;
       Bottom_Line : Buffer_Line_Type;
       View        : Gtk_Text_View;
-      Color       : Gdk_Color;
+      Color       : Gdk_RGBA;
       Layout      : Pango_Layout;
       Drawable    : Cairo.Cairo_Surface)
    is
@@ -1062,7 +1062,7 @@ package body Src_Editor_Buffer.Line_Information is
       Get_Iter_At_Line (Buffer, Iter, Gint (Current_Line - 1));
 
       Cr := Create (Drawable);
-      Set_Source_Color (Cr, Color);
+      Set_Source_RGBA (Cr, Color);
 
       Drawing_Loop :
       while Current_Line <= Bottom_Line loop
@@ -2664,7 +2664,7 @@ package body Src_Editor_Buffer.Line_Information is
       Remove     : Boolean := False)
    is
       Tag                  : Gtk_Text_Tag;
-      Color                : Gdk_Color;
+      Color                : Gdk_RGBA;
       New_Tag              : Boolean := False;
    begin
       --  Get the text tag, create it if necessary
@@ -2684,8 +2684,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  ??? Should we do the following even if not New_Tag ?
 
-      if Color /= Null_Color then
-         Set_Property (Tag, Background_Gdk_Property, Color);
+      if Color /= Null_RGBA then
+         Set_Property (Tag, Background_Rgba_Property, Color);
          Set_Property (Tag, Underline_Property, Pango_Underline_None);
       else
          Set_Property (Tag, Underline_Property, Pango_Underline_Error);

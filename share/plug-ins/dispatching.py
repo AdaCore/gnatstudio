@@ -47,11 +47,10 @@ class Dispatching_Highlighter(Location_Highlighter):
         self.set_style(OverlayStyle(
             name="dispatchcalls",
             background=GPS.Preference("Plugins/dispatching/color").get()))
-
-        # Always redo the highlighting to take into account changes in colors
-        #for b in GPS.EditorBuffer.list():
-        #    self.style.remove(b)
-
+        GPS.Logger("MANU").log(
+            "MANU preferences_changed color=%s %s"
+            % (GPS.Preference("Plugins/dispatching/color").get(),
+               self.style.background))
         self.__on_compilation_finished()
 
     def __on_file_edited(self, hook, file):

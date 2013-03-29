@@ -322,7 +322,7 @@ package body Gtkada.File_Selector is
    function Columns_Types return GType_Array is
    begin
       return GType_Array'
-        (Text_Color_Column => Gdk_Color_Type,
+        (Text_Color_Column => Gdk.RGBA.Get_Type,
          Base_Name_Column  => GType_String,
          Comment_Column    => GType_String,
          Icon_Column       => Gdk.Pixbuf.Get_Type,
@@ -767,12 +767,12 @@ package body Gtkada.File_Selector is
       State  : File_State;
       Pixbuf : Gdk_Pixbuf;
       Iter   : Gtk_Tree_Iter := Null_Iter;
-      Color  : Gdk_Color := Null_Color;
+      Color  : Gdk_RGBA := Null_RGBA;
 
       procedure Internal
         (Tree, Iter : System.Address;
          Col        : Gint;
-         Value      : Gdk_Color);
+         Value      : Gdk_RGBA);
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr");
 
       Has_Info : Boolean := False;
@@ -807,7 +807,7 @@ package body Gtkada.File_Selector is
          --  ??? The selectable state should be set here, if possible
 
          Iter := Null_Iter;
-         Color := Null_Color;
+         Color := Null_RGBA;
 
          case State is
             when Invisible =>
@@ -838,7 +838,7 @@ package body Gtkada.File_Selector is
                Has_Info := True;
             end if;
 
-            if Color /= Null_Color then
+            if Color /= Null_RGBA then
                Internal
                  (Get_Object (Win.File_Model), Iter'Address,
                   Text_Color_Column, Color);
@@ -1873,7 +1873,8 @@ package body Gtkada.File_Selector is
       Toolbar1 : Gtk_Toolbar;
       Label1   : Gtk_Label;
       Button   : Gtk_Widget;
-      pragma Unreferenced (Button);
+      Success  : Boolean;
+      pragma Unreferenced (Button, Success);
 
       Hpaned1  : Gtk_Hpaned;
 
@@ -1890,8 +1891,8 @@ package body Gtkada.File_Selector is
 
       File_Selector_Window.History := History;
 
-      File_Selector_Window.Highlighted_Color := Parse ("#FF0000");
-      File_Selector_Window.Insensitive_Color := Parse ("#808080");
+      Parse (File_Selector_Window.Highlighted_Color, "#FF0000", Success);
+      Parse (File_Selector_Window.Insensitive_Color, "#808080", Success);
 
       File_Selector_Window.Home_Directory := Root;
 

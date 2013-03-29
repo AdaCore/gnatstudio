@@ -27,7 +27,7 @@ with GNATCOLL.VFS;
 with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 
 with Glib;
-private with Gdk.Color;
+private with Gdk.RGBA;
 private with Gdk.Pixbuf;
 private with Glib.Values;
 with Gtk.Tree_Model;
@@ -141,7 +141,7 @@ private
       --  Integer value to distinguish obsolete values of Gtk_Tree_Iter by
       --  Gtk+ convention.
 
-      Non_Leaf_Color  : Gdk.Color.Gdk_Color;
+      Non_Leaf_Color  : Gdk.RGBA.Gdk_RGBA;
       --  Foreground color for category and file nodes.
 
       Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;

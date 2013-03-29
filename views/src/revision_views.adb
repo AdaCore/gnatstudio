@@ -31,7 +31,7 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with Gdk.Color;                  use Gdk.Color;
+with Gdk.RGBA;                   use Gdk.RGBA;
 with Gdk.Event;                  use Gdk.Event;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
@@ -96,7 +96,7 @@ package body Revision_Views is
       Mode         : Mode_Kind := Link;
       Syms         : String_Hash_Table.Instance;
       File         : Virtual_File;
-      Root_Color   : Gdk_Color;
+      Root_Color   : Gdk_RGBA;
       Child        : MDI_Child;
    end record;
 
@@ -909,6 +909,7 @@ package body Revision_Views is
                    2 => new String'(-"Author"),
                    3 => new String'(-"Date / Log"));
       Scrolled : Gtk_Scrolled_Window;
+      Success  : Boolean;
 
    begin
       View.Kernel := Kernel_Handle (Kernel);
@@ -926,7 +927,7 @@ package body Revision_Views is
                                 Date_Column     => GType_String,
                                 Log_Column      => GType_String,
                                 Link_Column     => GType_Boolean,
-                                Color_Column    => Gdk_Color_Type,
+                                Color_Column    => Gdk.RGBA.Get_Type,
                                 Rev_Info_Column => GType_String),
          Column_Names       => Names,
          Show_Column_Titles => True,
@@ -947,7 +948,7 @@ package body Revision_Views is
 
       Scrolled.Add (View.Tree);
 
-      View.Root_Color := Parse (Root_Color_Name);
+      Parse (View.Root_Color, Root_Color_Name, Success);
 
       Set_Attribute (Revision_Column);
       Set_Attribute (Author_Column);

@@ -236,7 +236,7 @@ package body Src_Editor_Module.Line_Highlighting is
    -- Get_Color --
    ---------------
 
-   function Get_Color (Index : Natural) return Gdk_Color is
+   function Get_Color (Index : Natural) return Gdk_RGBA is
       Module_Id : constant Source_Editor_Module :=
                     Source_Editor_Module (Src_Editor_Module_Id);
 
@@ -244,7 +244,7 @@ package body Src_Editor_Module.Line_Highlighting is
       if Index > 0 and then Index <= Module_Id.Categories'Last then
          return Get_Background_Color (Module_Id.Categories (Index).Style);
       else
-         return Null_Color;
+         return Null_RGBA;
       end if;
    end Get_Color;
 

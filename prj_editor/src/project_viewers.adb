@@ -26,7 +26,7 @@ with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;           use GNATCOLL.VFS_Utils;
 
-with Gdk.Color;                    use Gdk.Color;
+with Gdk.RGBA;                     use Gdk.RGBA;
 with Gdk.Event;                    use Gdk.Event;
 
 with Glib;                         use Glib;
@@ -149,7 +149,7 @@ package body Project_Viewers is
       Model : Gtk.Tree_Store.Gtk_Tree_Store;
       --  The actual contents of the viewer
 
-      Default_Switches_Color : Gdk.Color.Gdk_Color;
+      Default_Switches_Color : Gdk.RGBA.Gdk_RGBA;
       --  Color to use when displaying switches that are set at the project
       --  level, rather than file specific
 
@@ -414,7 +414,7 @@ package body Project_Viewers is
       procedure Internal
         (Tree, Iter : System.Address;
          Col2  : Gint; Value2 : String;
-         Col3  : Gint; Value3 : Gdk_Color);
+         Col3  : Gint; Value3 : Gdk_RGBA);
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_ptr");
 
       File_Name  : constant Virtual_File :=
@@ -422,9 +422,10 @@ package body Project_Viewers is
       Language   : constant String :=
                      Get_Language_From_File
                        (Get_Language_Handler (Viewer.Kernel), File_Name);
-      Color      : Gdk_Color;
+      Color      : Gdk_RGBA;
       Value      : String_List_Access;
       Is_Default : Boolean;
+      Success    : Boolean;
    begin
       Viewer.Current_Project.Switches
         (Compiler_Package, File_Name,
@@ -433,7 +434,7 @@ package body Project_Viewers is
       if Is_Default then
          Color := Viewer.Default_Switches_Color;
       else
-         Color := Parse ("#000000");
+         Parse (Color, "#000000", Success);
       end if;
 
       Internal (Get_Object (Viewer.Model), Iter'Address,
@@ -638,7 +639,7 @@ package body Project_Viewers is
                        (Display_File_Name_Column => GType_String,
                         File_Column              => Get_Virtual_File_Type,
                         Compiler_Switches_Column => GType_String,
-                        Compiler_Color_Column    => Gdk_Color_Type);
+                        Compiler_Color_Column    => Gdk.RGBA.Get_Type);
 
       Scrolled     : Gtk_Scrolled_Window;
       Col          : Gtk_Tree_View_Column;

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Color;  use Gdk.Color;
+with Gdk.RGBA;   use Gdk.RGBA;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
 
 package GPS.Styles.UI is
@@ -27,8 +27,8 @@ package GPS.Styles.UI is
 
       Editor_Icon : Gdk_Pixbuf := Null_Pixbuf;
 
-      Fg_Color   : Gdk_Color := Null_Color;
-      Bg_Color   : Gdk_Color := Null_Color;
+      Fg_Color   : Gdk_RGBA := Null_RGBA;
+      Bg_Color   : Gdk_RGBA := Null_RGBA;
    end record;
 
    type Style_Access is access all Style_Record'Class;
@@ -60,7 +60,7 @@ package GPS.Styles.UI is
    --  Initialize_Predefined_Styles and Preferences_Changed.
 
    function Get_Background_Color
-     (Style : not null access Style_Record) return Gdk_Color;
+     (Style : not null access Style_Record) return Gdk_RGBA;
    --  Return the background GC stored in Style. Return Null_GC if there is
    --  none.
 
