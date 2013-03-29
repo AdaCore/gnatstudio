@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M329-013 GPS: translucent highlighting colors (2013-03-29)
+
+  It is now possible to specify translucent colors for error messages,
+  current lines,... in the editors. This is a convenient solution so that
+  the current line also shows whether it has an associated error.
+
 NF-60-M307-008 GPS: refactoring of highlighter.py (2013-03-27)
 
   This python module is used as the basis for all python scripts that need to
