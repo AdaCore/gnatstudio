@@ -256,13 +256,17 @@ class Background_Highlighter(object):
             if context is not None:
                 end_line = min(end_line, line + context)
 
-            self.__buffers.insert(
-                0, (buffer, line, line + 1, start_line, end_line))
+            # push at the back, so that we do not change the current buffer,
+            # in case the user has computed data for it (see
+            # Location_Highlighter)
+            self.__buffers.append(
+                (buffer, line, line + 1, start_line, end_line))
 
             if self.style and self.style.use_messages():
                 self.style.remove(buffer)
 
             if self.synchronous:
+                self.on_start_buffer(buffer)
                 while self.__do_highlight():
                     pass
 
@@ -274,11 +278,19 @@ class Background_Highlighter(object):
                     self.__source_id = GPS.Timeout(
                         self.timeout_ms, self.__do_highlight)
 
+                self.on_start_buffer(buffer)
+
     def __on_file_closed(self, hook, file):
         for b in self.__buffers:
             if b[0].file() == file:
                 self.stop_highlight(b[0])
                 break
+
+    def on_start_buffer(self, buffer):
+        """
+        Called before we start processing a new buffer.
+        """
+        pass
 
     def stop_highlight(self, buffer=None):
         """
@@ -375,6 +387,8 @@ class Background_Highlighter(object):
                     buffer, min_line, max_line, start_line, end_line)
             else:
                 self.__buffers.pop(0)
+                if self.__buffers:
+                    self.on_start_buffer(self.__buffers[0][0])
 
             return True
 
@@ -472,37 +486,121 @@ class On_The_Fly_Highlighter(Background_Highlighter):
             self.start_highlight(buffer, context=self.context_lines)
 
 
+class Location_Highlighter(Background_Highlighter):
+    """
+    An abstract class that can be used to implement highlighter related to
+    the cross-reference engine.
+    As usual, such an highlighter does its job in the background.
+    To find the places to highlight in the editor, this class relies on
+    having a list of entities and their references. This list will in
+    general be computed once when we start processing a new buffer::
+
+           class H(Location_Highlighter):
+               def recompute_refs(self, buffer):
+                   return ...computation of references within file ...
+
+    :param integer context: The number of lines both before and after a
+       given reference where we should find for possible approximate
+       matches. This is used when the reference returned by the xref
+       engine was outdated.
+    """
+
+    def __init__(self, style, context=2):
+        Background_Highlighter.__init__(self, style)
+        self._refs = []  # list of (entity, ref) in the current buffer
+        self.context = context
+
+    def recompute_refs(self, buffer):
+        """
+        Called before we start processing a new buffer.
+
+        :return: a list of tuples, each of which contains
+            an (GPS.Entity, GPS.FileLocation).
+        """
+        return []
+
+    def on_start_buffer(self, buffer):  # overriding
+        self._refs = set(self.recompute_refs(buffer=buffer))
+
+    def process(self, start, end):  # overriding
+        buffer = start.buffer()
+
+        s = GPS.FileLocation(buffer.file(), start.line(), start.column())
+        e = GPS.FileLocation(buffer.file(), end.line(), end.column())
+
+        processed = set()
+
+        # ??? Inefficient, how could we optimize this ?
+        for entity, ref in self._refs:
+            if s <= ref <= e:
+                n = entity.name()  # byte-sequence, UTF-8 encoded
+                u = n.decode("utf-8").lower()
+                s2 = GPS.EditorLocation(buffer, ref.line(), ref.column())
+                e2 = s2 + len(u) - 1
+
+                b = buffer.get_chars(s2, e2).decode("utf-8").lower()
+                if b == u:
+                    self.style.apply(s2, e2)
+                    processed.add((entity, ref))
+
+                elif self.context > 0:
+                    for c in range(1, self.context + 1):
+                        # Search after original xref line (same column)
+                        s2 = GPS.EditorLocation(
+                            buffer, ref.line() + c, ref.column())
+                        e2 = cloc + len (u) - 1
+                        b = buffer.get_chars(s2, e2).decode("utf-8").lower()
+                        if b == u:
+                            self.style.apply(cloc, endloc)
+                            processed.add((entity, ref))
+                            break
+
+                        # Search before original xref line
+                        s2 = GPS.EditorLocation(
+                            buffer, ref.line() - c, ref.column())
+                        e2 = cloc + len (u) - 1
+                        b = buffer.get_chars(s2, e2).decode("utf-8").lower()
+                        if b == u:
+                            self.style.apply(cloc, endloc)
+                            processed.add((entity, ref))
+                            break
+
+        # We will not need to process those references again, so speed up the
+        # next iteration a bit.
+        self._refs.difference_update(processed)
+
+
 class Regexp_Highlighter(On_The_Fly_Highlighter):
     """
     The Regexp_Highlighter is a concrete implementation to highlight
     editors based on regular expressions. One example is for instance
     to highlight tabs or trailing spaces on lines, when this is considered
     improper style::
-    
+
         Regexp_Highlighter(
             regexp="\t+|\s+$",
             style=OverlayStyle(
                name="tabs style",
                strikethrough=True,
                background="#FF7979"))
-    
+
     Another example is to highlight TODO lines. Various conventions exist
     to mark these in the sources, but the following should catch some of
     these::
-    
+
         Regexp_Highlighter(
             regexp="TODO.*|\?\?\?.*",
             style=OverlayStyle(
                name="todo",
                background="#FF7979"))
-    
+
     Another example is a class to highlight Spark comments. This should
     only be applied when the language is spark::
-    
+
         class Spark_Highlighter(Regexp_Highlighter):
             def must_highlight(self, buffer):
                 return buffer.file().language().lower() == "spark"
-    
+
         Spark_Highlighter(
             regexp="--#.*$",
             style=OverlayStyle(

@@ -31,7 +31,7 @@ special comments for instance.
 
 import GPS
 from gps_utils import *
-from gps_utils.highlighter import Background_Highlighter, OverlayStyle
+from gps_utils.highlighter import Location_Highlighter, OverlayStyle
 import traceback
 
 default_colors = {
@@ -77,7 +77,7 @@ for k in default_colors:
           default_colors[k])
 
 
-class LocationHighlighter(Background_Highlighter):
+class Current_Entity_Highlighter(Location_Highlighter):
     """Class to handle the highlighting of local occurrences."""
 
     def __init__(self):
@@ -86,7 +86,7 @@ class LocationHighlighter(Background_Highlighter):
         context to highlight the entity under the cursor.
         It is intended that a single entity of this lass is created in GPS.
         """
-        Background_Highlighter.__init__(self, style=None)
+        Location_Highlighter.__init__(self, style=None, context=0)
 
         # Cache for some of the preferences
         self.highlight_entities = None
@@ -124,31 +124,28 @@ class LocationHighlighter(Background_Highlighter):
         self.remove_highlight()
         self.highlight()
 
+    def recompute_refs(self, buffer):
+        if self.entity:
+            # Compute all refs to the entity immediately, so that we do not
+            # have to do any xref query later on when doing the highlighting
+            # This query is fast since it only involves a single source file.
+
+            return [(self.entity, r) for r in self.entity.references(
+                include_implicit=False,
+                synchronous=True,
+                in_file=buffer.file())]
+
+        else:
+            return []   # irrelevant
+
+
     def process(self, start, end):
         """Called by Background_Highlighter"""
 
-        buffer = start.buffer()
-
         if self.entity:
-            s = GPS.FileLocation(buffer.file(), start.line(), start.column())
-            e = GPS.FileLocation(buffer.file(), end.line(), end.column())
-
-            # n is a sequence of bytes, encoded in UTF-8.
-            # To compute its length, we need to convert it to a unicode string
-            n = self.entity.name()
-            u = n.decode("utf-8")
-
-            for r in self.entity_refs:
-                if s <= r <= e:
-                    s2 = GPS.EditorLocation(buffer, r.line(), r.column())
-                    e2 = s2 + len(u) - 1
-                    if buffer.get_chars(s2, e2) == n:
-                        self.style.apply(s2, e2);
-
-                elif r >= e:
-                    break
-
+            Location_Highlighter.process(self, start, end)
         else:
+            buffer = start.buffer()
             while start < end:
 
                 # Get the string on the line
@@ -266,15 +263,6 @@ class LocationHighlighter(Background_Highlighter):
         self.word = word
 
         if self.entity:
-            # Compute all refs to the entity immediately, so that we do not
-            # have to do any xref query later on when doing the highlighting
-            # This query is fast since it only involves a single source file.
-
-            self.entity_refs = self.entity.references(
-                include_implicit=False,
-                synchronous=True,
-                in_file=buffer.file())
-
             if self.entity.is_subprogram():
                 self.set_style(self.styles["subprogram"])
             elif self.entity.is_container():
@@ -289,4 +277,4 @@ class LocationHighlighter(Background_Highlighter):
         self.start_highlight(buffer=buffer)
 
 
-highlighter = LocationHighlighter()
+highlighter = Current_Entity_Highlighter()
