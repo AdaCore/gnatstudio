@@ -4,6 +4,7 @@ files.
 """
 
 import GPS
+import time
 import traceback
 
 try:
@@ -42,18 +43,19 @@ class OverlayStyle(object):
         self.editable = editable
         self.whole_line = whole_line
 
-        self.__style = None
-        self.__messages = []
+        self._style = None
+        self._style_ts = time.time()  # detect whether we need to set props
+        self._messages = []
 
         self.others = kwargs
 
         if speedbar:
-            self.__style = GPS.Style(self.name)
+            self._style = GPS.Style(self.name)
             if self.background:
-                self.__style.set_background(self.background)
+                self._style.set_background(self.background)
             if self.foreground:
-                self.__style.set_foreground(self.foreground)
-            self.__style.set_in_speedbar(speedbar)
+                self._style.set_foreground(self.foreground)
+            self._style.set_in_speedbar(speedbar)
 
     def use_messages(self):
         """
@@ -61,7 +63,7 @@ class OverlayStyle(object):
            a `GPS.EditorOverlay` to highlight.
         :rtype: boolean
         """
-        return self.__style is not None
+        return self._style is not None
 
     def __create_style(self, buffer):
         """
@@ -70,10 +72,10 @@ class OverlayStyle(object):
            be applied.
         """
         if self.use_messages():
-            return self.__style
+            return self._style
         else:
             over = buffer.create_overlay(self.name) # Return existing one or create
-            if not hasattr(over, "created"):
+            if not hasattr(over, "ts") or over.ts != self._style_ts:
                 if self.foreground:
                     over.set_property("foreground", self.foreground)
                 if self.background:
@@ -92,7 +94,7 @@ class OverlayStyle(object):
                     over.set_property(prop, value)
 
                 over.set_property("editable", self.editable)
-                over.created = True
+                over.ts = self._style_ts
             return over
 
     def apply(self, start, end):
@@ -118,7 +120,7 @@ class OverlayStyle(object):
                 msg.set_style(over)
             else:
                 msg.set_style(over, len=end.column() - start.column())
-            self.__messages.append(msg)
+            self._messages.append(msg)
 
         else:
             buffer.apply_overlay(over, start, end)
@@ -143,12 +145,12 @@ class OverlayStyle(object):
             if end is None:
                 tmp = []
                 file = buffer.file()
-                for m in self.__messages:
+                for m in self._messages:
                     if m.get_file() == file:
                         m.remove()
                     else:
                         tmp.append(m)
-                self.__messages = tmp
+                self._messages = tmp
 
         else:
             over = self.__create_style(buffer)

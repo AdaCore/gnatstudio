@@ -5725,6 +5725,8 @@ The available hooks are:
   reparsing of all xref information, and the activation of the automatic-error
   fixes
 
+  See also the hook "xref_updated".
+
   :param category: A string, the location/highlighting category that contains the compilation output.
   :param target_name: A string, name of the executed build target.
   :param mode_name: A string, name of the executed build mode.
@@ -6271,6 +6273,10 @@ The available hooks are:
 
   Hook called when one of the scenario variables has been renamed, removed or
   when one of its possible values has changed.
+
+- xref_updated(hookname)
+
+  Hook called when the cross-reference information have been updated.
 
 - word_added(hookname, file)
 

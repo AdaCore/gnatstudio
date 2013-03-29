@@ -32,14 +32,22 @@ class Dispatching_Highlighter(Location_Highlighter):
         GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
         GPS.Hook("file_edited").add(self.__on_file_edited)
         GPS.Hook("file_changed_on_disk").add(self.__on_file_edited)
-        GPS.Hook("compilation_finished").add(self.__on_compilation_finished)
+
+        if GPS.Logger("ENTITIES.SQLITE").active:
+            GPS.Hook("xref_updated").add(self.__on_compilation_finished)
+        else:
+            GPS.Hook("compilation_finished").add(self.__on_compilation_finished)
 
     def __del__(self):
         Location_Highlighter.__del__(self)
         GPS.Hook("preferences_changed").remove(self.__on_preferences_changed)
         GPS.Hook("file_edited").remove(self.__on_file_edited)
         GPS.Hook("file_changed_on_disk").remove(self.__on_file_edited)
-        GPS.Hook("compilation_finished").remove(self.__on_compilation_finished)
+
+        if GPS.Logger("ENTITIES.SQLITE").active:
+            GPS.Hook("xref_updated").remove(self.__on_compilation_finished)
+        else:
+            GPS.Hook("compilation_finished").remove(self.__on_compilation_finished)
 
     def __on_preferences_changed(self, hook):
         self.stop_highlight()
@@ -47,10 +55,6 @@ class Dispatching_Highlighter(Location_Highlighter):
         self.set_style(OverlayStyle(
             name="dispatchcalls",
             background=GPS.Preference("Plugins/dispatching/color").get()))
-        GPS.Logger("MANU").log(
-            "MANU preferences_changed color=%s %s"
-            % (GPS.Preference("Plugins/dispatching/color").get(),
-               self.style.background))
         self.__on_compilation_finished()
 
     def __on_file_edited(self, hook, file):
@@ -71,4 +75,8 @@ class Dispatching_Highlighter(Location_Highlighter):
             return []
 
 
-highlighter = Dispatching_Highlighter()
+highlighter = None
+def on_gps_started(h):
+    global highlighter
+    highlighter = Dispatching_Highlighter()
+GPS.Hook("gps_started").add(on_gps_started)

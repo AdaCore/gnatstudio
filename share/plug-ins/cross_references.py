@@ -3,6 +3,7 @@
 
 import GPS
 import os.path
+import tool_output
 
 class Sqlite_Cross_References(object):
     """
@@ -27,6 +28,9 @@ class Sqlite_Cross_References(object):
       <arg>-P%PP</arg>
       <arg>%X</arg>
    </command-line>
+   <output-parsers>
+       gnatinspect_onexit_hook
+   </output-parsers>
    <is-run>True</is-run>
    <switches command="">
    </switches>
@@ -44,6 +48,7 @@ class Sqlite_Cross_References(object):
         output_chopper
         utf_converter
         progress_parser
+        gnatinspect_onexit_hook
     </output-parsers>
     <command-line>
        <arg>gnatinspect</arg>
@@ -127,6 +132,17 @@ class Sqlite_Cross_References(object):
     def on_gps_started(self, hook):
         GPS.Menu.create("/Build/Recompute _Xref info",
              on_activate=lambda x : self.recompute_xref())
+
+
+class GnatInspect_OnExit_Hook(tool_output.OutputParser):
+    name = "gnatinspect_onexit_hook"
+
+    def on_exit(self, status=0):
+        GPS.Logger("MANU").log("MANU running xref_updated")
+        GPS.Hook("xref_updated").run()
+
+
+GPS.Hook.register("xref_updated")
 
 if GPS.Logger("ENTITIES.SQLITE").active:
     Sqlite_Cross_References()
