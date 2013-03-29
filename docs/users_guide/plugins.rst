@@ -14,3 +14,8 @@ The :file:`auto_highlight_occurrences.py` module
 
 .. automodule:: auto_highlight_occurrences
 
+The :file:`dispatching.py` module
+---------------------------------
+
+.. automodule:: dispatching
+

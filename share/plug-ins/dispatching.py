@@ -69,7 +69,9 @@ class Dispatching_Highlighter(Location_Highlighter):
 
     def recompute_refs(self, buffer):
         try:
-            return buffer.file().references(kind="dispatching call")
+            return [(e.name(), r)
+                    for e, r in buffer.file().references(
+                       kind="dispatching call")]
         except:
             # xref engine might not be up-to-date, or available yet
             return []

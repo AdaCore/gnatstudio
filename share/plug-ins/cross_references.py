@@ -138,7 +138,6 @@ class GnatInspect_OnExit_Hook(tool_output.OutputParser):
     name = "gnatinspect_onexit_hook"
 
     def on_exit(self, status=0):
-        GPS.Logger("MANU").log("MANU running xref_updated")
         GPS.Hook("xref_updated").run()
 
 

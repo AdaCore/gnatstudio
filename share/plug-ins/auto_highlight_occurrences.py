@@ -130,7 +130,9 @@ class Current_Entity_Highlighter(Location_Highlighter):
             # have to do any xref query later on when doing the highlighting
             # This query is fast since it only involves a single source file.
 
-            return [(self.entity, r) for r in self.entity.references(
+            n = self.entity.name()
+
+            return [(n, r) for r in self.entity.references(
                 include_implicit=False,
                 synchronous=True,
                 in_file=buffer.file())]

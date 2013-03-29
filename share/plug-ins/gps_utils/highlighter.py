@@ -522,7 +522,11 @@ class Location_Highlighter(Background_Highlighter):
         Called before we start processing a new buffer.
 
         :return: a list of tuples, each of which contains
-            an (GPS.Entity, GPS.FileLocation).
+            an (name, GPS.FileLocation).
+            The highlighting is only done if the text at the location is
+            name. Name should be a byte-sequence that encodes a UTF-8
+            strings, not the unicode string itself (the result of
+            `GPS.EditorBuffer.get_chars` or `GPS.Entity.name` can be used).
         """
         return []
 
@@ -537,10 +541,9 @@ class Location_Highlighter(Background_Highlighter):
         s = GPS.FileLocation(buffer.file(), start.line(), start.column())
         e = GPS.FileLocation(buffer.file(), end.line(), end.column())
 
-        for entity, ref in self._refs:
+        for entity_name, ref in self._refs:
             if s <= ref <= e:
-                n = entity.name()  # byte-sequence, UTF-8 encoded
-                u = n.decode("utf-8").lower()
+                u = entity_name.decode("utf-8").lower()
                 s2 = GPS.EditorLocation(buffer, ref.line(), ref.column())
                 e2 = s2 + len(u) - 1
 

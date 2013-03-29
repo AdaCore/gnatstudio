@@ -1526,6 +1526,8 @@ package body Browsers.Call_Graph is
               (Iter                  => Ref_Command.Iter,
                Entity                => Entity,
                In_File               => In_File,
+               Kind                  => Only_If_Kind,
+               Include_Implicit      => Implicit,
                File_Has_No_LI_Report => null);
             --  ??? Should we give access to In_Scope
 
