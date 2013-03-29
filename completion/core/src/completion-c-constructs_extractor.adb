@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with Language.Cpp;     use Language.Cpp;
 with Xref;             use Xref;
 
@@ -248,11 +249,21 @@ package body Completion.C.Constructs_Extractor is
       function Is_Self_Referenced_Type
         (E : General_Entity) return Boolean is
       begin
-         return
-           E /= No_General_Entity
-             and then Db.Is_Type (E)
-             and then Db.Get_Type_Of (E) /= No_General_Entity
-             and then Db.Get_Type_Of (E) = Db.Caller_At_Declaration (E);
+         if Active (SQLITE) then
+            return
+              E /= No_General_Entity
+                and then Db.Is_Type (E)
+                and then Db.Is_Container (E)
+                and then Db.Is_Global (E)
+                and then Db.Get_Name (Db.Caller_At_Declaration (E))
+                           = Db.Get_Name (E);
+         else
+            return
+              E /= No_General_Entity
+                and then Db.Is_Type (E)
+                and then Db.Get_Type_Of (E) /= No_General_Entity
+                and then Db.Get_Type_Of (E) = Db.Caller_At_Declaration (E);
+         end if;
       end Is_Self_Referenced_Type;
 
       --  Local variables
@@ -495,7 +506,7 @@ package body Completion.C.Constructs_Extractor is
                               --
                               --     my_type obj;
                               --
-                              --  The type of obj references Second_Entity,
+                              --  The scope of obj references Second_Entity,
                               --  whose (parent) type is First_Entity (which
                               --  is the entity needed for completion purposes)
                               --
@@ -503,7 +514,11 @@ package body Completion.C.Constructs_Extractor is
                               --  instead.
 
                               if Is_Self_Referenced_Type (E) then
-                                 E := Db.Get_Type_Of (E);
+                                 if Active (SQLITE) then
+                                    E := Db.Caller_At_Declaration (E);
+                                 else
+                                    E := Db.Get_Type_Of (E);
+                                 end if;
                               end if;
 
                            else
