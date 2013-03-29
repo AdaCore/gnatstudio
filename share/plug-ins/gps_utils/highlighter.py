@@ -241,6 +241,11 @@ class Background_Highlighter(object):
             location = context.location()
             buffer = GPS.EditorBuffer.get(location.file(), open=False)
 
+        if buffer.file().name() == "":
+            # Do nothing, since we won't easily be able to detect the
+            # closing of that file.
+            return
+
         if buffer is not None and line is None:
             view = buffer.current_view()
             line = view.cursor().line() if view is not None else 1
@@ -248,7 +253,7 @@ class Background_Highlighter(object):
         if buffer is not None:
             # Is the buffer already in the list ?
             for b in self.__buffers:
-                if b[0].file() == buffer.file():
+                if b[0] == buffer:
                     return
 
             start_line = 0 if context is None else max(0, line - context)
@@ -451,7 +456,7 @@ class On_The_Fly_Highlighter(Background_Highlighter):
             GPS.Hook("character_added").add(self.__do_context_highlight)
             for buf in GPS.EditorBuffer.list():
                 if self.must_highlight(buf):
-                    sef.start_highlight(buf)
+                    self.start_highlight(buf)
 
     def stop(self):
         """
@@ -520,7 +525,9 @@ class Location_Highlighter(Background_Highlighter):
         return []
 
     def on_start_buffer(self, buffer):  # overriding
-        self._refs = set(self.recompute_refs(buffer=buffer))
+        # ??? Should use a more efficient data structure where we can
+        # easily find the references within a given range.
+        self._refs = self.recompute_refs(buffer=buffer)
 
     def process(self, start, end):  # overriding
         buffer = start.buffer()
@@ -528,9 +535,6 @@ class Location_Highlighter(Background_Highlighter):
         s = GPS.FileLocation(buffer.file(), start.line(), start.column())
         e = GPS.FileLocation(buffer.file(), end.line(), end.column())
 
-        processed = set()
-
-        # ??? Inefficient, how could we optimize this ?
         for entity, ref in self._refs:
             if s <= ref <= e:
                 n = entity.name()  # byte-sequence, UTF-8 encoded
@@ -541,7 +545,6 @@ class Location_Highlighter(Background_Highlighter):
                 b = buffer.get_chars(s2, e2).decode("utf-8").lower()
                 if b == u:
                     self.style.apply(s2, e2)
-                    processed.add((entity, ref))
 
                 elif self.context > 0:
                     for c in range(1, self.context + 1):
@@ -552,7 +555,6 @@ class Location_Highlighter(Background_Highlighter):
                         b = buffer.get_chars(s2, e2).decode("utf-8").lower()
                         if b == u:
                             self.style.apply(cloc, endloc)
-                            processed.add((entity, ref))
                             break
 
                         # Search before original xref line
@@ -562,12 +564,7 @@ class Location_Highlighter(Background_Highlighter):
                         b = buffer.get_chars(s2, e2).decode("utf-8").lower()
                         if b == u:
                             self.style.apply(cloc, endloc)
-                            processed.add((entity, ref))
                             break
-
-        # We will not need to process those references again, so speed up the
-        # next iteration a bit.
-        self._refs.difference_update(processed)
 
 
 class Regexp_Highlighter(On_The_Fly_Highlighter):

@@ -1373,6 +1373,23 @@ package body Xref is
    -------------------------
 
    procedure Find_All_References
+      (Self     : access General_Xref_Database_Record;
+       Iter     : out Entity_Reference_Iterator;
+       File     : GNATCOLL.VFS.Virtual_File;
+       Kind     : String := "";
+       Sort     : References_Sort := GNATCOLL.Xref.By_Location) is
+   begin
+      if Active (SQLITE) then
+         Self.Xref.References
+            (File => File, Cursor => Iter.Iter, Kind => Kind, Sort => Sort);
+      end if;
+   end Find_All_References;
+
+   -------------------------
+   -- Find_All_References --
+   -------------------------
+
+   procedure Find_All_References
      (Self                  : access General_Xref_Database_Record;
       Iter                  : out Entity_Reference_Iterator;
       Entity                : General_Entity;

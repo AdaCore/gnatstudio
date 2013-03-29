@@ -691,6 +691,18 @@ package Xref is
    --  returned. If Entity is a parameter of subprogram A, this will also
    --  return the parameters of subprograms that override A.
 
+   subtype References_Sort is GNATCOLL.Xref.References_Sort;
+   procedure Find_All_References
+      (Self     : access General_Xref_Database_Record;
+       Iter     : out Entity_Reference_Iterator;
+       File     : GNATCOLL.VFS.Virtual_File;
+       Kind     : String := "";
+       Sort     : References_Sort := GNATCOLL.Xref.By_Location);
+   --  Return references to all entities in the file, possibly filtering by
+   --  entity kind.
+   --  ??? This will always return an empty list when using the old xref
+   --  engine.
+
    function At_End (Iter : Entity_Reference_Iterator) return Boolean;
    --  Whether there are no more reference to return
 

@@ -21,7 +21,8 @@ with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 with OS_Utils;                use OS_Utils;
 with Remote;                  use Remote;
 with GPS.Core_Kernels;        use GPS.Core_Kernels;
-with GPS.Scripts.Entities;
+with GPS.Scripts.Entities;    use GPS.Scripts.Entities;
+with GPS.Scripts.File_Locations; use GPS.Scripts.File_Locations;
 with GPS.Scripts.Projects;
 with Language_Handlers;       use Language_Handlers;
 with Xref;                    use Xref;
@@ -217,6 +218,45 @@ package body GPS.Scripts.Files is
            (Data,
             GPS.Scripts.Projects.Create_Project (Get_Script (Data), Project));
 
+      elsif Command = "references" then
+         Info := Nth_Arg (Data, 1);
+         declare
+            Kind   : constant String := Nth_Arg (Data, 2, "");
+            Sortby : constant Integer := Nth_Arg
+               (Data, 3, References_Sort'Pos (References_Sort'First));
+            Sort   : constant References_Sort := References_Sort'Val (Sortby);
+            Refs   : Entity_Reference_Iterator;
+            Result : List_Instance'Class := New_List (Get_Script (Data));
+            F      : constant Class_Instance := Nth_Arg (Data, 1);
+         begin
+            Kernel.Databases.Find_All_References
+               (Iter   => Refs,
+                File   => Info,
+                Kind   => Kind,
+                Sort   => Sort);
+
+            while not At_End (Refs) loop
+               declare
+                  R   : constant General_Entity_Reference := Get (Refs);
+                  Loc : constant General_Location := Get_Location (R);
+                  L   : List_Instance'Class := New_List (Get_Script (Data));
+               begin
+                  L.Set_Nth_Arg (Natural'Last, Create_Entity
+                     (Get_Script (Data), Get_Entity (Refs)));
+                  L.Set_Nth_Arg (Natural'Last, Create_File_Location
+                     (Script => Get_Script (Data),
+                      File   => F,
+                      Line   => Loc.Line,
+                      Column => Loc.Column));
+                  Result.Set_Nth_Arg (Natural'Last, L);
+               end;
+               Next (Refs);
+            end loop;
+
+            Destroy (Refs);
+            Set_Return_Value (Data, Result);
+         end;
+
       elsif Command = "entities" then
          Name_Parameters (Data, File_Entities_Parameters);
          Info := Nth_Arg (Data, 1);
@@ -245,6 +285,7 @@ package body GPS.Scripts.Files is
 
       end if;
    end File_Command_Handler;
+
    --------------------
    -- Get_File_Class --
    --------------------
@@ -314,6 +355,12 @@ package body GPS.Scripts.Files is
          Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => File_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "references",
+         Class   => Get_File_Class (Kernel),
+         Handler => File_Command_Handler'Access,
+         Params  => (2 => Param ("kind", Optional => True),
+                     3 => Param ("sortby", Optional => True)));
    end Register_Commands;
 
    --------------
