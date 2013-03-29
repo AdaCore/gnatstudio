@@ -1306,11 +1306,15 @@ package body Default_Preferences is
 
    procedure Update_Color
      (Button : access GObject_Record'Class;
-      Data   : Manager_Preference) is
+      Data   : Manager_Preference)
+   is
+      R : Gdk_RGBA;
+      Success : Boolean;
    begin
-      Set_Color
-        (Gtk_Color_Button (Button),
-         Parse (Get_Pref (Color_Preference (Data.Pref))));
+      Parse (R, Get_Pref (Color_Preference (Data.Pref)), Success);
+      if Success then
+         Set_Rgba (Gtk_Color_Button (Button), R);
+      end if;
    end Update_Color;
 
    ----------------------
