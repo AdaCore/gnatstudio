@@ -2846,7 +2846,7 @@ package body Xref is
      (Self   : access General_Xref_Database_Record;
       Entity1, Entity2 : General_Entity) return Integer
    is
-      Id1, Id2 : Natural;
+      Id1, Id2 : Integer;
    begin
       if Active (SQLITE) then
          Id1 := GNATCOLL.Xref.Internal_Id (Entity1.Entity);
