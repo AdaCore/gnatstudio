@@ -350,6 +350,10 @@ package body Build_Configurations is
             elsif Child.Tag.all = "uses-shell" then
                Model.Uses_Shell := Boolean'Value (Child.Value.all);
 
+            elsif Child.Tag.all = "output-parsers" then
+               --  handled elsewhere
+               null;
+
             else
                Log
                  (Registry,
