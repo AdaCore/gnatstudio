@@ -27,6 +27,7 @@ class Sqlite_Cross_References(object):
       <arg>%eL</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
+      <arg>--subdirs=./%subdir</arg>
    </command-line>
    <output-parsers>
        gnatinspect_onexit_hook
@@ -59,6 +60,7 @@ class Sqlite_Cross_References(object):
        <arg>--encoding=iso-8859-1</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
+      <arg>--subdirs=./%subdir</arg>
     </command-line>
 </target>
 </GPS>
