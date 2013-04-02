@@ -63,6 +63,7 @@ with String_List_Utils;   use String_List_Utils;
 with GUI_Utils;           use GUI_Utils;
 with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
 with GNATCOLL.Iconv;      use GNATCOLL.Iconv;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 
 package body Interactive_Consoles is
    Me : constant Debug_Handle := Create ("Console");
@@ -2101,5 +2102,91 @@ package body Interactive_Consoles is
    begin
       return Interrupt (Console);
    end Interrupt;
+
+   -----------------------------
+   -- Get_Interactive_Console --
+   -----------------------------
+
+   function Get_Interactive_Console
+     (Self : access Console_Messages_Window)
+      return Interactive_Console is
+   begin
+      return Interactive_Console (Self.Console);
+   end Get_Interactive_Console;
+
+   ---------------------------------
+   -- Get_Console_Messages_Window --
+   ---------------------------------
+
+   function Get_Console_Messages_Window
+     (Self : access Interactive_Console_Record'Class)
+      return access Console_Messages_Window is
+   begin
+      return Self.Console;
+   end Get_Console_Messages_Window;
+
+   ------------
+   -- Insert --
+   ------------
+
+   overriding procedure Insert
+     (Self   : not null access Console_Messages_Window;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : GPS.Kernel.Message_Type)
+   is
+      use type GPS.Kernel.Message_Type;
+   begin
+      Self.Console.Insert (Text, Add_LF, Mode = GPS.Kernel.Error);
+   end Insert;
+
+   -----------------
+   -- Insert_UTF8 --
+   -----------------
+
+   overriding procedure Insert_UTF8
+     (Self   : not null access Console_Messages_Window;
+      UTF8   : String;
+      Add_LF : Boolean := True;
+      Mode   : GPS.Kernel.Message_Type)
+   is
+      use type GPS.Kernel.Message_Type;
+   begin
+      Self.Console.Insert_UTF8 (UTF8, Add_LF, Mode = GPS.Kernel.Error);
+   end Insert_UTF8;
+
+   -----------
+   -- Clear --
+   -----------
+
+   overriding procedure Clear
+     (Self   : not null access Console_Messages_Window) is
+   begin
+      Self.Console.Clear;
+   end Clear;
+
+   -------------------
+   -- Raise_Console --
+   -------------------
+
+   overriding procedure Raise_Console
+     (Self   : not null access Console_Messages_Window) is
+   begin
+      Raise_Child
+        (Find_MDI_Child
+           (Get_MDI (Self.Console.Kernel), Self.Console),
+         Give_Focus => True);
+   end Raise_Console;
+
+   -------------------------
+   -- Get_Virtual_Console --
+   -------------------------
+
+   overriding function Get_Virtual_Console
+     (Self : not null access Console_Messages_Window)
+      return GNATCOLL.Scripts.Virtual_Console is
+   begin
+      return Self.Console.Get_Or_Create_Virtual_Console;
+   end Get_Virtual_Console;
 
 end Interactive_Consoles;

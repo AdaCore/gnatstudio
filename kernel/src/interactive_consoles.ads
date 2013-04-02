@@ -40,6 +40,7 @@ with Histories;
 with GUI_Utils;
 with String_List_Utils;
 with GPS.Kernel.MDI;
+with GPS.Messages_Windows;
 
 package Interactive_Consoles is
 
@@ -331,6 +332,23 @@ package Interactive_Consoles is
    --  Return the interactive console associated with Virtual. This only works
    --  for virtual consoles created by Get_Or_Create_Virtual_Console above
 
+   -------------------------------------------------------------
+   --  Adapter for GPS.Messages_Windows.Abstract_Messages_Window
+   -------------------------------------------------------------
+
+   type Console_Messages_Window (<>) is
+     new GPS.Messages_Windows.Abstract_Messages_Window with private;
+
+   function Get_Interactive_Console
+     (Self : access Console_Messages_Window)
+      return Interactive_Console;
+   --  Convert Console_Messages_Window to Interactive_Console
+
+   function Get_Console_Messages_Window
+     (Self : access Interactive_Console_Record'Class)
+      return access Console_Messages_Window;
+   --  Convert Interactive_Console to Console_Messages_Window
+
 private
 
    type Hyper_Link_Record;
@@ -342,10 +360,16 @@ private
       Next     : Hyper_Links;
    end record;
 
+   type Console_Messages_Window (Console : access Interactive_Console_Record)
+     is new GPS.Messages_Windows.Abstract_Messages_Window with null record;
+
+   type Console_Messages_Window_Access is access all Console_Messages_Window;
+
    type Interactive_Console_Record is new Generic_Views.View_Record with record
       Handler    : Command_Handler;
       Virtual    : GNATCOLL.Scripts.Virtual_Console;
       Scrolled   : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Console    : Console_Messages_Window_Access;
 
       Completion           : GUI_Utils.Completion_Handler;
       Completion_User_Data : System.Address;
@@ -437,5 +461,27 @@ private
       --  Links_Count indicates the number of links that have been registered,
       --  for efficiency.
    end record;
+
+   overriding procedure Insert
+     (Self   : not null access Console_Messages_Window;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : GPS.Kernel.Message_Type);
+
+   overriding procedure Insert_UTF8
+     (Self   : not null access Console_Messages_Window;
+      UTF8   : String;
+      Add_LF : Boolean := True;
+      Mode   : GPS.Kernel.Message_Type);
+
+   overriding procedure Clear
+     (Self   : not null access Console_Messages_Window);
+
+   overriding procedure Raise_Console
+     (Self   : not null access Console_Messages_Window);
+
+   overriding function Get_Virtual_Console
+     (Self : not null access Console_Messages_Window)
+      return GNATCOLL.Scripts.Virtual_Console;
 
 end Interactive_Consoles;
