@@ -93,6 +93,12 @@ package body Xref is
       Loc : General_Location) return Entity_Access;
    --  Return the construct entity found at the location given in parameter.
 
+   procedure Reference_Iterator_Get_References
+     (Self   : Xref_Database'Class;
+      Entity : Entity_Information;
+      Cursor : in out References_Cursor'Class);
+   --  Wraps GNATCOLL.Xref.References to pass correct parameters
+
    ----------------
    -- Assistants --
    ----------------
@@ -1385,6 +1391,25 @@ package body Xref is
       end if;
    end Find_All_References;
 
+   ---------------------------------------
+   -- Reference_Iterator_Get_References --
+   ---------------------------------------
+
+   procedure Reference_Iterator_Get_References
+     (Self   : Xref_Database'Class;
+      Entity : Entity_Information;
+      Cursor : in out References_Cursor'Class)
+   is
+      C : constant GPS_Recursive_References_Cursor :=
+         GPS_Recursive_References_Cursor (Cursor);
+   begin
+      Self.References
+        (Entity, Cursor,
+         Include_Implicit => C.Include_Implicit,
+         Include_All      => C.Include_All,
+         Kinds            => To_String (C.Kind));
+   end Reference_Iterator_Get_References;
+
    -------------------------
    -- Find_All_References --
    -------------------------
@@ -1403,32 +1428,16 @@ package body Xref is
       Kind                  : String := "")
    is
       F      : Old_Entities.Source_File;
-
-      procedure Internal
-        (Self   : Xref_Database'Class;
-         Entity : Entity_Information;
-         Cursor : out References_Cursor'Class);
-      --  Wraps GNATCOLL.Xref.References to pass correct parameters
-
-      procedure Internal
-        (Self   : Xref_Database'Class;
-         Entity : Entity_Information;
-         Cursor : out References_Cursor'Class) is
-      begin
-         GNATCOLL.Xref.References
-           (Self, Entity, Cursor,
-            Include_Implicit => Include_Implicit,
-            Include_All      => Include_All,
-            Kinds            => Kind);
-      end Internal;
-
    begin
       if Active (SQLITE) then
          --  File_Has_No_LI_Report voluntarily ignored.
 
+         Iter.Iter.Include_Implicit := Include_Implicit;
+         Iter.Iter.Include_All := Include_All;
+         Iter.Iter.Kind := To_Unbounded_String (Kind);
          Self.Xref.Recursive
            (Entity          => Entity.Entity,
-            Compute         => Internal'Unrestricted_Access,
+            Compute         => Reference_Iterator_Get_References'Access,
             Cursor          => Iter.Iter,
             From_Overriding => Include_Overriding,
             From_Overridden => Include_Overridden,

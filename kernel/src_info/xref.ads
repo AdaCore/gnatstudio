@@ -836,10 +836,18 @@ private
       Name => Ada.Strings.Unbounded.Null_Unbounded_String,
       Body_Is_Full_Declaration => True);
 
+   type GPS_Recursive_References_Cursor
+      is new GNATCOLL.Xref.Recursive_References_Cursor
+   with record
+      Include_Implicit : Boolean := False;
+      Include_All      : Boolean := False;
+      Kind             : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+
    type Entity_Reference_Iterator is record
       Old_Iter : Old_Entities.Queries.Entity_Reference_Iterator;
 
-      Iter     : GNATCOLL.Xref.Recursive_References_Cursor;
+      Iter     : GPS_Recursive_References_Cursor;
       In_File  : GNATCOLL.VFS.Virtual_File;
       In_Scope : General_Entity := No_General_Entity;
    end record;
