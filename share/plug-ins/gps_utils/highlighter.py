@@ -330,7 +330,7 @@ class Background_Highlighter(object):
         :param GPS.EditorBuffer buffer: defaults to the current buffer
         """
         if buffer is None:
-            buffer = GPS.EditorBuffer.get()
+            buffer = GPS.EditorBuffer.get(open=False, force=False)
 
         if buffer is not None and self.style is not None:
             self.style.remove(buffer)
