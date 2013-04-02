@@ -682,7 +682,7 @@ package body Project_Viewers is
       Pack_Start (Col, Render, False);
       Set_Sort_Column_Id (Col, Compiler_Switches_Column);
       Add_Attribute (Col, Render, "text", Compiler_Switches_Column);
-      Add_Attribute (Col, Render, "foreground_gdk", Compiler_Color_Column);
+      Add_Attribute (Col, Render, "foreground_rgba", Compiler_Color_Column);
 
       Register_Contextual_Menu
         (Kernel          => Viewer.Kernel,

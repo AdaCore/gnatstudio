@@ -900,7 +900,7 @@ package body Revision_Views is
          Add_Attribute
            (Get_Column (View.Tree, Col),
             Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
-            "foreground_gdk", Color_Column);
+            "foreground_rgba", Color_Column);
          Object_Simple_List.Free (List);
       end Set_Attribute;
 
