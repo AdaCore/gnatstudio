@@ -907,6 +907,8 @@ Classes
 
    .. automethod:: GPS.File.project
 
+   .. automethod:: GPS.File.references
+
    .. automethod:: GPS.File.remove_property
 
    .. automethod:: GPS.File.search
@@ -1551,7 +1553,3 @@ Classes
    .. automethod:: GPS.XMLViewer.parse
 
    .. automethod:: GPS.XMLViewer.parse_string
-
-
-.. automodule: gps_utils.highlighter::
-   :members:
