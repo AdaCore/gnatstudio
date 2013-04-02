@@ -552,10 +552,11 @@ package body Build_Command_Manager is
                Console := Get_Build_Console
                  ((Kernel_Handle (Builder.Kernel)), Shadow, Background, False,
                   "Run: " & Main.Display_Base_Name);
-            end if;
 
-            --  Is_Run target writes its output directly to console, so
-            --  it doesn't need Output_Parser
+               if not Background then
+                  Console_Writer.Set_Console (Console);
+               end if;
+            end if;
          else
             Console := Get_Build_Console
               ((Kernel_Handle (Builder.Kernel)), Shadow, Background, False);

@@ -239,7 +239,6 @@ package body Commands.Builder is
       CL2      : Arg_List;
       Success  : Boolean := False;
       Cmd_Name : Unbounded_String;
-      Show_Output  : Boolean;
       Show_Command : Boolean;
       Created_Command : Scheduled_Command_Access;
    begin
@@ -254,7 +253,6 @@ package body Commands.Builder is
       Data.Is_A_Run       := Is_Run;
       Data.Output_Parser  := New_Parser_Chain (Target_Name);
 
-      Show_Output  := Is_Run and not Data.Background and not Quiet;
       Show_Command := not Background and not Quiet;
 
       if not Is_Run and then not Background then
@@ -313,7 +311,7 @@ package body Commands.Builder is
             Server               => Server,
             Console              => Console,
             Show_Command         => Show_Command,
-            Show_Output          => Show_Output,
+            Show_Output          => False,
             Callback_Data        => Data.all'Access,
             Success              => Success,
             Line_By_Line         => False,
