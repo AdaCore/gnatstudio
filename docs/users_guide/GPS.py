@@ -5243,18 +5243,19 @@ class File(object):
 
     def references(self, kind="", sortby=0):
         """
-        Returns all references (to any entity) within the file.
-        
+        Returns all references (to any entity) within the file. The acceptable
+        values for kind can currently be retrieved directly from the
+        cross-references database by using a slightly convoluted approach::
+
+               sqlite3 obj/gnatinspect.db
+               > select display from reference_kinds;
+
         :param string kind: this can be used to filter the references, and is
            more efficient than traversing the list afterward. For instance,
            you can get access to the list of dispatching calls by passing
            "dispatching call" for kind. The list of kinds is defined in the
            cross-reference database, and new values can be added at any time.
-           To access the list of kinds that are currently available on your
-           version of GPS, you can use the slightly convoluted approach::
-
-               sqlite3 obj/gnatinspect.db
-               > select display from reference_kinds;
+           See above on how to retrieve the list of possible values.
 
         :param integer sortby: how the returned list should be sorted.
            0 indicates that they are sorted in the order in which they
