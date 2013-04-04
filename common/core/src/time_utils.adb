@@ -17,6 +17,7 @@
 
 with Ada.Calendar.Time_Zones;  use Ada.Calendar.Time_Zones;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 
 package body Time_Utils is
 
@@ -87,4 +88,44 @@ package body Time_Utils is
       return Image (Y, 4) & Image (M, 2) & Image (D, 2) & "-" &
         Image (H, 2) & ":" & Image (Mi, 2) & ":" & Image (S, 2);
    end Local_Timestamp_Image;
+
+   -------------
+   -- Elapsed --
+   -------------
+
+   function Elapsed
+     (Start_Time : Ada.Calendar.Time;
+      End_Time   : Ada.Calendar.Time) return String
+   is
+      Elapsed : constant String :=
+        Ada.Calendar.Formatting.Image
+          (End_Time - Start_Time,
+           Include_Time_Fraction => True);
+
+      Elapsed_Start : Natural := Elapsed'First;
+
+   begin
+      --  Do not show hours and minutes if they are 0. The output is
+      --  thus similar to the one of the Unix command time
+
+      if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
+         Elapsed_Start := Elapsed_Start + 3;
+      end if;
+
+      if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
+         Elapsed_Start := Elapsed_Start + 3;
+      end if;
+
+      return Elapsed (Elapsed_Start .. Elapsed'Last);
+   end Elapsed;
+
+   ---------------
+   -- Timestamp --
+   ---------------
+
+   function Timestamp (T : Ada.Calendar.Time) return String is
+   begin
+      return "[" & Image (T, ISO_Date & " %T") & "] ";
+   end Timestamp;
+
 end Time_Utils;

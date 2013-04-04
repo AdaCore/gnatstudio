@@ -551,6 +551,10 @@ package body Build_Command_Manager is
 
          Console_Writer.Set_Console (null);
 
+         if not (Shadow or else Background or else Quiet) then
+            Console_Writer.Show_Status_On_Exit;
+         end if;
+
          if Is_Run (T) then
             if not Quiet then
                Console := Get_Build_Console

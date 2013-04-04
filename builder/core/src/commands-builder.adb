@@ -246,9 +246,6 @@ package body Commands.Builder is
             Show_In_Task_Manager => not Background,
             Name_In_Task_Manager => To_String (Cmd_Name),
             Synchronous          => Synchronous,
-            Show_Exit_Status     => not (Shadow
-              or else Background
-              or else Quiet),
             Block_Exit           => not (Shadow
               or else Background
               or else Quiet),

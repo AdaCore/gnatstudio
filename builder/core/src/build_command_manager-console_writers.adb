@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Interactive_Consoles;         use Interactive_Consoles;
+with String_Utils;                 use String_Utils;
+with Time_Utils;                   use Time_Utils;
+with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Messages.Legacy;
 
 package body Build_Command_Manager.Console_Writers is
@@ -36,6 +39,10 @@ package body Build_Command_Manager.Console_Writers is
       end if;
    end Create;
 
+   -------------------
+   -- End_Of_Stream --
+   -------------------
+
    overriding procedure End_Of_Stream
      (Self    : not null access Console_Writer;
       Status  : Integer;
@@ -43,6 +50,26 @@ package body Build_Command_Manager.Console_Writers is
    is
       use GPS.Kernel.Messages.Legacy;
    begin
+      if Self.Data.Show_Status then
+         declare
+            End_Time   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+            Time_Stamp : constant String := Timestamp (End_Time);
+         begin
+            if Status = 0 then
+               Self.Data.Console.Insert
+                 (Time_Stamp &
+                  (-"process terminated successfully (elapsed time: ")
+                  & Elapsed (Self.Data.Start_Time, End_Time) & "s)");
+            else
+               Self.Data.Console.Insert
+                 (Time_Stamp
+                  & (-"process exited with status ")
+                  & Image (Status) & " (elapsed time: "
+                  & Elapsed (Self.Data.Start_Time, End_Time) & "s)");
+            end if;
+         end;
+      end if;
+
       --  Raise the messages window is compilation was unsuccessful
       --  and no error was parsed. See D914-005
 
@@ -77,9 +104,13 @@ package body Build_Command_Manager.Console_Writers is
       Kernel   : Kernel_Handle;
       Category : Unbounded_String) is
    begin
-      Self.Data.Kernel := Kernel;
-      Self.Data.Category := Category;
-      Self.Data.Raise_On_Error := True;
+      Self.Data :=
+        (Kernel         => Kernel,
+         Console        => Self.Data.Console,
+         Show_Status    => Self.Data.Show_Status,
+         Start_Time     => Self.Data.Start_Time,
+         Category       => Category,
+         Raise_On_Error => True);
    end Raise_Console_On_Error;
 
    -----------------
@@ -91,7 +122,18 @@ package body Build_Command_Manager.Console_Writers is
       Console : Interactive_Consoles.Interactive_Console) is
    begin
       Self.Data.Console := Console;
-      Self.Data.Raise_On_Error := True;
+      Self.Data.Raise_On_Error := False;
+      Self.Data.Show_Status := False;
+      Self.Data.Start_Time := Ada.Calendar.Clock;
    end Set_Console;
+
+   -------------------------
+   -- Show_Status_On_Exit --
+   -------------------------
+
+   procedure Show_Status_On_Exit (Self : access Output_Parser_Fabric) is
+   begin
+      Self.Data.Show_Status := True;
+   end Show_Status_On_Exit;
 
 end Build_Command_Manager.Console_Writers;

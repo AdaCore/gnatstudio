@@ -45,4 +45,12 @@ package Time_Utils is
    function Local_Timestamp_Image (T : Ada.Calendar.Time) return String;
    --  Return a displayed version of the time (mostly for debug purposes).
 
+   function Timestamp (T : Ada.Calendar.Time) return String;
+   --  Return [timestamp] label
+
+   function Elapsed
+     (Start_Time : Ada.Calendar.Time;
+      End_Time   : Ada.Calendar.Time) return String;
+   --  Return image of elapsed time
+
 end Time_Utils;

@@ -17,7 +17,8 @@
 
 --  Declare parser to write each output item to console.
 
-with Commands; use Commands;
+with Ada.Calendar;
+with Commands;                  use Commands;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Tools_Output;          use GPS.Tools_Output;
 with Interactive_Consoles;
@@ -50,6 +51,9 @@ package Build_Command_Manager.Console_Writers is
    --  Request console raising on exit with error if no messages generated
    --  at given Category in location view
 
+   procedure Show_Status_On_Exit (Self : access Output_Parser_Fabric);
+   --  Request showing exit status
+
    overriding function Create
      (Self  : access Output_Parser_Fabric;
       Child : Tools_Output_Parser_Access)
@@ -61,8 +65,10 @@ private
    type Properties is record
       Console        : Interactive_Consoles.Interactive_Console;
       Raise_On_Error : Boolean;
+      Show_Status    : Boolean;
       Kernel         : Kernel_Handle;
       Category       : Unbounded_String;
+      Start_Time     : Ada.Calendar.Time;
    end record;
 
    type Output_Parser_Fabric is

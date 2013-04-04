@@ -16,9 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;               use Ada, Ada.Calendar;
-with Ada.Calendar.Formatting;
 with Ada.Unchecked_Conversion;
-with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
@@ -47,6 +45,7 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
+with Time_Utils;                 use Time_Utils;
 with Traces;                     use Traces;
 
 package body GPS.Kernel.Timeout is
@@ -319,41 +318,23 @@ package body GPS.Kernel.Timeout is
 
       declare
          End_Time      : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-         Time_Stamp    : constant String :=
-                           "[" & Image (End_Time, ISO_Date & " %T") & "] ";
-         Elapsed       : constant String :=
-                           Calendar.Formatting.Image
-                             (End_Time - Data.Start_Time,
-                              Include_Time_Fraction => True);
-         Elapsed_Start : Natural := Elapsed'First;
-
+         Time_Stamp    : constant String := Timestamp (End_Time);
       begin
-         --  Do not show hours and minutes if they are 0. The output is
-         --  thus similar to the one of the Unix command time
-
-         if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
-            Elapsed_Start := Elapsed_Start + 3;
-         end if;
-
-         if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
-            Elapsed_Start := Elapsed_Start + 3;
-         end if;
-
          if Data.Interrupted then
             Insert (Time_Stamp &
                     (-"<^C> process interrupted (elapsed time: ")
-                    & Elapsed (Elapsed_Start .. Elapsed'Last) & "s)");
+                    & Elapsed (Data.Start_Time, End_Time) & "s)");
             --  ??? elsif Data.Show_Output or else Data.Show_Command then
          elsif Data.Show_Exit_Status then
             if Status = 0 then
                Insert (Time_Stamp &
                        (-"process terminated successfully (elapsed time: ")
-                       & Elapsed (Elapsed_Start .. Elapsed'Last) & "s)");
+                       & Elapsed (Data.Start_Time, End_Time) & "s)");
             else
                Insert (Time_Stamp
                        & (-"process exited with status ")
                        & Image (Status) & " (elapsed time: "
-                       & Elapsed (Elapsed_Start .. Elapsed'Last) & "s)");
+                       & Elapsed (Data.Start_Time, End_Time) & "s)");
             end if;
          end if;
       end;
