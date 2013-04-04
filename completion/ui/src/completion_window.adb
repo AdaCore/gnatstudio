@@ -1095,7 +1095,7 @@ package body Completion_Window is
          Get_Iter_At_Mark
            (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
 
-         -- Forward Text_End iter to end of identifier
+         --  Forward Text_End iter to end of identifier
 
          Result := True;
          while Result
