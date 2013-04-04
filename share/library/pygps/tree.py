@@ -84,6 +84,9 @@ try:
          state = Gdk.ModifierType(0)
          if control:
              state |= Gdk.ModifierType.CONTROL_MASK
+
+             # on Mac, we need to also pass the Command key
+             state |= Gdk.ModifierType.MOD2_MASK
          if shift:
              state |= Gdk.ModifierType.SHIFT_MASK
          if alt:
