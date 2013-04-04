@@ -547,6 +547,8 @@ package body Build_Command_Manager is
             Styles            => GPS.Styles.UI.Builder_Styles,
             Show_In_Locations => not Background);
 
+         Console_Writer.Set_Console (null);
+
          if Is_Run (T) then
             if not Quiet then
                Console := Get_Build_Console
@@ -562,6 +564,11 @@ package body Build_Command_Manager is
               ((Kernel_Handle (Builder.Kernel)), Shadow, Background, False);
 
             Console_Writer.Set_Console (Console);
+
+            if not Background then
+               Console_Writer.Raise_Console_On_Error
+                 (Kernel_Handle (Builder.Kernel), Category_Name);
+            end if;
          end if;
 
          Launch_Build_Command

@@ -29,7 +29,6 @@ with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Interactive;           use GPS.Kernel.Interactive;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
-with GPS.Kernel.Messages.Legacy;       use GPS.Kernel.Messages.Legacy;
 with GPS.Intl;                         use GPS.Intl;
 
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
@@ -162,16 +161,6 @@ package body Commands.Builder is
       if Build_Data.Is_A_Run then
          --  Nothing to do for runs.
          return;
-      end if;
-
-      --  Raise the messages window is compilation was unsuccessful
-      --  and no error was parsed. See D914-005
-
-      if Category_Count (Data.Kernel, To_String (Build_Data.Category_Name)) = 0
-        and then Status /= 0
-        and then not Build_Data.Background
-      then
-         Data.Kernel.Raise_Console;
       end if;
 
       Destroy (Build_Data.Background_Env);
