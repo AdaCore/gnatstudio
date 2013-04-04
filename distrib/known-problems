@@ -8,14 +8,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
-- G628-009: GPS: completion with remaining characters
-  Problem:    When smart completion is triggered while the cursor is 
-              in the middle of an identifier, and a completion is selected,
-              the end of the previous identifier will remain at the end of
-              the new completed identifier.
-  Workaround: Remove extraneous characters manually
-
-
 - M324-004: GB: Stack size warning messages at startup
   Problem:    At startup SPARK & Codepeer plugins on linux may ask to
               to set the stack size to unlimited. This is unnecessary.
@@ -223,3 +215,10 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Problem:    If an aspect is used in a type declaration, it corrupts the
               completion database. The outline view may also be frozen.
   Workaround: Use pragmas instead of aspects.
+
+- G628-009: GPS: completion with remaining characters
+  Problem:    When smart completion is triggered while the cursor is 
+              in the middle of an identifier, and a completion is selected,
+              the end of the previous identifier will remain at the end of
+              the new completed identifier.
+  Workaround: Remove extraneous characters manually
