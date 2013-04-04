@@ -50,12 +50,13 @@ with Histories;              use Histories;
 with GUI_Utils;              use GUI_Utils;
 with Src_Editor_Module;      use Src_Editor_Module;
 with GNAT.Strings;           use GNAT.Strings;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Tooltips;               use Tooltips;
-with Traces;                 use Traces;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 
 package body Buffer_Views is
+   Me : constant Trace_Handle := Create ("BUFFERS");
 
    Icon_Column : constant := 0;
    Name_Column : constant := 1;
@@ -103,13 +104,13 @@ package body Buffer_Views is
    --  Refresh the contents of the Buffer view
 
    function Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean;
+     (View  : access GObject_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
    --  Callback for the "button_press" event
 
    function Get_Path_At_Event
      (Tree  : Gtk_Tree_View;
-      Event : Gdk_Event) return Gtk_Tree_Path;
+      Event : Gdk_Event_Button) return Gtk_Tree_Path;
    --  Return the path at which Event has occured.
    --  User must free memory associated to the returned path.
 
@@ -250,23 +251,17 @@ package body Buffer_Views is
 
    function Get_Path_At_Event
      (Tree  : Gtk_Tree_View;
-      Event : Gdk_Event) return Gtk_Tree_Path
+      Event : Gdk_Event_Button) return Gtk_Tree_Path
    is
-      X, Y      : Gdouble;
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
       Path      : Gtk_Tree_Path;
       Column    : Gtk_Tree_View_Column := null;
-
    begin
-      Get_Coords (Event, X, Y);
-
-      Gtk_New (Path);
       Get_Path_At_Pos
-        (Tree, Gint (X), Gint (Y),
+        (Tree, Gint (Event.X), Gint (Event.Y),
          Path, Column, Buffer_X, Buffer_Y, Row_Found);
-
       return Path;
    end Get_Path_At_Event;
 
@@ -275,9 +270,10 @@ package body Buffer_Views is
    ------------------
 
    function Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
+     (View  : access GObject_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
    is
+      Ev : constant Gdk_Event := To_Event (Event'Unrestricted_Access);
       Explorer : constant Buffer_View_Access := Buffer_View_Access (View);
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
       Model    : constant Gtk_Tree_Store := -Get_Model (Explorer.Tree);
@@ -286,7 +282,10 @@ package body Buffer_Views is
       Iter     : Gtk_Tree_Iter;
       Child    : MDI_Child;
    begin
-      if (Get_State (Event) and (Control_Mask or Shift_Mask)) /= 0 then
+      Trace (Me, "Button_Press X=" & Event.X'Img & " Y=" & Event.Y'Img
+             & " State=" & Event.State'Img);
+
+      if (Event.State and (Control_Mask or Shift_Mask)) /= 0 then
          --  If there is a ctrl or shift key modifier present, grab the focus
          --  on the tree so that ctrl-clicking and shift-clicking extend the
          --  multiple selection as expected.
@@ -301,17 +300,19 @@ package body Buffer_Views is
 
             Child := Find_MDI_Child_By_Name
               (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
+            Trace (Me, "Clicked on row for child " & Get_Title (Child));
 
-            if Get_Button (Event) = 3 then
+            if Event.Button = 3 then
                --  Right click ?
                return False;
 
-            elsif Get_Button (Event) = 1 then
-               if Get_Event_Type (Event) = Gdk_2button_Press then
+            elsif Event.Button = 1 then
+               if Event.The_Type = Gdk_2button_Press then
                   Raise_Child (Child, Give_Focus => True);
-               elsif Get_Event_Type (Event) = Button_Press then
-                  Child_Drag_Begin (Child => Child, Event => Event);
+               elsif Event.The_Type = Button_Press then
+                  Child_Drag_Begin (Child => Child, Event => Ev);
                   Raise_Child (Child, Give_Focus => True);
+                  Trace (Me, "Child should now have the focus");
                end if;
 
                return True;
@@ -320,10 +321,6 @@ package body Buffer_Views is
       end if;
 
       return False;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end Button_Press;
 
    --------------------
@@ -337,6 +334,7 @@ package body Buffer_Views is
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Iter2 : Gtk_Tree_Iter;
    begin
+      Trace (Me, "Child_Selected " & Get_Title (Child));
       --  If we are in the buffers view, do not show it, since otherwise that
       --  breaks the selection of multiple lines
 
@@ -373,8 +371,6 @@ package body Buffer_Views is
             end loop;
          end;
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Child_Selected;
 
    -------------
@@ -506,9 +502,6 @@ package body Buffer_Views is
       end if;
 
       Expand_All (V.Tree);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Refresh;
 
    --------------------------
@@ -614,12 +607,9 @@ package body Buffer_Views is
         (Get_MDI (View.Kernel), Signal_Children_Reorganized, Refresh'Access,
          View);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (View.Tree,
-         Signal_Button_Press_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
-         Slot_Object => View,
-         After       => False);
+      View.Tree.On_Button_Press_Event
+         (Call => Button_Press'Access,
+          Slot => View);
 
       Register_Contextual_Menu
         (Kernel          => View.Kernel,
