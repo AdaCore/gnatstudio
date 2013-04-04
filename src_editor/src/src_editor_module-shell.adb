@@ -24,6 +24,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
 with Glib.Convert;              use Glib.Convert;
@@ -1930,6 +1931,21 @@ package body Src_Editor_Module.Shell is
              Column =>
                Visible_Column_Type (Integer'Max (1, Nth_Arg (Data, 4)))));
 
+      elsif Command = "__repr__" then
+         declare
+            Loc1 : constant Editor_Location'Class := Get_Location (Data, 1);
+         begin
+            if Loc1 = Nil_Editor_Location then
+               Set_Return_Value (Data, String'("<no location>"));
+            else
+               Set_Return_Value
+                  (Data,
+                   Loc1.Buffer.File.Display_Full_Name
+                   & ":" & Image (Loc1.Line, Min_Width => 1)
+                   & ":" & Image (Integer (Loc1.Column), Min_Width => 1));
+            end if;
+         end;
+
       elsif Command = Comparison_Method then
          declare
             Loc1 : constant Editor_Location'Class := Get_Location (Data, 1);
@@ -2493,6 +2509,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, Constructor_Method, 3, 3, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, Comparison_Method, 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "__repr__", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, Addition_Method, 1, 1, Location_Cmds'Access, EditorLoc);
       Register_Command

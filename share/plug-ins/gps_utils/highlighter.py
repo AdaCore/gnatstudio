@@ -545,7 +545,12 @@ class Location_Highlighter(Background_Highlighter):
             if s <= ref <= e:
                 u = entity_name.decode("utf-8").lower()
                 s2 = GPS.EditorLocation(buffer, ref.line(), ref.column())
-                e2 = s2 + len(u) - 1
+                
+                try:
+                    e2 = s2 + len(u) - 1
+                except:
+                    # An invalid location ?
+                    continue
 
                 b = buffer.get_chars(s2, e2).decode("utf-8").lower()
                 if b == u:

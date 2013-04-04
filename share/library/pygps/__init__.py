@@ -190,8 +190,12 @@ try:
 
                     submenu = w.get_submenu()
                     if submenu:
-                        self.to_traverse.extend(
-                            (c, accel_path + '/', level + 1) for c in submenu)
+                        index = self.index
+                        for c in submenu:
+                            self.to_traverse.insert(
+                                index,
+                                (c, accel_path + '/', level + 1))
+                            index += 1
 
                     if result:
                         return result
@@ -206,13 +210,19 @@ try:
     class MenuTree(object):
         """Iterates over a menu and all its submenus. For each item, return
            a tuple (menu, label, accel, level), where menu is the
-           Gtk.MenuItem widget"""
+           Gtk.MenuItem widget.
+        """
 
-        def __init__(self, menu):
+        def __init__(self, menu, accel_prefix="<gps>/"):
+            """
+            :param accel_prefix: added to the accel_path of each tuple
+               returned by the iteration.
+            """
             self.menu = menu
+            self.prefix = accel_prefix
 
         def __iter__(self):
-            return MenuIterator(self.menu, '<gps>/')
+            return MenuIterator(self.menu, self.prefix)
 
 
     def get_widget_by_name(name, list=None):
