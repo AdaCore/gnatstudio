@@ -25,7 +25,6 @@ with Remote;                    use Remote;
 with Interactive_Consoles;      use Interactive_Consoles;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GPS.Kernel.Messages;
-with Extending_Environments;    use Extending_Environments;
 with Build_Command_Utils;       use Build_Command_Utils;
 
 package Commands.Builder is
@@ -49,7 +48,6 @@ package Commands.Builder is
       Console          : Interactive_Console;
       Directory        : Virtual_File;
       Builder          : Builder_Context;
-      Background_Env   : Extending_Environment;
       Target_Name      : String;
       Mode             : String;
       Category_Name    : Unbounded_String;

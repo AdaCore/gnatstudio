@@ -31,41 +31,16 @@ with GPS.Kernel.Interactive;           use GPS.Kernel.Interactive;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Intl;                         use GPS.Intl;
 
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-with GPS.Tools_Output;          use GPS.Tools_Output;
+with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
+with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 package body Commands.Builder is
 
    Shell_Env : constant String := Getenv ("SHELL").all;
 
    type Build_Callback_Data is new Callback_Data_Record with record
-      Target_Name   : Unbounded_String;
-      --  The name of the target being built
-
-      Mode_Name     : Unbounded_String;
-      --  The name of the mode being built
-
-      Category_Name : Unbounded_String;
-      --  The name of the messages category to create messages in messages
-      --  container.
-
-      Background : Boolean := False;
-      --  Whether this is a background build
-
-      Shadow : Boolean := False;
-      --  Whether this is a Shadow build
-
-      Is_A_Run : Boolean := False;
-      --  Whether this is a run build
-
-      Background_Env : Extending_Environment;
-      --  The extending environment created for the purpose of running this
-      --  target.
-
       Output_Parser  : Tools_Output_Parser_Access;
       --  Chain of output parsers
-
-      Builder        : Builder_Context;
    end record;
 
    type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
@@ -157,36 +132,6 @@ package body Commands.Builder is
       if Build_Data.Output_Parser /= null then
          Build_Data.Output_Parser.End_Of_Stream (Status, Data.Command);
       end if;
-
-      if Build_Data.Is_A_Run then
-         --  Nothing to do for runs.
-         return;
-      end if;
-
-      Destroy (Build_Data.Background_Env);
-
-      if Build_Data.Background then
-         --  We remove the previous background build data messages only when
-         --  the new background build is completed.
-
-         Get_Messages_Container (Data.Kernel).Remove_Category
-           (Previous_Background_Build_Id (Build_Data.Builder),
-            Background_Message_Flags);
-
-         Background_Build_Finished (Build_Data.Builder);
-      end if;
-
-      --  ??? should also pass the Status value to Compilation_Finished
-      --  and to the corresponding hook
-
-      Compilation_Finished
-        (Data.Kernel,
-         To_String (Build_Data.Category_Name),
-         To_String (Build_Data.Target_Name),
-         To_String (Build_Data.Mode_Name),
-         Build_Data.Shadow,
-         Build_Data.Background,
-         Status);
    end End_Build_Callback;
 
    --------------------
@@ -215,7 +160,6 @@ package body Commands.Builder is
       Console          : Interactive_Console;
       Directory        : Virtual_File;
       Builder          : Builder_Context;
-      Background_Env   : Extending_Environment;
       Target_Name      : String;
       Mode             : String;
       Category_Name    : Unbounded_String;
@@ -232,14 +176,6 @@ package body Commands.Builder is
       Created_Command : Scheduled_Command_Access;
    begin
       Data := new Build_Callback_Data;
-      Data.Target_Name := To_Unbounded_String (Target_Name);
-      Data.Builder := Builder;
-      Data.Category_Name  := Category_Name;
-      Data.Mode_Name      := To_Unbounded_String (Mode);
-      Data.Shadow         := Shadow;
-      Data.Background     := Background;
-      Data.Background_Env := Background_Env;
-      Data.Is_A_Run       := Is_Run;
       Data.Output_Parser  := New_Parser_Chain (Target_Name);
 
       Show_Command := not Background and not Quiet;
@@ -248,7 +184,7 @@ package body Commands.Builder is
          --  If we are starting a "real" build, remove messages from the
          --  current background build
          Get_Messages_Container (Kernel).Remove_Category
-           (Data.Builder.Previous_Background_Build_Id,
+           (Builder.Previous_Background_Build_Id,
             Background_Message_Flags);
       end if;
 
@@ -277,10 +213,10 @@ package body Commands.Builder is
                Shadow, Background);
          end if;
 
+         Cmd_Name := To_Unbounded_String (Target_Name);
+
          if Mode /= "default" then
-            Cmd_Name := Data.Target_Name & " (" & Data.Mode_Name & ")";
-         else
-            Cmd_Name := Data.Target_Name;
+            Cmd_Name := Cmd_Name & " (" & Mode & ")";
          end if;
 
          if Use_Shell

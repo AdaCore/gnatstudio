@@ -46,6 +46,7 @@ with GPS.Tools_Output;            use GPS.Tools_Output;
 with Build_Command_Manager.Build_Output_Collectors;
 with Build_Command_Manager.Console_Writers;
 with Build_Command_Manager.Location_Parsers;
+with Build_Command_Manager.End_Of_Build;
 with GPS.Kernel.Task_Manager;
 
 package body Build_Command_Manager is
@@ -55,6 +56,7 @@ package body Build_Command_Manager is
    Output_Collector   : aliased Build_Output_Collectors.Output_Parser_Fabric;
    Console_Writer     : aliased Console_Writers.Output_Parser_Fabric;
    Location_Parser    : aliased Location_Parsers.Output_Parser_Fabric;
+   End_Of_Run         : aliased End_Of_Build.Output_Parser_Fabric;
    Parsers_Registered : Boolean := False;
 
    procedure Register_Output_Parsers;
@@ -542,7 +544,7 @@ package body Build_Command_Manager is
             Background => Background);
 
          Location_Parser.Set
-           (Kernel            => (Kernel_Handle (Builder.Kernel)),
+           (Kernel            => Kernel_Handle (Builder.Kernel),
             Category          => To_String (Category_Name),
             Styles            => GPS.Styles.UI.Builder_Styles,
             Show_In_Locations => not Background);
@@ -559,6 +561,8 @@ package body Build_Command_Manager is
                   Console_Writer.Set_Console (Console);
                end if;
             end if;
+
+            End_Of_Run.Disable;
          else
             Console := Get_Build_Console
               ((Kernel_Handle (Builder.Kernel)), Shadow, Background, False);
@@ -569,6 +573,15 @@ package body Build_Command_Manager is
                Console_Writer.Raise_Console_On_Error
                  (Kernel_Handle (Builder.Kernel), Category_Name);
             end if;
+
+            End_Of_Run.Enable
+              (Builder    => Builder,
+               Env        => Background_Env,
+               Category   => Category_Name,
+               Target     => Target_Name,
+               Mode       => Mode_Name,
+               Shadow     => Shadow,
+               Background => Background);
          end if;
 
          Launch_Build_Command
@@ -581,7 +594,6 @@ package body Build_Command_Manager is
             Directory        => Dir,
             Is_Run           => Is_Run (T),
             Builder          => Builder,
-            Background_Env   => Background_Env,
             Target_Name      => Target_Name,
             Mode             => Mode,
             Category_Name    => Category_Name,
@@ -789,6 +801,7 @@ package body Build_Command_Manager is
       Register_Output_Parser (Console_Writer'Access, "console_writer");
       Register_Output_Parser (Location_Parser'Access, "location_parser");
       Register_Output_Parser (Output_Collector'Access, "output_collector");
+      Register_Output_Parser (End_Of_Run'Access, "end_of_build");
 
       Parsers_Registered := True;
    end Register_Output_Parsers;

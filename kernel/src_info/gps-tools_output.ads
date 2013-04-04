@@ -66,10 +66,6 @@ package GPS.Tools_Output is
       return Tools_Output_Parser_Access is abstract;
    --  Create output parser object. Set Child as next item in the chain
 
-   type Parser_Priority is range 0 .. 1023;
-   --  Priority is used to sort chain of output parser on creation.
-   --  Parser with lower priority is executed first
-
    procedure Register_Output_Parser
      (Fabric   : access Output_Parser_Fabric'Class;
       Name     : String);

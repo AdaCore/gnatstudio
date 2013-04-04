@@ -54,7 +54,8 @@ package body GPS.Tools_Output is
      "location_parser"  & " " &
      "text_splitter"    & " " &
      "output_collector" & " " &
-     "elaboration_cycles";
+     "elaboration_cycles" & " " &
+     "end_of_build";
 
    Space : constant Ada.Strings.Maps.Character_Set :=
      Ada.Strings.Maps.To_Set (" " & CR & LF & HT);
