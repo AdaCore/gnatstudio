@@ -1088,9 +1088,20 @@ package body Completion_Window is
       then
          Pos := Natural (Get_Int (Window.Explorer.Model, Iter, Index_Column));
 
+         --  Delete text between beginning of symbol to be completed
+         --  and the end of the existing symbol
+
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
          Get_Iter_At_Mark
            (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
+
+         -- Forward Text_End iter to end of identifier
+
+         Result := True;
+         while Result
+           and then Is_Word_Char (Window.Lang, Get_Char (Text_End)) loop
+            Forward_Char (Text_End, Result);
+         end loop;
 
          Window.In_Deletion := True;
          Delete (Window.Buffer, Text_Begin, Text_End);
