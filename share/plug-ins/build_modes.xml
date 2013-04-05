@@ -4,6 +4,7 @@
 <GPS>
  <builder-mode name="default">
   <description>Build with default switches defined in the project</description>
+  <subdir>.</subdir>
  </builder-mode>
 
  <builder-mode name="debug">
