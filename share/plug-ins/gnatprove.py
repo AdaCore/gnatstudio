@@ -416,19 +416,21 @@ class GNATprove_Parser(tool_output.OutputParser):
     GNATprove_Message objects instead of GPS.Message objects"""
 
     def on_stdout(self,text):
+        GPS.Console("Messages").write(text)
         lines = text.splitlines()
         for line in lines:
             sl = line.split(':')
             if len(sl) >= 4:
+                message_text = ':'.join(sl[3:]).strip()
+                message_text = message_text.replace('<','&lt;')
+                message_text = message_text.replace('>','&gt;')
                 m = GNATprove_Message(
                         toolname,
                         GPS.File(sl[0]),
                         int(sl[1]),
                         int(sl[2]),
-                        ':'.join(sl[3:]).strip(),
+                        message_text,
                         0)
-            else:
-                GPS.Console("Messages").write(line + '\n')
 
 def is_subp_decl_context(self):
     """Check whether the given context is the context of a subprogram
