@@ -939,19 +939,21 @@ package body Gtkada.Abstract_Filter_Model is
    begin
       Self.Stamp := Self.Stamp + 1;
 
-      --  Lookup for parent node.
+      --  Lookup for parent node, if any
 
-      for J in Indices'First .. Indices'Last - 1 loop
-         Parent := Parent.Children (Natural (Indices (J)));
-      end loop;
+      if Indices'Length /= 0 then
+         for J in Indices'First .. Indices'Last - 1 loop
+            Parent := Parent.Children (Natural (Indices (J)));
+         end loop;
 
-      --  Obtain children node.
+         --  Obtain children node.
 
-      Child := Parent.Children (Natural (Indices (Indices'Last)));
+         Child := Parent.Children (Natural (Indices (Indices'Last)));
 
-      --  Hide child node.
+         --  Hide child node.
 
-      Self.Hide (Child, True);
+         Self.Hide (Child, True);
+      end if;
    end On_Row_Deleted_Callback;
 
    ------------------------------
