@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with String_Utils;            use String_Utils;
@@ -617,24 +616,11 @@ package body Language.Tree is
          when Enclosing =>
             declare
                It : Construct_Tree_Iterator := First (Tree);
-               Line : Natural;
             begin
-               if Location.Absolute_Offset then
-                  Line := 0;
-               else
-                  Line := Location.Line;
-               end if;
-
                while It /= Null_Construct_Tree_Iterator loop
-                  --  Only compare lines, not columns, since most likely the
-                  --  cursor is not exactly within the scope of the
-                  --  declaration (for instance, a subprogram's declaration
-                  --  starts at column 4, but the cursor is on column 1 of the
-                  --  same line => we still want to return the subprogram).
+                  exit when Location < It.Node.Construct.Sloc_Start;
 
-                  exit when Line < It.Node.Construct.Sloc_Start.Line;
-
-                  if Line <= It.Node.Construct.Sloc_End.Line then
+                  if Location <= It.Node.Construct.Sloc_End then
                      if Match_Category (It.Node.Construct.Category) then
                         Last_Matched := It;
                      end if;
@@ -858,29 +844,49 @@ package body Language.Tree is
    -------------------
 
    --  ??? This is language dependent, to be either moved into a language
-   --  dependent package or made language independent
-
+   --  dependent package or made language indepenend
    function Get_Full_Name
      (Tree : Construct_Tree; It : Construct_Tree_Iterator)
       return String
    is
-      Name : Unbounded_String;
+      Length  : Integer;
       Current : Construct_Tree_Iterator := Get_Parent_Scope (Tree, It);
    begin
       if Get_Construct (It).Name = No_Symbol then
          return "";
       end if;
 
-      Name := To_Unbounded_String (Get (Get_Construct (It).Name).all);
+      Length := Get (Get_Construct (It).Name)'Length;
 
-      while Current /= Null_Construct_Tree_Iterator loop
-         Name := Get (Get_Construct (Current).Name).all
-           & '.'
-           & Name;
+      while Current /= Null_Construct_Tree_Iterator
+        and then Get_Construct (Current).Category = Cat_Package
+      loop
+         Length := Length + 1 + Get (Get_Construct (Current).Name)'Length;
          Current := Get_Parent_Scope (Tree, Current);
       end loop;
 
-      return To_String (Name);
+      declare
+         Name  : String (1 .. Length);
+         Index : Natural := Length;
+      begin
+         Name (Index - Get (Get_Construct (It).Name)'Length + 1 .. Index) :=
+           Get (Get_Construct (It).Name).all;
+
+         Index := Index - Get (Get_Construct (It).Name)'Length;
+         Current := Get_Parent_Scope (Tree, It);
+
+         while Current /= Null_Construct_Tree_Iterator
+           and then Get_Construct (Current).Category = Cat_Package
+         loop
+            Name (Index - Get (Get_Construct (Current).Name)'Length .. Index)
+              := Get (Get_Construct (Current).Name).all & ".";
+
+            Index := Index - 1 - Get (Get_Construct (Current).Name)'Length;
+            Current := Get_Parent_Scope (Tree, Current);
+         end loop;
+
+         return Name;
+      end;
    end Get_Full_Name;
 
    ------------------------------
