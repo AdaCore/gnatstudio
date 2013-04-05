@@ -208,13 +208,12 @@ package body GPS.Tree_View.Locations is
      (Self  : not null access GPS_Locations_Tree_View_Record'Class;
       Model : Gtk.Tree_Model.Gtk_Tree_Model)
    is
-
    begin
       GPS.Tree_View.Initialize (Self, Model);
       Class_Initialize (Self);
       Gtk_New (Self.Sort, -Model);
-      GPS.Location_View_Filter.Gtk_New (Self.Filter);
-      Self.Filter.Set_Source_Model (Self.Sort);
+      GPS.Location_View_Filter.Gtk_New
+        (Self.Filter, To_Interface (Self.Sort));
       Self.Set_Source_Model (Self.Filter);
    end Initialize;
 
@@ -555,9 +554,14 @@ package body GPS.Tree_View.Locations is
    overriding function To_Lowest_Model_Iter
      (Self : not null access GPS_Locations_Tree_View_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter is
+      return Gtk.Tree_Model.Gtk_Tree_Iter
+   is
+      It : Gtk_Tree_Iter;
    begin
-      return Self.Sort.Map_To_Source (Self.Filter.Map_To_Source (Iter));
+      --  ??? How come we need access to this low-level info ?
+      Self.Filter.Convert_Iter_To_Child_Iter
+        (Child_Iter => It, Filter_Iter => Iter);
+      return Self.Sort.Map_To_Source (It);
    end To_Lowest_Model_Iter;
 
 end GPS.Tree_View.Locations;

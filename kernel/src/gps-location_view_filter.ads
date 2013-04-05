@@ -17,18 +17,20 @@
 
 private with GNAT.Expect;
 private with GNAT.Strings;
-private with Glib.Values;
-private with Gtk.Tree_Model;
-with Gtkada.Abstract_Filter_Model;
+with Gtk.Tree_Model_Filter;
+with Gtk.Tree_Model;
 
 package GPS.Location_View_Filter is
 
    type Location_View_Filter_Model_Record is
-     new Gtkada.Abstract_Filter_Model.Gtk_Abstract_Filter_Model_Record
-       with private;
-
+     new Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter_Record with private;
    type Location_View_Filter_Model is
      access all Location_View_Filter_Model_Record'Class;
+
+   procedure Gtk_New
+     (Model       : out Location_View_Filter_Model;
+      Child_Model : Gtk.Tree_Model.Gtk_Tree_Model);
+   --  Create a new model
 
    procedure Set_Pattern
      (Self         : not null access Location_View_Filter_Model_Record;
@@ -37,32 +39,14 @@ package GPS.Location_View_Filter is
       Hide_Matched : Boolean);
    --  Sets pattern to be used for filtering.
 
-   procedure Gtk_New (Model : out Location_View_Filter_Model);
-
-   procedure Initialize
-     (Self : not null access Location_View_Filter_Model_Record'Class);
-
 private
 
    type Location_View_Filter_Model_Record is
-     new Gtkada.Abstract_Filter_Model.Gtk_Abstract_Filter_Model_Record
+     new Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter_Record
    with record
       Regexp  : GNAT.Expect.Pattern_Matcher_Access;
       Text    : GNAT.Strings.String_Access;
       Is_Hide : Boolean := False;
    end record;
-
-   overriding function Is_Visible
-     (Self        : not null access Location_View_Filter_Model_Record;
-      Source_Path : Gtk.Tree_Model.Gtk_Tree_Path;
-      Source_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Boolean;
-
-   overriding procedure Get_Value
-     (Self   : access Location_View_Filter_Model_Record;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      Value  : out Glib.Values.GValue);
-   --  Returns value at the specified position.
 
 end GPS.Location_View_Filter;
