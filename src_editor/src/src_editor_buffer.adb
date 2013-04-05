@@ -663,7 +663,7 @@ package body Src_Editor_Buffer is
       Chars                : Interfaces.C.Strings.chars_ptr;
 
    begin
-      if Line not in Buffer.Editable_Lines'Range then
+      if Line not in 1 .. Buffer.Last_Editable_Line then
          return Result;
       end if;
 
@@ -1273,7 +1273,7 @@ package body Src_Editor_Buffer is
       end if;
 
       if Buffer.Editable_Lines /= null then
-         if Line in Buffer.Editable_Lines'Range then
+         if Line in 1 .. Buffer.Last_Editable_Line then
             if Buffer.Editable_Lines (Line).Where = In_Buffer then
                return Buffer.Editable_Lines (Line).Buffer_Line;
             end if;
@@ -2376,7 +2376,7 @@ package body Src_Editor_Buffer is
 
    begin
       if Buffer_Line = 0 then
-         if Line in Buffer.Editable_Lines'Range
+         if Line in 1 .. Buffer.Last_Editable_Line
            and then Buffer.Editable_Lines (Line).Where = In_Mark
            and then Buffer.Editable_Lines (Line).Text /= null
            and then Buffer.Editable_Lines (Line).Text'Length >= Column - 1
@@ -3777,7 +3777,7 @@ package body Src_Editor_Buffer is
 
          File_Saved (Buffer.Kernel, Filename);
 
-         for J in Buffer.Editable_Lines'Range loop
+         for J in 1 .. Buffer.Last_Editable_Line loop
             Buffer_Line := Get_Buffer_Line (Buffer, J);
 
             if Buffer_Line /= 0
@@ -7301,7 +7301,7 @@ package body Src_Editor_Buffer is
       J       : Natural;
    begin
       if Buffer.Editable_Lines = null
-        or else Line not in Buffer.Editable_Lines'Range
+        or else Line not in 1 .. Buffer.Last_Editable_Line
       then
          return Current;
       end if;
@@ -7365,7 +7365,7 @@ package body Src_Editor_Buffer is
       J       : Natural;
 
    begin
-      if Column = 0 or else Line not in Buffer.Editable_Lines'Range then
+      if Column = 0 or else Line not in 1 .. Buffer.Last_Editable_Line then
          return 0;
       end if;
 
