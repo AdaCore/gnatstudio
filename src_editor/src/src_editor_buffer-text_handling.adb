@@ -26,6 +26,8 @@ with Language;           use Language;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+
 package body Src_Editor_Buffer.Text_Handling is
 
    --  ??? Must implement functions that do not require unfolding of lines.
@@ -51,7 +53,8 @@ package body Src_Editor_Buffer.Text_Handling is
       Line_Begin   : out Editable_Line_Type;
       Column_Begin : out Character_Offset_Type;
       Line_End     : out Editable_Line_Type;
-      Column_End   : out Character_Offset_Type);
+      Column_End   : out Character_Offset_Type;
+      Valid        : out Boolean);
    --  Get the positions around the given position
 
    ------------------
@@ -67,11 +70,19 @@ package body Src_Editor_Buffer.Text_Handling is
       Line_Begin   : out Editable_Line_Type;
       Column_Begin : out Character_Offset_Type;
       Line_End     : out Editable_Line_Type;
-      Column_End   : out Character_Offset_Type)
+      Column_End   : out Character_Offset_Type;
+      Valid        : out Boolean)
    is
       Iter   : Gtk_Text_Iter;
       Result : Boolean := True;
    begin
+      Valid := True;
+
+      if not Is_Valid_Position (Buffer, Line, Col) then
+         Valid := False;
+         return;
+      end if;
+
       Get_Iter (Buffer, Iter, Line, Col);
       Line_Begin := Line;
 
@@ -225,6 +236,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Start_Iter               : Gtk_Text_Iter;
       End_Iter                 : Gtk_Text_Iter;
       Has_Selection            : Boolean;
+      Valid                    : Boolean;
    begin
       if Line = 0 then
          Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Has_Selection);
@@ -238,7 +250,15 @@ package body Src_Editor_Buffer.Text_Handling is
       else
          Get_Location
            (Buffer, Line, Column, Before, After,
-            Line_Begin, Column_Begin, Line_End, Column_End);
+            Line_Begin, Column_Begin, Line_End, Column_End, Valid);
+
+         if not Valid then
+            Insert
+              (Buffer.Get_Kernel,
+               Text   => "Invalid location, cannot get chars",
+               Mode   => Error);
+            return "";
+         end if;
 
          return
            Get_Chars (Buffer, Line_Begin, Column_Begin, Line_End, Column_End);
@@ -259,6 +279,7 @@ package body Src_Editor_Buffer.Text_Handling is
    is
       Line_Begin, Line_End     : Editable_Line_Type;
       Column_Begin, Column_End : Character_Offset_Type;
+      Valid                    : Boolean;
    begin
       if not Get_Writable (Buffer) then
          return;
@@ -266,10 +287,18 @@ package body Src_Editor_Buffer.Text_Handling is
 
       Get_Location
         (Buffer, Line, Column, Before, After,
-         Line_Begin, Column_Begin, Line_End, Column_End);
+         Line_Begin, Column_Begin, Line_End, Column_End,
+         Valid);
 
-      Replace_Slice
-        (Buffer, Text, Line_Begin, Column_Begin, Line_End, Column_End);
+      if Valid then
+         Replace_Slice
+           (Buffer, Text, Line_Begin, Column_Begin, Line_End, Column_End);
+      else
+         Insert
+           (Buffer.Get_Kernel,
+            Text   => "Invalid location, cannot replace",
+            Mode   => Error);
+      end if;
    end Replace_Slice;
 
    -------------------
