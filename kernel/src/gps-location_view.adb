@@ -86,6 +86,11 @@ package body GPS.Location_View is
    Command_Export_Name : constant String := "Locations export to text file";
    Command_Export_Tip : constant String :=
      "Export the selected category or file to a text file";
+   Command_Toggle_Sort_By_Subcategory : constant String :=
+     "Locations toggle sort by subcategory";
+   Command_Toggle_Sort_By_Subcategory_Tip : constant String :=
+     "Changes the sort order in the locations window. When active, this will"
+     & " group all error messages together, and then warning messages";
 
    History_Sort_By_Subcategory : constant History_Key :=
      "locations-sort-by-subcategory";
@@ -194,6 +199,14 @@ package body GPS.Location_View is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Export selection to a text file
+
+   type Toggle_Sort_By_Subcategory_Command is
+     new Commands.Interactive.Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Toggle_Sort_By_Subcategory_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Changes sort order in locations view.
 
    --------------
    -- Messages --
@@ -783,6 +796,27 @@ package body GPS.Location_View is
       Path_Free (Path);
    end Context_Func;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Toggle_Sort_By_Subcategory_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      H : constant Histories.History := Get_History (K);
+      V : constant Location_View := Location_Views.Retrieve_View (K);
+   begin
+      Set_History
+        (H.all, History_Sort_By_Subcategory,
+         not Get_History (H.all, History_Sort_By_Subcategory));
+      On_Change_Sort (V);
+      return Commands.Success;
+   end Execute;
+
    --------------------
    -- On_Change_Sort --
    --------------------
@@ -1197,6 +1231,12 @@ package body GPS.Location_View is
       Command := new Export_Command;
       Register_Action
         (Kernel, Command_Export_Name, Command, Command_Export_Tip,
+         null, -"Locations");
+
+      Command := new Toggle_Sort_By_Subcategory_Command;
+      Register_Action
+        (Kernel, Command_Toggle_Sort_By_Subcategory,
+         Command, Command_Toggle_Sort_By_Subcategory_Tip,
          null, -"Locations");
 
       Get_Messages_Container (Kernel).Register_Listener
