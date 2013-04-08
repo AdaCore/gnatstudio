@@ -5683,6 +5683,14 @@ package body Src_Editor_Buffer is
          return New_Block;
       end if;
 
+      --  If we are inserting internally (for instance blank lines) then
+      --  we should not update the contents at this stage: the editor does
+      --  not know yet that the lines that we have just inserted are
+      --  special
+      if Editor.Inserting then
+         return New_Block;
+      end if;
+
       Update_Contents
         (Db      => Editor.Kernel.Get_Construct_Database,
          File    => Editor.Filename);
@@ -5714,8 +5722,8 @@ package body Src_Editor_Buffer is
       begin
          return Block_Record'
            (Indentation_Level => 0,
-            Offset_Start      => Current.Sloc_Start.Index,
-            Stored_Offset     => Current.Sloc_Start.Index,
+            Offset_Start      => Current.Sloc_Start.Column,
+            Stored_Offset     => Current.Sloc_Start.Column,
             First_Line      => Editable_Line_Type (Current.Sloc_Start.Line),
             Last_Line         => Editable_Line_Type (Current.Sloc_End.Line),
             Name              => Current.Name,
