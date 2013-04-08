@@ -667,6 +667,13 @@ package body Build_Command_Utils is
          if Param = "subdir" then
             return +Subdir;
 
+         elsif Param = "subdirsarg" then
+            if Subdir = "" then
+               return "";
+            else
+               return "--subdirs=" & (+Subdir);
+            end if;
+
          elsif Background
            and then not Simulate
            and then (Param = "pp" or else Param = "PP")
