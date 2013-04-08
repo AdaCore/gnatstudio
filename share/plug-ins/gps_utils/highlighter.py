@@ -379,15 +379,20 @@ class Background_Highlighter(object):
             elif max_line < end_line:
                 to_line = min(end_line - 1, max_line + self.batch_size)
 
-                f = GPS.EditorLocation(buffer, max_line, 1)
-                e = GPS.EditorLocation(buffer, to_line, 1).end_of_line()
+                # It is possible that the buffer has been changed so that one
+                # of the locations is now invalid, so we just protect.
+                try:
+                    f = GPS.EditorLocation(buffer, max_line, 1)
+                    e = GPS.EditorLocation(buffer, to_line, 1).end_of_line()
 
-                if self.style:
-                    self.style.remove(f, e)
-                self.process(f, e)
+                    if self.style:
+                        self.style.remove(f, e)
+                    self.process(f, e)
 
-                max_line = to_line + 1
-                changed = True
+                    max_line = to_line + 1
+                    changed = True
+                except:
+                    pass
 
             if changed:
                 self.__buffers[0] = (
