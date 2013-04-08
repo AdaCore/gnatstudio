@@ -71,6 +71,7 @@ with Find_Utils;                use Find_Utils;
 with Generic_Views;
 with Histories;                 use Histories;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -106,7 +107,13 @@ package body Project_Explorers is
    Show_Flat_View      : constant History_Key :=
                            "explorer-show-flat-view";
    Show_Hidden_Dirs    : constant History_Key :=
-                           "explorer-show-hidden-directories";
+     "explorer-show-hidden-directories";
+
+   Toggle_Absolute_Path_Name : constant String :=
+     "Explorer toggle absolute paths";
+   Toggle_Absolute_Path_Tip : constant String :=
+     "Toggle the display of absolute paths or just base names in the"
+     & " project explorer";
 
    Projects_Before_Directories : constant Boolean := False;
    --  <preference> True if the projects should be displayed, when sorted,
@@ -151,6 +158,13 @@ package body Project_Explorers is
    -----------------------
    -- Local subprograms --
    -----------------------
+
+   type Toggle_Absolute_Path_Command is
+      new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Toggle_Absolute_Path_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
 
    function Hash (Key : Filesystem_String) return Ada.Containers.Hash_Type;
    pragma Inline (Hash);
@@ -1268,6 +1282,27 @@ package body Project_Explorers is
          end;
       end if;
    end Update_Directory_Node_Text;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Toggle_Absolute_Path_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      H : constant Histories.History := Get_History (K);
+      V : constant Project_Explorer := Explorer_Views.Retrieve_View (K);
+   begin
+      Set_History
+        (H.all, Show_Absolute_Paths,
+         not Get_History (H.all, Show_Absolute_Paths));
+      Update_Absolute_Paths (V);
+      return Commands.Success;
+   end Execute;
 
    ---------------------------
    -- Update_Absolute_Paths --
@@ -3162,6 +3197,12 @@ package body Project_Explorers is
          Filter => Lookup_Filter (Kernel, "Project only")
                      and not Create (Module => Explorer_Module_Name),
          Label  => "Locate in Project View: %p");
+
+      Command := new Toggle_Absolute_Path_Command;
+      Register_Action
+        (Kernel, Toggle_Absolute_Path_Name,
+         Command, Toggle_Absolute_Path_Tip,
+         null, -"Project Explorer");
 
       Extra := new Explorer_Search_Extra_Record;
       Gtk.Box.Initialize_Vbox (Extra);
