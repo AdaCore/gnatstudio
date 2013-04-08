@@ -14,13 +14,16 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  This is concrete implementation of generic sorting proxy model to be used
---  in locations view.
+
+--  A model that provides sorting for the Locations view.
+
+with Gtk.Tree_Model_Sort;   use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Model;        use Gtk.Tree_Model;
 
 package GPS.Sort_Model.Locations is
 
    type Locations_Proxy_Model_Record is
-     new GPS_Sort_Model_Record with private;
+     new Gtk_Tree_Model_Sort_Record with null record;
 
    type Locations_Proxy_Model is
      access all Locations_Proxy_Model_Record'Class;
@@ -29,36 +32,14 @@ package GPS.Sort_Model.Locations is
      (Model  : in out Locations_Proxy_Model;
       Source : not null
          access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
+   --  Wraps a locations model so that we can provide sorting without changing
+   --  the model itself.
 
-   procedure Initialize
-     (Self   : not null access Locations_Proxy_Model_Record'Class;
-      Source : not null
-         access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
+   type Sort_Order is (By_Location, By_Category);
 
-   procedure Set_Locations_Order
-     (Self : not null access Locations_Proxy_Model_Record'Class);
-   --  Set sorting by locations mode
-
-   procedure Set_Weight_Order
-     (Self : not null access Locations_Proxy_Model_Record'Class);
-   --  Set sorting by weight (subcategory) mode
-
-private
-
-   type Compare_Function is
-     access function
-       (Self : Gtk.Tree_Model.Gtk_Tree_Model;
-        A    : Gtk.Tree_Model.Gtk_Tree_Iter;
-        B    : Gtk.Tree_Model.Gtk_Tree_Iter) return Glib.Gint;
-
-   type Locations_Proxy_Model_Record is
-     new GPS_Sort_Model_Record with record
-      Compare : Compare_Function;
-   end record;
-
-   overriding function Less_Than
-     (Self  : not null access Locations_Proxy_Model_Record;
-      Left  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Right : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
+   procedure Set_Order
+     (Self  : not null access Locations_Proxy_Model_Record'Class;
+      Order : Sort_Order);
+   --  Set the sort order for Self.
 
 end GPS.Sort_Model.Locations;

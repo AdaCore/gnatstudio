@@ -15,20 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS.GtkAda;
-with GPS.Kernel.Messages;
-with GPS.Location_View.Listener;
+with Glib;                       use Glib;
+with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS, GNATCOLL.VFS.GtkAda;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Location_View.Listener; use GPS.Location_View.Listener;
 
 package body GPS.Sort_Model.Locations is
 
-   use Glib;
-   use Gtk.Tree_Model;
-   use GNATCOLL.VFS;
-   use GNATCOLL.VFS.GtkAda;
-   use GPS.Kernel.Messages;
-   use GPS.Location_View.Listener;
-
-   type Compare_Functions is array (Positive range <>) of Compare_Function;
+   type Compare_Functions is
+     array (Positive range <>) of Gtk_Tree_Iter_Compare_Func;
 
    function Compare
      (Model : Gtk_Tree_Model;
@@ -106,13 +101,12 @@ package body GPS.Sort_Model.Locations is
       B    : Gtk_Tree_Iter) return Gint
    is
       Path  : constant Gtk_Tree_Path := Get_Path (Self, A);
-      Depth : Natural;
+      Depth : constant Natural := Natural (Get_Depth (Path));
 
    begin
-      --  GtkTreeSortModel breaks underling order of equal rows, so return
-      --  result of compare of last indices to save underling order.
+      --  GtkTreeSortModel breaks underlying order of equal rows, so return
+      --  result of compare of last indices to save underlying order.
 
-      Depth := Natural (Get_Depth (Path));
       Path_Free (Path);
 
       if Depth = 2 then
@@ -327,62 +321,30 @@ package body GPS.Sort_Model.Locations is
 
    procedure Gtk_New
      (Model  : in out Locations_Proxy_Model;
-      Source : not null access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class)
-   is
+      Source : not null access Gtk_Root_Tree_Model_Record'Class) is
    begin
       Model := new Locations_Proxy_Model_Record;
-      GPS.Sort_Model.Locations.Initialize (Model, Source);
+      Gtk.Tree_Model_Sort.Initialize_With_Model
+        (Model, Child_Model => To_Interface (Source));
+      Model.Set_Order (By_Location);
    end Gtk_New;
 
-   ----------------
-   -- Initialize --
-   ----------------
+   ---------------
+   -- Set_Order --
+   ---------------
 
-   procedure Initialize
-     (Self   : not null access Locations_Proxy_Model_Record'Class;
-      Source : not null access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class)
+   procedure Set_Order
+     (Self  : not null access Locations_Proxy_Model_Record'Class;
+      Order : Sort_Order)
    is
    begin
-      Self.Compare := Compare_By_Location'Access;
-      GPS.Sort_Model.Initialize (Self, Source);
-   end Initialize;
+      case Order is
+         when By_Location =>
+            Self.Set_Default_Sort_Func (Compare_By_Location'Access);
 
-   ---------------
-   -- Less_Than --
-   ---------------
-
-   overriding function Less_Than
-     (Self  : not null access Locations_Proxy_Model_Record;
-      Left  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Right : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean is
-   begin
-      return Self.Compare (Self.Source, Left, Right) < 0;
-   end Less_Than;
-
-   -------------------------
-   -- Set_Locations_Order --
-   -------------------------
-
-   procedure Set_Locations_Order
-     (Self : not null access Locations_Proxy_Model_Record'Class) is
-   begin
-      if Self.Compare /= Compare_By_Location'Access then
-         Self.Compare := Compare_By_Location'Access;
-         Self.Invalidate;
-      end if;
-   end Set_Locations_Order;
-
-   ----------------------
-   -- Set_Weight_Order --
-   ----------------------
-
-   procedure Set_Weight_Order
-     (Self : not null access Locations_Proxy_Model_Record'Class) is
-   begin
-      if Self.Compare /= Compare_By_Weight'Access then
-         Self.Compare := Compare_By_Weight'Access;
-         Self.Invalidate;
-      end if;
-   end Set_Weight_Order;
+         when By_Category =>
+            Self.Set_Default_Sort_Func (Compare_By_Weight'Access);
+      end case;
+   end Set_Order;
 
 end GPS.Sort_Model.Locations;

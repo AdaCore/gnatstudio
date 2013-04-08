@@ -534,7 +534,7 @@ package body GPS.Tree_View.Locations is
    procedure Sort_By_Location
      (Self : not null access GPS_Locations_Tree_View_Record'Class) is
    begin
-      Self.Sort.Set_Locations_Order;
+      Self.Sort.Set_Order (By_Location);
    end Sort_By_Location;
 
    -------------------------
@@ -544,7 +544,7 @@ package body GPS.Tree_View.Locations is
    procedure Sort_By_Subcategory
      (Self : not null access GPS_Locations_Tree_View_Record'Class) is
    begin
-      Self.Sort.Set_Weight_Order;
+      Self.Sort.Set_Order (By_Category);
    end Sort_By_Subcategory;
 
    ---------------------------
@@ -556,12 +556,14 @@ package body GPS.Tree_View.Locations is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      It : Gtk_Tree_Iter;
+      It, It2 : Gtk_Tree_Iter;
    begin
       --  ??? How come we need access to this low-level info ?
       Self.Filter.Convert_Iter_To_Child_Iter
         (Child_Iter => It, Filter_Iter => Iter);
-      return Self.Sort.Map_To_Source (It);
+      Self.Sort.Convert_Iter_To_Child_Iter
+        (Child_Iter => It2, Sorted_Iter => It);
+      return It2;
    end To_Lowest_Model_Iter;
 
 end GPS.Tree_View.Locations;
