@@ -32,7 +32,6 @@ with Gtk.List_Store;      use Gtk.List_Store;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Toolbar;         use Gtk.Toolbar;
-with Gtk.Tool_Button;     use Gtk.Tool_Button;
 with Gtk.Tree_Model;      use Gtk.Tree_Model;
 with Gtk.Tree_Selection;  use Gtk.Tree_Selection;
 with Gtk.Tree_Store;      use Gtk.Tree_Store;
@@ -42,14 +41,15 @@ with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.MDI;          use Gtkada.MDI;
 
+with Commands.Interactive;  use Commands.Interactive;
 with Projects;              use Projects;
 with Generic_Views;
-with GNAT.Case_Util;        use GNAT.Case_Util;
 with GNAT.Strings;          use GNAT.Strings;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
@@ -63,6 +63,7 @@ with GPS.Intl;              use GPS.Intl;
 with GUI_Utils;             use GUI_Utils;
 with Traces;                use Traces;
 with XML_Utils;             use XML_Utils;
+with Osint;
 
 package body Scenario_Views is
 
@@ -131,12 +132,6 @@ package body Scenario_Views is
    --  This recomputes the scenario view, so that changes are reflected in
    --  other parts of GPS.
 
-   procedure Edit_Variable (View : access GObject_Record'Class);
-   --  Called when editing a variable (name and possible values)
-
-   procedure Delete_Variable (View : access GObject_Record'Class);
-   --  Called when removing a variable
-
    type Refresh_Hook_Record is new Function_No_Args with record
       View : Scenario_View;
    end record;
@@ -154,6 +149,30 @@ package body Scenario_Views is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when a new build mode is selected
+
+   Command_Edit_Variable_Name : constant String :=
+     "Scenario edit variable";
+   Command_Edit_Variable_Tip : constant String :=
+     "Edit properties of the selected variable";
+
+   Command_Delete_Variable_Name : constant String :=
+     "Scenario delete variable";
+   Command_Delete_Variable_Tip : constant String :=
+     "Delete the selected variable";
+
+   type Command_Edit_Variable is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Command_Edit_Variable;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Edit the selected variable
+
+   type Command_Delete_Variable is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Command_Delete_Variable;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Deleted selected variable
 
    ----------------------------
    -- On_Preferences_Changed --
@@ -328,7 +347,6 @@ package body Scenario_Views is
       if Iter /= Null_Iter
         and then Model.Parent (Iter) = Model.Get_Iter (View.Scenario_Node)
       then
-         Trace (Me, "MANU Selected variable");
          declare
             Variable : constant String := Model.Get_String (Iter, 0);
          begin
@@ -336,7 +354,6 @@ package body Scenario_Views is
               (View.Kernel).Scenario_Variables (Variable);
          end;
       elsif Iter /= Null_Iter then
-         Trace (Me, "MANU not a variable " & Model.Get_String (Iter, 0));
          return No_Variable;
       else
          return No_Variable;
@@ -421,12 +438,18 @@ package body Scenario_Views is
          return null;
    end Add_Possible_Values;
 
-   -------------------
-   -- Edit_Variable --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Edit_Variable (View : access GObject_Record'Class) is
-      V : constant Scenario_View := Scenario_View (View);
+   overriding function Execute
+     (Self    : access Command_Edit_Variable;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V : constant Scenario_View := Scenario_Views.Retrieve_View (K);
       Variable : constant Scenario_Variable := Selected_Variable (V);
       Edit : New_Var_Edit;
    begin
@@ -439,15 +462,24 @@ package body Scenario_Views is
             null;
          end loop;
          Destroy (Edit);
+      else
+         Trace (Me, "No selected variable");
       end if;
-   end Edit_Variable;
+      return Commands.Success;
+   end Execute;
 
-   ---------------------
-   -- Delete_Variable --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Delete_Variable (View : access GObject_Record'Class) is
-      V : constant Scenario_View := Scenario_View (View);
+   overriding function Execute
+     (Self    : access Command_Delete_Variable;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V   : constant Scenario_View := Scenario_Views.Retrieve_View (K);
       Var : constant Scenario_Variable := Selected_Variable (V);
 
       Message : constant String :=
@@ -481,7 +513,8 @@ package body Scenario_Views is
             Trace (Me, "Delete_Variable: " & External_Name (Var));
          end if;
       end if;
-   end Delete_Variable;
+      return Commands.Success;
+   end Execute;
 
    --------------------
    -- Create_Toolbar --
@@ -489,9 +522,7 @@ package body Scenario_Views is
 
    overriding procedure Create_Toolbar
      (View    : not null access Scenario_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      Button : Gtk_Tool_Button;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
       Add_Button
         (View.Kernel,
@@ -499,16 +530,18 @@ package body Scenario_Views is
          Stock_Id => Stock_Add,
          Action   => Action_Add_Scenario_Variable,
          Tooltip  => -"Add new scenario variable");
-
-      Gtk_New_From_Stock (Button, Stock_Edit);
-      Button.Set_Tooltip_Text (-"Edit properties of selected variable");
-      Toolbar.Insert (Button);
-      Button.On_Clicked (Edit_Variable'Access, View);
-
-      Gtk_New_From_Stock (Button, Stock_Remove);
-      Button.Set_Tooltip_Text (-"Delete the selected variable");
-      Toolbar.Insert (Button);
-      Button.On_Clicked (Delete_Variable'Access, View);
+      Add_Button
+        (View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Edit,
+         Action   => Command_Edit_Variable_Name,
+         Tooltip  => Command_Edit_Variable_Tip);
+      Add_Button
+        (View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Remove,
+         Action   => Command_Delete_Variable_Name,
+         Tooltip  => Command_Delete_Variable_Tip);
    end Create_Toolbar;
 
    -------------
@@ -526,6 +559,8 @@ package body Scenario_Views is
       Val    : GValue;
       Scenario : constant Gtk_Tree_Iter := Model.Get_Iter (V.Scenario_Node);
    begin
+      Trace (Me, "Recomputing list of scenario variables");
+
       --  There is a small problem here: Refresh might be called while one of
       --  the combo boxes is still displayed. Thus, if we destroy it now, any
       --  pending signal on the combo box (like hiding the popup window) will
@@ -551,7 +586,7 @@ package body Scenario_Views is
                declare
                   Name : String := External_Name (Scenar_Var (J));
                begin
-                  To_Mixed (Name);
+                  Osint.Canonical_Case_Env_Var_Name (Name);
 
                   Model.Set (Iter, 0, Name);
                   Model.Set (Iter, 1, Value (Scenar_Var (J)));
@@ -625,6 +660,7 @@ package body Scenario_Views is
 
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
       M : constant Scenario_View_Module := new Scenario_View_Module_Record;
+      Command : Interactive_Command_Access;
    begin
       Gtk_New (M.Modes, (0 => GType_String));
 
@@ -634,6 +670,18 @@ package body Scenario_Views is
       Scenario_Views.Register_Module
         (Kernel,
          ID        => Module_ID (M));
+
+      Command := new Command_Edit_Variable;
+      Register_Action
+        (Kernel, Command_Edit_Variable_Name,
+         Command, Command_Edit_Variable_Tip,
+         null, -"Scenario");
+
+      Command := new Command_Delete_Variable;
+      Register_Action
+        (Kernel, Command_Delete_Variable_Name,
+         Command, Command_Delete_Variable_Tip,
+         null, -"Scenario");
    end Register_Module;
 
 end Scenario_Views;

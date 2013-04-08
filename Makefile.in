@@ -13,7 +13,7 @@ bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
 examplesdir     = $(prefix)/share/examples/gps
 
-default:
+all default:
 	$(MAKE) -C gps $@
 	$(MAKE) -C cli $@
 
