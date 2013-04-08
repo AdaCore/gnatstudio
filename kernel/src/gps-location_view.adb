@@ -45,7 +45,6 @@ with Gtk.Menu;                         use Gtk.Menu;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
 with Gtk.Separator_Tool_Item;          use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                        use Gtk.Stock;
-with Gtk.Tool_Button;                  use Gtk.Tool_Button;
 with Gtk.Toolbar;                      use Gtk.Toolbar;
 with GPS.Tree_View;                    use GPS.Tree_View;
 with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
@@ -55,7 +54,7 @@ with Gtkada.Handlers;                  use Gtkada.Handlers;
 with Gtkada.MDI;                       use Gtkada.MDI;
 
 with Basic_Types;                      use Basic_Types;
-with Commands.Interactive;
+with Commands.Interactive;             use Commands.Interactive;
 with GPS.Editors;                      use GPS.Editors;
 with GPS.Editors.GtkAda;               use GPS.Editors.GtkAda;
 with GPS.Intl;                         use GPS.Intl;
@@ -80,17 +79,30 @@ package body GPS.Location_View is
      "Locations remove selection";
    Command_Remove_Message_Tip : constant String :=
      "Remove the selected category, file or message";
+
    Command_Clear_Locations_Name : constant String := "Locations clear";
    Command_Clear_Locations_Tip : constant String :=
      "Remove all the messages";
+
    Command_Export_Name : constant String := "Locations export to text file";
    Command_Export_Tip : constant String :=
      "Export the selected category or file to a text file";
+
    Command_Toggle_Sort_By_Subcategory : constant String :=
      "Locations toggle sort by subcategory";
    Command_Toggle_Sort_By_Subcategory_Tip : constant String :=
      "Changes the sort order in the locations window. When active, this will"
      & " group all error messages together, and then warning messages";
+
+   Command_Expand_Category_Name : constant String :=
+     "Locations expand files in category";
+   Command_Expand_Category_Tip : constant String :=
+     "Expand all files in the current category";
+
+   Command_Collapse_All_Files_Name : constant String :=
+     "Locations collapse all files";
+   Command_Collapse_All_Files_Tip : constant String :=
+     "Collapse all files in the locations view";
 
    History_Sort_By_Subcategory : constant History_Key :=
      "locations-sort-by-subcategory";
@@ -176,37 +188,48 @@ package body GPS.Location_View is
    -- Actions --
    -------------
 
-   type Clear_Locations_Command is
-     new Commands.Interactive.Interactive_Command with null record;
+   type Clear_Locations_Command is new Interactive_Command with null record;
    overriding function Execute
      (Self    : access Clear_Locations_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Removes all messages
 
-   type Remove_Selection_Command is
-     new Commands.Interactive.Interactive_Command with null record;
+   type Remove_Selection_Command is new Interactive_Command with null record;
    overriding function Execute
      (Self    : access Remove_Selection_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Removes selected message
 
-   type Export_Command is
-     new Commands.Interactive.Interactive_Command with null record;
+   type Export_Command is new Interactive_Command with null record;
    overriding function Execute
      (Self    : access Export_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Export selection to a text file
 
-   type Toggle_Sort_By_Subcategory_Command is
-     new Commands.Interactive.Interactive_Command with null record;
+   type Toggle_Sort_By_Subcategory_Command is new Interactive_Command
+     with null record;
    overriding function Execute
      (Self    : access Toggle_Sort_By_Subcategory_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Changes sort order in locations view.
+
+   type Expand_Category_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Expand_Category_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Expand all files within the current category
+
+   type Collapse_All_Files_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Collapse_All_Files_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Collapse all files
 
    --------------
    -- Messages --
@@ -300,12 +323,6 @@ package body GPS.Location_View is
    procedure On_Row_Deleted
      (Self : access Location_View_Record'Class);
    --  Called when a row has been delete in the model
-
-   procedure On_Expand_Category (Self : access Location_View_Record'Class);
-   --  Expand all files in the selected Category
-
-   procedure On_Collapse_All (Self : access Location_View_Record'Class);
-   --  Collapse all categories in the Location View
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
@@ -576,11 +593,19 @@ package body GPS.Location_View is
       Path_Free (Path);
    end Goto_Location;
 
-   ------------------------
-   -- On_Expand_Category --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Expand_Category (Self : access Location_View_Record'Class) is
+   overriding function Execute
+     (Self    : access Expand_Category_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V : constant Location_View := Location_Views.Retrieve_View (K);
+
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
@@ -588,26 +613,35 @@ package body GPS.Location_View is
       pragma Unreferenced (Dummy);
 
    begin
-      Get_Selected (Get_Selection (Self.View), Model, Iter);
+      Get_Selected (Get_Selection (V.View), Model, Iter);
       Path := Get_Path (Model, Iter);
 
       while Path.Get_Depth > 1 and then Up (Path) loop
          null;
       end loop;
 
-      Dummy := Self.View.Expand_Row (Path, True);
+      Dummy := V.View.Expand_Row (Path, True);
 
       Path_Free (Path);
-   end On_Expand_Category;
+      return Commands.Success;
+   end Execute;
 
-   ---------------------
-   -- On_Collapse_All --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Collapse_All (Self : access Location_View_Record'Class) is
+   overriding function Execute
+     (Self    : access Collapse_All_Files_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V : constant Location_View := Location_Views.Retrieve_View (K);
    begin
-      Self.View.Collapse_All;
-   end On_Collapse_All;
+      V.View.Collapse_All;
+      return Commands.Success;
+   end Execute;
 
    ---------------
    -- Next_Item --
@@ -1094,7 +1128,6 @@ package body GPS.Location_View is
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
       use Generic_Views;
-      Button : Gtk_Tool_Button;
       Sep    : Gtk_Separator_Tool_Item;
    begin
       Add_Button
@@ -1119,19 +1152,18 @@ package body GPS.Location_View is
       Gtk_New (Sep);
       Toolbar.Insert (Sep);
 
-      Gtk_New_From_Stock (Button, GPS_Expand_All);
-      Button.Set_Tooltip_Text ("Expand all files in the current category");
-      Location_View_Callbacks.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked,
-         On_Expand_Category'Access, View);
-      Toolbar.Insert (Button);
-
-      Gtk_New_From_Stock (Button, GPS_Collapse_All);
-      Button.Set_Tooltip_Text ("Collapse all files in Locations");
-      Location_View_Callbacks.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked,
-         On_Collapse_All'Access, View);
-      Toolbar.Insert (Button);
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => GPS_Expand_All,
+         Action   => Command_Expand_Category_Name,
+         Tooltip  => Command_Expand_Category_Tip);
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => GPS_Collapse_All,
+         Action   => Command_Collapse_All_Files_Name,
+         Tooltip  => Command_Collapse_All_Files_Tip);
 
       View.Build_Filter
         (Toolbar     => Toolbar,
@@ -1237,6 +1269,18 @@ package body GPS.Location_View is
       Register_Action
         (Kernel, Command_Toggle_Sort_By_Subcategory,
          Command, Command_Toggle_Sort_By_Subcategory_Tip,
+         null, -"Locations");
+
+      Command := new Expand_Category_Command;
+      Register_Action
+        (Kernel, Command_Expand_Category_Name,
+         Command, Command_Expand_Category_Tip,
+         null, -"Locations");
+
+      Command := new Collapse_All_Files_Command;
+      Register_Action
+        (Kernel, Command_Collapse_All_Files_Name,
+         Command, Command_Collapse_All_Files_Tip,
          null, -"Locations");
 
       Get_Messages_Container (Kernel).Register_Listener
