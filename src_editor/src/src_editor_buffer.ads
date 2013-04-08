@@ -363,6 +363,8 @@ package Src_Editor_Buffer is
       End_Line     : out Editable_Line_Type;
       End_Column   : out Character_Offset_Type);
    --  Return the position Length characters after Start_Line/Start_Column
+   --  Negative values for Length are supported, moving the position
+   --  backwards.
 
    procedure Insert
      (Buffer      : access Source_Buffer_Record;

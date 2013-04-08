@@ -139,6 +139,12 @@ package body Src_Editor_Module.Editors is
       Location : Gtk_Text_Iter) return Src_Editor_Location'Class;
    --  Return an instance of Editor_Location
 
+   function Create_Editor_Location
+     (Buffer : Src_Editor_Buffer'Class;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type) return Src_Editor_Location'Class;
+   --  Return an instance of EditorLocation
+
    function Create_Editor_Overlay
      (Tag    : Gtk_Text_Tag) return Src_Editor_Overlay'Class;
    --  Return an instance of Src_Editor_Overlay
@@ -548,6 +554,21 @@ package body Src_Editor_Module.Editors is
       Editor_Loc.Offset := Integer (Get_Offset (Location));
       Editor_Loc.Buffer := Src_Editor_Buffer (Buffer);
       return Editor_Loc;
+   end Create_Editor_Location;
+
+   ----------------------------
+   -- Create_Editor_Location --
+   ----------------------------
+
+   function Create_Editor_Location
+     (Buffer : Src_Editor_Buffer'Class;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type) return Src_Editor_Location'Class
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Screen_Position (Buffer.Contents.Buffer, Iter, Line, Column);
+      return Create_Editor_Location (Buffer, Iter);
    end Create_Editor_Location;
 
    ------------------
@@ -1188,20 +1209,24 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Location;
       Count : Integer) return Editor_Location'Class
    is
-      Success : Boolean;
-      Iter    : Gtk_Text_Iter;
-   begin
-      Get_Location (Iter, This, Iter, Success);
-      if Success then
-         if Count >= 0 then
-            Forward_Chars (Iter, Gint (Count), Success);
-         else
-            Backward_Chars (Iter, -Gint (Count), Success);
-         end if;
-         return Create_Editor_Location (This.Buffer, Iter);
-      end if;
+      Begin_Col : Character_Offset_Type;
 
-      raise Editor_Exception with -"Invalid location";
+      End_Line : Editable_Line_Type;
+      End_Col  : Character_Offset_Type;
+
+   begin
+      Begin_Col := Collapse_Tabs
+        (This.Buffer.Contents.Buffer, This.Line, This.Column);
+
+      Forward_Position
+        (Buffer       => This.Buffer.Contents.Buffer,
+         Start_Line   => This.Line,
+         Start_Column => Begin_Col,
+         Length       => Count,
+         End_Line     => End_Line,
+         End_Column   => End_Col);
+
+      return Create_Editor_Location (This.Buffer, End_Line, End_Col);
    end Forward_Char;
 
    ------------------

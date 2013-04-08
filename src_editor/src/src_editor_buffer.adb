@@ -7162,21 +7162,39 @@ package body Src_Editor_Buffer is
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
+      Amount  : Integer := Length;
+
+      Forward : constant Boolean := Length > 0;
    begin
+      if Length < 0 then
+         Amount := -Length;
+      end if;
+
       Get_Iter_At_Line_Offset
         (Buffer,
          Iter,
          Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
          Gint (Start_Column - 1));
 
-      for J in 1 .. Length loop
-         Forward_Char (Iter, Success);
+      for J in 1 .. Amount loop
+         if Forward then
+            Forward_Char (Iter, Success);
+         else
+            Backward_Char (Iter, Success);
+         end if;
+
          exit when not Success;
 
          while Buffer.Line_Data
            (Buffer_Line_Type (Get_Line (Iter) + 1)).Editable_Line = 0
          loop
-            Forward_Char (Iter, Success);
+            --  ??? Could be optimized by moving line by line
+            if Forward then
+               Forward_Char (Iter, Success);
+            else
+               Backward_Char (Iter, Success);
+            end if;
+
             exit when not Success;
          end loop;
       end loop;
@@ -7236,9 +7254,7 @@ package body Src_Editor_Buffer is
          Get_End_Iter (Buffer, End_Iter);
       end if;
 
-      if not Lines_Are_Real (Buffer)
-        and then Real_End_Line - Start_Line > 1
-      then
+      if not Lines_Are_Real (Buffer) then
          --  If we are getting multiple lines of text, we need to get the
          --  potential hidden lines.
 
