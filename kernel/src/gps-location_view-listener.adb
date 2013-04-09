@@ -43,9 +43,7 @@ package body GPS.Location_View.Listener is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Node_Record'Class, Node_Access);
 
-   procedure Recursive_Free
-      (Self : not null access Locations_Listener'Class;
-       N    : in out Node_Access);
+   procedure Recursive_Free (N : in out Node_Access);
    --  Free N and all children of N
 
    function Create_Iter
@@ -112,20 +110,14 @@ package body GPS.Location_View.Listener is
    -- Recursive_Free --
    --------------------
 
-   procedure Recursive_Free
-      (Self : not null access Locations_Listener'Class;
-       N    : in out Node_Access)
-   is
+   procedure Recursive_Free (N : in out Node_Access) is
       C : Node_Access;
-      Path  : constant Gtk_Tree_Path := Self.Model.Create_Path (N);
    begin
       for J in N.Children.First_Index .. N.Children.Last_Index loop
          C := N.Children.Element (J);
-         Recursive_Free (Self, C);
+         Recursive_Free (C);
       end loop;
 
-      Row_Deleted (To_Interface (Self.Model), Path);
-      Path_Free (Path);
       Unchecked_Free (N);
    end Recursive_Free;
 
@@ -403,7 +395,7 @@ package body GPS.Location_View.Listener is
 
       File_Node := Cat_Node.Children.Element (Index);
       Cat_Node.Children.Delete (Index);
-      Recursive_Free (Self, File_Node);
+      Recursive_Free (File_Node);
 
       --  Remove the category node if it has no entries left
 
@@ -414,7 +406,8 @@ package body GPS.Location_View.Listener is
          Self.Model.Categories.Delete
            (Self.Model.Categories.Find_Index (Cat_Node));
 
-         Recursive_Free (Self, Cat_Node);
+         Recursive_Free (Cat_Node);
+         Row_Deleted (To_Interface (Self.Model), Path);
 
          --  Note: after the call to Row_Deleted above, the locations view
          --  might have been destroyed (if the preference "Auto close Locations
@@ -1141,7 +1134,7 @@ package body GPS.Location_View.Listener is
          Row_Has_Child_Toggled (To_Interface (Self.Model), Path, Iter);
       end if;
 
-      Recursive_Free (Self, Node);
+      Recursive_Free (Node);
       Path_Free (Path);
    end Message_Removed;
 
@@ -1333,7 +1326,7 @@ package body GPS.Location_View.Listener is
       loop
          Cat_Node := L.Model.Categories.Element (Cat_Ind);
 
-         Recursive_Free (L, Cat_Node);
+         Recursive_Free (Cat_Node);
       end loop;
 
       --  Destroy the model
