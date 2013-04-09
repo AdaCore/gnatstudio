@@ -14,8 +14,8 @@ sharedir        = $(prefix)/share
 examplesdir     = $(prefix)/share/examples/gps
 
 all default:
-	$(MAKE) -C gps $@
-	$(MAKE) -C cli $@
+	$(MAKE) -C gps default
+	$(MAKE) -C cli default
 
 codepeer:
 	$(MAKE) -C gps scil
