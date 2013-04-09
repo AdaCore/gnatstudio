@@ -58,6 +58,9 @@ with Xref;
 with GPS.Editors;
 with GPS.Core_Kernels;
 with GPS.Messages_Windows;
+with GPS.Process_Launchers;
+with GPS.Process_Launchers.Implementation;
+use GPS.Process_Launchers.Implementation;
 
 package GPS.Kernel is
 
@@ -1211,6 +1214,9 @@ private
 
       Undo_Redo : Commands.Controls.Undo_Redo;
       --  Undo/redo controls
+
+      Launcher : aliased GPS_Process_Launcher_Record;
+      --  External process launcher
    end record;
 
    overriding procedure Create_Registry
@@ -1224,5 +1230,9 @@ private
    overriding function Messages_Window
      (Self : not null access Kernel_Handle_Record)
       return GPS.Messages_Windows.Abstract_Messages_Window_Access;
+
+   overriding function Process_Launcher
+     (Self : not null access Kernel_Handle_Record)
+     return GPS.Process_Launchers.Process_Launcher;
 
 end GPS.Kernel;

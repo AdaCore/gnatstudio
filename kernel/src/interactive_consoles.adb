@@ -2122,7 +2122,11 @@ package body Interactive_Consoles is
      (Self : access Interactive_Console_Record'Class)
       return access Console_Messages_Window is
    begin
-      return Self.Console;
+      if Self = null then
+         return null;
+      else
+         return Self.Console;
+      end if;
    end Get_Console_Messages_Window;
 
    ------------

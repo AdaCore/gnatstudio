@@ -21,6 +21,7 @@ with Language_Handlers;
 with Projects;
 with Xref;
 with GPS.Messages_Windows;
+with GPS.Process_Launchers;
 
 with GNATCOLL.Scripts;
 with GNATCOLL.Symbols;
@@ -63,6 +64,11 @@ package GPS.Core_Kernels is
       return GPS.Messages_Windows.Abstract_Messages_Window_Access
       is abstract;
    --  Return console window
+
+   function Process_Launcher
+     (Self : not null access Core_Kernel_Record)
+     return GPS.Process_Launchers.Process_Launcher is abstract;
+   --  Process launcher service
 
    function Create_From_Base
      (Kernel : access Core_Kernel_Record'Class;

@@ -319,6 +319,7 @@ package body GPS.Kernel is
       Handle := new Kernel_Handle_Record;
       Handle.Home_Dir := Home_Dir;
       Handle.Prefix   := Prefix_Directory;
+      Handle.Launcher.Kernel := GPS.Core_Kernels.Core_Kernel (Handle);
 
       Handle.Main_Window  := Main_Window;
       Weak_Ref (Handle.Main_Window,
@@ -2106,5 +2107,16 @@ package body GPS.Kernel is
          return "default";
       end if;
    end Get_Build_Mode;
+
+   ----------------------
+   -- Process_Launcher --
+   ----------------------
+
+   overriding function Process_Launcher
+     (Self : not null access Kernel_Handle_Record)
+      return GPS.Process_Launchers.Process_Launcher is
+   begin
+      return Self.Launcher'Access;
+   end Process_Launcher;
 
 end GPS.Kernel;

@@ -20,6 +20,7 @@ with GPS.Core_Kernels;
 with Projects;
 with Xref;
 with GPS.Messages_Windows;
+with GPS.Process_Launchers;
 
 package GPS.CLI_Kernels is
 
@@ -39,5 +40,9 @@ package GPS.CLI_Kernels is
    overriding function Messages_Window
      (Self : not null access CLI_Kernel_Record)
       return GPS.Messages_Windows.Abstract_Messages_Window_Access;
+
+   overriding function Process_Launcher
+     (Self : not null access CLI_Kernel_Record)
+      return GPS.Process_Launchers.Process_Launcher;
 
 end GPS.CLI_Kernels;
