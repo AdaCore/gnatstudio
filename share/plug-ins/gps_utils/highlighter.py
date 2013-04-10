@@ -552,7 +552,7 @@ class Location_Highlighter(Background_Highlighter):
                 s2 = GPS.EditorLocation(buffer, ref.line(), ref.column())
                 
                 try:
-                    e2 = s2 + len(u) - 1
+                    e2 = s2 + (len(u) - 1)
                 except:
                     # An invalid location ?
                     continue
@@ -566,7 +566,7 @@ class Location_Highlighter(Background_Highlighter):
                         # Search after original xref line (same column)
                         s2 = GPS.EditorLocation(
                             buffer, ref.line() + c, ref.column())
-                        e2 = cloc + len (u) - 1
+                        e2 = cloc + (len (u) - 1)
                         b = buffer.get_chars(s2, e2).decode("utf-8").lower()
                         if b == u:
                             self.style.apply(cloc, endloc)
@@ -575,7 +575,7 @@ class Location_Highlighter(Background_Highlighter):
                         # Search before original xref line
                         s2 = GPS.EditorLocation(
                             buffer, ref.line() - c, ref.column())
-                        e2 = cloc + len (u) - 1
+                        e2 = cloc + (len (u) - 1)
                         b = buffer.get_chars(s2, e2).decode("utf-8").lower()
                         if b == u:
                             self.style.apply(cloc, endloc)
