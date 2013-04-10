@@ -567,8 +567,15 @@ package body Src_Editor_Module.Editors is
    is
       Iter : Gtk_Text_Iter;
    begin
-      Get_Iter_At_Screen_Position (Buffer.Contents.Buffer, Iter, Line, Column);
-      return Create_Editor_Location (Buffer, Iter);
+      if Is_Valid_Position (Buffer.Contents.Buffer, Line, Column) then
+         Get_Iter_At_Screen_Position
+           (Buffer.Contents.Buffer, Iter, Line, Column);
+
+         return Create_Editor_Location (Buffer, Iter);
+      else
+         raise Editor_Exception
+           with (-"Unable to create location at" & Line'Img & Column'Img);
+      end if;
    end Create_Editor_Location;
 
    ------------------
@@ -928,29 +935,9 @@ package body Src_Editor_Module.Editors is
             Block  := Get_Subprogram_Block
               (Buffer, Get_Editable_Line (Buffer, Line));
          else
-            --  ??? This filter is in fact a constant
-            declare
-               Count : constant Natural :=
-                 Language_Category'Pos (Enclosing_Entity_Category'Last)
-                 - Language_Category'Pos (Enclosing_Entity_Category'First)
-                 + 1
-                 + 6;
-               Filter : Category_Array (1 .. Count);
-               Index : Natural := Filter'First;
-            begin
-               for F in Enclosing_Entity_Category loop
-                  Filter (Index) := F;
-                  Index := Index + 1;
-               end loop;
-               Filter (Index + 0) := Cat_Declare_Block;
-               Filter (Index + 1) := Cat_Loop_Statement;
-               Filter (Index + 2) := Cat_If_Statement;
-               Filter (Index + 3) := Cat_Case_Statement;
-               Filter (Index + 4) := Cat_Select_Statement;
-               Filter (Index + 5) := Cat_Return_Block;
-               Block  := Get_Block
-                 (Buffer, Get_Editable_Line (Buffer, Line), Filter => Filter);
-            end;
+            Block  := Get_Block
+              (Buffer, Get_Editable_Line (Buffer, Line),
+               Filter => Categories_For_Block_Highlighting);
          end if;
       end if;
    end Get_Block;

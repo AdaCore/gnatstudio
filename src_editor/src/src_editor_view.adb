@@ -70,6 +70,7 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with Language;                   use Language;
+with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Traces;                     use Traces;
@@ -723,7 +724,8 @@ package body Src_Editor_View is
         or else
           (User.Highlight_Blocks
            and then User.Current_Block /=
-             Get_Block (Buffer, Editable_Line_Type (Line)))
+             Get_Block (Buffer, Editable_Line_Type (Line),
+                        Filter => Categories_For_Block_Highlighting))
       then
          Invalidate_Window (User);
       end if;

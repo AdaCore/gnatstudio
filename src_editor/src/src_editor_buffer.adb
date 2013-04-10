@@ -7170,19 +7170,27 @@ package body Src_Editor_Buffer is
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
+
       Amount  : Integer := Length;
 
+      Found   : Boolean;
       Forward : constant Boolean := Length > 0;
    begin
       if Length < 0 then
          Amount := -Length;
       end if;
 
-      Get_Iter_At_Line_Offset
-        (Buffer,
-         Iter,
-         Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
-         Gint (Start_Column - 1));
+      Is_Valid_Pos (Buffer => Source_Buffer (Buffer),
+                    Iter   => Iter,
+                    Found  => Found,
+                    Line   => Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
+                    Column => Gint (Start_Column - 1));
+
+      if not Found then
+         End_Line := Start_Line;
+         End_Column := Start_Column;
+         return;
+      end if;
 
       for J in 1 .. Amount loop
          if Forward then
