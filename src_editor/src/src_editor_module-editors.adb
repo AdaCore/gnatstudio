@@ -49,7 +49,6 @@ with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;
 with Find_Utils;                use Find_Utils;
 with Language;                  use Language;
-with Language.Tree;             use Language.Tree;
 with Src_Contexts;              use Src_Contexts;
 with Traces;                    use Traces;
 
@@ -936,8 +935,7 @@ package body Src_Editor_Module.Editors is
               (Buffer, Get_Editable_Line (Buffer, Line));
          else
             Block  := Get_Block
-              (Buffer, Get_Editable_Line (Buffer, Line),
-               Filter => Categories_For_Block_Highlighting);
+              (Buffer, Get_Editable_Line (Buffer, Line));
          end if;
       end if;
    end Get_Block;
