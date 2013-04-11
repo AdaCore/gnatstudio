@@ -17,8 +17,12 @@
 
 with Glib.Unicode;          use Glib.Unicode;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Fixed.Equal_Case_Insensitive;
 
 package body Completion.Aliases is
+
+   function "=" (A, B : String) return Boolean
+                 renames Ada.Strings.Fixed.Equal_Case_Insensitive;
 
    function To_Str
      (A : Unbounded_String) return String renames To_String;
@@ -64,7 +68,6 @@ package body Completion.Aliases is
         (Natural (Offset) + 1 .. Natural (Context.Offset)) :=
            Context.Buffer (Natural (Offset) + 1 .. Natural (Context.Offset));
    begin
-
       if not Get_Language_Context (Context.Lang).Case_Sensitive then
          Word := UTF8_Strdown (Word);
       end if;
