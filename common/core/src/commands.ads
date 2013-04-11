@@ -98,9 +98,7 @@ package Commands is
    --
    --  Do not execute this function directly. You should instead use
    --  Launch_Synchronous or the task manager, or a command queue,
-   --  to execute a command, Otherwise, the other actions resulting from the
-   --  command (see Add_Consequence_Action and Add_Alternate_Action)
-   --  will not be executed properly.
+   --  to execute a command.
 
    function Undo (Command : access Root_Command) return Boolean;
    --  Undo a Command. Return value indicates whether the operation was
@@ -135,8 +133,7 @@ package Commands is
    procedure Launch_Synchronous
      (Command : access Root_Command'Class;
       Wait    : Duration := 0.0);
-   --  Launch Command and all the consequent/alternate actions recursively,
-   --  then return.
+   --  Launch Command then return.
    --  If Wait is non-null, delay Wait milliseconds between each execution.
    --  This can be used when the command executes an external process, to give
    --  it more CPU time.
@@ -156,18 +153,6 @@ package Commands is
    --  Undo/Redo purposes.
    --  They are also used if you need to execute several commands one after
    --  the other, when these commands do not have strong links one to another.
-   --  If a command should only be executed depending on the result of another
-   --  command, you should use Add_Consequence_Action and Add_Alternate_Action
-   --  instead.
-   --
-   --  Commands associated with a command using Add_Consequence_Action
-   --  and Add_Alternate_Action are dealt with in the followin way:
-   --   - if they are actually executed, then they are enqueued to the
-   --     queue as normal commands, and are executed immediately after
-   --     Item finishes. They are accessible through Undo/Redo, and memory
-   --     associated to them is freed when the queue is freed.
-   --   - if they are not executed, then the memory associated to them
-   --     is freed when Item finishes.
 
    type Command_Queue is private;
    Null_Command_Queue : constant Command_Queue;
