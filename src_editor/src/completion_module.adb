@@ -68,6 +68,7 @@ with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;
 with Completion.History;        use Completion.History;
 with Completion.Keywords;       use Completion.Keywords;
+with Completion.Aliases;        use Completion.Aliases;
 
 with Completion.Ada;            use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
@@ -183,6 +184,7 @@ package body Completion_Module is
 
       Completion_History  : Completion_History_Access;
       Completion_Keywords : Completion_Keywords_Access;
+      Completion_Aliases  : Completion_Aliases_Access;
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -374,7 +376,6 @@ package body Completion_Module is
       First, Last : Gtk_Text_Iter;
       Dummy       : Boolean;
       pragma Unreferenced (Dummy);
-      Target      : Gtk_Text_Iter;
    begin
       Unlock (D.Lock.all);
 
@@ -393,11 +394,8 @@ package body Completion_Module is
          Get_Iter_At_Mark (D.Buffer, First, D.Start_Mark);
          Delete_Mark (D.Buffer, D.Start_Mark);
 
-         Get_Iter_At_Mark (D.Buffer, Last, Get_Insert (D.Buffer));
-         Get_Iter_At_Mark (D.Buffer, Target, D.End_Mark);
+         Get_Iter_At_Mark (D.Buffer, Last, D.End_Mark);
          Delete_Mark (D.Buffer, D.End_Mark);
-
-         Place_Cursor (D.Buffer, Target);
 
          --  If we did complete on multiple lines, indent the resulting lines
          --  using the user preferences.
@@ -441,6 +439,8 @@ package body Completion_Module is
            (Completion_Resolver_Access (Completion_Module.Completion_History));
          Free (Completion_Resolver_Access
                (Completion_Module.Completion_Keywords));
+         Free (Completion_Resolver_Access
+                 (Completion_Module.Completion_Aliases));
 
          Reset_Completion_Data;
          Completion_Module := null;
@@ -858,6 +858,8 @@ package body Completion_Module is
                  (Data.Manager, Completion_Module.Completion_History);
                Register_Resolver
                  (Data.Manager, Completion_Module.Completion_Keywords);
+               Register_Resolver
+                 (Data.Manager, Completion_Module.Completion_Aliases);
                Register_Resolver (Data.Manager, Data.Constructs_Resolver);
 
                Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
@@ -1265,6 +1267,7 @@ package body Completion_Module is
 
       Completion_Module.Completion_History := new Completion_History;
       Completion_Module.Completion_Keywords := new Completion_Keywords;
+      Completion_Module.Completion_Aliases := new Completion_Aliases;
    end Register_Module;
 
    ------------------------------

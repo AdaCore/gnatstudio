@@ -51,7 +51,6 @@ package body Completion.Ada is
                     (Ada_Context_All.Expression.Tokens)).Token_First - 1,
                Context  => Ada_Context,
                Result   => Result);
-
             It := Next (It);
          end loop;
       end if;

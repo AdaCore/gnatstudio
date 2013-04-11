@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with Xref;                    use Xref;
@@ -329,9 +328,14 @@ package body Engine_Wrappers is
       Loc : constant Completion.File_Location :=
         Proposal.Get_Location (Kernel.Databases);
       Entity : General_Entity;
+      Doc : constant String := Proposal.P.Get_Documentation;
    begin
-      if Proposal.P.Resolver.Get_Id = "Keywords" then
+      if Doc /= "" then
+         return Doc;
+      elsif Proposal.P.Resolver.Get_Id = "Keywords" then
          return "Language keyword.";
+      elsif Proposal.P.Resolver.Get_Id = "Aliases" then
+         return "Identifier, TOBEFIXED";
       end if;
 
       Entity := Xref.Get_Entity
@@ -345,6 +349,14 @@ package body Engine_Wrappers is
          Kernel.Get_Language_Handler,
          Entity);
    end Get_Documentation;
+
+   --------------------------
+   -- Get_Custom_Icon_Name --
+   --------------------------
+
+   function Get_Custom_Icon_Name
+     (Proposal : Comp_Proposal) return String
+   is (Proposal.P.Get_Custom_Icon_Name);
 
    -----------------------
    -- Get_Documentation --

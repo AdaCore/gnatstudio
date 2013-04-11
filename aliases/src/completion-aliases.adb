@@ -15,44 +15,72 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Unicode; use Glib.Unicode;
+with Glib.Unicode;          use Glib.Unicode;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-package body Completion.Keywords is
+package body Completion.Aliases is
 
-   Resolver_ID : constant String := "Keywords";
+   function To_Str
+     (A : Unbounded_String) return String renames To_String;
+
+   overriding function Get_Action_Name
+     (Proposal : Alias_Completion_Proposal) return String
+   is ("Expand alias");
+
+   overriding function Get_Documentation
+     (Proposal : Alias_Completion_Proposal) return String
+   is ("<b>Alias</b> " & To_Str (Proposal.Alias.Expansion));
+
+   overriding function Get_Category
+     (Proposal : Alias_Completion_Proposal) return Language_Category
+   is (Cat_Unknown);
+
+   overriding function Get_Custom_Icon_Name
+     (Proposal : Alias_Completion_Proposal) return String
+   is ("gps-alias");
+
+   overriding function Get_Label
+     (Proposal : Alias_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
+   is
+      pragma Unreferenced (Db);
+   begin
+      return Proposal.Name.all & " (alias)";
+   end Get_Label;
 
    -------------------------
    -- Get_Completion_Root --
    -------------------------
 
    overriding procedure Get_Completion_Root
-     (Resolver   : access Completion_Keywords;
+     (Resolver   : access Completion_Aliases;
       Offset     : String_Index_Type;
       Context    : Completion_Context;
       Result     : in out Completion_List)
    is
-      Proposal : Simple_Completion_Proposal;
+      Proposal : Alias_Completion_Proposal;
       List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.List;
-      Keywords : constant String_List := Language.Keywords (Context.Lang);
       Word     : UTF8_String
         (Natural (Offset) + 1 .. Natural (Context.Offset)) :=
            Context.Buffer (Natural (Offset) + 1 .. Natural (Context.Offset));
    begin
+
       if not Get_Language_Context (Context.Lang).Case_Sensitive then
          Word := UTF8_Strdown (Word);
       end if;
 
-      for J in Keywords'Range loop
+      for Alias of Get_Aliases_List loop
          declare
-            K : String renames Keywords (J).all;
+            Name : constant String := To_Str (Alias.Name);
          begin
-            if K'Length >= Word'Length
-              and then K (K'First .. K'First + Word'Length - 1) = Word
+            if Name'Length >= Word'Length
+              and then
+                Name (Name'First .. Name'First + Word'Length - 1) = Word
             then
                Proposal := (Resolver => Resolver,
-                            Name     => Keywords (J),
-                            Category => Cat_Custom);
-
+                            Name     => new String'(To_Str (Alias.Name)),
+                            Category => Cat_Custom,
+                            Alias    => Alias);
                Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
                  (List, Proposal);
             end if;
@@ -68,19 +96,16 @@ package body Completion.Keywords is
    ------------
 
    overriding function Get_Id
-     (Resolver : Completion_Keywords)
+     (Resolver : Completion_Aliases)
       return String
-   is
-      pragma Unreferenced (Resolver);
-   begin
-      return Resolver_ID;
-   end Get_Id;
+   is ("Aliases");
 
    ----------
    -- Free --
    ----------
 
    overriding procedure Free
-     (Resolver : in out Completion_Keywords)
+     (Resolver : in out Completion_Aliases)
    is null;
-end Completion.Keywords;
+
+end Completion.Aliases;

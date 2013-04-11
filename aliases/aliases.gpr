@@ -1,5 +1,6 @@
 with "../kernel/kernel";
 with "../shared";
+with "../completion/core/completion_core";
 
 project Aliases is
 

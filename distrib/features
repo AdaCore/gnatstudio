@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-H603-006 GPS: Aliases auto completion (2013-04-11)
+  
+  Aliases can now be completed and expanded by the regular auto-completion
+  mechanism.
+
 NF-60-M329-013 GPS: translucent highlighting colors (2013-03-29)
 
   It is now possible to specify translucent colors for error messages,

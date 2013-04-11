@@ -215,12 +215,12 @@ private
    type Completion_Window_Record is new Gtk_Window_Record with record
       Explorer : Completion_Explorer_Access;
 
-      Text   : Gtk_Text_View;
-      Buffer : Gtk_Text_Buffer;
-      Mark   : Gtk_Text_Mark;
+      Text       : Gtk_Text_View;
+      Buffer     : Gtk_Text_Buffer;
+      Start_Mark : Gtk_Text_Mark;
       --  The mark from which the text should be replaced
 
-      Cursor_Mark : Gtk_Text_Mark;
+      End_Mark : Gtk_Text_Mark;
       --  The mark set at the cursor place
 
       Initial_Offset : Gint;

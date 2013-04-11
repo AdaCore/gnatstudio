@@ -232,6 +232,10 @@
     <icon id="gps-entity-variable-protected-spec"        file="../icons/16px/entities/dot_ps.png" />
     <icon id="gps-entity-generic-protected-spec"         file="../icons/16px/entities/diamond_ps.png" />
 
+    <!-- Aliases icons -->
+
+    <icon id="gps-alias"              file="../icons/16px/entities/diamond_x_blue.png" />
+
     <!-- VCS icons -->
 
     <icon id="gps-vcs-added"          file="../icons/20px/vcs-added.png" />

@@ -42,6 +42,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Viewport;              use Gtk.Viewport;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Image;                 use Gtk.Image;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Pango.Layout;              use Pango.Layout;
 
@@ -54,6 +55,12 @@ with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Language.Icons;            use Language.Icons;
 with Xref;
+
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with Commands;                  use Commands;
+with Commands.Interactive;      use Commands.Interactive;
 
 package body Completion_Window is
 
@@ -237,14 +244,17 @@ package body Completion_Window is
       --  If we have a completion proposal, display it as head of the
       --  Notes window.
       if Item.Text /= null then
+
          Gtk_New_Hbox (HBox);
          if Item.Icon /= null then
             Gtk.Image.Gtk_New (Img, Item.Icon);
             Pack_Start (HBox, Img, False, False, 3);
          end if;
+
          Gtk_New (Title, Item.Text.all);
          Set_Selectable (Title, True);
          Modify_Font (Title, Explorer.Fixed_Width_Font);
+
          Pack_Start (HBox, Title, False, False, 3);
          Pack_Start (VBox, HBox, False, False, 1);
       end if;
@@ -257,6 +267,7 @@ package body Completion_Window is
 
       Add (Explorer.Notes_Container, VBox);
       Show_All (VBox);
+
    end Fill_Notes_Container;
 
    ------------------------
@@ -351,8 +362,8 @@ package body Completion_Window is
 
       Free_Info (Window.Explorer);
 
-      if Window.Mark /= null then
-         Delete_Mark (Window.Buffer, Window.Mark);
+      if Window.Start_Mark /= null then
+         Delete_Mark (Window.Buffer, Window.Start_Mark);
       end if;
 
       Destroy (Window.Notes_Window);
@@ -466,18 +477,31 @@ package body Completion_Window is
          Completion : constant String :=
            Get_Completion (Proposal, Explorer.Kernel.Databases);
          List       : Proposals_List.List;
+         Custom_Icon_Name : constant String := Proposal.Get_Custom_Icon_Name;
+         Icon : Gdk.Pixbuf.Gdk_Pixbuf;
       begin
+         if Custom_Icon_Name /= "" then
+            Icon := Render_Icon
+              (Explorer.Notes_Container, Custom_Icon_Name, Icon_Size_Menu);
+         else
+            Icon := Entity_Icons (False, Get_Visibility (Proposal))
+                                 (Get_Category (Proposal));
+         end if;
+
          --  Check whether the current iter contains the same completion
-         if Explorer.Index = 1
-           or else Explorer.Info (Explorer.Index - 1).Text = null
-           or else Explorer.Info
-             (Explorer.Index - 1).Text.all /= Completion
+         if
+             Explorer.Index = 1
+             or else Explorer.Info (Explorer.Index - 1).Text = null
+             or else Explorer.Info
+               (Explorer.Index - 1).Text.all /= Completion
+             or else
+               Explorer.Info
+                 (Explorer.Index - 1).Markup.all /= Showable
          then
             Info :=
               (new String'(Showable),
                new String'(Completion),
-               Entity_Icons (False, Get_Visibility (Proposal))
-               (Get_Category (Proposal)),
+               Icon,
                Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
                List,
                True);
@@ -498,8 +522,10 @@ package body Completion_Window is
 
                Set (Explorer.Model, Iter,
                     Markup_Column, Info.Markup.all);
-               Set (Explorer.Model, Iter,
-                    Icon_Column, Info.Icon);
+               if Info.Icon /= null then
+                  Set (Explorer.Model, Iter,
+                       Icon_Column, Info.Icon);
+               end if;
                Set (Explorer.Model, Iter,
                     Index_Column, Gint (Explorer.Index));
 
@@ -760,9 +786,9 @@ package body Completion_Window is
       end if;
 
       Get_Text_Iter (Nth (Params, 1), Iter);
-      Move_Mark (Window.Buffer, Window.Cursor_Mark, Iter);
+      Move_Mark (Window.Buffer, Window.End_Mark, Iter);
 
-      Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
+      Get_Iter_At_Mark (Window.Buffer, Beg, Window.Start_Mark);
       Free (Window.Explorer.Pattern);
       Window.Explorer.Pattern := new String'
         (Get_Text (Window.Buffer, Beg, Iter));
@@ -827,7 +853,7 @@ package body Completion_Window is
 
       Get_Text_Iter (Nth (Params, 1), Iter);
 
-      Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
+      Get_Iter_At_Mark (Window.Buffer, Beg, Window.Start_Mark);
 
       if Get_Offset (Iter) < Window.Initial_Offset then
          Delete (Window);
@@ -1037,7 +1063,7 @@ package body Completion_Window is
          end loop;
 
          --  Complete up to the common prefix
-         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
          Get_Iter_At_Mark
            (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
 
@@ -1055,7 +1081,7 @@ package body Completion_Window is
             end if;
 
             Window.In_Deletion := True;
-            Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+            Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
             Forward_Chars (Text_Begin, Offset, Dummy);
             Insert (Window.Buffer, Text_Begin, Prefix (First .. Last));
             Window.In_Deletion := False;
@@ -1080,6 +1106,8 @@ package body Completion_Window is
 
       Result     : Boolean;
 
+      Proposal : Completion_Proposal_Access := null;
+
    begin
       Get_Selected (Get_Selection (Window.Explorer.View), Model, Iter);
 
@@ -1088,10 +1116,20 @@ package body Completion_Window is
       then
          Pos := Natural (Get_Int (Window.Explorer.Model, Iter, Index_Column));
 
+         --  Get the underlying completion proposal if available
+
+         if Window.Explorer.Info (Pos).Proposals.First_Element.all in
+           Comp_Proposal'Class
+         then
+            Proposal := Get_Underlying_Proposal
+              (Comp_Proposal
+                 (Window.Explorer.Info (Pos).Proposals.First_Element.all));
+         end if;
+
          --  Delete text between beginning of symbol to be completed
          --  and the end of the existing symbol
 
-         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
          Get_Iter_At_Mark
            (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
 
@@ -1103,54 +1141,77 @@ package body Completion_Window is
             Forward_Char (Text_End, Result);
          end loop;
 
+         --  Perform the delete
+
          Window.In_Deletion := True;
          Delete (Window.Buffer, Text_Begin, Text_End);
 
-         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+         --  Insert the selected identifier
+
+         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
          Insert (Window.Buffer, Text_Begin,
                  Window.Explorer.Info (Pos).Text.all);
 
-         --  If the proposal can be stored, store it in the history
+         --  Move End_Mark to the end of the inserted text
+         Get_Iter_At_Mark
+           (Window.Buffer, Text_Begin, Get_Insert (Window.Buffer));
+         Move_Mark (Window.Buffer, Window.End_Mark, Text_Begin);
 
-         if Window.Explorer.Info (Pos).Proposals.First_Element.all in
-           Comp_Proposal'Class
-         then
-            declare
-               E : constant Completion_Proposal_Access :=
-                 Get_Underlying_Proposal
-                   (Comp_Proposal
-                    (Window.Explorer.Info (Pos).Proposals.First_Element.all));
-            begin
-               if E /= null
-                 and then E.all in Storable_Proposal'Class
-               then
-                  Prepend_Proposal
-                    (Window.Explorer.Completion_History, E.all);
-               end if;
-            end;
-         end if;
-
-         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+         --  Put Text_Begin at the offset corresponding to the completion
+         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
          Forward_Chars (Iter   => Text_Begin,
                         Count  => Gint (Window.Explorer.Info (Pos).Offset),
                         Result => Result);
 
+         --  Put the cursor at the offest corresponding to the completion
          if Result then
-            Move_Mark (Buffer => Window.Buffer,
-                       Mark   => Window.Cursor_Mark,
-                       Where  => Text_Begin);
+            Place_Cursor (Window.Buffer, Text_Begin);
          else
             --  We could not forward with the given number of characters: this
             --  means we are hitting the end of the text buffer. In this case
             --  move the cursor to the end.
 
             --  For safety, verify that we are indeed on the last line
-            Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+            Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
             if Get_Line_Count (Window.Buffer) = Get_Line (Text_Begin) + 1 then
                Get_End_Iter (Window.Buffer, Text_Begin);
-               Move_Mark (Buffer => Window.Buffer,
-                          Mark   => Window.Cursor_Mark,
-                          Where  => Text_Begin);
+               Place_Cursor (Window.Buffer, Text_Begin);
+            end if;
+         end if;
+
+         if Proposal /= null then
+
+            --  If the proposal can be stored, store it in the history
+
+            if Proposal.all in Storable_Proposal'Class then
+               Prepend_Proposal
+                 (Window.Explorer.Completion_History, Proposal.all);
+            end if;
+
+            --  If the proposal has a linked action, execute it
+
+            if Proposal.all.Get_Action_Name /= "" then
+               declare
+                  Action : constant Action_Record_Access :=
+                    Lookup_Action
+                      (Window.Explorer.Kernel, Proposal.all.Get_Action_Name);
+                  Context     : constant Selection_Context :=
+                    Get_Current_Context (Window.Explorer.Kernel);
+                  Command      : constant Command_Access := Create_Proxy
+                    (Command => Action.Command,
+                     Context =>
+                       (Event       => null,
+                        Context     => Context,
+                        Synchronous => True,
+                        Dir         => No_File,
+                        Args        => new GNAT.Strings.String_List (1 .. 0),
+                        Label       => new String'(""),
+                        Repeat_Count     => 1,
+                        Remaining_Repeat => 0));
+               begin
+                  Launch_Foreground_Command
+                    (Window.Explorer.Kernel, Command, Destroy_On_Exit => True);
+               end;
             end if;
          end if;
       end if;
@@ -1541,8 +1602,8 @@ package body Completion_Window is
    begin
       Window.Text := View;
       Window.Buffer := Buffer;
-      Window.Mark := Create_Mark (Buffer, "", Iter);
-      Window.Cursor_Mark := Mark;
+      Window.Start_Mark := Create_Mark (Buffer, "", Iter);
+      Window.End_Mark := Mark;
 
       Window.Mode := Mode;
 
