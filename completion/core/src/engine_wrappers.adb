@@ -334,6 +334,10 @@ package body Engine_Wrappers is
          return "Language keyword.";
       end if;
 
+      if Loc.File_Path = No_File then
+         return "Predefined entity.";
+      end if;
+
       Entity := Xref.Get_Entity
         (Kernel.Databases,
          Name  => Proposal.Get_Label (Kernel.Databases),
