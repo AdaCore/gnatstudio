@@ -2087,8 +2087,8 @@ package body GPS.Kernel is
    -- Get_Build_Mode --
    --------------------
 
-   function Get_Build_Mode
-     (Kernel : access Kernel_Handle_Record'Class) return String
+   overriding function Get_Build_Mode
+     (Kernel : not null access Kernel_Handle_Record) return String
    is
       Prop  : String_Property;
       Found : Boolean;

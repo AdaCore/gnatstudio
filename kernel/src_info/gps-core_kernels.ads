@@ -93,6 +93,10 @@ package GPS.Core_Kernels is
       Result : out GNATCOLL.Scripts.Scripts_Repository);
    --  Initialize Scripts_Repository with kernel specific version
 
+   function Get_Build_Mode
+     (Self : not null access Core_Kernel_Record) return String;
+   --  Returns the current build mode.
+
    procedure Initialize (Self : not null access Core_Kernel_Record'Class);
 
    procedure Destroy (Self : not null access Core_Kernel_Record'Class);

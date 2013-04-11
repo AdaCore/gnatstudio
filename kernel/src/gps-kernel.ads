@@ -873,8 +873,8 @@ package GPS.Kernel is
    --  is run, various settings like the object's subdir might not have been
    --  set yet, since they are set by listeners on that hook.
 
-   function Get_Build_Mode
-     (Kernel : access Kernel_Handle_Record'Class) return String;
+   overriding function Get_Build_Mode
+     (Kernel : not null access Kernel_Handle_Record) return String;
    --  Returns the current build mode.
    --  This build mode is in fact stored as a property of the root project by
    --  the builder module, so this function is a convenient to retrieve that

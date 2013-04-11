@@ -104,6 +104,18 @@ package body GPS.Core_Kernels is
       GNATCOLL.Symbols.Free (Self.Symbols);
    end Destroy;
 
+   --------------------
+   -- Get_Build_Mode --
+   --------------------
+
+   function Get_Build_Mode
+     (Self : not null access Core_Kernel_Record) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return "default";
+   end Get_Build_Mode;
+
    ------------------
    -- Lang_Handler --
    ------------------
