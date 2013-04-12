@@ -566,19 +566,19 @@ class Location_Highlighter(Background_Highlighter):
                         # Search after original xref line (same column)
                         s2 = GPS.EditorLocation(
                             buffer, ref.line() + c, ref.column())
-                        e2 = cloc + (len (u) - 1)
+                        e2 = s2 + (len (u) - 1)
                         b = buffer.get_chars(s2, e2).decode("utf-8").lower()
                         if b == u:
-                            self.style.apply(cloc, endloc)
+                            self.style.apply(s2, e2)
                             break
 
                         # Search before original xref line
                         s2 = GPS.EditorLocation(
                             buffer, ref.line() - c, ref.column())
-                        e2 = cloc + (len (u) - 1)
+                        e2 = s2 + (len (u) - 1)
                         b = buffer.get_chars(s2, e2).decode("utf-8").lower()
                         if b == u:
-                            self.style.apply(cloc, endloc)
+                            self.style.apply(s2, e2)
                             break
 
 
