@@ -103,12 +103,4 @@ package body Completion.Aliases is
       return String
    is ("Aliases");
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free
-     (Resolver : in out Completion_Aliases)
-   is null;
-
 end Completion.Aliases;

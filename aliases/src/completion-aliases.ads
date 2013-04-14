@@ -39,7 +39,7 @@ package Completion.Aliases is
    --  See inherited documentation
 
    overriding
-   procedure Free (Resolver : in out Completion_Aliases);
+   procedure Free (Resolver : in out Completion_Aliases) is null;
    --  See inherited documentation
 
 private

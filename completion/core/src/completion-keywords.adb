@@ -76,11 +76,4 @@ package body Completion.Keywords is
       return Resolver_ID;
    end Get_Id;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free
-     (Resolver : in out Completion_Keywords)
-   is null;
 end Completion.Keywords;
