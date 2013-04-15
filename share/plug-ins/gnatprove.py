@@ -12,8 +12,6 @@
 
 import GPS, os_utils, os.path, tool_output, re
 
-import expanded_code
-
 xml_gnatprove = """<?xml version="1.0"?>
   <GNATPROVE>
 
