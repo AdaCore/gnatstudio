@@ -530,6 +530,8 @@ def subprogram_start(cursor):
        return None
 
 def compute_subp_sloc(self):
+    """Return the location of the declaration of the subprogram that we are
+       currently in"""
     curloc = self.location()
     buf = GPS.EditorBuffer.get(curloc.file())
     edloc = GPS.EditorLocation(buf, curloc.line(), curloc.column())
@@ -537,6 +539,10 @@ def compute_subp_sloc(self):
     if not start_loc:
         return None
     name = edloc.subprogram_name()
+    # [subprogram_start] returns the beginning of the line of the
+    # definition/declaration. To be able to call GPS.Entity, we need to be
+    # closer to the actual subprogram name. We get closer by skipping the
+    # keyword that introduces the subprogram (procedure/function/entry etc.)
     start_loc = start_loc.forward_word(1)
     try:
         entity = GPS.Entity(
