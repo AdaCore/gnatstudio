@@ -205,3 +205,7 @@ NF-60-H603-006 GPS: Aliases auto completion (2013-04-11)
   Aliases can now be completed and expanded by the regular auto-completion
   mechanism.
 
+NF-60-H605-006 GPS: Visual indication of completions accessibility (2013-04-16)
+
+  In smart completions, entities that are not accessible in the context
+  of the completion are now shown in grey.

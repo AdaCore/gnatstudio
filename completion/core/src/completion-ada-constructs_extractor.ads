@@ -116,6 +116,11 @@ private
    end record;
 
    overriding
+   function Is_Accessible
+     (Proposal : Construct_Completion_Proposal)
+     return Boolean;
+
+   overriding
    function To_Completion_Id
      (Proposal : Construct_Completion_Proposal;
       Db : access Xref.General_Xref_Database_Record'Class)

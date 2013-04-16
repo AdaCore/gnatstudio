@@ -31,7 +31,7 @@ with GNATCOLL.Traces;   use GNATCOLL.Traces;
 package Ada_Semantic_Tree is
 
    type Entity_List is private;
-   --  A declaration list is an virtual list of declarations - contents
+   --  A declaration list is a virtual list of declarations - contents
    --  partially calculated when the list is built, and partially when it's
    --  iterated over. This way, it's possible to cut the processing on too
    --  long results.
@@ -49,7 +49,7 @@ package Ada_Semantic_Tree is
       Public_Library_Visible,
       Not_Visible);
    --  This type is used to describe the visibility level of an entity, from a
-   --  location on the file.
+   --  location in the file.
 
    type Entity_View_Record is abstract tagged private;
    type Entity_View is access all Entity_View_Record'Class;
@@ -63,6 +63,15 @@ package Ada_Semantic_Tree is
      (E : access Entity_View_Record'Class)
       return access Simple_Construct_Information;
    --  Return the construct designated by this declaration view.
+
+   function Is_Accessible
+     (E : access Entity_View_Record)
+      return Boolean;
+   --  Return the visibility of the entity in the context of the search
+   --  Should return True if the entity is accessible (directly or via
+   --  a qualified name).
+   --  Default implementation returns True (we suppose all symbols are
+   --  accessible unless specified otherwise)
 
    function Get_Category
      (E : access Entity_View_Record) return Language_Category;

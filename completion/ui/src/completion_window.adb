@@ -189,6 +189,34 @@ package body Completion_Window is
    procedure Free_Info (Explorer : access Completion_Explorer_Record'Class);
    --  Free memory associated to the stored proposals information
 
+   function Is_More_Iter (Explorer : access Completion_Explorer_Record'Class;
+                          Iter : Gtk_Tree_Iter) return Boolean;
+   --  Predicate returning true if Iter is pointing on the (more ...) row
+
+   procedure Populate_More_Iter
+     (Explorer : access Completion_Explorer_Record'Class);
+   --  Populate the row corresponding to the More_Iter iterator in
+   --  the Explorer.
+
+   function Is_More_Iter (Explorer : access Completion_Explorer_Record'Class;
+                          Iter : Gtk_Tree_Iter) return Boolean is
+   begin
+      return Get_Int (Explorer.Model, Iter, Index_Column) = -1;
+   end Is_More_Iter;
+
+   procedure Populate_More_Iter
+     (Explorer : access Completion_Explorer_Record'Class) is
+   begin
+      if Explorer.More_Iter /= Null_Iter then
+         Set (Explorer.Model, Explorer.More_Iter,
+              Markup_Column,
+              "<span color=""grey""><i> (more...) </i></span>");
+         Set (Explorer.Model, Explorer.More_Iter,
+              Index_Column,
+              Gint (-1));
+      end if;
+   end Populate_More_Iter;
+
    -------------------
    -- Augment_Notes --
    -------------------
@@ -276,9 +304,15 @@ package body Completion_Window is
 
    function To_Showable_String
      (P : Root_Proposal'Class;
-      Db : access Xref.General_Xref_Database_Record'Class) return String is
+      Db : access Xref.General_Xref_Database_Record'Class) return String
+   is
+      Escaped_Text : constant String := Escape_Text (Get_Label (P, Db));
    begin
-      return Escape_Text (Get_Label (P, Db));
+      if not P.Is_Accessible then
+         return "<span color=""grey"">" & Escaped_Text & "</span>";
+      else
+         return Escaped_Text;
+      end if;
    end To_Showable_String;
 
    ------------------
@@ -395,11 +429,8 @@ package body Completion_Window is
          if (Idle_Expand (Completion_Explorer_Access (Explorer)) = False)
            or else Explorer.Shown >= Explorer.Number_To_Show
          then
-            if Explorer.More_Iter /= Null_Iter then
-               Set (Explorer.Model, Explorer.More_Iter,
-                    Markup_Column,
-                    "<span color=""grey""><i> (more...) </i></span>");
-            end if;
+            Populate_More_Iter (Explorer);
+
             return;
          end if;
 
@@ -494,9 +525,6 @@ package body Completion_Window is
              or else Explorer.Info (Explorer.Index - 1).Text = null
              or else Explorer.Info
                (Explorer.Index - 1).Text.all /= Completion
-             or else
-               Explorer.Info
-                 (Explorer.Index - 1).Markup.all /= Showable
          then
             Info :=
               (new String'(Showable),
@@ -504,7 +532,9 @@ package body Completion_Window is
                Icon,
                Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
                List,
-               True);
+               True,
+               Proposal.Is_Accessible,
+               Null_Iter);
 
             Augment_Notes (Info, Proposal);
 
@@ -519,9 +549,12 @@ package body Completion_Window is
                else
                   Append (Explorer.Model, Iter);
                end if;
+               Explorer.Info (Explorer.Index).Iter := Iter;
 
+               --  Display the completion
                Set (Explorer.Model, Iter,
                     Markup_Column, Info.Markup.all);
+
                if Info.Icon /= null then
                   Set (Explorer.Model, Iter,
                        Icon_Column, Info.Icon);
@@ -545,6 +578,16 @@ package body Completion_Window is
                end;
             end if;
          else
+            --  Check if current item is accessible while previous is not
+            if (not Explorer.Info (Explorer.Index - 1).Accessible)
+              and then Proposal.Is_Accessible
+            then
+               --  If it is indeed the case, ungray the text (replace it)
+               Explorer.Info (Explorer.Index - 1).Markup
+                 := new String'(Showable);
+               Set (Explorer.Model, Explorer.Info (Explorer.Index - 1).Iter,
+                    Markup_Column, Showable);
+            end if;
             Augment_Notes (Explorer.Info (Explorer.Index - 1), Proposal);
          end if;
       end;
@@ -559,11 +602,7 @@ package body Completion_Window is
 
          --  Create a "more" iter
          Append (Explorer.Model, Explorer.More_Iter);
-         Set (Explorer.Model,
-              Explorer.More_Iter,
-              Markup_Column,
-              "<span color=""grey""><i> (more...) </i></span>");
-
+         Populate_More_Iter (Explorer);
          return False;
       end if;
 
@@ -586,7 +625,7 @@ package body Completion_Window is
 
          return False;
       else
-         --  If ther is no "more" iter displayed, create one now since we are
+         --  If there is no "more" iter displayed, create one now since we are
          --  still computing.
          if Explorer.More_Iter = Null_Iter then
             Append (Explorer.Model, Explorer.More_Iter);
@@ -955,7 +994,7 @@ package body Completion_Window is
       Get_Selected (Sel, Model, Iter);
 
       if Iter /= Null_Iter then
-         if Iter = Explorer.More_Iter then
+         if Is_More_Iter (Explorer, Iter) then
             Path := Get_Path (Explorer.Model, Iter);
 
             if Prev (Path) then
@@ -973,7 +1012,9 @@ package body Completion_Window is
 
             Index := Natural (Get_Int (Explorer.Model, Iter, Index_Column));
 
-            Fill_Notes_Container (Explorer, Explorer.Info (Index));
+            if Index /= 0 then
+               Fill_Notes_Container (Explorer, Explorer.Info (Index));
+            end if;
          end if;
       end if;
 

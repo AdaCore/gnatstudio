@@ -159,6 +159,8 @@ private
       --  The offset at which to place the cursor after completion.
       Proposals : Proposals_List.List;
       Visible  : Boolean := True;
+      Accessible : Boolean;
+      Iter : Gtk_Tree_Iter;
    end record;
 
    type Information_Array is array (Positive range <>) of Information_Record;

@@ -362,6 +362,15 @@ package body Engine_Wrappers is
      (Proposal : Comp_Proposal) return String
    is (Proposal.P.Get_Custom_Icon_Name);
 
+   -------------------
+   -- Is_Accessible --
+   -------------------
+
+   overriding function Is_Accessible
+     (Proposal : Comp_Proposal)
+      return Boolean
+   is (Proposal.P.Is_Accessible);
+
    -----------------------
    -- Get_Documentation --
    -----------------------

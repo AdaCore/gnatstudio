@@ -223,6 +223,12 @@ package Completion is
    --  Return the label of the completion proposal. By defaut, return the
    --  completion
 
+   function Is_Accessible
+     (Proposal : Completion_Proposal)
+      return Boolean
+   is (True);
+   --  Returns True if the completion is accessible in the current unit.
+
    function Get_Id
      (Proposal : Completion_Proposal;
       Db : access Xref.General_Xref_Database_Record'Class)

@@ -79,10 +79,11 @@ package body Ada_Semantic_Tree.Declarations is
 
       --  Data needed by the second iteration stage (database)
 
-      Construct_Db : Construct_Database_Access;
-      Db_Iterator  : Construct_Db_Iterator;
-      Visible_From : Entity_Access;
-      Valid        : Boolean := False;
+      Construct_Db  : Construct_Database_Access;
+      Db_Iterator   : Construct_Db_Iterator;
+      Visible_From  : Entity_Access;
+      Valid         : Boolean := False;
+      Accessible    : Boolean := True;
    end record;
 
    overriding
@@ -382,7 +383,7 @@ package body Ada_Semantic_Tree.Declarations is
            (It.Hidden_Entities,
             Get (Get_Construct (Potential_Entity).Name).all)
          then
-            --  Entities hiddent by things founds in the parent are not
+            --  Entities hidden by things founds in the parent are not
             --  displayed.
 
             It.Valid := False;
@@ -396,12 +397,16 @@ package body Ada_Semantic_Tree.Declarations is
                  (Potential_Entity, It.From_Visibility);
                It.Valid := It.Visible_From /= Null_Entity_Access;
 
-               return;
-
             when others =>
+               --  The entry is valid in any case
                It.Valid := True;
 
-               return;
+               --  But we still compute its visibility to decorate the
+               --  entity view
+               It.Accessible :=
+                 (Is_Visible_From_Clauses
+                    (Potential_Entity, It.From_Visibility)
+                  /= Null_Entity_Access);
 
          end case;
       end if;
@@ -458,7 +463,8 @@ package body Ada_Semantic_Tree.Declarations is
             Ref (It.Generic_Context);
 
             Declaration := new Declaration_View_Record'
-              (Confidence      => It.From_Visibility.Min_Visibility_Confidence,
+              (Is_Accessible   => True,
+               Confidence      => It.From_Visibility.Min_Visibility_Confidence,
                Entity          => It.Visible_Constructs (It.Visible_Index),
                Is_All          => False,
                From_Prefixed   => False,
@@ -482,7 +488,8 @@ package body Ada_Semantic_Tree.Declarations is
             Ref (Context);
 
             return new Declaration_View_Record'
-              (Confidence      => It.From_Visibility.Min_Visibility_Confidence,
+              (Is_Accessible   => It.Accessible,
+               Confidence      => It.From_Visibility.Min_Visibility_Confidence,
                Entity          => To_Entity_Access
                  (Get_File (It.Db_Iterator), Get_Construct (It.Db_Iterator)),
                Is_All          => False,
@@ -1284,7 +1291,10 @@ package body Ada_Semantic_Tree.Declarations is
                   Append
                     (List,
                      new Declaration_View_Record'
-                       (Confidence    => Use_Visible,
+                       (Is_Accessible =>
+                          Is_Accessible
+                            (Entity_Unit, Context.File, Context.Offset),
+                        Confidence    => Use_Visible,
                         Entity        => Entity_Unit,
                         Is_All        => False,
                         From_Prefixed => False,
@@ -1464,9 +1474,9 @@ package body Ada_Semantic_Tree.Declarations is
       Info : constant Semantic_Information := Get (It.It);
    begin
       Ref (Info.Generic_Context);
-
       return new Declaration_View_Record'
-        (Confidence      => Public_Library_Visible,
+        (Is_Accessible   => True,
+         Confidence      => Public_Library_Visible,
          Entity          => Info.Entity,
          Is_All          => Info.Kind = All_Access,
          From_Prefixed   => Info.Kind = Prefix_Notation,
@@ -1643,6 +1653,17 @@ package body Ada_Semantic_Tree.Declarations is
    end Get_Name;
 
    -------------------
+   -- Is_Accessible --
+   -------------------
+
+   overriding function Is_Accessible
+     (E : access Declaration_View_Record) return Boolean
+   is
+   begin
+      return E.Is_Accessible;
+   end Is_Accessible;
+
+   -------------------
    -- Fill_Children --
    -------------------
 
@@ -1737,10 +1758,14 @@ package body Ada_Semantic_Tree.Declarations is
    -- To_Declaration --
    --------------------
 
-   function To_Declaration (Entity : Entity_Access) return Entity_View
+   function To_Declaration
+     (Entity : Entity_Access; Is_Accessible : Boolean := True)
+      return Entity_View
    is
-      Result : constant Entity_View := new Declaration_View_Record;
+      Result : constant Entity_View
+        := new Declaration_View_Record;
    begin
+      Declaration_View_Record (Result.all).Is_Accessible := Is_Accessible;
       Result.Confidence := Public_Library_Visible;
       Result.Entity := Entity;
 
