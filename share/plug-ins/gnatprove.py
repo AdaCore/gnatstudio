@@ -511,6 +511,52 @@ def mk_loc_string (sloc):
     locstring = os.path.basename(sloc.file().name()) + ":" + str(sloc.line())
     return locstring
 
+def subprogram_start(cursor):
+   """Return the start of the subprogram that we are currently in"""
+   # This function has been copied and modified from plug-in "expanded_code"
+   blocks = {"CAT_PROCEDURE":1, "CAT_FUNCTION":1, "CAT_ENTRY":1,
+             "CAT_PROTECTED":1, "CAT_TASK":1, "CAT_PACKAGE":1}
+
+   if cursor.block_type() == "CAT_UNKNOWN":
+      return None
+
+   min = cursor.buffer().beginning_of_buffer()
+   while not blocks.has_key (cursor.block_type()) and cursor > min:
+     cursor = cursor.block_start() - 1
+
+   if cursor > min:
+       return cursor.block_start()
+   else:
+       return None
+
+def compute_subp_sloc(self):
+    """Return the location of the declaration of the subprogram that we are
+       currently in"""
+    curloc = self.location()
+    buf = GPS.EditorBuffer.get(curloc.file())
+    edloc = GPS.EditorLocation(buf, curloc.line(), curloc.column())
+    start_loc = subprogram_start(edloc)
+    if not start_loc:
+        return None
+    name = edloc.subprogram_name()
+    # [subprogram_start] returns the beginning of the line of the
+    # definition/declaration. To be able to call GPS.Entity, we need to be
+    # closer to the actual subprogram name. We get closer by skipping the
+    # keyword that introduces the subprogram (procedure/function/entry etc.)
+    start_loc = start_loc.forward_word(1)
+    try:
+        entity = GPS.Entity(
+                    name,
+                    start_loc.buffer().file(),
+                    start_loc.line(),
+                    start_loc.column())
+    except:
+        return None
+    if entity:
+        return entity.declaration()
+    else:
+        return None
+
 def on_prove_subp(self):
     """execute the "prove subprogram" action on the the given subprogram entity
     """
@@ -520,11 +566,12 @@ def on_prove_subp(self):
     # box shown to the user, even if appears in the uneditable argument list
     # displayed below it.
     gnatprove_plug.clean_locations_view()
-    loc = self.entity().declaration()
-    target = GPS.BuildTarget(prove_subp)
-    target.execute(
-        extra_args="--limit-subp="+mk_loc_string (loc),
-        synchronous=False)
+    loc = compute_subp_sloc(self)
+    if loc:
+        target = GPS.BuildTarget(prove_subp)
+        target.execute(
+            extra_args="--limit-subp="+mk_loc_string (loc),
+            synchronous=False)
 
 class GNATProve_Plugin:
     """Class to contain the main functionality of the GNATProve_Plugin"""
@@ -556,7 +603,7 @@ class GNATProve_Plugin:
             filter = is_ada_file_context)
         GPS.Contextual(prefix + "/" + prove_subp).create(
             on_activate = on_prove_subp,
-            filter = is_subp_context)
+            filter = is_ada_file_context)
         GPS.parse_xml(xml_gnatprove)
         self.messages = []
         self.trace_msg = None

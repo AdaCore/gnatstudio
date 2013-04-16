@@ -194,6 +194,14 @@ NF-53-J728-022 GPS: the Project Wizard takes advantage of gnatname (2012-11-08)
   The project wizard now optionally uses gnatname to search for Ada units in
   files with non-standard naming conventions.
 
+NF-53-I430-029 GB: Show Ada content in Project Explorer view (2013-03-28)
+
+  GNATbench now uses the Project Explorer view rather than the now deprecated
+  GNAT Project Explorer view.  This is the standard view in Eclipse for viewing
+  projects, folders, files, etc.  There's also a new view filter that can hide
+  any folders/files that are not relevant to the current build configuration.
+  Working sets are supported now as well.
+
 NF-53-I320-015 GB: Enhance block completions (2013-01-25)
 
   The block completion facility has been extended to cover additional
