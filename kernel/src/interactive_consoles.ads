@@ -360,7 +360,8 @@ private
       Next     : Hyper_Links;
    end record;
 
-   type Console_Messages_Window (Console : access Interactive_Console_Record)
+   type Console_Messages_Window
+     (Console : access Interactive_Console_Record'Class)
      is new GPS.Messages_Windows.Abstract_Messages_Window with null record;
 
    type Console_Messages_Window_Access is access all Console_Messages_Window;

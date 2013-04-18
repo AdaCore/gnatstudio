@@ -2124,9 +2124,11 @@ package body Interactive_Consoles is
    begin
       if Self = null then
          return null;
-      else
-         return Self.Console;
+      elsif Self.Console = null then
+         Self.Console := new Console_Messages_Window'(Console => Self);
       end if;
+
+      return Self.Console;
    end Get_Console_Messages_Window;
 
    ------------
