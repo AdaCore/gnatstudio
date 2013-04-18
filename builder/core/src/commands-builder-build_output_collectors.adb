@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package body Build_Command_Manager.Build_Output_Collectors is
+package body Commands.Builder.Build_Output_Collectors is
 
    ------------
    -- Create --
@@ -76,4 +76,4 @@ package body Build_Command_Manager.Build_Output_Collectors is
       Self.Background := Background;
    end Set;
 
-end Build_Command_Manager.Build_Output_Collectors;
+end Commands.Builder.Build_Output_Collectors;

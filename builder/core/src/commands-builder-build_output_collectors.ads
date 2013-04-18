@@ -21,7 +21,7 @@ with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Build_Command_Utils;              use Build_Command_Utils;
 with GPS.Tools_Output;                 use GPS.Tools_Output;
 
-package Build_Command_Manager.Build_Output_Collectors is
+package Commands.Builder.Build_Output_Collectors is
 
    type Build_Output_Collector is new Tools_Output_Parser with private;
 
@@ -65,4 +65,4 @@ private
       Background : Boolean;
    end record;
 
-end Build_Command_Manager.Build_Output_Collectors;
+end Commands.Builder.Build_Output_Collectors;

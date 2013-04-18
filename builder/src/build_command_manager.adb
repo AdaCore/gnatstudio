@@ -43,7 +43,7 @@ with GNATCOLL.Projects;           use GNATCOLL.Projects;
 
 with GPS.Tools_Output;            use GPS.Tools_Output;
 
-with Build_Command_Manager.Build_Output_Collectors;
+with Commands.Builder.Build_Output_Collectors;
 with Build_Command_Manager.Console_Writers;
 with Build_Command_Manager.Location_Parsers;
 with Build_Command_Manager.End_Of_Build;
