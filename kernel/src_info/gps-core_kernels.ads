@@ -17,6 +17,9 @@
 
 --  This package defines the abstract root type for GPS kernel.
 
+with Ada.Tags;
+with Ada.Containers.Hashed_Maps;
+
 with Language_Handlers;
 with Projects;
 with Xref;
@@ -101,7 +104,30 @@ package GPS.Core_Kernels is
 
    procedure Destroy (Self : not null access Core_Kernel_Record'Class);
 
+   type Abstract_Module_Record is abstract tagged limited null record;
+   type Abstract_Module is access all Abstract_Module_Record'Class;
+
+   procedure Register_Module
+     (Kernel : access Core_Kernel_Record'Class;
+      Module : not null Abstract_Module;
+      Tag    : Ada.Tags.Tag);
+   --  Register Module in Kernel. Module should implement service defined
+   --  by tagged type with given Tag.
+
+   function Module
+     (Kernel : access Core_Kernel_Record'Class;
+      Tag    : Ada.Tags.Tag) return Abstract_Module;
+   --  Return module that implement service with given Tag
+
 private
+
+   function Hash (Tag : Ada.Tags.Tag) return Ada.Containers.Hash_Type;
+
+   package Module_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => Ada.Tags.Tag,
+      Element_Type    => Abstract_Module,
+      Hash            => Hash,
+      Equivalent_Keys => Ada.Tags."=");
 
    type Core_Kernel_Record is abstract tagged record
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
@@ -118,6 +144,8 @@ private
 
       Scripts : GNATCOLL.Scripts.Scripts_Repository;
       --  Data used to store information for the scripting languages
+
+      Modules : Module_Maps.Map;
    end record;
 
 end GPS.Core_Kernels;

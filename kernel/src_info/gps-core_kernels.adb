@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Hash;
+
 with GNAT.OS_Lib;
 with GNAT.Strings;                     use GNAT.Strings;
 
@@ -116,6 +118,15 @@ package body GPS.Core_Kernels is
       return "default";
    end Get_Build_Mode;
 
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Tag : Ada.Tags.Tag) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (Ada.Tags.External_Tag (Tag));
+   end Hash;
+
    ------------------
    -- Lang_Handler --
    ------------------
@@ -126,6 +137,57 @@ package body GPS.Core_Kernels is
    begin
       return Kernel.Lang_Handler;
    end Lang_Handler;
+
+   ------------
+   -- Module --
+   ------------
+
+   function Module
+     (Kernel : access Core_Kernel_Record'Class;
+      Tag    : Ada.Tags.Tag) return Abstract_Module is
+   begin
+      return Kernel.Modules.Element (Tag);
+   end Module;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access Core_Kernel_Record'Class;
+      Module : not null Abstract_Module;
+      Tag    : Ada.Tags.Tag)
+   is
+      function Module_Implement_Tag return Boolean;
+      --  Verify that Module is ancestor of Tag
+
+      --------------------------
+      -- Module_Implement_Tag --
+      --------------------------
+
+      function Module_Implement_Tag return Boolean is
+         use Ada.Tags;
+
+         Item : Ada.Tags.Tag := Module'Tag;
+      begin
+         while Item /= No_Tag loop
+            if Item = Tag then
+               return True;
+            end if;
+
+            Item := Parent_Tag (Item);
+         end loop;
+
+         return False;
+      end Module_Implement_Tag;
+
+   begin
+      if not Module_Implement_Tag then
+         raise Constraint_Error;
+      end if;
+
+      Kernel.Modules.Insert (Tag, Module);
+   end Register_Module;
 
    --------------
    -- Registry --
