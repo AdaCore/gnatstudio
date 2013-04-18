@@ -1664,4 +1664,25 @@ package body Build_Command_Utils is
       return C;
    end Clear_All_Build_Output;
 
+   ---------------------
+   -- Get_Last_Build --
+   ---------------------
+
+   function Get_Last_Build
+     (Self : access Builder_Context_Record) return Build_Information is
+   begin
+      return Self.Build;
+   end Get_Last_Build;
+
+   ---------------------
+   -- Set_Last_Build --
+   ---------------------
+
+   procedure Set_Last_Build
+     (Self   : access Builder_Context_Record;
+      Build  : Build_Information) is
+   begin
+      Self.Build := Build;
+   end Set_Last_Build;
+
 end Build_Command_Utils;

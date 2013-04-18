@@ -22,26 +22,37 @@
 --  See spec of Builder_Facility_Module for an overview of the build system.
 
 with Ada.Containers.Hashed_Maps;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 
-with Projects;              use Projects;
-with Remote;                use Remote;
-with Toolchains;            use Toolchains;
-
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.Projects;                use GNATCOLL.Projects;
 
 with GPS.Core_Kernels;
-with GPS_Preferences_Types; use GPS_Preferences_Types;
+with GPS.Messages_Windows;             use GPS.Messages_Windows;
 
-with Build_Configurations;  use Build_Configurations;
-with Commands;              use Commands;
+with Build_Configurations;             use Build_Configurations;
+with Commands;                         use Commands;
+with Extending_Environments;           use Extending_Environments;
+with GPS_Preferences_Types;            use GPS_Preferences_Types;
+with Projects;                         use Projects;
+with Remote;                           use Remote;
+with Toolchains;                       use Toolchains;
 
 package Build_Command_Utils is
+
+   type Dialog_Mode is
+     (Force_Dialog, Force_No_Dialog,
+      Force_Dialog_Unless_Disabled_By_Target,
+      Default);
+   --  Force_Dialog means that the dialog should always be displayed
+   --  Force_No_Dialog means that the dialog should not be displayed
+   --  Force_Dialog_Unless_Disabled_By_Target means that the dialog should
+   --    be displayed, unless the target launches with Manually_With_No_Dialog
+   --  Default means that the target default should be enforced
 
    function Get_Server
      (Registry   : Build_Config_Registry_Access;
@@ -341,14 +352,38 @@ package Build_Command_Utils is
    --  Inform the module that a background build has started, controlled by
    --  Command.
 
-   ----------------------
-   -- Background build --
-   ----------------------
-
    procedure Interrupt_Background_Build
      (Self    : access Builder_Context_Record;
       Command : out Command_Access);
    --  Interrupt the currently running background build
+
+   -----------------
+   --  Last build --
+   -----------------
+
+   type Build_Information is record
+      Target      : Target_Access;
+      Main        : Virtual_File;
+      Force_File  : Virtual_File;
+      Env         : Extending_Environment;
+      Category    : Unbounded_String;
+      Mode        : Unbounded_String;
+      Background  : Boolean;
+      Shadow      : Boolean;
+      Quiet       : Boolean;
+      Console     : Abstract_Messages_Window_Access;
+      Full        : Expansion_Result;
+      Extra_Args  : Argument_List_Access;
+      Dialog      : Dialog_Mode;
+      Launch      : Boolean;
+   end record;
+
+   function Get_Last_Build
+     (Self : access Builder_Context_Record) return Build_Information;
+   procedure Set_Last_Build
+     (Self   : access Builder_Context_Record;
+      Build  : Build_Information);
+   --  Get/Set the last built target
 
    procedure Destroy (Self : access Builder_Context_Record);
    --  Cleanup internal data
@@ -391,6 +426,8 @@ private
       --  The command holding the background build.
       Outputs : Target_Output_Array;
       --  Save output for target builds
+      Build : Build_Information;
+      --  The last build target
    end record;
 
 end Build_Command_Utils;

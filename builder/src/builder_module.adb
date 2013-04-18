@@ -43,6 +43,7 @@ with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
 
+with Build_Command_Utils;
 with Build_Command_Manager;
 with Builder_Facility_Module;
 with Traces;
@@ -124,7 +125,7 @@ package body Builder_Module is
             Extra_Args  => null,
             Quiet       => True,
             Synchronous => True,
-            Dialog      => Build_Command_Manager.Force_No_Dialog,
+            Dialog      => Build_Command_Utils.Force_No_Dialog,
             Background  => False,
             Main        => GNATCOLL.VFS.No_File);
 
@@ -137,7 +138,7 @@ package body Builder_Module is
             Quiet       => True,
             Synchronous => False,
             Background  => False,
-            Dialog      => Build_Command_Manager.Force_No_Dialog,
+            Dialog      => Build_Command_Utils.Force_No_Dialog,
             Main        => GNATCOLL.VFS.No_File);
       end if;
    end Compile_Command;
@@ -160,7 +161,7 @@ package body Builder_Module is
          Quiet       => False,
          Synchronous => False,
          Background  => False,
-         Dialog      => Build_Command_Manager.Force_No_Dialog,
+         Dialog      => Build_Command_Utils.Force_No_Dialog,
          Main        => GNATCOLL.VFS.No_File);
 
    exception
