@@ -87,6 +87,12 @@ package body GPS.Kernel.Messages is
       --  true then the locations window will automatically jump to the first
       --  message.
 
+      procedure Notify_Listeners_About_Category_Removed
+        (Self     : not null access constant Messages_Container'Class;
+         Category : Ada.Strings.Unbounded.Unbounded_String;
+         Flags    : Message_Flags);
+      --  Calls listeners to notify about remove of the category
+
       procedure Notify_Listeners_About_File_Added
         (Self     : not null access constant Messages_Container'Class;
          Category : Ada.Strings.Unbounded.Unbounded_String;
@@ -1167,6 +1173,35 @@ package body GPS.Kernel.Messages is
          end loop;
       end Notify_Listeners_About_Category_Added;
 
+      ---------------------------------------------
+      -- Notify_Listeners_About_Category_Removed --
+      ---------------------------------------------
+
+      procedure Notify_Listeners_About_Category_Removed
+        (Self     : not null access constant Messages_Container'Class;
+         Category : Ada.Strings.Unbounded.Unbounded_String;
+         Flags    : Message_Flags)
+      is
+         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+
+      begin
+         while Has_Element (Listener_Position) loop
+            begin
+               if Element (Listener_Position).Flags = Empty_Message_Flags
+                 or else Match (Element (Listener_Position).Flags, Flags)
+               then
+                  Element (Listener_Position).Category_Removed (Category);
+               end if;
+
+            exception
+               when E : others =>
+                  Trace (Exception_Handle, E);
+            end;
+
+            Next (Listener_Position);
+         end loop;
+      end Notify_Listeners_About_Category_Removed;
+
       ---------------------------------------
       -- Notify_Listeners_About_File_Added --
       ---------------------------------------
@@ -1197,9 +1232,9 @@ package body GPS.Kernel.Messages is
          end loop;
       end Notify_Listeners_About_File_Added;
 
-      ---------------------------------------
+      -----------------------------------------
       -- Notify_Listeners_About_File_Removed --
-      ---------------------------------------
+      -----------------------------------------
 
       procedure Notify_Listeners_About_File_Removed
         (Self     : not null access constant Messages_Container'Class;
@@ -1520,6 +1555,9 @@ package body GPS.Kernel.Messages is
       if Category_Node.Children.Is_Empty then
          Self.Category_Map.Delete (Category_Position);
          Self.Categories.Delete (Category_Index);
+
+         Notifiers.Notify_Listeners_About_Category_Removed
+           (Self, Category_Node.Name, Flags);
 
          Free (Category_Node);
       end if;

@@ -353,6 +353,11 @@ package GPS.Kernel.Messages is
    --  If Allow_Auto_Jump_To_First is True and the user preference is also true
    --  then the locations window will automatically jump to the first message.
 
+   procedure Category_Removed
+     (Self     : not null access Abstract_Listener;
+      Category : Ada.Strings.Unbounded.Unbounded_String) is null;
+   --  Called on remove of category
+
    procedure File_Added
      (Self     : not null access Abstract_Listener;
       Category : Ada.Strings.Unbounded.Unbounded_String;
