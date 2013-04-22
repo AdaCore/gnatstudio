@@ -1072,7 +1072,7 @@ package body GPS.Kernel.Preferences is
 
       Secondary_File_Pattern := Create
         (Manager => Kernel.Preferences,
-         Name    => "Messages-Secondary-File-Regpat",
+         Name    => "Messages-Secondary-File-Regexp",
          Label   => -"Secondary File pattern",
          Doc     =>
            -"Pattern used to detect secondary file locations in messages",
