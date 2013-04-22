@@ -75,36 +75,45 @@ package body GPS.Kernel.Messages is
       Data   : access Hooks_Data'Class);
    --  React to a file renaming
 
+   function Get_Flags (Node : not null Node_Access) return Message_Flags;
+   --  Constructs set of actual visibility flags for category or file node and
+   --  returns it.
+
    package Notifiers is
 
       procedure Notify_Listeners_About_Category_Added
-        (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String;
-         Flags    : Message_Flags;
+        (Self          : not null access constant Messages_Container'Class;
+         Category      : Ada.Strings.Unbounded.Unbounded_String;
+         Initial_Flags : Message_Flags;
+         Current_Flags : Message_Flags;
          Allow_Auto_Jump_To_First : Boolean);
-      --  Calls listeners to notify about add of the category
+      --  Calls listeners to notify about add of the category when set of flags
+      --  has been changed.
       --  If Allow_Auto_Jump_To_First is True and the user preference is also
       --  true then the locations window will automatically jump to the first
       --  message.
 
       procedure Notify_Listeners_About_Category_Removed
-        (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String;
-         Flags    : Message_Flags);
+        (Self          : not null access constant Messages_Container'Class;
+         Category      : Ada.Strings.Unbounded.Unbounded_String;
+         Initial_Flags : Message_Flags;
+         Current_Flags : Message_Flags);
       --  Calls listeners to notify about remove of the category
 
       procedure Notify_Listeners_About_File_Added
-        (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String;
-         File     : GNATCOLL.VFS.Virtual_File;
-         Flags    : Message_Flags);
+        (Self          : not null access constant Messages_Container'Class;
+         Category      : Ada.Strings.Unbounded.Unbounded_String;
+         File          : GNATCOLL.VFS.Virtual_File;
+         Initial_Flags : Message_Flags;
+         Current_Flags : Message_Flags);
       --  Calls listeners to notify about add of the file
 
       procedure Notify_Listeners_About_File_Removed
-        (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String;
-         File     : GNATCOLL.VFS.Virtual_File;
-         Flags    : Message_Flags);
+        (Self          : not null access constant Messages_Container'Class;
+         Category      : Ada.Strings.Unbounded.Unbounded_String;
+         File          : GNATCOLL.VFS.Virtual_File;
+         Initial_Flags : Message_Flags;
+         Current_Flags : Message_Flags);
       --  Calls listeners to notify about remove of the file
 
       procedure Notify_Listeners_About_Message_Added
@@ -347,6 +356,25 @@ package body GPS.Kernel.Messages is
    begin
       return Self.Action;
    end Get_Action;
+
+   ---------------
+   -- Get_Flags --
+   ---------------
+
+   function Get_Flags (Node : not null Node_Access) return Message_Flags is
+   begin
+      case Node.Kind is
+         when Node_Category | Node_File =>
+            return Result : Message_Flags do
+               for J in Message_Visibility_Kind loop
+                  Result (J) := Node.Counters (J) /= 0;
+               end loop;
+            end return;
+
+         when Node_Message =>
+            raise Program_Error;
+      end case;
+   end Get_Flags;
 
    ------------------
    -- Has_Category --
@@ -725,8 +753,10 @@ package body GPS.Kernel.Messages is
       Category_Position : constant Category_Maps.Cursor :=
                             Container.Category_Map.Find (Category_Name);
       Category_Node     : Node_Access;
+      Category_Flags    : Message_Flags;
       File_Position     : File_Maps.Cursor;
       File_Node         : Node_Access;
+      File_Flags        : Message_Flags;
       Sort_Position     : Sort_Order_Hint_Maps.Cursor;
       Sort_Hint         : Sort_Order_Hint;
 
@@ -762,20 +792,14 @@ package body GPS.Kernel.Messages is
            new Node_Record'
              (Kind          => Node_Category,
               Parent        => null,
-              Flags         => Flags,
               Children      => Node_Vectors.Empty_Vector,
+              Counters      => (others => 0),
               Container     => Container,
               Name          => Category_Name,
               File_Map      => File_Maps.Empty_Map,
               Sort_Hint     => Sort_Hint);
          Container.Categories.Append (Category_Node);
          Container.Category_Map.Insert (Category_Name, Category_Node);
-
-         --  Notify listeners
-
-         Notifiers.Notify_Listeners_About_Category_Added
-           (Container, Category_Name, Flags,
-            Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
       end if;
 
       --  Resolve file node, create new one when there is no existent node
@@ -788,18 +812,13 @@ package body GPS.Kernel.Messages is
       else
          File_Node :=
            new Node_Record'
-             (Kind          => Node_File,
-              Parent        => Category_Node,
-              Flags         => Flags,
-              Children      => Node_Vectors.Empty_Vector,
-              File          => File);
+             (Kind     => Node_File,
+              Parent   => Category_Node,
+              Children => Node_Vectors.Empty_Vector,
+              Counters => (others => 0),
+              File     => File);
          Category_Node.Children.Append (File_Node);
          Category_Node.File_Map.Insert (File, File_Node);
-
-         --  Notify listeners
-
-         Notifiers.Notify_Listeners_About_File_Added
-           (Container, Category_Name, File, Flags);
       end if;
 
       --  Connect message with file node
@@ -807,15 +826,34 @@ package body GPS.Kernel.Messages is
       Self.Parent := File_Node;
       File_Node.Children.Append (Node_Access (Self));
 
-      --  Update flags of category and file nodes
+      --  Obtain initial set of flags for category and file nodes.
 
-      for K in Message_Visibility_Kind loop
-         File_Node.Flags (K) := File_Node.Flags (K) or Self.Flags (K);
-         Category_Node.Flags (K) := Category_Node.Flags (K) or Self.Flags (K);
+      Category_Flags := Get_Flags (Category_Node);
+      File_Flags := Get_Flags (File_Node);
+
+      --  Update counters.
+
+      for Kind in Message_Visibility_Kind loop
+         if Self.Flags (Kind) then
+            Category_Node.Counters (Kind) := Category_Node.Counters (Kind) + 1;
+            File_Node.Counters (Kind) := File_Node.Counters (Kind) + 1;
+         end if;
       end loop;
 
       --  Notify listeners
 
+      Notifiers.Notify_Listeners_About_Category_Added
+        (Container,
+         Category_Name,
+         Category_Flags,
+         Get_Flags (Category_Node),
+         Allow_Auto_Jump_To_First);
+      Notifiers.Notify_Listeners_About_File_Added
+        (Container,
+         Category_Name,
+         File,
+         File_Flags,
+         Get_Flags (File_Node));
       Notifiers.Notify_Listeners_About_Message_Added
         (Container, Self, Self.Flags);
    end Initialize;
@@ -1146,18 +1184,28 @@ package body GPS.Kernel.Messages is
       -------------------------------------------
 
       procedure Notify_Listeners_About_Category_Added
-        (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String;
-         Flags    : Message_Flags;
+        (Self          : not null access constant Messages_Container'Class;
+         Category      : Ada.Strings.Unbounded.Unbounded_String;
+         Initial_Flags : Message_Flags;
+         Current_Flags : Message_Flags;
          Allow_Auto_Jump_To_First : Boolean)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
       begin
+         if Initial_Flags = Current_Flags then
+            --  Set of flags wasn't changed, nothing to notify.
+
+            return;
+         end if;
+
          while Has_Element (Listener_Position) loop
             begin
-               if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match (Element (Listener_Position).Flags, Flags)
+               if (Element (Listener_Position).Flags = Empty_Message_Flags
+                   and Initial_Flags = Empty_Message_Flags)
+                 or (((Initial_Flags xor Current_Flags)
+                      and Element (Listener_Position).Flags)
+                     /= Empty_Message_Flags)
                then
                   Element (Listener_Position).Category_Added
                     (Category,
@@ -1178,17 +1226,27 @@ package body GPS.Kernel.Messages is
       ---------------------------------------------
 
       procedure Notify_Listeners_About_Category_Removed
-        (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String;
-         Flags    : Message_Flags)
+        (Self          : not null access constant Messages_Container'Class;
+         Category      : Ada.Strings.Unbounded.Unbounded_String;
+         Initial_Flags : Message_Flags;
+         Current_Flags : Message_Flags)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
       begin
+         if Initial_Flags = Current_Flags then
+            --  Set of flags wasn't changed, nothing to notify.
+
+            return;
+         end if;
+
          while Has_Element (Listener_Position) loop
             begin
-               if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match (Element (Listener_Position).Flags, Flags)
+               if (Element (Listener_Position).Flags = Empty_Message_Flags
+                   and Current_Flags = Empty_Message_Flags)
+                 or (((Initial_Flags xor Current_Flags)
+                      and Element (Listener_Position).Flags)
+                     /= Empty_Message_Flags)
                then
                   Element (Listener_Position).Category_Removed (Category);
                end if;
@@ -1207,18 +1265,28 @@ package body GPS.Kernel.Messages is
       ---------------------------------------
 
       procedure Notify_Listeners_About_File_Added
-        (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String;
-         File     : GNATCOLL.VFS.Virtual_File;
-         Flags    : Message_Flags)
+        (Self          : not null access constant Messages_Container'Class;
+         Category      : Ada.Strings.Unbounded.Unbounded_String;
+         File          : GNATCOLL.VFS.Virtual_File;
+         Initial_Flags : Message_Flags;
+         Current_Flags : Message_Flags)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
       begin
+         if Initial_Flags = Current_Flags then
+            --  Set of flags wasn't changed, nothing to notify.
+
+            return;
+         end if;
+
          while Has_Element (Listener_Position) loop
             begin
-               if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match (Element (Listener_Position).Flags, Flags)
+               if (Element (Listener_Position).Flags = Empty_Message_Flags
+                   and Initial_Flags = Empty_Message_Flags)
+                 or (((Initial_Flags xor Current_Flags)
+                      and Element (Listener_Position).Flags)
+                     /= Empty_Message_Flags)
                then
                   Element (Listener_Position).File_Added (Category, File);
                end if;
@@ -1237,18 +1305,28 @@ package body GPS.Kernel.Messages is
       -----------------------------------------
 
       procedure Notify_Listeners_About_File_Removed
-        (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String;
-         File     : GNATCOLL.VFS.Virtual_File;
-         Flags    : Message_Flags)
+        (Self          : not null access constant Messages_Container'Class;
+         Category      : Ada.Strings.Unbounded.Unbounded_String;
+         File          : GNATCOLL.VFS.Virtual_File;
+         Initial_Flags : Message_Flags;
+         Current_Flags : Message_Flags)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
       begin
+         if Initial_Flags = Current_Flags then
+            --  Set of flags wasn't changed, nothing to notify.
+
+            return;
+         end if;
+
          while Has_Element (Listener_Position) loop
             begin
-               if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match (Element (Listener_Position).Flags, Flags)
+               if (Element (Listener_Position).Flags = Empty_Message_Flags
+                   and Current_Flags = Empty_Message_Flags)
+                 or (((Initial_Flags xor Current_Flags)
+                      and Element (Listener_Position).Flags)
+                     /= Empty_Message_Flags)
                then
                   Element (Listener_Position).File_Removed (Category, File);
                end if;
@@ -1277,7 +1355,8 @@ package body GPS.Kernel.Messages is
          while Has_Element (Listener_Position) loop
             begin
                if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match (Element (Listener_Position).Flags, Flags)
+                 or else (Flags and Element (Listener_Position).Flags)
+                 /= Empty_Message_Flags
                then
                   Element (Listener_Position).Message_Added (Message);
                end if;
@@ -1337,7 +1416,8 @@ package body GPS.Kernel.Messages is
          while Has_Element (Listener_Position) loop
             begin
                if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match (Element (Listener_Position).Flags, Flags)
+                 or else (Flags and Element (Listener_Position).Flags)
+                 /= Empty_Message_Flags
                then
                   Element (Listener_Position).Message_Removed (Message);
                end if;
@@ -1555,10 +1635,6 @@ package body GPS.Kernel.Messages is
       if Category_Node.Children.Is_Empty then
          Self.Category_Map.Delete (Category_Position);
          Self.Categories.Delete (Category_Index);
-
-         Notifiers.Notify_Listeners_About_Category_Removed
-           (Self, Category_Node.Name, Flags);
-
          Free (Category_Node);
       end if;
    end Remove_Category;
@@ -1616,11 +1692,6 @@ package body GPS.Kernel.Messages is
       end loop;
 
       if File_Node.Children.Is_Empty then
-         --  Notify listeners
-
-         Notifiers.Notify_Listeners_About_File_Removed
-           (Self, Category_Node.Name, File_Node.File, File_Node.Flags);
-
          --  Delete file's node
 
          Category_Node.File_Map.Delete (File_Position);
@@ -1693,12 +1764,18 @@ package body GPS.Kernel.Messages is
       procedure Free is
         new Unchecked_Deallocation (Abstract_Message'Class, Message_Access);
 
-      Parent  : Node_Access := Message.Parent;
-      Index   : constant Positive :=
+      Parent         : Node_Access := Message.Parent;
+      Index          : constant Positive :=
         Parent.Children.Find_Index (Node_Access (Message));
-      Destroy : constant Boolean :=
+      Destroy        : constant Boolean :=
         Self.Cleanup_Mode
           or else Notifiers.Ask_About_Message_Destroy (Self, Message);
+      Category_Node  : Node_Access;
+      Category_Name  : constant Unbounded_String := Message.Get_Category;
+      Category_Flags : Message_Flags;
+      File           : constant Virtual_File := Message.Get_File;
+      File_Node      : Node_Access;
+      File_Flags     : Message_Flags;
 
    begin
       if Flags = Empty_Message_Flags or else Match (Message.Flags, Flags) then
@@ -1714,6 +1791,43 @@ package body GPS.Kernel.Messages is
 
          Notifiers.Notify_Listeners_About_Message_Removed
            (Self, Message, Message.Flags);
+
+         if Message.Level = Primary then
+            --  Removal of primary message may result in removal of category
+            --  and file.
+
+            File_Node := Parent;
+            Category_Node := File_Node.Parent;
+
+            --  Obtain initial set of flags for category and file nodes.
+
+            Category_Flags := Get_Flags (Category_Node);
+            File_Flags := Get_Flags (File_Node);
+
+            --  Update counters.
+
+            for Kind in Message_Visibility_Kind loop
+               if Message.Flags (Kind) then
+                  Category_Node.Counters (Kind) :=
+                    Category_Node.Counters (Kind) - 1;
+                  File_Node.Counters (Kind) := File_Node.Counters (Kind) - 1;
+               end if;
+            end loop;
+
+            --  Notify listeners
+
+            Notifiers.Notify_Listeners_About_File_Removed
+              (Self,
+               Category_Name,
+               File,
+               File_Flags,
+               Get_Flags (File_Node));
+            Notifiers.Notify_Listeners_About_Category_Removed
+              (Self,
+               Category_Name,
+               Category_Flags,
+               Get_Flags (Category_Node));
+         end if;
 
          if Destroy then
             Parent.Children.Delete (Index);

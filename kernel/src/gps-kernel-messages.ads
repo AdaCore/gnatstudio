@@ -462,6 +462,8 @@ private
         Hash,
         Ada.Tags."=");
 
+   type Message_Counters is array (Message_Visibility_Kind) of Natural;
+
    type Node_Kinds is (Node_Category, Node_File, Node_Message);
 
    --  Declaration of Node_Record as tagged type with discriminant versus
@@ -472,17 +474,26 @@ private
    type Node_Record (Kind : Node_Kinds) is tagged limited record
       Parent   : Node_Access;
       Children : Node_Vectors.Vector;
-      Flags    : Message_Flags;
 
       case Kind is
-         when Node_Category =>
-            Container : Messages_Container_Access;
-            Name      : Ada.Strings.Unbounded.Unbounded_String;
-            File_Map  : File_Maps.Map;
-            Sort_Hint : Sort_Order_Hint;
+         when Node_Category | Node_File =>
+            Counters : Message_Counters;
+            --  Number of messages of each visibility kinds. Used to manage
+            --  notification about category and file addition/removal.
 
-         when Node_File =>
-            File : GNATCOLL.VFS.Virtual_File;
+            case Kind is
+               when Node_Category =>
+                  Container : Messages_Container_Access;
+                  Name      : Ada.Strings.Unbounded.Unbounded_String;
+                  File_Map  : File_Maps.Map;
+                  Sort_Hint : Sort_Order_Hint;
+
+               when Node_File =>
+                  File : GNATCOLL.VFS.Virtual_File;
+
+               when Node_Message =>
+                  null;
+            end case;
 
          when Node_Message =>
             Line   : Natural;
@@ -492,6 +503,7 @@ private
             Style  : GPS.Styles.UI.Style_Access;
             Length : Natural := 0;
             Notes  : Note_Maps.Map;
+            Flags  : Message_Flags;
       end case;
    end record;
 
