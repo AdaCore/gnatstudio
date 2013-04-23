@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Build_Configurations;             use Build_Configurations;
+
 package body Commands.Builder.Build_Output_Collectors is
 
    ------------
@@ -29,9 +31,7 @@ package body Commands.Builder.Build_Output_Collectors is
       return new Build_Output_Collector'
         (Child      => Child,
          Builder    => Self.Builder,
-         Shadow     => Self.Shadow,
-         Target     => Self.Target,
-         Background => Self.Background);
+         Build      => Self.Builder.Get_Last_Build);
    end Create;
 
    ---------------------------
@@ -51,10 +51,10 @@ package body Commands.Builder.Build_Output_Collectors is
       end if;
 
       Self.Builder.Append_To_Build_Output
-        (Item (Item'First .. Last),
-         To_String (Self.Target),
-         Self.Shadow,
-         Self.Background);
+        (Line       => Item (Item'First .. Last),
+         Target     => Get_Name (Self.Build.Target),
+         Shadow     => Self.Build.Shadow,
+         Background => Self.Build.Background);
 
       Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
    end Parse_Standard_Output;
@@ -65,15 +65,9 @@ package body Commands.Builder.Build_Output_Collectors is
 
    procedure Set
      (Self       : access Output_Parser_Fabric;
-      Builder    : Builder_Context;
-      Target     : String;
-      Shadow     : Boolean;
-      Background : Boolean) is
+      Builder    : Builder_Context) is
    begin
       Self.Builder := Builder;
-      Self.Target := To_Unbounded_String (Target);
-      Self.Shadow := Shadow;
-      Self.Background := Background;
    end Set;
 
 end Commands.Builder.Build_Output_Collectors;

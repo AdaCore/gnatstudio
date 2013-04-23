@@ -46,6 +46,7 @@ class Sqlite_Cross_References(object):
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <output-parsers>
+        end_of_build
         output_chopper
         utf_converter
         progress_parser

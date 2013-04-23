@@ -71,10 +71,14 @@ with XML_Utils;                 use XML_Utils;
 
 with GPS.Tools_Output;          use GPS.Tools_Output;
 
+with Build_Command_Manager.Console_Writers;
+with Build_Command_Manager.Location_Parsers;
+with Build_Command_Manager.End_Of_Build;
 with Builder_Facility_Module.Output_Choppers;
 with Builder_Facility_Module.Text_Splitters;
 with Builder_Facility_Module.UTF8_Converters;
 with Commands.Builder.Progress_Parsers;
+with Commands.Builder.Build_Output_Collectors;
 with GPS.Core_Kernels;
 
 package body Builder_Facility_Module is
@@ -160,6 +164,10 @@ package body Builder_Facility_Module is
       Text_Splitter    : aliased Text_Splitters.Output_Parser_Fabric;
       UTF8_Converter   : aliased UTF8_Converters.Output_Parser_Fabric;
       Progress_Parser  : aliased Progress_Parsers.Output_Parser_Fabric;
+      Output_Collector : aliased Build_Output_Collectors.Output_Parser_Fabric;
+      Console_Writer   : aliased Console_Writers.Output_Parser_Fabric;
+      Location_Parser  : aliased Location_Parsers.Output_Parser_Fabric;
+      Build_Hook       : aliased End_Of_Build.Output_Parser_Fabric;
 
       Builder          : aliased Builder_Context_Record;
    end record;
@@ -1785,6 +1793,19 @@ package body Builder_Facility_Module is
         (Builder_Module_ID.UTF8_Converter'Access, "utf_converter");
       Register_Output_Parser
         (Builder_Module_ID.Text_Splitter'Access, "text_splitter");
+      Register_Output_Parser
+        (Builder_Module_ID.Console_Writer'Access, "console_writer");
+      Register_Output_Parser
+        (Builder_Module_ID.Location_Parser'Access, "location_parser");
+      Register_Output_Parser
+        (Builder_Module_ID.Output_Collector'Access, "output_collector");
+      Register_Output_Parser
+        (Builder_Module_ID.Build_Hook'Access, "end_of_build");
+
+      Builder_Module_ID.Output_Collector.Set (Builder);
+      Builder_Module_ID.Location_Parser.Set (Builder);
+      Builder_Module_ID.Console_Writer.Set (Builder);
+      Builder_Module_ID.Build_Hook.Set (Builder);
 
       declare
          Progress_Pattern : constant String :=

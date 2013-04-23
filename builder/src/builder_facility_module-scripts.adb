@@ -21,8 +21,8 @@ with GNAT.OS_Lib;
 
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 
-with Build_Command_Manager;      use Build_Command_Manager;
 with Build_Configurations;       use Build_Configurations;
+with Commands.Builder;           use Commands.Builder;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;

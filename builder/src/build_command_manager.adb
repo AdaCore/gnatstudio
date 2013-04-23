@@ -17,10 +17,6 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNATCOLL.Utils;              use GNATCOLL.Utils;
-
-with Build_Configurations;        use Build_Configurations;
-with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Commands.Builder;            use Commands.Builder;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
@@ -32,37 +28,15 @@ with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                    use GPS.Intl;
-with GPS.Styles.UI;
-with Interactive_Consoles;        use Interactive_Consoles;
-with Remote;                      use Remote;
-with Extending_Environments;      use Extending_Environments;
-with Traces;                      use Traces;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
-with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 
-with GPS.Tools_Output;            use GPS.Tools_Output;
+with Gtk.Text_View;               use Gtk.Text_View;
 
-with Commands.Builder.Build_Output_Collectors;
-with Build_Command_Manager.Console_Writers;
-with Build_Command_Manager.Location_Parsers;
-with Build_Command_Manager.End_Of_Build;
-with GPS.Kernel.Task_Manager;
+with GPS.Kernel.Console;          use GPS.Kernel.Console;
+with GPS.Kernel.Interactive;      use GPS.Kernel.Interactive;
 
 package body Build_Command_Manager is
-
-   Me : constant Debug_Handle := Create ("Build_Command_Manager");
-
-   Output_Collector   : aliased Build_Output_Collectors.Output_Parser_Fabric;
-   Console_Writer     : aliased Console_Writers.Output_Parser_Fabric;
-   Location_Parser    : aliased Location_Parsers.Output_Parser_Fabric;
-   End_Of_Run         : aliased End_Of_Build.Output_Parser_Fabric;
-   Parsers_Registered : Boolean := False;
-
-   procedure Register_Output_Parsers;
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Argument_List, Argument_List_Access);
 
    type Build_Command_Adapter is new Abstract_Build_Command_Adapter with record
       Context        : Selection_Context;
@@ -70,22 +44,6 @@ package body Build_Command_Manager is
       Builder        : Builder_Context;
    end record;
    type Build_Command_Adapter_Access is access all Build_Command_Adapter;
-
-   function Expand_Command_Line
-     (Builder    : Builder_Context;
-      CL         : Argument_List;
-      Target     : Target_Access;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean;
-      Background_Env : Extending_Environment) return Expansion_Result;
-   --  Expand all macros contained in CL using the GPS macro language.
-   --  User must free the result.
-   --  CL must contain at least one element.
-   --  If Simulate is true, never fail on unknown parameters.
 
    overriding
    function Get_Last_Main_For_Background_Target
@@ -260,7 +218,7 @@ package body Build_Command_Manager is
    begin
       Get_Messages_Container
         (Kernel_Handle (Adapter.Builder.Kernel)).Remove_File
-          (Error_Category, File, Builder_Message_Flags);
+          (Commands.Builder.Error_Category, File, Builder_Message_Flags);
    end Remove_Error_Builder_Message_From_File;
 
    -------------------------------------
@@ -319,350 +277,6 @@ package body Build_Command_Manager is
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;
-
-   -------------------
-   -- Launch_Target --
-   -------------------
-
-   procedure Launch_Target
-     (Builder     : Builder_Context;
-      Target_Name : String;
-      Mode_Name   : String;
-      Force_File  : Virtual_File;
-      Extra_Args  : Argument_List_Access;
-      Quiet       : Boolean;
-      Synchronous : Boolean;
-      Dialog      : Dialog_Mode;
-      Main        : Virtual_File;
-      Background  : Boolean;
-      Directory   : Virtual_File := No_File)
-   is
-      Prj            : constant Project_Type :=
-        Builder.Kernel.Registry.Tree.Root_Project;
-      Dir            : Virtual_File := No_File;
-      T              : Target_Access;
-      Full           : Expansion_Result;
-      Command_Line   : Argument_List_Access;
-      All_Extra_Args : Argument_List_Access;
-      Category_Name  : Unbounded_String;
-
-      procedure Interrupt_Background_Build;
-      --  Interrupt current background command and clear its messages
-
-      procedure Launch_For_Mode
-        (Mode       : String;
-         Quiet      : Boolean;
-         Shadow     : Boolean;
-         Background : Boolean);
-      --  Compute and launch the command, for the given mode
-
-      ---------------------
-      -- Launch_For_Mode --
-      ---------------------
-
-      procedure Launch_For_Mode
-        (Mode       : String;
-         Quiet      : Boolean;
-         Shadow     : Boolean;
-         Background : Boolean)
-      is
-
-         Subdir : constant Filesystem_String :=
-            Get_Mode_Subdir (Builder.Registry, Mode);
-         Server : Server_Type;
-         Background_Env : Extending_Environment;
-         Console        : Interactive_Console;
-
-         function Expand_Cmd_Line (CL : String) return String;
-         --  Callback for Single_Target_Dialog
-
-         ---------------------
-         -- Expand_Cmd_Line --
-         ---------------------
-
-         function Expand_Cmd_Line (CL : String) return String is
-            CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
-            Mode_Args : Argument_List_Access :=
-              Apply_Mode_Args (Builder.Registry, Get_Model (T), Mode,
-                               CL_Args.all);
-            Res       : constant Expansion_Result :=
-                          Expand_Command_Line
-                            (Builder,
-                             Mode_Args.all & All_Extra_Args.all,
-                             T,
-                             Server,
-                             Force_File, Main, Subdir, Shadow,
-                             Simulate       => True,
-                             Background_Env => Background_Env);
-
-         begin
-            Free (CL_Args);
-            Free (Mode_Args);
-            return To_Display_String (Res.Args);
-         end Expand_Cmd_Line;
-
-      begin
-         --  Compute the extra args, taking into account the mode and the
-         --  extra args explicitely passed.
-
-         if Extra_Args /= null then
-            All_Extra_Args := new Argument_List'(Extra_Args.all);
-         else
-            All_Extra_Args := new Argument_List (1 .. 0);
-         end if;
-
-         Server := Get_Server (Builder.Registry, Mode, T);
-
-         if (not Shadow)
-           and then (not Background)
-           and then
-            (Dialog = Force_Dialog
-              or else (Dialog = Force_Dialog_Unless_Disabled_By_Target
-                        and then Get_Properties (T).Launch_Mode
-                        /= Manually_With_No_Dialog)
-              or else (Dialog = Default
-                        and then Get_Properties (T).Launch_Mode
-                        = Manually_With_Dialog))
-         then
-            --  Use the single target dialog to get the unexpanded command line
-            Single_Target_Dialog
-              (Registry        => Builder.Registry,
-               Parent          => Get_Main_Window
-                                    (Kernel_Handle (Builder.Kernel)),
-               Target          => Target_Name,
-               History         => Get_History (Kernel_Handle (Builder.Kernel)),
-               Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,
-               Result          => Command_Line);
-
-            if Command_Line = null then
-               --  The dialog was cancelled: return
-               Unchecked_Free (All_Extra_Args);
-               return;
-            end if;
-
-            declare
-               CL_Mode : Argument_List_Access :=
-                 Apply_Mode_Args (Builder.Registry, Get_Model (T),
-                                  Mode, Command_Line.all);
-            begin
-               Full := Expand_Command_Line
-                 (Builder, CL_Mode.all & All_Extra_Args.all, T,
-                  Server, Force_File, Main, Subdir, False, False,
-                  Background_Env);
-               Free (Command_Line);
-               Free (CL_Mode);
-            end;
-
-         else
-            --  Get the unexpanded command line from the target
-            if Background then
-               Background_Env := Create_Extending_Environment
-                 (Builder.Kernel, Force_File, Server);
-            end if;
-
-            declare
-               CL      : constant Argument_List :=
-                 Get_Command_Line_Unexpanded (Builder.Registry, T);
-               CL_Mode : Argument_List_Access :=
-                 Apply_Mode_Args (Builder.Registry, Get_Model (T), Mode, CL);
-            begin
-               --  Sanity check that the command line contains at least one
-               --  item (the command itself). It can happen that this is not
-               --  the case if the user has modified the command by hand.
-
-               if CL_Mode'Length = 0 then
-                  Insert
-                    ((Kernel_Handle (Builder.Kernel)),
-                     -"Command line is empty for target: " & Target_Name,
-                     Mode => Error);
-                  Free (CL_Mode);
-                  Unchecked_Free (All_Extra_Args);
-                  return;
-               end if;
-
-               --  Expand the command line
-
-               if All_Extra_Args = null then
-                  Full := Expand_Command_Line
-                    (Builder, CL_Mode.all, T, Server, Force_File, Main,
-                     Subdir, Background, False, Background_Env);
-               else
-                  Full := Expand_Command_Line
-                    (Builder, CL_Mode.all & All_Extra_Args.all, T,
-                     Server, Force_File, Main, Subdir, Background, False,
-                     Background_Env);
-               end if;
-
-               Free (CL_Mode);
-            end;
-         end if;
-
-         --  Trace the command line, for debug purposes
-         if Full = (Empty_Command_Line, No_File, To_Unbounded_String ("")) then
-            Trace (Me, "Macro expansion resulted in empty command line");
-            Unchecked_Free (All_Extra_Args);
-            return;
-         end if;
-
-         --  Launch the build command
-
-         if Full.Dir /= No_File then
-            Dir := Full.Dir;
-         else
-            if Directory /= No_File then
-               Dir := Directory;
-            else
-               Dir := GNATCOLL.VFS.Dir (Project_Path (Prj));
-            end if;
-         end if;
-
-         --  For background compilation synthetic messages category name is
-         --  used. For non-background compilation target's messages category is
-         --  used when defined, otherwise Error_Category is used for backward
-         --  compatibility and compatibility with codefix.
-
-         if Background then
-            Category_Name :=
-              To_Unbounded_String (Builder.Current_Background_Build_Id);
-         else
-            Category_Name := Get_Messages_Category (T);
-
-            if Category_Name = Null_Unbounded_String then
-               Category_Name := To_Unbounded_String (Error_Category);
-            end if;
-
-            if Main /= No_File then
-               Set_Last_Main (Builder, Target_Name, Main);
-            end if;
-         end if;
-
-         --  Configure output parser fabrics
-         Output_Collector.Set
-           (Builder    => Builder,
-            Target     => Target_Name,
-            Shadow     => Shadow,
-            Background => Background);
-
-         Location_Parser.Set
-           (Kernel            => Kernel_Handle (Builder.Kernel),
-            Category          => To_String (Category_Name),
-            Styles            => GPS.Styles.UI.Builder_Styles,
-            Show_In_Locations => not Background);
-
-         Console_Writer.Set_Console (null);
-
-         if Is_Run (T) then
-            if not Quiet then
-               Console := Get_Build_Console
-                 ((Kernel_Handle (Builder.Kernel)), Shadow, Background, False,
-                  "Run: " & Main.Display_Base_Name);
-
-               if not Background then
-                  Console_Writer.Set_Console (Console);
-               end if;
-            end if;
-
-            End_Of_Run.Disable;
-         else
-            Console := Get_Build_Console
-              ((Kernel_Handle (Builder.Kernel)), Shadow, Background, False);
-
-            Console_Writer.Set_Console (Console);
-
-            if not Background then
-               Console_Writer.Raise_Console_On_Error
-                 (Kernel_Handle (Builder.Kernel), Category_Name);
-            end if;
-
-            End_Of_Run.Enable
-              (Builder    => Builder,
-               Env        => Background_Env,
-               Category   => Category_Name,
-               Target     => Target_Name,
-               Mode       => Mode_Name,
-               Shadow     => Shadow,
-               Background => Background);
-         end if;
-
-         if not (Shadow or else Background or else Quiet) then
-            Console_Writer.Show_Status_On_Exit;
-         end if;
-
-         Launch_Build_Command
-           (Kernel           => Kernel_Handle (Builder.Kernel),
-            CL               => Full.Args,
-            Server           => Server,
-            Synchronous      => Synchronous,
-            Use_Shell        => Uses_Shell (T),
-            Console          => Console,
-            Directory        => Dir,
-            Is_Run           => Is_Run (T),
-            Builder          => Builder,
-            Target_Name      => Target_Name,
-            Mode             => Mode,
-            Category_Name    => Category_Name,
-            Quiet            => Quiet,
-            Shadow           => Shadow,
-            Background       => Background);
-
-         Unchecked_Free (All_Extra_Args);
-      end Launch_For_Mode;
-
-      procedure Interrupt_Background_Build is
-         Command : Command_Access;
-      begin
-         Interrupt_Background_Build (Builder, Command);
-
-         if Command /= null then
-            Get_Messages_Container
-              ((Kernel_Handle (Builder.Kernel))).Remove_Category
-                (Builder.Current_Background_Build_Id,
-                 Commands.Builder.Background_Message_Flags);
-
-            GPS.Kernel.Task_Manager.Interrupt_Queue
-              ((Kernel_Handle (Builder.Kernel)), Command);
-         end if;
-      end Interrupt_Background_Build;
-   begin
-      --  Check if output parsers have been registered
-      Register_Output_Parsers;
-
-      --  If there is already a background build running, interrupt it
-      --  and clean up before launching a new build.
-      Interrupt_Background_Build;
-
-      --  Get the target
-
-      T := Get_Target_From_Name (Builder.Registry, Target_Name);
-
-      if T = null then
-         --  This should never happen
-         Insert
-           ((Kernel_Handle (Builder.Kernel)),
-            (-"Build target not found in registry: ") & Target_Name);
-         return;
-      end if;
-
-      if Mode_Name = "" then
-         declare
-            Modes : Argument_List := Get_List_Of_Modes
-              (Kernel_Handle (Builder.Kernel).Get_Build_Mode,
-               Builder.Registry,
-               Get_Model (T));
-         begin
-            for J in Modes'Range loop
-               --  All modes after Modes'First are Shadow modes
-               Launch_For_Mode
-                 (Modes (J).all, Quiet, J > Modes'First,
-                  Background);
-            end loop;
-
-            Free (Modes);
-         end;
-      else
-         Launch_For_Mode (Mode_Name, Quiet, False, Background);
-      end if;
-   end Launch_Target;
 
    -------------
    -- Execute --
@@ -792,22 +406,57 @@ package body Build_Command_Manager is
       Item.Quiet := Quiet;
    end Create;
 
-   -----------------------------
-   -- Register_Output_Parsers --
-   -----------------------------
+   -----------------------
+   -- Get_Build_Console --
+   -----------------------
 
-   procedure Register_Output_Parsers is
+   function Get_Build_Console
+     (Kernel              : GPS.Kernel.Kernel_Handle;
+      Shadow              : Boolean;
+      Background          : Boolean;
+      Create_If_Not_Exist : Boolean;
+      New_Console_Name    : String := "") return Interactive_Console
+   is
+      Console : Interactive_Console;
    begin
-      if Parsers_Registered then
-         return;
+      if New_Console_Name /= "" then
+         Console := Create_Interactive_Console
+           (Kernel              => Kernel,
+            Title               => New_Console_Name,
+            History             => "interactive",
+            Create_If_Not_Exist => True,
+            Module              => null,
+            Force_Create        => False,
+            ANSI_Support        => True,
+            Accept_Input        => True);
+
+         Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
+
+         return Console;
       end if;
 
-      Register_Output_Parser (Console_Writer'Access, "console_writer");
-      Register_Output_Parser (Location_Parser'Access, "location_parser");
-      Register_Output_Parser (Output_Collector'Access, "output_collector");
-      Register_Output_Parser (End_Of_Run'Access, "end_of_build");
+      if Background then
+         return Create_Interactive_Console
+           (Kernel              => Kernel,
+            Title               => -"Background Builds",
+            History             => "interactive",
+            Create_If_Not_Exist => Create_If_Not_Exist,
+            Module              => null,
+            Force_Create        => False,
+            Accept_Input        => False);
 
-      Parsers_Registered := True;
-   end Register_Output_Parsers;
+      elsif Shadow then
+         return Create_Interactive_Console
+           (Kernel              => Kernel,
+            Title               => -"Auxiliary Builds",
+            History             => "interactive",
+            Create_If_Not_Exist => Create_If_Not_Exist,
+            Module              => null,
+            Force_Create        => False,
+            Accept_Input        => False);
+      else
+         return Get_Console (Kernel);
+      end if;
+   end Get_Build_Console;
 
 end Build_Command_Manager;

@@ -19,7 +19,6 @@
 
 with Ada.Calendar;
 with Commands;                  use Commands;
-with GPS.Kernel;                use GPS.Kernel;
 with GPS.Tools_Output;          use GPS.Tools_Output;
 with Interactive_Consoles;
 
@@ -40,19 +39,9 @@ package Build_Command_Manager.Console_Writers is
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
-   procedure Set_Console
+   procedure Set
      (Self    : access Output_Parser_Fabric;
-      Console : Interactive_Consoles.Interactive_Console);
-
-   procedure Raise_Console_On_Error
-     (Self     : access Output_Parser_Fabric;
-      Kernel   : Kernel_Handle;
-      Category : Unbounded_String);
-   --  Request console raising on exit with error if no messages generated
-   --  at given Category in location view
-
-   procedure Show_Status_On_Exit (Self : access Output_Parser_Fabric);
-   --  Request showing exit status
+      Builder : Builder_Context);
 
    overriding function Create
      (Self  : access Output_Parser_Fabric;
@@ -62,22 +51,18 @@ package Build_Command_Manager.Console_Writers is
 
 private
 
-   type Properties is record
-      Console        : Interactive_Consoles.Interactive_Console;
-      Raise_On_Error : Boolean;
-      Show_Status    : Boolean;
-      Kernel         : Kernel_Handle;
-      Category       : Unbounded_String;
-      Start_Time     : Ada.Calendar.Time;
-   end record;
-
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with record
-      Data : Properties;
+      Builder : Builder_Context;
    end record;
 
    type Console_Writer is new Tools_Output_Parser with record
-      Data : Properties;
+      Builder        : Builder_Context;
+      Build          : Build_Information;
+      Console        : Interactive_Consoles.Interactive_Console;
+      Raise_On_Error : Boolean;
+      Show_Status    : Boolean;
+      Start_Time     : Ada.Calendar.Time;
    end record;
 
 end Build_Command_Manager.Console_Writers;

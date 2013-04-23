@@ -15,7 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Build_Configurations;             use Build_Configurations;
+
+with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.Task_Manager;
+with GPS.Styles.UI;
 
 package body Build_Command_Manager.Location_Parsers is
 
@@ -26,14 +32,48 @@ package body Build_Command_Manager.Location_Parsers is
    overriding function Create
      (Self  : access Output_Parser_Fabric;
       Child : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access is
+      return Tools_Output_Parser_Access
+   is
+      procedure Interrupt_Background_Build;
+      --  Interrupt current background command and clear its messages
+
+      procedure Interrupt_Background_Build is
+         Command : Command_Access;
+      begin
+         Interrupt_Background_Build (Self.Builder, Command);
+
+         if Command /= null then
+            Get_Messages_Container
+              ((Kernel_Handle (Self.Builder.Kernel))).Remove_Category
+                (Self.Builder.Current_Background_Build_Id,
+                 Background_Message_Flags);
+
+            GPS.Kernel.Task_Manager.Interrupt_Queue
+              ((Kernel_Handle (Self.Builder.Kernel)), Command);
+         end if;
+      end Interrupt_Background_Build;
+
+      Build : constant Build_Information := Self.Builder.Get_Last_Build;
    begin
+      --  If there is already a background build running, interrupt it
+      --  and clean up before launching a new build.
+
+      if not Build.Shadow then
+         Interrupt_Background_Build;
+      end if;
+
+      if not Is_Run (Build.Target) and then not Build.Background then
+         --  If we are starting a "real" build, remove messages from the
+         --  current background build
+         Get_Messages_Container (Kernel_Handle (Self.Builder.Kernel))
+           .Remove_Category (Self.Builder.Previous_Background_Build_Id,
+                             Background_Message_Flags);
+      end if;
+
       return new Location_Parser'
-        (Child             => Child,
-         Kernel            => Self.Kernel,
-         Category          => Self.Category,
-         Styles            => Self.Styles,
-         Show_In_Locations => Self.Show_In_Locations);
+        (Child   => Child,
+         Builder => Self.Builder,
+         Build   => Build);
    end Create;
 
    ---------------------------
@@ -46,12 +86,12 @@ package body Build_Command_Manager.Location_Parsers is
       Command : Command_Access) is
    begin
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
-        (Self.Kernel,
+        (Kernel_Handle (Self.Builder.Kernel),
          Item,
-         Category          => To_String (Self.Category),
+         Category          => To_String (Self.Build.Category),
          Highlight         => True,
-         Styles            => Self.Styles,
-         Show_In_Locations => Self.Show_In_Locations);
+         Styles            => GPS.Styles.UI.Builder_Styles,
+         Show_In_Locations => not Self.Build.Background);
 
       Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
    end Parse_Standard_Output;
@@ -61,16 +101,10 @@ package body Build_Command_Manager.Location_Parsers is
    ---------
 
    procedure Set
-     (Self              : access Output_Parser_Fabric;
-      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Category          : String;
-      Styles            : GPS.Styles.UI.Builder_Message_Styles;
-      Show_In_Locations : Boolean) is
+     (Self    : access Output_Parser_Fabric;
+      Builder : Builder_Context) is
    begin
-      Self.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
-      Self.Category := To_Unbounded_String (Category);
-      Self.Styles := Styles;
-      Self.Show_In_Locations := Show_In_Locations;
+      Self.Builder := Builder;
    end Set;
 
 end Build_Command_Manager.Location_Parsers;

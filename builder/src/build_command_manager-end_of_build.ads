@@ -18,7 +18,6 @@
 --  Declare parser to complete each target build.
 
 with Commands;                         use Commands;
-with Extending_Environments;           use Extending_Environments;
 with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 package Build_Command_Manager.End_Of_Build is
@@ -38,37 +37,20 @@ package Build_Command_Manager.End_Of_Build is
       Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access;
 
-   procedure Disable (Self  : access Output_Parser_Fabric);
-
-   procedure Enable
-     (Self       : access Output_Parser_Fabric;
-      Builder    : Builder_Context;
-      Env        : Extending_Environment;
-      Category   : Unbounded_String;
-      Target     : String;
-      Mode       : String;
-      Shadow     : Boolean;
-      Background : Boolean);
+   procedure Set
+     (Self    : access Output_Parser_Fabric;
+      Builder : Builder_Context);
 
 private
-   type Properties is record
-      Builder    : Builder_Context;
-      Env        : Extending_Environment;
-      Category   : Unbounded_String;
-      Target     : Unbounded_String;
-      Mode       : Unbounded_String;
-      Enabled    : Boolean;
-      Shadow     : Boolean;
-      Background : Boolean;
-   end record;
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with record
-      Data : Properties;
+      Builder : Builder_Context;
    end record;
 
    type Parser is new Tools_Output_Parser with record
-      Data : Properties;
+      Builder : Builder_Context;
+      Build   : Build_Information;
    end record;
 
 end Build_Command_Manager.End_Of_Build;

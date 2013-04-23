@@ -44,8 +44,8 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
 
 with Build_Command_Utils;
-with Build_Command_Manager;
 with Builder_Facility_Module;
+with Commands.Builder;           use Commands.Builder;
 with Traces;
 with Xref;                       use Xref;
 
@@ -118,7 +118,7 @@ package body Builder_Module is
       pragma Unreferenced (Data);
    begin
       if Command = "compute_xref" then
-         Build_Command_Manager.Launch_Target
+         Launch_Target
            (Builder_Facility_Module.Builder,
             "Build All", "xref",
             GNATCOLL.VFS.No_File,
@@ -130,7 +130,7 @@ package body Builder_Module is
             Main        => GNATCOLL.VFS.No_File);
 
       elsif Command = "compute_xref_bg" then
-         Build_Command_Manager.Launch_Target
+         Launch_Target
            (Builder_Facility_Module.Builder,
             "Build All", "xref",
             GNATCOLL.VFS.No_File,
@@ -153,7 +153,7 @@ package body Builder_Module is
       pragma Unreferenced (Kernel);
       pragma Unreferenced (Object);
    begin
-      Build_Command_Manager.Launch_Target
+      Launch_Target
         (Builder_Facility_Module.Builder,
          "Build All", "xref",
          GNATCOLL.VFS.No_File,

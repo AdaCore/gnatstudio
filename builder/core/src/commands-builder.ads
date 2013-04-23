@@ -19,12 +19,10 @@
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
-with GPS.Kernel;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Remote;                    use Remote;
-with Interactive_Consoles;      use Interactive_Consoles;
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GPS.Kernel.Messages;
 with Build_Command_Utils;       use Build_Command_Utils;
 
 package Commands.Builder is
@@ -32,47 +30,42 @@ package Commands.Builder is
    Error_Category : constant String := "Builder results";
    --  -"Builder results"
 
-   Builder_Message_Flags    : constant GPS.Kernel.Messages.Message_Flags :=
-     (GPS.Kernel.Messages.Editor_Side => True,
-      GPS.Kernel.Messages.Locations   => True);
-   Background_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
-     (GPS.Kernel.Messages.Editor_Side => True,
-      GPS.Kernel.Messages.Locations   => False);
+   procedure Launch_Target
+     (Builder     : Builder_Context;
+      Target_Name : String;
+      Mode_Name   : String;
+      Force_File  : Virtual_File;
+      Extra_Args  : Argument_List_Access;
+      Quiet       : Boolean;
+      Synchronous : Boolean;
+      Dialog      : Dialog_Mode;
+      Main        : Virtual_File;
+      Background  : Boolean;
+      Directory   : Virtual_File := No_File);
+   --  Launch a build of target named Target_Name
+   --  If Mode_Name is not the empty string, then the mode Mode_Name will be
+   --  used.
+   --  If Force_File is not set to No_File, then force the command to work
+   --  on this file. (This is needed to support GPS scripting).
+   --  Extra_Args may point to a list of unexpanded args.
+   --  If Quiet is true:
+   --    - files are not saved before build launch
+   --    - the console is not raised when launching the build
+   --    - the console is not cleared when launching the build
+   --  If Synchronous is True, GPS will block until the command is terminated.
+   --  See document of Dialog_Mode for details on Dialog values.
+   --  Main, if not empty, indicates the main to build.
+   --  If Directory is not empty, indicates which directory the target should
+   --  be run under. Default is the project's directory.
+   --  If Background, run the compile in the background.
 
    procedure Launch_Build_Command
-     (Kernel           : GPS.Kernel.Kernel_Handle;
-      CL               : Arg_List;
+     (Builder          : Builder_Context;
+      Build            : Build_Information;
       Server           : Server_Type;
-      Synchronous      : Boolean;
-      Use_Shell        : Boolean;
-      Console          : Interactive_Console;
-      Directory        : Virtual_File;
-      Builder          : Builder_Context;
-      Target_Name      : String;
-      Mode             : String;
-      Category_Name    : Unbounded_String;
-      Quiet            : Boolean;
-      Shadow           : Boolean;
-      Background       : Boolean;
-      Is_Run           : Boolean);
-   --  Launch a build command.
-   --  CL is the command line. The first item in CL should be the executable
-   --  and the rest are arguments.
-   --  Target_Name is the name of the target being launched.
-   --  Category_Name is the name of the target category being launched.
-   --  If Use_Shell, and if the SHELL environment variable is defined,
-   --  then call the command through $SHELL -c "command line".
+      Synchronous      : Boolean);
+   --  Launch a build command using build information stored in Build.
    --  Use given Console to send the output.
-   --  See Build_Command_Manager.Launch_Target for the meanings of Quiet and
-   --  Synchronous.
-
-   function Get_Build_Console
-     (Kernel              : GPS.Kernel.Kernel_Handle;
-      Shadow              : Boolean;
-      Background          : Boolean;
-      Create_If_Not_Exist : Boolean;
-      New_Console_Name    : String := "") return Interactive_Console;
-   --  Return the console appropriate for showing compiler errors
-   --  If New_Console_Name is specified, create a new console with this name.
+   --  See Build_Command_Manager.Launch_Target for the meanings of Synchronous.
 
 end Commands.Builder;

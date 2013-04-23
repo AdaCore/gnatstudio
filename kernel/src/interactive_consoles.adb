@@ -2179,8 +2179,7 @@ package body Interactive_Consoles is
      (Self   : not null access Console_Messages_Window) is
    begin
       Raise_Child
-        (Find_MDI_Child
-           (Get_MDI (Self.Console.Kernel), Self.Console),
+        (Find_MDI_Child_From_Widget (Self.Console),
          Give_Focus => True);
    end Raise_Console;
 

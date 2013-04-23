@@ -16,193 +16,248 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings;                      use Ada.Strings;
+with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
-with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
-with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 
-with Gtk.Text_View;                    use Gtk.Text_View;
-with Gtkada.MDI;                       use Gtkada.MDI;
-
-with GPS.Kernel;                       use GPS.Kernel;
-with GPS.Kernel.Console;               use GPS.Kernel.Console;
-with GPS.Kernel.Interactive;           use GPS.Kernel.Interactive;
-with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Intl;                         use GPS.Intl;
-
 with GPS.Tools_Output;                 use GPS.Tools_Output;
+with Build_Configurations;             use Build_Configurations;
+with Extending_Environments;           use Extending_Environments;
 
 package body Commands.Builder is
 
    Shell_Env : constant String := Getenv ("SHELL").all;
 
-   -----------------------
-   -- Get_Build_Console --
-   -----------------------
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Argument_List, Argument_List_Access);
 
-   function Get_Build_Console
-     (Kernel              : GPS.Kernel.Kernel_Handle;
-      Shadow              : Boolean;
-      Background          : Boolean;
-      Create_If_Not_Exist : Boolean;
-      New_Console_Name    : String := "") return Interactive_Console
+   -------------------
+   -- Launch_Target --
+   -------------------
+
+   procedure Launch_Target
+     (Builder     : Builder_Context;
+      Target_Name : String;
+      Mode_Name   : String;
+      Force_File  : Virtual_File;
+      Extra_Args  : Argument_List_Access;
+      Quiet       : Boolean;
+      Synchronous : Boolean;
+      Dialog      : Dialog_Mode;
+      Main        : Virtual_File;
+      Background  : Boolean;
+      Directory   : Virtual_File := No_File)
    is
-      Console : Interactive_Console;
+      T              : Target_Access;
+      All_Extra_Args : Argument_List_Access;
+
+      procedure Launch_For_Mode
+        (T          : Target_Access;
+         Mode       : String;
+         Quiet      : Boolean;
+         Shadow     : Boolean;
+         Background : Boolean);
+      --  Compute and launch the command, for the given mode
+
+      ---------------------
+      -- Launch_For_Mode --
+      ---------------------
+
+      procedure Launch_For_Mode
+        (T          : Target_Access;
+         Mode       : String;
+         Quiet      : Boolean;
+         Shadow     : Boolean;
+         Background : Boolean)
+      is
+
+         Server         : Server_Type;
+         Background_Env : Extending_Environment;
+         Category_Name  : Unbounded_String;
+
+      begin
+         Server := Get_Server (Builder.Registry, Mode, T);
+
+         --  Get the unexpanded command line from the target
+         if Background then
+            Background_Env := Create_Extending_Environment
+              (Builder.Kernel, Force_File, Server);
+         end if;
+
+         --  For background compilation synthetic messages category name is
+         --  used. For non-background compilation target's messages category is
+         --  used when defined, otherwise Error_Category is used for backward
+         --  compatibility and compatibility with codefix.
+
+         if Background then
+            Category_Name :=
+              To_Unbounded_String (Builder.Current_Background_Build_Id);
+         else
+            Category_Name := Get_Messages_Category (T);
+
+            if Category_Name = Null_Unbounded_String then
+               Category_Name := To_Unbounded_String (Error_Category);
+            end if;
+
+            if Main /= No_File then
+               Set_Last_Main (Builder, Target_Name, Main);
+            end if;
+         end if;
+
+         --  Configure output parser fabrics
+         Launch_Build_Command
+           (Builder          => Builder,
+            Build            => (Target     => T,
+                                 Main       => Main,
+                                 Force_File => Force_File,
+                                 Env        => Background_Env,
+                                 Category   => Category_Name,
+                                 Mode       => To_Unbounded_String (Mode),
+                                 Background => Background,
+                                 Shadow     => Shadow,
+                                 Quiet      => Quiet,
+                                 Console    => null,
+                                 Full       => (Dir    => Directory,
+                                                others => <>),
+                                 Extra_Args => All_Extra_Args,
+                                 Dialog     => Dialog,
+                                 Launch     => True),
+            Server           => Server,
+            Synchronous      => Synchronous);
+      end Launch_For_Mode;
+
    begin
-      if New_Console_Name /= "" then
-         Console := Create_Interactive_Console
-           (Kernel              => Kernel,
-            Title               => New_Console_Name,
-            History             => "interactive",
-            Create_If_Not_Exist => True,
-            Module              => null,
-            Force_Create        => False,
-            ANSI_Support        => True,
-            Accept_Input        => True);
+      --  Get the target
+      T := Get_Target_From_Name (Builder.Registry, Target_Name);
 
-         Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
-
-         return Console;
+      if T = null then
+         --  This should never happen
+         Builder.Kernel.Messages_Window.Insert
+           ((-"Build target not found in registry: ") & Target_Name);
+         return;
       end if;
 
-      if Background then
-         return Create_Interactive_Console
-           (Kernel              => Kernel,
-            Title               => -"Background Builds",
-            History             => "interactive",
-            Create_If_Not_Exist => Create_If_Not_Exist,
-            Module              => null,
-            Force_Create        => False,
-            Accept_Input        => False);
-
-      elsif Shadow then
-         return Create_Interactive_Console
-           (Kernel              => Kernel,
-            Title               => -"Auxiliary Builds",
-            History             => "interactive",
-            Create_If_Not_Exist => Create_If_Not_Exist,
-            Module              => null,
-            Force_Create        => False,
-            Accept_Input        => False);
+      --  Compute the extra args not null array pointer.
+      if Extra_Args /= null then
+         All_Extra_Args := new Argument_List'(Extra_Args.all);
       else
-         return Get_Console (Kernel);
+         All_Extra_Args := new Argument_List (1 .. 0);
       end if;
-   end Get_Build_Console;
+
+      if Mode_Name = "" then
+         declare
+            Modes : Argument_List := Get_List_Of_Modes
+              (Builder.Kernel.Get_Build_Mode,
+               Builder.Registry,
+               Get_Model (T));
+         begin
+            for J in Modes'Range loop
+               --  All modes after Modes'First are Shadow modes
+               Launch_For_Mode
+                 (T, Modes (J).all, Quiet, J > Modes'First,
+                  Background);
+            end loop;
+
+            Free (Modes);
+         end;
+      else
+         Launch_For_Mode
+           (T, Mode_Name, Quiet, False, Background);
+      end if;
+
+      Unchecked_Free (All_Extra_Args);
+   end Launch_Target;
 
    --------------------------
    -- Launch_Build_Command --
    --------------------------
 
    procedure Launch_Build_Command
-     (Kernel           : GPS.Kernel.Kernel_Handle;
-      CL               : Arg_List;
+     (Builder          : Builder_Context;
+      Build            : Build_Information;
       Server           : Server_Type;
-      Synchronous      : Boolean;
-      Use_Shell        : Boolean;
-      Console          : Interactive_Console;
-      Directory        : Virtual_File;
-      Builder          : Builder_Context;
-      Target_Name      : String;
-      Mode             : String;
-      Category_Name    : Unbounded_String;
-      Quiet            : Boolean;
-      Shadow           : Boolean;
-      Background       : Boolean;
-      Is_Run           : Boolean)
+      Synchronous      : Boolean)
    is
-      CL2      : Arg_List;
+      Result   : Build_Information;
+      CL       : Arg_List;
       Success  : Boolean := False;
       Cmd_Name : Unbounded_String;
-      Show_Command : Boolean;
       Created_Command : Command_Access;
       Output_Parser  : Tools_Output_Parser_Access;
    begin
-      Output_Parser  := New_Parser_Chain (Target_Name);
+      --  Store last build information into Builder
+      Builder.Set_Last_Build (Build);
 
-      Show_Command := not Background and not Quiet;
+      Output_Parser  := New_Parser_Chain (Get_Name (Build.Target));
 
-      if not Is_Run and then not Background then
-         --  If we are starting a "real" build, remove messages from the
-         --  current background build
-         Get_Messages_Container (Kernel).Remove_Category
-           (Builder.Previous_Background_Build_Id,
-            Background_Message_Flags);
+      --  Retrive build information modified by parsers
+      Result := Builder.Get_Last_Build;
+
+      --  Do nothing if one of parsers requests canceling of Launch
+      if not Result.Launch then
+         return;
       end if;
 
-      if not Shadow and Show_Command then
-         if Is_Run then
-            Clear (Console);
-            Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console),
-                         Give_Focus => True);
-         else
-            Raise_Console (Kernel);
-         end if;
+      CL := Result.Full.Args;
+
+      if not Build.Quiet then
+         Append_To_Build_Output
+           (Builder,
+            To_Display_String (Result.Full.Args), Get_Name (Build.Target),
+            Build.Shadow, Build.Background);
       end if;
 
-      if Is_Run
-        or else Compilation_Starting
-          (Handle     => Kernel,
-           Category   => To_String (Category_Name),
-           Quiet      => Quiet,
-           Shadow     => Shadow,
-           Background => Background)
+      Cmd_Name := To_Unbounded_String (Get_Name (Build.Target));
+
+      if Build.Mode /= "default" then
+         Cmd_Name := Cmd_Name & " (" & Build.Mode & ")";
+      end if;
+
+      --  If Use_Shell, and if the SHELL environment variable is defined,
+      --  then call the command through $SHELL -c "command line".
+      if Uses_Shell (Build.Target)
+        and then Shell_Env /= ""
+        and then Is_Local (Server)
       then
-         if not Quiet then
-            Append_To_Build_Output
-              (Builder,
-               To_Display_String (CL), Target_Name,
-               Shadow, Background);
-         end if;
-
-         Cmd_Name := To_Unbounded_String (Target_Name);
-
-         if Mode /= "default" then
-            Cmd_Name := Cmd_Name & " (" & Mode & ")";
-         end if;
-
-         if Use_Shell
-           and then Shell_Env /= ""
-           and then Is_Local (Server)
-         then
-            Append_Argument (CL2, Shell_Env, One_Arg);
-            Append_Argument (CL2, "-c", One_Arg);
-            Append_Argument (CL2, To_Display_String (CL), One_Arg);
-         else
-            CL2 := CL;
-         end if;
-
-         if Synchronous then
-            Kernel.Process_Launcher.Launch_Process
-              (CL              => CL2,
-               Server          => Server,
-               Directory       => Directory,
-               Output_Parser   => Output_Parser,
-               Show_Command_To => Console.Get_Console_Messages_Window,
-               Success         => Success,
-               Created_Command => Created_Command);
-         else
-            Kernel.Process_Launcher.Launch_Process_In_Background
-              (CL              => CL2,
-               Server          => Server,
-               Directory       => Directory,
-               Output_Parser   => Output_Parser,
-               Show_Command_To => Console.Get_Console_Messages_Window,
-               Success         => Success,
-               Show_In_Task_Manager => not Background,
-               Name_In_Task_Manager => To_String (Cmd_Name),
-               Block_Exit           => not (Shadow
-                                            or else Background
-                                            or else Quiet),
-               Created_Command      => Created_Command);
-         end if;
-
-         --  ??? check value of Success
-
-         if Success and then Background then
-            Background_Build_Started (Builder, Created_Command);
-         end if;
+         Append_Argument (CL, Shell_Env, One_Arg);
+         Append_Argument (CL, "-c", One_Arg);
+         Append_Argument (CL, To_Display_String (Result.Full.Args), One_Arg);
+      else
+         CL := Result.Full.Args;
       end if;
 
+      if Synchronous then
+         Builder.Kernel.Process_Launcher.Launch_Process
+           (CL              => CL,
+            Server          => Server,
+            Directory       => Result.Full.Dir,
+            Output_Parser   => Output_Parser,
+            Show_Command_To => Result.Console,
+            Success         => Success,
+            Created_Command => Created_Command);
+      else
+         Builder.Kernel.Process_Launcher.Launch_Process_In_Background
+           (CL              => CL,
+            Server          => Server,
+            Directory       => Result.Full.Dir,
+            Output_Parser   => Output_Parser,
+            Show_Command_To => Result.Console,
+            Success         => Success,
+            Show_In_Task_Manager => not Build.Background,
+            Name_In_Task_Manager => To_String (Cmd_Name),
+            Block_Exit           => not (Build.Shadow
+              or else Build.Background
+              or else Build.Quiet),
+            Created_Command      => Created_Command);
+      end if;
+
+      --  ??? check value of Success
+
+      if Success and then Build.Background then
+         Background_Build_Started (Builder, Created_Command);
+      end if;
    end Launch_Build_Command;
 
 end Commands.Builder;
