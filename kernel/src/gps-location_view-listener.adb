@@ -200,9 +200,6 @@ package body GPS.Location_View.Listener is
 
       Self.Model.Set (Iter, Category_Column, To_String (Category));
       Self.Model.Set (Iter, Weight_Column, 0);
-      --  XXX Weight for file node MUST be recomputed on adding/removing of
-      --  messages.
-
       Self.Model.Set (Iter, File_Column, File);
       Self.Model.Set (Iter, Line_Column, -1);
       Self.Model.Set (Iter, Column_Column, -1);
@@ -235,7 +232,6 @@ package body GPS.Location_View.Listener is
         (Iter,
          Sort_Order_Hint_Column,
          Self.Model.Get_Int (Category_Iter, Sort_Order_Hint_Column));
-      --  XXX Can sort order hint can be changed after creation of category?
       Self.Model.Set (Iter, Message_Column, System.Null_Address);
    end File_Added;
 
@@ -435,7 +431,12 @@ package body GPS.Location_View.Listener is
          when Primary =>
             Self.Model.Set
               (Iter, Weight_Column, Glib.Gint (Message.Get_Weight));
-            --  XXX Weight must be recomputed for file
+            Self.Model.Set
+              (File_Iter,
+               Weight_Column,
+               Glib.Gint'Max
+                 (Self.Model.Get_Int (File_Iter, Weight_Column),
+                  Glib.Gint (Message.Get_Weight)));
 
          when Secondary =>
             Self.Model.Set (Iter, Weight_Column, 0);
