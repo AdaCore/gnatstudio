@@ -615,14 +615,6 @@ package body Completion_Window is
             Explorer.More_Iter := Null_Iter;
          end if;
 
-         --  ??? Is this still needed
---         --  If the model is empty, this means we have not found any suitable
---           --  completion. In this case, delete the window.
---
---           if Get_Iter_First (Explorer.Model) = Null_Iter then
---              Delete (Window);
---           end if;
-
          return False;
       else
          --  If there is no "more" iter displayed, create one now since we are
