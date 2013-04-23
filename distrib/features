@@ -113,6 +113,12 @@ NF-53-I430-029 GB: Show Ada content in Project Explorer view (2013-03-28)
   any folders/files that are not relevant to the current build configuration.
   Working sets are supported now as well.
 
+NF-53-I424-031 GB: Ada elements now displayed in Properties view (2013-04-22)
+
+  When any element contributed to the Project Explorer or Outline view by
+  GNATbench is selected, you will now see properties of that element in the
+  Properties view.
+
 NF-53-I320-015 GB: Enhance block completions (2013-01-25)
 
   The block completion facility has been extended to cover additional
