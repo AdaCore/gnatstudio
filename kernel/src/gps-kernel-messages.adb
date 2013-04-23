@@ -2105,7 +2105,9 @@ package body GPS.Kernel.Messages is
          --  Save categories
 
          for J in 1 .. Natural (Self.Categories.Length) loop
-            if Match (Flags, Self.Categories.Element (J).Flags) then
+            if (Flags and Get_Flags (Self.Categories.Element (J)))
+              /= Empty_Message_Flags
+            then
                Save_Node (Self.Categories.Element (J), Project_XML_Node);
             end if;
          end loop;
