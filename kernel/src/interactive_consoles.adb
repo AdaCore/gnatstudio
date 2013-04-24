@@ -2176,11 +2176,10 @@ package body Interactive_Consoles is
    -------------------
 
    overriding procedure Raise_Console
-     (Self   : not null access Console_Messages_Window) is
+     (Self       : not null access Console_Messages_Window;
+      Give_Focus : Boolean) is
    begin
-      Raise_Child
-        (Find_MDI_Child_From_Widget (Self.Console),
-         Give_Focus => True);
+      Raise_Child (Find_MDI_Child_From_Widget (Self.Console), Give_Focus);
    end Raise_Console;
 
    -------------------------

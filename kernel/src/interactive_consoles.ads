@@ -479,7 +479,8 @@ private
      (Self   : not null access Console_Messages_Window);
 
    overriding procedure Raise_Console
-     (Self   : not null access Console_Messages_Window);
+     (Self       : not null access Console_Messages_Window;
+      Give_Focus : Boolean);
 
    overriding function Get_Virtual_Console
      (Self : not null access Console_Messages_Window)

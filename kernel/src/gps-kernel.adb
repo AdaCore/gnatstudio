@@ -2044,7 +2044,7 @@ package body GPS.Kernel is
    procedure Raise_Console
      (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
-      Kernel.Messages.Raise_Console;
+      Kernel.Messages.Raise_Console (Give_Focus => False);
    end Raise_Console;
 
    --------------------

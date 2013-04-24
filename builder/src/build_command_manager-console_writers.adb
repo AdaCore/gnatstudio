@@ -53,7 +53,7 @@ package body Build_Command_Manager.Console_Writers is
             Self.Builder.Set_Last_Build (Build);
 
             if Show_Status then
-               Build.Console.Raise_Console;
+               Build.Console.Raise_Console (Give_Focus => True);
                Build.Console.Clear;
             end if;
 
@@ -71,7 +71,7 @@ package body Build_Command_Manager.Console_Writers is
          Self.Builder.Set_Last_Build (Build);
 
          if Show_Status then
-            Build.Console.Raise_Console;
+            Build.Console.Raise_Console (Give_Focus => False);
          end if;
 
          Console := Cmd_Console;

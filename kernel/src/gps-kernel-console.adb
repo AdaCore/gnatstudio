@@ -114,7 +114,8 @@ package body GPS.Kernel.Console is
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info);
    overriding procedure Raise_Console
-     (Self   : not null access Kernel_Messages_Window);
+     (Self       : not null access Kernel_Messages_Window;
+      Give_Focus : Boolean);
    overriding procedure Clear
      (Self   : not null access Kernel_Messages_Window);
    overriding function Get_Virtual_Console
@@ -240,7 +241,7 @@ package body GPS.Kernel.Console is
                   Add_LF, Mode = Error);
             end if;
 
-            Self.Raise_Console;
+            Self.Raise_Console (Give_Focus => False);
 
          else
             if UTF8 then
@@ -286,14 +287,14 @@ package body GPS.Kernel.Console is
    -------------------
 
    overriding procedure Raise_Console
-     (Self   : not null access Kernel_Messages_Window)
+     (Self       : not null access Kernel_Messages_Window;
+      Give_Focus : Boolean)
    is
       View : constant GPS_Message :=
         Messages_Views.Retrieve_View (Self.Kernel);
    begin
       if View /= null then
-         Messages_Views.Child_From_View (View).Raise_Child
-           (Give_Focus => False);
+         Messages_Views.Child_From_View (View).Raise_Child (Give_Focus);
       end if;
    end Raise_Console;
 

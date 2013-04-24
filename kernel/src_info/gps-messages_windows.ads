@@ -48,9 +48,16 @@ package GPS.Messages_Windows is
    --  If Add_LF is True, automatically add a line separator.
 
    procedure Clear (Self   : not null access Abstract_Messages_Window)
+   is abstract;
+   --  Clear all the text in given message windows
+
+   procedure Raise_Console
+     (Self       : not null access Abstract_Messages_Window;
+      Give_Focus : Boolean)
      is abstract;
-   procedure Raise_Console (Self   : not null access Abstract_Messages_Window)
-     is abstract;
+   --  Put given message windows in the foreground.
+   --  Give the focus to this window if Give_Focus is set to True.
+
    --  The services that the messages window must implement. This is used to
    --  avoid a direct dependency of several packages on the Messages window.
    --  Instead, the services of the kernel (see below) should be called.
