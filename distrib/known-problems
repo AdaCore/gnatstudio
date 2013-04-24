@@ -8,11 +8,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M410-048: GB: Standard locations not searched for project files
+  Problem:    The standard locations for GNAT-defined project files
+              such as ajis.gpr and jni.gpr were not searched, so
+              these projects were not found, resulting in unresolved
+              user project file references.
+  Workaround: Specify the standard locations (e.g., .../lib/gnat) in
+              either GPR_PROJECT_PATH or ADA_PROJECT_PATH.
+
 - M324-004: GB: Stack size warning messages at startup
   Problem:    At startup SPARK & Codepeer plugins on linux may ask to
               to set the stack size to unlimited. This is unnecessary.
   Workaround: Ignore these messages.
- 
+
 - M322-021: Bad indentation of multiple aspect clauses
   Problem:    The indentation engine gets confused when multiple Ada 2012
               aspect clauses are specified on a record type.
@@ -70,7 +78,7 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: Restart GPS.
 
 - M125-011: GPS: use all type clause corrupts outline view & vertical bracket
-  Problem:    when Ada 2012 use all type clause is used, the displayed 
+  Problem:    when Ada 2012 use all type clause is used, the displayed
               vertical bracket around blocks may be wrong. The Outline view
               also may display wrong data.
   Workaround: None.
@@ -175,6 +183,14 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Problem:    The contextual menu appearing on notebook tabs to close other
               editors has been removed.
   Workaround: Use the menu File -> Close All Editors Except Current instead.
+
+- LB09-038: GB: Crash due to unresolved dependencies in new project
+  Problem:    When the new-project wizard creates an new AJIS or new Android
+              project, Eclipse crashes without a log entry unless the user
+              has specified the standard locations in either GPR_PROJECT_PATH
+              or ADA_PROJECT_PATH.
+  Workaround: Specify the standard locations (e.g., .../lib/gnat) in
+              either GPR_PROJECT_PATH or ADA_PROJECT_PATH.
 
 - LA23-019: Bad indentation of access procedure type in generic declaration
   Problem:    When indenting code of the form:
