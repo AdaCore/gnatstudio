@@ -183,7 +183,9 @@ package body Build_Command_Manager.End_Of_Build is
    begin
       Expand_Command_Line (Self.Builder, Build);
 
-      if Build.Launch and then not Is_Run (Build.Target) then
+      if Build.Full.Args = Empty_Command_Line then
+         Build.Launch := False;
+      elsif Build.Launch and then not Is_Run (Build.Target) then
          Build.Launch := GPS.Kernel.Compilation_Starting
            (Handle     => Kernel_Handle (Self.Builder.Kernel),
             Category   => To_String (Build.Category),
