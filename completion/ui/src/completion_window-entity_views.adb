@@ -118,6 +118,10 @@ package body Completion_Window.Entity_Views is
      (View : access Entity_View_Record'Class);
    --  Called when the size has been allocated
 
+   procedure On_Destroy
+     (View : access Entity_View_Record'Class);
+   --  Called when the dialog is destroyed
+
    function On_Pane_Button_Release
      (View : access Entity_View_Record'Class) return Boolean;
    --  Called on a resize of the Pane
@@ -205,7 +209,7 @@ package body Completion_Window.Entity_Views is
       File            : Virtual_File;
       Structured_File : Structured_File_Access;
    begin
-      --  Create the Visisbility context from the context
+      --  Create the Visibility context from the context
       if Has_Entity_Name_Information (Context)
         and then Has_Line_Information (Context)
         and then Has_Column_Information (Context)
@@ -244,10 +248,11 @@ package body Completion_Window.Entity_Views is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Index : Natural;
+      Raw_I : Gint;
       Item  : Information_Record;
 
       use Proposals_List;
-      C : Cursor;
+      C : Cursor := No_Element;
    begin
       Sel := Get_Selection (View.Explorer.View);
       Get_Selected (Sel, Model, Iter);
@@ -256,11 +261,13 @@ package body Completion_Window.Entity_Views is
          return;
       end if;
 
-      Index := Natural (Get_Int (View.Explorer.Model, Iter, Index_Column));
+      Raw_I := View.Explorer.Model_Filter.Get_Int (Iter, Index_Column);
 
-      Item := View.Explorer.Info (Index);
-
-      C := Item.Proposals.First;
+      if Raw_I /= -1 then
+         Index := Natural (Raw_I);
+         Item := View.Explorer.Info (Index);
+         C := Item.Proposals.First;
+      end if;
 
       if Has_Element (C) then
          declare
@@ -344,17 +351,17 @@ package body Completion_Window.Entity_Views is
          when GDK_Up | GDK_KP_Up =>
 
             Sel := Get_Selection (View.Explorer.View);
-            Get_Selected (Sel, Model, Iter);
+            Sel.Get_Selected (Model, Iter);
 
             if Iter = Null_Iter then
-               Iter := Get_Iter_First (View.Explorer.Model);
+               Iter := Get_Iter_First (View.Explorer.Model_Filter);
             end if;
 
             if Iter /= Null_Iter then
-               Path := Get_Path (View.Explorer.Model, Iter);
+               Path := Get_Path (View.Explorer.Model_Filter, Iter);
 
                if Prev (Path) then
-                  Iter := Get_Iter (View.Explorer.Model, Path);
+                  Iter := Get_Iter (View.Explorer.Model_Filter, Path);
                   Select_Iter (Sel, Iter);
                end if;
 
@@ -487,6 +494,10 @@ package body Completion_Window.Entity_Views is
         (View, Signal_Size_Allocate,
          To_Marshaller (On_Size_Allocated'Access), View, After => True);
 
+      Object_Connect
+        (View, Signal_Destroy,
+         To_Marshaller (On_Destroy'Access), View);
+
       Set_Events (View.Pane, Get_Events (View.Pane) or Button_Release_Mask);
 
       Object_Connect
@@ -505,9 +516,9 @@ package body Completion_Window.Entity_Views is
       return Gtk_Widget (View.Ent);
    end Initialize;
 
-   ------------------------------
-   -- On_Size_Allocated_Before --
-   ------------------------------
+   ----------------------------
+   -- On_Pane_Button_Release --
+   ----------------------------
 
    function On_Pane_Button_Release
      (View : access Entity_View_Record'Class) return Boolean is
@@ -523,6 +534,16 @@ package body Completion_Window.Entity_Views is
       when E : others => Trace (Exception_Handle, E);
          return False;
    end On_Pane_Button_Release;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (View : access Entity_View_Record'Class) is
+   begin
+      View.Explorer.Delete;
+   end On_Destroy;
 
    -----------------------
    -- On_Size_Allocated --

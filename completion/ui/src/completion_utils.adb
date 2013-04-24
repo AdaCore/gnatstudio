@@ -19,7 +19,6 @@ with Glib.Object;               use Glib.Object;
 with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Button;                use Gtk.Button;
-with Gtk.Box;                   use Gtk.Box;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -67,28 +66,20 @@ package body Completion_Utils is
       when E : others => Trace (Exception_Handle, E);
    end On_Location_Button_Clicked;
 
-   ---------------------
-   -- Proposal_Widget --
-   ---------------------
+   -----------------------
+   -- Add_Next_Item_Doc --
+   -----------------------
 
-   function Proposal_Widget
-     (Kernel           : Kernel_Handle;
-      Fixed_Width_Font : Pango_Font_Description;
-      Proposals        : Proposals_List.List) return Gtk_Widget
+   procedure Add_Next_Item_Doc
+     (Notes_Info       : in out Notes_Window_Info;
+      Kernel           : Kernel_Handle;
+      Fixed_Width_Font : Pango_Font_Description)
    is
-      Frame          : Gtk_Frame;
-      VBox,
-      VBox2          : Gtk_Vbox;
-      HBox           : Gtk_Hbox;
-
-      Button         : Gtk_Button;
-      Label          : Gtk_Label;
-      Title          : Gtk_Label;
-      Button_Label   : Gtk_Label;
-      Multiple_Items : Boolean;
+      Frame   : Gtk_Frame;
+      VBox2   : Gtk_Vbox;
+      HBox    : Gtk_Hbox;
 
       use Proposals_List;
-      C : Cursor;
 
       function Location_To_Label (Loc : File_Location) return String;
       --  Return a pango markup label corresponding to Loc.
@@ -104,27 +95,20 @@ package body Completion_Utils is
       end Location_To_Label;
 
       use type Ada.Containers.Count_Type;
-
    begin
-      if Proposals.Is_Empty then
-         return null;
-      end if;
 
-      Multiple_Items := (Proposals.Length > 1);
-
-      Gtk_New_Vbox (VBox);
-
-      C := Proposals.First;
-
-      while Has_Element (C) loop
+      if Has_Element (Notes_Info.C) then
          declare
-            --  ??? The doc should instead be loaded asynchronously the first
-            --  time the user scrolls on that entity.
             Doc      : constant String :=
-              Element (C).Get_Documentation (Kernel);
+              Element (Notes_Info.C).Get_Documentation (Kernel);
             Location : constant File_Location :=
-                         Get_Location (Element (C).all, Kernel.Databases);
+              Get_Location (Element (Notes_Info.C).all, Kernel.Databases);
+            Button         : Gtk_Button;
+            Label          : Gtk_Label;
+            Title          : Gtk_Label;
+            Button_Label   : Gtk_Label;
          begin
+
             --  Create the label
             Gtk_New (Label);
             Set_Selectable (Label, True);
@@ -145,7 +129,7 @@ package body Completion_Utils is
             --  border around the frame, as this is just graphical noise in
             --  this case.
 
-            if not Multiple_Items then
+            if not Notes_Info.Multiple_Items then
                Set_Shadow_Type (Frame, Shadow_None);
             end if;
 
@@ -189,12 +173,11 @@ package body Completion_Utils is
          end;
 
          Gtk_New_Hbox (HBox);
-         Pack_Start (HBox, Frame, True, True, 3);
-         Pack_Start (VBox, HBox, False, False, 3);
-         Next (C);
-      end loop;
-
-      return Gtk_Widget (VBox);
-   end Proposal_Widget;
+         HBox.Pack_Start (Frame, True, True, 3);
+         Notes_Info.Notes_Box.Pack_Start (HBox, False, False, 3);
+         Notes_Info.Notes_Box.Show_All;
+         Next (Notes_Info.C);
+      end if;
+   end Add_Next_Item_Doc;
 
 end Completion_Utils;

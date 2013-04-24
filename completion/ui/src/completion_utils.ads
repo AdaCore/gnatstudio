@@ -21,6 +21,7 @@
 with Ada.Containers.Doubly_Linked_Lists;
 
 with Gtk.Widget; use Gtk.Widget;
+with Gtk.Box;    use Gtk.Box;
 with Pango.Font; use Pango.Font;
 
 with GPS.Kernel; use GPS.Kernel;
@@ -30,13 +31,27 @@ with Engine_Wrappers; use Engine_Wrappers;
 
 package Completion_Utils is
 
-   package Proposals_List is new Ada.Containers.Doubly_Linked_Lists
-     (Root_Proposal_Access);
+   package Proposals_List
+   is new Ada.Containers.Doubly_Linked_Lists (Root_Proposal_Access);
 
-   function Proposal_Widget
-     (Kernel           : Kernel_Handle;
-      Fixed_Width_Font : Pango_Font_Description;
-      Proposals        : Proposals_List.List) return Gtk_Widget;
-   --  Return a widget representing Proposal
+   type Notes_Window_Info is record
+      Notes_Box      : Gtk_Vbox;
+      C              : Proposals_List.Cursor := Proposals_List.No_Element;
+      Multiple_Items : Boolean;
+   end record;
+   --  Structure representing the state of the notes floating window
+   --  Notes is the Gtk_Widget corresponding to the notes window
+   --  C points to the next item to be computed
+   --  Multiple_Items indicates wether the box shall contain multiple items or
+   --  not
+
+   procedure Add_Next_Item_Doc
+     (Notes_Info       : in out Notes_Window_Info;
+      Kernel           : Kernel_Handle;
+      Fixed_Width_Font : Pango_Font_Description);
+   --  This procedure adds one of the 1 .. N entries to the notes/documentation
+   --  floating window.
+   --  Loading is designed this way so as to enable async loading of
+   --  documentation entries
 
 end Completion_Utils;

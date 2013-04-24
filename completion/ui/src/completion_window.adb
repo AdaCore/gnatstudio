@@ -47,6 +47,7 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Pango.Layout;              use Pango.Layout;
 
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
+with Ada.Strings.Unbounded;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
@@ -182,40 +183,43 @@ package body Completion_Window is
       Proposal : Root_Proposal'Class);
    --  Add Note to the notes stored in Info
 
+   function Idle_Compute
+     (Explorer : Completion_Explorer_Access) return Boolean;
+   --  Compute completions and documentation
+
    function Idle_Expand
      (Explorer : Completion_Explorer_Access) return Boolean;
    --  Expand the tree in the completion explorer
 
+   function Idle_Complete_Notes
+     (Explorer : Completion_Explorer_Access) return Boolean;
+   --  Complete one entry in the Notes window
+
    procedure Free_Info (Explorer : access Completion_Explorer_Record'Class);
    --  Free memory associated to the stored proposals information
 
-   function Is_More_Iter (Explorer : access Completion_Explorer_Record'Class;
-                          Iter : Gtk_Tree_Iter) return Boolean;
-   --  Predicate returning true if Iter is pointing on the (more ...) row
-
-   procedure Populate_More_Iter
+   procedure Add_Computing_Iter
      (Explorer : access Completion_Explorer_Record'Class);
-   --  Populate the row corresponding to the More_Iter iterator in
-   --  the Explorer.
+   --  Create the Iter corresponding to the "computing" row
+   --  in the completion list
 
-   function Is_More_Iter (Explorer : access Completion_Explorer_Record'Class;
-                          Iter : Gtk_Tree_Iter) return Boolean is
-   begin
-      return Get_Int (Explorer.Model, Iter, Index_Column) = -1;
-   end Is_More_Iter;
+   ------------------------
+   -- Add_Computing_Iter --
+   ------------------------
 
-   procedure Populate_More_Iter
+   procedure Add_Computing_Iter
      (Explorer : access Completion_Explorer_Record'Class) is
    begin
-      if Explorer.More_Iter /= Null_Iter then
-         Set (Explorer.Model, Explorer.More_Iter,
-              Markup_Column,
-              "<span color=""grey""><i> (more...) </i></span>");
-         Set (Explorer.Model, Explorer.More_Iter,
-              Index_Column,
-              Gint (-1));
-      end if;
-   end Populate_More_Iter;
+      declare
+         Iter : Gtk_Tree_Iter;
+      begin
+         Explorer.Model.Append (Iter);
+         Explorer.Model.Set (Iter, Index_Column, -1);
+         Explorer.Model.Set (Iter, Markup_Column, "Computing...");
+         Explorer.Model.Set (Iter, Shown_Column, True);
+         Explorer.Computing_Iter := Iter;
+      end;
+   end Add_Computing_Iter;
 
    -------------------
    -- Augment_Notes --
@@ -272,7 +276,6 @@ package body Completion_Window is
       --  If we have a completion proposal, display it as head of the
       --  Notes window.
       if Item.Text /= null then
-
          Gtk_New_Hbox (HBox);
          if Item.Icon /= null then
             Gtk.Image.Gtk_New (Img, Item.Icon);
@@ -287,14 +290,19 @@ package body Completion_Window is
          Pack_Start (VBox, HBox, False, False, 1);
       end if;
 
-      Pack_Start
-        (VBox,
-         Proposal_Widget
-           (Explorer.Kernel, Explorer.Fixed_Width_Font, Item.Proposals),
-         False, False, 1);
-
-      Add (Explorer.Notes_Container, VBox);
-      Show_All (VBox);
+      --  Start idle completion of the notes box
+      declare
+         N_Info : Notes_Window_Info;
+      begin
+         Gtk_New_Vbox (N_Info.Notes_Box);
+         N_Info.C := Item.Proposals.First;
+         N_Info.Multiple_Items := Natural (Item.Proposals.Length) > 1;
+         Explorer.Notes_Info := N_Info;
+         Explorer.Notes_Need_Completion := True;
+         Pack_Start (VBox, N_Info.Notes_Box, False, False, 1);
+         Add (Explorer.Notes_Container, VBox);
+         Show_All (VBox);
+      end;
 
    end Fill_Notes_Container;
 
@@ -309,7 +317,7 @@ package body Completion_Window is
       Escaped_Text : constant String := Escape_Text (Get_Label (P, Db));
    begin
       if not P.Is_Accessible then
-         return "<span color=""grey"">" & Escaped_Text & "</span>";
+         return "<span color=""#777777"">" & Escaped_Text & "</span>";
       else
          return Escaped_Text;
       end if;
@@ -322,9 +330,11 @@ package body Completion_Window is
    function Column_Types return GType_Array is
    begin
       return
-        (Markup_Column => GType_String,
-         Index_Column  => GType_Int,
-         Icon_Column   => Gdk.Pixbuf.Get_Type);
+        (Markup_Column     => GType_String,
+         Index_Column      => GType_Int,
+         Icon_Column       => Gdk.Pixbuf.Get_Type,
+         Shown_Column      => GType_Boolean,
+         Completion_Column => GType_String);
    end Column_Types;
 
    ----------
@@ -361,6 +371,7 @@ package body Completion_Window is
          Free (Explorer.Info (J));
       end loop;
       Unchecked_Free (Explorer.Info);
+      Explorer.Info := null;
    end Free_Info;
 
    -----------
@@ -369,14 +380,33 @@ package body Completion_Window is
 
    procedure Clear (Explorer : access Completion_Explorer_Record'Class) is
    begin
+      if Explorer.Has_Idle_Computation then
+         Remove (Explorer.Idle_Computation);
+         Explorer.Has_Idle_Computation := False;
+      end if;
       Empty_Notes_Container (Explorer);
       Clear (Explorer.Model);
       Explorer.Shown := 0;
-      Explorer.More_Iter := Null_Iter;
       Free_Info (Explorer);
       Explorer.Info := new Information_Array (1 .. 1024);
       Explorer.Index := 1;
+      Explorer.Notes_Need_Completion := False;
+      Add_Computing_Iter (Explorer);
    end Clear;
+
+   ------------
+   -- Delete --
+   ------------
+
+   procedure Delete (Explorer : access Completion_Explorer_Record'Class) is
+   begin
+      if Explorer.Has_Idle_Computation then
+         Remove (Explorer.Idle_Computation);
+         Explorer.Has_Idle_Computation := False;
+      end if;
+
+      Free_Info (Explorer);
+   end Delete;
 
    ------------
    -- Delete --
@@ -390,11 +420,7 @@ package body Completion_Window is
 
       Window.In_Destruction := True;
 
-      if Window.Explorer.Has_Idle_Expansion then
-         Remove (Window.Explorer.Idle_Expansion);
-      end if;
-
-      Free_Info (Window.Explorer);
+      Delete (Window.Explorer);
 
       if Window.Start_Mark /= null then
          Delete_Mark (Window.Buffer, Window.Start_Mark);
@@ -413,11 +439,12 @@ package body Completion_Window is
    is
       Count : Natural := 0;
    begin
+
       --  If the idle function is running, unregister it
 
-      if Explorer.Has_Idle_Expansion then
-         Remove (Explorer.Idle_Expansion);
-         Explorer.Has_Idle_Expansion := False;
+      if Explorer.Has_Idle_Computation then
+         Remove (Explorer.Idle_Computation);
+         Explorer.Has_Idle_Computation := False;
       end if;
 
       --  Give ourselves Number * 2 chances to get Number items without having
@@ -429,8 +456,6 @@ package body Completion_Window is
          if (Idle_Expand (Completion_Explorer_Access (Explorer)) = False)
            or else Explorer.Shown >= Explorer.Number_To_Show
          then
-            Populate_More_Iter (Explorer);
-
             return;
          end if;
 
@@ -444,12 +469,63 @@ package body Completion_Window is
       --  If we failed to get Number items, register an idle computation to
       --  fill the data.
 
-      Explorer.Has_Idle_Expansion := True;
-      Explorer.Idle_Expansion := Completion_Explorer_Idle.Idle_Add
-        (Idle_Expand'Access, Completion_Explorer_Access (Explorer));
+      if not Explorer.Has_Idle_Computation then
+         Explorer.Has_Idle_Computation := True;
+         Explorer.Idle_Computation := Completion_Explorer_Idle.Idle_Add
+           (Idle_Compute'Access, Completion_Explorer_Access (Explorer));
+      end if;
    exception
       when E : others => Trace (Exception_Handle, E);
    end Expand_Selection;
+
+   -------------------------
+   -- Idle_Complete_Notes --
+   -------------------------
+
+   function Idle_Complete_Notes
+     (Explorer : Completion_Explorer_Access) return Boolean
+   is
+      use Proposals_List;
+   begin
+      if Explorer.Notes_Need_Completion
+        and then Has_Element (Explorer.Notes_Info.C)
+      then
+         Add_Next_Item_Doc
+           (Explorer.Notes_Info,
+            Explorer.Kernel,
+            Explorer.Fixed_Width_Font);
+         return True;
+      else
+         Explorer.Notes_Need_Completion := False;
+         return False;
+      end if;
+   end Idle_Complete_Notes;
+
+   ------------------
+   -- Idle_Compute --
+   ------------------
+
+   function Idle_Compute
+     (Explorer : Completion_Explorer_Access) return Boolean
+   is
+      More_Idle_Complete, More_Idle_Doc : Boolean;
+   begin
+      if Explorer = null
+        or else Explorer.Info = null
+        or else not Explorer.Has_Idle_Computation
+      then
+         return False;
+      end if;
+
+      More_Idle_Doc := Idle_Complete_Notes (Explorer);
+      More_Idle_Complete := Idle_Expand (Explorer);
+
+      --  If one of the two computation functions has work left
+      --  then idle computation must continue
+      Explorer.Has_Idle_Computation := More_Idle_Doc or More_Idle_Complete;
+
+      return Explorer.Has_Idle_Computation;
+   end Idle_Compute;
 
    -----------------
    -- Idle_Expand --
@@ -458,6 +534,7 @@ package body Completion_Window is
    function Idle_Expand
      (Explorer : Completion_Explorer_Access) return Boolean
    is
+
       function Is_Prefix (S1, S2 : String) return Boolean;
       --  Return True if S1 is a prefix of S2, case-sensitivity taken into
       --  account.
@@ -484,154 +561,157 @@ package body Completion_Window is
          return False;
       end Is_Prefix;
 
+      use Ada.Strings.Unbounded;
+
       Info  : Information_Record;
       Iter  : Gtk_Tree_Iter;
+      Last_Completion : Unbounded_String;
 
    begin
 
-      if At_End (Explorer.Iter.all) then
+      if Explorer.Iter.At_End then
+         --  Hide the "computing" row.
+         Explorer.Model.Set
+           (Explorer.Computing_Iter, Shown_Column, False);
          return False;
-      end if;
-
-      if not Is_Valid (Explorer.Iter.all) then
-         --  Since we don't know what happened before, we have to assume that
-         --  the current iterator does not have a valid proposal anymore. In
-         --  that case, we have to get the next element.
-         Next  (Explorer.Iter.all, Explorer.Kernel.Databases);
-      end if;
-
-      declare
-         Proposal   : constant Root_Proposal'Class :=
-           Get_Proposal (Explorer.Iter.all);
-         Showable   : constant String :=
-           To_Showable_String (Proposal, Explorer.Kernel.Databases);
-         Completion : constant String :=
-           Get_Completion (Proposal, Explorer.Kernel.Databases);
-         List       : Proposals_List.List;
-         Custom_Icon_Name : constant String := Proposal.Get_Custom_Icon_Name;
-         Icon : Gdk.Pixbuf.Gdk_Pixbuf;
-      begin
-         if Custom_Icon_Name /= "" then
-            Icon := Render_Icon
-              (Explorer.Notes_Container, Custom_Icon_Name, Icon_Size_Menu);
-         else
-            Icon := Entity_Icons (False, Get_Visibility (Proposal))
-                                 (Get_Category (Proposal));
-         end if;
-
-         --  Check whether the current iter contains the same completion
-         if
-             Explorer.Index = 1
-             or else Explorer.Info (Explorer.Index - 1).Text = null
-             or else Explorer.Info
-               (Explorer.Index - 1).Text.all /= Completion
-         then
-            Info :=
-              (new String'(Showable),
-               new String'(Completion),
-               Icon,
-               Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
-               List,
-               True,
-               Proposal.Is_Accessible,
-               Null_Iter);
-
-            Augment_Notes (Info, Proposal);
-
-            Explorer.Info (Explorer.Index) := Info;
-
-            if Explorer.Pattern = null
-              or else Is_Prefix (Explorer.Pattern.all, Info.Text.all)
-            then
-               if Explorer.More_Iter /= Null_Iter then
-                  Insert_Before
-                    (Explorer.Model, Iter, Explorer.More_Iter);
-               else
-                  Append (Explorer.Model, Iter);
+      elsif Explorer.Shown >= Explorer.Number_To_Show
+        and then not Explorer.Iter.At_End
+      then
+         Explorer.Model.Set (Explorer.Computing_Iter, Shown_Column, False);
+         declare
+            Path_Begin, Path_End : Gtk_Tree_Path;
+            Iter : Gtk_Tree_Iter;
+            Success : Boolean;
+         begin
+            Explorer.View.Get_Visible_Range (Path_Begin, Path_End, Success);
+            if Success then
+               Iter := Explorer.Model_Filter.Get_Iter (Path_End);
+               Explorer.Model_Filter.Next (Iter);
+               if Iter = Null_Iter then
+                  Explorer.Number_To_Show :=
+                    Explorer.Number_To_Show * 2;
+                  Explorer.Model.Set
+                    (Explorer.Computing_Iter, Shown_Column, True);
                end if;
-               Explorer.Info (Explorer.Index).Iter := Iter;
-
-               --  Display the completion
-               Set (Explorer.Model, Iter,
-                    Markup_Column, Info.Markup.all);
-
-               if Info.Icon /= null then
-                  Set (Explorer.Model, Iter,
-                       Icon_Column, Info.Icon);
+               if Path_Begin /= Null_Gtk_Tree_Path then
+                  Path_Free (Path_Begin);
                end if;
-               Set (Explorer.Model, Iter,
-                    Index_Column, Gint (Explorer.Index));
-
-               Explorer.Shown := Explorer.Shown + 1;
+               if Path_End /= Null_Gtk_Tree_Path then
+                  Path_Free (Path_End);
+               end if;
             end if;
-
-            Explorer.Index := Explorer.Index + 1;
-
-            if Explorer.Index > Explorer.Info'Last then
-               declare
-                  A : Information_Array (1 .. Explorer.Info'Last * 2);
-               begin
-                  A (1 .. Explorer.Index - 1) :=
-                    Explorer.Info (1 .. Explorer.Index - 1);
-                  Unchecked_Free (Explorer.Info);
-                  Explorer.Info := new Information_Array'(A);
-               end;
-            end if;
-         else
-            --  Check if current item is accessible while previous is not
-            if (not Explorer.Info (Explorer.Index - 1).Accessible)
-              and then Proposal.Is_Accessible
-            then
-               --  If it is indeed the case, ungray the text (replace it)
-               Explorer.Info (Explorer.Index - 1).Markup
-                 := new String'(Showable);
-               Set (Explorer.Model, Explorer.Info (Explorer.Index - 1).Iter,
-                    Markup_Column, Showable);
-            end if;
-            Augment_Notes (Explorer.Info (Explorer.Index - 1), Proposal);
-         end if;
-      end;
-
-      Next (Explorer.Iter.all, Explorer.Kernel.Databases);
-
-      if Explorer.Shown >= Explorer.Number_To_Show then
-         --  There is probably a "computing" iter: remove it
-         if Explorer.More_Iter /= Null_Iter then
-            Remove (Explorer.Model, Explorer.More_Iter);
-         end if;
-
-         --  Create a "more" iter
-         Append (Explorer.Model, Explorer.More_Iter);
-         Populate_More_Iter (Explorer);
-         return False;
-      end if;
-
-      if At_End (Explorer.Iter.all) then
-         --  We have reached the end. We can remove the "more" iter, since we
-         --  will no longer be computing.
-
-         if Explorer.More_Iter /= Null_Iter then
-            Remove (Explorer.Model, Explorer.More_Iter);
-            Explorer.More_Iter := Null_Iter;
-         end if;
-
-         return False;
-      else
-         --  If there is no "more" iter displayed, create one now since we are
-         --  still computing.
-         if Explorer.More_Iter = Null_Iter then
-            Append (Explorer.Model, Explorer.More_Iter);
-            Set (Explorer.Model,
-                 Explorer.More_Iter,
-                 Markup_Column,
-                 "<span color=""grey""><i> (computing...) </i></span>");
-         end if;
-
+         end;
          return True;
       end if;
 
+      if not Explorer.Iter.Is_Valid then
+         --  Since we don't know what happened before, we have to assume that
+         --  the current iterator does not have a valid proposal anymore. In
+         --  that case, we have to get the next element.
+         Explorer.Iter.Next (Explorer.Kernel.Databases);
+      end if;
+
+      loop
+         exit when Explorer.Iter.At_End;
+         declare
+            Proposal   : constant Root_Proposal'Class :=
+              Explorer.Iter.Get_Proposal;
+            Showable   : constant String :=
+              To_Showable_String (Proposal, Explorer.Kernel.Databases);
+            Completion : constant String :=
+              Proposal.Get_Completion (Explorer.Kernel.Databases);
+            List       : Proposals_List.List;
+            Custom_Icon_Name : constant String
+              := Proposal.Get_Custom_Icon_Name;
+            Icon : Gdk.Pixbuf.Gdk_Pixbuf;
+         begin
+            exit when Last_Completion /= ""
+              and then Completion /= Last_Completion;
+
+            Last_Completion := To_Unbounded_String (Completion);
+
+            if Custom_Icon_Name /= "" then
+               Icon := Render_Icon
+                 (Explorer.Notes_Container, Custom_Icon_Name, Icon_Size_Menu);
+            else
+               Icon := Entity_Icons (False, Get_Visibility (Proposal))
+                 (Get_Category (Proposal));
+            end if;
+
+            --  Check whether the current iter contains the same completion
+            if
+              Explorer.Index = 1
+              or else Explorer.Info (Explorer.Index - 1).Text = null
+              or else Explorer.Info
+                (Explorer.Index - 1).Text.all /= Completion
+            then
+               if Explorer.Pattern = null
+                 or else Is_Prefix (Explorer.Pattern.all, Completion)
+               then
+                  Info :=
+                    (new String'(Showable),
+                     new String'(Completion),
+                     Icon,
+                     Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
+                     List,
+                     Proposal.Is_Accessible);
+
+                  Augment_Notes (Info, Proposal);
+
+                  Explorer.Info (Explorer.Index) := Info;
+                  Explorer.Model.Insert_Before (Iter, Explorer.Computing_Iter);
+
+                  --  Set all columns
+                  Explorer.Model.Set (Iter, Markup_Column, Info.Markup.all);
+                  if Info.Icon /= null then
+                     Explorer.Model.Set (Iter, Icon_Column, Info.Icon);
+                  end if;
+                  Explorer.Model.Set
+                    (Iter, Index_Column, Gint (Explorer.Index));
+                  Explorer.Model.Set (Iter, Completion_Column, Info.Text.all);
+                  Explorer.Model.Set (Iter, Shown_Column, True);
+                  Explorer.Shown := Explorer.Shown + 1;
+
+                  Explorer.Index := Explorer.Index + 1;
+
+                  if Explorer.Index > Explorer.Info'Last then
+                     declare
+                        A : Information_Array (1 .. Explorer.Info'Last * 2);
+                     begin
+                        A (1 .. Explorer.Index - 1) :=
+                          Explorer.Info (1 .. Explorer.Index - 1);
+                        Unchecked_Free (Explorer.Info);
+                        Explorer.Info := new Information_Array'(A);
+                     end;
+                  end if;
+               end if;
+            else
+               --  Check if current item is accessible while previous is not
+               if (not Explorer.Info (Explorer.Index - 1).Accessible)
+                 and then Proposal.Is_Accessible
+               then
+                  --  If it is indeed the case, ungray the text (replace it)
+                  Explorer.Info (Explorer.Index - 1).Markup
+                    := new String'(Showable);
+
+                  --  Mark the entry as accessible in the info array
+                  Explorer.Info (Explorer.Index - 1).Accessible := True;
+
+                  --  Modify the tree model accordingly
+                  Explorer.Model.Set (Iter,
+                                      Markup_Column, Showable);
+               end if;
+               Augment_Notes (Explorer.Info (Explorer.Index - 1), Proposal);
+            end if;
+         end;
+         Explorer.Iter.Next (Explorer.Kernel.Databases);
+      end loop;
+
+      return True;
+
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Exception_Handle, E);
          return False;
    end Idle_Expand;
 
@@ -644,11 +724,6 @@ package body Completion_Window is
    is
       Prev      : Gtk_Tree_Iter;
       Curr      : Gtk_Tree_Iter;
-
-      Selection : Gtk_Tree_Selection;
-      Model     : Gtk_Tree_Model;
-
-      Previously_Selected : Natural := 0;
 
       function Equals (A, B : String) return Boolean;
       --  Perform a case-conscious comparison
@@ -667,82 +742,77 @@ package body Completion_Window is
       end Equals;
 
       UTF8 : constant String := Window.Explorer.Pattern.all;
+
+      Sel   : Gtk_Tree_Selection;
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Path  : Gtk_Tree_Path;
    begin
-      Selection := Get_Selection (Window.Explorer.View);
-
-      --  Find the entry currently being selected
-      Get_Selected (Selection, Model, Curr);
-
-      if Curr /= Null_Iter then
-         Previously_Selected :=
-           Natural (Get_Int (Window.Explorer.Model, Curr, Index_Column));
-      end if;
-
-      --  Clear the model
-
-      Clear (Window.Explorer.Model);
       Window.Explorer.Shown := 0;
-      Window.Explorer.More_Iter := Null_Iter;
-
-      if Window.Explorer.Has_Idle_Expansion then
-         Remove (Window.Explorer.Idle_Expansion);
-      end if;
 
       --  Browse through the completion possibilities and filter out the
       --  lines that don't match.
-
-      Prev := Null_Iter;
-
-      for J in 1 .. Window.Explorer.Index - 1 loop
-         if Window.Explorer.Info (J).Text'Length >= UTF8'Length
-           and then Equals
-             (Window.Explorer.Info (J).Text
-              (Window.Explorer.Info (J).Text'First
-                 .. Window.Explorer.Info
-                   (J).Text'First - 1 + UTF8'Length), UTF8)
-         then
-            Append (Window.Explorer.Model, Curr);
-            Window.Explorer.Shown := Window.Explorer.Shown + 1;
-
-            Set (Window.Explorer.Model, Curr, Markup_Column,
-                 Window.Explorer.Info (J).Markup.all);
-            Set (Window.Explorer.Model, Curr, Icon_Column,
-                 Window.Explorer.Info (J).Icon);
-            Set (Window.Explorer.Model, Curr, Index_Column, Gint (J));
-
-            if J = Previously_Selected then
-               Prev := Curr;
-            end if;
-         end if;
+      Curr := Window.Explorer.Model.Get_Iter_First;
+      while Curr /= Null_Iter loop
+         Window.Explorer.Model.Set (Curr, Shown_Column, False);
+         Window.Explorer.Model.Next (Curr);
       end loop;
 
-      --  Expand the selection to show more items, if needed
-      if Window.Explorer.Shown < Minimal_Items_To_Show then
-         Expand_Selection (Window.Explorer);
-      end if;
+      Curr := Window.Explorer.Model.Get_Iter_First;
+      while Curr /= Null_Iter
+        and then Window.Explorer.Shown < Window.Explorer.Number_To_Show
+      loop
+         declare
+            Text : constant String
+              := Window.Explorer.Model.Get_String (Curr, Completion_Column);
+            Matches : constant Boolean
+              := Text'Length >= UTF8'Length and then
+              Equals (Text (Text'First .. Text'First - 1 + UTF8'Length), UTF8);
+         begin
+            Window.Explorer.Model.Set (Curr, Shown_Column, Matches);
+            if Matches then
+               Window.Explorer.Shown := Window.Explorer.Shown + 1;
+            end if;
+         end;
+         Window.Explorer.Model.Next (Curr);
+      end loop;
+
+      while Curr /= Null_Iter loop
+         Window.Explorer.Model.Set (Curr, Shown_Column, False);
+         Window.Explorer.Model.Next (Curr);
+      end loop;
+      Window.Explorer.Model.Set
+        (Window.Explorer.Computing_Iter, Shown_Column, True);
+
+      Window.Explorer.Model_Filter.Refilter;
+
+      Expand_Selection (Window.Explorer);
 
       --  Re-select the item previously selected, or, if there was none,
       --  select the first iter
+      Sel := Get_Selection (Window.Explorer.View);
+      Get_Selected (Sel, Model, Iter);
+      if Iter = Null_Iter then
+         Iter := Window.Explorer.Model_Filter.Get_Iter_First;
+         Path := Get_Path (Model, Iter);
+         Scroll_To_Cell (Window.Explorer.View, Path, null,
+                         False, 0.1, 0.1);
+         Path_Free (Path);
+      end if;
 
-      if Prev /= Null_Iter then
-         if not Window.all.Volatile then
-            Select_Iter (Selection, Prev);
-         end if;
-
-      elsif not Window.In_Destruction then
+      if not Window.In_Destruction then
          Prev := Get_Iter_First (Window.Explorer.Model);
 
          if Prev = Null_Iter then
             --  If there is no entry in the tree, destroy the window
             Destroy (Window);
-            return;
          else
             if not Get_Visible (Window) then
                declare
                   Previously_Volatile : constant Boolean := Window.Volatile;
                begin
                   --  The call to Show_All causes the focus to be grabbed on
-                  --  the tree view, and as a result the first item gets
+                  --  the tree view, and as a Rresult the first item gets
                   --  selected. This is not desirable if the window was
                   --  volatile, so we need to reset the volatility after the
                   --  call.
@@ -753,10 +823,6 @@ package body Completion_Window is
                      Window.all.Volatile := True;
                   end if;
                end;
-            end if;
-
-            if not Window.all.Volatile then
-               Select_Iter (Selection, Prev);
             end if;
          end if;
       end if;
@@ -975,39 +1041,42 @@ package body Completion_Window is
    procedure On_Explorer_Selection_Changed
      (Explorer : access Completion_Explorer_Record'Class)
    is
-      Sel   : Gtk_Tree_Selection;
-      Iter  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
-      Model : Gtk_Tree_Model;
-      Index : Natural;
+      Sel       : Gtk_Tree_Selection;
+      Iter      : Gtk_Tree_Iter;
+      Path      : Gtk_Tree_Path;
+      Model     : Gtk_Tree_Model;
+      Index     : Natural;
+      Raw_Index : Gint;
 
    begin
       Sel := Get_Selection (Explorer.View);
       Get_Selected (Sel, Model, Iter);
 
       if Iter /= Null_Iter then
-         if Is_More_Iter (Explorer, Iter) then
-            Path := Get_Path (Explorer.Model, Iter);
+         Path := Get_Path (Model, Iter);
+         Scroll_To_Cell (Explorer.View, Path, null, False, 0.1, 0.1);
+         Path_Free (Path);
 
-            if Prev (Path) then
-               Iter := Get_Iter (Explorer.Model, Path);
-               Explorer.Number_To_Show := Explorer.Number_To_Show +
-                 Minimal_Items_To_Show;
-               Expand_Selection (Explorer);
-               Select_Iter (Sel, Iter);
-            end if;
+         Raw_Index := Explorer.Model_Filter.Get_Int (Iter, Index_Column);
 
-         else
-            Path := Get_Path (Model, Iter);
-            Scroll_To_Cell (Explorer.View, Path, null, False, 0.1, 0.1);
-            Path_Free (Path);
-
-            Index := Natural (Get_Int (Explorer.Model, Iter, Index_Column));
-
-            if Index /= 0 then
-               Fill_Notes_Container (Explorer, Explorer.Info (Index));
-            end if;
+         if Raw_Index = -1 then
+            Explorer.Notes_Need_Completion := False;
+            return;
          end if;
+
+         Index := Natural (Raw_Index);
+
+         if Index /= 0 then
+            Fill_Notes_Container (Explorer, Explorer.Info (Index));
+         end if;
+
+         if not Explorer.Has_Idle_Computation then
+            Explorer.Has_Idle_Computation := True;
+            Explorer.Idle_Computation := Completion_Explorer_Idle.Idle_Add
+              (Idle_Compute'Access, Explorer);
+         end if;
+      else
+         Explorer.Notes_Need_Completion := False;
       end if;
 
    exception
@@ -1043,35 +1112,38 @@ package body Completion_Window is
 
       Iter : Gtk_Tree_Iter;
       J    : Natural;
+      K    : Gint;
    begin
       if not At_End (Window.Explorer.Iter.all) then
-         --  In this case, we haven't finished to iterate through all the
-         --  possible completions. It's not possible to know the common prefix
-         --  since they may be other hidden entries with different prefix.
-
          return False;
       end if;
 
       --  Compute the common prefix
-      Iter := Get_Iter_First (Window.Explorer.Model);
+      Iter := Window.Explorer.Model_Filter.Get_Iter_First;
 
       if Iter = Null_Iter then
          return False;
       end if;
 
-      J := Natural (Get_Int (Window.Explorer.Model, Iter, Index_Column));
+      K := Window.Explorer.Model_Filter.Get_Int (Iter, Index_Column);
+      if K = -1 then
+         return False;
+      end if;
+      J := Natural (K);
 
-      Next (Window.Explorer.Model, Iter);
+      Window.Explorer.Model_Filter.Next (Iter);
 
       declare
          Prefix : constant String := Window.Explorer.Info (J).Text.all;
          Last   : Natural := Prefix'Last;
          First  : Natural := Prefix'First;
       begin
-         while Iter /= Null_Iter
-           and then Iter /= Window.Explorer.More_Iter
-         loop
-            J := Natural (Get_Int (Window.Explorer.Model, Iter, Index_Column));
+         while Iter /= Null_Iter loop
+            K := Window.Explorer.Model_Filter.Get_Int (Iter, Index_Column);
+            if K = -1 then
+               return False;
+            end if;
+            J := Natural (K);
 
             for K in Window.Explorer.Info (J).Text'First .. Natural'Min
               (Window.Explorer.Info (J).Text'Last,
@@ -1092,7 +1164,7 @@ package body Completion_Window is
                Last := K - Window.Explorer.Info (J).Text'First + First;
             end loop;
 
-            Next (Window.Explorer.Model, Iter);
+            Window.Explorer.Model_Filter.Next (Iter);
          end loop;
 
          --  Complete up to the common prefix
@@ -1133,6 +1205,7 @@ package body Completion_Window is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
 
+      Raw_Pos    : Gint;
       Pos        : Natural;
       Text_Begin : Gtk_Text_Iter;
       Text_End   : Gtk_Text_Iter;
@@ -1144,10 +1217,13 @@ package body Completion_Window is
    begin
       Get_Selected (Get_Selection (Window.Explorer.View), Model, Iter);
 
-      if Iter /= Null_Iter
-        and then Iter /= Window.Explorer.More_Iter
-      then
-         Pos := Natural (Get_Int (Window.Explorer.Model, Iter, Index_Column));
+      if Iter /= Null_Iter then
+         Raw_Pos := Get_Int (Window.Explorer.Model_Filter, Iter, Index_Column);
+         if Raw_Pos = -1 then
+            Delete (Window);
+            return;
+         end if;
+         Pos := Natural (Raw_Pos);
 
          --  Get the underlying completion proposal if available
 
@@ -1406,12 +1482,24 @@ package body Completion_Window is
 
          when GDK_Tab =>
             --  Key press on TAB completes.
-            --  If the window is volatile, first select the top item.
-            if Window.Volatile then
+
+            Sel := Get_Selection (Window.Explorer.View);
+            Get_Selected (Sel, Model, Iter);
+
+            if Iter = Null_Iter then
                Select_Next (Completion_Window_Access (Window));
+               Sel := Get_Selection (Window.Explorer.View);
+               Get_Selected (Sel, Model, Iter);
             end if;
 
-            return Complete;
+            if Iter = Null_Iter
+              or else Window.Explorer.Model_Filter.Get_Int
+                (Iter, Index_Column) = -1
+            then
+               return True;
+            else
+               return Complete;
+            end if;
 
          when GDK_Down | GDK_KP_Down =>
             Select_Next (Completion_Window_Access (Window));
@@ -1432,14 +1520,14 @@ package body Completion_Window is
             Get_Selected (Sel, Model, Iter);
 
             if Iter = Null_Iter then
-               Iter := Get_Iter_First (Window.Explorer.Model);
+               Iter := Get_Iter_First (Window.Explorer.Model_Filter);
             end if;
 
             if Iter /= Null_Iter then
-               Path := Get_Path (Window.Explorer.Model, Iter);
+               Path := Get_Path (Window.Explorer.Model_Filter, Iter);
 
                if Prev (Path) then
-                  Iter := Get_Iter (Window.Explorer.Model, Path);
+                  Iter := Get_Iter (Window.Explorer.Model_Filter, Path);
                   Select_Iter (Sel, Iter);
                end if;
 
@@ -1501,7 +1589,9 @@ package body Completion_Window is
       Initialize_Hbox (Explorer);
 
       Gtk_New (Explorer.Model, Column_Types);
-      Gtk_New (Explorer.View, Explorer.Model);
+      Gtk.Tree_Model_Filter.Gtk_New (Explorer.Model_Filter, +Explorer.Model);
+      Gtk_New (Explorer.View, Explorer.Model_Filter);
+      Explorer.Model_Filter.Set_Visible_Column (Shown_Column);
 
       Set_Headers_Visible (Explorer.View, False);
 
@@ -1548,6 +1638,7 @@ package body Completion_Window is
         (Explorer,
          Gtk.Widget.Signal_Destroy_Event,
          To_Marshaller (On_Explorer_Destroyed'Access), Explorer);
+
    end Initialize;
 
    -------------
@@ -1632,6 +1723,7 @@ package body Completion_Window is
       Cursor                  : Gtk_Text_Iter;
       Max_Width, Notes_Window_Width, Max_Height : Gint;
       Tree_Iter               : Gtk_Tree_Iter;
+
    begin
       Window.Text := View;
       Window.Buffer := Buffer;
@@ -1739,7 +1831,7 @@ package body Completion_Window is
          Move (Window.Notes_Window, X + Width, Y);
 
       else
-         --  Make sure the Notes window doesn't overlap the tree view
+         --  Make sure the Notes window doesn'Gt overlap the tree view
          if X <= Notes_Window_Width then
             Notes_Window_Width := X - 2;
             Set_Default_Size
@@ -1807,9 +1899,12 @@ package body Completion_Window is
          After => True);
 
       Window.Explorer.Pattern := new String'("");
+
+      Add_Computing_Iter (Window.Explorer);
+
       Expand_Selection (Window.Explorer);
 
-      Tree_Iter := Get_Iter_First (Window.Explorer.Model);
+      Tree_Iter := Window.Explorer.Model_Filter.Get_Iter_First;
 
       Window.Volatile := Volatile;
 
@@ -1842,9 +1937,9 @@ package body Completion_Window is
       Get_Selected (Sel, Model, Iter);
 
       if Iter = Null_Iter then
-         Iter := Get_Iter_First (Explorer.Model);
+         Iter := Get_Iter_First (Explorer.Model_Filter);
       else
-         Next (Explorer.Model, Iter);
+         Next (Explorer.Model_Filter, Iter);
       end if;
 
       if Iter /= Null_Iter then

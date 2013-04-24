@@ -143,7 +143,7 @@ package Engine_Wrappers is
      (Proposal : Comp_Proposal) return String;
    overriding function Is_Accessible
      (Proposal : Comp_Proposal)
-     return Boolean;
+      return Boolean;
 
    overriding procedure Free (X : in out Comp_Proposal);
 
