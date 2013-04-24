@@ -200,8 +200,6 @@ package body Commands.Builder is
          return;
       end if;
 
-      CL := Result.Full.Args;
-
       if not Build.Quiet then
          Append_To_Build_Output
            (Builder,
