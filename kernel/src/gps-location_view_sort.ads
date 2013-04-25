@@ -35,7 +35,7 @@ package GPS.Location_View_Sort is
    --  Wraps a locations model so that we can provide sorting without changing
    --  the model itself.
 
-   type Sort_Order is (By_Location, By_Category);
+   type Sort_Order is (By_Location, By_Weight);
 
    procedure Set_Order
      (Self  : not null access Locations_Proxy_Model_Record'Class;

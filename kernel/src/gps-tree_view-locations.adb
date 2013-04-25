@@ -544,7 +544,7 @@ package body GPS.Tree_View.Locations is
    procedure Sort_By_Subcategory
      (Self : not null access GPS_Locations_Tree_View_Record'Class) is
    begin
-      Self.Sort.Set_Order (By_Category);
+      Self.Sort.Set_Order (By_Weight);
    end Sort_By_Subcategory;
 
    ---------------------------

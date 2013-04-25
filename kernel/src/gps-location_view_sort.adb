@@ -342,7 +342,7 @@ package body GPS.Location_View_Sort is
          when By_Location =>
             Self.Set_Default_Sort_Func (Compare_By_Location'Access);
 
-         when By_Category =>
+         when By_Weight =>
             Self.Set_Default_Sort_Func (Compare_By_Weight'Access);
       end case;
    end Set_Order;
