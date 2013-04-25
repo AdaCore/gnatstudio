@@ -1611,7 +1611,7 @@ package body Completion_Window is
 
       Gtk_New (Explorer.Tree_Scroll);
       Set_Shadow_Type (Explorer.Tree_Scroll, Shadow_None);
-      Set_Policy (Explorer.Tree_Scroll, Policy_Never, Policy_Automatic);
+      Set_Policy (Explorer.Tree_Scroll, Policy_Automatic, Policy_Automatic);
       Add (Explorer.Tree_Scroll, Explorer.View);
 
       Gtk_New (Frame);
