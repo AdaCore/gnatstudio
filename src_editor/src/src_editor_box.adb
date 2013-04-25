@@ -50,6 +50,7 @@ with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
+with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
@@ -58,7 +59,6 @@ with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
-with Gtk.Status_Bar;             use Gtk.Status_Bar;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Mark;              use Gtk.Text_Mark;
@@ -891,7 +891,7 @@ package body Src_Editor_Box is
       Drawing_Area   : Gtk_Drawing_Area;
       Hbox           : Gtk_Hbox;
       Separator      : Gtk_Vseparator;
-      Status_Bar     : Gtk_Status_Bar;
+      Frame          : Gtk_Frame;
 
    begin
       Initialize_Vbox (Box, Homogeneous => False);
@@ -936,27 +936,13 @@ package body Src_Editor_Box is
 
       --  The status bar, at the bottom of the window...
 
-      --  We use an actual GtkStatusBar so that themes can correctly display
-      --  the status bar as desired.
-      Gtk_New (Status_Bar);
-      Pack_Start (Box, Status_Bar, Expand => False, Fill => False);
-      Box.Label_Box := Gtk_Hbox (Status_Bar.Get_Message_Area);
+      Gtk_New_Hbox (Box.Label_Box);
 
-      --  Remove packed-in children, and replace with our own widgets
-      declare
-         Children : Gtk.Widget.Widget_List.Glist :=
-                      Box.Label_Box.Get_Children;
-         Child    : Gtk_Widget;
-         use Gtk.Widget.Widget_List;
+      Gtk_New (Frame);
+      Frame.Set_Shadow_Type (Shadow_None);
+      Pack_Start (Box, Frame, Expand => False, Fill => False);
 
-      begin
-         for J in 0 .. Length (Children) - 1 loop
-            Child := Nth_Data (Children, J);
-            Box.Label_Box.Remove (Child);
-         end loop;
-
-         Free (Children);
-      end;
+      Frame.Add (Box.Label_Box);
 
       --  Avoid resizing the main window whenever a label is changed
       Set_Resize_Mode (Box.Label_Box, Resize_Queue);
