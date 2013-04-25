@@ -411,11 +411,25 @@ class GNATprove_Message(GPS.Message):
                     GPS.EditorLocation(buf, sloc.line(), 1),
                     GPS.EditorLocation(buf, sloc.line(), 1))
 
+
 class GNATprove_Parser(tool_output.OutputParser):
     """Class that parses messages of the gnatprove tool, and creates
     GNATprove_Message objects instead of GPS.Message objects"""
 
+    def __init__(self, child):
+        tool_output.OutputParser.__init__(self, child)
+        # this variable is used to clear GNATprove messages whenever a new
+        # builder action is run. It is too early to do it in the menu entry
+        # callbacks, so we have to do it when starting to parse the tool
+        # output. See GNATprove_Parser.on_stdout.
+        self.clear_messages = True
+
     def on_stdout(self,text):
+        # On the first message, we assume the tool has been run; clear the
+        # locations view of the gnatprove messages.
+        if self.clear_messages:
+            self.clear_messages = False
+            gnatprove_plug.clean_locations_view()
         GPS.Console("Messages").write(text)
         lines = text.splitlines()
         for line in lines:
@@ -483,7 +497,6 @@ def is_msg_context(self):
 
 # It's more convenient to define these callbacks outside of the plugin class
 def generic_on_prove(target):
-    gnatprove_plug.clean_locations_view()
     GPS.BuildTarget(target).execute(synchronous=False)
 
 def on_prove_all(self):
@@ -565,7 +578,6 @@ def on_prove_subp(self):
     # A mild consequence is that --limit-subp does not appear in the editable
     # box shown to the user, even if appears in the uneditable argument list
     # displayed below it.
-    gnatprove_plug.clean_locations_view()
     loc = compute_subp_sloc(self)
     if loc:
         target = GPS.BuildTarget(prove_subp)
