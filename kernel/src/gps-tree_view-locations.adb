@@ -37,7 +37,7 @@ package body GPS.Tree_View.Locations is
    use Gtk.Cell_Renderer_Text;
    use Gtk.Tree_Model;
    use Gtk.Tree_View_Column;
-   use GPS.Sort_Model.Locations;
+   use GPS.Location_View_Sort;
 
    function On_Button_Press
      (Self  : access GPS_Locations_Tree_View_Record'Class;

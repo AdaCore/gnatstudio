@@ -20,7 +20,7 @@ with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS, GNATCOLL.VFS.GtkAda;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Location_View.Listener; use GPS.Location_View.Listener;
 
-package body GPS.Sort_Model.Locations is
+package body GPS.Location_View_Sort is
 
    type Compare_Functions is
      array (Positive range <>) of Gtk_Tree_Iter_Compare_Func;
@@ -347,4 +347,4 @@ package body GPS.Sort_Model.Locations is
       end case;
    end Set_Order;
 
-end GPS.Sort_Model.Locations;
+end GPS.Location_View_Sort;

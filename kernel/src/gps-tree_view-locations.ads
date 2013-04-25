@@ -45,7 +45,7 @@ private with Glib.Main;
 private with Gtk.Cell_Renderer_Text;
 private with Gtk.Tree_View_Column;
 with GPS.Location_View_Filter;
-private with GPS.Sort_Model.Locations;
+private with GPS.Location_View_Sort;
 
 package GPS.Tree_View.Locations is
 
@@ -107,7 +107,7 @@ private
 
       Filter                  :
         GPS.Location_View_Filter.Location_View_Filter_Model;
-      Sort                    : GPS.Sort_Model.Locations.Locations_Proxy_Model;
+      Sort                    : GPS.Location_View_Sort.Locations_Proxy_Model;
       --  Intermediate models to support filtering and custom sorting of items
       --  in the view
 

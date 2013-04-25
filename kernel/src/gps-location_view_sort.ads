@@ -15,6 +15,31 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package GPS.Sort_Model is
+--  A model that provides sorting for the Locations view.
 
-end GPS.Sort_Model;
+with Gtk.Tree_Model_Sort; use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Model;      use Gtk.Tree_Model;
+
+package GPS.Location_View_Sort is
+
+   type Locations_Proxy_Model_Record is
+     new Gtk_Tree_Model_Sort_Record with null record;
+
+   type Locations_Proxy_Model is
+     access all Locations_Proxy_Model_Record'Class;
+
+   procedure Gtk_New
+     (Model  : in out Locations_Proxy_Model;
+      Source : not null
+         access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
+   --  Wraps a locations model so that we can provide sorting without changing
+   --  the model itself.
+
+   type Sort_Order is (By_Location, By_Category);
+
+   procedure Set_Order
+     (Self  : not null access Locations_Proxy_Model_Record'Class;
+      Order : Sort_Order);
+   --  Set the sort order for Self.
+
+end GPS.Location_View_Sort;
