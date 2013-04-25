@@ -84,6 +84,10 @@ class Sqlite_Cross_References(object):
     def recompute_xref(self):
         """ Launch recompilation of the cross references """
 
+        # The testsuite can disable gnatinspect in some cases
+        if not GPS.Logger("RUN_GNATINSPECT").active:
+            return
+
         # The project might not exist, for instance when GPS is loading the
         # default project in a directory
 
