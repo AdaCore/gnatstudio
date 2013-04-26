@@ -155,38 +155,17 @@ package body GPS.Core_Kernels is
 
    procedure Register_Module
      (Kernel : access Core_Kernel_Record'Class;
-      Module : not null Abstract_Module;
-      Tag    : Ada.Tags.Tag)
+      Module : not null Abstract_Module)
    is
-      function Module_Implement_Tag return Boolean;
-      --  Verify that Module is ancestor of Tag
+      use Ada.Tags;
 
-      --------------------------
-      -- Module_Implement_Tag --
-      --------------------------
-
-      function Module_Implement_Tag return Boolean is
-         use Ada.Tags;
-
-         Item : Ada.Tags.Tag := Module'Tag;
-      begin
-         while Item /= No_Tag loop
-            if Item = Tag then
-               return True;
-            end if;
-
-            Item := Parent_Tag (Item);
-         end loop;
-
-         return False;
-      end Module_Implement_Tag;
-
+      Item : Ada.Tags.Tag := Module'Tag;
    begin
-      if not Module_Implement_Tag then
-         raise Constraint_Error;
-      end if;
+      while Item /= No_Tag loop
+         Kernel.Modules.Include (Item, Module);
 
-      Kernel.Modules.Insert (Tag, Module);
+         Item := Parent_Tag (Item);
+      end loop;
    end Register_Module;
 
    --------------

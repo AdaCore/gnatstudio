@@ -109,10 +109,9 @@ package GPS.Core_Kernels is
 
    procedure Register_Module
      (Kernel : access Core_Kernel_Record'Class;
-      Module : not null Abstract_Module;
-      Tag    : Ada.Tags.Tag);
-   --  Register Module in Kernel. Module should implement service defined
-   --  by tagged type with given Tag.
+      Module : not null Abstract_Module);
+   --  Register Module in Kernel. Module is registered as implementation of
+   --  any service defined by each of its parents.
 
    function Module
      (Kernel : access Core_Kernel_Record'Class;
