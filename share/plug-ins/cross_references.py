@@ -12,6 +12,10 @@ class Sqlite_Cross_References(object):
     xref info.
     """
 
+    disable_gnatinspect = False
+    # If true, gnatinspect is never run. This should only be used for the
+    # testsuite in some cases, since this also breaks all cross-referenes.
+
     xml = """<?xml version="1.0" ?><GPS>
 <!-- This is an XML model for launching gnatinspect, the cross-references parser -->
 <target-model name="gnatinspect" category="">
@@ -85,7 +89,7 @@ class Sqlite_Cross_References(object):
         """ Launch recompilation of the cross references """
 
         # The testsuite can disable gnatinspect in some cases
-        if not GPS.Logger("RUN_GNATINSPECT").active:
+        if self.disable_gnatinspect:
             return
 
         # The project might not exist, for instance when GPS is loading the
