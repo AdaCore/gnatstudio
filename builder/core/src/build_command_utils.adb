@@ -375,6 +375,7 @@ package body Build_Command_Utils is
    begin
       Self.Kernel := Kernel;
       Self.Registry := Registry;
+      Register_Module (Kernel, Self);
    end Initialize;
 
    --------------------------------

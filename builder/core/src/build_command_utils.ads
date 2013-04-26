@@ -31,7 +31,7 @@ with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 
-with GPS.Core_Kernels;
+with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with GPS.Messages_Windows;             use GPS.Messages_Windows;
 
 with Build_Configurations;             use Build_Configurations;
@@ -244,7 +244,7 @@ package Build_Command_Utils is
    --  fills in one call all members handled by Abstract_Build_Command_Adapter
    --  getters.
 
-   type Builder_Context_Record is tagged limited private;
+   type Builder_Context_Record is new Abstract_Module_Record with private;
    --  Builder context stores set of last main for launched targets and
    --  background identifier for last launched command.
    type Builder_Context is access all Builder_Context_Record;
@@ -413,7 +413,7 @@ private
    type Target_Output_Array is array (Target_Output_Type) of
      Target_Outputs.Map;
 
-   type Builder_Context_Record is tagged limited record
+   type Builder_Context_Record is new Abstract_Module_Record with record
       Kernel : GPS.Core_Kernels.Core_Kernel;
       --  Kernel handle
       Registry : Build_Config_Registry_Access;
