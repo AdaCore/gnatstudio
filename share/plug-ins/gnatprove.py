@@ -322,10 +322,11 @@ class GNATprove_Message(GPS.Message):
             fn = self.compute_trace_filename()
             if os.path.isfile(fn):
                 self.parse_trace_file(fn)
-                self.set_subprogram(
-                    lambda m : m.toggle_trace(),
-                    "gps-semantic-check",
-                    "show path information")
+                if len(self.lines) > 0:
+                    self.set_subprogram(
+                        lambda m : m.toggle_trace(),
+                        "gps-semantic-check",
+                        "show path information")
 
     def highlight_message(self):
         msg_buffer = GPS.EditorBuffer.get(self.get_file())
@@ -391,7 +392,8 @@ class GNATprove_Message(GPS.Message):
         with open(fn,"r") as f:
             for line in f:
                 sl = line.split(':')
-                self.lines.append(GPS.FileLocation(GPS.File(sl[0]),int(sl[1]), 1))
+                if len(sl) >= 2:
+                    self.lines.append(GPS.FileLocation(GPS.File(sl[0]),int(sl[1]), 1))
 
 
     def show_trace(self):
