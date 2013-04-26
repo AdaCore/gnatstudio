@@ -1,4 +1,5 @@
-with "../kernel/kernel";
+with "../kernel/kernel_core";
+with "../toolchains_editor/core/toolchains_core";
 with "../shared";
 
 project Builder_Core is
