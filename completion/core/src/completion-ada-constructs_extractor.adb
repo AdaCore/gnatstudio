@@ -606,7 +606,18 @@ package body Completion.Ada.Constructs_Extractor is
       Context  : Completion_Context;
       Result   : in out Completion_List)
    is
-      Visibility : Visibility_Context;
+      Visibility_Accessible : constant Visibility_Context :=
+        (Offset => Offset,
+         Filter => Everything,
+         File   => Resolver.Current_File,
+         Min_Visibility_Confidence => With_Visible);
+
+      Visibility_Unreachable : constant Visibility_Context :=
+        (Offset => Offset,
+         Filter => Everything,
+         File   => Resolver.Current_File,
+         Min_Visibility_Confidence => Public_Library_Visible);
+
       Expression : Parsed_Expression;
    begin
       if Context.all in Ada_Completion_Context then
@@ -626,22 +637,36 @@ package body Completion.Ada.Constructs_Extractor is
          Expression := Null_Parsed_Expression;
       end if;
 
-      Visibility.Offset := Offset;
-      Visibility.Filter := Everything;
-      Visibility.File := Resolver.Current_File;
-      Visibility.Min_Visibility_Confidence := Public_Library_Visible;
-
       Append
         (Result.List,
          Construct_Db_Wrapper'
-           (Visibility,
+           (Visibility_Accessible,
             Completion_Resolver_Access (Resolver),
             Find_Declarations
               ((From_File,
                 Null_Instance_Info,
                 Resolver.Current_File,
                 Offset),
-               From_Visibility => Visibility,
+               From_Visibility => Visibility_Accessible,
+               Expression      => Expression,
+               Filter          => Null_Filter,
+               Is_Partial      => True),
+            Expression /= Null_Parsed_Expression
+            and then Token_List.Data
+              (Token_List.First (Expression.Tokens))
+      .Tok_Type = Tok_Accept));
+
+      Append
+        (Result.List,
+         Construct_Db_Wrapper'
+           (Visibility_Unreachable,
+            Completion_Resolver_Access (Resolver),
+            Find_Declarations
+              ((From_File,
+                Null_Instance_Info,
+                Resolver.Current_File,
+                Offset),
+               From_Visibility => Visibility_Unreachable,
                Expression      => Expression,
                Filter          => Null_Filter,
                Is_Partial      => True),

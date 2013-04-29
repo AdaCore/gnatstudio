@@ -1904,7 +1904,7 @@ package body Completion_Window is
 
       Expand_Selection (Window.Explorer);
 
-      Tree_Iter := Window.Explorer.Model_Filter.Get_Iter_First;
+      Tree_Iter := Get_Iter_First (Window.Explorer.Model_Filter);
 
       Window.Volatile := Volatile;
 
