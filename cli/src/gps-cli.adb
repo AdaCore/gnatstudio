@@ -28,6 +28,11 @@ with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
+with Build_Command_Utils;
+with Build_Configurations;             use Build_Configurations;
+with Commands.Builder.Scripts;
+with Commands.Builder.Build_Output_Collectors;
+
 with GPS.CLI_Kernels;
 with GPS.Core_Kernels;
 with GPS.Python_Core;
@@ -35,6 +40,7 @@ with GPS.Scripts.Entities;
 with GPS.Scripts.File_Locations;
 with GPS.Scripts.Files;
 with GPS.Scripts.Projects;
+with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 procedure GPS.CLI is
    procedure Parse_Command_Line (Switch, Parameter, Section : String);
@@ -50,6 +56,15 @@ procedure GPS.CLI is
    procedure Register_Classes
      (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record);
    --  Register GPS script's classes
+
+   procedure Register_Output_Parsers;
+   --  Register tool output parsers.
+
+   Output_Collector : aliased
+     Commands.Builder.Build_Output_Collectors.Output_Parser_Fabric;
+
+   Registry : Build_Config_Registry_Access;
+   Builder  : aliased Build_Command_Utils.Builder_Context_Record;
 
    -------------------
    -- Execute_Batch --
@@ -100,7 +115,18 @@ procedure GPS.CLI is
       GPS.Scripts.File_Locations.Register_Commands (Kernel);
       GPS.Scripts.Files.Register_Commands (Kernel);
       GPS.Scripts.Projects.Register_Commands (Kernel);
+      Commands.Builder.Scripts.Register_Commands (Kernel);
    end Register_Classes;
+
+   -----------------------------
+   -- Register_Output_Parsers --
+   -----------------------------
+
+   procedure Register_Output_Parsers is
+   begin
+      Register_Output_Parser (Output_Collector'Access, "output_collector");
+      Output_Collector.Set (Builder'Unchecked_Access);
+   end Register_Output_Parsers;
 
    Cmdline               : Command_Line_Configuration;
    Project_Name          : aliased GNAT.Strings.String_Access;
@@ -148,7 +174,10 @@ begin
 
    GPS.Core_Kernels.Initialize (Kernel);
    GPS.Python_Core.Register_Python (Kernel);
+   Registry := Create;
+   Builder.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel), Registry);
    Register_Classes (Kernel);
+   Register_Output_Parsers;
 
    declare
       Path : Virtual_File := Create (+Project_Name.all);
@@ -187,5 +216,6 @@ begin
    end if;
 
    --  Destroy all
+   Free (Registry);
    GPS.Core_Kernels.Destroy (Kernel);
 end GPS.CLI;
