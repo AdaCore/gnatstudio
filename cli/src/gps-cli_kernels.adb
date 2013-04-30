@@ -55,11 +55,9 @@ package body GPS.CLI_Kernels is
 
    overriding function Messages_Window
      (Self : not null access CLI_Kernel_Record)
-      return GPS.Messages_Windows.Abstract_Messages_Window_Access
-   is
-      pragma Unreferenced (Self);
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access is
    begin
-      return null;
+      return Self.Messages_Window'Access;
    end Messages_Window;
 
    ----------------------
