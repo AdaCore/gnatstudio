@@ -60,8 +60,7 @@ procedure GPS.CLI is
    procedure Register_Output_Parsers;
    --  Register tool output parsers.
 
-   Output_Collector : aliased
-     Commands.Builder.Build_Output_Collectors.Output_Parser_Fabric;
+   Output_Collector : access Output_Parser_Fabric'Class;
 
    Registry : Build_Config_Registry_Access;
    Builder  : aliased Build_Command_Utils.Builder_Context_Record;
@@ -123,9 +122,12 @@ procedure GPS.CLI is
    -----------------------------
 
    procedure Register_Output_Parsers is
+      use Commands.Builder;
    begin
-      Register_Output_Parser (Output_Collector'Access, "output_collector");
-      Output_Collector.Set (Builder'Unchecked_Access);
+      Output_Collector := new Build_Output_Collectors.Output_Parser_Fabric;
+      Register_Output_Parser (Output_Collector, "output_collector");
+      Build_Output_Collectors.Output_Parser_Fabric (Output_Collector.all).Set
+        (Builder'Unchecked_Access);
    end Register_Output_Parsers;
 
    Cmdline               : Command_Line_Configuration;
