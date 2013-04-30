@@ -22,6 +22,7 @@ with Xref;
 with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.CLI_Messages_Windows;
+with GPS.CLI_Process_Launchers;        use GPS.CLI_Process_Launchers;
 
 package GPS.CLI_Kernels is
 
@@ -48,6 +49,7 @@ package GPS.CLI_Kernels is
 private
 
    type CLI_Kernel_Record is new Core_Kernel_Record with record
+      Launcher        : aliased CLI_Process_Launcher_Record;
       Messages_Window : aliased GPS.CLI_Messages_Windows.Messages_Window;
    end record;
 

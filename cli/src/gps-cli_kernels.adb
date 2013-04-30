@@ -66,11 +66,9 @@ package body GPS.CLI_Kernels is
 
    overriding function Process_Launcher
      (Self : not null access CLI_Kernel_Record)
-      return GPS.Process_Launchers.Process_Launcher
-   is
-      pragma Unreferenced (Self);
+      return GPS.Process_Launchers.Process_Launcher is
    begin
-      return null;
+      return Self.Launcher'Access;
    end Process_Launcher;
 
 end GPS.CLI_Kernels;
