@@ -233,8 +233,7 @@ package body Commands.Builder is
             Directory       => Result.Full.Dir,
             Output_Parser   => Output_Parser,
             Show_Command_To => Result.Console,
-            Success         => Success,
-            Created_Command => Created_Command);
+            Success         => Success);
       else
          Builder.Kernel.Process_Launcher.Launch_Process_In_Background
            (CL              => CL,
@@ -249,12 +248,12 @@ package body Commands.Builder is
               or else Build.Background
               or else Build.Quiet),
             Created_Command      => Created_Command);
-      end if;
 
-      --  ??? check value of Success
+         --  ??? check value of Success
 
-      if Success and then Build.Background then
-         Background_Build_Started (Builder, Created_Command);
+         if Success and then Build.Background then
+            Background_Build_Started (Builder, Created_Command);
+         end if;
       end if;
    end Launch_Build_Command;
 

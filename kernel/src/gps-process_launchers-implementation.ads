@@ -37,8 +37,7 @@ package GPS.Process_Launchers.Implementation is
       Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Output_Parser        : GPS.Tools_Output.Tools_Output_Parser_Access;
       Show_Command_To      : Messages_Windows.Abstract_Messages_Window_Access;
-      Success              : out Boolean;
-      Created_Command      : out Command_Access);
+      Success              : out Boolean);
 
    overriding procedure Launch_Process_In_Background
      (Launcher             : access GPS_Process_Launcher_Record;

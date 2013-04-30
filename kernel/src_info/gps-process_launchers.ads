@@ -37,8 +37,7 @@ package GPS.Process_Launchers is
       Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Output_Parser        : GPS.Tools_Output.Tools_Output_Parser_Access;
       Show_Command_To      : Abstract_Messages_Window_Access := null;
-      Success              : out Boolean;
-      Created_Command      : out Command_Access) is abstract;
+      Success              : out Boolean) is abstract;
 
    --  Launch a given CL command with arguments on Server.
    --  Arguments must be freed by the user.
@@ -57,7 +56,6 @@ package GPS.Process_Launchers is
    --  This applies to the local host, not the remote host.
 
    --  This procedure waits for the process to complete.
-   --  It returns the created command in Created_Command parameter.
 
    procedure Launch_Process_In_Background
      (Launcher             : access Process_Launcher_Record;
@@ -81,5 +79,7 @@ package GPS.Process_Launchers is
    --
    --  Block_Exit indicates whether the fact that this process is running
    --  should prevent GPS from closing.
+   --
+   --  It returns the created command in Created_Command parameter.
 
 end GPS.Process_Launchers;

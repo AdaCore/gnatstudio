@@ -78,8 +78,7 @@ package body GPS.Process_Launchers.Implementation is
       Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Output_Parser        : GPS.Tools_Output.Tools_Output_Parser_Access;
       Show_Command_To      : Messages_Windows.Abstract_Messages_Window_Access;
-      Success              : out Boolean;
-      Created_Command      : out Command_Access)
+      Success              : out Boolean)
    is
       Console : Interactive_Consoles.Interactive_Console;
       Result  : Scheduled_Command_Access;
@@ -108,8 +107,6 @@ package body GPS.Process_Launchers.Implementation is
          Synchronous          => True,
          Show_Exit_Status     => False,
          Created_Command      => Result);
-
-      Created_Command := Command_Access (Result);
    end Launch_Process;
 
    ----------------------------------
