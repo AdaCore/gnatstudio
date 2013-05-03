@@ -92,16 +92,6 @@ procedure GPS.CLI is
       end if;
    end Execute_Batch;
 
-   ------------------------
-   -- Parse_Command_Line --
-   ------------------------
-
-   procedure Parse_Command_Line (Switch, Parameter, Section : String) is
-      pragma Unreferenced (Section);
-   begin
-      null;
-   end Parse_Command_Line;
-
    ----------------------
    -- Register_Classes --
    ----------------------
@@ -136,8 +126,35 @@ procedure GPS.CLI is
    Kernel                : constant GPS.CLI_Kernels.CLI_Kernel :=
      new GPS.CLI_Kernels.CLI_Kernel_Record;
    GNAT_Version          : GNAT.Strings.String_Access;
+
+   ------------------------
+   -- Parse_Command_Line --
+   ------------------------
+
+   procedure Parse_Command_Line (Switch, Parameter, Section : String) is
+      pragma Unreferenced (Section);
+      Equal : Natural;
+   begin
+      if Switch = "-X" then
+         Equal := Ada.Strings.Fixed.Index (Parameter, "=");
+         if Equal /= 0 then
+            Kernel.Registry.Environment.Change_Environment
+              (Name => Parameter (Parameter'First .. Equal - 1),
+               Value => Parameter (Equal + 1 .. Parameter'Last));
+         else
+            Put_Line
+              ("Ignoring switch -X, missing name or/and value for: " &
+                 Switch & Parameter);
+         end if;
+      end if;
+
+   end Parse_Command_Line;
+
 begin
+   --  Retrieve log configuration
    GNATCOLL.Traces.Parse_Config_File;
+
+   --  Set comand line options
    Set_Usage
      (Cmdline,
       Help => "GPS command line interface");
@@ -154,7 +171,20 @@ begin
       Switch      => "-l:",
       Long_Switch => "--load=",
       Help        => "Execute an external file written in the language lang");
+   Define_Switch
+     (Cmdline,
+      Switch       => "-X:",
+      Help         => "Specify an external reference in the project");
 
+   --  Initialize context
+   GPS.Core_Kernels.Initialize (Kernel);
+   GPS.Python_Core.Register_Python (Kernel);
+   Registry := Create;
+   Builder.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel), Registry);
+   Register_Classes (Kernel);
+   Register_Output_Parsers;
+
+   --  Retrieve command line option
    begin
       Getopt (Cmdline, Parse_Command_Line'Unrestricted_Access);
    exception
@@ -173,13 +203,6 @@ begin
          return;
       end if;
    end if;
-
-   GPS.Core_Kernels.Initialize (Kernel);
-   GPS.Python_Core.Register_Python (Kernel);
-   Registry := Create;
-   Builder.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel), Registry);
-   Register_Classes (Kernel);
-   Register_Output_Parsers;
 
    declare
       Path : Virtual_File := Create (+Project_Name.all);
