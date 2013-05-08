@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M411-032: GB: Code Assist invocation may cause Eclipse to crash
+  Problem:    Invocation of the Code Assist feature can cause a crash
+              of GNATbench due to a deadlock.
+  Workaround: Restart Eclipse and retry the operation.
+
 - M410-048: GB: Standard locations not searched for project files
   Problem:    The standard locations for GNAT-defined project files
               such as ajis.gpr and jni.gpr were not searched, so
