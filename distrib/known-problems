@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- M424-052: GB: Stack overflow on startup
+  Problem:    When starting Workbench or Eclipse with the Ada editor
+              open, the construct analysis could lead to an infinitly
+              recursive call.
+  Workaround: Close the editor and restart Eclipse.
+
 - M411-032: GB: Code Assist invocation may cause Eclipse to crash
   Problem:    Invocation of the Code Assist feature can cause a crash
               of GNATbench due to a deadlock.
