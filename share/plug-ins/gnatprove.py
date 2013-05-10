@@ -19,6 +19,18 @@ xml_gnatprove = """<?xml version="1.0"?>
       <language>Ada</language>
       <switches columns="2" lines="3" switch_char="-">
         <title line="1">Proof</title>
+         <combo label="Main mode" switch="--mode" noswitch="prove"
+               separator="=" column="1"
+               tip="Main mode of formal verification" >
+            <combo-entry label="check" value="check"
+                         tip="Check SPARK restrictions for code where SPARK_Mode=On"/>
+            <combo-entry label="prove" value="prove"
+                         tip="Prove subprogram contracts and absence of run-time errors"/>
+            <combo-entry label="flow" value="flow"
+                         tip="Prove object initialization, globals and depends contracts"/>
+            <combo-entry label="all" value="all"
+                         tip="Activates all modes"/>
+         </combo>
         <combo line="1" label="Report mode" switch="--report" separator="="
                noswitch="fail" tip="Amount of information reported">
           <combo-entry label="fail" value="fail"
@@ -28,12 +40,22 @@ xml_gnatprove = """<?xml version="1.0"?>
           <combo-entry label="detailed" value="detailed"
                        tip="Detailed proof attempts"/>
         </combo>
+         <combo label="One proof by" switch="--proof" noswitch="no_split"
+               separator="=" column="1"
+               tip="Formulas generated for each check (faster) or each path (more precise)" >
+            <combo-entry label="check" value="no_split"
+                         tip="Generate one formula per check"/>
+            <combo-entry label="check first, then path" value="then_split"
+                         tip="Start with one formula per check, then split into paths when needed"/>
+            <combo-entry label="path" value="path_wp"
+                         tip="Generate one formula per path for each check"/>
+         </combo>
         <spin label="Prover timeout" switch="--timeout="
               default="1" min="1" max="3600"
-              tip="Set the prover timeout (in s) for individual VCs" />
+              tip="Set the prover timeout (in s) for individual proofs" />
         <spin label="Prover max steps" switch="--steps="
               default="0" min="0" max="1000000"
-              tip="Set the prover maximum number of steps for individual VCs" />
+              tip="Set the prover maximum number of steps for individual proofs" />
         <title line="1" column="2">Process control</title>
         <spin label="Multiprocessing" column="2" switch="-j"
               default="1" min="1" max="100"
@@ -48,17 +70,39 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>-P%PP</arg>
        </command-line>
        <icon>gps-build-all</icon>
-       <switches command="%(tool_name)s" columns="2" lines="2">
-         <title column="1" line="1" >Compilation</title>
+       <switches command="%(tool_name)s" columns="2" lines="4">
+         <title column="1" line="1" >General</title>
+         <combo label="Mode" switch="--mode" noswitch="prove"
+               separator="=" column="1"
+               tip="Main mode of formal verification" >
+            <combo-entry label="check" value="check"
+                         tip="Check SPARK restrictions for code where SPARK_Mode=On"/>
+            <combo-entry label="prove" value="prove"
+                         tip="Prove subprogram contracts and absence of run-time errors"/>
+            <combo-entry label="flow" value="flow"
+                         tip="Prove object initialization, globals and depends contracts"/>
+            <combo-entry label="all" value="all"
+                         tip="Activates all modes"/>
+         </combo>
          <check label="Ignore cached results" switch="-f" column="1"
                 tip="All actions are redone entirely, including compilation and proof" />
-         <check label="Report Proved VCs" switch="--report=all" column="1"
-                tip="Report the status of all VCs, including those proved" />
-         <title column="2" line="1" >Proof</title>
-         <spin label="Prover Timeout" switch="--timeout=" column="2"
+         <check label="Report checks proved" switch="--report=all" column="1"
+                tip="Report the status of all checks, including those proved" />
+         <title column="2" line="1" >Prover</title>
+         <combo label="One proof by" switch="--proof" noswitch="no_split"
+               separator="=" column="2"
+               tip="Formulas generated for each check (faster) or each path (more precise)" >
+            <combo-entry label="check" value="no_split"
+                         tip="Generate one formula per check"/>
+            <combo-entry label="check first, then path" value="then_split"
+                         tip="Start with one formula per check, then split into paths when needed"/>
+            <combo-entry label="path" value="path_wp"
+                         tip="Generate one formula per path for each check"/>
+         </combo>
+         <spin label="Prover timeout" switch="--timeout=" column="2"
                 default="1" min="1" max="3600"
-                tip="Set the prover timeout (in s) for individual VCs" />
-         <field label="Alternate Prover" switch="--prover=" column="2"
+                tip="Set the prover timeout (in s) for individual proofs" />
+         <field label="Alternate prover" switch="--prover=" column="2"
                 tip="Alternate prover to use instead of Alt-Ergo" />
        </switches>
     </target-model>
