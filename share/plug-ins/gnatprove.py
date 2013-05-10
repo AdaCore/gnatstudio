@@ -176,19 +176,6 @@ xml_gnatprove = """<?xml version="1.0"?>
        </switches>
     </target-model>
 
-    <target model="gnatprovable" name="Show Unprovable Code" category="GNATprove">
-       <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
-       <read-only>TRUE</read-only>
-       <command-line>
-          <arg>gnatprove</arg>
-          <arg>-P%PP</arg>
-          <arg>--mode=detect</arg>
-          <arg>-f</arg>
-       </command-line>
-    </target>
-
     <target-model name="gnatprove_clean">
        <description>Target model for GNATprove for cleaning</description>
        <command-line>
@@ -226,7 +213,6 @@ prove_root_project   = "Prove Root Project"
 prove_file           = "Prove File"
 prove_line           = "Prove Line"
 prove_subp           = "Prove Subprogram"
-show_unprovable_code = "Show Unprovable Code"
 clean_up             = "Clean Proofs"
 clear_highlighting   = "Remove Editor Highlighting"
 
@@ -516,9 +502,6 @@ def on_prove_line(self):
 def on_clear_highlighting(self):
     gnatprove_plug.clear_highlighting()
 
-def on_show_unprovable_code(self):
-    GPS.BuildTarget(show_unprovable_code).execute(synchronous=False)
-
 def on_clean_up(self):
     generic_on_prove(clean_up)
 
@@ -600,9 +583,6 @@ class GNATProve_Plugin:
             menu_prefix + "/" + prove_file,
             on_prove_file,
             filter = is_ada_file_context)
-        GPS.Menu.create(
-            menu_prefix + "/" + show_unprovable_code,
-            on_show_unprovable_code)
         GPS.Menu.create(
             menu_prefix + "/" + clean_up,
             on_clean_up)
