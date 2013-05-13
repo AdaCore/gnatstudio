@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.3.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-53-M318-031 GB: warning editing files not part of a GB project (2013-05-13)
+
+  When the Ada editor opens a file not part of a GNATbench project, a dialog is
+  displayed to inform the user that some features will not work properly until
+  the file is part of a GNATbench project.
+  This dialog can be disabled through Ada Editor Preferences page.
+
 NF-53-M204-035 ECL: automatic scenario set for Android projects (2013-02-04)
 
   When the new-project wizard creates a new Ada for Android project
