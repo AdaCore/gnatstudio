@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
-with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
@@ -78,6 +77,7 @@ with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
+with GPS.Kernel.Search;                 use GPS.Kernel.Search;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with Histories;                         use Histories;
@@ -270,15 +270,6 @@ package body Src_Editor_Module is
      (Kernel : Kernel_Handle; Comment : Boolean);
    --  Comment or uncomment the current selection, if any.
    --  Auxiliary procedure for On_Comment_Lines and On_Uncomment_Lines.
-
-   type File_Completion_Factory is new Completions_Factory with record
-      File1, File2 : File_Array_Access;
-   end record;
-   overriding function Completion
-     (Factory : File_Completion_Factory; Index : Positive) return String;
-   overriding function Description
-     (Factory : File_Completion_Factory; Index : Positive) return String;
-   --  See doc from inherited subprogram
 
    type Edit_File_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -1480,60 +1471,6 @@ package body Src_Editor_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Open_Remote_File;
 
-   ----------------
-   -- Completion --
-   ----------------
-
-   overriding function Completion
-     (Factory : File_Completion_Factory; Index : Positive) return String
-   is
-      File : GNATCOLL.VFS.Virtual_File;
-   begin
-      if Index > Factory.File1'Length then
-         if Index - Factory.File1'Length > Factory.File2'Length then
-            return "";
-         else
-            File := Factory.File2
-              (Factory.File2'First + Index - Factory.File1'Length - 1);
-         end if;
-      else
-         File := Factory.File1 (Factory.File1'First + Index - 1);
-      end if;
-
-      if File = GNATCOLL.VFS.No_File then
-         return "@$#$";  --  Unlikely string, will not match any suffix
-      else
-         return +Base_Name (File);
-      end if;
-   end Completion;
-
-   -----------------
-   -- Description --
-   -----------------
-
-   overriding function Description
-     (Factory : File_Completion_Factory; Index : Positive) return String
-   is
-      File : GNATCOLL.VFS.Virtual_File;
-   begin
-      if Index > Factory.File1'Length then
-         if Index - Factory.File1'Length > Factory.File2'Length then
-            return "";
-         else
-            File := Factory.File2
-              (Factory.File2'First + Index - Factory.File1'Length - 1);
-         end if;
-      else
-         File := Factory.File1 (Factory.File1'First + Index - 1);
-      end if;
-
-      if File = GNATCOLL.VFS.No_File then
-         return "";
-      else
-         return +Full_Name (File);
-      end if;
-   end Description;
-
    -----------------------
    -- On_Open_From_Path --
    -----------------------
@@ -1543,24 +1480,12 @@ package body Src_Editor_Module is
    is
       Label  : Gtk_Label;
       Ignore : Gtk_Widget;
-      pragma Unreferenced (Widget, Ignore);
-
       Open_File_Dialog : Gtk_Dialog;
       Open_File_Entry  : Gtkada_Entry;
-      Hist             : constant String_List_Access :=
-                           Get_History
-                             (Get_History (Kernel).all,
-                              Open_From_Path_History);
-      List1            : File_Array_Access :=
-                           Get_Project (Kernel).Source_Files
-                             (Recursive => True);
-      List2            : File_Array_Access := new File_Array'
-                           (Get_Registry (Kernel).Environment
-                            .Predefined_Source_Files);
-      Compl            : File_Completion_Factory;
+      Resp : Gtk_Response_Type;
+      pragma Unreferenced (Widget, Ignore, Resp);
 
    begin
-      Push_State (Kernel,  Busy);
       Gtk_New (Open_File_Dialog,
                Title  => -"Open file from project",
                Parent => Get_Current_Window (Kernel),
@@ -1574,17 +1499,14 @@ package body Src_Editor_Module is
       --  Do not use a combo box, so that users can easily navigate to the list
       --  of completions through the keyboard (C423-005)
       Gtk_New (Open_File_Entry,
+               Kernel         => Kernel,
+               History        => Open_From_Path_History,
+               Completion     => GPS.Kernel.Search.Registry.Get
+                 (Provider_Filenames),
                Case_Sensitive =>
                  Is_Case_Sensitive (Get_Nickname (Build_Server)));
-      Set_Activates_Default (Get_Entry (Open_File_Entry), True);
-      Pack_Start (Get_Content_Area (Open_File_Dialog), Open_File_Entry,
-                  Fill => True, Expand => True);
-
-      if Hist /= null then
-         Set_Text (Get_Entry (Open_File_Entry),
-                   Base_Name (Hist (Hist'First).all));
-         Select_Region (Get_Entry (Open_File_Entry), 0, -1);
-      end if;
+      Get_Content_Area (Open_File_Dialog).Pack_Start
+        (Open_File_Entry, Fill => True, Expand => True);
 
       Ignore := Add_Button (Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
       Ignore := Add_Button
@@ -1594,69 +1516,9 @@ package body Src_Editor_Module is
       Grab_Focus (Get_Entry (Open_File_Entry));
       Show_All (Open_File_Dialog);
 
-      Compl.File1 := List1;
-      Compl.File2 := List2;
-
-      Set_Completions (Open_File_Entry, Compl);
-
-      Pop_State (Kernel);
-
-      if Run (Open_File_Dialog) = Gtk_Response_OK then
-
-         --  Look for the file in the project. If the file cannot be found,
-         --  display an error message in the console.
-
-         declare
-            Complet : constant Integer :=
-                        Current_Completion (Open_File_Entry);
-            Text    : constant String :=
-                        Get_Text (Get_Entry (Open_File_Entry));
-            --  ??? What if the filesystem path is non-UTF8?
-            Full    : Virtual_File;
-         begin
-            --  Close the dialog first, so that the current context becomes the
-            --  one of the editor while running hooks
-            Destroy (Open_File_Dialog);
-
-            if Complet /= 0 then
-               if Complet > List1'Length then
-                  Full := List2 (List2'First + Complet - List1'Length - 1);
-               else
-                  Full := List1 (List1'First + Complet - 1);
-               end if;
-            else
-               Full := Create (+Text, Kernel, Use_Object_Path => False);
-            end if;
-
-            Add_To_History
-              (Get_History (Kernel).all, Open_From_Path_History,
-               +Full_Name (Full));
-
-            if Is_Regular_File (Full) then
-               Open_File_Editor
-                 (Kernel, Full,
-                  Enable_Navigation => True,
-                  New_File          => False,
-                  Line              => 0,
-                  Column            => 0);
-
-            else
-               Insert
-                 (Kernel,
-                    -"Could not find source file """ & Text &
-                      (-""" in currently loaded project."),
-                  Mode => Error);
-            end if;
-         end;
-      else
-         Destroy (Open_File_Dialog);
-      end if;
-
-      Unchecked_Free (List1);
-      Unchecked_Free (List2);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
+      --  The action is performed directly by the search_provider
+      Resp := Open_File_Dialog.Run;
+      Open_File_Dialog.Destroy;
    end On_Open_From_Path;
 
    --------------
@@ -1667,9 +1529,6 @@ package body Src_Editor_Module is
      (Callback : access On_Recent; Item : String) is
    begin
       Open_File_Editor (Callback.Kernel, Create (Full_Filename => +Item));
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Activate;
 
    -----------------
