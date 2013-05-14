@@ -314,6 +314,7 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "lsmod" then
          declare
+            package Module_List renames GPS.Kernel.Modules.Module_List;
             use type Module_List.List_Node;
             Current : Module_List.List_Node;
             List    : constant Module_List.List := List_Of_Modules (Kernel);

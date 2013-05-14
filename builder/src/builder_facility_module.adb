@@ -43,6 +43,7 @@ with Commands.Interactive;        use Commands.Interactive;
 with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
+with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;

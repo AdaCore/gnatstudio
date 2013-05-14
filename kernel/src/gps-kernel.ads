@@ -84,19 +84,6 @@ package GPS.Kernel is
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
 
-   type Customization_Level is
-     (Hard_Coded, System_Wide, Project_Wide, User_Specific, Themes);
-   --  The various level of customization (See GPS.Kernel.Custom).
-   --  Hard_Coded is used for customization that are hard-coded in the GPS code
-   --  System_Wide is used if customization comes from a custom file found in
-   --  the installation directory of GPS.
-   --  Project_Wide is used if the customization comes from a custom file found
-   --  in one of the directories lists in GPS_CUSTOM_PATH.
-   --  User_Specific is used if the customization comes from a custom file
-   --  found in the user's own directory (see GPS_HOME/.gps/plug-ins).
-   --  Themes is used if the customization was found in a theme definition,
-   --  wherever that definition was found.
-
    procedure Load_Preferences (Handle : access Kernel_Handle_Record);
    --  Load the preferences from the user's file ~/.gps/preferences
 
