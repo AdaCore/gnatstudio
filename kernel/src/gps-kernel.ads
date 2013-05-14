@@ -56,7 +56,7 @@ with XML_Utils;
 with Xref;
 
 with GPS.Editors;
-with GPS.Core_Kernels;
+with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.Process_Launchers.Implementation;
@@ -230,16 +230,6 @@ package GPS.Kernel is
       Accel_Mods : Natural);
    --  Set a default key for the registered action.
 
-   -------------
-   -- Modules --
-   -------------
-   --  ??? Could be moved to GPS.Kernel.Module if the contexts didn't require
-   --  an Abstract_Module_ID. Perhaps we could move them to GPS.Kernel.Contexts
-
-   type Abstract_Module_ID_Record is
-     abstract new GPS.Core_Kernels.Abstract_Module_Record with null record;
-   type Abstract_Module_ID is access all Abstract_Module_ID_Record'Class;
-
    -----------
    -- Files --
    -----------
@@ -301,14 +291,14 @@ package GPS.Kernel is
    procedure Set_Context_Information
      (Context : in out Selection_Context;
       Kernel  : access Kernel_Handle_Record'Class;
-      Creator : Abstract_Module_ID);
+      Creator : Abstract_Module);
    --  Set the information in the context
 
    function Get_Kernel (Context : Selection_Context) return Kernel_Handle;
    --  Return the kernel associated with the context
 
    function Get_Creator
-     (Context : Selection_Context) return Abstract_Module_ID;
+     (Context : Selection_Context) return Abstract_Module;
    --  Return the module ID for the module that created the context
 
    procedure Set_Is_Dispatching_Call
@@ -881,6 +871,10 @@ package GPS.Kernel is
    --  the builder module, so this function is a convenient to retrieve that
    --  property.
 
+   subtype Abstract_Module_ID        is Abstract_Module;
+   subtype Abstract_Module_ID_Record is Abstract_Module_Record;
+   --  Type aliases for compability
+
 private
 
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
@@ -927,7 +921,7 @@ private
 
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
-      Creator   : Abstract_Module_ID;
+      Creator   : Abstract_Module;
       Ref_Count : Natural := 1;
 
       Instances : GNATCOLL.Scripts.Instance_List_Access;

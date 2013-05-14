@@ -29,6 +29,7 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Log_Utils;                 use Log_Utils;
 
+with GPS.Core_Kernels;          use GPS.Core_Kernels;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -230,10 +231,10 @@ package body VCS_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
-      Creator : constant Abstract_Module_ID := Get_Creator (Context);
+      Creator : constant Abstract_Module := Get_Creator (Context);
    begin
-      if (Creator /= Abstract_Module_ID (VCS_Module_ID)
-          and then Creator /= Abstract_Module_ID (VCS_Explorer_Module_Id))
+      if (Creator /= Abstract_Module (VCS_Module_ID)
+          and then Creator /= Abstract_Module (VCS_Explorer_Module_Id))
         or else Has_Activity_Information (Context)
       then
          VCS_View_API.VCS_Contextual_Menu
