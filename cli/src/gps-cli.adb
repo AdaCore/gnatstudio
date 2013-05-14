@@ -34,6 +34,8 @@ with Commands.Builder.Scripts;
 with Commands.Builder.Build_Output_Collectors;
 
 with GPS.CLI_Kernels;
+with GPS.CLI_Scripts;
+with GPS.CLI_Target_Loaders;
 with GPS.Core_Kernels;
 with GPS.Python_Core;
 with GPS.Scripts.Entities;
@@ -105,6 +107,7 @@ procedure GPS.CLI is
       GPS.Scripts.Files.Register_Commands (Kernel);
       GPS.Scripts.Projects.Register_Commands (Kernel);
       Commands.Builder.Scripts.Register_Commands (Kernel);
+      GPS.CLI_Scripts.Register_Commands (Kernel);
    end Register_Classes;
 
    -----------------------------
@@ -126,6 +129,8 @@ procedure GPS.CLI is
    Kernel                : constant GPS.CLI_Kernels.CLI_Kernel :=
      new GPS.CLI_Kernels.CLI_Kernel_Record;
    GNAT_Version          : GNAT.Strings.String_Access;
+   Target_Loader         : constant GPS.Core_Kernels.Abstract_Module :=
+     new GPS.CLI_Target_Loaders.Target_Loader (Kernel);
 
    ------------------------
    -- Parse_Command_Line --
@@ -183,6 +188,7 @@ begin
    Builder.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel), Registry);
    Register_Classes (Kernel);
    Register_Output_Parsers;
+   Kernel.Register_Module (Target_Loader);
 
    --  Retrieve command line option
    begin
