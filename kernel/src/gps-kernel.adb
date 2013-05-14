@@ -62,11 +62,13 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
+with GPS.Kernel.Search.Filenames;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Properties;            use GPS.Properties;
+with GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
@@ -314,7 +316,10 @@ package body GPS.Kernel is
      (Handle           : out Kernel_Handle;
       Main_Window      : Gtk.Window.Gtk_Window;
       Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File) is
+      Prefix_Directory : Virtual_File)
+   is
+      use GPS.Kernel.Search;
+      D : GPS.Search.Search_Provider_Access;
    begin
       Handle := new Kernel_Handle_Record;
       Handle.Home_Dir := Home_Dir;
@@ -327,6 +332,11 @@ package body GPS.Kernel is
                 Handle.all'Address);
 
       GPS.Core_Kernels.Initialize (Handle);
+
+      GPS.Kernel.Search.Registry.Kernel := Handle;
+
+      D := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
+      GPS.Kernel.Search.Registry.Register (Provider_Filenames, D);
 
       --  by default, the local server
       Handle.Gnatls_Server := new String'("");
