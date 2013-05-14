@@ -583,28 +583,24 @@ package body GPS.Kernel.Contexts is
      (Context         : in out Selection_Context;
       Entity_Name     : String;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
-      From_Expression : String := "")
-   is
-      Db : constant General_Xref_Database :=
-        Context.Data.Data.Kernel.Databases;
+      From_Expression : String := "") is
    begin
       if Entity_Name /= "" then
          Context.Data.Data.Entity_Name := new String'(Entity_Name);
          Context.Data.Data.Entity_Column   := Entity_Column;
 
-         if Has_File_Information (Context)
-           and then Has_Line_Information (Context)
+         if not (Has_File_Information (Context)
+                 and then Has_Line_Information (Context))
          then
-            Db.Find_Declaration_Or_Overloaded
-              (Loc  => (File   => Context.Data.Data.Files
-                        (Context.Data.Data.Files'First),
-                        Line   => Context.Data.Data.Line,
-                        Column => Entity_Column),
-               Entity_Name => Entity_Name,
-               Entity      => Context.Data.Data.Xref_Entity,
-               Closest_Ref => Context.Data.Data.Xref_Closest_Ref);
+            --  We do not perform the query to resolve the entity declaration
+            --  now. Instead, we store the relevant data, and do the actual
+            --  request lazily in Get_Entity.
 
-            Ref (Context.Data.Data.Xref_Entity);
+            --  If we do not have file and line information, no need
+            --  to resolve the entity.
+
+            Context.Data.Data.Xref_Entity := No_General_Entity;
+            Context.Data.Data.Xref_Entity_Resolution_Attempted := True;
          end if;
       end if;
 
@@ -629,6 +625,7 @@ package body GPS.Kernel.Contexts is
       Ref (Entity);
       Context.Data.Data.Entity_Name   := new String'
         (Kernel.Databases.Get_Name (Entity));
+
       Context.Data.Data.Entity_Column := Decl.Column;
       Context.Data.Data.Xref_Entity   := Entity;
 
@@ -756,7 +753,34 @@ package body GPS.Kernel.Contexts is
      (Context           : Selection_Context)
       return Xref.General_Entity
    is
+      Db : constant General_Xref_Database :=
+        Context.Data.Data.Kernel.Databases;
    begin
+      --  If we have never attempted to get the actual location of the entity,
+      --  do so now.
+
+      if not Context.Data.Data.Xref_Entity_Resolution_Attempted then
+         --  We are attempting resolution now
+         Context.Data.Data.Xref_Entity_Resolution_Attempted := True;
+
+         if Has_File_Information (Context)
+           and then Has_Line_Information (Context)
+           and then Context.Data.Data.Entity_Name /= null
+         then
+            Db.Find_Declaration_Or_Overloaded
+              (Loc  =>
+                 (File   => Context.Data.Data.Files
+                    (Context.Data.Data.Files'First),
+                  Line   => Context.Data.Data.Line,
+                  Column => Context.Data.Data.Entity_Column),
+               Entity_Name => Context.Data.Data.Entity_Name.all,
+               Entity      => Context.Data.Data.Xref_Entity,
+               Closest_Ref => Context.Data.Data.Xref_Closest_Ref);
+
+            Ref (Context.Data.Data.Xref_Entity);
+         end if;
+      end if;
+
       return Context.Data.Data.Xref_Entity;
    end Get_Entity;
 
