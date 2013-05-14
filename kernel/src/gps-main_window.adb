@@ -402,9 +402,12 @@ package body GPS.Main_Window is
    begin
       --  Initialize the window first, so that it can be used while creating
       --  the kernel, in particular calls to Push_State
-      Gtk.Window.Initialize (Main_Window, Window_Toplevel);
       Glib.Object.Initialize_Class_Record
-        (Main_Window, Signals, Class_Record, Type_Name => "GpsMainWindow");
+        (Ancestor     => Gtk.Window.Get_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "GpsMainWindow");
+      Glib.Object.G_New (Main_Window, Class_Record);
 
       Gtk_New
         (Main_Window.Kernel,

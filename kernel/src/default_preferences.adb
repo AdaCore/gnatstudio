@@ -2165,22 +2165,24 @@ package body Default_Preferences is
    begin
       Save_Preferences (Manager, Saved);
 
-      Dialog := new Preferences_Editor_Record;
-      Initialize
-        (Dialog => Dialog,
-         Title  => -"Preferences",
-         Parent => Gtk_Window (Parent),
-         Flags  => Modal or Destroy_With_Parent);
-      Set_Name (Dialog, "Preferences");  --  for the testsuite
-      Set_Position (Dialog, Win_Pos_Mouse);
-      Set_Default_Size (Dialog, 620, 400);
-
       Glib.Object.Initialize_Class_Record
-        (Dialog,
+        (Ancestor     => Gtk.Dialog.Get_Type,
          Signals      => Preferences_Editor_Signals,
          Class_Record => Preferences_Editor_Class_Record,
          Type_Name    => "PreferencesEditor",
          Parameters   => Signal_Parameters);
+
+      Dialog := new Preferences_Editor_Record;
+      G_New (Dialog, Preferences_Editor_Class_Record.The_Type);
+
+      Dialog.Set_Title (-"Preferences");
+      Dialog.Set_Transient_For (Gtk_Window (Parent));
+      Dialog.Set_Destroy_With_Parent (True);
+      Dialog.Set_Modal (True);
+      Dialog.Set_Name ("Preferences");  --  for the testsuite
+      Dialog.Set_Position (Win_Pos_Mouse);
+      Dialog.Set_Default_Size (620, 400);
+
       Manager.Pref_Editor := Gtk_Widget (Dialog);
 
       Gtk_New (Main_Table, Rows => 3, Columns => 2, Homogeneous => False);

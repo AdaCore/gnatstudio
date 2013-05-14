@@ -91,13 +91,13 @@ package body CodePeer.Lifeage_Criteria_Editors is
       Check : Gtk.Check_Button.Gtk_Check_Button;
 
    begin
-      Gtk.Box.Initialize_Vbox (Self);
       Glib.Object.Initialize_Class_Record
-        (Self,
-         Signals,
-         Class_Record,
-         "CodePeerMessageLifeageCriteriaEditor",
-         Signal_Parameters);
+        (Ancestor     => Gtk.Box.Get_Vbox_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "CodePeerMessageLifeageCriteriaEditor",
+         Parameters   => Signal_Parameters);
+      Glib.Object.G_New (Self, Class_Record);
 
       Self.Kernel := Kernel;
       Self.History_Prefix := To_Unbounded_String (History_Prefix);

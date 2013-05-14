@@ -406,13 +406,13 @@ package body Gtkada.Combo_Tool_Button is
       Arrow       : Gtk_Arrow;
       Box : Gtk_Box;
    begin
-      Gtk.Tool_Item.Initialize (Button);
       Initialize_Class_Record
-        (Object       => Button,
+        (Ancestor     => Gtk.Tool_Item.Get_Type,
          Signals      => Signals,
          Class_Record => Class_Record,
          Type_Name    => "GtkadaComboToolButton",
          Parameters   => Signal_Parameters);
+      Glib.Object.G_New (Button, Class_Record);
 
       Get_Style_Context (Button).Add_Class ("gps-combo-tool-button");
 

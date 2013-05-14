@@ -67,11 +67,6 @@ package body GPS.Tree_View.Locations is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Emits "location-clicked" signal.
 
-   procedure Class_Initialize
-     (Self : not null access GPS_Locations_Tree_View_Record'Class);
-   --  Common initialization code to be shared between two implementations
-   --  of Initialize.
-
    package View_Idles is
      new Glib.Main.Generic_Sources (GPS_Locations_Tree_View);
 
@@ -110,23 +105,49 @@ package body GPS.Tree_View.Locations is
    end Action_Clicked;
 
    ----------------------
-   -- Class_Initialize --
+   -- Get_Filter_Model --
    ----------------------
 
-   procedure Class_Initialize
-     (Self : not null access GPS_Locations_Tree_View_Record'Class)
+   function Get_Filter_Model
+     (Self : not null access GPS_Locations_Tree_View_Record)
+      return GPS.Location_View_Filter.Location_View_Filter_Model is
+   begin
+      return Self.Filter;
+   end Get_Filter_Model;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Object : in out GPS_Locations_Tree_View;
+      Model  : Gtk_Tree_Model) is
+   begin
+      Object := new GPS_Locations_Tree_View_Record;
+      GPS.Tree_View.Locations.Initialize (Object, Model);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self  : not null access GPS_Locations_Tree_View_Record'Class;
+      Model : Gtk.Tree_Model.Gtk_Tree_Model)
    is
       Pixbuf_Renderer : Gtk_Cell_Renderer_Pixbuf;
       Dummy           : Gint;
       pragma Unreferenced (Dummy);
-
    begin
       Initialize_Class_Record
-        (Self,
-         Signals,
-         Class_Record,
-         "GPSLocationsTreeView",
-         Signals_Parameters);
+        (Ancestor     => Gtk.Tree_View.Get_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "GPSLocationsTreeView",
+         Parameters   => Signals_Parameters);
+      Glib.Object.G_New (Self, Class_Record);
+
+      GPS.Tree_View.Initialize (Self, Model);  --  initial parent fields
 
       Self.Set_Rules_Hint (False);
       Self.Set_Headers_Visible (False);
@@ -175,42 +196,7 @@ package body GPS.Tree_View.Locations is
          GPS_Locations_Tree_View_Boolean_Callbacks.To_Marshaller
            (On_Button_Press'Access),
          After => False);
-   end Class_Initialize;
 
-   ----------------------
-   -- Get_Filter_Model --
-   ----------------------
-
-   function Get_Filter_Model
-     (Self : not null access GPS_Locations_Tree_View_Record)
-      return GPS.Location_View_Filter.Location_View_Filter_Model is
-   begin
-      return Self.Filter;
-   end Get_Filter_Model;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Object : in out GPS_Locations_Tree_View;
-      Model  : Gtk_Tree_Model) is
-   begin
-      Object := new GPS_Locations_Tree_View_Record;
-      GPS.Tree_View.Locations.Initialize (Object, Model);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self  : not null access GPS_Locations_Tree_View_Record'Class;
-      Model : Gtk.Tree_Model.Gtk_Tree_Model)
-   is
-   begin
-      GPS.Tree_View.Initialize (Self, Model);
-      Class_Initialize (Self);
       Gtk_New (Self.Sort, -Model);
       GPS.Location_View_Filter.Gtk_New
         (Self.Filter, To_Interface (Self.Sort));

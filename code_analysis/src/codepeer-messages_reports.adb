@@ -451,13 +451,14 @@ package body CodePeer.Messages_Reports is
                   (Kernel)).Analysis_Data.CodePeer_Data.all);
 
    begin
-      Gtk.Box.Initialize_Vbox (Self);
       Glib.Object.Initialize_Class_Record
-        (Self,
-         Signals,
-         Class_Record,
-         "CodePeerSummaryReport",
-         Signal_Parameters);
+        (Ancestor     => Gtk.Box.Get_Vbox_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "CodePeerSummaryReport",
+         Parameters   => Signal_Parameters);
+      Glib.Object.G_New (Self, Class_Record);
+
       Summary_Report_Callbacks.Connect
         (Self,
          Gtk.Widget.Signal_Destroy,

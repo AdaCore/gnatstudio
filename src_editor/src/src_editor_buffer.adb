@@ -2804,11 +2804,14 @@ package body Src_Editor_Buffer is
 
       use Pango.Enums.Underline_Properties;
    begin
-      Gtkada.Text_Buffer.Initialize (Buffer);
-
       Glib.Object.Initialize_Class_Record
-        (Buffer, Signals, Class_Record, "GPSSourceBuffer",
-         Signal_Parameters);
+        (Ancestor     => Gtkada.Text_Buffer.Get_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "GPSSourceBuffer",
+         Parameters   => Signal_Parameters);
+      Glib.Object.G_New (Buffer, Class_Record);
+      Gtkada.Text_Buffer.Initialize (Buffer);
 
       Buffer.Lang := Lang;
       Buffer.Kernel := Kernel;

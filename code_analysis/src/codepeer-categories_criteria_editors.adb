@@ -134,13 +134,13 @@ package body CodePeer.Categories_Criteria_Editors is
       pragma Warnings (Off, Dummy);
 
    begin
-      Gtk.Scrolled_Window.Initialize (Self);
       Glib.Object.Initialize_Class_Record
-        (Self,
-         Signals,
-         Class_Record,
-         "CodePeerMessageCategoryCriteriaEditor",
-         Signal_Parameters);
+        (Ancestor      => Gtk.Scrolled_Window.Get_Type,
+         Signals       => Signals,
+         Class_Record  => Class_Record,
+         Type_Name     => "CodePeerMessageCategoryCriteriaEditor",
+         Parameters    => Signal_Parameters);
+      Glib.Object.G_New (Self, Class_Record);
 
       Message_Categories_Criteria_Editor_Callbacks.Connect
         (Self,

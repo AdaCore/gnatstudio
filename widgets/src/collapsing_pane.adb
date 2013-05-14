@@ -82,10 +82,13 @@ package body Collapsing_Pane is
       Frame      : Gtk_Frame;
 
    begin
-      Gtk.Event_Box.Initialize (Pane);
       Glib.Object.Initialize_Class_Record
-        (Pane, Signals, Class_Record, "CollapsingPane",
-         Signal_Parameters);
+        (Ancestor     => Gtk.Event_Box.Get_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "CollapsingPane",
+         Parameters   => Signal_Parameters);
+      Glib.Object.G_New (Pane, Class_Record);
 
       Gtk.Frame.Gtk_New (Frame);
       Frame.Set_Border_Width (5);

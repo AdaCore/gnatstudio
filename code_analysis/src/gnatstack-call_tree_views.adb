@@ -107,13 +107,13 @@ package body GNATStack.Call_Tree_Views is
       pragma Unreferenced (Dummy);
 
    begin
-      Gtk.Box.Initialize_Hbox (Self);
       Glib.Object.Initialize_Class_Record
-        (Self,
-         Signals,
-         Class_Record,
-         "GNATStackCallTreeView",
-         Signals_Parameters);
+        (Ancestor     => Gtk.Box.Get_Hbox_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "GNATStackCallTreeView",
+         Parameters   => Signals_Parameters);
+      Glib.Object.G_New (Self, Class_Record);
 
       GNATStack.Call_Tree_Models.Gtk_New (Self.Model, Subprogram);
       Gtk.Tree_View.Gtk_New (Self.View, Self.Model);

@@ -187,13 +187,13 @@ package body CodePeer.Message_Review_Dialogs is
       end Process_Audit;
 
    begin
-      Gtk.Dialog.Initialize (Self);
       Glib.Object.Initialize_Class_Record
-        (Self,
-         Signals,
-         Class_Record,
-         "CodePeerMessageReviewDialog",
-         Signal_Parameters);
+        (Ancestor     => Gtk.Dialog.Get_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "CodePeerMessageReviewDialog",
+         Parameters   => Signal_Parameters);
+      Glib.Object.G_New (Self, Class_Record);
       Self.Set_Title (-"CodePeer message review");
 
       Self.Message := Message;

@@ -32,7 +32,6 @@ with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
-with Gtkada.Types;            use Gtkada.Types;
 
 with Ada.Tags;                  use Ada.Tags;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -144,17 +143,17 @@ package body Generic_Views is
       Self.Filter := new Filter_Panel_Record;
       F := Self.Filter;
 
-      Gtk.Tool_Item.Initialize (F);
       if Glib.Object.Initialize_Class_Record
-        (F,
-         (1 .. 0 => Gtkada.Types.Null_Ptr),
-         Filter_Class_Record'Access,
-         "FilterPanel")
+        (Ancestor     => Gtk.Tool_Item.Get_Type,
+         Class_Record => Filter_Class_Record'Access,
+         Type_Name    => "FilterPanel")
       then
          Set_Default_Get_Preferred_Width_Handler
            (Filter_Class_Record,
             Get_Filter_Preferred_Width'Access);
       end if;
+
+      G_New (F, Filter_Class_Record.The_Type);
 
       F.Pattern := Gtk_Entry_New;
       Get_Style_Context (F.Pattern).Add_Class ("search");

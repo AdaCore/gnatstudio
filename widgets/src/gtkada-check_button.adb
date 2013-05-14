@@ -62,13 +62,21 @@ package body Gtkada.Check_Button is
 
       Set_Handler : Boolean := False;
    begin
+      Initialize_Class_Record
+        (Ancestor     => Gtk.Check_Button.Get_Type,
+         Signals      => (1 .. 0 => <>),
+         Class_Record => Class_Record,
+         Type_Name    => "GtkadaCheckButton");
+
       Gtkada_Check_Button_Record (Check.all) :=
         (Gtk.Check_Button.Gtk_Check_Button_Record with
          Default  => False,
          State    => State_Unchecked,
          Internal => False,
          Forcing_Update => False);
-      Gtk.Check_Button.Initialize (Check, Label);
+
+      Glib.Object.G_New (Check, Class_Record);
+      Check.Set_Label (Label);
       Set_Default (Check, Default);
 
       --  We need to create a new Class Record for this widget, as we are
@@ -76,12 +84,6 @@ package body Gtkada.Check_Button is
       if Class_Record = Uninitialized_Class then
          Set_Handler := True;
       end if;
-
-      Initialize_Class_Record
-        (Object       => Check,
-         Signals      => (1 .. 0 => <>),
-         Class_Record => Class_Record,
-         Type_Name    => "GtkadaCheckButton");
 
       if Set_Handler then
          --  We replace the class handler for 'clicked' because this signal

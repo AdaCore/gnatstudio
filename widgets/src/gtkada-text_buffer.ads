@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Glib;
 with Gtk.Text_Buffer;
 
 package Gtkada.Text_Buffer is
@@ -29,6 +30,9 @@ package Gtkada.Text_Buffer is
    procedure Initialize (Buffer : access Gtkada_Text_Buffer_Record'Class);
    --  Internal initialization procedure.
    --  See he section "Creating your own widgets" in the documentation.
+
+   function Get_Type return Glib.GType;
+   --  The internal type
 
    procedure Clear (Buffer : access Gtkada_Text_Buffer_Record'Class);
    --  Delete all characters from the given buffer, leaving an empty buffer.
