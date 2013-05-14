@@ -144,10 +144,34 @@ package body GPS.Core_Kernels is
 
    function Module
      (Kernel : access Core_Kernel_Record'Class;
-      Tag    : Ada.Tags.Tag) return Abstract_Module is
+      Tag    : Ada.Tags.Tag) return Abstract_Module
+   is
+      use Abstract_Module_List;
+      Sequence : constant List := Kernel.Module_List (Tag);
    begin
-      return Kernel.Modules.Element (Tag);
+      if Is_Empty (Sequence) then
+         return null;
+      else
+         return Data (Last (Sequence));
+      end if;
    end Module;
+
+   -----------------
+   -- Module_List --
+   -----------------
+
+   function Module_List
+     (Kernel : access Core_Kernel_Record'Class;
+      Tag    : Ada.Tags.Tag) return Abstract_Module_List.List
+   is
+      Pos : constant Module_Maps.Cursor := Kernel.Modules.Find (Tag);
+   begin
+      if Module_Maps.Has_Element (Pos) then
+         return Module_Maps.Element (Pos);
+      else
+         return Abstract_Module_List.Null_List;
+      end if;
+   end Module_List;
 
    ---------------------
    -- Register_Module --
@@ -162,9 +186,19 @@ package body GPS.Core_Kernels is
       Item : Ada.Tags.Tag := Module'Tag;
    begin
       while Item /= No_Tag loop
-         Kernel.Modules.Include (Item, Module);
+         declare
+            Pos  : constant Module_Maps.Cursor := Kernel.Modules.Find (Item);
+            List : Abstract_Module_List.List;
+         begin
+            if Module_Maps.Has_Element (Pos) then
+               List := Module_Maps.Element (Pos);
+            end if;
 
-         Item := Parent_Tag (Item);
+            Abstract_Module_List.Append (List, Module);
+            Kernel.Modules.Include (Item, List);
+
+            Item := Parent_Tag (Item);
+         end;
       end loop;
    end Register_Module;
 
