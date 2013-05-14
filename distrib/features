@@ -29,6 +29,13 @@ NF-60-M329-013 GPS: translucent highlighting colors (2013-03-29)
   current lines,... in the editors. This is a convenient solution so that
   the current line also shows whether it has an associated error.
 
+NF-53-M318-031 GB: warning editing files not part of a GB project (2013-05-13)
+
+  When the Ada editor opens a file not part of a GNATbench project, a dialog is
+  displayed to inform the user that some features will not work properly until
+  the file is part of a GNATbench project.
+  This dialog can be disabled through Ada Editor Preferences page.
+
 NF-60-M307-008 GPS: refactoring of highlighter.py (2013-03-27)
 
   This python module is used as the basis for all python scripts that need to
