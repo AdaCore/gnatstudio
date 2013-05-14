@@ -966,6 +966,10 @@ private
       --  xref engines are responsible for making a best guess, or setting
       --  this to null.
 
+      Xref_Entity_Resolution_Attempted : Boolean := False;
+      --  Whether we have already attempted to get the Xref_Entity for this
+      --  context.
+
       Xref_Entity_Type_Of : Xref.General_Entity := Xref.No_General_Entity;
       --  The type of Xref_Entity, cached.
       --  No_General_Entity indicates that the entity hasn't been computed.
