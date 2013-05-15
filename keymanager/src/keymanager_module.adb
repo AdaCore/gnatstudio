@@ -47,17 +47,14 @@ with Gtkada.Dialogs;          use Gtkada.Dialogs;
 
 with Config;                  use Config;
 with Commands.Interactive;    use Commands, Commands.Interactive;
-
-with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
-with GPS.Kernel;                       use GPS.Kernel;
-
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel;              use GPS.Kernel;
 with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
 with KeyManager_Module.GUI;

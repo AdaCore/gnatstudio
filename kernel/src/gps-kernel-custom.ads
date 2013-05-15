@@ -84,6 +84,14 @@ package GPS.Kernel.Custom is
    --  This function returns the error message, if any, from the XML parser if
    --  the string couldn't be parsed
 
+   procedure Execute_Customization_String
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Node   : XML_Utils.Node_Ptr;
+      Level  : GPS.Kernel.Customization_Level);
+   --  Send a signal to all registered modules to indicate a new customization
+   --  string.
+
    -------------------------------
    -- Customization directories --
    -------------------------------

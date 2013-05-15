@@ -52,7 +52,6 @@ with Custom_Combos;             use Custom_Combos;
 with Custom_Timeout;            use Custom_Timeout;
 with Custom_Tools_Output;       use Custom_Tools_Output;
 with Expect_Interface;          use Expect_Interface;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;

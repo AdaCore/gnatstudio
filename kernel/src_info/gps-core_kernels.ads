@@ -20,7 +20,6 @@
 with Ada.Tags;
 with Ada.Containers.Hashed_Maps;
 
-with Generic_List;
 with Language_Handlers;
 with Projects;
 with Xref;
@@ -117,18 +116,7 @@ package GPS.Core_Kernels is
    function Module
      (Kernel : access Core_Kernel_Record'Class;
       Tag    : Ada.Tags.Tag) return Abstract_Module;
-   --  Return last module that implement service with given Tag
-
-   procedure Noop_Free (Data : in out Abstract_Module) is null;
-   --  Modules are never deallocated trought Module_List
-
-   package Abstract_Module_List is
-     new Generic_List (Abstract_Module, Noop_Free);
-
-   function Module_List
-     (Kernel : access Core_Kernel_Record'Class;
-      Tag    : Ada.Tags.Tag) return Abstract_Module_List.List;
-   --  Return list of modules that implement service with given Tag
+   --  Return module that implement service with given Tag
 
 private
 
@@ -136,10 +124,9 @@ private
 
    package Module_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Ada.Tags.Tag,
-      Element_Type    => Abstract_Module_List.List,
+      Element_Type    => Abstract_Module,
       Hash            => Hash,
-      Equivalent_Keys => Ada.Tags."=",
-      "="             => Abstract_Module_List."=");
+      Equivalent_Keys => Ada.Tags."=");
 
    type Core_Kernel_Record is abstract tagged record
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access;

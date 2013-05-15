@@ -30,7 +30,6 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Config;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;

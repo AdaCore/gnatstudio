@@ -34,12 +34,11 @@ with Gtk.Widget;         use Gtk.Widget;
 
 with Gtkada.MDI;         use Gtkada.MDI;
 
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
-with GPS.Styles;                  use GPS.Styles;
-with GPS.Styles.UI;               use GPS.Styles.UI;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Styles;         use GPS.Styles;
+with GPS.Styles.UI;      use GPS.Styles.UI;
+with GPS.Kernel;         use GPS.Kernel;
 with Generic_List;
 with HTables;
 with Src_Contexts;

@@ -34,13 +34,12 @@ with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 
-with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Console;               use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
-with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
-with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
+with GPS.Intl;              use GPS.Intl;
+with GPS.Kernel.Console;    use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Remote;     use GPS.Kernel.Remote;
+with GPS.Kernel.Timeout;    use GPS.Kernel.Timeout;
 
 with Commands;              use Commands;
 with Password_Manager;      use Password_Manager;

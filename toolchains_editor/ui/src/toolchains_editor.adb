@@ -60,7 +60,6 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
-with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;

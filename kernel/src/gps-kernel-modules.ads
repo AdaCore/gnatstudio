@@ -75,7 +75,6 @@ with Glib.Object;
 with Generic_List;
 with Gtk.Widget;
 with XML_Utils;
-with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
 
 package GPS.Kernel.Modules is
 
@@ -92,7 +91,7 @@ package GPS.Kernel.Modules is
    -- Module types --
    ------------------
 
-   type Module_ID_Record is new Customizable_Module_Record with private;
+   type Module_ID_Record is new Abstract_Module_ID_Record with private;
    type Module_ID is access all Module_ID_Record'Class;
 
    procedure Destroy (Id : in out Module_ID_Record) is null;
@@ -164,7 +163,7 @@ package GPS.Kernel.Modules is
    --
    --  null should be returned if we can't create a marker at that position
 
-   overriding procedure Customize
+   procedure Customize
      (Module : access Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -246,7 +245,7 @@ package GPS.Kernel.Modules is
 
 private
 
-   type Module_ID_Record is new Customizable_Module_Record with record
+   type Module_ID_Record is new Abstract_Module_ID_Record with record
       Kernel   : Kernel_Handle;
       Priority : Module_Priority;
       Name     : GNAT.Strings.String_Access;

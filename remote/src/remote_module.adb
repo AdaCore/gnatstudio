@@ -23,7 +23,6 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;

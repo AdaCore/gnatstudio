@@ -41,7 +41,6 @@ with Gtk.Widget;                             use Gtk.Widget;
 with Gtk.Box;                                use Gtk.Box;
 with Gtk.Label;                              use Gtk.Label;
 with Gtkada.MDI;                             use Gtkada.MDI;
-with GPS.Core_Kernels;                       use GPS.Core_Kernels;
 with GPS.Intl;                               use GPS.Intl;
 with GPS.Kernel;                             use GPS.Kernel;
 with GPS.Kernel.Contexts;                    use GPS.Kernel.Contexts;
@@ -1729,7 +1728,7 @@ package body Code_Analysis_Module is
       end if;
 
       if Get_Creator (Context) /=
-        Abstract_Module (Code_Analysis_Module_ID)
+        Abstract_Module_ID (Code_Analysis_Module_ID)
       then
          Gtk_New (Sep);
          Append (Submenu, Sep);

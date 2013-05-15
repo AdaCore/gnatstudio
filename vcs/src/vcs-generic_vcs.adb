@@ -30,7 +30,6 @@ with Commands;                     use Commands;
 with Commands.Custom;              use Commands.Custom;
 with Commands.Interactive;         use Commands.Interactive;
 with Generic_List;
-with GPS.Customizable_Modules;     use GPS.Customizable_Modules;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;

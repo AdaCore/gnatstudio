@@ -45,7 +45,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Commands.Custom;           use Commands; use Commands.Custom;
-with GPS.Core_Kernels;          use GPS.Core_Kernels;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -927,7 +926,9 @@ package body VCS_View_API is
          end;
       end if;
 
-      if Get_Creator (Context) = Abstract_Module (VCS_Explorer_Module_Id) then
+      if Get_Creator (Context) =
+        Abstract_Module_ID (VCS_Explorer_Module_Id)
+      then
          Items_Inserted := True;
          Gtk_New (Item, Label => -"Expand all");
          Append (Menu, Item);

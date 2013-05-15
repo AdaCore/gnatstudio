@@ -79,7 +79,6 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Commands.Interactive;     use Commands, Commands.Interactive;
-with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;

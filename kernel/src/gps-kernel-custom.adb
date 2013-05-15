@@ -27,7 +27,6 @@ with Traces;                    use Traces;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with String_Hash;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -107,6 +106,48 @@ package body GPS.Kernel.Custom is
 
       return From_Path (Result);
    end Get_Custom_Path;
+
+   ----------------------------------
+   -- Execute_Customization_String --
+   ----------------------------------
+
+   procedure Execute_Customization_String
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level)
+   is
+      use type Module_List.List_Node;
+      List    : constant Module_List.List := List_Of_Modules (Kernel);
+      Current : Module_List.List_Node;
+      Tmp     : Node_Ptr := Node;
+      Tmp2    : Node_Ptr;
+
+   begin
+      --  Parse the nodes in the XML file one after the other, and for each
+      --  traverse the list of modules for it.
+      --  It is less efficient than passing the whole file to each module, but
+      --  is necessary to properly handle themes:
+      --  If we have    <action>...</action>
+      --                <theme> ... ref to the action ... </theme>
+      --  we need to be sure that the action has been created before processing
+      --  the theme itself, and that would depend on the order in which the
+      --  modules were registered (DA15-003)
+
+      while Tmp /= null loop
+         Tmp2 := Tmp.Next;
+         Tmp.Next := null;
+
+         Current := Module_List.First (List);
+         while Current /= Module_List.Null_Node loop
+            Customize (Module_List.Data (Current), File, Tmp, Level);
+            Current := Module_List.Next (Current);
+         end loop;
+
+         Tmp.Next := Tmp2;
+         Tmp := Tmp.Next;
+      end loop;
+   end Execute_Customization_String;
 
    ----------------------
    -- Parse_Custom_Dir --

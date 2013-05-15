@@ -54,7 +54,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
 
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
