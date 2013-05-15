@@ -1478,7 +1478,6 @@ package body Src_Editor_Module is
    procedure On_Open_From_Path
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Label  : Gtk_Label;
       Ignore : Gtk_Widget;
       Open_File_Dialog : Gtk_Dialog;
       Open_File_Entry  : Gtkada_Entry;
@@ -1493,18 +1492,15 @@ package body Src_Editor_Module is
       Set_Default_Size (Open_File_Dialog, 600, 400);
       Set_Position (Open_File_Dialog, Win_Pos_Mouse);
 
-      Gtk_New (Label, -"Enter file name (use <tab> for completion):");
-      Pack_Start (Get_Content_Area (Open_File_Dialog), Label, Expand => False);
-
       --  Do not use a combo box, so that users can easily navigate to the list
       --  of completions through the keyboard (C423-005)
       Gtk_New (Open_File_Entry,
                Kernel         => Kernel,
                History        => Open_From_Path_History,
-               Completion     => GPS.Kernel.Search.Registry.Get
-                 (Provider_Filenames),
+               Completion     =>
+                  GPS.Kernel.Search.Registry.Get (Provider_Filenames),
                Case_Sensitive =>
-                 Is_Case_Sensitive (Get_Nickname (Build_Server)));
+                  Is_Case_Sensitive (Get_Nickname (Build_Server)));
       Get_Content_Area (Open_File_Dialog).Pack_Start
         (Open_File_Entry, Fill => True, Expand => True);
 
