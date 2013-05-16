@@ -230,3 +230,9 @@ NF-60-H605-006 GPS: Visual indication of completions accessibility (2013-04-16)
 
   In smart completions, entities that are not accessible in the context
   of the completion are now shown in grey.
+
+NF-53-G104-002 WB: Debug tooltip (2013-05-16)
+
+  When debugging an ada application, if the mouse cursor is over a variable
+  that can be printed by the debugger, the tooltip displays the variable
+  current value. This feature requires WRWB 3.3 or later.
