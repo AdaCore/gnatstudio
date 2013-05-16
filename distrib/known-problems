@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- M516-020: ECL: Tooltips when debugging ada application may call Ada function
+  Problem:    When debugging an Ada application, the Ada Editor tooltip may
+              call a debugged application function to get actual value to be
+              displayed in the tooltip.
+  Workaround: Disable tooltips feature through Ada > Editor preferences page.
+
 - M424-052: GB: Stack overflow on startup
   Problem:    When starting Workbench or Eclipse with the Ada editor
               open, the construct analysis could lead to an infinitly
