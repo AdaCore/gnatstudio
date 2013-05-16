@@ -72,7 +72,6 @@
 
 with GNAT.Strings;
 with Glib.Object;
-with Generic_List;
 with Gtk.Widget;
 with XML_Utils;
 with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
@@ -173,19 +172,6 @@ package GPS.Kernel.Modules is
    --  It is initially called just after all modules have been registered,
    --  and gets passed a single XML node.
    --  File is the XML file that is currently being parsed.
-
-   ------------------
-   -- Modules list --
-   ------------------
-
-   procedure Free (Module : in out Module_ID);
-   --  Free memory associated to a Module_ID
-
-   package Module_List is new Generic_List (Module_ID);
-
-   function List_Of_Modules (Kernel : access Kernel_Handle_Record'Class)
-      return Module_List.List;
-   --  Return the list of currently loaded modules
 
    -------------------------
    -- Module manipulation --
