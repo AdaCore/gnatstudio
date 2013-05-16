@@ -69,6 +69,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Basic_Types;               use Basic_Types;
 with Creation_Wizard;           use Creation_Wizard;
 with File_Utils;                use File_Utils;
+with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;

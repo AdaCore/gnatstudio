@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Default_Preferences;      use Default_Preferences;
 with GUI_Utils;                use GUI_Utils;
