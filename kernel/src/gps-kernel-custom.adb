@@ -24,7 +24,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with XML_Utils;                 use XML_Utils;
 with Commands.Custom;           use Commands.Custom;
 with Traces;                    use Traces;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;

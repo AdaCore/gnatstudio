@@ -19,7 +19,6 @@ with Glib.Object;               use Glib.Object;
 with Gtk.Widget;                use Gtk.Widget;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Task_Manager.Shell;        use Task_Manager.Shell;
 with Traces;

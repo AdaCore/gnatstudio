@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with VCS_Module;         use VCS_Module;
 
 package body VCS.Unknown_VCS is

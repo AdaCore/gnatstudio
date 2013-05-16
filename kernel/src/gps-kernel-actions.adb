@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Commands;                  use Commands;
 with GNAT.Strings;              use GNAT.Strings;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Intl;                  use GPS.Intl;
 with Ada.Unchecked_Deallocation;
 with Commands.Interactive;      use Commands.Interactive;

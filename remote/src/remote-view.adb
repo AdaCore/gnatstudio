@@ -51,7 +51,6 @@ with Generic_Views;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
