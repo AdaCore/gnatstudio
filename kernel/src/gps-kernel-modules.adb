@@ -133,6 +133,7 @@ package body GPS.Kernel.Modules is
       end if;
 
       Module_List.Append (List.all, Module_ID (Module));
+      Kernel.Register_Module (Module);
    end Register_Module;
 
    -----------------------------
