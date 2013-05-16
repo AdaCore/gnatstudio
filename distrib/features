@@ -131,3 +131,9 @@ NF-53-I320-015 GB: Enhance block completions (2013-01-25)
   The block completion facility has been extended to cover additional
   constructs e.g. extended return statement, protected entry bodies,
   variant parts inside record declarations.
+
+NF-53-G104-002 WB: Debug tooltip (2013-05-16)
+
+  When debugging an ada application, if the mouse cursor is over a variable
+  that can be printed by the debugger, the tooltip displays the variable
+  current value. This feature requires WRWB 3.3 or later.
