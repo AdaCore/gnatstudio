@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.3.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-53-M424-019 Improved indentation of conditional expressions (2013-05-17)
+
+  Ada 2012 If-expressions and case-expressions are better handled by the
+  indentation engine and in particular extra indentation levels are used for
+  each case branch.
+
 NF-53-M318-031 GB: warning editing files not part of a GB project (2013-05-13)
 
   When the Ada editor opens a file not part of a GNATbench project, a dialog is
