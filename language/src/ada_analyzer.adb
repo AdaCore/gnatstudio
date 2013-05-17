@@ -858,11 +858,12 @@ package body Ada_Analyzer is
       --  Perform special indentation for function return/rename statements
 
       procedure Compute_Indentation
-        (Token      : Token_Type;
-         Prev_Token : Token_Type;
-         Prec       : Natural;
-         Line_Count : Natural;
-         Num_Spaces : Integer);
+        (Token           : Token_Type;
+         Prev_Token      : Token_Type;
+         Prev_Prev_Token : Token_Type;
+         Prec            : Natural;
+         Line_Count      : Natural;
+         Num_Spaces      : Integer);
       --  Compute proper indentation, taking into account various cases
       --  of simple/continuation/declaration/... lines.
 
@@ -1221,16 +1222,17 @@ package body Ada_Analyzer is
       -------------------------
 
       procedure Compute_Indentation
-        (Token      : Token_Type;
-         Prev_Token : Token_Type;
-         Prec       : Natural;
-         Line_Count : Natural;
-         Num_Spaces : Integer)
+        (Token           : Token_Type;
+         Prev_Token      : Token_Type;
+         Prev_Prev_Token : Token_Type;
+         Prec            : Natural;
+         Line_Count      : Natural;
+         Num_Spaces      : Integer)
       is
          Top_Tok : constant Token_Type := Top (Tokens).Token;
 
          function Is_Continuation_Line return Boolean;
-         --  Return True is we are indenting a continuation line
+         --  Return True if we are indenting a continuation line
 
          --------------------------
          -- Is_Continuation_Line --
@@ -1326,7 +1328,9 @@ package body Ada_Analyzer is
             Do_Indent
               (Prec, Line_Count, Num_Spaces - Indent_Level + Indent_When);
 
-         elsif Prev_Token = Tok_Comma then
+         elsif Prev_Token = Tok_Comma
+           and then (Num_Parens = 0 or else Token /= Tok_When)
+         then
             if Top_Tok = Tok_Declare
               or else Top_Tok = Tok_Identifier
               or else Top_Tok = Tok_Record
@@ -1404,6 +1408,25 @@ package body Ada_Analyzer is
                Continuation_Val := 0;
             end if;
 
+         elsif Num_Parens > 0
+           and then
+             (Token = Tok_When
+              or else Prev_Token = Tok_Arrow
+              or else (Prev_Token = Tok_Then
+                       and then Prev_Prev_Token /= Tok_And)
+              or else (Prev_Token = Tok_Else
+                       and then Prev_Prev_Token /= Tok_Or))
+         then
+            --  Handle a bit better Ada 2012 conditional expressions
+
+            if Token = Tok_When then
+               Continuation_Val := Indent_Level - Indent_Continue;
+            else
+               Continuation_Val :=
+                 Continuation_Val + Indent_Level - Indent_Continue;
+            end if;
+
+            Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
          else
             Do_Indent (Prec, Line_Count, Num_Spaces);
          end if;
@@ -1482,7 +1505,8 @@ package body Ada_Analyzer is
 
                if Buffer (Tmp) = ASCII.LF then
                   Compute_Indentation
-                    (Token, Prev_Token, Tmp - 1, Line_Count, Num_Spaces);
+                    (Token, Prev_Token, Prev_Prev_Token,
+                     Tmp - 1, Line_Count, Num_Spaces);
                   New_Lines := New_Lines + 1;
                end if;
 
@@ -2848,7 +2872,8 @@ package body Ada_Analyzer is
          Adjust          : Natural;
          Insert_Spaces   : Boolean;
          Char            : Character;
-         Prev_Prev_Token : Token_Type;
+         Prev_Prev_Token : Token_Type := No_Token;
+         Prev3_Token     : Token_Type;
          Local_Top_Token : Token_Stack.Generic_Type_Access;
          Tmp             : Boolean;
          Token_Found     : Boolean;
@@ -3564,6 +3589,7 @@ package body Ada_Analyzer is
                   Skip_First_Line    => False);
             end if;
 
+            Prev3_Token := Prev_Prev_Token;
             Prev_Prev_Token := Prev_Token;
             Token_Found := True;
 
@@ -3846,7 +3872,8 @@ package body Ada_Analyzer is
                      end if;
 
                      Compute_Indentation
-                       (Prev_Token, Prev_Prev_Token, P, L, Num_Spaces);
+                       (Prev_Token, Prev_Prev_Token, Prev3_Token,
+                        P, L, Num_Spaces);
 
                      if Callback /= null then
                         if Callback
@@ -4069,7 +4096,8 @@ package body Ada_Analyzer is
                      --  continuation lines are already handled separately.
 
                      Compute_Indentation
-                       (Prev_Token, Prev_Prev_Token, P, L, Num_Spaces);
+                       (Prev_Token, Prev_Prev_Token, Prev3_Token,
+                        P, L, Num_Spaces);
                   else
                      Do_Indent (P, L, Num_Spaces);
                   end if;
@@ -4608,7 +4636,8 @@ package body Ada_Analyzer is
 
          if Token /= Tok_Is then
             Compute_Indentation
-              (Token, Prev_Token, Current, Line_Count, Num_Spaces);
+              (Token, Prev_Token, Prev_Prev_Token,
+               Current, Line_Count, Num_Spaces);
          end if;
 
          Prec            := Current + 1;
