@@ -83,9 +83,11 @@ package body GPS.Kernel.Modules is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Module_ID_Record'Class, Module_ID);
    begin
-      Destroy (Module.all);
-      GNAT.Strings.Free (Module.Name);
-      Unchecked_Free (Module);
+      if Module /= null then
+         Destroy (Module.all);
+         GNAT.Strings.Free (Module.Name);
+         Unchecked_Free (Module);
+      end if;
    end Free;
 
    ----------------
