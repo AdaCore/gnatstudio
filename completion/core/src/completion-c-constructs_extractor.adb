@@ -165,9 +165,6 @@ package body Completion.C.Constructs_Extractor is
          Scope        : General_Entity;
          Prefix_Token : Token_Record)
       is
---           GLI_Extension : constant Filesystem_String :=
---                           Get_ALI_Ext (ALI_Handler (Resolver.GLI_Handler));
-
          Prefix_Text   : constant String :=
                            Context.Buffer
                              (Natural (Prefix_Token.Token_First)
@@ -179,18 +176,6 @@ package body Completion.C.Constructs_Extractor is
          It := Db.Get_All_Called_Entities (Scope);
          while not At_End (It) loop
             E  := Get (It);
-
---            Decl := Db.Get_Declaration (E);
-
---              LI := Get_LI (Decl.Loc.File);
---
---              --  Skip entities associated with other languages
---
---              if LI /= null
---                and then File_Extension (Get_LI_Filename (LI))
---                          /= GLI_Extension
---              then
---                 null;
 
             --  Do not suggest types found in the scope of other types. Done to
             --  avoid suggesting in C/C++ types used in declaration of struct
@@ -494,6 +479,16 @@ package body Completion.C.Constructs_Extractor is
                            elsif Db.Has_Methods (E) then
                               E := Db.Get_Type_Of (E);
 
+                           else
+                              E := Db.Get_Type_Of (E);
+                           end if;
+                        end if;
+
+                        if E /= No_General_Entity then
+
+                           --  Class or record
+                           if Db.Has_Methods (E) then
+
                               --  Handle named typedef structs since the
                               --  compiler generates two entites in the LI
                               --  file with the same name. For example:
@@ -521,15 +516,6 @@ package body Completion.C.Constructs_Extractor is
                                  end if;
                               end if;
 
-                           else
-                              E := Db.Get_Type_Of (E);
-                           end if;
-                        end if;
-
-                        if E /= No_General_Entity then
-
-                           --  Class or record
-                           if Db.Has_Methods (E) then
                               Add_Scope_Proposals
                                 (To_List      => E_List,
                                  Scope        => E,
