@@ -3671,6 +3671,44 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def add_multi_cursor(self, location):
+        """
+        Adds a new multi cursor at the given location.
+        """
+
+    def get_multi_cursors_marks(self):
+        """
+        Returns the list of all marks corresponding to existing multi cursors
+        in that buffer. Note that if you intend to perform actions with them
+        (in particular deletions/insertions), you should call
+        set_multi_cursors_manual_sync, with the cursor mark as argument.
+        See set_multi_cursors_* functions for more details
+
+        :return: A list of :class:`GPS.EditorMark` instances
+        """
+
+    def remove_all_multi_cursors(self):
+        """
+        Removes all active multi-cursors from the buffer
+        """
+
+    def set_multi_cursors_auto_sync(self):
+        """
+        Set the buffer in auto sync mode regarding multi cursors.
+        This means that any insertion/deletion will be propagated
+        in a 'naive' way on all multi cursors. Cursor movements won't
+        be propagated.
+        """
+
+    def set_multi_cursors_manual_sync(self, multi_cursor_mark=None):
+        """
+        Set the buffer in manual sync mode regarding multi cursors.
+        multi_cursor_mark should be the mark corresponding to the multi
+        cursor that is gonna be affected, or None if the action is from
+        the main cursor. This info is useful to provide correct undo/redo
+        actions for custom multi cursors actions.
+        """
+
 
 ###########################################################
 # EditorHighlighter

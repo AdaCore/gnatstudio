@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Tags;                  use Ada.Tags;
@@ -1864,6 +1863,34 @@ package body Src_Editor_Module.Shell is
            (Get_Overlay (Data, 2),
             Get_Location (Data, 3), Get_Location (Data, 4));
 
+      elsif Command = "add_multi_cursor" then
+         Get_Buffer (Data, 1).Add_Multi_Cursor
+           (Get_Location (Data, 2));
+
+      elsif Command = "remove_all_multi_cursors" then
+         Get_Buffer (Data, 1).Remove_All_Multi_Cursors;
+
+      elsif Command = "set_multi_cursors_manual_sync" then
+
+         if Data.Number_Of_Arguments = 1 then
+            Get_Buffer (Data, 1).Set_Multi_Cursors_Manual_Sync;
+         elsif Data.Number_Of_Arguments = 2 then
+            Get_Buffer (Data, 1).Set_Multi_Cursors_Manual_Sync
+              (Get_Mark (Data, 2));
+         end if;
+
+      elsif Command = "set_multi_cursors_auto_sync" then
+         Get_Buffer (Data, 1).Set_Multi_Cursors_Auto_Sync;
+
+      elsif Command = "get_multi_cursors_marks" then
+         Set_Return_Value_As_List (Data);
+         for Cursor_Mark of
+           Get_Buffer (Data, 1).Get_Multi_Cursors_Marks
+         loop
+            Data.Set_Return_Value
+              (Cursor_Mark.Create_Instance (Data.Get_Script));
+         end loop;
+
       elsif Command = "start_undo_group" then
          Get_Buffer (Data, 1).Start_Undo_Group;
 
@@ -2604,6 +2631,24 @@ package body Src_Editor_Module.Shell is
         (Kernel, "apply_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "remove_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
+
+      Register_Command
+        (Kernel, "add_multi_cursor",  1, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel,
+         "remove_all_multi_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel,
+         "set_multi_cursors_manual_sync",  0, 1, Buffer_Cmds'Access,
+         EditorBuffer);
+      Register_Command
+        (Kernel,
+         "set_multi_cursors_auto_sync",  0, 0, Buffer_Cmds'Access,
+         EditorBuffer);
+      Register_Command
+        (Kernel,
+         "get_multi_cursors_marks",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+
       Register_Command
         (Kernel, "file", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command

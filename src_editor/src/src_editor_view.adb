@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 with Interfaces.C.Strings;
 
@@ -73,6 +72,7 @@ with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
 with Traces;                     use Traces;
 
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
@@ -485,6 +485,7 @@ package body Src_Editor_View is
       pragma Unreferenced (Event);
       Src_View : constant Source_View := Source_View (View);
    begin
+      Remove_All_Multi_Cursors (Source_Buffer (Get_Buffer (Src_View)));
       if Src_View.Highlight_Blocks then
          Invalidate_Window (Src_View);
       end if;
@@ -1394,7 +1395,7 @@ package body Src_Editor_View is
          Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
          After => False);
 
-      if Host = Windows then
+      --  if Host = Windows then
          --  ??? Under Windows, a click does not refresh the entire area as it
          --  does under X. We need it to properly redraw current line and
          --  current block, therefore we do it manually.
@@ -1406,7 +1407,7 @@ package body Src_Editor_View is
               (On_Button_Press'Access),
             View,
             After => False);
-      end if;
+      --  end if;
 
       Hook := new Preferences_Hook_Record'
         (Function_No_Args with View => Source_View (View));

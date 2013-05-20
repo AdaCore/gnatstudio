@@ -287,6 +287,9 @@ package GPS.Editors is
       return Class_Instance is abstract;
    --  Return an Class_Instance for the mark
 
+   package Mark_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
+     (Editor_Mark'Class);
+
    -----------------
    -- Editor_View --
    -----------------
@@ -585,6 +588,44 @@ package GPS.Editors is
    --  Removes all instances of the overlay in the given range of text. It
    --  isn't an error if the overlay is not applied to any of the character in
    --  the range, it just has no effect in that case
+
+   procedure Add_Multi_Cursor
+     (This     : Editor_Buffer;
+      Location : Editor_Location'Class := Nil_Editor_Location) is abstract;
+   --  Add a multi cursor at the specified location
+
+   procedure Remove_All_Multi_Cursors (This : Editor_Buffer) is abstract;
+   --  Remove all multi cursors from current buffer
+
+   procedure Set_Multi_Cursors_Manual_Sync (This : Editor_Buffer) is abstract;
+   --  This sets the buffer in "main manual mode" regarding multi cursor
+   --  insertion. It should be called before the main cursor action is done
+   --  This basically means that in this mode, if any action is performed :
+   --  - It wont impact any multi cursor
+   --  - The main cursor will move accordingly to the action
+
+   procedure Set_Multi_Cursors_Manual_Sync
+     (This : Editor_Buffer;
+      Mark : Editor_Mark'Class) is abstract;
+   --  This sets the buffer in "slave manual mode" regarding multi cursor
+   --  insertion, with the corresponding text mark as the multi-cursors mark.
+   --  This should be called before the corresponding multi cursor's action is
+   --  done. This basically means that in this mode, if any action is
+   --  performed :
+   --  - It wont impact any multi cursor
+   --  - The main cursor will not move
+   --  The action will be recorded as part of the same group as the main
+   --  cursor's action regarding undo/redo groups.
+
+   procedure Set_Multi_Cursors_Auto_Sync (Buffer : Editor_Buffer) is abstract;
+   --  This sets the buffer in auto mode regarding multi cursor insertion.
+   --  This means that every insert/delete will impact every active cursors
+   --  in the buffer. Do not forget to set that back after a manual multi
+   --  cursor operation !
+
+   function Get_Multi_Cursors_Marks
+     (This : Editor_Buffer) return Mark_Lists.List is abstract;
+   --  Get the list of all multi cursor's marks
 
    overriding function "="
      (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean;
@@ -898,6 +939,26 @@ private
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location) is null;
+
+   overriding procedure Add_Multi_Cursor
+     (This : Dummy_Editor_Buffer;
+      Location : Editor_Location'Class) is null;
+
+   overriding procedure Remove_All_Multi_Cursors
+     (This : Dummy_Editor_Buffer) is null;
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Dummy_Editor_Buffer) is null;
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Dummy_Editor_Buffer; Mark : Editor_Mark'Class) is null;
+
+   overriding procedure Set_Multi_Cursors_Auto_Sync
+     (This : Dummy_Editor_Buffer) is null;
+
+   overriding function Get_Multi_Cursors_Marks
+     (This : Dummy_Editor_Buffer) return Mark_Lists.List
+   is (Mark_Lists.Empty_List);
 
    overriding function Views
      (This : Dummy_Editor_Buffer) return View_Lists.List;

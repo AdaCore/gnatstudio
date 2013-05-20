@@ -26,6 +26,7 @@ with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with Language;                        use Language;
 with Src_Editor_Buffer;               use Src_Editor_Buffer;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
 with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module;               use Src_Editor_Module;
 with Src_Editor_View;                 use Src_Editor_View;
@@ -122,6 +123,7 @@ package body Src_Editor_View.Commands is
       pragma Unreferenced (Moved);
 
    begin
+      Set_Multi_Cursors_Manual_Sync (Buffer);
       if Command.Kind = Page then
          Scrolled := Gtk_Scrolled_Window (Get_Parent (View));
          Adj      := Get_Vadjustment (Scrolled);
@@ -138,13 +140,19 @@ package body Src_Editor_View.Commands is
          end if;
          Moved := Place_Cursor_Onscreen (View);
          Moved := Move_Mark_Onscreen (View, Mark);
+         Set_Multi_Cursors_Auto_Sync (Buffer);
          return Success;
-
       else
          Get_Iter_At_Mark (Buffer, Iter, Mark);
          Move_Iter (Iter, Command.Kind, Command.Step);
          Move_Mark (Buffer, Mark, Iter);
          Place_Cursor (Buffer, Iter);
+         for Cursor_Mark of Get_Multi_Cursors_Marks (Buffer) loop
+            Buffer.Get_Iter_At_Mark (Iter, Cursor_Mark);
+            Move_Iter (Iter, Command.Kind, Command.Step);
+            Buffer.Move_Mark (Cursor_Mark, Iter);
+         end loop;
+         Set_Multi_Cursors_Auto_Sync (Buffer);
          return Success;
       end if;
    end Execute;
@@ -189,10 +197,23 @@ package body Src_Editor_View.Commands is
       Iter, Start : Gtk_Text_Iter;
 
    begin
+      Set_Multi_Cursors_Manual_Sync (Buffer);
+
       Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
       Copy (Source => Iter, Dest => Start);
       Move_Iter (Iter, Command.Kind, Command.Count);
       Delete (Buffer, Iter, Start);
+
+      for Cursor_Mark of Get_Multi_Cursors_Marks (Buffer) loop
+         Set_Multi_Cursors_Manual_Sync (Buffer, Cursor_Mark);
+         Get_Iter_At_Mark (Buffer, Iter, Cursor_Mark);
+         Copy (Source => Iter, Dest => Start);
+         Move_Iter (Iter, Command.Kind, Command.Count);
+         Delete (Buffer, Iter, Start);
+      end loop;
+
+      Set_Multi_Cursors_Auto_Sync (Buffer);
+
       return Success;
    end Execute;
 

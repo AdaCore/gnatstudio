@@ -38,7 +38,7 @@ with Glib;                      use Glib;
 with Glib.Main;
 with Gtk;
 with Gtk.Text_Iter;
-with Gtk.Text_Mark;
+with Gtk.Text_Mark; use Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 
@@ -53,11 +53,17 @@ with GPS.Styles;                use GPS.Styles;
 with GPS.Styles.UI;             use GPS.Styles.UI;
 with Language.Tree;
 with Src_Highlighting;
+with Ada.Strings.Unbounded;
 
 package Src_Editor_Buffer is
 
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
+
+   type Multi_Cursors_Sync_Mode_Type is (Auto, Manual_Master, Manual_Slave);
+
+   package Marks_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Gtk.Text_Mark.Gtk_Text_Mark);
 
    procedure Gtk_New
      (Buffer : out Source_Buffer;
@@ -1345,6 +1351,18 @@ private
    type Last_Typed_Chars is array (1 .. Max_Typed_Chars) of Gunichar;
    --  The array to store the last typed characters in a buffer
 
+   ------------------
+   -- Multi_Cursor --
+   ------------------
+
+   type Multi_Cursor is record
+      Mark            : Gtk.Text_Mark.Gtk_Text_Mark;
+      Current_Command : Command_Access;
+   end record;
+
+   package Multi_Cursors_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Multi_Cursor);
+
    --------------------------
    -- Source_Buffer_Record --
    --------------------------
@@ -1620,6 +1638,15 @@ private
       Hyper_Mode_Highlight_Begin            : Gtk.Text_Mark.Gtk_Text_Mark;
       Hyper_Mode_Highlight_End              : Gtk.Text_Mark.Gtk_Text_Mark;
       --  The begin and end of the highlighted section
+
+      Multi_Cursors_List                    : Multi_Cursors_Lists.List;
+      Multi_Cursors_Barrier                 : Boolean := True;
+      Multi_Cursors_Next_Id                 : Natural := 0;
+      Multi_Cursors_Delete_Offset           : Gint := 0;
+      Multi_Cursors_Sync_Mode               : Multi_Cursors_Sync_Mode_Type
+        := Auto;
+      Multi_Cursors_Current_Cursor_Name
+        : Ada.Strings.Unbounded.Unbounded_String;
 
       Logical_Timestamp : Integer := -1;
    end record;

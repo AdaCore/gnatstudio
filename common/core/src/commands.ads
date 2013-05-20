@@ -332,9 +332,6 @@ private
       Progress           : Progress_Record;
       --  The current progress of the command
 
-      --  The following booleans are used to avoid cases when execution of
-      --  a command might cause this command to be destroyed in the process.
-
       Ref_Count          : Natural := 1;
       --  Used to indicate that the command is currently being used
       --  and should not be freed. A command can only be freed when this is 0.

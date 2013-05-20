@@ -43,6 +43,7 @@ with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
@@ -346,6 +347,25 @@ package body Src_Editor_Module.Editors is
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location);
+
+   overriding procedure Add_Multi_Cursor
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class);
+
+   overriding procedure Remove_All_Multi_Cursors
+     (This     : Src_Editor_Buffer);
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Src_Editor_Buffer);
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Src_Editor_Buffer; Mark : Editor_Mark'Class);
+
+   overriding procedure Set_Multi_Cursors_Auto_Sync
+     (This : Src_Editor_Buffer);
+
+   overriding function Get_Multi_Cursors_Marks
+     (This : Src_Editor_Buffer) return Mark_Lists.List;
 
    overriding function Current_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
@@ -2809,6 +2829,56 @@ package body Src_Editor_Module.Editors is
          Remove_Tag (This.Contents.Buffer, Ovy.Tag, Iter1, Iter2);
       end if;
    end Remove_Overlay;
+
+   ----------------------
+   -- Add_Multi_Cursor --
+   ----------------------
+
+   overriding procedure Add_Multi_Cursor
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      This.Contents.Buffer.Get_Iter_At_Offset (Iter, Gint (Location.Offset));
+      Add_Multi_Cursor (This.Contents.Buffer, Iter);
+   end Add_Multi_Cursor;
+
+   overriding procedure Remove_All_Multi_Cursors
+     (This     : Src_Editor_Buffer) is
+   begin
+      Remove_All_Multi_Cursors (This.Contents.Buffer);
+   end Remove_All_Multi_Cursors;
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Src_Editor_Buffer) is
+   begin
+      Set_Multi_Cursors_Manual_Sync (This.Contents.Buffer);
+   end Set_Multi_Cursors_Manual_Sync;
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Src_Editor_Buffer; Mark : Editor_Mark'Class) is
+   begin
+      Set_Multi_Cursors_Manual_Sync
+        (This.Contents.Buffer, This.Contents.Buffer.Get_Mark (Mark.Name));
+   end Set_Multi_Cursors_Manual_Sync;
+
+   overriding procedure Set_Multi_Cursors_Auto_Sync
+     (This : Src_Editor_Buffer) is
+   begin
+      Set_Multi_Cursors_Auto_Sync (This.Contents.Buffer);
+   end Set_Multi_Cursors_Auto_Sync;
+
+   overriding function Get_Multi_Cursors_Marks
+     (This : Src_Editor_Buffer) return Mark_Lists.List
+   is
+      List : Mark_Lists.List;
+   begin
+      for Cursor_Mark of Get_Multi_Cursors_Marks (This.Contents.Buffer) loop
+         List.Append (This.Create_Editor_Mark (Cursor_Mark));
+      end loop;
+      return List;
+   end Get_Multi_Cursors_Marks;
 
    ----------
    -- Name --
