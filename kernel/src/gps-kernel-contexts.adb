@@ -588,20 +588,6 @@ package body GPS.Kernel.Contexts is
       if Entity_Name /= "" then
          Context.Data.Data.Entity_Name := new String'(Entity_Name);
          Context.Data.Data.Entity_Column   := Entity_Column;
-
-         if not (Has_File_Information (Context)
-                 and then Has_Line_Information (Context))
-         then
-            --  We do not perform the query to resolve the entity declaration
-            --  now. Instead, we store the relevant data, and do the actual
-            --  request lazily in Get_Entity.
-
-            --  If we do not have file and line information, no need
-            --  to resolve the entity.
-
-            Context.Data.Data.Xref_Entity := No_General_Entity;
-            Context.Data.Data.Xref_Entity_Resolution_Attempted := True;
-         end if;
       end if;
 
       if From_Expression /= "" then
