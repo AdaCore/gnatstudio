@@ -21,6 +21,8 @@
 with Glib.Main;
 with Gtk.Box;
 with Gtk.GEntry;
+with Gtk.List_Store;
+with Gtk.Tree_View;
 with GPS.Kernel;
 with GPS.Search;
 with Histories;
@@ -61,7 +63,8 @@ private
       Idle             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Need_Clear       : Boolean := False;
 
-      View             : Gtk.Box.Gtk_Box;
+      Completions      : Gtk.List_Store.Gtk_List_Store;
+      View             : Gtk.Tree_View.Gtk_Tree_View;
       --  The widget that displays the list of possible completions
    end record;
 
