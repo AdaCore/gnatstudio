@@ -1678,10 +1678,6 @@ private
       --  in the public procedures related to sync, in
       --  Src_Editor_Buffer.Multi_Cursors.
 
-      Multi_Cursors_Current_Cursor_Name
-        : Ada.Strings.Unbounded.Unbounded_String;
-      --  The name of the current cursor, in manual slave sync mode.
-
       Logical_Timestamp : Integer := -1;
    end record;
 

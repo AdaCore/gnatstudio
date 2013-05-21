@@ -168,6 +168,10 @@ package body Commands.Editor is
       Item.Alternative_Cursor_Name := To_Unbounded_String (Cursor_Name);
    end Create;
 
+   -----------------------
+   -- Avoid_Move_Cursor --
+   -----------------------
+
    function Avoid_Move_Cursor
      (Command : access Editor_Command_Type) return Boolean
    is
@@ -287,8 +291,7 @@ package body Commands.Editor is
       --  Set the action's cursor at the right place whether it is a multi
       --  cursor or the main cursor
 
-      procedure Set_Cursor_Position
-      is
+      procedure Set_Cursor_Position is
          Iter : Gtk_Text_Iter;
          Mark : Gtk_Text_Mark;
          Cursor_Name : constant String

@@ -31,7 +31,6 @@ package body Src_Editor_Buffer.Multi_Cursors is
    procedure Set_Multi_Cursors_Manual_Sync (Buffer : Source_Buffer)
    is
    begin
-      Buffer.Multi_Cursors_Current_Cursor_Name := To_Unbounded_String ("");
       Buffer.Multi_Cursors_Sync := (Mode => Manual_Master);
    end Set_Multi_Cursors_Manual_Sync;
 
@@ -46,7 +45,6 @@ package body Src_Editor_Buffer.Multi_Cursors is
    procedure Set_Multi_Cursors_Auto_Sync (Buffer : Source_Buffer)
    is
    begin
-      Buffer.Multi_Cursors_Current_Cursor_Name := To_Unbounded_String ("");
       Buffer.Multi_Cursors_Sync := (Mode => Auto);
    end Set_Multi_Cursors_Auto_Sync;
 

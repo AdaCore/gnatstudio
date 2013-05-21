@@ -145,6 +145,8 @@ package Commands.Editor is
    --  by the user.
    --  Cursor_Line and Cursor_Column need to be specified only if the
    --  Direction_Type is Extended.
+   --  Cursor_Name needs to be set if the Command needs to be executed for
+   --  a specific multi cursor, and not for the main cursor
 
    procedure Add_Text
      (Item         : Editor_Command;
@@ -201,6 +203,7 @@ private
       Cursor_Line               : Editable_Line_Type;
       Cursor_Column             : Character_Offset_Type;
       Alternative_Cursor_Name   : Unbounded_String;
+      --  Name of the multi cursor this action is bound to, if there is one
    end record;
 
    type Editor_Replace_Slice_Type is new Base_Editor_Command_Type with record

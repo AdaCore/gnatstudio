@@ -218,6 +218,11 @@ def in_xml_file(context):
    return context.in_xml_file
 
 def execute_for_all_cursors(editor, mark_fn):
+    """
+    Execute the function mark_fn for every cursor in the editor,
+    meaning, the main cursor + every existing multi cursor.
+    mark_fn has the prototype def mark_fn(EditorBuffer, EditorMark)
+    """
     main_cursor_mark = editor.get_mark ("insert")
     editor.set_multi_cursors_manual_sync()
     mark_fn(editor, main_cursor_mark)

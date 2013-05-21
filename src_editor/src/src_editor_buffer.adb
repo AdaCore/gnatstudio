@@ -243,14 +243,6 @@ package body Src_Editor_Buffer is
       Params : Glib.Values.GValues);
    --  First handler connected to the "insert_text" signal
 
-   procedure Update_Insert_Command
-     (Buffer : Source_Buffer;
-      User_Action : Action_Type;
-      Command : out Editor_Command;
-      Pos : Gtk_Text_Iter;
-      Text : String;
-      Is_Main_Action : Boolean := True);
-
    procedure Delete_Range_Cb
      (Buffer : access Source_Buffer_Record'Class;
       Iter   : Gtk_Text_Iter);
@@ -1772,6 +1764,76 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
+
+      procedure Update_Insert_Command
+        (Buffer : Source_Buffer;
+         User_Action : Action_Type;
+         Command : out Editor_Command;
+         Pos : Gtk_Text_Iter;
+         Text : String;
+         Is_Main_Action : Boolean := True);
+      --  Update the command with the given action
+
+      procedure Update_Insert_Command
+        (Buffer : Source_Buffer;
+         User_Action : Action_Type;
+         Command : out Editor_Command;
+         Pos : Gtk_Text_Iter;
+         Text : String;
+         Is_Main_Action : Boolean := True)
+      is
+         Line : constant Editable_Line_Type := Get_Editable_Line
+           (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
+
+         procedure End_Action;
+         procedure End_Action is
+         begin
+            if Is_Main_Action then
+               End_Action (Buffer);
+            end if;
+         end End_Action;
+
+         procedure Create_And_Enqueue_Command;
+         procedure Create_And_Enqueue_Command is
+         begin
+            Create
+              (Command,
+               Insertion,
+               Buffer,
+               False, Line,
+               Character_Offset_Type (Get_Line_Offset (Pos) + 1),
+               Cursor_Name => (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
+                               then To_String
+                                 (Buffer.Multi_Cursors_Sync.Cursor_Name)
+                               else ""));
+            Enqueue (Buffer, Command_Access (Command), User_Action);
+         end Create_And_Enqueue_Command;
+
+      begin
+         if Is_Null_Command (Command) then
+            Create_And_Enqueue_Command;
+         elsif Get_Mode (Command) = Insertion then
+            if (User_Action = Insert_Spaces
+                and then Buffer.Last_User_Action /= Insert_Spaces)
+              or else
+                (User_Action = Insert_Line
+                 and then Buffer.Last_User_Action /= Insert_Line)
+            then
+               End_Action;
+               Create_And_Enqueue_Command;
+            end if;
+         else
+            End_Action;
+            Create_And_Enqueue_Command;
+         end if;
+
+         Add_Text (Command, Text);
+
+         if Is_Main_Action then
+            Buffer.Current_Command := Command_Access (Command);
+         end if;
+      end Update_Insert_Command;
+
       Text        : constant Unchecked_String_Access :=
                       To_Unchecked_String (Get_Chars (Nth (Params, 2)));
       Length      : constant Integer := Integer (Get_Int (Nth (Params, 3)));
@@ -1925,8 +1987,6 @@ package body Src_Editor_Buffer is
             end loop;
             Buffer.Leave_Current_Group;
             Buffer.Multi_Cursors_Sync := (Mode => Auto);
-            Buffer.Multi_Cursors_Current_Cursor_Name :=
-              To_Unbounded_String ("");
          end;
       end if;
 
@@ -1936,66 +1996,6 @@ package body Src_Editor_Buffer is
       when E : others =>
          Trace (Traces.Exception_Handle, E);
    end Before_Insert_Text;
-
-   procedure Update_Insert_Command
-     (Buffer : Source_Buffer;
-      User_Action : Action_Type;
-      Command : out Editor_Command;
-      Pos : Gtk_Text_Iter;
-      Text : String;
-      Is_Main_Action : Boolean := True)
-   is
-      Line : constant Editable_Line_Type := Get_Editable_Line
-        (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
-
-      procedure End_Action;
-      procedure End_Action is
-      begin
-         if Is_Main_Action then
-            End_Action (Buffer);
-         end if;
-      end End_Action;
-
-      procedure Create_And_Enqueue_Command;
-      procedure Create_And_Enqueue_Command is
-      begin
-         Create
-           (Command,
-            Insertion,
-            Buffer,
-            False, Line,
-            Character_Offset_Type (Get_Line_Offset (Pos) + 1),
-            Cursor_Name => (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
-                            then To_String
-                              (Buffer.Multi_Cursors_Current_Cursor_Name)
-                            else ""));
-         Enqueue (Buffer, Command_Access (Command), User_Action);
-      end Create_And_Enqueue_Command;
-
-   begin
-      if Is_Null_Command (Command) then
-         Create_And_Enqueue_Command;
-      elsif Get_Mode (Command) = Insertion then
-         if (User_Action = Insert_Spaces
-             and then Buffer.Last_User_Action /= Insert_Spaces)
-           or else
-             (User_Action = Insert_Line
-              and then Buffer.Last_User_Action /= Insert_Line)
-         then
-            End_Action;
-            Create_And_Enqueue_Command;
-         end if;
-      else
-         End_Action;
-         Create_And_Enqueue_Command;
-      end if;
-
-      Add_Text (Command, Text);
-
-      if Is_Main_Action then
-         Buffer.Current_Command := Command_Access (Command);
-      end if;
-   end Update_Insert_Command;
 
    ---------------------
    -- Delete_Range_Cb --
@@ -2309,7 +2309,7 @@ package body Src_Editor_Buffer is
                Character_Offset_Type (Column + 1),
                Cursor_Name => (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
                                then To_String
-                                 (Buffer.Multi_Cursors_Current_Cursor_Name)
+                                 (Buffer.Multi_Cursors_Sync.Cursor_Name)
                                else ""));
 
             Enqueue (Buffer, Command_Access (Command), User_Action);
