@@ -179,9 +179,8 @@ package body Gtkada.Entry_Completion is
       Self.On_Destroy (On_Entry_Destroy'Access);
       Gtk.Editable.On_Changed (+Self.GEntry, On_Entry_Changed'Access, Self);
 
-      Self.View.On_Button_Press_Event
-         (On_Proposal_Click'Access, Self, After => True);
-      Self.View.On_Key_Press_Event (On_Key_Press'Access, Self, After => False);
+      Self.View.On_Button_Press_Event (On_Proposal_Click'Access, Self);
+      Self.View.On_Key_Press_Event (On_Key_Press'Access, Self);
 
       --  Set the current entry to be the previously inserted one
       if History /= "" then
@@ -214,15 +213,18 @@ package body Gtkada.Entry_Completion is
       if Iter /= Null_Iter then
          Result := Convert
             (Get_Address (+Self.Completions, Iter, Column_Data));
-      elsif Force then
-         Result := Convert
-            (Get_Address (+Self.Completions,
-             Self.Completions.Get_Iter_First, Column_Data));
+      else
+         if Force then
+            Iter := Self.Completions.Get_Iter_First;
+            if Iter /= Null_Iter then
+               Result := Convert
+                  (Get_Address (+Self.Completions, Iter, Column_Data));
+            end if;
+         end if;
       end if;
 
       if Result /= null then
          Self.Hist := null;  --  do not free
-
          Self.Kernel.Add_To_History
             (Self.History_Key.all, Result.Short.all);
 
@@ -248,9 +250,30 @@ package body Gtkada.Entry_Completion is
       (Ent   : access GObject_Record'Class;
        Event : Gdk_Event_Button) return Boolean
    is
-      pragma Unreferenced (Event);
+      Self : constant Gtkada_Entry := Gtkada_Entry (Ent);
+      Path : Gtk_Tree_Path;
+      Column : Gtk_Tree_View_Column;
+      Cell_X, Cell_Y : Gint;
+      Found : Boolean;
+      Iter : Gtk_Tree_Iter;
    begin
-      Activate_Proposal (Gtkada_Entry (Ent), Force => False);
+      Self.View.Get_Path_At_Pos
+         (X => Gint (Event.X),
+          Y => Gint (Event.Y),
+          Path => Path,
+          Column => Column,
+          Cell_X => Cell_X,
+          Cell_Y => Cell_Y,
+          Row_Found => Found);
+
+      if Found then
+         Iter := Self.Completions.Get_Iter (Path);
+         Self.View.Get_Selection.Select_Iter (Iter);
+         Activate_Proposal (Gtkada_Entry (Ent), Force => False);
+      end if;
+
+      Path_Free (Path);
+
       return False;
    end On_Proposal_Click;
 
