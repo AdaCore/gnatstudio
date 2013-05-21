@@ -358,12 +358,12 @@ package body Gtkada.Entry_Completion is
       if Result.Long /= null then
          Self.Completions.Set
             (Iter, Column_Label,
-             "<big><b>" & Result.Short.all & "</b></big>" & Score'Img
+             "<big><b>" & Result.Short.all & "</b></big>"
              & ASCII.LF & Result.Long.all);
       else
          Self.Completions.Set
             (Iter, Column_Label,
-             "<big><b>" & Result.Short.all & "</b></big>" & Score'Img);
+             "<big><b>" & Result.Short.all & "</b></big>");
       end if;
 
       Init (Val, GType_Pointer);
@@ -412,7 +412,17 @@ package body Gtkada.Entry_Completion is
    -----------
 
    procedure Clear (Self : access Gtkada_Entry_Record'Class) is
+      Iter : Gtk_Tree_Iter := Self.Completions.Get_Iter_First;
+      Result : Search_Result_Access;
    begin
+      --  Free the completion proposals
+      while Iter /= Null_Iter loop
+         Result := Convert
+            (Get_Address (+Self.Completions, Iter, Column_Data));
+         Free (Result);
+         Self.Completions.Next (Iter);
+      end loop;
+
       Self.Completions.Clear;
       Self.Need_Clear := False;
    end Clear;
