@@ -44,6 +44,7 @@ with Pango.Font;              use Pango.Font;
 with Pango.Layout;            use Pango.Layout;
 
 with Basic_Types;             use Basic_Types;
+with Osint;                   use Osint;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
@@ -448,11 +449,12 @@ package body GPS.Kernel.Scripts is
       elsif Command = "set_scenario_variable" then
          Name_Parameters (Data, Set_Scenario_Parameters);
          declare
-            Name  : constant String := Nth_Arg (Data, 1);
+            Name  : String := Nth_Arg (Data, 1);
             Value : constant String := Nth_Arg (Data, 2);
             Var   : Scenario_Variable :=
               Get_Registry (Kernel).Tree.Scenario_Variables (Name);
          begin
+            Osint.Canonical_Case_Env_Var_Name (Name);
             Set_Value (Var, Value);
             Get_Registry (Kernel).Tree.Change_Environment ((1 => Var));
             Run_Hook (Kernel, Variable_Changed_Hook);
