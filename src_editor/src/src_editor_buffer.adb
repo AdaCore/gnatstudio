@@ -1627,7 +1627,7 @@ package body Src_Editor_Buffer is
 
       if Mark = Buffer.Insert_Mark then
 
-         if Buffer.Multi_Cursors_Sync_Mode = Auto
+         if Buffer.Multi_Cursors_Sync.Mode = Auto
            and then Buffer.Multi_Cursors_Barrier
          then
             Remove_All_Multi_Cursors (Source_Buffer (Buffer));
@@ -1739,7 +1739,7 @@ package body Src_Editor_Buffer is
          end;
       end if;
 
-      if Buffer.Multi_Cursors_Sync_Mode = Auto
+      if Buffer.Multi_Cursors_Sync.Mode = Auto
         and then not Buffer.Multi_Cursors_Barrier
       then
          Buffer.Multi_Cursors_Barrier := True;
@@ -1908,15 +1908,15 @@ package body Src_Editor_Buffer is
         (Source_Buffer (Buffer),
          User_Action, Command, Pos, Text (1 .. Length));
 
-      if Buffer.Multi_Cursors_Sync_Mode = Auto then
+      if Buffer.Multi_Cursors_Sync.Mode = Auto then
          declare
             Iter : Gtk_Text_Iter;
          begin
-            Buffer.Multi_Cursors_Sync_Mode := Manual_Slave;
             Buffer.Enter_Current_Group;
             for Cursor of Buffer.Multi_Cursors_List loop
-               Buffer.Multi_Cursors_Current_Cursor_Name :=
-                 To_Unbounded_String (Cursor.Mark.Get_Name);
+               Buffer.Multi_Cursors_Sync :=
+                 (Manual_Slave, To_Unbounded_String (Cursor.Mark.Get_Name));
+
                Buffer.Get_Iter_At_Mark (Iter, Cursor.Mark);
                Update_Insert_Command
                  (Source_Buffer (Buffer),
@@ -1924,7 +1924,7 @@ package body Src_Editor_Buffer is
                   Iter, Text (1 .. Length), False);
             end loop;
             Buffer.Leave_Current_Group;
-            Buffer.Multi_Cursors_Sync_Mode := Auto;
+            Buffer.Multi_Cursors_Sync := (Mode => Auto);
             Buffer.Multi_Cursors_Current_Cursor_Name :=
               To_Unbounded_String ("");
          end;
@@ -1965,7 +1965,7 @@ package body Src_Editor_Buffer is
             Buffer,
             False, Line,
             Character_Offset_Type (Get_Line_Offset (Pos) + 1),
-            Cursor_Name => (if Buffer.Multi_Cursors_Sync_Mode = Manual_Slave
+            Cursor_Name => (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
                             then To_String
                               (Buffer.Multi_Cursors_Current_Cursor_Name)
                             else ""));
@@ -2041,7 +2041,7 @@ package body Src_Editor_Buffer is
          Interactive => not Buffer.Inserting);
 
       if Buffer.Multi_Cursors_Delete_Offset /= 0 and then
-        Buffer.Multi_Cursors_Sync_Mode = Auto and then
+        Buffer.Multi_Cursors_Sync.Mode = Auto and then
         not Buffer.Multi_Cursors_Barrier
       then
          Buffer.Multi_Cursors_Barrier := True;
@@ -2307,7 +2307,7 @@ package body Src_Editor_Buffer is
                Direction,
                Editable_Line_End,
                Character_Offset_Type (Column + 1),
-               Cursor_Name => (if Buffer.Multi_Cursors_Sync_Mode = Manual_Slave
+               Cursor_Name => (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
                                then To_String
                                  (Buffer.Multi_Cursors_Current_Cursor_Name)
                                else ""));
@@ -2333,7 +2333,7 @@ package body Src_Editor_Buffer is
          end if;
 
          if Delete_Offset /= 0
-           and then Buffer.Multi_Cursors_Sync_Mode = Auto
+           and then Buffer.Multi_Cursors_Sync.Mode = Auto
          then
             Buffer.Enter_Current_Group;
             for Cursor of Buffer.Multi_Cursors_List loop

@@ -40,7 +40,7 @@ package Src_Editor_Buffer.Multi_Cursors is
      (Buffer : Source_Buffer) return Marks_Lists.List;
    --  Return a full list of all multi cursor's marks.
 
-   function Get_Multi_Cursors_Sync_Mode
-     (Buffer : Source_Buffer) return Multi_Cursors_Sync_Mode_Type;
+   function Get_Multi_Cursors_Sync
+     (Buffer : Source_Buffer) return Multi_Cursors_Sync_Type;
 
 end Src_Editor_Buffer.Multi_Cursors;

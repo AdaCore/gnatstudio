@@ -60,7 +60,18 @@ package Src_Editor_Buffer is
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
 
-   type Multi_Cursors_Sync_Mode_Type is (Auto, Manual_Master, Manual_Slave);
+   type MC_Sync_Mode_Type is (Auto, Manual_Master, Manual_Slave);
+   --  This type represents the mode the buffer is in regarding multi cursors
+   --  behaviour
+
+   type Multi_Cursors_Sync_Type (Mode : MC_Sync_Mode_Type := Auto) is record
+      case Mode is
+         when Auto => null;
+         when Manual_Master => null;
+         when Manual_Slave =>
+            Cursor_Name : Ada.Strings.Unbounded.Unbounded_String;
+      end case;
+   end record;
 
    package Marks_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Gtk.Text_Mark.Gtk_Text_Mark);
@@ -1359,6 +1370,11 @@ private
       Mark            : Gtk.Text_Mark.Gtk_Text_Mark;
       Current_Command : Command_Access;
    end record;
+   --  Represents the information we have to store about each multi-cursor
+   --  The Mark field is the mark representing the multi cursor in the buffer
+   --  The Current_Command field is the last command relative to this mark, so
+   --  that we can perform command aggregation (see multiple insertions as one
+   --  for example)
 
    package Multi_Cursors_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Multi_Cursor);
@@ -1640,13 +1656,31 @@ private
       --  The begin and end of the highlighted section
 
       Multi_Cursors_List                    : Multi_Cursors_Lists.List;
+      --  The list of all active multi cursors
+
       Multi_Cursors_Barrier                 : Boolean := True;
+      --  Represents wether insertion/deletions should be performed everywhere,
+      --  when the buffer is in auto sync mode. Note that True means no
+      --  insertion/deletion. The barrier is removed in the before
+      --  insertion/deletion event handlers.
+
       Multi_Cursors_Next_Id                 : Natural := 0;
+      --  Unique id for the next multi cursor. Incremented at multi cursor
+      --  creation
+
       Multi_Cursors_Delete_Offset           : Gint := 0;
-      Multi_Cursors_Sync_Mode               : Multi_Cursors_Sync_Mode_Type
-        := Auto;
+      --  Internal field used between before and after delete events handlers
+      --  Represents a simple deletion. +5 means delete 5 chars forward.
+      --  -5 means delete 5 chars backward. 0 means do nothing.
+
+      Multi_Cursors_Sync                    : Multi_Cursors_Sync_Type;
+      --  The sync mode of the buffer. The operating mode is detailed precisely
+      --  in the public procedures related to sync, in
+      --  Src_Editor_Buffer.Multi_Cursors.
+
       Multi_Cursors_Current_Cursor_Name
         : Ada.Strings.Unbounded.Unbounded_String;
+      --  The name of the current cursor, in manual slave sync mode.
 
       Logical_Timestamp : Integer := -1;
    end record;

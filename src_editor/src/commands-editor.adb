@@ -38,6 +38,8 @@ package body Commands.Editor is
 
    function Avoid_Move_Cursor
      (Command : access Editor_Command_Type) return Boolean;
+   --  Predicate that returns wether the cursor should be moved
+   --  for the given command.
 
    ------------
    -- Create --
@@ -282,6 +284,9 @@ package body Commands.Editor is
       View   : Source_View;
 
       procedure Set_Cursor_Position;
+      --  Set the action's cursor at the right place whether it is a multi
+      --  cursor or the main cursor
+
       procedure Set_Cursor_Position
       is
          Iter : Gtk_Text_Iter;
@@ -291,7 +296,7 @@ package body Commands.Editor is
          Reset_Mode : Boolean := False;
       begin
 
-         if Get_Multi_Cursors_Sync_Mode (Command.Buffer) = Auto then
+         if Get_Multi_Cursors_Sync (Command.Buffer).Mode = Auto then
             Set_Multi_Cursors_Manual_Sync (Command.Buffer);
             Reset_Mode := True;
          end if;
