@@ -190,8 +190,9 @@ package body Gtkada.Entry_Completion is
    begin
       Self := new Completion_Proposal_Record;
       Gtk.Button.Initialize (Self);
---      Self.Set_Relief (Relief_None);
---      Set_Property (Self, Margin_Property, 0);
+
+      --  Using Relief_None also disables drawing the background
+      Self.Set_Relief (Relief_Half);
 
       Gtk_New_Vbox (B, Homogeneous => False, Spacing => 0);
       Self.Add (B);

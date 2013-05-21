@@ -51,11 +51,22 @@
 /* Search and filter fields */
 GtkEntry.search {
   border-radius: 10px;
+  border-top: 0px;
+  border-bottom:0px;
 }
 
-.completion-list GtkButton {
+.completion-list .button {
    padding: 1px 1px 1px 4px;
    border-style: none;
+   background-color: white;
+   background-image: none;
+   border-style: none;
+}
+.completion-list .button:hover {
+   background-color: shade(white, 0.95);
+}
+.completion-list .button:focus {
+   background-color: shade(white, 0.9);
 }
 .completion-short {
    color: green;
