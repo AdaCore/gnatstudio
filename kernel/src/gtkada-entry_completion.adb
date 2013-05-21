@@ -193,7 +193,7 @@ package body Gtkada.Entry_Completion is
       Gtk.Editable.On_Changed (+Self.GEntry, On_Entry_Changed'Access, Self);
 
       Self.View.On_Button_Press_Event (On_Proposal_Click'Access, Self);
-      Self.View.On_Key_Press_Event (On_Key_Press'Access, Self);
+      Self.GEntry.On_Key_Press_Event (On_Key_Press'Access, Self);
 
       --  Set the current entry to be the previously inserted one
       if History /= "" then
@@ -378,10 +378,54 @@ package body Gtkada.Entry_Completion is
 
    function On_Key_Press
      (Ent   : access GObject_Record'Class;
-      Event : Gdk_Event_Key) return Boolean is
+      Event : Gdk_Event_Key) return Boolean
+   is
+      Self : constant Gtkada_Entry := Gtkada_Entry (Ent);
+      Iter : Gtk_Tree_Iter;
+      M    : Gtk_Tree_Model;
    begin
       if Event.Keyval = GDK_Return then
-         Activate_Proposal (Gtkada_Entry (Ent), Force => True);
+         Activate_Proposal (Self, Force => True);
+         return True;
+
+      elsif Event.Keyval = GDK_Tab
+         or else Event.Keyval = GDK_KP_Down
+         or else Event.Keyval = GDK_Down
+      then
+         Self.View.Get_Selection.Get_Selected (M, Iter);
+         if Iter = Null_Iter then
+            Iter := Self.Completions.Get_Iter_First;
+         else
+            Self.Completions.Next (Iter);
+            if Iter = Null_Iter then
+               Iter := Self.Completions.Get_Iter_First;
+            end if;
+         end if;
+
+         if Iter /= Null_Iter then
+            Self.View.Get_Selection.Select_Iter (Iter);
+         end if;
+
+         return True;
+
+      elsif Event.Keyval = GDK_KP_Up
+         or else Event.Keyval = GDK_Up
+      then
+         Self.View.Get_Selection.Get_Selected (M, Iter);
+         if Iter = Null_Iter
+            or else Iter = Self.Completions.Get_Iter_First
+         then
+            Iter := Self.Completions.Nth_Child
+               (Null_Iter, Self.Completions.N_Children);
+         else
+            Self.Completions.Previous (Iter);
+         end if;
+
+         if Iter /= Null_Iter then
+            Self.View.Get_Selection.Select_Iter (Iter);
+         end if;
+
+         return True;
       end if;
       return False;
    end On_Key_Press;
