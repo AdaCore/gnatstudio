@@ -32,10 +32,12 @@ with Build_Command_Utils;
 with Build_Configurations;             use Build_Configurations;
 with Commands.Builder.Scripts;
 with Commands.Builder.Build_Output_Collectors;
+with Toolchains;
 
 with GPS.CLI_Kernels;
 with GPS.CLI_Scripts;
 with GPS.CLI_Target_Loaders;
+with GPS.CLI_Toolchain_Managers;       use GPS.CLI_Toolchain_Managers;
 with GPS.Core_Kernels;
 with GPS.Python_Core;
 with GPS.Scripts.Entities;
@@ -131,6 +133,8 @@ procedure GPS.CLI is
    GNAT_Version          : GNAT.Strings.String_Access;
    Target_Loader         : constant GPS.Core_Kernels.Abstract_Module :=
      new GPS.CLI_Target_Loaders.Target_Loader (Kernel);
+   Toolchain_Manager     : constant Toolchains.Toolchain_Manager :=
+     new Toolchain_Manager_Record (Kernel);
 
    ------------------------
    -- Parse_Command_Line --
@@ -189,6 +193,7 @@ begin
    Register_Classes (Kernel);
    Register_Output_Parsers;
    Kernel.Register_Module (Target_Loader);
+   Kernel.Set_Toolchains_Manager (Toolchain_Manager);
 
    --  Retrieve command line option
    begin
