@@ -200,7 +200,7 @@ package Build_Command_Utils is
    --  Return the status of Expand_Command_Line
 
    function Expand_Command_Line
-     (Adapter     : Abstract_Build_Command_Adapter_Access;
+     (Adapter    : Abstract_Build_Command_Adapter_Access;
       CL         : Argument_List;
       Target     : Target_Access;
       Server     : Server_Type;
@@ -213,23 +213,6 @@ package Build_Command_Utils is
    --  User must free the result.
    --  CL must contain at least one element.
    --  If Simulate is true, never fail on unknown parameters.
-
-   function Expand_Command_Line
-     (Build_Registry   : Build_Config_Registry_Access;
-      Proj_Registry    : Project_Registry_Access;
-      Proj_Type        : Project_Type;
-      Toolchains       : Toolchain_Manager;
-      Command_Line     : String;
-      Target_Name      : String;
-      Mode_Name        : String;
-      Project_File     : Virtual_File;
-      Force_File       : Virtual_File;
-      Main_File        : Virtual_File;
-      Simulate         : Boolean;
-      Trusted_Mode     : Boolean;
-      Multi_Language_Builder : Multi_Language_Builder_Policy;
-      Execute_Command  : String
-      ) return Expansion_Result;
 
    procedure Initialize
      (Adapter     : in out Abstract_Build_Command_Adapter'Class;
@@ -387,6 +370,19 @@ package Build_Command_Utils is
 
    procedure Destroy (Self : access Builder_Context_Record);
    --  Cleanup internal data
+
+   function Expand_Command_Line
+     (Builder    : Builder_Context;
+      CL         : Argument_List;
+      Target     : Target_Access;
+      Server     : Server_Type;
+      Force_File : Virtual_File;
+      Main       : Virtual_File;
+      Subdir     : Filesystem_String;
+      Background : Boolean;
+      Simulate   : Boolean) return Expansion_Result;
+   --  Expand command line CL using trivial Build_Command_Adapter.
+
 private
 
    type Abstract_Build_Command_Adapter is abstract tagged record

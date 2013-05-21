@@ -1044,7 +1044,7 @@ package body Build_Command_Utils is
    -------------------------
 
    function Expand_Command_Line
-     (Adapter     : Abstract_Build_Command_Adapter_Access;
+     (Adapter    : Abstract_Build_Command_Adapter_Access;
       CL         : Argument_List;
       Target     : Target_Access;
       Server     : Server_Type;
@@ -1277,42 +1277,33 @@ package body Build_Command_Utils is
    -------------------------
 
    function Expand_Command_Line
-     (Build_Registry   : Build_Config_Registry_Access;
-      Proj_Registry    : Project_Registry_Access;
-      Proj_Type        : Project_Type;
-      Toolchains       : Toolchain_Manager;
-      Command_Line     : String;
-      Target_Name      : String;
-      Mode_Name        : String;
-      Project_File     : Virtual_File;
-      Force_File       : Virtual_File;
-      Main_File        : Virtual_File;
-      Simulate         : Boolean;
-      Trusted_Mode     : Boolean;
-      Multi_Language_Builder : Multi_Language_Builder_Policy;
-      Execute_Command  : String
-      ) return Expansion_Result is
+     (Builder    : Builder_Context;
+      CL         : Argument_List;
+      Target     : Target_Access;
+      Server     : Server_Type;
+      Force_File : Virtual_File;
+      Main       : Virtual_File;
+      Subdir     : Filesystem_String;
+      Background : Boolean;
+      Simulate   : Boolean) return Expansion_Result
+   is
       Adapter   : Build_Command_Adapter_Access := new Build_Command_Adapter;
-      T         : constant Target_Access :=
-         Get_Target_From_Name (Build_Registry, Target_Name);
-      CL_Args   : Argument_List_Access :=
-         Argument_String_To_List (Command_Line);
-      Mode_Args : Argument_List_Access :=
-         Apply_Mode_Args (Build_Registry, Get_Model (T), Mode_Name,
-                          CL_Args.all);
-      Res       : Expansion_Result;
+      Res     : Expansion_Result;
    begin
-      Initialize (Adapter.all, Proj_Registry, Proj_Type, Toolchains,
-                  Force_File, '%', Trusted_Mode, Execute_Command,
-                  Multi_Language_Builder);
-      Adapter.Project_File := Project_File;
+      Initialize
+        (Adapter.all,
+         Builder.Kernel.Registry,
+         Builder.Kernel.Registry.Tree.Root_Project,
+         Builder.Kernel.Get_Toolchains_Manager,
+         Context_File_Information => No_File,
+         Kernel_Macros_Special_Character => '%',
+         Trusted_Mode_Preference => True,
+         Execute_Command_Preference  => "",
+         Multi_Language_Builder => Gprbuild);
+
       Res := Expand_Command_Line
-         (Abstract_Build_Command_Adapter_Access (Adapter), Mode_Args.all, T,
-          Get_Server (Build_Registry, Mode_Name, T), Force_File, Main_File,
-          Get_Mode_Subdir (Build_Registry, Mode_Name), False, Simulate);
-      Res.Status := Adapter.Status;
-      Free (CL_Args);
-      Free (Mode_Args);
+        (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
+         Force_File, Main, Subdir, Background, Simulate);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;

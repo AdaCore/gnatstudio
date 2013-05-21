@@ -180,6 +180,30 @@ package body Commands.Builder is
       Server           : Server_Type;
       Synchronous      : Boolean)
    is
+      procedure Expand_Command_Line (Result : in out Build_Information);
+
+      -------------------------
+      -- Expand_Command_Line --
+      -------------------------
+
+      procedure Expand_Command_Line (Result : in out Build_Information) is
+         Mode    : constant String := To_String (Result.Mode);
+         CL      : Argument_List :=
+           Get_Command_Line_Unexpanded (Builder.Registry, Result.Target);
+         CL_Mode : constant Argument_List_Access :=
+           Apply_Mode_Args (Builder.Registry, Get_Model (Result.Target),
+                            Mode, CL);
+         Subdir  : constant Filesystem_String :=
+           Get_Mode_Subdir (Builder.Registry, Mode);
+      begin
+         Result.Full := Expand_Command_Line
+           (Builder, CL_Mode.all & Result.Extra_Args.all, Result.Target,
+            Server, Result.Force_File, Result.Main, Subdir, Result.Background,
+            False);
+
+         Free (CL);
+      end Expand_Command_Line;
+
       Result   : Build_Information;
       CL       : Arg_List;
       Success  : Boolean := False;
@@ -198,6 +222,13 @@ package body Commands.Builder is
       --  Do nothing if one of parsers requests canceling of Launch
       if not Result.Launch then
          return;
+      end if;
+
+      --  Normally command line expansion done during parser initialization,
+      --  because it could include GUI interaction. This is "last chance"
+      --  expand command line for CLI tool.
+      if Result.Full.Args = Empty_Command_Line then
+         Expand_Command_Line (Result);
       end if;
 
       if not Build.Quiet then
