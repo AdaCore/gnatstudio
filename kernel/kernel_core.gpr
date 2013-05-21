@@ -4,6 +4,7 @@ with "../shared";
 with "../gnatlib/src/gnatcoll";
 with "../gnatlib/src/gnatcoll_sqlite";
 with "../language/language";
+with "../toolchains_editor/core/toolchains_core";
 
 project Kernel_Core is
 

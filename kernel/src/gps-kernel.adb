@@ -451,28 +451,6 @@ package body GPS.Kernel is
       Kernel.Editor_Factory := Factory;
    end Set_Buffer_Factory;
 
-   ----------------------------
-   -- Get_Toolchains_Manager --
-   ----------------------------
-
-   function Get_Toolchains_Manager
-     (Kernel : access Kernel_Handle_Record)
-      return Toolchains.Toolchain_Manager is
-   begin
-      return Kernel.Toolchains_Manager;
-   end Get_Toolchains_Manager;
-
-   ----------------------------
-   -- Set_Toolchains_Manager --
-   ----------------------------
-
-   procedure Set_Toolchains_Manager
-     (Kernel  : access Kernel_Handle_Record;
-      Manager : Toolchains.Toolchain_Manager) is
-   begin
-      Kernel.Toolchains_Manager := Manager;
-   end Set_Toolchains_Manager;
-
    -------------------
    -- Get_Undo_Redo --
    -------------------

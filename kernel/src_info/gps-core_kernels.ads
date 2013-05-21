@@ -30,6 +30,7 @@ with GPS.Process_Launchers;
 with GNATCOLL.Scripts;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
+with Toolchains;
 
 package GPS.Core_Kernels is
 
@@ -101,6 +102,14 @@ package GPS.Core_Kernels is
      (Self : not null access Core_Kernel_Record) return String;
    --  Returns the current build mode.
 
+   function Get_Toolchains_Manager
+     (Self : not null access Core_Kernel_Record)
+      return Toolchains.Toolchain_Manager;
+
+   procedure Set_Toolchains_Manager
+     (Self    : not null access Core_Kernel_Record;
+      Manager : Toolchains.Toolchain_Manager);
+
    procedure Initialize (Self : not null access Core_Kernel_Record'Class);
 
    procedure Destroy (Self : not null access Core_Kernel_Record'Class);
@@ -156,6 +165,9 @@ private
 
       Scripts : GNATCOLL.Scripts.Scripts_Repository;
       --  Data used to store information for the scripting languages
+
+      Toolchains_Manager : Toolchains.Toolchain_Manager;
+      --  Current toolchain manager
 
       Modules : Module_Maps.Map;
    end record;

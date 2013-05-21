@@ -253,4 +253,25 @@ package body GPS.Core_Kernels is
       Self.Create_Scripts_Repository (Self.Scripts);
    end Initialize;
 
+   ----------------------------
+   -- Get_Toolchains_Manager --
+   ----------------------------
+
+   function Get_Toolchains_Manager
+     (Self : not null access Core_Kernel_Record)
+      return Toolchains.Toolchain_Manager is
+   begin
+      return Self.Toolchains_Manager;
+   end Get_Toolchains_Manager;
+
+   ----------------------------
+   -- Set_Toolchains_Manager --
+   ----------------------------
+
+   procedure Set_Toolchains_Manager
+     (Self    : not null access Core_Kernel_Record;
+      Manager : Toolchains.Toolchain_Manager) is
+   begin
+      Self.Toolchains_Manager := Manager;
+   end Set_Toolchains_Manager;
 end GPS.Core_Kernels;
