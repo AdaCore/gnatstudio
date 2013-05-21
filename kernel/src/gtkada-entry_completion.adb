@@ -30,7 +30,6 @@ with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Style_Context;          use Gtk.Style_Context;
@@ -113,7 +112,6 @@ package body Gtkada.Entry_Completion is
    is
       pragma Unreferenced (Kernel);
       Scrolled : Gtk_Scrolled_Window;
-      Frame    : Gtk_Frame;
       List : Widget_List.Glist := Widget_List.Null_List;
 
    begin
@@ -137,18 +135,17 @@ package body Gtkada.Entry_Completion is
 
       Self.GEntry.Set_Width_Chars (25);
 
-      Gtk_New (Frame);
-      Self.Pack_Start (Frame, Expand => True, Fill => True);
-
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Frame.Add (Scrolled);
+      Scrolled.Set_Shadow_Type (Shadow_None);
+      Self.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Gtk_New_Vbox (Self.View, Homogeneous => False, Spacing => 0);
+      Get_Style_Context (Scrolled).Add_Class ("completion-list");
       Scrolled.Add_With_Viewport (Self.View);
 
       Widget_List.Append (List, Gtk_Widget (Self.GEntry));
-      Widget_List.Append (List, Gtk_Widget (Frame));
+      Widget_List.Append (List, Gtk_Widget (Scrolled));
       Self.Set_Focus_Chain (List);
       Widget_List.Free (List);
 
@@ -193,6 +190,8 @@ package body Gtkada.Entry_Completion is
    begin
       Self := new Completion_Proposal_Record;
       Gtk.Button.Initialize (Self);
+--      Self.Set_Relief (Relief_None);
+--      Set_Property (Self, Margin_Property, 0);
 
       Gtk_New_Vbox (B, Homogeneous => False, Spacing => 0);
       Self.Add (B);

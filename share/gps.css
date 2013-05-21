@@ -53,6 +53,19 @@ GtkEntry.search {
   border-radius: 10px;
 }
 
+.completion-list GtkButton {
+   padding: 1px 1px 1px 4px;
+   border-style: none;
+}
+.completion-short {
+   color: green;
+   font-size: 15px;
+   font-weight: bold;
+}
+.completion-long {
+   color: gray;
+}
+
 /*
  * Tooltips
  */

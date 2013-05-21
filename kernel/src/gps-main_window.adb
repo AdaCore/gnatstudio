@@ -38,6 +38,7 @@ with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Settings;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Style_Provider;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -355,8 +356,10 @@ package body GPS.Main_Window is
             Get_Pref (Gtk_Theme));
       end if;
 
+      --  ??? This creates a new css_provider every time prefs are changed.
       Gtkada.Style.Load_Css_String
-        ("* { font: " & To_String (Default_Font.Get_Pref_Font) & "}");
+        ("* { font: " & To_String (Default_Font.Get_Pref_Font) & "}",
+         Priority => Gtk.Style_Provider.Priority_Theme);
 
       case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Hide_Toolbar =>

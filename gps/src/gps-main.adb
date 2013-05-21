@@ -51,6 +51,7 @@ with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Main;                         use Gtk.Main;
+with Gtk.Style_Provider;               use Gtk.Style_Provider;
 with Gtk.Window;                       use Gtk.Window;
 with Gtk_Utils;                        use Gtk_Utils;
 
@@ -729,13 +730,15 @@ procedure GPS.Main is
          if Global.Is_Regular_File then
             Trace (Me, "Loading " & Global.Display_Full_Name);
             Gtkada.Style.Load_Css_File
-              (Global.Display_Full_Name, Put_Line'Access);
+              (Global.Display_Full_Name, Put_Line'Access,
+               Priority_Settings);
          end if;
 
          if Local.Is_Regular_File then
             Trace (Me, "Loading " & Local.Display_Full_Name);
             Gtkada.Style.Load_Css_File
-              (Local.Display_Full_Name, Put_Line'Access);
+              (Local.Display_Full_Name, Put_Line'Access,
+               Priority_User);
          end if;
       end;
 
