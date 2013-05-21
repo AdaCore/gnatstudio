@@ -237,7 +237,6 @@ private
    end record;
 
    type History_Key_Access is access History_Key_Record;
-
    procedure No_Free (A : in out History_Key_Access) is null;
 
    Null_History : constant History_Key_Access := null;

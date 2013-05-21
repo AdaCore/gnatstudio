@@ -17,6 +17,7 @@
 
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
 
 with Gdk.Event;                  use Gdk.Event;
@@ -40,6 +41,7 @@ with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Widget;                 use Gtk.Widget;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Search;                 use GPS.Search;
 with Histories;                  use Histories;
 with System;
@@ -121,7 +123,7 @@ package body Gtkada.Entry_Completion is
       Col  : Gint;
       C    : Gtk_Tree_View_Column;
       Render : Gtk_Cell_Renderer_Text;
-      pragma Unreferenced (Kernel, Col);
+      pragma Unreferenced (Col);
 
    begin
       Self := new Gtkada_Entry_Record;
@@ -129,20 +131,14 @@ package body Gtkada.Entry_Completion is
       Initialize_Vbox (Self, Homogeneous => False, Spacing => 5);
       Self.Case_Sensitive := Case_Sensitive;
       Self.Completion := GPS.Search.Search_Provider_Access (Completion);
+      Self.Kernel := Kernel_Handle (Kernel);
 
       Gtk_New (Self.GEntry);
       Self.GEntry.Set_Activates_Default (False);
-      Self.Pack_Start (Self.GEntry, Expand => False);
-
       Self.GEntry.On_Activate (On_Entry_Activate'Access, Self);
-
-      --  ??? Should we set initial contents to be that of the history ?
-      if History /= "" then
-         Self.GEntry.Set_Text ("");
-         Self.GEntry.Select_Region (0, -1);
-      end if;
-
+      Self.GEntry.Set_Placeholder_Text ("filename");
       Self.GEntry.Set_Width_Chars (25);
+      Self.Pack_Start (Self.GEntry, Expand => False);
 
       Gtk_New (Scrolled);
       Get_Style_Context (Scrolled).Add_Class ("completion-list");
@@ -161,8 +157,13 @@ package body Gtkada.Entry_Completion is
       Self.View.Set_Rules_Hint (True);
       Scrolled.Add (Self.View);
 
+      Self.Completions.Set_Sort_Column_Id
+         (Sort_Column_Id => Column_Score,
+          Order          => Sort_Descending);
+
       Gtk_New (C);
       C.Set_Sort_Column_Id (Column_Score);
+      C.Set_Sort_Order (Sort_Descending);
       C.Clicked;
       Col := Self.View.Append_Column (C);
 
@@ -181,6 +182,18 @@ package body Gtkada.Entry_Completion is
       Self.View.On_Button_Press_Event
          (On_Proposal_Click'Access, Self, After => True);
       Self.View.On_Key_Press_Event (On_Key_Press'Access, Self, After => False);
+
+      --  Set the current entry to be the previously inserted one
+      if History /= "" then
+         Set_Max_Length (Kernel.Get_History.all, 5, History);
+         Self.Hist := Get_History (Kernel.Get_History.all, History);
+         Self.History_Key := new History_Key'(History);
+
+         if Self.Hist /= null then
+            Self.GEntry.Set_Text (Self.Hist (Self.Hist'First).all);
+            Self.GEntry.Select_Region (0, -1);
+         end if;
+      end if;
    end Gtk_New;
 
    -----------------------
@@ -208,6 +221,11 @@ package body Gtkada.Entry_Completion is
       end if;
 
       if Result /= null then
+         Self.Hist := null;  --  do not free
+
+         Self.Kernel.Add_To_History
+            (Self.History_Key.all, Result.Short.all);
+
          Result.Execute (Give_Focus => True);
 
          --  ??? Temporary workaround to close the parent dialog if any.
@@ -244,23 +262,53 @@ package body Gtkada.Entry_Completion is
      (Self : not null access Gtkada_Entry_Record'Class;
       Result : GPS.Search.Search_Result_Access)
    is
+      Max_History : constant := 5;
+      --  Maximum number of history items that are taken into account for
+      --  the scoring.
+
       Iter  : Gtk_Tree_Iter;
       Val   : GValue;
+      Score : Gint;
+      M     : Integer;
    begin
       Self.Completions.Append (Iter);
+
+      Score := Gint (Result.Score);
+
+      --  Give priority to shorter items (which means the pattern
+      --  matched a bigger portion of it). This way, "buffer" matches
+      --  "src_editor_buffer.adb" before "src_editor_buffer-hooks.adb".
+
+      Score := 100 * Score - Gint (Result.Short'Length);
+
+      --  Take history into account as well (most recent items first)
+
+      if Self.Hist /= null then
+         M := Integer'Min (Self.Hist'First + Max_History, Self.Hist'Last);
+         for H in Self.Hist'First .. M loop
+            if Self.Hist (H) /= null
+               and then Result.Short.all = Self.Hist (H).all
+            then
+               Score := Score + Gint ((Max_History + 1 - H) * 20);
+               exit;
+            end if;
+         end loop;
+      end if;
+
+      --  Fill list of completions
+
+      Self.Completions.Set (Iter, Column_Score, Score);
 
       if Result.Long /= null then
          Self.Completions.Set
             (Iter, Column_Label,
-             "<big><b>" & Result.Short.all & "</b></big>"
+             "<big><b>" & Result.Short.all & "</b></big>" & Score'Img
              & ASCII.LF & Result.Long.all);
       else
          Self.Completions.Set
             (Iter, Column_Label,
-             "<big><b>" & Result.Short.all & "</b></big>");
+             "<big><b>" & Result.Short.all & "</b></big>" & Score'Img);
       end if;
-
-      Self.Completions.Set (Iter, Column_Score, Gint (Result.Score));
 
       Init (Val, GType_Pointer);
       Set_Address (Val, Result.all'Address);
@@ -297,6 +345,8 @@ package body Gtkada.Entry_Completion is
    ----------------------
 
    procedure On_Entry_Destroy (Self : access Gtk_Widget_Record'Class) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (History_Key, History_Key_Access);
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
    begin
       if S.Idle /= No_Source_Id then
@@ -306,6 +356,7 @@ package body Gtkada.Entry_Completion is
 
       S.Clear;
 
+      Unchecked_Free (S.History_Key);
       Free (S.Pattern);
       Free (S.Completion);
    end On_Entry_Destroy;

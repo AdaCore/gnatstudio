@@ -25,6 +25,7 @@ with Gtk.List_Store;
 with Gtk.Tree_View;
 with GPS.Kernel;
 with GPS.Search;
+with GNAT.Strings;
 with Histories;
 
 package Gtkada.Entry_Completion is
@@ -54,14 +55,22 @@ package Gtkada.Entry_Completion is
    --  is free to enter any string.
 
 private
+   type History_Key_Access is access all Histories.History_Key;
+
    type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with record
       GEntry           : Gtk.GEntry.Gtk_Entry;
       Case_Sensitive   : Boolean;
       Completion       : GPS.Search.Search_Provider_Access;
       Pattern          : GPS.Search.Search_Pattern_Access;
+      Kernel           : GPS.Kernel.Kernel_Handle;
 
       Idle             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Need_Clear       : Boolean := False;
+
+      History_Key      : History_Key_Access;
+
+      Hist             : GNAT.Strings.String_List_Access;
+      --  Do not free this, this belongs to the history
 
       Completions      : Gtk.List_Store.Gtk_List_Store;
       View             : Gtk.Tree_View.Gtk_Tree_View;
