@@ -53,6 +53,24 @@ package body GPS.Kernel.Search.Filenames is
       Self.Pattern := Pattern;
    end Set_Pattern;
 
+   ----------------------------
+   -- Build_Filenames_Result --
+   ----------------------------
+
+   function Build_Filenames_Result
+      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       File   : GNATCOLL.VFS.Virtual_File;
+       Score  : Natural := 100)
+      return GPS.Search.Search_Result_Access is
+   begin
+      return new Filenames_Search_Result'
+        (Kernel => Kernel_Handle (Kernel),
+         Score  => Score,
+         Short  => new String'(+File.Base_Name),
+         Long   => new String'(File.Display_Full_Name),
+         File   => File);
+   end Build_Filenames_Result;
+
    ----------
    -- Next --
    ----------
@@ -71,12 +89,8 @@ package body GPS.Kernel.Search.Filenames is
 
          C := Self.Pattern.Start (+F.Base_Name);
          if C /= No_Match then
-            Result := new Filenames_Search_Result'
-              (Kernel => Self.Kernel,
-               Score  => C.Score,
-               Short  => new String'(+F.Base_Name),
-               Long   => new String'(F.Display_Full_Name),
-               File   => F);
+            Result := Build_Filenames_Result
+               (Self.Kernel, F, C.Score);
             Has_Next := Self.Index < Self.Files'Last;
             return;
          end if;

@@ -38,7 +38,6 @@ with Gtk.Check_Button;                  use Gtk.Check_Button;
 with Gtk.Combo_Box_Text;                use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
-with Gtk.GEntry;                        use Gtk.GEntry;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
 with Gtk.Menu;                          use Gtk.Menu;
@@ -78,8 +77,10 @@ with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Search;                 use GPS.Kernel.Search;
+with GPS.Kernel.Search.Filenames;       use GPS.Kernel.Search.Filenames;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
+with GPS.Search;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -130,6 +131,12 @@ package body Src_Editor_Module is
    pragma Import (C, unfold_block_xpm, "unfold_block_xpm");
    close_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, close_block_xpm, "close_block_xpm");
+
+   type Open_From_Project_Entry is new Gtkada_Entry_Record with null record;
+   overriding function Fallback
+      (Self : not null access Open_From_Project_Entry;
+       Text : String) return GPS.Search.Search_Result_Access;
+   --  An entry used for the Open From Project dialog
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
@@ -1471,6 +1478,23 @@ package body Src_Editor_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Open_Remote_File;
 
+   --------------
+   -- Fallback --
+   --------------
+
+   overriding function Fallback
+      (Self : not null access Open_From_Project_Entry;
+       Text : String) return GPS.Search.Search_Result_Access
+   is
+      F : constant Virtual_File := Create_From_Base (+Text);
+   begin
+      if F.Is_Regular_File then
+         return GPS.Kernel.Search.Filenames.Build_Filenames_Result
+            (Self.Get_Kernel, File => F);
+      end if;
+      return null;
+   end Fallback;
+
    -----------------------
    -- On_Open_From_Path --
    -----------------------
@@ -1494,13 +1518,14 @@ package body Src_Editor_Module is
 
       --  Do not use a combo box, so that users can easily navigate to the list
       --  of completions through the keyboard (C423-005)
-      Gtk_New (Open_File_Entry,
-               Kernel         => Kernel,
-               History        => Open_From_Path_History,
-               Completion     =>
-                  GPS.Kernel.Search.Registry.Get (Provider_Filenames),
-               Case_Sensitive =>
-                  Is_Case_Sensitive (Get_Nickname (Build_Server)));
+      Open_File_Entry := new Open_From_Project_Entry;
+      Initialize
+         (Open_File_Entry,
+          Kernel         => Kernel,
+          History        => Open_From_Path_History,
+          Completion     =>
+             GPS.Kernel.Search.Registry.Get (Provider_Filenames),
+          Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)));
       Get_Content_Area (Open_File_Dialog).Pack_Start
         (Open_File_Entry, Fill => True, Expand => True);
 
@@ -1509,10 +1534,10 @@ package body Src_Editor_Module is
         (Open_File_Dialog, Stock_Cancel, Gtk_Response_Cancel);
       Set_Default_Response (Open_File_Dialog, Gtk_Response_OK);
 
-      Grab_Focus (Get_Entry (Open_File_Entry));
       Show_All (Open_File_Dialog);
 
-      --  The action is performed directly by the search_provider
+      --  The action is performed directly by the search_provider or the
+      --  fallback
       Resp := Open_File_Dialog.Run;
       Open_File_Dialog.Destroy;
    end On_Open_From_Path;

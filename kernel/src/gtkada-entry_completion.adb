@@ -116,6 +116,21 @@ package body Gtkada.Entry_Completion is
       Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Completion     : access GPS.Search.Search_Provider'Class;
       Case_Sensitive : Boolean := True;
+      History        : Histories.History_Key := "") is
+   begin
+      Self := new Gtkada_Entry_Record;
+      Initialize (Self, Kernel, Completion, Case_Sensitive, History);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self           : not null access Gtkada_Entry_Record'Class;
+      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Completion     : access GPS.Search.Search_Provider'Class;
+      Case_Sensitive : Boolean := True;
       History        : Histories.History_Key := "")
    is
       Scrolled : Gtk_Scrolled_Window;
@@ -126,8 +141,6 @@ package body Gtkada.Entry_Completion is
       pragma Unreferenced (Col);
 
    begin
-      Self := new Gtkada_Entry_Record;
-
       Initialize_Vbox (Self, Homogeneous => False, Spacing => 5);
       Self.Case_Sensitive := Case_Sensitive;
       Self.Completion := GPS.Search.Search_Provider_Access (Completion);
@@ -193,7 +206,9 @@ package body Gtkada.Entry_Completion is
             Self.GEntry.Select_Region (0, -1);
          end if;
       end if;
-   end Gtk_New;
+
+      Self.GEntry.Grab_Focus;
+   end Initialize;
 
    -----------------------
    -- Activate_Proposal --
@@ -207,6 +222,7 @@ package body Gtkada.Entry_Completion is
       Iter : Gtk_Tree_Iter;
       W    : Gtk_Widget;
       Result : Search_Result_Access;
+      Result_Need_Free : Boolean := False;
    begin
       Self.View.Get_Selection.Get_Selected (M, Iter);
 
@@ -219,6 +235,9 @@ package body Gtkada.Entry_Completion is
             if Iter /= Null_Iter then
                Result := Convert
                   (Get_Address (+Self.Completions, Iter, Column_Data));
+            else
+               Result := Self.Fallback (Self.GEntry.Get_Text);
+               Result_Need_Free := True;
             end if;
          end if;
       end if;
@@ -227,8 +246,11 @@ package body Gtkada.Entry_Completion is
          Self.Hist := null;  --  do not free
          Self.Kernel.Add_To_History
             (Self.History_Key.all, Result.Short.all);
-
          Result.Execute (Give_Focus => True);
+
+         if Result_Need_Free then
+            Free (Result);
+         end if;
 
          --  ??? Temporary workaround to close the parent dialog if any.
          --  The clean approach is to have a signal that a completion has
@@ -241,6 +263,17 @@ package body Gtkada.Entry_Completion is
          end if;
       end if;
    end Activate_Proposal;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+      (Self : not null access Gtkada_Entry_Record)
+      return GPS.Kernel.Kernel_Handle is
+   begin
+      return Self.Kernel;
+   end Get_Kernel;
 
    -----------------------
    -- On_Proposal_Click --
@@ -352,16 +385,6 @@ package body Gtkada.Entry_Completion is
       end if;
       return False;
    end On_Key_Press;
-
-   ---------------
-   -- Get_Entry --
-   ---------------
-
-   function Get_Entry
-     (Self : access Gtkada_Entry_Record) return Gtk.GEntry.Gtk_Entry is
-   begin
-      return Self.GEntry;
-   end Get_Entry;
 
    ----------------------
    -- On_Entry_Destroy --

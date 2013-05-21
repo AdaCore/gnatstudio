@@ -18,7 +18,7 @@
 --  A search provider that matches name of files from the current project.
 
 with GPS.Search;
-private with GNATCOLL.VFS;
+with GNATCOLL.VFS;
 
 package GPS.Kernel.Search.Filenames is
 
@@ -36,6 +36,13 @@ package GPS.Kernel.Search.Filenames is
       Has_Next : out Boolean);
 
    type Filenames_Search_Result is new Kernel_Search_Result with private;
+
+   function Build_Filenames_Result
+      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       File   : GNATCOLL.VFS.Virtual_File;
+       Score  : Natural := 100)
+      return GPS.Search.Search_Result_Access;
+   --  Build a new result
 
 private
    type Filenames_Search_Provider is new Kernel_Search_Provider with record

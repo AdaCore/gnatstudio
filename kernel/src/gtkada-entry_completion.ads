@@ -39,6 +39,12 @@ package Gtkada.Entry_Completion is
       Completion     : access GPS.Search.Search_Provider'Class;
       Case_Sensitive : Boolean := True;
       History        : Histories.History_Key := "");
+   procedure Initialize
+     (Self           : not null access Gtkada_Entry_Record'Class;
+      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Completion     : access GPS.Search.Search_Provider'Class;
+      Case_Sensitive : Boolean := True;
+      History        : Histories.History_Key := "");
    --  Create a new entry.
    --  If Case_Sensitive is False, then the matching of what the user typed
    --  with the completion list is done in a case insensitive manner
@@ -46,13 +52,24 @@ package Gtkada.Entry_Completion is
    --  Completion is the provider to be used to compute the possible
    --  completions. Completion is then owned by Self, and must not be freed
    --  by the caller.
+   --
+   --  If the user presses <enter> in the entry when there is no completion
+   --  proposal, Fallback is called if specified. If unspecified, nothing
+   --  happens.
 
-   function Get_Entry (Self : access Gtkada_Entry_Record)
-      return Gtk.GEntry.Gtk_Entry;
-   --  Return the top entry, possibly the one inside the combo if there is a
-   --  combo. Use this to get the current input from the user. This current
-   --  input might not be one of the possible completions, since the user
-   --  is free to enter any string.
+   function Fallback
+      (Self : not null access Gtkada_Entry_Record;
+       Text : String) return GPS.Search.Search_Result_Access is (null);
+   --  Called when the user has pressed <enter> in the entry and there was
+   --  no completion.
+   --  The returned value is used as a proposal as if the user had clicked
+   --  on it. If not null, the dialog is closed in addition.
+   --  The returned value is freed by the entry.
+
+   function Get_Kernel
+      (Self : not null access Gtkada_Entry_Record)
+      return GPS.Kernel.Kernel_Handle;
+   --  Return a handle to the kernel
 
 private
    type History_Key_Access is access all Histories.History_Key;
