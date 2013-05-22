@@ -1123,7 +1123,8 @@ package body Src_Editor_View is
             View.Current_Block := Get_Block
               (Buffer,
                Get_Editable_Line
-                 (Buffer, Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1));
+                 (Buffer, Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1),
+               Filter => Categories_For_Block_Highlighting);
             Draw_Block (View.Current_Block);
          end if;
 

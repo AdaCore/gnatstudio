@@ -121,7 +121,7 @@ package Language.Tree is
    Null_Category_Array : aliased constant
       Category_Array (1 .. 0) := (others => Cat_Unknown);
 
-   Categories_For_Block_Highlighting : constant Category_Array (1 .. 19) :=
+   Categories_For_Block_Highlighting : constant Category_Array :=
      (Cat_Package,
       Cat_Namespace,
       Cat_Task,
@@ -138,9 +138,12 @@ package Language.Tree is
       Cat_Union,
       Cat_Declare_Block,
       Cat_Loop_Statement,
+      Cat_If_Statement,
       Cat_Case_Statement,
       Cat_Select_Statement,
-      Cat_Return_Block);
+      Cat_Declare_Block,
+      Cat_Return_Block,
+      Cat_Simple_Block);
    --  The categories to consider for block highlighting
 
    type Category_Array_Access is access all Category_Array;
