@@ -18,56 +18,25 @@
 
 with Ada.Command_Line;
 with Ada.Strings.Fixed;
-with Ada.Text_IO;                      use Ada.Text_IO;
+with Ada.Text_IO;       use Ada.Text_IO;
 
-with GNAT.Command_Line;                use GNAT.Command_Line;
+with GNAT.Command_Line; use GNAT.Command_Line;
 with GNAT.OS_Lib;
-with GNAT.Strings;                     use GNAT.Strings;
+with GNAT.Strings;      use GNAT.Strings;
 
-with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
-with GNATCOLL.Traces;                  use GNATCOLL.Traces;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Build_Command_Utils;
-with Build_Configurations;             use Build_Configurations;
-with Commands.Builder.Scripts;
-with Commands.Builder.Build_Output_Collectors;
-with Toolchains;
-
-with GPS.CLI_Kernels;
-with GPS.CLI_Scripts;
-with GPS.CLI_Target_Loaders;
-with GPS.CLI_Toolchain_Managers;       use GPS.CLI_Toolchain_Managers;
-with GPS.Core_Kernels;
-with GPS.Python_Core;
-with GPS.Scripts.Entities;
-with GPS.Scripts.File_Locations;
-with GPS.Scripts.Files;
-with GPS.Scripts.Projects;
-with GPS.Tools_Output;                 use GPS.Tools_Output;
+with GPS.CLI_Utils;     use GPS.CLI_Utils;
+with GPS.CLI_Kernels;   use GPS.CLI_Kernels;
 
 procedure GPS.CLI is
-   procedure Parse_Command_Line (Switch, Parameter, Section : String);
-   --  Handles some switches from the command line. Other switches are handled
-   --  directly by Getopt and will set the corresponding local variables.
-
    procedure Execute_Batch
      (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
       Lang_Name   : String;
       Script_Name : String);
    --  Execute a batch command file Script_Name in Lang_Name language.
-
-   procedure Register_Classes
-     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record);
-   --  Register GPS script's classes
-
-   procedure Register_Output_Parsers;
-   --  Register tool output parsers.
-
-   Output_Collector : access Output_Parser_Fabric'Class;
-
-   Registry : Build_Config_Registry_Access;
-   Builder  : aliased Build_Command_Utils.Builder_Context_Record;
 
    -------------------
    -- Execute_Batch --
@@ -96,68 +65,11 @@ procedure GPS.CLI is
       end if;
    end Execute_Batch;
 
-   ----------------------
-   -- Register_Classes --
-   ----------------------
-
-   procedure Register_Classes
-     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record)
- is
-   begin
-      GPS.Scripts.Entities.Register_Commands (Kernel);
-      GPS.Scripts.File_Locations.Register_Commands (Kernel);
-      GPS.Scripts.Files.Register_Commands (Kernel);
-      GPS.Scripts.Projects.Register_Commands (Kernel);
-      Commands.Builder.Scripts.Register_Commands (Kernel);
-      GPS.CLI_Scripts.Register_Commands (Kernel);
-   end Register_Classes;
-
-   -----------------------------
-   -- Register_Output_Parsers --
-   -----------------------------
-
-   procedure Register_Output_Parsers is
-      use Commands.Builder;
-   begin
-      Output_Collector := new Build_Output_Collectors.Output_Parser_Fabric;
-      Register_Output_Parser (Output_Collector, "output_collector");
-      Build_Output_Collectors.Output_Parser_Fabric (Output_Collector.all).Set
-        (Builder'Unchecked_Access);
-   end Register_Output_Parsers;
-
    Cmdline               : Command_Line_Configuration;
    Project_Name          : aliased GNAT.Strings.String_Access;
    Script_Name           : aliased GNAT.Strings.String_Access;
    Kernel                : constant GPS.CLI_Kernels.CLI_Kernel :=
      new GPS.CLI_Kernels.CLI_Kernel_Record;
-   GNAT_Version          : GNAT.Strings.String_Access;
-   Target_Loader         : constant GPS.Core_Kernels.Abstract_Module :=
-     new GPS.CLI_Target_Loaders.Target_Loader (Kernel);
-   Toolchain_Manager     : constant Toolchains.Toolchain_Manager :=
-     new Toolchain_Manager_Record (Kernel);
-
-   ------------------------
-   -- Parse_Command_Line --
-   ------------------------
-
-   procedure Parse_Command_Line (Switch, Parameter, Section : String) is
-      pragma Unreferenced (Section);
-      Equal : Natural;
-   begin
-      if Switch = "-X" then
-         Equal := Ada.Strings.Fixed.Index (Parameter, "=");
-         if Equal /= 0 then
-            Kernel.Registry.Environment.Change_Environment
-              (Name => Parameter (Parameter'First .. Equal - 1),
-               Value => Parameter (Equal + 1 .. Parameter'Last));
-         else
-            Put_Line
-              ("Ignoring switch -X, missing name or/and value for: " &
-                 Switch & Parameter);
-         end if;
-      end if;
-
-   end Parse_Command_Line;
 
 begin
    --  Retrieve log configuration
@@ -186,52 +98,40 @@ begin
       Help         => "Specify an external reference in the project");
 
    --  Initialize context
-   GPS.Core_Kernels.Initialize (Kernel);
-   GPS.Python_Core.Register_Python (Kernel);
-   Registry := Create;
-   Builder.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel), Registry);
-   Register_Classes (Kernel);
-   Register_Output_Parsers;
-   Kernel.Register_Module (Target_Loader);
-   Kernel.Set_Toolchains_Manager (Toolchain_Manager);
+   GPS.CLI_Utils.Create_Kernel_Context (Kernel);
 
    --  Retrieve command line option
    begin
-      Getopt (Cmdline, Parse_Command_Line'Unrestricted_Access);
+      GPS.CLI_Utils.Parse_Command_Line (Cmdline, Kernel);
    exception
       when GNAT.Command_Line.Exit_From_Command_Line =>
          --  User provided -h or --help option. Just return
          return;
    end;
 
-   if Project_Name.all = "" then
-      Free (Project_Name);
-      Project_Name := new String'(GNAT.Command_Line.Get_Argument);
-
-      if Project_Name.all = "" then
+   --  Check project file path passed in command line
+   declare
+      Project_File : Virtual_File;
+   begin
+      --  Exit with message if no project file path found at all
+      if not CLI_Utils.Is_Project_Path_Specified (Project_Name) then
          Put_Line ("No project file specified");
          Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
       end if;
-   end if;
 
-   declare
-      Path : Virtual_File := Create (+Project_Name.all);
-   begin
-      if not Path.Is_Regular_File then
-         Path := Create (+Project_Name.all & ".gpr");
+      Project_File := CLI_Utils.Get_Project_File_From_Path (Project_Name);
 
-         if not Path.Is_Regular_File then
-            Put_Line ("No such file: " & Project_Name.all);
-            Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
-            return;
-         end if;
+      --  Exit with message if path is not valid
+      if Project_File = No_File then
+         Put_Line ("No such file: " & Project_Name.all);
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+         return;
       end if;
 
-      Kernel.Registry.Environment.Set_Path_From_Gnatls
-         ("gnatls", GNAT_Version);
+      --  Load project
       Kernel.Registry.Tree.Load
-        (Root_Project_Path => Path,
+        (Root_Project_Path => Project_File,
          Env => Kernel.Registry.Environment);
    end;
 
@@ -252,6 +152,6 @@ begin
    end if;
 
    --  Destroy all
-   Free (Registry);
-   GPS.Core_Kernels.Destroy (Kernel);
+   GPS.CLI_Utils.Destroy_Kernel_Context (Kernel);
+
 end GPS.CLI;
