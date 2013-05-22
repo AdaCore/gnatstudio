@@ -18,8 +18,12 @@
 with GPS.CLI_Kernels;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNAT.Command_Line; use GNAT.Command_Line;
-with GNAT.Strings; use GNAT.Strings;
+with GNAT.Strings;      use GNAT.Strings;
 
+--  This package gathered utility procedures and functions related to:
+--     - the initialisation of core kernels
+--     - and process of basics command line arguments such as
+--       -P (project file) and -X (scenarios variables)
 package GPS.CLI_Utils is
 
    procedure Create_Kernel_Context
@@ -37,7 +41,7 @@ package GPS.CLI_Utils is
    procedure Parse_Command_Line
      (Command_Line : Command_Line_Configuration;
       Kernel       : access GPS.CLI_Kernels.CLI_Kernel_Record);
-   --  Calls GetOpt in order to manage -X switch for scenario variable.
+   --  Handles -X switch for scenario variable.
    --  Change directly the environment of the Kernel passed as a parameter,
    --  with scenario variable retrieve from command line.
 
@@ -48,7 +52,7 @@ package GPS.CLI_Utils is
    --  line that is not a switch.
    --
    --  Return: False if no project file has been specified,
-   --          True is a non empty string has been found as the project file
+   --          True if a non empty string has been found as the project file
 
    function Get_Project_File_From_Path
      (Path : GNAT.Strings.String_Access) return Virtual_File;

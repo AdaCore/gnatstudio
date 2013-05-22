@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with GPS.CLI_Target_Loaders;
 with GPS.CLI_Scripts;
 
@@ -185,12 +186,6 @@ package body GPS.CLI_Utils is
       File           : Virtual_File;
       File_Extension : constant String := ".gpr";
    begin
-      --  if GNATCOLL.Utils.Ends_With (Path.all, File_Extension) then
-      --    File := Create (+Path.all);
-      --        else
-      --           File := Create (+Path.all & ".gpr");
-      --        end if;
-
       --  Add ".gpr" extension if not mentionned
       File := Create (+(if GNATCOLL.Utils.Ends_With (Path.all, File_Extension)
                       then Path.all
