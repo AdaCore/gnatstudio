@@ -43,9 +43,13 @@ package GPS.Kernel.Search.Filenames is
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
        File   : GNATCOLL.VFS.Virtual_File;
        Line, Column : Natural := 0;
-       Score  : Natural := 100)
+       Score  : Natural := 100;
+       Short  : String := "";
+       Long   : String := "")
       return GPS.Search.Search_Result_Access;
    --  Build a new result
+   --  Short is the contents of the result's short string, If unspecified,
+   --  it will be based on the file's base name.
 
 private
    type Filenames_Search_Provider is new Kernel_Search_Provider with record
@@ -53,6 +57,7 @@ private
       Pattern_Needs_Free : Boolean := False;
 
       Line, Column : Natural := 0;  --  from pattern
+      Match_Directory : Boolean;  --  whether to match directory part
       Files   : GNATCOLL.VFS.File_Array_Access;
       Index   : Natural;  --  last file tested
 

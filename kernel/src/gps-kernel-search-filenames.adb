@@ -15,8 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Regpat;               use GNAT.Regpat;
@@ -46,12 +48,16 @@ package body GPS.Kernel.Search.Filenames is
    is
       pragma Unreferenced (Self);
    begin
-      return "Search amongst the source files of the project or the run time"
+      return -("Search amongst the source files of the project or the run time"
          & " files of the compiler." & ASCII.LF
          & "The following syntax is supported to open a file at a specific"
          & " location:" & ASCII.LF
          & " <b>filename:line:column</b>" & ASCII.LF
-         & "where the line and column are optional.";
+         & "where the line and column are optional." & ASCII.LF
+         & "Possible completions are found by testing the filename pattern"
+         & " with the base names of the source files, unless filename"
+         & " contains a '/' or '\', in which case the full name of the"
+         & " source file is used.");
    end Documentation;
 
    -----------------
@@ -82,6 +88,9 @@ package body GPS.Kernel.Search.Filenames is
       Self.Runtime_Index := Self.Runtime'First - 1;
       Self.Pattern := Search_Pattern_Access (Pattern);
       Self.Pattern_Needs_Free := False;
+      Self.Match_Directory :=
+         Ada.Strings.Fixed.Index (Text, "/") >= Text'First or else
+         Ada.Strings.Fixed.Index (Text, "\") >= Text'First;
 
       --  Search for "filename:line:column" pattern
       Match (P, Text, M);
@@ -109,14 +118,27 @@ package body GPS.Kernel.Search.Filenames is
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
        File   : GNATCOLL.VFS.Virtual_File;
        Line, Column : Natural := 0;
-       Score  : Natural := 100)
-      return GPS.Search.Search_Result_Access is
+       Score  : Natural := 100;
+       Short  : String := "";
+       Long   : String := "")
+      return GPS.Search.Search_Result_Access
+   is
+      L : constant GNAT.Strings.String_Access := new String'
+         ((if Long = "" then File.Display_Full_Name else Long));
+      S : GNAT.Strings.String_Access;
    begin
+      if Short = "" then
+         S := new String'(+File.Base_Name);
+      else
+         S := new String'(Short);
+      end if;
+
       return new Filenames_Search_Result'
         (Kernel => Kernel_Handle (Kernel),
          Score  => Score,
-         Short  => new String'(+File.Base_Name),
-         Long   => new String'(File.Display_Full_Name),
+         Short  => S,
+         Long   => L,
+         Id     => L,
          Line   => Line,
          Column => Column,
          File   => File);
@@ -131,39 +153,51 @@ package body GPS.Kernel.Search.Filenames is
       Result   : out Search_Result_Access;
       Has_Next : out Boolean)
    is
-      F : Virtual_File;
-      C : Search_Context;
+      procedure Check (F : Virtual_File);
+      --  Sets Result to non-null if F matches
+
+      procedure Check (F : Virtual_File) is
+         Text : constant String :=
+            (if Self.Match_Directory then +F.Full_Name.all else +F.Base_Name);
+         C : constant Search_Context := Self.Pattern.Start (Text);
+      begin
+         if C /= GPS.Search.No_Match then
+            if Self.Match_Directory then
+               Result := Build_Filenames_Result
+                  (Self.Kernel, F, Line => Self.Line,
+                   Column => Self.Column, Score => C.Score,
+                   Long => Self.Pattern.Highlight_Match
+                      (Buffer => Text, Context => C));
+            else
+               Result := Build_Filenames_Result
+                  (Self.Kernel, F, Line => Self.Line,
+                   Column => Self.Column, Score => C.Score,
+                   Short => Self.Pattern.Highlight_Match
+                      (Buffer => Text, Context => C));
+            end if;
+            Has_Next := Self.Runtime_Index < Self.Runtime'Last;
+         end if;
+      end Check;
+
    begin
+      Has_Next := False;
+      Result := null;
+
       while Self.Index < Self.Files'Last loop
          Self.Index := Self.Index + 1;
-         F := Self.Files (Self.Index);
-
-         C := Self.Pattern.Start (+F.Base_Name);
-         if C /= GPS.Search.No_Match then
-            Result := Build_Filenames_Result
-               (Self.Kernel, F, Line => Self.Line,
-                Column => Self.Column, Score => C.Score);
-            Has_Next := True; --  will need to test runtime files
+         Check (Self.Files (Self.Index));
+         if Result /= null then
             return;
          end if;
       end loop;
 
       while Self.Runtime_Index < Self.Runtime'Last loop
          Self.Runtime_Index := Self.Runtime_Index + 1;
-         F := Self.Runtime (Self.Runtime_Index);
-
-         C := Self.Pattern.Start (+F.Base_Name);
-         if C /= GPS.Search.No_Match then
-            Result := Build_Filenames_Result
-               (Self.Kernel, F, Line => Self.Line,
-                Column => Self.Column, Score => C.Score);
-            Has_Next := Self.Runtime_Index < Self.Runtime'Last;
+         Check (Self.Runtime (Self.Runtime_Index));
+         if Result /= null then
             return;
          end if;
       end loop;
-
-      Has_Next := False;
-      Result := null;
    end Next;
 
    -------------

@@ -245,8 +245,12 @@ package body Gtkada.Entry_Completion is
 
       if Result /= null then
          Self.Hist := null;  --  do not free
-         Self.Kernel.Add_To_History
-            (Self.History_Key.all, Result.Short.all);
+
+         if Result.Id /= null then
+            Self.Kernel.Add_To_History
+               (Self.History_Key.all, Result.Id.all);
+         end if;
+
          Result.Execute (Give_Focus => True);
 
          if Result_Need_Free then
@@ -344,7 +348,7 @@ package body Gtkada.Entry_Completion is
          M := Integer'Min (Self.Hist'First + Max_History, Self.Hist'Last);
          for H in Self.Hist'First .. M loop
             if Self.Hist (H) /= null
-               and then Result.Short.all = Self.Hist (H).all
+               and then Result.Id.all = Self.Hist (H).all
             then
                Score := Score + Gint ((Max_History + 1 - H) * 20);
                exit;

@@ -277,12 +277,34 @@ package body GPS.Search is
       end if;
    end Next;
 
+   ---------------------
+   -- Highlight_Match --
+   ---------------------
+
+   function Highlight_Match
+      (Self    : Search_Pattern;
+       Buffer  : String;
+       Context : Search_Context) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return Buffer (Context.Buffer_Start .. Context.Start - 1)
+         & "<b>"
+         & Buffer (Context.Start .. Context.Finish)
+         & "</b>"
+         & Buffer (Context.Finish + 1 .. Context.Buffer_End);
+   end Highlight_Match;
+
    ----------
    -- Free --
    ----------
 
    procedure Free (Self : in out Search_Result) is
    begin
+      if Self.Id /= Self.Short and then Self.Id /= Self.Long then
+         Free (Self.Id);
+      end if;
+
       Free (Self.Short);
       Free (Self.Long);
    end Free;

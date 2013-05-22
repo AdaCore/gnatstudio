@@ -131,6 +131,13 @@ package GPS.Search is
    --
    --  Context is set to No_Match if the Buffer did not match.
 
+   function Highlight_Match
+      (Self      : Search_Pattern;
+       Buffer    : String;
+       Context   : Search_Context) return String;
+   --  Return a copy of Buffer where the substring or characters matching
+   --  Context are highlighted.
+
    ------------
    -- Result --
    ------------
@@ -139,6 +146,7 @@ package GPS.Search is
       Score : Natural := 100;
       Short : GNAT.Strings.String_Access;
       Long  : GNAT.Strings.String_Access;
+      Id    : GNAT.Strings.String_Access;
    end record;
    type Search_Result_Access is access all Search_Result'Class;
    --  This type describes a match, as would be displayed in a dialog or a
@@ -155,6 +163,14 @@ package GPS.Search is
    --
    --  Short and Long can embed simple pango markup if they need to highlight
    --  part of the string in a gtk+ dialog.
+   --
+   --  Id is a unique id for the search result, so that the next time the
+   --  completion entries is brought up, it can be prefilled with this value.
+   --  It is also used to recognize when the proposal was previously selected
+   --  and then increase its score. It can point to the same value as Short
+   --  or Long, this will not result in double-deallocation.
+   --  If unset, the completion entry will not add this proposal to its
+   --  history.
    --
    --  The lifetime of a search_result might be much longer than that of the
    --  search_provider that created it. As such, the result should not embed
