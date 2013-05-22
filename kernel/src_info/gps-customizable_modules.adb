@@ -27,10 +27,10 @@ package body GPS.Customizable_Modules is
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
-      use type Abstract_Module_List.List_Node;
+      use Abstract_Module_List;
       List    : constant Abstract_Module_List.List :=
         Kernel.Module_List (Customizable_Module_Record'Tag);
-      Current : Abstract_Module_List.List_Node;
+      Current : Abstract_Module_List.Cursor;
       Tmp     : Node_Ptr := Node;
       Tmp2    : Node_Ptr;
 
@@ -50,9 +50,9 @@ package body GPS.Customizable_Modules is
          Tmp.Next := null;
 
          Current := Abstract_Module_List.First (List);
-         while Current /= Abstract_Module_List.Null_Node loop
+         while Has_Element (Current) loop
             Customizable_Module_Record'Class
-              (Abstract_Module_List.Data (Current).all).Customize
+              (Abstract_Module_List.Element (Current).all).Customize
                 (File, Tmp, Level);
 
             Current := Abstract_Module_List.Next (Current);

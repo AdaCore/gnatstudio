@@ -152,7 +152,7 @@ package body GPS.Core_Kernels is
       if Is_Empty (Sequence) then
          return null;
       else
-         return Data (Last (Sequence));
+         return Sequence.Last_Element;
       end if;
    end Module;
 
@@ -169,7 +169,7 @@ package body GPS.Core_Kernels is
       if Module_Maps.Has_Element (Pos) then
          return Module_Maps.Element (Pos);
       else
-         return Abstract_Module_List.Null_List;
+         return Abstract_Module_List.Empty_List;
       end if;
    end Module_List;
 
