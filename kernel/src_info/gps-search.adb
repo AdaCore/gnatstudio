@@ -420,9 +420,12 @@ package body GPS.Search is
             BM := new GNATCOLL.Boyer_Moore.Pattern;
             Compile (BM.all, Pattern, Case_Sensitive => Case_Sensitive);
             return new Full_Text_Search'
-              (Pattern => BM,
-               Text    => new String'(Pattern),
-               Length  => Pattern'Length);
+              (Pattern        => BM,
+               Text           => new String'(Pattern),
+               Case_Sensitive => Case_Sensitive,
+               Whole_Word     => Whole_Word,
+               Kind           => Kind,
+               Length         => Pattern'Length);
 
          when Regexp | Fuzzy =>
             if not Case_Sensitive then
@@ -443,11 +446,39 @@ package body GPS.Search is
             end if;
 
             return new Regexp_Search'
-              (Pattern     => Re,
-               Text        => new String'(Pattern),
-               Matches => new Match_Array (0 .. Paren_Count (Re.all)));
+              (Pattern        => Re,
+               Text           => new String'(Pattern),
+               Case_Sensitive => Case_Sensitive,
+               Whole_Word     => Whole_Word,
+               Kind           => Kind,
+               Matches        => new Match_Array (0 .. Paren_Count (Re.all)));
       end case;
    end Build;
+
+   -----------
+   -- Build --
+   -----------
+
+   function Build
+      (Pattern : not null access Search_Pattern'Class;
+       Text    : String) return Search_Pattern_Access is
+   begin
+      return Build
+         (Pattern        => Text,
+          Case_Sensitive => Pattern.Case_Sensitive,
+          Whole_Word     => Pattern.Whole_Word,
+          Kind           => Pattern.Kind);
+   end Build;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+      (Pattern : not null access Search_Pattern'Class) return String is
+   begin
+      return Pattern.Text.all;
+   end Get_Text;
 
    ----------
    -- Free --

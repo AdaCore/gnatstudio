@@ -26,6 +26,8 @@ package GPS.Kernel.Search.Filenames is
      with private;
 
    overriding procedure Free (Self : in out Filenames_Search_Provider);
+   overriding function Documentation
+     (Self    : not null access Filenames_Search_Provider) return String;
    overriding procedure Set_Pattern
      (Self    : not null access Filenames_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
@@ -40,19 +42,24 @@ package GPS.Kernel.Search.Filenames is
    function Build_Filenames_Result
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
        File   : GNATCOLL.VFS.Virtual_File;
+       Line, Column : Natural := 0;
        Score  : Natural := 100)
       return GPS.Search.Search_Result_Access;
    --  Build a new result
 
 private
    type Filenames_Search_Provider is new Kernel_Search_Provider with record
-      Pattern : access GPS.Search.Search_Pattern'Class; --  don't free
+      Pattern : GPS.Search.Search_Pattern_Access;
+      Pattern_Needs_Free : Boolean := False;
+
+      Line, Column : Natural := 0;  --  from pattern
       Files   : GNATCOLL.VFS.File_Array_Access;
       Index   : Natural;  --  last file tested
    end record;
 
    type Filenames_Search_Result is new Kernel_Search_Result with record
       File : GNATCOLL.VFS.Virtual_File;
+      Line, Column : Natural := 0;
    end record;
 
    overriding procedure Execute

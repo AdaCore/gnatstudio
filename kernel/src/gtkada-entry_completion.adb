@@ -149,8 +149,9 @@ package body Gtkada.Entry_Completion is
       Gtk_New (Self.GEntry);
       Self.GEntry.Set_Activates_Default (False);
       Self.GEntry.On_Activate (On_Entry_Activate'Access, Self);
-      Self.GEntry.Set_Placeholder_Text ("filename");
+      Self.GEntry.Set_Placeholder_Text ("search");
       Self.GEntry.Set_Width_Chars (25);
+      Self.GEntry.Set_Tooltip_Markup (Completion.Documentation);
       Self.Pack_Start (Self.GEntry, Expand => False);
 
       Gtk_New (Scrolled);
@@ -358,12 +359,11 @@ package body Gtkada.Entry_Completion is
       if Result.Long /= null then
          Self.Completions.Set
             (Iter, Column_Label,
-             "<big><b>" & Result.Short.all & "</b></big>"
-             & ASCII.LF & Result.Long.all);
+             Result.Short.all
+             & ASCII.LF & "<small>" & Result.Long.all & "</small>");
       else
          Self.Completions.Set
-            (Iter, Column_Label,
-             "<big><b>" & Result.Short.all & "</b></big>");
+            (Iter, Column_Label, Result.Short.all);
       end if;
 
       Init (Val, GType_Pointer);

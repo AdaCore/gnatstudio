@@ -87,6 +87,18 @@ package GPS.Search is
    --  It can be shared among multiple search providers, since it does not
    --  embed any context.
 
+   function Build
+      (Pattern    : not null access Search_Pattern'Class;
+       Text       : String) return Search_Pattern_Access;
+   --  Allocates a new pattern, preserving the attributes of pattern.
+   --  In particular, this can be used to detect particular values in the
+   --  pattern, like "filename:line" where only the filename part should
+   --  be searched.
+
+   function Get_Text
+      (Pattern    : not null access Search_Pattern'Class) return String;
+   --  Return the text searched by the user.
+
    function Start
      (Self        : Search_Pattern;
       Buffer      : String;
@@ -213,6 +225,11 @@ package GPS.Search is
    procedure Free (Self : in out Search_Provider_Access);
    --  Free the memory used by Self.
 
+   function Documentation
+      (Self : not null access Search_Provider) return String is ("");
+   --  The documentation for this provider. This explains what pattern is
+   --  supported, where the search occurs,...
+
    procedure Set_Pattern
      (Self    : not null access Search_Provider;
       Pattern : not null access Search_Pattern'Class;
@@ -301,7 +318,10 @@ package GPS.Search is
 private
 
    type Search_Pattern is abstract tagged record
-      Text : GNAT.Strings.String_Access;
+      Text           : GNAT.Strings.String_Access;
+      Case_Sensitive : Boolean := False;
+      Whole_Word     : Boolean := False;
+      Kind           : Search_Kind := Full_Text;
    end record;
 
    No_Match : constant Search_Context :=
