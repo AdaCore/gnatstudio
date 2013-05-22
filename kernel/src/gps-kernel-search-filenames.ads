@@ -55,6 +55,9 @@ private
       Line, Column : Natural := 0;  --  from pattern
       Files   : GNATCOLL.VFS.File_Array_Access;
       Index   : Natural;  --  last file tested
+
+      Runtime : GNATCOLL.VFS.File_Array_Access;
+      Runtime_Index : Natural;  --  last runtime file tested
    end record;
 
    type Filenames_Search_Result is new Kernel_Search_Result with record

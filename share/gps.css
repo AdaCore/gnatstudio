@@ -55,26 +55,8 @@ GtkEntry.search {
   border-bottom:0px;
 }
 
-.completion-list .button {
-   padding: 1px 1px 1px 4px;
-   border-style: none;
-   background-color: white;
-   background-image: none;
-   border-style: none;
-}
-.completion-list .button:hover {
-   background-color: shade(white, 0.95);
-}
-.completion-list .button:focus {
-   background-color: shade(white, 0.9);
-}
-.completion-short {
-   color: green;
-   font-size: 15px;
-   font-weight: bold;
-}
-.completion-long {
-   color: gray;
+.completion-list {
+   /* The list of possible completions, in a completion entry */
 }
 
 /*

@@ -416,7 +416,7 @@ package body Gtkada.Entry_Completion is
             or else Iter = Self.Completions.Get_Iter_First
          then
             Iter := Self.Completions.Nth_Child
-               (Null_Iter, Self.Completions.N_Children);
+               (Null_Iter, Self.Completions.N_Children - 1);
          else
             Self.Completions.Previous (Iter);
          end if;

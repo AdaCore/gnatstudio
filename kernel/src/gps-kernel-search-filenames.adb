@@ -30,6 +30,7 @@ package body GPS.Kernel.Search.Filenames is
    overriding procedure Free (Self : in out Filenames_Search_Provider) is
    begin
       Unchecked_Free (Self.Files);
+      Unchecked_Free (Self.Runtime);
 
       if Self.Pattern_Needs_Free then
          Free (Self.Pattern);
@@ -68,13 +69,17 @@ package body GPS.Kernel.Search.Filenames is
       M    : Match_Array (0 .. 3);
    begin
       if Self.Files = null then
-         --  ??? Should include runtime files
-         --  Get_Registry (Kernel).Environmnet.Predefined_Source_Files
          Self.Files :=
-           Get_Project (Self.Kernel).Source_Files (Recursive => True);
+            Get_Project (Self.Kernel).Source_Files (Recursive => True);
+      end if;
+
+      if Self.Runtime = null then
+         Self.Runtime := new File_Array'
+            (Get_Registry (Self.Kernel).Environment.Predefined_Source_Files);
       end if;
 
       Self.Index := Self.Files'First - 1;
+      Self.Runtime_Index := Self.Runtime'First - 1;
       Self.Pattern := Search_Pattern_Access (Pattern);
       Self.Pattern_Needs_Free := False;
 
@@ -138,7 +143,21 @@ package body GPS.Kernel.Search.Filenames is
             Result := Build_Filenames_Result
                (Self.Kernel, F, Line => Self.Line,
                 Column => Self.Column, Score => C.Score);
-            Has_Next := Self.Index < Self.Files'Last;
+            Has_Next := True; --  will need to test runtime files
+            return;
+         end if;
+      end loop;
+
+      while Self.Runtime_Index < Self.Runtime'Last loop
+         Self.Runtime_Index := Self.Runtime_Index + 1;
+         F := Self.Runtime (Self.Runtime_Index);
+
+         C := Self.Pattern.Start (+F.Base_Name);
+         if C /= GPS.Search.No_Match then
+            Result := Build_Filenames_Result
+               (Self.Kernel, F, Line => Self.Line,
+                Column => Self.Column, Score => C.Score);
+            Has_Next := Self.Runtime_Index < Self.Runtime'Last;
             return;
          end if;
       end loop;
