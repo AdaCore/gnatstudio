@@ -84,8 +84,8 @@ package body GPS.CLI_Utils is
       use Commands.Builder;
       GNAT_Version : GNAT.Strings.String_Access;
       Registry              : Build_Config_Registry_Access;
-      Builder               : aliased
-        Build_Command_Utils.Builder_Context_Record;
+      Builder               : constant Build_Command_Utils.Builder_Context :=
+        new Build_Command_Utils.Builder_Context_Record;
       Target_Loader         : constant GPS.Core_Kernels.Abstract_Module :=
         new GPS.CLI_Target_Loaders.Target_Loader (Kernel);
 
@@ -98,7 +98,7 @@ package body GPS.CLI_Utils is
 
       --  Register
       Register_Classes (Kernel);
-      Register_Output_Parsers (Builder);
+      Register_Output_Parsers (Builder.all);
       Kernel.Register_Module (Target_Loader);
 
       --  Set GNAT version
