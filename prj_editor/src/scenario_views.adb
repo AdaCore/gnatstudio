@@ -64,7 +64,6 @@ with GPS.Intl;              use GPS.Intl;
 with GUI_Utils;             use GUI_Utils;
 with Traces;                use Traces;
 with XML_Utils;             use XML_Utils;
-with Osint;
 
 package body Scenario_Views is
 
@@ -585,10 +584,8 @@ package body Scenario_Views is
                Row := Guint (J - Scenar_Var'First) + 1;
 
                declare
-                  Name : String := External_Name (Scenar_Var (J));
+                  Name : constant String := External_Name (Scenar_Var (J));
                begin
-                  Osint.Canonical_Case_Env_Var_Name (Name);
-
                   Model.Set (Iter, 0, Name);
                   Model.Set (Iter, 1, Value (Scenar_Var (J)));
                   Model.Set (Iter, 3, True);  --  editable
