@@ -527,7 +527,7 @@ package body Gtkada.Entry_Completion is
       S.Pattern := GPS.Search.Build
         (Pattern        => Text,
          Case_Sensitive => S.Case_Sensitive,
-         Kind           => Full_Text);  --  Fuzzy
+         Kind           => Fuzzy);
       S.Completion.Set_Pattern (S.Pattern);
 
       if Text = "" then

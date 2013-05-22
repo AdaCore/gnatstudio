@@ -37,6 +37,10 @@ package body GPS.Search is
       Matches : Match_Array_Access;
    end record;
 
+   type Fuzzy_Search is new Search_Pattern with record
+      null;
+   end record;
+
    overriding function Start
      (Self        : Full_Text_Search;
       Buffer      : String;
@@ -55,6 +59,15 @@ package body GPS.Search is
       Ref_Line    : Natural := 1;
       Ref_Column  : Character_Offset_Type := 1;
       Ref_Visible_Column : Visible_Column_Type := -1) return Search_Context;
+   overriding function Start
+     (Self        : Fuzzy_Search;
+      Buffer      : String;
+      Start_Index : Integer := -1;
+      End_Index   : Integer := -1;
+      Ref_Index   : Integer := -1;
+      Ref_Line    : Natural := 1;
+      Ref_Column  : Character_Offset_Type := 1;
+      Ref_Visible_Column : Visible_Column_Type := -1) return Search_Context;
    overriding procedure Next
      (Self    : Full_Text_Search;
       Buffer  : String;
@@ -63,8 +76,16 @@ package body GPS.Search is
      (Self    : Regexp_Search;
       Buffer  : String;
       Context : in out Search_Context);
+   overriding procedure Next
+     (Self    : Fuzzy_Search;
+      Buffer  : String;
+      Context : in out Search_Context);
    overriding procedure Free (Self : in out Full_Text_Search);
    overriding procedure Free (Self : in out Regexp_Search);
+   overriding function Highlight_Match
+      (Self    : Fuzzy_Search;
+       Buffer  : String;
+       Context : Search_Context) return String;
 
    procedure Update_Location
      (Context : in out Search_Context;
@@ -228,6 +249,136 @@ package body GPS.Search is
       Update_Location (Context, Buffer);
       return Context;
    end Start;
+
+   -----------
+   -- Start --
+   -----------
+
+   overriding function Start
+     (Self        : Fuzzy_Search;
+      Buffer      : String;
+      Start_Index : Integer := -1;
+      End_Index   : Integer := -1;
+      Ref_Index   : Integer := -1;
+      Ref_Line    : Natural := 1;
+      Ref_Column  : Character_Offset_Type := 1;
+      Ref_Visible_Column : Visible_Column_Type := -1) return Search_Context
+   is
+      S : constant Integer :=
+        (if Start_Index = -1 then Buffer'First else Start_Index);
+      F : constant Integer :=
+        (if End_Index = -1 then Buffer'Last else End_Index);
+      R : constant Integer :=
+        (if Ref_Index = -1 then Buffer'First else Ref_Index);
+      Start : Natural;
+      Score : Natural;
+
+      T : Natural := Self.Text'First;
+      Context : Search_Context;
+
+   begin
+      for B in S .. F loop
+         --  ??? Missing case sensitivity
+         if Buffer (B) = Self.Text (T) then
+            if T = Self.Text'First then
+               Start := B;
+            end if;
+
+            if T = Self.Text'Last then
+               --  The score should be higher when the characters are closer
+               --  together
+               Score := 100 - (B - Start);
+
+               Context := Search_Context'
+                 (Start             => Start,
+                  Finish            => B,
+                  Line_Start        => 1,
+                  Line_End          => 1,
+                  Col_Start         => 1,
+                  Col_End           => 1,
+                  Col_Visible_Start => 1,
+                  Col_Visible_End   => 1,
+                  Score             => Score,
+                  Buffer_Start      => S,
+                  Buffer_End        => F,
+                  Ref_Index         => R,
+                  Ref_Line          => Ref_Line,
+                  Ref_Column        => Ref_Column,
+                  Ref_Visible_Column =>
+                    (if Ref_Visible_Column = -1
+                     then Visible_Column_Type (Ref_Column)
+                     else Ref_Visible_Column));
+
+               Update_Location (Context, Buffer);
+               return Context;
+            end if;
+
+            T := T + 1;
+         end if;
+      end loop;
+
+      return GPS.Search.No_Match;
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Self    : Fuzzy_Search;
+      Buffer  : String;
+      Context : in out Search_Context)
+   is
+      T : Natural := Self.Text'First;
+   begin
+      for B in Context.Finish + 1 .. Context.Buffer_End loop
+         --  ??? Missing case sensitivity
+         if Buffer (B) = Self.Text (T) then
+            if T = Self.Text'First then
+               Context.Start := B;
+            end if;
+
+            if T = Self.Text'Last then
+               Context.Score := 100 - (B - Context.Start);
+               Context.Finish := B;
+               Update_Location (Context, Buffer);
+               return;
+            end if;
+
+            T := T + 1;
+         end if;
+      end loop;
+      Context := No_Match;
+   end Next;
+
+   ---------------------
+   -- Highlight_Match --
+   ---------------------
+
+   overriding function Highlight_Match
+      (Self    : Fuzzy_Search;
+       Buffer  : String;
+       Context : Search_Context) return String
+   is
+      T : Natural := Self.Text'First;
+      Result : Unbounded_String;
+   begin
+      Result := To_Unbounded_String
+         (Buffer (Buffer'First .. Context.Start - 1));
+
+      for B in Context.Start .. Context.Finish loop
+         --   ??? Missing case sensitivity
+         if T <= Self.Text'Last and then Buffer (B) = Self.Text (T) then
+            Append (Result, "<b>" & Buffer (B) & "</b>");
+            T := T + 1;
+         else
+            Append (Result, Buffer (B));
+         end if;
+      end loop;
+
+      Append (Result, Buffer (Context.Finish + 1 .. Buffer'Last));
+      return To_String (Result);
+   end Highlight_Match;
 
    ----------
    -- Next --
@@ -419,19 +570,6 @@ package body GPS.Search is
       Kind           : Search_Kind := Full_Text)
       return Search_Pattern_Access
    is
-      function Fuzzify return String;
-      --  Return a fuzzy regexp matcher for pattern
-
-      function Fuzzify return String is
-         Re : Unbounded_String;
-      begin
-         for P in Pattern'Range loop
-            Append (Re, GNAT.Regpat.Quote ("" & Pattern (P)));
-            Append (Re, ".*");
-         end loop;
-         return To_String (Re);
-      end Fuzzify;
-
       BM    : Boyer_Moore_Pattern_Access;
       Re    : GNAT.Expect.Pattern_Matcher_Access;
       Flags : Regexp_Flags := Multiple_Lines;
@@ -449,22 +587,24 @@ package body GPS.Search is
                Kind           => Kind,
                Length         => Pattern'Length);
 
-         when Regexp | Fuzzy =>
+         when Fuzzy =>
+            return new Fuzzy_Search'
+              (Text           => new String'(Pattern),
+               Case_Sensitive => Case_Sensitive,
+               Whole_Word     => Whole_Word,
+               Kind           => Kind);
+
+         when Regexp =>
             if not Case_Sensitive then
                Flags := Flags or Case_Insensitive;
             end if;
 
-            if Kind = Fuzzy then
+            if Whole_Word then
                Re := new GNAT.Regpat.Pattern_Matcher'
-                 (Compile (Fuzzify, Flags));
+                 (Compile (WD & Pattern & WD, Flags));
             else
-               if Whole_Word then
-                  Re := new GNAT.Regpat.Pattern_Matcher'
-                    (Compile (WD & Pattern & WD, Flags));
-               else
-                  Re := new GNAT.Regpat.Pattern_Matcher'
-                    (Compile (Pattern, Flags));
-               end if;
+               Re := new GNAT.Regpat.Pattern_Matcher'
+                 (Compile (Pattern, Flags));
             end if;
 
             return new Regexp_Search'
