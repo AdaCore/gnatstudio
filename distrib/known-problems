@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- M521-020: GPS: Unwanted scrolling in the editors when switching perspectives
+  Problem:    When switching perspectives, for instance when entering or
+              leaving a debug session, editors scroll and lose the current
+              location.
+  Workaround: None: scroll manually.
+
 - M516-020: ECL: Tooltips when debugging ada application may call Ada function
   Problem:    When debugging an Ada application, the Ada Editor tooltip may
               call a debugged application function to get actual value to be
