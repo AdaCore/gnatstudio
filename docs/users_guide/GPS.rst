@@ -570,6 +570,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.__init__
 
+   .. automethod:: GPS.EditorBuffer.add_multi_cursor
+
    .. automethod:: GPS.EditorBuffer.add_special_line
 
    .. automethod:: GPS.EditorBuffer.apply_overlay
@@ -606,6 +608,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.get_mark
 
+   .. automethod:: GPS.EditorBuffer.get_multi_cursors_marks
+
    .. automethod:: GPS.EditorBuffer.get_new
 
    .. automethod:: GPS.EditorBuffer.indent
@@ -626,6 +630,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.refill
 
+   .. automethod:: GPS.EditorBuffer.remove_all_multi_cursors
+
    .. automethod:: GPS.EditorBuffer.remove_overlay
 
    .. automethod:: GPS.EditorBuffer.remove_special_lines
@@ -637,6 +643,10 @@ Classes
    .. automethod:: GPS.EditorBuffer.selection_end
 
    .. automethod:: GPS.EditorBuffer.selection_start
+
+   .. automethod:: GPS.EditorBuffer.set_multi_cursors_auto_sync
+
+   .. automethod:: GPS.EditorBuffer.set_multi_cursors_manual_sync
 
    .. automethod:: GPS.EditorBuffer.set_read_only
 
