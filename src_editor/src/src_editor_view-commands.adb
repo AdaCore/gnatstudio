@@ -147,11 +147,14 @@ package body Src_Editor_View.Commands is
          Move_Iter (Iter, Command.Kind, Command.Step);
          Move_Mark (Buffer, Mark, Iter);
          Place_Cursor (Buffer, Iter);
+         View.Scroll_To_Cursor_Location;
+
          for Cursor_Mark of Get_Multi_Cursors_Marks (Buffer) loop
             Buffer.Get_Iter_At_Mark (Iter, Cursor_Mark);
             Move_Iter (Iter, Command.Kind, Command.Step);
             Buffer.Move_Mark (Cursor_Mark, Iter);
          end loop;
+
          Set_Multi_Cursors_Auto_Sync (Buffer);
          return Success;
       end if;
