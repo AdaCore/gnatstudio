@@ -20,7 +20,7 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 
 with Commands; use Commands;
 
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Scripts;                use GPS.Scripts;
 with GPS.Tools_Output;           use GPS.Tools_Output;
 with String_List_Utils;
 
@@ -70,7 +70,7 @@ package body Custom_Tools_Output is
    --  Process end of streams (both output and error).
 
    type Python_Parser_Fabric is new External_Parser_Fabric with record
-      Kernel : Kernel_Handle;
+      Kernel : Core_Kernel;
    end record;
 
    overriding procedure Create_External_Parsers
@@ -95,7 +95,7 @@ package body Custom_Tools_Output is
 
       Inst   : Class_Instance;
       Script : constant Scripting_Language :=
-        Lookup_Scripting_Language (Get_Scripts (Self.Kernel), "Python");
+        Lookup_Scripting_Language (Self.Kernel.Scripts, "Python");
    begin
       --  Try to create new python parser
       declare
@@ -107,8 +107,8 @@ package body Custom_Tools_Output is
          if Child /= null then
             --  Create wrapper around Child and pass to python function
             declare
-               Class    : constant Class_Type :=
-                 New_Class (Self.Kernel, Tools_Output_Handler_Class_Name);
+               Class    : constant Class_Type := New_Class
+                 (Self.Kernel.Scripts, Tools_Output_Handler_Class_Name);
                Instance : constant Class_Instance :=
                  New_Instance (Script, Class);
                Property : constant Tools_Output_Property := (Child => Child);
@@ -183,9 +183,9 @@ package body Custom_Tools_Output is
    procedure Handler
      (Data    : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel : constant Core_Kernel := Get_Kernel (Data);
       Class  : constant Class_Type := New_Class
-        (Kernel, Tools_Output_Handler_Class_Name);
+        (Kernel.Scripts, Tools_Output_Handler_Class_Name);
    begin
       if Command = On_Stdout_Cst then
          Name_Parameters (Data, On_Text_Params);
@@ -282,35 +282,35 @@ package body Custom_Tools_Output is
    -- Register_Commands --
    -----------------------
 
-   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+   procedure Register_Commands (Kernel : access Core_Kernel_Record'Class) is
       Fabric : constant External_Parser_Fabric_Access :=
-        new Python_Parser_Fabric'(Kernel => Kernel_Handle (Kernel));
+        new Python_Parser_Fabric'(Kernel => Core_Kernel (Kernel));
       Class : constant Class_Type :=
-        New_Class (Kernel, Tools_Output_Handler_Class_Name);
+        New_Class (Kernel.Scripts, Tools_Output_Handler_Class_Name);
    begin
       Register_Command
-        (Kernel,
+        (Kernel.Scripts,
          Constructor_Method,
          Minimum_Args  => 0,
          Maximum_Args  => 1,
          Class         => Class,
          Handler       => Handler'Access);
       Register_Command
-        (Kernel,
+        (Kernel.Scripts,
          On_Stdout_Cst,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Class,
          Handler       => Handler'Access);
       Register_Command
-        (Kernel,
+        (Kernel.Scripts,
          On_Stderr_Cst,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Class,
          Handler       => Handler'Access);
       Register_Command
-        (Kernel,
+        (Kernel.Scripts,
          On_Exit_Cst,
          Minimum_Args  => 0,
          Maximum_Args  => 1,

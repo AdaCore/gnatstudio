@@ -21,6 +21,7 @@ with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
 
+with Custom_Tools_Output;
 with Generic_Stack;
 
 with GNAT.Directory_Operations;
@@ -387,6 +388,7 @@ package body Build_Command_Utils is
       Self.Kernel := Kernel;
       Self.Registry := Registry;
       Register_Module (Kernel, Self);
+      Custom_Tools_Output.Register_Commands (Kernel);
    end Initialize;
 
    --------------------------------

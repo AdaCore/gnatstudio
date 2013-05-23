@@ -17,11 +17,11 @@
 
 --  This package is used to register scripts to parse output of tools
 
-with GPS.Kernel; use GPS.Kernel;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package Custom_Tools_Output is
 
-   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
+   procedure Register_Commands (Kernel : access Core_Kernel_Record'Class);
    --  Register the shell commands associated with this module
 
 end Custom_Tools_Output;
