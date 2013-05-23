@@ -108,6 +108,9 @@ package body Gtkada.Entry_Completion is
    --  Activate the proposal that current has the focus. If none and Force
    --  is True, activates the first proposal in the list.
 
+   procedure Show_Preview (Self : access Gtkada_Entry_Record'Class);
+   --  Show the preview pane if there is a current selection
+
    function Convert is new Ada.Unchecked_Conversion
       (System.Address, Search_Result_Access);
 
@@ -134,11 +137,13 @@ package body Gtkada.Entry_Completion is
       Completion       : not null access GPS.Search.Search_Provider'Class;
       Name             : Histories.History_Key;
       Case_Sensitive   : Boolean := False;
+      Preview          : Boolean := True;
       Completion_In_Popup : Boolean := True) is
    begin
       Self := new Gtkada_Entry_Record;
       Initialize
-         (Self, Kernel, Completion, Name, Case_Sensitive, Completion_In_Popup);
+         (Self, Kernel, Completion, Name, Case_Sensitive, Preview,
+          Completion_In_Popup);
    end Gtk_New;
 
    ----------------
@@ -151,6 +156,7 @@ package body Gtkada.Entry_Completion is
       Completion       : not null access GPS.Search.Search_Provider'Class;
       Name             : Histories.History_Key;
       Case_Sensitive      : Boolean := False;
+      Preview          : Boolean := True;
       Completion_In_Popup : Boolean := True)
    is
       Scrolled : Gtk_Scrolled_Window;
@@ -253,6 +259,13 @@ package body Gtkada.Entry_Completion is
                  Default => False);
       Settings.Pack_Start (Self.Settings_Whole_Word, Expand => False);
 
+      Gtk_New (Self.Settings_Preview, -"Preview");
+      Associate (Get_History (Kernel).all,
+                 Name & "-preview",
+                 Self.Settings_Preview,
+                 Default => Preview);
+      Settings.Pack_Start (Self.Settings_Preview, Expand => False);
+
       Gtk_New (Self.Settings_Kind);
       Self.Settings_Kind.Append
          (Search_Kind'Image (Full_Text), -"Substrings match");
@@ -272,6 +285,7 @@ package body Gtkada.Entry_Completion is
       Self.Settings_Case_Sensitive.On_Toggled
          (On_Settings_Changed'Access, Self);
       Self.Settings_Whole_Word.On_Toggled (On_Settings_Changed'Access, Self);
+      Self.Settings_Preview.On_Toggled (On_Settings_Changed'Access, Self);
       Self.Settings_Kind.On_Changed (On_Settings_Changed'Access, Self);
 
       Self.On_Destroy (On_Entry_Destroy'Access);
@@ -474,10 +488,8 @@ package body Gtkada.Entry_Completion is
       Self : constant Gtkada_Entry := Gtkada_Entry (Ent);
       Iter : Gtk_Tree_Iter;
       M    : Gtk_Tree_Model;
-      Label : Gtk_Label;
       Path  : Gtk_Tree_Path;
       Modified_Selection : Boolean := False;
-      Result : Search_Result_Access;
 
    begin
       if Event.Keyval = GDK_Return then
@@ -533,30 +545,51 @@ package body Gtkada.Entry_Completion is
              Col_Align => 0.0);
          Path_Free (Path);
 
-         Remove_All_Children (Self.Notes_Box);
-
-         Result := Convert
-            (Get_Address (+Self.Completions, Iter, Column_Data));
-         declare
-            F : constant String := Result.Full;
-         begin
-            if F /= "" then
-               if Get_Parent (Self.Notes_Scroll) = null then
-                  Self.Completion_Box.Pack_Start
-                     (Self.Notes_Scroll, Expand => True, Fill => True);
-               end if;
-
-               Gtk_New (Label, F);
-               Self.Notes_Box.Pack_Start (Label, Expand => False);
-               Label.Modify_Font (View_Fixed_Font.Get_Pref);
-               Self.Notes_Scroll.Show_All;
-            end if;
-         end;
+         Show_Preview (Self);
          return True;
       end if;
 
       return False;
    end On_Key_Press;
+
+   ------------------
+   -- Show_Preview --
+   ------------------
+
+   procedure Show_Preview (Self : access Gtkada_Entry_Record'Class) is
+      Iter   : Gtk_Tree_Iter;
+      M      : Gtk_Tree_Model;
+      Label  : Gtk_Label;
+      Result : Search_Result_Access;
+   begin
+      if Self.Settings_Preview.Get_Active then
+         Self.View.Get_Selection.Get_Selected (M, Iter);
+         Remove_All_Children (Self.Notes_Box);
+
+         if Iter /= Null_Iter then
+            Result := Convert
+               (Get_Address (+Self.Completions, Iter, Column_Data));
+
+            declare
+               F : constant String := Result.Full;
+            begin
+               if F /= "" then
+                  if Get_Parent (Self.Notes_Scroll) = null then
+                     Self.Completion_Box.Pack_Start
+                        (Self.Notes_Scroll, Expand => True, Fill => True);
+                  end if;
+
+                  Gtk_New (Label, F);
+                  Self.Notes_Box.Pack_Start (Label, Expand => False);
+                  Label.Modify_Font (View_Fixed_Font.Get_Pref);
+                  Self.Notes_Scroll.Show_All;
+               end if;
+            end;
+         end if;
+      else
+         Self.Notes_Scroll.Hide;
+      end if;
+   end Show_Preview;
 
    ----------------------
    -- On_Entry_Destroy --
@@ -706,6 +739,8 @@ package body Gtkada.Entry_Completion is
    begin
       S.Settings_Whole_Word.Set_Sensitive (K = Regexp);
       Add_To_History (Get_History (S.Kernel).all, "completion_entry-kind", T);
+
+      Show_Preview (S);
       On_Entry_Changed (S);
    end On_Settings_Changed;
 
