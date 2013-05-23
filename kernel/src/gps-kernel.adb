@@ -1103,7 +1103,6 @@ package body GPS.Kernel is
       Free_Tools (Handle);
 
       Free (Handle.Logs_Mapper);
-      Free_Modules (Handle);
       Free_Messages_Container (Handle);
 
       Commands.Free (Handle.Perma_Commands);
