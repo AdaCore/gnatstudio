@@ -184,7 +184,6 @@ package body GPS.CLI_Utils is
    function Project_File_Path_Exists
      (Path : in out GNAT.Strings.String_Access) return Boolean
    is
-      --  File           : Virtual_File;
       File_Name        : constant String := Path.all;
       File_Extension   : constant String := ".gpr";
    begin
@@ -195,16 +194,6 @@ package body GPS.CLI_Utils is
       end if;
 
       return GNATCOLL.VFS_Utils.Is_Regular_File (Filesystem_String (Path.all));
---    File := Create (+(if GNATCOLL.Utils.Ends_With (Path.all, File_Extension)
---                        then Path.all
---                        else Path.all & File_Extension));
---
---        If file found then return it
---        if File.Is_Regular_File then
---           return File;
---        end if;
---
---        return No_File;
    end Project_File_Path_Exists;
 
 end GPS.CLI_Utils;
