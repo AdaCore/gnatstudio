@@ -72,14 +72,10 @@ package GPS.Tools_Output is
    --  Register new output parser fabric with given name
 
    function New_Parser_Chain
-     (Target_Name : String) return Tools_Output_Parser_Access;
+     (Name_List : String_List_Utils.String_List.List)
+      return Tools_Output_Parser_Access;
    --  Create new chain of Tools_Output_Parsers.
    --  Result should be deallocated after use
-
-   procedure Set_Parsers
-     (Target_Name : String;
-      Parser_List : String);
-   --  Assign parser name list to given target
 
    type External_Parser_Fabric is abstract tagged limited null record;
 
@@ -100,5 +96,26 @@ package GPS.Tools_Output is
    procedure Set_External_Parser_Fabric
      (Value : External_Parser_Fabric_Access);
    --  Define external parser fabric
+
+   Default_Parser_Names : constant String;
+   --  List of parsers used by default
+
+   Default_Macros : constant String;
+   --  Macro to represent Default_Parser_Names in list of parser names
+
+private
+
+   Default_Macros : constant String := "[default]";
+
+   Default_Parser_Names : constant String :=
+     "output_chopper"   & " " &
+     "utf_converter"    & " " &
+     "progress_parser"  & " " &
+     "console_writer"   & " " &
+     "location_parser"  & " " &
+     "text_splitter"    & " " &
+     "output_collector" & " " &
+     "elaboration_cycles" & " " &
+     "end_of_build";
 
 end GPS.Tools_Output;

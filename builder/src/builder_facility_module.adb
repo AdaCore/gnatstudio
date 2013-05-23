@@ -1415,7 +1415,8 @@ package body Builder_Facility_Module is
    procedure Set_Parsers_For_Target (Target : Target_Access) is
       P : constant Target_Properties := Get_Properties (Target);
    begin
-      Set_Parsers (Get_Name (Target), To_String (P.Output_Parsers));
+      Builder_Module_ID.Builder.Set_Parsers
+        (Get_Name (Target), To_String (P.Output_Parsers));
    end Set_Parsers_For_Target;
 
    -----------------
