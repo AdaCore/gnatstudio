@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Build_Command_Utils;             use Build_Command_Utils;
 with Build_Configurations;            use Build_Configurations;
 
@@ -32,9 +33,7 @@ package body GPS.CLI_Target_Loaders is
    is
       pragma Unreferenced (File);
 
-      T         : Target_Access;
-      pragma Unreferenced (T);
-
+      Target   : Target_Access;
       Mode      : Mode_Record;
       pragma Unreferenced (Mode);
 
@@ -43,7 +42,14 @@ package body GPS.CLI_Target_Loaders is
         Builder_Context (Self.Kernel.Module (Builder_Context_Record'Tag));
    begin
       if Node.Tag.all = "target" then
-         T := Load_Target_From_XML (Builder.Registry, Node, From_User);
+         Target := Load_Target_From_XML (Builder.Registry, Node, From_User);
+
+         declare
+            P : constant Target_Properties := Get_Properties (Target);
+         begin
+            Builder.Set_Parsers
+              (Get_Name (Target), To_String (P.Output_Parsers));
+         end;
 
       elsif Node.Tag.all = "target-model" then
          Create_Model_From_XML (Builder.Registry, Node);
