@@ -729,7 +729,11 @@ package body Gtkada.Entry_Completion is
             S.Idle := No_Source_Id;
          end if;
          S.Clear;
-         Hide (S.Popup);
+
+         if S.Popup /= null then
+            Hide (S.Popup);
+         end if;
+
       else
          Popup (S);
          S.Need_Clear := True;

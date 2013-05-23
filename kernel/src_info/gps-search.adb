@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Boyer_Moore;        use GNATCOLL.Boyer_Moore;
@@ -278,8 +279,10 @@ package body GPS.Search is
 
    begin
       for B in S .. F loop
-         --  ??? Missing case sensitivity
-         if Buffer (B) = Self.Text (T) then
+         if (Self.Case_Sensitive and then Buffer (B) = Self.Text (T))
+            or else (not Self.Case_Sensitive
+                     and then To_Lower (Buffer (B)) = To_Lower (Self.Text (T)))
+         then
             if T = Self.Text'First then
                Start := B;
             end if;
@@ -332,8 +335,10 @@ package body GPS.Search is
       T : Natural := Self.Text'First;
    begin
       for B in Context.Finish + 1 .. Context.Buffer_End loop
-         --  ??? Missing case sensitivity
-         if Buffer (B) = Self.Text (T) then
+         if (Self.Case_Sensitive and then Buffer (B) = Self.Text (T))
+            or else (not Self.Case_Sensitive
+                     and then To_Lower (Buffer (B)) = To_Lower (Self.Text (T)))
+         then
             if T = Self.Text'First then
                Context.Start := B;
             end if;
