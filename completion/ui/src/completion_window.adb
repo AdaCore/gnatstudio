@@ -794,10 +794,13 @@ package body Completion_Window is
       Get_Selected (Sel, Model, Iter);
       if Iter = Null_Iter then
          Iter := Window.Explorer.Model_Filter.Get_Iter_First;
-         Path := Get_Path (Model, Iter);
-         Scroll_To_Cell (Window.Explorer.View, Path, null,
-                         False, 0.1, 0.1);
-         Path_Free (Path);
+
+         if Iter /= Null_Iter then
+            Path := Get_Path (Model, Iter);
+            Scroll_To_Cell (Window.Explorer.View, Path, null,
+                            False, 0.1, 0.1);
+            Path_Free (Path);
+         end if;
       end if;
 
       if not Window.In_Destruction then
