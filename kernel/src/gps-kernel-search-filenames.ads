@@ -73,5 +73,7 @@ private
    overriding procedure Execute
      (Self       : not null access Filenames_Search_Result;
       Give_Focus : Boolean);
+   overriding function Full
+     (Self       : not null access Filenames_Search_Result) return String;
 
 end GPS.Kernel.Search.Filenames;

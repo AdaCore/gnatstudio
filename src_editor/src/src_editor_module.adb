@@ -117,10 +117,6 @@ package body Src_Editor_Module is
    --  Key to use in the kernel histories to store the most recently opened
    --  files.
 
-   Open_From_Path_History : constant History_Key := "open-from-project";
-   --  Key used to store the most recently open files in the Open From Project
-   --  dialog.
-
    Underscore : constant Gunichar := UTF8_Get_Char ("_");
    Space      : constant Gunichar := UTF8_Get_Char (" ");
    Backspace  : constant Gunichar := 8;
@@ -1513,7 +1509,7 @@ package body Src_Editor_Module is
                Title  => -"Open file from project",
                Parent => Get_Current_Window (Kernel),
                Flags  => Modal or Destroy_With_Parent);
-      Set_Default_Size (Open_File_Dialog, 600, 400);
+      Open_File_Dialog.Set_Default_Size (600, -1);
       Set_Position (Open_File_Dialog, Win_Pos_Mouse);
 
       --  Do not use a combo box, so that users can easily navigate to the list
@@ -1522,7 +1518,7 @@ package body Src_Editor_Module is
       Initialize
          (Open_File_Entry,
           Kernel         => Kernel,
-          History        => Open_From_Path_History,
+          Name           => "open_from_project",
           Completion     =>
              GPS.Kernel.Search.Registry.Get (Provider_Filenames),
           Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)));

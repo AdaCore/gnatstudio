@@ -20,9 +20,13 @@
 
 with Glib.Main;
 with Gtk.Box;
+with Gtk.Check_Button;
+with Gtk.Combo_Box_Text;
 with Gtk.GEntry;
 with Gtk.List_Store;
+with Gtk.Scrolled_Window;
 with Gtk.Tree_View;
+with Gtk.Window;
 with GPS.Kernel;
 with GPS.Search;
 with GNAT.Strings;
@@ -30,24 +34,29 @@ with Histories;
 
 package Gtkada.Entry_Completion is
 
-   type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type Gtkada_Entry_Record is new Gtk.GEntry.Gtk_Entry_Record with private;
    type Gtkada_Entry is access all Gtkada_Entry_Record'Class;
 
    procedure Gtk_New
      (Self           : out Gtkada_Entry;
       Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Completion     : access GPS.Search.Search_Provider'Class;
-      Case_Sensitive : Boolean := True;
-      History        : Histories.History_Key := "");
+      Name           : Histories.History_Key;
+      Case_Sensitive : Boolean := False);
    procedure Initialize
      (Self           : not null access Gtkada_Entry_Record'Class;
       Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Completion     : access GPS.Search.Search_Provider'Class;
-      Case_Sensitive : Boolean := True;
-      History        : Histories.History_Key := "");
+      Name           : Histories.History_Key;
+      Case_Sensitive : Boolean := False);
    --  Create a new entry.
-   --  If Case_Sensitive is False, then the matching of what the user typed
-   --  with the completion list is done in a case insensitive manner
+   --
+   --  Name is a unique name for this entry. It is used to store a number of
+   --  information from one session to the next.
+   --
+   --  Case_Sensitive is the default value the first time (ever) this entry is
+   --  displayed. Afterwards, its value is retained in a history key so that
+   --  user changes are taken into account.
    --
    --  Completion is the provider to be used to compute the possible
    --  completions. Completion is then owned by Self, and must not be freed
@@ -74,9 +83,7 @@ package Gtkada.Entry_Completion is
 private
    type History_Key_Access is access all Histories.History_Key;
 
-   type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with record
-      GEntry           : Gtk.GEntry.Gtk_Entry;
-      Case_Sensitive   : Boolean;
+   type Gtkada_Entry_Record is new Gtk.GEntry.Gtk_Entry_Record with record
       Completion       : GPS.Search.Search_Provider_Access;
       Pattern          : GPS.Search.Search_Pattern_Access;
       Kernel           : GPS.Kernel.Kernel_Handle;
@@ -84,14 +91,25 @@ private
       Idle             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Need_Clear       : Boolean := False;
 
-      History_Key      : History_Key_Access;
+      Name             : History_Key_Access;
 
       Hist             : GNAT.Strings.String_List_Access;
       --  Do not free this, this belongs to the history
 
+      Popup            : Gtk.Window.Gtk_Window;
+      --  The popup window
+
+      Settings_Case_Sensitive : Gtk.Check_Button.Gtk_Check_Button;
+      Settings_Whole_Word     : Gtk.Check_Button.Gtk_Check_Button;
+      Settings_Kind           : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
+
       Completions      : Gtk.List_Store.Gtk_List_Store;
       View             : Gtk.Tree_View.Gtk_Tree_View;
       --  The widget that displays the list of possible completions
+
+      Notes_Scroll     : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Notes_Box        : Gtk.Box.Gtk_Box;
+      --   Display extra information on the currently selected item
    end record;
 
 end Gtkada.Entry_Completion;

@@ -22,6 +22,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Strings;              use GNAT.Strings;
 
 package body GPS.Kernel.Search.Filenames is
 
@@ -216,5 +217,24 @@ package body GPS.Kernel.Search.Filenames is
          Line              => Self.Line,
          Column            => Visible_Column (Self.Column));
    end Execute;
+
+   ----------
+   -- Full --
+   ----------
+
+   overriding function Full
+     (Self : not null access Filenames_Search_Result) return String
+   is
+      Tmp : GNAT.Strings.String_Access;
+   begin
+      Tmp := Self.File.Read_File;
+      if Tmp = null then
+         return "";
+      else
+         return R : constant String := Tmp.all do
+            GNAT.Strings.Free (Tmp);
+         end return;
+      end if;
+   end Full;
 
 end GPS.Kernel.Search.Filenames;
