@@ -480,7 +480,8 @@ def goto_beginning_of_line():
    def goto_bol (buffer, mark):
        mark.move(mark.location().beginning_of_line())
 
-   execute_for_all_cursors (GPS.EditorBuffer.get(), goto_bol)
+   execute_for_all_cursors (GPS.EditorBuffer.get(), goto_bol,
+                            extend_selection = should_extend_selection)
 
 def end_of_line(file, line):
    """Goto to the end of the line in file"""
@@ -495,7 +496,8 @@ def goto_end_of_line():
    def goto_eol (buffer, mark):
        mark.move(mark.location().end_of_line())
 
-   execute_for_all_cursors (GPS.EditorBuffer.get(), goto_eol)
+   execute_for_all_cursors (GPS.EditorBuffer.get(), goto_eol,
+                            extend_selection = should_extend_selection)
 
 def is_space (char):
    return char == ' ' or char == '\t'
