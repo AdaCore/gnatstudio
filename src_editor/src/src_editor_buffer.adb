@@ -17,6 +17,7 @@
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with System.Address_To_Access_Conversions;
 
 pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
@@ -150,6 +151,9 @@ package body Src_Editor_Buffer is
 
    Strip_Blanks_Property_Name : constant String := "strip-blanks";
    Strip_Lines_Property_Name  : constant String := "strip-blanks-lines";
+
+   package Iter_Access_Address_Conversions is
+     new System.Address_To_Access_Conversions (Gtk_Text_Iter);
 
    --------------------
    -- Signal Support --
@@ -1731,6 +1735,8 @@ package body Src_Editor_Buffer is
          end;
       end if;
 
+      --  Perform insertion for every multi cursor
+      --  If we are in auto mode
       if Buffer.Multi_Cursors_Sync.Mode = Auto
         and then not Buffer.Multi_Cursors_Barrier
       then
@@ -1747,6 +1753,15 @@ package body Src_Editor_Buffer is
          end loop;
          Buffer.End_Inserting;
          Buffer.Multi_Cursors_Barrier := False;
+
+         declare
+            Iter_Acc : constant access Gtk_Text_Iter :=
+              Iter_Access_Address_Conversions.To_Pointer
+                (Get_Address (Nth (Params, 1)));
+         begin
+            Buffer.Get_Iter_At_Mark (Iter_Acc.all, Buffer.Insert_Mark);
+         end;
+
       end if;
 
       Buffer.Multi_Cursors_Barrier := True;
@@ -1754,6 +1769,7 @@ package body Src_Editor_Buffer is
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
+         Buffer.Multi_Cursors_Barrier := True;
    end After_Insert_Text;
 
    ------------------------
