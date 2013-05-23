@@ -522,8 +522,14 @@ package body Gtkada.Entry_Completion is
          if Iter = Null_Iter
             or else Iter = Self.Completions.Get_Iter_First
          then
-            Iter := Self.Completions.Nth_Child
-               (Null_Iter, Self.Completions.N_Children - 1);
+            declare
+               N : constant Gint := Self.Completions.N_Children;
+            begin
+               if N > 0 then
+                  Iter := Self.Completions.Nth_Child
+                    (Null_Iter, Self.Completions.N_Children - 1);
+               end if;
+            end;
          else
             Self.Completions.Previous (Iter);
          end if;
