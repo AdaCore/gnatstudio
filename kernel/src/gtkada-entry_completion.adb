@@ -50,6 +50,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
@@ -547,6 +548,7 @@ package body Gtkada.Entry_Completion is
 
                Gtk_New (Label, F);
                Self.Notes_Box.Pack_Start (Label, Expand => False);
+               Label.Modify_Font (View_Fixed_Font.Get_Pref);
                Self.Notes_Scroll.Show_All;
             end if;
          end;
