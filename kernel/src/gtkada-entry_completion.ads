@@ -34,21 +34,23 @@ with Histories;
 
 package Gtkada.Entry_Completion is
 
-   type Gtkada_Entry_Record is new Gtk.GEntry.Gtk_Entry_Record with private;
+   type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Gtkada_Entry is access all Gtkada_Entry_Record'Class;
 
    procedure Gtk_New
      (Self           : out Gtkada_Entry;
-      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Completion     : access GPS.Search.Search_Provider'Class;
+      Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Completion     : not null access GPS.Search.Search_Provider'Class;
       Name           : Histories.History_Key;
-      Case_Sensitive : Boolean := False);
+      Case_Sensitive : Boolean := False;
+      Completion_In_Popup : Boolean := True);
    procedure Initialize
      (Self           : not null access Gtkada_Entry_Record'Class;
-      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Completion     : access GPS.Search.Search_Provider'Class;
+      Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Completion     : not null access GPS.Search.Search_Provider'Class;
       Name           : Histories.History_Key;
-      Case_Sensitive : Boolean := False);
+      Case_Sensitive : Boolean := False;
+      Completion_In_Popup : Boolean := True);
    --  Create a new entry.
    --
    --  Name is a unique name for this entry. It is used to store a number of
@@ -62,9 +64,11 @@ package Gtkada.Entry_Completion is
    --  completions. Completion is then owned by Self, and must not be freed
    --  by the caller.
    --
-   --  If the user presses <enter> in the entry when there is no completion
-   --  proposal, Fallback is called if specified. If unspecified, nothing
-   --  happens.
+   --  The list of completions can either appear in a popup, or in a widget
+   --  below the completion entry. Do not use a popup if the entry is put in a
+   --  dialog, since the latter will grab all events and the list of
+   --  completions will not receive the mouse events. The layout is configured
+   --  via Completion_In_Popup.
 
    function Fallback
       (Self : not null access Gtkada_Entry_Record;
@@ -83,7 +87,8 @@ package Gtkada.Entry_Completion is
 private
    type History_Key_Access is access all Histories.History_Key;
 
-   type Gtkada_Entry_Record is new Gtk.GEntry.Gtk_Entry_Record with record
+   type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with record
+      GEntry           : Gtk.GEntry.Gtk_Entry;
       Completion       : GPS.Search.Search_Provider_Access;
       Pattern          : GPS.Search.Search_Pattern_Access;
       Kernel           : GPS.Kernel.Kernel_Handle;
@@ -95,6 +100,9 @@ private
 
       Hist             : GNAT.Strings.String_List_Access;
       --  Do not free this, this belongs to the history
+
+      Completion_Box   : Gtk.Box.Gtk_Box;
+      --  Box that contains the list of completion and the notes_scroll
 
       Popup            : Gtk.Window.Gtk_Window;
       --  The popup window

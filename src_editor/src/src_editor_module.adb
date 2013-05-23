@@ -1509,7 +1509,7 @@ package body Src_Editor_Module is
                Title  => -"Open file from project",
                Parent => Get_Current_Window (Kernel),
                Flags  => Modal or Destroy_With_Parent);
-      Open_File_Dialog.Set_Default_Size (600, -1);
+      Open_File_Dialog.Set_Default_Size (600, 480);
       Set_Position (Open_File_Dialog, Win_Pos_Mouse);
 
       --  Do not use a combo box, so that users can easily navigate to the list
@@ -1519,6 +1519,7 @@ package body Src_Editor_Module is
          (Open_File_Entry,
           Kernel         => Kernel,
           Name           => "open_from_project",
+          Completion_In_Popup => False,
           Completion     =>
              GPS.Kernel.Search.Registry.Get (Provider_Filenames),
           Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)));

@@ -128,14 +128,16 @@ package body Gtkada.Entry_Completion is
    -------------
 
    procedure Gtk_New
-     (Self           : out Gtkada_Entry;
-      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Completion     : access GPS.Search.Search_Provider'Class;
-      Name           : Histories.History_Key;
-      Case_Sensitive : Boolean := False) is
+     (Self             : out Gtkada_Entry;
+      Kernel           : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Completion       : not null access GPS.Search.Search_Provider'Class;
+      Name             : Histories.History_Key;
+      Case_Sensitive   : Boolean := False;
+      Completion_In_Popup : Boolean := True) is
    begin
       Self := new Gtkada_Entry_Record;
-      Initialize (Self, Kernel, Completion, Name, Case_Sensitive);
+      Initialize
+         (Self, Kernel, Completion, Name, Case_Sensitive, Completion_In_Popup);
    end Gtk_New;
 
    ----------------
@@ -143,15 +145,15 @@ package body Gtkada.Entry_Completion is
    ----------------
 
    procedure Initialize
-     (Self           : not null access Gtkada_Entry_Record'Class;
-      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Completion     : access GPS.Search.Search_Provider'Class;
-      Name           : Histories.History_Key;
-      Case_Sensitive : Boolean := False)
+     (Self             : not null access Gtkada_Entry_Record'Class;
+      Kernel           : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Completion       : not null access GPS.Search.Search_Provider'Class;
+      Name             : Histories.History_Key;
+      Case_Sensitive      : Boolean := False;
+      Completion_In_Popup : Boolean := True)
    is
       Scrolled : Gtk_Scrolled_Window;
       Box  : Gtk_Box;
-      Completion_Box : Gtk_Box;
       Settings : Gtk_Box;
       Col  : Gint;
       C    : Gtk_Tree_View_Column;
@@ -161,34 +163,41 @@ package body Gtkada.Entry_Completion is
       pragma Unreferenced (Col, Dummy);
 
    begin
-      Gtk.GEntry.Initialize (Self);
+      Gtk.Box.Initialize_Vbox (Self, Homogeneous => False);
       Self.Completion := GPS.Search.Search_Provider_Access (Completion);
       Self.Kernel := Kernel_Handle (Kernel);
       Self.Name := new History_Key'(Name);
 
-      Self.Set_Activates_Default (False);
-      Self.On_Activate (On_Entry_Activate'Access, Self);
-      Self.Set_Placeholder_Text ("search");
-      Self.Set_Width_Chars (25);
-      Self.Set_Tooltip_Markup (Completion.Documentation);
+      Gtk_New (Self.GEntry);
+      Self.Pack_Start (Self.GEntry, Expand => False, Fill => False);
+      Self.GEntry.Set_Activates_Default (False);
+      Self.GEntry.On_Activate (On_Entry_Activate'Access, Self);
+      Self.GEntry.Set_Placeholder_Text ("search");
+      Self.GEntry.Set_Width_Chars (25);
+      Self.GEntry.Set_Tooltip_Markup (Completion.Documentation);
 
-      Gtk_New (Self.Popup, Window_Popup);
-      --  Self.Popup.Set_Decorated (False);
-      --  Self.Popup.Set_Type_Hint (Window_Type_Hint_Combo);
-      Get_Style_Context (Self.Popup).Add_Class ("completion");
+      if Completion_In_Popup then
+         Gtk_New (Self.Popup, Window_Popup);
+         Self.Popup.Set_Decorated (False);
+         Self.Popup.Set_Type_Hint (Window_Type_Hint_Combo);
+         Get_Style_Context (Self.Popup).Add_Class ("completion");
 
-      Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 0);
-      Self.Popup.Add (Box);
+         Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 0);
+         Self.Popup.Add (Box);
 
-      Gtk_New_Hbox (Completion_Box, Homogeneous => False);
-      Box.Pack_Start (Completion_Box, Expand => True, Fill => True);
+      else
+         Box := Gtk_Box (Self);
+      end if;
+
+      Gtk_New_Hbox (Self.Completion_Box, Homogeneous => False);
+      Box.Pack_Start (Self.Completion_Box, Expand => True, Fill => True);
 
       --  Scrolled window for the possible completions
 
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Scrolled.Set_Shadow_Type (Shadow_None);
-      Completion_Box.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Self.Completion_Box.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Self.Completions,
                (Column_Label => GType_String,
@@ -218,9 +227,6 @@ package body Gtkada.Entry_Completion is
       --  Extra notes for selected item
 
       Gtk_New (Self.Notes_Scroll);
-      Completion_Box.Pack_Start
-         (Self.Notes_Scroll, Expand => True, Fill => True);
-
       Gtk_New_Vbox (Self.Notes_Box, Homogeneous => False);
       Self.Notes_Scroll.Add (Self.Notes_Box);
 
@@ -278,13 +284,15 @@ package body Gtkada.Entry_Completion is
       if Self.Hist /= null
          and then Self.Hist (Self.Hist'First).all /= ""
       then
-         Self.Set_Text (Self.Hist (Self.Hist'First).all);
-         Self.Select_Region (0, -1);
+         Self.GEntry.Set_Text (Self.Hist (Self.Hist'First).all);
+         Self.GEntry.Select_Region (0, -1);
       end if;
+
+      Self.GEntry.Grab_Focus;
 
       --  Connect after setting the default entry, so that we do not
       --  pop up the completion window immediately.
-      Gtk.Editable.On_Changed (+Self, On_Entry_Changed'Access, Self);
+      Gtk.Editable.On_Changed (+Self.GEntry, On_Entry_Changed'Access, Self);
    end Initialize;
 
    -----------------------
@@ -313,7 +321,7 @@ package body Gtkada.Entry_Completion is
                Result := Convert
                   (Get_Address (+Self.Completions, Iter, Column_Data));
             else
-               Result := Self.Fallback (Self.Get_Text);
+               Result := Self.Fallback (Self.GEntry.Get_Text);
                Result_Need_Free := True;
             end if;
          end if;
@@ -532,6 +540,11 @@ package body Gtkada.Entry_Completion is
             F : constant String := Result.Full;
          begin
             if F /= "" then
+               if Get_Parent (Self.Notes_Scroll) = null then
+                  Self.Completion_Box.Pack_Start
+                     (Self.Notes_Scroll, Expand => True, Fill => True);
+               end if;
+
                Gtk_New (Label, F);
                Self.Notes_Box.Pack_Start (Label, Expand => False);
                Self.Notes_Scroll.Show_All;
@@ -559,7 +572,9 @@ package body Gtkada.Entry_Completion is
 
       S.Clear;
 
-      Destroy (S.Popup);
+      if S.Popup /= null then
+         Destroy (S.Popup);
+      end if;
 
       Unchecked_Free (S.Name);
       Free (S.Pattern);
@@ -642,7 +657,7 @@ package body Gtkada.Entry_Completion is
       Layout : Pango_Layout;
       Toplevel : Gtk_Widget;
    begin
-      if not Self.Popup.Get_Visible then
+      if Self.Popup /= null and then not Self.Popup.Get_Visible then
          Layout := Create_Pango_Layout (Self.View);
          Layout.Set_Text ("0m");
          Layout.Get_Pixel_Size (Char_Width, Char_Height);
@@ -673,6 +688,8 @@ package body Gtkada.Entry_Completion is
          Self.Popup.Set_Size_Request (Width, Height);
          Self.Popup.Show_All;
          Self.Notes_Scroll.Hide;
+      else
+         Self.Notes_Scroll.Hide;
       end if;
    end Popup;
 
@@ -696,7 +713,7 @@ package body Gtkada.Entry_Completion is
 
    procedure On_Entry_Changed (Self  : access GObject_Record'Class) is
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
-      Text : constant String := S.Get_Text;
+      Text : constant String := S.GEntry.Get_Text;
    begin
       Free (S.Pattern);
       S.Pattern := GPS.Search.Build
