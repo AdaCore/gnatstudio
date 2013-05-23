@@ -54,11 +54,11 @@ package GPS.CLI_Utils is
    --  Return: False if no project file has been specified,
    --          True if a non empty string has been found as the project file
 
-   function Get_Project_File_From_Path
-     (Path : GNAT.Strings.String_Access) return Virtual_File;
-   --  Try to create a Virtual File from the given path.
+   function Project_File_Path_Exists
+     (Path : in out GNAT.Strings.String_Access) return Boolean;
+   --  Check existance of the given Path. Add the project file extension if
+   --  not mentionned in the Path string.
    --
-   --  Return: No_File if the path doesn't exist
-   --          a Virtual File object representing the project file.
+   --  Return: Wheter the file exists or not.
 
 end GPS.CLI_Utils;

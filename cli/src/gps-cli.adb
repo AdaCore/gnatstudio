@@ -120,15 +120,14 @@ begin
          return;
       end if;
 
-      Project_File := CLI_Utils.Get_Project_File_From_Path (Project_Name);
-
       --  Exit with message if path is not valid
-      if Project_File = No_File then
+      if not CLI_Utils.Project_File_Path_Exists (Project_Name) then
          Put_Line ("No such file: " & Project_Name.all);
          Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
       end if;
 
+      Project_File := Create (+Project_Name.all);
       --  Load project
       Kernel.Registry.Tree.Load
         (Root_Project_Path => Project_File,
