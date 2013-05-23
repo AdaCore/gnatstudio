@@ -558,8 +558,9 @@ package body GPS.Kernel.Modules.UI is
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget
    is
       use Abstract_Module_List;
-      Current : Cursor := Abstract_Module_List.First
-        (Kernel.Module_List (Module_ID_Record'Tag));
+      List    : constant Abstract_Module_List.List :=
+        Kernel.Module_List (Module_ID_Record'Tag);
+      Current : Cursor := Abstract_Module_List.First (List);
       Module  : Module_ID;
       W       : Gtk_Widget;
    begin
@@ -587,8 +588,9 @@ package body GPS.Kernel.Modules.UI is
    is
       use Abstract_Module_List;
       use type XML_Utils.Node_Ptr;
-      Current : Cursor := Abstract_Module_List.First
-        (Kernel.Module_List (Module_ID_Record'Tag));
+      List    : constant Abstract_Module_List.List :=
+        Kernel.Module_List (Module_ID_Record'Tag);
+      Current : Cursor := Abstract_Module_List.First (List);
       Module  : Module_ID;
       Marker  : Location_Marker;
    begin
@@ -608,6 +610,7 @@ package body GPS.Kernel.Modules.UI is
             Current := Abstract_Module_List.Next (Current);
          end loop;
       end if;
+
       return null;
    end Create_Marker;
 

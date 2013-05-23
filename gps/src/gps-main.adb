@@ -74,7 +74,6 @@ with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Shell;
-with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
@@ -1887,8 +1886,6 @@ procedure GPS.Main is
       --  point, we no longer want to access/update it past this point.
 
       Destroy (GPS_Main);
-
-      Free_Modules (Kernel);
 
       Destroy (Kernel);
 
