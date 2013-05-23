@@ -207,19 +207,23 @@ package body GPS.Kernel.Modules is
    ------------------
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class) is
-      use type Abstract_Module_List.List_Node;
+      use Abstract_Module_List;
       List : constant Abstract_Module_List.List :=
         Kernel.Module_List (Module_ID_Record'Tag);
-      Current : Abstract_Module_List.List_Node :=
-        Abstract_Module_List.Last (List);
+      Current : Cursor := Abstract_Module_List.Last (List);
    begin
       --  Destroy the modules in the reverse order,
       --  otherwise, the scripts module is no longer available for the other
       --  modules, and some modules (e.g. editor) is freed too early.
 
-      while Current /= Abstract_Module_List.Null_Node loop
-         Free (Module_ID (Abstract_Module_List.Data_Ref (Current).all));
-         Current := Abstract_Module_List.Prev (List, Current);
+      while Has_Element (Current) loop
+         declare
+            Module : Abstract_Module := Element (Current);
+         begin
+            Free (Module_ID (Module));
+         end;
+
+         Current := Abstract_Module_List.Previous (Current);
       end loop;
    end Free_Modules;
 

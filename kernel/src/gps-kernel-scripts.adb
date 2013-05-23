@@ -316,8 +316,8 @@ package body GPS.Kernel.Scripts is
       elsif Command = "lsmod" then
          declare
             package Module_List renames GPS.Core_Kernels.Abstract_Module_List;
-            use type Module_List.List_Node;
-            Current : Module_List.List_Node;
+            use Module_List;
+            Current : Cursor;
             List    : constant Module_List.List :=
               Kernel.Module_List (Module_ID_Record'Tag);
 
@@ -326,10 +326,10 @@ package body GPS.Kernel.Scripts is
 
             Set_Return_Value_As_List (Data);
 
-            while Current /= Module_List.Null_Node loop
+            while Has_Element (Current) loop
                Set_Return_Value
                  (Data,
-                  Module_Name (Module_ID (Module_List.Data (Current))));
+                  Module_Name (Module_ID (Element (Current))));
                Current := Module_List.Next (Current);
             end loop;
          end;

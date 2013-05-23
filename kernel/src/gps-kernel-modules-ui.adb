@@ -557,14 +557,14 @@ package body GPS.Kernel.Modules.UI is
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget
    is
-      use type Abstract_Module_List.List_Node;
-      Current : Abstract_Module_List.List_Node := Abstract_Module_List.First
+      use Abstract_Module_List;
+      Current : Cursor := Abstract_Module_List.First
         (Kernel.Module_List (Module_ID_Record'Tag));
       Module  : Module_ID;
       W       : Gtk_Widget;
    begin
-      while Current /= Abstract_Module_List.Null_Node loop
-         Module := Module_ID (Abstract_Module_List.Data (Current));
+      while Has_Element (Current) loop
+         Module := Module_ID (Element (Current));
          if Module /= null then
             W := Tooltip_Handler (Module, Context);
             if W /= null then
@@ -585,9 +585,9 @@ package body GPS.Kernel.Modules.UI is
      (Kernel : access Kernel_Handle_Record'Class;
       Load   : XML_Utils.Node_Ptr := null) return Location_Marker
    is
-      use type Abstract_Module_List.List_Node;
+      use Abstract_Module_List;
       use type XML_Utils.Node_Ptr;
-      Current : Abstract_Module_List.List_Node := Abstract_Module_List.First
+      Current : Cursor := Abstract_Module_List.First
         (Kernel.Module_List (Module_ID_Record'Tag));
       Module  : Module_ID;
       Marker  : Location_Marker;
@@ -599,8 +599,8 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
       else
-         while Current /= Abstract_Module_List.Null_Node loop
-            Module := Module_ID (Abstract_Module_List.Data (Current));
+         while Has_Element (Current) loop
+            Module := Module_ID (Element (Current));
             Marker := Bookmark_Handler (Module, Load);
             if Marker /= null then
                return Marker;
