@@ -21,6 +21,15 @@ with Gtk.Text_Iter; use Gtk.Text_Iter;
 
 package Src_Editor_Buffer.Multi_Cursors is
 
+   type Cursor is access all Multi_Cursor;
+
+   package Cursors_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Cursor);
+
+   function Get_Mark (C : Cursor) return Gtk_Text_Mark;
+   function Get_Column_Memory (C : Cursor) return Gint;
+   procedure Set_Column_Memory (C : Cursor; Offset : Gint);
+
    procedure Add_Multi_Cursor
      (Buffer : Source_Buffer; Location : Gtk_Text_Iter);
    --  Add a new multi cursor at the specified location
@@ -55,8 +64,12 @@ package Src_Editor_Buffer.Multi_Cursors is
    --  in the buffer. Do not forget to set that back after a manual multi
    --  cursor operation !
 
-   function Get_Multi_Cursors_Marks
-     (Buffer : Source_Buffer) return Marks_Lists.List;
+--     function Get_Multi_Cursors_Marks
+--       (Buffer : Source_Buffer) return Marks_Lists.List;
+   --  Return a full list of all multi cursor's marks.
+
+   function Get_Multi_Cursors
+     (Buffer : Source_Buffer) return Cursors_Lists.List;
    --  Return a full list of all multi cursor's marks.
 
    function Get_Multi_Cursors_Sync

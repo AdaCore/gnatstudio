@@ -492,6 +492,11 @@ package body Src_Editor_Buffer is
    pragma Inline (Update_Logical_Timestamp);
    --  Update the logical timestamp
 
+   procedure Update_All_Column_Memory
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Update column memory for every cursor, the main one and every existing
+   --  multi cursor
+
    -----------
    -- Hooks --
    -----------
@@ -1607,7 +1612,7 @@ package body Src_Editor_Buffer is
    is
       Mark : constant Gtk_Text_Mark :=
                Get_Text_Mark (Glib.Values.Nth (Params, 2));
-
+      Iter : Gtk_Text_Iter;
    begin
       --  Emit the new cursor position if it is the Insert_Mark that was
       --  changed.
@@ -1638,7 +1643,16 @@ package body Src_Editor_Buffer is
 
          Emit_New_Cursor_Position (Buffer);
          Cursor_Move_Hook (Buffer);
+         Buffer.Get_Iter_At_Mark (Iter, Mark);
+         Buffer.Cursor_Column_Memory := Get_Line_Offset (Iter);
       end if;
+
+      for Cursor of Buffer.Multi_Cursors_List loop
+         if Cursor.Mark = Mark then
+            Buffer.Get_Iter_At_Mark (Iter, Mark);
+            Cursor.Column_Memory := Get_Line_Offset (Iter);
+         end if;
+      end loop;
 
       Buffer.Setting_Mark := False;
 
@@ -1740,29 +1754,30 @@ package body Src_Editor_Buffer is
       if Buffer.Multi_Cursors_Sync.Mode = Auto
         and then not Buffer.Multi_Cursors_Barrier
       then
-         Buffer.Multi_Cursors_Barrier := True;
-         Buffer.Start_Inserting;
-         for Cursor of Buffer.Multi_Cursors_List loop
-            declare
-               Cursor_Mark : constant Gtk_Text_Mark := Cursor.Mark;
-               Iter : Gtk_Text_Iter;
-            begin
-               Buffer.Get_Iter_At_Mark (Iter, Cursor_Mark);
-               Buffer.Insert (Iter, Text (1 .. Length));
-            end;
-         end loop;
-         Buffer.End_Inserting;
-         Buffer.Multi_Cursors_Barrier := False;
-
          declare
-            Iter_Acc : constant access Gtk_Text_Iter :=
-              Iter_Access_Address_Conversions.To_Pointer
-                (Get_Address (Nth (Params, 1)));
+            Iter : Gtk_Text_Iter;
          begin
-            Buffer.Get_Iter_At_Mark (Iter_Acc.all, Buffer.Insert_Mark);
-         end;
+            Buffer.Multi_Cursors_Barrier := True;
+            Buffer.Start_Inserting;
+            for Cursor of Buffer.Multi_Cursors_List loop
+               Buffer.Get_Iter_At_Mark (Iter, Cursor.Mark);
+               Buffer.Insert (Iter, Text (1 .. Length));
+            end loop;
+            Buffer.End_Inserting;
+            Buffer.Multi_Cursors_Barrier := False;
 
+            declare
+               Iter_Acc : constant access Gtk_Text_Iter :=
+                 Iter_Access_Address_Conversions.To_Pointer
+                   (Get_Address (Nth (Params, 1)));
+            begin
+               Buffer.Get_Iter_At_Mark (Iter_Acc.all, Buffer.Insert_Mark);
+            end;
+
+         end;
       end if;
+
+      Update_All_Column_Memory (Buffer);
 
       Buffer.Multi_Cursors_Barrier := True;
 
@@ -2078,6 +2093,8 @@ package body Src_Editor_Buffer is
       end if;
 
       Buffer.Multi_Cursors_Barrier := True;
+
+      Update_All_Column_Memory (Buffer);
 
    exception
       when E : others =>
@@ -8111,6 +8128,44 @@ package body Src_Editor_Buffer is
          Buffer.Logical_Timestamp := Buffer.Logical_Timestamp + 1;
       end if;
    end Update_Logical_Timestamp;
+
+   -----------------------
+   -- Set_Column_Memory --
+   -----------------------
+   procedure Set_Column_Memory
+     (Buffer : access Source_Buffer_Record; Offset : Gint) is
+   begin
+      Buffer.Cursor_Column_Memory := Offset;
+   end Set_Column_Memory;
+
+   -----------------------
+   -- Get_Column_Memory --
+   -----------------------
+
+   function Get_Column_Memory
+     (Buffer : access Source_Buffer_Record) return Gint
+   is (Buffer.Cursor_Column_Memory);
+
+   ------------------------------
+   -- Update_All_Column_Memory --
+   ------------------------------
+
+   procedure Update_All_Column_Memory
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+
+      Buffer.Get_Iter_At_Mark (Iter, Buffer.Insert_Mark);
+      Buffer.Cursor_Column_Memory := Get_Line_Offset (Iter);
+
+      for Cursor of Buffer.Multi_Cursors_List loop
+         Buffer.Get_Iter_At_Mark (Iter, Cursor.Mark);
+         Cursor.Column_Memory := Get_Line_Offset (Iter);
+      end loop;
+
+   end Update_All_Column_Memory;
+   pragma Unreferenced (Update_All_Column_Memory);
 
    ---------------
    -- Inserting --

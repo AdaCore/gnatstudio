@@ -60,6 +60,8 @@ package Src_Editor_Buffer is
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
 
+   type Multi_Cursor is private;
+
    type MC_Sync_Mode_Type is (Auto, Manual_Master, Manual_Slave);
    --  This type represents the mode the buffer is in regarding multi cursors
    --  behaviour
@@ -628,6 +630,14 @@ package Src_Editor_Buffer is
       return Source_Buffer_Array;
    --  Return the list of all buffers currently edited. Each buffer appears
    --  only once even if multiple views exist.
+
+   procedure Set_Column_Memory
+     (Buffer : access Source_Buffer_Record; Offset : Gint);
+   --  Set column memory for the main cursor of the buffer
+
+   function  Get_Column_Memory
+     (Buffer : access Source_Buffer_Record) return Gint;
+   --  Get column memory for the main cursor of the buffer
 
    -------------------
    -- Buffer Status --
@@ -1367,8 +1377,9 @@ private
    ------------------
 
    type Multi_Cursor is record
-      Mark            : Gtk.Text_Mark.Gtk_Text_Mark;
-      Current_Command : Command_Access;
+      Mark                     : Gtk.Text_Mark.Gtk_Text_Mark;
+      Current_Command          : Command_Access;
+      Column_Memory : Gint := 0;
    end record;
    --  Represents the information we have to store about each multi-cursor
    --  The Mark field is the mark representing the multi cursor in the buffer
@@ -1677,6 +1688,9 @@ private
       --  The sync mode of the buffer. The operating mode is detailed precisely
       --  in the public procedures related to sync, in
       --  Src_Editor_Buffer.Multi_Cursors.
+
+      Cursor_Column_Memory                  : Gint := 0;
+      --  Memory for the horizontal of the cursor when moving from line to line
 
       Logical_Timestamp : Integer := -1;
    end record;

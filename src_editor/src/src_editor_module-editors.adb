@@ -2876,8 +2876,8 @@ package body Src_Editor_Module.Editors is
    is
       List : Mark_Lists.List;
    begin
-      for Cursor_Mark of Get_Multi_Cursors_Marks (This.Contents.Buffer) loop
-         List.Append (This.Create_Editor_Mark (Cursor_Mark));
+      for Cursor of Get_Multi_Cursors (This.Contents.Buffer) loop
+         List.Append (This.Create_Editor_Mark (Get_Mark (Cursor)));
       end loop;
       return List;
    end Get_Multi_Cursors_Marks;
