@@ -36,6 +36,14 @@ NF-53-M318-031 GB: warning editing files not part of a GB project (2013-05-13)
   the file is part of a GNATbench project.
   This dialog can be disabled through Ada Editor Preferences page.
 
+NF-53-M205-030 ECL: navigation problems are announced (2013-05-24)
+
+  When navigation functions, such as hyperlinks and goto-spec/body, encounter
+  problems due to lack of compilation or use of foreign Ada source files, these
+  problems are announced via warning and errors dialog boxes.  Users have the
+  option to disable these dialogs with a checkbox on the dialogs themselves,
+  for convenience.
+
 NF-53-M204-035 ECL: automatic scenario set for Android projects (2013-02-04)
 
   When the new-project wizard creates a new Ada for Android project
