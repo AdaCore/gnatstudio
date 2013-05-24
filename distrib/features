@@ -51,6 +51,14 @@ NF-60-M307-008 GPS: refactoring of highlighter.py (2013-03-27)
   before (in particular, you can strike through or underline specific text
   in your editors with just a few lines of code).
 
+NF-53-M205-030 ECL: navigation problems are announced (2013-05-24)
+
+  When navigation functions, such as hyperlinks and goto-spec/body, encounter
+  problems due to lack of compilation or use of foreign Ada source files, these
+  problems are announced via warning and errors dialog boxes.  Users have the
+  option to disable these dialogs with a checkbox on the dialogs themselves,
+  for convenience.
+
 NF-53-M204-035 ECL: automatic scenario set for Android projects (2013-02-04)
 
   When the new-project wizard creates a new Ada for Android project
