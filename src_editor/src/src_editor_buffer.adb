@@ -2107,16 +2107,51 @@ package body Src_Editor_Buffer is
       Editable_Line_End   : Editable_Line_Type;
       First_Buffer_Line_To_Remove : Buffer_Line_Type;
       Last_Buffer_Line_To_Remove  : Buffer_Line_Type;
-
       Delete_Offset : Gint := 0;
 
+      procedure Get_Current_Cursor_Position
+        (Line   : out Gint;
+         Column : out Gint);
+      --  Same as get cursor position, but takes multi-cursors into account
+
+      procedure Get_Current_Cursor_Position
+        (Line   : out Gint;
+         Column : out Gint)
+      is
+         Mark : Gtk_Text_Mark;
+         Iter : Gtk_Text_Iter;
+      begin
+
+         if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
+            Mark := Buffer.Get_Mark
+              (To_String (Buffer.Multi_Cursors_Sync.Cursor_Name));
+         else
+            Mark := Buffer.Insert_Mark;
+         end if;
+
+         Get_Iter_At_Mark (Buffer, Iter, Mark);
+         Line   := Get_Line (Iter);
+         Column := Get_Line_Offset (Iter);
+      end Get_Current_Cursor_Position;
+
    begin
+      --  If in multi cursors manual slave mode, update corresponding command
+      if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
+         for Cursor of Buffer.Multi_Cursors_List loop
+            if
+              Cursor.Mark.Get_Name = Buffer.Multi_Cursors_Sync.Cursor_Name
+            then
+               Command := Editor_Command (Cursor.Current_Command);
+            end if;
+         end loop;
+      end if;
+
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
       Get_Text_Iter (Nth (Params, 2), End_Iter);
 
       --  Determine the direction mode for the delete action
 
-      Get_Cursor_Position (Buffer, Line, Column);
+      Get_Current_Cursor_Position (Line, Column);
 
       Line_Start   := Get_Line (Start_Iter);
       Column_Start := Get_Line_Offset (Start_Iter);
