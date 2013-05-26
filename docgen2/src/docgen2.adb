@@ -57,6 +57,7 @@ with Docgen2.Scripts;         use Docgen2.Scripts;
 with Docgen2.Comments;        use Docgen2.Comments;
 with Docgen2.Comments.List;   use Docgen2.Comments.List;
 with Docgen2.Utils;           use Docgen2.Utils;
+with Docgen3;
 with Language.Tree.Database;  use Language.Tree.Database;
 with Xref;                    use Xref;
 
@@ -855,6 +856,20 @@ package body Docgen2 is
                      Get_Registry (Kernel).Tree.Other_File (File);
       C          : Docgen_Object;
    begin
+      if Active (Docgen3.DOCGEN_V31) then
+         Docgen3.Process_Single_File
+           (Kernel  => Kernel,
+            File    => File,
+            Options => (Comments_Filter => Options.Comments_Filter,
+                        Report_Errors   => Docgen3.Errors_Only,
+                        Tree_Output     =>
+                          (Kind => Docgen3.Short,
+                           With_Comments => True),
+                        Skip_C_Files    => True,
+                        Display_Time    => True));
+         return;
+      end if;
+
       Parse_All_LI_Information (Kernel, P, Recursive => False);
 
       C := new Docgen_Command;
@@ -897,6 +912,21 @@ package body Docgen2 is
       Context : Selection_Context;
 
    begin
+      if Active (Docgen3.DOCGEN_V31) then
+         Docgen3.Process_Project_Files
+           (Kernel    => Kernel,
+            Project   => Project,
+            Options   => (Comments_Filter => Options.Comments_Filter,
+                          Report_Errors   => Docgen3.Errors_Only,
+                          Tree_Output     =>
+                            (Kind => Docgen3.Short,
+                             With_Comments => True),
+                          Skip_C_Files    => True,
+                          Display_Time    => True),
+            Recursive => Recursive);
+         return;
+      end if;
+
       if P = No_Project then
          Context := Get_Current_Context (Kernel);
 
