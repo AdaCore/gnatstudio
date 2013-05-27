@@ -19,6 +19,12 @@ Known Problems fixed in GPS 5.2.2
               builder preference is set to Auto.
   Workaround: Set the Default builder preference to gprbuild.
 
+- M125-011: GPS: use all type clause corrupts outline view & vertical bracket
+  Problem:    when Ada 2012 use all type clause is used, the displayed
+              vertical bracket around blocks may be wrong. The Outline view
+              also may display wrong data.
+  Workaround: None.
+
 Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.1
 
 - M214-041: GB: UI freeze at startup on right click.

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2012, AdaCore                     --
+--                     Copyright (C) 2001-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2391,8 +2391,10 @@ package body Ada_Analyzer is
             end if;
 
          elsif (Reserved = Tok_Type
-                and then Prev_Token /= Tok_With    --  with type
-                and then Prev_Token /= Tok_Use)    --  use type
+                and then Prev_Token /= Tok_With     --  with type
+                and then Prev_Token /= Tok_Use      --  use type
+                and then (Prev_Prev_Token /= Tok_Use or
+                            Prev_Token /= Tok_All)) --  use all type
            or else Reserved = Tok_Subtype
          then
             --  Entering a type declaration/definition
