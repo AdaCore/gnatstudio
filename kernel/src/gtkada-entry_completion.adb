@@ -81,6 +81,9 @@ package body Gtkada.Entry_Completion is
    function On_Idle (Self : Gtkada_Entry) return Boolean;
    --  Called on idle to complete the completions
 
+   function On_Preview_Idle (Self : Gtkada_Entry) return Boolean;
+   --  Called on idle to display the preview of the current selection
+
    procedure Clear (Self : access Gtkada_Entry_Record'Class);
    --  Clear the list of completions, and free the memory
 
@@ -600,6 +603,20 @@ package body Gtkada.Entry_Completion is
    ------------------
 
    procedure Show_Preview (Self : access Gtkada_Entry_Record'Class) is
+   begin
+      if Self.Settings_Preview.Get_Active
+         and then Self.Notes_Idle = No_Source_Id
+      then
+         Self.Notes_Idle := Completion_Sources.Idle_Add
+            (On_Preview_Idle'Access, Self);
+      end if;
+   end Show_Preview;
+
+   ---------------------
+   -- On_Preview_Idle --
+   ---------------------
+
+   function On_Preview_Idle (Self : Gtkada_Entry) return Boolean is
       Iter   : Gtk_Tree_Iter;
       M      : Gtk_Tree_Model;
       Label  : Gtk_Label;
@@ -632,7 +649,11 @@ package body Gtkada.Entry_Completion is
       else
          Self.Notes_Scroll.Hide;
       end if;
-   end Show_Preview;
+
+      --  No need to retry
+      Self.Notes_Idle := No_Source_Id;
+      return False;
+   end On_Preview_Idle;
 
    ----------------------
    -- On_Entry_Destroy --
@@ -646,6 +667,11 @@ package body Gtkada.Entry_Completion is
       if S.Idle /= No_Source_Id then
          Remove (S.Idle);
          S.Idle := No_Source_Id;
+      end if;
+
+      if S.Notes_Idle /= No_Source_Id then
+         Remove (S.Notes_Idle);
+         S.Notes_Idle := No_Source_Id;
       end if;
 
       S.Clear;
@@ -875,11 +901,19 @@ package body Gtkada.Entry_Completion is
          Kind          => Search_Kind'Value (S.Settings_Kind.Get_Active_Id));
       S.Completion.Set_Pattern (S.Pattern);
 
+      --  Since the list of completions will change shortly, give up on
+      --  loading the preview.
+      if S.Notes_Idle /= No_Source_Id then
+         Remove (S.Notes_Idle);
+         S.Notes_Idle := No_Source_Id;
+      end if;
+
       if Text = "" then
          if S.Idle /= No_Source_Id then
             Remove (S.Idle);
             S.Idle := No_Source_Id;
          end if;
+
          S.Clear;
          Popdown (S);
 

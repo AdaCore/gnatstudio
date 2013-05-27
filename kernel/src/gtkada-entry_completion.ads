@@ -127,6 +127,7 @@ private
 
       Notes_Scroll     : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Notes_Box        : Gtk.Box.Gtk_Box;
+      Notes_Idle       : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --   Display extra information on the currently selected item
    end record;
 
