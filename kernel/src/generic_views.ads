@@ -26,12 +26,12 @@ with Glib.Object;
 with XML_Utils;
 with Gtkada.Handlers;
 with Gtk.Box;
-private with Gtk.GEntry;
 with Gtk.Menu;
 private with Gtk.Toggle_Tool_Button;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
 with Gtk.Widget;
+private with Gtkada.Search_Entry;
 with Gtkada.MDI;
 with Histories;
 
@@ -287,7 +287,7 @@ package Generic_Views is
 private
    type Filter_Panel_Record is new Gtk.Tool_Item.Gtk_Tool_Item_Record
      with record
-      Pattern : Gtk.GEntry.Gtk_Entry;
+      Pattern : Gtkada.Search_Entry.Gtkada_Search_Entry;
       Regexp  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
       Negate  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
      end record;

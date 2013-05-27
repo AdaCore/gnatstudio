@@ -25,6 +25,7 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Search;          use GPS.Kernel.Search;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;            use GPS.Main_Window;
@@ -56,6 +57,7 @@ with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.Abstract_List_Model; use Gtkada.Abstract_List_Model;
+with Gtkada.Entry_Completion;    use Gtkada.Entry_Completion;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with String_Utils;               use String_Utils;
@@ -214,9 +216,6 @@ package body Task_Manager.GUI is
       Task_Label         : Gtk_Label;
       --  What action are we performing ?
 
-      Logo : Gtk_Image;
-      --  The logo displayed when GPS is idle.
-
       Close_Button_Pixbuf    : Gdk_Pixbuf;
       Pause_Button_Pixbuf    : Gdk_Pixbuf;
       Play_Button_Pixbuf     : Gdk_Pixbuf;
@@ -347,6 +346,7 @@ package body Task_Manager.GUI is
 
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;
+      Kernel  : not null access Kernel_Handle_Record'Class;
       Area    : Gtk.Box.Gtk_Hbox);
    --  Indicate an area in which progress bars can be displayed
 
@@ -545,9 +545,6 @@ package body Task_Manager.GUI is
    is
    begin
       if Idle then
-         View.Logo.Set_Child_Visible (True);
-         View.Logo.Show_All;
-
          View.Main_Progress_Bar.Set_Child_Visible (False);
          View.Progress_Bar_Button.Set_Child_Visible (False);
          View.Task_Label.Set_Child_Visible (False);
@@ -556,9 +553,6 @@ package body Task_Manager.GUI is
          View.Task_Label.Hide;
 
       else
-         View.Logo.Set_Child_Visible (False);
-         View.Logo.Hide;
-
          View.Main_Progress_Bar.Set_Child_Visible (True);
          View.Progress_Bar_Button.Set_Child_Visible (True);
          View.Task_Label.Set_Child_Visible (True);
@@ -1394,13 +1388,6 @@ package body Task_Manager.GUI is
       Initialize_Hbox (View, Homogeneous => False);
       Get_Style_Context (View).Add_Class ("gps-task-manager");
 
-      --  The logo goes to the left of everything, so that when it is hidden
-      --  it doesn't matter if it is part of the size computation for the
-      --  task manager
-
-      Gtk_New (View.Logo, GPS_Logo, Icon_Size_Small_Toolbar);
-      View.Pack_Start (View.Logo, Expand => False);
-
       --  The progress bar area
 
       Gtk_New_Vbox (VBox);
@@ -1483,8 +1470,22 @@ package body Task_Manager.GUI is
 
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;
-      Area    : Gtk.Box.Gtk_Hbox) is
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Area    : Gtk.Box.Gtk_Hbox)
+   is
+      Search : Gtkada_Entry;
    begin
+      Gtk_New
+         (Search,
+          Kernel              => Kernel,
+          Name                => "global_search",
+          Completion_In_Popup => True,
+          Case_Sensitive      => True,
+          Preview             => False,
+          Completion          =>
+             GPS.Kernel.Search.Registry.Get (Provider_Filenames));
+      Area.Pack_End (Search, Expand => False);
+
       Area.Pack_End (Task_Manager_UI_Access (Manager).GUI, Expand => False);
    end Set_Progress_Area;
 
@@ -1520,6 +1521,7 @@ package body Task_Manager.GUI is
       --  Display the main progress bar in the GPS main window
       Set_Progress_Area
         (Get_Task_Manager (Kernel),
+         Kernel,
          GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box);
    end Register_Module;
 

@@ -41,9 +41,6 @@ package GPS.Stock_Icons is
    GPS_Stop_Task : constant String := "gps-stopTask";
    --  Icon used in the task manager's main progress bar to cancel a task
 
-   GPS_Logo : constant String := "gps-logo";
-   --  The GPS logo
-
    GPS_Expand_All : constant String := "gps-expandAll";
    GPS_Collapse_All : constant String := "gps-collapseAll";
    --  Manipulating a tree view

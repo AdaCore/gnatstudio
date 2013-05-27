@@ -18,13 +18,14 @@
 --  An entry field that provides on-the-fly completion.
 --  This completion is provided by a GPS.Search.Search_Provider.
 
+with Gdk.Device;
 with Glib.Main;
 with Gtk.Box;
 with Gtk.Check_Button;
 with Gtk.Combo_Box_Text;
-with Gtk.GEntry;
 with Gtk.List_Store;
 with Gtk.Scrolled_Window;
+with Gtkada.Search_Entry;
 with Gtk.Tree_View;
 with Gtk.Window;
 with GPS.Kernel;
@@ -94,7 +95,7 @@ private
    type History_Key_Access is access all Histories.History_Key;
 
    type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with record
-      GEntry           : Gtk.GEntry.Gtk_Entry;
+      GEntry           : Gtkada.Search_Entry.Gtkada_Search_Entry;
       Completion       : GPS.Search.Search_Provider_Access;
       Pattern          : GPS.Search.Search_Pattern_Access;
       Kernel           : GPS.Kernel.Kernel_Handle;
@@ -112,6 +113,8 @@ private
 
       Popup            : Gtk.Window.Gtk_Window;
       --  The popup window
+
+      Grab_Device             : Gdk.Device.Gdk_Device;
 
       Settings_Case_Sensitive : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Whole_Word     : Gtk.Check_Button.Gtk_Check_Button;

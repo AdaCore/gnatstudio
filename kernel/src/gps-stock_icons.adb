@@ -113,7 +113,6 @@ package body GPS.Stock_Icons is
 
       Icon (GPS_Stock_Config_Menu, -"Configuration", "20px/menu_20.png");
       Icon (GPS_Stop_Task, -"Close", "9px/close_8.png");
-      Icon (GPS_Logo, -"Logo", "24px/gps_24.png");
       Icon (GPS_Expand_All, -"Expand all", "9px/expand_12.png");
       Icon (GPS_Collapse_All, "-Collapse all", "9px/collapse_12.png");
       Icon (GPS_Clear_Entry, -"Clear", "16px/clear_entry_16.png");

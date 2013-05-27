@@ -50,9 +50,11 @@
 
 /* Search and filter fields */
 GtkEntry.search {
-  border-radius: 10px;
-  border-top: 0px;
-  border-bottom:0px;
+  border-radius: 8px;
+  border-color: transparent;
+  border-width: 1px;
+  box-shadow: none;
+  /* border-image: none; background-image:none */
 }
 
 .completion-list {

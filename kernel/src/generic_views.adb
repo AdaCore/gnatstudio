@@ -21,7 +21,6 @@ with Gtk.Editable;
 with Gdk.Event;               use Gdk.Event;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
-with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Style_Context;       use Gtk.Style_Context;
 with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
@@ -31,6 +30,7 @@ with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.Search_Entry;     use Gtkada.Search_Entry;
 with Gtkada.MDI;              use Gtkada.MDI;
 
 with Ada.Tags;                  use Ada.Tags;
@@ -54,12 +54,6 @@ package body Generic_Views is
       return Gint;
    --  Return the index of the separator that right aligns items, or -1 if
    --  there is none.
-
-   procedure On_Clear_Filter_Entry
-     (View  : access GObject_Record'Class;
-      Pos   : Gtk_Entry_Icon_Position;
-      Event : Gdk_Event_Button);
-   --  Clear the contents of the entry.
 
    procedure Report_Filter_Changed (View : access GObject_Record'Class);
    --  Report a change in the filter panel
@@ -155,15 +149,8 @@ package body Generic_Views is
 
       G_New (F, Filter_Class_Record.The_Type);
 
-      F.Pattern := Gtk_Entry_New;
-      Get_Style_Context (F.Pattern).Add_Class ("search");
-      F.Pattern.Set_Icon_From_Stock
-        (Gtk_Entry_Icon_Secondary, GPS_Clear_Entry);
-      F.Pattern.Set_Icon_Activatable (Gtk_Entry_Icon_Secondary, True);
-      F.Pattern.Set_Icon_Tooltip_Text
-        (Gtk_Entry_Icon_Secondary, -"Clear the pattern");
-      F.Pattern.Set_Placeholder_Text (Placeholder);
-      F.Pattern.On_Icon_Press (On_Clear_Filter_Entry'Access, Self);
+      Gtk_New (F.Pattern, Placeholder => Placeholder);
+
       Object_Callback.Object_Connect
         (F.Pattern, Gtk.Editable.Signal_Changed,
          Report_Filter_Changed'Access, Self);
@@ -268,22 +255,6 @@ package body Generic_Views is
          end if;
       end if;
    end Append_Toolbar;
-
-   --------------------
-   -- On_Clear_Entry --
-   --------------------
-
-   procedure On_Clear_Filter_Entry
-     (View  : access GObject_Record'Class;
-      Pos   : Gtk_Entry_Icon_Position;
-      Event : Gdk_Event_Button)
-   is
-      pragma Unreferenced (Pos, Event);
-      V : constant Abstract_View_Access := Abstract_View_Access (View);
-   begin
-      V.Filter.Pattern.Set_Text ("");
-      Report_Filter_Changed (V);
-   end On_Clear_Filter_Entry;
 
    ------------------
    -- Simple_Views --

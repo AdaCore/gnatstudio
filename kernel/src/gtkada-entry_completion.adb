@@ -22,6 +22,8 @@ with GNAT.Strings;               use GNAT.Strings;
 
 with Pango.Layout;               use Pango.Layout;
 with Gdk.Event;                  use Gdk.Event;
+with Gdk.Device;                 use Gdk.Device;
+with Gdk.Device_Manager;         use Gdk.Device_Manager;
 with Gdk.Screen;                 use Gdk.Screen;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
@@ -41,6 +43,7 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
 with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
@@ -91,7 +94,7 @@ package body Gtkada.Entry_Completion is
    procedure On_Settings_Changed (Self : access GObject_Record'Class);
    --  One of the settings has changed
 
-   function On_Proposal_Click
+   function On_Button_Event
       (Ent   : access GObject_Record'Class;
        Event : Gdk_Event_Button) return Boolean;
    --  Called when a proposal is selected
@@ -99,8 +102,14 @@ package body Gtkada.Entry_Completion is
    procedure On_Entry_Activate (Self : access GObject_Record'Class);
    --  Called when <enter> is pressed in the entry
 
+   function On_Focus_Out
+      (Self  : access GObject_Record'Class;
+       Event : Gdk_Event_Focus) return Boolean;
+   --  Focus leaves the entry, we should close the popup
+
    procedure Popup (Self : not null access Gtkada_Entry_Record'Class);
-   --  Show the popup window with the list of completions
+   procedure Popdown (Self : not null access Gtkada_Entry_Record'Class);
+   --  Show or hide the popup window with the list of completions
 
    procedure Activate_Proposal
       (Self : not null access Gtkada_Entry_Record'Class;
@@ -289,8 +298,9 @@ package body Gtkada.Entry_Completion is
       Self.Settings_Kind.On_Changed (On_Settings_Changed'Access, Self);
 
       Self.On_Destroy (On_Entry_Destroy'Access);
-      Self.View.On_Button_Press_Event (On_Proposal_Click'Access, Self);
-      Self.On_Key_Press_Event (On_Key_Press'Access, Self);
+      Self.View.On_Button_Press_Event (On_Button_Event'Access, Self);
+      Self.GEntry.On_Key_Press_Event (On_Key_Press'Access, Self);
+      Self.GEntry.On_Focus_Out_Event (On_Focus_Out'Access, Self);
 
       --  Set the current entry to be the previously inserted one
       Set_Max_Length (Kernel.Get_History.all, 5, Name);
@@ -298,6 +308,11 @@ package body Gtkada.Entry_Completion is
 
       if Self.Hist /= null
          and then Self.Hist (Self.Hist'First).all /= ""
+
+         --  When the completion is in a popup, having a prefilled entry is
+         --  not convenient: use need to click in it to get the focus, then
+         --  triple-click to reselect the full text
+         and then not Completion_In_Popup
       then
          Self.GEntry.Set_Text (Self.Hist (Self.Hist'First).all);
          Self.GEntry.Select_Region (0, -1);
@@ -307,8 +322,24 @@ package body Gtkada.Entry_Completion is
 
       --  Connect after setting the default entry, so that we do not
       --  pop up the completion window immediately.
-      Gtk.Editable.On_Changed (+Self.GEntry, On_Entry_Changed'Access, Self);
+      Gtk.Editable.On_Changed
+         (+Gtk_Entry (Self.GEntry), On_Entry_Changed'Access, Self);
    end Initialize;
+
+   ------------------
+   -- On_Focus_Out --
+   ------------------
+
+   function On_Focus_Out
+      (Self  : access GObject_Record'Class;
+       Event : Gdk_Event_Focus) return Boolean
+   is
+      S : constant Gtkada_Entry := Gtkada_Entry (Self);
+      pragma Unreferenced (Event);
+   begin
+      Popdown (S);
+      return False;
+   end On_Focus_Out;
 
    -----------------------
    -- Activate_Proposal --
@@ -349,6 +380,7 @@ package body Gtkada.Entry_Completion is
             Self.Kernel.Add_To_History (Self.Name.all, Result.Id.all);
          end if;
 
+         Popdown (Self);
          Result.Execute (Give_Focus => True);
 
          if Result_Need_Free then
@@ -378,11 +410,11 @@ package body Gtkada.Entry_Completion is
       return Self.Kernel;
    end Get_Kernel;
 
-   -----------------------
-   -- On_Proposal_Click --
-   -----------------------
+   ---------------------
+   -- On_Button_Event --
+   ---------------------
 
-   function On_Proposal_Click
+   function On_Button_Event
       (Ent   : access GObject_Record'Class;
        Event : Gdk_Event_Button) return Boolean
    is
@@ -414,7 +446,7 @@ package body Gtkada.Entry_Completion is
       end if;
 
       return False;
-   end On_Proposal_Click;
+   end On_Button_Event;
 
    ---------------------
    -- Insert_Proposal --
@@ -495,6 +527,11 @@ package body Gtkada.Entry_Completion is
       if Event.Keyval = GDK_Return then
          Activate_Proposal (Self, Force => True);
          return True;
+
+      elsif Event.Keyval = GDK_Escape then
+         if Self.Popup /= null then
+            Hide (Self.Popup);
+         end if;
 
       elsif Event.Keyval = GDK_Tab
          or else Event.Keyval = GDK_KP_Down
@@ -697,6 +734,8 @@ package body Gtkada.Entry_Completion is
       X, Y : Gint;
       Layout : Pango_Layout;
       Toplevel : Gtk_Widget;
+      Alloc : Gtk_Allocation;
+      Status : Gdk_Grab_Status;
    begin
       if Self.Popup /= null and then not Self.Popup.Get_Visible then
          Layout := Create_Pango_Layout (Self.View);
@@ -708,12 +747,15 @@ package body Gtkada.Entry_Completion is
               Gint'Min (Max_Window_Width, Char_Width * 20)) + 5;
          Height := Char_Height * 22 + 5;
 
+         --  This is the origin of the GPS window
          Get_Origin (Get_Window (Self), Gdk_X, Gdk_Y);
+         Self.Get_Allocation (Alloc);
+         Gdk_X := Gdk_X + Alloc.X;
+         Y := Gdk_Y + Alloc.Y + Self.GEntry.Get_Allocated_Height;
 
          --  Make sure window doesn't get past screen limits
          Root_Width := Get_Width (Gdk.Screen.Get_Default);
          X := Gint'Min (Gdk_X, Root_Width - Width);
-         Y := Gdk_Y + Self.Get_Allocated_Height;
 
          Toplevel := Self.Get_Toplevel;
          if Toplevel /= null
@@ -723,16 +765,83 @@ package body Gtkada.Entry_Completion is
             Self.Popup.Set_Transient_For (Gtk_Window (Toplevel));
          end if;
 
-         --  Self.Popup.Set_Resizable (False);
-         --  Self.Popup.Set_Screen (Self.Get_Screen);
+         Self.Popup.Set_Resizable (False);
+         Self.Popup.Set_Screen (Self.Get_Screen);
+         Self.Popup.Set_Skip_Taskbar_Hint (True);
+         Self.Popup.Set_Skip_Pager_Hint (True);
          Self.Popup.Move (X, Y);
          Self.Popup.Set_Size_Request (Width, Height);
          Self.Popup.Show_All;
          Self.Notes_Scroll.Hide;
+
+         --  Code from gtkcombobox.c
+         declare
+            use Device_List;
+            Mgr : constant Gdk_Device_Manager :=
+               Get_Device_Manager (Self.Get_Display);
+            Devices : Device_List.Glist :=
+               Mgr.List_Devices (Gdk_Device_Type_Master);
+         begin
+            Self.Grab_Device := Get_Data (Devices);
+
+            if Self.Grab_Device /= null
+               and then Self.Grab_Device.Get_Source = Source_Keyboard
+            then
+               Self.Grab_Device := Self.Grab_Device.Get_Associated_Device;
+            end if;
+
+            Free (Devices);
+         end;
+
+         if Self.Grab_Device = null then
+            Trace (Me, "No current device on which to grab");
+         else
+            --  ??? This seems to have no effect
+            Status := Self.Grab_Device.Grab
+               (Window => Self.View.Get_Window,
+                Grab_Ownership => Ownership_Window,
+                Owner_Events   => True,
+                Event_Mask     => Button_Press_Mask or Button_Release_Mask,
+                Cursor         => null,
+                Time           => 0);
+            if Status /= Grab_Success then
+               Trace (Me, "Grab failed");
+               Self.Grab_Device := null;
+            else
+               Trace (Me, "Grab on "
+                  & Self.Grab_Device.Get_Device_Type'Img & " "
+                  & Self.Grab_Device.Get_Mode'Img & " "
+                  & Self.Grab_Device.Get_Source'Img & " "
+                  & Self.Grab_Device.Get_Name);
+            end if;
+
+            --  If we use Gtk.Main.Device_Grab_Add instead, we seem to
+            --  properly capture all mouse events, but also keyboard events
+            --  and the entry no longer receives them...
+            --
+            --     Device_Grab_Add (Self.View, Self.Grab_Device, True);
+         end if;
+
       else
          Self.Notes_Scroll.Hide;
       end if;
    end Popup;
+
+   -------------
+   -- Popdown --
+   -------------
+
+   procedure Popdown (Self : not null access Gtkada_Entry_Record'Class) is
+   begin
+      if Self.Popup /= null then
+         if Self.Grab_Device /= null then
+            Self.Grab_Device.Ungrab (0);
+            Self.Grab_Device := null;
+         end if;
+
+         Hide (Self.Popup);
+      end if;
+   end Popdown;
 
    -------------------------
    -- On_Settings_Changed --
@@ -772,10 +881,7 @@ package body Gtkada.Entry_Completion is
             S.Idle := No_Source_Id;
          end if;
          S.Clear;
-
-         if S.Popup /= null then
-            Hide (S.Popup);
-         end if;
+         Popdown (S);
 
       else
          Popup (S);
