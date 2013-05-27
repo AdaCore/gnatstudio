@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2012, AdaCore                          --
+--                 Copyright (C) 2012-2013, AdaCore                         --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -698,7 +698,7 @@ package body Build_Command_Utils is
          return Result;
       end Create_Command;
 
-   begin
+   begin  -- Expand_Arg
       --  ??? Special case for "%X"
       --  We are implementing a special case here since GPS.Kernel.Macros
       --  does not support returning an Argument_List.
@@ -774,7 +774,9 @@ package body Build_Command_Utils is
             Clean : constant Boolean := Arg = "%gprclean";
 
          begin
-            if Multi_Language_Build (Prj) then
+            if Arg = "%gprbuild" then
+               Res.Args := Create_Command ("gprbuild", Tc);
+            elsif Multi_Language_Build (Prj) then
                if Clean then
                   Res.Args := Create_Command ("gprclean", Tc);
                else

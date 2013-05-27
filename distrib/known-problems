@@ -13,6 +13,12 @@ Known Problems fixed in GPS 5.2.2
   Workaround: Use "Help/Gps/Using the GNAT Programming Studio" and
               "Help/Gps/GNAT Programming Studio Tutorial" menus instead.
 
+- M305-055: Bad expansion of %gprbuild
+  Problem:    %gprbuild in build targets gets expanded as gnatmake instead
+              of gprbuild in case of an Ada only prefer, and the Default
+              builder preference is set to Auto.
+  Workaround: Set the Default builder preference to gprbuild.
+
 Known Problems fixed in GPS 5.2.1 / GNATbench 2.7.1
 
 - M214-041: GB: UI freeze at startup on right click.
