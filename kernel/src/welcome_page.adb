@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2012, AdaCore                     --
+--                     Copyright (C) 2005-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -107,7 +107,7 @@ package body Welcome_Page is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Html (Kernel, "gps-tutorial.html");
+      Open_Html (Kernel, "tutorial/index.html");
       return False;
    exception
       when E : others =>
@@ -125,7 +125,7 @@ package body Welcome_Page is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Html (Kernel, "gps.html");
+      Open_Html (Kernel, "users_guide/index.html");
       return False;
    exception
       when E : others =>
