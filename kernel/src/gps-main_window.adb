@@ -400,7 +400,6 @@ package body GPS.Main_Window is
       Vbox      : Gtk_Vbox;
       Menu      : Gtk_Menu;
       Menu_Item : Gtk_Menu_Item;
-      Anim_Tb   : Gtk_Toolbar;
 
    begin
       --  Initialize the window first, so that it can be used while creating
@@ -496,17 +495,13 @@ package body GPS.Main_Window is
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 
       Gtk_New_Hbox (Main_Window.Toolbar_Box, False, 0);
+      Main_Window.Toolbar_Box.Set_Name ("toolbar-box");
       Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
 
       Gtk_New (Main_Window.Toolbar);
       Set_Orientation (Main_Window.Toolbar, Orientation_Horizontal);
       Set_Style (Main_Window.Toolbar, Toolbar_Icons);
       Pack_Start (Main_Window.Toolbar_Box, Main_Window.Toolbar);
-
-      Gtk_New (Anim_Tb);
-      Set_Orientation (Anim_Tb, Orientation_Horizontal);
-      Set_Style (Anim_Tb, Toolbar_Icons);
-      Pack_End (Main_Window.Toolbar_Box, Anim_Tb, False);
 
       Add (Vbox, Main_Window.MDI);
 

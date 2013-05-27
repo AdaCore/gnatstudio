@@ -37,6 +37,7 @@ with Glib.Main;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glib;                       use Glib;
+with Gtk.Alignment;              use Gtk.Alignment;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
@@ -343,12 +344,6 @@ package body Task_Manager.GUI is
      (Manager : Task_Manager_Access;
       GUI     : Gtk_Widget);
    --  Get and set the active graphical interface for Manager
-
-   procedure Set_Progress_Area
-     (Manager : Task_Manager_Access;
-      Kernel  : not null access Kernel_Handle_Record'Class;
-      Area    : Gtk.Box.Gtk_Hbox);
-   --  Indicate an area in which progress bars can be displayed
 
    ------------------
    -- On_Exit_Hook --
@@ -1464,31 +1459,6 @@ package body Task_Manager.GUI is
       Task_Manager_UI_Access (Manager).GUI := Task_Manager_Interface (GUI);
    end Set_GUI;
 
-   -----------------------
-   -- Set_Progress_Area --
-   -----------------------
-
-   procedure Set_Progress_Area
-     (Manager : Task_Manager_Access;
-      Kernel  : not null access Kernel_Handle_Record'Class;
-      Area    : Gtk.Box.Gtk_Hbox)
-   is
-      Search : Gtkada_Entry;
-   begin
-      Gtk_New
-         (Search,
-          Kernel              => Kernel,
-          Name                => "global_search",
-          Completion_In_Popup => True,
-          Case_Sensitive      => True,
-          Preview             => False,
-          Completion          =>
-             GPS.Kernel.Search.Registry.Get (Provider_Filenames));
-      Area.Pack_End (Search, Expand => False);
-
-      Area.Pack_End (Task_Manager_UI_Access (Manager).GUI, Expand => False);
-   end Set_Progress_Area;
-
    -------------
    -- Destroy --
    -------------
@@ -1505,6 +1475,10 @@ package body Task_Manager.GUI is
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Search  : Gtkada_Entry;
+      Align   : Gtk_Alignment;
+      Manager : Task_Manager_Access;
+      Box     : Gtk_Box;
    begin
       TM_Views.Register_Module
         (Kernel,
@@ -1516,13 +1490,29 @@ package body Task_Manager.GUI is
          Name => "task_manager.on_exit");
 
       --  Create the main progress bar in the main toolbar
-      Set_Task_Manager (Kernel, Create (Kernel_Handle (Kernel)));
+      Manager := Create (Kernel_Handle (Kernel));
+      Set_Task_Manager (Kernel, Manager);
 
       --  Display the main progress bar in the GPS main window
-      Set_Progress_Area
-        (Get_Task_Manager (Kernel),
-         Kernel,
-         GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box);
+      Box := GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box;
+
+      Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
+      Box.Pack_End (Align, Expand => False);
+
+      Gtk_New
+         (Search,
+          Kernel              => Kernel,
+          Name                => "global_search",
+          Completion_In_Popup => True,
+          Case_Sensitive      => True,
+          Preview             => False,
+          Completion          =>
+             GPS.Kernel.Search.Registry.Get (Provider_Filenames));
+      Align.Add (Search);
+
+      Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
+      Box.Pack_End (Align, Expand => False);
+      Align.Add (Task_Manager_UI_Access (Manager).GUI);
    end Register_Module;
 
 end Task_Manager.GUI;
