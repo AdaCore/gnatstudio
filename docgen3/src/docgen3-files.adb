@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
-with GPS.Kernel.Console;          use GPS.Kernel.Console;
 
 package body Docgen3.Files is
 

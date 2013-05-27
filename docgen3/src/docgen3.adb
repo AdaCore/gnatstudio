@@ -17,7 +17,6 @@
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
