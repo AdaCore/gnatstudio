@@ -14,6 +14,15 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               location.
   Workaround: None: scroll manually.
 
+- M517-006: Completion on C pointers on structures does not work.
+  Problem:    Writing the operator "->" after a pointer to an struct does not
+              enable the completion feature proposing the fields of the target
+              struct type.
+  Workaround: Declare temporarily an auxiliary variable whose type is the
+              target struct type; use this temporary variable to have available
+              the completion feature, and thus select the desired target field;
+              then replace the auxiliary variable by the pointer to the struct.
+
 - M516-020: ECL: Tooltips when debugging ada application may call Ada function
   Problem:    When debugging an Ada application, the Ada Editor tooltip may
               call a debugged application function to get actual value to be
