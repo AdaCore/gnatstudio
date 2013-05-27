@@ -16,40 +16,29 @@
 ------------------------------------------------------------------------------
 
 with Commands.Interactive;     use Commands, Commands.Interactive;
+with Gdk.Types.Keysyms;        use Gdk.Types, Gdk.Types.Keysyms;
+with Glib.Object;              use Glib.Object;
 with Gtk.Alignment;            use Gtk.Alignment;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Entry_Completion;  use Gtkada.Entry_Completion;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Search;        use GPS.Kernel.Search;
+with GPS.Kernel.Search.Filenames; use GPS.Kernel.Search.Filenames;
+with GPS.Intl;                 use GPS.Intl;
 with GPS.Main_Window;          use GPS.Main_Window;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 with Histories;                use Histories;
+with Remote;                   use Remote;
 
 package body GPS.Search.GUI is
-
-   type Global_Search_Module_Record is new Module_ID_Record with record
-      Search : Gtkada_Entry;
-
-      Default_Provider : GPS.Search.Search_Provider_Access;
-      --  The default search provider
-
-      Default_History : access History_Key;
-      --  The default history (to be used for the default_provider).
-      --  Do not free.
-
-      History : access History_Key;
-      --  The history that should be enhanced after the user types some text.
-      --  Do not Free.
-
-      Previous_Focus : Gtk_Widget;
-      --  The widget that had the focus before we gave it to the search field
-      --  for the last time
-   end record;
-   type Global_Search_Module is access all Global_Search_Module_Record'Class;
-
-   Module : Global_Search_Module;
 
    type Global_Search_Command is new Interactive_Command with record
       Provider : GPS.Search.Search_Provider_Access;
@@ -62,11 +51,40 @@ package body GPS.Search.GUI is
        Context : Interactive_Command_Context) return Command_Return_Type;
    --  Activate the global search field
 
+   type Global_Search_Module_Record is new Module_ID_Record with record
+      Search : Gtkada_Entry;
+
+      Default_Command : Global_Search_Command_Access;
+      --  The command used to give the focus to the global search.
+      --  Do not free.
+
+      Current_Command : Global_Search_Command_Access;
+      --  The command that was last used to give focus to the search (if any).
+      --  Do not free.
+
+      Previous_Focus : Gtk_Widget;
+      --  The widget that had the focus before we gave it to the search field
+      --  for the last time
+   end record;
+   type Global_Search_Module is access all Global_Search_Module_Record'Class;
+
+   Module : Global_Search_Module;
+
    procedure On_Escape (Self : access Gtk_Widget_Record'Class);
    --  Called when "<escape>" has been called
 
    procedure On_Activate (Self : access Gtk_Widget_Record'Class);
    --  Called when the user activates one of the search proposals
+
+   type Open_From_Project_Entry is new Gtkada_Entry_Record with null record;
+   overriding function Fallback
+      (Self : not null access Open_From_Project_Entry;
+       Text : String) return GPS.Search.Search_Result_Access;
+   --  An entry used for the Open From Project dialog
+
+   procedure On_Open_From_Project
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Open From Path menu
 
    ---------------
    -- On_Escape --
@@ -81,9 +99,8 @@ package body GPS.Search.GUI is
       end if;
 
       --  Reset for when the user clicks in the field
-      Module.Search.Set_Completion (Module.Default_Provider);
-
-      Module.History := Module.Default_History;
+      Module.Current_Command := null;
+      Module.Search.Set_Completion (Module.Default_Command.Provider);
    end On_Escape;
 
    -----------------
@@ -93,17 +110,16 @@ package body GPS.Search.GUI is
    procedure On_Activate (Self : access Gtk_Widget_Record'Class) is
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
    begin
-      if Module.History /= null then
+      if Module.Current_Command /= null then
          Add_To_History
             (Get_History (S.Get_Kernel).all,
-             Module.History.all,
+             Module.Current_Command.History.all,
              S.Get_Text);
       end if;
 
-      Module.History := Module.Default_History;
-
       --  Reset for when the user clicks in the field
-      Module.Search.Set_Completion (Module.Default_Provider);
+      Module.Current_Command := null;
+      Module.Search.Set_Completion (Module.Default_Command.Provider);
    end On_Activate;
 
    -------------
@@ -118,7 +134,7 @@ package body GPS.Search.GUI is
       Kernel : constant Kernel_Handle := Module.Get_Kernel;
    begin
       Module.Previous_Focus := Get_Current_Focus_Widget (Kernel);
-      Module.History := Self.History;
+      Module.Current_Command := Global_Search_Command_Access (Self);
 
       Create_New_Key_If_Necessary
          (Get_History (Kernel).all, Self.History.all, Strings);
@@ -138,6 +154,69 @@ package body GPS.Search.GUI is
       return Commands.Success;
    end Execute;
 
+   --------------
+   -- Fallback --
+   --------------
+
+   overriding function Fallback
+      (Self : not null access Open_From_Project_Entry;
+       Text : String) return GPS.Search.Search_Result_Access
+   is
+      F : constant Virtual_File := Create_From_Base (+Text);
+   begin
+      if F.Is_Regular_File then
+         return GPS.Kernel.Search.Filenames.Build_Filenames_Result
+            (Self.Get_Kernel, File => F);
+      end if;
+      return null;
+   end Fallback;
+
+   --------------------------
+   -- On_Open_From_Project --
+   --------------------------
+
+   procedure On_Open_From_Project
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Ignore : Gtk_Widget;
+      Open_File_Dialog : Gtk_Dialog;
+      Open_File_Entry  : Gtkada_Entry;
+      Resp : Gtk_Response_Type;
+      pragma Unreferenced (Widget, Ignore, Resp);
+
+   begin
+      Gtk_New (Open_File_Dialog,
+               Title  => -"Open file from project",
+               Parent => Get_Current_Window (Kernel),
+               Flags  => Modal or Destroy_With_Parent);
+      Open_File_Dialog.Set_Default_Size (600, 480);
+      Open_File_Dialog.Set_Position (Win_Pos_Mouse);
+
+      --  Do not use a combo box, so that users can easily navigate to the list
+      --  of completions through the keyboard (C423-005)
+      Open_File_Entry := new Open_From_Project_Entry;
+      Initialize
+         (Open_File_Entry,
+          Kernel         => Kernel,
+          Name           => "open_from_project",
+          Completion_In_Popup => False,
+          Completion     =>
+             GPS.Kernel.Search.Registry.Get (Provider_Filenames),
+          Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)));
+      Open_File_Dialog.Get_Content_Area.Pack_Start
+        (Open_File_Entry, Fill => True, Expand => True);
+
+      Ignore := Open_File_Dialog.Add_Button
+        (Stock_Cancel, Gtk_Response_Cancel);
+
+      Open_File_Dialog.Show_All;
+
+      --  The action is performed directly by the search_provider or the
+      --  fallback
+      Resp := Open_File_Dialog.Run;
+      Open_File_Dialog.Destroy;
+   end On_Open_From_Project;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -145,6 +224,7 @@ package body GPS.Search.GUI is
    procedure Register_Module
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      File    : constant String := '/' & (-"File") & '/';
       Align   : Gtk_Alignment;
       Command : Global_Search_Command_Access;
    begin
@@ -153,9 +233,26 @@ package body GPS.Search.GUI is
          (Module      => Module,
           Kernel      => Kernel,
           Module_Name => "Global_Search");
-      Module.Default_Provider :=
-         GPS.Kernel.Search.Registry.Get (Provider_Filenames);
-      Module.Default_History := new History_Key'("global-search-entry");
+
+      Command := new Global_Search_Command;
+      Command.Provider := GPS.Kernel.Search.Registry.Get (Provider_Filenames);
+      Command.History := new History_Key'("global-search-entry");
+      Module.Default_Command := Command;
+      Register_Action
+         (Kernel, "Global Search", Command,
+          Description =>
+             "Activate the global search field in the main toolbar",
+          Category => "Search");
+
+      --  ??? Should have a fallback for unknown files
+      Command := new Global_Search_Command;
+      Command.Provider := GPS.Kernel.Search.Registry.Get (Provider_Filenames);
+      Command.History := new History_Key'("global-search-filenames-entry");
+      Register_Action
+         (Kernel, "Global Search in context: file names", Command,
+          Description =>
+             "Search amongst the source file names of the project",
+          Category => "Search");
 
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
       GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box.Pack_End
@@ -168,7 +265,7 @@ package body GPS.Search.GUI is
           Completion_In_Popup => True,
           Case_Sensitive      => True,
           Preview             => False,
-          Completion          => Module.Default_Provider);
+          Completion          => Module.Default_Command.Provider);
       Module.Search.Set_Name ("global-search");
       Align.Add (Module.Search);
 
@@ -176,23 +273,12 @@ package body GPS.Search.GUI is
       Widget_Callback.Connect
          (Module.Search, Signal_Activate, On_Activate'Access);
 
-      Command := new Global_Search_Command;
-      Command.Provider := Module.Default_Provider;
-      Command.History := Module.Default_History;
-      Register_Action
-         (Kernel, "Global Search", Command,
-          Description =>
-             "Activate the global search field in the main toolbar",
-          Category => "Search");
-
-      Command := new Global_Search_Command;
-      Command.Provider := GPS.Kernel.Search.Registry.Get (Provider_Filenames);
-      Command.History := new History_Key'("global-search-filenames-entry");
-      Register_Action
-         (Kernel, "Global Search in context: file names", Command,
-          Description =>
-             "Search amongst the source file names of the project",
-          Category => "Search");
+      --  ??? Should use the command defined above
+      Register_Menu
+        (Kernel, File, -"Open _From Project...",  Stock_Open,
+         On_Open_From_Project'Access, null,
+         GDK_F3, Shift_Mask,
+         Ref_Item => -"Open...", Add_Before => False);
    end Register_Module;
 
 end GPS.Search.GUI;

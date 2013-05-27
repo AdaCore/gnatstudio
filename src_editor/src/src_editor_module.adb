@@ -50,7 +50,6 @@ with Gtk.Tool_Button;                   use Gtk.Tool_Button;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Window;                        use Gtk.Window;
 
-with Gtkada.Entry_Completion;           use Gtkada.Entry_Completion;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Handlers;                   use Gtkada.Handlers;
 with Gtkada.Types;                      use Gtkada.Types;
@@ -76,11 +75,8 @@ with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
-with GPS.Kernel.Search;                 use GPS.Kernel.Search;
-with GPS.Kernel.Search.Filenames;       use GPS.Kernel.Search.Filenames;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
-with GPS.Search;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -127,12 +123,6 @@ package body Src_Editor_Module is
    pragma Import (C, unfold_block_xpm, "unfold_block_xpm");
    close_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, close_block_xpm, "close_block_xpm");
-
-   type Open_From_Project_Entry is new Gtkada_Entry_Record with null record;
-   overriding function Fallback
-      (Self : not null access Open_From_Project_Entry;
-       Text : String) return GPS.Search.Search_Result_Access;
-   --  An entry used for the Open From Project dialog
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
@@ -196,10 +186,6 @@ package body Src_Editor_Module is
    procedure On_Open_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Open menu
-
-   procedure On_Open_From_Path
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Open From Path menu
 
    procedure On_Open_Remote_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1473,71 +1459,6 @@ package body Src_Editor_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Open_Remote_File;
-
-   --------------
-   -- Fallback --
-   --------------
-
-   overriding function Fallback
-      (Self : not null access Open_From_Project_Entry;
-       Text : String) return GPS.Search.Search_Result_Access
-   is
-      F : constant Virtual_File := Create_From_Base (+Text);
-   begin
-      if F.Is_Regular_File then
-         return GPS.Kernel.Search.Filenames.Build_Filenames_Result
-            (Self.Get_Kernel, File => F);
-      end if;
-      return null;
-   end Fallback;
-
-   -----------------------
-   -- On_Open_From_Path --
-   -----------------------
-
-   procedure On_Open_From_Path
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Ignore : Gtk_Widget;
-      Open_File_Dialog : Gtk_Dialog;
-      Open_File_Entry  : Gtkada_Entry;
-      Resp : Gtk_Response_Type;
-      pragma Unreferenced (Widget, Ignore, Resp);
-
-   begin
-      Gtk_New (Open_File_Dialog,
-               Title  => -"Open file from project",
-               Parent => Get_Current_Window (Kernel),
-               Flags  => Modal or Destroy_With_Parent);
-      Open_File_Dialog.Set_Default_Size (600, 480);
-      Set_Position (Open_File_Dialog, Win_Pos_Mouse);
-
-      --  Do not use a combo box, so that users can easily navigate to the list
-      --  of completions through the keyboard (C423-005)
-      Open_File_Entry := new Open_From_Project_Entry;
-      Initialize
-         (Open_File_Entry,
-          Kernel         => Kernel,
-          Name           => "open_from_project",
-          Completion_In_Popup => False,
-          Completion     =>
-             GPS.Kernel.Search.Registry.Get (Provider_Filenames),
-          Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)));
-      Get_Content_Area (Open_File_Dialog).Pack_Start
-        (Open_File_Entry, Fill => True, Expand => True);
-
-      Ignore := Add_Button (Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
-      Ignore := Add_Button
-        (Open_File_Dialog, Stock_Cancel, Gtk_Response_Cancel);
-      Set_Default_Response (Open_File_Dialog, Gtk_Response_OK);
-
-      Show_All (Open_File_Dialog);
-
-      --  The action is performed directly by the search_provider or the
-      --  fallback
-      Resp := Open_File_Dialog.Run;
-      Open_File_Dialog.Destroy;
-   end On_Open_From_Path;
 
    --------------
    -- Activate --
@@ -2862,11 +2783,6 @@ package body Src_Editor_Module is
       Register_Menu
         (Kernel, File, -"_Open...",  Stock_Open,
          On_Open_File'Access, null, GDK_F3,
-         Ref_Item => -"Save More");
-      Register_Menu
-        (Kernel, File, -"Open _From Project...",  Stock_Open,
-         On_Open_From_Path'Access, null,
-         GDK_F3, Shift_Mask,
          Ref_Item => -"Save More");
       Register_Menu
         (Kernel, File, -"Open From _Host...",  Stock_Open,
