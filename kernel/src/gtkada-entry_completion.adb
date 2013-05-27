@@ -69,6 +69,9 @@ package body Gtkada.Entry_Completion is
    --  Maximum time spent in the idle callback to insert the possible
    --  completions.
 
+   Do_Grabs : constant Boolean := False;
+   --  Whether to attempt grabbing the pointer
+
    procedure On_Entry_Destroy (Self : access Gtk_Widget_Record'Class);
    --  Callback when the widget is destroyed.
 
@@ -218,6 +221,7 @@ package body Gtkada.Entry_Completion is
 
       if Completion_In_Popup then
          Gtk_New (Self.Popup, Window_Popup);
+         Self.Popup.Set_Name ("completion-list");
          Self.Popup.Set_Decorated (False);
          Self.Popup.Set_Type_Hint (Window_Type_Hint_Combo);
          Get_Style_Context (Self.Popup).Add_Class ("completion");
@@ -300,6 +304,7 @@ package body Gtkada.Entry_Completion is
       Settings.Pack_Start (Self.Settings_Preview, Expand => False);
 
       Gtk_New (Self.Settings_Kind);
+      Self.Settings_Kind.Set_Name ("global-search-kind");
       Self.Settings_Kind.Append
          (Search_Kind'Image (Full_Text), -"Substrings match");
       Self.Settings_Kind.Append
@@ -831,51 +836,53 @@ package body Gtkada.Entry_Completion is
          Self.Notes_Scroll.Hide;
 
          --  Code from gtkcombobox.c
-         declare
-            use Device_List;
-            Mgr : constant Gdk_Device_Manager :=
-               Get_Device_Manager (Self.Get_Display);
-            Devices : Device_List.Glist :=
-               Mgr.List_Devices (Gdk_Device_Type_Master);
-         begin
-            Self.Grab_Device := Get_Data (Devices);
+         if Do_Grabs then
+            declare
+               use Device_List;
+               Mgr : constant Gdk_Device_Manager :=
+                  Get_Device_Manager (Self.Get_Display);
+               Devices : Device_List.Glist :=
+                  Mgr.List_Devices (Gdk_Device_Type_Master);
+            begin
+               Self.Grab_Device := Get_Data (Devices);
 
-            if Self.Grab_Device /= null
-               and then Self.Grab_Device.Get_Source = Source_Keyboard
-            then
-               Self.Grab_Device := Self.Grab_Device.Get_Associated_Device;
-            end if;
+               if Self.Grab_Device /= null
+                  and then Self.Grab_Device.Get_Source = Source_Keyboard
+               then
+                  Self.Grab_Device := Self.Grab_Device.Get_Associated_Device;
+               end if;
 
-            Free (Devices);
-         end;
+               Free (Devices);
+            end;
 
-         if Self.Grab_Device = null then
-            Trace (Me, "No current device on which to grab");
-         else
-            --  ??? This seems to have no effect
-            Status := Self.Grab_Device.Grab
-               (Window => Self.View.Get_Window,
-                Grab_Ownership => Ownership_Window,
-                Owner_Events   => True,
-                Event_Mask     => Button_Press_Mask or Button_Release_Mask,
-                Cursor         => null,
-                Time           => 0);
-            if Status /= Grab_Success then
-               Trace (Me, "Grab failed");
-               Self.Grab_Device := null;
+            if Self.Grab_Device = null then
+               Trace (Me, "No current device on which to grab");
             else
-               Trace (Me, "Grab on "
-                  & Self.Grab_Device.Get_Device_Type'Img & " "
-                  & Self.Grab_Device.Get_Mode'Img & " "
-                  & Self.Grab_Device.Get_Source'Img & " "
-                  & Self.Grab_Device.Get_Name);
-            end if;
+               --  ??? This seems to have no effect
+               Status := Self.Grab_Device.Grab
+                  (Window => Self.View.Get_Window,
+                   Grab_Ownership => Ownership_Window,
+                   Owner_Events   => True,
+                   Event_Mask     => Button_Press_Mask or Button_Release_Mask,
+                   Cursor         => null,
+                   Time           => 0);
+               if Status /= Grab_Success then
+                  Trace (Me, "Grab failed");
+                  Self.Grab_Device := null;
+               else
+                  Trace (Me, "Grab on "
+                     & Self.Grab_Device.Get_Device_Type'Img & " "
+                     & Self.Grab_Device.Get_Mode'Img & " "
+                     & Self.Grab_Device.Get_Source'Img & " "
+                     & Self.Grab_Device.Get_Name);
+               end if;
 
-            --  If we use Gtk.Main.Device_Grab_Add instead, we seem to
-            --  properly capture all mouse events, but also keyboard events
-            --  and the entry no longer receives them...
-            --
-            --     Device_Grab_Add (Self.View, Self.Grab_Device, True);
+               --  If we use Gtk.Main.Device_Grab_Add instead, we seem to
+               --  properly capture all mouse events, but also keyboard events
+               --  and the entry no longer receives them...
+               --
+               --     Device_Grab_Add (Self.View, Self.Grab_Device, True);
+            end if;
          end if;
 
       else
@@ -894,7 +901,7 @@ package body Gtkada.Entry_Completion is
    procedure Popdown (Self : not null access Gtkada_Entry_Record) is
    begin
       if Self.Popup /= null then
-         if Self.Grab_Device /= null then
+         if Do_Grabs and then Self.Grab_Device /= null then
             Self.Grab_Device.Ungrab (0);
             Self.Grab_Device := null;
          end if;

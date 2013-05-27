@@ -169,6 +169,7 @@ package body GPS.Search.GUI is
           Case_Sensitive      => True,
           Preview             => False,
           Completion          => Module.Default_Provider);
+      Module.Search.Set_Name ("global-search");
       Align.Add (Module.Search);
 
       Widget_Callback.Connect (Module.Search, Signal_Escape, On_Escape'Access);
