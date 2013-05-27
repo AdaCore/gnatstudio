@@ -43,6 +43,7 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
 with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Style_Context;          use Gtk.Style_Context;
@@ -59,6 +60,7 @@ with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
 with System;
+with Interfaces.C.Strings;       use Interfaces.C.Strings;
 
 package body Gtkada.Entry_Completion is
    Me : constant Trace_Handle := Create ("SEARCH");
@@ -110,10 +112,6 @@ package body Gtkada.Entry_Completion is
        Event : Gdk_Event_Focus) return Boolean;
    --  Focus leaves the entry, we should close the popup
 
-   procedure Popup (Self : not null access Gtkada_Entry_Record'Class);
-   procedure Popdown (Self : not null access Gtkada_Entry_Record'Class);
-   --  Show or hide the popup window with the list of completions
-
    procedure Activate_Proposal
       (Self : not null access Gtkada_Entry_Record'Class;
        Force : Boolean);
@@ -130,6 +128,13 @@ package body Gtkada.Entry_Completion is
    Column_Score : constant := 1;
    Column_Data  : constant := 2;
 
+   Completion_Class_Record : Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
+
+   Signals : constant chars_ptr_array :=
+      (1 => New_String (String (Signal_Activate)),
+       2 => New_String (String (Signal_Escape)));
+
    -----------------------
    -- On_Entry_Activate --
    -----------------------
@@ -138,6 +143,20 @@ package body Gtkada.Entry_Completion is
    begin
       Activate_Proposal (Gtkada_Entry (Self), Force => True);
    end On_Entry_Activate;
+
+   --------------
+   -- Get_Type --
+   --------------
+
+   function Get_Type return Glib.GType is
+   begin
+      Glib.Object.Initialize_Class_Record
+         (Ancestor     => Gtk.Box.Get_Vbox_Type,
+          Signals      => Signals,
+          Class_Record => Completion_Class_Record,
+          Type_Name    => "GtkAdaEntryCompletion");
+      return Completion_Class_Record.The_Type;
+   end Get_Type;
 
    -------------
    -- Gtk_New --
@@ -182,7 +201,9 @@ package body Gtkada.Entry_Completion is
       pragma Unreferenced (Col, Dummy);
 
    begin
+      G_New (Self, Get_Type);
       Gtk.Box.Initialize_Vbox (Self, Homogeneous => False);
+
       Self.Completion := GPS.Search.Search_Provider_Access (Completion);
       Self.Kernel := Kernel_Handle (Kernel);
       Self.Name := new History_Key'(Name);
@@ -384,11 +405,17 @@ package body Gtkada.Entry_Completion is
          end if;
 
          Popdown (Self);
+
+         Widget_Callback.Emit_By_Name (Self, Signal_Activate);
+
          Result.Execute (Give_Focus => True);
 
          if Result_Need_Free then
             Free (Result);
          end if;
+
+         --  Keep the interface leaner
+         Self.GEntry.Set_Text ("");
 
          --  ??? Temporary workaround to close the parent dialog if any.
          --  The clean approach is to have a signal that a completion has
@@ -532,9 +559,12 @@ package body Gtkada.Entry_Completion is
          return True;
 
       elsif Event.Keyval = GDK_Escape then
-         if Self.Popup /= null then
-            Hide (Self.Popup);
-         end if;
+         Popdown (Self);
+
+         --  Keep the interface leaner
+         Self.GEntry.Set_Text ("");
+
+         Widget_Callback.Emit_By_Name (Self, Signal_Escape);
 
       elsif Event.Keyval = GDK_Tab
          or else Event.Keyval = GDK_KP_Down
@@ -749,7 +779,7 @@ package body Gtkada.Entry_Completion is
    -- Popup --
    -----------
 
-   procedure Popup (Self : not null access Gtkada_Entry_Record'Class) is
+   procedure Popup (Self : not null access Gtkada_Entry_Record) is
       Max_Window_Width : constant := 400;
       --  Maximum width of the popup window
 
@@ -851,13 +881,17 @@ package body Gtkada.Entry_Completion is
       else
          Self.Notes_Scroll.Hide;
       end if;
+
+      --  Force the focus, so that focus-out-event is meaningful and the user
+      --  can immediately interact through the keyboard
+      Self.GEntry.Grab_Focus;
    end Popup;
 
    -------------
    -- Popdown --
    -------------
 
-   procedure Popdown (Self : not null access Gtkada_Entry_Record'Class) is
+   procedure Popdown (Self : not null access Gtkada_Entry_Record) is
    begin
       if Self.Popup /= null then
          if Self.Grab_Device /= null then
@@ -927,4 +961,36 @@ package body Gtkada.Entry_Completion is
       end if;
    end On_Entry_Changed;
 
+   --------------------
+   -- Set_Completion --
+   --------------------
+
+   procedure Set_Completion
+      (Self : not null access Gtkada_Entry_Record;
+       Completion : not null access GPS.Search.Search_Provider'Class) is
+   begin
+      Self.Completion := Search_Provider_Access (Completion);
+   end Set_Completion;
+
+   --------------
+   -- Set_Text --
+   --------------
+
+   procedure Set_Text
+      (Self : not null access Gtkada_Entry_Record;
+       Text : String) is
+   begin
+      Self.GEntry.Set_Text (Text);
+      Self.GEntry.Select_Region (0, -1);
+   end Set_Text;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+      (Self : not null access Gtkada_Entry_Record) return String is
+   begin
+      return Self.GEntry.Get_Text;
+   end Get_Text;
 end Gtkada.Entry_Completion;

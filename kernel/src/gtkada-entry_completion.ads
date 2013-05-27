@@ -77,6 +77,9 @@ package Gtkada.Entry_Completion is
    --  default. Like Completion_In_Popup, it is only relevant the first time
    --  the entry is displayed.
 
+   function Get_Type return Glib.GType;
+   --  The internal gtk+ type
+
    function Fallback
       (Self : not null access Gtkada_Entry_Record;
        Text : String) return GPS.Search.Search_Result_Access is (null);
@@ -90,6 +93,30 @@ package Gtkada.Entry_Completion is
       (Self : not null access Gtkada_Entry_Record)
       return GPS.Kernel.Kernel_Handle;
    --  Return a handle to the kernel
+
+   function Get_Text
+      (Self : not null access Gtkada_Entry_Record) return String;
+   procedure Set_Text
+      (Self : not null access Gtkada_Entry_Record;
+       Text : String);
+   --  Force the text in the entry.
+
+   procedure Set_Completion
+      (Self : not null access Gtkada_Entry_Record;
+       Completion : not null access GPS.Search.Search_Provider'Class);
+   --  Override the provider for the completions
+
+   procedure Popup (Self : not null access Gtkada_Entry_Record);
+   procedure Popdown (Self : not null access Gtkada_Entry_Record);
+   --  Force the display of the completion list (in case it is in a popup)
+
+   Signal_Escape : constant Glib.Signal_Name := "escape";
+   --  Emitted when the user presses <escape> in the search field. This is
+   --  called just after calling popdown.
+
+   Signal_Activate : constant Glib.Signal_Name := "activate";
+   --  Emitted when the user activates a search proposal (or the fallback
+   --  action). This is called just prior to executing the action.
 
 private
    type History_Key_Access is access all Histories.History_Key;

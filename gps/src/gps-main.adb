@@ -86,6 +86,7 @@ with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
 with GPS.Stock_Icons;
 with GPS.Main_Window;
 with GPS.Menu;
+with GPS.Search.GUI;
 with OS_Utils;                         use OS_Utils;
 with Projects;                         use Projects;
 with Remote;                           use Remote;
@@ -1504,6 +1505,7 @@ procedure GPS.Main is
          Scenario_Views.Register_Module (GPS_Main.Kernel);
       end if;
 
+      GPS.Search.GUI.Register_Module (GPS_Main.Kernel);
       Task_Manager.GUI.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Task_Manager.Register_Module (GPS_Main.Kernel);
 

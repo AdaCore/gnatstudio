@@ -25,7 +25,6 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Search;          use GPS.Kernel.Search;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;            use GPS.Main_Window;
@@ -58,7 +57,6 @@ with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.Abstract_List_Model; use Gtkada.Abstract_List_Model;
-with Gtkada.Entry_Completion;    use Gtkada.Entry_Completion;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with String_Utils;               use String_Utils;
@@ -1475,7 +1473,6 @@ package body Task_Manager.GUI is
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Search  : Gtkada_Entry;
       Align   : Gtk_Alignment;
       Manager : Task_Manager_Access;
       Box     : Gtk_Box;
@@ -1495,20 +1492,6 @@ package body Task_Manager.GUI is
 
       --  Display the main progress bar in the GPS main window
       Box := GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box;
-
-      Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
-      Box.Pack_End (Align, Expand => False);
-
-      Gtk_New
-         (Search,
-          Kernel              => Kernel,
-          Name                => "global_search",
-          Completion_In_Popup => True,
-          Case_Sensitive      => True,
-          Preview             => False,
-          Completion          =>
-             GPS.Kernel.Search.Registry.Get (Provider_Filenames));
-      Align.Add (Search);
 
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
       Box.Pack_End (Align, Expand => False);
