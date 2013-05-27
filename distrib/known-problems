@@ -98,12 +98,6 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               removed from Locations View manually.
   Workaround: Restart GPS.
 
-- M125-011: GPS: use all type clause corrupts outline view & vertical bracket
-  Problem:    when Ada 2012 use all type clause is used, the displayed
-              vertical bracket around blocks may be wrong. The Outline view
-              also may display wrong data.
-  Workaround: None.
-
 - M122-003: GPS: tasks view is too wide
   Problem:    The Tasks view does not fit in a small width (the progress bar
               gets truncated and the pause button to its left is not visible)
