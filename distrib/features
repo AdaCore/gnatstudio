@@ -36,6 +36,14 @@ NF-53-M318-031 GB: warning editing files not part of a GB project (2013-05-13)
   the file is part of a GNATbench project.
   This dialog can be disabled through Ada Editor Preferences page.
 
+NF-53-M315-025 WB: enable DFW_ENABLE_ADA_SYMBOL_CHECK at startup (2013-05-17)
+
+  On Wind River Workbench 3.3 or later, Ada expressions watch feature requires
+  DFW_ENABLE_ADA_SYMBOL_CHECK environment variable to be set to 1.
+  If not set, Expressions view is not able to display current values of records
+  and arrays variables.
+  This feature can be disabled using Ada General preferences page.
+
 NF-53-M205-030 ECL: navigation problems are announced (2013-05-24)
 
   When navigation functions, such as hyperlinks and goto-spec/body, encounter
