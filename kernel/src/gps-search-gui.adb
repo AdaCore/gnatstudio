@@ -146,6 +146,14 @@ package body GPS.Search.GUI is
              S.Get_Text);
       end if;
 
+      --  Give the focus back, so that if for instance we are executing
+      --  a GPS action, it executes in the context of the original view, not
+      --  that of the global search entry.
+
+      if Module.Previous_Focus /= null then
+         Module.Previous_Focus.Grab_Focus;
+      end if;
+
       Reset;
    end On_Activate;
 
@@ -288,6 +296,26 @@ package body GPS.Search.GUI is
    procedure Register_Module
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      procedure Register_Provider
+         (Name : String; Fallback : Command_Fallback);
+      --  Register an action for a given search provider
+
+      procedure Register_Provider
+         (Name : String; Fallback : Command_Fallback)
+      is
+         Command : Global_Search_Command_Access;
+      begin
+         Command := new Global_Search_Command;
+         Command.Provider := GPS.Kernel.Search.Registry.Get (Name);
+         Command.History := new History_Key'
+            ("global-search-entry-" & History_Key (Name));
+         Command.Fallback := Fallback;
+         Register_Action
+            (Kernel, "Global Search in context: " & Name, Command,
+             Description => Command.Provider.Documentation,
+             Category => "Search");
+      end Register_Provider;
+
       Align   : Gtk_Alignment;
       Command : Global_Search_Command_Access;
    begin
@@ -307,15 +335,8 @@ package body GPS.Search.GUI is
              "Activate the global search field in the main toolbar",
           Category => "Search");
 
-      Command := new Global_Search_Command;
-      Command.Provider := GPS.Kernel.Search.Registry.Get (Provider_Filenames);
-      Command.History := new History_Key'("global-search-filenames-entry");
-      Command.Fallback := Filenames_Fallback'Access;
-      Register_Action
-         (Kernel, "Global Search in context: file names", Command,
-          Description =>
-             "Search amongst the source file names of the project",
-          Category => "Search");
+      Register_Provider (Provider_Filenames, Filenames_Fallback'Access);
+      Register_Provider (Provider_Actions, null);
 
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
       GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box.Pack_End

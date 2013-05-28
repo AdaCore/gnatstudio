@@ -43,7 +43,8 @@ package GPS.Kernel.Search is
    --  Same as inherited Get, but also initializes the Kernel field in the
    --  provider, when needed
 
-   Provider_Filenames : constant String := "filenames";
+   Provider_Filenames : constant String := "file names";
+   Provider_Actions   : constant String := "actions";
 
    Registry : Kernel_Provider_Registry;
    --  ??? Will be moved to the kernel

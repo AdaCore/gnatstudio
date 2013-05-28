@@ -25,6 +25,8 @@ with Gtk.Check_Button;
 with Gtk.Combo_Box_Text;
 with Gtk.List_Store;
 with Gtk.Scrolled_Window;
+with Gtk.Text_Buffer;
+with Gtk.Text_View;
 with Gtkada.Search_Entry;
 with Gtk.Tree_View;
 with Gtk.Window;
@@ -153,7 +155,8 @@ private
       --  The widget that displays the list of possible completions
 
       Notes_Scroll     : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-      Notes_Box        : Gtk.Box.Gtk_Box;
+      Notes_Buffer     : Gtk.Text_Buffer.Gtk_Text_Buffer;
+      Notes_View       : Gtk.Text_View.Gtk_Text_View;
       Notes_Idle       : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --   Display extra information on the currently selected item
    end record;

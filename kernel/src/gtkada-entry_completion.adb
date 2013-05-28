@@ -40,9 +40,10 @@ with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.Label;                  use Gtk.Label;
 with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
+with Gtk.Text_View;              use Gtk.Text_View;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
 with Gtk.Separator;              use Gtk.Separator;
@@ -57,7 +58,6 @@ with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Search;                 use GPS.Search;
-with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
 with System;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
@@ -271,8 +271,13 @@ package body Gtkada.Entry_Completion is
       --  Extra notes for selected item
 
       Gtk_New (Self.Notes_Scroll);
-      Gtk_New_Vbox (Self.Notes_Box, Homogeneous => False);
-      Self.Notes_Scroll.Add (Self.Notes_Box);
+
+      Gtk_New (Self.Notes_Buffer);
+      Gtk_New (Self.Notes_View, Self.Notes_Buffer);
+      Unref (Self.Notes_Buffer);
+      Self.Notes_View.Set_Editable (False);
+
+      Self.Notes_Scroll.Add (Self.Notes_View);
 
       --  The settings panel
 
@@ -654,12 +659,11 @@ package body Gtkada.Entry_Completion is
    function On_Preview_Idle (Self : Gtkada_Entry) return Boolean is
       Iter   : Gtk_Tree_Iter;
       M      : Gtk_Tree_Model;
-      Label  : Gtk_Label;
       Result : Search_Result_Access;
    begin
       if Self.Settings_Preview.Get_Active then
          Self.View.Get_Selection.Get_Selected (M, Iter);
-         Remove_All_Children (Self.Notes_Box);
+         Self.Notes_Buffer.Set_Text ("");
 
          if Iter /= Null_Iter then
             Result := Convert
@@ -674,9 +678,12 @@ package body Gtkada.Entry_Completion is
                         (Self.Notes_Scroll, Expand => True, Fill => True);
                   end if;
 
-                  Gtk_New (Label, F);
-                  Self.Notes_Box.Pack_Start (Label, Expand => False);
-                  Label.Modify_Font (View_Fixed_Font.Get_Pref);
+                  --  Reset the font, in case the prefs have changed
+                  Self.Notes_View.Modify_Font (View_Fixed_Font.Get_Pref);
+
+                  Self.Notes_View.Set_Wrap_Mode (Wrap_None); --  or Wrap_Word
+
+                  Self.Notes_Buffer.Set_Text (F);
                   Self.Notes_Scroll.Show_All;
                end if;
             end;

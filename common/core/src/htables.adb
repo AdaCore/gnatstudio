@@ -394,8 +394,13 @@ package body HTables is
       -------------
 
       function Get_Key (Iter : Cursor) return Key is
+         Ptr : constant Elmt_Ptr := Get_Element (Iter.Iter);
       begin
-         return Get_Element (Iter.Iter).K.all;
+         if Ptr = null then
+            raise Program_Error;
+         else
+            return Ptr.K.all;
+         end if;
       end Get_Key;
 
       -----------------
@@ -408,7 +413,7 @@ package body HTables is
          if Ptr = null then
             return No_Element;
          else
-            return Get_Element (Iter.Iter).E;
+            return Ptr.E;
          end if;
       end Get_Element;
 

@@ -16,14 +16,19 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Commands;                  use Commands;
-with GNAT.Strings;              use GNAT.Strings;
-with GPS.Intl;                  use GPS.Intl;
 with Ada.Unchecked_Deallocation;
 with Commands.Interactive;      use Commands.Interactive;
+with Commands;                  use Commands;
+with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 package body GPS.Kernel.Actions is
+   Me : constant Trace_Handle := Create ("ACTIONS");
 
    use Actions_Htable.String_Hash_Table;
 
@@ -260,5 +265,90 @@ package body GPS.Kernel.Actions is
       --  Free the actions and their filters
       Reset (X.Table);
    end Reset;
+
+   ---------------------------
+   -- Execute_In_Background --
+   ---------------------------
+
+   function Execute_In_Background
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Action  : not null Action_Record_Access;
+      Context : Selection_Context := No_Context;
+      Event   : Gdk.Event.Gdk_Event := null;
+      Repeat  : Positive := 1) return Boolean
+   is
+      Child : GPS_MDI_Child;
+      --  The child that currently has the focus
+
+      procedure Undo_Group (Start : Boolean);
+      --  Start or end an undo group
+
+      ----------------
+      -- Undo_Group --
+      ----------------
+
+      procedure Undo_Group (Start : Boolean) is
+         C : MDI_Child;
+      begin
+         if Start then
+            if Repeat >= 2 then
+               C := Get_Focus_Child (Get_MDI (Kernel));
+               if C /= null
+                  and then C.all in GPS_MDI_Child_Record'Class
+               then
+                  Child := GPS_MDI_Child (C);
+               end if;
+
+               if Child /= null then
+                  Start_Group (Get_Command_Queue (Child));
+               end if;
+            end if;
+
+         elsif Child /= null then
+            End_Group (Get_Command_Queue (Child));
+         end if;
+      end Undo_Group;
+
+      C : Selection_Context := Context;
+   begin
+      if Context = No_Context then
+         C := Get_Current_Context (Kernel);  --  no need to free
+      end if;
+
+      if Action.Filter = null
+         or else
+            (C /= No_Context
+             and then Filter_Matches (Action.Filter, C))
+      then
+         if Active (Me) then
+            Trace (Me, "Executing action " & Action.Name.all
+                   & Repeat'Img & " times");
+         end if;
+
+         Undo_Group (Start => True);
+         for R in 1 .. Repeat loop
+            Launch_Background_Command
+               (Kernel,
+                Create_Proxy
+                   (Action.Command,
+                    (Event       => Event,
+                     Context     => Context,
+                     Synchronous => False,
+                     Dir         => No_File,
+                     Args        => null,
+                     Label       => new String'(Action.Name.all),
+                     Repeat_Count => Repeat,
+                     Remaining_Repeat => Repeat - R)),
+                Destroy_On_Exit => True,
+                Active          => True,
+                Show_Bar        => False,
+                Queue_Id        => "");
+         end loop;
+
+         Undo_Group (Start => False);
+         return True;
+      end if;
+      return False;
+   end Execute_In_Background;
 
 end GPS.Kernel.Actions;

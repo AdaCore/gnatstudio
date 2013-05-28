@@ -62,6 +62,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
+with GPS.Kernel.Search.Actions;
 with GPS.Kernel.Search.Filenames;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;
@@ -337,6 +338,9 @@ package body GPS.Kernel is
 
       D := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
       GPS.Kernel.Search.Registry.Register (Provider_Filenames, D);
+
+      D := new GPS.Kernel.Search.Actions.Actions_Search_Provider;
+      GPS.Kernel.Search.Registry.Register (Provider_Actions, D);
 
       --  by default, the local server
       Handle.Gnatls_Server := new String'("");

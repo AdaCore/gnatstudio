@@ -22,6 +22,7 @@ with GNATCOLL.Boyer_Moore;        use GNATCOLL.Boyer_Moore;
 with GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
+with Glib.Convert;
 
 package body GPS.Search is
 
@@ -369,19 +370,22 @@ package body GPS.Search is
       Result : Unbounded_String;
    begin
       Result := To_Unbounded_String
-         (Buffer (Buffer'First .. Context.Start - 1));
+         (Glib.Convert.Escape_Text
+            (Buffer (Buffer'First .. Context.Start - 1)));
 
       for B in Context.Start .. Context.Finish loop
          --   ??? Missing case sensitivity
          if T <= Self.Text'Last and then Buffer (B) = Self.Text (T) then
-            Append (Result, "<b>" & Buffer (B) & "</b>");
+            Append (Result, "<b>"
+               & Glib.Convert.Escape_Text ("" & Buffer (B)) & "</b>");
             T := T + 1;
          else
-            Append (Result, Buffer (B));
+            Append (Result, Glib.Convert.Escape_Text ("" & Buffer (B)));
          end if;
       end loop;
 
-      Append (Result, Buffer (Context.Finish + 1 .. Buffer'Last));
+      Append (Result, Glib.Convert.Escape_Text
+         (Buffer (Context.Finish + 1 .. Buffer'Last)));
       return To_String (Result);
    end Highlight_Match;
 

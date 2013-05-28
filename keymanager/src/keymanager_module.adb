@@ -42,7 +42,6 @@ with Gtk.Main;                use Gtk.Main;
 with Gtk.Window;              use Gtk.Window;
 with Gtk.Widget;              use Gtk.Widget;
 
-with Gtkada.MDI;              use Gtkada.MDI;
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 
 with Config;                  use Config;
@@ -55,7 +54,6 @@ with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                       use GPS.Kernel;
 
 with GUI_Utils;               use GUI_Utils;
@@ -1054,17 +1052,9 @@ package body KeyManager_Module is
       Context          : Selection_Context;
       Context_Computed : Boolean := False;
       Found_Action     : Boolean := False;
-      Child            : GPS_MDI_Child;
 
       procedure Compute_Context;
       --  Compute the current context if not done already
-
-      procedure Compute_Child;
-      --  Compute the child that currently has the focus. If no such child, or
-      --  this isn't a GPS_MDI_Child, null is set.
-
-      procedure Undo_Group (Start : Boolean);
-      --  Start or end an undo group
 
       ---------------------
       -- Compute_Context --
@@ -1077,36 +1067,6 @@ package body KeyManager_Module is
             Context_Computed := True;
          end if;
       end Compute_Context;
-
-      -------------------
-      -- Compute_Child --
-      -------------------
-
-      procedure Compute_Child is
-         C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
-      begin
-         if C /= null and then C.all in GPS_MDI_Child_Record'Class then
-            Child := GPS_MDI_Child (C);
-         end if;
-      end Compute_Child;
-
-      ----------------
-      -- Undo_Group --
-      ----------------
-
-      procedure Undo_Group (Start : Boolean) is
-      begin
-         if Start then
-            if Keymanager_Module.Repeat_Count >= 2 then
-               Compute_Child;
-               if Child /= null then
-                  Start_Group (Get_Command_Queue (Child));
-               end if;
-            end if;
-         elsif Child /= null then
-            End_Group (Get_Command_Queue (Child));
-         end if;
-      end Undo_Group;
 
    begin
       --  We could test Modif /= 0 if we allowed only key shortcuts with a
@@ -1206,54 +1166,20 @@ package body KeyManager_Module is
                elsif Command.Command /= null then
                   Compute_Context;
 
-                  if Command.Filter = null
-                    or else
-                      (Context /= No_Context
-                       and then Filter_Matches (Command.Filter, Context))
+                  if Execute_In_Background
+                     (Kernel  => Kernel,
+                      Action  => Command,
+                      Context => Context,
+                      Event   => Event,
+                      Repeat  => Keymanager_Module.Repeat_Count)
                   then
-                     if Active (Me) then
-                        if Keymanager_Module.Repeat_Count > 1 then
-                           Trace (Me, "Executing action "
-                                  & Binding.Action.all
-                                  & Keymanager_Module.Repeat_Count'Img
-                                  & " times");
-                        else
-                           Trace (Me, "Executing action "
-                                  & Binding.Action.all);
-                        end if;
-                     end if;
-
                      if Keymanager_Module.Last_Command /=
                        Cst_String_Access (Binding.Action)
                      then
                         Free (Keymanager_Module.Last_User_Command);
                      end if;
                      Keymanager_Module.Last_Command :=
-                       Cst_String_Access (Binding.Action);
-
-                     Undo_Group (Start => True);
-                     for R in 1 .. Keymanager_Module.Repeat_Count loop
-                        Launch_Background_Command
-                          (Kernel,
-                           Create_Proxy
-                             (Command.Command,
-                              (Event            => Event,
-                               Context          => Context,
-                               Synchronous      => False,
-                               Dir              => No_File,
-                               Args             => null,
-                               Label            => new String'
-                                 (Binding.Action.all),
-                               Repeat_Count     => R,
-                               Remaining_Repeat =>
-                                 Keymanager_Module.Repeat_Count - R)),
-                           Destroy_On_Exit => True,
-                           Active          => True,
-                           Show_Bar        => False,
-                           Queue_Id        => "");
-                     end loop;
-                     Undo_Group (Start => False);
-
+                        Cst_String_Access (Binding.Action);
                      Found_Action := True;
                      Keymanager_Module.Repeat_Count := 1;
                   end if;
