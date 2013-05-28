@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Vectors;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Hash;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
@@ -1873,10 +1874,14 @@ package body Default_Preferences is
       N_Themes    : Natural := 0;
       Num         : Positive;
 
-      Dirs : constant File_Array := From_Path (Search_Path);
-      Dir  : GNATCOLL.VFS.Virtual_File;
-      Subdirs : File_Array_Access;
-      Rc_File : Virtual_File;
+      package Dir_Vectors is new Ada.Containers.Vectors
+        (Positive, GNATCOLL.VFS.Virtual_File);
+      Dirs       : constant File_Array := From_Path (Search_Path);
+      Dir        : GNATCOLL.VFS.Virtual_File;
+      Subdirs    : GNATCOLL.VFS.File_Array_Access;
+      Theme_Dirs : Dir_Vectors.Vector;
+      Rc_File    : Virtual_File;
+      use type Config.Host_Type;
 
    begin
       if Active (Me) then
@@ -1889,25 +1894,34 @@ package body Default_Preferences is
 
          if Dir.Is_Directory then
             Subdirs := Dir.Read_Dir (Dirs_Only);
+
+            for Subdir of Subdirs.all loop
+               Rc_File := Subdir.Create_From_Dir ("gtk-3.0/gtk.css");
+
+               if Rc_File.Is_Regular_File then
+                  Theme_Dirs.Append (Subdir);
+                  N_Themes := N_Themes + 1;
+               end if;
+            end loop;
+
+            Unchecked_Free (Subdirs);
+
          else
-            Subdirs := new File_Array (1 .. 0);
             if Active (Me) then
                Trace (Me, "Theme search path not found on disk: "
                       & Dir.Display_Full_Name);
             end if;
          end if;
 
-         --  Count the total number of available themes
-         for J in Subdirs'Range loop
-            Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtk.css");
-
-            if Rc_File.Is_Regular_File then
-               N_Themes := N_Themes + 1;
-            end if;
-         end loop;
-
-         Unchecked_Free (Subdirs);
       end loop;
+
+      if Config.Host = Config.Windows then
+         --  +2 for the windows theme + Raleigh
+         N_Themes := N_Themes + 2;
+      else
+         --  +1 for the Raleigh theme
+         N_Themes := N_Themes + 1;
+      end if;
 
       Ret.Themes := new GNAT.Strings.String_List (1 .. N_Themes);
       Ret.Current := 0;
@@ -1915,63 +1929,58 @@ package body Default_Preferences is
       --  Fill the list of themes
       Num := Ret.Themes'First;
 
-      for D in Dirs'Range loop
-         Dir := Dirs (D);
-         if Dir.Is_Directory then
-            Subdirs := Dir.Read_Dir (Dirs_Only);
-         else
-            Subdirs := new File_Array (1 .. 0);
+      --  The 'gtk-win32' and 'Raleigh' themes are now directly embedded inside
+      --  the gtk library, so exist event without any directory in the themes
+      --  directories. We thus need to add them manually to the list of
+      --  available themes.
+      if Config.Host = Config.Windows then
+         Ret.Themes (Num) := new String'("gtk-win32");
+         Win_Default := Num;
+
+         if Default = "gtk-win32" then
+            Ret.Current := Num;
          end if;
 
-         for J in Subdirs'Range loop
-            Rc_File := Subdirs (J).Create_From_Dir ("gtk-3.0/gtk.css");
+         Num := Num + 1;
+      end if;
 
-            if Rc_File.Is_Regular_File then
-               declare
-                  Theme : constant String :=
-                     +Base_Dir_Name (Subdirs (J));
-               begin
-                  Ret.Themes (Num) := new String'(Theme);
+      Ret.Themes (Num) := new String'("Raleigh");
+      Gtk_Default := Num;
 
-                  if Theme = "bubble" then
-                     --  Fallback in case the active theme cannot be
-                     --  determined
-                     Gtk_Default := Num;
+      if Default = "Raleigh" then
+         Ret.Current := Num;
+      end if;
 
-                  elsif Theme = "MS-Windows" then
-                     --  Fallback in the windows case
-                     Win_Default := Num;
+      Num := Num + 1;
 
-                  elsif Theme = "Clearlooks" then
-                     --  Fallback in the unix case
-                     Unx_Default := Num;
+      for Theme_Dir of Theme_Dirs loop
+         Ret.Themes (Num) := new String'(+Base_Dir_Name (Theme_Dir));
 
-                  elsif Theme = Default then
-                     --  We found the active theme, and it's not a
-                     --  default.  This must then come from
-                     --  user-specified gtkrc file.  Let's keep this
-                     --  value.
-                     Ret.Current := Num;
+         if Ret.Themes (Num).all = "Adwaita" then
+            --  Fallback in the unix case
+            Unx_Default := Num;
 
-                  end if;
+         elsif Ret.Themes (Num).all = Default then
+            --  We found the active theme, and it's not a
+            --  default.  This must then come from
+            --  user-specified gtkrc file.  Let's keep this
+            --  value.
+            Ret.Current := Num;
 
-                  Num := Num + 1;
-               end;
-            end if;
-         end loop;
-
-         if Ret.Current = 0 then
-            if Win_Default > 0 then
-               Ret.Current := Win_Default;
-            elsif Unx_Default > 0 then
-               Ret.Current := Unx_Default;
-            elsif Gtk_Default > 0 then
-               Ret.Current := Gtk_Default;
-            end if;
          end if;
 
-         Unchecked_Free (Subdirs);
+         Num := Num + 1;
       end loop;
+
+      if Ret.Current = 0 then
+         if Win_Default > 0 then
+            Ret.Current := Win_Default;
+         elsif Unx_Default > 0 then
+            Ret.Current := Unx_Default;
+         elsif Gtk_Default > 0 then
+            Ret.Current := Gtk_Default;
+         end if;
+      end if;
 
       Register (Manager, Name, Label, Page, Doc, Ret);
 
