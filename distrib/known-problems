@@ -88,12 +88,6 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: Ignore this incorrect indentation, fix the indentation manually,
               or put the comment before the separate.
 
-- M130-025: GPS: Cannot remove CodePeer categories from Locations View
-  Problem:    Messages' categories for CodePeer race conditions are not removed
-              on close of CodePeer report window when it was attempted to be
-              removed from Locations View manually.
-  Workaround: Restart GPS.
-
 - M122-003: GPS: tasks view is too wide
   Problem:    The Tasks view does not fit in a small width (the progress bar
               gets truncated and the pause button to its left is not visible)
