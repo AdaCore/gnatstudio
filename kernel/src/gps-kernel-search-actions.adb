@@ -58,7 +58,8 @@ package body GPS.Kernel.Search.Actions is
       Has_Next : out Boolean)
    is
       Action : constant Action_Record_Access := Get (Self.Iter);
-      C : Search_Context;
+      C      : Search_Context;
+      S      : GNAT.Strings.String_Access;
    begin
       Result := null;
 
@@ -68,12 +69,17 @@ package body GPS.Kernel.Search.Actions is
          if Action.Name (Action.Name'First) /= '/' then
             C := Self.Pattern.Start (Action.Name.all);
             if C /= GPS.Search.No_Match then
-               Result := Build_Actions_Result
-                  (Self.Kernel,
-                   Name  => Action.Name.all,
-                   Score => C.Score,
-                   Short => Self.Pattern.Highlight_Match
-                      (Action.Name.all, Context => C));
+               S := new String'
+                  (Self.Pattern.Highlight_Match
+                     (Action.Name.all, Context => C));
+               Result := new Actions_Search_Result'
+                 (Kernel   => Self.Kernel,
+                  Provider => Self,
+                  Score    => C.Score,
+                  Short    => S,
+                  Long     => null,
+                  Id       => S,
+                  Name     => new String'(Action.Name.all));
             end if;
          end if;
 
@@ -93,29 +99,6 @@ package body GPS.Kernel.Search.Actions is
       GNAT.Strings.Free (Self.Name);
       Free (Kernel_Search_Result (Self));
    end Free;
-
-   --------------------------
-   -- Build_Actions_Result --
-   --------------------------
-
-   function Build_Actions_Result
-      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Name   : String;
-       Score  : Natural := 100;
-       Short  : String := "")
-      return GPS.Search.Search_Result_Access
-   is
-      S : constant GNAT.Strings.String_Access :=
-         new String'((if Short = "" then Name else Short));
-   begin
-      return new Actions_Search_Result'
-         (Kernel   => Kernel_Handle (Kernel),
-          Score    => Score,
-          Short    => S,
-          Long     => null,
-          Id       => S,
-          Name     => new String'(Name));
-   end Build_Actions_Result;
 
    -------------
    -- Execute --

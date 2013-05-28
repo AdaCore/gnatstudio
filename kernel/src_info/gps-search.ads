@@ -142,11 +142,22 @@ package GPS.Search is
    -- Result --
    ------------
 
+   type Search_Provider is abstract tagged null record;
+   type Search_Provider_Access is access all Search_Provider'Class;
+   --  Instances of this type will look for matches of a given pattern, in a
+   --  given context.
+   --  Each search dialog, completion window or entry field in GPS will create
+   --  its own providers, so the life of the providers might be relatively
+   --  short.
+   --  A provider might do some caching, for instance to optimize the searching
+   --  when the pattern is augmented.
+
    type Search_Result is abstract tagged record
-      Score : Natural := 100;
-      Short : GNAT.Strings.String_Access;
-      Long  : GNAT.Strings.String_Access;
-      Id    : GNAT.Strings.String_Access;
+      Score    : Natural := 100;
+      Short    : GNAT.Strings.String_Access;
+      Long     : GNAT.Strings.String_Access;
+      Id       : GNAT.Strings.String_Access;
+      Provider : not null access Search_Provider'Class;  --  do not free
    end record;
    type Search_Result_Access is access all Search_Result'Class;
    --  This type describes a match, as would be displayed in a dialog or a
@@ -226,19 +237,13 @@ package GPS.Search is
    -- Providers --
    ---------------
 
-   type Search_Provider is abstract tagged null record;
-   type Search_Provider_Access is access all Search_Provider'Class;
-   --  Instances of this type will look for matches of a given pattern, in a
-   --  given context.
-   --  Each search dialog, completion window or entry field in GPS will create
-   --  its own providers, so the life of the providers might be relatively
-   --  short.
-   --  A provider might do some caching, for instance to optimize the searching
-   --  when the pattern is augmented.
-
    procedure Free (Self : in out Search_Provider) is null;
    procedure Free (Self : in out Search_Provider_Access);
    --  Free the memory used by Self.
+
+   function Display_Name
+      (Self : not null access Search_Provider) return String is abstract;
+   --  Return the name of the provider, as should be displayed to the user.
 
    function Documentation
       (Self : not null access Search_Provider) return String is ("");

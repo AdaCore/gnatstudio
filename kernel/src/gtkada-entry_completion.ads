@@ -82,15 +82,6 @@ package Gtkada.Entry_Completion is
    function Get_Type return Glib.GType;
    --  The internal gtk+ type
 
-   function Fallback
-      (Self : not null access Gtkada_Entry_Record;
-       Text : String) return GPS.Search.Search_Result_Access is (null);
-   --  Called when the user has pressed <enter> in the entry and there was
-   --  no completion.
-   --  The returned value is used as a proposal as if the user had clicked
-   --  on it. If not null, the dialog is closed in addition.
-   --  The returned value is freed by the entry.
-
    function Get_Kernel
       (Self : not null access Gtkada_Entry_Record)
       return GPS.Kernel.Kernel_Handle;
@@ -117,8 +108,8 @@ package Gtkada.Entry_Completion is
    --  called just after calling popdown.
 
    Signal_Activate : constant Glib.Signal_Name := "activate";
-   --  Emitted when the user activates a search proposal (or the fallback
-   --  action). This is called just prior to executing the action.
+   --  Emitted when the user activates a search proposal.
+   --  This is called just prior to executing the action.
 
 private
    type History_Key_Access is access all Histories.History_Key;

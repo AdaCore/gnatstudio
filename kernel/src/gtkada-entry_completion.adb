@@ -387,7 +387,6 @@ package body Gtkada.Entry_Completion is
       Iter : Gtk_Tree_Iter;
       W    : Gtk_Widget;
       Result : Search_Result_Access;
-      Result_Need_Free : Boolean := False;
    begin
       Self.View.Get_Selection.Get_Selected (M, Iter);
 
@@ -400,9 +399,6 @@ package body Gtkada.Entry_Completion is
             if Iter /= Null_Iter then
                Result := Convert
                   (Get_Address (+Self.Completions, Iter, Column_Data));
-            else
-               Result := Self.Fallback (Self.GEntry.Get_Text);
-               Result_Need_Free := True;
             end if;
          end if;
       end if;
@@ -419,10 +415,6 @@ package body Gtkada.Entry_Completion is
          Widget_Callback.Emit_By_Name (Self, Signal_Activate);
 
          Result.Execute (Give_Focus => True);
-
-         if Result_Need_Free then
-            Free (Result);
-         end if;
 
          --  Keep the interface leaner
          Self.GEntry.Set_Text ("");

@@ -30,7 +30,6 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Search;        use GPS.Kernel.Search;
-with GPS.Kernel.Search.Filenames; use GPS.Kernel.Search.Filenames;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -40,13 +39,9 @@ with Remote;                   use Remote;
 
 package body GPS.Search.GUI is
 
-   type Command_Fallback is access function
-      (Text : String) return GPS.Search.Search_Result_Access;
-
    type Global_Search_Command is new Interactive_Command with record
       Provider : GPS.Search.Search_Provider_Access;
       History  : access History_Key;
-      Fallback : Command_Fallback;
    end record;
    type Global_Search_Command_Access
       is access all Global_Search_Command'Class;
@@ -55,20 +50,8 @@ package body GPS.Search.GUI is
        Context : Interactive_Command_Context) return Command_Return_Type;
    --  Activate the global search field
 
-   type Global_Search_Entry is new Gtkada_Entry_Record with null record;
-   overriding function Fallback
-      (Self : not null access Global_Search_Entry;
-       Text : String) return GPS.Search.Search_Result_Access;
-   --  An entry used for the global search entry
-
-   type Open_From_Project_Entry is new Gtkada_Entry_Record with null record;
-   overriding function Fallback
-      (Self : not null access Open_From_Project_Entry;
-       Text : String) return GPS.Search.Search_Result_Access;
-   --  An entry used for the Open From Project dialog
-
    type Global_Search_Module_Record is new Module_ID_Record with record
-      Search          : access Global_Search_Entry;
+      Search          : Gtkada_Entry;
 
       Default_Command : Global_Search_Command_Access;
       --  The command used to give the focus to the global search.
@@ -98,10 +81,6 @@ package body GPS.Search.GUI is
 
    procedure Reset;
    --  Reset the global search entry after <escape> or a search is selected
-
-   function Filenames_Fallback (Text : String) return Search_Result_Access;
-   --  The fallbacks for the various commands. These are called if the user
-   --  enters text which has no completion.
 
    -----------
    -- Reset --
@@ -193,56 +172,6 @@ package body GPS.Search.GUI is
       return Commands.Success;
    end Execute;
 
-   ------------------------
-   -- Filenames_Fallback --
-   ------------------------
-
-   function Filenames_Fallback (Text : String) return Search_Result_Access is
-      F : constant Virtual_File := Create_From_Base (+Text);
-   begin
-      if F.Is_Regular_File then
-         return GPS.Kernel.Search.Filenames.Build_Filenames_Result
-            (Module.Get_Kernel, File => F);
-      end if;
-      return null;
-   end Filenames_Fallback;
-
-   --------------
-   -- Fallback --
-   --------------
-
-   overriding function Fallback
-      (Self : not null access Open_From_Project_Entry;
-       Text : String) return GPS.Search.Search_Result_Access
-   is
-      pragma Unreferenced (Self);
-   begin
-      return Filenames_Fallback (Text);
-   end Fallback;
-
-   --------------
-   -- Fallback --
-   --------------
-
-   overriding function Fallback
-      (Self : not null access Global_Search_Entry;
-       Text : String) return GPS.Search.Search_Result_Access
-   is
-      pragma Unreferenced (Self);
-      Fallback : Command_Fallback;
-   begin
-      if Module.Current_Command /= null then
-         Fallback := Module.Current_Command.Fallback;
-         if Fallback /= null then
-            return Fallback (Text);
-         end if;
-      end if;
-
-      --  Else other fallbacks are possible. In fact, the order of
-      --  fallbacks should be configurable...
-      return null;
-   end Fallback;
-
    --------------------------
    -- On_Open_From_Project --
    --------------------------
@@ -266,8 +195,7 @@ package body GPS.Search.GUI is
 
       --  Do not use a combo box, so that users can easily navigate to the list
       --  of completions through the keyboard (C423-005)
-      Open_File_Entry := new Open_From_Project_Entry;
-      Initialize
+      Gtk_New
          (Open_File_Entry,
           Kernel         => Kernel,
           Name           => "open_from_project",
@@ -283,8 +211,7 @@ package body GPS.Search.GUI is
 
       Open_File_Dialog.Show_All;
 
-      --  The action is performed directly by the search_provider or the
-      --  fallback
+      --  The action is performed directly by the search_provider
       Resp := Open_File_Dialog.Run;
       Open_File_Dialog.Destroy;
    end On_Open_From_Project;
@@ -296,20 +223,16 @@ package body GPS.Search.GUI is
    procedure Register_Module
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      procedure Register_Provider
-         (Name : String; Fallback : Command_Fallback);
+      procedure Register_Provider (Name : String);
       --  Register an action for a given search provider
 
-      procedure Register_Provider
-         (Name : String; Fallback : Command_Fallback)
-      is
+      procedure Register_Provider (Name : String) is
          Command : Global_Search_Command_Access;
       begin
          Command := new Global_Search_Command;
          Command.Provider := GPS.Kernel.Search.Registry.Get (Name);
          Command.History := new History_Key'
             ("global-search-entry-" & History_Key (Name));
-         Command.Fallback := Fallback;
          Register_Action
             (Kernel, "Global Search in context: " & Name, Command,
              Description => Command.Provider.Documentation,
@@ -335,15 +258,14 @@ package body GPS.Search.GUI is
              "Activate the global search field in the main toolbar",
           Category => "Search");
 
-      Register_Provider (Provider_Filenames, Filenames_Fallback'Access);
-      Register_Provider (Provider_Actions, null);
+      Register_Provider (Provider_Filenames);
+      Register_Provider (Provider_Actions);
 
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
       GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box.Pack_End
          (Align, Expand => False);
 
-      Module.Search := new Global_Search_Entry;
-      Initialize
+      Gtk_New
          (Module.Search,
           Kernel              => Kernel,
           Name                => "global_search",

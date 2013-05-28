@@ -116,7 +116,7 @@ package body GPS.Kernel.Search.Filenames is
          Hook.Execute (Self.Kernel);
       end if;
 
-      Self.Index := Self.Files'First - 1;
+      Self.Index := Self.Files'First - 2;
       Self.Runtime_Index := Self.Runtime'First - 1;
       Self.Pattern := Search_Pattern_Access (Pattern);
       Self.Pattern_Needs_Free := False;
@@ -149,7 +149,7 @@ package body GPS.Kernel.Search.Filenames is
    ----------------------------
 
    function Build_Filenames_Result
-      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      (Provider : not null access Filenames_Search_Provider'Class;
        File   : GNATCOLL.VFS.Virtual_File;
        Line, Column : Natural := 0;
        Score  : Natural := 100;
@@ -168,7 +168,8 @@ package body GPS.Kernel.Search.Filenames is
       end if;
 
       return new Filenames_Search_Result'
-        (Kernel => Kernel_Handle (Kernel),
+        (Kernel   => Provider.Kernel,
+         Provider => Provider,
          Score  => Score,
          Short  => S,
          Long   => L,
@@ -205,13 +206,13 @@ package body GPS.Kernel.Search.Filenames is
 
             if Self.Match_Directory then
                Result := Build_Filenames_Result
-                  (Self.Kernel, F, Line => Self.Line,
+                  (Self, F, Line => Self.Line,
                    Column => Self.Column, Score => C.Score,
                    Long => Self.Pattern.Highlight_Match
                       (Buffer => Text, Context => C));
             else
                Result := Build_Filenames_Result
-                  (Self.Kernel, F, Line => Self.Line,
+                  (Self, F, Line => Self.Line,
                    Column => Self.Column, Score => C.Score,
                    Short => Self.Pattern.Highlight_Match
                       (Buffer => Text, Context => C));
@@ -230,8 +231,24 @@ package body GPS.Kernel.Search.Filenames is
          end if;
       end Check;
 
+      F : Virtual_File;
    begin
       Result := null;
+
+      if Self.Index = Self.Files'First - 2 then
+         Self.Index := Self.Index + 1;
+
+         --  Does the text entered by the user match an existing file ?
+         F := GNATCOLL.VFS.Create_From_Base (+Self.Pattern.Get_Text);
+         if F.Is_Regular_File then
+            Self.Seen.Include (F);  --  avoid duplicates
+            Result := Build_Filenames_Result
+               (Self, F, Line => Self.Line,
+                Column => Self.Column, Score => 200);
+            Has_Next := True;
+            return;
+         end if;
+      end if;
 
       while Self.Index < Self.Files'Last loop
          Self.Index := Self.Index + 1;

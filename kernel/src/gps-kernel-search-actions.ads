@@ -34,19 +34,12 @@ package GPS.Kernel.Search.Actions is
      (Self     : not null access Actions_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean);
+   overriding function Display_Name
+     (Self     : not null access Actions_Search_Provider) return String
+     is ("Actions");
 
    type Actions_Search_Result is new Kernel_Search_Result with private;
    overriding procedure Free (Self : in out Actions_Search_Result);
-
-   function Build_Actions_Result
-      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Name   : String;
-       Score  : Natural := 100;
-       Short  : String := "")
-      return GPS.Search.Search_Result_Access;
-   --  Build a new result
-   --  Short is the contents of the result's short string, If unspecified,
-   --  it will be based on the action's name
 
 private
    type Actions_Search_Provider is new Kernel_Search_Provider with record

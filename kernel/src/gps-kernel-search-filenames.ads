@@ -36,11 +36,14 @@ package GPS.Kernel.Search.Filenames is
      (Self     : not null access Filenames_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean);
+   overriding function Display_Name
+     (Self     : not null access Filenames_Search_Provider) return String
+     is ("File names");
 
    type Filenames_Search_Result is new Kernel_Search_Result with private;
 
    function Build_Filenames_Result
-      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      (Provider : not null access Filenames_Search_Provider'Class;
        File   : GNATCOLL.VFS.Virtual_File;
        Line, Column : Natural := 0;
        Score  : Natural := 100;
@@ -59,7 +62,7 @@ private
       Line, Column : Natural := 0;  --  from pattern
       Match_Directory : Boolean;  --  whether to match directory part
       Files   : GNATCOLL.VFS.File_Array_Access;
-      Index   : Natural;  --  last file tested
+      Index   : Integer;  --  last file tested
 
       Seen : GPS.Kernel.File_Sets.Set;
       --  Files already returned, to avoid duplicates (in particular the
