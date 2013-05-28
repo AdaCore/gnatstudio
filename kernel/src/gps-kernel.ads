@@ -18,6 +18,7 @@
 --  This package is the root of the GPS' kernel API
 
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Finalization;
 with Ada.Strings.Unbounded;
@@ -822,6 +823,15 @@ package GPS.Kernel is
    --  of Makefile targets. The string parameter gives the kind of target to
    --  be computed (e.g. "main", "makefile").
 
+   -------------------
+   -- Sets of files --
+   -------------------
+
+   package File_Sets is new Ada.Containers.Hashed_Sets
+      (Element_Type        => GNATCOLL.VFS.Virtual_File,
+       Hash                => GNATCOLL.VFS.Full_Name_Hash,
+       Equivalent_Elements => GNATCOLL.VFS."=",
+       "="                 => GNATCOLL.VFS."=");
    -----------------
    -- Build modes --
    -----------------

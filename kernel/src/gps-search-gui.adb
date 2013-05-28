@@ -288,7 +288,6 @@ package body GPS.Search.GUI is
    procedure Register_Module
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      File    : constant String := '/' & (-"File") & '/';
       Align   : Gtk_Alignment;
       Command : Global_Search_Command_Access;
    begin
@@ -308,7 +307,6 @@ package body GPS.Search.GUI is
              "Activate the global search field in the main toolbar",
           Category => "Search");
 
-      --  ??? Should have a fallback for unknown files
       Command := new Global_Search_Command;
       Command.Provider := GPS.Kernel.Search.Registry.Get (Provider_Filenames);
       Command.History := new History_Key'("global-search-filenames-entry");
@@ -339,9 +337,9 @@ package body GPS.Search.GUI is
       Widget_Callback.Connect
          (Module.Search, Signal_Activate, On_Activate'Access);
 
-      --  ??? Should use the command defined above
       Register_Menu
-        (Kernel, File, -"Open _From Project...",  Stock_Open,
+        (Kernel,
+         '/' & (-"File") & '/', -"Open _From Project...",  Stock_Open,
          On_Open_From_Project'Access, null,
          GDK_F3, Shift_Mask,
          Ref_Item => -"Open...", Add_Before => False);

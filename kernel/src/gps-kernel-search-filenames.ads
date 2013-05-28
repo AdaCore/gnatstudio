@@ -61,6 +61,10 @@ private
       Files   : GNATCOLL.VFS.File_Array_Access;
       Index   : Natural;  --  last file tested
 
+      Seen : GPS.Kernel.File_Sets.Set;
+      --  Files already returned, to avoid duplicates (in particular the
+      --  list of runtime files could include duplicates)
+
       Runtime : GNATCOLL.VFS.File_Array_Access;
       Runtime_Index : Natural;  --  last runtime file tested
    end record;

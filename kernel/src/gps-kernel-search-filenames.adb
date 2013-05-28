@@ -20,6 +20,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
@@ -75,6 +76,8 @@ package body GPS.Kernel.Search.Filenames is
       P    : constant Pattern_Matcher := Compile (":(\d+)?(:(\d+))?$");
       M    : Match_Array (0 .. 3);
    begin
+      --  ??? Should refresh the cache when the project changes or is
+      --  recomputed.
       if Self.Files = null then
          Self.Files :=
             Get_Project (Self.Kernel).Source_Files (Recursive => True);
@@ -92,6 +95,8 @@ package body GPS.Kernel.Search.Filenames is
       Self.Match_Directory :=
          Ada.Strings.Fixed.Index (Text, "/") >= Text'First or else
          Ada.Strings.Fixed.Index (Text, "\") >= Text'First;
+
+      Self.Seen.Clear;
 
       --  Search for "filename:line:column" pattern
       Match (P, Text, M);
@@ -163,6 +168,13 @@ package body GPS.Kernel.Search.Filenames is
          C : constant Search_Context := Self.Pattern.Start (Text);
       begin
          if C /= GPS.Search.No_Match then
+            Has_Next := Self.Runtime_Index < Self.Runtime'Last;
+
+            if Self.Seen.Contains (F) then
+               Result := null;
+               return;
+            end if;
+
             if Self.Match_Directory then
                Result := Build_Filenames_Result
                   (Self.Kernel, F, Line => Self.Line,
@@ -176,12 +188,14 @@ package body GPS.Kernel.Search.Filenames is
                    Short => Self.Pattern.Highlight_Match
                       (Buffer => Text, Context => C));
             end if;
-            Has_Next := Self.Runtime_Index < Self.Runtime'Last;
+
+            if Result /= null then
+               Self.Seen.Include (F);
+            end if;
          end if;
       end Check;
 
    begin
-      Has_Next := False;
       Result := null;
 
       while Self.Index < Self.Files'Last loop
@@ -199,6 +213,8 @@ package body GPS.Kernel.Search.Filenames is
             return;
          end if;
       end loop;
+
+      Has_Next := False;
    end Next;
 
    -------------
