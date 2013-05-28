@@ -25,7 +25,6 @@ with Gdk.Event;                  use Gdk.Event;
 with Gdk.Device;                 use Gdk.Device;
 with Gdk.Device_Manager;         use Gdk.Device_Manager;
 with Gdk.RGBA;                   use Gdk.RGBA;
-with Gdk.Screen;                 use Gdk.Screen;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Gdk.Window;                 use Gdk.Window;
@@ -395,13 +394,14 @@ package body Gtkada.Entry_Completion is
       --  Extra notes for selected item
 
       Gtk_New (Self.Notes_Scroll);
-
       Gtk_New (Self.Notes_Buffer);
       Gtk_New (Self.Notes_View, Self.Notes_Buffer);
       Unref (Self.Notes_Buffer);
       Self.Notes_View.Set_Editable (False);
-
       Self.Notes_Scroll.Add (Self.Notes_View);
+
+      Self.Completion_Box.Pack_Start
+         (Self.Notes_Scroll, Expand => True, Fill => True);
 
       --  The settings panel
 
@@ -795,11 +795,6 @@ package body Gtkada.Entry_Completion is
                F : constant String := Result.Full;
             begin
                if F /= "" then
-                  if Get_Parent (Self.Notes_Scroll) = null then
-                     Self.Completion_Box.Pack_Start
-                        (Self.Notes_Scroll, Expand => True, Fill => True);
-                  end if;
-
                   --  Reset the font, in case the prefs have changed
                   Self.Notes_View.Modify_Font (View_Fixed_Font.Get_Pref);
 
@@ -922,9 +917,10 @@ package body Gtkada.Entry_Completion is
 
       Char_Width, Char_Height : Gint;
       Width, Height : Gint;
-      Root_Width : Gint;
       Gdk_X, Gdk_Y : Gint;
       X, Y : Gint;
+      MaxX : Gint;
+      Root_X, Root_Y : Gint;
       Layout : Pango_Layout;
       Toplevel : Gtk_Widget;
       Alloc : Gtk_Allocation;
@@ -947,10 +943,6 @@ package body Gtkada.Entry_Completion is
          Gdk_X := Gdk_X + Alloc.X;
          Y := Gdk_Y + Alloc.Y + Self.GEntry.Get_Allocated_Height;
 
-         --  Make sure window doesn't get past screen limits
-         Root_Width := Get_Width (Gdk.Screen.Get_Default);
-         X := Gint'Min (Gdk_X, Root_Width - Width);
-
          Toplevel := Self.Get_Toplevel;
          if Toplevel /= null
             and then Toplevel.all in Gtk_Window_Record'Class
@@ -958,6 +950,12 @@ package body Gtkada.Entry_Completion is
             Gtk_Window (Toplevel).Get_Group.Add_Window (Self.Popup);
             Self.Popup.Set_Transient_For (Gtk_Window (Toplevel));
          end if;
+
+         --  Make sure window doesn't get past screen limits
+
+         Get_Origin (Get_Window (Toplevel), Root_X, Root_Y);
+         MaxX := Root_X + Toplevel.Get_Allocated_Width;
+         X := Gint'Min (Gdk_X, MaxX - Width);
 
          Self.Popup.Set_Resizable (False);
          Self.Popup.Set_Screen (Self.Get_Screen);
