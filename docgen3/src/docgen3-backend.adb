@@ -546,24 +546,19 @@ package body Docgen3.Backend is
             end if;
          end Add;
 
-         C        : Tag_Cursor := New_Cursor (Comment);
+         C        : Tag_Cursor;
          Tag_Info : Tag_Info_Ptr;
       begin
-         if not At_End (C) then
-            --  General description (if any)
+         if No (Comment) then
+            return Null_Unbounded_String;
+         end if;
 
+         C := New_Cursor (Comment);
+         while not At_End (C) loop
             Tag_Info := Get (C);
             Add (Tag_Info);
             Next (C);
-
-            --  Tags
-
-            while not At_End (C) loop
-               Tag_Info := Get (C);
-               Add (Tag_Info);
-               Next (C);
-            end loop;
-         end if;
+         end loop;
 
          return Result;
       end To_ReST;

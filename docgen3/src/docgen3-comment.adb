@@ -29,7 +29,7 @@ package body Docgen3.Comment is
    ----------------------
 
    procedure Append_Param_Tag
-     (Comment    : in out Structured_Comment;
+     (Comment    : Structured_Comment;
       Entity     : General_Entity;
       Param_Name : Unbounded_String;
       Text       : Unbounded_String)
@@ -56,7 +56,7 @@ package body Docgen3.Comment is
    ----------------
 
    function Append_Tag
-     (Comment   : in out Structured_Comment;
+     (Comment   : Structured_Comment;
       Tag       : Unbounded_String;
       Entity    : General_Entity;
       Attribute : Unbounded_String;
@@ -128,6 +128,10 @@ package body Docgen3.Comment is
       procedure Free_Node is
         new Ada.Unchecked_Deallocation (Node, Node_Ptr);
 
+      procedure Free_Structured_Node is
+        new Ada.Unchecked_Deallocation
+          (Structured_Comment_Record, Structured_Comment);
+
       Node : Node_Ptr;
       Next : Node_Ptr;
    begin
@@ -145,12 +149,7 @@ package body Docgen3.Comment is
          Node := Next;
       end loop;
 
-      Comment :=
-        (First_Tag   => null,
-         First_Param => No_Cursor,
-         Last_Param  => No_Cursor,
-         Last_Node   => null,
-         Count       => 0);
+      Free_Structured_Node (Comment);
    end Free;
 
    ---------
@@ -197,8 +196,9 @@ package body Docgen3.Comment is
         new Node'
           (Tag_Info => New_Info,
            Next     => null);
+
    begin
-      return Structured_Comment'
+      return new Structured_Comment_Record'
         (First_Tag   => New_Node,
          First_Param => No_Cursor,
          Last_Param  => No_Cursor,
@@ -215,6 +215,24 @@ package body Docgen3.Comment is
    begin
       C := Tag_Cursor (Node_Ptr (C).Next);
    end Next;
+
+   --------
+   -- No --
+   --------
+
+   function No (Comment : Structured_Comment) return Boolean is
+   begin
+      return Comment = No_Structured_Comment;
+   end No;
+
+   -------------
+   -- Present --
+   -------------
+
+   function Present (Comment : Structured_Comment) return Boolean is
+   begin
+      return Comment /= No_Structured_Comment;
+   end Present;
 
    ------------------
    -- Search_Param --

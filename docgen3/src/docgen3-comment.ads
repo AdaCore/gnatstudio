@@ -30,6 +30,12 @@ private package Docgen3.Comment is
 
    No_Structured_Comment : constant Structured_Comment;
 
+   function No (Comment : Structured_Comment) return Boolean;
+   --  Returns true if an structured comment is not available
+
+   function Present (Comment : Structured_Comment) return Boolean;
+   --  Returns true if an structured comment is available
+
    type Tag_Info is record
       Entity : General_Entity := No_General_Entity;
       Tag    : Ada.Strings.Unbounded.Unbounded_String;
@@ -73,7 +79,7 @@ private package Docgen3.Comment is
    --  Constructor
 
    procedure Append_Param_Tag
-     (Comment    : in out Structured_Comment;
+     (Comment    : Structured_Comment;
       Entity     : General_Entity;
       Param_Name : Unbounded_String;
       Text       : Unbounded_String);
@@ -81,7 +87,7 @@ private package Docgen3.Comment is
    --  associated with ParamName.
 
    function Append_Tag
-     (Comment   : in out Structured_Comment;
+     (Comment   : Structured_Comment;
       Tag       : Unbounded_String;
       Entity    : General_Entity;
       Attribute : Unbounded_String;
@@ -119,7 +125,7 @@ private
    type Tag_Cursor is new Node_Ptr;
    No_Cursor : constant Tag_Cursor := null;
 
-   type Structured_Comment is record
+   type Structured_Comment_Record is record
       Count       : Natural;
       First_Tag   : Node_Ptr;
       First_Param : Tag_Cursor;
@@ -127,11 +133,8 @@ private
       Last_Node   : Node_Ptr;
    end record;
 
-   No_Structured_Comment : constant Structured_Comment :=
-     (First_Tag   => null,
-      Last_Node   => null,
-      First_Param => No_Cursor,
-      Last_Param  => No_Cursor,
-      Count       => 0);
+   type Structured_Comment is access Structured_Comment_Record;
+
+   No_Structured_Comment : constant Structured_Comment := null;
 
 end Docgen3.Comment;

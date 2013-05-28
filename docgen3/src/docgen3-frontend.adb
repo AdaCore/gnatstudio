@@ -948,7 +948,7 @@ package body Docgen3.Frontend is
          E : Entity_Id;
          S : String)
       is
-         Comment : Structured_Comment := Get_Comment (E);
+         Comment : constant Structured_Comment := Get_Comment (E);
          Current : Tag_Cursor := New_Cursor (Comment);
 
          procedure Parse (S : String);
@@ -1242,26 +1242,18 @@ package body Docgen3.Frontend is
          while EInfo_List.Has_Element (Cursor) loop
             Param := EInfo_List.Element (Cursor);
             pragma Assert (Get_Kind (Param) = E_Formal);
-            --  Fails: to be investigated???
             EInfo_List.Next (Cursor);
 
             if Get_Doc (Param) = No_Comment_Result
               or else In_C_Lang --  Unsupported feature yet???
             then
-               declare
-                  Comment : Structured_Comment := Get_Comment (Subp);
-                  --  Avoid this extra copy using access types???
-
-               begin
-                  Append_Param_Tag
-                    (Comment,
-                     Entity => LL.Get_Entity (Param),
-                     Param_Name =>
-                       To_Unbounded_String
-                         (Get_Name (Context.Database, LL.Get_Entity (Param))),
-                     Text => Null_Unbounded_String);
-                  Set_Comment (Subp, Comment);
-               end;
+               Append_Param_Tag
+                 (Comment    => Get_Comment (Subp),
+                  Entity     => LL.Get_Entity (Param),
+                  Param_Name =>
+                    To_Unbounded_String
+                      (Get_Name (Context.Database, LL.Get_Entity (Param))),
+                  Text       => Null_Unbounded_String);
             else
                --  Calculate the last line where the comment of this parameter
                --  can be correctly located
@@ -1273,8 +1265,8 @@ package body Docgen3.Frontend is
                if not EInfo_List.Has_Element (Cursor) then
                   Param_End_Line := Get_Doc (Subp).Start_Line;
 
-                  --  Case 2: For other parameters their comment must be
-                  --  located before the location of the next parameter.
+               --  Case 2: For other parameters their comment must be
+               --  located before the location of the next parameter.
 
                else
                   Param_End_Line :=
@@ -1282,38 +1274,21 @@ package body Docgen3.Frontend is
                end if;
 
                if Get_Doc (Param).Start_Line < Param_End_Line then
-                  --  Avoid this extra copy using access types???
-                  declare
-                     Comment : Structured_Comment := Get_Comment (Subp);
-
-                  begin
-                     Append_Param_Tag
-                       (Comment,
-                        Entity => LL.Get_Entity (Param),
-                        Param_Name =>
-                          To_Unbounded_String (Get_Short_Name (Param)),
-                        --  To_Unbounded_String
-                        --    (Get_Name (Db, LL.Get_Entity (Param))),
-                        Text => Get_Doc (Param).Text);
-                     Set_Comment (Subp, Comment);
-                  end;
+                  Append_Param_Tag
+                    (Comment    => Get_Comment (Subp),
+                     Entity     => LL.Get_Entity (Param),
+                     Param_Name =>
+                       To_Unbounded_String (Get_Short_Name (Param)),
+                     Text       => Get_Doc (Param).Text);
                else
-                  --  Avoid this extra copy using access types???
-                  declare
-                     Comment : Structured_Comment := Get_Comment (Subp);
-
-                  begin
-                     Append_Param_Tag
-                       (Comment,
-                        Entity => LL.Get_Entity (Param),
-                        Param_Name =>
-                          To_Unbounded_String
-                            (Get_Name
-                                 (Context.Database,
-                                  LL.Get_Entity (Param))),
-                        Text => Null_Unbounded_String);
-                     Set_Comment (Subp, Comment);
-                  end;
+                  Append_Param_Tag
+                    (Comment    => Get_Comment (Subp),
+                     Entity     => LL.Get_Entity (Param),
+                     Param_Name =>
+                       To_Unbounded_String
+                         (Get_Name
+                           (Context.Database, LL.Get_Entity (Param))),
+                     Text       => Null_Unbounded_String);
                end if;
 
                Set_Doc (Param, No_Comment_Result);
@@ -1368,8 +1343,7 @@ package body Docgen3.Frontend is
 
          elsif Get_Doc (Entity).Text /= Null_Unbounded_String then
             Set_Comment (Entity, New_Structured_Comment);
-            Parse_Doc
-              (Context, Entity, To_String (Get_Doc (Entity).Text));
+            Parse_Doc (Context, Entity, To_String (Get_Doc (Entity).Text));
             Set_Doc (Entity, No_Comment_Result);
          end if;
 
