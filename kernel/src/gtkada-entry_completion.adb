@@ -62,6 +62,7 @@ with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Search;                 use GPS.Search;
+with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
 with System;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
@@ -128,6 +129,20 @@ package body Gtkada.Entry_Completion is
    procedure Show_Preview (Self : access Gtkada_Entry_Record'Class);
    --  Show the preview pane if there is a current selection
 
+   procedure Get_Iter_Next
+      (Tree : not null access Gtk_Tree_Store_Record'Class;
+       Iter : in out Gtk_Tree_Iter);
+   procedure Get_Iter_Prev
+      (Tree : not null access Gtk_Tree_Store_Record'Class;
+       Iter : in out Gtk_Tree_Iter);
+   --  Returns the next result proposal. Pass Null_Iter to get the
+   --  first or last item in the tree
+
+   function Get_Last_Child
+      (Tree : not null access Gtk_Tree_Store_Record'Class;
+       Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+   --  Return the last child of Iter
+
    function Convert is new Ada.Unchecked_Conversion
       (System.Address, Search_Result_Access);
 
@@ -142,6 +157,91 @@ package body Gtkada.Entry_Completion is
    Signals : constant chars_ptr_array :=
       (1 => New_String (String (Signal_Activate)),
        2 => New_String (String (Signal_Escape)));
+
+   --------------------
+   -- Get_Last_Child --
+   --------------------
+
+   function Get_Last_Child
+      (Tree : not null access Gtk_Tree_Store_Record'Class;
+       Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
+   is
+      N : constant Gint := Tree.N_Children (Iter);
+   begin
+      if N > 0 then
+         return Tree.Nth_Child (Iter, N - 1);
+      else
+         return Null_Iter;
+      end if;
+   end Get_Last_Child;
+
+   -------------------
+   -- Get_Iter_Next --
+   -------------------
+
+   procedure Get_Iter_Next
+      (Tree : not null access Gtk_Tree_Store_Record'Class;
+       Iter : in out Gtk_Tree_Iter)
+   is
+      Iter2 : Gtk_Tree_Iter;
+   begin
+      if Iter /= Null_Iter then
+         Iter2 := Iter;
+         Tree.Next (Iter2);
+
+         if Iter2 = Null_Iter then
+            --  No more iter at the current level
+
+            Iter2 := Tree.Parent (Iter);
+            Tree.Next (Iter2);
+            if Iter2 = Null_Iter then
+               Iter2 := Tree.Get_Iter_First;
+            end if;
+
+            Iter := Tree.Children (Iter2);
+         else
+            Iter := Iter2;
+         end if;
+
+      else
+         Iter := Tree.Get_Iter_First;
+         if Iter /= Null_Iter then
+            Iter := Tree.Children (Iter);
+         end if;
+      end if;
+   end Get_Iter_Next;
+
+   -------------------
+   -- Get_Iter_Prev --
+   -------------------
+
+   procedure Get_Iter_Prev
+      (Tree : not null access Gtk_Tree_Store_Record'Class;
+       Iter : in out Gtk_Tree_Iter)
+   is
+      Iter2 : Gtk_Tree_Iter;
+   begin
+      if Iter /= Null_Iter then
+         Iter2 := Iter;
+         Tree.Previous (Iter2);
+
+         if Iter2 = Null_Iter then
+            --  No more iter at the current level
+            Iter2 := Tree.Parent (Iter);
+            Tree.Previous (Iter2);
+            if Iter2 = Null_Iter then
+               Iter2 := Get_Last_Child (Tree, Null_Iter);
+            end if;
+
+            Iter := Get_Last_Child (Tree, Iter2);
+         else
+            Iter := Iter2;
+         end if;
+
+      else
+         Iter := Get_Last_Child (Tree, Get_Last_Child (Tree, Null_Iter));
+      end if;
+   end Get_Iter_Prev;
 
    -----------------------
    -- On_Entry_Activate --
@@ -420,7 +520,9 @@ package body Gtkada.Entry_Completion is
             (Get_Address (+Self.Completions, Iter, Column_Data));
       else
          if Force then
-            Iter := Self.Completions.Get_Iter_First;
+            Iter := Null_Iter;
+            Get_Iter_Next (Self.Completions, Iter);
+
             if Iter /= Null_Iter then
                Result := Convert
                   (Get_Address (+Self.Completions, Iter, Column_Data));
@@ -546,7 +648,7 @@ package body Gtkada.Entry_Completion is
       Self.Completions.Append (Iter => Iter, Parent => Parent);
 
       if Need_To_Expand then
-         Self.View.Expand_All;
+         Expand_Row (Self.View, Parent);
       end if;
 
       Score := Gint (Result.Score);
@@ -601,89 +703,6 @@ package body Gtkada.Entry_Completion is
    is
       Self : constant Gtkada_Entry := Gtkada_Entry (Ent);
 
-      procedure Get_Iter_Next (Iter : in out Gtk_Tree_Iter);
-      procedure Get_Iter_Prev (Iter : in out Gtk_Tree_Iter);
-      --  Returns the next result proposal
-
-      function Get_Last_Child (Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
-      --  Return the last child of Iter
-
-      --------------------
-      -- Get_Last_Child --
-      --------------------
-
-      function Get_Last_Child (Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter is
-         N : constant Gint := Self.Completions.N_Children (Iter);
-      begin
-         if N > 0 then
-            return Self.Completions.Nth_Child (Iter, N - 1);
-         else
-            return Null_Iter;
-         end if;
-      end Get_Last_Child;
-
-      -------------------
-      -- Get_Iter_Next --
-      -------------------
-
-      procedure Get_Iter_Next (Iter : in out Gtk_Tree_Iter) is
-         Iter2 : Gtk_Tree_Iter;
-      begin
-         if Iter /= Null_Iter then
-            Iter2 := Iter;
-            Self.Completions.Next (Iter2);
-
-            if Iter2 = Null_Iter then
-               --  No more iter at the current level
-
-               Iter2 := Self.Completions.Parent (Iter);
-               Self.Completions.Next (Iter2);
-               if Iter2 = Null_Iter then
-                  Iter2 := Self.Completions.Get_Iter_First;
-               end if;
-
-               Iter := Self.Completions.Children (Iter2);
-            else
-               Iter := Iter2;
-            end if;
-
-         else
-            Iter := Self.Completions.Get_Iter_First;
-            if Iter /= Null_Iter then
-               Iter := Self.Completions.Children (Iter);
-            end if;
-         end if;
-      end Get_Iter_Next;
-
-      -------------------
-      -- Get_Iter_Prev --
-      -------------------
-
-      procedure Get_Iter_Prev (Iter : in out Gtk_Tree_Iter) is
-         Iter2 : Gtk_Tree_Iter;
-      begin
-         if Iter /= Null_Iter then
-            Iter2 := Iter;
-            Self.Completions.Previous (Iter2);
-
-            if Iter2 = Null_Iter then
-               --  No more iter at the current level
-               Iter2 := Self.Completions.Parent (Iter);
-               Self.Completions.Previous (Iter2);
-               if Iter2 = Null_Iter then
-                  Iter2 := Get_Last_Child (Null_Iter);
-               end if;
-
-               Iter := Get_Last_Child (Iter2);
-            else
-               Iter := Iter2;
-            end if;
-
-         else
-            Iter := Get_Last_Child (Get_Last_Child (Null_Iter));
-         end if;
-      end Get_Iter_Prev;
-
       Iter : Gtk_Tree_Iter;
       M    : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
@@ -707,7 +726,7 @@ package body Gtkada.Entry_Completion is
          or else Event.Keyval = GDK_Down
       then
          Self.View.Get_Selection.Get_Selected (M, Iter);
-         Get_Iter_Next (Iter);
+         Get_Iter_Next (Self.Completions, Iter);
          if Iter /= Null_Iter then
             Self.View.Get_Selection.Select_Iter (Iter);
             Modified_Selection := True;
@@ -717,7 +736,7 @@ package body Gtkada.Entry_Completion is
          or else Event.Keyval = GDK_Up
       then
          Self.View.Get_Selection.Get_Selected (M, Iter);
-         Get_Iter_Prev (Iter);
+         Get_Iter_Prev (Self.Completions, Iter);
          if Iter /= Null_Iter then
             Self.View.Get_Selection.Select_Iter (Iter);
             Modified_Selection := True;
