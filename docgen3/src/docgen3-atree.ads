@@ -396,7 +396,7 @@ private
          Is_Frozen       : Boolean;
 
          Doc             : Comment_Result;
-         Comment         : Structured_Comment;
+         Comment         : aliased Structured_Comment;
          --  Doc is a temporary buffer used to store the block of comments
          --  retrieved from the source file. After processed, it is cleaned and
          --  its contents is stored in the structured comment, which identifies

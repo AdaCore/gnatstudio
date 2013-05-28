@@ -1377,18 +1377,14 @@ package body Docgen3.Atree is
          end if;
 
          if E.Comment /= No_Structured_Comment then
-            declare
-               Comm : constant Structured_Comment := Get_Comment (E);
-            begin
-               Append_Line ("Structured Comment:");
+            Append_Line ("Structured Comment:");
 
-               --  Append the comment avoiding the duplicate addition of the
-               --  prefix to the output
+            --  Append the comment avoiding the duplicate addition of the
+            --  prefix to the output
 
-               Append_Line_Without_Prefix
-                 (Ada.Strings.Unbounded.To_String
-                    (To_Unbounded_String (Comm, Prefix => Prefix)));
-            end;
+            Append_Line_Without_Prefix
+              (Ada.Strings.Unbounded.To_String
+                 (To_Unbounded_String (Get_Comment (E), Prefix => Prefix)));
          end if;
       end if;
 
