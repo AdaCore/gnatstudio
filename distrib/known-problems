@@ -88,12 +88,6 @@ Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
   Workaround: Ignore this incorrect indentation, fix the indentation manually,
               or put the comment before the separate.
 
-- M130-025: GPS: Cannot remove CodePeer categories from Locations View
-  Problem:    Messages' categories for CodePeer race conditions are not removed
-              on close of CodePeer report window when it was attempted to be
-              removed from Locations View manually.
-  Workaround: Restart GPS.
-
 - M119-001: GPS: crash when loading an erroneous project template
   Problem:    If you write a custom project template (.gpt) file, GPS will
               crash if the "Category" field is blank.
