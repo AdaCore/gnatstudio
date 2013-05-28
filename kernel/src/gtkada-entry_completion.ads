@@ -23,8 +23,8 @@ with Glib.Main;
 with Gtk.Box;
 with Gtk.Check_Button;
 with Gtk.Combo_Box_Text;
-with Gtk.Tree_Store;
 with Gtk.Scrolled_Window;
+with Gtk.Tree_Store;
 with Gtk.Text_Buffer;
 with Gtk.Text_View;
 with Gtkada.Search_Entry;
@@ -145,6 +145,7 @@ private
       View             : Gtk.Tree_View.Gtk_Tree_View;
       --  The widget that displays the list of possible completions
 
+      Notes_Popup      : Gtk.Window.Gtk_Window;
       Notes_Scroll     : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Notes_Buffer     : Gtk.Text_Buffer.Gtk_Text_Buffer;
       Notes_View       : Gtk.Text_View.Gtk_Text_View;

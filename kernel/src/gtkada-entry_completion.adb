@@ -328,7 +328,19 @@ package body Gtkada.Entry_Completion is
          Self.Popup.Set_Name ("completion-list");
          Self.Popup.Set_Decorated (False);
          Self.Popup.Set_Type_Hint (Window_Type_Hint_Combo);
+         Self.Popup.Set_Resizable (False);
+         Self.Popup.Set_Skip_Taskbar_Hint (True);
+         Self.Popup.Set_Skip_Pager_Hint (True);
          Get_Style_Context (Self.Popup).Add_Class ("completion");
+
+         Gtk_New (Self.Notes_Popup, Window_Popup);
+         Self.Notes_Popup.Set_Name ("completion-preview");
+         Self.Notes_Popup.Set_Decorated (False);
+         Self.Notes_Popup.Set_Type_Hint (Window_Type_Hint_Combo);
+         Self.Notes_Popup.Set_Resizable (False);
+         Self.Notes_Popup.Set_Skip_Taskbar_Hint (True);
+         Self.Notes_Popup.Set_Skip_Pager_Hint (True);
+         Get_Style_Context (Self.Notes_Popup).Add_Class ("completion");
 
          Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 0);
          Self.Popup.Add (Box);
@@ -400,8 +412,12 @@ package body Gtkada.Entry_Completion is
       Self.Notes_View.Set_Editable (False);
       Self.Notes_Scroll.Add (Self.Notes_View);
 
-      Self.Completion_Box.Pack_Start
-         (Self.Notes_Scroll, Expand => True, Fill => True);
+      if Self.Notes_Popup /= null then
+         Self.Notes_Popup.Add (Self.Notes_Scroll);
+      else
+         Self.Completion_Box.Pack_Start
+            (Self.Notes_Scroll, Expand => True, Fill => True);
+      end if;
 
       --  The settings panel
 
@@ -801,11 +817,21 @@ package body Gtkada.Entry_Completion is
                   Self.Notes_View.Set_Wrap_Mode (Wrap_None); --  or Wrap_Word
 
                   Self.Notes_Buffer.Set_Text (F);
+
                   Self.Notes_Scroll.Show_All;
+
+                  if Self.Notes_Popup /= null then
+                     Self.Notes_Popup.Show_All;
+                  end if;
                end if;
             end;
          end if;
+
       else
+         if Self.Notes_Popup /= null then
+            Self.Notes_Popup.Hide;
+         end if;
+
          Self.Notes_Scroll.Hide;
       end if;
 
@@ -912,7 +938,7 @@ package body Gtkada.Entry_Completion is
       Provider_Name_Width : constant := 100;
       Preview_Width       : constant := 300;
 
-      Max_Window_Width : constant := 400;
+      Max_Window_Width : constant := 300;
       --  Maximum width of the popup window
 
       Char_Width, Char_Height : Gint;
@@ -934,7 +960,7 @@ package body Gtkada.Entry_Completion is
          Width := Gint'Max
              (Self.Get_Allocated_Width,  --  minimum width is that of Self
               Gint'Min (Max_Window_Width, Char_Width * 20)) + 5
-             + Provider_Name_Width + Preview_Width;
+             + Provider_Name_Width;
          Height := Char_Height * 22 + 5;
 
          --  This is the origin of the GPS window
@@ -957,14 +983,14 @@ package body Gtkada.Entry_Completion is
          MaxX := Root_X + Toplevel.Get_Allocated_Width;
          X := Gint'Min (Gdk_X, MaxX - Width);
 
-         Self.Popup.Set_Resizable (False);
          Self.Popup.Set_Screen (Self.Get_Screen);
-         Self.Popup.Set_Skip_Taskbar_Hint (True);
-         Self.Popup.Set_Skip_Pager_Hint (True);
          Self.Popup.Move (X, Y);
          Self.Popup.Set_Size_Request (Width, Height);
          Self.Popup.Show_All;
-         Self.Notes_Scroll.Hide;
+
+         Self.Notes_Popup.Set_Screen (Self.Get_Screen);
+         Self.Notes_Popup.Move (X - Preview_Width, Y);
+         Self.Notes_Popup.Set_Size_Request (Preview_Width, Height);
 
          --  Code from gtkcombobox.c
          if Do_Grabs then
@@ -1015,9 +1041,12 @@ package body Gtkada.Entry_Completion is
                --     Device_Grab_Add (Self.View, Self.Grab_Device, True);
             end if;
          end if;
+      end if;
 
-      else
-         Self.Notes_Scroll.Hide;
+      Self.Notes_Scroll.Hide;
+
+      if Self.Notes_Popup /= null then
+         Self.Notes_Popup.Hide;
       end if;
 
       --  Force the focus, so that focus-out-event is meaningful and the user
@@ -1039,7 +1068,8 @@ package body Gtkada.Entry_Completion is
             Self.Grab_Device := null;
          end if;
 
-         Hide (Self.Popup);
+         Self.Popup.Hide;
+         Self.Notes_Popup.Hide;
       end if;
    end Popdown;
 
