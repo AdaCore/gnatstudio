@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2012, AdaCore                     --
+--                     Copyright (C) 2008-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1439,7 +1439,7 @@ package body CodePeer.Module is
 
       begin
          Get_Messages_Container (Context.Module.Kernel).Remove_Category
-           (Category, Race_Message_Flags);
+           (Category, Empty_Message_Flags);
       end Process_Category;
 
       ------------------
