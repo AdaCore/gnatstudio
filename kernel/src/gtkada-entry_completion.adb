@@ -322,7 +322,6 @@ package body Gtkada.Entry_Completion is
       Self.GEntry.Set_Activates_Default (False);
       Self.GEntry.On_Activate (On_Entry_Activate'Access, Self);
       Self.GEntry.Set_Placeholder_Text ("search");
-      Self.GEntry.Set_Width_Chars (25);
       Self.GEntry.Set_Tooltip_Markup (Completion.Documentation);
 
       if Completion_In_Popup then
@@ -1025,7 +1024,9 @@ package body Gtkada.Entry_Completion is
 
       --  Force the focus, so that focus-out-event is meaningful and the user
       --  can immediately interact through the keyboard
-      Self.GEntry.Grab_Focus;
+      if not Self.GEntry.Has_Focus then
+         Self.GEntry.Grab_Focus;
+      end if;
    end Popup;
 
    -------------
