@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
@@ -26,6 +27,31 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
 
 package body GPS.Kernel.Search.Filenames is
+
+   type Hook_Project_View_Changed is new Function_No_Args with record
+      Provider : access Filenames_Search_Provider;
+      --  The provider to refresh (do not free).
+   end record;
+   overriding procedure Execute
+      (Hook : Hook_Project_View_Changed;
+       Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the project view has changed
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Hook : Hook_Project_View_Changed;
+       Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Unchecked_Free (Hook.Provider.Files);
+      Unchecked_Free (Hook.Provider.Runtime);
+      Hook.Provider.Files :=
+         Get_Project (Kernel).Source_Files (Recursive => True);
+      Hook.Provider.Runtime := new File_Array'
+         (Get_Registry (Kernel).Environment.Predefined_Source_Files);
+   end Execute;
 
    ----------
    -- Free --
@@ -75,17 +101,19 @@ package body GPS.Kernel.Search.Filenames is
       Text : constant String := Pattern.Get_Text;
       P    : constant Pattern_Matcher := Compile (":(\d+)?(:(\d+))?$");
       M    : Match_Array (0 .. 3);
+      Hook : access Hook_Project_View_Changed;
    begin
-      --  ??? Should refresh the cache when the project changes or is
-      --  recomputed.
       if Self.Files = null then
-         Self.Files :=
-            Get_Project (Self.Kernel).Source_Files (Recursive => True);
-      end if;
+         --  The first time the provider is used, we connect to the
+         --  appropriate hooks so that we refresh the cached list of
+         --  source and runtime files whenever the project is recomputed.
 
-      if Self.Runtime = null then
-         Self.Runtime := new File_Array'
-            (Get_Registry (Self.Kernel).Environment.Predefined_Source_Files);
+         Hook := new Hook_Project_View_Changed'
+            (Function_No_Args with Provider => Self);
+         Add_Hook
+            (Self.Kernel, Project_View_Changed_Hook, Hook,
+             "gps-kernel-search-filenames.on_project_view_changed");
+         Hook.Execute (Self.Kernel);
       end if;
 
       Self.Index := Self.Files'First - 1;
@@ -159,10 +187,10 @@ package body GPS.Kernel.Search.Filenames is
       Result   : out Search_Result_Access;
       Has_Next : out Boolean)
    is
-      procedure Check (F : Virtual_File);
+      procedure Check (F : Virtual_File; Runtime : Boolean);
       --  Sets Result to non-null if F matches
 
-      procedure Check (F : Virtual_File) is
+      procedure Check (F : Virtual_File; Runtime : Boolean) is
          Text : constant String :=
             (if Self.Match_Directory then +F.Full_Name.all else +F.Base_Name);
          C : constant Search_Context := Self.Pattern.Start (Text);
@@ -190,6 +218,13 @@ package body GPS.Kernel.Search.Filenames is
             end if;
 
             if Result /= null then
+               --  Lower the score for runtime files, so that the source files
+               --  always appear first.
+
+               if Runtime then
+                  Result.Score := Result.Score - 1;
+               end if;
+
                Self.Seen.Include (F);
             end if;
          end if;
@@ -200,7 +235,7 @@ package body GPS.Kernel.Search.Filenames is
 
       while Self.Index < Self.Files'Last loop
          Self.Index := Self.Index + 1;
-         Check (Self.Files (Self.Index));
+         Check (Self.Files (Self.Index), Runtime => False);
          if Result /= null then
             return;
          end if;
@@ -208,7 +243,7 @@ package body GPS.Kernel.Search.Filenames is
 
       while Self.Runtime_Index < Self.Runtime'Last loop
          Self.Runtime_Index := Self.Runtime_Index + 1;
-         Check (Self.Runtime (Self.Runtime_Index));
+         Check (Self.Runtime (Self.Runtime_Index), Runtime => True);
          if Result /= null then
             return;
          end if;
