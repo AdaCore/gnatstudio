@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Gdk.Types.Keysyms;        use Gdk.Types, Gdk.Types.Keysyms;
 with Glib.Object;              use Glib.Object;
@@ -38,6 +39,9 @@ with Histories;                use Histories;
 with Remote;                   use Remote;
 
 package body GPS.Search.GUI is
+
+   Proposals_Per_Provider : constant := 5;
+   --  Number of proposals from each provider in the Overall_Search_Provider
 
    type Global_Search_Command is new Interactive_Command with record
       Provider : GPS.Search.Search_Provider_Access;
@@ -69,6 +73,30 @@ package body GPS.Search.GUI is
 
    Module : Global_Search_Module;
 
+   type Provider_Array is array (Natural range <>) of Search_Provider_Access;
+   type Provider_Array_Access is access Provider_Array;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+      (Provider_Array, Provider_Array_Access);
+
+   type Overall_Search_Provider is new Kernel_Search_Provider with record
+      Providers : Provider_Array_Access;
+      Current_Provider : Integer := -1;
+      Total_For_Current : Natural := 0;
+   end record;
+   type Overall_Search_Provider_Access
+      is access all Overall_Search_Provider'Class;
+   overriding procedure Set_Pattern
+     (Self    : not null access Overall_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last);
+   overriding procedure Next
+     (Self     : not null access Overall_Search_Provider;
+      Result   : out GPS.Search.Search_Result_Access;
+      Has_Next : out Boolean);
+   overriding function Display_Name
+     (Self     : not null access Overall_Search_Provider) return String;
+
    procedure On_Escape (Self : access Gtk_Widget_Record'Class);
    --  Called when "<escape>" has been called
 
@@ -81,6 +109,69 @@ package body GPS.Search.GUI is
 
    procedure Reset;
    --  Reset the global search entry after <escape> or a search is selected
+
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   overriding procedure Set_Pattern
+     (Self    : not null access Overall_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last)
+   is
+   begin
+      for P in Self.Providers'Range loop
+         Self.Providers (P).Set_Pattern
+            (Pattern, Limit => Natural'Min (Limit, Proposals_Per_Provider));
+      end loop;
+
+      Self.Current_Provider := Self.Providers'First;
+      Self.Total_For_Current := 0;
+   end Set_Pattern;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Self     : not null access Overall_Search_Provider;
+      Result   : out GPS.Search.Search_Result_Access;
+      Has_Next : out Boolean)
+   is
+   begin
+      if Self.Current_Provider > Self.Providers'Last then
+         Result := null;
+         Has_Next := False;
+         return;
+      end if;
+
+      Self.Providers (Self.Current_Provider).Next (Result, Has_Next);
+
+      if Result /= null then
+         Self.Total_For_Current := Self.Total_For_Current + 1;
+      end if;
+
+      if not Has_Next
+         or else Self.Total_For_Current >= Proposals_Per_Provider
+      then
+         Self.Current_Provider := Self.Current_Provider + 1;
+         Self.Total_For_Current := 0;
+      end if;
+   end Next;
+
+   ------------------
+   -- Display_Name --
+   ------------------
+
+   overriding function Display_Name
+     (Self     : not null access Overall_Search_Provider) return String is
+   begin
+      if Self.Current_Provider > Self.Providers'Last then
+         return "";
+      else
+         return Self.Providers (Self.Current_Provider).Display_Name;
+      end if;
+   end Display_Name;
 
    -----------
    -- Reset --
@@ -223,11 +314,15 @@ package body GPS.Search.GUI is
    procedure Register_Module
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Overall : constant Overall_Search_Provider_Access :=
+         new Overall_Search_Provider;
+
       procedure Register_Provider (Name : String);
       --  Register an action for a given search provider
 
       procedure Register_Provider (Name : String) is
          Command : Global_Search_Command_Access;
+         Tmp     : Provider_Array_Access;
       begin
          Command := new Global_Search_Command;
          Command.Provider := GPS.Kernel.Search.Registry.Get (Name);
@@ -237,6 +332,16 @@ package body GPS.Search.GUI is
             (Kernel, "Global Search in context: " & Name, Command,
              Description => Command.Provider.Documentation,
              Category => "Search");
+
+         Tmp := Overall.Providers;
+         if Tmp = null then
+            Overall.Providers := new Provider_Array (1 .. 1);
+         else
+            Overall.Providers := new Provider_Array (1 .. Tmp'Last + 1);
+            Overall.Providers (Tmp'Range) := Tmp.all;
+            Unchecked_Free (Tmp);
+         end if;
+         Overall.Providers (Overall.Providers'Last) := Command.Provider;
       end Register_Provider;
 
       Align   : Gtk_Alignment;
@@ -249,7 +354,7 @@ package body GPS.Search.GUI is
           Module_Name => "Global_Search");
 
       Command := new Global_Search_Command;
-      Command.Provider := GPS.Kernel.Search.Registry.Get (Provider_Filenames);
+      Command.Provider := Search_Provider_Access (Overall);
       Command.History := new History_Key'("global-search-entry");
       Module.Default_Command := Command;
       Register_Action

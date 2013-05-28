@@ -24,6 +24,7 @@ with Pango.Layout;               use Pango.Layout;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Device;                 use Gdk.Device;
 with Gdk.Device_Manager;         use Gdk.Device_Manager;
+with Gdk.RGBA;                   use Gdk.RGBA;
 with Gdk.Screen;                 use Gdk.Screen;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
@@ -31,8 +32,10 @@ with Gdk.Window;                 use Gdk.Window;
 with Glib;                       use Glib;
 with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
+with Glib.Properties;            use Glib.Properties;
 with Glib.Values;                use Glib.Values;
 with Gtk.Box;                    use Gtk.Box;
+with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
@@ -40,12 +43,13 @@ with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.List_Store;             use Gtk.List_Store;
+with Gtk.Tree_Store;             use Gtk.Tree_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_View;              use Gtk.Text_View;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
+with Gtkada.Style;               use Gtkada.Style;
 with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
@@ -127,9 +131,10 @@ package body Gtkada.Entry_Completion is
    function Convert is new Ada.Unchecked_Conversion
       (System.Address, Search_Result_Access);
 
-   Column_Label : constant := 0;
-   Column_Score : constant := 1;
-   Column_Data  : constant := 2;
+   Column_Label    : constant := 0;
+   Column_Score    : constant := 1;
+   Column_Data     : constant := 2;
+   Column_Provider : constant := 3;
 
    Completion_Class_Record : Glib.Object.Ada_GObject_Class :=
       Glib.Object.Uninitialized_Class;
@@ -201,6 +206,7 @@ package body Gtkada.Entry_Completion is
       Sep  : Gtk_Separator;
       Render : Gtk_Cell_Renderer_Text;
       Dummy  : Boolean;
+      Color  : Gdk_RGBA;
       pragma Unreferenced (Col, Dummy);
 
    begin
@@ -244,19 +250,38 @@ package body Gtkada.Entry_Completion is
       Self.Completion_Box.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Self.Completions,
-               (Column_Label => GType_String,
-                Column_Score => GType_Int,
-                Column_Data  => GType_Pointer));
+               (Column_Label    => GType_String,
+                Column_Score    => GType_Int,
+                Column_Data     => GType_Pointer,
+                Column_Provider => GType_String));
       Gtk_New (Self.View, Self.Completions);
       Unref (Self.Completions);
       Self.View.Set_Headers_Visible (False);
       Self.View.Get_Selection.Set_Mode (Selection_Single);
       Self.View.Set_Rules_Hint (True);
+      Self.View.Set_Expander_Column (null);
+      Self.View.Set_Show_Expanders (False);
       Scrolled.Add (Self.View);
 
       Self.Completions.Set_Sort_Column_Id
          (Sort_Column_Id => Column_Score,
           Order          => Sort_Descending);
+
+      Gtk_New (C);
+      Col := Self.View.Append_Column (C);
+      Gtk_New (Render);
+      C.Pack_Start (Render, False);
+      C.Add_Attribute (Render, "text", Column_Provider);
+
+      Get_Style_Context (Self.View).Get_Background_Color
+         (Gtk_State_Flag_Normal, Color);
+      Set_Property
+         (Render, Gtk.Cell_Renderer_Text.Foreground_Property, "gray");
+      Set_Property
+         (Render, Gtk.Cell_Renderer_Text.Background_Rgba_Property,
+          Shade_Or_Lighten (Color, 0.05));
+      Set_Property (Render, Gtk.Cell_Renderer.Xalign_Property, 1.0);
+      Set_Property (Render, Gtk.Cell_Renderer.Yalign_Property, 0.0);
 
       Gtk_New (C);
       C.Set_Sort_Column_Id (Column_Score);
@@ -492,12 +517,37 @@ package body Gtkada.Entry_Completion is
       --  Maximum number of history items that are taken into account for
       --  the scoring.
 
+      Prov : constant String := Result.Provider.Display_Name;
+
       Iter  : Gtk_Tree_Iter;
       Val   : GValue;
       Score : Gint;
       M     : Integer;
+      Parent : Gtk_Tree_Iter;
+      Need_To_Expand : Boolean := False;
    begin
-      Self.Completions.Append (Iter);
+      Parent := Self.Completions.Get_Iter_First;
+      while Parent /= Null_Iter loop
+         if Self.Completions.Get_String (Parent, Column_Provider) = Prov then
+            exit;
+         end if;
+         Self.Completions.Next (Parent);
+      end loop;
+
+      if Parent = Null_Iter then
+         Need_To_Expand := True;
+         Self.Completions.Append (Iter => Parent, Parent => Null_Iter);
+         Self.Completions.Set (Parent, Column_Provider, Prov);
+
+         --  ??? Should order provider based on user preferences
+         Self.Completions.Set (Parent, Column_Score, 100);
+      end if;
+
+      Self.Completions.Append (Iter => Iter, Parent => Parent);
+
+      if Need_To_Expand then
+         Self.View.Expand_All;
+      end if;
 
       Score := Gint (Result.Score);
 
@@ -521,7 +571,7 @@ package body Gtkada.Entry_Completion is
          end loop;
       end if;
 
-      --  Fill list of completions
+      --  Fill list of completions (no text in provider column)
 
       Self.Completions.Set (Iter, Column_Score, Score);
 
@@ -550,6 +600,90 @@ package body Gtkada.Entry_Completion is
       Event : Gdk_Event_Key) return Boolean
    is
       Self : constant Gtkada_Entry := Gtkada_Entry (Ent);
+
+      procedure Get_Iter_Next (Iter : in out Gtk_Tree_Iter);
+      procedure Get_Iter_Prev (Iter : in out Gtk_Tree_Iter);
+      --  Returns the next result proposal
+
+      function Get_Last_Child (Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+      --  Return the last child of Iter
+
+      --------------------
+      -- Get_Last_Child --
+      --------------------
+
+      function Get_Last_Child (Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter is
+         N : constant Gint := Self.Completions.N_Children (Iter);
+      begin
+         if N > 0 then
+            return Self.Completions.Nth_Child (Iter, N - 1);
+         else
+            return Null_Iter;
+         end if;
+      end Get_Last_Child;
+
+      -------------------
+      -- Get_Iter_Next --
+      -------------------
+
+      procedure Get_Iter_Next (Iter : in out Gtk_Tree_Iter) is
+         Iter2 : Gtk_Tree_Iter;
+      begin
+         if Iter /= Null_Iter then
+            Iter2 := Iter;
+            Self.Completions.Next (Iter2);
+
+            if Iter2 = Null_Iter then
+               --  No more iter at the current level
+
+               Iter2 := Self.Completions.Parent (Iter);
+               Self.Completions.Next (Iter2);
+               if Iter2 = Null_Iter then
+                  Iter2 := Self.Completions.Get_Iter_First;
+               end if;
+
+               Iter := Self.Completions.Children (Iter2);
+            else
+               Iter := Iter2;
+            end if;
+
+         else
+            Iter := Self.Completions.Get_Iter_First;
+            if Iter /= Null_Iter then
+               Iter := Self.Completions.Children (Iter);
+            end if;
+         end if;
+      end Get_Iter_Next;
+
+      -------------------
+      -- Get_Iter_Prev --
+      -------------------
+
+      procedure Get_Iter_Prev (Iter : in out Gtk_Tree_Iter) is
+         Iter2 : Gtk_Tree_Iter;
+      begin
+         if Iter /= Null_Iter then
+            Iter2 := Iter;
+            Self.Completions.Previous (Iter2);
+
+            if Iter2 = Null_Iter then
+               --  No more iter at the current level
+               Iter2 := Self.Completions.Parent (Iter);
+               Self.Completions.Previous (Iter2);
+               if Iter2 = Null_Iter then
+                  Iter2 := Get_Last_Child (Null_Iter);
+               end if;
+
+               Iter := Get_Last_Child (Iter2);
+            else
+               Iter := Iter2;
+            end if;
+
+         else
+            Iter := Get_Last_Child (Get_Last_Child (Null_Iter));
+         end if;
+      end Get_Iter_Prev;
+
       Iter : Gtk_Tree_Iter;
       M    : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
@@ -573,15 +707,7 @@ package body Gtkada.Entry_Completion is
          or else Event.Keyval = GDK_Down
       then
          Self.View.Get_Selection.Get_Selected (M, Iter);
-         if Iter = Null_Iter then
-            Iter := Self.Completions.Get_Iter_First;
-         else
-            Self.Completions.Next (Iter);
-            if Iter = Null_Iter then
-               Iter := Self.Completions.Get_Iter_First;
-            end if;
-         end if;
-
+         Get_Iter_Next (Iter);
          if Iter /= Null_Iter then
             Self.View.Get_Selection.Select_Iter (Iter);
             Modified_Selection := True;
@@ -591,21 +717,7 @@ package body Gtkada.Entry_Completion is
          or else Event.Keyval = GDK_Up
       then
          Self.View.Get_Selection.Get_Selected (M, Iter);
-         if Iter = Null_Iter
-            or else Iter = Self.Completions.Get_Iter_First
-         then
-            declare
-               N : constant Gint := Self.Completions.N_Children;
-            begin
-               if N > 0 then
-                  Iter := Self.Completions.Nth_Child
-                    (Null_Iter, Self.Completions.N_Children - 1);
-               end if;
-            end;
-         else
-            Self.Completions.Previous (Iter);
-         end if;
-
+         Get_Iter_Prev (Iter);
          if Iter /= Null_Iter then
             Self.View.Get_Selection.Select_Iter (Iter);
             Modified_Selection := True;
@@ -784,6 +896,9 @@ package body Gtkada.Entry_Completion is
    -----------
 
    procedure Popup (Self : not null access Gtkada_Entry_Record) is
+      Provider_Name_Width : constant := 100;
+      Preview_Width       : constant := 300;
+
       Max_Window_Width : constant := 400;
       --  Maximum width of the popup window
 
@@ -804,7 +919,8 @@ package body Gtkada.Entry_Completion is
 
          Width := Gint'Max
              (Self.Get_Allocated_Width,  --  minimum width is that of Self
-              Gint'Min (Max_Window_Width, Char_Width * 20)) + 5;
+              Gint'Min (Max_Window_Width, Char_Width * 20)) + 5
+             + Provider_Name_Width + Preview_Width;
          Height := Char_Height * 22 + 5;
 
          --  This is the origin of the GPS window
@@ -919,7 +1035,7 @@ package body Gtkada.Entry_Completion is
       K : constant Search_Kind := Search_Kind'Value (T);
    begin
       S.Settings_Whole_Word.Set_Sensitive (K = Regexp);
-      Add_To_History (Get_History (S.Kernel).all, "completion_entry-kind", T);
+      Add_To_History (Get_History (S.Kernel).all, S.Name.all & "-kind", T);
 
       Show_Preview (S);
       On_Entry_Changed (S);
