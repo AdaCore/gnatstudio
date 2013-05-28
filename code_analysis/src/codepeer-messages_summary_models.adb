@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2012, AdaCore                     --
+--                     Copyright (C) 2008-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,7 @@ with Glib.Object;
 with Gdk.Color;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with GPS.Intl;          use GPS.Intl;
 
 with CodePeer.Module;
@@ -186,6 +187,21 @@ package body CodePeer.Messages_Summary_Models is
       procedure Set_Deltas_Image (Level : CodePeer.Message_Ranking_Level);
 
       procedure Set_Deltas_Image (Added : Natural; Removed : Natural);
+
+      function Percent_Image (Passed, Total : Natural) return String;
+      --  Return a string representing the percentage Passed/Total in the
+      --  form "(xxx%)"
+
+      -------------------
+      -- Percent_Image --
+      -------------------
+
+      function Percent_Image (Passed, Total : Natural) return String is
+      begin
+         return "("
+           & Image ((if Total = 0 then 100 else Passed * 100 / Total), 1)
+           & "%)";
+      end Percent_Image;
 
       ---------------------
       -- Set_Count_Image --
@@ -554,14 +570,34 @@ package body CodePeer.Messages_Summary_Models is
                Set_Integer_Image (0, True);
 
             elsif File_Node /= null then
-               Set_Integer_Image
-                 (CodePeer.File_Data
+               declare
+                  Total  : constant Natural := CodePeer.File_Data
                     (File_Node.Node.Analysis_Data.CodePeer_Data.all).
-                       Total_Checks,
-                  True);
+                    Total_Checks;
+                  Passed : constant Natural :=
+                    Total - File_Node.Checks_Count;
+
+               begin
+                  Glib.Values.Init (Value, Glib.GType_String);
+                  Glib.Values.Set_String
+                    (Value,
+                     Image (Passed, 1)
+                     & " " & Percent_Image (Passed, Total));
+               end;
 
             elsif Project_Node /= null then
-               Set_Integer_Image (Project_Node.Total_Checks, True);
+               declare
+                  Total  : constant Natural := Project_Node.Total_Checks;
+                  Passed : constant Natural :=
+                    Total - Project_Node.Checks_Count;
+
+               begin
+                  Glib.Values.Init (Value, Glib.GType_String);
+                  Glib.Values.Set_String
+                    (Value,
+                     Image (Passed, 1)
+                     & " " & Percent_Image (Passed, Total));
+               end;
 
             else
                declare

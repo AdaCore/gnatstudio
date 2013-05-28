@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2012, AdaCore                     --
+--                     Copyright (C) 2008-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -82,10 +82,11 @@ package body CodePeer.Utilities is
             end case;
          end if;
 
-         --  Count all checks with non-suppressed ranking
+         --  Count all non-removed checks with non-suppressed ranking
 
          if Message.Is_Check
            and then Message.Current_Ranking /= Suppressed
+           and then Message.Lifeage /= Removed
          then
             Checks := Checks + 1;
          end if;
