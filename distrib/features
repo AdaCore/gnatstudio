@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M529-012 GPS: execute_extended.py plugin removed (2013-05-29)
+
+  This plugin allows one to easily execute any of the GPS commands via the
+  keyboard. This behavior is now directly available via the new global search
+  box in the GPS toolbar.
+
 NF-60-M523-031 GPS: add search field in the global toolbar (2013-05-27)
 
   A search field is now provided, which will look simultaneously in various
