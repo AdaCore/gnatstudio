@@ -41,6 +41,7 @@ with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
@@ -321,6 +322,7 @@ package body Gtkada.Entry_Completion is
       Dummy  : Boolean;
       Color  : Gdk_RGBA;
       Filter : Gtk_Tree_Model_Filter;
+      Frame  : Gtk_Frame;
       pragma Unreferenced (Col, Dummy);
 
       Col_Types : constant Glib.GType_Array :=
@@ -362,8 +364,10 @@ package body Gtkada.Entry_Completion is
          Get_Style_Context (Self.Notes_Popup).Add_Class ("completion");
 
          Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 0);
-         Self.Popup.Add (Box);
 
+         Gtk_New (Frame);
+         Self.Popup.Add (Frame);
+         Frame.Add (Box);
       else
          Box := Gtk_Box (Self);
       end if;
@@ -426,12 +430,13 @@ package body Gtkada.Entry_Completion is
       --  Extra notes for selected item
 
       Gtk_New (Self.Notes_Scroll);
+      Gtk_New (Frame);
+      Frame.Add (Self.Notes_Scroll);
 
       if Self.Notes_Popup /= null then
-         Self.Notes_Popup.Add (Self.Notes_Scroll);
+         Self.Notes_Popup.Add (Frame);
       else
-         Self.Completion_Box.Pack_Start
-            (Self.Notes_Scroll, Expand => True, Fill => True);
+         Self.Completion_Box.Pack_Start (Frame, Expand => True, Fill => True);
       end if;
 
       --  The settings panel
