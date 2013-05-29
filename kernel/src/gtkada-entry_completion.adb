@@ -42,26 +42,26 @@ with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.Tree_Store;             use Gtk.Tree_Store;
+with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_View;              use Gtk.Text_View;
-with Gtkada.Handlers;            use Gtkada.Handlers;
-with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
-with Gtkada.Style;               use Gtkada.Style;
-with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;      use Gtk.Tree_Model_Filter;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
+with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
+with Gtkada.Style;               use Gtkada.Style;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Search;                 use GPS.Search;
-with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
 with System;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
@@ -129,18 +129,26 @@ package body Gtkada.Entry_Completion is
    --  Show the preview pane if there is a current selection
 
    procedure Get_Iter_Next
-      (Tree : not null access Gtk_Tree_Store_Record'Class;
+      (Tree : Gtk_Tree_Model;
        Iter : in out Gtk_Tree_Iter);
    procedure Get_Iter_Prev
-      (Tree : not null access Gtk_Tree_Store_Record'Class;
+      (Tree : Gtk_Tree_Model;
        Iter : in out Gtk_Tree_Iter);
    --  Returns the next result proposal. Pass Null_Iter to get the
    --  first or last item in the tree
 
    function Get_Last_Child
-      (Tree : not null access Gtk_Tree_Store_Record'Class;
+      (Tree : Gtk_Tree_Model;
        Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
    --  Return the last child of Iter
+
+   procedure Model_Modify_Func
+      (Model  : Gtk.Tree_Model.Gtk_Tree_Model;
+       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+       Value  : in out Glib.Values.GValue;
+       Column : Gint);
+   --  This is a filter function applied to the list of completions, and is
+   --  used to avoid duplicating the name of the provider on each row.
 
    function Convert is new Ada.Unchecked_Conversion
       (System.Address, Search_Result_Access);
@@ -162,13 +170,13 @@ package body Gtkada.Entry_Completion is
    --------------------
 
    function Get_Last_Child
-      (Tree : not null access Gtk_Tree_Store_Record'Class;
+      (Tree : Gtk_Tree_Model;
        Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
-      N : constant Gint := Tree.N_Children (Iter);
+      N : constant Gint := N_Children (Tree, Iter);
    begin
       if N > 0 then
-         return Tree.Nth_Child (Iter, N - 1);
+         return Nth_Child (Tree, Iter, N - 1);
       else
          return Null_Iter;
       end if;
@@ -179,34 +187,16 @@ package body Gtkada.Entry_Completion is
    -------------------
 
    procedure Get_Iter_Next
-      (Tree : not null access Gtk_Tree_Store_Record'Class;
-       Iter : in out Gtk_Tree_Iter)
-   is
-      Iter2 : Gtk_Tree_Iter;
+      (Tree : Gtk_Tree_Model;
+       Iter : in out Gtk_Tree_Iter) is
    begin
       if Iter /= Null_Iter then
-         Iter2 := Iter;
-         Tree.Next (Iter2);
-
-         if Iter2 = Null_Iter then
-            --  No more iter at the current level
-
-            Iter2 := Tree.Parent (Iter);
-            Tree.Next (Iter2);
-            if Iter2 = Null_Iter then
-               Iter2 := Tree.Get_Iter_First;
-            end if;
-
-            Iter := Tree.Children (Iter2);
-         else
-            Iter := Iter2;
+         Next (Tree, Iter);
+         if Iter = Null_Iter then
+            Iter := Get_Iter_First (Tree);
          end if;
-
       else
-         Iter := Tree.Get_Iter_First;
-         if Iter /= Null_Iter then
-            Iter := Tree.Children (Iter);
-         end if;
+         Iter := Get_Iter_First (Tree);
       end if;
    end Get_Iter_Next;
 
@@ -215,30 +205,16 @@ package body Gtkada.Entry_Completion is
    -------------------
 
    procedure Get_Iter_Prev
-      (Tree : not null access Gtk_Tree_Store_Record'Class;
-       Iter : in out Gtk_Tree_Iter)
-   is
-      Iter2 : Gtk_Tree_Iter;
+      (Tree : Gtk_Tree_Model;
+       Iter : in out Gtk_Tree_Iter) is
    begin
       if Iter /= Null_Iter then
-         Iter2 := Iter;
-         Tree.Previous (Iter2);
-
-         if Iter2 = Null_Iter then
-            --  No more iter at the current level
-            Iter2 := Tree.Parent (Iter);
-            Tree.Previous (Iter2);
-            if Iter2 = Null_Iter then
-               Iter2 := Get_Last_Child (Tree, Null_Iter);
-            end if;
-
-            Iter := Get_Last_Child (Tree, Iter2);
-         else
-            Iter := Iter2;
+         Previous (Tree, Iter);
+         if Iter = Null_Iter then
+            Iter := Get_Last_Child (Tree, Null_Iter);
          end if;
-
       else
-         Iter := Get_Last_Child (Tree, Get_Last_Child (Tree, Null_Iter));
+         Iter := Get_Last_Child (Tree, Null_Iter);
       end if;
    end Get_Iter_Prev;
 
@@ -250,6 +226,45 @@ package body Gtkada.Entry_Completion is
    begin
       Activate_Proposal (Gtkada_Entry (Self), Force => True);
    end On_Entry_Activate;
+
+   -----------------------
+   -- Model_Modify_Func --
+   -----------------------
+
+   procedure Model_Modify_Func
+      (Model  : Gtk.Tree_Model.Gtk_Tree_Model;
+       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+       Value  : in out Glib.Values.GValue;
+       Column : Gint)
+   is
+      Filter : constant Gtk_Tree_Model_Filter := -Model;
+      Child  : constant Gtk_Tree_Model := Filter.Get_Model;
+      Child_It : Gtk_Tree_Iter;
+      Prev     : Gtk_Tree_Iter;
+   begin
+      Filter.Convert_Iter_To_Child_Iter (Child_It, Filter_Iter => Iter);
+
+      if Column = Column_Provider then
+         Prev := Child_It;
+         Previous (Child, Prev);
+
+         if Prev = Null_Iter then
+            Get_Value (Child, Child_It, Column, Value);
+         else
+            declare
+               Prev_Prov : constant String := Get_String (Child, Prev, Column);
+               Prov : constant String := Get_String (Child, Child_It, Column);
+            begin
+               if Prev_Prov /= Prov then
+                  Set_String (Value, Prov);
+               end if;
+            end;
+         end if;
+
+      else
+         Get_Value (Child, Child_It, Column, Value);
+      end if;
+   end Model_Modify_Func;
 
    --------------
    -- Get_Type --
@@ -306,7 +321,14 @@ package body Gtkada.Entry_Completion is
       Render : Gtk_Cell_Renderer_Text;
       Dummy  : Boolean;
       Color  : Gdk_RGBA;
+      Filter : Gtk_Tree_Model_Filter;
       pragma Unreferenced (Col, Dummy);
+
+      Col_Types : constant Glib.GType_Array :=
+         (Column_Label    => GType_String,
+          Column_Score    => GType_Int,
+          Column_Data     => GType_Pointer,
+          Column_Provider => GType_String);
 
    begin
       G_New (Self, Get_Type);
@@ -359,13 +381,14 @@ package body Gtkada.Entry_Completion is
       Scrolled.Set_Shadow_Type (Shadow_None);
       Self.Completion_Box.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      Gtk_New (Self.Completions,
-               (Column_Label    => GType_String,
-                Column_Score    => GType_Int,
-                Column_Data     => GType_Pointer,
-                Column_Provider => GType_String));
-      Gtk_New (Self.View, Self.Completions);
+      Gtk_New (Self.Completions, Col_Types);
+      Gtk_New (Filter, +Self.Completions);
       Unref (Self.Completions);
+      Filter.Set_Modify_Func (Col_Types, Model_Modify_Func'Access);
+
+      Gtk_New (Self.View, Filter);
+      Unref (Filter);
+
       Self.View.Set_Headers_Visible (False);
       Self.View.Get_Selection.Set_Mode (Selection_Single);
       Self.View.Set_Rules_Hint (True);
@@ -531,16 +554,13 @@ package body Gtkada.Entry_Completion is
       Self.View.Get_Selection.Get_Selected (M, Iter);
 
       if Iter /= Null_Iter then
-         Result := Convert
-            (Get_Address (+Self.Completions, Iter, Column_Data));
+         Result := Convert (Get_Address (+M, Iter, Column_Data));
       else
          if Force then
             Iter := Null_Iter;
-            Get_Iter_Next (Self.Completions, Iter);
-
+            Get_Iter_Next (M, Iter);
             if Iter /= Null_Iter then
-               Result := Convert
-                  (Get_Address (+Self.Completions, Iter, Column_Data));
+               Result := Convert (Get_Address (+M, Iter, Column_Data));
             end if;
          end if;
       end if;
@@ -597,6 +617,7 @@ package body Gtkada.Entry_Completion is
       Column : Gtk_Tree_View_Column;
       Cell_X, Cell_Y : Gint;
       Found : Boolean;
+      M    : Gtk_Tree_Model;
       Iter : Gtk_Tree_Iter;
    begin
       if Event.Button = 1 then
@@ -608,9 +629,10 @@ package body Gtkada.Entry_Completion is
              Cell_X => Cell_X,
              Cell_Y => Cell_Y,
              Row_Found => Found);
+         M := Self.View.Get_Model;
 
          if Found then
-            Iter := Self.Completions.Get_Iter (Path);
+            Iter := Get_Iter (M, Path);
             Self.View.Get_Selection.Select_Iter (Iter);
             Activate_Proposal (Gtkada_Entry (Ent), Force => False);
          end if;
@@ -634,37 +656,12 @@ package body Gtkada.Entry_Completion is
       --  Maximum number of history items that are taken into account for
       --  the scoring.
 
-      Prov : constant String := Result.Provider.Display_Name;
-
       Iter  : Gtk_Tree_Iter;
       Val   : GValue;
       Score : Gint;
       M     : Integer;
-      Parent : Gtk_Tree_Iter;
-      Need_To_Expand : Boolean := False;
    begin
-      Parent := Self.Completions.Get_Iter_First;
-      while Parent /= Null_Iter loop
-         if Self.Completions.Get_String (Parent, Column_Provider) = Prov then
-            exit;
-         end if;
-         Self.Completions.Next (Parent);
-      end loop;
-
-      if Parent = Null_Iter then
-         Need_To_Expand := True;
-         Self.Completions.Append (Iter => Parent, Parent => Null_Iter);
-         Self.Completions.Set (Parent, Column_Provider, Prov);
-
-         --  ??? Should order provider based on user preferences
-         Self.Completions.Set (Parent, Column_Score, 100);
-      end if;
-
-      Self.Completions.Append (Iter => Iter, Parent => Parent);
-
-      if Need_To_Expand then
-         Expand_Row (Self.View, Parent);
-      end if;
+      Self.Completions.Append (Iter);
 
       Score := Gint (Result.Score);
 
@@ -691,6 +688,8 @@ package body Gtkada.Entry_Completion is
       --  Fill list of completions (no text in provider column)
 
       Self.Completions.Set (Iter, Column_Score, Score);
+      Self.Completions.Set
+         (Iter, Column_Provider, Result.Provider.Display_Name);
 
       if Result.Long /= null then
          Self.Completions.Set
@@ -741,7 +740,7 @@ package body Gtkada.Entry_Completion is
          or else Event.Keyval = GDK_Down
       then
          Self.View.Get_Selection.Get_Selected (M, Iter);
-         Get_Iter_Next (Self.Completions, Iter);
+         Get_Iter_Next (M, Iter);
          if Iter /= Null_Iter then
             Self.View.Get_Selection.Select_Iter (Iter);
             Modified_Selection := True;
@@ -751,7 +750,7 @@ package body Gtkada.Entry_Completion is
          or else Event.Keyval = GDK_Up
       then
          Self.View.Get_Selection.Get_Selected (M, Iter);
-         Get_Iter_Prev (Self.Completions, Iter);
+         Get_Iter_Prev (M, Iter);
          if Iter /= Null_Iter then
             Self.View.Get_Selection.Select_Iter (Iter);
             Modified_Selection := True;
@@ -760,7 +759,7 @@ package body Gtkada.Entry_Completion is
 
       --  If we have selected an item, displays its full description
       if Modified_Selection then
-         Path := Self.Completions.Get_Path (Iter);
+         Path := Get_Path (M, Iter);
          Self.View.Scroll_To_Cell
             (Path      => Path,
              Column    => null,
@@ -804,8 +803,7 @@ package body Gtkada.Entry_Completion is
          Self.Notes_Buffer.Set_Text ("");
 
          if Iter /= Null_Iter then
-            Result := Convert
-               (Get_Address (+Self.Completions, Iter, Column_Data));
+            Result := Convert (Get_Address (+M, Iter, Column_Data));
 
             declare
                F : constant String := Result.Full;
@@ -813,11 +811,8 @@ package body Gtkada.Entry_Completion is
                if F /= "" then
                   --  Reset the font, in case the prefs have changed
                   Self.Notes_View.Modify_Font (View_Fixed_Font.Get_Pref);
-
                   Self.Notes_View.Set_Wrap_Mode (Wrap_None); --  or Wrap_Word
-
                   Self.Notes_Buffer.Set_Text (F);
-
                   Self.Notes_Scroll.Show_All;
 
                   if Self.Notes_Popup /= null then

@@ -148,6 +148,14 @@ package body GPS.Search.GUI is
       Self.Providers (Self.Current_Provider).Next (Result, Has_Next);
 
       if Result /= null then
+         --  Make sure the primary sort key is the provider
+         --  ??? Should disconnect the sorting for the display from the order
+         --  in which we process the providers, since the former is controlled
+         --  by the user and the latter by the application (we always want to
+         --  run "file content" provider last, since it is slower.
+         Result.Score := Result.Score
+            + (Self.Providers'Last - Self.Current_Provider) * 1_000_000;
+
          Self.Total_For_Current := Self.Total_For_Current + 1;
       end if;
 

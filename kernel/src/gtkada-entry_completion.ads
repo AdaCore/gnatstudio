@@ -24,7 +24,7 @@ with Gtk.Box;
 with Gtk.Check_Button;
 with Gtk.Combo_Box_Text;
 with Gtk.Scrolled_Window;
-with Gtk.Tree_Store;
+with Gtk.List_Store;
 with Gtk.Text_Buffer;
 with Gtk.Text_View;
 with Gtkada.Search_Entry;
@@ -141,7 +141,7 @@ private
       Settings_Preview        : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Kind           : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
 
-      Completions      : Gtk.Tree_Store.Gtk_Tree_Store;
+      Completions      : Gtk.List_Store.Gtk_List_Store;
       View             : Gtk.Tree_View.Gtk_Tree_View;
       --  The widget that displays the list of possible completions
 
