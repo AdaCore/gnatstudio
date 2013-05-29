@@ -323,6 +323,7 @@ package body Gtkada.Entry_Completion is
       Color  : Gdk_RGBA;
       Filter : Gtk_Tree_Model_Filter;
       Frame  : Gtk_Frame;
+      Popup  : Gtk_Window;
       pragma Unreferenced (Col, Dummy);
 
       Col_Types : constant Glib.GType_Array :=
@@ -355,25 +356,38 @@ package body Gtkada.Entry_Completion is
          Self.Popup.Set_Skip_Pager_Hint (True);
          Get_Style_Context (Self.Popup).Add_Class ("completion");
 
-         Gtk_New (Self.Notes_Popup, Window_Popup);
-         Self.Notes_Popup.Set_Name ("completion-preview");
-         Self.Notes_Popup.Set_Type_Hint (Window_Type_Hint_Combo);
-         Self.Notes_Popup.Set_Resizable (False);
-         Self.Notes_Popup.Set_Skip_Taskbar_Hint (True);
-         Self.Notes_Popup.Set_Skip_Pager_Hint (True);
-         Get_Style_Context (Self.Notes_Popup).Add_Class ("completion");
-
          Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 0);
-
          Gtk_New (Frame);
          Self.Popup.Add (Frame);
          Frame.Add (Box);
+
+         Gtk_New (Popup, Window_Popup);
+         Self.Notes_Popup := Gtk_Widget (Popup);
+         Popup.Set_Name ("completion-preview");
+         Popup.Set_Type_Hint (Window_Type_Hint_Combo);
+         Popup.Set_Resizable (False);
+         Popup.Set_Skip_Taskbar_Hint (True);
+         Popup.Set_Skip_Pager_Hint (True);
+         Get_Style_Context (Popup).Add_Class ("completion");
+
       else
          Box := Gtk_Box (Self);
       end if;
 
       Gtk_New_Hbox (Self.Completion_Box, Homogeneous => False);
       Box.Pack_Start (Self.Completion_Box, Expand => True, Fill => True);
+
+      Gtk_New (Frame);
+      Gtk_New (Self.Notes_Scroll);
+      Self.Notes_Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Frame.Add (Self.Notes_Scroll);
+
+      if Completion_In_Popup then
+         Popup.Add (Frame);
+      else
+         Self.Notes_Popup := Gtk_Widget (Frame);
+         Frame.Set_Shadow_Type (Shadow_None);
+      end if;
 
       --  Scrolled window for the possible completions
 
@@ -427,16 +441,9 @@ package body Gtkada.Entry_Completion is
       C.Pack_Start (Render, False);
       C.Add_Attribute (Render, "markup", Column_Label);
 
-      --  Extra notes for selected item
-
-      Gtk_New (Self.Notes_Scroll);
-      Gtk_New (Frame);
-      Frame.Add (Self.Notes_Scroll);
-
-      if Self.Notes_Popup /= null then
-         Self.Notes_Popup.Add (Frame);
-      else
-         Self.Completion_Box.Pack_Start (Frame, Expand => True, Fill => True);
+      if not Completion_In_Popup then
+         Self.Completion_Box.Pack_Start
+            (Self.Notes_Popup, Expand => True, Fill => True);
       end if;
 
       --  The settings panel
@@ -817,11 +824,7 @@ package body Gtkada.Entry_Completion is
          end if;
 
       else
-         if Self.Notes_Popup /= null then
-            Self.Notes_Popup.Hide;
-         end if;
-
-         Self.Notes_Scroll.Hide;
+         Self.Notes_Popup.Hide;
       end if;
 
       --  No need to retry
@@ -940,6 +943,7 @@ package body Gtkada.Entry_Completion is
       Toplevel : Gtk_Widget;
       Alloc : Gtk_Allocation;
       Status : Gdk_Grab_Status;
+      Popup : Gtk_Window;
    begin
       if Self.Popup /= null and then not Self.Popup.Get_Visible then
          Layout := Create_Pango_Layout (Self.View);
@@ -977,9 +981,10 @@ package body Gtkada.Entry_Completion is
          Self.Popup.Set_Size_Request (Width, Height);
          Self.Popup.Show_All;
 
-         Self.Notes_Popup.Set_Screen (Self.Get_Screen);
-         Self.Notes_Popup.Move (X - Preview_Width, Y);
-         Self.Notes_Popup.Set_Size_Request (Preview_Width, Height);
+         Popup := Gtk_Window (Self.Notes_Popup);
+         Popup.Set_Screen (Self.Get_Screen);
+         Popup.Move (X - Preview_Width, Y);
+         Popup.Set_Size_Request (Preview_Width, Height);
 
          --  Code from gtkcombobox.c
          if Do_Grabs then
@@ -1032,11 +1037,7 @@ package body Gtkada.Entry_Completion is
          end if;
       end if;
 
-      Self.Notes_Scroll.Hide;
-
-      if Self.Notes_Popup /= null then
-         Self.Notes_Popup.Hide;
-      end if;
+      Self.Notes_Popup.Hide;
 
       --  Force the focus, so that focus-out-event is meaningful and the user
       --  can immediately interact through the keyboard

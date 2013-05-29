@@ -27,6 +27,7 @@ with Gtk.Scrolled_Window;
 with Gtk.List_Store;
 with Gtkada.Search_Entry;
 with Gtk.Tree_View;
+with Gtk.Widget;
 with Gtk.Window;
 with GPS.Kernel;
 with GPS.Search;
@@ -143,7 +144,10 @@ private
       View             : Gtk.Tree_View.Gtk_Tree_View;
       --  The widget that displays the list of possible completions
 
-      Notes_Popup      : Gtk.Window.Gtk_Window;
+      Notes_Popup      : Gtk.Widget.Gtk_Widget;
+      --  A Gtk_Window or Gtk_Frame, depending on whether we are using
+      --  popup or not for the preview
+
       Notes_Scroll     : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Notes_Idle       : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --   Display extra information on the currently selected item
