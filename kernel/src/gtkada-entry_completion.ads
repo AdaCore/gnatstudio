@@ -135,6 +135,7 @@ private
 
       Grab_Device             : Gdk.Device.Gdk_Device;
 
+      Settings                : Gtk.Box.Gtk_Box;
       Settings_Case_Sensitive : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Whole_Word     : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Preview        : Gtk.Check_Button.Gtk_Check_Button;

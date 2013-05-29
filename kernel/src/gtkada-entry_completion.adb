@@ -20,7 +20,6 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
 
-with Pango.Layout;               use Pango.Layout;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Device;                 use Gdk.Device;
 with Gdk.Device_Manager;         use Gdk.Device_Manager;
@@ -76,6 +75,16 @@ package body Gtkada.Entry_Completion is
    Do_Grabs : constant Boolean := False;
    --  Whether to attempt grabbing the pointer
 
+   Preview_Right_Margin : constant := 10;
+   --  between preview and completion popups
+
+   Preview_Width       : constant := 400;
+   Preview_Height      : constant := 400;
+
+   Provider_Label_Width : constant := 100;
+   Result_Width : constant := 300;
+   --  Maximum width of the popup window
+
    procedure On_Entry_Destroy (Self : access Gtk_Widget_Record'Class);
    --  Callback when the widget is destroyed.
 
@@ -127,6 +136,11 @@ package body Gtkada.Entry_Completion is
 
    procedure Show_Preview (Self : access Gtkada_Entry_Record'Class);
    --  Show the preview pane if there is a current selection
+
+   procedure Resize_Popup
+      (Self : not null access Gtkada_Entry_Record'Class;
+       Height_Only : Boolean);
+   --  Resize the popup window depending on its contents
 
    procedure Get_Iter_Next
       (Tree : Gtk_Tree_Model;
@@ -314,7 +328,6 @@ package body Gtkada.Entry_Completion is
    is
       Scrolled : Gtk_Scrolled_Window;
       Box  : Gtk_Box;
-      Settings : Gtk_Box;
       Col  : Gint;
       C    : Gtk_Tree_View_Column;
       Sep  : Gtk_Separator;
@@ -404,6 +417,7 @@ package body Gtkada.Entry_Completion is
       Gtk_New (Self.View, Filter);
       Unref (Filter);
 
+      Self.View.Set_Fixed_Height_Mode (True);
       Self.View.Set_Headers_Visible (False);
       Self.View.Get_Selection.Set_Mode (Selection_Single);
       Self.View.Set_Rules_Hint (True);
@@ -416,6 +430,8 @@ package body Gtkada.Entry_Completion is
           Order          => Sort_Descending);
 
       Gtk_New (C);
+      C.Set_Sizing (Tree_View_Column_Fixed);
+      C.Set_Fixed_Width (Provider_Label_Width);
       Col := Self.View.Append_Column (C);
       Gtk_New (Render);
       C.Pack_Start (Render, False);
@@ -432,6 +448,8 @@ package body Gtkada.Entry_Completion is
       Set_Property (Render, Gtk.Cell_Renderer.Yalign_Property, 0.0);
 
       Gtk_New (C);
+      C.Set_Sizing (Tree_View_Column_Fixed);
+      C.Set_Fixed_Width (Result_Width);
       C.Set_Sort_Column_Id (Column_Score);
       C.Set_Sort_Order (Sort_Descending);
       C.Clicked;
@@ -451,29 +469,29 @@ package body Gtkada.Entry_Completion is
       Gtk_New_Hseparator (Sep);
       Box.Pack_Start (Sep, Expand => False);
 
-      Gtk_New_Hbox (Settings, Homogeneous => False);
-      Box.Pack_Start (Settings, Expand => False);
+      Gtk_New_Hbox (Self.Settings, Homogeneous => False);
+      Box.Pack_Start (Self.Settings, Expand => False);
 
       Gtk_New (Self.Settings_Case_Sensitive, -"Case Sensitive");
       Associate (Get_History (Kernel).all,
                  Name & "-case_sensitive",
                  Self.Settings_Case_Sensitive,
                  Default => Case_Sensitive);
-      Settings.Pack_Start (Self.Settings_Case_Sensitive, Expand => False);
+      Self.Settings.Pack_Start (Self.Settings_Case_Sensitive, Expand => False);
 
       Gtk_New (Self.Settings_Whole_Word, -"Whole Word");
       Associate (Get_History (Kernel).all,
                  Name & "-whole_word",
                  Self.Settings_Whole_Word,
                  Default => False);
-      Settings.Pack_Start (Self.Settings_Whole_Word, Expand => False);
+      Self.Settings.Pack_Start (Self.Settings_Whole_Word, Expand => False);
 
       Gtk_New (Self.Settings_Preview, -"Preview");
       Associate (Get_History (Kernel).all,
                  Name & "-preview",
                  Self.Settings_Preview,
                  Default => Preview);
-      Settings.Pack_Start (Self.Settings_Preview, Expand => False);
+      Self.Settings.Pack_Start (Self.Settings_Preview, Expand => False);
 
       Gtk_New (Self.Settings_Kind);
       Self.Settings_Kind.Set_Name ("global-search-kind");
@@ -483,7 +501,7 @@ package body Gtkada.Entry_Completion is
          (Search_Kind'Image (Fuzzy), -"Fuzzy match");
       Self.Settings_Kind.Append
          (Search_Kind'Image (Regexp), -"Regular expression");
-      Settings.Pack_Start (Self.Settings_Kind, Expand => False);
+      Self.Settings.Pack_Start (Self.Settings_Kind, Expand => False);
 
       Create_New_Key_If_Necessary
          (Get_History (Kernel).all, Name & "-kind", Strings);
@@ -709,6 +727,8 @@ package body Gtkada.Entry_Completion is
       Set_Address (Val, Result.all'Address);
       Self.Completions.Set_Value (Iter, Column_Data, Val);
       Unset (Val);
+
+      Resize_Popup (Self, Height_Only => True);
    end Insert_Proposal;
 
    ------------------
@@ -922,45 +942,78 @@ package body Gtkada.Entry_Completion is
       return True;
    end On_Idle;
 
+   ------------------
+   -- Resize_Popup --
+   ------------------
+
+   procedure Resize_Popup
+      (Self : not null access Gtkada_Entry_Record'Class;
+       Height_Only : Boolean)
+   is
+      Width : Gint;
+      Gdk_X, Gdk_Y : Gint;
+      X, Y : Gint;
+      MaxX, MaxY : Gint;
+      Root_X, Root_Y : Gint;
+      Toplevel : Gtk_Widget;
+      Alloc : Gtk_Allocation;
+      Popup : Gtk_Window;
+      Min_Child_Height, Natural_Child_Height : Gint;
+      Height : Gint;
+   begin
+      if Self.Popup /= null then
+         --  Position of the completion entry within its toplevel window
+         Get_Origin (Get_Window (Self), Gdk_X, Gdk_Y);
+         Self.Get_Allocation (Alloc);
+         Gdk_X := Gdk_X + Alloc.X;
+         Gdk_Y := Gdk_Y + Alloc.Y;
+
+         --  Make sure window doesn't get past screen limits
+         Toplevel := Self.Get_Toplevel;
+         Get_Origin (Get_Window (Toplevel), Root_X, Root_Y);
+         MaxX := Root_X + Toplevel.Get_Allocated_Width;
+         MaxY := Root_Y + Toplevel.Get_Allocated_Height;
+
+         --  Compute the ideal height. We do not compute the ideal width, since
+         --  we don't want to have to move the window around and want it
+         --  aligned on the GPS right side.
+
+         Width := Result_Width + Provider_Label_Width;
+
+         Self.View.Get_Preferred_Height
+            (Min_Child_Height, Natural_Child_Height);
+
+         X := Gint'Min (Gdk_X, MaxX - Width);
+         Y := Gdk_Y + Self.GEntry.Get_Allocated_Height;
+
+         if not Height_Only then
+            Self.Popup.Move (X, Y);
+
+            Popup := Gtk_Window (Self.Notes_Popup);
+            Popup.Set_Size_Request (Preview_Width, Preview_Height);
+            Popup.Move (X - Preview_Width - Preview_Right_Margin, Y);
+         end if;
+
+         --  '3' is the height of the separator. Should be computed from the
+         --  widget itself perhaps
+         Height := Gint'Min
+            (Natural_Child_Height + Self.Settings.Get_Allocated_Height + 3,
+             MaxY - Y);
+         Self.Popup.Set_Size_Request (Width, Height);
+         Self.Popup.Queue_Resize;
+      end if;
+   end Resize_Popup;
+
    -----------
    -- Popup --
    -----------
 
    procedure Popup (Self : not null access Gtkada_Entry_Record) is
-      Provider_Name_Width : constant := 100;
-      Preview_Width       : constant := 300;
-
-      Max_Window_Width : constant := 300;
-      --  Maximum width of the popup window
-
-      Char_Width, Char_Height : Gint;
-      Width, Height : Gint;
-      Gdk_X, Gdk_Y : Gint;
-      X, Y : Gint;
-      MaxX : Gint;
-      Root_X, Root_Y : Gint;
-      Layout : Pango_Layout;
       Toplevel : Gtk_Widget;
-      Alloc : Gtk_Allocation;
       Status : Gdk_Grab_Status;
-      Popup : Gtk_Window;
    begin
       if Self.Popup /= null and then not Self.Popup.Get_Visible then
-         Layout := Create_Pango_Layout (Self.View);
-         Layout.Set_Text ("0m");
-         Layout.Get_Pixel_Size (Char_Width, Char_Height);
-
-         Width := Gint'Max
-             (Self.Get_Allocated_Width,  --  minimum width is that of Self
-              Gint'Min (Max_Window_Width, Char_Width * 20)) + 5
-             + Provider_Name_Width;
-         Height := Char_Height * 22 + 5;
-
-         --  This is the origin of the GPS window
-         Get_Origin (Get_Window (Self), Gdk_X, Gdk_Y);
-         Self.Get_Allocation (Alloc);
-         Gdk_X := Gdk_X + Alloc.X;
-         Y := Gdk_Y + Alloc.Y + Self.GEntry.Get_Allocated_Height;
+         Resize_Popup (Self, Height_Only => False);
 
          Toplevel := Self.Get_Toplevel;
          if Toplevel /= null
@@ -970,21 +1023,9 @@ package body Gtkada.Entry_Completion is
             Self.Popup.Set_Transient_For (Gtk_Window (Toplevel));
          end if;
 
-         --  Make sure window doesn't get past screen limits
-
-         Get_Origin (Get_Window (Toplevel), Root_X, Root_Y);
-         MaxX := Root_X + Toplevel.Get_Allocated_Width;
-         X := Gint'Min (Gdk_X, MaxX - Width);
-
          Self.Popup.Set_Screen (Self.Get_Screen);
-         Self.Popup.Move (X, Y);
-         Self.Popup.Set_Size_Request (Width, Height);
+         Gtk_Window (Self.Notes_Popup).Set_Screen (Self.Get_Screen);
          Self.Popup.Show_All;
-
-         Popup := Gtk_Window (Self.Notes_Popup);
-         Popup.Set_Screen (Self.Get_Screen);
-         Popup.Move (X - Preview_Width, Y);
-         Popup.Set_Size_Request (Preview_Width, Height);
 
          --  Code from gtkcombobox.c
          if Do_Grabs then
