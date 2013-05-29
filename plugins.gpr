@@ -16,6 +16,7 @@ project Plugins is
    package Compiler is
       for Driver ("Python") use "";
       for Driver ("XML") use "";
+      for Driver ("CSS") use "";
    end Compiler;
 
    package IDE renames Shared.IDE;
