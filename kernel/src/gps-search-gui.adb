@@ -75,6 +75,7 @@ package body GPS.Search.GUI is
 
    type Provider_Array is array (Natural range <>) of Search_Provider_Access;
    type Provider_Array_Access is access Provider_Array;
+   type Result_Array is array (Natural range <>) of Search_Result_Access;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       (Provider_Array, Provider_Array_Access);
@@ -82,7 +83,11 @@ package body GPS.Search.GUI is
    type Overall_Search_Provider is new Kernel_Search_Provider with record
       Providers : Provider_Array_Access;
       Current_Provider : Integer := -1;
-      Total_For_Current : Natural := 0;
+
+      Current : Result_Array (1 .. Proposals_Per_Provider);
+      Current_Returned : Natural;
+      Current_Index : Natural;
+      --  The best proposals for the current provider.
    end record;
    type Overall_Search_Provider_Access
       is access all Overall_Search_Provider'Class;
@@ -126,7 +131,8 @@ package body GPS.Search.GUI is
       end loop;
 
       Self.Current_Provider := Self.Providers'First;
-      Self.Total_For_Current := 0;
+      Self.Current_Returned := Self.Current'First - 1;
+      Self.Current_Index := Self.Current'First - 1;
    end Set_Pattern;
 
    ----------
@@ -138,6 +144,7 @@ package body GPS.Search.GUI is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
+      Insert_At : Integer;
    begin
       if Self.Current_Provider > Self.Providers'Last then
          Result := null;
@@ -145,26 +152,70 @@ package body GPS.Search.GUI is
          return;
       end if;
 
-      Self.Providers (Self.Current_Provider).Next (Result, Has_Next);
+      --  If we are in the process of processing the current provider
 
-      if Result /= null then
-         --  Make sure the primary sort key is the provider
-         --  ??? Should disconnect the sorting for the display from the order
-         --  in which we process the providers, since the former is controlled
-         --  by the user and the latter by the application (we always want to
-         --  run "file content" provider last, since it is slower.
-         Result.Score := Result.Score
-            + (Self.Providers'Last - Self.Current_Provider) * 1_000_000;
+      if Self.Current_Returned < Self.Current'First then
+         Self.Providers (Self.Current_Provider).Next (Result, Has_Next);
 
-         Self.Total_For_Current := Self.Total_For_Current + 1;
+         if Result /= null then
+            --  Make sure the primary sort key is the provider
+            --  ??? Should disconnect the sorting for the display from the
+            --  order in which we process the providers, since the former is
+            --  controlled by the user and the latter by the application (we
+            --  always want to run "file content" provider last, since it is
+            --  slower.
+
+            Result.Score := Result.Score
+               + (Self.Providers'Last - Self.Current_Provider) * 1_000_000;
+
+            if Self.Current_Index < Self.Current'Last then
+               Self.Current_Index := Self.Current_Index + 1;
+               Self.Current (Self.Current_Index) := Result;
+
+            --  Keep only the results with the highest priority
+            elsif Result.Score > Self.Current (Self.Current'Last).Score then
+               Insert_At := Self.Current'Last;
+               Free (Self.Current (Self.Current'Last));
+
+               for J in Self.Current'First .. Self.Current'Last - 1 loop
+                  if Result.Score > Self.Current (J).Score then
+                     Insert_At := J;
+                     exit;
+                  end if;
+               end loop;
+
+               Self.Current (Insert_At + 1 .. Self.Current'Last) :=
+                  Self.Current (Insert_At .. Self.Current'Last - 1);
+               Self.Current (Insert_At) := Result;
+
+            else
+               Free (Result);
+            end if;
+         end if;
+
+         if Has_Next then
+            --  Wait till we have finished processing this provider to make
+            --  sure we have the ones with the top score
+            Result := null;
+            return;
+         end if;
+
+         Self.Current_Returned := Self.Current'First;
       end if;
 
-      if not Has_Next
-         or else Self.Total_For_Current >= Proposals_Per_Provider
-      then
-         Self.Current_Provider := Self.Current_Provider + 1;
-         Self.Total_For_Current := 0;
+      if Self.Current_Returned <= Self.Current_Index then
+         Result := Self.Current (Self.Current_Returned);
+         Self.Current_Returned := Self.Current_Returned + 1;
+         Has_Next := True;
+         return;
       end if;
+
+      --  Move to next provider
+      Self.Current_Provider := Self.Current_Provider + 1;
+      Self.Current_Index := Self.Current'First - 1;
+      Self.Current_Returned := Self.Current'First - 1;
+      Result := null;
+      Has_Next := True;
    end Next;
 
    ------------------
