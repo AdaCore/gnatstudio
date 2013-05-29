@@ -275,11 +275,6 @@ package GPS.Kernel.MDI is
       return Gtk.Icon_Factory.Gtk_Icon_Factory;
    --  Return the default icon factory
 
-   function Get_Toolbar
-     (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Toolbar.Gtk_Toolbar;
-   --  Return the main toolbar associated with the kernel
-
    function Get_Current_Context
      (Kernel : access Kernel_Handle_Record'Class) return Selection_Context;
    --  Return the context associated with the current MDI child.
@@ -295,6 +290,38 @@ package GPS.Kernel.MDI is
    --  is one at that point in time (therefore, we ignore cases where for
    --  instance a new child has been selected automatically at that point)
 
+   -------------
+   -- Toolbar --
+   -------------
+
+   --  The GPS toolbar is organized this way:
+   --
+   --    <gps-defined> <custom> | <build> | [debug]      [progress] <search>
+   --                          (a)       (b)
+   --
+   --  where:
+   --     | is a named separator
+   --     gps-defined are the icons set by GPS
+   --     custom are the custom icons
+   --     build are the build icons
+   --     debug are the debug icons
+   --     progress is the progress bar
+   --     search is the search area
+   --
+   --  The position of the named separators can be obtained by
+   --  Get_Toolbar_Separator_Position
+
+   function Get_Toolbar
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Toolbar.Gtk_Toolbar;
+   --  Return the main toolbar associated with the kernel
+
+   type GPS_Toolbar_Separator is (Before_Build, Before_Debug);
+
+   function Get_Toolbar_Separator_Position
+     (Handle    : access Kernel_Handle_Record'Class;
+      Separator : GPS_Toolbar_Separator) return Gint;
+   --  Get the position of the given named separator
    ---------------------
    -- Signal emission --
    ---------------------

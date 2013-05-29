@@ -14,7 +14,8 @@
    @define-color theme_tooltip_bg_color yellow;
 */
 
-.gps-task-manager .progressbar {
+.gps-task-manager GtkProgressBar {
+   -GtkProgressBar-min-horizontal-bar-height: 1;
 }
 
 .gps-local-toolbar {  /* local toolbar in the panes/views */

@@ -49,8 +49,10 @@ with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Progress_Bar;           use Gtk.Progress_Bar;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Style_Context;          use Gtk.Style_Context;
+with Gtk.Tool_Item;              use Gtk.Tool_Item;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;       use Gtk.Tree_Model.Utils;
 with Gtk.Tree_View;              use Gtk.Tree_View;
@@ -214,6 +216,9 @@ package body Task_Manager.GUI is
 
       Task_Label         : Gtk_Label;
       --  What action are we performing ?
+
+      Progress_Label         : Gtk_Label;
+      --  The progress to show
 
       Close_Button_Pixbuf    : Gdk_Pixbuf;
       Pause_Button_Pixbuf    : Gdk_Pixbuf;
@@ -541,17 +546,21 @@ package body Task_Manager.GUI is
          View.Main_Progress_Bar.Set_Child_Visible (False);
          View.Progress_Bar_Button.Set_Child_Visible (False);
          View.Task_Label.Set_Child_Visible (False);
+         View.Progress_Label.Set_Child_Visible (False);
          View.Main_Progress_Bar.Hide;
          View.Progress_Bar_Button.Hide;
          View.Task_Label.Hide;
+         View.Progress_Label.Hide;
 
       else
          View.Main_Progress_Bar.Set_Child_Visible (True);
          View.Progress_Bar_Button.Set_Child_Visible (True);
          View.Task_Label.Set_Child_Visible (True);
+         View.Progress_Label.Set_Child_Visible (True);
          View.Main_Progress_Bar.Show_All;
          View.Progress_Bar_Button.Show_All;
          View.Task_Label.Show_All;
+         View.Progress_Label.Show_All;
       end if;
    end Set_Mode;
 
@@ -575,7 +584,7 @@ package body Task_Manager.GUI is
                GUI.Set_Mode (Idle => False);
                GUI.Main_Progress_Bar.Set_Fraction (Pd.Fraction);
                GUI.Task_Label.Set_Text (Pd.Text);
-               GUI.Main_Progress_Bar.Set_Text (Pd.Progress_Text);
+               GUI.Progress_Label.Set_Text (Pd.Progress_Text);
                GUI.Progress_Bar_Button.Set_Sensitive (not Pd.Multiple_Queues);
 
                GUI.Main_Progress_Bar.Set_Tooltip_Markup
@@ -1369,9 +1378,10 @@ package body Task_Manager.GUI is
       View : Task_Manager_Interface;
       Model : constant Task_Manager_Model := new Task_Manager_Model_Record;
       Image   : Gtk_Image;
-      Box     : Gtk_Box;
-      VBox    : Gtk_Box;
+      VBox     : Gtk_Box;
+      HBox    : Gtk_Box;
       Event   : Gtk_Event_Box;
+      Label_Box : Gtk_Box;
 
    begin
       Manager := new Task_Manager_UI_Record;
@@ -1383,31 +1393,39 @@ package body Task_Manager.GUI is
 
       --  The progress bar area
 
+      Gtk_New_Hbox (HBox);
+      View.Pack_Start (HBox, Expand => True);
+
+      Gtk_New (Event);
+      Event.Set_Has_Window (False);
+      HBox.Pack_Start (Event, Expand => True);
+
       Gtk_New_Vbox (VBox);
-      View.Pack_Start (VBox, Expand => True);
+      Event.Add (VBox);
+
+      Gtk_New_Hbox (Label_Box);
+      VBox.Pack_Start (Label_Box, Padding => 2);
 
       Gtk_New (View.Task_Label, "");
       View.Task_Label.Set_Alignment (0.0, 0.5);
       View.Task_Label.Override_Font (Small_Font.Get_Pref);
-      VBox.Pack_Start (View.Task_Label, Expand => False);
+      Label_Box.Pack_Start (View.Task_Label, Expand => False);
 
-      Gtk_New_Hbox (Box);
-      VBox.Pack_Start (Box, Expand => False);
-
-      Gtk_New (Event);
-      Event.Set_Has_Window (False);
-      Box.Pack_Start (Event, Expand => True);
+      Gtk_New (View.Progress_Label, "");
+      View.Progress_Label.Set_Alignment (1.0, 0.5);
+      View.Progress_Label.Override_Font (Small_Font.Get_Pref);
+      Label_Box.Pack_End (View.Progress_Label, Expand => False);
 
       Gtk_New (View.Main_Progress_Bar);
       View.Main_Progress_Bar.Override_Font (Small_Font.Get_Pref);
-      View.Main_Progress_Bar.Set_Show_Text (True);
-      Event.Add (View.Main_Progress_Bar);
+      View.Main_Progress_Bar.Set_Show_Text (False);
+      VBox.Pack_Start (View.Main_Progress_Bar);
 
       Gtk_New (View.Progress_Bar_Button);
       Gtk_New (Image, GPS_Stop_Task, Icon_Size_Action_Button);
       View.Progress_Bar_Button.Add (Image);
       View.Progress_Bar_Button.Set_Relief (Relief_None);
-      Box.Pack_Start (View.Progress_Bar_Button, Expand => False);
+      HBox.Pack_Start (View.Progress_Bar_Button, Expand => False);
 
       Task_Manager_Handler.Connect
         (View.Progress_Bar_Button, Gtk.Button.Signal_Clicked,
@@ -1475,7 +1493,8 @@ package body Task_Manager.GUI is
    is
       Align   : Gtk_Alignment;
       Manager : Task_Manager_Access;
-      Box     : Gtk_Box;
+      Item    : Gtk_Tool_Item;
+      Space   : Gtk_Separator_Tool_Item;
    begin
       TM_Views.Register_Module
         (Kernel,
@@ -1490,12 +1509,22 @@ package body Task_Manager.GUI is
       Manager := Create (Kernel_Handle (Kernel));
       Set_Task_Manager (Kernel, Manager);
 
-      --  Display the main progress bar in the GPS main window
-      Box := GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box;
+      --  Display the main progress bar in the GPS main toolbar
 
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
-      Box.Pack_End (Align, Expand => False);
       Align.Add (Task_Manager_UI_Access (Manager).GUI);
+
+      Gtk_New (Item);
+      Item.Add (Align);
+      GPS_Window (Get_Main_Window (Kernel)).Toolbar.Insert
+        (Item,
+         Get_Toolbar_Separator_Position (Kernel, Before_Debug) + 2);
+
+      Gtk_New (Space);
+      Space.Set_Draw (False);
+      GPS_Window (Get_Main_Window (Kernel)).Toolbar.Insert
+        (Space,
+         Get_Toolbar_Separator_Position (Kernel, Before_Debug) + 3);
    end Register_Module;
 
 end Task_Manager.GUI;

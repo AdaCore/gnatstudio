@@ -138,6 +138,7 @@ package body GVD_Module is
       Lines_Hook                     : Lines_Revealed_Hook;
 
       Space_Separator                : Gtk_Separator_Tool_Item;
+
       Cont_Button,
       Step_Button,
       Next_Button,
@@ -460,6 +461,8 @@ package body GVD_Module is
       Toolbar : constant Gtk_Toolbar  := Get_Toolbar (Kernel);
       Window  : constant Gtk_Window := Get_Main_Window (Kernel);
 
+      Pos : constant Gint := Get_Toolbar_Separator_Position
+        (Kernel, Before_Debug) + 1;
    begin
       if GVD_Module_ID.Cont_Button /= null then
          return;
@@ -467,7 +470,7 @@ package body GVD_Module is
 
       Gtk_New (GVD_Module_ID.Space_Separator);
       Set_Draw (GVD_Module_ID.Space_Separator, True);
-      Insert (Toolbar, GVD_Module_ID.Space_Separator);
+      Insert (Toolbar, GVD_Module_ID.Space_Separator, Pos);
       Show_All (GVD_Module_ID.Space_Separator);
 
       Gtk_New_From_Stock (GVD_Module_ID.Cont_Button, "gps-debugger-run");
@@ -475,7 +478,7 @@ package body GVD_Module is
       Set_Tooltip_Text
         (GVD_Module_ID.Cont_Button,
          -"Start/Continue the debugged program");
-      Insert (Toolbar, GVD_Module_ID.Cont_Button);
+      Insert (Toolbar, GVD_Module_ID.Cont_Button, Pos + 1);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Cont_Button, Signal_Clicked,
          On_Start_Continue'Access, Window);
@@ -484,7 +487,7 @@ package body GVD_Module is
       Gtk_New_From_Stock (GVD_Module_ID.Step_Button, "gps-debugger-step");
       Set_Name (GVD_Module_ID.Step_Button, "gps-debugger-step-button");
       Set_Tooltip_Text (GVD_Module_ID.Step_Button, -"Step");
-      Insert (Toolbar, GVD_Module_ID.Step_Button);
+      Insert (Toolbar, GVD_Module_ID.Step_Button, Pos + 2);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Step_Button, Signal_Clicked, On_Step'Access, Window);
       Show_All (GVD_Module_ID.Step_Button);
@@ -492,7 +495,7 @@ package body GVD_Module is
       Gtk_New_From_Stock (GVD_Module_ID.Next_Button, "gps-debugger-next");
       Set_Name (GVD_Module_ID.Next_Button, "gps-debugger-next-button");
       Set_Tooltip_Text (GVD_Module_ID.Next_Button, -"Next");
-      Insert (Toolbar, GVD_Module_ID.Next_Button);
+      Insert (Toolbar, GVD_Module_ID.Next_Button, Pos + 3);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Next_Button, Signal_Clicked, On_Next'Access, Window);
       Show_All (GVD_Module_ID.Next_Button);
@@ -502,7 +505,7 @@ package body GVD_Module is
       Set_Tooltip_Text
         (GVD_Module_ID.Finish_Button,
          -"Execute until selected stack frame returns");
-      Insert (Toolbar, GVD_Module_ID.Finish_Button);
+      Insert (Toolbar, GVD_Module_ID.Finish_Button, Pos + 4);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Finish_Button,
          Signal_Clicked, On_Finish'Access, Window);
@@ -513,7 +516,7 @@ package body GVD_Module is
       Set_Tooltip_Text
         (GVD_Module_ID.Up_Button,
          -"Select and print stack frame that called this one");
-      Insert (Toolbar, GVD_Module_ID.Up_Button);
+      Insert (Toolbar, GVD_Module_ID.Up_Button, Pos + 5);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Up_Button, Signal_Clicked, On_Up'Access, Window);
       Show_All (GVD_Module_ID.Up_Button);
@@ -522,7 +525,7 @@ package body GVD_Module is
       Set_Name (GVD_Module_ID.Down_Button, "gps-debugger-down-button");
       Set_Tooltip_Text (GVD_Module_ID.Down_Button,
                         -"Select and print stack frame called by this one");
-      Insert (Toolbar, GVD_Module_ID.Down_Button);
+      Insert (Toolbar, GVD_Module_ID.Down_Button, Pos + 6);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Down_Button, Signal_Clicked, On_Down'Access, Window);
       Show_All (GVD_Module_ID.Down_Button);

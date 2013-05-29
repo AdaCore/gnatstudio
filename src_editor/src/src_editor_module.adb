@@ -2890,17 +2890,20 @@ package body Src_Editor_Module is
       begin
          Gtk_New (Space);
          Set_Draw (Space, True);
-         Insert (Toolbar, Space);
+         Insert (Toolbar, Space,
+                 Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
          Gtk_New_From_Stock (UR.Undo_Button, Stock_Undo);
          Set_Tooltip_Text (UR.Undo_Button, -"Undo Previous Action");
          Set_Sensitive (UR.Undo_Button, False);
-         Insert (Toolbar, UR.Undo_Button);
+         Insert (Toolbar, UR.Undo_Button,
+                 Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
          Gtk_New_From_Stock (UR.Redo_Button, Stock_Redo);
          Set_Tooltip_Text (UR.Redo_Button, -"Redo Previous Action");
          Set_Sensitive (UR.Redo_Button, False);
-         Insert (Toolbar, UR.Redo_Button);
+         Insert (Toolbar, UR.Redo_Button,
+                 Get_Toolbar_Separator_Position (Kernel, Before_Build));
       end;
 
       Kernel_Callback.Connect

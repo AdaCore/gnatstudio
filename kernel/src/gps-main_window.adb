@@ -69,6 +69,7 @@ with User_Interface_Tools;
 with Gtk.Text_View;
 with Gtk.Text_Buffer;
 with Gtk.Scrolled_Window;
+with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
 
 package body GPS.Main_Window is
 
@@ -400,6 +401,7 @@ package body GPS.Main_Window is
       Vbox      : Gtk_Vbox;
       Menu      : Gtk_Menu;
       Menu_Item : Gtk_Menu_Item;
+      Tool_Item : Gtk_Separator_Tool_Item;
 
    begin
       --  Initialize the window first, so that it can be used while creating
@@ -502,6 +504,21 @@ package body GPS.Main_Window is
       Set_Orientation (Main_Window.Toolbar, Orientation_Horizontal);
       Set_Style (Main_Window.Toolbar, Toolbar_Icons);
       Pack_Start (Main_Window.Toolbar_Box, Main_Window.Toolbar);
+
+      Gtk_New (Tool_Item);
+      Tool_Item.Set_Draw (False);
+      Main_Window.Toolbar.Insert (Tool_Item);
+      Main_Window.Build_Separator := Gtk_Tool_Item (Tool_Item);
+
+      Gtk_New (Tool_Item);
+      Tool_Item.Set_Draw (False);
+      Main_Window.Toolbar.Insert (Tool_Item);
+      Main_Window.Debug_Separator := Gtk_Tool_Item (Tool_Item);
+
+      Gtk_New (Tool_Item);
+      Tool_Item.Set_Expand (True);
+      Tool_Item.Set_Draw (False);
+      Main_Window.Toolbar.Insert (Tool_Item);
 
       Add (Vbox, Main_Window.MDI);
 

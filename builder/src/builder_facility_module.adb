@@ -20,7 +20,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Glib;
+with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Handlers;
@@ -29,7 +29,6 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
@@ -1177,6 +1176,8 @@ package body Builder_Facility_Module is
 
    procedure Install_Button_For_Target (Target : Target_Access) is
       Toolbar : constant Gtk_Toolbar   := Get_Toolbar (Get_Kernel);
+      Pos     : constant Glib.Gint := Get_Toolbar_Separator_Position
+        (Get_Kernel, Before_Debug);
       Button : Gtk.Tool_Item.Gtk_Tool_Item;
 
       procedure Button_For_Target
@@ -1243,7 +1244,7 @@ package body Builder_Facility_Module is
          end if;
 
          Builder_Module_ID.Buttons.Prepend (Button);
-         Insert (Toolbar => Toolbar, Item    => Button);
+         Insert (Toolbar => Toolbar, Item    => Button, Pos => Pos);
          Show_All (Button);
 
       end Button_For_Target;
@@ -1691,9 +1692,7 @@ package body Builder_Facility_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Space : Gtk_Separator_Tool_Item;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
@@ -1776,12 +1775,6 @@ package body Builder_Facility_Module is
 
       Builder_Facility_Module.Scripts.Register_Commands
         (Kernel_Handle (Kernel));
-
-      --  Insert a separator in the toolbar
-
-      Gtk_New (Space);
-      Set_Draw (Space, True);
-      Insert (Get_Toolbar (Kernel), Space);
 
       --  Load the user-defined targets
 

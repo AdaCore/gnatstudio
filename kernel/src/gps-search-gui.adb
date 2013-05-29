@@ -23,6 +23,7 @@ with Gtk.Alignment;            use Gtk.Alignment;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Tool_Item;            use Gtk.Tool_Item;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Entry_Completion;  use Gtkada.Entry_Completion;
 with Gtkada.Handlers;          use Gtkada.Handlers;
@@ -405,6 +406,9 @@ package body GPS.Search.GUI is
 
       Align   : Gtk_Alignment;
       Command : Global_Search_Command_Access;
+
+      Item : Gtk_Tool_Item;
+
    begin
       Module := new Global_Search_Module_Record;
       Register_Module
@@ -425,9 +429,11 @@ package body GPS.Search.GUI is
       Register_Provider (Provider_Filenames);
       Register_Provider (Provider_Actions);
 
+      Gtk_New (Item);
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
-      GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box.Pack_End
-         (Align, Expand => False);
+      Item.Add (Align);
+
+      GPS_Window (Get_Main_Window (Kernel)).Toolbar.Insert (Item);
 
       Gtk_New
          (Module.Search,

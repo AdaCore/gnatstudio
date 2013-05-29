@@ -450,8 +450,10 @@ package body Custom_Combos is
             Widget : constant Gtk_Widget :=
               Gtk_Widget (GObject'(Get_Data (EntInst)));
             Tip    : constant String := Nth_Arg (Data, 3, "");
+            Pos : constant Gint := Get_Toolbar_Separator_Position
+              (Kernel, Before_Build);
          begin
-            Insert (Widget, Tip, -1);
+            Insert (Widget, Tip, Pos - 1);
          end;
 
       elsif Command = "insert" then

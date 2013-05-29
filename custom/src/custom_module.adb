@@ -909,7 +909,9 @@ package body Custom_Module is
             Gtk_New (Space);
             Set_Draw (Space, True);
             Show_All (Space);
-            Insert (Get_Toolbar (Kernel), Space, -1);
+            Insert (Get_Toolbar (Kernel),
+                    Space,
+                    Get_Toolbar_Separator_Position (Kernel, Before_Build));
          end if;
 
          Free (Title);

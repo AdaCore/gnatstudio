@@ -41,6 +41,7 @@ with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Toolbar;              use Gtk.Toolbar;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -1333,6 +1334,30 @@ package body GPS.Kernel.MDI is
          return null;
       end if;
    end Get_Toolbar;
+
+   ------------------------------------
+   -- Get_Toolbar_Separator_Position --
+   ------------------------------------
+
+   function Get_Toolbar_Separator_Position
+     (Handle    : access Kernel_Handle_Record'Class;
+      Separator : GPS_Toolbar_Separator) return Gint
+   is
+      W : GPS_Window;
+   begin
+      if Handle.Main_Window = null then
+         return -1;
+      end if;
+
+      W := GPS_Window (Handle.Main_Window);
+
+      case Separator is
+         when Before_Build =>
+            return W.Toolbar.Get_Item_Index (W.Build_Separator);
+         when Before_Debug =>
+            return W.Toolbar.Get_Item_Index (W.Debug_Separator);
+      end case;
+   end Get_Toolbar_Separator_Position;
 
    -------------------------
    -- Get_Current_Context --

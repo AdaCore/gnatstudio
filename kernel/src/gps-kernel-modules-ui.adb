@@ -1662,7 +1662,8 @@ package body GPS.Kernel.Modules.UI is
 
       Set_Homogeneous (Button, False);
 
-      Insert (Toolbar, Button);
+      Insert (Toolbar, Button,
+              Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
       if Tooltip /= "" then
          Set_Tooltip_Text (Button, Tooltip);
@@ -1695,7 +1696,8 @@ package body GPS.Kernel.Modules.UI is
       if Tooltip /= "" then
          Set_Tooltip_Text (Button, Tooltip);
       end if;
-      Insert (Get_Toolbar (Kernel), Button, -1);
+      Insert (Get_Toolbar (Kernel), Button,
+              Get_Toolbar_Separator_Position (Kernel, Before_Build) - 1);
 
       Show_All (Button);
 
