@@ -18,6 +18,7 @@
 --  The root for all the search providers in GPS
 
 with GPS.Search;
+with Gtk.Widget;
 
 package GPS.Kernel.Search is
 
@@ -30,6 +31,13 @@ package GPS.Kernel.Search is
    with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
+
+   function Full
+      (Self : not null access Kernel_Search_Result)
+      return Gtk.Widget.Gtk_Widget is (null);
+   --  Returns the full description for the result. This description might be
+   --  displayed in a separate pane in the search popup. In most cases, GPS
+   --  will not query or display this information at all.
 
    type Kernel_Provider_Registry
      is new GPS.Search.Search_Provider_Registry with

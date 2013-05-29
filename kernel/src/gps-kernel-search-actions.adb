@@ -18,6 +18,12 @@
 with GNAT.Strings;        use GNAT.Strings;
 with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
 with GPS.Search;          use GPS.Search;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
+with Gtk.Text_Iter;       use Gtk.Text_Iter;
+with Gtk.Text_Tag;        use Gtk.Text_Tag;
+with Gtk.Text_View;       use Gtk.Text_View;
+with Pango.Enums;         use Pango.Enums;
 
 package body GPS.Kernel.Search.Actions is
 
@@ -125,16 +131,52 @@ package body GPS.Kernel.Search.Actions is
    ----------
 
    overriding function Full
-     (Self : not null access Actions_Search_Result) return String
+     (Self : not null access Actions_Search_Result)
+     return Gtk.Widget.Gtk_Widget
    is
       Action : constant Action_Record_Access :=
          Lookup_Action (Self.Kernel, Self.Name.all);
+      View : Gtk_Text_View;
+      Buffer : Gtk_Text_Buffer;
+      Underline : Gtk_Text_Tag;
+      Bold      : Gtk_Text_Tag;
+      Iter   : Gtk_Text_Iter;
    begin
       if Action /= null and then Action.Description /= null then
-         --  ??? Should include name, category,...
-         return Action.Description.all;
+         Gtk_New (Buffer);
+         Gtk_New (View, Buffer);
+         Unref (Buffer);
+
+         View.Set_Editable (False);
+         View.Set_Wrap_Mode (Wrap_Word);
+
+         Bold := Buffer.Create_Tag;
+         Set_Property (Bold, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
+
+         Underline := Buffer.Create_Tag;
+         Set_Property
+            (Underline, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
+         Set_Property
+            (Underline, Gtk.Text_Tag.Underline_Property,
+             Pango_Underline_Single);
+
+         Buffer.Get_End_Iter (Iter);
+         Buffer.Insert_With_Tags
+            (Iter, Action.Name.all & ASCII.LF & ASCII.LF, Underline);
+
+         Buffer.Insert (Iter, Action.Description.all);
+
+         Buffer.Insert_With_Tags
+            (Iter, ASCII.LF & ASCII.LF & "Declared in: ", Bold);
+         if Action.Defined_In /= GNATCOLL.VFS.No_File then
+            Buffer.Insert (Iter, Action.Defined_In.Display_Full_Name);
+         else
+            Buffer.Insert (Iter, +"built-in");
+         end if;
+
+         return Gtk.Widget.Gtk_Widget (View);
       end if;
-      return "";
+      return null;
    end Full;
 
 end GPS.Kernel.Search.Actions;

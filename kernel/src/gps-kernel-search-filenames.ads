@@ -81,6 +81,7 @@ private
      (Self       : not null access Filenames_Search_Result;
       Give_Focus : Boolean);
    overriding function Full
-     (Self       : not null access Filenames_Search_Result) return String;
+     (Self       : not null access Filenames_Search_Result)
+     return Gtk.Widget.Gtk_Widget;
 
 end GPS.Kernel.Search.Filenames;

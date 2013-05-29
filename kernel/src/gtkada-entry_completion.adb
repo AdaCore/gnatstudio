@@ -45,8 +45,6 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;      use Gtk.Tree_Model_Filter;
@@ -59,9 +57,10 @@ with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
 with Gtkada.Style;               use Gtkada.Style;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Search;          use GPS.Kernel.Search;
 with GPS.Search;                 use GPS.Search;
+with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
 with System;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
@@ -348,7 +347,6 @@ package body Gtkada.Entry_Completion is
       if Completion_In_Popup then
          Gtk_New (Self.Popup, Window_Popup);
          Self.Popup.Set_Name ("completion-list");
-         Self.Popup.Set_Decorated (False);
          Self.Popup.Set_Type_Hint (Window_Type_Hint_Combo);
          Self.Popup.Set_Resizable (False);
          Self.Popup.Set_Skip_Taskbar_Hint (True);
@@ -357,7 +355,6 @@ package body Gtkada.Entry_Completion is
 
          Gtk_New (Self.Notes_Popup, Window_Popup);
          Self.Notes_Popup.Set_Name ("completion-preview");
-         Self.Notes_Popup.Set_Decorated (False);
          Self.Notes_Popup.Set_Type_Hint (Window_Type_Hint_Combo);
          Self.Notes_Popup.Set_Resizable (False);
          Self.Notes_Popup.Set_Skip_Taskbar_Hint (True);
@@ -429,11 +426,6 @@ package body Gtkada.Entry_Completion is
       --  Extra notes for selected item
 
       Gtk_New (Self.Notes_Scroll);
-      Gtk_New (Self.Notes_Buffer);
-      Gtk_New (Self.Notes_View, Self.Notes_Buffer);
-      Unref (Self.Notes_Buffer);
-      Self.Notes_View.Set_Editable (False);
-      Self.Notes_Scroll.Add (Self.Notes_View);
 
       if Self.Notes_Popup /= null then
          Self.Notes_Popup.Add (Self.Notes_Scroll);
@@ -797,29 +789,26 @@ package body Gtkada.Entry_Completion is
       Iter   : Gtk_Tree_Iter;
       M      : Gtk_Tree_Model;
       Result : Search_Result_Access;
+      F      : Gtk_Widget;
    begin
       if Self.Settings_Preview.Get_Active then
          Self.View.Get_Selection.Get_Selected (M, Iter);
-         Self.Notes_Buffer.Set_Text ("");
+         Remove_All_Children (Self.Notes_Scroll);
 
          if Iter /= Null_Iter then
             Result := Convert (Get_Address (+M, Iter, Column_Data));
 
-            declare
-               F : constant String := Result.Full;
-            begin
-               if F /= "" then
-                  --  Reset the font, in case the prefs have changed
-                  Self.Notes_View.Modify_Font (View_Fixed_Font.Get_Pref);
-                  Self.Notes_View.Set_Wrap_Mode (Wrap_None); --  or Wrap_Word
-                  Self.Notes_Buffer.Set_Text (F);
+            if Result.all in Kernel_Search_Result'Class then
+               F := Kernel_Search_Result'Class (Result.all).Full;
+               if F /= null then
+                  Self.Notes_Scroll.Add (F);
                   Self.Notes_Scroll.Show_All;
 
                   if Self.Notes_Popup /= null then
                      Self.Notes_Popup.Show_All;
                   end if;
                end if;
-            end;
+            end if;
          end if;
 
       else

@@ -16,7 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Gtk.Label;                 use Gtk.Label;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
@@ -291,17 +293,20 @@ package body GPS.Kernel.Search.Filenames is
    ----------
 
    overriding function Full
-     (Self : not null access Filenames_Search_Result) return String
+     (Self : not null access Filenames_Search_Result)
+     return Gtk.Widget.Gtk_Widget
    is
       Tmp : GNAT.Strings.String_Access;
+      Label : Gtk_Label;
    begin
       Tmp := Self.File.Read_File;
       if Tmp = null then
-         return "";
+         return null;
       else
-         return R : constant String := Tmp.all do
-            GNAT.Strings.Free (Tmp);
-         end return;
+         Gtk_New (Label, Tmp.all);
+         Label.Modify_Font (View_Fixed_Font.Get_Pref);
+         GNAT.Strings.Free (Tmp);
+         return Gtk.Widget.Gtk_Widget (Label);
       end if;
    end Full;
 

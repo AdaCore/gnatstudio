@@ -193,12 +193,6 @@ package GPS.Search is
    procedure Free (Self : in out Search_Result_Access);
    --  Free the memory used by Self.
 
-   function Full (Self : not null access Search_Result) return String is ("");
-   --  Returns the full description for the result. This description might be
-   --  displayed in a separate pane in the search popup. In most cases, GPS
-   --  will not query or display this information at all.
-   --  This function might cache the result in Self for efficiency.
-
    procedure To_Message (Self : not null access Search_Result) is null;
    --  Insert Self in the locations window, by creating a message.
    --  It could for instance call
