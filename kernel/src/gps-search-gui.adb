@@ -38,7 +38,6 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 with Histories;                use Histories;
 with Remote;                   use Remote;
-with GNAT.IO; use GNAT.IO;
 
 package body GPS.Search.GUI is
 
@@ -180,25 +179,15 @@ package body GPS.Search.GUI is
                Insert_At := J;
             end loop;
 
-            if Result.Score > 1_010_100 then
-               Put_Line
-                  ("MANU score=" & Result.Score'Img & " " & Result.Short.all);
-            end if;
-
             if Insert_At > Self.Current'Last then
                Free (Result);
 
             elsif Self.Current_Index = Self.Current'Last then
-               Put_Line ("MANU Insert at pos " & Self.Current_Index'Img
-                   & " Score=" & Result.Score'Img & " " & Result.Short.all
-                   & " and remove last");
                Free (Self.Current (Self.Current'Last));
                Self.Current (Insert_At + 1 .. Self.Current'Last) :=
                   Self.Current (Insert_At .. Self.Current'Last - 1);
                Self.Current (Insert_At) := Result;
             else
-               Put_Line ("MANU Insert at pos " & Self.Current_Index'Img
-                   & " Score=" & Result.Score'Img & " " & Result.Short.all);
                Self.Current (Insert_At + 1 .. Self.Current_Index + 1) :=
                   Self.Current (Insert_At .. Self.Current_Index);
                Self.Current_Index := Self.Current_Index + 1;
