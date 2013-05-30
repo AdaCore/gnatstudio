@@ -62,6 +62,7 @@ with GPS.Kernel.Search;          use GPS.Kernel.Search;
 with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
+with Pango.Layout;               use Pango.Layout;
 with System;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
 
@@ -426,7 +427,6 @@ package body Gtkada.Entry_Completion is
       Gtk_New (Self.View, Filter);
       Unref (Filter);
 
-      Self.View.Set_Fixed_Height_Mode (True);
       Self.View.Set_Headers_Visible (False);
       Self.View.Get_Selection.Set_Mode (Selection_Single);
       Self.View.Set_Rules_Hint (True);
@@ -439,8 +439,6 @@ package body Gtkada.Entry_Completion is
           Order          => Sort_Descending);
 
       Gtk_New (C);
-      C.Set_Sizing (Tree_View_Column_Fixed);
-      C.Set_Fixed_Width (Provider_Label_Width);
       Col := Self.View.Append_Column (C);
       Gtk_New (Render);
       C.Pack_Start (Render, False);
@@ -457,8 +455,6 @@ package body Gtkada.Entry_Completion is
       Set_Property (Render, Gtk.Cell_Renderer.Yalign_Property, 0.0);
 
       Gtk_New (C);
-      C.Set_Sizing (Tree_View_Column_Fixed);
-      C.Set_Fixed_Width (Result_Width);
       C.Set_Sort_Column_Id (Column_Score);
       C.Set_Sort_Order (Sort_Descending);
       C.Clicked;
@@ -967,8 +963,11 @@ package body Gtkada.Entry_Completion is
       Toplevel : Gtk_Widget;
       Alloc : Gtk_Allocation;
       Popup : Gtk_Window;
-      Min_Child_Height, Natural_Child_Height : Gint;
       Height : Gint;
+      Iter : Gtk_Tree_Iter;
+      Result : Search_Result_Access;
+      Layout : Pango_Layout;
+      W, H : Gint;
    begin
       if Self.Popup /= null then
          --  Position of the completion entry within its toplevel window
@@ -989,8 +988,37 @@ package body Gtkada.Entry_Completion is
 
          Width := Result_Width + Provider_Label_Width;
 
-         Self.View.Get_Preferred_Height
-            (Min_Child_Height, Natural_Child_Height);
+         --  Unfortunately, there doesn't seem to be a convenient way to
+         --  compute the ideal height for a GtkTreeView (using the upper value
+         --  of the vadjustment doesn't work either since it never decreases),
+         --  and Get_Preferred_Height always returns 0 unless we are using
+         --  Fixed_Height mode, but in our case the rows do not all have the
+         --  same height.
+         --  Self.View.Get_Cell_Area returns the height of a row, but only if
+         --  it is visible which is not the case yet).
+
+         Layout := Create_Pango_Layout (Self.View);
+         Layout.Set_Text ("0mp");
+         Layout.Get_Pixel_Size (W, H);
+         Unref (Layout);
+
+         Height := 0;
+         Iter := Self.Completions.Get_Iter_First;
+         while Iter /= Null_Iter loop
+            Result := Convert
+               (Get_Address (+Self.Completions, Iter, Column_Data));
+            Height := Height + H;
+
+            if Result.Long /= null then
+               Height := Height + H;
+            end if;
+
+            --  5 is the height of separators between rows. It comes from
+            --  the theme, though, so this is only an approximation.
+            Height := Height + 5;
+
+            Next (Self.Completions, Iter);
+         end loop;
 
          X := Gint'Min (Gdk_X, MaxX - Width);
          Y := Gdk_Y + Self.GEntry.Get_Allocated_Height;
@@ -1006,7 +1034,7 @@ package body Gtkada.Entry_Completion is
          --  '3' is the height of the separator. Should be computed from the
          --  widget itself perhaps
          Height := Gint'Min
-            (Natural_Child_Height + Self.Settings.Get_Allocated_Height + 3,
+            (Height + Self.Settings.Get_Allocated_Height + 3,
              MaxY - Y);
          Self.Popup.Set_Size_Request (Width, Height);
          Self.Popup.Queue_Resize;
