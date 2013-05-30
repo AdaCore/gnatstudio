@@ -921,7 +921,7 @@ package body Gtkada.Entry_Completion is
 
       if Self.Need_Clear then
          --  Clear at the last minute to limit flickering.
-         Self.Completions.Clear;
+         Clear (Self);
       end if;
 
       Start := Clock;
@@ -987,6 +987,8 @@ package body Gtkada.Entry_Completion is
          --  aligned on the GPS right side.
 
          Width := Result_Width + Provider_Label_Width;
+         X := Gint'Min (Gdk_X, MaxX - Width);
+         Y := Gdk_Y + Self.GEntry.Get_Allocated_Height;
 
          --  Unfortunately, there doesn't seem to be a convenient way to
          --  compute the ideal height for a GtkTreeView (using the upper value
@@ -1002,40 +1004,37 @@ package body Gtkada.Entry_Completion is
          Layout.Get_Pixel_Size (W, H);
          Unref (Layout);
 
-         Height := 0;
+         --  '3' is the height of the separator. Should be computed from the
+         --  widget itself perhaps
+         Height := Self.Settings.Get_Allocated_Height + 3;
+
          Iter := Self.Completions.Get_Iter_First;
          while Iter /= Null_Iter loop
             Result := Convert
                (Get_Address (+Self.Completions, Iter, Column_Data));
-            Height := Height + H;
+
+            --  5 is the height of separators between rows. It comes from
+            --  the theme, though, so this is only an approximation. At worse
+            --  the popup window will be too high
+            Height := Height + H + 5;
 
             if Result.Long /= null then
                Height := Height + H;
             end if;
 
-            --  5 is the height of separators between rows. It comes from
-            --  the theme, though, so this is only an approximation.
-            Height := Height + 5;
+            exit when Height > MaxY - Y;  --  no need to go further
 
             Next (Self.Completions, Iter);
          end loop;
 
-         X := Gint'Min (Gdk_X, MaxX - Width);
-         Y := Gdk_Y + Self.GEntry.Get_Allocated_Height;
-
          if not Height_Only then
             Self.Popup.Move (X, Y);
-
             Popup := Gtk_Window (Self.Notes_Popup);
             Popup.Set_Size_Request (Preview_Width, Preview_Height);
             Popup.Move (X - Preview_Width - Preview_Right_Margin, Y);
          end if;
 
-         --  '3' is the height of the separator. Should be computed from the
-         --  widget itself perhaps
-         Height := Gint'Min
-            (Height + Self.Settings.Get_Allocated_Height + 3,
-             MaxY - Y);
+         Height := Gint'Min (Height, MaxY - Y);
          Self.Popup.Set_Size_Request (Width, Height);
          Self.Popup.Queue_Resize;
       end if;
