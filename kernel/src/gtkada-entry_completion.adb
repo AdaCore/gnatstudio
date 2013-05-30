@@ -179,6 +179,12 @@ package body Gtkada.Entry_Completion is
       (1 => New_String (String (Signal_Activate)),
        2 => New_String (String (Signal_Escape)));
 
+   Col_Types : constant Glib.GType_Array :=
+      (Column_Label    => GType_String,
+       Column_Score    => GType_Int,
+       Column_Data     => GType_Pointer,
+       Column_Provider => GType_String);
+
    --------------------
    -- Get_Last_Child --
    --------------------
@@ -263,7 +269,7 @@ package body Gtkada.Entry_Completion is
          Previous (Child, Prev);
 
          if Prev = Null_Iter then
-            Get_Value (Child, Child_It, Column, Value);
+            Set_String (Value, Get_String (Child, Child_It, Column));
          else
             declare
                Prev_Prov : constant String := Get_String (Child, Prev, Column);
@@ -275,8 +281,16 @@ package body Gtkada.Entry_Completion is
             end;
          end if;
 
+      elsif Column = Column_Label then
+         Set_String (Value, Get_String (Child, Child_It, Column));
+
+      elsif Column = Column_Score then
+         Set_Int (Value, Get_Int (Child, Child_It, Column));
+
+      elsif Column = Column_Provider then
+         Set_Address (Value, Get_Address (Child, Child_It, Column));
       else
-         Get_Value (Child, Child_It, Column, Value);
+         raise Program_Error with "Unexpected column";
       end if;
    end Model_Modify_Func;
 
@@ -338,12 +352,6 @@ package body Gtkada.Entry_Completion is
       Frame  : Gtk_Frame;
       Popup  : Gtk_Window;
       pragma Unreferenced (Col, Dummy);
-
-      Col_Types : constant Glib.GType_Array :=
-         (Column_Label    => GType_String,
-          Column_Score    => GType_Int,
-          Column_Data     => GType_Pointer,
-          Column_Provider => GType_String);
 
    begin
       G_New (Self, Get_Type);
