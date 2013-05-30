@@ -86,6 +86,8 @@ package body GPS.Kernel.Search.Actions is
                   Long     => null,
                   Id       => S,
                   Name     => new String'(Action.Name.all));
+
+               Self.Adjust_Score (Result);
             end if;
          end if;
 

@@ -464,11 +464,13 @@ package body Gtkada.Entry_Completion is
       C.Add_Attribute (Render, "markup", Column_Label);
 
       --  Debug: show score
-      Gtk_New (C);
-      Col := Self.View.Append_Column (C);
-      Gtk_New (Render);
-      C.Pack_Start (Render, False);
-      C.Add_Attribute (Render, "text", Column_Score);
+      --  Code is left here for convenience
+
+      --  Gtk_New (C);
+      --  Col := Self.View.Append_Column (C);
+      --  Gtk_New (Render);
+      --  C.Pack_Start (Render, False);
+      --  C.Add_Attribute (Render, "text", Column_Score);
 
       if not Completion_In_Popup then
          Self.Completion_Box.Pack_Start
@@ -532,22 +534,6 @@ package body Gtkada.Entry_Completion is
       Self.GEntry.On_Key_Press_Event (On_Key_Press'Access, Self);
       Self.GEntry.On_Focus_Out_Event (On_Focus_Out'Access, Self);
 
-      --  Set the current entry to be the previously inserted one
-      Set_Max_Length (Kernel.Get_History.all, 5, Name);
-      Self.Hist := Get_History (Kernel.Get_History.all, Name);
-
-      if Self.Hist /= null
-         and then Self.Hist (Self.Hist'First).all /= ""
-
-         --  When the completion is in a popup, having a prefilled entry is
-         --  not convenient: use need to click in it to get the focus, then
-         --  triple-click to reselect the full text
-         and then not Completion_In_Popup
-      then
-         Self.GEntry.Set_Text (Self.Hist (Self.Hist'First).all);
-         Self.GEntry.Select_Region (0, -1);
-      end if;
-
       Self.GEntry.Grab_Focus;
 
       --  Connect after setting the default entry, so that we do not
@@ -599,17 +585,13 @@ package body Gtkada.Entry_Completion is
       end if;
 
       if Result /= null then
-         Self.Hist := null;  --  do not free
-
-         if Result.Id /= null then
-            Self.Kernel.Add_To_History (Self.Name.all, Result.Id.all);
-         end if;
-
          Popdown (Self);
 
          Widget_Callback.Emit_By_Name (Self, Signal_Activate);
 
          Result.Execute (Give_Focus => True);
+
+         Result.Provider.On_Result_Executed (Result);
 
          --  Keep the interface leaner
          Self.GEntry.Set_Text ("");
@@ -685,32 +667,13 @@ package body Gtkada.Entry_Completion is
      (Self : not null access Gtkada_Entry_Record'Class;
       Result : GPS.Search.Search_Result_Access)
    is
-      Max_History : constant := 5;
-      --  Maximum number of history items that are taken into account for
-      --  the scoring.
-
       Iter  : Gtk_Tree_Iter;
       Val   : GValue;
       Score : Gint;
-      M     : Integer;
    begin
       Self.Completions.Append (Iter);
 
       Score := Gint (Result.Score);
-
-      --  Take history into account as well (most recent items first)
-
-      if Self.Hist /= null then
-         M := Integer'Min (Self.Hist'First + Max_History, Self.Hist'Last);
-         for H in Self.Hist'First .. M loop
-            if Self.Hist (H) /= null
-               and then Result.Id.all = Self.Hist (H).all
-            then
-               Score := Score + Gint ((Max_History + 1 - H) * 20);
-               exit;
-            end if;
-         end loop;
-      end if;
 
       --  Fill list of completions (no text in provider column)
 

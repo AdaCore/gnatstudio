@@ -308,6 +308,14 @@ package GPS.Search is
    --  responsability of the context to do the aggregation, not of the
    --  search window.
 
+   procedure On_Result_Executed
+      (Self   : not null access Search_Provider;
+       Result : not null access Search_Result'Class) is null;
+   --  Called when a user has executed Result. It might be used to do various
+   --  cleanups or changes in the provider, for instance storing the list of
+   --  recent items selected by the user so that the scores can be modified
+   --  later on.
+
    --------------
    -- Registry --
    --------------

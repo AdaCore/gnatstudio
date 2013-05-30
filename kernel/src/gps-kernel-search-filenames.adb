@@ -27,7 +27,6 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
-with GNAT.IO; use GNAT.IO;
 
 package body GPS.Kernel.Search.Filenames is
 
@@ -68,6 +67,8 @@ package body GPS.Kernel.Search.Filenames is
       if Self.Pattern_Needs_Free then
          Free (Self.Pattern);
       end if;
+
+      Free (Kernel_Search_Provider (Self));  --  inherited
    end Free;
 
    -------------------
@@ -164,7 +165,6 @@ package body GPS.Kernel.Search.Filenames is
             (if Self.Match_Directory then +F.Full_Name.all else +F.Base_Name);
          C : constant Search_Context := Self.Pattern.Start (Text);
          L : GNAT.Strings.String_Access;
-         Score : Integer;
       begin
          if C /= GPS.Search.No_Match then
             Has_Next := Self.Runtime_Index < Self.Runtime'Last;
@@ -174,17 +174,11 @@ package body GPS.Kernel.Search.Filenames is
                return;
             end if;
 
-            --  Give priority to shorter items (which means the pattern matched
-            --  a bigger portion of it). This way, "buffer" matches
-            --  "src_editor_buffer.adb" before "src_editor_buffer-hooks.adb".
-
-            Score := 100 * C.Score - F.Base_Name'Length;
-
             if Self.Match_Directory then
                Result := new Filenames_Search_Result'
                   (Kernel   => Self.Kernel,
                    Provider => Self,
-                   Score    => Score,
+                   Score    => C.Score,
                    Short    => new String'(+F.Base_Name),
                    Long     => new String'
                       (Self.Pattern.Highlight_Match
@@ -198,7 +192,7 @@ package body GPS.Kernel.Search.Filenames is
                Result := new Filenames_Search_Result'
                   (Kernel   => Self.Kernel,
                    Provider => Self,
-                   Score    => Score,
+                   Score    => C.Score,
                    Short    => new String'
                       (Self.Pattern.Highlight_Match
                          (Buffer => Text, Context => C)),
@@ -209,21 +203,21 @@ package body GPS.Kernel.Search.Filenames is
                    File     => F);
             end if;
 
-            if Result /= null then
-               --  Lower the score for runtime files, so that the source files
-               --  always appear first.
+            --  Give priority to shorter items (which means the pattern matched
+            --  a bigger portion of it). This way, "buffer" matches
+            --  "src_editor_buffer.adb" before "src_editor_buffer-hooks.adb".
 
-               if Runtime then
-                  Result.Score := Result.Score - 1;
-               end if;
+            Result.Score := 100 * Result.Score - F.Base_Name'Length;
+            Self.Adjust_Score (Result);
 
-               Self.Seen.Include (F);
+            --  Lower the score for runtime files, so that the source files
+            --  always appear first.
+
+            if Runtime then
+               Result.Score := Result.Score - 1;
             end if;
 
-            if F.Base_Name = "vsearch.adb" then
-               Put_Line ("MANU searching vsearch.adb, score="
-                  & Result.Score'Img);
-            end if;
+            Self.Seen.Include (F);
          end if;
       end Check;
 

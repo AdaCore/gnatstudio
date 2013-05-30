@@ -31,7 +31,6 @@ with Gtk.Widget;
 with Gtk.Window;
 with GPS.Kernel;
 with GPS.Search;
-with GNAT.Strings;
 with Histories;
 
 package Gtkada.Entry_Completion is
@@ -123,9 +122,6 @@ private
       Need_Clear       : Boolean := False;
 
       Name             : History_Key_Access;
-
-      Hist             : GNAT.Strings.String_List_Access;
-      --  Do not free this, this belongs to the history
 
       Completion_Box   : Gtk.Box.Gtk_Box;
       --  Box that contains the list of completion and the notes_scroll
