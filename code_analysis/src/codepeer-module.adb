@@ -716,7 +716,10 @@ package body CodePeer.Module is
       if File.Is_Regular_File then
          Input_Sources.File.Open (+File.Full_Name, Input);
          Reader.Parse
-           (Input, GPS.Kernel.Kernel_Handle (Self.Kernel), Self.Tree);
+           (Input,
+            GPS.Kernel.Kernel_Handle (Self.Kernel),
+            Self.Tree,
+            Self.Version);
          Input_Sources.File.Close (Input);
 
          --  Create codepeer report window

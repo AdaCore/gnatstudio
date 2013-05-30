@@ -118,6 +118,8 @@ private
    type Module_Id_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
      new GPS.Kernel.Modules.Module_ID_Record with record
+      Version                : Supported_Format_Version;
+      --  Used version of format of interchange files.
       Tree                   : Code_Analysis.Code_Analysis_Tree;
       Report_Subwindow       : GPS.Kernel.MDI.GPS_MDI_Child;
       Report                 : CodePeer.Reports.Report;
