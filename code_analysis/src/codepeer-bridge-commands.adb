@@ -126,6 +126,10 @@ package body CodePeer.Bridge.Commands is
 
    begin
       XML_Utils.Set_Attribute
+        (Database_Node,
+         "maximum_format",
+         Format_Version'Image (Supported_Format_Version'Last));
+      XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.

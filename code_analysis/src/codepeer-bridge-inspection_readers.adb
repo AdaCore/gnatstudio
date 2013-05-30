@@ -90,16 +90,17 @@ package body CodePeer.Bridge.Inspection_Readers is
    -----------
 
    procedure Parse
-     (Self   : in out Reader;
-      Input  : in out Input_Sources.Input_Source'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Tree   : out Code_Analysis.Code_Analysis_Tree)
+     (Self    : in out Reader;
+      Input   : in out Input_Sources.Input_Source'Class;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Tree    : out Code_Analysis.Code_Analysis_Tree;
+      Version : out Supported_Format_Version)
    is
       Root_Project : Code_Analysis.Project_Access;
 
    begin
       Self.Kernel          := Kernel;
-      Self.Version         := 1;
+      Self.Version         := Supported_Format_Version'First;
       Self.Ignore_Depth    := 0;
       Self.Projects        := new Code_Analysis.Project_Maps.Map;
       Self.Root_Inspection := new CodePeer.Project_Data;
@@ -113,6 +114,7 @@ package body CodePeer.Bridge.Inspection_Readers is
       Self.Parse (Input);
 
       Tree := Self.Projects;
+      Version := Self.Version;
    end Parse;
 
    -------------------
@@ -296,7 +298,7 @@ package body CodePeer.Bridge.Inspection_Readers is
 
          if Attrs.Get_Index (Format_Attribute) /= -1 then
             Self.Version :=
-              Positive'Value (Attrs.Get_Value (Format_Attribute));
+              Format_Version'Value (Attrs.Get_Value (Format_Attribute));
          end if;
 
       elsif Qname = Message_Category_Tag then

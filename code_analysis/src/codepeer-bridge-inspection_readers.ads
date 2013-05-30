@@ -30,10 +30,11 @@ package CodePeer.Bridge.Inspection_Readers is
    type Reader is new Sax.Readers.Reader with private;
 
    procedure Parse
-     (Self   : in out Reader;
-      Input  : in out Input_Sources.Input_Source'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Tree   : out Code_Analysis.Code_Analysis_Tree);
+     (Self    : in out Reader;
+      Input   : in out Input_Sources.Input_Source'Class;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Tree    : out Code_Analysis.Code_Analysis_Tree;
+      Version : out Supported_Format_Version);
 
 private
 
@@ -51,11 +52,12 @@ private
    type Reader is new Sax.Readers.Reader with record
       Kernel                : GPS.Kernel.Kernel_Handle;
 
-      Version               : Positive;
+      Version               : Supported_Format_Version;
       --  Version number of interchange format.
       --
       --   1 - default value
       --   2 - is_warning attribute is reported by CodePeer
+      --   3 - new content of audit records
 
       Ignore_Depth          : Natural := 0;
       --  Depth of ignore of nested XML elements to be able to load data files
