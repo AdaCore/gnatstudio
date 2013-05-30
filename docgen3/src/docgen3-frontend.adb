@@ -166,25 +166,21 @@ package body Docgen3.Frontend is
       ----------------
 
       procedure Get_Source (E : Entity_Id) is
+         Lang : constant Language_Access :=
+                  Get_Language_From_File (Context.Lang_Handler, File);
 
-         function Get_Source
-           (Context : access constant Docgen_Context;
-            Buffer : GNAT.Strings.String_Access;
-            File   : Virtual_File;
-            Entity : General_Entity) return Unbounded_String;
-         --  Retrieve the source of Entity
+         function Get_Subprogram_Source return Unbounded_String;
+         --  Retrieve the source of E
 
-         ----------------
-         -- Get_Source --
-         ----------------
+         ---------------------------
+         -- Get_Subprogram_Source --
+         ---------------------------
 
-         function Get_Source
-           (Context : access constant Docgen_Context;
-            Buffer : GNAT.Strings.String_Access;
-            File   : Virtual_File;
-            Entity : General_Entity) return Unbounded_String
-         is
+         function Get_Subprogram_Source return Unbounded_String is
             Printout : Unbounded_String;
+
+            procedure Append (Text : String);
+            --  Append Text to Printout
 
             function CB
               (Entity         : Language_Entity;
@@ -193,11 +189,21 @@ package body Docgen3.Frontend is
                Partial_Entity : Boolean) return Boolean;
             --  Callback for entity parser
 
+            -----------------
+            -- Append_Line --
+            -----------------
+
+            procedure Append (Text : String) is
+            begin
+               Printout := Printout & Text;
+            end Append;
+
             --------
             -- CB --
             --------
 
             Par_Count : Natural := 0;
+            Last_Idx  : Natural := 0;
 
             function CB
               (Entity         : Language_Entity;
@@ -206,13 +212,20 @@ package body Docgen3.Frontend is
                Partial_Entity : Boolean) return Boolean
             is
                pragma Unreferenced (Partial_Entity);
-               --  pragma Unreferenced (Entity);
 
-               S : constant String :=
+               S : String renames
                      Buffer (Sloc_Start.Index .. Sloc_End.Index);
 
-               --  use Basic_Types;
             begin
+               --  Print all text between previous call and current one
+
+               if Last_Idx /= 0 then
+                  Append (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
+               end if;
+
+               Last_Idx := Sloc_End.Index;
+               Append (S);
+
                --  if Entity = Block_Text then  --  identifier???
                --     return False; --  continue
 
@@ -221,30 +234,14 @@ package body Docgen3.Frontend is
 
                elsif Entity = Operator_Text then
                   if S = "(" then
-                     if Par_Count = 0 then
-                        Printout := Printout & ASCII.LF & "     ";
-                     end if;
-
                      Par_Count := Par_Count + 1;
                   elsif S = ")" then
                      Par_Count := Par_Count - 1;
-                     if Par_Count = 0 then
-                        Printout := Printout & ASCII.LF & "     ";
-                     end if;
-
                   elsif S = ";" then
                      if Par_Count = 0 then
                         return True;
                      end if;
                   end if;
-               end if;
-
-               Printout := Printout & " " & S;
-
-               --  Parameters delimiter
-
-               if Entity = Operator_Text and then S = ";" then
-                  Printout := Printout & ASCII.LF & "       ";
                end if;
 
                return False;
@@ -254,54 +251,39 @@ package body Docgen3.Frontend is
                   return True;
             end CB;
 
-            --  Local variables
-
-            Lang : constant Language_Access :=
-                     Get_Language_From_File (Context.Lang_Handler, File);
+            Index         : Natural;
+            Lines_Skipped : Natural;
 
          --  Start of processing for Get_Source
 
          begin
             Trace (Me, "Get_Source of " & (+File.Base_Name));
 
-            declare
-               Loc  : constant General_Location :=
-                 Get_Location (Context.Database, Entity);
+            --  Displace the pointer to the beginning of the subprogram
+            Index := Buffer'First;
+            GNATCOLL.Utils.Skip_Lines
+              (Str           => Buffer.all,
+               Lines         => LL.Get_Location (E).Line - 1,
+               Index         => Index,
+               Lines_Skipped => Lines_Skipped);
 
-               Index         : Natural;
-               Lines_Skipped : Natural;
+            Parse_Entities
+              (Lang, Buffer.all (Index .. Buffer'Last),
+               CB'Unrestricted_Access);
 
-            begin
-               --  Displace the pointer to the beginning of the subprogram
-               Index := Buffer'First;
-               GNATCOLL.Utils.Skip_Lines
-                 (Str           => Buffer.all,
-                  Lines         => Loc.Line - 1,
-                  Index         => Index,
-                  Lines_Skipped => Lines_Skipped);
-
-               Printout := Printout & "   ";
-               Parse_Entities
-                 (Lang, Buffer.all (Index .. Buffer'Last),
-                  CB'Unrestricted_Access);
-
-               return Printout;
-            end;
-         end Get_Source;
+            return Printout;
+         end Get_Subprogram_Source;
 
       begin
-         if True then
+         if not LL.Is_Subprogram (E) then
             --  To be improved???
-            Set_Src (E, To_Unbounded_String ("<<Get_Source disabled>>"));
+            Set_Src (E,
+              To_Unbounded_String
+                ("<<Get_Source under development for this kind of entity>>"));
             return;
          end if;
 
-         Set_Src (E,
-           Get_Source
-             (Context => Context,
-              Buffer  => Buffer,
-              File    => File,
-              Entity  => LL.Get_Entity (E)));
+         Set_Src (E, Get_Subprogram_Source);
       end Get_Source;
 
       ------------------
@@ -677,10 +659,10 @@ package body Docgen3.Frontend is
 
       --  Local variables
 
-      Std_Entity   : constant Entity_Id :=
-                       New_Internal_Entity
-                         (Context => Context,
-                          Name    => "Standard");
+      Std_Entity : constant Entity_Id :=
+                     New_Internal_Entity
+                       (Context => Context,
+                        Name    => "Standard");
       --  This entity represents the outermost scope (ie. the standard scope).
       --  It is needed to associate some scope to generic formals of library
       --  level units.
@@ -1363,9 +1345,9 @@ package body Docgen3.Frontend is
       File    : Virtual_File) return Tree_Type
    is
       Lang          : constant Language_Access :=
-                       Get_Language_From_File (Context.Lang_Handler, File);
+                        Get_Language_From_File (Context.Lang_Handler, File);
       In_Ada_Lang   : constant Boolean :=
-                       Lang.all in Language.Ada.Ada_Language'Class;
+                        Lang.all in Language.Ada.Ada_Language'Class;
       In_C_Lang     : constant Boolean := not In_Ada_Lang;
       Tree          : aliased Tree_Type;
 

@@ -428,7 +428,7 @@ package body Docgen3.Backend is
             Append_Line ("");
             Append_Line ("::");
             Append_Line ("");
-            Append_Line (To_String (Get_Src (E)));
+            Append_Line ("   " & To_String (Get_Src (E)));
          end if;
 
          declare
