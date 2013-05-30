@@ -118,8 +118,13 @@ package body CodePeer.Module.Bridge is
             end if;
 
          when 3 =>
-            raise Program_Error;
-            --  ??? Not implemented yet.
+            CodePeer.Bridge.Commands.Add_Audit_Record_V3
+              (Command_File_Name,
+               Codepeer_Output_Directory (Project),
+               Ids,
+               Message.Audit_V3.First_Element.Status,
+               Message.Audit_V3.First_Element.Approved_By,
+               Message.Audit_V3.First_Element.Comment);
       end case;
 
       --  Run gps_codepeer_bridge

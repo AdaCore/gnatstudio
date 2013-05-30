@@ -71,6 +71,56 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Free (Database_Node);
    end Add_Audit_Record_V2;
 
+   -------------------------
+   -- Add_Audit_Record_V3 --
+   -------------------------
+
+   procedure Add_Audit_Record_V3
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Ids               : Natural_Sets.Set;
+      Status            : CodePeer.Audit_Status_Kinds;
+      Approved_By       : Unbounded_String;
+      Comment           : Unbounded_String)
+   is
+      Database_Node  : XML_Utils.Node_Ptr :=
+                         new XML_Utils.Node'
+                               (Tag    => new String'("database"),
+                                others => <>);
+      Add_Audit_Node : XML_Utils.Node_Ptr;
+      Position       : Natural_Sets.Cursor := Ids.First;
+
+   begin
+      XML_Utils.Set_Attribute (Database_Node, "format", "3");
+      XML_Utils.Set_Attribute
+        (Database_Node, "output_directory", +Output_Directory.Full_Name);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
+
+      while Natural_Sets.Has_Element (Position) loop
+         Add_Audit_Node :=
+           new XML_Utils.Node'
+             (Tag    => new String'("add_audit_record"),
+              Value  => new String'(To_String (Comment)),
+              others => <>);
+         XML_Utils.Set_Attribute
+           (Add_Audit_Node,
+            "message",
+            Positive'Image (Natural_Sets.Element (Position)));
+         XML_Utils.Set_Attribute
+           (Add_Audit_Node, "status", Audit_Status_Kinds'Image (Status));
+         XML_Utils.Set_Attribute
+           (Add_Audit_Node, "approved", To_String (Approved_By));
+
+         XML_Utils.Add_Child (Database_Node, Add_Audit_Node);
+
+         Natural_Sets.Next (Position);
+      end loop;
+
+      XML_Utils.Print (Database_Node, Command_File_Name);
+      XML_Utils.Free (Database_Node);
+   end Add_Audit_Record_V3;
+
    -----------------
    -- Audit_Trail --
    -----------------
