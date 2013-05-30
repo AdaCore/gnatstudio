@@ -99,7 +99,7 @@ package body CodePeer.Module.Bridge is
       case Module.Version is
          when 2 =>
             if Message.Audit_V2.First_Element.Ranking_Changed then
-               CodePeer.Bridge.Commands.Add_Audit_Record
+               CodePeer.Bridge.Commands.Add_Audit_Record_V2
                  (Command_File_Name,
                   Codepeer_Output_Directory (Project),
                   Ids,
@@ -108,7 +108,7 @@ package body CodePeer.Module.Bridge is
                   Message.Audit_V2.First_Element.Comment);
 
             else
-               CodePeer.Bridge.Commands.Add_Audit_Record
+               CodePeer.Bridge.Commands.Add_Audit_Record_V2
                  (Command_File_Name,
                   Codepeer_Output_Directory (Project),
                   Ids,

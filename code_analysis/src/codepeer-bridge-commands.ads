@@ -39,7 +39,7 @@ package CodePeer.Bridge.Commands is
    --  Generates command file for export audit trail information from the
    --  database.
 
-   procedure Add_Audit_Record
+   procedure Add_Audit_Record_V2
      (Command_File_Name   : Virtual_File;
       Output_Directory    : Virtual_File;
       Ids                 : Natural_Sets.Set;

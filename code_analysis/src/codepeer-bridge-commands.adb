@@ -19,11 +19,11 @@ with XML_Utils;
 
 package body CodePeer.Bridge.Commands is
 
-   ----------------------
-   -- Add_Audit_Record --
-   ----------------------
+   -------------------------
+   -- Add_Audit_Record_V2 --
+   -------------------------
 
-   procedure Add_Audit_Record
+   procedure Add_Audit_Record_V2
      (Command_File_Name   : Virtual_File;
       Output_Directory    : Virtual_File;
       Ids                 : Natural_Sets.Set;
@@ -69,7 +69,7 @@ package body CodePeer.Bridge.Commands is
 
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
-   end Add_Audit_Record;
+   end Add_Audit_Record_V2;
 
    -----------------
    -- Audit_Trail --
