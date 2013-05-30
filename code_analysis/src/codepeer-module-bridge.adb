@@ -300,7 +300,8 @@ package body CodePeer.Module.Bridge is
         (Command_File_Name,
          Codepeer_Output_Directory (Project),
          Reply_File_Name,
-         Message.Id);
+         Message.Id,
+         Module.Version);
 
       --  Run gps_codepeer_bridge
 

@@ -34,7 +34,8 @@ package CodePeer.Bridge.Commands is
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
       Export_File_Name  : Virtual_File;
-      Message_Id        : Positive);
+      Message_Id        : Positive;
+      Version           : Supported_Format_Version);
    --  Generates command file for export audit trail information from the
    --  database.
 

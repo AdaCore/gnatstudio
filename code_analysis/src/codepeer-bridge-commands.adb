@@ -79,7 +79,8 @@ package body CodePeer.Bridge.Commands is
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
       Export_File_Name  : Virtual_File;
-      Message_Id        : Positive)
+      Message_Id        : Positive;
+      Version           : Supported_Format_Version)
    is
       Database_Node    : XML_Utils.Node_Ptr :=
                            new XML_Utils.Node'
@@ -91,6 +92,8 @@ package body CodePeer.Bridge.Commands is
                               others => <>);
 
    begin
+      XML_Utils.Set_Attribute
+        (Database_Node, "format", Format_Version'Image (Version));
       XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
