@@ -287,8 +287,9 @@ package body Gtkada.Entry_Completion is
       elsif Column = Column_Score then
          Set_Int (Value, Get_Int (Child, Child_It, Column));
 
-      elsif Column = Column_Provider then
+      elsif Column = Column_Data then
          Set_Address (Value, Get_Address (Child, Child_It, Column));
+
       else
          raise Program_Error with "Unexpected column";
       end if;
