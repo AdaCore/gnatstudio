@@ -44,6 +44,14 @@ package CodePeer is
    type Message_Ranking_Level is
      (Suppressed, Informational, Low, Medium, High);
 
+   type Audit_Status_Kinds is
+     (Unclassified,
+      Pending,
+      Not_A_Bug,
+      False_Positive,
+      Intentional,
+      Bug);
+
    type Message_Category is record
       Name : GNAT.Strings.String_Access;
    end record;
@@ -56,7 +64,7 @@ package CodePeer is
    package Message_Category_Sets is new Ada.Containers.Hashed_Sets
      (Message_Category_Access, Hash, "=");
 
-   type Audit_Record (Ranking_Changed : Boolean) is record
+   type Audit_Record_V2 (Ranking_Changed : Boolean) is record
       Timestamp   : Ada.Strings.Unbounded.Unbounded_String;
       Comment     : Ada.Strings.Unbounded.Unbounded_String;
 
@@ -69,10 +77,22 @@ package CodePeer is
       end case;
    end record;
 
-   type Audit_Record_Access is access all Audit_Record;
+   type Audit_Record_V2_Access is access all Audit_Record_V2;
 
-   package Audit_Vectors is
-     new Ada.Containers.Vectors (Positive, Audit_Record_Access);
+   package Audit_V2_Vectors is
+     new Ada.Containers.Vectors (Positive, Audit_Record_V2_Access);
+
+   type Audit_Record_V3 is record
+      Timestamp   : Ada.Strings.Unbounded.Unbounded_String;
+      Comment     : Ada.Strings.Unbounded.Unbounded_String;
+      Approved_By : Ada.Strings.Unbounded.Unbounded_String;
+      Status      : Audit_Status_Kinds;
+   end record;
+
+   type Audit_Record_V3_Access is access all Audit_Record_V3;
+
+   package Audit_V3_Vectors is
+     new Ada.Containers.Vectors (Positive, Audit_Record_V3_Access);
 
    package Natural_Sets is
      new Ada.Containers.Ordered_Sets (Natural);
@@ -90,7 +110,8 @@ package CodePeer is
       Current_Ranking  : Message_Ranking_Level;
       Text             : GNAT.Strings.String_Access;
       Audit_Loaded     : Boolean;
-      Audit            : Audit_Vectors.Vector;
+      Audit_V2         : Audit_V2_Vectors.Vector;
+      Audit_V3         : Audit_V3_Vectors.Vector;
       From_File        : GNATCOLL.VFS.Virtual_File;
       From_Line        : Positive;
       From_Column      : Positive;
