@@ -1404,7 +1404,7 @@ package body Task_Manager.GUI is
       Event.Add (VBox);
 
       Gtk_New_Hbox (Label_Box);
-      VBox.Pack_Start (Label_Box, Padding => 2);
+      VBox.Pack_Start (Label_Box);
 
       Gtk_New (View.Task_Label, "");
       View.Task_Label.Set_Alignment (0.0, 0.5);
@@ -1419,7 +1419,7 @@ package body Task_Manager.GUI is
       Gtk_New (View.Main_Progress_Bar);
       View.Main_Progress_Bar.Override_Font (Small_Font.Get_Pref);
       View.Main_Progress_Bar.Set_Show_Text (False);
-      VBox.Pack_Start (View.Main_Progress_Bar);
+      VBox.Pack_Start (View.Main_Progress_Bar, Padding => 2);
 
       Gtk_New (View.Progress_Bar_Button);
       Gtk_New (Image, GPS_Stop_Task, Icon_Size_Action_Button);

@@ -24,6 +24,7 @@ with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tool_Item;            use Gtk.Tool_Item;
+with Gtk.Box;                  use Gtk.Box;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Entry_Completion;  use Gtkada.Entry_Completion;
 with Gtkada.Handlers;          use Gtkada.Handlers;
@@ -406,6 +407,7 @@ package body GPS.Search.GUI is
       end Register_Provider;
 
       Align   : Gtk_Alignment;
+      Vbox    : Gtk_Vbox;
       Command : Global_Search_Command_Access;
 
       Item : Gtk_Tool_Item;
@@ -445,7 +447,10 @@ package body GPS.Search.GUI is
           Preview             => False,
           Completion          => Module.Default_Command.Provider);
       Module.Search.Set_Name ("global-search");
-      Align.Add (Module.Search);
+
+      Gtk_New_Vbox (Vbox);
+      Vbox.Pack_Start (Module.Search, Padding => 2);
+      Align.Add (Vbox);
 
       Widget_Callback.Connect (Module.Search, Signal_Escape, On_Escape'Access);
       Widget_Callback.Connect
