@@ -26,29 +26,6 @@
    /* background: shade(@theme_bg_color, 0.9); */
 }
 
-.mdifocused { /* The notebook that current has the focus */
-   background-color: #729fcf;
-}
-.mdifocused tab:active {
-   background-image: -gtk-gradient(linear,
-                                   left top, left bottom,
-                                   from(#729cfc),
-                                   to(shade(#829cfc, 0.9)));
-}
-
-* {
-   /* Size of handle to resize windows */
-   -GtkAdaMultiPaned-handle-size: 2;
-
-   /* Control the location of the scroll arrows in notebooks */
-   -GtkNotebook-has-backward-stepper: 1;
-   -GtkNotebook-has-secondary-forward-stepper: 0;
-   -GtkNotebook-has-secondary-backward-stepper: 0;
-   -GtkNotebook-has-forward-stepper: 1;
-   -GtkWidget-scroll-arrow-hlength: 10px;
-   -GtkWidget-scroll-arrow-vlength: 10px;
-}
-
 /* Search and filter fields */
 GtkEntry.search {
   border-radius: 8px;

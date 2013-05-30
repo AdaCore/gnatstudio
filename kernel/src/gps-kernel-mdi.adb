@@ -26,7 +26,6 @@ with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
 
-with Gdk.RGBA; use Gdk.RGBA;
 with Gdk;      use Gdk;
 
 with Gtk.Box;                  use Gtk.Box;
@@ -68,8 +67,6 @@ with GPS.Editors.GtkAda;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with Traces;                    use Traces;
-
-with Pango.Font;                use Pango.Font;
 
 with Glib.Xml_Int;
 with XML_Utils;                 use XML_Utils;
@@ -385,8 +382,7 @@ package body GPS.Kernel.MDI is
          Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
          Show_Tabs_Policy          => Policy,
          Tabs_Position             => Pos,
-         Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref,
-         Hardcode_Theme            => False);
+         Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref);
 
       Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
 
