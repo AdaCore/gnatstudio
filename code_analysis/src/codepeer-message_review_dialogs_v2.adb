@@ -34,14 +34,14 @@ with Gtk.Table;
 with Gtk.Text_Iter;
 with Gtk.Text_View;
 with Gtk.Tree_Model;
-with Gtk.Tree_Store;   use Gtk.Tree_Store;
+with Gtk.Tree_Store;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
 with GPS.Intl; use GPS.Intl;
 
-package body CodePeer.Message_Review_Dialogs is
+package body CodePeer.Message_Review_Dialogs_V2 is
 
    Probability_Model_Label_Column     : constant := 0;
    Probability_Model_Changed_Column : constant := 1;
@@ -78,8 +78,7 @@ package body CodePeer.Message_Review_Dialogs is
       Name   : Glib.Signal_Name);
    pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
 
-   Class_Record : Glib.Object.Ada_GObject_Class :=
-      Glib.Object.Uninitialized_Class;
+   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Ok_Activated)));
@@ -188,19 +187,19 @@ package body CodePeer.Message_Review_Dialogs is
       end Process_Audit;
 
    begin
+      Gtk.Dialog.Initialize (Self);
       Glib.Object.Initialize_Class_Record
-        (Ancestor     => Gtk.Dialog.Get_Type,
-         Signals      => Signals,
-         Class_Record => Class_Record,
-         Type_Name    => "CodePeerMessageReviewDialog",
-         Parameters   => Signal_Parameters);
-      Glib.Object.G_New (Self, Class_Record);
+        (Self,
+         Signals,
+         Class_Record,
+         "CodePeerMessageReviewDialog",
+         Signal_Parameters);
       Self.Set_Title (-"CodePeer message review");
 
       Self.Message := Message;
 
       Gtk.Table.Gtk_New (Table, 2, 3, False);
-      Self.Get_Content_Area.Pack_Start (Table, False, False);
+      Self.Get_Vbox.Pack_Start (Table, False, False);
 
       Gtk.Label.Gtk_New (Label, "Original ranking");
       Table.Attach (Label, 0, 1, 0, 1);
@@ -225,7 +224,7 @@ package body CodePeer.Message_Review_Dialogs is
 
       Gtk.Tree_Store.Gtk_New (Store, Probability_Model_Types);
 
-      Gtk.Combo_Box.Gtk_New_With_Model (Self.New_Probability, +Store);
+      Gtk.Combo_Box.Gtk_New_With_Model (Self.New_Probability, Store);
       Table.Attach (Self.New_Probability, 1, 2, 2, 3);
 
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
@@ -278,13 +277,13 @@ package body CodePeer.Message_Review_Dialogs is
 
       Gtk.Label.Gtk_New (Label, "Comment");
       Label.Set_Alignment (0.0, 0.5);
-      Self.Get_Content_Area.Pack_Start (Label, False, False);
+      Self.Get_Vbox.Pack_Start (Label, False, False);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Size_Request (Height => 200);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
+      Self.Get_Vbox.Pack_Start (Scrolled, False, False);
 
       Gtk.Text_View.Gtk_New (Text_View);
       Text_View.Set_Wrap_Mode (Gtk.Enums.Wrap_Word);
@@ -298,7 +297,7 @@ package body CodePeer.Message_Review_Dialogs is
       Scrolled.Set_Size_Request (Height => 300, Width => 700);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Self.Get_Content_Area.Pack_End (Scrolled, True, True);
+      Self.Get_Vbox.Pack_End (Scrolled, True, True);
 
       Gtk.Tree_Store.Gtk_New (Store, History_Model_Types);
 
@@ -379,7 +378,8 @@ package body CodePeer.Message_Review_Dialogs is
       use type Glib.Signal_Name;
 
       Model               : constant Gtk.Tree_Store.Gtk_Tree_Store :=
-                              -(Self.New_Probability.Get_Model);
+                              Gtk.Tree_Store.Gtk_Tree_Store
+                                (Self.New_Probability.Get_Model);
       Iter                : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
                               Self.New_Probability.Get_Active_Iter;
       Probability_Changed : constant Boolean :=
@@ -420,4 +420,4 @@ package body CodePeer.Message_Review_Dialogs is
       Self.Destroy;
    end On_Ok;
 
-end CodePeer.Message_Review_Dialogs;
+end CodePeer.Message_Review_Dialogs_V2;
