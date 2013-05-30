@@ -153,7 +153,7 @@ package GPS.Search is
    --  when the pattern is augmented.
 
    type Search_Result is abstract tagged record
-      Score    : Natural := 100;
+      Score    : Integer := 100;
       Short    : GNAT.Strings.String_Access;
       Long     : GNAT.Strings.String_Access;
       Id       : GNAT.Strings.String_Access;
@@ -187,7 +187,10 @@ package GPS.Search is
    --  search_provider that created it. As such, the result should not embed
    --  a pointer to the provider.
    --
-   --  Score is used to sort the results
+   --  Score is used to sort the results within a given provider. Its specific
+   --  values are only relevant within the context of that provider (although
+   --  scores should be less than 900_000 to keep the various providers
+   --  separated in the global search results).
 
    procedure Free (Self : in out Search_Result);
    procedure Free (Self : in out Search_Result_Access);

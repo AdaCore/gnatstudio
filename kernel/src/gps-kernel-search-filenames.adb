@@ -203,19 +203,20 @@ package body GPS.Kernel.Search.Filenames is
                    File     => F);
             end if;
 
+            --  Lower the score for runtime files, so that the source files
+            --  always appear first. "10" is so that in fuzzy matching this
+            --  corresponds to having characters separated by 9 others.
+
+            if Runtime then
+               Result.Score := Result.Score - 10;
+            end if;
+
             --  Give priority to shorter items (which means the pattern matched
             --  a bigger portion of it). This way, "buffer" matches
             --  "src_editor_buffer.adb" before "src_editor_buffer-hooks.adb".
 
             Result.Score := 100 * Result.Score - F.Base_Name'Length;
             Self.Adjust_Score (Result);
-
-            --  Lower the score for runtime files, so that the source files
-            --  always appear first.
-
-            if Runtime then
-               Result.Score := Result.Score - 1;
-            end if;
 
             Self.Seen.Include (F);
          end if;
