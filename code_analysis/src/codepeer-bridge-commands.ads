@@ -46,6 +46,17 @@ package CodePeer.Bridge.Commands is
       Probability_Changed : Boolean;
       New_Ranking         : CodePeer.Message_Ranking_Level;
       Comment             : Unbounded_String);
-   --  Generates command file for add audit record to the database.
+   --  Generates command file for add audit record to the database using
+   --  version 2 of interchange format.
+
+   procedure Add_Audit_Record_V3
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Ids               : Natural_Sets.Set;
+      Status            : CodePeer.Audit_Status_Kinds;
+      Approved_By       : Unbounded_String;
+      Comment           : Unbounded_String);
+   --  Generates command file for add audit record to the database using
+   --  version 3 of interchange format.
 
 end CodePeer.Bridge.Commands;
