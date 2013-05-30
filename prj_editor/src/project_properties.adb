@@ -4757,10 +4757,10 @@ package body Project_Properties is
       Gtk_New (Editor.Note);
       Set_Name (Editor.Note, "Project Properties Notebook"); --  Testsuite
       Set_Tab_Pos (Editor.Note, Pos_Left);
-      Pack1 (Main_Box, Editor.Note, Resize => True, Shrink => True);
+      Pack1 (Main_Box, Editor.Note, Resize => True, Shrink => False);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Pack2 (Main_Box, Box, Resize => False, Shrink => True);
+      Pack2 (Main_Box, Box, Resize => False, Shrink => False);
 
       Gtk_New (Label, -"Apply changes to:");
       Set_Alignment (Label, 0.0, 0.0);
