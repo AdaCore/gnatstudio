@@ -177,8 +177,6 @@ package body CodePeer is
             Audit : Audit_Record_Access := Audit_Vectors.Element (Position);
 
          begin
-            GNAT.Strings.Free (Audit.Timestamp);
-            GNAT.Strings.Free (Audit.Comment);
             Free (Audit);
          end Process;
 

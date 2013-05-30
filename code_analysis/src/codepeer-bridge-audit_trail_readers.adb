@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings; use GNAT.Strings;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body CodePeer.Bridge.Audit_Trail_Readers is
 
@@ -28,20 +28,10 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
 
    overriding procedure Characters
      (Self : in out Reader;
-      Text : Unicode.CES.Byte_Sequence)
-   is
-      Aux : GNAT.Strings.String_Access;
-
+      Text : Unicode.CES.Byte_Sequence) is
    begin
       if Self.Audit_Record /= null then
-         if Self.Audit_Record.Comment /= null then
-            Aux := Self.Audit_Record.Comment;
-            Self.Audit_Record.Comment := new String'(Aux.all & Text);
-            GNAT.Strings.Free (Aux);
-
-         else
-            Self.Audit_Record.Comment := new String'(Text);
-         end if;
+         Append (Self.Audit_Record.Comment, Text);
       end if;
    end Characters;
 
@@ -59,13 +49,6 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
 
    begin
       if Qname = Audit_Tag then
-         --  If there are no commect, then create empty string. This simplify
-         --  things all around the code.
-
-         if Self.Audit_Record.Comment = null then
-            Self.Audit_Record.Comment := new String'("");
-         end if;
-
          Self.Audit.Append (Self.Audit_Record);
          Self.Audit_Record := null;
       end if;
@@ -112,19 +95,19 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
               new CodePeer.Audit_Record'
                 (Ranking_Changed => True,
                  Timestamp       =>
-                   new String'(Attrs.Get_Value ("timestamp")),
+                   To_Unbounded_String (Attrs.Get_Value ("timestamp")),
                  Ranking         =>
                    CodePeer.Message_Ranking_Level'Value
                      (Attrs.Get_Value ("probability")),
-                 Comment         => null);
+                 Comment         => Null_Unbounded_String);
 
          else
             Self.Audit_Record :=
               new CodePeer.Audit_Record'
                 (Ranking_Changed => False,
                  Timestamp       =>
-                   new String'(Attrs.Get_Value ("timestamp")),
-                 Comment         => null);
+                   To_Unbounded_String (Attrs.Get_Value ("timestamp")),
+                 Comment         => Null_Unbounded_String);
          end if;
 
       else
