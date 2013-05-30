@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar.Formatting;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Interfaces.C.Strings;
 with System;
 
@@ -164,7 +165,7 @@ package body CodePeer.Message_Review_Dialogs is
          Store.Set
            (Iter,
             History_Model_Timestamp_Column,
-            Audit.Timestamp.all);
+            To_String (Audit.Timestamp));
 
          if Audit.Ranking_Changed then
             Store.Set
@@ -182,7 +183,7 @@ package body CodePeer.Message_Review_Dialogs is
          Store.Set
            (Iter,
             History_Model_Comment_Column,
-            Audit.Comment.all);
+            To_String (Audit.Comment));
       end Process_Audit;
 
    begin
@@ -403,9 +404,11 @@ package body CodePeer.Message_Review_Dialogs is
       Self.Comment_Buffer.Get_End_Iter (End_Iter);
 
       New_Record.Comment :=
-        new String'(Self.Comment_Buffer.Get_Text (Start_Iter, End_Iter));
+        To_Unbounded_String
+          (Self.Comment_Buffer.Get_Text (Start_Iter, End_Iter));
       New_Record.Timestamp :=
-        new String'(Ada.Calendar.Formatting.Image (Ada.Calendar.Clock));
+        To_Unbounded_String
+          (Ada.Calendar.Formatting.Image (Ada.Calendar.Clock));
       Self.Message.Audit.Prepend (New_Record);
 
       --  Emit signal

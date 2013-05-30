@@ -17,7 +17,9 @@
 
 --  Generates command files for gps_codepeer_bridge commands
 
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 package CodePeer.Bridge.Commands is
 
@@ -42,7 +44,7 @@ package CodePeer.Bridge.Commands is
       Ids                 : Natural_Sets.Set;
       Probability_Changed : Boolean;
       New_Ranking         : CodePeer.Message_Ranking_Level;
-      Comment             : String);
+      Comment             : Unbounded_String);
    --  Generates command file for add audit record to the database.
 
 end CodePeer.Bridge.Commands;

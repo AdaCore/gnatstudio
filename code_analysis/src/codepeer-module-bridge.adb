@@ -107,7 +107,7 @@ package body CodePeer.Module.Bridge is
             Ids,
             True,
             Message.Audit.First_Element.Ranking,
-            Message.Audit.First_Element.Comment.all);
+            Message.Audit.First_Element.Comment);
 
       else
          CodePeer.Bridge.Commands.Add_Audit_Record
@@ -116,7 +116,7 @@ package body CodePeer.Module.Bridge is
             Ids,
             False,
             CodePeer.High,
-            Message.Audit.First_Element.Comment.all);
+            Message.Audit.First_Element.Comment);
       end if;
 
       --  Run gps_codepeer_bridge

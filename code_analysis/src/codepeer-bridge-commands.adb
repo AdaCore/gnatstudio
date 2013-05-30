@@ -29,7 +29,7 @@ package body CodePeer.Bridge.Commands is
       Ids                 : Natural_Sets.Set;
       Probability_Changed : Boolean;
       New_Ranking         : CodePeer.Message_Ranking_Level;
-      Comment             : String)
+      Comment             : Unbounded_String)
    is
       Database_Node  : XML_Utils.Node_Ptr :=
                          new XML_Utils.Node'
@@ -48,7 +48,7 @@ package body CodePeer.Bridge.Commands is
          Add_Audit_Node :=
            new XML_Utils.Node'
              (Tag    => new String'("add_audit_record"),
-              Value  => new String'(Comment),
+              Value  => new String'(To_String (Comment)),
               others => <>);
          XML_Utils.Set_Attribute
            (Add_Audit_Node,

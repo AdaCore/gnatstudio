@@ -19,6 +19,7 @@ with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;
 with GNAT.Strings;
 
 with GNATCOLL.VFS;
@@ -50,8 +51,8 @@ package CodePeer is
      (Message_Category_Access, Hash, "=");
 
    type Audit_Record (Ranking_Changed : Boolean) is record
-      Timestamp   : GNAT.Strings.String_Access;
-      Comment     : GNAT.Strings.String_Access;
+      Timestamp   : Ada.Strings.Unbounded.Unbounded_String;
+      Comment     : Ada.Strings.Unbounded.Unbounded_String;
 
       case Ranking_Changed is
          when True =>
