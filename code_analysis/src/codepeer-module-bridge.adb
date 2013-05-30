@@ -100,24 +100,31 @@ package body CodePeer.Module.Bridge is
       Ids.Insert (Message.Id);
       Ids.Union (Message.Merged);
 
-      if Message.Audit.First_Element.Ranking_Changed then
-         CodePeer.Bridge.Commands.Add_Audit_Record
-           (Command_File_Name,
-            Codepeer_Output_Directory (Project),
-            Ids,
-            True,
-            Message.Audit.First_Element.Ranking,
-            Message.Audit.First_Element.Comment);
+      case Module.Version is
+         when 2 =>
+            if Message.Audit_V2.First_Element.Ranking_Changed then
+               CodePeer.Bridge.Commands.Add_Audit_Record
+                 (Command_File_Name,
+                  Codepeer_Output_Directory (Project),
+                  Ids,
+                  True,
+                  Message.Audit_V2.First_Element.Ranking,
+                  Message.Audit_V2.First_Element.Comment);
 
-      else
-         CodePeer.Bridge.Commands.Add_Audit_Record
-           (Command_File_Name,
-            Codepeer_Output_Directory (Project),
-            Ids,
-            False,
-            CodePeer.High,
-            Message.Audit.First_Element.Comment);
-      end if;
+            else
+               CodePeer.Bridge.Commands.Add_Audit_Record
+                 (Command_File_Name,
+                  Codepeer_Output_Directory (Project),
+                  Ids,
+                  False,
+                  CodePeer.High,
+                  Message.Audit_V2.First_Element.Comment);
+            end if;
+
+         when 3 =>
+            raise Program_Error;
+            --  ??? Not implemented yet.
+      end case;
 
       --  Run gps_codepeer_bridge
 

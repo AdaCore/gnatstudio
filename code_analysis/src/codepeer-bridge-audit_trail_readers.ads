@@ -25,15 +25,19 @@ package CodePeer.Bridge.Audit_Trail_Readers is
    type Reader is new Sax.Readers.Reader with private;
 
    procedure Parse
-     (Self   : in out Reader;
-      Input  : in out Input_Sources.Input_Source'Class;
-      Audit  : out CodePeer.Audit_Vectors.Vector);
+     (Self     : in out Reader;
+      Input    : in out Input_Sources.Input_Source'Class;
+      Audit_V2 : out CodePeer.Audit_V2_Vectors.Vector;
+      Audit_V3 : out CodePeer.Audit_V3_Vectors.Vector);
 
 private
 
    type Reader is new Sax.Readers.Reader with record
-      Audit        : CodePeer.Audit_Vectors.Vector;
-      Audit_Record : CodePeer.Audit_Record_Access;
+      Version         : Supported_Format_Version;
+      Audit_V2        : CodePeer.Audit_V2_Vectors.Vector;
+      Audit_Record_V2 : CodePeer.Audit_Record_V2_Access;
+      Audit_V3        : CodePeer.Audit_V3_Vectors.Vector;
+      Audit_Record_V3 : CodePeer.Audit_Record_V3_Access;
    end record;
 
    overriding procedure Start_Element

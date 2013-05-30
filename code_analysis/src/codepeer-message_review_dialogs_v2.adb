@@ -122,7 +122,7 @@ package body CodePeer.Message_Review_Dialogs_V2 is
       Dummy_I       : Glib.Gint;
       pragma Warnings (Off, Dummy_I);
 
-      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor);
+      procedure Process_Audit (Position : CodePeer.Audit_V2_Vectors.Cursor);
 
       function Ranking_Image
         (Probability : CodePeer.Message_Ranking_Level) return String;
@@ -156,9 +156,9 @@ package body CodePeer.Message_Review_Dialogs_V2 is
       -- Process_Audit --
       -------------------
 
-      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor) is
-         Audit : constant CodePeer.Audit_Record_Access :=
-                   CodePeer.Audit_Vectors.Element (Position);
+      procedure Process_Audit (Position : CodePeer.Audit_V2_Vectors.Cursor) is
+         Audit : constant CodePeer.Audit_Record_V2_Access :=
+                   CodePeer.Audit_V2_Vectors.Element (Position);
 
       begin
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
@@ -301,7 +301,7 @@ package body CodePeer.Message_Review_Dialogs_V2 is
 
       Gtk.Tree_Store.Gtk_New (Store, History_Model_Types);
 
-      Message.Audit.Iterate (Process_Audit'Access);
+      Message.Audit_V2.Iterate (Process_Audit'Access);
 
       Gtk.Tree_View.Gtk_New (Tree_View, Store);
       Scrolled.Add (Tree_View);
@@ -377,23 +377,23 @@ package body CodePeer.Message_Review_Dialogs_V2 is
 
       use type Glib.Signal_Name;
 
-      Model               : constant Gtk.Tree_Store.Gtk_Tree_Store :=
-                              Gtk.Tree_Store.Gtk_Tree_Store
-                                (Self.New_Probability.Get_Model);
-      Iter                : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-                              Self.New_Probability.Get_Active_Iter;
-      Probability_Changed : constant Boolean :=
-                              Model.Get_Boolean
-                                (Iter, Probability_Model_Changed_Column);
-      New_Record          : constant CodePeer.Audit_Record_Access :=
-                              new CodePeer.Audit_Record (Probability_Changed);
-      Start_Iter          : Gtk.Text_Iter.Gtk_Text_Iter;
-      End_Iter            : Gtk.Text_Iter.Gtk_Text_Iter;
+      Model           : constant Gtk.Tree_Store.Gtk_Tree_Store :=
+                          Gtk.Tree_Store.Gtk_Tree_Store
+                            (Self.New_Probability.Get_Model);
+      Iter            : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+                          Self.New_Probability.Get_Active_Iter;
+      Ranking_Changed : constant Boolean :=
+                          Model.Get_Boolean
+                            (Iter, Probability_Model_Changed_Column);
+      New_Record      : constant CodePeer.Audit_Record_V2_Access :=
+                          new CodePeer.Audit_Record_V2 (Ranking_Changed);
+      Start_Iter      : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter        : Gtk.Text_Iter.Gtk_Text_Iter;
 
    begin
       --  Add new record and change message probability
 
-      if Probability_Changed then
+      if Ranking_Changed then
          New_Record.Ranking :=
            CodePeer.Message_Ranking_Level'Val
              (Model.Get_Int (Iter, Probability_Model_New_Level_Column));
@@ -409,7 +409,7 @@ package body CodePeer.Message_Review_Dialogs_V2 is
       New_Record.Timestamp :=
         To_Unbounded_String
           (Ada.Calendar.Formatting.Image (Ada.Calendar.Clock));
-      Self.Message.Audit.Prepend (New_Record);
+      Self.Message.Audit_V2.Prepend (New_Record);
 
       --  Emit signal
 

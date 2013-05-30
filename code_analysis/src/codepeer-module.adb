@@ -1717,7 +1717,7 @@ package body CodePeer.Module is
          --  Load inspection information
 
          Input_Sources.File.Open (+File.Full_Name, Input);
-         Reader.Parse (Input, Message.Audit);
+         Reader.Parse (Input, Message.Audit_V2, Message.Audit_V3);
          Input_Sources.File.Close (Input);
 
          Message.Audit_Loaded := True;

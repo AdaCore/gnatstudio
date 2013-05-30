@@ -30,9 +30,17 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
      (Self : in out Reader;
       Text : Unicode.CES.Byte_Sequence) is
    begin
-      if Self.Audit_Record /= null then
-         Append (Self.Audit_Record.Comment, Text);
-      end if;
+      case Self.Version is
+         when 2 =>
+            if Self.Audit_Record_V2 /= null then
+               Append (Self.Audit_Record_V2.Comment, Text);
+            end if;
+
+         when 3 =>
+            if Self.Audit_Record_V3 /= null then
+               Append (Self.Audit_Record_V3.Comment, Text);
+            end if;
+      end case;
    end Characters;
 
    -----------------
@@ -49,8 +57,15 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
 
    begin
       if Qname = Audit_Tag then
-         Self.Audit.Append (Self.Audit_Record);
-         Self.Audit_Record := null;
+         case Self.Version is
+            when 2 =>
+               Self.Audit_V2.Append (Self.Audit_Record_V2);
+               Self.Audit_Record_V2 := null;
+
+            when 3 =>
+               Self.Audit_V3.Append (Self.Audit_Record_V3);
+               Self.Audit_Record_V3 := null;
+         end case;
       end if;
    end End_Element;
 
@@ -59,17 +74,22 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
    -----------
 
    procedure Parse
-     (Self  : in out Reader;
-      Input : in out Input_Sources.Input_Source'Class;
-      Audit : out CodePeer.Audit_Vectors.Vector)
+     (Self     : in out Reader;
+      Input    : in out Input_Sources.Input_Source'Class;
+      Audit_V2 : out CodePeer.Audit_V2_Vectors.Vector;
+      Audit_V3 : out CodePeer.Audit_V3_Vectors.Vector)
    is
    begin
-      Self.Audit.Clear;
-      Self.Audit_Record := null;
+      Self.Audit_V2.Clear;
+      Self.Audit_Record_V2 := null;
+      Self.Audit_V3.Clear;
+      Self.Audit_Record_V3 := null;
+      Self.Version := Supported_Format_Version'First;
 
       Self.Parse (Input);
 
-      Audit := Self.Audit;
+      Audit_V2 := Self.Audit_V2;
+      Audit_V3 := Self.Audit_V3;
    end Parse;
 
    -------------------
@@ -87,28 +107,42 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
 
    begin
       if Qname = Audit_Trail_Tag then
-         null;
+         Self.Version := Format_Version'Value (Attrs.Get_Value ("format"));
 
       elsif Qname = Audit_Tag then
-         if Attrs.Get_Index ("probability") /= -1 then
-            Self.Audit_Record :=
-              new CodePeer.Audit_Record'
-                (Ranking_Changed => True,
-                 Timestamp       =>
-                   To_Unbounded_String (Attrs.Get_Value ("timestamp")),
-                 Ranking         =>
-                   CodePeer.Message_Ranking_Level'Value
-                     (Attrs.Get_Value ("probability")),
-                 Comment         => Null_Unbounded_String);
+         case Self.Version is
+            when 2 =>
+               if Attrs.Get_Index ("probability") /= -1 then
+                  Self.Audit_Record_V2 :=
+                    new CodePeer.Audit_Record_V2'
+                      (Ranking_Changed => True,
+                       Timestamp       =>
+                         To_Unbounded_String (Attrs.Get_Value ("timestamp")),
+                       Ranking         =>
+                         CodePeer.Message_Ranking_Level'Value
+                           (Attrs.Get_Value ("probability")),
+                       Comment         => Null_Unbounded_String);
 
-         else
-            Self.Audit_Record :=
-              new CodePeer.Audit_Record'
-                (Ranking_Changed => False,
-                 Timestamp       =>
-                   To_Unbounded_String (Attrs.Get_Value ("timestamp")),
-                 Comment         => Null_Unbounded_String);
-         end if;
+               else
+                  Self.Audit_Record_V2 :=
+                    new CodePeer.Audit_Record_V2'
+                      (Ranking_Changed => False,
+                       Timestamp       =>
+                         To_Unbounded_String (Attrs.Get_Value ("timestamp")),
+                       Comment         => Null_Unbounded_String);
+               end if;
+
+            when 3 =>
+               Self.Audit_Record_V3 :=
+                 new CodePeer.Audit_Record_V3'
+                   (Status      =>
+                      Audit_Status_Kinds'Value (Attrs.Get_Value ("status")),
+                    Approved_By =>
+                      To_Unbounded_String (Attrs.Get_Value ("approved")),
+                    Timestamp   =>
+                      To_Unbounded_String (Attrs.Get_Value ("timestamp")),
+                    Comment     => Null_Unbounded_String);
+         end case;
 
       else
          raise Program_Error with "Unexpected tag '" & Qname & "'";
