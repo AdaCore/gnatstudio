@@ -459,10 +459,16 @@ package body Gtkada.Entry_Completion is
       C.Set_Sort_Order (Sort_Descending);
       C.Clicked;
       Col := Self.View.Append_Column (C);
-
       Gtk_New (Render);
       C.Pack_Start (Render, False);
       C.Add_Attribute (Render, "markup", Column_Label);
+
+      --  Debug: show score
+      Gtk_New (C);
+      Col := Self.View.Append_Column (C);
+      Gtk_New (Render);
+      C.Pack_Start (Render, False);
+      C.Add_Attribute (Render, "text", Column_Score);
 
       if not Completion_In_Popup then
          Self.Completion_Box.Pack_Start
@@ -691,12 +697,6 @@ package body Gtkada.Entry_Completion is
       Self.Completions.Append (Iter);
 
       Score := Gint (Result.Score);
-
-      --  Give priority to shorter items (which means the pattern
-      --  matched a bigger portion of it). This way, "buffer" matches
-      --  "src_editor_buffer.adb" before "src_editor_buffer-hooks.adb".
-
-      Score := 100 * Score - Gint (Result.Short'Length);
 
       --  Take history into account as well (most recent items first)
 

@@ -42,18 +42,6 @@ package GPS.Kernel.Search.Filenames is
 
    type Filenames_Search_Result is new Kernel_Search_Result with private;
 
-   function Build_Filenames_Result
-      (Provider : not null access Filenames_Search_Provider'Class;
-       File   : GNATCOLL.VFS.Virtual_File;
-       Line, Column : Natural := 0;
-       Score  : Natural := 100;
-       Short  : String := "";
-       Long   : String := "")
-      return GPS.Search.Search_Result_Access;
-   --  Build a new result
-   --  Short is the contents of the result's short string, If unspecified,
-   --  it will be based on the file's base name.
-
 private
    type Filenames_Search_Provider is new Kernel_Search_Provider with record
       Pattern : GPS.Search.Search_Pattern_Access;

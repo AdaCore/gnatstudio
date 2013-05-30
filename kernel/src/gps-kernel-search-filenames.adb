@@ -27,6 +27,7 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
+with GNAT.IO; use GNAT.IO;
 
 package body GPS.Kernel.Search.Filenames is
 
@@ -146,41 +147,6 @@ package body GPS.Kernel.Search.Filenames is
       end if;
    end Set_Pattern;
 
-   ----------------------------
-   -- Build_Filenames_Result --
-   ----------------------------
-
-   function Build_Filenames_Result
-      (Provider : not null access Filenames_Search_Provider'Class;
-       File   : GNATCOLL.VFS.Virtual_File;
-       Line, Column : Natural := 0;
-       Score  : Natural := 100;
-       Short  : String := "";
-       Long   : String := "")
-      return GPS.Search.Search_Result_Access
-   is
-      L : constant GNAT.Strings.String_Access := new String'
-         ((if Long = "" then File.Display_Full_Name else Long));
-      S : GNAT.Strings.String_Access;
-   begin
-      if Short = "" then
-         S := new String'(+File.Base_Name);
-      else
-         S := new String'(Short);
-      end if;
-
-      return new Filenames_Search_Result'
-        (Kernel   => Provider.Kernel,
-         Provider => Provider,
-         Score  => Score,
-         Short  => S,
-         Long   => L,
-         Id     => L,
-         Line   => Line,
-         Column => Column,
-         File   => File);
-   end Build_Filenames_Result;
-
    ----------
    -- Next --
    ----------
@@ -197,6 +163,8 @@ package body GPS.Kernel.Search.Filenames is
          Text : constant String :=
             (if Self.Match_Directory then +F.Full_Name.all else +F.Base_Name);
          C : constant Search_Context := Self.Pattern.Start (Text);
+         L : GNAT.Strings.String_Access;
+         Score : Integer;
       begin
          if C /= GPS.Search.No_Match then
             Has_Next := Self.Runtime_Index < Self.Runtime'Last;
@@ -206,18 +174,39 @@ package body GPS.Kernel.Search.Filenames is
                return;
             end if;
 
+            --  Give priority to shorter items (which means the pattern matched
+            --  a bigger portion of it). This way, "buffer" matches
+            --  "src_editor_buffer.adb" before "src_editor_buffer-hooks.adb".
+
+            Score := 100 * C.Score - F.Base_Name'Length;
+
             if Self.Match_Directory then
-               Result := Build_Filenames_Result
-                  (Self, F, Line => Self.Line,
-                   Column => Self.Column, Score => C.Score,
-                   Long => Self.Pattern.Highlight_Match
-                      (Buffer => Text, Context => C));
+               Result := new Filenames_Search_Result'
+                  (Kernel   => Self.Kernel,
+                   Provider => Self,
+                   Score    => Score,
+                   Short    => new String'(+F.Base_Name),
+                   Long     => new String'
+                      (Self.Pattern.Highlight_Match
+                         (Buffer => Text, Context => C)),
+                   Id       => new String'(+F.Full_Name),
+                   Line     => Self.Line,
+                   Column   => Self.Column,
+                   File     => F);
             else
-               Result := Build_Filenames_Result
-                  (Self, F, Line => Self.Line,
-                   Column => Self.Column, Score => C.Score,
-                   Short => Self.Pattern.Highlight_Match
-                      (Buffer => Text, Context => C));
+               L := new String'(+F.Full_Name);
+               Result := new Filenames_Search_Result'
+                  (Kernel   => Self.Kernel,
+                   Provider => Self,
+                   Score    => Score,
+                   Short    => new String'
+                      (Self.Pattern.Highlight_Match
+                         (Buffer => Text, Context => C)),
+                   Long     => L,
+                   Id       => L,
+                   Line     => Self.Line,
+                   Column   => Self.Column,
+                   File     => F);
             end if;
 
             if Result /= null then
@@ -230,10 +219,16 @@ package body GPS.Kernel.Search.Filenames is
 
                Self.Seen.Include (F);
             end if;
+
+            if F.Base_Name = "vsearch.adb" then
+               Put_Line ("MANU searching vsearch.adb, score="
+                  & Result.Score'Img);
+            end if;
          end if;
       end Check;
 
       F : Virtual_File;
+      L : GNAT.Strings.String_Access;
    begin
       Result := null;
 
@@ -244,9 +239,17 @@ package body GPS.Kernel.Search.Filenames is
          F := GNATCOLL.VFS.Create_From_Base (+Self.Pattern.Get_Text);
          if F.Is_Regular_File then
             Self.Seen.Include (F);  --  avoid duplicates
-            Result := Build_Filenames_Result
-               (Self, F, Line => Self.Line,
-                Column => Self.Column, Score => 200);
+            L := new String'(+F.Full_Name);
+            Result := new Filenames_Search_Result'
+                  (Kernel   => Self.Kernel,
+                   Provider => Self,
+                   Score    => 100 * 100,
+                   Short    => new String'(+F.Base_Name),
+                   Long     => L,
+                   Id       => L,
+                   Line     => Self.Line,
+                   Column   => Self.Column,
+                   File     => F);
             Has_Next := True;
             return;
          end if;

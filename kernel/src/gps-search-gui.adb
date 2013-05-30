@@ -38,6 +38,7 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 with Histories;                use Histories;
 with Remote;                   use Remote;
+with GNAT.IO; use GNAT.IO;
 
 package body GPS.Search.GUI is
 
@@ -169,28 +170,39 @@ package body GPS.Search.GUI is
             Result.Score := Result.Score
                + (Self.Providers'Last - Self.Current_Provider) * 1_000_000;
 
-            if Self.Current_Index < Self.Current'Last then
-               Self.Current_Index := Self.Current_Index + 1;
-               Self.Current (Self.Current_Index) := Result;
+            --  ??? This doesn't take into account score modification that
+            --  will be done by the entry_completion for instance to show
+            --  most recent items first, or shorter items.
 
-            --  Keep only the results with the highest priority
-            elsif Result.Score > Self.Current (Self.Current'Last).Score then
-               Insert_At := Self.Current'Last;
+            Insert_At := Self.Current_Index + 1;
+            for J in reverse Self.Current'First .. Self.Current_Index loop
+               exit when Result.Score <= Self.Current (J).Score;
+               Insert_At := J;
+            end loop;
+
+            if Result.Score > 1_010_100 then
+               Put_Line
+                  ("MANU score=" & Result.Score'Img & " " & Result.Short.all);
+            end if;
+
+            if Insert_At > Self.Current'Last then
+               Free (Result);
+
+            elsif Self.Current_Index = Self.Current'Last then
+               Put_Line ("MANU Insert at pos " & Self.Current_Index'Img
+                   & " Score=" & Result.Score'Img & " " & Result.Short.all
+                   & " and remove last");
                Free (Self.Current (Self.Current'Last));
-
-               for J in Self.Current'First .. Self.Current'Last - 1 loop
-                  if Result.Score > Self.Current (J).Score then
-                     Insert_At := J;
-                     exit;
-                  end if;
-               end loop;
-
                Self.Current (Insert_At + 1 .. Self.Current'Last) :=
                   Self.Current (Insert_At .. Self.Current'Last - 1);
                Self.Current (Insert_At) := Result;
-
             else
-               Free (Result);
+               Put_Line ("MANU Insert at pos " & Self.Current_Index'Img
+                   & " Score=" & Result.Score'Img & " " & Result.Short.all);
+               Self.Current (Insert_At + 1 .. Self.Current_Index + 1) :=
+                  Self.Current (Insert_At .. Self.Current_Index);
+               Self.Current_Index := Self.Current_Index + 1;
+               Self.Current (Insert_At) := Result;
             end if;
          end if;
 
