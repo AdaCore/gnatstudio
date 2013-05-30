@@ -49,7 +49,7 @@ with Traces;                     use Traces;
 
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
-with CodePeer.Message_Review_Dialogs;
+with CodePeer.Message_Review_Dialogs_V2;
 with CodePeer.Messages_Reports;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
@@ -1738,7 +1738,7 @@ package body CodePeer.Module is
      (Self    : access Module_Id_Record'Class;
       Message : CodePeer.Message_Access)
    is
-      Review : CodePeer.Message_Review_Dialogs.Message_Review_Dialog;
+      Review_V2 : CodePeer.Message_Review_Dialogs_V2.Message_Review_Dialog;
 
    begin
       if not Message.Audit_Loaded then
@@ -1748,12 +1748,12 @@ package body CodePeer.Module is
       else
          --  Create and show review dialog
 
-         CodePeer.Message_Review_Dialogs.Gtk_New (Review, Message);
-         Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
-         Review.Show_All;
+         CodePeer.Message_Review_Dialogs_V2.Gtk_New (Review_V2, Message);
+         Review_V2.Set_Transient_For (Self.Kernel.Get_Main_Window);
+         Review_V2.Show_All;
          Context_CB.Connect
-           (Review,
-            CodePeer.Message_Review_Dialogs.Signal_Ok_Activated,
+           (Review_V2,
+            CodePeer.Message_Review_Dialogs_V2.Signal_Ok_Activated,
             Context_CB.To_Marshaller (On_Message_Reviewed'Access),
             (CodePeer_Module_Id (Self), null, null, Message));
       end if;

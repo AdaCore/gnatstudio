@@ -41,7 +41,7 @@ with Gtk.Widget;
 
 with GPS.Intl; use GPS.Intl;
 
-package body CodePeer.Message_Review_Dialogs is
+package body CodePeer.Message_Review_Dialogs_V2 is
 
    Probability_Model_Label_Column     : constant := 0;
    Probability_Model_Changed_Column : constant := 1;
@@ -420,4 +420,4 @@ package body CodePeer.Message_Review_Dialogs is
       Self.Destroy;
    end On_Ok;
 
-end CodePeer.Message_Review_Dialogs;
+end CodePeer.Message_Review_Dialogs_V2;

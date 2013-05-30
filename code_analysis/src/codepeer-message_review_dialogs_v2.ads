@@ -20,7 +20,7 @@ with Gtk.Combo_Box;
 with Gtk.Dialog;
 with Gtk.Text_Buffer;
 
-package CodePeer.Message_Review_Dialogs is
+package CodePeer.Message_Review_Dialogs_V2 is
 
    type Message_Review_Dialog_Record is
      new Gtk.Dialog.Gtk_Dialog_Record with private;
@@ -48,4 +48,4 @@ private
 
    Signal_Ok_Activated : constant Glib.Signal_Name := "ok_activated";
 
-end CodePeer.Message_Review_Dialogs;
+end CodePeer.Message_Review_Dialogs_V2;
