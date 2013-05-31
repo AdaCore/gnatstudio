@@ -61,9 +61,12 @@ package Aliases_Module is
       Name : SU.Unbounded_String;
       Expansion : SU.Unbounded_String;
    end record;
+   No_Alias_Info : constant Alias_Info := (SU.Null_Unbounded_String,
+                                           SU.Null_Unbounded_String);
 
    type Alias_Info_List is array (Positive range <>) of Alias_Info;
 
    function Get_Aliases_List return Alias_Info_List;
+   function Get_Alias (Name : SU.Unbounded_String) return Alias_Info;
 
 end Aliases_Module;

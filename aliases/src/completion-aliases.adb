@@ -29,7 +29,7 @@ package body Completion.Aliases is
 
    overriding function Get_Action_Name
      (Proposal : Alias_Completion_Proposal) return String
-   is ("Expand alias");
+   is ("Expand alias under cursor");
 
    overriding function Get_Documentation
      (Proposal : Alias_Completion_Proposal) return String

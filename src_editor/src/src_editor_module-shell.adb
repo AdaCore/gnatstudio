@@ -95,6 +95,7 @@ package body Src_Editor_Module.Shell is
    Before_Cst            : aliased constant String := "before";
    After_Cst             : aliased constant String := "after";
    Name_Cst              : aliased constant String := "name";
+   Left_Gravity_Cst      : aliased constant String := "left_gravity";
    First_Line_Cst        : aliased constant String := "first_line";
    Start_Column_Cst      : aliased constant String := "start_column";
    Last_Line_Cst         : aliased constant String := "last_line";
@@ -2117,11 +2118,13 @@ package body Src_Editor_Module.Shell is
                Get_Location (Data, 1).Forward_Line (Nth_Arg (Data, 2, 1))));
 
       elsif Command = "create_mark" then
-         Name_Parameters (Data, (1 => Name_Cst'Access));
+         Name_Parameters (Data, (1 => Name_Cst'Access,
+                                 2 => Left_Gravity_Cst'Access));
          Set_Return_Value
            (Data, Create_Editor_Mark
               (Get_Script (Data),
-               Get_Location (Data, 1).Create_Mark (Nth_Arg (Data, 2, ""))));
+               Get_Location (Data, 1).Create_Mark
+               (Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, True))));
 
       elsif Command = "get_char" then
          declare

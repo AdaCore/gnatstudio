@@ -236,7 +236,9 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Location) return Editor_Buffer'Class;
 
    overriding function Create_Mark
-     (This : Src_Editor_Location; Name : String := "")
+     (This : Src_Editor_Location;
+      Name : String := "";
+      Left_Gravity : Boolean := True)
       return Editor_Mark'Class;
 
    overriding function Forward_Char
@@ -1179,7 +1181,9 @@ package body Src_Editor_Module.Editors is
    -----------------
 
    overriding function Create_Mark
-     (This : Src_Editor_Location; Name : String := "")
+     (This : Src_Editor_Location;
+      Name : String := "";
+      Left_Gravity : Boolean := True)
       return Editor_Mark'Class
    is
       Success : Boolean;
@@ -1196,8 +1200,9 @@ package body Src_Editor_Module.Editors is
          if Mark = null then
             Mark := Create_Mark
               (Get_Buffer (Iter),
-               Mark_Name => Name,
-               Where     => Iter);
+               Mark_Name    => Name,
+               Where        => Iter,
+               Left_Gravity => Left_Gravity);
          else
             Move_Mark (Get_Buffer (Iter), Mark, Where => Iter);
          end if;

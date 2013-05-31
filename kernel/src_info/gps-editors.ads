@@ -162,7 +162,9 @@ package GPS.Editors is
    --  Return the editor in which the location is found
 
    function Create_Mark
-     (This : Editor_Location; Name : String := "")
+     (This : Editor_Location;
+      Name : String := "";
+      Left_Gravity : Boolean := True)
       return Editor_Mark'Class is abstract;
    --  Create a mark at that location in the buffer. The mark will stay
    --  permanently at that location, and follows if the buffer is modified. If
@@ -719,8 +721,10 @@ private
      (This : Dummy_Editor_Location) return Editor_Buffer'Class;
 
    overriding function Create_Mark
-     (This : Dummy_Editor_Location; Name : String := "")
-      return Editor_Mark'Class;
+     (This : Dummy_Editor_Location;
+      Name : String := "";
+      Left_Gravity : Boolean := True)
+      return Editor_Mark'Class is (Nil_Editor_Mark);
 
    overriding function Forward_Char
      (This : Dummy_Editor_Location;

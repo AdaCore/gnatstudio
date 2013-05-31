@@ -1320,9 +1320,12 @@ package body Completion_Window is
                         Label       => new String'(""),
                         Repeat_Count     => 1,
                         Remaining_Repeat => 0));
+                  Kernel : constant Kernel_Handle := Window.Explorer.Kernel;
                begin
+                  Delete (Window);
                   Launch_Foreground_Command
-                    (Window.Explorer.Kernel, Command, Destroy_On_Exit => True);
+                    (Kernel, Command, Destroy_On_Exit => True);
+                  return;
                end;
             end if;
          end if;

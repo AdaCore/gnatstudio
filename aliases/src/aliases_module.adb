@@ -96,6 +96,8 @@ with XML_Utils;                use XML_Utils;
 with Traces;                   use Traces;
 with XML_Parsers;
 
+with Aliases_Module.Scripts;
+
 package body Aliases_Module is
 
    function To_UStr (a : String)
@@ -2191,8 +2193,16 @@ package body Aliases_Module is
         (Kernel, "Current Date", 'D', Special_Entities'Access);
       Register_Special_Alias_Entity
         (Kernel, "Current Hour", 'H', Special_Entities'Access);
+
+      Aliases_Module.Scripts.Register_Commands
+        (Kernel_Handle (Kernel));
+
       --  Others are registered in src_editor_module
    end Register_Module;
+
+   ----------------------
+   -- Get_Aliases_List --
+   ----------------------
 
    function Get_Aliases_List return Alias_Info_List is
       use Aliases_Map;
@@ -2208,5 +2218,20 @@ package body Aliases_Module is
          end loop;
       end return;
    end Get_Aliases_List;
+
+   ---------------
+   -- Get_Alias --
+   ---------------
+
+   function Get_Alias (Name : SU.Unbounded_String) return Alias_Info is
+      Alias : Alias_Record;
+   begin
+      if Aliases_Module_Id.Aliases.Contains (Name) then
+         Alias := Aliases_Module_Id.Aliases.Element (Name);
+         return (Name => Alias.Name, Expansion => Alias.Expansion);
+      else
+         return No_Alias_Info;
+      end if;
+   end Get_Alias;
 
 end Aliases_Module;
