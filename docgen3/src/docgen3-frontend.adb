@@ -172,6 +172,184 @@ package body Docgen3.Frontend is
          function Get_Subprogram_Source return Unbounded_String;
          --  Retrieve the source of E
 
+         function Get_Record_Type_Source return Unbounded_String;
+         --  Retrieve the source of E
+
+         ----------------------------
+         -- Get_Record_Type_Source --
+         ----------------------------
+
+         function Get_Record_Type_Source return Unbounded_String is
+            Printout : Unbounded_String;
+
+            procedure Append (Text : String);
+            --  Append Text to Printout
+
+            function CB
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean;
+            --  Callback for entity parser
+
+            -----------------
+            -- Append_Line --
+            -----------------
+
+            procedure Append (Text : String) is
+            begin
+               Printout := Printout & Text;
+            end Append;
+
+            --------
+            -- CB --
+            --------
+
+            Par_Count : Natural := 0;
+            Last_Idx  : Natural := 0;
+
+            Private_Found    : Boolean := False;
+            End_Found        : Boolean := False;
+            End_Record_Found : Boolean := False;
+
+            function CB
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean
+            is
+               pragma Unreferenced (Partial_Entity);
+
+               S : String renames
+                     Buffer (Sloc_Start.Index .. Sloc_End.Index);
+
+            begin
+               --  Print all text between previous call and current one
+
+               if Last_Idx /= 0 then
+                  Append (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
+               end if;
+
+               Last_Idx := Sloc_End.Index;
+               Append (S);
+
+               --  if Entity = Block_Text then  --  identifier???
+               --     return False; --  continue
+
+               if Entity = Comment_Text then
+                  return False; --  continue
+
+               elsif Entity = Keyword_Text then
+                  declare
+                     Keyword : constant String := To_Lower (S);
+                  begin
+                     if Keyword  = "private" then
+                        Private_Found := True;
+                     elsif Keyword = "end" then
+                        End_Found := True;
+                     elsif End_Found and then Keyword = "record" then
+                        End_Record_Found := True;
+                     else
+                        End_Found := False;
+                     end if;
+                  end;
+               elsif Entity = Operator_Text then
+                  if S = "(" then
+                     Par_Count := Par_Count + 1;
+                  elsif S = ")" then
+                     Par_Count := Par_Count - 1;
+                  elsif S = ";" then
+                     if Par_Count = 0 then
+                        return Private_Found
+                          or else End_Record_Found;
+                     end if;
+                  end if;
+               end if;
+
+               return False;
+            exception
+               when E : others =>
+                  Trace (Exception_Handle, E);
+                  return True;
+            end CB;
+
+            --  Local variables
+
+            Entity_Index    : Natural;
+            Lines_Skipped   : Natural;
+            Prev_Word_Begin : Natural;
+            Prev_Word_End   : Natural;
+
+         --  Start of processing for Get_Record_Type_Source
+
+         begin
+            Trace (Me, "Get_Record_Type_Source of " & (+File.Base_Name));
+
+            --  Displace the pointer to the beginning of the record type
+            --  declaration
+
+            Entity_Index := Buffer'First;
+            GNATCOLL.Utils.Skip_Lines
+              (Str           => Buffer.all,
+               Lines         => LL.Get_Location (E).Line - 1,
+               Index         => Entity_Index,
+               Lines_Skipped => Lines_Skipped);
+
+            GNATCOLL.Utils.Skip_To_Column
+              (Str           => Buffer.all,
+               Columns       => Natural (LL.Get_Location (E).Column),
+               Index         => Entity_Index);
+
+            --  Locate the beginning of the previous word
+            declare
+               Idx : Natural := Entity_Index - 1;
+            begin
+               while Idx > 0
+                 and then (Buffer (Idx) = ' '
+                           or else Buffer (Idx) = ASCII.LF)
+               loop
+                  Idx := Idx - 1;
+               end loop;
+               Prev_Word_End := Idx;
+
+               while Idx > 0
+                 and then (Buffer (Idx) /= ' '
+                             and then Buffer (Idx) /= ASCII.LF)
+               loop
+                  Idx := Idx - 1;
+               end loop;
+               Prev_Word_Begin := Idx + 1;
+            end;
+
+            pragma Assert
+              (To_Lower (Buffer.all (Prev_Word_Begin .. Prev_Word_End))
+                = "type");
+
+            --  For incomplete and private types there is no need to use
+            --  the Ada parser. We just need to locate the ';'
+
+            if Is_Incomplete_Or_Private_Type (E) then
+               declare
+                  Idx : Natural := Entity_Index - 1;
+               begin
+                  while Idx > 0
+                    and then Buffer (Idx) /= ';'
+                  loop
+                     Idx := Idx + 1;
+                  end loop;
+
+                  Append (Buffer.all (Prev_Word_Begin .. Idx + 1));
+               end;
+
+            else
+               Parse_Entities
+                 (Lang, Buffer.all (Prev_Word_Begin .. Buffer'Last),
+                  CB'Unrestricted_Access);
+            end if;
+
+            return Printout;
+         end Get_Record_Type_Source;
+
          ---------------------------
          -- Get_Subprogram_Source --
          ---------------------------
@@ -254,7 +432,7 @@ package body Docgen3.Frontend is
             Index         : Natural;
             Lines_Skipped : Natural;
 
-         --  Start of processing for Get_Source
+         --  Start of processing for Get_Subprogram_Source
 
          begin
             Trace (Me, "Get_Source of " & (+File.Base_Name));
@@ -275,15 +453,18 @@ package body Docgen3.Frontend is
          end Get_Subprogram_Source;
 
       begin
-         if not LL.Is_Subprogram (E) then
-            --  To be improved???
+         if LL.Is_Subprogram (E) then
+            Set_Src (E, Get_Subprogram_Source);
+
+         elsif Is_Record_Type (E) then
+            Set_Src (E, Get_Record_Type_Source);
+
+         else
             Set_Src (E,
               To_Unbounded_String
                 ("<<Get_Source under development for this kind of entity>>"));
             return;
          end if;
-
-         Set_Src (E, Get_Subprogram_Source);
       end Get_Source;
 
       ------------------
