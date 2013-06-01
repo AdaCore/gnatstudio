@@ -385,7 +385,7 @@ package body Docgen3.Backend is
       --  Append Text to Printout plus ASCII.LF
 
       procedure Append_Subprogram_ReST (E : Entity_Id);
-      --  Append to Printout the reStructured output of a type
+      --  Append to Printout the reStructured output of a subprogram
 
       procedure Append_Type_ReST (E : Entity_Id);
       --  Append to Printout the reStructured output of a type
@@ -424,7 +424,6 @@ package body Docgen3.Backend is
          Append_Line ("");
 
          if Get_Src (E) /= Null_Unbounded_String then
-            Append_Line ("**profile**");
             Append_Line ("");
             Append_Line ("::");
             Append_Line ("");
@@ -459,11 +458,10 @@ package body Docgen3.Backend is
          Append_Line ("");
 
          if Get_Src (E) /= Null_Unbounded_String then
-            Append_Line ("**type**");
             Append_Line ("");
             Append_Line ("::");
             Append_Line ("");
-            Append_Line (To_String (Get_Src (E)));
+            Append_Line ("   " & To_String (Get_Src (E)));
             Append_Line ("");
          end if;
 
