@@ -1,5 +1,4 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Src_Editor_Buffer.Multi_Cursors is
 
@@ -23,9 +22,6 @@ package body Src_Editor_Buffer.Multi_Cursors is
       Cursor_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
         (Next_Multi_Cursor_Name, False);
    begin
-      Put_Line ("IN Add_Multi_Cursor");
-      Put_Line ("ITER LINE : " & Gint'Image (Get_Line (Location))
-                & "ITER COLUMN" & Gint'Image (Get_Line_Offset (Location)));
       Buffer.Multi_Cursors_List.Append
         ((Mark => Cursor_Mark,
           Current_Command => null,
