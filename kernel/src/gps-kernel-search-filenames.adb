@@ -16,27 +16,31 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+
+with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+
 with Gtk.Label;                 use Gtk.Label;
+
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Strings;              use GNAT.Strings;
 
 package body GPS.Kernel.Search.Filenames is
 
    type Hook_Project_View_Changed is new Function_No_Args with record
       Provider : access Filenames_Search_Provider;
-      --  The provider to refresh (do not free).
+      --  The provider to refresh (do not free)
    end record;
+
    overriding procedure Execute
-      (Hook : Hook_Project_View_Changed;
-       Kernel : access Kernel_Handle_Record'Class);
+     (Hook : Hook_Project_View_Changed;
+      Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
 
    -------------
@@ -44,8 +48,8 @@ package body GPS.Kernel.Search.Filenames is
    -------------
 
    overriding procedure Execute
-      (Hook : Hook_Project_View_Changed;
-       Kernel : access Kernel_Handle_Record'Class) is
+     (Hook : Hook_Project_View_Changed;
+      Kernel : access Kernel_Handle_Record'Class) is
    begin
       Unchecked_Free (Hook.Provider.Files);
       Unchecked_Free (Hook.Provider.Runtime);
@@ -76,7 +80,7 @@ package body GPS.Kernel.Search.Filenames is
    -------------------
 
    overriding function Documentation
-     (Self    : not null access Filenames_Search_Provider) return String
+     (Self : not null access Filenames_Search_Provider) return String
    is
       pragma Unreferenced (Self);
    begin
@@ -158,12 +162,15 @@ package body GPS.Kernel.Search.Filenames is
       Has_Next : out Boolean)
    is
       function Highlight_Runtime
-         (Str : String; Runtime : Boolean) return String;
+        (Str : String; Runtime : Boolean) return String;
       --  For runtime files, highlight them specially
 
+      -----------------------
+      -- Highlight_Runtime --
+      -----------------------
+
       function Highlight_Runtime
-         (Str : String; Runtime : Boolean) return String
-      is
+        (Str : String; Runtime : Boolean) return String is
       begin
          if Runtime then
             return "<i>" & Str & "</i>";
@@ -174,6 +181,10 @@ package body GPS.Kernel.Search.Filenames is
 
       procedure Check (F : Virtual_File; Runtime : Boolean);
       --  Sets Result to non-null if F matches
+
+      -----------
+      -- Check --
+      -----------
 
       procedure Check (F : Virtual_File; Runtime : Boolean) is
          Text : constant String :=
@@ -312,12 +323,14 @@ package body GPS.Kernel.Search.Filenames is
      (Self : not null access Filenames_Search_Result)
      return Gtk.Widget.Gtk_Widget
    is
-      Tmp : GNAT.Strings.String_Access;
+      Tmp   : GNAT.Strings.String_Access;
       Label : Gtk_Label;
    begin
       Tmp := Self.File.Read_File;
+
       if Tmp = null then
          return null;
+
       else
          Gtk_New (Label, Tmp.all);
          Label.Modify_Font (View_Fixed_Font.Get_Pref);
