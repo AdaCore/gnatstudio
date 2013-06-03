@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
--- This package presents a very bare bones scripting interface to the 
--- aliases module.
--- The only functionality provided on the ada side is to be able to retrieve
--- an alias instance by name. Every instance has two properties, name and
--- expansion. Everything else is done python-side
+--  This package presents a very bare bones scripting interface to the
+--  aliases module.
+--  The only functionality provided on the ada side is to be able to retrieve
+--  an alias instance by name. Every instance has two properties, name and
+--  expansion. Everything else is done python-side
 
 with GPS.Kernel;
 
