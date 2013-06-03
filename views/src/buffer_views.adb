@@ -47,7 +47,7 @@ with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Search;      use GPS.Kernel.Search;
 with GPS.Intl;               use GPS.Intl;
-with GPS.Search.GUI;         use GPS.Search, GPS.Search.GUI;
+with GPS.Search;             use GPS.Search;
 with Histories;              use Histories;
 with GUI_Utils;              use GUI_Utils;
 with Src_Editor_Module;      use Src_Editor_Module;
@@ -151,7 +151,7 @@ package body Buffer_Views is
        Has_Next : out Boolean);
    overriding function Display_Name
       (Self     : not null access Opened_Windows_Search) return String
-      is ("Opened Windows");
+      is ("Opened");
    overriding function Documentation
       (Self     : not null access Opened_Windows_Search) return String;
 
@@ -701,7 +701,9 @@ package body Buffer_Views is
       else
          C := Self.Pattern.Start (Child.Get_Short_Title);
          if C /= GPS.Search.No_Match then
-            L := new String'(Child.Get_Title);
+            if Child.Get_Title /= Child.Get_Short_Title then
+               L := new String'(Child.Get_Title);
+            end if;
             Result := new Opened_Windows_Result'
                (Kernel   => Self.Kernel,
                 Provider => Self,
@@ -710,10 +712,10 @@ package body Buffer_Views is
                    (Self.Pattern.Highlight_Match
                       (Child.Get_Short_Title, Context => C)),
                 Long     => L,
-                Id       => L);
+                Id       => new String'(Child.Get_Title));
             Self.Adjust_Score (Result);
 
-         else
+         elsif Child.Get_Short_Title /= Child.Get_Title then
             C := Self.Pattern.Start (Child.Get_Title);
             if C /= GPS.Search.No_Match then
                L := new String'(Child.Get_Title);
@@ -817,7 +819,7 @@ package body Buffer_Views is
          Label  => -"Close selected windows");
 
       P := new Opened_Windows_Search;
-      Register_Provider_And_Action (Kernel, P, "Opened Windows");
+      Register_Provider_And_Action (Kernel, P, Provider_Opened_Win);
    end Register_Module;
 
 end Buffer_Views;

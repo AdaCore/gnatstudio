@@ -15,34 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings; use GNAT.Strings;
-with GPS.Search;   use GPS.Search;
-with Histories;    use Histories;
+with GNAT.Strings;         use GNAT.Strings;
+with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
+with GPS.Search.GUI;       use GPS.Search, GPS.Search.GUI;
+with Histories;            use Histories;
 
 package body GPS.Kernel.Search is
 
    Max_History_Items : constant := 5;
    --  Maximum number of items stored in the history
-
-   ---------
-   -- Get --
-   ---------
-
-   overriding function Get
-     (Self : Kernel_Provider_Registry;
-      Name : String) return Search_Provider_Access
-   is
-      P : constant Search_Provider_Access :=
-        Search_Provider_Registry (Self).Get (Name);
-   begin
-      if P /= null
-        and then P.all in Kernel_Search_Provider'Class
-      then
-         Kernel_Search_Provider (P.all).Kernel := Self.Kernel;
-      end if;
-
-      return P;
-   end Get;
 
    ------------------
    -- Adjust_Score --
@@ -88,5 +69,41 @@ package body GPS.Kernel.Search is
       Set_Max_Length (Self.Kernel.Get_History.all, Max_History_Items, Key);
       Self.Kernel.Add_To_History (Key, Result.Id.all);
    end On_Result_Executed;
+
+   ----------------------------------
+   -- Register_Provider_And_Action --
+   ----------------------------------
+
+   procedure Register_Provider_And_Action
+      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Provider : not null access Kernel_Search_Provider'Class;
+       Name     : String)
+   is
+      Command : Global_Search_Command_Access;
+   begin
+      Provider.Kernel := Kernel_Handle (Kernel);
+      GPS.Kernel.Search.Registry.Register (Name, Provider);
+
+      --  ??? Should come from user preferences, not hard-coded
+
+      if Name = Provider_Filenames then
+         Provider.Rank := 2;
+      elsif Name = Provider_Actions then
+         Provider.Rank := 3;
+      elsif Name = Provider_Builds then
+         Provider.Rank := 4;
+      elsif Name = Provider_Opened_Win then
+         Provider.Rank := 1;
+      end if;
+
+      Command := new Global_Search_Command;
+      Command.Provider := Search_Provider_Access (Provider);
+      Command.History := new History_Key'
+         ("global-search-entry-" & History_Key (Name));
+      Register_Action
+         (Kernel, "Global Search in context: " & Name, Command,
+          Description => Command.Provider.Documentation,
+          Category => "Search");
+   end Register_Provider_And_Action;
 
 end GPS.Kernel.Search;

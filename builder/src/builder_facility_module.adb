@@ -17,6 +17,7 @@
 
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
@@ -55,6 +56,8 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Search;         use GPS.Kernel.Search;
+with GPS.Search;                use GPS.Search;
 with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 
@@ -89,6 +92,9 @@ package body Builder_Facility_Module is
 
    Main_Menu : constant String := '/' & (-"_Build") & '/';
    --  -"Build"
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+      (Any_Type, Any_Type_Access);
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
@@ -192,6 +198,47 @@ package body Builder_Facility_Module is
       Object  : access GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+
+   ---------------
+   -- Searching --
+   ---------------
+
+   type Target_Cursor_Access is access all Target_Cursor;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+      (Target_Cursor, Target_Cursor_Access);
+
+   type Builder_Search_Provider is new Kernel_Search_Provider with record
+      Pattern : Search_Pattern_Access;
+      Iter    : Target_Cursor_Access;
+      Mains   : Any_Type_Access;
+      Current_Main : Integer;
+   end record;
+   overriding procedure Free (Self : in out Builder_Search_Provider);
+   overriding procedure Set_Pattern
+      (Self     : not null access Builder_Search_Provider;
+       Pattern  : not null access GPS.Search.Search_Pattern'Class;
+       Limit    : Natural := Natural'Last);
+   overriding procedure Next
+      (Self     : not null access Builder_Search_Provider;
+       Result   : out GPS.Search.Search_Result_Access;
+       Has_Next : out Boolean);
+   overriding function Display_Name
+      (Self     : not null access Builder_Search_Provider) return String
+      is ("Build");
+   overriding function Documentation
+      (Self     : not null access Builder_Search_Provider) return String;
+
+   procedure Setup
+      (Self : not null access Builder_Search_Provider'Class);
+   --  Preparate internal data for the current target
+
+   type Builder_Search_Result is new Kernel_Search_Result with record
+      Target : Target_Access;
+      Main   : Virtual_File;
+   end record;
+   overriding procedure Execute
+      (Self       : not null access Builder_Search_Result;
+       Give_Focus : Boolean);
 
    -----------------------
    -- Local subprograms --
@@ -1692,7 +1739,9 @@ package body Builder_Facility_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      P : Kernel_Search_Provider_Access;
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
@@ -1708,6 +1757,12 @@ package body Builder_Facility_Module is
         (Module      => Builder_Module_ID,
          Kernel      => Kernel,
          Module_Name => "Builder Facility");
+
+      P := new Builder_Search_Provider;
+      Register_Provider_And_Action (Kernel, P, Provider_Builds);
+      if P.Kernel = null then
+         raise Program_Error;
+      end if;
 
       --  Register the menus
 
@@ -1884,5 +1939,158 @@ package body Builder_Facility_Module is
          Recompute_View (Get_Kernel);
       end if;
    end On_Build_Mode_Changed;
+
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   overriding procedure Set_Pattern
+      (Self     : not null access Builder_Search_Provider;
+       Pattern  : not null access GPS.Search.Search_Pattern'Class;
+       Limit    : Natural := Natural'Last)
+   is
+      pragma Unreferenced (Limit);
+   begin
+      Self.Pattern := Search_Pattern_Access (Pattern);
+
+      Unchecked_Free (Self.Iter);
+
+      Self.Iter := new Target_Cursor'
+         (Get_First_Target (Builder_Module_ID.Registry));
+      Setup (Self);
+   end Set_Pattern;
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup
+      (Self : not null access Builder_Search_Provider'Class)
+   is
+      T : constant Target_Access := Get_Target (Self.Iter.all);
+   begin
+      if Self.Mains /= null then
+         Free (Self.Mains.all);
+         Unchecked_Free (Self.Mains);
+      end if;
+
+      if T /= null then
+         declare
+            Targets : constant Unbounded_String :=
+               Get_Properties (T).Target_Type;
+            Data : aliased String_Hooks_Args :=
+               (Hooks_Data with
+                Length => Length (Targets),
+                Value  => To_String (Targets));
+         begin
+            Self.Mains := new Any_Type'(Run_Hook_Until_Not_Empty
+               (Self.Kernel,
+                Compute_Build_Targets_Hook,
+                Data'Unchecked_Access));
+            Self.Current_Main := 1;
+         end;
+      else
+         Self.Mains := null;
+         Self.Current_Main := Integer'Last;
+      end if;
+   end Setup;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+      (Self     : not null access Builder_Search_Provider;
+       Result   : out GPS.Search.Search_Result_Access;
+       Has_Next : out Boolean)
+   is
+      T : constant Target_Access := Get_Target (Self.Iter.all);
+      C : Search_Context;
+   begin
+      Result := null;
+      if T = null or else Self.Mains = null then
+         Has_Next := False;
+      else
+         if Self.Current_Main < Self.Mains.Length then
+            declare
+               Main : constant Virtual_File :=
+                  Create (+Self.Mains.List (Self.Current_Main).Tuple (2).Str);
+               Name : constant String :=
+                  Get_Name (T) & " " & Main.Display_Base_Name;
+            begin
+               C := Self.Pattern.Start (Name);
+               if C /= GPS.Search.No_Match then
+                  Result := new Builder_Search_Result'
+                     (Kernel   => Self.Kernel,
+                      Provider => Self,
+                       Score   => C.Score,
+                       Short   => new String'
+                          (Self.Pattern.Highlight_Match (Name, Context => C)),
+                       Long    => null,
+                       Id      => new String'("build-" & Name),
+                       Main    => Main,
+                       Target  => T);
+                  Self.Adjust_Score (Result);
+               end if;
+
+            end;
+         end if;
+
+         Self.Current_Main := Self.Current_Main + 1;
+         if Self.Current_Main > Self.Mains.Length then
+            Next (Self.Iter.all);
+            Setup (Self);
+            Has_Next := Get_Target (Self.Iter.all) /= null;
+         end if;
+      end if;
+   end Next;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Builder_Search_Provider) is
+   begin
+      if Self.Mains /= null then
+         Free (Self.Mains.all);
+         Unchecked_Free (Self.Mains);
+      end if;
+
+      Unchecked_Free (Self.Iter);
+
+      Free (Kernel_Search_Provider (Self));
+   end Free;
+
+   -------------------
+   -- Documentation --
+   -------------------
+
+   overriding function Documentation
+      (Self     : not null access Builder_Search_Provider) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return "Search amongst build targets";
+   end Documentation;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self       : not null access Builder_Search_Result;
+       Give_Focus : Boolean)
+   is
+      C : aliased Build_Command;
+      Result : Command_Return_Type;
+      pragma Unreferenced (Result, Give_Focus);
+   begin
+      C.Builder := Builder;
+      C.Target_Name := To_Unbounded_String (Get_Name (Self.Target));
+      C.Main    := Self.Main;
+      C.Dialog  := Build_Command_Utils.Default;
+      C.Quiet   := False;
+      Result := C.Execute (Context => Null_Context);
+   end Execute;
 
 end Builder_Facility_Module;

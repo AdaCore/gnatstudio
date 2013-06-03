@@ -54,22 +54,19 @@ package GPS.Kernel.Search is
    --  Change the list of recent items, after Result has been selected
    --  by the user.
 
-   type Kernel_Provider_Registry
-     is new GPS.Search.Search_Provider_Registry with
-      record
-         Kernel : GPS.Kernel.Kernel_Handle;
-      end record;
-
-   overriding function Get
-     (Self : Kernel_Provider_Registry;
-      Name : String) return GPS.Search.Search_Provider_Access;
-   --  Same as inherited Get, but also initializes the Kernel field in the
-   --  provider, when needed
-
    Provider_Filenames : constant String := "file names";
    Provider_Actions   : constant String := "actions";
+   Provider_Builds    : constant String := "builds";
+   Provider_Opened_Win : constant String := "opened windows";
 
-   Registry : Kernel_Provider_Registry;
+   Registry : GPS.Search.Search_Provider_Registry;
    --  ??? Will be moved to the kernel
+
+   procedure Register_Provider_And_Action
+      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Provider : not null access Kernel_Search_Provider'Class;
+       Name     : String);
+   --  Register the provider (and sets its Kernel field).
+   --  Creates an action for it so that users can do key bindings.
 
 end GPS.Kernel.Search;

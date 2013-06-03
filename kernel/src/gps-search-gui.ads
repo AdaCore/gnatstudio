@@ -18,8 +18,9 @@
 --  This package provides the GUI support for the global search entry
 --  in the GPS toolbar.
 
+with Commands.Interactive;
 with GPS.Kernel;   use GPS.Kernel;
-with GPS.Kernel.Search;
+with Histories;
 
 package GPS.Search.GUI is
 
@@ -27,12 +28,21 @@ package GPS.Search.GUI is
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Creates the global search entry, and all GPS actions to access it.
 
-   procedure Register_Provider_And_Action
-      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Provider :
-          not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
-       Name     : String);
-   --  Register the provider (and sets its Kernel field).
-   --  Creates an action for it so that users can do key bindings.
+   --------------
+   -- Commands --
+   --------------
+
+   type Global_Search_Command is new Commands.Interactive.Interactive_Command
+   with record
+      Provider : GPS.Search.Search_Provider_Access;
+      History  : access Histories.History_Key;
+   end record;
+   type Global_Search_Command_Access
+      is access all Global_Search_Command'Class;
+   overriding function Execute
+      (Self    : access Global_Search_Command;
+       Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Activate the global search field
 
 end GPS.Search.GUI;

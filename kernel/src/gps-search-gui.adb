@@ -46,17 +46,6 @@ package body GPS.Search.GUI is
    Proposals_Per_Provider : constant := 5;
    --  Number of proposals from each provider in the Overall_Search_Provider
 
-   type Global_Search_Command is new Interactive_Command with record
-      Provider : GPS.Search.Search_Provider_Access;
-      History  : access History_Key;
-   end record;
-   type Global_Search_Command_Access
-      is access all Global_Search_Command'Class;
-   overriding function Execute
-      (Self    : access Global_Search_Command;
-       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Activate the global search field
-
    type Global_Search_Module_Record is new Module_ID_Record with record
       Search          : Gtkada_Entry;
 
@@ -183,7 +172,7 @@ package body GPS.Search.GUI is
             --  slower.
 
             Result.Score := Result.Score
-               + (100 - Self.Current_Provider) * 1_000_000;
+               + (100 - Self.Provider.Rank) * 1_000_000;
 
             --  ??? This doesn't take into account score modification that
             --  will be done by the entry_completion for instance to show
@@ -391,31 +380,6 @@ package body GPS.Search.GUI is
       Open_File_Dialog.Destroy;
    end On_Open_From_Project;
 
-   ----------------------------------
-   -- Register_Provider_And_Action --
-   ----------------------------------
-
-   procedure Register_Provider_And_Action
-      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Provider :
-          not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
-       Name     : String)
-   is
-      Command : Global_Search_Command_Access;
-   begin
-      Provider.Kernel := Kernel_Handle (Kernel);
-      GPS.Kernel.Search.Registry.Register (Name, Provider);
-
-      Command := new Global_Search_Command;
-      Command.Provider := GPS.Kernel.Search.Registry.Get (Name);
-      Command.History := new History_Key'
-         ("global-search-entry-" & History_Key (Name));
-      Register_Action
-         (Kernel, "Global Search in context: " & Name, Command,
-          Description => Command.Provider.Documentation,
-          Category => "Search");
-   end Register_Provider_And_Action;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -437,8 +401,6 @@ package body GPS.Search.GUI is
          (Module      => Module,
           Kernel      => Kernel,
           Module_Name => "Global_Search");
-
-      GPS.Kernel.Search.Registry.Kernel := Kernel_Handle (Kernel);
 
       Command := new Global_Search_Command;
       Command.Provider := Search_Provider_Access (Overall);
