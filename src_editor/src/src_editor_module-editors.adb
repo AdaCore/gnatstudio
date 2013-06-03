@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System;
@@ -1558,16 +1557,12 @@ package body Src_Editor_Module.Editors is
    overriding function New_Location
      (This   : Src_Editor_Buffer;
       Line   : Integer;
-      Column : Visible_Column_Type) return Editor_Location'Class
-   is
-      Result : Src_Editor_Location;
+      Column : Visible_Column_Type) return Editor_Location'Class is
    begin
-      Result.Buffer := This;
-      Result.Line   := Editable_Line_Type'Max (1, Editable_Line_Type (Line));
-      Result.Column := Visible_Column_Type'Max
-        (1, Column);
-
-      return Result;
+      return Create_Editor_Location
+        (This,
+         Editable_Line_Type (Line),
+         Character_Offset_Type (Column));
    end New_Location;
 
    ---------
