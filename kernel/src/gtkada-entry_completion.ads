@@ -24,6 +24,7 @@ with Gtk.Box;
 with Gtk.Check_Button;
 with Gtk.Combo_Box_Text;
 with Gtk.Scrolled_Window;
+with Gtk.Tree_View_Column;
 with Gtk.List_Store;
 with Gtkada.Search_Entry;
 with Gtk.Tree_View;
@@ -130,6 +131,9 @@ private
       --  The popup window
 
       Grab_Device             : Gdk.Device.Gdk_Device;
+
+      Column_Provider  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Column_Match     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
 
       Settings                : Gtk.Box.Gtk_Box;
       Settings_Case_Sensitive : Gtk.Check_Button.Gtk_Check_Button;

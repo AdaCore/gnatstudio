@@ -345,7 +345,6 @@ package body Gtkada.Entry_Completion is
       Scrolled : Gtk_Scrolled_Window;
       Box  : Gtk_Box;
       Col  : Gint;
-      C    : Gtk_Tree_View_Column;
       Sep  : Gtk_Separator;
       Render : Gtk_Cell_Renderer_Text;
       Dummy  : Boolean;
@@ -438,11 +437,12 @@ package body Gtkada.Entry_Completion is
          (Sort_Column_Id => Column_Score,
           Order          => Sort_Descending);
 
-      Gtk_New (C);
-      Col := Self.View.Append_Column (C);
+      Gtk_New (Self.Column_Provider);
+      Col := Self.View.Append_Column (Self.Column_Provider);
       Gtk_New (Render);
-      C.Pack_Start (Render, False);
-      C.Add_Attribute (Render, "text", Column_Provider);
+      Self.Column_Provider.Pack_Start (Render, False);
+      Self.Column_Provider.Add_Attribute
+         (Render, "text", Column_Provider);
 
       Get_Style_Context (Self.View).Get_Background_Color
          (Gtk_State_Flag_Normal, Color);
@@ -454,14 +454,14 @@ package body Gtkada.Entry_Completion is
       Set_Property (Render, Gtk.Cell_Renderer.Xalign_Property, 1.0);
       Set_Property (Render, Gtk.Cell_Renderer.Yalign_Property, 0.0);
 
-      Gtk_New (C);
-      C.Set_Sort_Column_Id (Column_Score);
-      C.Set_Sort_Order (Sort_Descending);
-      C.Clicked;
-      Col := Self.View.Append_Column (C);
+      Gtk_New (Self.Column_Match);
+      Self.Column_Match.Set_Sort_Column_Id (Column_Score);
+      Self.Column_Match.Set_Sort_Order (Sort_Descending);
+      Self.Column_Match.Clicked;
+      Col := Self.View.Append_Column (Self.Column_Match);
       Gtk_New (Render);
-      C.Pack_Start (Render, False);
-      C.Add_Attribute (Render, "markup", Column_Label);
+      Self.Column_Match.Pack_Start (Render, False);
+      Self.Column_Match.Add_Attribute (Render, "markup", Column_Label);
 
       --  Debug: show score
       --  Code is left here for convenience
@@ -634,6 +634,7 @@ package body Gtkada.Entry_Completion is
       Found : Boolean;
       M    : Gtk_Tree_Model;
       Iter : Gtk_Tree_Iter;
+      Result : Search_Result_Access;
    begin
       if Event.Button = 1 then
          Self.View.Get_Path_At_Pos
@@ -648,8 +649,16 @@ package body Gtkada.Entry_Completion is
 
          if Found then
             Iter := Get_Iter (M, Path);
-            Self.View.Get_Selection.Select_Iter (Iter);
-            Activate_Proposal (Gtkada_Entry (Ent), Force => False);
+
+            if Column = Self.Column_Match then
+               Self.View.Get_Selection.Select_Iter (Iter);
+               Activate_Proposal (Gtkada_Entry (Ent), Force => False);
+
+            elsif Column = Self.Column_Provider then
+               Result := Convert (Get_Address (+M, Iter, Column_Data));
+               Self.Set_Completion (Result.Provider);
+               On_Entry_Changed (Self);
+            end if;
          end if;
 
          Path_Free (Path);
@@ -1170,6 +1179,7 @@ package body Gtkada.Entry_Completion is
        Completion : not null access GPS.Search.Search_Provider'Class) is
    begin
       Self.Completion := Search_Provider_Access (Completion);
+      Self.GEntry.Set_Tooltip_Markup (Completion.Documentation);
    end Set_Completion;
 
    --------------

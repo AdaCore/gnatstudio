@@ -103,6 +103,8 @@ package body GPS.Search.GUI is
       Has_Next : out Boolean);
    overriding function Display_Name
      (Self     : not null access Overall_Search_Provider) return String;
+   overriding function Documentation
+     (Self : not null access Overall_Search_Provider) return String;
 
    procedure On_Escape (Self : access Gtk_Widget_Record'Class);
    --  Called when "<escape>" has been called
@@ -116,6 +118,18 @@ package body GPS.Search.GUI is
 
    procedure Reset;
    --  Reset the global search entry after <escape> or a search is selected
+
+   -------------------
+   -- Documentation --
+   -------------------
+
+   overriding function Documentation
+     (Self : not null access Overall_Search_Provider) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return "Searches everywhere in GPS";
+   end Documentation;
 
    -----------------
    -- Set_Pattern --
