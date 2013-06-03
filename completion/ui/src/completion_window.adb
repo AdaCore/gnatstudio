@@ -439,7 +439,6 @@ package body Completion_Window is
    is
       Count : Natural := 0;
    begin
-
       --  If the idle function is running, unregister it
 
       if Explorer.Has_Idle_Computation then
@@ -624,6 +623,9 @@ package body Completion_Window is
             Custom_Icon_Name : constant String
               := Proposal.Get_Custom_Icon_Name;
             Icon : Gdk.Pixbuf.Gdk_Pixbuf;
+            Do_Show_Completion : constant Boolean :=
+              (Explorer.Pattern = null
+               or else Is_Prefix (Explorer.Pattern.all, Completion));
          begin
             exit when Last_Completion /= ""
               and then Completion /= Last_Completion;
@@ -645,45 +647,41 @@ package body Completion_Window is
               or else Explorer.Info
                 (Explorer.Index - 1).Text.all /= Completion
             then
-               if Explorer.Pattern = null
-                 or else Is_Prefix (Explorer.Pattern.all, Completion)
-               then
-                  Info :=
-                    (new String'(Showable),
-                     new String'(Completion),
-                     Icon,
-                     Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
-                     List,
-                     Proposal.Is_Accessible);
+               Info :=
+                 (new String'(Showable),
+                  new String'(Completion),
+                  Icon,
+                  Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
+                  List,
+                  Proposal.Is_Accessible);
 
-                  Augment_Notes (Info, Proposal);
+               Augment_Notes (Info, Proposal);
 
-                  Explorer.Info (Explorer.Index) := Info;
-                  Explorer.Model.Insert_Before (Iter, Explorer.Computing_Iter);
+               Explorer.Info (Explorer.Index) := Info;
+               Explorer.Model.Insert_Before (Iter, Explorer.Computing_Iter);
 
-                  --  Set all columns
-                  Explorer.Model.Set (Iter, Markup_Column, Info.Markup.all);
-                  if Info.Icon /= null then
-                     Explorer.Model.Set (Iter, Icon_Column, Info.Icon);
-                  end if;
-                  Explorer.Model.Set
-                    (Iter, Index_Column, Gint (Explorer.Index));
-                  Explorer.Model.Set (Iter, Completion_Column, Info.Text.all);
-                  Explorer.Model.Set (Iter, Shown_Column, True);
-                  Explorer.Shown := Explorer.Shown + 1;
+               --  Set all columns
+               Explorer.Model.Set (Iter, Markup_Column, Info.Markup.all);
+               if Info.Icon /= null then
+                  Explorer.Model.Set (Iter, Icon_Column, Info.Icon);
+               end if;
+               Explorer.Model.Set
+                 (Iter, Index_Column, Gint (Explorer.Index));
+               Explorer.Model.Set (Iter, Completion_Column, Info.Text.all);
+               Explorer.Model.Set (Iter, Shown_Column, Do_Show_Completion);
+               Explorer.Shown := Explorer.Shown + 1;
 
-                  Explorer.Index := Explorer.Index + 1;
+               Explorer.Index := Explorer.Index + 1;
 
-                  if Explorer.Index > Explorer.Info'Last then
-                     declare
-                        A : Information_Array (1 .. Explorer.Info'Last * 2);
-                     begin
-                        A (1 .. Explorer.Index - 1) :=
-                          Explorer.Info (1 .. Explorer.Index - 1);
-                        Unchecked_Free (Explorer.Info);
-                        Explorer.Info := new Information_Array'(A);
-                     end;
-                  end if;
+               if Explorer.Index > Explorer.Info'Last then
+                  declare
+                     A : Information_Array (1 .. Explorer.Info'Last * 2);
+                  begin
+                     A (1 .. Explorer.Index - 1) :=
+                       Explorer.Info (1 .. Explorer.Index - 1);
+                     Unchecked_Free (Explorer.Info);
+                     Explorer.Info := new Information_Array'(A);
+                  end;
                end if;
             else
                --  Check if current item is accessible while previous is not
