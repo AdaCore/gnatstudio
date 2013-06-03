@@ -3360,6 +3360,12 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def expand_alias(alias):
+        """
+        Expand given alias in the editor buffer at the point where the cursor
+        is.
+        """
+
     def file(self):
         """
         Returns the name of the file edited in this buffer
@@ -9442,6 +9448,23 @@ column.
         :param str: A string
         """
         pass  # implemented in Ada
+
+###########################################################
+# Alias
+###########################################################
+
+class Alias(object):
+    """
+    This class represents a GPS Alias, that is, a code template
+    to be expanded in an editor. This class allows you to manipulate
+    them programmatically.
+    """
+
+    @staticmethod
+    def get(name):
+        """
+        Get the alias instance corresponding to name
+        """
 
 ###########################################################
 # OutputParserWrapper

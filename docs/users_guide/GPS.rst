@@ -117,6 +117,15 @@ Classes
 
    .. automethod:: GPS.Activities.vcs
 
+:class:`GPS.Alias`
+^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Alias
+
+   
+
+   .. automethod:: GPS.Alias.get
+
 :class:`GPS.AreaContext`
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -597,6 +606,8 @@ Classes
    .. automethod:: GPS.EditorBuffer.delete
 
    .. automethod:: GPS.EditorBuffer.end_of_buffer
+
+   .. automethod:: GPS.EditorBuffer.expand_alias
 
    .. automethod:: GPS.EditorBuffer.file
 

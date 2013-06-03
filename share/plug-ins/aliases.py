@@ -5,8 +5,6 @@ from collections import defaultdict
 from text_utils import goto_word_start
 import re
 
-EditorLocation.goto_word_start = goto_word_start
-
 subst_pattern = re.compile("%\(.*?\)|%_")
 id_pattern = re.compile(r"[^\w0-9_]")
 
@@ -55,7 +53,7 @@ def expand_alias_action():
     """
     editor = EditorBuffer.get()
     cursor_loc = editor.current_view().cursor().forward_char(-1)
-    start_loc = cursor_loc.goto_word_start()
+    start_loc = goto_word_start(cursor_loc)
     alias_name = editor.get_chars(start_loc, cursor_loc)
     editor.delete(start_loc, cursor_loc)
     alias = Alias.get(alias_name)
