@@ -374,8 +374,12 @@ package body GPS.Search is
             (Buffer (Buffer'First .. Context.Start - 1)));
 
       for B in Context.Start .. Context.Finish loop
-         --   ??? Missing case sensitivity
-         if T <= Self.Text'Last and then Buffer (B) = Self.Text (T) then
+         if T <= Self.Text'Last
+            and then
+             ((Self.Case_Sensitive and then Buffer (B) = Self.Text (T))
+               or else (not Self.Case_Sensitive
+                   and then To_Lower (Buffer (B)) = To_Lower (Self.Text (T))))
+         then
             Append (Result, "<b>"
                & Glib.Convert.Escape_Text ("" & Buffer (B)) & "</b>");
             T := T + 1;
