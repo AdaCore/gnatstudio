@@ -21,7 +21,7 @@
 with Basic_Types;   use Basic_Types;
 with GNAT.Strings;
 with GNATCOLL.Xref;
-private with Ada.Containers.Indefinite_Ordered_Maps;
+private with Ada.Containers.Vectors;
 
 package GPS.Search is
    use type GNATCOLL.Xref.Visible_Column;
@@ -340,6 +340,11 @@ package GPS.Search is
    --  Retrieve a copy of the registered provider with this name (or null if
    --  there is no such registered provider.
 
+   function Get
+     (Self : Search_Provider_Registry;
+      N    : Positive) return Search_Provider_Access;
+   --  Retrieve a provider by rank
+
 private
 
    type Search_Pattern is abstract tagged record
@@ -358,11 +363,16 @@ private
       Ref_Index => -1, Ref_Line => 1, Ref_Column => 0,
       Ref_Visible_Column => -1);
 
-   package Provider_Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (String, Search_Provider_Access);
+   type Provider_Info is record
+      Name     : GNAT.Strings.String_Access;
+      Provider : Search_Provider_Access;
+   end record;
+
+   package Provider_Vectors is new Ada.Containers.Vectors
+     (Positive, Provider_Info);
 
    type Search_Provider_Registry is tagged record
-      Map : Provider_Maps.Map;
+      Providers : Provider_Vectors.Vector;
    end record;
 
 end GPS.Search;

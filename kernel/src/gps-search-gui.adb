@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Gdk.Types.Keysyms;        use Gdk.Types, Gdk.Types.Keysyms;
 with Glib.Object;              use Glib.Object;
@@ -33,6 +32,8 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Search;        use GPS.Kernel.Search;
+with GPS.Kernel.Search.Actions;
+with GPS.Kernel.Search.Filenames;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -75,16 +76,12 @@ package body GPS.Search.GUI is
 
    Module : Global_Search_Module;
 
-   type Provider_Array is array (Natural range <>) of Search_Provider_Access;
-   type Provider_Array_Access is access Provider_Array;
    type Result_Array is array (Natural range <>) of Search_Result_Access;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-      (Provider_Array, Provider_Array_Access);
-
    type Overall_Search_Provider is new Kernel_Search_Provider with record
-      Providers : Provider_Array_Access;
-      Current_Provider : Integer := -1;
+      Pattern : Search_Pattern_Access;
+      Provider : Search_Provider_Access;  --  the current one
+      Current_Provider : Integer := -1;   --  index of current one
 
       Current : Result_Array (1 .. Proposals_Per_Provider);
       Current_Returned : Natural;
@@ -141,12 +138,16 @@ package body GPS.Search.GUI is
       Limit   : Natural := Natural'Last)
    is
    begin
-      for P in Self.Providers'Range loop
-         Self.Providers (P).Set_Pattern
-            (Pattern, Limit => Natural'Min (Limit, Proposals_Per_Provider));
-      end loop;
+      Self.Pattern := Search_Pattern_Access (Pattern);
+      Self.Current_Provider := 1;
+      Self.Provider := Registry.Get (Self.Current_Provider);
 
-      Self.Current_Provider := Self.Providers'First;
+      if Self.Provider /= null then
+         Self.Provider.Set_Pattern
+            (Self.Pattern,
+             Limit => Natural'Min (Limit, Proposals_Per_Provider));
+      end if;
+
       Self.Current_Returned := Self.Current'First - 1;
       Self.Current_Index := Self.Current'First - 1;
    end Set_Pattern;
@@ -162,7 +163,7 @@ package body GPS.Search.GUI is
    is
       Insert_At : Integer;
    begin
-      if Self.Current_Provider > Self.Providers'Last then
+      if Self.Provider = null then
          Result := null;
          Has_Next := False;
          return;
@@ -171,7 +172,7 @@ package body GPS.Search.GUI is
       --  If we are in the process of processing the current provider
 
       if Self.Current_Returned < Self.Current'First then
-         Self.Providers (Self.Current_Provider).Next (Result, Has_Next);
+         Self.Provider.Next (Result, Has_Next);
 
          if Result /= null then
             --  Make sure the primary sort key is the provider
@@ -182,7 +183,7 @@ package body GPS.Search.GUI is
             --  slower.
 
             Result.Score := Result.Score
-               + (Self.Providers'Last - Self.Current_Provider) * 1_000_000;
+               + (100 - Self.Current_Provider) * 1_000_000;
 
             --  ??? This doesn't take into account score modification that
             --  will be done by the entry_completion for instance to show
@@ -229,6 +230,13 @@ package body GPS.Search.GUI is
 
       --  Move to next provider
       Self.Current_Provider := Self.Current_Provider + 1;
+      Self.Provider := Registry.Get (Self.Current_Provider);
+
+      if Self.Provider /= null then
+         Self.Provider.Set_Pattern
+            (Self.Pattern, Limit => Proposals_Per_Provider);
+      end if;
+
       Self.Current_Index := Self.Current'First - 1;
       Self.Current_Returned := Self.Current'First - 1;
       Result := null;
@@ -242,10 +250,10 @@ package body GPS.Search.GUI is
    overriding function Display_Name
      (Self     : not null access Overall_Search_Provider) return String is
    begin
-      if Self.Current_Provider > Self.Providers'Last then
+      if Self.Provider = null then
          return "";
       else
-         return Self.Providers (Self.Current_Provider).Display_Name;
+         return Self.Provider.Display_Name;
       end if;
    end Display_Name;
 
@@ -383,6 +391,31 @@ package body GPS.Search.GUI is
       Open_File_Dialog.Destroy;
    end On_Open_From_Project;
 
+   ----------------------------------
+   -- Register_Provider_And_Action --
+   ----------------------------------
+
+   procedure Register_Provider_And_Action
+      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Provider :
+          not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
+       Name     : String)
+   is
+      Command : Global_Search_Command_Access;
+   begin
+      Provider.Kernel := Kernel_Handle (Kernel);
+      GPS.Kernel.Search.Registry.Register (Name, Provider);
+
+      Command := new Global_Search_Command;
+      Command.Provider := GPS.Kernel.Search.Registry.Get (Name);
+      Command.History := new History_Key'
+         ("global-search-entry-" & History_Key (Name));
+      Register_Action
+         (Kernel, "Global Search in context: " & Name, Command,
+          Description => Command.Provider.Documentation,
+          Category => "Search");
+   end Register_Provider_And_Action;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -392,39 +425,11 @@ package body GPS.Search.GUI is
    is
       Overall : constant Overall_Search_Provider_Access :=
          new Overall_Search_Provider;
-
-      procedure Register_Provider (Name : String);
-      --  Register an action for a given search provider
-
-      procedure Register_Provider (Name : String) is
-         Command : Global_Search_Command_Access;
-         Tmp     : Provider_Array_Access;
-      begin
-         Command := new Global_Search_Command;
-         Command.Provider := GPS.Kernel.Search.Registry.Get (Name);
-         Command.History := new History_Key'
-            ("global-search-entry-" & History_Key (Name));
-         Register_Action
-            (Kernel, "Global Search in context: " & Name, Command,
-             Description => Command.Provider.Documentation,
-             Category => "Search");
-
-         Tmp := Overall.Providers;
-         if Tmp = null then
-            Overall.Providers := new Provider_Array (1 .. 1);
-         else
-            Overall.Providers := new Provider_Array (1 .. Tmp'Last + 1);
-            Overall.Providers (Tmp'Range) := Tmp.all;
-            Unchecked_Free (Tmp);
-         end if;
-         Overall.Providers (Overall.Providers'Last) := Command.Provider;
-      end Register_Provider;
-
       Align   : Gtk_Alignment;
       Vbox    : Gtk_Vbox;
       Command : Global_Search_Command_Access;
-
-      Item : Gtk_Tool_Item;
+      Item    : Gtk_Tool_Item;
+      P       : Kernel_Search_Provider_Access;
 
    begin
       Module := new Global_Search_Module_Record;
@@ -432,6 +437,8 @@ package body GPS.Search.GUI is
          (Module      => Module,
           Kernel      => Kernel,
           Module_Name => "Global_Search");
+
+      GPS.Kernel.Search.Registry.Kernel := Kernel_Handle (Kernel);
 
       Command := new Global_Search_Command;
       Command.Provider := Search_Provider_Access (Overall);
@@ -443,8 +450,11 @@ package body GPS.Search.GUI is
              "Activate the global search field in the main toolbar",
           Category => "Search");
 
-      Register_Provider (Provider_Filenames);
-      Register_Provider (Provider_Actions);
+      P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
+      Register_Provider_And_Action (Kernel, P, Provider_Filenames);
+
+      P := new GPS.Kernel.Search.Actions.Actions_Search_Provider;
+      Register_Provider_And_Action (Kernel, P, Provider_Actions);
 
       Gtk_New (Item);
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);

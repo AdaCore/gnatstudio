@@ -38,6 +38,8 @@ package GPS.Kernel.Search is
    with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
+   type Kernel_Search_Provider_Access is
+      access all Kernel_Search_Provider'Class;
 
    procedure Adjust_Score
       (Self   : not null access Kernel_Search_Provider;

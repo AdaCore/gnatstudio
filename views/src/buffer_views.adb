@@ -45,7 +45,9 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Search;      use GPS.Kernel.Search;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Search.GUI;         use GPS.Search, GPS.Search.GUI;
 with Histories;              use Histories;
 with GUI_Utils;              use GUI_Utils;
 with Src_Editor_Module;      use Src_Editor_Module;
@@ -128,6 +130,37 @@ package body Buffer_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Context factory when creating contextual menus
+
+   ---------------
+   -- Searching --
+   ---------------
+
+   type Opened_Windows_Search is new Kernel_Search_Provider with record
+      Pattern : Search_Pattern_Access;
+      Iter    : Child_Iterator;
+   end record;
+   type Opened_Windows_Search_Access is
+      access all Opened_Windows_Search'Class;
+   overriding procedure Set_Pattern
+      (Self     : not null access Opened_Windows_Search;
+       Pattern  : not null access GPS.Search.Search_Pattern'Class;
+       Limit    : Natural := Natural'Last);
+   overriding procedure Next
+      (Self     : not null access Opened_Windows_Search;
+       Result   : out GPS.Search.Search_Result_Access;
+       Has_Next : out Boolean);
+   overriding function Display_Name
+      (Self     : not null access Opened_Windows_Search) return String
+      is ("Opened Windows");
+   overriding function Documentation
+      (Self     : not null access Opened_Windows_Search) return String;
+
+   type Opened_Windows_Result is new Kernel_Search_Result with null record;
+   overriding procedure Execute
+      (Self       : not null access Opened_Windows_Result;
+       Give_Focus : Boolean);
+   overriding function Full
+      (Self       : not null access Opened_Windows_Result) return Gtk_Widget;
 
    --------------
    -- Tooltips --
@@ -633,6 +666,115 @@ package body Buffer_Views is
       return Gtk_Widget (View.Tree);
    end Initialize;
 
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   overriding procedure Set_Pattern
+      (Self     : not null access Opened_Windows_Search;
+       Pattern  : not null access GPS.Search.Search_Pattern'Class;
+       Limit    : Natural := Natural'Last)
+   is
+      pragma Unreferenced (Limit);
+   begin
+      Self.Pattern := Search_Pattern_Access (Pattern);
+      Self.Iter    := First_Child (Get_MDI (Self.Kernel));
+   end Set_Pattern;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+      (Self     : not null access Opened_Windows_Search;
+       Result   : out GPS.Search.Search_Result_Access;
+       Has_Next : out Boolean)
+   is
+      C : Search_Context;
+      L     : GNAT.Strings.String_Access;
+      Child : constant MDI_Child := Get (Self.Iter);
+   begin
+      Result := null;
+
+      if Child = null then
+         Has_Next  := False;
+      else
+         C := Self.Pattern.Start (Child.Get_Short_Title);
+         if C /= GPS.Search.No_Match then
+            L := new String'(Child.Get_Title);
+            Result := new Opened_Windows_Result'
+               (Kernel   => Self.Kernel,
+                Provider => Self,
+                Score    => C.Score,
+                Short    => new String'
+                   (Self.Pattern.Highlight_Match
+                      (Child.Get_Short_Title, Context => C)),
+                Long     => L,
+                Id       => L);
+            Self.Adjust_Score (Result);
+
+         else
+            C := Self.Pattern.Start (Child.Get_Title);
+            if C /= GPS.Search.No_Match then
+               L := new String'(Child.Get_Title);
+               Result := new Opened_Windows_Result'
+                  (Kernel   => Self.Kernel,
+                   Provider => Self,
+                   Score    => C.Score,
+                   Short    => new String'(Child.Get_Short_Title),
+                   Long     => new String'
+                      (Self.Pattern.Highlight_Match
+                         (Child.Get_Title, Context => C)),
+                   Id       => new String'(Child.Get_Title));
+               Self.Adjust_Score (Result);
+            end if;
+         end if;
+
+         Next (Self.Iter);
+         Has_Next := Get (Self.Iter) /= null;
+      end if;
+   end Next;
+
+   -------------------
+   -- Documentation --
+   -------------------
+
+   overriding function Documentation
+      (Self     : not null access Opened_Windows_Search) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return "Search amongst opened windows";
+   end Documentation;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self       : not null access Opened_Windows_Result;
+       Give_Focus : Boolean)
+   is
+      C : constant MDI_Child :=
+         Find_MDI_Child_By_Name (Get_MDI (Self.Kernel), Self.Id.all);
+   begin
+      if C /= null then
+         Raise_Child (C, Give_Focus => Give_Focus);
+      end if;
+   end Execute;
+
+   ----------
+   -- Full --
+   ----------
+
+   overriding function Full
+      (Self       : not null access Opened_Windows_Result) return Gtk_Widget
+   is
+      pragma Unreferenced (Self);
+   begin
+      return null;
+   end Full;
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
@@ -658,6 +800,7 @@ package body Buffer_Views is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
+      P : Opened_Windows_Search_Access;
    begin
       Generic_View.Register_Module (Kernel, Menu_Name => -"Views/_Windows");
 
@@ -672,6 +815,9 @@ package body Buffer_Views is
          Action => Command,
          Filter => Create (Module => Module_Name),
          Label  => -"Close selected windows");
+
+      P := new Opened_Windows_Search;
+      Register_Provider_And_Action (Kernel, P, "Opened Windows");
    end Register_Module;
 
 end Buffer_Views;

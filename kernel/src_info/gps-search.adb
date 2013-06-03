@@ -512,7 +512,9 @@ package body GPS.Search is
    is
    begin
       --  Use Include, since we want to allow overriding predefined
-      Self.Map.Include (Name, Search_Provider_Access (Template));
+      Self.Providers.Append
+         ((Name     => new String'(Name),
+           Provider => Search_Provider_Access (Template)));
    end Register;
 
    ---------
@@ -521,16 +523,31 @@ package body GPS.Search is
 
    function Get
      (Self : Search_Provider_Registry;
-      Name : String) return Search_Provider_Access
+      N    : Positive) return Search_Provider_Access
    is
-      use Provider_Maps;
-      C : constant Cursor := Self.Map.Find (Name);
+      use Provider_Vectors;
    begin
-      if Has_Element (C) then
-         return new Search_Provider'Class'(Element (C).all);
-      else
+      if N > Integer (Self.Providers.Length) then
          return null;
+      else
+         return Self.Providers.Element (N).Provider;
       end if;
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Self : Search_Provider_Registry;
+      Name : String) return Search_Provider_Access is
+   begin
+      for P of Self.Providers loop
+         if P.Name.all = Name then
+            return P.Provider;
+         end if;
+      end loop;
+      return null;
    end Get;
 
    ----------

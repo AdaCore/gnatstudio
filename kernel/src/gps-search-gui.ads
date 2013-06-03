@@ -19,11 +19,20 @@
 --  in the GPS toolbar.
 
 with GPS.Kernel;   use GPS.Kernel;
+with GPS.Kernel.Search;
 
 package GPS.Search.GUI is
 
    procedure Register_Module
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Creates the global search entry, and all GPS actions to access it.
+
+   procedure Register_Provider_And_Action
+      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Provider :
+          not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
+       Name     : String);
+   --  Register the provider (and sets its Kernel field).
+   --  Creates an action for it so that users can do key bindings.
 
 end GPS.Search.GUI;
