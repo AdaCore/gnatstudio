@@ -157,6 +157,21 @@ package body GPS.Kernel.Search.Filenames is
       Result   : out Search_Result_Access;
       Has_Next : out Boolean)
    is
+      function Highlight_Runtime
+         (Str : String; Runtime : Boolean) return String;
+      --  For runtime files, highlight them specially
+
+      function Highlight_Runtime
+         (Str : String; Runtime : Boolean) return String
+      is
+      begin
+         if Runtime then
+            return "<i>" & Str & "</i>";
+         else
+            return Str;
+         end if;
+      end Highlight_Runtime;
+
       procedure Check (F : Virtual_File; Runtime : Boolean);
       --  Sets Result to non-null if F matches
 
@@ -179,7 +194,8 @@ package body GPS.Kernel.Search.Filenames is
                   (Kernel   => Self.Kernel,
                    Provider => Self,
                    Score    => C.Score,
-                   Short    => new String'(+F.Base_Name),
+                   Short    => new String'
+                      (Highlight_Runtime (+F.Base_Name, Runtime)),
                    Long     => new String'
                       (Self.Pattern.Highlight_Match
                          (Buffer => Text, Context => C)),
@@ -194,8 +210,10 @@ package body GPS.Kernel.Search.Filenames is
                    Provider => Self,
                    Score    => C.Score,
                    Short    => new String'
-                      (Self.Pattern.Highlight_Match
-                         (Buffer => Text, Context => C)),
+                      (Highlight_Runtime
+                         (Self.Pattern.Highlight_Match
+                            (Buffer => Text, Context => C),
+                          Runtime)),
                    Long     => L,
                    Id       => L,
                    Line     => Self.Line,
