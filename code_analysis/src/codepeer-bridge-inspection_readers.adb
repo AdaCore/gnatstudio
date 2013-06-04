@@ -43,6 +43,8 @@ package body CodePeer.Bridge.Inspection_Readers is
    Line_Attribute          : constant String := "line";
    Name_Attribute          : constant String := "name";
    Previous_Attribute      : constant String := "previous";
+   Rank_Attribute          : constant String := "rank";
+   Status_Attribute        : constant String := "status";
 
    -----------------
    -- End_Element --
@@ -157,6 +159,9 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       function Get_Optional_Column return Positive;
       --  Returns value of "column" attribute is specified and 1 instead.
+
+      function Status return Audit_Status_Kinds;
+      --  Returns value of "status" attribute if specified or 'Unclassified'.
 
       ------------
       -- Checks --
@@ -284,6 +289,22 @@ package body CodePeer.Bridge.Inspection_Readers is
          return Result;
       end Merged;
 
+      ------------
+      -- Status --
+      ------------
+
+      function Status return Audit_Status_Kinds is
+         Index : constant Integer := Attrs.Get_Index (Status_Attribute);
+
+      begin
+         if Index = -1 then
+            return Unclassified;
+
+         else
+            return CodePeer.Audit_Status_Kinds'Value (Attrs.Get_Value (Index));
+         end if;
+      end Status;
+
    begin
       if Self.Ignore_Depth /= 0 then
          Self.Ignore_Depth := Self.Ignore_Depth + 1;
@@ -374,27 +395,55 @@ package body CodePeer.Bridge.Inspection_Readers is
             Message : CodePeer.Message_Access;
 
          begin
-            Message :=
-              new CodePeer.Message'
-                (Positive'Value (Attrs.Get_Value ("identifier")),
-                 Merged,
-                 Lifeage,
-                 Positive'Value (Attrs.Get_Value ("line")),
-                 Positive'Value (Attrs.Get_Value ("column")),
-                 Self.Message_Categories.Element
-                   (Positive'Value (Attrs.Get_Value ("category"))),
-                 Is_Check,
-                 Computed_Ranking,
-                 CodePeer.Message_Ranking_Level'Value
-                   (Attrs.Get_Value ("probability")),
-                 new String'(Attrs.Get_Value ("text")),
-                 False,
-                 CodePeer.Audit_V2_Vectors.Empty_Vector,
-                 CodePeer.Audit_V3_Vectors.Empty_Vector,
-                 GNATCOLL.VFS.No_File,
-                 1,
-                 1,
-                 null);
+            case Self.Version is
+               when 2 =>
+                  Message :=
+                    new CodePeer.Message'
+                      (Positive'Value (Attrs.Get_Value ("identifier")),
+                       Merged,
+                       Lifeage,
+                       Positive'Value (Attrs.Get_Value ("line")),
+                       Positive'Value (Attrs.Get_Value ("column")),
+                       Self.Message_Categories.Element
+                         (Positive'Value (Attrs.Get_Value ("category"))),
+                       Is_Check,
+                       Computed_Ranking,
+                       CodePeer.Message_Ranking_Level'Value
+                         (Attrs.Get_Value ("probability")),
+                       Unclassified,
+                       new String'(Attrs.Get_Value ("text")),
+                       False,
+                       CodePeer.Audit_V2_Vectors.Empty_Vector,
+                       CodePeer.Audit_V3_Vectors.Empty_Vector,
+                       GNATCOLL.VFS.No_File,
+                       1,
+                       1,
+                       null);
+
+               when 3 =>
+                  Message :=
+                    new CodePeer.Message'
+                      (Positive'Value (Attrs.Get_Value ("identifier")),
+                       Merged,
+                       Lifeage,
+                       Positive'Value (Attrs.Get_Value ("line")),
+                       Positive'Value (Attrs.Get_Value ("column")),
+                       Self.Message_Categories.Element
+                         (Positive'Value (Attrs.Get_Value ("category"))),
+                       Is_Check,
+                       CodePeer.High,
+                       CodePeer.Message_Ranking_Level'Value
+                         (Attrs.Get_Value (Rank_Attribute)),
+                       Status,
+                       new String'(Attrs.Get_Value ("text")),
+                       False,
+                       CodePeer.Audit_V2_Vectors.Empty_Vector,
+                       CodePeer.Audit_V3_Vectors.Empty_Vector,
+                       GNATCOLL.VFS.No_File,
+                       1,
+                       1,
+                       null);
+            end case;
 
             if Attrs.Get_Index ("from_file") /= -1 then
                Message.From_File :=
