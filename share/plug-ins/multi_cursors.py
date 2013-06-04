@@ -3,9 +3,6 @@ from gps_utils import *
 from text_utils import goto_word_start, goto_word_end
 import re
 
-EditorLocation.goto_word_start = goto_word_start
-EditorLocation.goto_word_end = goto_word_end
-
 xml_conf = """
 <key action="Add multi cursor and go down">shift-alt-Down</key>
 <key action="Add multi cursor and go up">shift-alt-Up</key>
@@ -59,6 +56,7 @@ def mc_up():
 
 id_pattern = re.compile(r"[\w0-9_]")
 
+
 @interactive("Editor", name="Add multi cursor to all references of entity")
 def mc_all_entity_references():
 
@@ -67,8 +65,8 @@ def mc_all_entity_references():
 
     editor = GPS.EditorBuffer.get()
     loc = editor.current_view().cursor()
-    loc_id_start = loc.goto_word_start()
-    loc_id_end = loc.goto_word_end()
+    loc_id_start = goto_word_start(loc)
+    loc_id_end = goto_word_end(loc)
 
     # Check the case when we are at the end of a word
     if not id_pattern.match(loc.get_char()):
