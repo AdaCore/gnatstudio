@@ -48,6 +48,7 @@ with Traces;                     use Traces;
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Message_Review_Dialogs_V2;
+with CodePeer.Message_Review_Dialogs_V3;
 with CodePeer.Messages_Reports;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
@@ -1688,6 +1689,7 @@ package body CodePeer.Module is
       Message : CodePeer.Message_Access)
    is
       Review_V2 : CodePeer.Message_Review_Dialogs_V2.Message_Review_Dialog;
+      Review_V3 : CodePeer.Message_Review_Dialogs_V3.Message_Review_Dialog;
 
    begin
       if not Message.Audit_Loaded then
@@ -1697,14 +1699,27 @@ package body CodePeer.Module is
       else
          --  Create and show review dialog
 
-         CodePeer.Message_Review_Dialogs_V2.Gtk_New (Review_V2, Message);
-         Review_V2.Set_Transient_For (Self.Kernel.Get_Main_Window);
-         Review_V2.Show_All;
-         Context_CB.Connect
-           (Review_V2,
-            CodePeer.Message_Review_Dialogs_V2.Signal_Ok_Activated,
-            Context_CB.To_Marshaller (On_Message_Reviewed'Access),
-            (CodePeer_Module_Id (Self), null, null, Message));
+         case Self.Version is
+            when 2 =>
+               CodePeer.Message_Review_Dialogs_V2.Gtk_New (Review_V2, Message);
+               Review_V2.Set_Transient_For (Self.Kernel.Get_Main_Window);
+               Review_V2.Show_All;
+               Context_CB.Connect
+                 (Review_V2,
+                  CodePeer.Message_Review_Dialogs_V2.Signal_Ok_Activated,
+                  Context_CB.To_Marshaller (On_Message_Reviewed'Access),
+                  (CodePeer_Module_Id (Self), null, null, Message));
+
+            when 3 =>
+               CodePeer.Message_Review_Dialogs_V3.Gtk_New (Review_V3, Message);
+               Review_V3.Set_Transient_For (Self.Kernel.Get_Main_Window);
+               Review_V3.Show_All;
+               Context_CB.Connect
+                 (Review_V3,
+                  CodePeer.Message_Review_Dialogs_V3.Signal_Ok_Activated,
+                  Context_CB.To_Marshaller (On_Message_Reviewed'Access),
+                  (CodePeer_Module_Id (Self), null, null, Message));
+         end case;
       end if;
    end Review_Message;
 
