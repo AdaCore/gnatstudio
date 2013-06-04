@@ -1628,9 +1628,7 @@ package body Src_Editor_Buffer is
 
       if Mark = Buffer.Insert_Mark then
 
-         if Buffer.Multi_Cursors_Sync.Mode = Auto
-           and then Buffer.Multi_Cursors_Barrier
-         then
+         if Buffer.Multi_Cursors_Sync.Mode = Auto then
             Remove_All_Multi_Cursors (Source_Buffer (Buffer));
          end if;
 
@@ -1751,20 +1749,19 @@ package body Src_Editor_Buffer is
 
       --  Perform insertion for every multi cursor
       --  If we are in auto mode
-      if Buffer.Multi_Cursors_Sync.Mode = Auto
-        and then not Buffer.Multi_Cursors_Barrier
-      then
+      if Buffer.Multi_Cursors_Sync.Mode = Auto then
          declare
             Iter : Gtk_Text_Iter;
          begin
-            Buffer.Multi_Cursors_Barrier := True;
-            Buffer.Start_Inserting;
+            Buffer.Enter_Current_Group;
             for Cursor of Buffer.Multi_Cursors_List loop
+               Set_Multi_Cursors_Manual_Sync
+                 (Source_Buffer (Buffer), Cursor);
                Buffer.Get_Iter_At_Mark (Iter, Cursor.Mark);
                Buffer.Insert (Iter, Text (1 .. Length));
             end loop;
-            Buffer.End_Inserting;
-            Buffer.Multi_Cursors_Barrier := False;
+            Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+            Buffer.Leave_Current_Group;
 
             declare
                Iter_Acc : constant access Gtk_Text_Iter :=
@@ -1779,12 +1776,9 @@ package body Src_Editor_Buffer is
 
       Update_All_Column_Memory (Buffer);
 
-      Buffer.Multi_Cursors_Barrier := True;
-
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
-         Buffer.Multi_Cursors_Barrier := True;
    end After_Insert_Text;
 
    ------------------------
@@ -1870,10 +1864,17 @@ package body Src_Editor_Buffer is
       Length      : constant Integer := Integer (Get_Int (Nth (Params, 3)));
       Pos         : Gtk_Text_Iter;
       Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
+      pragma Unreferenced (Command);
       Line        : Editable_Line_Type;
       User_Action : Action_Type;
       Cursor_Previously_Held : Boolean;
    begin
+      --  If in multi cursors manual slave mode, update corresponding command
+      if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
+         Command :=
+           Editor_Command (Buffer.Multi_Cursors_Sync.MC.Current_Command);
+      end if;
+
       Get_Text_Iter (Nth (Params, 1), Pos);
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
@@ -1971,8 +1972,6 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Buffer.Multi_Cursors_Barrier := False;
-
       --  Past this point, we know we are dealing with an user action
 
       User_Edit_Hook (Buffer);
@@ -1999,27 +1998,8 @@ package body Src_Editor_Buffer is
 
       Update_Insert_Command
         (Source_Buffer (Buffer),
-         User_Action, Command, Pos, Text (1 .. Length));
-
-      if Buffer.Multi_Cursors_Sync.Mode = Auto then
-         declare
-            Iter : Gtk_Text_Iter;
-         begin
-            Buffer.Enter_Current_Group;
-            for Cursor of Buffer.Multi_Cursors_List loop
-               Buffer.Multi_Cursors_Sync :=
-                 (Manual_Slave, To_Unbounded_String (Cursor.Mark.Get_Name));
-
-               Buffer.Get_Iter_At_Mark (Iter, Cursor.Mark);
-               Update_Insert_Command
-                 (Source_Buffer (Buffer),
-                  User_Action, Editor_Command (Cursor.Current_Command),
-                  Iter, Text (1 .. Length), False);
-            end loop;
-            Buffer.Leave_Current_Group;
-            Buffer.Multi_Cursors_Sync := (Mode => Auto);
-         end;
-      end if;
+         User_Action, Command, Pos, Text (1 .. Length),
+         Is_Main_Action => Buffer.Multi_Cursors_Sync.Mode /= Manual_Slave);
 
       Buffer.No_Cursor_Move_On_Changes := Cursor_Previously_Held;
 
@@ -2072,27 +2052,25 @@ package body Src_Editor_Buffer is
          Interactive => not Buffer.Inserting);
 
       if Buffer.Multi_Cursors_Delete_Offset /= 0 and then
-        Buffer.Multi_Cursors_Sync.Mode = Auto and then
-        not Buffer.Multi_Cursors_Barrier
+        Buffer.Multi_Cursors_Sync.Mode = Auto
       then
-         Buffer.Multi_Cursors_Barrier := True;
-         Buffer.Start_Inserting;
          declare
             Iter_1, Iter_2 : Gtk_Text_Iter;
          begin
+            Buffer.Enter_Current_Group;
             for Cursor of Buffer.Multi_Cursors_List loop
+               Set_Multi_Cursors_Manual_Sync
+                 (Source_Buffer (Buffer), Cursor);
                Buffer.Get_Iter_At_Mark (Iter_1, Cursor.Mark);
                Buffer.Get_Iter_At_Offset
                  (Iter_2,
                   Get_Offset (Iter_1) + Buffer.Multi_Cursors_Delete_Offset);
                Buffer.Delete (Iter_1, Iter_2);
             end loop;
+            Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+            Buffer.Leave_Current_Group;
          end;
-         Buffer.Multi_Cursors_Barrier := False;
-         Buffer.End_Inserting;
       end if;
-
-      Buffer.Multi_Cursors_Barrier := True;
 
       Update_All_Column_Memory (Buffer);
 
@@ -2154,13 +2132,8 @@ package body Src_Editor_Buffer is
    begin
       --  If in multi cursors manual slave mode, update corresponding command
       if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
-         for Cursor of Buffer.Multi_Cursors_List loop
-            if
-              Cursor.Mark.Get_Name = Buffer.Multi_Cursors_Sync.Cursor_Name
-            then
-               Command := Editor_Command (Cursor.Current_Command);
-            end if;
-         end loop;
+         Command := Editor_Command
+           (Buffer.Multi_Cursors_Sync.MC.Current_Command);
       end if;
 
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
@@ -2183,7 +2156,7 @@ package body Src_Editor_Buffer is
          Direction := Forward;
       end if;
 
-      if not Buffer.Inserting then
+      if Buffer.Multi_Cursors_Sync.Mode = Auto then
          Delete_Offset := (Get_Offset (End_Iter) - Get_Offset (Start_Iter));
          Delete_Offset := Delete_Offset * (case Direction is
                                            when Forward => -1,
@@ -2337,8 +2310,6 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Buffer.Multi_Cursors_Barrier := False;
-
       User_Edit_Hook (Buffer);
 
       if not Is_Null_Command (Command)
@@ -2399,96 +2370,7 @@ package body Src_Editor_Buffer is
                Add_Text (Command, Slice);
             end if;
          end if;
-
-         if Delete_Offset /= 0
-           and then Buffer.Multi_Cursors_Sync.Mode = Auto
-         then
-            Buffer.Enter_Current_Group;
-            for Cursor of Buffer.Multi_Cursors_List loop
-               declare
-                  MC_Command : Editor_Command :=
-                    (if Cursor.Current_Command /= null
-                     then Editor_Command (Cursor.Current_Command)
-                     else null);
-                  Pos, End_Pos : Gtk_Text_Iter;
-                  Line_Start, Line_End : Editable_Line_Type;
-                  Col_Start, Col_End : Character_Offset_Type;
-               begin
-                  if not Is_Null_Command (MC_Command)
-                    and then
-                      (Get_Mode (MC_Command) /= Deletion
-                       or else (Get_Direction (MC_Command) /= Direction))
-                  then
-                     Cursor.Current_Command := null;
-                     MC_Command := null;
-                  end if;
-
-                  if Direction = Forward then
-                     Buffer.Get_Iter_At_Mark (End_Pos, Cursor.Mark);
-                     Buffer.Get_Iter_At_Offset (Pos,
-                                                Get_Offset (End_Pos)
-                                                + Delete_Offset);
-                  else
-                     Buffer.Get_Iter_At_Mark (Pos, Cursor.Mark);
-                     Buffer.Get_Iter_At_Offset (End_Pos,
-                                                Get_Offset (Pos)
-                                                + Delete_Offset);
-                  end if;
-
-                  Line_Start := Buffer.Get_Editable_Line
-                    (Buffer_Line_Type (Get_Line (Pos) + 1));
-                  Line_End := Buffer.Get_Editable_Line
-                    (Buffer_Line_Type (Get_Line (End_Pos) + 1));
-                  Col_Start :=
-                    Character_Offset_Type (Get_Line_Offset (Pos) + 1);
-                  Col_End :=
-                    Character_Offset_Type (Get_Line_Offset (End_Pos) + 1);
-
-                  declare
-                     MC_Slice : constant UTF8_String
-                       := Buffer.Get_Slice (Pos, End_Pos);
-                  begin
-                     if Is_Null_Command (MC_Command) then
-                        Create
-                          (MC_Command,
-                           Deletion,
-                           Source_Buffer (Buffer),
-                           True,
-                           Line_Start,
-                           Col_Start,
-                           Direction,
-                           Line_End,
-                           Col_End,
-                           Cursor_Name => Cursor.Mark.Get_Name);
-
-                        Enqueue
-                          (Buffer, Command_Access (MC_Command), User_Action);
-
-                        Add_Text
-                          (MC_Command,
-                           MC_Slice,
-                           Line_Start,
-                           Col_Start);
-                     else
-                        if Direction = Forward then
-                           Add_Text
-                             (MC_Command,
-                              MC_Slice,
-                              Line_Start,
-                              Col_Start);
-                        else
-                           Add_Text (MC_Command, MC_Slice);
-                        end if;
-                     end if;
-                     Cursor.Current_Command := Command_Access (MC_Command);
-                  end;
-               end;
-            end loop;
-            Buffer.Leave_Current_Group;
-         end if;
       end;
-
-      Buffer.Current_Command := Command_Access (Command);
 
       if Direction = Extended
         or else Line_Start /= Line_End

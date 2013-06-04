@@ -286,6 +286,10 @@ package body Commands.Editor is
       First  : constant Natural := Command.Current_Text'First;
       Editor : Source_Editor_Box;
       View   : Source_View;
+      Cursor_Name : constant String
+        := To_String (Command.Alternative_Cursor_Name);
+      Mark : Gtk_Text_Mark;
+      MC_Sync_Save : Multi_Cursors_Sync_Type;
 
       procedure Set_Cursor_Position;
       --  Set the action's cursor at the right place whether it is a multi
@@ -294,8 +298,6 @@ package body Commands.Editor is
       procedure Set_Cursor_Position is
          Iter : Gtk_Text_Iter;
          Mark : Gtk_Text_Mark;
-         Cursor_Name : constant String
-           := To_String (Command.Alternative_Cursor_Name);
          Reset_Mode : Boolean := False;
       begin
 
@@ -337,6 +339,20 @@ package body Commands.Editor is
            (Find_Current_Editor (Get_Kernel (Command.Buffer)));
          View := Get_View (Editor);
 
+         MC_Sync_Save := Get_Multi_Cursors_Sync (Command.Buffer);
+
+         --  The cursor is a multi cursor
+         if Cursor_Name /= "" then
+            Mark := Command.Buffer.Get_Mark (Cursor_Name);
+            if Mark /= null then
+               Set_Multi_Cursors_Manual_Sync (Command.Buffer, Mark);
+            else
+               Set_Multi_Cursors_Manual_Sync (Command.Buffer);
+            end if;
+         else
+            Set_Multi_Cursors_Manual_Sync (Command.Buffer);
+         end if;
+
          case Command.Edition_Mode is
             when Insertion =>
                if not Avoid_Move_Cursor (Command) then
@@ -375,6 +391,8 @@ package body Commands.Editor is
                   Set_Cursor_Position;
                end if;
          end case;
+
+         Set_Multi_Cursors_Sync (Command.Buffer, MC_Sync_Save);
       end if;
 
       Command_Finished (Command, True);

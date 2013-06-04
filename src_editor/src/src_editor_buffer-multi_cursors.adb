@@ -49,10 +49,26 @@ package body Src_Editor_Buffer.Multi_Cursors is
 
    procedure Set_Multi_Cursors_Manual_Sync
      (Buffer  : Source_Buffer;
-      MC_Mark : Gtk_Text_Mark) is
+      MC_Mark : Gtk_Text_Mark)
+   is
+      MC : Multi_Cursor;
+   begin
+      for Multi of Buffer.Multi_Cursors_List loop
+         if MC_Mark = Multi.Mark then
+            MC := Multi;
+         end if;
+      end loop;
+      Buffer.Multi_Cursors_Sync :=
+        (Manual_Slave, To_Unbounded_String (MC_Mark.Get_Name), MC);
+   end Set_Multi_Cursors_Manual_Sync;
+
+   procedure Set_Multi_Cursors_Manual_Sync
+     (Buffer : Source_Buffer;
+      MC     : Multi_Cursor)
+   is
    begin
       Buffer.Multi_Cursors_Sync :=
-        (Manual_Slave, To_Unbounded_String (MC_Mark.Get_Name));
+        (Manual_Slave, To_Unbounded_String (MC.Mark.Get_Name), MC);
    end Set_Multi_Cursors_Manual_Sync;
 
    procedure Set_Multi_Cursors_Auto_Sync (Buffer : Source_Buffer)
@@ -79,5 +95,12 @@ package body Src_Editor_Buffer.Multi_Cursors is
    function Get_Multi_Cursors_Sync
      (Buffer : Source_Buffer) return Multi_Cursors_Sync_Type
    is (Buffer.Multi_Cursors_Sync);
+
+   procedure Set_Multi_Cursors_Sync
+     (Buffer : Source_Buffer; Sync : Multi_Cursors_Sync_Type)
+   is
+   begin
+      Buffer.Multi_Cursors_Sync := Sync;
+   end Set_Multi_Cursors_Sync;
 
 end Src_Editor_Buffer.Multi_Cursors;

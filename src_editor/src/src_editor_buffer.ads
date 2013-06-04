@@ -66,14 +66,7 @@ package Src_Editor_Buffer is
    --  This type represents the mode the buffer is in regarding multi cursors
    --  behaviour
 
-   type Multi_Cursors_Sync_Type (Mode : MC_Sync_Mode_Type := Auto) is record
-      case Mode is
-         when Auto => null;
-         when Manual_Master => null;
-         when Manual_Slave =>
-            Cursor_Name : Ada.Strings.Unbounded.Unbounded_String;
-      end case;
-   end record;
+   type Multi_Cursors_Sync_Type (Mode : MC_Sync_Mode_Type := Auto) is private;
 
    package Marks_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Gtk.Text_Mark.Gtk_Text_Mark);
@@ -1390,6 +1383,16 @@ private
    package Multi_Cursors_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Multi_Cursor);
 
+   type Multi_Cursors_Sync_Type (Mode : MC_Sync_Mode_Type := Auto) is record
+      case Mode is
+         when Auto => null;
+         when Manual_Master => null;
+         when Manual_Slave =>
+            Cursor_Name : Ada.Strings.Unbounded.Unbounded_String;
+            MC : Multi_Cursor;
+      end case;
+   end record;
+
    --------------------------
    -- Source_Buffer_Record --
    --------------------------
@@ -1668,12 +1671,6 @@ private
 
       Multi_Cursors_List                    : Multi_Cursors_Lists.List;
       --  The list of all active multi cursors
-
-      Multi_Cursors_Barrier                 : Boolean := True;
-      --  Represents wether insertion/deletions should be performed everywhere,
-      --  when the buffer is in auto sync mode. Note that True means no
-      --  insertion/deletion. The barrier is removed in the before
-      --  insertion/deletion event handlers.
 
       Multi_Cursors_Next_Id                 : Natural := 0;
       --  Unique id for the next multi cursor. Incremented at multi cursor

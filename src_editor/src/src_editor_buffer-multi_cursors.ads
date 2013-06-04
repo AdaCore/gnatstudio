@@ -58,6 +58,10 @@ package Src_Editor_Buffer.Multi_Cursors is
    --  The action will be recorded as part of the same group as the main
    --  cursor's action regarding undo/redo groups.
 
+   procedure Set_Multi_Cursors_Manual_Sync
+     (Buffer : Source_Buffer;
+      MC     : Multi_Cursor);
+
    procedure Set_Multi_Cursors_Auto_Sync (Buffer : Source_Buffer);
    --  This sets the buffer in auto mode regarding multi cursor insertion.
    --  This means that every insert/delete will impact every active cursors
@@ -74,5 +78,8 @@ package Src_Editor_Buffer.Multi_Cursors is
 
    function Get_Multi_Cursors_Sync
      (Buffer : Source_Buffer) return Multi_Cursors_Sync_Type;
+
+   procedure Set_Multi_Cursors_Sync
+     (Buffer : Source_Buffer; Sync : Multi_Cursors_Sync_Type);
 
 end Src_Editor_Buffer.Multi_Cursors;

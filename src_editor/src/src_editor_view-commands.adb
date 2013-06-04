@@ -228,7 +228,7 @@ package body Src_Editor_View.Commands is
          declare
             Cursor_Mark : constant Gtk_Text_Mark := Get_Mark (Cursor);
          begin
-            Set_Multi_Cursors_Manual_Sync (Buffer, Cursor_Mark);
+            Set_Multi_Cursors_Manual_Sync (Buffer, Cursor.all);
             Get_Iter_At_Mark (Buffer, Iter, Cursor_Mark);
             Copy (Source => Iter, Dest => Start);
             Move_Iter (Iter, Command.Kind, Command.Count);
