@@ -1771,11 +1771,11 @@ package body CodePeer.Module is
                     Message.Line,
                     Basic_Types.Visible_Column_Type (Message.Column),
                     Image (Message),
-                    Message_Ranking_Level'Pos (Message.Current_Ranking),
+                    Message_Ranking_Level'Pos (Message.Ranking),
                     Flags,
                     Allow_Auto_Jump_To_First => False);
                Style   : constant Style_Access :=
-                 Module.Message_Styles (Message.Current_Ranking);
+                 Module.Message_Styles (Message.Ranking);
 
             begin
                Message.Message := GPS.Kernel.Messages.Message_Access (Primary);
@@ -1895,7 +1895,7 @@ package body CodePeer.Module is
                end Decorate;
 
             begin
-               case Message.Current_Ranking is
+               case Message.Ranking is
                   when CodePeer.High =>
                      return Decorate ("high");
 
@@ -1915,7 +1915,7 @@ package body CodePeer.Module is
 
          begin
             if Self.Filter_Criteria.Lineages (Message.Lifeage)
-              and then Self.Filter_Criteria.Rankings (Message.Current_Ranking)
+              and then Self.Filter_Criteria.Rankings (Message.Ranking)
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then
