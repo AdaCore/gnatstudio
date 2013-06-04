@@ -337,7 +337,7 @@ package body GPS.Kernel.Actions is
                      Dir         => No_File,
                      Args        => null,
                      Label       => new String'(Action.Name.all),
-                     Repeat_Count => Repeat,
+                     Repeat_Count => R,
                      Remaining_Repeat => Repeat - R)),
                 Destroy_On_Exit => True,
                 Active          => True,
