@@ -107,7 +107,7 @@ package CodePeer is
       Is_Check         : Boolean;
       --  True means this message is check.
       Computed_Ranking : Message_Ranking_Level;
-      Current_Ranking  : Message_Ranking_Level;
+      Ranking          : Message_Ranking_Level;
       Text             : GNAT.Strings.String_Access;
       Audit_Loaded     : Boolean;
       Audit_V2         : Audit_V2_Vectors.Vector;

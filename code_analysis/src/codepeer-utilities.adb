@@ -61,14 +61,14 @@ package body CodePeer.Utilities is
          if Categories.Contains (Message.Category)
            and Lifeages (Message.Lifeage)
          then
-            Counts (Message.Current_Ranking).Current :=
-              Counts (Message.Current_Ranking).Current + 1;
+            Counts (Message.Ranking).Current :=
+              Counts (Message.Ranking).Current + 1;
          end if;
 
          --  Count all non-removed checks with non-suppressed ranking
 
          if Message.Is_Check
-           and then Message.Current_Ranking /= Suppressed
+           and then Message.Ranking /= Suppressed
            and then Message.Lifeage /= Removed
          then
             Checks := Checks + 1;

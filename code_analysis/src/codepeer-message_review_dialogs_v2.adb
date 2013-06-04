@@ -214,7 +214,7 @@ package body CodePeer.Message_Review_Dialogs_V2 is
 
       Gtk.GEntry.Gtk_New (Text_Entry);
       Text_Entry.Set_Editable (False);
-      Text_Entry.Set_Text (Ranking_Image (Message.Current_Ranking));
+      Text_Entry.Set_Text (Ranking_Image (Message.Ranking));
       Table.Attach (Text_Entry, 1, 2, 1, 2);
 
       --  New probability combobox and underling model
@@ -397,7 +397,7 @@ package body CodePeer.Message_Review_Dialogs_V2 is
          New_Record.Ranking :=
            CodePeer.Message_Ranking_Level'Val
              (Model.Get_Int (Iter, Probability_Model_New_Level_Column));
-         Self.Message.Current_Ranking := New_Record.Ranking;
+         Self.Message.Ranking := New_Record.Ranking;
       end if;
 
       Self.Comment_Buffer.Get_Start_Iter (Start_Iter);
