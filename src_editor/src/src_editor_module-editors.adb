@@ -1557,12 +1557,27 @@ package body Src_Editor_Module.Editors is
    overriding function New_Location
      (This   : Src_Editor_Buffer;
       Line   : Integer;
-      Column : Visible_Column_Type) return Editor_Location'Class is
+      Column : Visible_Column_Type) return Editor_Location'Class
+   is
+      Result : Src_Editor_Location;
+      Iter   : Gtk_Text_Iter;
    begin
-      return Create_Editor_Location
-        (This,
-         Editable_Line_Type (Line),
-         Character_Offset_Type (Column));
+      if Is_Valid_Position
+        (This.Contents.Buffer, Editable_Line_Type (Line), Column)
+      then
+         Get_Iter_At_Screen_Position
+           (This.Contents.Buffer, Iter,
+            Editable_Line_Type (Line),
+            Character_Offset_Type (Column));
+         Result.Offset := Integer (Get_Offset (Iter));
+      end if;
+
+      Result.Line := Editable_Line_Type'Max (1, Editable_Line_Type (Line));
+      Result.Column := Visible_Column_Type'Max (1, Column);
+      Result.Buffer := This;
+
+      return Result;
+
    end New_Location;
 
    ---------
