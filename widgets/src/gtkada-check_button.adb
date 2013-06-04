@@ -47,7 +47,7 @@ package body Gtkada.Check_Button is
    -- Initialize --
    ----------------
 
-   Class_Record : Ada_GObject_Class := Uninitialized_Class;
+   Class_Record : aliased Ada_GObject_Class := Uninitialized_Class;
 
    procedure Initialize
      (Check : access Gtkada_Check_Button_Record'Class;
@@ -55,46 +55,35 @@ package body Gtkada.Check_Button is
       Default : Boolean := False)
    is
       procedure Install_Clicked_Handler
-        (Obj     : System.Address;
+        (Obj     : GType;
          Handler : System.Address);
       pragma Import (C, Install_Clicked_Handler,
                      "gtkada_check_button_install_handler");
 
-      Set_Handler : Boolean := False;
    begin
-      Initialize_Class_Record
+      if Initialize_Class_Record
         (Ancestor     => Gtk.Check_Button.Get_Type,
          Signals      => (1 .. 0 => <>),
-         Class_Record => Class_Record,
-         Type_Name    => "GtkadaCheckButton");
-
-      Gtkada_Check_Button_Record (Check.all) :=
-        (Gtk.Check_Button.Gtk_Check_Button_Record with
-         Default  => False,
-         State    => State_Unchecked,
-         Internal => False,
-         Forcing_Update => False);
-
-      Glib.Object.G_New (Check, Class_Record);
-      Check.Set_Label (Label);
-      Set_Default (Check, Default);
-
-      --  We need to create a new Class Record for this widget, as we are
-      --  going to replace the default handler for the 'clicked' signal.
-      if Class_Record = Uninitialized_Class then
-         Set_Handler := True;
-      end if;
-
-      if Set_Handler then
+         Class_Record => Class_Record'Access,
+         Type_Name    => "GtkadaCheckButton")
+      then
          --  We replace the class handler for 'clicked' because this signal
          --  has the flag G_SIGNAL_RUN_FIRST which makes the class handler
          --  always being called first even when connecting a new signal
          --  handler with 'Last' set to false.
          --  We absolutely need to be called before the class handler.
          Install_Clicked_Handler
-            (Get_Object (Check), On_Button_Clicked'Address);
+            (Class_Record.The_Type, On_Button_Clicked'Address);
       end if;
 
+      Glib.Object.G_New (Check, Class_Record.The_Type);
+      Check.Default := False;
+      Check.State := State_Unchecked;
+      Check.Internal := False;
+      Check.Forcing_Update := False;
+
+      Check.Set_Label (Label);
+      Set_Default (Check, Default);
       Redraw_State (Check);
    end Initialize;
 
