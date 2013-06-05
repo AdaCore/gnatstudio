@@ -5825,7 +5825,7 @@ package body Src_Editor_Buffer is
 
          while Result
            and then not Ends_Line (Iter)
-           and then Is_Space (Get_Char (Iter))
+           and then Glib.Unicode.Is_Space (Get_Char (Iter))
          loop
             Forward_Char (Iter, Result);
             Offset := Offset + 1;
