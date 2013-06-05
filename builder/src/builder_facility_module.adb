@@ -1585,12 +1585,14 @@ package body Builder_Facility_Module is
          Get_Main_Window (Kernel),
          Changes_Made);
 
+      pragma Warnings (Off);
       if Changes_Made then
          --  ???
          --  Reset mode combo box
          --  Save user-defined modes
          null;
       end if;
+      pragma Warnings (On);
 
    exception
       when E : others => Trace (Exception_Handle, E);
