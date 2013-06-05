@@ -6005,7 +6005,7 @@ package body Src_Editor_Buffer is
 
                Char := Get_Char (Iter);
 
-               exit when not Is_Space (Char);
+               exit when not Glib.Unicode.Is_Space (Char);
 
                if Char = Character'Pos (ASCII.HT) then
                   Indent_Offset :=
