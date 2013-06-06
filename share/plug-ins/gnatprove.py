@@ -14,6 +14,21 @@ import GPS, os_utils, os.path, tool_output, re
 
 xml_gnatprove = """<?xml version="1.0"?>
   <GNATPROVE>
+    <doc_path>share/doc/gnatprove</doc_path>
+
+    <documentation_file>
+      <name>html/ug/index.html</name>
+      <descr>SPARK 2014 Toolset User's Guide</descr>
+      <category>SPARK 2014</category>
+      <menu before="About">/Help/SPARK 2014/SPARK 2014 Toolset User's Guide</menu>
+    </documentation_file>
+
+    <documentation_file>
+      <name>html/lrm/index.html</name>
+      <descr>SPARK 2014 Reference Manual</descr>
+      <category>SPARK 2014</category>
+      <menu before="About">/Help/SPARK 2014/SPARK 2014 Reference Manual</menu>
+    </documentation_file>
 
     <tool name="GNATprove" package="Prove" attribute="switches" index="">
       <language>Ada</language>
