@@ -6803,6 +6803,12 @@ class MDI(object):
         :param title: A string
         :param short: A string
 
+        .. code-block:: python
+
+           from gi.repository import Gtk
+           b = Gtk.Button("Press Me")
+           GPS.MDI.add(b)
+
         .. seealso::
 
            :func:`GPS.MDI.get`
