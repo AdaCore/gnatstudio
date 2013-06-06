@@ -374,7 +374,9 @@ procedure GPS.Main is
          Set_Position (Splash, Win_Pos_Center);
          Gdk_New_From_File (Pixbuf, +File.Full_Name, Error);
          Gtk_New (Image, Pixbuf);
-         Unref (Pixbuf);
+         if Pixbuf /= null then
+            Unref (Pixbuf);
+         end if;
          Add (Splash, Image);
          Show_All (Splash);
       end if;
