@@ -253,13 +253,9 @@ package Src_Editor_Buffer is
      (Buffer    : access Source_Buffer_Record;
       Line      : Editable_Line_Type;
       Column    : Character_Offset_Type;
-      Centering : GPS.Editors.Centering_Type := GPS.Editors.Center;
       Internal  : Boolean;
       Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given position.
-   --  If, following this call, the cursor location needs to be displayed, the
-   --  editor will scroll so that the cursor is visible, with the behavior
-   --  specified in Centering.
    --
    --  The validity of the cursor position must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
@@ -988,22 +984,6 @@ package Src_Editor_Buffer is
    procedure Refresh_Side_Column (Buffer : access Source_Buffer_Record);
    --  Refresh the side columns in Buffer
 
-   function Position_Set_Explicitely
-     (Buffer : access Source_Buffer_Record;
-      Reset  : Boolean) return Boolean;
-   --  Return True if the position of the cursor has been set explicitely (ie
-   --  not as a side effect of a text change)
-   --  If Reset is true, deactivate the flag saying that the cursor has been
-   --  set explicitely: further calls to Position_Set_Explicitely will return
-   --  False.
-
-   procedure Set_Position_Set_Explicitely
-     (Buffer : access Source_Buffer_Record);
-   --  Set the flag "Position_Set_Explicitely".
-   --  This should only be called when opening an editor or when jumping to
-   --  a location. This flag will not do anything on editors that are already
-   --  open and scrolled.
-
    procedure End_Action (Buffer : access Source_Buffer_Record'Class);
    --  This procedure should be called every time that an internal
    --  event should cancel the current user action: focus switching
@@ -1119,13 +1099,9 @@ private
      (Buffer    : access Source_Buffer_Record;
       Line      : Gint;
       Column    : Gint;
-      Centering : GPS.Editors.Centering_Type;
       Internal  : Boolean;
       Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given position.
-   --  If, following this call, the cursor location needs to be displayed, the
-   --  editor will scroll so that the cursor is centered if Center is True.
-   --  Otherwise, only a minimal scrolling will be performed.
    --
    --  The validity of the cursor position must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
@@ -1587,17 +1563,6 @@ private
 
       Tab_Width : Gint := 8;
       --  Width of a Tab character
-
-      Cursor_Set_Explicitely : Boolean := False;
-      --  True when the user requested to scroll to this position when the
-      --  editor was first opened. This is used to scroll to this position in
-      --  the callbacks that display the editor.
-
-      Initial_Scroll_Has_Occurred : Boolean := False;
-      --  Whether the initial scroll has occurred.
-      --  This flag, in cunjunction with Cursor_Set_Explicitely above, are used
-      --  to make sure that a newly-created editor will scroll to the given
-      --  location when it is first opened.
 
       In_Destruction : Boolean := False;
       --  Indicates whether the buffer is currently being destroyed

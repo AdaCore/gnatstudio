@@ -47,7 +47,6 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
-with GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -2413,8 +2412,8 @@ package body Src_Contexts is
                  (Get_Buffer (Editor),
                   Context.End_Line,
                   Context.End_Column,
-                  GPS.Editors.With_Margin,
                   Internal => True);
+               Get_View (Editor).Set_Position_Set_Explicitely;
 
                Save_Cursor_Position (Get_View (Editor));
             end if;

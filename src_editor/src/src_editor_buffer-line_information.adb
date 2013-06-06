@@ -35,7 +35,6 @@ with Pango.Enums;              use Pango.Enums;
 
 with Commands.Editor;          use Commands.Editor;
 with GNATCOLL.Xref;
-with GPS.Editors;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel;               use GPS.Kernel;
 
@@ -1156,8 +1155,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Command : Command_Access;
    begin
-      Set_Cursor_Position
-        (Buffer, Gint (Line - 1), 0, GPS.Editors.Minimal, False);
+      Set_Cursor_Position (Buffer, Gint (Line - 1), 0, False);
 
       if BL.all /= null then
          for Col in BL.all'Range loop

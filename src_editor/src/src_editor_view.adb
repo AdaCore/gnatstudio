@@ -760,8 +760,6 @@ package body Src_Editor_View is
 
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class) is
       V      : constant Source_View := Source_View (View);
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (V));
-
    begin
       --  Keep the cursor on screen when the editor is resized.
       --  Do not do this if the editor is synchronized with another editor.
@@ -770,7 +768,7 @@ package body Src_Editor_View is
         and then V.Cursor_Position >= 0.0
         and then V.Cursor_Position <= 1.0
       then
-         if Position_Set_Explicitely (Buffer, False) then
+         if V.Position_Set_Explicitely (False) then
             Scroll_To_Cursor_Location (V, Center);
          end if;
       end if;
@@ -1498,9 +1496,7 @@ package body Src_Editor_View is
            (Get_Hadjustment (View.Scroll),
             Get_Value (Get_Hadjustment (View.Synchronized_Editor.Scroll)));
       else
-         if Position_Set_Explicitely
-           (Source_Buffer (Get_Buffer (View)), True)
-         then
+         if View.Position_Set_Explicitely (Reset => True) then
             Scroll_To_Cursor_Location (View, Center);
          end if;
       end if;
@@ -2071,7 +2067,7 @@ package body Src_Editor_View is
       Key := Get_Key_Val (Event);
 
       if Key /= GDK_Control_L and then Key /= GDK_Control_R then
-         Ignore := Position_Set_Explicitely (Buffer, True);
+         Ignore := View.Position_Set_Explicitely (Reset => True);
       end if;
 
       if not Get_Editable (View) then
@@ -2539,5 +2535,34 @@ package body Src_Editor_View is
          View.Side_Column_Buffer := Null_Surface;
       end if;
    end Invalidate_Side_Column_Cache;
+
+   ------------------------------
+   -- Position_Set_Explicitely --
+   ------------------------------
+
+   function Position_Set_Explicitely
+     (Self   : access Source_View_Record;
+      Reset  : Boolean) return Boolean
+   is
+      Set : constant Boolean := Self.Cursor_Set_Explicitely;
+   begin
+      if Reset then
+         Self.Cursor_Set_Explicitely := False;
+         Self.Initial_Scroll_Has_Occurred := True;
+      end if;
+
+      return Set;
+   end Position_Set_Explicitely;
+
+   ----------------------------------
+   -- Set_Position_Set_Explicitely --
+   ----------------------------------
+
+   procedure Set_Position_Set_Explicitely (Self : access Source_View_Record) is
+   begin
+      if not Self.Initial_Scroll_Has_Occurred then
+         Self.Cursor_Set_Explicitely := True;
+      end if;
+   end Set_Position_Set_Explicitely;
 
 end Src_Editor_View;

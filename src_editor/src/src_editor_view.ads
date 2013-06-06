@@ -166,6 +166,21 @@ package Src_Editor_View is
    procedure Reset_As_Is_Mode (View : access Source_View_Record'Class);
    --  Set As_Mode to false
 
+   function Position_Set_Explicitely
+     (Self   : access Source_View_Record;
+      Reset  : Boolean) return Boolean;
+   --  Return True if the position of the cursor has been set explicitely (ie
+   --  not as a side effect of a text change)
+   --  If Reset is true, deactivate the flag saying that the cursor has been
+   --  set explicitely: further calls to Position_Set_Explicitely will return
+   --  False.
+
+   procedure Set_Position_Set_Explicitely (Self : access Source_View_Record);
+   --  Set the flag "Position_Set_Explicitely".
+   --  This should only be called when opening an editor or when jumping to
+   --  a location. This flag will not do anything on editors that are already
+   --  open and scrolled.
+
 private
 
    type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);
@@ -184,6 +199,18 @@ private
 
       Highlight_Current   : Boolean := False;
       Highlight_As_Line   : Boolean := False;
+
+      Cursor_Set_Explicitely : Boolean := False;
+      --  True when the user requested to scroll to this position when the
+      --  editor was first opened. This is used to scroll to this position in
+      --  the callbacks that display the editor.
+
+      Initial_Scroll_Has_Occurred : Boolean := False;
+      --  Whether the initial scroll has occurred.
+      --  This flag, in cunjunction with Cursor_Set_Explicitely above, are used
+      --  to make sure that a newly-created editor will scroll to the given
+      --  location when it is first opened, but keep the user location
+      --  at other times.
 
       Top_Line            : Src_Editor_Buffer.Buffer_Line_Type := 1;
       Bottom_Line         : Src_Editor_Buffer.Buffer_Line_Type := 0;

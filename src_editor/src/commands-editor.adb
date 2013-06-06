@@ -24,7 +24,6 @@ with Src_Editor_Buffer.Line_Information;
 use  Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Multi_Cursors;
 use  Src_Editor_Buffer.Multi_Cursors;
-with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
@@ -319,7 +318,6 @@ package body Commands.Editor is
               (Command.Buffer,
                Command.Line,
                Command.Column,
-               Centering => Minimal,
                Internal  => True);
             Scroll_To_Cursor_Location (View);
          end if;
@@ -466,7 +464,6 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.End_Line_After,
             Command.End_Column_After,
-            Centering => Minimal,
             Internal  => True);
          Scroll_To_Cursor_Location (Get_View (Editor));
       end if;
@@ -510,14 +507,12 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.End_Line_Before,
             Command.End_Column_Before,
-            Centering => Minimal,
             Internal  => True);
       else
          Set_Cursor_Position
            (Command.Buffer,
             Command.Start_Line,
             Command.Start_Column,
-            Centering => Minimal,
             Internal  => True);
       end if;
 

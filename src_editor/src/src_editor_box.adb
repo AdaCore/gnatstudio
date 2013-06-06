@@ -2411,6 +2411,12 @@ package body Src_Editor_Box is
          Set_Editable (Box.Source_View, False);
       end if;
 
+      --  Preserve the current location
+      Box.Set_Cursor_Location
+        (Line   => Source.Current_Line,
+         Column => 1);
+      Box.Source_View.Set_Position_Set_Explicitely;
+
       Update_Status (Box);
    end Create_New_View;
 
@@ -2843,9 +2849,13 @@ package body Src_Editor_Box is
 
          Set_Cursor_Position
            (Editor.Source_Buffer, Editable_Line, Column,
-            Centering => Centering,
             Internal  => False,
             Extend_Selection => Extend_Selection);
+
+         if Centering /= Minimal then
+            Editor.Source_View.Set_Position_Set_Explicitely;
+         end if;
+
          Save_Cursor_Position (Editor.Source_View);
          Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 
@@ -2861,8 +2871,13 @@ package body Src_Editor_Box is
          end if;
 
          Set_Cursor_Position
-           (Editor.Source_Buffer, Editable_Line, 1, Centering, False,
+           (Editor.Source_Buffer, Editable_Line, 1, False,
             Extend_Selection => Extend_Selection);
+
+         if Centering /= Minimal then
+            Editor.Source_View.Set_Position_Set_Explicitely;
+         end if;
+
          Save_Cursor_Position (Editor.Source_View);
          Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 

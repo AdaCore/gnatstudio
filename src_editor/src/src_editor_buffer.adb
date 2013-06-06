@@ -4210,7 +4210,6 @@ package body Src_Editor_Buffer is
      (Buffer    : access Source_Buffer_Record;
       Line      : Gint;
       Column    : Gint;
-      Centering : Centering_Type;
       Internal  : Boolean;
       Extend_Selection : Boolean := False)
    is
@@ -4231,12 +4230,6 @@ package body Src_Editor_Buffer is
          Remove_Completion;
       end if;
 
-      if Centering /= Minimal
-        and then not Buffer.Initial_Scroll_Has_Occurred
-      then
-         Buffer.Cursor_Set_Explicitely := True;
-      end if;
-
       --  At this point, we know that the (Line, Column) position is
       --  valid, so we can safely get the iterator at this position.
 
@@ -4253,7 +4246,6 @@ package body Src_Editor_Buffer is
      (Buffer    : access Source_Buffer_Record;
       Line      : Editable_Line_Type;
       Column    : Character_Offset_Type;
-      Centering : Centering_Type := Center;
       Internal  : Boolean;
       Extend_Selection : Boolean := False)
    is
@@ -4272,7 +4264,7 @@ package body Src_Editor_Buffer is
 
       Set_Cursor_Position
         (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1),
-         Centering, Internal => Internal,
+         Internal => Internal,
          Extend_Selection => Extend_Selection);
    end Set_Cursor_Position;
 
@@ -7536,36 +7528,6 @@ package body Src_Editor_Buffer is
       Side_Column_Configuration_Changed (Buffer);
       Side_Column_Changed (Buffer);
    end Refresh_Side_Column;
-
-   ------------------------------
-   -- Position_Set_Explicitely --
-   ------------------------------
-
-   function Position_Set_Explicitely
-     (Buffer : access Source_Buffer_Record;
-      Reset  : Boolean) return Boolean
-   is
-      Set : constant Boolean := Buffer.Cursor_Set_Explicitely;
-   begin
-      if Reset then
-         Buffer.Cursor_Set_Explicitely := False;
-         Buffer.Initial_Scroll_Has_Occurred := True;
-      end if;
-
-      return Set;
-   end Position_Set_Explicitely;
-
-   ----------------------------------
-   -- Set_Position_Set_Explicitely --
-   ----------------------------------
-
-   procedure Set_Position_Set_Explicitely
-     (Buffer : access Source_Buffer_Record) is
-   begin
-      if not Buffer.Initial_Scroll_Has_Occurred then
-         Buffer.Cursor_Set_Explicitely := True;
-      end if;
-   end Set_Position_Set_Explicitely;
 
    --------------------
    -- In_Destruction --
