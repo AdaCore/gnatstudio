@@ -542,8 +542,10 @@ installing GPS.
     [UNEXPECTED_EXCEPTION] 1/17 Unexpected exception: Exception name: CONSTRAINT_ERROR
     _UNEXPECTED_EXCEPTION_ Message: gtk-image.adb:281 access check failed
 
-  Then it means there is a conflict with :file:`~/.local/share/mime/mime.cache`.
-  Removing this file will solve this conflict.
+  Then it means either that there is a conflict with
+  :file:`~/.local/share/mime/mime.cache`: removing this file will solve this
+  conflict; or that you need to install the shared-mime-info package on
+  your system.
 
 *GPS requires a display depth of at least 24 bits*
 
