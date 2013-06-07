@@ -723,6 +723,7 @@ package body CodePeer.Module is
            (Self.Report,
             GPS.Kernel.Kernel_Handle (Self.Kernel),
             GPS.Kernel.Modules.Module_ID (Self),
+            Self.Version,
             Self.Tree);
          Context_CB.Connect
            (Self.Report,
@@ -1931,6 +1932,7 @@ package body CodePeer.Module is
          begin
             if Self.Filter_Criteria.Lineages (Message.Lifeage)
               and then Self.Filter_Criteria.Rankings (Message.Ranking)
+              and then Self.Filter_Criteria.Statuses (Message.Status)
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then

@@ -91,22 +91,39 @@ package body CodePeer.Messages_Reports is
    procedure On_Show_Informational_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
-
    procedure On_Show_Low_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
-
    procedure On_Show_Medium_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
-
    procedure On_Show_High_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
-
    procedure On_Show_Suppressed_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
+   --  Handles change of state of items of ranking filter
+
+   procedure On_Show_Unclassified_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   procedure On_Show_Pending_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   procedure On_Show_Not_A_Bug_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   procedure On_Show_Intentional_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   procedure On_Show_False_Positive_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   procedure On_Show_Bug_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   --  Handles change of state of items of review status filter
 
    procedure On_Categories_Criteria_Changed
      (Object : access
@@ -158,6 +175,19 @@ package body CodePeer.Messages_Reports is
      "codepeer-summary_report-ranking-medium";
    Ranking_High_History          : constant Histories.History_Key :=
      "codepeer-summary_report-ranking-high";
+
+   Status_Unclassified_History   : constant Histories.History_Key :=
+     "codepeer-summary_report-status-unclassified";
+   Status_Pending_History        : constant Histories.History_Key :=
+     "codepeer-summary_report-status-pending";
+   Status_Not_A_Bug_History      : constant Histories.History_Key :=
+     "codepeer-summary_report-status-not_a_bug";
+   Status_False_Positive_History : constant Histories.History_Key :=
+     "codepeer-summary_report-status-false_positive";
+   Status_Intentional_History    : constant Histories.History_Key :=
+     "codepeer-summary_report-status-intentional";
+   Status_Bug_History            : constant Histories.History_Key :=
+     "codepeer-summary_report-status-bug";
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
       Glib.Object.Uninitialized_Class;
@@ -405,13 +435,14 @@ package body CodePeer.Messages_Reports is
    -------------
 
    procedure Gtk_New
-     (Report : out Messages_Report;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID;
-      Tree   : Code_Analysis.Code_Analysis_Tree) is
+     (Report  : out Messages_Report;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Module  : GPS.Kernel.Modules.Module_ID;
+      Version : Supported_Format_Version;
+      Tree    : Code_Analysis.Code_Analysis_Tree) is
    begin
       Report := new Messages_Report_Record;
-      Initialize (Report, Kernel, Module, Tree);
+      Initialize (Report, Kernel, Module, Version, Tree);
    end Gtk_New;
 
    ----------------
@@ -419,10 +450,11 @@ package body CodePeer.Messages_Reports is
    ----------------
 
    procedure Initialize
-     (Self   : access Messages_Report_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID;
-      Tree   : Code_Analysis.Code_Analysis_Tree)
+     (Self    : access Messages_Report_Record'Class;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Module  : GPS.Kernel.Modules.Module_ID;
+      Version : Supported_Format_Version;
+      Tree    : Code_Analysis.Code_Analysis_Tree)
    is
       use Gtk.Tree_Model_Sort;
 
@@ -464,8 +496,9 @@ package body CodePeer.Messages_Reports is
          Gtk.Widget.Signal_Destroy,
          Summary_Report_Callbacks.To_Marshaller (On_Destroy'Access));
 
-      Self.Kernel := Kernel;
-      Self.Tree   := Tree;
+      Self.Kernel  := Kernel;
+      Self.Version := Version;
+      Self.Tree    := Tree;
 
       Project_Icon :=
         Gtk.Widget.Gtk_Widget
@@ -505,6 +538,36 @@ package body CodePeer.Messages_Reports is
         Histories.Get_History (Kernel.Get_History.all, Ranking_Medium_History);
       Self.Show_Ranking (CodePeer.High) :=
         Histories.Get_History (Kernel.Get_History.all, Ranking_High_History);
+
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Status_Unclassified_History, True);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Status_Pending_History, True);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Status_Not_A_Bug_History, False);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Status_False_Positive_History, False);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Status_Intentional_History, False);
+      Histories.Create_New_Boolean_Key_If_Necessary
+        (Kernel.Get_History.all, Status_Bug_History, True);
+
+      Self.Show_Status (Unclassified) :=
+        Histories.Get_History
+          (Kernel.Get_History.all, Status_Unclassified_History);
+      Self.Show_Status (Pending) :=
+        Histories.Get_History (Kernel.Get_History.all, Status_Pending_History);
+      Self.Show_Status (Not_A_Bug) :=
+        Histories.Get_History
+          (Kernel.Get_History.all, Status_Not_A_Bug_History);
+      Self.Show_Status (False_Positive) :=
+        Histories.Get_History
+          (Kernel.Get_History.all, Status_False_Positive_History);
+      Self.Show_Status (Intentional) :=
+        Histories.Get_History
+          (Kernel.Get_History.all, Status_Intentional_History);
+      Self.Show_Status (Bug) :=
+        Histories.Get_History (Kernel.Get_History.all, Status_Bug_History);
 
       --  Create report's widgets
 
@@ -765,7 +828,83 @@ package body CodePeer.Messages_Reports is
            (On_Show_High_Messages_Toggled'Access),
          Messages_Report (Self));
 
-      --
+      --  Message review status
+
+      case Self.Version is
+         when 2 =>
+            --  There is no message review status support in this version.
+
+            null;
+
+         when 3 =>
+            Gtk.Separator.Gtk_New_Hseparator (Separator);
+            Filter_Box.Pack_Start (Separator, False);
+
+            Gtk.Label.Gtk_New (Label, -"Message review status");
+            Filter_Box.Pack_Start (Label, False);
+
+            Gtk.Check_Button.Gtk_New (Check, -"unclassified");
+            Check.Set_Active (Self.Show_Status (Unclassified));
+            Filter_Box.Pack_Start (Check, False);
+            Check_Button_Report_Callbacks.Connect
+              (Check,
+               Gtk.Toggle_Button.Signal_Toggled,
+               Check_Button_Report_Callbacks.To_Marshaller
+                 (On_Show_Unclassified_Messages_Toggled'Access),
+               Messages_Report (Self));
+
+            Gtk.Check_Button.Gtk_New (Check, -"pending");
+            Check.Set_Active (Self.Show_Status (Pending));
+            Filter_Box.Pack_Start (Check, False);
+            Check_Button_Report_Callbacks.Connect
+              (Check,
+               Gtk.Toggle_Button.Signal_Toggled,
+               Check_Button_Report_Callbacks.To_Marshaller
+                 (On_Show_Pending_Messages_Toggled'Access),
+               Messages_Report (Self));
+
+            Gtk.Check_Button.Gtk_New (Check, -"not a bug");
+            Check.Set_Active (Self.Show_Status (Not_A_Bug));
+            Filter_Box.Pack_Start (Check, False);
+            Check_Button_Report_Callbacks.Connect
+              (Check,
+               Gtk.Toggle_Button.Signal_Toggled,
+               Check_Button_Report_Callbacks.To_Marshaller
+                 (On_Show_Not_A_Bug_Messages_Toggled'Access),
+               Messages_Report (Self));
+
+            Gtk.Check_Button.Gtk_New (Check, -"false positive");
+            Check.Set_Active (Self.Show_Status (False_Positive));
+            Filter_Box.Pack_Start (Check, False);
+            Check_Button_Report_Callbacks.Connect
+              (Check,
+               Gtk.Toggle_Button.Signal_Toggled,
+               Check_Button_Report_Callbacks.To_Marshaller
+                 (On_Show_False_Positive_Messages_Toggled'Access),
+               Messages_Report (Self));
+
+            Gtk.Check_Button.Gtk_New (Check, -"intentional");
+            Check.Set_Active (Self.Show_Status (Intentional));
+            Filter_Box.Pack_Start (Check, False);
+            Check_Button_Report_Callbacks.Connect
+              (Check,
+               Gtk.Toggle_Button.Signal_Toggled,
+               Check_Button_Report_Callbacks.To_Marshaller
+                 (On_Show_Intentional_Messages_Toggled'Access),
+               Messages_Report (Self));
+
+            Gtk.Check_Button.Gtk_New (Check, -"bug");
+            Check.Set_Active (Self.Show_Status (Bug));
+            Filter_Box.Pack_Start (Check, False);
+            Check_Button_Report_Callbacks.Connect
+              (Check,
+               Gtk.Toggle_Button.Signal_Toggled,
+               Check_Button_Report_Callbacks.To_Marshaller
+                 (On_Show_Bug_Messages_Toggled'Access),
+               Messages_Report (Self));
+      end case;
+
+      --  Register contextual menu handler
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -901,6 +1040,38 @@ package body CodePeer.Messages_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_All_Subprograms_Toggled;
 
+   ----------------------------------
+   -- On_Show_Bug_Messages_Toggled --
+   ----------------------------------
+
+   procedure On_Show_Bug_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report) is
+   begin
+      Self.Show_Status (Bug) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Status_Bug_History,
+         Self.Show_Status (Bug));
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Bug_Messages_Toggled;
+
+   ---------------------------------------------
+   -- On_Show_False_Positive_Messages_Toggled --
+   ---------------------------------------------
+
+   procedure On_Show_False_Positive_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report) is
+   begin
+      Self.Show_Status (False_Positive) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Status_False_Positive_History,
+         Self.Show_Status (False_Positive));
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_False_Positive_Messages_Toggled;
+
    -----------------------------------
    -- On_Show_High_Messages_Toggled --
    -----------------------------------
@@ -932,6 +1103,22 @@ package body CodePeer.Messages_Reports is
          Self.Show_Ranking (Informational));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Informational_Messages_Toggled;
+
+   ------------------------------------------
+   -- On_Show_Intentional_Messages_Toggled --
+   ------------------------------------------
+
+   procedure On_Show_Intentional_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report) is
+   begin
+      Self.Show_Status (Intentional) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Status_Intentional_History,
+         Self.Show_Status (Intentional));
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Intentional_Messages_Toggled;
 
    ----------------------------------
    -- On_Show_Low_Messages_Toggled --
@@ -965,6 +1152,38 @@ package body CodePeer.Messages_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Medium_Messages_Toggled;
 
+   ----------------------------------------
+   -- On_Show_Not_A_Bug_Messages_Toggled --
+   ----------------------------------------
+
+   procedure On_Show_Not_A_Bug_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report) is
+   begin
+      Self.Show_Status (Not_A_Bug) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Status_Not_A_Bug_History,
+         Self.Show_Status (Not_A_Bug));
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Not_A_Bug_Messages_Toggled;
+
+   --------------------------------------
+   -- On_Show_Pending_Messages_Toggled --
+   --------------------------------------
+
+   procedure On_Show_Pending_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report) is
+   begin
+      Self.Show_Status (Pending) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Status_Pending_History,
+         Self.Show_Status (Pending));
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Pending_Messages_Toggled;
+
    -----------------------------------------
    -- On_Show_Suppressed_Messages_Toggled --
    -----------------------------------------
@@ -980,6 +1199,22 @@ package body CodePeer.Messages_Reports is
          Self.Show_Ranking (Suppressed));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Suppressed_Messages_Toggled;
+
+   -------------------------------------------
+   -- On_Show_Unclassified_Messages_Toggled --
+   -------------------------------------------
+
+   procedure On_Show_Unclassified_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report) is
+   begin
+      Self.Show_Status (Unclassified) := Object.Get_Active;
+      Histories.Set_History
+        (Self.Kernel.Get_History.all,
+         Status_Unclassified_History,
+         Self.Show_Status (Unclassified));
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Unclassified_Messages_Toggled;
 
    ---------------------------------
    -- On_Lifeage_Criteria_Changed --
@@ -1024,6 +1259,14 @@ package body CodePeer.Messages_Reports is
           (Self.Check_Categories_Editor.Get_Visible_Categories);
       Criteria.Rankings   := Self.Show_Ranking;
       Criteria.Lineages   := Self.Lifeage_Editor.Get_Visible_Lifeages;
+
+      case Self.Version is
+         when 2 =>
+            Criteria.Statuses := (others => True);
+
+         when 3 =>
+            Criteria.Statuses := Self.Show_Status;
+      end case;
    end Update_Criteria;
 
 end CodePeer.Messages_Reports;

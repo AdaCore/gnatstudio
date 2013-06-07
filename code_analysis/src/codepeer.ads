@@ -264,12 +264,15 @@ package CodePeer is
 
    type Lifeage_Kinds_Flags is array (Lifeage_Kinds) of Boolean;
 
+   type Review_Status_Kinds_Flags is array (Audit_Status_Kinds) of Boolean;
+
    type Message_Filter_Criteria is record
       Files      : File_Sets.Set;
       --  Set of shown files.
       Categories : Message_Category_Sets.Set;
       Rankings   : Message_Ranking_Level_Flags;
       Lineages   : Lifeage_Kinds_Flags;
+      Statuses   : Review_Status_Kinds_Flags;
    end record;
 
    function Less

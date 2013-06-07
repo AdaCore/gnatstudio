@@ -34,16 +34,18 @@ package CodePeer.Messages_Reports is
    type Messages_Report is access all Messages_Report_Record'Class;
 
    procedure Gtk_New
-     (Report : out Messages_Report;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID;
-      Tree   : Code_Analysis.Code_Analysis_Tree);
+     (Report  : out Messages_Report;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Module  : GPS.Kernel.Modules.Module_ID;
+      Version : Supported_Format_Version;
+      Tree    : Code_Analysis.Code_Analysis_Tree);
 
    procedure Initialize
-     (Self   : access Messages_Report_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID;
-      Tree   : Code_Analysis.Code_Analysis_Tree);
+     (Self    : access Messages_Report_Record'Class;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Module  : GPS.Kernel.Modules.Module_ID;
+      Version : Supported_Format_Version;
+      Tree    : Code_Analysis.Code_Analysis_Tree);
 
    function Get_Selected_Project
      (Self : access Messages_Report_Record'Class)
@@ -82,6 +84,8 @@ private
       Lifeage_Editor      :
         CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor;
 
+      Version             : Supported_Format_Version;
+      Show_Status         : Review_Status_Kinds_Flags;
       Show_Ranking        : Message_Ranking_Level_Flags;
       Double_Click        : Boolean := False;
       --  Used to handle double click by setting to True on mouse double-press
