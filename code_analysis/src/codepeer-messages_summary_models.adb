@@ -38,6 +38,7 @@ package body CodePeer.Messages_Summary_Models is
    begin
       Self.Message_Categories.Clear;
       Self.Message_Lifeages := (others => False);
+      Self.Message_Statuses := (others => False);
    end Clear;
 
    ------------
@@ -199,6 +200,7 @@ package body CodePeer.Messages_Summary_Models is
                  (Self.Tree,
                   Self.Message_Categories,
                   Self.Message_Lifeages,
+                  Self.Message_Statuses,
                   Counts,
                   Dummy_Checks,
                   Dummy_Totals);
@@ -400,6 +402,7 @@ package body CodePeer.Messages_Summary_Models is
                     (Self.Tree,
                      Self.Message_Categories,
                      Self.Message_Lifeages,
+                     Self.Message_Statuses,
                      Counts,
                      Checks,
                      Totals);
@@ -439,6 +442,7 @@ package body CodePeer.Messages_Summary_Models is
                     (Self.Tree,
                      Self.Message_Categories,
                      Self.Message_Lifeages,
+                     Self.Message_Statuses,
                      Counts,
                      Checks,
                      Totals);
@@ -486,6 +490,7 @@ package body CodePeer.Messages_Summary_Models is
       Model.Tree := Tree;
       Model.Message_Categories := Categories;
       Model.Message_Lifeages := (others => True);
+      Model.Message_Statuses := (others => True);
 
       Model.Project_Icon    := Project_Icon;
       Model.File_Icon       := File_Icon;
@@ -556,6 +561,7 @@ package body CodePeer.Messages_Summary_Models is
         (Project_Node.Node,
          Self.Message_Categories,
          Self.Message_Lifeages,
+         Self.Message_Statuses,
          Project_Node.Messages_Counts,
          Project_Node.Checks_Count,
          Project_Node.Total_Checks);
@@ -590,6 +596,7 @@ package body CodePeer.Messages_Summary_Models is
         (File_Node.Node,
          Self.Message_Categories,
          Self.Message_Lifeages,
+         Self.Message_Statuses,
          File_Node.Messages_Counts,
          File_Node.Checks_Count);
       File_Node.Computed := True;
@@ -622,6 +629,7 @@ package body CodePeer.Messages_Summary_Models is
         (Subprogram_Node.Node,
          Self.Message_Categories,
          Self.Message_Lifeages,
+         Self.Message_Statuses,
          Subprogram_Node.Messages_Counts,
          Dummy);
       Subprogram_Node.Computed := True;
@@ -667,5 +675,17 @@ package body CodePeer.Messages_Summary_Models is
       Self.Message_Lifeages := To;
       Self.Reconstruct;
    end Set_Visible_Message_Lifeages;
+
+   --------------------------------
+   -- Set_Visible_Message_Status --
+   --------------------------------
+
+   procedure Set_Visible_Message_Status
+     (Self : access Messages_Summary_Model_Record'Class;
+      To   : CodePeer.Review_Status_Kinds_Flags) is
+   begin
+      Self.Message_Statuses := To;
+      Self.Reconstruct;
+   end Set_Visible_Message_Status;
 
 end CodePeer.Messages_Summary_Models;
