@@ -16,21 +16,22 @@
 ------------------------------------------------------------------------------
 
 with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
-with Engine_Wrappers;                use Engine_Wrappers;
 with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;      use GPS.Kernel.Standard_Hooks;
 with GNAT.Strings;                   use GNAT.Strings;
 with Gtk.Label;                      use Gtk.Label;
 with Gtk.Widget;                     use Gtk.Widget;
+with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
+with Language.Tree.Database;         use Language.Tree.Database;
+with Xref;                           use Xref;
 
 package body Completion.Search is
 
    type Entity_Search_Result is new Kernel_Search_Result with record
-      Proposal : Root_Proposal_Access;
+      Entity : Entity_Persistent_Access :=
+        Null_Entity_Persistent_Access;
    end record;
    overriding procedure Execute
      (Self       : not null access Entity_Search_Result;
@@ -46,8 +47,11 @@ package body Completion.Search is
 
    overriding procedure Free (Self : in out Entity_Search_Result) is
    begin
-      Free (Self.Proposal.all);
-      Unchecked_Free (Self.Proposal);
+      if Self.Entity /= Null_Entity_Persistent_Access then
+         Unref (Self.Entity);
+         Self.Entity := Null_Entity_Persistent_Access;
+      end if;
+      Free (Kernel_Search_Result (Self));  --  inherited
    end Free;
 
    -------------
@@ -58,15 +62,16 @@ package body Completion.Search is
      (Self       : not null access Entity_Search_Result;
       Give_Focus : Boolean)
    is
-      Loc : constant File_Location :=
-         Get_Location (Self.Proposal.all, Self.Kernel.Databases);
+      Construct : constant Simple_Construct_Information :=
+        Get_Construct (Self.Entity);
+      File : constant Structured_File_Access := Get_File (Self.Entity);
    begin
       Open_File_Editor
-         (Self.Kernel,
-          Loc.File_Path,
-          Loc.Line,
-          Loc.Column,
-          Focus => Give_Focus);
+        (Self.Kernel,
+         Get_File_Path (File),
+         Construct.Sloc_Entity.Line,
+         Visible_Column_Type (Construct.Sloc_Entity.Column),
+         Focus => Give_Focus);
    end Execute;
 
    ----------
@@ -78,8 +83,23 @@ package body Completion.Search is
      return Gtk.Widget.Gtk_Widget
    is
       Label : Gtk_Label;
+      Entity : General_Entity;
+      Construct : constant Simple_Construct_Information :=
+        Get_Construct (Self.Entity);
+      File : constant Structured_File_Access := Get_File (Self.Entity);
    begin
-      Gtk_New (Label, Self.Proposal.Get_Documentation (Self.Kernel));
+      Entity := Xref.Get_Entity
+        (Self.Kernel.Databases,
+         Name  => Get (Construct.Name).all,
+         Loc   => (File => Get_File_Path (File),
+                   Line => Construct.Sloc_Entity.Line,
+                   Column => Visible_Column_Type
+                     (Construct.Sloc_Entity.Column)));
+
+      Gtk_New (Label, Documentation
+                 (Self.Kernel.Databases,
+                  Self.Kernel.Get_Language_Handler,
+                  Entity));
       Label.Set_Use_Markup (True);
       Label.Modify_Font (View_Fixed_Font.Get_Pref);
       return Gtk_Widget (Label);
@@ -104,8 +124,7 @@ package body Completion.Search is
    overriding procedure Free
      (Self : in out Entities_Search_Provider) is
    begin
-      Free (Self.List);
-      Unchecked_Free (Self.Iter);
+      Free (Self.Iter);
       Free (Kernel_Search_Provider (Self));  --  inherited
    end Free;
 
@@ -119,36 +138,14 @@ package body Completion.Search is
       Limit   : Natural := Natural'Last)
    is
       pragma Unreferenced (Limit);
-      Expression : Parsed_Expression;
-      Text : String_Access;
    begin
       --  ??? Could use current context to restrict the visibility
 
-      Free (Self.List);
-      Unchecked_Free (Self.Iter);
+      Free (Self.Iter);
 
       Self.Pattern := Search_Pattern_Access (Pattern);
-
-      Text := new String'(Pattern.Get_Text);
-      Expression := Parse_Expression_Backward (Text);
-      Self.List := Find_Declarations
-        (Context =>
-           (From_Database,
-            Null_Instance_Info,
-            Get_Construct_Database (Self.Kernel)),
-         From_Visibility  => Null_Visibility_Context,
-         Is_Partial       => True,
-         Expression       => Expression);
-
-      Self.Iter := new Engine_Wrappers.Entity_Iterator'
-        (I => Ada_Semantic_Tree.First (Self.List));
-
-      --  Since Find_Declarations returns a sorted list already, we want to
-      --  preserve that sorting.
-      Self.Score := 1_000;
-
-      Free (Expression);
-      Free (Text);
+      Self.Iter := Start
+        (Self.Kernel.Databases.Constructs, Prefix => "", Is_Partial => True);
    end Set_Pattern;
 
    ----------
@@ -160,55 +157,55 @@ package body Completion.Search is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      Proposal : Root_Proposal_Access;
       L : String_Access;
-      Loc : File_Location;
       C : GPS.Search.Search_Context;
+      Entity : Entity_Access;
    begin
       Result := null;
 
-      if Self.Iter.At_End then
+      if At_End (Self.Iter) then
          Has_Next := False;
+         return;
+
+      elsif not Is_Valid (Self.Iter) then
+         Has_Next := True;
+         Next (Self.Iter);
          return;
       end if;
 
-      Proposal := new Root_Proposal'Class'
-         (Self.Iter.Get_Proposal);
+      Entity := Get (Self.Iter);
 
-      if Proposal /= null then
+      if Entity /= Null_Entity_Access then
          declare
-            Label : constant String :=
-              Proposal.Get_Label (Self.Kernel.Databases);
+            Construct : constant access Simple_Construct_Information :=
+              Get_Construct (Entity);
+            File : constant Structured_File_Access := Get_File (Self.Iter);
+            Name : constant String := Get (Construct.Name).all;
          begin
-            C := Self.Pattern.Start (Label);
+            C := Self.Pattern.Start (Name);
             if C /= GPS.Search.No_Match then
-               Loc := Get_Location (Proposal.all, Self.Kernel.Databases);
-
                L := new String'
-                 (Loc.File_Path.Display_Base_Name
-                  & ":" & Image (Loc.Line, Min_Width => 0)
-                  & ":" & Image (Integer (Loc.Column), Min_Width => 0));
+                 (Get_File_Path (File).Display_Base_Name
+                  & ":" & Image (Construct.Sloc_Entity.Line, Min_Width => 0)
+                  & ":"
+                  & Image (Construct.Sloc_Entity.Column, Min_Width => 0));
 
                Result := new Entity_Search_Result'
                  (Kernel   => Self.Kernel,
                   Provider => Self,
-                  Score    => Self.Score + C.Score,
+                  Score    => C.Score,
                   Short    => new String'
-                    (Self.Pattern.Highlight_Match (Label, Context => C)),
+                    (Self.Pattern.Highlight_Match (Name, Context => C)),
                   Long     => L,
-                  Id       => new String'(Label & ":" & L.all),
-                  Proposal => Proposal);
+                  Id       => new String'(Name & ":" & L.all),
+                  Entity   => To_Entity_Persistent_Access (Entity));
                Self.Adjust_Score (Result);
-
-               if Self.Score > 1 then
-                  Self.Score := Self.Score - 1;
-               end if;
             end if;
          end;
       end if;
 
-      Self.Iter.Next (Self.Kernel.Databases);
-      Has_Next := not Self.Iter.At_End;
+      Next (Self.Iter);
+      Has_Next := not At_End (Self.Iter);
    end Next;
 
 end Completion.Search;

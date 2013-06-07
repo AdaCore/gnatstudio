@@ -18,8 +18,7 @@
 --  A search provider that matches entities, to be used in particular in the
 --  global search box.
 
-with Ada_Semantic_Tree;
-with Engine_Wrappers;
+with Language.Tree.Database;
 with GPS.Kernel.Search;  use GPS.Kernel.Search;
 with GPS.Search;         use GPS.Search;
 
@@ -48,10 +47,7 @@ private
       Pattern : Search_Pattern_Access;
       --  Do not free
 
-      List : Ada_Semantic_Tree.Entity_List;
-      Iter : Engine_Wrappers.Root_Iterator_Access;
-
-      Score : Integer;
+      Iter : Language.Tree.Database.Construct_Db_Iterator;
    end record;
 
 end Completion.Search;

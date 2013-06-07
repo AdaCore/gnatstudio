@@ -89,11 +89,13 @@ package body GPS.Kernel.Search is
       if Name = Provider_Filenames then
          Provider.Rank := 2;
       elsif Name = Provider_Actions then
-         Provider.Rank := 3;
-      elsif Name = Provider_Builds then
          Provider.Rank := 4;
+      elsif Name = Provider_Builds then
+         Provider.Rank := 5;
       elsif Name = Provider_Opened_Win then
          Provider.Rank := 1;
+      elsif Name = Provider_Entities then
+         Provider.Rank := 3;
       end if;
 
       Command := new Global_Search_Command;
