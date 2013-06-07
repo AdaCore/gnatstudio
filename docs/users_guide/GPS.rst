@@ -1108,6 +1108,58 @@ Classes
 
    
 
+
+   .. autoattribute:: GPS.MDI.GROUP_CONSOLES
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_DEBUGGER_DATA
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_DEBUGGER_STACK
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_DEFAULT
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_GRAPHS
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_VCS_ACTIVITIVES
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_VCS_EXPLORER
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_VIEW
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_AUTOMATIC
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_BOTTOM
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_LEFT
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_RIGHT
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_TOP
+
+
    .. automethod:: GPS.MDI.add
 
    .. automethod:: GPS.MDI.children

@@ -6785,6 +6785,23 @@ class MDI(object):
        create()
     """
 
+    GROUP_CONSOLES = 0
+    GROUP_DEBUGGER_DATA = 0
+    GROUP_DEBUGGER_STACK = 0
+    GROUP_DEFAULT = 0
+    GROUP_GRAPHS = 0
+    GROUP_VCS_ACTIVITIES = 0
+    GROUP_VCS_EXPLORER = 0
+    GROUP_VIEW = 0
+    # constants to be used in GPS.MDI.add()
+
+    POSITION_AUTOMATIC = 0
+    POSITION_BOTTOM = 0
+    POSITION_TOP = 0
+    POSITION_LEFT = 0
+    POSITION_RIGHT = 0
+    # constants to be used in GPS.MDI.add()
+
     @staticmethod
     def add(widget, title="", short="", group=0, position=0):
         """
