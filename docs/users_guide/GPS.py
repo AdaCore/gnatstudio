@@ -6786,7 +6786,7 @@ class MDI(object):
     """
 
     @staticmethod
-    def add(widget, title, short):
+    def add(widget, title="", short="", group=0, position=0):
         """
         This function is only available if pygobject could be loaded in the
         python shell. You must install this library first, see the documentation
@@ -6802,6 +6802,16 @@ class MDI(object):
         :param widget: A widget, created by pygobject
         :param title: A string
         :param short: A string
+
+        :param group: An integer, see the constants MDI.GROUP_*
+            This indicates to which logical group the widget belongs (the
+            default group should be reserved for editors). You can create
+            new groups as you see fit.
+        :param position: An integer, see the constants MDI.POSITION_*.
+            It is used when no other widget of the same group exists, to
+            specify the initial location of the newly created notebook.
+            When other widgets of the same group exist, the widget is put
+            on top of them.
 
         .. code-block:: python
 

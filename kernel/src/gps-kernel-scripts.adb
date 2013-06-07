@@ -44,7 +44,6 @@ with Pango.Font;              use Pango.Font;
 with Pango.Layout;            use Pango.Layout;
 
 with Basic_Types;             use Basic_Types;
---  with Osint;                   use Osint;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;

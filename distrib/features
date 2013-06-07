@@ -77,6 +77,12 @@ NF-60-M307-008 GPS: refactoring of highlighter.py (2013-03-27)
   before (in particular, you can strike through or underline specific text
   in your editors with just a few lines of code).
 
+NF-60-M218-036: GPS: GPS.MDI.add to put on top of consoles (2013-06-07)
+
+  The python function GPS.MDI.add now has additional parameters to specify
+  the initial location of the new widget. This allows you to put widgets on
+  top of the existing GPS consoles for instance.
+
 NF-53-M205-030 ECL: navigation problems are announced (2013-05-24)
 
   When navigation functions, such as hyperlinks and goto-spec/body, encounter

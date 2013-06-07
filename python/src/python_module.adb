@@ -161,6 +161,7 @@ package body Python_Module is
       Tmp     : Boolean;
       pragma Unreferenced (Ignored, Tmp);
       Script  : Scripting_Language;
+      MDI     : Class_Type;
 
    begin
       GPS.Python_Core.Register_Python (Kernel);
@@ -180,15 +181,21 @@ package body Python_Module is
          new Python_Module_Record,
          Menu_Name  => -"Consoles/_Python");
 
+      MDI := New_Class (Get_Scripts (Kernel), "MDI");
+
       Add_PyWidget_Method
         (Get_Scripts (Kernel), Class => Get_GUI_Class (Kernel));
       Register_Command
         (Get_Scripts (Kernel),
          Command       => "add",
          Handler       => Python_GUI_Command_Handler'Access,
-         Class         => New_Class (Get_Scripts (Kernel), "MDI"),
-         Minimum_Args  => 1,
-         Maximum_Args  => 3,
+         Class         => MDI,
+         Params        =>
+            (Param ("widget"),
+             Param ("title", Optional => True),
+             Param ("short", Optional => True),
+             Param ("group", Optional => True),
+             Param ("position", Optional => True)),
          Static_Method => True,
          Language      => Python_Name);
 
@@ -448,15 +455,20 @@ package body Python_Module is
    is
       Widget : Glib.Object.GObject;
       Child  : GPS_MDI_Child;
+      Group  : Child_Group;
+      Position : Child_Position;
    begin
       if Command = "add" then
          Widget := From_PyGtk (Data, 1);
          if Widget /= null then
-            Gtk_New (Child, Gtk_Widget (Widget), Group => Group_Default,
+            Group := Child_Group (Nth_Arg (Data, 4, Integer (Group_Default)));
+            Position := Child_Position'Val
+               (Nth_Arg (Data, 5, Child_Position'Pos (Position_Automatic)));
+
+            Gtk_New (Child, Gtk_Widget (Widget), Group => Group,
                      Module => null, Desktop_Independent => False);
             Set_Title (Child, Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, ""));
-            Put (Get_MDI (Get_Kernel (Data)), Child,
-                 Initial_Position => Position_Automatic);
+            Put (Get_MDI (Get_Kernel (Data)), Child, Position);
             Set_Focus_Child (Child);
          end if;
       end if;
