@@ -29,13 +29,14 @@ package body CodePeer.Reports is
    -------------
 
    procedure Gtk_New
-     (Widget : out Report;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID;
-      Tree   : Code_Analysis.Code_Analysis_Tree) is
+     (Widget  : out Report;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Module  : GPS.Kernel.Modules.Module_ID;
+      Version : Supported_Format_Version;
+      Tree    : Code_Analysis.Code_Analysis_Tree) is
    begin
       Widget := new Report_Record;
-      Initialize (Widget, Kernel, Module, Tree);
+      Initialize (Widget, Kernel, Module, Version, Tree);
    end Gtk_New;
 
    ----------------
@@ -43,10 +44,11 @@ package body CodePeer.Reports is
    ----------------
 
    procedure Initialize
-     (Self   : not null access Report_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID;
-      Tree   : Code_Analysis.Code_Analysis_Tree)
+     (Self    : not null access Report_Record'Class;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Module  : GPS.Kernel.Modules.Module_ID;
+      Version : Supported_Format_Version;
+      Tree    : Code_Analysis.Code_Analysis_Tree)
    is
       use Ada.Strings;
       use Ada.Strings.Fixed;
@@ -94,6 +96,7 @@ package body CodePeer.Reports is
         (Self.Messages_Report,
          Kernel,
          Module,
+         Version,
          Tree);
       Notebook.Append_Page (Self.Messages_Report);
       Notebook.Set_Tab_Label_Text (Self.Messages_Report, "Messages");

@@ -28,16 +28,18 @@ package CodePeer.Reports is
    type Report is access all Report_Record'Class;
 
    procedure Gtk_New
-     (Widget : out Report;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID;
-      Tree   : Code_Analysis.Code_Analysis_Tree);
+     (Widget  : out Report;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Module  : GPS.Kernel.Modules.Module_ID;
+      Version : Supported_Format_Version;
+      Tree    : Code_Analysis.Code_Analysis_Tree);
 
    procedure Initialize
-     (Self   : not null access Report_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID;
-      Tree   : Code_Analysis.Code_Analysis_Tree);
+     (Self    : not null access Report_Record'Class;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Module  : GPS.Kernel.Modules.Module_ID;
+      Version : Supported_Format_Version;
+      Tree    : Code_Analysis.Code_Analysis_Tree);
 
    function Messages_Report
      (Self : not null access Report_Record'Class)
