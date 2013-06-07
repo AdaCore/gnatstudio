@@ -904,6 +904,8 @@ package body CodePeer.Messages_Reports is
                Messages_Report (Self));
       end case;
 
+      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
+
       --  Register contextual menu handler
 
       Register_Contextual_Menu
@@ -1053,6 +1055,7 @@ package body CodePeer.Messages_Reports is
         (Self.Kernel.Get_History.all,
          Status_Bug_History,
          Self.Show_Status (Bug));
+      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Bug_Messages_Toggled;
 
@@ -1069,6 +1072,7 @@ package body CodePeer.Messages_Reports is
         (Self.Kernel.Get_History.all,
          Status_False_Positive_History,
          Self.Show_Status (False_Positive));
+      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_False_Positive_Messages_Toggled;
 
@@ -1117,6 +1121,7 @@ package body CodePeer.Messages_Reports is
         (Self.Kernel.Get_History.all,
          Status_Intentional_History,
          Self.Show_Status (Intentional));
+      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Intentional_Messages_Toggled;
 
@@ -1165,6 +1170,7 @@ package body CodePeer.Messages_Reports is
         (Self.Kernel.Get_History.all,
          Status_Not_A_Bug_History,
          Self.Show_Status (Not_A_Bug));
+      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Not_A_Bug_Messages_Toggled;
 
@@ -1181,6 +1187,7 @@ package body CodePeer.Messages_Reports is
         (Self.Kernel.Get_History.all,
          Status_Pending_History,
          Self.Show_Status (Pending));
+      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Pending_Messages_Toggled;
 
@@ -1213,6 +1220,7 @@ package body CodePeer.Messages_Reports is
         (Self.Kernel.Get_History.all,
          Status_Unclassified_History,
          Self.Show_Status (Unclassified));
+      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Unclassified_Messages_Toggled;
 

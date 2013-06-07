@@ -30,6 +30,7 @@ package CodePeer.Utilities is
      (Subprogram : Code_Analysis.Subprogram_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
+      Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
       Checks     : out Natural);
    --  Computes number of the subprogram's messages with specified categories
@@ -38,6 +39,7 @@ package CodePeer.Utilities is
      (File       : Code_Analysis.File_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
+      Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
       Checks     : out Natural);
    --  Computes number of the file's messages with specified categories
@@ -46,6 +48,7 @@ package CodePeer.Utilities is
      (Project      : Code_Analysis.Project_Access;
       Categories   : CodePeer.Message_Category_Sets.Set;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
+      Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
       Checks       : out Natural;
       Total_Checks : out Natural);
@@ -55,6 +58,7 @@ package CodePeer.Utilities is
      (Tree         : Code_Analysis.Code_Analysis_Tree;
       Categories   : CodePeer.Message_Category_Sets.Set;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
+      Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
       Checks       : out Natural;
       Total_Checks : out Natural);

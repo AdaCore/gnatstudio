@@ -77,6 +77,11 @@ package CodePeer.Messages_Summary_Models is
       To   : CodePeer.Lifeage_Kinds_Flags);
    --  Sets subset of visible message lifeages.
 
+   procedure Set_Visible_Message_Status
+     (Self : access Messages_Summary_Model_Record'Class;
+      To   : CodePeer.Review_Status_Kinds_Flags);
+   --  Sets subset of visible message review statuses.
+
    procedure Clear (Self : access Messages_Summary_Model_Record);
 
 private
@@ -91,6 +96,8 @@ private
       --  Set of the message categories, which is shown in the report
       Message_Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       --  Set of the message lifeages, which is show in the report
+      Message_Statuses     : CodePeer.Review_Status_Kinds_Flags;
+      --  Set of the message review statuses, which is show in the report
       Project_Icon         : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Icon            : Gdk.Pixbuf.Gdk_Pixbuf;
       Subprogram_Icon      : Gdk.Pixbuf.Gdk_Pixbuf;
