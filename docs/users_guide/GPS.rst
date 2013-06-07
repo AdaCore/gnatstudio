@@ -1129,7 +1129,7 @@ Classes
 
 
 
-   .. autoattribute:: GPS.MDI.GROUP_VCS_ACTIVITIVES
+   .. autoattribute:: GPS.MDI.GROUP_VCS_ACTIVITIES
 
 
 
