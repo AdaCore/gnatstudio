@@ -51,96 +51,58 @@ with CodePeer.Module;
 
 package body CodePeer.Messages_Reports is
 
-use type Glib.Signal_Name;
+   use type Glib.Signal_Name;
 
---  use type Code_Analysis.File_Access;
---  ??? Uncomment this line after I120-013 will be fixed
-use type Code_Analysis.Project_Access;
-use type Code_Analysis.Subprogram_Access;
+   --  use type Code_Analysis.File_Access;
+   --  ??? Uncomment this line after I120-013 will be fixed
+   use type Code_Analysis.Project_Access;
+   use type Code_Analysis.Subprogram_Access;
 
-package Tree_View_Report_Return_Boolean_Callbacks is
-new Gtk.Handlers.User_Return_Callback
-(Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Messages_Report);
+   package Tree_View_Report_Return_Boolean_Callbacks is
+     new Gtk.Handlers.User_Return_Callback
+           (Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Messages_Report);
 
-package Summary_Report_Callbacks is new Gtk.Handlers.Callback
-(Messages_Report_Record);
+   package Summary_Report_Callbacks is new Gtk.Handlers.Callback
+     (Messages_Report_Record);
 
-package Check_Button_Report_Callbacks is new Gtk.Handlers.User_Callback
-(Gtk.Check_Button.Gtk_Check_Button_Record, Messages_Report);
+   package Check_Button_Report_Callbacks is new Gtk.Handlers.User_Callback
+     (Gtk.Check_Button.Gtk_Check_Button_Record, Messages_Report);
 
-package Message_Categories_Criteria_Callbacks is
-new Gtk.Handlers.User_Callback
-(CodePeer.Categories_Criteria_Editors.
- Categories_Criteria_Editor_Record,
- Messages_Report);
+   package Message_Categories_Criteria_Callbacks is
+     new Gtk.Handlers.User_Callback
+          (CodePeer.Categories_Criteria_Editors.
+             Categories_Criteria_Editor_Record,
+           Messages_Report);
 
-package Message_Lifeage_Criteria_Callbacks is
-new Gtk.Handlers.User_Callback
-(CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record,
- Messages_Report);
+   package Message_Lifeage_Criteria_Callbacks is
+     new Gtk.Handlers.User_Callback
+          (CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record,
+           Messages_Report);
 
-package Compare_Functions is
-new Gtk.Tree_Sortable.Set_Default_Sort_Func_User_Data (Messages_Report);
+   package Compare_Functions is
+     new Gtk.Tree_Sortable.Set_Default_Sort_Func_User_Data (Messages_Report);
 
-procedure On_Destroy (Self : access Messages_Report_Record'Class);
+   procedure On_Destroy (Self : access Messages_Report_Record'Class);
 
-procedure On_Show_All_Subprograms_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
+   procedure On_Show_All_Subprograms_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
 
-procedure On_Show_Informational_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
-procedure On_Show_Low_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
-procedure On_Show_Medium_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
-procedure On_Show_High_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
-procedure On_Show_Suppressed_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
---  Handles change of state of items of ranking filter
-procedure On_Show_Unclassified_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
-procedure On_Show_Pending_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
-procedure On_Show_Not_A_Bug_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
-procedure On_Show_Intentional_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
-procedure On_Show_False_Positive_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
-procedure On_Show_Bug_Messages_Toggled
-(Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-Self   : Messages_Report);
---  Handles change of state of items of review status filter
-procedure On_Categories_Criteria_Changed
-(Object : access
- CodePeer.Categories_Criteria_Editors.
- Categories_Criteria_Editor_Record'Class;
-Self   : Messages_Report);
---  Handles change of set of visible message's categories.
-procedure On_Lifeage_Criteria_Changed
-(Object : access
- CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record'Class;
-Self   : Messages_Report);
---  Handles change of set of visible message's lifeages.
-procedure Context_Func
-(Context      : in out GPS.Kernel.Selection_Context;
-Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-Object       : access Glib.Object.GObject_Record'Class;
-Event        : Gdk.Event.Gdk_Event;
-Menu         : Gtk.Menu.Gtk_Menu);
+   procedure On_Show_Informational_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   procedure On_Show_Low_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   procedure On_Show_Medium_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   procedure On_Show_High_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
+   procedure On_Show_Suppressed_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Messages_Report);
    --  Handles change of state of items of ranking filter
 
    procedure On_Show_Unclassified_Messages_Toggled
@@ -170,46 +132,49 @@ Menu         : Gtk.Menu.Gtk_Menu);
       Self   : Messages_Report);
    --  Handles change of set of visible message's categories.
 
-function Compare
-(Model     : Gtk_Tree_Model;
-A         : Gtk.Tree_Model.Gtk_Tree_Iter;
-B         : Gtk.Tree_Model.Gtk_Tree_Iter;
-Self      : Messages_Report) return Glib.Gint;
---  Compare two rows in the model.
+   procedure On_Lifeage_Criteria_Changed
+     (Object : access
+        CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record'Class;
+      Self   : Messages_Report);
+   --  Handles change of set of visible message's lifeages.
 
-procedure Emit_By_Name
-(Object : System.Address;
-Name   : Glib.Signal_Name);
-pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
+   procedure Context_Func
+     (Context      : in out GPS.Kernel.Selection_Context;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu);
 
-Ranking_Suppressed_History    : constant Histories.History_Key :=
-"codepeer-summary_report-ranking-suppressed";
-Ranking_Informational_History : constant Histories.History_Key :=
-"codepeer-summary_report-ranking-informational";
-Ranking_Low_History           : constant Histories.History_Key :=
-"codepeer-summary_report-ranking-low";
-Ranking_Medium_History        : constant Histories.History_Key :=
-"codepeer-summary_report-ranking-medium";
-Ranking_High_History          : constant Histories.History_Key :=
-"codepeer-summary_report-ranking-high";
+   function On_Analysis_Click
+     (View  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Self  : Messages_Report) return Boolean;
+   --  Handler of mouse press, double-press and release events. It handle
+   --  selection on mouse press, and activation on double-press/release events.
 
-Class_Record : Glib.Object.Ada_GObject_Class :=
-Glib.Object.Uninitialized_Class;
+   function Compare
+     (Model     : Gtk_Tree_Model;
+      A         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self      : Messages_Report) return Glib.Gint;
+   --  Compare two rows in the model.
 
-   Status_Unclassified_History   : constant Histories.History_Key :=
-     "codepeer-summary_report-status-unclassified";
-   Status_Pending_History        : constant Histories.History_Key :=
-     "codepeer-summary_report-status-pending";
-   Status_Not_A_Bug_History      : constant Histories.History_Key :=
-     "codepeer-summary_report-status-not_a_bug";
-   Status_False_Positive_History : constant Histories.History_Key :=
-     "codepeer-summary_report-status-false_positive";
-   Status_Intentional_History    : constant Histories.History_Key :=
-     "codepeer-summary_report-status-intentional";
-   Status_Bug_History            : constant Histories.History_Key :=
-     "codepeer-summary_report-status-bug";
+   procedure Emit_By_Name
+     (Object : System.Address;
+      Name   : Glib.Signal_Name);
+   pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
 
-   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+   Ranking_Suppressed_History    : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-suppressed";
+   Ranking_Informational_History : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-informational";
+   Ranking_Low_History           : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-low";
+   Ranking_Medium_History        : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-medium";
+   Ranking_High_History          : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-high";
 
    Status_Unclassified_History   : constant Histories.History_Key :=
      "codepeer-summary_report-status-unclassified";
