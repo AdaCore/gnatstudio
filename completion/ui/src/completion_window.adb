@@ -573,9 +573,8 @@ package body Completion_Window is
          Explorer.Model.Set
            (Explorer.Computing_Iter, Shown_Column, False);
          return False;
-      elsif Explorer.Shown >= Explorer.Number_To_Show
-        and then not Explorer.Iter.At_End
-      then
+
+      elsif Explorer.Shown >= Explorer.Number_To_Show then
          Explorer.Model.Set (Explorer.Computing_Iter, Shown_Column, False);
          declare
             Path_Begin, Path_End : Gtk_Tree_Path;

@@ -31,6 +31,7 @@ with Gtk.GEntry;         use Gtk.GEntry;
 with Gtk.Stock;          use Gtk.Stock;
 
 with Completion_Window;  use Completion_Window;
+with Completion.Search;  use Completion.Search;
 
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
@@ -40,6 +41,7 @@ with Generic_Views;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Search;         use GPS.Kernel.Search;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -666,7 +668,9 @@ package body Completion_Window.Entity_Views is
    ---------------------
 
    procedure Register_Module
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      P : Kernel_Search_Provider_Access;
    begin
       Entity_Views.Register_Module (Kernel, Menu_Name => -"Views/_Entity");
 
@@ -676,6 +680,9 @@ package body Completion_Window.Entity_Views is
          Accel_Key => GDK_LC_t,
          Accel_Mods => Control_Mask,
          Callback => On_Entity_View_Dialog'Access);
+
+      P := new Entities_Search_Provider;
+      Register_Provider_And_Action (Kernel, P, Provider_Entities);
    end Register_Module;
 
 end Completion_Window.Entity_Views;

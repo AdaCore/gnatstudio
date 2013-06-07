@@ -32,6 +32,7 @@ with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 with Glib.Properties;            use Glib.Properties;
 with Glib.Values;                use Glib.Values;
+with Gtk.Alignment;              use Gtk.Alignment;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
@@ -799,6 +800,7 @@ package body Gtkada.Entry_Completion is
       M      : Gtk_Tree_Model;
       Result : Search_Result_Access;
       F      : Gtk_Widget;
+      Align  : Gtk_Alignment;
    begin
       if Self.Settings_Preview.Get_Active then
          Self.View.Get_Selection.Get_Selected (M, Iter);
@@ -810,7 +812,10 @@ package body Gtkada.Entry_Completion is
             if Result.all in Kernel_Search_Result'Class then
                F := Kernel_Search_Result'Class (Result.all).Full;
                if F /= null then
-                  Self.Notes_Scroll.Add (F);
+                  Gtk_New (Align, 0.0, 0.0, 0.0, 0.0);
+                  Align.Add (F);
+
+                  Self.Notes_Scroll.Add (Align);
                   Self.Notes_Scroll.Show_All;
 
                   if Self.Notes_Popup /= null then

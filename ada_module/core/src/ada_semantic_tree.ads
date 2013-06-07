@@ -266,7 +266,7 @@ package Ada_Semantic_Tree is
    --  and Start_Offset points to "field", the returned parsed expression will
    --  contain 8 elements:
    --      Tok_Identifier + Tok_Dot + Tok_Identifier + Tok_Open_Parenthesis
-   --      + Tok_Identifier + Tok_Close_Parenthesis + Tok_Dot + Tok_Identifdier
+   --      + Tok_Identifier + Tok_Close_Parenthesis + Tok_Dot + Tok_Identifier
    --  Note that Start_Offset must point on the d, or the last identifier
    --  returned will only contain a part of the name.
    --
@@ -281,7 +281,7 @@ package Ada_Semantic_Tree is
    --  Same as above, assuming Start_Offset = Buffer'Last and End_Offset = 0
 
    function To_String (Expression : Parsed_Expression) return String;
-   --  Returns a string with the contents of the expresion
+   --  Returns a string with the contents of the expression
 
    function Get_Name
      (Expression : Parsed_Expression; Token : Token_Record) return String;

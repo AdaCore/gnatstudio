@@ -58,6 +58,7 @@ package GPS.Kernel.Search is
    Provider_Actions   : constant String := "actions";
    Provider_Builds    : constant String := "builds";
    Provider_Opened_Win : constant String := "opened windows";
+   Provider_Entities   : constant String := "entities";
 
    Registry : GPS.Search.Search_Provider_Registry;
    --  ??? Will be moved to the kernel
