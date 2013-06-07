@@ -14,7 +14,6 @@ procedure @_Main_Name_@ is
 
 begin
    --  Initialize GtkAda.
-   Gtk.Main.Set_Locale;
    Gtk.Main.Init;
 
    --  Create a window with a size of 400x400
