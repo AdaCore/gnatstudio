@@ -103,7 +103,7 @@ package body GPS.Kernel.Search is
       Command.History := new History_Key'
          ("global-search-entry-" & History_Key (Name));
       Register_Action
-         (Kernel, "Global Search in context: " & Name, Command,
+         (Kernel, Action_Name_Prefix & Name, Command,
           Description => Command.Provider.Documentation,
           Category => "Search");
    end Register_Provider_And_Action;

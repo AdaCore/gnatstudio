@@ -19,7 +19,6 @@ with Commands.Interactive;     use Commands, Commands.Interactive;
 with Gdk.Types.Keysyms;        use Gdk.Types, Gdk.Types.Keysyms;
 with Glib.Object;              use Glib.Object;
 with Gtk.Alignment;            use Gtk.Alignment;
-with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tool_Item;            use Gtk.Tool_Item;
@@ -37,9 +36,7 @@ with GPS.Kernel.Search.Filenames;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 with Histories;                use Histories;
-with Remote;                   use Remote;
 
 package body GPS.Search.GUI is
 
@@ -97,10 +94,6 @@ package body GPS.Search.GUI is
 
    procedure On_Activate (Self : access Gtk_Widget_Record'Class);
    --  Called when the user activates one of the search proposals
-
-   procedure On_Open_From_Project
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Open From Path menu
 
    procedure Reset;
    --  Reset the global search entry after <escape> or a search is selected
@@ -336,50 +329,6 @@ package body GPS.Search.GUI is
       return Commands.Success;
    end Execute;
 
-   --------------------------
-   -- On_Open_From_Project --
-   --------------------------
-
-   procedure On_Open_From_Project
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Ignore : Gtk_Widget;
-      Open_File_Dialog : Gtk_Dialog;
-      Open_File_Entry  : Gtkada_Entry;
-      Resp : Gtk_Response_Type;
-      pragma Unreferenced (Widget, Ignore, Resp);
-
-   begin
-      Gtk_New (Open_File_Dialog,
-               Title  => -"Open file from project",
-               Parent => Get_Current_Window (Kernel),
-               Flags  => Modal or Destroy_With_Parent);
-      Open_File_Dialog.Set_Default_Size (600, 480);
-      Open_File_Dialog.Set_Position (Win_Pos_Mouse);
-
-      --  Do not use a combo box, so that users can easily navigate to the list
-      --  of completions through the keyboard (C423-005)
-      Gtk_New
-         (Open_File_Entry,
-          Kernel         => Kernel,
-          Name           => "open_from_project",
-          Completion_In_Popup => False,
-          Completion     =>
-             GPS.Kernel.Search.Registry.Get (Provider_Filenames),
-          Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)));
-      Open_File_Dialog.Get_Content_Area.Pack_Start
-        (Open_File_Entry, Fill => True, Expand => True);
-
-      Ignore := Open_File_Dialog.Add_Button
-        (Stock_Cancel, Gtk_Response_Cancel);
-
-      Open_File_Dialog.Show_All;
-
-      --  The action is performed directly by the search_provider
-      Resp := Open_File_Dialog.Run;
-      Open_File_Dialog.Destroy;
-   end On_Open_From_Project;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -445,8 +394,10 @@ package body GPS.Search.GUI is
       Register_Menu
         (Kernel,
          '/' & (-"File") & '/', -"Open _From Project...",  Stock_Open,
-         On_Open_From_Project'Access, null,
-         GDK_F3, Shift_Mask,
+         Callback => null,
+         Action =>
+           Lookup_Action (Kernel, Action_Name_Prefix & Provider_Filenames),
+         Accel_Key => GDK_F3, Accel_Mods => Shift_Mask,
          Ref_Item => -"Open...", Add_Before => False);
    end Register_Module;
 

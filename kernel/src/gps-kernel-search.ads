@@ -60,6 +60,10 @@ package GPS.Kernel.Search is
    Provider_Opened_Win : constant String := "opened windows";
    Provider_Entities   : constant String := "entities";
 
+   Action_Name_Prefix : constant String := "Global Search in context: ";
+   --  prefix for the actions, which should be followed by one of the provider
+   --  ids.
+
    Registry : GPS.Search.Search_Provider_Registry;
    --  ??? Will be moved to the kernel
 

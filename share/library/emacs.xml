@@ -66,6 +66,7 @@
   <key action="Cancel mark command">control-g</key>
 
   <key action="Global Search in context: actions">alt-x</key>
+  <key action="Global Search in context: opened windows">control-x b</key>
 
   <key action="/Edit/Paste">control-y</key>
   <key action="/Edit/Paste Previous">alt-y</key>

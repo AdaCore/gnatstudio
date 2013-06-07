@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M606-028 GPS: remove Open From Project dialog (2013-06-07)
+
+  The menu /Files/Open From Project no longer opens up a dialog. Instead,
+  it moves the focus to the global search field. This provides on-the-fly
+  completion, fuzzy matching,...
+
 NF-60-M529-012 GPS: execute_extended.py plugin removed (2013-05-29)
 
   This plugin allows one to easily execute any of the GPS commands via the
