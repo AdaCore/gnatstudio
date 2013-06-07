@@ -29,6 +29,13 @@ NF-60-M606-028 GPS: remove Open From Project dialog (2013-06-07)
   it moves the focus to the global search field. This provides on-the-fly
   completion, fuzzy matching,...
 
+NF-60-M603-060 GPS: remove Goto Entity dialog (2013-06-07)
+
+  The menu /Navigate/Goto Entity no longer opens up a dialog. Instead it
+  moves the focus to the global search field. The /Tools/Views/Entity
+  view was also removed since its features are now available through the
+  global search field.
+
 NF-60-M529-012 GPS: execute_extended.py plugin removed (2013-05-29)
 
   This plugin allows one to easily execute any of the GPS commands via the
