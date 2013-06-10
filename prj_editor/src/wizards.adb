@@ -28,6 +28,7 @@ with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Pango.Enums;              use Pango.Enums;
+with Pango.Font;               use Pango.Font;
 
 with Logo_Boxes;               use Logo_Boxes;
 with GPS.Kernel;               use GPS.Kernel;
@@ -148,10 +149,6 @@ package body Wizards is
 
       Widget_Callback.Connect (Wiz, Signal_Map, Map'Access);
       Widget_Callback.Connect (Wiz, Signal_Destroy, On_Destroy'Access);
-
-      Wiz.Highlight_Font := Get_Font (Get_Style_Context (Wiz),
-                                      Gtk_State_Flag_Normal);
-      Set_Weight (Wiz.Highlight_Font, Pango_Weight_Bold);
 
       Wiz.Pages := null;
       Wiz.Current_Page := 1;
@@ -380,7 +377,9 @@ package body Wizards is
    ----------------------
 
    procedure Set_Current_Page
-     (Wiz : access Wizard_Record'Class; Num : Positive) is
+     (Wiz : access Wizard_Record'Class; Num : Positive)
+   is
+      Font : Pango_Font_Description;
    begin
       pragma Assert (Wiz.Pages /= null);
       pragma Assert (Num <= Wiz.Pages'Last);
@@ -418,8 +417,9 @@ package body Wizards is
       Update_Page (Wiz.Pages (Wiz.Current_Page));
 
       if Wiz.Pages (Wiz.Current_Page).Toc /= null then
-         Override_Font
-           (Wiz.Pages (Wiz.Current_Page).Toc, Wiz.Highlight_Font);
+         Font := Get_Font (Get_Style_Context (Wiz), Gtk_State_Flag_Normal);
+         Set_Weight (Font, Pango_Weight_Bold);
+         Override_Font (Wiz.Pages (Wiz.Current_Page).Toc, Font);
       end if;
 
       Set_Text (Get_Title_Label (Wiz), Wiz.Pages (Wiz.Current_Page).Title.all);
