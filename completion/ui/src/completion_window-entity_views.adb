@@ -43,9 +43,6 @@ package body Completion_Window.Entity_Views is
          Callback => null,
          Action =>
            Lookup_Action (Kernel, Action_Name_Prefix & Provider_Entities));
-
-      P := new Entities_Search_Provider;
-      Register_Provider_And_Action (Kernel, P, Provider_Entities);
    end Register_Module;
 
 end Completion_Window.Entity_Views;
