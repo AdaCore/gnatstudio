@@ -8,14 +8,26 @@ import re
 subst_pattern = re.compile("%\(.*?\)|%_")
 id_pattern = re.compile(r"[^\w0-9_]")
 
-xml_conf = """ <key action="Expand alias under cursor">control-o</key> """
-
-xml_conf_in = """ <key action="Toggle to next alias field">Tab</key> """
-
-xml_conf_out = """
-<key action="Toggle to next alias field"></key>
-<key action="/Edit/Format Selection">Tab</key>
+xml_conf = """
+<key action="Toggle to next alias field">control-Tab</key>
+<key action="Expand alias under cursor">control-o</key>
 """
+
+color_pref_name = "Plugins/aliases/color_current_field"
+Preference(color_pref_name).create(
+    "Aliases current field color",
+    "color",
+    "Background color for the current field under completion",
+    "#AAF"
+)
+
+
+def get_comments_colors():
+    _, c1, c2 = GPS.Preference("Src-Editor-Comments-Variant")\
+                   .get().split("@")
+    if c2 == "white" or c2 == "rgb(255,255,255)":
+        c2 = None
+    return c1, c2
 
 
 def reset_overlay(editor):
@@ -33,7 +45,6 @@ def exit_alias_expand(editor):
     """
     Exit alias expansion.
     """
-    parse_xml(xml_conf_out)
     editor.remove_all_multi_cursors()
     reset_overlay(editor)
     editor.current_alias_mark_index = None
@@ -71,6 +82,8 @@ def toggle_next_field(editor=None):
         editor = EditorBuffer.get()
 
     try:
+        reset_overlay(editor)
+
         i = editor.current_alias_mark_index
 
         if i is None:
@@ -97,6 +110,12 @@ def toggle_next_field(editor=None):
 
         reset_overlay(editor)
 
+        for mark_start, mark_end in marks:
+            lstart = mark_start.location()
+            lend = mark_end.location().forward_char(-1)
+            if lend >= lstart:
+                editor.delete(lstart, lend)
+
         # Add multi cursors for every other mark
         if len(marks) > 1:
             for mark_begin, mark_end in marks[1:]:
@@ -108,18 +127,28 @@ def toggle_next_field(editor=None):
         return
 
 
+def apply_overlay(editor, mark_start, mark_end, overlay):
+    """
+    Apply overlay overlay between mark_start and mark end
+    if mark_start - mark_end >= 1 char
+    """
+    lstart = mark_start.location()
+    lend = mark_end.location().forward_char(-1)
+    if lend >= lstart:
+        editor.apply_overlay(overlay, lstart, lend)
+
+
 def on_edit(hook_name, file_name):
     """
     Event handler on insert/delete. Mainly ensures that the current field
     in alias expansion is highlighted (via the aliases overlay)
     """
     editor = EditorBuffer.get(file_name)
-    marks_list = editor.alias_marks[editor.current_alias_mark_index - 1]
-    reset_overlay(editor)
-    for mark_start, mark_end in marks_list:
-        lstart = mark_start.location()
-        lend = mark_end.location().forward_char(-1)
-        editor.apply_overlay(editor.aliases_overlay, lstart, lend)
+    if editor.current_alias_mark_index > 0:
+        marks_list = editor.alias_marks[editor.current_alias_mark_index - 1]
+        reset_overlay(editor)
+        for mark_start, mark_end in marks_list:
+            apply_overlay(editor, mark_start, mark_end, editor.aliases_overlay)
 
 
 def on_move(hook_name, file_name, line, column):
@@ -147,6 +176,17 @@ def expand_alias(editor, alias):
               for s in subst_pattern.findall(alias.expansion)]
     alias_labels = defaultdict(list)
 
+    editor.aliases_overlay = editor.create_overlay("aliases_overlay")
+    editor.aliases_overlay.set_property(
+        "background", Preference(color_pref_name).get()
+    )
+
+    editor.aliases_overlay_next = editor.create_overlay("aliases_overlay_next")
+    c1, c2 = get_comments_colors()
+    editor.aliases_overlay_next.set_property("foreground", c1)
+    if c2:
+        editor.aliases_overlay_next.set_property("background", "#124")
+
     # Create a mark with right gravity so it will stay at the end of what we
     # have inserted, giving us the current insert point
     editor.alias_begin_mark = editor.current_view().cursor().create_mark()
@@ -168,7 +208,15 @@ def expand_alias(editor, alias):
                 [(m, m.location().create_mark(left_gravity=False))
                  for m in alias_labels[subst]]
             )
+            for m in alias_labels[subst]:
+                editor.insert(m.location(), "<{0}>".format(subst))
             substs_set.add(subst)
+
+    for marks_list in editor.alias_marks:
+        for mark_start, mark_end in marks_list:
+            apply_overlay(
+                editor, mark_start, mark_end, editor.aliases_overlay_next
+            )
 
     if "%_" in alias_labels:
         editor.last_alias_mark = alias_labels["%_"][0]
@@ -178,9 +226,7 @@ def expand_alias(editor, alias):
     editor.current_alias_mark_index = 0
     Hook("character_added").add(on_edit)
     Hook("location_changed").add(on_move)
-    editor.aliases_overlay = editor.create_overlay("aliases_overlay")
-    editor.aliases_overlay.set_property("background", "blue")
-    parse_xml(xml_conf_in)
+
     editor.indent(editor.alias_begin_mark.location(),
                   editor.alias_end_mark.location())
     toggle_next_field(editor)

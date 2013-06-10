@@ -99,7 +99,7 @@
      <regexp>\b(\w+)\s*:=</regexp>
    </vsearch-pattern>
 
-  <alias name="procedure is" >
+  <alias name="procedure_is" >
     <param name="name"  />
     <param name="params"  />
     <text>procedure %(name) (%(params)) is
@@ -107,13 +107,15 @@ begin
    %_
 end %(name);</text>
   </alias>
-  <alias name="task body" >
+
+  <alias name="task_body" >
     <param name="name"  />
     <text>task body %(name) is
 begin
    %_
 end %(name);</text>
   </alias>
+
   <alias name="select" >
     <param name="entry2"  />
     <param name="entry"  />
@@ -127,7 +129,8 @@ or
    end %(entry2);
 end select;</text>
   </alias>
-  <alias name="function is" >
+
+  <alias name="function_is" >
     <param name="name"  />
     <param name="params"  />
     <param name="return_type"  />
@@ -136,13 +139,15 @@ begin
    return %_
 end %(name);</text>
   </alias>
+
   <alias name="declare" >
     <text>declare
-   %_
+   %(variables)
 begin
-   null;
+   %_
 end;</text>
   </alias>
+
   <alias name="for" >
     <param name="range"  />
     <param name="index"  />
@@ -150,11 +155,13 @@ end;</text>
    %_
 end loop;</text>
   </alias>
+
   <alias name="procedure" >
     <param name="name"  />
     <text>procedure %(name)%_;</text>
   </alias>
-  <alias name="package body" >
+
+  <alias name="package_body" >
     <param name="name"  />
     <text>package body %(name) is
 
@@ -162,12 +169,14 @@ end loop;</text>
 
 end %(name);</text>
   </alias>
+
   <alias name="task" >
     <param name="name"  />
     <text>task %(name) is
    %_
 end %(name);</text>
   </alias>
+
   <alias name="loop" >
     <param name="exit_condition"  />
     <text>loop
@@ -175,6 +184,7 @@ end %(name);</text>
    exit when %(exit_condition);
 end loop;</text>
   </alias>
+
   <alias name="case" >
     <param name="choice"  />
     <param name="expression"  />
@@ -183,12 +193,14 @@ end loop;</text>
       %_
 end case;</text>
   </alias>
+
   <alias name="while" >
     <param name="condition"  />
     <text>while %(condition) loop
    %_
 end loop;</text>
   </alias>
+
   <alias name="package" >
     <param name="name"  />
     <text>package %(name) is
@@ -197,27 +209,32 @@ end loop;</text>
 
 end %(name);</text>
   </alias>
+
   <alias name="if" >
     <param name="condition"  />
     <text>if %(condition) then
    %_
 end if;</text>
   </alias>
+
   <alias name="function" >
     <param name="name"  />
     <param name="params"  />
     <text>function %(name) (%(params)) return %_;</text>
   </alias>
+
   <alias name="array" >
     <param name="range"  />
     <text>array (%(range)) of %_;</text>
   </alias>
+
   <alias name="exception" >
     <param name="error"  />
     <text>exception
    when %(error) =&gt;
       %_</text>
   </alias>
+
   <alias name="begin" >
     <text>begin
    %_
