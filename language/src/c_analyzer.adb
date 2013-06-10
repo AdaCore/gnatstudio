@@ -530,6 +530,7 @@ package body C_Analyzer is
       Padding           : Integer := 0;
       Char_In_Line      : Natural := 1;
       Start_Char        : Natural;
+      Start_Index       : Natural;
       Num_Ifdef         : Natural;
       Last_Replace_Line : Natural := 0;
       Top_Token         : Token_Stack.Generic_Type_Access;
@@ -538,6 +539,15 @@ package body C_Analyzer is
       Tokens            : Token_Stack.Simple_Stack;
       Indents           : Indent_Stack.Stack.Simple_Stack;
       Main_File         : String_Access;
+
+      function Do_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+      --  Centralized routine used to perform the callback. It remembers
+      --  in the local variable Callback_Done if the call has been done
+      --  (and thus avoid performing the call twice with the same token).
 
       procedure Do_Indent
         (P            : Natural;
@@ -549,6 +559,9 @@ package body C_Analyzer is
       procedure New_Line;
       --  Increment line counter and line-related states.
       --  Should be called each time a new line is detected.
+
+      procedure Next_Char;
+      --  Increment the scanner index
 
       function Identifier_Keyword return Boolean;
       --  Handle next identifier or keyword.
@@ -600,6 +613,27 @@ package body C_Analyzer is
 
       procedure Pop (Stack : in out Token_Stack.Simple_Stack);
       --  Pop Value on top of Stack. Ignore returned value.
+
+      -----------------
+      -- Do_Callback --
+      -----------------
+
+      Callback_Done : Boolean;
+
+      function Do_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean is
+      begin
+         if Callback = null then
+            return False;
+         else
+            Callback_Done := True;
+            return Callback
+              (Entity, Sloc_Start, Sloc_End, Partial_Entity);
+         end if;
+      end Do_Callback;
 
       ---------------
       -- Do_Indent --
@@ -655,6 +689,16 @@ package body C_Analyzer is
          Line := Line + 1;
          Char_In_Line := 0;
       end New_Line;
+
+      ---------------
+      -- Next_Char --
+      ---------------
+
+      procedure Next_Char is
+      begin
+         Index := Index + 1;
+         Char_In_Line := Char_In_Line + 1;
+      end Next_Char;
 
       ---------
       -- Pop --
@@ -815,13 +859,9 @@ package body C_Analyzer is
             Char_In_Line := Char_In_Line + 1;
          end loop;
 
-         if Callback = null then
-            return False;
-         else
-            return Callback
-              (Character_Text, (Line, Start_Char, First),
-               (Line, Char_In_Line, Index), False);
-         end if;
+         return Do_Callback
+           (Character_Text, (Line, Start_Char, First),
+            (Line, Char_In_Line, Index), False);
       end Skip_Character;
 
       -----------------
@@ -858,13 +898,9 @@ package body C_Analyzer is
             Char_In_Line := Char_In_Line + 1;
          end loop;
 
-         if Callback = null then
-            return False;
-         else
-            return Callback
-              (String_Text, (Line, Start_Char, First),
-               (Line, Char_In_Line, Index), False);
-         end if;
+         return Do_Callback
+           (String_Text, (Line, Start_Char, First),
+            (Line, Char_In_Line, Index), False);
       end Skip_String;
 
       ------------------
@@ -935,13 +971,9 @@ package body C_Analyzer is
                Do_Indent (Index, Indent);
             end if;
 
-            if Callback = null then
-               return False;
-            else
-               return Callback
-                 (Comment_Text, (Line, Start_Char, First),
-                  (Line, Char_In_Line, Index), False);
-            end if;
+            return Do_Callback
+              (Comment_Text, (Line, Start_Char, First),
+               (Line, Char_In_Line, Index), False);
 
          elsif Buffer (Index + 1) = '*' then
             --  Skip and indent C-style multi-line comment
@@ -1068,15 +1100,11 @@ package body C_Analyzer is
                Next;
             end loop;
 
-            if Callback = null then
-               return False;
-            else
-               return Callback
-                 (Comment_Text,
-                  (Start_Line, Start_Char, First),
-                  (Line, Char_In_Line, Index),
-                  Buffer (Index) /= '/');
-            end if;
+            return Do_Callback
+              (Comment_Text,
+               (Start_Line, Start_Char, First),
+               (Line, Char_In_Line, Index),
+               Buffer (Index) /= '/');
          end if;
 
          return False;
@@ -1144,15 +1172,11 @@ package body C_Analyzer is
                Char_In_Line := Char_In_Line + 1;
             end loop;
 
-            if Callback = null then
-               return False;
-            else
-               return Callback
-                 (Comment_Text,
-                  (Start_Line, Start_Char, First),
-                  (Line, Char_In_Line, Index),
-                  Num_Ifdef > 0);
-            end if;
+            return Do_Callback
+              (Comment_Text,
+               (Start_Line, Start_Char, First),
+               (Line, Char_In_Line, Index),
+               Num_Ifdef > 0);
 
          else
             if Buffer'Last > Index + 7
@@ -1431,12 +1455,12 @@ package body C_Analyzer is
 
          if Callback /= null then
             if Token = Tok_Identifier then
-               return Callback
+               return Do_Callback
                  (Identifier_Text,
                   Temp.Sloc, (Line, Char_In_Line, Index), False);
 
             elsif Enable_Cpp or else Token not in Cpp_Token then
-               return Callback
+               return Do_Callback
                  (Keyword_Text, Temp.Sloc, (Line, Char_In_Line, Index), False);
             end if;
          end if;
@@ -1494,6 +1518,12 @@ package body C_Analyzer is
          end loop;
       end Pop_Constructs_And_Indent;
 
+      --  Local variables
+
+      Some_Token_Found : Boolean;
+
+   --  Start of processing for Analyze_C_Source
+
    begin  -- Analyze_C_Source
       Indent_Separate_Line (Tok_If)     := Indent_Extra;
       Indent_Separate_Line (Tok_Else)   := Indent_Extra;
@@ -1509,6 +1539,12 @@ package body C_Analyzer is
       Push (Indents, (None, 0, 0));
 
       while Index <= Buffer'Last loop
+         Start_Char  := Char_In_Line;
+         Start_Index := Index;
+
+         Some_Token_Found := True;
+         Callback_Done := False;
+
          case Buffer (Index) is
             when '{' =>
                Token := Tok_Left_Bracket;
@@ -1718,6 +1754,7 @@ package body C_Analyzer is
                   case Buffer (Index + 1) is
                      when '=' =>
                         Token := Tok_Equal;
+                        Next_Char;
                      when others =>
                         Token := Tok_Assign;
                   end case;
@@ -1755,10 +1792,13 @@ package body C_Analyzer is
                   case Buffer (Index + 1) is
                      when '=' =>
                         Token := Tok_Minus_Assign;
+                        Next_Char;
                      when '>' =>
                         Token := Tok_Deref_Select;
+                        Next_Char;
                      when '-' =>
                         Token := Tok_Minus_Minus;
+                        Next_Char;
                      when others =>
                         Token := Tok_Minus;
                   end case;
@@ -1771,8 +1811,10 @@ package body C_Analyzer is
                   case Buffer (Index + 1) is
                      when '=' =>
                         Token := Tok_Plus_Assign;
+                        Next_Char;
                      when '+' =>
                         Token := Tok_Plus_Plus;
+                        Next_Char;
                      when others =>
                         Token := Tok_Plus;
                   end case;
@@ -1783,6 +1825,7 @@ package body C_Analyzer is
             when '*' =>
                if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
                   Token := Tok_Star_Assign;
+                  Next_Char;
                else
                   Token := Tok_Star;
                end if;
@@ -1792,14 +1835,17 @@ package body C_Analyzer is
                   case Buffer (Index + 1) is
                      when '=' =>
                         Token := Tok_Greater_Equal;
+                        Next_Char;
                      when '>' =>
                         if (Index + 1) < Buffer'Last
                           and then Buffer (Index + 2) = '='
                         then
                            Token := Tok_Righ_Shift_Assign;
+                           Next_Char;
                         else
                            Token := Tok_Righ_Shift;
                         end if;
+                        Next_Char;
 
                      when others =>
                         Token := Tok_Greater;
@@ -1813,14 +1859,17 @@ package body C_Analyzer is
                   case Buffer (Index + 1) is
                      when '=' =>
                         Token := Tok_Less_Equal;
+                        Next_Char;
                      when '<' =>
                         if (Index + 1) > Buffer'Last
                           and then Buffer (Index + 2) = '='
                         then
                            Token := Tok_Left_Shift_Assign;
+                           Next_Char;
                         else
                            Token := Tok_Left_Shift;
                         end if;
+                        Next_Char;
 
                      when others =>
                         Token := Tok_Less;
@@ -1835,6 +1884,7 @@ package body C_Analyzer is
             when '!' =>
                if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
                   Token := Tok_Not_Equal;
+                  Next_Char;
                else
                   Token := Tok_Not;
                end if;
@@ -1842,6 +1892,7 @@ package body C_Analyzer is
             when '%' =>
                if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
                   Token := Tok_Percent;
+                  Next_Char;
                else
                   Token := Tok_Percent_Assign;
                end if;
@@ -1849,6 +1900,7 @@ package body C_Analyzer is
             when '^' =>
                if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
                   Token := Tok_Xor_Assign;
+                  Next_Char;
                else
                   Token := Tok_Xor;
                end if;
@@ -1858,8 +1910,10 @@ package body C_Analyzer is
                   case Buffer (Index + 1) is
                      when '=' =>
                         Token := Tok_And_Assign;
+                        Next_Char;
                      when '&' =>
                         Token := Tok_Logical_And;
+                        Next_Char;
                      when others =>
                         Token := Tok_And;
                   end case;
@@ -1872,8 +1926,10 @@ package body C_Analyzer is
                   case Buffer (Index + 1) is
                      when '=' =>
                         Token := Tok_Or_Assign;
+                        Next_Char;
                      when '|' =>
                         Token := Tok_Logical_Or;
+                        Next_Char;
                      when others =>
                         Token := Tok_Or;
                   end case;
@@ -1894,6 +1950,7 @@ package body C_Analyzer is
                   case Buffer (Index + 1) is
                      when '=' =>
                         Token := Tok_Slash_Assign;
+                        Next_Char;
                      when '/' | '*' =>
                         exit when Skip_Comment;
                      when others =>
@@ -1911,8 +1968,19 @@ package body C_Analyzer is
                exit when Identifier_Keyword;
 
             when others =>
-               null;
+               Some_Token_Found := False;
          end case;
+
+         if not Callback_Done
+           and then Some_Token_Found
+           and then Token in Tok_Minus .. Tok_Left_Shift_Assign
+         then
+            exit when Do_Callback
+              (Entity         => Operator_Text,
+               Sloc_Start     => (Line, Start_Char, Start_Index),
+               Sloc_End       => (Line, Char_In_Line, Index),
+               Partial_Entity => False);
+         end if;
 
          if Is_Blank (Buffer (Index)) then
             if Buffer (Index) = ASCII.LF then
@@ -1927,8 +1995,7 @@ package body C_Analyzer is
          end if;
 
          Prev_Token := Token;
-         Index := Index + 1;
-         Char_In_Line := Char_In_Line + 1;
+         Next_Char;
       end loop;
 
       Free (Main_File);
