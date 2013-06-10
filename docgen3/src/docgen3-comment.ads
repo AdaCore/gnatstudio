@@ -20,9 +20,7 @@
 --  and generates structured comments composed of tags and their attributes.
 
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.Xref;           use GNATCOLL.Xref;
-with Xref;                    use Xref;
 
 private package Docgen3.Comment is
 

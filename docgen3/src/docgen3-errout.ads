@@ -17,9 +17,6 @@
 
 --  This package contains routines to output error messages and warnings.
 
-with GPS.Kernel;  use GPS.Kernel;
-with Xref;        use Xref;
-
 private package Docgen3.Errout is
 
    procedure Error

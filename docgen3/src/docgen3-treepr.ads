@@ -18,7 +18,6 @@
 --  This package provides internal support for printing the contents of the
 --  tree. These routines are intended only for debugging use.
 
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with Docgen3.Frontend;  use Docgen3.Frontend;
 
 private package Docgen3.Treepr is
