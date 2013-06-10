@@ -18,7 +18,6 @@
 --  This package implements the frontend of docgen3 which builds the tree
 --  associated with a single file.
 
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with Docgen3;           use Docgen3;
 with Docgen3.Atree;     use Docgen3.Atree;
 

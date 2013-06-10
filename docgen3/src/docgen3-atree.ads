@@ -40,10 +40,8 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.Xref;           use GNATCOLL.Xref;
 with Docgen3.Comment;         use Docgen3.Comment;
-with Xref;                    use Xref;
 with Xref.Docgen;             use Xref.Docgen;
 
 private package Docgen3.Atree is

@@ -1,7 +1,6 @@
 with "../shared";
 with "../kernel/kernel";
 with "../templates_parser/templates_parser";
-with "../vsearch/vsearch";
 with "docgen_resources";
 
 project Docgen3 is

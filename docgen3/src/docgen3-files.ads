@@ -19,7 +19,6 @@
 
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.Xref;           use GNATCOLL.Xref;
 
 private package Docgen3.Files is

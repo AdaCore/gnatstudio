@@ -18,8 +18,6 @@
 --  Package containing utility subprograms used throughout Docgen3
 
 with GNATCOLL.VFS;
-with GPS.Kernel;
-with Xref;          use Xref;
 
 private package Docgen3.Utils is
 
