@@ -363,38 +363,9 @@ try:
             event.state = Gdk.ModifierType(0)
             # event.device = None    # No device for key events
 
-            # hard-code the keycode, although it depends on the OS and the
-            # specific keyboard kind.
-            # There used to be a bug in pygobject, where the string field
-            # would be deallocated twice, or even set as non-writable. Seems
-            # to be fixed now though
-
-            if keyval == ord("u"):
-                event.string = "u"
-                event.length = len(event.string)
-                event.hardware_keycode = 32
-            elif keyval == ord("2"):
-                event.string = "2"
-                event.length = len(event.string)
-                event.hardware_keycode = 19
-            elif keyval == ord("k"):
-                event.string = "k"
-                event.length = len(event.string)
-                event.hardware_keycode = 40
-            elif keyval == GDK_RETURN:
-                event.string = "\r"
-                event.length = len(event.string)
-                event.hardware_keycode = 36
-            elif keyval == GDK_BACKSPACE:
-                if os.name == 'nt':
-                    event.hardware_keycode = 8
-                else:
-                    event.hardware_keycode = 59
-            elif keyval == GDK_CONTROL_L:
-                event.hardware_keycode = 59
-            elif keyval >= 32 and keyval <= 128:
-                event.string = chr (keyval)
-                event.length = len(event.string)
+            # Can't set string in some versions of pygobject
+            # hardware_keycode is OS and keyboard specific.
+            # Neither of these are needed in any case.
 
             return event
 
