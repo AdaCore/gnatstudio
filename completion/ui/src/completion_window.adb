@@ -668,7 +668,10 @@ package body Completion_Window is
                  (Iter, Index_Column, Gint (Explorer.Index));
                Explorer.Model.Set (Iter, Completion_Column, Info.Text.all);
                Explorer.Model.Set (Iter, Shown_Column, Do_Show_Completion);
-               Explorer.Shown := Explorer.Shown + 1;
+
+               if Do_Show_Completion then
+                  Explorer.Shown := Explorer.Shown + 1;
+               end if;
 
                Explorer.Index := Explorer.Index + 1;
 
@@ -745,6 +748,7 @@ package body Completion_Window is
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
    begin
+
       Window.Explorer.Shown := 0;
 
       --  Browse through the completion possibilities and filter out the
