@@ -18,7 +18,6 @@
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Docgen3.Comment;         use Docgen3.Comment;
 with Docgen3.Time;            use Docgen3.Time;
 with Docgen3.Utils;           use Docgen3.Utils;
@@ -279,8 +278,7 @@ package body Docgen3.Backend is
      (Kernel : Kernel_Handle) return Virtual_File
    is
       Base_Dir : Virtual_File;
-      Project  : Project_Type renames
-                   Get_Registry (Kernel).Tree.Root_Project;
+      Project  : Project_Type renames Kernel.Registry.Tree.Root_Project;
       Attr     : constant String :=
                    Project.Attribute_Value (Documentation_Dir_Attribute);
 
@@ -379,7 +377,6 @@ package body Docgen3.Backend is
                        Get_Template
                          (Get_System_Dir (Context.Kernel), Tmpl_Src);
       File_Entities : aliased Collected_Entities;
-      use Comment;
 
       procedure Append_Line (Text : String);
       --  Append Text to Printout plus ASCII.LF

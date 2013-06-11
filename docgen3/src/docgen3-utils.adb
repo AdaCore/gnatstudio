@@ -15,9 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;   use GNATCOLL.Projects;
-with GPS.Kernel.Project;  use GPS.Kernel.Project;
-
 package body Docgen3.Utils is
 
    ------------
@@ -97,7 +94,7 @@ package body Docgen3.Utils is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
-      return Get_Registry (Kernel).Tree.Info (File).Unit_Part = Unit_Spec;
+      return Kernel.Registry.Tree.Info (File).Unit_Part = Unit_Spec;
    end Is_Spec_File;
 
    -----------------

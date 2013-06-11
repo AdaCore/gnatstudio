@@ -26,7 +26,6 @@ with Language;                use Language;
 with Language.Ada;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
-with Language_Handlers;       use Language_Handlers;
 with String_Utils;            use String_Utils;
 
 package body Docgen3.Treepr is

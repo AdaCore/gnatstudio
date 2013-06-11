@@ -31,7 +31,6 @@ with Language;                use Language;
 with Language.Ada;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
-with Language_Handlers;       use Language_Handlers;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 with UTF8_Utils;              use UTF8_Utils;
@@ -1390,7 +1389,6 @@ package body Docgen3.Frontend is
          Has_Params     : Boolean;
          Param          : Entity_Id;
          Param_End_Line : Integer;
-         use type Comment_Result;
       begin
          --  Initialize the structured comment associated with this entity
 

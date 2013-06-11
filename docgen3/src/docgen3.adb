@@ -71,8 +71,7 @@ package body Docgen3 is
       --  which can not be processed
 
       procedure Check_Files is
-         Lang_Handler : constant Language_Handler :=
-                          Get_Language_Handler (Kernel);
+         Lang_Handler : constant Language_Handler := Kernel.Lang_Handler;
 
          function Skip_File (File_Index : Files_List.Cursor) return Boolean;
          --  Return True if if the file Src_Files (File_Index) cannot be
@@ -170,8 +169,7 @@ package body Docgen3 is
 
       --  Local variables
 
-      Lang_Handler : constant Language_Handler :=
-                       Get_Language_Handler (Kernel);
+      Lang_Handler : constant Language_Handler := Kernel.Lang_Handler;
       Project_Info : Backend_Info;
       Context      : aliased constant Docgen_Context :=
                        (Kernel, Database, Lang_Handler, Options);
@@ -326,7 +324,7 @@ package body Docgen3 is
       File    : GNATCOLL.VFS.Virtual_File)
    is
       Other_File : constant Virtual_File :=
-                     Get_Registry (Kernel).Tree.Other_File (File);
+                     Kernel.Registry.Tree.Other_File (File);
       Src_Files  : Files_List.Vector;
    begin
       Trace (Me, "Process_Single_File");
