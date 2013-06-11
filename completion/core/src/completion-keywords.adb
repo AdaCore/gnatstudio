@@ -51,7 +51,7 @@ package body Completion.Keywords is
             then
                Proposal := (Resolver => Resolver,
                             Name     => Keywords (J),
-                            Category => Cat_Custom);
+                            Category => Cat_Unknown);
 
                Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
                  (List, Proposal);

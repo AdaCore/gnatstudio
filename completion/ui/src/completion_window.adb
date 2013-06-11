@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 with Glib.Convert;              use Glib.Convert;
@@ -565,6 +564,7 @@ package body Completion_Window is
       Info  : Information_Record;
       Iter  : Gtk_Tree_Iter;
       Last_Completion : Unbounded_String;
+      Last_Comp_Cat : Language_Category := Cat_Unknown;
 
    begin
 
@@ -643,9 +643,12 @@ package body Completion_Window is
             if
               Explorer.Index = 1
               or else Explorer.Info (Explorer.Index - 1).Text = null
-              or else Explorer.Info
-                (Explorer.Index - 1).Text.all /= Completion
+              or else
+                Explorer.Info (Explorer.Index - 1).Text.all /= Completion
+              or else
+                Proposal.Get_Category /= Last_Comp_Cat
             then
+               Last_Comp_Cat := Proposal.Get_Category;
                Info :=
                  (new String'(Showable),
                   new String'(Completion),

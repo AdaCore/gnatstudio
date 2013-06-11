@@ -448,11 +448,9 @@ package body Completion is
    ------------------
 
    overriding function Get_Category
-     (Proposal : Simple_Completion_Proposal) return Language_Category
-   is
-      pragma Unreferenced (Proposal);
+     (Proposal : Simple_Completion_Proposal) return Language_Category is
    begin
-      return Cat_Unknown;
+      return Proposal.Category;
    end Get_Category;
 
    --------------------

@@ -61,10 +61,6 @@ private
      (Proposal : Alias_Completion_Proposal)
       return String;
 
-   overriding function Get_Category
-     (Proposal : Alias_Completion_Proposal)
-      return Language_Category;
-
    overriding function Get_Custom_Icon_Name
      (Proposal : Alias_Completion_Proposal) return String;
 

@@ -857,9 +857,9 @@ package body Completion_Module is
                Register_Resolver
                  (Data.Manager, Completion_Module.Completion_History);
                Register_Resolver
-                 (Data.Manager, Completion_Module.Completion_Keywords);
-               Register_Resolver
                  (Data.Manager, Completion_Module.Completion_Aliases);
+               Register_Resolver
+                 (Data.Manager, Completion_Module.Completion_Keywords);
                Register_Resolver (Data.Manager, Data.Constructs_Resolver);
 
                Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
@@ -1266,8 +1266,8 @@ package body Completion_Module is
       Completion_Window.Entity_Views.Register_Module (Kernel);
 
       Completion_Module.Completion_History := new Completion_History;
-      Completion_Module.Completion_Keywords := new Completion_Keywords;
       Completion_Module.Completion_Aliases := new Completion_Aliases;
+      Completion_Module.Completion_Keywords := new Completion_Keywords;
    end Register_Module;
 
    ------------------------------

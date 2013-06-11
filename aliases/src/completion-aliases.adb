@@ -35,10 +35,6 @@ package body Completion.Aliases is
      (Proposal : Alias_Completion_Proposal) return String
    is ("<b>Alias</b> " & To_Str (Proposal.Alias.Expansion));
 
-   overriding function Get_Category
-     (Proposal : Alias_Completion_Proposal) return Language_Category
-   is (Cat_Unknown);
-
    overriding function Get_Custom_Icon_Name
      (Proposal : Alias_Completion_Proposal) return String
    is ("gps-alias");
