@@ -4,6 +4,7 @@ from itertools import izip_longest
 from collections import defaultdict
 from text_utils import goto_word_start
 import re
+from color_utils import Color
 
 subst_pattern = re.compile("%\(.*?\)|%_")
 id_pattern = re.compile(r"[^\w0-9_]")
@@ -20,6 +21,15 @@ Preference(color_pref_name).create(
     "Background color for the current field under completion",
     "#AAF"
 )
+
+
+def get_paragraph_color():
+    pref_string = GPS.Preference("Src-Editor-Reference-Style").get()
+    print pref_string
+    c = Color(
+        pref_string.split("@")[2]
+    )
+    return c.shade_or_lighten(0.1).to_hex()
 
 
 def get_comments_colors():
@@ -47,6 +57,11 @@ def exit_alias_expand(editor):
     """
     editor.remove_all_multi_cursors()
     reset_overlay(editor)
+    editor.remove_overlay(
+        editor.aliases_background_overlay,
+        editor.alias_begin_mark.location().beginning_of_line(),
+        editor.alias_end_mark.location()
+    )
     editor.current_alias_mark_index = None
     editor.alias_marks = None
     editor.current_alias_mark_index = None
@@ -84,6 +99,12 @@ def toggle_next_field(editor=None):
     try:
         reset_overlay(editor)
 
+        editor.apply_overlay(
+            editor.aliases_background_overlay,
+            editor.alias_begin_mark.location().beginning_of_line(),
+            editor.alias_end_mark.location()
+        )
+
         i = editor.current_alias_mark_index
 
         if i is None:
@@ -102,6 +123,14 @@ def toggle_next_field(editor=None):
 
         editor.remove_all_multi_cursors()
         marks = editor.alias_marks[i]
+
+        # Delete the placeholder text
+        for mark_start, mark_end in marks:
+            lstart = mark_start.location()
+            lend = mark_end.location().forward_char(-1)
+            if lend >= lstart:
+                editor.delete(lstart, lend)
+
         editor.current_view().goto(marks[0][0].location())
         try:
             execute_action("/Edit/Format Selection")
@@ -109,12 +138,6 @@ def toggle_next_field(editor=None):
             pass
 
         reset_overlay(editor)
-
-        for mark_start, mark_end in marks:
-            lstart = mark_start.location()
-            lend = mark_end.location().forward_char(-1)
-            if lend >= lstart:
-                editor.delete(lstart, lend)
 
         # Add multi cursors for every other mark
         if len(marks) > 1:
@@ -179,6 +202,13 @@ def expand_alias(editor, alias):
     editor.aliases_overlay = editor.create_overlay("aliases_overlay")
     editor.aliases_overlay.set_property(
         "background", Preference(color_pref_name).get()
+    )
+
+    editor.aliases_background_overlay = editor.create_overlay(
+        "aliases_background_overlay"
+    )
+    editor.aliases_background_overlay.set_property(
+        "paragraph-background", get_paragraph_color()
     )
 
     editor.aliases_overlay_next = editor.create_overlay("aliases_overlay_next")
