@@ -58,6 +58,7 @@ with Xref;
 
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
@@ -1769,9 +1770,7 @@ package body Completion_Window is
 
       --  ??? Uposition should take into account the current desktop
 
-      Window.Explorer.Fixed_Width_Font :=
-        Gtk.Style_Context.Get_Style_Context
-          (View).Get_Font (Gtk_State_Flag_Normal);
+      Window.Explorer.Fixed_Width_Font := Default_Style.Get_Pref_Font;
 
       declare
          Char_Width, Char_Height : Gint;
