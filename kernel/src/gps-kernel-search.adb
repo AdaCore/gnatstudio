@@ -82,7 +82,6 @@ package body GPS.Kernel.Search is
       Command : Global_Search_Command_Access;
    begin
       Provider.Kernel := Kernel_Handle (Kernel);
-      GPS.Kernel.Search.Registry.Register (Name, Provider);
 
       --  ??? Should come from user preferences, not hard-coded
 
@@ -96,7 +95,11 @@ package body GPS.Kernel.Search is
          Provider.Rank := 1;
       elsif Name = Provider_Entities then
          Provider.Rank := 3;
+      elsif Name = Provider_Sources then
+         Provider.Rank := 6;
       end if;
+
+      GPS.Kernel.Search.Registry.Register (Name, Provider);
 
       Command := new Global_Search_Command;
       Command.Provider := Search_Provider_Access (Provider);

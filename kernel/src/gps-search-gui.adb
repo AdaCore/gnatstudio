@@ -33,6 +33,7 @@ with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Search;        use GPS.Kernel.Search;
 with GPS.Kernel.Search.Actions;
 with GPS.Kernel.Search.Filenames;
+with GPS.Kernel.Search.Sources;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -366,6 +367,9 @@ package body GPS.Search.GUI is
 
       P := new GPS.Kernel.Search.Actions.Actions_Search_Provider;
       Register_Provider_And_Action (Kernel, P, Provider_Actions);
+
+      P := new GPS.Kernel.Search.Sources.Sources_Search_Provider;
+      Register_Provider_And_Action (Kernel, P, Provider_Sources);
 
       Gtk_New (Item);
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);

@@ -95,6 +95,14 @@ package body GPS.Search is
    --  Compute the (line, column) location for the match, based on previous
    --  knowledge in Context.
 
+   function "<" (P1, P2 : Provider_Info) return Boolean;
+   function "<" (P1, P2 : Provider_Info) return Boolean is
+   begin
+      return P1.Provider.Rank < P2.Provider.Rank;
+   end "<";
+
+   package Sorting_By_Rank is new Provider_Lists.Generic_Sorting ("<");
+
    ---------------------
    -- Update_Location --
    ---------------------
@@ -121,6 +129,8 @@ package body GPS.Search is
                     and then Buffer (Context.Ref_Index + 1) /= ASCII.LF)
          then
             Context.Ref_Line := Context.Ref_Line + 1;
+            Context.Ref_Column := 0;
+
          elsif C = ASCII.HT then
             Context.Ref_Column := Context.Ref_Column + 1;
             Context.Ref_Visible_Column := Context.Ref_Visible_Column
@@ -451,12 +461,16 @@ package body GPS.Search is
        Context : Search_Context) return String
    is
       pragma Unreferenced (Self);
+      B, F : Natural;
    begin
-      return Buffer (Context.Buffer_Start .. Context.Start - 1)
+      B := Integer'Max (Context.Buffer_Start, Buffer'First);
+      F := Integer'Min (Context.Buffer_End, Buffer'Last);
+
+      return Buffer (B .. Context.Start - 1)
          & "<b>"
          & Buffer (Context.Start .. Context.Finish)
          & "</b>"
-         & Buffer (Context.Finish + 1 .. Context.Buffer_End);
+         & Buffer (Context.Finish + 1 .. F);
    end Highlight_Match;
 
    ----------
@@ -511,10 +525,12 @@ package body GPS.Search is
       Template : not null access Search_Provider'Class)
    is
    begin
-      --  Use Include, since we want to allow overriding predefined
+      --  For now, we sort on the rank, so that we can have minimal
+      --  control over which provider is run last.
       Self.Providers.Append
          ((Name     => new String'(Name),
            Provider => Search_Provider_Access (Template)));
+      Sorting_By_Rank.Sort (Self.Providers);
    end Register;
 
    ---------
@@ -525,12 +541,26 @@ package body GPS.Search is
      (Self : Search_Provider_Registry;
       N    : Positive) return Search_Provider_Access
    is
-      use Provider_Vectors;
+      use Provider_Lists;
+      C : Provider_Lists.Cursor;
+      Count : Natural := 1;
    begin
       if N > Integer (Self.Providers.Length) then
          return null;
       else
-         return Self.Providers.Element (N).Provider;
+         C := Self.Providers.First;
+         while Has_Element (C)
+            and then Count < N
+         loop
+            Count := Count + 1;
+            Next (C);
+         end loop;
+
+         if Has_Element (C) then
+            return Element (C).Provider;
+         else
+            return null;
+         end if;
       end if;
    end Get;
 
@@ -661,6 +691,31 @@ package body GPS.Search is
           Whole_Word     => Pattern.Whole_Word,
           Kind           => Pattern.Kind);
    end Build;
+
+   -----------
+   -- Build --
+   -----------
+
+   function Build
+      (Pattern : not null access Search_Pattern'Class;
+       Kind    : Search_Kind) return Search_Pattern_Access is
+   begin
+      return Build
+         (Pattern        => Pattern.Text.all,
+          Case_Sensitive => Pattern.Case_Sensitive,
+          Whole_Word     => Pattern.Whole_Word,
+          Kind           => Kind);
+   end Build;
+
+   --------------
+   -- Get_Kind --
+   --------------
+
+   function Get_Kind
+      (Pattern : not null access Search_Pattern'Class) return Search_Kind is
+   begin
+      return Pattern.Kind;
+   end Get_Kind;
 
    --------------
    -- Get_Text --

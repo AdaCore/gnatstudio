@@ -59,6 +59,7 @@ package GPS.Kernel.Search is
    Provider_Builds    : constant String := "builds";
    Provider_Opened_Win : constant String := "opened windows";
    Provider_Entities   : constant String := "entities";
+   Provider_Sources    : constant String := "sources";
 
    Action_Name_Prefix : constant String := "Global Search in context: ";
    --  prefix for the actions, which should be followed by one of the provider

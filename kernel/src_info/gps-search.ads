@@ -21,7 +21,7 @@
 with Basic_Types;   use Basic_Types;
 with GNAT.Strings;
 with GNATCOLL.Xref;
-private with Ada.Containers.Vectors;
+private with Ada.Containers.Doubly_Linked_Lists;
 
 package GPS.Search is
    use type GNATCOLL.Xref.Visible_Column;
@@ -90,13 +90,19 @@ package GPS.Search is
    function Build
       (Pattern    : not null access Search_Pattern'Class;
        Text       : String) return Search_Pattern_Access;
-   --  Allocates a new pattern, preserving the attributes of pattern.
+   function Build
+      (Pattern    : not null access Search_Pattern'Class;
+       Kind       : Search_Kind) return Search_Pattern_Access;
+   --  Allocates a new pattern, preserving the attributes of pattern,
+   --  except the ones given in parameter.
    --  In particular, this can be used to detect particular values in the
    --  pattern, like "filename:line" where only the filename part should
    --  be searched.
 
    function Get_Text
       (Pattern    : not null access Search_Pattern'Class) return String;
+   function Get_Kind
+      (Pattern    : not null access Search_Pattern'Class) return Search_Kind;
    --  Return the text searched by the user.
 
    function Start
@@ -137,6 +143,7 @@ package GPS.Search is
        Context   : Search_Context) return String;
    --  Return a copy of Buffer where the substring or characters matching
    --  Context are highlighted.
+   --  Buffer must the same one passed to Start or Next, or a substring of it.
 
    ------------
    -- Result --
@@ -372,11 +379,11 @@ private
       Provider : Search_Provider_Access;
    end record;
 
-   package Provider_Vectors is new Ada.Containers.Vectors
-     (Positive, Provider_Info);
+   package Provider_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Provider_Info);
 
    type Search_Provider_Registry is tagged record
-      Providers : Provider_Vectors.Vector;
+      Providers : Provider_Lists.List;
    end record;
 
 end GPS.Search;
