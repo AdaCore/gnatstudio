@@ -2989,7 +2989,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Natural (Block.First_Line);
    end Get_Block_Start;
@@ -3002,7 +3003,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Natural (Block.Last_Line);
    end Get_Block_End;
@@ -3015,7 +3017,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Get (Block.Name).all;
    end Get_Block_Name;
@@ -3028,7 +3031,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Language_Category'Image (Block.Block_Type);
    end Get_Block_Type;
@@ -3041,7 +3045,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Natural (Block.Indentation_Level);
    end Get_Block_Level;

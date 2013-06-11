@@ -852,11 +852,14 @@ package Src_Editor_Buffer is
    end record;
 
    function Get_Block
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Filter : Language.Tree.Category_Array :=
+     (Editor             : access Source_Buffer_Record;
+      Line               : Editable_Line_Type;
+      Update_Immediately : Boolean;
+      Filter             : Language.Tree.Category_Array :=
         Language.Tree.Null_Category_Array) return Block_Record;
    --  Return the block information associated with Line.
+   --  If Update_Immediately is True, update the constructs information before
+   --  returning the block.
 
    function Get_Subprogram_Block
      (Editor : access Source_Buffer_Record;

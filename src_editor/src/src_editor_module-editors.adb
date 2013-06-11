@@ -957,7 +957,7 @@ package body Src_Editor_Module.Editors is
               (Buffer, Get_Editable_Line (Buffer, Line));
          else
             Block  := Get_Block
-              (Buffer, Get_Editable_Line (Buffer, Line),
+              (Buffer, Get_Editable_Line (Buffer, Line), True,
                Filter => Language.Tree.Categories_For_Block_Highlighting);
          end if;
       end if;

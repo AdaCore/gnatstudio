@@ -721,7 +721,7 @@ package body Src_Editor_View is
         or else
           (User.Highlight_Blocks
            and then User.Current_Block /=
-             Get_Block (Buffer, Editable_Line_Type (Line),
+             Get_Block (Buffer, Editable_Line_Type (Line), False,
                         Filter => Categories_For_Block_Highlighting))
       then
          Invalidate_Window (User);
@@ -1120,6 +1120,7 @@ package body Src_Editor_View is
               (Buffer,
                Get_Editable_Line
                  (Buffer, Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1),
+               False,
                Filter => Categories_For_Block_Highlighting);
             Draw_Block (View.Current_Block);
          end if;

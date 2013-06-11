@@ -5831,9 +5831,10 @@ package body Src_Editor_Buffer is
    ---------------
 
    function Get_Block
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Filter : Language.Tree.Category_Array :=
+     (Editor             : access Source_Buffer_Record;
+      Line               : Editable_Line_Type;
+      Update_Immediately : Boolean;
+      Filter             : Language.Tree.Category_Array :=
         Language.Tree.Null_Category_Array) return Block_Record
    is
       File : Structured_File_Access;
@@ -5852,9 +5853,11 @@ package body Src_Editor_Buffer is
          return New_Block;
       end if;
 
-      Update_Contents
-        (Db      => Editor.Kernel.Get_Construct_Database,
-         File    => Editor.Filename);
+      if Update_Immediately then
+         Update_Contents
+           (Db      => Editor.Kernel.Get_Construct_Database,
+            File    => Editor.Filename);
+      end if;
 
       File := Get_Or_Create
         (Db      => Editor.Kernel.Get_Construct_Database,
@@ -5904,7 +5907,7 @@ package body Src_Editor_Buffer is
       Line   : Editable_Line_Type) return Block_Record is
    begin
       return Get_Block
-        (Editor, Line,
+        (Editor, Line, True,
          Filter =>
            (Cat_Package, Cat_Namespace, Cat_Task, Cat_Procedure,
             Cat_Function, Cat_Constructor, Cat_Method, Cat_Destructor,
@@ -6210,7 +6213,8 @@ package body Src_Editor_Buffer is
 
             Block := Get_Block
               (Buffer,
-               Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)));
+               Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)),
+               True);
             Offset_Line := Block.First_Line;
 
             Get_Iter_At_Line_Offset
