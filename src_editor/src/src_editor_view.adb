@@ -2052,10 +2052,12 @@ package body Src_Editor_View is
 
       use Interfaces.C.Strings;
    begin
-      if not View.Get_Realized
-         or else not View.Get_Editable
-      then
-         return True;
+      if not Active (Testsuite_Handle) then
+         if not (View.Get_Realized)
+           or else not View.Get_Editable
+         then
+            return True;
+         end if;
       end if;
 
       --  As soon as a key is pressed on an editor, reset the flag
