@@ -170,8 +170,8 @@ package body Docgen3 is
       --  Local variables
 
       Lang_Handler : constant Language_Handler := Kernel.Lang_Handler;
-      Project_Info : Backend_Info;
-      Context      : aliased constant Docgen_Context :=
+      Backend      : Docgen3_Backend'Class := New_Backend;
+      Context      : aliased Docgen_Context :=
                        (Kernel, Database, Lang_Handler, Options);
 
    --  Start of processing for Process_Files
@@ -193,11 +193,19 @@ package body Docgen3 is
 
       Docgen3.Time.Reset;
 
+      --  Initialize the Atree. Required to reset the internal counter used to
+      --  generate the unique identifiers of the tree nodes (and thus associate
+      --  the same id to repeated executions of this module; required when a
+      --  breakpoint in set in node with a given id. For details on debugging
+      --  see the comments in the body of docgen3-atree.adb).
+
+      Atree.Initialize;
+
       --  Initialize the backend. Required to ensure that we create the
       --  destination directory with support files before processing the
       --  first file.
 
-      Backend.Initialize (Context'Access, Project_Info);
+      Backend.Initialize (Context);
 
       --  Process all the files
 
@@ -244,18 +252,14 @@ package body Docgen3 is
                   end if;
                end if;
 
-               Backend.Process_File
-                 (Context => Context'Access,
-                  Tree    => Tree'Access,
-                  Info    => Project_Info);
+               Backend.Process_File (Tree'Access);
             end;
 
             Files_List.Next (File_Index);
          end loop;
       end;
 
-      Backend.Finalize
-        (Context'Access, Src_Files, Project_Info, Update_Global_Index);
+      Backend.Finalize (Update_Global_Index);
 
       Templates_Parser.Release_Cache;
 

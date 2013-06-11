@@ -15,8 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Console;               use GPS.Kernel.Console;
-with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.Console;  use GPS.Kernel.Console;
 
 package body Docgen3.Errout is
 
@@ -76,7 +75,6 @@ package body Docgen3.Errout is
                Col (Col'First + 1 .. Col'Last) & ": " & Msg;
    begin
       Insert (Context.Kernel, Err, Mode => Mode);
-      Parse_File_Locations (Context.Kernel, Err, "Documentation");
    end Output_Message;
 
    -------------

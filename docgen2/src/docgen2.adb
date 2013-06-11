@@ -865,7 +865,7 @@ package body Docgen2 is
                         Tree_Output     =>
                           (Kind => Docgen3.Short,
                            With_Comments => True),
-                        Skip_C_Files    => True,
+                        Skip_C_Files    => False,
                         Display_Time    => True));
          return;
       end if;
@@ -921,7 +921,7 @@ package body Docgen2 is
                           Tree_Output     =>
                             (Kind => Docgen3.Short,
                              With_Comments => True),
-                          Skip_C_Files    => True,
+                          Skip_C_Files    => False,
                           Display_Time    => True),
             Recursive => Recursive);
          return;

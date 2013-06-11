@@ -34,6 +34,9 @@ private package Docgen3.Files is
    package Files_Vector_Sort is new Files_List.Generic_Sorting
      ("<" => Less_Than);
 
+   function Filename (File : Virtual_File) return Filesystem_String;
+   --  Return the name of File without extension
+
    procedure Remove_Element
      (List   : in out Files_List.Vector;
       Cursor : in out Files_List.Cursor);

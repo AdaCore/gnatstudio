@@ -20,6 +20,19 @@ with GPS.Kernel.Console;          use GPS.Kernel.Console;
 
 package body Docgen3.Files is
 
+   --------------
+   -- Filename --
+   --------------
+
+   function Filename (File : Virtual_File) return Filesystem_String is
+      Ext  : constant Filesystem_String := File.File_Extension;
+      Base : constant Filesystem_String := File.Base_Name;
+      Name : constant Filesystem_String :=
+               Base (Base'First .. Base'Last - Ext'Length);
+   begin
+      return Name;
+   end Filename;
+
    ---------------
    -- Less_Than --
    ---------------

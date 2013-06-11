@@ -15,25 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package implements the reStructured text backend of Docgen. Given
---  that we do not need to implement several backends (because sphynx takes
---  care of processing reStructured Text and generate html, Latex, PDF, etc.)
---  the routines in this package have not been designed using tagged types.
+--  This package defines abstract interface of the backend
 
---  For details on the reStructured Text Markup language read:
---    http://docutils.sourceforge.net/docs/user/rst/quickref.html
---    http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
-
---  For details on sphynx read:
---    http://sphinx-doc.org
-
-with Docgen3.Atree;     use Docgen3.Atree;
-with Docgen3.Files;     use Docgen3.Files;
 with Docgen3.Frontend;  use Docgen3.Frontend;
 
 private package Docgen3.Backend is
-
-   type Backend_Info is private;
 
    function Get_Doc_Directory
      (Kernel : Kernel_Handle) return Virtual_File;
@@ -42,39 +28,25 @@ private package Docgen3.Backend is
    --  'doc' in the object directory, or in the project directory if no
    --  object dir is defined).
 
+   type Docgen3_Backend is abstract tagged null record;
+
    procedure Initialize
-     (Context : access constant Docgen_Context;
-      Info    : out Backend_Info);
+     (Backend : in out Docgen3_Backend;
+      Context : Docgen_Context) is abstract;
    --  Initialize the backend and create the destination directory with
-   --  support files. Returns the backend structure used to collect
-   --  information of all the processed files (used to generate the
-   --  global indexes).
+   --  support files.
 
    procedure Process_File
-     (Context : access constant Docgen_Context;
-      Tree    : access Tree_Type;
-      Info    : Backend_Info);
+     (Backend : in out Docgen3_Backend;
+      Tree    : access Tree_Type) is abstract;
    --  Generate documentation of a single file
 
    procedure Finalize
-     (Context             : access constant Docgen_Context;
-      Src_Files           : in out Files_List.Vector;
-      Info                : Backend_Info;
-      Update_Global_Index : Boolean);
-   --  Destroy the backend structure used to colledt information of all the
-   --  processed files. If Update_Global_Index is true then update the global
-   --  indexes.
+     (Backend : in out Docgen3_Backend;
+      Update_Global_Index : Boolean) is abstract;
+   --  If Update_Global_Index is true then update the global indexes.
 
-private
-   type Collected_Entities is record
-      Pkgs         : EInfo_List.Vector;
-      Variables    : EInfo_List.Vector;
-      Types        : EInfo_List.Vector;
-      Record_Types : EInfo_List.Vector;
-      Tagged_Types : EInfo_List.Vector;
-      Subprgs      : EInfo_List.Vector;
-      Methods      : EInfo_List.Vector;
-   end record;
+   function New_Backend return Docgen3_Backend'Class;
+   --  Factory method
 
-   type Backend_Info is access Collected_Entities;
 end Docgen3.Backend;
