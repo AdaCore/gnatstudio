@@ -80,7 +80,7 @@ package body Gtkada.Entry_Completion is
    Preview_Right_Margin : constant := 10;
    --  between preview and completion popups
 
-   Preview_Width       : constant := 400;
+   Preview_Width       : constant := 500;
    Preview_Height      : constant := 400;
 
    Provider_Label_Width : constant := 100;
