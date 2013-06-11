@@ -337,16 +337,11 @@ try:
     GDK_TAB = 65289
     GDK_RETURN = 65293
     GDK_ESCAPE = 65307
-
-    if os.name == 'nt':
-        GDK_BACKSPACE_HARDWARE_KEYCODE = 8
-    else:
-        GDK_BACKSPACE_HARDWARE_KEYCODE = 59
+    GDK_CONTROL_L = 65507
 
 
     def send_key_event(keyval, control=0, alt=0, shift=0, window=None,
-                       process_events=True, key_press=True,
-                       hardware_keycode=None):
+                       process_events=True):
         """Emit a key event on GPS, simulating the given key. This event is
            sent asynchronously.
            Unless process_events is true, this function will return when the
@@ -356,12 +351,52 @@ try:
            except for special characters like GDK_RETURN.
         """
 
-        event = Gdk.EventKey()
+        def _synthesize(type, keyval):
+            event = Gdk.EventKey()
+            event.type = type
+            event.window = window
+            event.keyval = keyval
+            event.send_event = 0
+            event.time = Gdk.CURRENT_TIME
+            event.is_modifier = 0
+            event.group = 0
+            event.state = Gdk.ModifierType(0)
+            # event.device = None    # No device for key events
 
-        if key_press:
-            event.type = Gdk.EventType.KEY_PRESS
-        else:
-            event.type = Gdk.EventType.KEY_RELEASE
+            # hard-code the keycode, although it depends on the OS and the
+            # specific keyboard kind.
+            # There used to be a bug in pygobject, where the string field
+            # would be deallocated twice, or even set as non-writable. Seems
+            # to be fixed now though
+
+            if keyval == ord("u"):
+                event.string = "u"
+                event.length = len(event.string)
+                event.hardware_keycode = 32
+            elif keyval == ord("2"):
+                event.string = "2"
+                event.length = len(event.string)
+                event.hardware_keycode = 19
+            elif keyval == ord("k"):
+                event.string = "k"
+                event.length = len(event.string)
+                event.hardware_keycode = 40
+            elif keyval == GDK_RETURN:
+                event.string = "\r"
+                event.length = len(event.string)
+                event.hardware_keycode = 36
+            elif keyval == GDK_BACKSPACE:
+                if os.name == 'nt':
+                    event.hardware_keycode = 8
+                else:
+                    event.hardware_keycode = 59
+            elif keyval == GDK_CONTROL_L:
+                event.hardware_keycode = 59
+            elif keyval >= 32 and keyval <= 128:
+                event.string = chr (keyval)
+                event.length = len(event.string)
+
+            return event
 
         if not window:
             window = Gtk.Window.list_toplevels()[0]
@@ -369,37 +404,32 @@ try:
             window = window.get_window(Gtk.TextWindowType.TEXT)
         if not isinstance(window, Gdk.Window):
             window = window.get_window()
-        event.window = window
-        event.keyval = keyval
-        event.device = default_event_device()
 
-        # Disabled for now as this does not work on all platforms. The keycode
-        # depends on the OS but also on the keyboard kind.
-        #    if hardware_keycode:
-        #       event.hardware_keycode = hardware_keycode
+        event = _synthesize(Gdk.EventType.KEY_PRESS, keyval)
 
-        event.send_event = 1
-        event.time = int(time.time())
-
-        # We cannot set event.string, because of a bug in pygobject, which tries
-        # to doubly deallocate the string later on.
-
-        # In gobject-introspection, the binding is not correct and the field
-        # "string" is not writable.
-
-        # if keyval >= 32 and keyval <= 128:
-        #   event.string = chr (keyval)
-
-        state = Gdk.ModifierType(0)
         if control:
-            state = state | Gdk.ModifierType.CONTROL_MASK
-        if shift:
-            state = state | Gdk.ModifierType.SHIFT_MASK
-        if alt:
-            state = state | Gdk.ModifierType.MOD1_MASK
+            event.state |= Gdk.ModifierType.CONTROL_MASK
 
-        event.state = state
+            # Synthesize the pressing of the control key
+            e2 = _synthesize(Gdk.EventType.KEY_PRESS, GDK_CONTROL_L)
+            e2.put()
+
+        if shift:
+            event.state |= Gdk.ModifierType.SHIFT_MASK
+        if alt:
+            event.state |= Gdk.ModifierType.MOD1_MASK
+
         event.put()
+
+        e3 = _synthesize(Gdk.EventType.KEY_RELEASE, keyval)
+        e3.state = event.state
+        e3.put()
+
+        if control:
+            e4 = _synthesize(Gdk.EventType.KEY_RELEASE, GDK_CONTROL_L)
+            e4.state = event.state   # matches what gtk+ does
+            e4.put()
+
         if process_events:
             process_all_events()
 

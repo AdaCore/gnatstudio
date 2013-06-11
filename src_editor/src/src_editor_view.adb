@@ -32,7 +32,6 @@ with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 
 with Glib.Object;                use Glib.Object;
-with Glib.Properties;            use Glib.Properties;
 with Glib.Values;                use Glib.Values;
 
 with Gtk;                        use Gtk;
@@ -45,7 +44,6 @@ with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Widget;                 use Gtk.Widget;
-with Gtk.Window;                 use Gtk.Window;
 
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
@@ -2053,9 +2051,8 @@ package body Src_Editor_View is
 
       use Interfaces.C.Strings;
    begin
-      if View.Get_Realized
-        and then not Get_Property
-          (Gtk_Window (Get_Toplevel (View)), Has_Toplevel_Focus_Property)
+      if not View.Get_Realized
+         or else not View.Get_Editable
       then
          return True;
       end if;

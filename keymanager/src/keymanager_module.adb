@@ -202,7 +202,7 @@ package body KeyManager_Module is
    --  ??? Global variable, could be queries from the kernel
    Keymanager_Module : Keymanager_Module_ID;
 
-   function Process_Event
+   function Process_Key_Event
      (Kernel  : access Kernel_Handle_Record'Class;
       Event   : Gdk_Event) return Boolean;
    --  Process the event and call the appropriate actions if needed
@@ -462,7 +462,7 @@ package body KeyManager_Module is
             if Current = null
               or else not Get_Modal (Gtk_Window (Get_Toplevel (Current)))
             then
-               if Process_Event (Kernel, Event) then
+               if Process_Key_Event (Kernel, Event) then
                   return;
                end if;
             end if;
@@ -998,11 +998,11 @@ package body KeyManager_Module is
       Key      : out Gdk_Key_Type;
       Modifier : out Gdk_Modifier_Type)
    is
-      State : constant Gdk_Modifier_Type := Get_State (Event);
+      State : constant Gdk_Modifier_Type := Event.Key.State;
    begin
       --  Remove any num-lock and caps-lock modifiers
       Modifier := State and Get_Default_Mod_Mask;
-      Key := Get_Key_Val (Event);
+      Key := Event.Key.Keyval;
 
       --  If Caps lock in on, and the key is an upper-case character,
       --  lower-case it.
@@ -1035,11 +1035,11 @@ package body KeyManager_Module is
       --       left-menu  => GDK_MOD1_MASK
    end Get_Normalized_Key;
 
-   -------------------
-   -- Process_Event --
-   -------------------
+   -----------------------
+   -- Process_Key_Event --
+   -----------------------
 
-   function Process_Event
+   function Process_Key_Event
      (Kernel   : access Kernel_Handle_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean
    is
@@ -1190,7 +1190,6 @@ package body KeyManager_Module is
          end loop;
 
          if not Found_Action then
-            Trace (Me, "No action was executed, falling though gtk+");
             --  The command will be executed by gtk, we don't know exactly how
             if Keymanager_Module.Last_Command /= null then
                Free (Keymanager_Module.Last_User_Command);
@@ -1212,14 +1211,13 @@ package body KeyManager_Module is
          end if;
 
       elsif Get_Event_Type (Event) = Key_Release then
-         Key   := Get_Key_Val (Event);
+         Get_Normalized_Key (Event, Key, Modif);
 
          --  If we are releasing CTRL, enter Hyper Mode
 
          if Key = GDK_Control_L or else Key = GDK_Control_R then
             Leave_Hyper_Mode (Kernel);
          end if;
-
       end if;
 
       --  Let gtk+ handle all events even if we have already processed one or
@@ -1230,13 +1228,17 @@ package body KeyManager_Module is
       --  ??? On the other hand, if we let it through this means that for
       --  instance alt-w will open the Window menu, even after some action has
       --  been executed.
+
+      if not (Found_Action or Has_Secondary) then
+         Trace (Me, "No action was executed, falling though gtk+");
+      end if;
       return Found_Action or Has_Secondary;
 
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
          return False;
-   end Process_Event;
+   end Process_Key_Event;
 
    ----------------------
    -- Load_Custom_Keys --
