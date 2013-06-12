@@ -15,11 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Messages_Windows;
 with Interactive_Consoles; use Interactive_Consoles;
 
 package GPS.Kernel.Console is
 
-   type Message_Type is (Info, Error, Verbose);
+   type Message_Type is new GPS.Messages_Windows.Message_Type;
    --  We are dealing with 3 types of messages :
    --   - Info for general information
    --   - Error for signaling errors

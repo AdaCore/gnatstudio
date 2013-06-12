@@ -19,6 +19,7 @@
 with GPS.Core_Kernels;
 with Projects;
 with Xref;
+with GPS.Messages_Windows;
 
 package GPS.CLI_Kernels is
 
@@ -34,5 +35,9 @@ package GPS.CLI_Kernels is
    overriding procedure Create_Database
      (Self   : not null access CLI_Kernel_Record;
       Result : out Xref.General_Xref_Database);
+
+   overriding function Messages_Window
+     (Self : not null access CLI_Kernel_Record)
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access;
 
 end GPS.CLI_Kernels;

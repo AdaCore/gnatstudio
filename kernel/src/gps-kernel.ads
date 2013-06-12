@@ -56,6 +56,7 @@ with Xref;
 
 with GPS.Editors;
 with GPS.Core_Kernels;
+with GPS.Messages_Windows; use GPS.Messages_Windows;
 
 package GPS.Kernel is
 
@@ -1134,6 +1135,8 @@ private
 
       Refactoring : Standard.Refactoring.Factory_Context;
 
+      Messages_Window : Abstract_Messages_Window_Access;
+
       Undo_Redo : Commands.Controls.Undo_Redo;
       --  Undo/redo controls
    end record;
@@ -1145,5 +1148,9 @@ private
    overriding procedure Create_Database
      (Self   : not null access Kernel_Handle_Record;
       Result : out Xref.General_Xref_Database);
+
+   overriding function Messages_Window
+     (Self : not null access Kernel_Handle_Record)
+      return Abstract_Messages_Window_Access;
 
 end GPS.Kernel;

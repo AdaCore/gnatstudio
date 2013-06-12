@@ -135,6 +135,15 @@ package body GPS.Kernel is
       Column   : Basic_Types.Visible_Column_Type := 1;
       Text     : String);
 
+   type Kernel_Messages_Window is new Abstract_Messages_Window with record
+      Kernel : Kernel_Handle;
+   end record;
+   overriding procedure Insert
+     (Self   : not null access Kernel_Messages_Window;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : GPS.Messages_Windows.Message_Type := Info);
+
    ------------------
    -- Report_Error --
    ------------------
@@ -322,6 +331,7 @@ package body GPS.Kernel is
       Handle := new Kernel_Handle_Record;
       Handle.Home_Dir := Home_Dir;
       Handle.Prefix   := Prefix_Directory;
+      Handle.Messages_Window := new Kernel_Messages_Window'(Kernel => Handle);
 
       Handle.Main_Window  := Main_Window;
       Weak_Ref (Handle.Main_Window,
@@ -1999,5 +2009,30 @@ package body GPS.Kernel is
          Kernel.Key_Setter_Function (Kernel, Action, Accel_Key, Accel_Mods);
       end if;
    end Set_Default_Key;
+
+   ---------------------
+   -- Messages_Window --
+   ---------------------
+
+   overriding function Messages_Window
+     (Self : not null access Kernel_Handle_Record)
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access is
+   begin
+      return Self.Messages_Window;
+   end Messages_Window;
+
+   ------------
+   -- Insert --
+   ------------
+
+   overriding procedure Insert
+     (Self   : not null access Kernel_Messages_Window;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : GPS.Messages_Windows.Message_Type := Info) is
+   begin
+      Insert
+        (Self.Kernel, Text, Add_LF, GPS.Kernel.Console.Message_Type (Mode));
+   end Insert;
 
 end GPS.Kernel;

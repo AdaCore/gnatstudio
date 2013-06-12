@@ -20,6 +20,7 @@
 with Language_Handlers;
 with Projects;
 with Xref;
+with GPS.Messages_Windows;
 
 with GNATCOLL.Scripts;
 with GNATCOLL.Symbols;
@@ -56,6 +57,12 @@ package GPS.Core_Kernels is
      (Kernel : access Core_Kernel_Record'Class)
       return Xref.General_Xref_Database;
    --  Return the entity databases
+
+   function Messages_Window
+     (Self : not null access Core_Kernel_Record)
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access
+      is abstract;
+   --  Return console window
 
    function Create_From_Base
      (Kernel : access Core_Kernel_Record'Class;

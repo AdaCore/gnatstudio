@@ -15,51 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;
+--  This package defines the abstract root type for message console.
 
-package body GPS.CLI_Kernels is
-
-   ---------------------
-   -- Create_Database --
-   ---------------------
-
-   overriding procedure Create_Database
-     (Self   : not null access CLI_Kernel_Record;
-      Result : out Xref.General_Xref_Database) is
-   begin
-      Result := new Xref.General_Xref_Database_Record;
-
-      Xref.Initialize
-        (Result, Self.Lang_Handler, Self.Symbols, Self.Registry);
-   end Create_Database;
+package GPS.Messages_Windows is
 
    ---------------------
-   -- Create_Registry --
+   -- Messages window --
    ---------------------
 
-   overriding procedure Create_Registry
-     (Self   : not null access CLI_Kernel_Record;
-      Result : out Projects.Project_Registry_Access)
-   is
-      pragma Unreferenced (Self);
-      Tree : constant GNATCOLL.Projects.Project_Tree_Access :=
-        new GNATCOLL.Projects.Project_Tree;
-   begin
-      Result := Projects.Create (Tree => Tree);
-      Tree.Load_Empty_Project;
-   end Create_Registry;
+   type Message_Type is (Info, Error, Verbose);
+   --  We are dealing with 3 types of messages :
+   --   - Info for general information
+   --   - Error for signaling errors
+   --   - Verbose for detailed information
 
-   ---------------------
-   -- Messages_Window --
-   ---------------------
+   type Abstract_Messages_Window is abstract tagged null record;
+   type Abstract_Messages_Window_Access is
+     access all Abstract_Messages_Window'Class;
+   procedure Insert
+     (Self   : not null access Abstract_Messages_Window;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info) is abstract;
+   --  Insert Text in the GPS's console.
+   --  If Add_LF is True, automatically add a line separator.
 
-   overriding function Messages_Window
-     (Self : not null access CLI_Kernel_Record)
-      return GPS.Messages_Windows.Abstract_Messages_Window_Access
-   is
-      pragma Unreferenced (Self);
-   begin
-      return null;
-   end Messages_Window;
-
-end GPS.CLI_Kernels;
+end GPS.Messages_Windows;
