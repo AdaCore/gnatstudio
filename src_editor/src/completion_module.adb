@@ -56,6 +56,7 @@ with Language.Icons;
 with Language_Handlers;         use Language_Handlers;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
+with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
@@ -1276,11 +1277,24 @@ package body Completion_Module is
    function Trigger_Timeout_Callback return Boolean is
       Ignore : Command_Return_Type;
       pragma Unreferenced (Ignore);
+      Widget        : constant Gtk_Widget :=
+        Get_Current_Focus_Widget (Get_Kernel (Completion_Module.all));
+      View          : Source_View;
+      Buffer        : Source_Buffer;
+
    begin
-      Ignore := Smart_Complete
-        (Get_Kernel (Completion_Module.all),
-         Complete => False,
-         Volatile => True);
+      if Widget /= null
+        and then Widget.all in Source_View_Record'Class
+      then
+         View   := Source_View (Widget);
+         Buffer := Source_Buffer (Get_Buffer (View));
+      end if;
+      if Get_Multi_Cursors (Buffer).Is_Empty then
+         Ignore := Smart_Complete
+           (Get_Kernel (Completion_Module.all),
+            Complete => False,
+            Volatile => True);
+      end if;
 
       Completion_Module.Has_Trigger_Timeout := False;
       return False;
