@@ -452,7 +452,7 @@ package body Completion_Window is
       loop
          --  Call Idle_Expand, and exit the loop if the function returns False
 
-         if (Idle_Expand (Completion_Explorer_Access (Explorer)) = False)
+         if (not Idle_Expand (Completion_Explorer_Access (Explorer)))
            or else Explorer.Shown >= Explorer.Number_To_Show
          then
             return;
@@ -509,6 +509,7 @@ package body Completion_Window is
    is
       More_Idle_Complete, More_Idle_Doc : Boolean;
    begin
+
       if Explorer = null
         or else Explorer.Info = null
         or else not Explorer.Has_Idle_Computation
@@ -518,6 +519,22 @@ package body Completion_Window is
 
       More_Idle_Doc := Idle_Complete_Notes (Explorer);
       More_Idle_Complete := Idle_Expand (Explorer);
+
+      if not Explorer.Completion_Window.In_Destruction then
+         declare
+            T : constant Gtk_Tree_Iter :=
+              Explorer.Model_Filter.Get_Iter_First;
+         begin
+            if T = Null_Iter
+              and then Explorer.Completion_Window.Volatile
+            then
+               Remove (Explorer.Idle_Computation);
+               Explorer.Completion_Window.In_Destruction := True;
+               Explorer.Completion_Window.Destroy;
+               return False;
+            end if;
+         end;
+      end if;
 
       --  If one of the two computation functions has work left
       --  then idle computation must continue
@@ -568,11 +585,11 @@ package body Completion_Window is
       Last_Comp_Cat : Language_Category := Cat_Unknown;
 
    begin
-
       if Explorer.Iter.At_End then
          --  Hide the "computing" row.
          Explorer.Model.Set
            (Explorer.Computing_Iter, Shown_Column, False);
+
          return False;
 
       elsif Explorer.Shown >= Explorer.Number_To_Show then
@@ -809,9 +826,11 @@ package body Completion_Window is
       end if;
 
       if not Window.In_Destruction then
-         Prev := Get_Iter_First (Window.Explorer.Model);
+         Prev := Get_Iter_First (Window.Explorer.Model_Filter);
 
-         if Prev = Null_Iter then
+         if Prev = Null_Iter
+           and then Window.Volatile
+         then
             --  If there is no entry in the tree, destroy the window
             Destroy (Window);
          else
@@ -1679,6 +1698,9 @@ package body Completion_Window is
       pragma Unreferenced (Dummy);
    begin
       Gtk_New (Window.Explorer, Kernel);
+
+      Window.Explorer.Completion_Window :=
+        Completion_Window_Access (Window);
 
       Gtk.Window.Initialize (Window, Window_Popup);
 

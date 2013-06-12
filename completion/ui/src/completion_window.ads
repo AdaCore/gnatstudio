@@ -220,6 +220,9 @@ private
       --  A fixed-width font in use in the tree and the notes window.
 
       Case_Sensitive : Boolean;
+
+      Completion_Window : Completion_Window_Access;
+      --  access to the parent completion window
    end record;
 
    type Completion_Window_Record is new Gtk_Window_Record with record

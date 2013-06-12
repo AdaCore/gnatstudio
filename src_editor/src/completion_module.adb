@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;              use GNAT.Strings;
