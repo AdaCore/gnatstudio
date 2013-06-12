@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Console;  use GPS.Kernel.Console;
-
 package body Docgen3.Errout is
 
    -----------------------
