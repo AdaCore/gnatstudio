@@ -339,6 +339,7 @@ try:
     GDK_RETURN = 65293
     GDK_ESCAPE = 65307
     GDK_CONTROL_L = 65507
+    GDK_PAGE_DOWN = 0xFF56
 
     if os.name == 'nt':
         GDK_BACKSPACE_HARDWARE_KEYCODE = 8
@@ -358,6 +359,11 @@ try:
            Sending letters to an editor doesn't seem to work at the moment,
            except for special characters like GDK_RETURN.
         """
+
+        if hasattr(GPS, "send_key_event"):
+            GPS.send_key_event(keyval, window=window,
+                               control=control, alt=alt, shift=shift)
+            return
 
         def _synthesize(type, keyval):
             event = Gdk.EventKey()

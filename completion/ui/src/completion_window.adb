@@ -1418,9 +1418,9 @@ package body Completion_Window is
 
          if Success then
             if Where = Up then
-               Iter := Get_Iter (Window.Explorer.Model, Path);
+               Iter := Get_Iter (Window.Explorer.View.Get_Model, Path);
             else
-               Iter := Get_Iter (Window.Explorer.Model, End_Path);
+               Iter := Get_Iter (Window.Explorer.View.Get_Model, End_Path);
             end if;
 
             if Iter /= Null_Iter then

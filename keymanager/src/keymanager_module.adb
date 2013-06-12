@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -28,7 +29,10 @@ with Interfaces.C.Strings;
 
 with System.Assertions;       use System.Assertions;
 
+with Gdk.Device;              use Gdk.Device;
+with Gdk.Device_Manager;      use Gdk.Device_Manager;
 with Gdk.Event;               use Gdk.Event;
+with Gdk.Screen;              use Gdk.Screen;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Window;              use Gdk.Window;
@@ -1571,6 +1575,92 @@ package body KeyManager_Module is
                Next (Get_Kernel (Data), Iter);
             end loop;
          end;
+
+      elsif Command = "send_key_event" then
+         declare
+            use type Gdk.Gdk_Window;
+            use Widget_List;
+
+            Keyval  : constant Gdk_Key_Type :=
+               Gdk_Key_Type (Integer'(Nth_Arg (Data, 1)));
+            Window  : Gdk.Gdk_Window := From_PyGtk (Data, 2);
+            Control : constant Boolean := Nth_Arg (Data, 3, False);
+            Alt     : constant Boolean := Nth_Arg (Data, 4, False);
+            Shift   : constant Boolean := Nth_Arg (Data, 5, False);
+            Event   : Gdk_Event;
+            List    : Widget_List.Glist;
+            Win     : Gtk_Widget;
+         begin
+            if Window = null then
+               List := List_Toplevels;
+               Win := Get_Data (List);
+               Window := Get_Window (Win);
+               Free (List);
+            end if;
+
+            Gdk_New (Event, Gdk.Event.Key_Press);
+            Event.Key :=
+               (The_Type    => Gdk.Event.Key_Press,
+                Window      => Window,
+                Keyval      => Keyval,
+                Send_Event  => 0,
+                Time        => 0, --  CURRENT_TIME
+                Is_Modifier => 0,
+                Group       => 0,
+                State       => 0,
+                Length      => 0,
+                String      => Interfaces.C.Strings.Null_Ptr,
+                Hardware_Keycode => 0);
+            Ref (Event.Key.Window);
+
+            if Control then
+               Event.Key.State := Event.Key.State or Control_Mask;
+            end if;
+
+            if Shift then
+               Event.Key.State := Event.Key.State or Shift_Mask;
+            end if;
+
+            if Alt then
+               Event.Key.State := Event.Key.State or Mod1_Mask;
+            end if;
+
+            if Keyval = GDK_BackSpace then
+               if GNAT.OS_Lib.Directory_Separator = '\' then
+                  Event.Key.Hardware_Keycode := 8;
+               else
+                  --  On MAC, should be 51, on Unix 59
+                  Event.Key.Hardware_Keycode := 59;
+               end if;
+            end if;
+
+            declare
+               use Device_List;
+               Screen : constant Gdk_Screen :=
+                  Get_Kernel (Data).Get_Main_Window.Get_Screen;
+               Mgr : constant Gdk_Device_Manager :=
+                  Get_Device_Manager (Screen.Get_Display);
+               L : Device_List.Glist :=
+                  Mgr.List_Devices (Gdk_Device_Type_Master);
+               L2 : Device_List.Glist := L;
+               Device : Gdk_Device;
+            begin
+               while L2 /= Device_List.Null_List loop
+                  Device := Device_List.Get_Data (L2);
+                  exit when Device.Get_Source = Source_Keyboard;
+                  L2 := Device_List.Next (L2);
+               end loop;
+
+               Device_List.Free (L);
+               Device.Ref;
+               Set_Device (Event, Device);
+               Device.Ref;
+               Set_Source_Device (Event, Device);
+            end;
+
+            General_Event_Handler (Event, Kernel => Get_Kernel (Data));
+            Gdk.Event.Free (Event);
+         end;
       end if;
    end Keymanager_Command_Handler;
 
@@ -1693,6 +1783,17 @@ package body KeyManager_Module is
            Keymanager_Command_Handler'Access);
       Register_Command
         (Kernel, "lookup_actions", 0, 0, Keymanager_Command_Handler'Access);
+
+      if Active (Traces.Testsuite_Handle) then
+         Register_Command
+            (Get_Scripts (Kernel), "send_key_event",
+            (Param ("keyval"),
+             Param ("window", Optional => True),
+             Param ("control", Optional => True),
+             Param ("alt", Optional => True),
+             Param ("shift", Optional => True)),
+            Keymanager_Command_Handler'Access);
+      end if;
 
       Command := new Repeat_Next_Command;
       Repeat_Next_Command (Command.all).Kernel := Kernel_Handle (Kernel);
